@@ -3,3 +3,7 @@ web/_temp
 node_modules
 *.sw?
 built
+typings/
+mbitprj/microbit.asm
+mbitprj/microbit.hex
+mbitprj/microbit.js

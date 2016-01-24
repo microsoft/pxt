@@ -11,6 +11,6 @@
   "license": "MIT",
   "homepage": "https://github.com/Microsoft/tsmbit#readme",
   "dependencies": {
-    "typescript": "^1.7.5"
+    "typescript": "^1.8.0-dev.20160124"
   }
 }

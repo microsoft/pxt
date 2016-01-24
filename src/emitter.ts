@@ -1,14 +1,8 @@
 /// <reference path="../node_modules/typescript/lib/typescriptServices.d.ts"/>
+/// <reference path="../typings/node/node.d.ts"/>
 /// <reference path="thumb.ts"/>
 
-declare var require: any;    
-
 namespace ts {
-    declare function getNodeId(node: Node): number;   
-    export interface Node extends TextRange {
-        symbol?: Symbol;                // Symbol declared by node (initialized by binding)
-    }
-
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
             throw new Error(msg)

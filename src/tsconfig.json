@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "out": "../built/tsmbit.js",
         "rootDir": ".",
-        "newLine": "LF",        
+        "newLine": "LF",
         "sourceMap": true
     }
 }
