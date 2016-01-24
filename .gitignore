@@ -1,0 +1,5 @@
+templater.sh
+web/_temp
+node_modules
+*.sw?
+built

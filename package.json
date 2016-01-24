@@ -1,0 +1,16 @@
+{
+  "name": "tsmbit",
+  "version": "0.0.0",
+  "description": "TypeScript -> mbit comiler",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Microsoft/tsmbit.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "homepage": "https://github.com/Microsoft/tsmbit#readme",
+  "dependencies": {
+    "typescript": "^1.7.5"
+  }
+}
