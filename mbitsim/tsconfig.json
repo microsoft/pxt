@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "outDir": "../built",
+        "rootDir": ".",
+        "newLine": "LF",
+        "module": "commonjs",
+        "sourceMap": true
+    }
+}
