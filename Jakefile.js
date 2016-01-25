@@ -31,6 +31,10 @@ function tscIn(task, dir) {
 
 task('default', ['runprj'])
 
+task('clean', function() {
+  jake.rmRf("built")
+})
+
 task('runprj', ['buildprj', 'sim'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "mbitprj", 'node ../built/sim.js')
 })
