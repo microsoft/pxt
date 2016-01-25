@@ -1,5 +1,3 @@
-/// <reference path="emitter.ts"/>
-
 namespace ts.mbit {
     export type StringMap<T> = thumb.StringMap<T>;
 

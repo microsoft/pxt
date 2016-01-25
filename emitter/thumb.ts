@@ -1,6 +1,3 @@
-/// <reference path="emitter.ts"/>
-
-
 module ts.mbit.thumb {
     /* Docs:
      *
