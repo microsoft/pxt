@@ -137,7 +137,7 @@ namespace ts {
         capturedVars: VarOrParam[];
     }
 
-    export function emitMBit(program: Program): EmitResult {
+    export function emitMBit(program: Program, host: CompilerHost): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: thumb.StringMap<ClassInfo> = {}
@@ -145,7 +145,6 @@ namespace ts {
         mbit.staticBytecodeInfo = require("./hexinfo.js");
         mbit.setup();
 
-        const fs = require("fs");
         let bin: mbit.Binary;
         let proc: mbit.Procedure;
 
@@ -162,7 +161,6 @@ namespace ts {
         program.getSourceFiles().forEach(emit);
 
         if (diagnostics.getModificationCount() == 0) {
-            console.log("second pass")
             reset();
             bin.finalPass = true
             program.getSourceFiles().forEach(emit);
@@ -236,13 +234,15 @@ namespace ts {
                 return;
             bin.serialize();
             bin.patchSrcHash();
-            fs.writeFileSync("microbit.asm", bin.csource)
+            
+            let writeFileSync = (fn:string, data:string) =>            
+                host.writeFile(fn, data, false, null);
+            writeFileSync("microbit.asm", bin.csource)
             bin.assemble();
             const hex = bin.patchHex(false).join("\r\n") + "\r\n"
-            fs.writeFileSync("microbit.asm", bin.csource) // optimized
-            fs.writeFileSync("microbit.hex", hex)
-            fs.writeFileSync("microbit.js", bin.jssource)
-            console.log("wrote microbit.hex and microbit.asm")
+            writeFileSync("microbit.asm", bin.csource) // optimized
+            writeFileSync("microbit.hex", hex)
+            writeFileSync("microbit.js", bin.jssource)
         }
 
         function lookupLocation(decl: Declaration): mbit.Location {

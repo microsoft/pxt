@@ -4,23 +4,18 @@ namespace ts {
 
     let reportDiagnostic = reportDiagnosticSimply;
 
-    function reportDiagnostics(diagnostics: Diagnostic[], host: CompilerHost): void {
+    function reportDiagnostics(diagnostics: Diagnostic[]): void {
         for (const diagnostic of diagnostics) {
-            reportDiagnostic(diagnostic, host);
+            reportDiagnostic(diagnostic);
         }
     }
 
-    function getRelativeFileName(fileName: string, host: CompilerHost): string {
-        //return host ? convertToRelativePath(fileName, host.getCurrentDirectory(), fileName => host.getCanonicalFileName(fileName)) : fileName;
-        return fileName
-    }
-
-    function reportDiagnosticSimply(diagnostic: Diagnostic, host: CompilerHost): void {
+    function reportDiagnosticSimply(diagnostic: Diagnostic): void {
         let output = "";
 
         if (diagnostic.file) {
             const { line, character } = getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-            const relativeFileName = getRelativeFileName(diagnostic.file.fileName, host);
+            const relativeFileName = diagnostic.file.fileName;
             output += `${relativeFileName}(${line + 1},${character + 1}): `;
         }
 
@@ -30,42 +25,103 @@ namespace ts {
         sys.write(output);
     }
 
+    type StringMap<T> = ts.thumb.StringMap<T>;
 
-    export function main() {
-        let fileNames = process.argv.slice(2)
+    export interface CompileOptions {
+        fileSystem: StringMap<string>;
+        sourceFiles?: string[];
+    }
+
+    export interface CompileResult {
+        outfiles: StringMap<string>;
+        diagnostics: Diagnostic[];
+        success: boolean;
+    }
+
+    export function compile(opts: CompileOptions) {
+        let res: CompileResult = {
+            outfiles: {},
+            diagnostics: [],
+            success: false
+        }
+
         let options = ts.getDefaultCompilerOptions()
-       
+
         options.target = ScriptTarget.ES5;
         options.module = ModuleKind.CommonJS;
+        let fileText = opts.fileSystem
+        let setParentNodes = true
 
-        let host = createCompilerHost(options, true)
-        let program = createProgram(fileNames, options, host);
+        let host: CompilerHost = {
+            getSourceFile: (fn, v, err) => {
+                let text = ""
+                if (fileText.hasOwnProperty(fn)) {
+                    text = fileText[fn]
+                } else {
+                    if (err) err("File not found: " + fn)
+                }
+                return createSourceFile(fn, text, v, setParentNodes)
+            },
+            fileExists: fn => fileText.hasOwnProperty(fn),
+            getCanonicalFileName: fn => fn,
+            getDefaultLibFileName: () => "no-default-lib.d.ts",
+            writeFile: (fileName, data, writeByteOrderMark, onError) => {
+                res.outfiles[fileName] = data
+            },
+            getCurrentDirectory: () => ".",
+            useCaseSensitiveFileNames: () => true,
+            getNewLine: () => "\n",
+            readFile: fn => fileText[fn] || "",
+            directoryExists: dn => true,
+        }
 
-        let diagnostics: Diagnostic[];
+        let program = createProgram(opts.sourceFiles || Object.keys(opts.fileSystem), options, host);
 
         // First get and report any syntactic errors.
-        diagnostics = program.getSyntacticDiagnostics();
+        res.diagnostics = program.getSyntacticDiagnostics();
+        if (res.diagnostics.length > 0) return res;
 
         // If we didn't have any syntactic errors, then also try getting the global and
         // semantic errors.
-        if (diagnostics.length === 0) {
-            diagnostics = program.getOptionsDiagnostics().concat(program.getGlobalDiagnostics());
+        res.diagnostics = program.getOptionsDiagnostics().concat(program.getGlobalDiagnostics());        
 
-            if (diagnostics.length === 0) {
-                diagnostics = program.getSemanticDiagnostics();
-            }
+        if (res.diagnostics.length == 0) {
+            res.diagnostics = program.getSemanticDiagnostics();
         }
 
-        if (diagnostics.length == 0) {
-            const mbitOutput = emitMBit(program);
-            diagnostics = mbitOutput.diagnostics
+        if (res.diagnostics.length == 0) {
+            const mbitOutput = emitMBit(program, host);
+            res.diagnostics = mbitOutput.diagnostics
         }
 
-        reportDiagnostics(diagnostics, host);
+        if (res.diagnostics.length == 0)
+            res.success = true
+        return res
+    }
 
-        return diagnostics.length
-            ? ExitStatus.DiagnosticsPresent_OutputsSkipped
-            : ExitStatus.Success;
+    export function main() {
+        let fileNames = process.argv.slice(2)
+
+        let fs = require("fs")
+
+        let fileText: any = {}
+        fileNames.forEach(fn => {
+            fileText[fn] = fs.readFileSync(fn, "utf8")
+        })
+
+        let res = compile({
+            fileSystem: fileText,
+            sourceFiles: fileNames
+        })
+
+        Object.keys(res.outfiles).forEach(fn =>
+            fs.writeFileSync(fn, res.outfiles[fn], "utf8"))
+        
+        reportDiagnostics(res.diagnostics);
+
+        return res.success ?
+            ExitStatus.Success :
+            ExitStatus.DiagnosticsPresent_OutputsSkipped
     }
 }
 
