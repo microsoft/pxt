@@ -2,6 +2,7 @@
 
 var child_process = require("child_process");
 var fs = require("fs");
+var util = require("util");
 
 // for use with child_process.exec/execFile
 function execCallback(task) {
@@ -32,7 +33,7 @@ function catFiles(files, out) {
 }
 
 function cmdIn(task, dir, cmd) {
-  console.log(`[${dir}] ${cmd}`)
+  console.log(`[${task.name}] cd ${dir}; ${cmd}`)
   child_process.exec(cmd, { cwd: dir }, execCallback(task))
 }
 
