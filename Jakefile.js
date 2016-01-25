@@ -16,6 +16,17 @@ function execCallback(task) {
   }
 }
 
+function expand(dir) {
+  if (Array.isArray(dir)) {
+    let r = []
+    dir.forEach(f => expand(dir).forEach(f => r.push(f)))
+    return r
+  }
+  if (fs.existsSync(dir) && fs.statSync(dir).isDirectory())
+    return fs.readdirSync(dir).map(f => dir + "/" + f)
+  else return [dir]
+}
+
 function catFiles(files, out) {
   fs.writeFileSync(out, files.map(f => fs.readFileSync(f, "utf8")).join(""))
 }
@@ -35,20 +46,20 @@ task('clean', function() {
   jake.rmRf("built")
 })
 
-task('runprj', ['buildprj', 'sim'], {async:true, parallelLimit: 10}, function() {
+task('runprj', ['built/microbit.js', 'built/sim.js'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "mbitprj", 'node ../built/sim.js')
 })
 
-task('buildprj', ['tsm'], {async:true}, function() {
+file('built/microbit.js', ['built/tsm.js'], {async:true}, function() {
   let f = fs.readdirSync("mbitprj").filter(f => /\.ts$/.test(f)).join(" ")
   cmdIn(this, "mbitprj", 'node ../built/tsm.js ' + f)
 })
 
-task('tsm', ['tsmbit'], function () {
+file('built/tsm.js', ['built/tsmbit.js'], function () {
   catFiles([ "node_modules/typescript/lib/typescript.js",
              "built/tsmbit.js"], "built/tsm.js")
 })
 
-task('tsmbit', {async : true}, function () { tscIn(this, "src") })
-task('sim', {async: true}, function () { tscIn(this, "mbitsim") })
+file('built/tsmbit.js', expand("src"), {async : true}, function () { tscIn(this, "src") })
+file('built/sim.js', expand("mbitsim"), {async: true}, function () { tscIn(this, "mbitsim") })
 
