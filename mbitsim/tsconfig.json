@@ -2,10 +2,10 @@
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
-        "outDir": "../built",
+        "declaration": false,
+        "out": "../built/mbitsim.js",
         "rootDir": ".",
         "newLine": "LF",
-        "module": "commonjs",
         "sourceMap": true
     }
 }

@@ -18,6 +18,14 @@ jake
 * +=, -= etc
 * return values in lambdas
 
+## Yelm
+
+Yelm is a package manager for mbit. 
+
+### Name
+
+Yelm is a city in Washington state, with a name short enough for a command line tool.
+
 ## License
 
 MIT

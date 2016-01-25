@@ -25,7 +25,7 @@ namespace ts {
         sys.write(output);
     }
 
-    type StringMap<T> = ts.thumb.StringMap<T>;
+    export type StringMap<T> = ts.thumb.StringMap<T>;
 
     export interface MbitCompileOptions {
         fileSystem: StringMap<string>;

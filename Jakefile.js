@@ -28,8 +28,10 @@ function expand(dir) {
   else return [dir]
 }
 
-function catFiles(files, out) {
-  fs.writeFileSync(out, files.map(f => fs.readFileSync(f, "utf8")).join(""))
+function catFiles(out, files) {
+  file(out, files, function () {
+    fs.writeFileSync(out, files.map(f => fs.readFileSync(f, "utf8")).join(""))
+  })
 }
 
 function cmdIn(task, dir, cmd) {
@@ -41,14 +43,18 @@ function tscIn(task, dir) {
   cmdIn(task, dir, 'node ../node_modules/typescript/bin/tsc')
 }
 
+function compileDir(name) {
+  file('built/' + name + '.js', expand(name), {async : true}, function () { tscIn(this, name) })
+}
+
 task('default', ['runprj'])
 
 task('clean', function() {
   jake.rmRf("built")
 })
 
-task('runprj', ['built/microbit.js', 'built/sim.js'], {async:true, parallelLimit: 10}, function() {
-  cmdIn(this, "mbitprj", 'node ../built/sim.js')
+task('runprj', ['built/microbit.js', 'built/mbitsim.js'], {async:true, parallelLimit: 10}, function() {
+  cmdIn(this, "mbitprj", 'node ../built/mbitsim.js')
 })
 
 file('built/microbit.js', ['built/tsm.js'], {async:true}, function() {
@@ -56,11 +62,7 @@ file('built/microbit.js', ['built/tsm.js'], {async:true}, function() {
   cmdIn(this, "mbitprj", 'node ../built/tsm.js ' + f)
 })
 
-file('built/tsm.js', ['built/tsmbit.js'], function () {
-  catFiles([ "node_modules/typescript/lib/typescript.js",
-             "built/tsmbit.js"], "built/tsm.js")
-})
+catFiles('built/tsm.js', ["node_modules/typescript/lib/typescript.js", 'built/emitter.js'])
 
-file('built/tsmbit.js', expand("src"), {async : true}, function () { tscIn(this, "src") })
-file('built/sim.js', expand("mbitsim"), {async: true}, function () { tscIn(this, "mbitsim") })
-
+compileDir("emitter")
+compileDir("mbitsim")
