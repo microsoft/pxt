@@ -1,5 +1,13 @@
 # ARM Thumb / mbit emitter for TypeScript
 
+## Build
+
+```
+tsd reinstall
+npm install
+jake
+```
+
 ## TODO
 
 * image literals
