@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "declaration": false,
+        "out": "../built/cli.js",
+        "rootDir": ".",
+        "newLine": "LF",
+        "sourceMap": true
+    }
+}

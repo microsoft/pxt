@@ -1,46 +1,22 @@
 /// <reference path="emitter.ts"/>
 
-namespace ts {
+namespace ts.mbit {
+    export type StringMap<T> = thumb.StringMap<T>;
 
-    let reportDiagnostic = reportDiagnosticSimply;
-
-    function reportDiagnostics(diagnostics: Diagnostic[]): void {
-        for (const diagnostic of diagnostics) {
-            reportDiagnostic(diagnostic);
-        }
-    }
-
-    function reportDiagnosticSimply(diagnostic: Diagnostic): void {
-        let output = "";
-
-        if (diagnostic.file) {
-            const { line, character } = getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-            const relativeFileName = diagnostic.file.fileName;
-            output += `${relativeFileName}(${line + 1},${character + 1}): `;
-        }
-
-        const category = DiagnosticCategory[diagnostic.category].toLowerCase();
-        output += `${category} TS${diagnostic.code}: ${flattenDiagnosticMessageText(diagnostic.messageText, sys.newLine)}${sys.newLine}`;
-
-        sys.write(output);
-    }
-
-    export type StringMap<T> = ts.thumb.StringMap<T>;
-
-    export interface MbitCompileOptions {
+    export interface CompileOptions {
         fileSystem: StringMap<string>;
         sourceFiles?: string[];
         hexinfo: any;
     }
 
-    export interface MbitCompileResult {
+    export interface CompileResult {
         outfiles: StringMap<string>;
         diagnostics: Diagnostic[];
         success: boolean;
     }
 
-    export function compile(opts: MbitCompileOptions) {
-        let res: MbitCompileResult = {
+    export function compile(opts: CompileOptions) {
+        let res: CompileResult = {
             outfiles: {},
             diagnostics: [],
             success: false
@@ -99,34 +75,4 @@ namespace ts {
             res.success = true
         return res
     }
-
-    export function main() {
-        let fileNames = process.argv.slice(2)
-
-        let fs = require("fs")
-
-        let fileText: any = {}
-        fileNames.forEach(fn => {
-            fileText[fn] = fs.readFileSync(fn, "utf8")
-        })
-        
-        let hexinfo = require("../generated/hexinfo.js");
-
-        let res = compile({
-            fileSystem: fileText,
-            sourceFiles: fileNames,
-            hexinfo: hexinfo
-        })
-
-        Object.keys(res.outfiles).forEach(fn =>
-            fs.writeFileSync("../built/" + fn, res.outfiles[fn], "utf8"))
-        
-        reportDiagnostics(res.diagnostics);
-
-        return res.success ?
-            ExitStatus.Success :
-            ExitStatus.DiagnosticsPresent_OutputsSkipped
-    }
 }
-
-ts.main();

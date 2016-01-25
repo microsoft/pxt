@@ -1,8 +1,7 @@
 /// <reference path="../node_modules/typescript/lib/typescriptServices.d.ts"/>
-/// <reference path="../typings/node/node.d.ts"/>
 /// <reference path="thumb.ts"/>
 
-namespace ts {
+namespace ts.mbit {
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
             throw new Error(msg)
@@ -137,7 +136,7 @@ namespace ts {
         capturedVars: VarOrParam[];
     }
 
-    export function emitMBit(program: Program, host: CompilerHost, opts: MbitCompileOptions): EmitResult {
+    export function emitMBit(program: Program, host: CompilerHost, opts: CompileOptions): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: thumb.StringMap<ClassInfo> = {}

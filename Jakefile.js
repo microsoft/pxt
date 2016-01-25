@@ -20,7 +20,7 @@ function execCallback(task) {
 function expand(dir) {
   if (Array.isArray(dir)) {
     let r = []
-    dir.forEach(f => expand(dir).forEach(f => r.push(f)))
+    dir.forEach(f => expand(f).forEach(x => r.push(x)))
     return r
   }
   if (fs.existsSync(dir) && fs.statSync(dir).isDirectory())
@@ -43,8 +43,10 @@ function tscIn(task, dir) {
   cmdIn(task, dir, 'node ../node_modules/typescript/bin/tsc')
 }
 
-function compileDir(name) {
-  file('built/' + name + '.js', expand(name), {async : true}, function () { tscIn(this, name) })
+function compileDir(name, deps) {
+  if (!deps) deps = []
+  let dd = expand([name].concat(deps))
+  file('built/' + name + '.js', dd, {async : true}, function () { tscIn(this, name) })
 }
 
 task('default', ['runprj'])
@@ -57,12 +59,19 @@ task('runprj', ['built/microbit.js', 'built/mbitsim.js'], {async:true, parallelL
   cmdIn(this, "mbitprj", 'node ../built/mbitsim.js')
 })
 
-file('built/microbit.js', ['built/tsm.js'], {async:true}, function() {
+file('built/microbit.js', ['built/yelm.js'], {async:true}, function() {
   let f = fs.readdirSync("mbitprj").filter(f => /\.ts$/.test(f)).join(" ")
-  cmdIn(this, "mbitprj", 'node ../built/tsm.js ' + f)
+  cmdIn(this, "mbitprj", 'node ../built/yelm.js ' + f)
 })
 
-catFiles('built/tsm.js', ["node_modules/typescript/lib/typescript.js", 'built/emitter.js'])
+catFiles('built/yelm.js', [
+    "node_modules/typescript/lib/typescript.js", 
+    "built/emitter.js",
+    "built/yelmlib.js",
+    "built/cli.js"
+    ])
 
+compileDir("yelmlib", ["built/emitter.js"])
+compileDir("cli", ["built/yelmlib.js"])
 compileDir("emitter")
 compileDir("mbitsim")

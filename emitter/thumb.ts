@@ -1,7 +1,7 @@
 /// <reference path="emitter.ts"/>
 
 
-module ts.thumb {
+module ts.mbit.thumb {
     /* Docs:
      *
      * Thumb 16-bit Instruction Set Quick Reference Card
