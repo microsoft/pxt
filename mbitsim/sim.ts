@@ -637,7 +637,7 @@ namespace rt {
 
 
 function main() {
-    let f = fs.readFileSync("../mbitprj/microbit.js", "utf8")
+    let f = fs.readFileSync("../built/microbit.js", "utf8")
     let r = rt.mkRuntime(f)
     r.run(() => {
         console.log("DONE")

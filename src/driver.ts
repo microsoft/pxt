@@ -27,19 +27,20 @@ namespace ts {
 
     type StringMap<T> = ts.thumb.StringMap<T>;
 
-    export interface CompileOptions {
+    export interface MbitCompileOptions {
         fileSystem: StringMap<string>;
         sourceFiles?: string[];
+        hexinfo: any;
     }
 
-    export interface CompileResult {
+    export interface MbitCompileResult {
         outfiles: StringMap<string>;
         diagnostics: Diagnostic[];
         success: boolean;
     }
 
-    export function compile(opts: CompileOptions) {
-        let res: CompileResult = {
+    export function compile(opts: MbitCompileOptions) {
+        let res: MbitCompileResult = {
             outfiles: {},
             diagnostics: [],
             success: false
@@ -90,7 +91,7 @@ namespace ts {
         }
 
         if (res.diagnostics.length == 0) {
-            const mbitOutput = emitMBit(program, host);
+            const mbitOutput = emitMBit(program, host, opts);
             res.diagnostics = mbitOutput.diagnostics
         }
 
@@ -108,14 +109,17 @@ namespace ts {
         fileNames.forEach(fn => {
             fileText[fn] = fs.readFileSync(fn, "utf8")
         })
+        
+        let hexinfo = require("../generated/hexinfo.js");
 
         let res = compile({
             fileSystem: fileText,
-            sourceFiles: fileNames
+            sourceFiles: fileNames,
+            hexinfo: hexinfo
         })
 
         Object.keys(res.outfiles).forEach(fn =>
-            fs.writeFileSync(fn, res.outfiles[fn], "utf8"))
+            fs.writeFileSync("../built/" + fn, res.outfiles[fn], "utf8"))
         
         reportDiagnostics(res.diagnostics);
 

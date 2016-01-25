@@ -137,12 +137,12 @@ namespace ts {
         capturedVars: VarOrParam[];
     }
 
-    export function emitMBit(program: Program, host: CompilerHost): EmitResult {
+    export function emitMBit(program: Program, host: CompilerHost, opts: MbitCompileOptions): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: thumb.StringMap<ClassInfo> = {}
 
-        mbit.staticBytecodeInfo = require("./hexinfo.js");
+        mbit.staticBytecodeInfo = opts.hexinfo;
         mbit.setup();
 
         let bin: mbit.Binary;
