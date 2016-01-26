@@ -1,6 +1,9 @@
-namespace ts.mbit {
-    export type StringMap<T> = thumb.StringMap<T>;
+/// <reference path="../node_modules/typescript/lib/typescriptServices.d.ts"/>
+/// <reference path="util.ts"/>
+/// <reference path="thumb.ts"/>
+/// <reference path="emitter.ts"/>
 
+namespace ts.mbit {
     export interface CompileOptions {
         fileSystem: StringMap<string>;
         sourceFiles?: string[];

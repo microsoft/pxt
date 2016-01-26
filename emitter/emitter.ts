@@ -1,16 +1,10 @@
-/// <reference path="../node_modules/typescript/lib/typescriptServices.d.ts"/>
-/// <reference path="thumb.ts"/>
+namespace ts {
+    export var assert = Util.assert;
+    export var oops = Util.oops;      
+    export type StringMap<T> = Util.StringMap<T>;
+}
 
 namespace ts.mbit {
-    export function assert(cond: boolean, msg = "Assertion failed") {
-        if (!cond) {
-            throw new Error(msg)
-        }
-    }
-    
-    export function oops(msg = "OOPS") {
-        throw new Error(msg)
-    }
 
     function stringKind(n: Node) {
         if (!n) return "<null>"
@@ -124,7 +118,6 @@ namespace ts.mbit {
         return checkType(r)
     }
 
-    type StringMap<T> = thumb.StringMap<T>;
     type VarOrParam = VariableDeclaration | ParameterDeclaration;
 
     interface VariableInfo {
@@ -139,7 +132,7 @@ namespace ts.mbit {
     export function emitMBit(program: Program, host: CompilerHost, opts: CompileOptions): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
-        let classInfos: thumb.StringMap<ClassInfo> = {}
+        let classInfos: StringMap<ClassInfo> = {}
 
         mbit.staticBytecodeInfo = opts.hexinfo;
         mbit.setup();
@@ -1348,8 +1341,6 @@ namespace ts.mbit {
     }
 
     module mbit {
-        type StringMap<T> = thumb.StringMap<T>;
-
         export interface FuncInfo {
             name: string;
             type: string;

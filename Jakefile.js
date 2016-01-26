@@ -30,7 +30,9 @@ function expand(dir) {
 
 function catFiles(out, files) {
   file(out, files, function () {
-    fs.writeFileSync(out, files.map(f => fs.readFileSync(f, "utf8")).join(""))
+      let cont = files.map(f => fs.readFileSync(f, "utf8").replace(/\r/g, ""))
+      cont.unshift('"use strict";')
+    fs.writeFileSync(out, cont.join("\n"))
   })
 }
 
@@ -52,7 +54,14 @@ function compileDir(name, deps) {
 task('default', ['runprj'])
 
 task('clean', function() {
-  jake.rmRf("built")
+  // jake.rmRf("built") - doesn't work?
+  expand("built").forEach(f => {
+      try {
+      fs.unlinkSync(f)
+      } catch (e) {
+          console.log("cannot unlink:", f, e.message)
+      }
+  })
 })
 
 task('runprj', ['built/microbit.js', 'built/mbitsim.js'], {async:true, parallelLimit: 10}, function() {
@@ -61,15 +70,18 @@ task('runprj', ['built/microbit.js', 'built/mbitsim.js'], {async:true, parallelL
 
 file('built/microbit.js', ['built/yelm.js'], {async:true}, function() {
   let f = fs.readdirSync("mbitprj").filter(f => /\.ts$/.test(f)).join(" ")
-  cmdIn(this, "mbitprj", 'node ../built/yelm.js ' + f)
+  cmdIn(this, "mbitprj", 'node ../built/yelm.js compile ' + f)
 })
 
 catFiles('built/yelm.js', [
     "node_modules/typescript/lib/typescript.js", 
     "built/emitter.js",
     "built/yelmlib.js",
+    "built/nodeutil.js",
     "built/cli.js"
     ])
+
+file('built/nodeutil.js', ['built/cli.js'])
 
 compileDir("yelmlib", ["built/emitter.js"])
 compileDir("cli", ["built/yelmlib.js"])

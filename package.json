@@ -11,6 +11,7 @@
   "license": "MIT",
   "homepage": "https://github.com/Microsoft/tsmbit#readme",
   "dependencies": {
+    "bluebird": "^3.1.4",
     "typescript": "^1.8.0-dev.20160124"
   }
 }

@@ -3,7 +3,8 @@
         "target": "es5",
         "noImplicitAny": true,
         "declaration": false,
-        "out": "../built/cli.js",
+        "outDir": "../built",
+        "module": "commonjs",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": true

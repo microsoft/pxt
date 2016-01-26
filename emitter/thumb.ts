@@ -22,11 +22,7 @@ module ts.mbit.thumb {
         coremsg: string;
         hints: string;
     }
-
-    export interface StringMap<T> {
-        [index: string]: T;
-    }
-
+    
     interface EmitResult {
         stack: number;
         opcode: number;
