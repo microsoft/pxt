@@ -18,6 +18,15 @@ namespace Util {
         if (v == null) return null
         return JSON.parse(JSON.stringify(v))
     }
+    
+    export function iterStringMap<T>(m:StringMap<T>, f:(k:string, v:T)=>void) {
+        Object.keys(m).forEach(k => f(k, m[k]))
+    }
+    
+    export function mapStringMap<T,S>(m:StringMap<T>, f:(k:string, v:T)=>S) {
+        let r:StringMap<S> = {}
+        Object.keys(m).forEach(k => r[k] = f(k, m[k]))
+    }
 
     export var isNodeJS = false;
 
