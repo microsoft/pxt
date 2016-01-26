@@ -26,15 +26,6 @@ namespace yelm {
 
         host() { return this.parent._host }
 
-        readConfigAsync() {
-            if (this.config) return Promise.resolve();
-
-        }
-
-        refetchAsync() {
-
-        }
-
         resolveDep(id: string) {
             if (this.parent.deps.hasOwnProperty(id))
                 return this.parent.deps[id];
@@ -128,17 +119,15 @@ namespace yelm {
         installAsync() {
             return this.loadAsync(true)
         }
+        
+        buildAsync() {
+            
+        }
+        
+        publishAsync() {
+            
+        }
     }
 
     var pkgPrefix = "ptr-yelm-"
-
-    export function buildPkgAsync(pkgs: Util.StringMap<Package>) {
-        pkgs["this"]
-    }
-
-
-
-    export function publishPackage(cfg: PackageConfig) {
-
-    }
 }
