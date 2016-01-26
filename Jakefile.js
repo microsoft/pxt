@@ -87,3 +87,12 @@ compileDir("yelmlib", ["built/emitter.js"])
 compileDir("cli", ["built/yelmlib.js"])
 compileDir("emitter")
 compileDir("mbitsim")
+
+task('update', {async:true}, function() {
+  jake.exec([
+        "git pull",
+        "npm install",
+        "tsd reinstall"
+  ], {printStdout: true});
+})
+
