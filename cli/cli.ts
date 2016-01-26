@@ -88,6 +88,10 @@ namespace yelm {
                 console.log(resp.json)
             })
     }
+    
+    function cmdBuild() {
+        
+    }
 
     function cmdCompile() {
         let fileText: any = {}
