@@ -2,6 +2,7 @@
 /// <reference path="util.ts"/>
 /// <reference path="thumb.ts"/>
 /// <reference path="emitter.ts"/>
+/// <reference path="typescriptInternal.d.ts"/>
 
 namespace ts.mbit {
     export interface CompileOptions {

@@ -1,5 +1,5 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
-/// <reference path="../built/emitter.d.ts"/>
+/// <reference path="../emitter/driver.ts"/>
 
 namespace yelm {
     export interface Host {
@@ -17,11 +17,13 @@ namespace yelm {
 
     export class Package {
         public config: PackageConfig;
-        public isTopDep = false;
+        public level = -1;
+        public isLoaded = false;
 
         constructor(public id: string, public verspec: string, public parent: MainPackage) {
-            if (parent)
-                this.host
+            if (parent) {
+                this.level = this.parent.level + 1
+            }
         }
 
         host() { return this.parent._host }
@@ -73,6 +75,8 @@ namespace yelm {
         }
 
         loadAsync(isInstall: boolean = false): Promise<void> {
+            if (this.isLoaded) return Promise.resolve();
+            this.isLoaded = true
             return this.host().readFileAsync(this.id, "yelm.config")
                 .then(str => {
                     if (str == null) {
@@ -91,13 +95,10 @@ namespace yelm {
                         if (mod) {
                             if (mod.verspec != ver)
                                 throw new Error("Version spec mismatch on " + id)
-                            if (<Package>this.parent == this)
-                                mod.isTopDep = true;
+                            mod.level = Math.min(mod.level, this.level + 1)
                             return Promise.resolve()
                         } else {
                             mod = new Package(id, ver, this.parent)
-                            if (<Package>this.parent == this)
-                                mod.isTopDep = true;
                             this.parent.deps[id] = mod
                             return mod.loadAsync(isInstall)
                         }
@@ -114,18 +115,53 @@ namespace yelm {
         constructor(public _host: Host) {
             super("this", "*", null)
             this.parent = this
+            this.deps[this.id] = this;
         }
 
         installAsync() {
             return this.loadAsync(true)
         }
-        
-        buildAsync() {
-            
+
+        sortedDeps() {
+            let ids: string[] = []
+            let rec = (p: Package) => {
+                if (ids.indexOf(p.id) >= 0) return;
+                ids.push(p.id)
+                Object.keys(p.config.dependencies).forEach(id => rec(this.resolveDep(id)))
+            }
+            return ids.map(id => this.resolveDep(id))
         }
-        
+
+        buildAsync() {
+            let opts: ts.mbit.CompileOptions = {
+                sourceFiles: [],
+                fileSystem: {},
+                hexinfo: {}
+            }
+
+            return this.loadAsync()
+                .then(() => Promise.join(Util.concat(this.sortedDeps()
+                    .map(pkg =>
+                        pkg.config.files.map(f => {
+                            if (/\.ts$/.test(f)) {
+                                let sn = f
+                                if (pkg.level > 0)
+                                    sn = "modules/" + pkg.id + "/" + f
+                                opts.sourceFiles.push(sn)
+                                return this.host().readFileAsync(pkg.id, f)
+                                    .then(str => {
+                                        opts.fileSystem[sn] = str
+                                    })
+                            } else return Promise.resolve()
+                        }))))
+                    .then(() => {
+                        return ts.mbit.compile(opts)
+                    })
+                )
+        }
+
         publishAsync() {
-            
+
         }
     }
 

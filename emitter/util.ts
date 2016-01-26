@@ -18,14 +18,33 @@ namespace Util {
         if (v == null) return null
         return JSON.parse(JSON.stringify(v))
     }
-    
-    export function iterStringMap<T>(m:StringMap<T>, f:(k:string, v:T)=>void) {
+
+    export function iterStringMap<T>(m: StringMap<T>, f: (k: string, v: T) => void) {
         Object.keys(m).forEach(k => f(k, m[k]))
     }
-    
-    export function mapStringMap<T,S>(m:StringMap<T>, f:(k:string, v:T)=>S) {
-        let r:StringMap<S> = {}
+
+    export function mapStringMap<T, S>(m: StringMap<T>, f: (k: string, v: T) => S) {
+        let r: StringMap<S> = {}
         Object.keys(m).forEach(k => r[k] = f(k, m[k]))
+    }
+
+    export function pushRange<T>(trg: T[], src: T[]) {
+        for (let i = 0; i < src.length; ++i)
+            trg.push(src[i])
+    }
+
+    export function concat<T>(arrays: T[][]): T[] {
+        let r: T[] = []
+        for (let i = 0; i < arrays.length; ++i) {
+            pushRange(r, arrays[i])
+        }
+        return r
+    }
+
+    export function strcmp(a: string, b: string) {
+        if (a == b) return 0;
+        if (a < b) return -1;
+        else return 1;
     }
 
     export var isNodeJS = false;
@@ -56,15 +75,15 @@ namespace Util {
                 return resp
             })
     }
-    
-    export function httpGetJsonAsync(url:string) {
+
+    export function httpGetJsonAsync(url: string) {
         return requestAsync({ url: url }).then(resp => resp.json)
     }
-    
-    export function httpPostJsonAsync(url:string, data: any) {
+
+    export function httpPostJsonAsync(url: string, data: any) {
         return requestAsync({ url: url, data: data || {} }).then(resp => resp.json)
     }
-    
+
     // TODO add web implementations below    
     export var httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;
 }
@@ -72,23 +91,23 @@ namespace Util {
 namespace Cloud {
     export var apiRoot = "https://www.touchdevelop.com/api/";
     export var accessToken = "";
-    
-    export function privateRequestAsync(options:Util.HttpRequestOptions) {
+
+    export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url
         if (!options.headers) options.headers = {}
         options.headers["x-td-access-token"] = accessToken
         return Util.requestAsync(options)
     }
-    
-    export function privateGetAsync(path:string) {
+
+    export function privateGetAsync(path: string) {
         return privateRequestAsync({ url: path }).then(resp => resp.json)
     }
-    
-    export function privateDeleteAsync(path:string) {
+
+    export function privateDeleteAsync(path: string) {
         return privateRequestAsync({ url: path, method: "DELETE" }).then(resp => resp.json)
     }
-    
-    export function privatePostAsync(path:string, data: any) {
+
+    export function privatePostAsync(path: string, data: any) {
         return privateRequestAsync({ url: path, data: data || {} }).then(resp => resp.json)
-    }    
+    }
 }

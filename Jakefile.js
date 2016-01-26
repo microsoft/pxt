@@ -75,7 +75,6 @@ file('built/microbit.js', ['built/yelm.js'], {async:true}, function() {
 
 catFiles('built/yelm.js', [
     "node_modules/typescript/lib/typescript.js", 
-    "built/emitter.js",
     "built/yelmlib.js",
     "built/nodeutil.js",
     "built/cli.js"
@@ -83,9 +82,8 @@ catFiles('built/yelm.js', [
 
 file('built/nodeutil.js', ['built/cli.js'])
 
-compileDir("yelmlib", ["built/emitter.js"])
+compileDir("yelmlib", ["emitter"])
 compileDir("cli", ["built/yelmlib.js"])
-compileDir("emitter")
 compileDir("mbitsim")
 
 task('update', {async:true}, function() {
