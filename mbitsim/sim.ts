@@ -1,6 +1,7 @@
+/// <reference path="../typings/node/node.d.ts"/>
+
 "use strict";
 
-declare var require: any;
 let fs = require("fs");
 
 
@@ -637,7 +638,7 @@ namespace rt {
 
 
 function main() {
-    let f = fs.readFileSync("../built/microbit.js", "utf8")
+    let f = fs.readFileSync(process.argv[2], "utf8")
     let r = rt.mkRuntime(f)
     r.run(() => {
         console.log("DONE")

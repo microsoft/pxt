@@ -64,13 +64,12 @@ task('clean', function() {
   })
 })
 
-task('runprj', ['built/microbit.js', 'built/mbitsim.js'], {async:true, parallelLimit: 10}, function() {
-  cmdIn(this, "mbitprj", 'node ../built/mbitsim.js')
+task('runprj', ['built/mbitsim.js', 'libs/hello/built/microbit.js'], {async:true, parallelLimit: 10}, function() {
+  cmdIn(this, ".", 'node ' + this.prereqs.join(" "))
 })
 
-file('built/microbit.js', ['built/yelm.js'], {async:true}, function() {
-  let f = fs.readdirSync("mbitprj").filter(f => /\.ts$/.test(f)).join(" ")
-  cmdIn(this, "mbitprj", 'node ../built/yelm.js compile ' + f)
+file('libs/hello/built/microbit.js', ['built/yelm.js'], {async:true}, function() {
+  cmdIn(this, "libs/hello", 'node ../../built/yelm.js build')
 })
 
 catFiles('built/yelm.js', [

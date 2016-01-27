@@ -5,6 +5,7 @@ namespace yelm {
     export interface Host {
         readFileAsync(module: string, filename: string): Promise<string>;
         writeFileAsync(module: string, filename: string, contents: string): Promise<void>;
+        hasLocalPackage(name:string): boolean;
         getHexInfoAsync(): Promise<any>;
     }
 
@@ -59,6 +60,11 @@ namespace yelm {
         private downloadAsync() {
             if (this.id == "this")
                 return Promise.resolve()
+            
+            if (this.host().hasLocalPackage(this.id)) {
+                info(`skipping download of local package ${this.id}`)
+                return Promise.resolve()
+            }
 
             let verNo = ""
             let yelmCfg = ""
@@ -221,7 +227,7 @@ namespace yelm {
                     info("package initialized")
                 })
         }
-
+        
         publishAsync() {
             let files: Util.StringMap<string> = {};
             let text: string;
@@ -299,7 +305,7 @@ namespace yelm {
     }
 
     var pkgPrefix = "ptr-yelm-"
-    var configName = "yelm.json"
+    export var configName = "yelm.json"
     var info = function info(msg: string) {
         console.log(msg)
     }

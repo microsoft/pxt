@@ -120,7 +120,12 @@ let writeFileAsync: any = Promise.promisify(fs.writeFile)
 class Host
     implements yelm.Host {
     resolve(module: string, filename: string) {
-        return module == "this" ? "./" + filename : "yelm_modules/" + module + "/" + filename
+        if (module == "this")
+            return "./" + filename
+        else if (this.hasLocalPackage(module))
+            return "../" + module + "/" + filename
+        else
+            return "yelm_modules/" + module + "/" + filename
     }
 
     readFileAsync(module: string, filename: string): Promise<string> {
@@ -147,6 +152,22 @@ class Host
 
     getHexInfoAsync() {
         return Promise.resolve(require(__dirname + "/../generated/hexinfo.js"))
+    }
+
+    localPkgs: Util.StringMap<number> = null;
+
+    hasLocalPackage(name: string) {
+        if (!this.localPkgs) {
+            this.localPkgs = {}
+            let files = fs.readdirSync("..")
+            if (files.indexOf("yelmlocal.json") >= 0) {
+                files.forEach(f => {
+                    if (fs.existsSync("../" + f + "/" + yelm.configName))
+                        this.localPkgs[f] = 1;
+                })
+            }
+        }
+        return this.localPkgs.hasOwnProperty(name)
     }
 }
 
