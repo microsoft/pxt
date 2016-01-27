@@ -5,6 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as child_process from 'child_process';
 
 Promise = require("bluebird");
 
@@ -116,6 +117,21 @@ function cmdCompile() {
 
 let readFileAsync: any = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
+let execAsync = Promise.promisify(child_process.exec)
+
+function getBitDrivesAsync(): Promise<string[]> {
+    if (process.platform == "win32")
+        return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem")
+            .then(buf => {
+                let res: string[] = []
+                buf.toString("utf8").split(/\n/).forEach(ln => {
+                    let m = /^([A-Z]:).* MICROBIT/.exec(ln)
+                    if (m) res.push(m[1] + "/")
+                })
+                return res
+            })
+    else return Promise.resolve([])
+}
 
 class Host
     implements yelm.Host {
@@ -190,13 +206,29 @@ function cmdPublish() {
     mainPkg.publishAsync().done()
 }
 
-function cmdBuild() {
+function cmdDeploy() {
+    cmdBuild(true)
+}
+
+function cmdBuild(deploy = false) {
     ensurePkgDir();
     mainPkg.buildAsync()
-        .then(res => {
-            return Util.mapStringMapAsync(res.outfiles, (fn, c) =>
-                mainPkg.host().writeFileAsync("this", "built/" + fn, c))
-        })
+        .then(res => Util.mapStringMapAsync(res.outfiles, (fn, c) =>
+            mainPkg.host().writeFileAsync("this", "built/" + fn, c))
+            .then(() => deploy ? getBitDrivesAsync() : null)
+            .then(drives => {
+                if (!drives) return
+                if (drives.length == 0)
+                    console.log("cannot find any drives to deploy to")
+                else
+                    console.log("copy microbit.hex to " + drives.join(", "))
+                Promise.map(drives, d =>
+                    writeFileAsync(d + "microbit.hex", res.outfiles["microbit.hex"])
+                        .then(() => {
+                            console.log("wrote hex file to " + d)
+                        }))
+            })
+        )
         .done()
 }
 
@@ -213,6 +245,7 @@ let cmds: Command[] = [
     { n: "install", f: cmdInstall, a: "[PACKAGE...]", d: "install new packages, or all packages" },
     { n: "publish", f: cmdPublish, a: "", d: "publish current package" },
     { n: "build", f: cmdBuild, a: "", d: "build current package" },
+    { n: "deploy", f: cmdDeploy, a: "", d: "build and deploy current package" },
     { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call" },
     { n: "compile", f: cmdCompile, a: "FILE...", d: "hex-compile given set of files" },
 ]
@@ -230,13 +263,13 @@ function usage() {
 }
 
 function goToPkgDir() {
-    let goUp = (s:string):string => {
+    let goUp = (s: string): string => {
         if (fs.existsSync(s + "/" + yelm.configName))
             return s
         let s2 = path.resolve(path.join(s, ".."))
         if (s != s2)
             return goUp(s2)
-        return null 
+        return null
     }
     let dir = goUp(process.cwd())
     if (!dir) {
@@ -251,7 +284,7 @@ function goToPkgDir() {
 }
 
 function ensurePkgDir() {
-    goToPkgDir(); 
+    goToPkgDir();
 }
 
 export function main() {
