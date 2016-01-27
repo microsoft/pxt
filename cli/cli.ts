@@ -174,6 +174,7 @@ class Host
 let mainPkg = new yelm.MainPackage(new Host())
 
 function cmdInstall() {
+    ensurePkgDir();
     if (cmdArgs[0])
         Promise.mapSeries(cmdArgs, n => mainPkg.installPkgAsync(n)).done()
     else
@@ -185,10 +186,12 @@ function cmdInit() {
 }
 
 function cmdPublish() {
+    ensurePkgDir();
     mainPkg.publishAsync().done()
 }
 
 function cmdBuild() {
+    ensurePkgDir();
     mainPkg.buildAsync()
         .then(res => {
             return Util.mapStringMapAsync(res.outfiles, (fn, c) =>
@@ -224,6 +227,31 @@ function usage() {
         console.log(f(cmd.n, 10) + f(cmd.a, 20) + cmd.d);
     })
     process.exit(1)
+}
+
+function goToPkgDir() {
+    let goUp = (s:string):string => {
+        if (fs.existsSync(s + "/" + yelm.configName))
+            return s
+        let s2 = path.resolve(path.join(s, ".."))
+        if (s != s2)
+            return goUp(s2)
+        return null 
+    }
+    let dir = goUp(process.cwd())
+    if (!dir) {
+        console.error(`Cannot find ${yelm.configName} in any of the parent directories.`)
+        process.exit(1)
+    } else {
+        if (dir != process.cwd()) {
+            console.log(`Going up to ${dir} which has ${yelm.configName}`)
+            process.chdir(dir)
+        }
+    }
+}
+
+function ensurePkgDir() {
+    goToPkgDir(); 
 }
 
 export function main() {
