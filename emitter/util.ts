@@ -33,7 +33,7 @@ namespace Util {
         return Promise.all(Object.keys(m).map(k => f(k, m[k]).then(v => r[k] = v)))
             .then(() => r)
     }
-    
+
 
     export function pushRange<T>(trg: T[], src: T[]) {
         for (let i = 0; i < src.length; ++i)
@@ -99,6 +99,11 @@ namespace Util {
         return requestAsync({ url: url, data: data || {} }).then(resp => resp.json)
     }
 
+    export function userError(msg: string) {
+        let e = new Error(msg);
+        (<any>e).isUserError = true;
+        throw e
+    }
 
     // TODO add web implementations below    
     export var httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;

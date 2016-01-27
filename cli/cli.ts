@@ -198,7 +198,9 @@ function cmdInstall() {
 }
 
 function cmdInit() {
-    mainPkg.initAsync(cmdArgs[0] || "").done()
+    mainPkg.initAsync(cmdArgs[0] || "")
+        .then(() => mainPkg.installAllAsync())
+        .done()
 }
 
 function cmdPublish() {
@@ -237,6 +239,7 @@ interface Command {
     f: () => void;
     a: string;
     d: string;
+    o?: number;
 }
 
 let cmds: Command[] = [
@@ -246,18 +249,26 @@ let cmds: Command[] = [
     { n: "publish", f: cmdPublish, a: "", d: "publish current package" },
     { n: "build", f: cmdBuild, a: "", d: "build current package" },
     { n: "deploy", f: cmdDeploy, a: "", d: "build and deploy current package" },
-    { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call" },
-    { n: "compile", f: cmdCompile, a: "FILE...", d: "hex-compile given set of files" },
+    { n: "help", f: usage, a: "", d: "display this message" },
+
+    { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call", o: 1 },
+    { n: "compile", f: cmdCompile, a: "FILE...", d: "hex-compile given set of files", o: 1 },
 ]
 
 function usage() {
-    console.log("USAGE: yelm command args...")
     let f = (s: string, n: number) => {
         while (s.length < n) s += " "
         return s
     }
+    let showAll = cmdArgs[0] == "all"
+    console.log("USAGE: yelm command args...")
+    if (showAll)
+        console.log("All commands:")
+    else
+        console.log("Common commands (use 'yelm help all' to show all):")
     cmds.forEach(cmd => {
-        console.log(f(cmd.n, 10) + f(cmd.a, 20) + cmd.d);
+        if (showAll || !cmd.o)
+            console.log(f(cmd.n, 10) + f(cmd.a, 20) + cmd.d);
     })
     process.exit(1)
 }
@@ -287,15 +298,35 @@ function ensurePkgDir() {
     goToPkgDir();
 }
 
+function errorHandler(reason: any) {
+    if (reason.isUserError) {
+        console.error("ERROR:", reason.message)
+        process.exit(1)
+    }
+
+    let msg = reason.stack || reason.message || (reason + "")
+    console.error("INTERNAL ERROR:", msg)
+    process.exit(20)
+}
+
 export function main() {
+    // no, please, I want to handle my errors myself
+    let async = (<any>Promise)._async
+    async.fatalError = (e:any) => async.throwLater(e);    
+    process.on("unhandledRejection", errorHandler);    
+    process.on('uncaughtException', errorHandler);
+
     let args = process.argv.slice(2)
     cmdArgs = args.slice(1)
 
     initConfig();
 
     let cmd = args[0]
-    if (!cmd)
-        usage()
+    if (!cmd) {
+        console.log("running 'yelm deploy' (run 'yelm help' for usage)")
+        cmd = "deploy"
+    }
+
     let cc = cmds.filter(c => c.n == cmd)[0]
     if (!cc) usage()
     cc.f()

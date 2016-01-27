@@ -5,7 +5,7 @@ namespace yelm {
     export interface Host {
         readFileAsync(module: string, filename: string): Promise<string>;
         writeFileAsync(module: string, filename: string, contents: string): Promise<void>;
-        hasLocalPackage(name:string): boolean;
+        hasLocalPackage(name: string): boolean;
         getHexInfoAsync(): Promise<any>;
     }
 
@@ -40,7 +40,7 @@ namespace yelm {
             let cfg = JSON.stringify(this.config, null, 4) + "\n"
             return this.host().writeFileAsync(this.id, configName, cfg)
         }
-        
+
         private resolveVersionAsync() {
             let v = this.verspec
 
@@ -48,19 +48,19 @@ namespace yelm {
                 return Cloud.privateGetAsync(pkgPrefix + this.id).then(r => {
                     let id = r["scriptid"]
                     if (!id)
-                        throw new Error("scriptid no set on ptr for pkg " + this.id)
+                        Util.userError("scriptid no set on ptr for pkg " + this.id)
                     return id;
                 })
             if (/^[a-z]+$/.test(v)) {
                 return Promise.resolve(v)
             }
-            throw new Error("bad version spec: " + this.id)
+            Util.userError("bad version spec: " + this.id)
         }
 
         private downloadAsync() {
             if (this.id == "this")
                 return Promise.resolve()
-            
+
             if (this.host().hasLocalPackage(this.id)) {
                 info(`skipping download of local package ${this.id}`)
                 return Promise.resolve()
@@ -91,11 +91,11 @@ namespace yelm {
 
         validateConfig() {
             if (!this.config.dependencies)
-                throw new Error("Missing dependencies in config of: " + this.id)
+                Util.userError("Missing dependencies in config of: " + this.id)
             if (!Array.isArray(this.config.files))
-                throw new Error("Missing files in config of: " + this.id)
+                Util.userError("Missing files in config of: " + this.id)
             if (typeof this.config.name != "string" || !/^[a-z][a-z0-9\-]+$/.test(this.config.name))
-                throw new Error("Invalid package name: " + this.config.name)
+                Util.userError("Invalid package name: " + this.config.name)
         }
 
         private parseConfig(str: string) {
@@ -111,7 +111,7 @@ namespace yelm {
                 .then(str => {
                     if (str == null) {
                         if (!isInstall)
-                            throw new Error("Package not installed: " + this.id)
+                            Util.userError("Package not installed: " + this.id)
                     } else {
                         this.parseConfig(str)
                     }
@@ -124,7 +124,7 @@ namespace yelm {
                         ver = ver || "*"
                         if (mod) {
                             if (mod.verspec != ver)
-                                throw new Error("Version spec mismatch on " + id)
+                                Util.userError("Version spec mismatch on " + id)
                             mod.level = Math.min(mod.level, this.level + 1)
                             return Promise.resolve()
                         } else {
@@ -207,7 +207,7 @@ namespace yelm {
             return this.host().readFileAsync(this.id, configName)
                 .then(str => {
                     if (str)
-                        throw new Error("config already present")
+                        Util.userError("config already present")
 
                     this.config = {
                         name: name,
@@ -227,7 +227,7 @@ namespace yelm {
                     info("package initialized")
                 })
         }
-        
+
         publishAsync() {
             let files: Util.StringMap<string> = {};
             let text: string;
@@ -244,7 +244,7 @@ namespace yelm {
                         this.host().readFileAsync(this.id, f)
                             .then(str => {
                                 if (str == null)
-                                    throw new Error("referenced file missing: " + f)
+                                    Util.userError("referenced file missing: " + f)
                                 files[f] = str
                             }))))
                 .then(() => {
