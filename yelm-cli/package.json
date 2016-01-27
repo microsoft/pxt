@@ -1,6 +1,6 @@
 {
   "name": "yelm-cli",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "TypeScript to mbit comiler - command line interface",
   "keywords": [
       "TypeScript",

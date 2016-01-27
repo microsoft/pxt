@@ -76,7 +76,11 @@ function cmdLogin() {
         globalConfig.accessToken = cmdArgs[0]
         saveConfig()
     } else {
-        fatal("Usage: yelm login https://.../?access_token=...\nGo to https://www.touchdevelop.com/oauth/gettoken to obtain the token.")
+        let root = Cloud.apiRoot.replace(/api\/$/, "")
+        console.log("USAGE:")
+        console.log(`  yelm login https://example.com/?access_token=...`)
+        console.log(`Go to ${root}oauth/gettoken to obtain the token.`)
+        fatal("Bad usage")
     }
 }
 
@@ -312,8 +316,8 @@ function errorHandler(reason: any) {
 export function main() {
     // no, please, I want to handle my errors myself
     let async = (<any>Promise)._async
-    async.fatalError = (e:any) => async.throwLater(e);    
-    process.on("unhandledRejection", errorHandler);    
+    async.fatalError = (e: any) => async.throwLater(e);
+    process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
     let args = process.argv.slice(2)

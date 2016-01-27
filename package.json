@@ -1,6 +1,6 @@
 {
     "name": "yelm",
-    "version": "0.0.12",
+    "version": "0.0.16",
     "description": "TypeScript to mbit comiler",
     "keywords": [
         "TypeScript",
@@ -17,7 +17,8 @@
         "README.md",
         "built/yelm.js",
         "built/yelmlib.js",
-        "built/yelmlib.d.ts"
+        "built/yelmlib.d.ts",
+        "generated/hexinfo.js"
     ],
     "preferGlobal": true,
     "dependencies": {

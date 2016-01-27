@@ -112,13 +112,15 @@ namespace Util {
 }
 
 namespace Cloud {
-    export var apiRoot = "https://www.touchdevelop.com/api/";
+    export var apiRoot = "https://mbit.touchdevelop.com/api/";
     export var accessToken = "";
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url
-        if (!options.headers) options.headers = {}
-        options.headers["x-td-access-token"] = accessToken
+        if (accessToken) {
+            if (!options.headers) options.headers = {}
+            options.headers["x-td-access-token"] = accessToken
+        }
         return Util.requestAsync(options)
     }
 
