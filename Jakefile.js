@@ -7,8 +7,8 @@ var util = require("util");
 // for use with child_process.exec/execFile
 function execCallback(task) {
   return function (error, stdout, stderr) {
-    if (stdout) console.log(stdout.toString());
-    if (stderr) console.error(stderr.toString());
+    if (stdout) console.log(stdout.toString().replace(/\n$/, ""));
+    if (stderr) console.error(stderr.toString().replace(/\n$/, ""));
     if (error) {
       console.error(error);
       task.fail(error);
@@ -55,21 +55,21 @@ task('default', ['runprj'])
 
 task('clean', function() {
   // jake.rmRf("built") - doesn't work?
-  expand("built").forEach(f => {
+  expand("built", "libs/lang-test0/built").forEach(f => {
       try {
-      fs.unlinkSync(f)
+        fs.unlinkSync(f)
       } catch (e) {
           console.log("cannot unlink:", f, e.message)
       }
   })
 })
 
-task('runprj', ['built/mbitsim.js', 'libs/hello/built/microbit.js'], {async:true, parallelLimit: 10}, function() {
+task('runprj', ['built/mbitsim.js', 'libs/lang-test0/built/microbit.js'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, ".", 'node ' + this.prereqs.join(" "))
 })
 
-file('libs/hello/built/microbit.js', ['built/yelm.js'], {async:true}, function() {
-  cmdIn(this, "libs/hello", 'node ../../built/yelm.js build')
+file('libs/lang-test0/built/microbit.js', ['built/yelm.js'], {async:true}, function() {
+  cmdIn(this, "libs/lang-test0", 'node ../../built/yelm.js build')
 })
 
 catFiles('built/yelm.js', [

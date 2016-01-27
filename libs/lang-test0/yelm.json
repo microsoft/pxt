@@ -1,10 +1,10 @@
 {
-    "name": "hello",
-    "description": "",
+    "name": "lang-test0",
+    "description": "Test for the TypeScript -> HEX compiler",
     "installedVersion": "",
     "files": [
         "README.md",
-        "hello.ts"
+        "lang-test0.ts"
     ],
     "dependencies": {
         "mbit": "*"
