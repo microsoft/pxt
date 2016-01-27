@@ -21,9 +21,11 @@ function findYelmJs() {
 function selfInstall() {
     if (!fs.existsSync("node_modules"))
         fs.mkdirSync("node_modules")
+    console.log("Installing yelm locally; don't worry about package.json warnings.")
     child_process.execSync("npm install yelm", {
         stdio: "inherit"
     })
+    console.log("Installed yelm.")
 }
 
 function main() {

@@ -85,7 +85,17 @@ compileDir("yelmlib", ["emitter"])
 compileDir("cli", ["built/yelmlib.js"])
 compileDir("mbitsim")
 
-task('update', {async:true}, function() {
+task('publish', function() {
+   let pkg = JSON.parse(fs.readFileSync("package.json", "utf8"))
+   let m = /(.*)\.(\d+)$/.exec(pkg.version)
+   pkg.version = m[1] + "." + (parseInt(m[2]) + 1)
+   fs.writeFileSync("package.json", JSON.stringify(pkg, null, 4) + "\n")
+  jake.exec([
+        "npm publish",
+  ], {printStdout: true});
+})
+
+task('update', function() {
   jake.exec([
         "git pull",
         "npm install",
