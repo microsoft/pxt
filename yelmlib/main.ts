@@ -316,11 +316,26 @@ namespace yelm {
 
 Put some info here.
 `,
-        "main.ts":
-        `function main() {
-    basic.showString("Hello world!")    
+        "tsconfig.json":
+        `{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "outDir": "built",
+        "rootDir": "."
+    }
 }
 `,
+        "main.ts":
+        `function main() {
+    basic.showString("Hello world!", 400)    
+}
+`,
+        ".gitignore":
+`built
+node_modules
+yelm_modules
+`        
     }
 
 }
