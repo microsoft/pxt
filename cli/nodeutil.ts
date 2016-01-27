@@ -4,6 +4,7 @@ import * as url from 'url';
 import * as http from 'http';
 import * as https from 'https';
 import * as events from 'events';
+import * as crypto from 'crypto';
 
 function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
@@ -86,9 +87,18 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     })
 }
 
+function sha256(hashData: string): string {
+    let sha: string;
+    let hash = crypto.createHash("sha256");
+    hash.update(hashData, "utf8");
+    sha = hash.digest().toString("hex").toLowerCase();
+    return sha;
+}
+
 function init() {
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
+    Util.sha256 = sha256;
 }
 
 init();

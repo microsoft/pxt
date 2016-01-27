@@ -4,3 +4,5 @@ node_modules
 *.sw?
 built
 typings/
+yelm_modules
+libs/*/tsconfig.json

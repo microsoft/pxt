@@ -1,0 +1,11 @@
+{
+    "name": "mbit",
+    "description": "The base mbit library",
+    "installedVersion": "vwuaib",
+    "files": [
+        "README.md",
+        "core.d.ts",
+        "mbit.ts"
+    ],
+    "dependencies": {}
+}

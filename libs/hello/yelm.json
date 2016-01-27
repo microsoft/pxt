@@ -1,0 +1,12 @@
+{
+    "name": "hello",
+    "description": "",
+    "installedVersion": "",
+    "files": [
+        "README.md",
+        "hello.ts"
+    ],
+    "dependencies": {
+        "mbit": "*"
+    }
+}

@@ -28,6 +28,13 @@ namespace Util {
         Object.keys(m).forEach(k => r[k] = f(k, m[k]))
     }
 
+    export function mapStringMapAsync<T, S>(m: StringMap<T>, f: (k: string, v: T) => Promise<S>) {
+        let r: StringMap<S> = {}
+        return Promise.all(Object.keys(m).map(k => f(k, m[k]).then(v => r[k] = v)))
+            .then(() => r)
+    }
+    
+
     export function pushRange<T>(trg: T[], src: T[]) {
         for (let i = 0; i < src.length; ++i)
             trg.push(src[i])
@@ -45,6 +52,14 @@ namespace Util {
         if (a == b) return 0;
         if (a < b) return -1;
         else return 1;
+    }
+
+    export function sortObjectFields<T>(o: T): T {
+        let keys = Object.keys(o)
+        keys.sort(strcmp)
+        let r: any = {}
+        keys.forEach(k => r[k] = (<any>o)[k])
+        return r
     }
 
     export var isNodeJS = false;
@@ -84,8 +99,11 @@ namespace Util {
         return requestAsync({ url: url, data: data || {} }).then(resp => resp.json)
     }
 
+
     // TODO add web implementations below    
     export var httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;
+    export var sha256: (hashData: string) => string;
+
 }
 
 namespace Cloud {
