@@ -30,6 +30,7 @@ testActionSave();
 testLazyOps();
 testRefLocals();
 testByRefParams();
+testFunDecl();
 
 // test some top-level code
 let xsum = 0;
@@ -38,7 +39,7 @@ for (let i = 0; i < 11; ++i)
 assert(xsum == 55, "mainfor")
 
 control.inBackground(() => {
-    xsum = xsum + 10;    
+    xsum = xsum + 10;
 })
 
 basic.pause(20)
@@ -311,6 +312,27 @@ function testAction(p: number): void {
     });
     assert(x == 42 + p * 6, "run2");
     assert(coll.length == 2, "run2");
+}
+
+function add7() {
+    sum = sum + 7;
+}
+
+function testFunDecl() {
+    let x = 12;
+    sum = 0;
+    function addX() {
+        sum = sum + x;
+    }
+    function add10() {
+        sum = sum + 10;
+    }
+    runTwice(addX)
+    assert(sum == 24, "cap")
+    runTwice(add10);
+    assert(sum == 44, "nocap")
+    runTwice(add7);
+    assert(sum == 44 + 14, "glb")
 }
 
 function saveAction(fn: Action): void {

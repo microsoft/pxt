@@ -10,17 +10,19 @@ jake
 
 ## TODO
 
-* image literals
-* only compile what's needed
-* test.ts file handling
-* class methods
-* optional arguments
-* default arguments
-* +=, -= etc
-* return values in lambdas
-* clear variables when they get out of scope to limit memory usage
-* function f() {...}; control.inBackground(f) in local scope
-* function f() {...}; control.inBackground(f) in global scope
+[ ] image literals
+[x] code in top-level scope
+[ ] only compile what's needed
+[ ] test.ts file handling
+[ ] class methods
+[ ] optional arguments
+[ ] default arguments
+[ ] +=, -= etc
+[ ] proper caching for x.f++, x.f += ... etc
+[ ] return values in lambdas
+[ ] clear variables when they get out of scope to limit memory usage
+[x] function f() {...}; control.inBackground(f) in local scope
+[x] function f() {...}; control.inBackground(f) in global scope
 
 ## Yelm
 

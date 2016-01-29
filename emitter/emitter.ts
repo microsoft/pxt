@@ -125,6 +125,7 @@ namespace ts.mbit {
 
     interface FunctionInfo {
         capturedVars: VarOrParam[];
+        location?: mbit.Location;
     }
 
     export function emitMBit(program: Program, host: CompilerHost, opts: CompileOptions): EmitResult {
@@ -149,12 +150,18 @@ namespace ts.mbit {
         let rootFunction = <any>{
             kind: SyntaxKind.FunctionDeclaration,
             parameters: [],
-            name: { text: "<main>" },
+            name: {
+                text: "<main>",
+                pos: 0,
+                end: 0
+            },
             body: {
                 kind: SyntaxKind.Block,
                 statements: allStmts
             },
-            parent: src
+            parent: src,
+            pos: 0,
+            end: 0
         }
 
         function emitAll() {
@@ -306,6 +313,15 @@ namespace ts.mbit {
                 let l = lookupLocation(decl)
                 recordUse(<VarOrParam>decl)
                 l.emitLoadByRef(proc)
+            } else if (decl && decl.kind == SyntaxKind.FunctionDeclaration) {
+                let f = <FunctionDeclaration>decl
+                let info = getFunctionInfo(f)
+                if (info.location) {
+                    info.location.emitLoad(proc)
+                } else {
+                    assert(!bin.finalPass || info.capturedVars.length == 0)
+                    emitFunLit(f)
+                }
             } else {
                 unhandled(node, "id")
             }
@@ -632,6 +648,12 @@ namespace ts.mbit {
             proc.emit("@stackempty litfunc");
         }
 
+        function emitFunLit(node: FunctionLikeDeclaration) {
+            let lbl = getFunctionLabel(node) + "_Lit"
+            proc.emit("@js r0 = " + lbl)
+            proc.emitLdPtr(lbl, true)
+        }
+
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (node.flags & NodeFlags.Ambient)
                 return;
@@ -653,34 +675,30 @@ namespace ts.mbit {
                 return l;
             })
 
-            let isLambda =
-                node.kind != SyntaxKind.FunctionDeclaration ||
-                getEnclosingFunction(node) != null;
-
-            if (isLambda) {
-                if (caps.length > 0) {
-                    proc.emitInt(refs.length)
-                    proc.emitInt(caps.length)
-                }
-                let lbl = getFunctionLabel(node) + "_Lit"
-                proc.emit("@js r0 = " + lbl)
-                proc.emitLdPtr(lbl, true)
-                // if no captured variables, then we can get away with a plain pointer to code
-                if (caps.length > 0) {
-                    proc.emitCall("action::mk", 0)
-                    caps.forEach((l, i) => {
-                        proc.emitInt(i)
-                        let loc = proc.localIndex(l)
-                        if (!loc)
-                            userError("cannot find captured value: " + checker.symbolToString(l.symbol))
-                        loc.emitLoad(proc, true) // direct load
-                        proc.emitCall("bitvm::stclo", 0)
-                        // already done by emitCall
-                        // proc.emit("push {r0}");
-                    })
+            // if no captured variables, then we can get away with a plain pointer to code
+            if (caps.length > 0) {
+                assert(getEnclosingFunction(node) != null)
+                proc.emitInt(refs.length)
+                proc.emitInt(caps.length)
+                emitFunLit(node)
+                proc.emitCall("action::mk", 0)
+                caps.forEach((l, i) => {
+                    proc.emitInt(i)
+                    let loc = proc.localIndex(l)
+                    if (!loc)
+                        userError("cannot find captured value: " + checker.symbolToString(l.symbol))
+                    loc.emitLoad(proc, true) // direct load
+                    proc.emitCall("bitvm::stclo", 0)
+                    // already done by emitCall
+                    // proc.emit("push {r0}");
+                })
+                if (node.kind == SyntaxKind.FunctionDeclaration) {
+                    info.location = proc.mkLocal(node, getVarInfo(node))
+                    info.location.emitStore(proc)
                 }
             } else {
-                assert(caps.length == 0);
+                if (node.kind != SyntaxKind.FunctionDeclaration)
+                    emitFunLit(node)
             }
 
             scope(() => {
@@ -745,9 +763,8 @@ namespace ts.mbit {
                 proc.emit("@stackempty func");
                 proc.emit("@stackempty args")
 
-                if (isLambda) {
+                if (proc.args.length <= 2)
                     emitLambdaWrapper(node)
-                }
             })
         }
 
