@@ -219,6 +219,11 @@ function cmdDeploy() {
 function cmdBuild(deploy = false) {
     ensurePkgDir();
     mainPkg.buildAsync()
+        .then(res => {
+            reportDiagnostics(res.diagnostics);
+            if (!res.success) process.exit(1)
+            return res;
+        })
         .then(res => Util.mapStringMapAsync(res.outfiles, (fn, c) =>
             mainPkg.host().writeFileAsync("this", "built/" + fn, c))
             .then(() => deploy ? getBitDrivesAsync() : null)
