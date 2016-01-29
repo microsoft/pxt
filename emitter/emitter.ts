@@ -627,22 +627,27 @@ namespace ts.mbit {
                 getEnclosingFunction(node) != null;
 
             if (isLambda) {
-                proc.emitInt(refs.length)
-                proc.emitInt(caps.length)
+                if (caps.length > 0) {
+                    proc.emitInt(refs.length)
+                    proc.emitInt(caps.length)
+                }
                 let lbl = getFunctionLabel(node)
                 proc.emit("@js r0 = " + lbl)
                 proc.emitLdPtr(lbl, true)
-                proc.emitCall("action::mk", 0)
-                caps.forEach((l, i) => {
-                    proc.emitInt(i)
-                    let loc = proc.localIndex(l)
-                    if (!loc)
-                        userError("cannot find captured value: " + checker.symbolToString(l.symbol))
-                    loc.emitLoad(proc, true) // direct load
-                    proc.emitCall("bitvm::stclo", 0)
-                    // already done by emitCall
-                    // proc.emit("push {r0}");
-                })
+                // if no captured variables, then we can get away with a plain pointer to code
+                if (caps.length > 0) {
+                    proc.emitCall("action::mk", 0)
+                    caps.forEach((l, i) => {
+                        proc.emitInt(i)
+                        let loc = proc.localIndex(l)
+                        if (!loc)
+                            userError("cannot find captured value: " + checker.symbolToString(l.symbol))
+                        loc.emitLoad(proc, true) // direct load
+                        proc.emitCall("bitvm::stclo", 0)
+                        // already done by emitCall
+                        // proc.emit("push {r0}");
+                    })
+                }
             } else {
                 assert(caps.length == 0);
             }
