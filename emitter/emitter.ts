@@ -58,6 +58,15 @@ namespace ts.mbit {
         return d.kind == SyntaxKind.Parameter
     }
 
+    function isGlobalFunctionDecl(decl: Declaration) {
+        return decl.kind == SyntaxKind.FunctionDeclaration && !getEnclosingFunction(decl)
+    }
+
+    function isOnDemandDecl(decl: Declaration) {
+        return (isGlobalVar(decl) && !(<VariableDeclaration>decl).initializer) ||
+            isGlobalFunctionDecl(decl)
+    }
+
     interface CommentAttrs {
         shim?: string;
         enumval?: string;
@@ -267,8 +276,15 @@ namespace ts.mbit {
             writeFileSync("microbit.js", bin.jssource)
         }
 
+        function typeCheckVar(decl: Declaration) {
+            if (typeOf(decl).flags & TypeFlags.Void)
+                userError("void-typed variables not supported")
+        }
+
         function lookupLocation(decl: Declaration): mbit.Location {
             if (isGlobalVar(decl)) {
+                markUsed(decl)
+                typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
                     ex = new mbit.Location(bin.globals.length, decl, getVarInfo(decl))
@@ -448,22 +464,14 @@ namespace ts.mbit {
             }
         }
 
-        function isUsed(decl: Node) {
-            return usedDecls.hasOwnProperty(nodeKey(decl))
-        }
-
-        function isGlobalFunctionDecl(decl: Declaration) {
-            return (decl.kind == SyntaxKind.FunctionDeclaration &&
-                getEnclosingFunction(decl) == null)
-
+        function isUsed(decl: Declaration) {
+            return !isOnDemandDecl(decl) || usedDecls.hasOwnProperty(nodeKey(decl))
         }
 
         function markUsed(decl: Declaration) {
             if (!isUsed(decl)) {
                 usedDecls[nodeKey(decl)] = true
-                if (isGlobalFunctionDecl(decl)) {
-                    usedWorkList.push(decl)
-                }
+                usedWorkList.push(decl)
             }
         }
 
@@ -592,7 +600,7 @@ namespace ts.mbit {
                     if (helperStmt.kind != SyntaxKind.FunctionDeclaration)
                         userError(lf("helpers.{0} isn't a function", attrs.helper))
                     decl = <FunctionDeclaration>helperStmt;
-                    markUsed(decl)                    
+                    markUsed(decl)
                     emitPlain();
                     return
                 }
@@ -693,7 +701,7 @@ namespace ts.mbit {
             if (!node.body)
                 return;
 
-            if (isGlobalFunctionDecl(node) && !isUsed(node))
+            if (!isUsed(node))
                 return;
 
             let info = getFunctionInfo(node)
@@ -1213,7 +1221,11 @@ namespace ts.mbit {
         function emitCatchClause(node: CatchClause) { }
         function emitDebuggerStatement(node: Node) { }
         function emitVariableDeclaration(node: VariableDeclaration) {
-            let loc = proc.mkLocal(node, getVarInfo(node))
+            if (!isUsed(node))
+                return;
+            typeCheckVar(node)
+            let loc = isGlobalVar(node) ?
+                lookupLocation(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 loc.emitClrIfRef(proc) // we might be in a loop
                 proc.emitCallRaw("bitvm::mkloc" + loc.refSuff())
@@ -1603,6 +1615,9 @@ namespace ts.mbit {
             iscap = false;
 
             constructor(public index: number, public def: Declaration, public info: VariableInfo) {
+                if (typeOf(this.def).flags & TypeFlags.Void) {
+                    oops("void-typed variable, " + this.toString())
+                }
             }
 
             toString() {
@@ -2000,6 +2015,8 @@ namespace ts.mbit {
                     }
                     return bytes
                 }
+
+                console.log("num globals", this.globals.length)
 
                 var hd = [0x4207, this.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
                 var tmp = hexTemplateHash()

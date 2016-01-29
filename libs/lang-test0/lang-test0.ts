@@ -6,6 +6,8 @@ var tot: string;
 var lazyAcc: number;
 var sum: number;
 
+var xyz = 12;
+
 console.log("Starting...")
 
 //lib.print_17(3);
@@ -45,6 +47,15 @@ control.inBackground(() => {
 basic.pause(20)
 assert(xsum == 65, "mainforBg")
 
+assert(xyz == 12, "init")
+
+function incrXyz() {
+    xyz++;
+    return 0;
+}
+var unusedInit = incrXyz(); 
+
+assert(xyz == 13, "init2")
 
 /*
 msg("start mem test");

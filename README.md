@@ -13,7 +13,7 @@ jake
 [ ] image literals
 [x] code in top-level scope
 [x] only compile what's needed
-[ ] don't emit unused global vars
+[x] don't emit unused global vars
 [ ] test.ts file handling
 [ ] class methods
 [ ] optional arguments
