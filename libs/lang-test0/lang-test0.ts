@@ -6,51 +6,63 @@ var tot: string;
 var lazyAcc: number;
 var sum: number;
 
+console.log("Starting...")
 
-export function main(): void {
-    console.log("Starting...")
+//lib.print_17(3);
+showDigit(0);
+//assert(lib3.getX() == 17 * 3, "");
+showDigit(3);
+testNums();
+testStrings();
+testNumCollection();
+showDigit(2);
+testStringCollection();
+testStringOps();
+showDigit(4);
+testReccoll();
+showDigit(5);
+inBg();
+testAction(1);
+showDigit(6);
+testAction(7);
+testIter();
+testActionSave();
+testLazyOps();
+testRefLocals();
+testByRefParams();
+
+// test some top-level code
+let xsum = 0;
+for (let i = 0; i < 11; ++i)
+    xsum = xsum + i;
+assert(xsum == 55, "mainfor")
+
+control.inBackground(() => {
+    xsum = xsum + 10;    
+})
+
+basic.pause(20)
+assert(xsum == 65, "mainforBg")
 
 
-    //lib.print_17(3);
-    showDigit(0);
-    //assert(lib3.getX() == 17 * 3, "");
-    showDigit(3);
-    testNums();
-    testStrings();
-    testNumCollection();
-    showDigit(2);
-    testStringCollection();
-    testStringOps();
-    showDigit(4);
-    testReccoll();
-    showDigit(5);
-    inBg();
-    testAction(1);
-    showDigit(6);
-    testAction(7);
-    testIter();
-    testActionSave();
-    testLazyOps();
-    testRefLocals();
-    testByRefParams();
+/*
+msg("start mem test");
+testMemoryFree();
+msg("start 2nd mem test");
+testMemoryFreeHOF();
+msg("stop mem test");
+assert(enumAdd("two", 2) == 4, "enum");
+let x = enumAdd2("size", 0);
+assert(x == 10, "enum2");
+assert(enumAdd2("pi", 0) == 3, "enum3");
+assert(tdid("two") == 2, "tdid");
+showDigit(9);
+//TD.basic.showLeds("0 1 0 1 0\n0 0 0 0 0\n0 0 1 0 0\n1 0 0 0 1\n0 1 1 1 0", 400);
+*/
 
-    /*
-    msg("start mem test");
-    testMemoryFree();
-    msg("start 2nd mem test");
-    testMemoryFreeHOF();
-    msg("stop mem test");
-    assert(enumAdd("two", 2) == 4, "enum");
-    let x = enumAdd2("size", 0);
-    assert(x == 10, "enum2");
-    assert(enumAdd2("pi", 0) == 3, "enum3");
-    assert(tdid("two") == 2, "tdid");
-    showDigit(9);
-    //TD.basic.showLeds("0 1 0 1 0\n0 0 0 0 0\n0 0 1 0 0\n1 0 0 0 1\n0 1 1 1 0", 400);
-    */
+showDigit(1);
 
-    showDigit(1);
-}
+msg("ALL TESTS OK")
 
 function testNums(): void {
     let x = 40 + 2;

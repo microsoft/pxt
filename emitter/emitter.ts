@@ -1,6 +1,6 @@
 namespace ts {
     export var assert = Util.assert;
-    export var oops = Util.oops;      
+    export var oops = Util.oops;
     export type StringMap<T> = Util.StringMap<T>;
 }
 
@@ -32,8 +32,6 @@ namespace ts.mbit {
         let tp = typeOf(def)
         return isRefType(tp)
     }
-
-
 
     function getEnclosingFunction(node0: Node) {
         let node = node0
@@ -142,22 +140,42 @@ namespace ts.mbit {
 
         function reset() {
             bin = new mbit.Binary();
-            proc = new mbit.Procedure();
-            bin.addProc(proc);
+            proc = null
+        }
+
+        let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
+
+        let src = program.getSourceFiles()[0]
+        let rootFunction = <any>{
+            kind: SyntaxKind.FunctionDeclaration,
+            parameters: [],
+            body: {
+                kind: SyntaxKind.Block,
+                statements: allStmts
+            }
+        }
+        rootFunction.parent = src
+
+        function emitAll() {
+            emit(rootFunction)
         }
 
         let variableStatus: StringMap<VariableInfo> = {};
         let functionInfo: StringMap<FunctionInfo> = {};
 
         reset();
-        program.getSourceFiles().forEach(emit);
+        emitAll();
 
         if (diagnostics.getModificationCount() == 0) {
             reset();
             bin.finalPass = true
-            program.getSourceFiles().forEach(emit);
+            emitAll();
 
-            finalEmit();
+            try {
+                finalEmit();
+            } catch (e) {
+                handleError(rootFunction, e)
+            }
         }
 
         return {
@@ -226,8 +244,8 @@ namespace ts.mbit {
                 return;
             bin.serialize();
             bin.patchSrcHash();
-            
-            let writeFileSync = (fn:string, data:string) =>            
+
+            let writeFileSync = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null);
             writeFileSync("microbit.asm", bin.csource)
             bin.assemble();
@@ -494,7 +512,7 @@ namespace ts.mbit {
                 let mode = hasRet ? "F0" : "P0"
                 let lbl = proc.mkLabel("call")
                 proc.emit("bl " + getFunctionLabel(<FunctionLikeDeclaration>decl) + " ; *R " + lbl)
-                proc.emitLbl(lbl)                
+                proc.emitLbl(lbl)
                 if (args.length > 0)
                     proc.emit("add sp, #4*" + args.length)
                 if (hasRet)
@@ -588,8 +606,8 @@ namespace ts.mbit {
                 return;
 
             let info = getFunctionInfo(node)
-            
-            let isRef = (d:Declaration) => {
+
+            let isRef = (d: Declaration) => {
                 if (isRefDecl(d)) return true
                 let info = getVarInfo(d)
                 return (info.captured && info.written)
@@ -604,7 +622,9 @@ namespace ts.mbit {
                 return l;
             })
 
-            let isLambda = getEnclosingFunction(node) != null;
+            let isLambda =
+                node.kind != SyntaxKind.FunctionDeclaration ||
+                getEnclosingFunction(node) != null;
 
             if (isLambda) {
                 proc.emitInt(refs.length)
@@ -628,7 +648,9 @@ namespace ts.mbit {
             }
 
             scope(() => {
+                let isRoot = proc == null
                 proc = new mbit.Procedure();
+                proc.isRoot = isRoot
                 proc.action = node;
                 proc.info = info;
                 proc.captured = locals;
@@ -657,13 +679,13 @@ namespace ts.mbit {
                 }
 
                 proc.pushLocals();
-                
+
                 proc.args = node.parameters.map((p, i) => {
                     let l = new mbit.Location(i, p, getVarInfo(p))
                     l.isarg = true
                     return l
                 })
-                
+
                 proc.args.forEach(l => {
                     if (l.isByRefLocal()) {
                         // TODO add C++ support function to do this
@@ -675,7 +697,7 @@ namespace ts.mbit {
                         proc.emitCallRaw("bitvm::stloc" + l.refSuff()); // unref internal
                         proc.emit("pop {r0}")
                         l.emitStoreCore(proc)
-                    }                    
+                    }
                 })
 
                 emit(node.body);
@@ -1149,13 +1171,17 @@ namespace ts.mbit {
             proc.emitInt(n)
         }
 
+        function handleError(node: Node, e: any) {
+            if (!e.bitvmUserError)
+                console.log(e.stack)
+            error(node, e.message)
+        }
+
         function emit(node: Node) {
             try {
                 emitNodeCore(node);
             } catch (e) {
-                if (!e.bitvmUserError)
-                    console.log(e.stack)
-                error(node, e.message)
+                handleError(node, e);
             }
         }
 
@@ -1616,6 +1642,7 @@ namespace ts.mbit {
             info: FunctionInfo;
             seqNo: number;
             lblNo = 0;
+            isRoot = false;
 
             prebody = "";
             body = "";
@@ -1653,6 +1680,7 @@ namespace ts.mbit {
             }
 
             emitClrs() {
+                if (this.isRoot) return;
                 var lst = this.locals.concat(this.args)
                 lst.forEach(p => {
                     p.emitClrIfRef(this)
@@ -1661,7 +1689,7 @@ namespace ts.mbit {
 
             emitCallRaw(name: string) {
                 var inf = lookupFunc(name)
-                assert(!!inf, "unimplemented raw function: " + name)                
+                assert(!!inf, "unimplemented raw function: " + name)
                 this.emit("bl " + name + " ; *" + inf.type + inf.args + " (raw)")
             }
 
@@ -1699,13 +1727,13 @@ namespace ts.mbit {
 
                 if (reglist.length > 0)
                     this.emit("push {" + reglist.join(",") + "}")
-                
+
                 let lbl = ""
                 if (isAsync)
                     lbl = this.mkLabel("async")
 
                 this.emit("bl " + name + " ; *" + inf.type + inf.args + " " + lbl)
-                
+
                 if (lbl) this.emitLbl(lbl)
 
                 if (inf.type == "F") {
@@ -1976,7 +2004,7 @@ namespace ts.mbit {
                 this.procs.forEach(p => {
                     this.csource += "\n" + p.body
                 })
-                
+
                 this.csource += "_end_js:\n"
 
                 this.csource += this.stringsBody
