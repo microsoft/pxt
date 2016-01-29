@@ -149,12 +149,13 @@ namespace ts.mbit {
         let rootFunction = <any>{
             kind: SyntaxKind.FunctionDeclaration,
             parameters: [],
+            name: { text: "<main>" },
             body: {
                 kind: SyntaxKind.Block,
                 statements: allStmts
-            }
+            },
+            parent: src
         }
-        rootFunction.parent = src
 
         function emitAll() {
             emit(rootFunction)
@@ -601,6 +602,36 @@ namespace ts.mbit {
         function emitParenExpression(node: ParenthesizedExpression) {
             emit(node.expression)
         }
+
+        function emitLambdaWrapper(node: FunctionLikeDeclaration) {
+            proc.emit("")
+            proc.emit(".section code");
+            proc.emit(".balign 4");
+            proc.emitLbl(getFunctionLabel(node) + "_Lit");
+            proc.emit(".short 0xffff, 0x0000   ; action literal");
+            proc.emit("@stackmark litfunc");
+            proc.emit("push {r5, lr}");
+            proc.emit("mov r5, r1");
+
+            node.parameters.forEach((p, i) => {
+                if (i >= 2)
+                    userError(lf("only up to two parameters supported in lambdas"))
+                proc.emit(`push {r${i + 2}}`)
+            })
+            proc.emit("@stackmark args");
+
+            let mode = proc.hasReturn() ? "F0" : "P0"
+            let nxt = proc.mkLabel("call")
+            proc.emit("bl " + getFunctionLabel(node) + " ; *R " + nxt)
+            proc.emitLbl(nxt)
+
+            proc.emit("@stackempty args")
+            if (node.parameters.length)
+                proc.emit("add sp, #4*" + node.parameters.length + " ; pop args")
+            proc.emit("pop {r5, pc}");
+            proc.emit("@stackempty litfunc");
+        }
+
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (node.flags & NodeFlags.Ambient)
                 return;
@@ -631,7 +662,7 @@ namespace ts.mbit {
                     proc.emitInt(refs.length)
                     proc.emitInt(caps.length)
                 }
-                let lbl = getFunctionLabel(node)
+                let lbl = getFunctionLabel(node) + "_Lit"
                 proc.emit("@js r0 = " + lbl)
                 proc.emitLdPtr(lbl, true)
                 // if no captured variables, then we can get away with a plain pointer to code
@@ -661,27 +692,17 @@ namespace ts.mbit {
                 proc.captured = locals;
                 bin.addProc(proc);
 
+                proc.emit("")
+                proc.emit(";")
+                proc.emit("; Function " + proc.getName())
+                proc.emit(";")
                 proc.emit(".section code");
-                proc.emit(".balign 4");
                 proc.emitLbl(getFunctionLabel(node));
 
-                if (isLambda) {
-                    proc.emit(".short 0xffff, 0x0000   ; action literal");
-                    proc.emit("@stackmark inlfunc");
-                    proc.emit("push {r5, lr}");
-                    proc.emit("mov r5, r1");
 
-                    node.parameters.forEach((p, i) => {
-                        if (i >= 2)
-                            userError(lf("only up to two parameters supported in lambdas"))
-                        proc.emit(`push {r${i + 2}}`)
-                    })
-                    proc.emit("@stackmark args");
-                } else {
-                    proc.emit("@stackmark func");
-                    proc.emit("@stackmark args");
-                    proc.emit("push {lr}");
-                }
+                proc.emit("@stackmark func");
+                proc.emit("@stackmark args");
+                proc.emit("push {lr}");
 
                 proc.pushLocals();
 
@@ -720,16 +741,12 @@ namespace ts.mbit {
 
                 proc.popLocals();
 
+                proc.emit("pop {pc}");
+                proc.emit("@stackempty func");
+                proc.emit("@stackempty args")
+
                 if (isLambda) {
-                    proc.emit("@stackempty args")
-                    if (node.parameters.length)
-                        proc.emit("add sp, #4*" + node.parameters.length + " ; pop args")
-                    proc.emit("pop {r5, pc}");
-                    proc.emit("@stackempty inlfunc");
-                } else {
-                    proc.emit("pop {pc}");
-                    proc.emit("@stackempty func");
-                    proc.emit("@stackempty args")
+                    emitLambdaWrapper(node)
                 }
             })
         }
@@ -1667,7 +1684,7 @@ namespace ts.mbit {
             }
 
             getName() {
-                let text = this.action ? (<Identifier>this.action.name).text : null
+                let text = this.action && this.action.name ? (<Identifier>this.action.name).text : null
                 return text || "inline"
             }
 
@@ -2070,7 +2087,7 @@ namespace ts.mbit {
         export var peepDbg = false;
 
         function asmline(s: string) {
-            if (!/(^\s)|(:$)/.test(s))
+            if (!/(^[\s;])|(:$)/.test(s))
                 s = "    " + s
             return s + "\n"
         }
