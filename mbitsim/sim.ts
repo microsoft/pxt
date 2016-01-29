@@ -4,8 +4,9 @@
 
 let fs = require("fs");
 
-
 namespace rt {
+    let quiet = true;
+
     function check(cond: boolean) {
         if (!cond)
             throw new Error("mbit sim: check failed")
@@ -32,12 +33,13 @@ namespace rt {
         }
 
         export function serialSendString(s: string) {
-            if (s.trim())
+            if (s.trim() && !quiet)
                 console.log("SERIAL:", s)
         }
 
         export function showDigit(v: number) {
-            console.log("DIGIT:", v)
+            if (!quiet)
+                console.log("DIGIT:", v)
         }
     }
 
@@ -60,14 +62,14 @@ namespace rt {
     }
 
     export class FnWrapper {
-        constructor(public func: LabelFn, public a0: any, public a1: any, public a2: any, public a3: any, public cb:ResumeFn = null) { }
+        constructor(public func: LabelFn, public a0: any, public a1: any, public a2: any, public a3: any, public cb: ResumeFn = null) { }
     }
 
     class RefRecord extends RefObject {
         len: number;
         reflen: number;
         fields: any[] = [];
-        
+
         destroy() {
             for (let i = 0; i < this.reflen; ++i)
                 decr(this.fields[i])
@@ -87,7 +89,7 @@ namespace rt {
             check(0 <= n && n < this.len)
             return this.fields[n]
         }
-        
+
         destroy() {
             super.destroy();
             this.func = null
@@ -140,7 +142,7 @@ namespace rt {
 
     class RefRefLocal extends RefObject {
         v: any = null;
-        
+
         destroy() {
             decr(this.v)
         }
@@ -535,7 +537,7 @@ namespace rt {
             return mem[sp - 4]
         }
 
-        function actionCall(fn: LabelFn, retPC: number, cb?:ResumeFn) {
+        function actionCall(fn: LabelFn, retPC: number, cb?: ResumeFn) {
             lr = {
                 caller: lr,
                 retPC: retPC,
