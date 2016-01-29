@@ -68,7 +68,7 @@ task('runprj', ['built/mbitsim.js', 'libs/lang-test0/built/microbit.js'], {async
   cmdIn(this, ".", 'node ' + this.prereqs.join(" "))
 })
 
-file('libs/lang-test0/built/microbit.js', ['built/yelm.js'], {async:true}, function() {
+file('libs/lang-test0/built/microbit.js', expand(['libs/mbit', 'libs/lang-test0', 'built/yelm.js']), {async:true}, function() {
   cmdIn(this, "libs/lang-test0", 'node ../../built/yelm.js build')
 })
 
