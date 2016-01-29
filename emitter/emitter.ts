@@ -537,13 +537,17 @@ namespace ts.mbit {
             }
 
             if (decl && decl.kind == SyntaxKind.FunctionDeclaration) {
-                if (attrs.shim) {
-                    emitShim(decl, node, args);
-                    return;
-                }
+                let info = getFunctionInfo(<FunctionDeclaration>decl)
 
-                emitPlain();
-                return
+                if (!info.location) {
+                    if (attrs.shim) {
+                        emitShim(decl, node, args);
+                        return;
+                    }
+
+                    emitPlain();
+                    return
+                }
             }
 
             if (decl && decl.kind == SyntaxKind.MethodSignature) {
@@ -570,7 +574,9 @@ namespace ts.mbit {
                 unhandled(node, "non-shim method call");
             }
 
-            if (decl && (decl.kind == SyntaxKind.VariableDeclaration || decl.kind == SyntaxKind.Parameter)) {
+            if (decl && (decl.kind == SyntaxKind.VariableDeclaration ||
+                decl.kind == SyntaxKind.FunctionDeclaration || // this is lambda
+                decl.kind == SyntaxKind.Parameter)) {
                 if (args.length > 1)
                     userError("lambda functions with more than 1 argument not supported")
 

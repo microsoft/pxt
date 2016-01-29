@@ -330,9 +330,12 @@ function testFunDecl() {
     runTwice(addX)
     assert(sum == 24, "cap")
     runTwice(add10);
-    assert(sum == 44, "nocap")
+    assert(sum == 44, "nocap");
     runTwice(add7);
     assert(sum == 44 + 14, "glb")
+    addX();
+    add10();
+    assert(sum == 44 + 14 + x + 10, "direct");
 }
 
 function saveAction(fn: Action): void {
