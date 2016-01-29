@@ -132,6 +132,10 @@ namespace ts.mbit {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: StringMap<ClassInfo> = {}
+        let usedDecls: StringMap<boolean> = {}
+        let usedWorkList: Declaration[] = []
+        let variableStatus: StringMap<VariableInfo> = {};
+        let functionInfo: StringMap<FunctionInfo> = {};
 
         mbit.staticBytecodeInfo = opts.hexinfo;
         mbit.setup();
@@ -164,20 +168,16 @@ namespace ts.mbit {
             end: 0
         }
 
-        function emitAll() {
-            emit(rootFunction)
-        }
-
-        let variableStatus: StringMap<VariableInfo> = {};
-        let functionInfo: StringMap<FunctionInfo> = {};
+        markUsed(rootFunction);
+        usedWorkList = [];
 
         reset();
-        emitAll();
+        emit(rootFunction)
 
         if (diagnostics.getModificationCount() == 0) {
             reset();
             bin.finalPass = true
-            emitAll();
+            emit(rootFunction)
 
             try {
                 finalEmit();
@@ -206,8 +206,12 @@ namespace ts.mbit {
             userError(lf("Unsupported syntax node: {0}", stringKind(n)) + addInfo);
         }
 
+        function nodeKey(f: Node) {
+            return getNodeId(f) + ""
+        }
+
         function getFunctionInfo(f: FunctionLikeDeclaration) {
-            let key = getNodeId(f) + ""
+            let key = nodeKey(f)
             let info = functionInfo[key]
             if (!info)
                 functionInfo[key] = info = {
@@ -444,10 +448,31 @@ namespace ts.mbit {
             }
         }
 
+        function isUsed(decl: Node) {
+            return usedDecls.hasOwnProperty(nodeKey(decl))
+        }
+
+        function isGlobalFunctionDecl(decl: Declaration) {
+            return (decl.kind == SyntaxKind.FunctionDeclaration &&
+                getEnclosingFunction(decl) == null)
+
+        }
+
+        function markUsed(decl: Declaration) {
+            if (!isUsed(decl)) {
+                usedDecls[nodeKey(decl)] = true
+                if (isGlobalFunctionDecl(decl)) {
+                    usedWorkList.push(decl)
+                }
+            }
+        }
+
         function getDecl(node: Node): Declaration {
             if (!node) return null
             let sym = checker.getSymbolAtLocation(node)
-            return sym ? sym.valueDeclaration : null
+            let decl: Declaration = sym ? sym.valueDeclaration : null
+            markUsed(decl)
+            return decl
         }
         function getComments(node: Node) {
             let src = getSourceFileOfNode(node)
@@ -567,6 +592,7 @@ namespace ts.mbit {
                     if (helperStmt.kind != SyntaxKind.FunctionDeclaration)
                         userError(lf("helpers.{0} isn't a function", attrs.helper))
                     decl = <FunctionDeclaration>helperStmt;
+                    markUsed(decl)                    
                     emitPlain();
                     return
                 }
@@ -662,6 +688,12 @@ namespace ts.mbit {
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (node.flags & NodeFlags.Ambient)
+                return;
+
+            if (!node.body)
+                return;
+
+            if (isGlobalFunctionDecl(node) && !isUsed(node))
                 return;
 
             let info = getFunctionInfo(node)
@@ -771,6 +803,13 @@ namespace ts.mbit {
 
                 if (proc.args.length <= 2)
                     emitLambdaWrapper(node)
+
+                assert(!bin.finalPass || usedWorkList.length == 0)
+                while (usedWorkList.length > 0) {
+                    let f = usedWorkList.pop()
+                    emit(f)
+                }
+
             })
         }
 
@@ -1180,6 +1219,7 @@ namespace ts.mbit {
                 proc.emitCallRaw("bitvm::mkloc" + loc.refSuff())
                 loc.emitStoreCore(proc)
             }
+            // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {
                 emit(node.initializer)
                 loc.emitStoreByRef(proc)
