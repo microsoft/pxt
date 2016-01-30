@@ -8,7 +8,7 @@ namespace basic {
     /**
      * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.
      */
-    export function showString(text: string, interval: number): void { }
+    export function showString(text: string, interval: number = 150): void { }
 
     /**
      * Turn off all LEDs
@@ -37,7 +37,7 @@ namespace basic {
      * {shim:micro_bit::scrollNumber}
      * {async}
      */
-    export function showNumber(value: number, interval: number): void { }
+    export function showNumber(value: number, interval: number = 150): void { }
 
     /**
      * Get the button state (pressed or not) for ``A`` and ``B``.

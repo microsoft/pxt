@@ -268,6 +268,7 @@ namespace ts.mbit {
 
             let writeFileSync = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null);
+            // this doesn't actully write file, it just stores it for the cli.ts to write it
             writeFileSync("microbit.asm", bin.csource)
             bin.assemble();
             const hex = bin.patchHex(false).join("\r\n") + "\r\n"
@@ -504,6 +505,9 @@ namespace ts.mbit {
             return res
         }
         function isRefExpr(e: Expression) {
+            // we generate a fake NULL expression for default arguments
+            if (e.kind == SyntaxKind.NullKeyword)
+                return false
             return isRefType(typeOf(e))
         }
         function getMask(args: Expression[]) {
@@ -551,6 +555,18 @@ namespace ts.mbit {
             proc.emitCall(attrs.shim, getMask(args), attrs.async);
         }
 
+        function isNumericLiteral(node: Expression) {
+            switch (node.kind) {
+                case SyntaxKind.NullKeyword:
+                case SyntaxKind.TrueKeyword:
+                case SyntaxKind.FalseKeyword:
+                case SyntaxKind.NumericLiteral:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         function emitCallExpression(node: CallExpression) {
             let decl = getDecl(node.expression)
             let attrs = parseComments(decl)
@@ -567,6 +583,31 @@ namespace ts.mbit {
                     proc.emit("add sp, #4*" + args.length)
                 if (hasRet)
                     proc.emit("push {r0}");
+            }
+
+            let sig = checker.getResolvedSignature(node)
+            if (sig) {
+                let parms = sig.getParameters();
+                if (parms.length > args.length) {
+                    parms.slice(args.length).forEach(p => {
+                        if (p.valueDeclaration &&
+                            p.valueDeclaration.kind == SyntaxKind.Parameter) {
+                            let prm = <ParameterDeclaration>p.valueDeclaration
+                            if (!prm.initializer) {
+                                args.push(<any>{
+                                    kind: SyntaxKind.NullKeyword
+                                })
+                            } else {
+                                if (!isNumericLiteral(prm.initializer)) {
+                                    userError("only numbers, null, true and false supported as default arguments")
+                                }
+                                args.push(prm.initializer)
+                            }
+                        } else {
+                            unhandled(node, "problems with default arguments")
+                        }
+                    })
+                }
             }
 
             if (decl && decl.kind == SyntaxKind.FunctionDeclaration) {
@@ -2015,8 +2056,6 @@ namespace ts.mbit {
                     }
                     return bytes
                 }
-
-                console.log("num globals", this.globals.length)
 
                 var hd = [0x4207, this.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
                 var tmp = hexTemplateHash()

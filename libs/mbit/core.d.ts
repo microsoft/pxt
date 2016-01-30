@@ -37,8 +37,8 @@ interface Array<T> {
       * @param start The beginning of the specified portion of the array.
       * @param end The end of the specified portion of the array.
       */
-    // {helper:arrayShift}
-    slice(start?: number, end?: number): T[];
+    // {helper:arraySlice}
+    slice(start: number, end: number): T[];
 
     /** Removes the first occurence of an object. Returns true if removed. */
     // {shim:collection::remove}
@@ -70,7 +70,7 @@ interface Array<T> {
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
     // {shim:collection::index_of}
-    indexOf(searchElement: T, fromIndex: number): number;
+    indexOf(searchElement: T, fromIndex?: number): number;
 
 
     [n: number]: T;
@@ -283,10 +283,9 @@ declare var Boolean: BooleanConstructor;
 interface Number {
     /**
       * Returns a string representation of an object.
-      * @param radix Specifies a radix for converting numeric values to strings. This value is only used for numbers.
       */
     // {shim:number::to_string}
-    toString(radix?: number): string;
+    toString(): string;
 }
 
 interface NumberConstructor {

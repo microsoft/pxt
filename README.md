@@ -14,10 +14,10 @@ jake
 [x] code in top-level scope
 [x] only compile what's needed
 [x] don't emit unused global vars
-[ ] test.ts file handling
+[ ] testFiles: [ ... ] in yelm.json
 [ ] class methods
-[ ] optional arguments
-[ ] default arguments
+[x] optional arguments
+[x] default arguments
 [ ] +=, -= etc
 [ ] proper caching for x.f++, x.f += ... etc
 [ ] lambdas returning values (maybe just works?)

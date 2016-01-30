@@ -33,6 +33,7 @@ testLazyOps();
 testRefLocals();
 testByRefParams();
 testFunDecl();
+testDefaultArgs();
 
 // test some top-level code
 let xsum = 0;
@@ -53,9 +54,45 @@ function incrXyz() {
     xyz++;
     return 0;
 }
-var unusedInit = incrXyz(); 
+var unusedInit = incrXyz();
 
 assert(xyz == 13, "init2")
+
+
+function defaultArgs(x: number, y = 3, z = 7) {
+    return x + y + z;
+}
+
+function testDefaultArgs() {
+    assert(defaultArgs(1) == 11, "defl0")
+    assert(defaultArgs(1, 4) == 12, "defl1")
+    assert(defaultArgs(1, 4, 8) == 13, "defl2")
+    
+    assert(optargs(1) == 1, "opt0");
+    assert(optargs(1, 2) == 3, "opt1");
+    assert(optargs(1, 2, 3) == 3, "opt2");
+    
+    assert(optstring(3) == 6, "os0")
+    assert(optstring(3, "7") == 10, "os1")
+    assert(optstring2(3) == 6, "os0")
+    assert(optstring2(3, "7") == 10, "os1")
+}
+
+function optargs(x: number, y?: number, z?:number) {
+    return x + y;
+}
+
+function optstring(x:number, s?:string) {
+    if (s != null)
+        return parseInt(s) + x;
+    return x * 2;
+}
+
+function optstring2(x:number, s:string = null) {
+    if (s != null)
+        return parseInt(s) + x;
+    return x * 2;
+}
 
 /*
 msg("start mem test");
@@ -229,7 +266,7 @@ function testStringCollection(): void {
     coll.push("foobar");
     coll.push((12).toString());
     coll.push(coll[0] + "xx");
-    assert(coll.indexOf("12", 0) == 1, "idx");
+    assert(coll.indexOf("12") == 1, "idx");
     coll = [
         "a" + "b",
         coll[2],
