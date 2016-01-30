@@ -15,6 +15,7 @@ namespace yelm {
         description?: string;
         dependencies: Util.StringMap<string>;
         files: string[];
+        testFiles?: string[];
     }
 
     export class Package {
@@ -135,6 +136,13 @@ namespace yelm {
                     }))
                 .then(() => { })
         }
+
+        getFiles() {
+            if (this.level == 0)
+                return this.config.files.concat(this.config.testFiles || [])
+            else
+                return this.config.files.slice(0);
+        }
     }
 
     export class MainPackage
@@ -144,6 +152,7 @@ namespace yelm {
         constructor(public _host: Host) {
             super("this", "*", null)
             this.parent = this
+            this.level = 0
             this.deps[this.id] = this;
         }
 
@@ -186,7 +195,7 @@ namespace yelm {
                 })
                 .then(() => Promise.all(Util.concat(this.sortedDeps()
                     .map(pkg =>
-                        pkg.config.files.map(f => {
+                        pkg.getFiles().map(f => {
                             if (/\.ts$/.test(f)) {
                                 let sn = f
                                 if (pkg.level > 0)
@@ -213,7 +222,8 @@ namespace yelm {
                         name: name,
                         description: "",
                         installedVersion: "",
-                        files: Object.keys(defaultFiles),
+                        files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
+                        testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),
                         dependencies: {
                             "mbit": "*"
                         }
@@ -240,7 +250,7 @@ namespace yelm {
                     files[configName] = JSON.stringify(cfg, null, 4)
                 })
                 .then(() => Promise.all(
-                    this.config.files.map(f =>
+                    this.getFiles().map(f =>
                         this.host().readFileAsync(this.id, f)
                             .then(str => {
                                 if (str == null)
@@ -327,15 +337,16 @@ Put some info here.
 }
 `,
         "main.ts":
-        `function main() {
-    basic.showString("Hello world!", 400)    
-}
+        `basic.showString("Hello world!")
+`,
+        "tests.ts":
+        `// Put your testing code in this file. 
+// It will not be compiled when compiling as a library (dependency of another module).
 `,
         ".gitignore":
-`built
+        `built
 node_modules
 yelm_modules
-`        
+`
     }
-
 }

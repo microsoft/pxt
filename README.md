@@ -14,7 +14,7 @@ jake
 * [x] code in top-level scope
 * [x] only compile what's needed
 * [x] don't emit unused global vars
-* [ ] testFiles: [ ... ] in yelm.json
+* [x] testFiles: [ ... ] in yelm.json
 * [ ] class methods
 * [x] optional arguments
 * [x] default arguments
@@ -25,6 +25,7 @@ jake
 * [x] function f() {...}; control.inBackground(f) in local scope
 * [x] function f() {...}; control.inBackground(f) in global scope
 * [ ] @mbit shim=... weight=... help=... etc insteaf of {shim:...}
+* [ ] bit operators (&, |, etc)
 
 ## Yelm
 
