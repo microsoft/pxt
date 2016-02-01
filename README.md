@@ -27,7 +27,16 @@ jake
 * [x] //% shim=... weight=... help=... etc insteaf of {shim:...}
 * [ ] bit operators (&, |, etc)
 * [ ] inline assembly
-* [ ] use "(x + y) | 0" etc instead of "x + y"
+* [ ] use "(x + y) | 0" etc instead of "x + y" in simulator
+* [ ] have buffered output mode in simulator
+* [ ] have output-independent simulator for running tests
+
+## TODO for converter from TD
+
+* [ ] multi-line strings into backtick literals
+* [ ] use bit operators for bits.XYZ
+* [ ] fish out {shim:...} and friends
+* [ ] {hints:...} -> @param x Blah, eg: 100, 200 (?)
 
 ## Yelm
 
