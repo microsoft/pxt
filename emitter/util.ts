@@ -10,7 +10,7 @@ namespace Util {
         }
     }
 
-    export function oops(msg = "OOPS") {
+    export function oops(msg = "OOPS"):Error {
         throw new Error(msg)
     }
 
@@ -99,7 +99,7 @@ namespace Util {
         return requestAsync({ url: url, data: data || {} }).then(resp => resp.json)
     }
 
-    export function userError(msg: string) {
+    export function userError(msg: string):Error {
         let e = new Error(msg);
         (<any>e).isUserError = true;
         throw e

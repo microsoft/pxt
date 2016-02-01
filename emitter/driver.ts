@@ -28,6 +28,9 @@ namespace ts.mbit {
 
         options.target = ScriptTarget.ES5;
         options.module = ModuleKind.CommonJS;
+        options.noImplicitAny = true;
+        options.noImplicitReturns = true;
+        
         let fileText = opts.fileSystem
         let setParentNodes = true
 

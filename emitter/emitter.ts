@@ -15,11 +15,11 @@ namespace ts.mbit {
         console.log(stringKind(n))
     }
 
-    function userError(msg: string) {
+    function userError(msg: string):Error {
         debugger;
         var e = new Error(msg);
         (<any>e).bitvmUserError = true;
-        throw e;
+        throw e;        
     }
 
     function isRefType(t: Type) {
@@ -244,7 +244,7 @@ namespace ts.mbit {
         function unhandled(n: Node, addInfo = "") {
             if (addInfo)
                 addInfo = " (" + addInfo + ")"
-            userError(lf("Unsupported syntax node: {0}", stringKind(n)) + addInfo);
+            return userError(lf("Unsupported syntax node: {0}", stringKind(n)) + addInfo);
         }
 
         function nodeKey(f: Node) {
@@ -1035,6 +1035,8 @@ namespace ts.mbit {
                 let bexpr = <BinaryExpression>node
                 return (bexpr.operatorToken.kind == SyntaxKind.EqualsToken)
             }
+            
+            return false
         }
 
         function fieldIndex(pacc: PropertyAccessExpression) {
@@ -1046,7 +1048,7 @@ namespace ts.mbit {
                     userError(lf("field {0} not found", pacc.name.text))
                 return info.allfields.indexOf(fld)
             } else {
-                unhandled(pacc, "bad field access")
+                throw unhandled(pacc, "bad field access")
             }
         }
 
@@ -1313,7 +1315,7 @@ namespace ts.mbit {
                     return (<LabeledStatement>node).statement;
                 if (!label && isIterationStatement(node, false))
                     return <Statement>node;
-                findOuter(node.parent);
+                return findOuter(node.parent);
             }
             let stmt = findOuter(node)
             if (!stmt)
@@ -1643,7 +1645,7 @@ namespace ts.mbit {
             if (m)
                 return [parseInt(m[1], 16)].concat(parseHexBytes(bytes.slice(2)))
             else
-                oops("bad bytes " + bytes)
+                throw oops("bad bytes " + bytes)
         }
 
         var currentSetup: string = null;

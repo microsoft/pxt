@@ -2,6 +2,7 @@
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
+        "noImplicitReturns": true,
         "declaration": false,
         "out": "../built/mbitsim.js",
         "rootDir": ".",

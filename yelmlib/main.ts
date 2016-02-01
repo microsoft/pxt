@@ -55,7 +55,7 @@ namespace yelm {
             if (/^[a-z]+$/.test(v)) {
                 return Promise.resolve(v)
             }
-            Util.userError("bad version spec: " + this.id)
+            throw Util.userError("bad version spec: " + this.id)
         }
 
         private downloadAsync() {
@@ -118,6 +118,7 @@ namespace yelm {
                     }
                     if (isInstall)
                         return this.downloadAsync()
+                    else return null
                 })
                 .then(() =>
                     Util.mapStringMapAsync(this.config.dependencies, (id, ver) => {
@@ -309,7 +310,7 @@ namespace yelm {
                     if (this.config.installedVersion != scrInfo.id) {
                         this.config.installedVersion = scrInfo.id
                         return this.saveConfigAsync();
-                    }
+                    } else return null
                 })
         }
     }

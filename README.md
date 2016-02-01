@@ -16,7 +16,7 @@ jake
 * [x] don't emit unused global vars
 * [x] testFiles: [ ... ] in yelm.json
 * [x] class methods
-* [ ] class field initializers
+* [ ] class field initializers (?)
 * [x] constructors
 * [ ] disallow direct references to class members (cannot copy JS semantics)
 * [x] optional arguments

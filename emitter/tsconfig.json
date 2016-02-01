@@ -2,6 +2,7 @@
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
+        "noImplicitReturns": true,
         "declaration": true,
         "out": "../built/emitter.js",
         "rootDir": ".",
