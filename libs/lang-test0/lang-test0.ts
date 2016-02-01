@@ -1,3 +1,56 @@
+
+//%  shim=uBit.panic
+function panic(code2: number): void {
+}
+
+//%  shim=micro_bit::showDigit
+function showDigit(code2: number): void {
+}
+
+function msg(s: string): void {
+    console.log(s)
+    basic.pause(50);
+}
+
+function assert(cond: boolean, msg_: string) {
+    if (!cond) {
+        msg("ASSERT: " + msg_);
+        panic(45);
+    }
+}
+
+class Foo {
+    pin: number;
+    buf: number[];
+    
+    setPin(p:number) {
+        let x = this
+        //this.pin = p
+    }
+    
+    getPin() {
+        return this.pin
+    }
+    
+    init() {
+        this.buf = [1, 2]
+    }
+}
+
+function testClass()
+{
+    let f = new Foo();
+    f.setPin(42)
+    assert(f.getPin() == 42, "getpin")
+}
+
+/*
+
+
+//
+// start tests
+//
+
 var glb1: number;
 var s2: string;
 var x: number;
@@ -36,7 +89,6 @@ testFunDecl();
 testDefaultArgs();
 testMemoryFree();
 testMemoryFreeHOF();
-showDigit(9);
 
 
 
@@ -99,14 +151,6 @@ function optstring2(x:number, s:string = null) {
     return x * 2;
 }
 
-/*
-//TD.basic.showLeds("0 1 0 1 0\n0 0 0 0 0\n0 0 1 0 0\n1 0 0 0 1\n0 1 1 1 0", 400);
-*/
-
-showDigit(1);
-
-msg("ALL TESTS OK")
-
 function testNums(): void {
     let x = 40 + 2;
     assert(x == 42, "add");
@@ -132,13 +176,6 @@ function testNums(): void {
 
 
 
-function assert(cond: boolean, msg_: string) {
-    if (!cond) {
-        msg("ASSERT: " + msg_);
-        panic(45);
-    }
-}
-
 function fib(p: number): number {
     if (p <= 2) {
         return p;
@@ -152,27 +189,6 @@ function doStuff(x: number, x2: number): number {
     return x3;
 }
 
-//%  shim=uBit.panic
-/**
- * Stop the micro:bit program and display given error code.
- */
-function panic(code2: number): void {
-}
-
-/**
- * Show the number
- */
-//%  shim=micro_bit::showDigit
-function showDigit(code2: number): void {
-}
-
-/**
- * Print message
- */
-function msg(s: string): void {
-    console.log(s)
-    basic.pause(50);
-}
 
 function testIf(): void {
     let b = false;
@@ -568,3 +584,11 @@ function allocImage() : void
 {
     let tmp = createObj();
 }
+
+
+
+showDigit(1);
+
+msg("ALL TESTS OK")
+
+*/

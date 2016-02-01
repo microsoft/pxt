@@ -216,6 +216,7 @@ function cmdDeploy() {
     cmdBuild(true)
 }
 
+
 function cmdBuild(deploy = false) {
     ensurePkgDir();
     mainPkg.buildAsync()

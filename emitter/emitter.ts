@@ -28,9 +28,18 @@ namespace ts.mbit {
     }
 
     function isRefDecl(def: Declaration) {
+        if ((<any>def).isThisParameter)
+            return true;
         //let tp = checker.getDeclaredTypeOfSymbol(def.symbol)
         let tp = typeOf(def)
         return isRefType(tp)
+    }
+   
+    function getEnclosingMethod(node: Node): MethodDeclaration {
+        if (!node) return null;
+        if (node.kind == SyntaxKind.MethodDeclaration)
+            return <MethodDeclaration>node;
+        return getEnclosingMethod(node.parent)
     }
 
     function getEnclosingFunction(node0: Node) {
@@ -41,7 +50,9 @@ namespace ts.mbit {
                 userError(lf("cannot determine parent of {0}", stringKind(node0)))
             if (node.kind == SyntaxKind.FunctionDeclaration ||
                 node.kind == SyntaxKind.ArrowFunction ||
-                node.kind == SyntaxKind.FunctionExpression) return <FunctionLikeDeclaration>node
+                node.kind == SyntaxKind.FunctionExpression ||
+                node.kind == SyntaxKind.MethodDeclaration)
+                return <FunctionLikeDeclaration>node
             if (node.kind == SyntaxKind.SourceFile) return null
         }
     }
@@ -90,7 +101,7 @@ namespace ts.mbit {
 
     function isClassType(t: Type) {
         // check if we like the class?
-        return (t.flags & TypeFlags.Class)
+        return (t.flags & TypeFlags.Class) || (t.flags & TypeFlags.ThisType)
     }
 
     function arrayElementType(t: Type): Type {
@@ -107,7 +118,8 @@ namespace ts.mbit {
     }
 
     function checkType(t: Type) {
-        let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean | TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null
+        let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
+            TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
@@ -135,6 +147,7 @@ namespace ts.mbit {
     interface FunctionInfo {
         capturedVars: VarOrParam[];
         location?: mbit.Location;
+        thisParameter?: ParameterDeclaration; // a bit bogus
     }
 
     export function emitMBit(program: Program, host: CompilerHost, opts: CompileOptions): EmitResult {
@@ -328,12 +341,16 @@ namespace ts.mbit {
             return info;
         }
 
+        function emitLocalLoad(decl: VarOrParam) {
+            let l = lookupLocation(decl)
+            recordUse(decl)
+            l.emitLoadByRef(proc)
+        }
+
         function emitIdentifier(node: Identifier) {
             let decl = getDecl(node)
             if (decl && (decl.kind == SyntaxKind.VariableDeclaration || decl.kind == SyntaxKind.Parameter)) {
-                let l = lookupLocation(decl)
-                recordUse(<VarOrParam>decl)
-                l.emitLoadByRef(proc)
+                emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SyntaxKind.FunctionDeclaration) {
                 let f = <FunctionDeclaration>decl
                 let info = getFunctionInfo(f)
@@ -349,9 +366,22 @@ namespace ts.mbit {
         }
 
         function emitParameter(node: ParameterDeclaration) { }
-        function emitMethod(node: MethodDeclaration) { }
+        function emitMethod(node: MethodDeclaration) {
+            emitFunctionDeclaration(node)
+        }
         function emitAccessor(node: AccessorDeclaration) { }
-        function emitThis(node: Node) { }
+        function emitThis(node: Node) {
+            let meth = getEnclosingMethod(node)
+            if (!meth)
+                userError("'this' used outside of a method")
+            let inf = getFunctionInfo(meth)
+            if (!inf.thisParameter) {
+                //console.log("get this param,", meth.kind, nodeKey(meth))
+                //console.log("GET", meth)
+                oops("no this")
+            }
+            return emitLocalLoad(inf.thisParameter)
+        }
         function emitSuper(node: Node) { }
         function emitLiteral(node: LiteralExpression) {
             if (node.kind == SyntaxKind.NumericLiteral) {
@@ -577,6 +607,9 @@ namespace ts.mbit {
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = node.arguments.slice(0)
 
+            if (!decl)
+                unhandled(node, "no declaration")
+
             function emitPlain() {
                 args.forEach(emit)
                 let mode = hasRet ? "F0" : "P0"
@@ -614,7 +647,7 @@ namespace ts.mbit {
                 }
             }
 
-            if (decl && decl.kind == SyntaxKind.FunctionDeclaration) {
+            if (decl.kind == SyntaxKind.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
                 if (!info.location) {
@@ -628,7 +661,8 @@ namespace ts.mbit {
                 }
             }
 
-            if (decl && decl.kind == SyntaxKind.MethodSignature) {
+            if (decl.kind == SyntaxKind.MethodSignature ||
+                decl.kind == SyntaxKind.MethodDeclaration) {
                 if (node.expression.kind == SyntaxKind.PropertyAccessExpression)
                     args.unshift((<PropertyAccessExpression>node.expression).expression)
                 else
@@ -648,14 +682,16 @@ namespace ts.mbit {
                     markUsed(decl)
                     emitPlain();
                     return
+                } else {
+                    markUsed(decl)
+                    emitPlain();
+                    return
                 }
-
-                unhandled(node, "non-shim method call");
             }
 
-            if (decl && (decl.kind == SyntaxKind.VariableDeclaration ||
+            if (decl.kind == SyntaxKind.VariableDeclaration ||
                 decl.kind == SyntaxKind.FunctionDeclaration || // this is lambda
-                decl.kind == SyntaxKind.Parameter)) {
+                decl.kind == SyntaxKind.Parameter) {
                 if (args.length > 1)
                     userError("lambda functions with more than 1 argument not supported")
 
@@ -704,6 +740,25 @@ namespace ts.mbit {
             emit(node.expression)
         }
 
+        function getParameters(node: FunctionLikeDeclaration) {
+            let res = node.parameters.slice(0)
+            if (node.kind == SyntaxKind.MethodDeclaration) {
+                let info = getFunctionInfo(node)
+                if (!info.thisParameter) {
+                    //console.log("set this param,", (<any>node.name).text, node.kind, nodeKey(node))
+                    //console.log("SET", node)
+                    info.thisParameter = <any>{
+                        kind: SyntaxKind.Parameter,
+                        name: { text: "this" },
+                        isThisParameter: true,
+                        parent: node
+                    }
+                }
+                res.unshift(info.thisParameter)
+            }
+            return res
+        }
+
         function emitLambdaWrapper(node: FunctionLikeDeclaration) {
             proc.emit("")
             proc.emit(".section code");
@@ -714,7 +769,9 @@ namespace ts.mbit {
             proc.emit("push {r5, lr}");
             proc.emit("mov r5, r1");
 
-            node.parameters.forEach((p, i) => {
+            let parms = getParameters(node)
+
+            parms.forEach((p, i) => {
                 if (i >= 2)
                     userError(lf("only up to two parameters supported in lambdas"))
                 proc.emit(`push {r${i + 2}}`)
@@ -727,8 +784,8 @@ namespace ts.mbit {
             proc.emitLbl(nxt)
 
             proc.emit("@stackempty args")
-            if (node.parameters.length)
-                proc.emit("add sp, #4*" + node.parameters.length + " ; pop args")
+            if (parms.length)
+                proc.emit("add sp, #4*" + parms.length + " ; pop args")
             proc.emit("pop {r5, pc}");
             proc.emit("@stackempty litfunc");
         }
@@ -815,7 +872,7 @@ namespace ts.mbit {
 
                 proc.pushLocals();
 
-                proc.args = node.parameters.map((p, i) => {
+                proc.args = getParameters(node).map((p, i) => {
                     let l = new mbit.Location(i, p, getVarInfo(p))
                     l.isarg = true
                     return l
@@ -1409,20 +1466,20 @@ namespace ts.mbit {
                 case SyntaxKind.TypeAliasDeclaration:
                     // skip
                     return
+                case SyntaxKind.MethodDeclaration:
+                    //case SyntaxKind.MethodSignature:
+                    return emitMethod(<MethodDeclaration>node);
+                case SyntaxKind.ThisKeyword:
+                    return emitThis(node);
                 default:
                     unhandled(node);
 
                 /*    
                 case SyntaxKind.Parameter:
                     return emitParameter(<ParameterDeclaration>node);
-                case SyntaxKind.MethodDeclaration:
-                case SyntaxKind.MethodSignature:
-                    return emitMethod(<MethodDeclaration>node);
                 case SyntaxKind.GetAccessor:
                 case SyntaxKind.SetAccessor:
                     return emitAccessor(<AccessorDeclaration>node);
-                case SyntaxKind.ThisKeyword:
-                    return emitThis(node);
                 case SyntaxKind.SuperKeyword:
                     return emitSuper(node);
                 case SyntaxKind.TemplateExpression:
@@ -1660,7 +1717,7 @@ namespace ts.mbit {
             iscap = false;
 
             constructor(public index: number, public def: Declaration, public info: VariableInfo) {
-                if (typeOf(this.def).flags & TypeFlags.Void) {
+                if (!isRefDecl(this.def) && typeOf(this.def).flags & TypeFlags.Void) {
                     oops("void-typed variable, " + this.toString())
                 }
             }
@@ -1795,6 +1852,7 @@ namespace ts.mbit {
             captured: Location[] = [];
             args: Location[] = [];
             binary: Binary;
+            parent: Procedure;
 
             hasReturn() {
                 let sig = checker.getSignatureFromDeclaration(this.action)

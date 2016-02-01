@@ -69,7 +69,7 @@ task('runprj', ['built/mbitsim.js', 'libs/lang-test0/built/microbit.js'], {async
 })
 
 file('libs/lang-test0/built/microbit.js', expand(['libs/mbit', 'libs/lang-test0', 'built/yelm.js']), {async:true}, function() {
-  cmdIn(this, "libs/lang-test0", 'node ../../built/yelm.js build')
+  cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js build')
 })
 
 catFiles('built/yelm.js', [
