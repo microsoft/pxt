@@ -15,7 +15,10 @@ jake
 * [x] only compile what's needed
 * [x] don't emit unused global vars
 * [x] testFiles: [ ... ] in yelm.json
-* [ ] class methods
+* [x] class methods
+* [ ] class field initializers
+* [ ] constructors
+* [ ] disallow direct references to class members (cannot copy JS semantics)
 * [x] optional arguments
 * [x] default arguments
 * [ ] +=, -= etc
