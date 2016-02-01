@@ -7,13 +7,13 @@ function showDigit(code2: number): void {
 }
 
 function msg(s: string): void {
-    console.log(s)
-    basic.pause(50);
+    //console.log(s)
+    //basic.pause(50);
 }
 
 function assert(cond: boolean, msg_: string) {
     if (!cond) {
-        msg("ASSERT: " + msg_);
+        console.log("ASSERT: " + msg_);
         panic(45);
     }
 }
@@ -37,19 +37,14 @@ console.log("Starting...")
 //lib.print_17(3);
 showDigit(0);
 //assert(lib3.getX() == 17 * 3, "");
-showDigit(3);
 testNums();
 testStrings();
 testNumCollection();
-showDigit(2);
 testStringCollection();
 testStringOps();
-showDigit(4);
 testReccoll();
-showDigit(5);
 inBg();
 testAction(1);
-showDigit(6);
 testAction(7);
 testIter();
 testActionSave();
@@ -88,7 +83,8 @@ assert(xyz == 13, "init2")
 
 testClass()
 showDigit(1);
-msg("ALL TESTS OK")
+
+console.log("ALL TESTS OK")
 
 
 function defaultArgs(x: number, y = 3, z = 7) {
@@ -131,10 +127,8 @@ function testNums(): void {
     assert(x == 42, "add");
     x = 40 / 2;
     assert(x == 20, "div");
-    showDigit(7);
     let r = fib(15);
     msg("FIB" + r);
-    showDigit(8);
     assert(r == 987, "fib");
     let x3 = doStuff(x, 2);
     assert(x3 == 10, "call order");
@@ -487,13 +481,9 @@ function byRefParam_2(pxx: number): void {
 }
 
 function testByRefParams(): void {
-    console.log("A0")
     refparamWrite("a" + "b");
-    console.log("A1")
     refparamWrite2(new Testrec());
-    console.log("A2")
     refparamWrite3(new Testrec());
-    console.log("A3")
     sum = 0;
     let x = 1;
     control.inBackground(() => {
