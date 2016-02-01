@@ -37,7 +37,7 @@ namespace ts.mbit {
 
     function getEnclosingMethod(node: Node): MethodDeclaration {
         if (!node) return null;
-        if (node.kind == SyntaxKind.MethodDeclaration)
+        if (node.kind == SyntaxKind.MethodDeclaration || node.kind == SyntaxKind.Constructor)
             return <MethodDeclaration>node;
         return getEnclosingMethod(node.parent)
     }
@@ -51,7 +51,8 @@ namespace ts.mbit {
             if (node.kind == SyntaxKind.FunctionDeclaration ||
                 node.kind == SyntaxKind.ArrowFunction ||
                 node.kind == SyntaxKind.FunctionExpression ||
-                node.kind == SyntaxKind.MethodDeclaration)
+                node.kind == SyntaxKind.MethodDeclaration ||
+                node.kind == SyntaxKind.Constructor)
                 return <FunctionLikeDeclaration>node
             if (node.kind == SyntaxKind.SourceFile) return null
         }
@@ -69,13 +70,15 @@ namespace ts.mbit {
         return d.kind == SyntaxKind.Parameter
     }
 
-    function isGlobalFunctionDecl(decl: Declaration) {
-        return decl.kind == SyntaxKind.FunctionDeclaration && !getEnclosingFunction(decl)
+    function isTopLevelFunctionDecl(decl: Declaration) {
+        return (decl.kind == SyntaxKind.FunctionDeclaration && !getEnclosingFunction(decl)) ||
+            decl.kind == SyntaxKind.MethodDeclaration ||
+            decl.kind == SyntaxKind.Constructor
     }
 
     function isOnDemandDecl(decl: Declaration) {
         return (isGlobalVar(decl) && !(<VariableDeclaration>decl).initializer) ||
-            isGlobalFunctionDecl(decl)
+            isTopLevelFunctionDecl(decl)
     }
 
     interface CommentAttrs {
@@ -136,6 +139,22 @@ namespace ts.mbit {
         if (!r) r = checker.getTypeAtLocation(node);
         return checkType(r)
     }
+
+    function getDeclName(node: Declaration) {
+        let text = node && node.name ? (<Identifier>node.name).text : null
+        if (!text && node.kind == SyntaxKind.Constructor)
+            text = "constructor"
+        if (node.parent && node.parent.kind == SyntaxKind.ClassDeclaration)
+            text = (<ClassDeclaration>node.parent).name.text + "." + text
+        text = text || "inline"
+        return text;
+    }
+
+    function getFunctionLabel(node: FunctionLikeDeclaration) {
+        let text = getDeclName(node)
+        return "_" + text.replace(/[^\w]+/g, "_") + "_" + getNodeId(node)
+    }
+
 
     type VarOrParam = VariableDeclaration | ParameterDeclaration;
 
@@ -366,9 +385,6 @@ namespace ts.mbit {
         }
 
         function emitParameter(node: ParameterDeclaration) { }
-        function emitMethod(node: MethodDeclaration) {
-            emitFunctionDeclaration(node)
-        }
         function emitAccessor(node: AccessorDeclaration) { }
         function emitThis(node: Node) {
             let meth = getEnclosingMethod(node)
@@ -600,6 +616,43 @@ namespace ts.mbit {
                     return false;
             }
         }
+        
+        function emitPlainCall(decl: Declaration, args: Expression[], hasRet = false) {
+            args.forEach(emit)
+            let mode = hasRet ? "F0" : "P0"
+            let lbl = proc.mkLabel("call")
+            proc.emit("bl " + getFunctionLabel(<FunctionLikeDeclaration>decl) + " ; *R " + lbl)
+            proc.emitLbl(lbl)
+            if (args.length > 0)
+                proc.emit("add sp, #4*" + args.length)
+            if (hasRet)
+                proc.emit("push {r0}");
+        }
+
+        function addDefaultParameters(sig: Signature, args: Expression[]) {
+            if (!sig) return;
+            let parms = sig.getParameters();
+            if (parms.length > args.length) {
+                parms.slice(args.length).forEach(p => {
+                    if (p.valueDeclaration &&
+                        p.valueDeclaration.kind == SyntaxKind.Parameter) {
+                        let prm = <ParameterDeclaration>p.valueDeclaration
+                        if (!prm.initializer) {
+                            args.push(<any>{
+                                kind: SyntaxKind.NullKeyword
+                            })
+                        } else {
+                            if (!isNumericLiteral(prm.initializer)) {
+                                userError("only numbers, null, true and false supported as default arguments")
+                            }
+                            args.push(prm.initializer)
+                        }
+                    } else {
+                        userError("unsupported default argument (shouldn't happen)")
+                    }
+                })
+            }
+        }
 
         function emitCallExpression(node: CallExpression) {
             let decl = getDecl(node.expression)
@@ -611,41 +664,10 @@ namespace ts.mbit {
                 unhandled(node, "no declaration")
 
             function emitPlain() {
-                args.forEach(emit)
-                let mode = hasRet ? "F0" : "P0"
-                let lbl = proc.mkLabel("call")
-                proc.emit("bl " + getFunctionLabel(<FunctionLikeDeclaration>decl) + " ; *R " + lbl)
-                proc.emitLbl(lbl)
-                if (args.length > 0)
-                    proc.emit("add sp, #4*" + args.length)
-                if (hasRet)
-                    proc.emit("push {r0}");
+                emitPlainCall(decl, args, hasRet)
             }
 
-            let sig = checker.getResolvedSignature(node)
-            if (sig) {
-                let parms = sig.getParameters();
-                if (parms.length > args.length) {
-                    parms.slice(args.length).forEach(p => {
-                        if (p.valueDeclaration &&
-                            p.valueDeclaration.kind == SyntaxKind.Parameter) {
-                            let prm = <ParameterDeclaration>p.valueDeclaration
-                            if (!prm.initializer) {
-                                args.push(<any>{
-                                    kind: SyntaxKind.NullKeyword
-                                })
-                            } else {
-                                if (!isNumericLiteral(prm.initializer)) {
-                                    userError("only numbers, null, true and false supported as default arguments")
-                                }
-                                args.push(prm.initializer)
-                            }
-                        } else {
-                            unhandled(node, "problems with default arguments")
-                        }
-                    })
-                }
-            }
+            addDefaultParameters(checker.getResolvedSignature(node), args);
 
             if (decl.kind == SyntaxKind.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
@@ -711,22 +733,32 @@ namespace ts.mbit {
             unhandled(node, stringKind(decl))
         }
 
-        function getFunctionLabel(node: FunctionLikeDeclaration) {
-            let text = node && node.name ? (<Identifier>node.name).text : null
-            text = text || "inline"
-            return "_" + text.replace(/[^\w]+/g, "_") + "_" + getNodeId(node)
-        }
         function emitNewExpression(node: NewExpression) {
             let t = typeOf(node)
             if (isArrayType(t)) {
                 oops();
             } else if (isClassType(t)) {
-                if (node.arguments && node.arguments.length)
-                    userError(lf("constructor arguments not supported"));
+                let classDecl = <ClassDeclaration>getDecl(node.expression)
+                if (classDecl.kind != SyntaxKind.ClassDeclaration) {
+                    userError("new expression only supported on class types")
+                }
+                let ctor = classDecl.members.filter(n => n.kind == SyntaxKind.Constructor)[0]                
                 let info = getClassInfo(t)
                 proc.emitInt(info.reffields.length)
                 proc.emitInt(info.allfields.length)
                 proc.emitCall("record::mk", 0)
+                if (ctor) {
+                    markUsed(ctor)
+                    proc.emitCallRaw("bitvm::incr")
+                    // here the record is still on stack
+                    let args = node.arguments.slice(0)
+                    addDefaultParameters(checker.getResolvedSignature(node), args)
+                    // this will emit and pop all arguments, and decrement the record ref count, but leave it on stack
+                    emitPlainCall(ctor, args, false)                    
+                } else {
+                    if (node.arguments && node.arguments.length)
+                        userError(lf("constructor with arguments not found"));
+                }
             } else {
                 unhandled(node)
             }
@@ -742,7 +774,7 @@ namespace ts.mbit {
 
         function getParameters(node: FunctionLikeDeclaration) {
             let res = node.parameters.slice(0)
-            if (node.kind == SyntaxKind.MethodDeclaration) {
+            if (node.kind == SyntaxKind.MethodDeclaration || node.kind == SyntaxKind.Constructor) {
                 let info = getFunctionInfo(node)
                 if (!info.thisParameter) {
                     info.thisParameter = <any>{
@@ -806,6 +838,8 @@ namespace ts.mbit {
 
             let info = getFunctionInfo(node)
 
+            let isExpression = node.kind == SyntaxKind.ArrowFunction || node.kind == SyntaxKind.FunctionExpression
+
             let isRef = (d: Declaration) => {
                 if (isRefDecl(d)) return true
                 let info = getVarInfo(d)
@@ -843,8 +877,7 @@ namespace ts.mbit {
                     info.location.emitStore(proc)
                 }
             } else {
-                if (node.kind != SyntaxKind.FunctionDeclaration &&
-                    node.kind != SyntaxKind.MethodDeclaration)
+                if (isExpression)
                     emitFunLit(node)
             }
 
@@ -1403,9 +1436,12 @@ namespace ts.mbit {
                     return emitModuleDeclaration(<ModuleDeclaration>node);
                 case SyntaxKind.EnumDeclaration:
                     return emitEnumDeclaration(<EnumDeclaration>node);
+                //case SyntaxKind.MethodSignature:
                 case SyntaxKind.FunctionDeclaration:
                 case SyntaxKind.FunctionExpression:
                 case SyntaxKind.ArrowFunction:
+                case SyntaxKind.Constructor:
+                case SyntaxKind.MethodDeclaration:
                     return emitFunctionDeclaration(<FunctionLikeDeclaration>node);
                 case SyntaxKind.ExpressionStatement:
                     return emitExpressionStatement(<ExpressionStatement>node);
@@ -1467,9 +1503,6 @@ namespace ts.mbit {
                 case SyntaxKind.TypeAliasDeclaration:
                     // skip
                     return
-                case SyntaxKind.MethodDeclaration:
-                    //case SyntaxKind.MethodSignature:
-                    return emitMethod(<MethodDeclaration>node);
                 case SyntaxKind.ThisKeyword:
                     return emitThis(node);
                 default:

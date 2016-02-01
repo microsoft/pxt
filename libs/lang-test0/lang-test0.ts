@@ -554,6 +554,10 @@ class Foo {
     pin: number;
     buf: number[];
     
+    constructor(k:number, l:number) {
+        this.pin = k - l
+    }
+    
     setPin(p:number) {
         this.pin = p
     }
@@ -569,7 +573,8 @@ class Foo {
 
 function testClass()
 {
-    let f = new Foo();
+    let f = new Foo(272, 100);
+    assert(f.getPin() == 172, "ctor")
     f.setPin(42)
     assert(f.getPin() == 42, "getpin")
 }
