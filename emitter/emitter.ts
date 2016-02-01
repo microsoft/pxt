@@ -494,14 +494,18 @@ namespace ts.mbit {
             if (!node) return {}
             let cmt = getComments(node)
             let res = {}
-            cmt = cmt.replace(/\{(\w+):([^{}]+)\}/g, (f: string, n: string, v: string) => {
-                (<any>res)[n] = v;
-                return ""
-            })
-            cmt = cmt.replace(/\{(\w+)\}/g, (f: string, n: string) => {
-                (<any>res)[n] = true;
-                return ""
-            })
+            let didSomething = true
+            while (didSomething) {
+                didSomething = false
+                cmt = cmt.replace(/\/\/%[ \t]*(\w+)(=("([^"\n]+)"|'([^'\n]+)'|([^\s]+)))?/,
+                    (f: string, n: string, d0: string, d1: string,
+                        v0: string, v1: string, v2: string) => {
+                        let v = d0 ? (v0 || v1 || v2) : "true";
+                        (<any>res)[n] = v;
+                        didSomething = true
+                        return "//% "
+                    })
+            }
             return res
         }
         function isRefExpr(e: Expression) {

@@ -4,32 +4,32 @@ interface Array<T> {
     /**
       * Gets or sets the length of the array. This is a number one higher than the highest element defined in an array.
       */
-    // {shim:collection::count}
+    //% shim=collection::count
     length: number;
 
     /**
       * Appends new elements to an array.
       * @param items New elements of the Array.
       */
-    // {shim:collection::add}
+    //% shim=collection::add
     push(item: T): void;
     
     /**
       * Removes the last element from an array and returns it.
       */
-    // {helper:arrayPop}
+    //% helper=arrayPop
     pop(): T;
 
     /**
       * Reverses the elements in an Array. 
       */
-    // {helper:arrayReverse}
+    //% helper=arrayReverse
     reverse(): void;
     
     /**
       * Removes the first element from an array and returns it.
       */
-    // {helper:arrayShift}
+    //% helper=arrayShift
     shift(): T;
     
     /** 
@@ -37,15 +37,15 @@ interface Array<T> {
       * @param start The beginning of the specified portion of the array.
       * @param end The end of the specified portion of the array.
       */
-    // {helper:arraySlice}
+    //% helper=arraySlice
     slice(start: number, end: number): T[];
 
     /** Removes the first occurence of an object. Returns true if removed. */
-    // {shim:collection::remove}
+    //% shim=collection::remove
     removeElement(element:T) : boolean;
     
     /** Removes the object at position index. */
-    // {shim:collection::remove_at}
+    //% shim=collection::remove_at
     removeAt(idx:number) : void;
     
     
@@ -54,14 +54,14 @@ interface Array<T> {
       * @param start The zero-based location in the array from which to start removing elements.
       * @param deleteCount The number of elements to remove.
       */
-    // {helper:arraySplice}
+    //% helper=arraySplice
     splice(start: number, deleteCount: number): void;
 
     /**
       * Inserts new elements at the start of an array.
       * @param items  Elements to insert at the start of the Array.
       */
-    // {helper:arrayUnshift}
+    //% helper=arrayUnshift
     unshift(item:T): void;
 
     /**
@@ -69,7 +69,7 @@ interface Array<T> {
       * @param searchElement The value to locate in the array.
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
-    // {shim:collection::index_of}
+    //% shim=collection::index_of
     indexOf(searchElement: T, fromIndex?: number): number;
 
 
@@ -175,21 +175,21 @@ interface String {
       * Returns the character at the specified index.
       * @param pos The zero-based index of the desired character.
       */
-    // {shim:string::at}
+    //% shim=string::at
     charAt(pos: number): string;
 
     /** 
       * Returns the Unicode value of the character at the specified location.
       * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
       */
-    // {shim:string::code_at}
+    //% shim=string::code_at
     charCodeAt(index: number): number;
 
     /**
       * Returns a string that contains the concatenation of two or more strings.
       * @param strings The strings to append to the end of the string.  
       */
-    // {shim:string::concat}
+    //% shim=string::concat
     concat(other: string): string;
 
     /**
@@ -241,10 +241,10 @@ interface String {
     toLocaleUpperCase(): string;
 
     /** Returns the length of a String object. */
-    // {shim:string::count}
+    //% shim=string::count
     length: number;
 
-    // {shim:string::at}
+    //% shim=string::at
     [index: number]: string;
 }
 
@@ -253,7 +253,7 @@ interface String {
   * Converts A string to an integer.
   * @param s A string to convert into a number.
   */
-  // {shim:string::to_number}
+  //% shim=string::to_number
 declare function parseInt(s: string): number;
 
 
@@ -284,7 +284,7 @@ interface Number {
     /**
       * Returns a string representation of an object.
       */
-    // {shim:number::to_string}
+    //% shim=number::to_string
     toString(): string;
 }
 
@@ -331,26 +331,26 @@ declare namespace Math {
       * For example, the absolute value of -5 is the same as the absolute value of 5.
       * @param x A numeric expression for which the absolute value is needed.
       */
-    // {shim:math::abs}
+    //% shim=math::abs
     export function abs(x: number): number;
     
     /**
       * Returns the sign of the x, indicating whether x is positive, negative or zero.
       * @param x The numeric expression to test
       */
-    // {shim:math::sign}
+    //% shim=math::sign
     export function sign(x: number): number;
     
     /**
       * Returns the larger of two supplied numeric expressions. 
       */
-    // {shim:math::max}
+    //% shim=math::max
     export function max(a:number, b:number): number;
     
     /**
       * Returns the smaller of two supplied numeric expressions. 
       */
-    // {shim:math::min}
+    //% shim=math::min
     export function min(a:number, b:number): number;
     
     /**
@@ -358,17 +358,17 @@ declare namespace Math {
       * @param x The base value of the expression.
       * @param y The exponent value of the expression.
       */
-    // {shim:math::pow}
+    //% shim=math::pow
     export function pow(x: number, y: number): number;
     
     /** Returns a pseudorandom number between 0 and `max`. */
-    // {shim:math::random}
+    //% shim=math::random
     export function random(max:number): number;
     
     /**
       * Returns the square root of a number.
       * @param x A numeric expression.
       */
-    // {shim:math::sqrt}
+    //% shim=math::sqrt
     export function sqrt(x: number): number;
 }

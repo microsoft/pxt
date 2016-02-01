@@ -158,17 +158,17 @@ function doStuff(x: number, x2: number): number {
     return x3;
 }
 
+//%  shim=uBit.panic
 /**
  * Stop the micro:bit program and display given error code.
- * {shim:uBit.panic}
  */
 function panic(code2: number): void {
 }
 
 /**
  * Show the number
- * {shim:micro_bit::showDigit}
  */
+//%  shim=micro_bit::showDigit
 function showDigit(code2: number): void {
 }
 
@@ -198,13 +198,6 @@ function testIf(): void {
     assert(glb1 == 8, "glb3");
 }
 
-/**
- * {shim:TD_ID}
- * {enum:s:one=1,two=2,three=3}
- */
-function tdid(s: string): number {
-    return 0;
-}
 
 function incrBy_2(): void {
     glb1 = glb1 + 2;
