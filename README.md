@@ -24,8 +24,10 @@ jake
 * [ ] clear variables when they get out of scope to limit memory usage
 * [x] function f() {...}; control.inBackground(f) in local scope
 * [x] function f() {...}; control.inBackground(f) in global scope
-* [ ] @mbit shim=... weight=... help=... etc insteaf of {shim:...}
+* [x] //% shim=... weight=... help=... etc insteaf of {shim:...}
 * [ ] bit operators (&, |, etc)
+* [ ] inline assembly
+* [ ] use "(x + y) | 0" etc instead of "x + y"
 
 ## Yelm
 
