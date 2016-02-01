@@ -1,4 +1,3 @@
-
 //%  shim=uBit.panic
 function panic(code2: number): void {
 }
@@ -18,34 +17,6 @@ function assert(cond: boolean, msg_: string) {
         panic(45);
     }
 }
-
-class Foo {
-    pin: number;
-    buf: number[];
-    
-    setPin(p:number) {
-        let x = this
-        //this.pin = p
-    }
-    
-    getPin() {
-        return this.pin
-    }
-    
-    init() {
-        this.buf = [1, 2]
-    }
-}
-
-function testClass()
-{
-    let f = new Foo();
-    f.setPin(42)
-    assert(f.getPin() == 42, "getpin")
-}
-
-/*
-
 
 //
 // start tests
@@ -114,6 +85,10 @@ function incrXyz() {
 var unusedInit = incrXyz();
 
 assert(xyz == 13, "init2")
+
+testClass()
+showDigit(1);
+msg("ALL TESTS OK")
 
 
 function defaultArgs(x: number, y = 3, z = 7) {
@@ -585,10 +560,28 @@ function allocImage() : void
     let tmp = createObj();
 }
 
+class Foo {
+    pin: number;
+    buf: number[];
+    
+    setPin(p:number) {
+        this.pin = p
+    }
+    
+    getPin() {
+        return this.pin
+    }
+    
+    init() {
+        this.buf = [1, 2]
+    }
+}
+
+function testClass()
+{
+    let f = new Foo();
+    f.setPin(42)
+    assert(f.getPin() == 42, "getpin")
+}
 
 
-showDigit(1);
-
-msg("ALL TESTS OK")
-
-*/

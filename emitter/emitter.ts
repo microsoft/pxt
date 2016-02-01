@@ -34,7 +34,7 @@ namespace ts.mbit {
         let tp = typeOf(def)
         return isRefType(tp)
     }
-   
+
     function getEnclosingMethod(node: Node): MethodDeclaration {
         if (!node) return null;
         if (node.kind == SyntaxKind.MethodDeclaration)
@@ -745,8 +745,6 @@ namespace ts.mbit {
             if (node.kind == SyntaxKind.MethodDeclaration) {
                 let info = getFunctionInfo(node)
                 if (!info.thisParameter) {
-                    //console.log("set this param,", (<any>node.name).text, node.kind, nodeKey(node))
-                    //console.log("SET", node)
                     info.thisParameter = <any>{
                         kind: SyntaxKind.Parameter,
                         name: { text: "this" },
@@ -845,7 +843,8 @@ namespace ts.mbit {
                     info.location.emitStore(proc)
                 }
             } else {
-                if (node.kind != SyntaxKind.FunctionDeclaration)
+                if (node.kind != SyntaxKind.FunctionDeclaration &&
+                    node.kind != SyntaxKind.MethodDeclaration)
                     emitFunLit(node)
             }
 
@@ -1377,6 +1376,8 @@ namespace ts.mbit {
         }
 
         function emit(node: Node) {
+            //if (proc)
+            //    proc.emit(";" + stringKind(node))
             try {
                 emitNodeCore(node);
             } catch (e) {

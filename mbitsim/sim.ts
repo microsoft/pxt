@@ -5,7 +5,7 @@
 let fs = require("fs");
 
 namespace rt {
-    let quiet = true;
+    let quiet = false;
 
     function check(cond: boolean) {
         if (!cond)
