@@ -473,8 +473,13 @@ namespace rt {
 }
 
 namespace rt {
-    export type LabelFn = (n: number) => void;
+    export type LabelFn = (n: number) => CodePtr;
     export type ResumeFn = (v?: any) => void;
+
+    export interface CodePtr {
+        fn: LabelFn;
+        pc: number;
+    }
 
     interface LR {
         caller: LR;
@@ -537,7 +542,13 @@ namespace rt {
             return mem[sp - 4]
         }
 
-        function actionCall(fn: LabelFn, retPC: number, cb?: ResumeFn) {
+        function loop(p: CodePtr) {
+            while (!!p) {
+                p = p.fn(p.pc)
+            }
+        }
+
+        function actionCall(fn: LabelFn, retPC: number, cb?: ResumeFn): CodePtr {
             lr = {
                 caller: lr,
                 retPC: retPC,
@@ -545,10 +556,10 @@ namespace rt {
                 baseSP: sp,
                 finalCallback: cb
             }
-            fn(0)
+            return { fn, pc: 0 }
         }
 
-        function leave(v: any) {
+        function leave(v: any): CodePtr {
             let topLr = lr
             lr = lr.caller
             let popped = pop()
@@ -556,7 +567,7 @@ namespace rt {
             rr0 = v;
             if (topLr.finalCallback)
                 topLr.finalCallback(v);
-            return lr.currFn(topLr.retPC);
+            return { fn: lr.currFn, pc: topLr.retPC }
         }
 
         function setupTop(cb: ResumeFn) {
@@ -575,13 +586,14 @@ namespace rt {
                     free(stackTop)
                     if (cb)
                         cb(rr0)
+                    return null
                 }
             }
         }
 
         function topCall(fn: LabelFn, cb: ResumeFn) {
             setupTopCore(cb)
-            actionCall(fn, 0)
+            loop(actionCall(fn, 0))
         }
 
         function storeRegs() {
@@ -612,10 +624,10 @@ namespace rt {
                     rr1 = w.a1
                     rr2 = w.a2
                     rr3 = w.a3
-                    return actionCall(w.func, retPC, w.cb)
+                    return loop(actionCall(w.func, retPC, w.cb))
                 }
                 rr0 = v;
-                return lr.currFn(retPC)
+                return loop({ fn: lr.currFn, pc: retPC })
             }
         }
 

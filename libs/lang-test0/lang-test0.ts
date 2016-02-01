@@ -34,6 +34,11 @@ testRefLocals();
 testByRefParams();
 testFunDecl();
 testDefaultArgs();
+testMemoryFree();
+testMemoryFreeHOF();
+showDigit(9);
+
+
 
 // test some top-level code
 let xsum = 0;
@@ -95,17 +100,6 @@ function optstring2(x:number, s:string = null) {
 }
 
 /*
-msg("start mem test");
-testMemoryFree();
-msg("start 2nd mem test");
-testMemoryFreeHOF();
-msg("stop mem test");
-assert(enumAdd("two", 2) == 4, "enum");
-let x = enumAdd2("size", 0);
-assert(x == 10, "enum2");
-assert(enumAdd2("pi", 0) == 3, "enum3");
-assert(tdid("two") == 2, "tdid");
-showDigit(9);
 //TD.basic.showLeds("0 1 0 1 0\n0 0 0 0 0\n0 0 1 0 0\n1 0 0 0 1\n0 1 1 1 0", 400);
 */
 
@@ -545,9 +539,6 @@ function refparamWrite3(testrec: Testrec): void {
 }
 
 
-/*
-
-
 function testMemoryFree() : void
 {
     for (let i = 0; i < 1000; i++) {
@@ -560,18 +551,20 @@ function runOnce(fn:Action) : void
     fn();
 }
 
+function createObj() {
+    return new Testrec();
+}
+
 function testMemoryFreeHOF() : void
 {
     for (let i = 0; i < 1000; i++) {
         runOnce(() => {
-            // let img = image.createImage("0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1\n0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0\n0 0 1 1 0 0 0 1 1 0 0 0 1 1 0 0 0 1 1 0\n0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0");
+            let tmp = createObj();
         });
     }
 }
 
 function allocImage() : void
 {
-    // let img = image.createImage("0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1\n0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0\n0 0 1 1 0 0 0 1 1 0 0 0 1 1 0 0 0 1 1 0\n0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0");
+    let tmp = createObj();
 }
-
-*/
