@@ -1,0 +1,32 @@
+declare var require:any;
+var PouchDB = require("pouchdb")
+import * as Promise from "bluebird";
+
+let db = new PouchDB("mbit", { revs_limit: 2 })
+
+export class Table {    
+    constructor(public name:string)
+    {
+    }
+    
+    getAsync(id:string):Promise<any> {
+        return db.get(this.name + "--" + id).then((v:any) => {
+            v.id = id
+            return v
+        })
+    }
+    
+    getAllAsync():Promise<any[]> {
+        return db.allDocs({
+            include_docs: true,
+            startkey: this.name + "--",
+            endkey: this.name + "--\uffff"
+        }).then((resp:any) => resp.rows)
+    }
+    
+    setAsync(obj:any):Promise<string> {
+        if (obj.id && !obj._id)
+            obj._id = this.name + "--" + obj.id
+        return db.put(obj).then((resp:any) => resp.rev)
+    }
+} 
