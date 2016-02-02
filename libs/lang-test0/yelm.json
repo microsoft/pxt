@@ -7,6 +7,6 @@
         "lang-test0.ts"
     ],
     "dependencies": {
-        "mbit": "*"
+        "mbit": "file:../mbit"
     }
 }

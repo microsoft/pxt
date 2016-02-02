@@ -139,24 +139,23 @@ function getBitDrivesAsync(): Promise<string[]> {
 
 class Host
     implements yelm.Host {
-    resolve(module: string, filename: string) {
-        if (module == "this")
+    resolve(module: yelm.Package, filename: string) {
+        if (module.level == 0)
             return "./" + filename
-        else if (this.hasLocalPackage(module))
-            return "../" + module + "/" + filename
+        else if (module.verProtocol() == "file")
+            return module.verArgument() + "/" + filename
         else
             return "yelm_modules/" + module + "/" + filename
     }
 
-    readFileAsync(module: string, filename: string): Promise<string> {
+    readFileAsync(module: yelm.Package, filename: string): Promise<string> {
         return (<Promise<string>>readFileAsync(this.resolve(module, filename), "utf8"))
             .then(txt => txt, err => {
-                //console.log(err.message)
                 return null
             })
     }
 
-    writeFileAsync(module: string, filename: string, contents: string): Promise<void> {
+    writeFileAsync(module: yelm.Package, filename: string, contents: string): Promise<void> {
         let p = this.resolve(module, filename)
         let check = (p: string) => {
             let dir = p.replace(/\/[^\/]+$/, "")
@@ -174,20 +173,25 @@ class Host
         return Promise.resolve(require(__dirname + "/../generated/hexinfo.js"))
     }
 
-    localPkgs: Util.StringMap<number> = null;
+    downloadPackageAsync(pkg: yelm.Package) {
+        let proto = pkg.verProtocol()
 
-    hasLocalPackage(name: string) {
-        if (!this.localPkgs) {
-            this.localPkgs = {}
-            let files = fs.readdirSync("..")
-            if (files.indexOf("yelmlocal.json") >= 0) {
-                files.forEach(f => {
-                    if (fs.existsSync("../" + f + "/" + yelm.configName))
-                        this.localPkgs[f] = 1;
-                })
-            }
-        }
-        return this.localPkgs.hasOwnProperty(name)
+        if (proto == "pub")
+            return Cloud.privateRequestAsync({ url: pkg.verArgument() + "/text" })
+                .then(resp =>
+                    Util.mapStringMapAsync(JSON.parse(resp.text), (fn: string, cont: string) => {
+                        if (fn == yelm.configName) {
+                            return pkg.updateConfigAsync(cont)
+                        }
+                        return pkg.host().writeFileAsync(pkg, fn, cont)
+                    }))
+                .then(() => { })
+         else if (proto == "file") {
+             console.log(`skip download of local pkg: ${pkg.version()}`)
+             return Promise.resolve()
+         } else {
+             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
+         }
     }
 }
 
@@ -221,7 +225,7 @@ function cmdBuild(deploy = false) {
     ensurePkgDir();
     mainPkg.buildAsync()
         .then(res => Util.mapStringMapAsync(res.outfiles, (fn, c) =>
-            mainPkg.host().writeFileAsync("this", "built/" + fn, c))
+            mainPkg.host().writeFileAsync(mainPkg, "built/" + fn, c))
             .then(() => {
                 reportDiagnostics(res.diagnostics);
                 if (!res.success) process.exit(1)
