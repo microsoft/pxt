@@ -16,9 +16,6 @@
     },
     "ace/ace.d.ts": {
       "commit": "717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf"
-    },
-    "bluebird/bluebird.d.ts": {
-      "commit": "e5b11858676f54051a890ca63f9c06ab6f515251"
     }
   }
 }

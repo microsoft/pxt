@@ -95,10 +95,16 @@ function sha256(hashData: string): string {
     return sha;
 }
 
+
 function init() {
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
     Util.sha256 = sha256;
+    Util.getRandomBuf = buf => {
+        let tmp = crypto.randomBytes(buf.length)
+        for (let i = 0; i < buf.length; ++i)
+            buf[i] = tmp[i]
+    }
 }
 
 init();

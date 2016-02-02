@@ -6,16 +6,19 @@ import * as db from "./db";
 let headers = new db.Table("header")
 let texts = new db.Table("text")
 
-export interface Header {
-    _rev: string;
-    id: string; // guid
+export interface InstallHeader {
     name: string;
     scriptId: string; // for published scripts
-    cloudSnapshot: string; // blob name for cloud version
     meta: any;
     status: string;
-    recentUse: number; // seconds since epoch
     editor: string;
+}
+
+export interface Header extends InstallHeader {
+    _rev: string;
+    id: string; // guid
+    recentUse: number; // seconds since epoch
+    cloudSnapshot: string; // blob name for cloud version
 }
 
 export interface ScriptText {
@@ -50,6 +53,13 @@ export class PromiseQueue {
 let headerQ = new PromiseQueue();
 let lastTextRev: Util.StringMap<string> = {}
 
+export function resetAsync() {
+    return db.db.destroy()
+        .then(() => {
+            window.localStorage.clear()
+        })
+}
+
 export function getTextAsync(id: string): Promise<ScriptText> {
     return headerQ.enqueue(id, () =>
         texts.getAsync(id)
@@ -68,6 +78,36 @@ export function updateAsync(h: Header, text?: ScriptText) {
     if (text)
         h.status = "unpublished"
     return saveCoreAsync(h, text)
+}
+
+export function installAsync(h0: InstallHeader, text: ScriptText) {
+    let h = <Header>h0
+    h.id = Util.guidGen();
+    h.recentUse = nowSeconds()
+    text.id = h.id
+    return saveCoreAsync(h, text)
+        .then(() => {
+            allHeaders.push(h)
+        })
+}
+
+export function installByIdAsync(id: string) {
+    return Cloud.privateGetAsync(id)
+        .then((scr: Cloud.JsonScript) =>
+            Cloud.getScriptFilesAsync(scr.id)
+                .then(files => installAsync(
+                    {
+                        name: scr.name,
+                        scriptId: id,
+                        meta: scr.meta,
+                        status: "published",
+                        editor: scr.editor
+                    },
+                    {
+                        _rev: undefined,
+                        id: undefined,
+                        files: files
+                    })))
 }
 
 function saveCoreAsync(h: Header, text?: ScriptText) {

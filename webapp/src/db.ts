@@ -2,7 +2,7 @@ declare var require:any;
 var PouchDB = require("pouchdb")
 import * as Promise from "bluebird";
 
-let db = new PouchDB("mbit", { revs_limit: 2 })
+export let db = new PouchDB("mbit", { revs_limit: 2 })
 
 export class Table {    
     constructor(public name:string)
@@ -21,7 +21,7 @@ export class Table {
             include_docs: true,
             startkey: this.name + "--",
             endkey: this.name + "--\uffff"
-        }).then((resp:any) => resp.rows)
+        }).then((resp:any) => resp.rows.map((e:any) => e.doc))
     }
     
     setAsync(obj:any):Promise<string> {
