@@ -7,6 +7,7 @@ SEMJS = behaviors/api.js behaviors/colorize.js behaviors/form.js behaviors/state
 all: built/style.css built/semantic.js
 	cp node_modules/jquery/dist/jquery.js built/
 	cp ../built/yelmlib.js built/
+	cp ../node_modules/typescript/lib/typescript.js built/
 	node node_modules/typescript/lib/tsc
 	node node_modules/browserify/bin/cmd built/src/app.js -o built/main.js
 

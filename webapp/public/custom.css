@@ -1,10 +1,18 @@
 #filelist {
   position: absolute;
   left: 0;
-  top: 0;
+  top: 60px;
   bottom: 0;
   width: 300px;
   padding: 1em;
+}
+
+#menubar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 50px;    
 }
 
 #filelist .menu {
@@ -14,7 +22,7 @@
 #maineditor {
   position: absolute;
   right: 0;
-  top: 0;
+  top: 60px;
   bottom: 0;
   left: 300px;
 }

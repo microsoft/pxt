@@ -2,6 +2,7 @@ declare var require:any;
 var PouchDB = require("pouchdb")
 import * as Promise from "bluebird";
 
+(window as any).Promise = Promise;
 export let db = new PouchDB("mbit", { revs_limit: 2 })
 
 export class Table {    

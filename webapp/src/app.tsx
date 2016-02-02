@@ -18,7 +18,33 @@ interface IAppState {
     currFile?: string;
 }
 
+class Host
+    implements yelm.Host {
+
+    readFileAsync(module: string, filename: string): Promise<string> {
+        if (module != "this")
+            return Promise.resolve(null as string)
+        if (theEditor.state.text) {
+            return Promise.resolve(theEditor.state.text.files[filename] || null)
+        } else return Promise.resolve(null as string)
+    }
+
+    writeFileAsync(module: string, filename: string, contents: string): Promise<void> {
+        throw Util.oops("trying to write " + module + " / " + filename)
+    }
+
+    getHexInfoAsync() {
+        return Promise.resolve(require("../../../generated/hexinfo.js"))
+    }
+
+    hasLocalPackage(name: string) {
+        return false;
+    }
+}
+
 let theEditor: Editor;
+let theHost = new Host();
+let mainPkg = new yelm.MainPackage(theHost);
 
 class Editor extends React.Component<IAppProps, IAppState> {
 
@@ -83,6 +109,14 @@ class Editor extends React.Component<IAppProps, IAppState> {
             })
     }
 
+    compile() {
+        mainPkg.buildAsync()
+            .then(resp => {
+                console.log(resp)
+            })
+            .done()
+    }
+
     public render() {
         theEditor = this;
         let files = this.getFiles().map(fn =>
@@ -96,8 +130,18 @@ class Editor extends React.Component<IAppProps, IAppState> {
 
         return (
             <div id='root'>
+                <div id="menubar">
+                    <div className="ui menu">
+                        <div className="item">
+                            <button className="ui primary button"
+                                onClick={() => this.compile() }>
+                                Compile
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div id="filelist">
-                    <div className="ui vertical pointing menu">
+                    <div className="ui secondary vertical pointing menu">
                         {files}
                     </div>
                 </div>
