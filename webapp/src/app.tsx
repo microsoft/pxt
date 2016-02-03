@@ -85,7 +85,7 @@ class Settings extends React.Component<ISettingsProps, ISettingsState> {
                         <label>Font size</label>
                         <select className="ui selection dropdown " value={par.state.fontSize}
                             onChange={fontSize}>
-                            {Object.keys(sizes).map(k => <option value={k}>{sizes[k]}</option>) }
+                            {Object.keys(sizes).map(k => <option key={k} value={k}>{sizes[k]}</option>) }
                         </select>
                     </div>
                 </div>
@@ -203,7 +203,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
 
         let filesWithHeader = (pkg: pkg.EditorPackage) =>
             pkg.yelmPkg.level == 0 ? filesOf(pkg) : [
-                <div className="header item">
+                <div key={"hd-" + pkg.yelmPkg.id} className="header item">
                     <i className="folder icon"></i>
                     {pkg.yelmPkg.id}
                 </div>

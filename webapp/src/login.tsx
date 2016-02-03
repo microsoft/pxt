@@ -90,10 +90,16 @@ export class LoginBox extends apicache.RestComponent<ILoginBoxProps, ILoginBoxSt
                         <div className="menu">
                             {Cloud.isLoggedIn() ?
                                 [
-                                    <div className="item" onClick={() => this.signout() }><i className="sign out icon"></i> Sign out</div>,
-                                    <div className="item" onClick={() => this.options() }><i className="settings icon"></i> Account options</div>
+                                    <div key="signout" className="item" onClick={() => this.signout() }>
+                                        <i className="sign out icon"></i> Sign out
+                                    </div>,
+                                    <div key="settings" className="item" onClick={() => this.options() }>
+                                        <i className="settings icon"></i> Account options
+                                    </div>
                                 ] : [
-                                    <div className="item" onClick={() => this.signin() }><i className="sign in icon"></i> Sign in</div>
+                                    <div key="signin" className="item" onClick={() => this.signin() }>
+                                        <i className="sign in icon"></i> Sign in
+                                    </div>
                                 ]}
                         </div>
                     </div>
