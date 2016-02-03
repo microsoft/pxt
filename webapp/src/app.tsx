@@ -34,7 +34,7 @@ interface ISettingsProps {
     parent: Editor;
 }
 
-class Settings extends React.Component<ISettingsProps, ISettingsState> {
+class Settings extends core.Component<ISettingsProps, ISettingsState> {
     state: ISettingsState;
     constructor(props: ISettingsProps) {
         super(props);
@@ -43,20 +43,21 @@ class Settings extends React.Component<ISettingsProps, ISettingsState> {
     }
 
     componentDidMount() {
-        $('#settings > .button').popup({
+        this.child(".popup-button").popup({
             position: "bottom right",
+            on: "click",
             hoverable: true,
             delay: {
                 show: 50,
                 hide: 1000
             }
         });
-        $('#settings .ui.dropdown').dropdown();
+        this.child(".ui.dropdown").dropdown();
     }
 
     componentDidUpdate() {
-        $('#settings > .button').popup('refresh');
-        $('#settings .ui.dropdown').dropdown('refresh');
+        this.child(".popup-button").popup('refresh');
+        this.child(".ui.dropdown").dropdown('refresh');
     }
 
 
@@ -70,7 +71,7 @@ class Settings extends React.Component<ISettingsProps, ISettingsState> {
         let fontSize = (ev: React.FormEvent) => par.setState({ fontSize: (ev.target as HTMLInputElement).value })
         return (
             <div id='settings'>
-                <div className="ui orange icon button">
+                <div className="ui orange icon button popup-button">
                     <i className="settings icon"></i>
                 </div>
                 <div className="ui popup transition hidden form">
