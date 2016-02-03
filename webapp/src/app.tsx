@@ -27,7 +27,6 @@ interface IAppState {
 var theEditor: Editor;
 
 interface ISettingsState {
-    dropped?: boolean;
 }
 
 interface ISettingsProps {
@@ -94,6 +93,62 @@ class Settings extends core.Component<ISettingsProps, ISettingsState> {
         );
     }
 }
+
+class SlotSelector extends core.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+        };
+    }
+
+    componentDidMount() {
+        this.child(".ui.dropdown").dropdown();
+    }
+
+    componentDidUpdate() {
+        this.child(".ui.dropdown").dropdown('refresh');
+    }
+
+
+    public render() {
+        let par = this.props.parent
+        let headers = workspace.allHeaders.filter(h => !h.isDeleted)
+        headers.sort((a, b) => b.recentUse - a.recentUse)
+        let chgHeader = (ev: React.FormEvent) => {
+            let id = (ev.target as HTMLInputElement).value
+            par.loadHeader(headers.filter(h => h.id == id)[0])
+        }
+        let hd = par.state.header
+        return (
+            <div id='slotselector'>
+                <select className="ui selection search dropdown" value={hd ? hd.id : ""}
+                    onChange={chgHeader}>
+                    {headers.map(h =>
+                        <option key={h.id} value={h.id}>
+                            <b>Foo</b>
+                            {h.name || "no name"}
+                        </option>
+                    ) }
+                </select>
+            </div>
+        );
+    }
+}
+
+/*
+                <div className="ui fluid search selection dropdown">
+                    <i className="dropdown icon"></i>
+                    <div className="default text">Select Project</div>
+                    <div className="menu" value={hd ? hd.id : ""} onChange={chgHeader}>
+                        {headers.map(h =>
+                            <div className="item" key={h.id} onClick={}>
+                                {h.name || "no name"}
+                            </div>
+                        ) }
+                    </div>
+                </div>
+*/
+
 
 class Editor extends React.Component<IAppProps, IAppState> {
     editor: AceAjax.Editor;
@@ -221,6 +276,9 @@ class Editor extends React.Component<IAppProps, IAppState> {
                                 onClick={() => this.compile() }>
                                 Compile
                             </button>
+                        </div>
+                        <div className="item">
+                            <SlotSelector parent={this} />
                         </div>
                         <div className="item right">
                             <LoginBox />

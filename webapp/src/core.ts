@@ -47,3 +47,7 @@ export function parseQueryString(qs: string) {
     return r
 }
 
+export function errorNotification(msg:string) {
+    console.log("ERROR", msg)
+}
+

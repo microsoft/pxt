@@ -94,5 +94,11 @@ export function allEditorPkgs() {
 export function loadPkgAsync(id: string) {
     mainPkg = new yelm.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id
-    return mainPkg.installAllAsync()
+    
+    return theHost.downloadPackageAsync(mainPkg)
+        .then(() => theHost.readFileAsync(mainPkg, yelm.configName))     
+        .then(str => {
+            if (!str) return Promise.resolve()
+            return mainPkg.installAllAsync()
+        })
 }

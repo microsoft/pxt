@@ -187,6 +187,10 @@ interface InstalledHeaders {
     blobcontainer: string;
 }
 
+function isProject(h:Header) {
+    return /prj$/.test(h.editor)
+}
+
 export function syncAsync() {
     var numUp = 0
     var numDown = 0
@@ -227,12 +231,11 @@ export function syncAsync() {
                 header.blobCurrent = true
                 header.blobId = blobId
                 header.modificationTime = cloudHeader.scriptVersion.time
-                var files: Util.StringMap<string> = { "main.txt": resp.script }
-                try {
-                    files = JSON.parse(resp.script)
-                } catch (e) {
-                }
                 header.editor = resp.editor
+                header.name = resp.name
+                var files: Util.StringMap<string> = { "_default_": resp.script }
+                if (isProject(header))
+                    files = JSON.parse(resp.script)
                 header.recentUse = cloudHeader.recentUse
                 delete header.isDeleted
                 header.pubId = resp.scriptId
@@ -265,6 +268,11 @@ export function syncAsync() {
         numUp++
         return getTextAsync(h.id)
             .then(txt => {
+                let scr = ""
+                if (isProject(h))
+                    scr = txt.files[Object.keys(txt.files)[0]] || ""
+                else
+                    scr = JSON.stringify(txt.files)
                 let body = {
                     guid: h.id,
                     name: h.name,
@@ -274,7 +282,7 @@ export function syncAsync() {
                     status: h.pubCurrent ? "published" : "unpublished",
                     recentUse: h.recentUse,
                     editor: h.editor,
-                    script: JSON.stringify(txt.files)
+                    script: scr
                 }
                 console.log(`sync up ${h.id}; ${body.script.length} chars`)
                 return Cloud.privatePostAsync("me/installed", { bodies: [body] })
