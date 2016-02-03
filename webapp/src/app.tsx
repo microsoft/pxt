@@ -3,6 +3,8 @@ import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
 import * as apicache from "./apicache";
 import * as pkg from "./package";
+import * as core from "./core";
+import {LoginBox} from "./login";
 
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
@@ -89,46 +91,6 @@ class Settings extends React.Component<ISettingsProps, ISettingsState> {
                 </div>
             </div>
         );
-    }
-}
-
-interface ILoginBoxProps {
-}
-
-interface ILoginBoxState {
-    loggedIn?: boolean;
-}
-
-class LoginBox extends apicache.RestComponent<ILoginBoxProps, ILoginBoxState> {
-    constructor(props: ILoginBoxProps) {
-        super(props);
-        this.state = {
-        };
-    }
-
-    componentDidMount() {
-        $('#loginbox .ui.dropdown').dropdown();
-    }
-
-    componentDidUpdate() {
-        $('#loginbox .ui.dropdown').dropdown('refresh');
-    }
-
-    public render() {
-        let settings:Cloud.UserSettings = this.getApi("me/settings?format=nonsensitive") || {}
-        let name = settings.nickname || "Sign in"                 
-        return (
-            <div id='loginbox'>
-                <div className="ui orange buttons">
-                    <div className="ui button" onClick={() => { } }>{name}</div>
-                    <div className="ui floating dropdown icon button">
-                        <i className="dropdown icon"></i>
-                        <div className="menu">
-                            <div className="item"><i className="edit icon"></i> Edit Post</div>
-                        </div>
-                    </div>
-                </div>
-            </div>)
     }
 }
 

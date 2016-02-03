@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as workspace from "./workspace";
+import * as core from "./core";
 
 export type Action = () => void;
 export type Component = React.Component<any, any>;
@@ -122,7 +123,7 @@ export function getAsync(path: string) {
     })
 }
 
-export class RestComponent<T, S> extends React.Component<T, S> {
+export class RestComponent<T, S> extends core.Component<T, S> {
     constructor(props: T) {
         super(props);
     }
