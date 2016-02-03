@@ -1,10 +1,14 @@
-#filelist {
+#filelist,
+#maineditor {
   position: absolute;
-  left: 0;
-  top: 60px;
+  top: 74px;
   bottom: 0;
+}
+
+#filelist {
+  left: 0;
   width: 300px;
-  padding: 0.2em 1em 0em 0.5em;
+  padding: 0em 1em 0em 0.5em;
 }
 
 #menubar {
@@ -12,7 +16,7 @@
   left: 0;
   top: 0;
   right: 0;
-  height: 50px;    
+  height: 64px;    
 }
 
 #filelist .menu {
@@ -28,10 +32,7 @@
 }
 
 #maineditor {
-  position: absolute;
   right: 0;
-  top: 63px;
-  bottom: 0;
   left: 300px;
 }
 
@@ -39,6 +40,13 @@
     width: 400px;
 }
 
-#root.inverted #filelist {
+#root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+#root.inverted {
     background: #1B1C1D;
 }

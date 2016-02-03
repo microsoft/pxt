@@ -763,6 +763,36 @@ namespace Cloud {
         canmanage: boolean;
         hasabusereports: boolean;
     }
+    
+    export interface UserSettings {
+        nickname?: string;
+        aboutme?: string;
+        website?: string;
+        notifications?: boolean;
+        notifications2?: string;
+        picturelinkedtofacebook?: boolean;
+        realname?: string;
+        gender?: string;
+        howfound?: string;
+        culture?: string;
+        yearofbirth?: number;
+        programmingknowledge?: string;
+        occupation?: string;
+        emailnewsletter2?: string;
+        emailfrequency?: string;
+        email?: string;
+        emailverified?: boolean;
+        previousemail?: string;
+        location?: string;
+        twitterhandle?: string;
+        githubuser?: string;
+        minecraftuser?: string;
+        editorMode?: string;
+        school?: string;
+        wallpaper?: string;
+        permissions?: string;
+        credit?: number;
+    }
 
 
 }

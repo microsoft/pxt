@@ -1,6 +1,8 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
+import * as apicache from "./apicache";
+import * as pkg from "./package";
 
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
@@ -14,102 +16,13 @@ require('brace/mode/markdown');
 interface IAppProps { }
 interface IAppState {
     header?: workspace.Header;
-    currFile?: File;
+    currFile?: pkg.File;
     inverted?: string;
     fontSize?: string;
 }
 
-class File {
-    constructor(public epkg: EditorPackage, public name: string, public content: string)
-    { }
-
-    getName() {
-        return this.epkg.yelmPkg.id + "/" + this.name
-    }
-    getExtension() {
-        let m = /\.([^\.]+)$/.exec(this.name)
-        if (m) return m[1]
-        return ""
-    }
-}
-
-class EditorPackage {
-    files: Util.StringMap<File> = {};
-    constructor(public yelmPkg: yelm.Package) {
-    }
-
-    setFiles(files: Util.StringMap<string>) {
-        this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
-    }
-
-    sortedFiles() {
-        return Util.values(this.files)
-    }
-
-    getMainFile() {
-        return this.sortedFiles().filter(f => f.getExtension() == "ts")[0] || this.sortedFiles()[0]
-    }
-}
-
-class Host
-    implements yelm.Host {
-
-    readFileAsync(module: yelm.Package, filename: string): Promise<string> {
-        let epkg = getEditorPkg(module)
-        let file = epkg.files[filename]
-        return Promise.resolve(file ? file.content : null)
-    }
-
-    writeFileAsync(module: yelm.Package, filename: string, contents: string): Promise<void> {
-        if (filename == yelm.configName)
-            return Promise.resolve(); // ignore config writes
-        throw Util.oops("trying to write " + module + " / " + filename)
-    }
-
-    getHexInfoAsync() {
-        return Promise.resolve(require("../../../generated/hexinfo.js"))
-    }
-
-    downloadPackageAsync(pkg: yelm.Package) {
-        let proto = pkg.verProtocol()
-        let epkg = getEditorPkg(pkg)
-
-        if (proto == "pub")
-            // make sure it sits in cache
-            return workspace.getScriptFilesAsync(pkg.verArgument())
-                .then(files => epkg.setFiles(files))
-        else if (proto == "workspace") {
-            return workspace.getTextAsync(pkg.verArgument())
-                .then(scr => epkg.setFiles(scr.files))
-        } else {
-            return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
-        }
-    }
-
-    resolveVersionAsync(pkg: yelm.Package) {
-        return Cloud.privateGetAsync(yelm.pkgPrefix + pkg.id).then(r => {
-            let id = r["scriptid"]
-            if (!id)
-                Util.userError("scriptid no set on ptr for pkg " + pkg.id)
-            return id
-        })
-    }
-
-}
 
 var theEditor: Editor;
-var theHost = new Host();
-var mainPkg = new yelm.MainPackage(theHost);
-
-function getEditorPkg(p: yelm.Package) {
-    let r: EditorPackage = (p as any)._editorPkg
-    if (r) return r
-    return ((p as any)._editorPkg = new EditorPackage(p))
-}
-
-function allEditorPkgs() {
-    return Util.values(mainPkg.deps).map(getEditorPkg)
-}
 
 interface ISettingsState {
     dropped?: boolean;
@@ -155,7 +68,7 @@ class Settings extends React.Component<ISettingsProps, ISettingsState> {
         let fontSize = (ev: React.FormEvent) => par.setState({ fontSize: (ev.target as HTMLInputElement).value })
         return (
             <div id='settings'>
-                <div className="ui icon button">
+                <div className="ui orange icon button">
                     <i className="settings icon"></i>
                 </div>
                 <div className="ui popup transition hidden form">
@@ -179,9 +92,47 @@ class Settings extends React.Component<ISettingsProps, ISettingsState> {
     }
 }
 
-class Editor extends React.Component<IAppProps, IAppState> {
+interface ILoginBoxProps {
+}
 
-    state: IAppState;
+interface ILoginBoxState {
+    loggedIn?: boolean;
+}
+
+class LoginBox extends apicache.RestComponent<ILoginBoxProps, ILoginBoxState> {
+    constructor(props: ILoginBoxProps) {
+        super(props);
+        this.state = {
+        };
+    }
+
+    componentDidMount() {
+        $('#loginbox .ui.dropdown').dropdown();
+    }
+
+    componentDidUpdate() {
+        $('#loginbox .ui.dropdown').dropdown('refresh');
+    }
+
+    public render() {
+        let settings:Cloud.UserSettings = this.getApi("me/settings?format=nonsensitive") || {}
+        let name = settings.nickname || "Sign in"                 
+        return (
+            <div id='loginbox'>
+                <div className="ui orange buttons">
+                    <div className="ui button" onClick={() => { } }>{name}</div>
+                    <div className="ui floating dropdown icon button">
+                        <i className="dropdown icon"></i>
+                        <div className="menu">
+                            <div className="item"><i className="edit icon"></i> Edit Post</div>
+                        </div>
+                    </div>
+                </div>
+            </div>)
+    }
+}
+
+class Editor extends React.Component<IAppProps, IAppState> {
     editor: AceAjax.Editor;
 
     constructor(props: IAppProps) {
@@ -233,7 +184,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
         this.setTheme();
     }
 
-    setFile(fn: File) {
+    setFile(fn: pkg.File) {
         if (this.state.currFile == fn)
             return;
         let ext = fn.getExtension()
@@ -254,20 +205,18 @@ class Editor extends React.Component<IAppProps, IAppState> {
 
     loadHeader(h: workspace.Header) {
         if (!h) return
-        mainPkg = new yelm.MainPackage(theHost)
-        mainPkg._verspec = "workspace:" + h.id
-        mainPkg.installAllAsync()
+        pkg.loadPkgAsync(h.id)
             .then(() => {
                 this.setState({
                     header: h,
                     currFile: null
                 })
-                this.setFile(getEditorPkg(mainPkg).getMainFile())
+                this.setFile(pkg.getEditorPkg(pkg.mainPkg).getMainFile())
             })
     }
 
     compile() {
-        mainPkg.buildAsync()
+        pkg.mainPkg.buildAsync()
             .then(resp => {
                 console.log(resp)
             })
@@ -279,7 +228,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
 
         this.setTheme()
 
-        let filesOf = (pkg: EditorPackage) =>
+        let filesOf = (pkg: pkg.EditorPackage) =>
             pkg.sortedFiles().map(file =>
                 <a
                     key={file.getName() }
@@ -290,7 +239,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
                 </a>
             )
 
-        let filesWithHeader = (pkg: EditorPackage) =>
+        let filesWithHeader = (pkg: pkg.EditorPackage) =>
             pkg.yelmPkg.level == 0 ? filesOf(pkg) : [
                 <div className="header item">
                     <i className="folder icon"></i>
@@ -298,7 +247,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
                 </div>
             ].concat(filesOf(pkg))
 
-        let files = Util.concat(allEditorPkgs().map(filesWithHeader))
+        let files = Util.concat(pkg.allEditorPkgs().map(filesWithHeader))
 
         return (
             <div id='root' className={this.state.inverted || ""}>
@@ -311,6 +260,9 @@ class Editor extends React.Component<IAppProps, IAppState> {
                             </button>
                         </div>
                         <div className="item right">
+                            <LoginBox />
+                        </div>
+                        <div className="item">
                             <Settings parent={this} />
                         </div>
                     </div>
