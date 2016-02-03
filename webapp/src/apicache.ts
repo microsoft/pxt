@@ -2,7 +2,7 @@ import * as React from "react";
 import * as workspace from "./workspace";
 
 export type Action = () => void;
-export type Component = React.Component<any,any>;
+export type Component = React.Component<any, any>;
 
 interface CacheEntry {
     path: string;
@@ -18,7 +18,7 @@ var cachedData: Util.StringMap<CacheEntry> = {};
 function subscribe(component: Component, path: string) {
     let lst = lookup(path).components
     if (lst.indexOf(component) < 0)
-    lst.push(component)
+        lst.push(component)
 }
 
 // TODO do we need to speed this up?
@@ -39,22 +39,23 @@ function shouldCache(ce: CacheEntry) {
 }
 
 function loadCache() {
-    JSON.parse(window.localStorage["apiCache"] || "[]").forEach((e:any) => {
+    JSON.parse(window.localStorage["apiCache"] || "[]").forEach((e: any) => {
         let ce = lookup(e.path)
         ce.data = e.data
     })
 }
 
 function saveCache() {
-    let obj = Util.values(cachedData).filter(e => shouldCache(e)).map(e => { return { 
-        path: e.path,
-        data: e.data
-    } })    
+    let obj = Util.values(cachedData).filter(e => shouldCache(e)).map(e => {
+        return {
+            path: e.path,
+            data: e.data
+        }
+    })
     window.localStorage["apiCache"] = JSON.stringify(obj)
 }
 
-function matches(ce:CacheEntry, prefix:string)
-{
+function matches(ce: CacheEntry, prefix: string) {
     return ce.path.slice(0, prefix.length) == prefix;
 }
 
@@ -92,14 +93,17 @@ function lookup(path: string) {
     return cachedData[path]
 }
 
-export function invalidate(prefix:string)
-{
+export function invalidate(prefix: string) {
     Util.values(cachedData).forEach(ce => {
-        if (matches(ce, prefix)) ce.lastRefresh = 0;
+        if (matches(ce, prefix)) {
+            ce.lastRefresh = 0;
+            if (ce.components.length > 0)
+                queue(ce)
+        }
     })
 }
 
-function getCached(component:Component, path: string) {
+function getCached(component: Component, path: string) {
     subscribe(component, path)
     let res = lookup(path)
     if (expired(res))
@@ -118,17 +122,16 @@ export function getAsync(path: string) {
     })
 }
 
-export class RestComponent<T,S> extends React.Component<T,S> {
+export class RestComponent<T, S> extends React.Component<T, S> {
     constructor(props: T) {
         super(props);
     }
-    
-    getApi(path:string)
-    {
+
+    getApi(path: string) {
         return getCached(this, path)
     }
-    
-    componentWillUnmount(): void{
+
+    componentWillUnmount(): void {
         unsubscribe(this)
     }
 }
