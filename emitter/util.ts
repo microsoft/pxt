@@ -26,6 +26,7 @@ namespace Util {
     export function mapStringMap<T, S>(m: StringMap<T>, f: (k: string, v: T) => S) {
         let r: StringMap<S> = {}
         Object.keys(m).forEach(k => r[k] = f(k, m[k]))
+        return r
     }
 
     export function mapStringMapAsync<T, S>(m: StringMap<T>, f: (k: string, v: T) => Promise<S>) {
@@ -34,6 +35,9 @@ namespace Util {
             .then(() => r)
     }
 
+    export function values<T>(m: StringMap<T>) {
+        return Object.keys(m || {}).map(k => m[k])
+    }
 
     export function pushRange<T>(trg: T[], src: T[]) {
         for (let i = 0; i < src.length; ++i)
@@ -60,6 +64,20 @@ namespace Util {
         let r: any = {}
         keys.forEach(k => r[k] = (<any>o)[k])
         return r
+    }
+
+    export function memoizeString<T>(createNew: (id: string) => T): (id: string) => T {
+        return memoize(s => s, createNew)
+    }
+
+    export function memoize<S, T>(getId: (v: S) => string, createNew: (v: S) => T): (id: S) => T {
+        let cache: Util.StringMap<T> = {}
+        return (v: S) => {
+            let id = getId(v)
+            if (cache.hasOwnProperty(id))
+                return cache[id]
+            return (cache[id] = createNew(v))
+        }
     }
 
     export var isNodeJS = false;
@@ -383,7 +401,7 @@ namespace Cloud {
         return privateRequestAsync({ url: path }).then(resp => resp.json)
     }
 
-    export function getScriptFilesAsync(id: string) {
+    export function downloadScriptFilesAsync(id: string) {
         return privateRequestAsync({ url: id + "/text" }).then(resp => {
             return JSON.parse(resp.text)
         })

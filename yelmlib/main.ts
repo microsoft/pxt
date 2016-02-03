@@ -7,6 +7,7 @@ namespace yelm {
         writeFileAsync(pkg: Package, filename: string, contents: string): Promise<void>;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(): Promise<any>;
+        resolveVersionAsync(pkg: Package): Promise<string>;
     }
 
     export interface PackageConfig {
@@ -22,7 +23,7 @@ namespace yelm {
         public config: PackageConfig;
         public level = -1;
         public isLoaded = false;
-        public resolvedVersion: string;
+        private resolvedVersion: string;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage) {
             if (parent) {
@@ -63,31 +64,27 @@ namespace yelm {
             let v = this._verspec
 
             if (!v || v == "*")
-                return Cloud.privateGetAsync(pkgPrefix + this.id).then(r => {
-                    let id = r["scriptid"]
-                    if (!id)
-                        Util.userError("scriptid no set on ptr for pkg " + this.id)
+                return this.host().resolveVersionAsync(this).then(id => {
                     return (this.resolvedVersion = "pub:" + id);
                 })
             return Promise.resolve(v)
         }
 
-        public updateConfigAsync(cont: string) {
-            this.parseConfig(cont)
-            this.config.installedVersion = this.version()
-            return this.saveConfigAsync()
-        }
-
         private downloadAsync() {
-            if (this.id == "this")
-                return Promise.resolve()
-
             let yelmCfg = ""
             return this.resolveVersionAsync()
                 .then(verNo => {
                     if (this.config && this.config.installedVersion == verNo)
                         return
                     return this.host().downloadPackageAsync(this)
+                        .then(() => this.host().readFileAsync(this, configName))
+                        .then(confStr => {
+                            if (!confStr)
+                                Util.userError(`package ${this.id} is missing ${configName}`)
+                            this.parseConfig(confStr)
+                            this.config.installedVersion = this.version()
+                            return this.saveConfigAsync()
+                        })
                         .then(() => {
                             info(`installed ${this.id} /${verNo}`)
                         })
@@ -95,7 +92,7 @@ namespace yelm {
                 })
         }
 
-        validateConfig() {
+        protected validateConfig() {
             if (!this.config.dependencies)
                 Util.userError("Missing dependencies in config of: " + this.id)
             if (!Array.isArray(this.config.files))
@@ -156,7 +153,7 @@ namespace yelm {
         public deps: Util.StringMap<Package> = {};
 
         constructor(public _host: Host) {
-            super("this", "*", null)
+            super("this", "file:.", null)
             this.parent = this
             this.level = 0
             this.deps[this.id] = this;
@@ -327,7 +324,7 @@ namespace yelm {
         }
     }
 
-    var pkgPrefix = "ptr-yelm-"
+    export var pkgPrefix = "ptr-yelm-"
     export var configName = "yelm.json"
     var info = function info(msg: string) {
         console.log(msg)

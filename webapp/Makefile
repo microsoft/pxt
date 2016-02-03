@@ -4,12 +4,15 @@ SEMJS = behaviors/api.js behaviors/colorize.js behaviors/form.js behaviors/state
     modules/tab.js modules/transition.js modules/video.js \
     globals/site.js
 
-all: built/style.css built/semantic.js
+all: built/style.css built/semantic.js built/themes
 	cp node_modules/jquery/dist/jquery.js built/
 	cp ../built/yelmlib.js built/
 	cp ../node_modules/typescript/lib/typescript.js built/
 	node node_modules/typescript/lib/tsc
 	node node_modules/browserify/bin/cmd built/src/app.js -o built/main.js
+
+built/themes:
+	cp -r node_modules/semantic-ui-less/themes built/
 
 built/style.css:
 	mkdir -p built

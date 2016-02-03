@@ -5,6 +5,7 @@ import * as db from "./db";
 
 let headers = new db.Table("header")
 let texts = new db.Table("text")
+let scripts = new db.Table("script")
 
 export interface InstallHeader {
     name: string;
@@ -91,10 +92,23 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
         })
 }
 
+let scriptDlQ = new PromiseQueue();
+//let scriptCache:any = {}
+export function getScriptFilesAsync(id: string) {
+    //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])   
+    return scriptDlQ.enqueue(id, () => scripts.getAsync(id)
+        .then(v => v.files, e => Cloud.downloadScriptFilesAsync(id)
+            .then(files => scripts.setAsync({ id: id, files: files })
+                .then(() => {
+                    //return (scriptCache[id] = files)
+                    return files
+                }))))
+}
+
 export function installByIdAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((scr: Cloud.JsonScript) =>
-            Cloud.getScriptFilesAsync(scr.id)
+            getScriptFilesAsync(scr.id)
                 .then(files => installAsync(
                     {
                         name: scr.name,

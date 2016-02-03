@@ -15,8 +15,17 @@
   height: 50px;    
 }
 
-#filelist .menu {
+.filemenu {
   width: 100%;
+}
+
+.filemenu .active {
+    background: rgba(0,0,0,.05);
+}
+
+.filemenu .item,
+.filemenu .content {
+    display: block;
 }
 
 #maineditor {

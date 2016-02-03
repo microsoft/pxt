@@ -14,22 +14,53 @@ require('brace/mode/markdown');
 interface IAppProps { }
 interface IAppState {
     header?: workspace.Header;
-    text?: workspace.ScriptText;
-    currFile?: string;
+    currFile?: File;
+}
+
+class File {
+    constructor(public epkg: EditorPackage, public name: string, public content: string)
+    { }
+
+    getName() {
+        return this.epkg.yelmPkg.id + "/" + this.name
+    }
+    getExtension() {
+        let m = /\.([^\.]+)$/.exec(this.name)
+        if (m) return m[1]
+        return ""
+    }
+}
+
+class EditorPackage {
+    files: Util.StringMap<File> = {};
+    constructor(public yelmPkg: yelm.Package) {
+    }
+
+    setFiles(files: Util.StringMap<string>) {
+        this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
+    }
+
+    sortedFiles() {
+        return Util.values(this.files)
+    }
+
+    getMainFile() {
+        return this.sortedFiles().filter(f => f.getExtension() == "ts")[0] || this.sortedFiles()[0]
+    }
 }
 
 class Host
     implements yelm.Host {
 
-    readFileAsync(module: string, filename: string): Promise<string> {
-        if (module != "this")
-            return Promise.resolve(null as string)
-        if (theEditor.state.text) {
-            return Promise.resolve(theEditor.state.text.files[filename] || null)
-        } else return Promise.resolve(null as string)
+    readFileAsync(module: yelm.Package, filename: string): Promise<string> {
+        let epkg = getEditorPkg(module)
+        let file = epkg.files[filename]
+        return Promise.resolve(file ? file.content : null)
     }
 
-    writeFileAsync(module: string, filename: string, contents: string): Promise<void> {
+    writeFileAsync(module: yelm.Package, filename: string, contents: string): Promise<void> {
+        if (filename == yelm.configName)
+            return Promise.resolve(); // ignore config writes
         throw Util.oops("trying to write " + module + " / " + filename)
     }
 
@@ -37,14 +68,46 @@ class Host
         return Promise.resolve(require("../../../generated/hexinfo.js"))
     }
 
-    hasLocalPackage(name: string) {
-        return false;
+    downloadPackageAsync(pkg: yelm.Package) {
+        let proto = pkg.verProtocol()
+        let epkg = getEditorPkg(pkg)
+
+        if (proto == "pub")
+            // make sure it sits in cache
+            return workspace.getScriptFilesAsync(pkg.verArgument())
+                .then(files => epkg.setFiles(files))
+        else if (proto == "workspace") {
+            return workspace.getTextAsync(pkg.verArgument())
+                .then(scr => epkg.setFiles(scr.files))
+        } else {
+            return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
+        }
     }
+
+    resolveVersionAsync(pkg: yelm.Package) {
+        return Cloud.privateGetAsync(yelm.pkgPrefix + pkg.id).then(r => {
+            let id = r["scriptid"]
+            if (!id)
+                Util.userError("scriptid no set on ptr for pkg " + pkg.id)
+            return id
+        })
+    }
+
 }
 
-let theEditor: Editor;
-let theHost = new Host();
-let mainPkg = new yelm.MainPackage(theHost);
+var theEditor: Editor;
+var theHost = new Host();
+var mainPkg = new yelm.MainPackage(theHost);
+
+function getEditorPkg(p: yelm.Package) {
+    let r: EditorPackage = (p as any)._editorPkg
+    if (r) return r
+    return ((p as any)._editorPkg = new EditorPackage(p))
+}
+
+function allEditorPkgs() {
+    return Util.values(mainPkg.deps).map(getEditorPkg)
+}
 
 class Editor extends React.Component<IAppProps, IAppState> {
 
@@ -72,10 +135,10 @@ class Editor extends React.Component<IAppProps, IAppState> {
         this.editor.setTheme('ace/theme/tomorrow_night_bright');
     }
 
-    setFile(fn: string) {
+    setFile(fn: File) {
         if (this.state.currFile == fn)
             return;
-        let ext = fn.replace(/.*\./, "")
+        let ext = fn.getExtension()
         let modeMap: any = {
             "cpp": "c_cpp",
             "json": "json",
@@ -86,26 +149,22 @@ class Editor extends React.Component<IAppProps, IAppState> {
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
         let sess = this.editor.getSession()
         sess.setMode('ace/mode/' + mode);
-        this.editor.setValue(this.state.text.files[fn], -1)
-        this.setState({ currFile: fn })
-    }
 
-    getFiles(): string[] {
-        if (this.state.text)
-            return Object.keys(this.state.text.files)
-        return []
+        this.editor.setValue(fn.content, -1)
+        this.setState({ currFile: fn })
     }
 
     loadHeader(h: workspace.Header) {
         if (!h) return
-        workspace.getTextAsync(h.id)
-            .then(text => {
+        mainPkg = new yelm.MainPackage(theHost)
+        mainPkg._verspec = "workspace:" + h.id
+        mainPkg.installAllAsync()
+            .then(() => {
                 this.setState({
                     header: h,
-                    text: text,
                     currFile: null
                 })
-                this.setFile(this.getFiles()[0])
+                this.setFile(getEditorPkg(mainPkg).getMainFile())
             })
     }
 
@@ -119,14 +178,37 @@ class Editor extends React.Component<IAppProps, IAppState> {
 
     public render() {
         theEditor = this;
-        let files = this.getFiles().map(fn =>
-            <a
-                key={fn}
-                className={this.state.currFile == fn ? "active item" : "item"}
-                onClick={() => this.setFile(fn) }>
-                {fn}
-            </a>
-        )
+
+        let filesOf = (pkg: EditorPackage) =>
+            pkg.sortedFiles().map(file =>
+                <a
+                    key={file.getName() }
+                    onClick={() => this.setFile(file) }
+                    className={this.state.currFile == file ? "active item" : "item"}
+                    >
+                    <i className="file icon"></i>
+                    <div className="content">
+                        <div className="header">{file.name}</div>
+                        <div className="description">{file.content.length} bytes</div>
+                    </div>
+                </a>
+            )
+
+        let filesWithHeader = (pkg: EditorPackage) =>
+            pkg.yelmPkg.level == 0 ? filesOf(pkg) : [
+                <div className="item">
+                    <i className="folder icon"></i>
+                    <div className="content">
+                        <div className="header">{pkg.yelmPkg.id}</div>
+                        <div className="description">{pkg.sortedFiles().length} files</div>
+                        <div className="list">
+                            {filesOf(pkg) }
+                        </div>
+                    </div>
+                </div>
+            ]
+
+        let files = Util.concat(allEditorPkgs().map(filesWithHeader))
 
         return (
             <div id='root'>
@@ -141,7 +223,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
                     </div>
                 </div>
                 <div id="filelist">
-                    <div className="ui secondary vertical pointing menu">
+                    <div className="ui list filemenu">
                         {files}
                     </div>
                 </div>

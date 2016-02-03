@@ -177,22 +177,29 @@ class Host
         let proto = pkg.verProtocol()
 
         if (proto == "pub")
-            return Cloud.privateRequestAsync({ url: pkg.verArgument() + "/text" })
+            return Cloud.downloadScriptFilesAsync(pkg.verArgument())
                 .then(resp =>
-                    Util.mapStringMapAsync(JSON.parse(resp.text), (fn: string, cont: string) => {
-                        if (fn == yelm.configName) {
-                            return pkg.updateConfigAsync(cont)
-                        }
+                    Util.mapStringMapAsync(resp, (fn: string, cont: string) => {
                         return pkg.host().writeFileAsync(pkg, fn, cont)
                     }))
                 .then(() => { })
-         else if (proto == "file") {
-             console.log(`skip download of local pkg: ${pkg.version()}`)
-             return Promise.resolve()
-         } else {
-             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
-         }
+        else if (proto == "file") {
+            console.log(`skip download of local pkg: ${pkg.version()}`)
+            return Promise.resolve()
+        } else {
+            return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
+        }
     }
+
+    resolveVersionAsync(pkg: yelm.Package) {
+        return Cloud.privateGetAsync(yelm.pkgPrefix + pkg.id).then(r => {
+            let id = r["scriptid"]
+            if (!id)
+                Util.userError("scriptid no set on ptr for pkg " + pkg.id)
+            return id
+        })
+    }
+
 }
 
 let mainPkg = new yelm.MainPackage(new Host())
