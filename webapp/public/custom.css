@@ -34,3 +34,11 @@
   bottom: 0;
   left: 300px;
 }
+
+#settings .popup {
+    width: 400px;
+}
+
+#root.inverted #filelist {
+    background: #1B1C1D;
+}

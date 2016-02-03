@@ -15,6 +15,7 @@ interface IAppProps { }
 interface IAppState {
     header?: workspace.Header;
     currFile?: File;
+    inverted?: string;
 }
 
 class File {
@@ -109,6 +110,56 @@ function allEditorPkgs() {
     return Util.values(mainPkg.deps).map(getEditorPkg)
 }
 
+interface ISettingsState {
+    dropped?: boolean;
+}
+
+interface ISettingsProps {
+    parent: Editor;
+}
+
+class Settings extends React.Component<ISettingsProps, ISettingsState> {
+    state: ISettingsState;
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+        };
+    }
+
+    componentDidMount() {
+        $('#settings > .button').popup({
+            position: "bottom right",
+            hoverable: true,
+            delay: {
+                show: 50,
+                hide: 1000
+            }
+        });
+    }
+
+    componentDidUpdate() {
+        $('#settings > .button').popup('refresh');
+    }
+
+
+    public render() {
+        let par = this.props.parent
+        return (
+            <div id='settings'>
+                <div className="ui icon button">
+                    <i className="settings icon"></i>
+                </div>
+                <div className="ui popup transition hidden">
+                    <div className="ui toggle checkbox">
+                        <input type="checkbox" name="public" checked={!!par.state.inverted} onChange={() => par.swapTheme()} />
+                        <label>Dark theme</label>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+}
+
 class Editor extends React.Component<IAppProps, IAppState> {
 
     state: IAppState;
@@ -116,8 +167,35 @@ class Editor extends React.Component<IAppProps, IAppState> {
 
     constructor(props: IAppProps) {
         super(props);
+        
+        let settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         this.state = {
+            inverted: settings.inverted ? " inverted " : ""
         };
+    }
+    
+    swapTheme() {
+        this.setState({
+            inverted: this.state.inverted ? "" : " inverted " 
+        })
+    }
+    
+    componentDidUpdate() {
+        let settings = {
+            inverted: !!this.state.inverted
+        }
+        window.localStorage["editorSettings"] = JSON.stringify(settings)
+    }
+
+    setTheme() {
+        require('brace/theme/sqlserver');
+        require('brace/theme/tomorrow_night_bright');
+
+        if (!this.editor) return
+        let th = this.state.inverted ? 'ace/theme/tomorrow_night_bright' : 'ace/theme/sqlserver'
+        if (this.editor.getTheme() != th) {
+            this.editor.setTheme(th)
+        }
     }
 
     public componentDidMount() {
@@ -130,9 +208,8 @@ class Editor extends React.Component<IAppProps, IAppState> {
         sess.setMode('ace/mode/typescript');
         this.editor.setFontSize("18px")
         this.editor.$blockScrolling = Infinity;
-        
-        require('brace/theme/sqlserver');
-        this.editor.setTheme('ace/theme/sqlserver');
+
+        this.setTheme();
     }
 
     setFile(fn: File) {
@@ -179,13 +256,15 @@ class Editor extends React.Component<IAppProps, IAppState> {
     public render() {
         theEditor = this;
 
+        this.setTheme()
+
         let filesOf = (pkg: EditorPackage) =>
             pkg.sortedFiles().map(file =>
                 <a
                     key={file.getName() }
                     onClick={() => this.setFile(file) }
                     className={(this.state.currFile == file ? "active " : "") + (pkg.yelmPkg.level == 0 ? "" : "nested ") + "item"}
-                    >                    
+                    >
                     {file.name}
                 </a>
             )
@@ -201,19 +280,22 @@ class Editor extends React.Component<IAppProps, IAppState> {
         let files = Util.concat(allEditorPkgs().map(filesWithHeader))
 
         return (
-            <div id='root'>
+            <div id='root' className={this.state.inverted || ""}>
                 <div id="menubar">
-                    <div className="ui menu">
+                    <div className={"ui menu" + this.state.inverted}>
                         <div className="item">
                             <button className="ui primary button"
                                 onClick={() => this.compile() }>
                                 Compile
                             </button>
                         </div>
+                        <div className="item right">
+                            <Settings parent={this} />
+                        </div>
                     </div>
                 </div>
                 <div id="filelist">
-                    <div className="ui vertical menu filemenu">
+                    <div className={"ui vertical menu filemenu " + this.state.inverted}>
                         {files}
                     </div>
                 </div>
