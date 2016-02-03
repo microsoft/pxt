@@ -4,7 +4,7 @@
   top: 60px;
   bottom: 0;
   width: 300px;
-  padding: 1em;
+  padding: 0.2em 1em 0em 0.5em;
 }
 
 #menubar {
@@ -15,23 +15,22 @@
   height: 50px;    
 }
 
-.filemenu {
+#filelist .menu {
   width: 100%;
 }
 
-.filemenu .active {
-    background: rgba(0,0,0,.05);
+#filelist .nested.item {
+    padding-left: 4em;
 }
 
-.filemenu .item,
-.filemenu .content {
-    display: block;
+#filelist .header {
+    background: rgba(0,0,0,0.05);
 }
 
 #maineditor {
   position: absolute;
   right: 0;
-  top: 60px;
+  top: 63px;
   bottom: 0;
   left: 300px;
 }

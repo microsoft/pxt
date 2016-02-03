@@ -130,9 +130,9 @@ class Editor extends React.Component<IAppProps, IAppState> {
         sess.setMode('ace/mode/typescript');
         this.editor.setFontSize("18px")
         this.editor.$blockScrolling = Infinity;
-
-        require('brace/theme/tomorrow_night_bright');
-        this.editor.setTheme('ace/theme/tomorrow_night_bright');
+        
+        require('brace/theme/sqlserver');
+        this.editor.setTheme('ace/theme/sqlserver');
     }
 
     setFile(fn: File) {
@@ -184,29 +184,19 @@ class Editor extends React.Component<IAppProps, IAppState> {
                 <a
                     key={file.getName() }
                     onClick={() => this.setFile(file) }
-                    className={this.state.currFile == file ? "active item" : "item"}
-                    >
-                    <i className="file icon"></i>
-                    <div className="content">
-                        <div className="header">{file.name}</div>
-                        <div className="description">{file.content.length} bytes</div>
-                    </div>
+                    className={(this.state.currFile == file ? "active " : "") + (pkg.yelmPkg.level == 0 ? "" : "nested ") + "item"}
+                    >                    
+                    {file.name}
                 </a>
             )
 
         let filesWithHeader = (pkg: EditorPackage) =>
             pkg.yelmPkg.level == 0 ? filesOf(pkg) : [
-                <div className="item">
+                <div className="header item">
                     <i className="folder icon"></i>
-                    <div className="content">
-                        <div className="header">{pkg.yelmPkg.id}</div>
-                        <div className="description">{pkg.sortedFiles().length} files</div>
-                        <div className="list">
-                            {filesOf(pkg) }
-                        </div>
-                    </div>
+                    {pkg.yelmPkg.id}
                 </div>
-            ]
+            ].concat(filesOf(pkg))
 
         let files = Util.concat(allEditorPkgs().map(filesWithHeader))
 
@@ -223,7 +213,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
                     </div>
                 </div>
                 <div id="filelist">
-                    <div className="ui list filemenu">
+                    <div className="ui vertical menu filemenu">
                         {files}
                     </div>
                 </div>

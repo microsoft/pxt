@@ -14,7 +14,7 @@ all: built/style.css built/semantic.js built/themes
 built/themes:
 	cp -r node_modules/semantic-ui-less/themes built/
 
-built/style.css:
+built/style.css: theme.config 
 	mkdir -p built
 	node node_modules/less/bin/lessc style.less built/style.css --include-path=node_modules/semantic-ui-less
 
