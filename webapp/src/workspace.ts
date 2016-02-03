@@ -9,22 +9,25 @@ let scripts = new db.Table("script")
 
 export interface InstallHeader {
     name: string;
-    scriptId: string; // for published scripts
     meta: any;
-    status: string;
     editor: string;
+    pubId: string; // for published scripts
+    pubCurrent: boolean; // is this exactly pubId, or just based on it
 }
 
 export interface Header extends InstallHeader {
     _rev: string;
     id: string; // guid
     recentUse: number; // seconds since epoch
-    cloudSnapshot: string; // blob name for cloud version
+    modificationTime: number; // seconds since epoch
+    blobId: string; // blob name for cloud version
+    blobCurrent: boolean;      // has the current version of the script been pushed to cloud
+    isDeleted: boolean;
 }
 
 export interface ScriptText {
-    _rev: string;
-    id: string;
+    _rev?: string;
+    id?: string;
     files: Util.StringMap<string>;
 }
 
@@ -74,10 +77,13 @@ function nowSeconds() {
     return Math.round(Date.now() / 1000)
 }
 
-export function updateAsync(h: Header, text?: ScriptText) {
+export function saveAsync(h: Header, text?: ScriptText) {
     h.recentUse = nowSeconds();
-    if (text)
-        h.status = "unpublished"
+    if (text || h.isDeleted) {
+        h.pubCurrent = false
+        h.blobCurrent = false
+        h.modificationTime = nowSeconds();
+    }
     return saveCoreAsync(h, text)
 }
 
@@ -85,6 +91,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     let h = <Header>h0
     h.id = Util.guidGen();
     h.recentUse = nowSeconds()
+    h.modificationTime = h.recentUse;
     text.id = h.id
     return saveCoreAsync(h, text)
         .then(() => {
@@ -112,9 +119,9 @@ export function installByIdAsync(id: string) {
                 .then(files => installAsync(
                     {
                         name: scr.name,
-                        scriptId: id,
+                        pubId: id,
+                        pubCurrent: true,
                         meta: scr.meta,
-                        status: "published",
                         editor: scr.editor
                     },
                     {
@@ -125,6 +132,7 @@ export function installByIdAsync(id: string) {
 }
 
 function saveCoreAsync(h: Header, text?: ScriptText) {
+    if (text && !text.id) text.id = h.id
     return headerQ.enqueue(h.id, () =>
         setTextAsync(text).then(() =>
             headers.setAsync(h).then(rev => {
@@ -144,4 +152,194 @@ function setTextAsync(t: ScriptText): Promise<void> {
         .then(resp => {
             lastTextRev[t.id] = resp
         })
+}
+
+export function apiAsync(path: string, data?: any) {
+    return (data ?
+        Cloud.privatePostAsync(path, data) :
+        Cloud.privateGetAsync(path))
+        .then(resp => {
+            console.log("*")
+            console.log("*******", path, "--->")
+            console.log("*")
+            console.log(resp)
+            console.log("*")
+            return resp
+        }, err => {
+            console.log(err.message)
+        })
+}
+
+interface CloudHeader {
+    guid: string;
+    status: string;
+    recentUse: number;
+    scriptVersion: { time: number; baseSnapshot: string };
+}
+
+interface InstalledHeaders {
+    headers: CloudHeader[];
+    newNotifications: number;
+    notifications: boolean;
+    time: number;
+    random: string;
+    v: number;
+    blobcontainer: string;
+}
+
+export function syncAsync() {
+    var numUp = 0
+    var numDown = 0
+    var blobConatiner = ""
+
+    function uninstallAsync(h: Header) {
+        console.log(`uninstall local ${h.id}`)
+        let idx = allHeaders.indexOf(h)
+        Util.assert(idx >= 0)
+        allHeaders.splice(idx, 1)
+        h.isDeleted = true;
+        return headers.deleteAsync(h)
+            .then(() => texts.deleteAsync({ id: h.id, _rev: lastTextRev[h.id] }))
+    }
+
+    function syncDownAsync(header0: Header, cloudHeader: CloudHeader) {
+        if (cloudHeader.status == "deleted") {
+            if (!header0)
+                return Promise.resolve()
+            else
+                return uninstallAsync(header0)
+        }
+
+        let header = header0
+        if (!header) {
+            header = <any>{
+                id: cloudHeader.guid
+            }
+        }
+
+        numDown++
+        Util.assert(header.id == cloudHeader.guid)
+        let blobId = cloudHeader.scriptVersion.baseSnapshot
+        console.log(`sync down ${header.id} - ${blobId}`)
+        return Util.httpGetJsonAsync(blobConatiner + blobId)
+            .then(resp => {
+                Util.assert(resp.guid == header.id)
+                header.blobCurrent = true
+                header.blobId = blobId
+                header.modificationTime = cloudHeader.scriptVersion.time
+                var files: Util.StringMap<string> = { "main.txt": resp.script }
+                try {
+                    files = JSON.parse(resp.script)
+                } catch (e) {
+                }
+                header.editor = resp.editor
+                header.recentUse = cloudHeader.recentUse
+                delete header.isDeleted
+                header.pubId = resp.scriptId
+                header.pubCurrent = (resp.status == "published")
+                if (!header0)
+                    allHeaders.push(header)
+                return saveCoreAsync(header, { files: files })
+            })
+            .then(() => progress(--numDown))
+    }
+
+    function progressMsg(m: string) {
+        console.log(m)
+    }
+
+    function progress(dummy: number) {
+        let msg = ""
+        if (numDown == 0 && numUp == 0)
+            msg = "All synced"
+        else {
+            msg = "Syncing ("
+            if (numDown) msg += numDown + " down"
+            if (numUp) msg += (numDown ? ", " : "") + numUp + " up"
+            msg += ")"
+        }
+        progressMsg(msg)
+    }
+
+    function syncUpAsync(h: Header) {
+        numUp++
+        return getTextAsync(h.id)
+            .then(txt => {
+                let body = {
+                    guid: h.id,
+                    name: h.name,
+                    scriptId: h.pubId,
+                    scriptVersion: { time: h.modificationTime, baseSnapshot: "*" },
+                    meta: JSON.stringify(h.meta),
+                    status: h.pubCurrent ? "published" : "unpublished",
+                    recentUse: h.recentUse,
+                    editor: h.editor,
+                    script: JSON.stringify(txt.files)
+                }
+                console.log(`sync up ${h.id}; ${body.script.length} chars`)
+                return Cloud.privatePostAsync("me/installed", { bodies: [body] })
+            })
+            .then(resp => {
+                let chd = resp.headers[0] as CloudHeader
+                h.blobId = chd.scriptVersion.baseSnapshot
+                h.blobCurrent = true
+                return saveCoreAsync(h)
+            })
+            .then(() => progress(--numUp))
+    }
+
+    function syncDeleteAsync(h: Header) {
+        let body = {
+            guid: h.id,
+            status: "deleted"
+        }
+        return Cloud.privatePostAsync("me/installed", { bodies: [body] })
+            .then(() => uninstallAsync(h))
+    }
+
+    Cloud.privateGetAsync("me/installed?format=short")
+        .then((resp: InstalledHeaders) => {
+            blobConatiner = resp.blobcontainer
+            let cloudHeaders = Util.toDictionary(resp.headers, h => h.guid)
+            let existingHeaders = Util.toDictionary(allHeaders, h => h.id)
+            let waitFor = allHeaders.map(hd => {
+                if (cloudHeaders.hasOwnProperty(hd.id)) {
+                    let chd = cloudHeaders[hd.id]
+
+                    if (hd.isDeleted)
+                        return syncDeleteAsync(hd)
+
+                    if (chd.scriptVersion.baseSnapshot == hd.blobId) {
+                        if (hd.blobCurrent) {
+                            if (hd.recentUse != chd.recentUse) {
+                                hd.recentUse = chd.recentUse
+                                return saveCoreAsync(hd)
+                            } else {
+                                // nothing to do
+                                return Promise.resolve()
+                            }
+                        } else {
+                            return syncUpAsync(hd)
+                        }
+                    } else {
+                        if (hd.blobCurrent) {
+                            return syncDownAsync(hd, chd)
+                        } else {
+                            return syncUpAsync(hd)
+                        }
+                    }
+                } else {
+                    if (hd.blobId)
+                        // this has been pushed once to the cloud - uninstall wins
+                        return uninstallAsync(hd)
+                    else
+                        // never pushed before
+                        return syncUpAsync(hd)
+                }
+            })
+            waitFor = waitFor.concat(resp.headers.filter(h => !existingHeaders[h.guid]).map(h => syncDownAsync(null, h)))
+            progress(0)
+            return Promise.all(waitFor)
+        })
+        .then(() => progressMsg("Syncing done"))
 }

@@ -25,9 +25,13 @@ export class Table {
         }).then((resp:any) => resp.rows.map((e:any) => e.doc))
     }
     
+    deleteAsync(obj:any):Promise<void> {
+        return db.remove(obj)
+    }
+    
     setAsync(obj:any):Promise<string> {
         if (obj.id && !obj._id)
-            obj._id = this.name + "--" + obj.id
+            obj._id = this.name + "--" + obj.id            
         return db.put(obj).then((resp:any) => resp.rev)
     }
 } 

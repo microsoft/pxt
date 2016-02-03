@@ -66,6 +66,61 @@ namespace Util {
         return r
     }
 
+    export function chopArray<T>(arr: T[], chunkSize: number): T[][] {
+        var res: T[][] = []
+        for (var i = 0; i < arr.length; i += chunkSize)
+            res.push(arr.slice(i, i + chunkSize))
+        return res
+    }
+
+    export function unique<T>(arr: T[], f: (t: T) => string): T[] {
+        var v: T[] = [];
+        var r: { [index: string]: any; } = {}
+        arr.forEach(e => {
+            var k = f(e)
+            if (!r.hasOwnProperty(k)) {
+                r[k] = null;
+                v.push(e);
+            }
+        })
+        return v;
+    }
+
+    export function groupBy<T>(arr: T[], f: (t: T) => string): StringMap<T[]> {
+        var r: StringMap<T[]> = {}
+        arr.forEach(e => {
+            var k = f(e)
+            if (!r.hasOwnProperty(k)) r[k] = []
+            r[k].push(e)
+        })
+        return r
+    }
+
+    export function toDictionary<T>(arr: T[], f: (t: T) => string): StringMap<T> {
+        var r: StringMap<T> = {}
+        arr.forEach(e => { r[f(e)] = e })
+        return r
+    }
+
+    export interface ArrayLike<T> {
+        [index: number]: T;
+        length: number;
+    }
+
+    export function toArray<T>(a: ArrayLike<T>): T[] {
+        var r: T[] = []
+        for (var i = 0; i < a.length; ++i)
+            r.push(a[i])
+        return r
+    }
+
+    export function indexOfMatching<T>(arr: T[], f: (t: T) => boolean): number {
+        for (var i = 0; i < arr.length; ++i)
+            if (f(arr[i])) return i;
+        return -1;
+    }
+
+
     export function memoizeString<T>(createNew: (id: string) => T): (id: string) => T {
         return memoize(s => s, createNew)
     }
@@ -257,10 +312,10 @@ namespace BrowserImpl {
                 client.setRequestHeader(k, headers[k])
             })
 
-            if (data == null)
+            if (buf == null)
                 client.send();
             else
-                client.send(data);
+                client.send(buf);
         })
     }
 
