@@ -16,6 +16,7 @@ interface IAppState {
     header?: workspace.Header;
     currFile?: File;
     inverted?: string;
+    fontSize?: string;
 }
 
 class File {
@@ -135,24 +136,42 @@ class Settings extends React.Component<ISettingsProps, ISettingsState> {
                 hide: 1000
             }
         });
+        $('#settings .ui.dropdown').dropdown();
     }
 
     componentDidUpdate() {
         $('#settings > .button').popup('refresh');
+        $('#settings .ui.dropdown').dropdown('refresh');
     }
 
 
     public render() {
         let par = this.props.parent
+        let sizes: Util.StringMap<string> = {
+            '14px': "Small",
+            '20px': "Medium",
+            '24px': "Large",
+        }
+        let fontSize = (ev: React.FormEvent) => par.setState({ fontSize: (ev.target as HTMLInputElement).value })
         return (
             <div id='settings'>
                 <div className="ui icon button">
                     <i className="settings icon"></i>
                 </div>
-                <div className="ui popup transition hidden">
-                    <div className="ui toggle checkbox">
-                        <input type="checkbox" name="public" checked={!!par.state.inverted} onChange={() => par.swapTheme()} />
-                        <label>Dark theme</label>
+                <div className="ui popup transition hidden form">
+                    <div className="field">
+                        <div className="ui toggle checkbox ">
+                            <input type="checkbox" name="public" checked={!!par.state.inverted} onChange={() => par.swapTheme() } />
+                            <label>Dark theme</label>
+                        </div>
+                    </div>
+
+                    <div className="field">
+                        <label>Font size</label>
+                        <select className="ui selection dropdown " value={par.state.fontSize}
+                            onChange={fontSize}>
+                            {Object.keys(sizes).map(k => <option value={k}>{sizes[k]}</option>) }
+                        </select>
                     </div>
                 </div>
             </div>
@@ -167,22 +186,24 @@ class Editor extends React.Component<IAppProps, IAppState> {
 
     constructor(props: IAppProps) {
         super(props);
-        
+
         let settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         this.state = {
-            inverted: settings.inverted ? " inverted " : ""
+            inverted: settings.inverted ? " inverted " : "",
+            fontSize: settings.fontSize || "20px"
         };
     }
-    
+
     swapTheme() {
         this.setState({
-            inverted: this.state.inverted ? "" : " inverted " 
+            inverted: this.state.inverted ? "" : " inverted "
         })
     }
-    
+
     componentDidUpdate() {
         let settings = {
-            inverted: !!this.state.inverted
+            inverted: !!this.state.inverted,
+            fontSize: this.state.fontSize
         }
         window.localStorage["editorSettings"] = JSON.stringify(settings)
     }
@@ -196,6 +217,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
         if (this.editor.getTheme() != th) {
             this.editor.setTheme(th)
         }
+        this.editor.setFontSize(this.state.fontSize)
     }
 
     public componentDidMount() {
@@ -206,7 +228,6 @@ class Editor extends React.Component<IAppProps, IAppState> {
         sess.setTabSize(4);
         sess.setUseSoftTabs(true);
         sess.setMode('ace/mode/typescript');
-        this.editor.setFontSize("18px")
         this.editor.$blockScrolling = Infinity;
 
         this.setTheme();
