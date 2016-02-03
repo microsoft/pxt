@@ -1,5 +1,6 @@
 /// <reference path="../node_modules/typescript/lib/typescriptServices.d.ts"/>
 /// <reference path="util.ts"/>
+/// <reference path="cloud.ts"/>
 /// <reference path="thumb.ts"/>
 /// <reference path="emitter.ts"/>
 /// <reference path="typescriptInternal.d.ts"/>
