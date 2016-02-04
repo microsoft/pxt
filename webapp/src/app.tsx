@@ -125,7 +125,6 @@ class SlotSelector extends core.Component<ISettingsProps, {}> {
                     onChange={chgHeader}>
                     {headers.map(h =>
                         <option key={h.id} value={h.id}>
-                            <b>Foo</b>
                             {h.name || "no name"}
                         </option>
                     ) }
@@ -134,21 +133,6 @@ class SlotSelector extends core.Component<ISettingsProps, {}> {
         );
     }
 }
-
-/*
-                <div className="ui fluid search selection dropdown">
-                    <i className="dropdown icon"></i>
-                    <div className="default text">Select Project</div>
-                    <div className="menu" value={hd ? hd.id : ""} onChange={chgHeader}>
-                        {headers.map(h =>
-                            <div className="item" key={h.id} onClick={}>
-                                {h.name || "no name"}
-                            </div>
-                        ) }
-                    </div>
-                </div>
-*/
-
 
 class Editor extends React.Component<IAppProps, IAppState> {
     editor: AceAjax.Editor;
@@ -230,6 +214,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
                     currFile: null
                 })
                 this.setFile(pkg.getEditorPkg(pkg.mainPkg).getMainFile())
+                core.infoNotification("Project loaded: " + h.name)
             })
     }
 
@@ -306,7 +291,8 @@ function render() {
 
 let myexports: any = {
     workspace,
-    require
+    require,
+    core
 }
 Object.keys(myexports).forEach(k => (window as any)[k] = myexports[k])
 

@@ -47,7 +47,22 @@ export function parseQueryString(qs: string) {
     return r
 }
 
+function htmlmsg(kind:string, msg:string) {
+    $('#' + kind + 'msg').finish().text(msg).fadeIn('fast').delay(3000).fadeOut('slow');
+}
+
 export function errorNotification(msg:string) {
     console.log("ERROR", msg)
+    htmlmsg("err", msg)    
+}
+
+export function warningNotification(msg:string) {
+    console.log("WARNING", msg)
+    htmlmsg("warn", msg)    
+}
+
+export function infoNotification(msg:string) {
+    console.log("INFO", msg)
+    htmlmsg("info", msg)    
 }
 

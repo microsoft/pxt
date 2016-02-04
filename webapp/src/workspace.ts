@@ -2,6 +2,7 @@
 
 import * as Promise from "bluebird";
 import * as db from "./db";
+import * as core from "./core";
 
 let headers = new db.Table("header")
 let texts = new db.Table("text")
@@ -248,7 +249,7 @@ export function syncAsync() {
     }
 
     function progressMsg(m: string) {
-        console.log(m)
+        core.infoNotification(m)
     }
 
     function progress(dummy: number) {
