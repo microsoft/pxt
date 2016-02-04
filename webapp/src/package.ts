@@ -7,18 +7,26 @@ export class File {
     getName() {
         return this.epkg.yelmPkg.id + "/" + this.name
     }
+    
     getExtension() {
         let m = /\.([^\.]+)$/.exec(this.name)
         if (m) return m[1]
         return ""
     }
+    
+    setContent(newContent:string){
+        
+    }
 }
 
 export class EditorPackage {
     files: Util.StringMap<File> = {};
+    header: workspace.Header;
     onupdate = () => { };
 
     constructor(public yelmPkg: yelm.Package) {
+        if (yelmPkg.verProtocol() == "workspace")
+            this.header = workspace.getHeader(yelmPkg.verArgument())
     }
 
     setFiles(files: Util.StringMap<string>) {

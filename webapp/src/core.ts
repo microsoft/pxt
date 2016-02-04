@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
-import * as apicache from "./apicache";
+import * as data from "./data";
 import * as pkg from "./package";
 
 let dimmer = `
@@ -11,6 +11,8 @@ let dimmer = `
   </div>
 </div>
 `
+
+export type Component<S,T> = data.Component<S,T>;
 
 export function showLoading(msg: string) {
     let over = $(dimmer)
@@ -26,16 +28,6 @@ export function navigateInWindow(url: string) {
 
 export function findChild(c: React.Component<any, any>, selector: string) {
     return $(ReactDOM.findDOMNode(c)).find(selector)
-}
-
-export class Component<T, S> extends React.Component<T, S> {
-    constructor(props: T) {
-        super(props);
-    }
-
-    child(selector: string) {
-        return findChild(this, selector)
-    }
 }
 
 export function parseQueryString(qs: string) {

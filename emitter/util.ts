@@ -120,6 +120,10 @@ namespace Util {
         return -1;
     }
 
+    export function nextTick(f: () => void) { 
+        Promise.resolve().done(f)
+    }
+
 
     export function memoizeString<T>(createNew: (id: string) => T): (id: string) => T {
         return memoize(s => s, createNew)

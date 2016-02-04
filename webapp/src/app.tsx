@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
-import * as apicache from "./apicache";
+import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import {LoginBox} from "./login";
@@ -21,6 +21,7 @@ interface IAppState {
     currFile?: pkg.File;
     inverted?: string;
     fontSize?: string;
+    fileState?: string;
 }
 
 
@@ -33,7 +34,7 @@ interface ISettingsProps {
     parent: Editor;
 }
 
-class Settings extends core.Component<ISettingsProps, ISettingsState> {
+class Settings extends data.Component<ISettingsProps, ISettingsState> {
     state: ISettingsState;
     constructor(props: ISettingsProps) {
         super(props);
@@ -94,7 +95,7 @@ class Settings extends core.Component<ISettingsProps, ISettingsState> {
     }
 }
 
-class DropdownMenu extends core.Component<{}, {}> {
+class DropdownMenu extends data.Component<{}, {}> {
     componentDidMount() {
         this.child(".ui.dropdown").dropdown({
             action: "hide"
@@ -129,7 +130,7 @@ class DropdownMenu extends core.Component<{}, {}> {
     }
 }
 
-class SlotSelector extends core.Component<ISettingsProps, {}> {
+class SlotSelector extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
@@ -184,6 +185,7 @@ interface EditorSettings {
 
 class Editor extends React.Component<IAppProps, IAppState> {
     editor: AceAjax.Editor;
+    editorFile: pkg.File;
     settings: EditorSettings;
 
     constructor(props: IAppProps) {
@@ -208,10 +210,11 @@ class Editor extends React.Component<IAppProps, IAppState> {
         sett.inverted = !!this.state.inverted
         sett.fontSize = this.state.fontSize
 
-        if (this.state.header && this.state.currFile) {
+        let f = this.editorFile
+        if (f && f.epkg.header) {
             let n: FileHistoryEntry = {
-                id: this.state.header.id,
-                name: this.state.currFile.getName(),
+                id: f.epkg.header.id,
+                name: f.getName(),
                 pos: this.editor.getCursorPosition()
             }
             sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
@@ -239,6 +242,13 @@ class Editor extends React.Component<IAppProps, IAppState> {
         this.editor.setFontSize(this.state.fontSize)
     }
 
+    private saveFile() {
+        if (!this.editorFile)
+            return;
+        this.editorFile.setContent(this.editor.getValue())
+        this.setState({ fileState: "flushed" })
+    }
+    
     public componentDidMount() {
         this.editor = ace.edit('maineditor');
 
@@ -246,18 +256,31 @@ class Editor extends React.Component<IAppProps, IAppState> {
         sess.setNewLineMode("unix");
         sess.setTabSize(4);
         sess.setUseSoftTabs(true);
-        sess.setMode('ace/mode/typescript');
         this.editor.$blockScrolling = Infinity;
+
+        let hasChangeTimer = false
+        sess.on("change", () => {
+            this.setState({ fileState: "dirty" })
+            if (!hasChangeTimer) {
+                hasChangeTimer = true
+                setTimeout(function() {
+                    hasChangeTimer = false;
+                    this.saveFile();
+                }, 3000);
+            }
+        })
 
         this.setTheme();
     }
 
-    setFile(fn: pkg.File) {
+    private updateEditorFile() {
+        if (this.state.currFile == this.editorFile)
+            return;
         this.saveSettings();
 
-        if (this.state.currFile == fn)
-            return;
-        let ext = fn.getExtension()
+        let file = this.state.currFile
+
+        let ext = file.getExtension()
         let modeMap: any = {
             "cpp": "c_cpp",
             "json": "json",
@@ -269,13 +292,18 @@ class Editor extends React.Component<IAppProps, IAppState> {
         let sess = this.editor.getSession()
         sess.setMode('ace/mode/' + mode);
 
-        this.editor.setValue(fn.content, -1)
-        let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == fn.getName())[0]
+        this.saveFile(); // before change
+        this.editorFile = file;
+        this.editor.setValue(file.content, -1)
+
+        let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == file.getName())[0]
         if (e) {
             this.editor.moveCursorToPosition(e.pos)
-            this.editor.scrollToLine(e.pos.row - 1, true, false, () => {})
-            //this.editor.gotoLine(e.pos.row - 1, e.pos.column - 1)
+            this.editor.scrollToLine(e.pos.row - 1, true, false, () => { })
         }
+    }
+
+    setFile(fn: pkg.File) {
         this.setState({ currFile: fn })
     }
 

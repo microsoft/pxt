@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
-import * as apicache from "./apicache";
+import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 
@@ -27,7 +27,7 @@ function initLogin() {
 
 initLogin();
 
-export class LoginBox extends apicache.RestComponent<ILoginBoxProps, ILoginBoxState> {
+export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
     constructor(props: ILoginBoxProps) {
         super(props);
         this.state = {
