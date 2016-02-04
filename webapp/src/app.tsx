@@ -114,7 +114,7 @@ class DropdownMenu extends core.Component<{}, {}> {
         )
         return (
             <div>
-                <div className="ui dropdown">
+                <div className="ui dropdown button floating">
                     <div className="text">More</div>
                     <i className="dropdown icon"></i>
                     <div className="menu">
@@ -141,6 +141,7 @@ class SlotSelector extends core.Component<ISettingsProps, {}> {
     }
 
     componentDidUpdate() {
+        this.child(".ui.dropdown").dropdown('set selected', this.child("select").val())
         this.child(".ui.dropdown").dropdown('refresh');
     }
 
@@ -169,17 +170,31 @@ class SlotSelector extends core.Component<ISettingsProps, {}> {
     }
 }
 
+interface FileHistoryEntry {
+    id: string;
+    name: string;
+    pos: AceAjax.Position;
+}
+
+interface EditorSettings {
+    inverted: boolean;
+    fontSize: string;
+    fileHistory: FileHistoryEntry[];
+}
+
 class Editor extends React.Component<IAppProps, IAppState> {
     editor: AceAjax.Editor;
+    settings: EditorSettings;
 
     constructor(props: IAppProps) {
         super(props);
 
-        let settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
+        this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         this.state = {
-            inverted: settings.inverted ? " inverted " : "",
-            fontSize: settings.fontSize || "20px"
+            inverted: this.settings.inverted ? " inverted " : "",
+            fontSize: this.settings.fontSize || "20px"
         };
+        if (!this.settings.fileHistory) this.settings.fileHistory = []
     }
 
     swapTheme() {
@@ -188,12 +203,28 @@ class Editor extends React.Component<IAppProps, IAppState> {
         })
     }
 
-    componentDidUpdate() {
-        let settings = {
-            inverted: !!this.state.inverted,
-            fontSize: this.state.fontSize
+    saveSettings() {
+        let sett = this.settings
+        sett.inverted = !!this.state.inverted
+        sett.fontSize = this.state.fontSize
+
+        if (this.state.header && this.state.currFile) {
+            let n: FileHistoryEntry = {
+                id: this.state.header.id,
+                name: this.state.currFile.getName(),
+                pos: this.editor.getCursorPosition()
+            }
+            sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
+            if (this.settings.fileHistory.length > 100)
+                sett.fileHistory.pop()
+            sett.fileHistory.unshift(n)
         }
-        window.localStorage["editorSettings"] = JSON.stringify(settings)
+
+        window.localStorage["editorSettings"] = JSON.stringify(this.settings)
+    }
+
+    componentDidUpdate() {
+        this.saveSettings()
     }
 
     setTheme() {
@@ -222,6 +253,8 @@ class Editor extends React.Component<IAppProps, IAppState> {
     }
 
     setFile(fn: pkg.File) {
+        this.saveSettings();
+
         if (this.state.currFile == fn)
             return;
         let ext = fn.getExtension()
@@ -237,6 +270,12 @@ class Editor extends React.Component<IAppProps, IAppState> {
         sess.setMode('ace/mode/' + mode);
 
         this.editor.setValue(fn.content, -1)
+        let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == fn.getName())[0]
+        if (e) {
+            this.editor.moveCursorToPosition(e.pos)
+            this.editor.scrollToLine(e.pos.row - 1, true, false, () => {})
+            //this.editor.gotoLine(e.pos.row - 1, e.pos.column - 1)
+        }
         this.setState({ currFile: fn })
     }
 
@@ -248,8 +287,16 @@ class Editor extends React.Component<IAppProps, IAppState> {
                     header: h,
                     currFile: null
                 })
-                this.setFile(pkg.getEditorPkg(pkg.mainPkg).getMainFile())
+                let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
+                let main = pkg.getEditorPkg(pkg.mainPkg)
+                let file = main.getMainFile()
+                if (e)
+                    file = main.lookupFile(e.name) || file
+                this.setFile(file)
                 core.infoNotification("Project loaded: " + h.name)
+                pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
+                    this.loadHeader(h)
+                }
             })
     }
 
@@ -340,8 +387,19 @@ $(document).ready(() => {
     workspace.initAsync()
         .then(() => {
             render()
+            workspace.syncAsync().done()
         })
         .then(() => {
-            theEditor.loadHeader(workspace.allHeaders[0])
+            let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
+            let hd = workspace.allHeaders[0]
+            if (ent)
+                hd = workspace.getHeader(ent.id)
+            theEditor.loadHeader(hd)
         })
+})
+
+
+window.addEventListener("unload", ev => {
+    if (theEditor)
+        theEditor.saveSettings()
 })

@@ -16,6 +16,8 @@ export class File {
 
 export class EditorPackage {
     files: Util.StringMap<File> = {};
+    onupdate = () => { };
+
     constructor(public yelmPkg: yelm.Package) {
     }
 
@@ -29,6 +31,14 @@ export class EditorPackage {
 
     getMainFile() {
         return this.sortedFiles().filter(f => f.getExtension() == "ts")[0] || this.sortedFiles()[0]
+    }
+
+    pkgAndDeps(): EditorPackage[] {
+        return Util.values((<yelm.MainPackage>this.yelmPkg.parent).deps).map(getEditorPkg)
+    }
+
+    lookupFile(name: string) {
+        return Util.concat(this.pkgAndDeps().map(e => Util.values(e.files).filter(f => f.getName() == name)))[0]
     }
 }
 
@@ -91,12 +101,20 @@ export function allEditorPkgs() {
     return Util.values(mainPkg.deps).map(getEditorPkg)
 }
 
+export function notifySyncDone(updated: Util.StringMap<number>) {
+    let newOnes = Util.values(mainPkg.deps).filter(d => d.verProtocol() == "workspace" && updated.hasOwnProperty(d.verArgument()))
+    if (newOnes.length > 0) {
+        getEditorPkg(mainPkg).onupdate()
+    }
+
+}
+
 export function loadPkgAsync(id: string) {
     mainPkg = new yelm.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id
-    
+
     return theHost.downloadPackageAsync(mainPkg)
-        .then(() => theHost.readFileAsync(mainPkg, yelm.configName))     
+        .then(() => theHost.readFileAsync(mainPkg, yelm.configName))
         .then(str => {
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()

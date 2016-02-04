@@ -3,6 +3,7 @@
 import * as Promise from "bluebird";
 import * as db from "./db";
 import * as core from "./core";
+import * as pkg from "./package";
 
 let headers = new db.Table("header")
 let texts = new db.Table("text")
@@ -33,6 +34,10 @@ export interface ScriptText {
 }
 
 export let allHeaders: Header[];
+
+export function getHeader(id:string) {
+    return allHeaders.filter(h => !h.isDeleted && h.id == id)[0]
+}
 
 export function initAsync() {
     return headers.getAllAsync().then(h => { allHeaders = h })
@@ -196,6 +201,7 @@ export function syncAsync() {
     var numUp = 0
     var numDown = 0
     var blobConatiner = ""
+    var updated:Util.StringMap<number> = {}
 
     function uninstallAsync(h: Header) {
         console.log(`uninstall local ${h.id}`)
@@ -242,7 +248,8 @@ export function syncAsync() {
                 header.pubId = resp.scriptId
                 header.pubCurrent = (resp.status == "published")
                 if (!header0)
-                    allHeaders.push(header)
+                    allHeaders.push(header);
+                updated[header.id] = 1;
                 return saveCoreAsync(header, { files: files })
             })
             .then(() => progress(--numDown))
@@ -351,4 +358,5 @@ export function syncAsync() {
             return Promise.all(waitFor)
         })
         .then(() => progressMsg("Syncing done"))
+        .then(() => pkg.notifySyncDone(updated))
 }
