@@ -1,5 +1,6 @@
 # enforce unix style line endings
 *.ts text eol=lf
+*.tsx text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
 *.js text eol=lf
