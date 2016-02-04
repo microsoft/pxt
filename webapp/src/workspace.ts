@@ -306,7 +306,7 @@ export function syncAsync() {
             .then(() => uninstallAsync(h))
     }
 
-    Cloud.privateGetAsync("me/installed?format=short")
+    return Cloud.privateGetAsync("me/installed?format=short")
         .then((resp: InstalledHeaders) => {
             blobConatiner = resp.blobcontainer
             let cloudHeaders = Util.toDictionary(resp.headers, h => h.guid)

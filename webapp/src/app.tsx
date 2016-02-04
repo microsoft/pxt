@@ -94,6 +94,41 @@ class Settings extends core.Component<ISettingsProps, ISettingsState> {
     }
 }
 
+class DropdownMenu extends core.Component<{}, {}> {
+    componentDidMount() {
+        this.child(".ui.dropdown").dropdown({
+            action: "hide"
+        });
+    }
+
+    componentDidUpdate() {
+        this.child(".ui.dropdown").dropdown('refresh');
+    }
+
+    public render() {
+        let item = (icon: string, msg: string, cb: () => void) => (
+            <div className="item" onClick={cb}>
+                {icon ? <i className={icon + " icon"}></i> : null}
+                {msg}
+            </div>
+        )
+        return (
+            <div>
+                <div className="ui dropdown">
+                    <div className="text">More</div>
+                    <i className="dropdown icon"></i>
+                    <div className="menu">
+                        {item("file", "New project", () => { }) }
+                        {item("trash", "Remove project", () => { }) }
+                        <div className="divider"></div>
+                        {item("cloud download", "Sync", () => workspace.syncAsync().done()) }
+                    </div>
+                </div>
+            </div>
+        );
+    }
+}
+
 class SlotSelector extends core.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -264,6 +299,9 @@ class Editor extends React.Component<IAppProps, IAppState> {
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />
+                        </div>
+                        <div className="item">
+                            <DropdownMenu />
                         </div>
                         <div className="item right">
                             <LoginBox />

@@ -12,7 +12,7 @@ let dimmer = `
 </div>
 `
 
-export function showLoading(msg:string) {
+export function showLoading(msg: string) {
     let over = $(dimmer)
     over.find(".msg").text(msg)
     $(document.body).append(over)
@@ -32,8 +32,8 @@ export class Component<T, S> extends React.Component<T, S> {
     constructor(props: T) {
         super(props);
     }
-    
-    child(selector:string) {
+
+    child(selector: string) {
         return findChild(this, selector)
     }
 }
@@ -47,22 +47,31 @@ export function parseQueryString(qs: string) {
     return r
 }
 
-function htmlmsg(kind:string, msg:string) {
-    $('#' + kind + 'msg').finish().text(msg).fadeIn('fast').delay(3000).fadeOut('slow');
+let lastTime: any = {}
+
+function htmlmsg(kind: string, msg: string) {
+    let now = Date.now()
+    let prev = lastTime[kind] || 0
+    if (now - prev < 100)
+        $('#' + kind + 'msg').text(msg);
+    else {
+        lastTime[kind] = now
+        $('#' + kind + 'msg').finish().text(msg).fadeIn('fast').delay(3000).fadeOut('slow');
+    }
 }
 
-export function errorNotification(msg:string) {
+export function errorNotification(msg: string) {
     console.log("ERROR", msg)
-    htmlmsg("err", msg)    
+    htmlmsg("err", msg)
 }
 
-export function warningNotification(msg:string) {
+export function warningNotification(msg: string) {
     console.log("WARNING", msg)
-    htmlmsg("warn", msg)    
+    htmlmsg("warn", msg)
 }
 
-export function infoNotification(msg:string) {
+export function infoNotification(msg: string) {
     console.log("INFO", msg)
-    htmlmsg("info", msg)    
+    htmlmsg("info", msg)
 }
 
