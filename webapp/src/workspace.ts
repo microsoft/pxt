@@ -72,13 +72,16 @@ export function resetAsync() {
         })
 }
 
-export function getTextAsync(id: string): Promise<ScriptText> {
-    return headerQ.enqueue(id, () =>
-        texts.getAsync(id)
+function getTextCoreAsync(id: string): Promise<ScriptText> {
+    return texts.getAsync(id)
             .then(resp => {
                 lastTextRev[resp.id] = resp._rev
                 return resp;
-            }))
+            })
+}
+
+export function getTextAsync(id: string): Promise<ScriptText> {
+    return headerQ.enqueue(id, () => getTextCoreAsync(id))
 }
 
 function nowSeconds() {
@@ -164,8 +167,11 @@ function setTextAsync(t: ScriptText): Promise<void> {
 
     Util.assert(!!t.id)
     Util.assert(!!t.files)
-
+    
     t._rev = lastTextRev[t.id]
+    
+    if (!t._rev)
+        return getTextCoreAsync(t.id).then(() => setTextAsync(t))
 
     return texts.setAsync(t)
         .then(resp => {
