@@ -61,41 +61,6 @@ class Settings extends data.Component<ISettingsProps, {}> {
     }
 }
 
-
-class DropdownMenu extends data.Component<{}, {}> {
-    componentDidMount() {
-        this.child(".ui.dropdown").dropdown({
-            action: "hide"
-        });
-    }
-
-    componentDidUpdate() {
-        this.child(".ui.dropdown").dropdown('refresh');
-    }
-
-    renderCore() {
-        let item = (icon: string, msg: string, cb: () => void) => (
-            <div className="item" onClick={cb}>
-                {icon ? <i className={icon + " icon"}></i> : null}
-                {msg}
-            </div>
-        )
-        return (
-            <div>
-                <div className="ui dropdown icon button floating">
-                    <i className="wrench icon"></i>
-                    <div className="menu">
-                        {item("file", "New project", () => { }) }
-                        {item("trash", "Remove project", () => { }) }
-                        <div className="divider"></div>
-                        {item("cloud download", "Sync", () => workspace.syncAsync().done()) }
-                    </div>
-                </div>
-            </div>
-        );
-    }
-}
-
 class SlotSelector extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -361,7 +326,12 @@ class Editor extends data.Component<IAppProps, IAppState> {
                             <SlotSelector parent={this} />
                         </div>
                         <div className="item">
-                            <DropdownMenu />
+                            <sui.Dropdown class="button floating" icon="wrench" menu={true}>
+                                <sui.Item icon="file" text="New project" onClick={() => { } } />
+                                <sui.Item icon="trash" text="Remove project" onClick={() => { } } />
+                                <div className="divider"></div>
+                                <sui.Item icon="cloud download" text="Sync" onClick={() => workspace.syncAsync().done() } />
+                            </sui.Dropdown>
                         </div>
                         <div className="item right">
                             <LoginBox />

@@ -10,8 +10,9 @@ export interface UiProps {
 }
 
 export interface DropdownProps extends UiProps {
-    value: string;
+    value?: string;
     onChange?: (v: string) => void;
+    menu?: boolean;
 }
 
 function genericClassName(cls: string, props: UiProps) {
@@ -21,13 +22,14 @@ function genericClassName(cls: string, props: UiProps) {
 function genericContent(props: UiProps) {
     return [
         props.icon ? (<i className={props.icon + " icon"}></i>) : null,
-        props.text ? (<div className='text'>{props.text}</div>) : null
+        props.text ? (<span className='text'>{props.text}</span>) : null
     ]
 }
 
 export class Dropdown extends data.Component<DropdownProps, {}> {
     componentDidMount() {
         this.child("").dropdown({
+            action: this.props.menu ? "activate" : "hide",
             onChange: (v: string) => {
                 if (this.props.onChange)
                     this.props.onChange(v)
@@ -36,17 +38,17 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
     }
 
     componentDidUpdate() {
-        this.child("")
-            .dropdown('set selected', this.props.value)
-            .dropdown("refresh")
+        if (!this.props.menu)
+            this.child("").dropdown('set selected', this.props.value)
+        this.child("").dropdown("refresh")
     }
 
     renderCore() {
         return (
             <div className={genericClassName("ui dropdown", this.props) }>
-                <input type="hidden" name="mydropdown"/>
+                {this.props.menu ? null : <input type="hidden" name="mydropdown"/>}
                 {genericContent(this.props) }
-                <div className="default text"></div>
+                {this.props.menu ? null : <div className="default text"></div>}
                 <div className="menu">
                     {this.props.children}
                 </div>
@@ -55,14 +57,17 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
 }
 
 export interface ItemProps extends UiProps {
-    value: string;
+    value?: string;
     onClick?: () => void;
 }
 
 export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
         return (
-            <div className={genericClassName("item", this.props) } key={this.props.value} data-value={this.props.value}>
+            <div className={genericClassName("ui item", this.props) }
+                key={this.props.value}
+                data-value={this.props.value}
+                onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}
             </div>);
