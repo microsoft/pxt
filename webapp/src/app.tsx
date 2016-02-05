@@ -61,7 +61,7 @@ class Settings extends data.Component<ISettingsProps, ISettingsState> {
     }
 
 
-    public render() {
+    renderCore() {
         let par = this.props.parent
         let sizes: Util.StringMap<string> = {
             '14px': "Small",
@@ -106,7 +106,7 @@ class DropdownMenu extends data.Component<{}, {}> {
         this.child(".ui.dropdown").dropdown('refresh');
     }
 
-    public render() {
+    renderCore() {
         let item = (icon: string, msg: string, cb: () => void) => (
             <div className="item" onClick={cb}>
                 {icon ? <i className={icon + " icon"}></i> : null}
@@ -147,13 +147,13 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
     }
 
 
-    public render() {
+    renderCore() {
         let par = this.props.parent
-        let headers = workspace.allHeaders.filter(h => !h.isDeleted)
+        let headers: workspace.Header[] = this.getData("header:*")
         headers.sort((a, b) => b.recentUse - a.recentUse)
         let chgHeader = (ev: React.FormEvent) => {
             let id = (ev.target as HTMLInputElement).value
-            par.loadHeader(headers.filter(h => h.id == id)[0])
+            par.loadHeader(workspace.getHeader(id))
         }
         let hd = par.state.header
         return (
@@ -183,7 +183,7 @@ interface EditorSettings {
     fileHistory: FileHistoryEntry[];
 }
 
-class Editor extends React.Component<IAppProps, IAppState> {
+class Editor extends data.Component<IAppProps, IAppState> {
     editor: AceAjax.Editor;
     editorFile: pkg.File;
     settings: EditorSettings;
@@ -230,7 +230,7 @@ class Editor extends React.Component<IAppProps, IAppState> {
         this.saveSettings()
     }
 
-    setTheme() {
+    private setTheme() {
         require('brace/theme/sqlserver');
         require('brace/theme/tomorrow_night_bright');
 
@@ -246,9 +246,8 @@ class Editor extends React.Component<IAppProps, IAppState> {
         if (!this.editorFile)
             return;
         this.editorFile.setContent(this.editor.getValue())
-        this.setState({ fileState: "flushed" })
     }
-    
+
     public componentDidMount() {
         this.editor = ace.edit('maineditor');
 
@@ -260,10 +259,9 @@ class Editor extends React.Component<IAppProps, IAppState> {
 
         let hasChangeTimer = false
         sess.on("change", () => {
-            this.setState({ fileState: "dirty" })
             if (!hasChangeTimer) {
                 hasChangeTimer = true
-                setTimeout(function() {
+                setTimeout(() => {
                     hasChangeTimer = false;
                     this.saveFile();
                 }, 3000);
@@ -311,16 +309,15 @@ class Editor extends React.Component<IAppProps, IAppState> {
         if (!h) return
         pkg.loadPkgAsync(h.id)
             .then(() => {
-                this.setState({
-                    header: h,
-                    currFile: null
-                })
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
                 let file = main.getMainFile()
                 if (e)
                     file = main.lookupFile(e.name) || file
-                this.setFile(file)
+                this.setState({
+                    header: h,
+                    currFile: file
+                })
                 core.infoNotification("Project loaded: " + h.name)
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeader(h)
@@ -336,10 +333,11 @@ class Editor extends React.Component<IAppProps, IAppState> {
             .done()
     }
 
-    public render() {
+    renderCore() {
         theEditor = this;
 
         this.setTheme()
+        this.updateEditorFile();
 
         let filesOf = (pkg: pkg.EditorPackage) =>
             pkg.sortedFiles().map(file =>

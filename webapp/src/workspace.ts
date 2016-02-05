@@ -4,6 +4,7 @@ import * as Promise from "bluebird";
 import * as db from "./db";
 import * as core from "./core";
 import * as pkg from "./package";
+import * as data from "./data";
 
 let headers = new db.Table("header")
 let texts = new db.Table("text")
@@ -35,7 +36,7 @@ export interface ScriptText {
 
 export let allHeaders: Header[];
 
-export function getHeader(id:string) {
+export function getHeader(id: string) {
     return allHeaders.filter(h => !h.isDeleted && h.id == id)[0]
 }
 
@@ -143,6 +144,10 @@ function saveCoreAsync(h: Header, text?: ScriptText) {
         setTextAsync(text).then(() =>
             headers.setAsync(h).then(rev => {
                 h._rev = rev
+                data.invalidate("header:" + h.id)
+                data.invalidate("header:*")
+                if (text)
+                    data.invalidate("text:" + h.id)
             })))
 }
 
@@ -193,7 +198,7 @@ interface InstalledHeaders {
     blobcontainer: string;
 }
 
-function isProject(h:Header) {
+function isProject(h: Header) {
     return /prj$/.test(h.editor)
 }
 
@@ -201,7 +206,7 @@ export function syncAsync() {
     var numUp = 0
     var numDown = 0
     var blobConatiner = ""
-    var updated:Util.StringMap<number> = {}
+    var updated: Util.StringMap<number> = {}
 
     function uninstallAsync(h: Header) {
         console.log(`uninstall local ${h.id}`)
@@ -360,3 +365,37 @@ export function syncAsync() {
         .then(() => progressMsg("Syncing done"))
         .then(() => pkg.notifySyncDone(updated))
 }
+
+/*
+    header:<guid>   - one header
+    header:*        - all headers
+*/
+
+data.mountVirtualApi("header", {
+    isSync: p => true,
+    getSync: p => {
+        p = data.stripProtocol(p)
+        if (p == "*") return allHeaders.filter(f => !f.isDeleted)
+        return getHeader(p)
+    },
+    getAsync: null,
+})
+
+/*
+    text:<guid>            - all files
+    text:<guid>/<filename> - one file
+*/
+data.mountVirtualApi("text", {
+    isSync: p => false,
+    getSync: null,
+    getAsync: p => {
+        let m = /^\w+:([^\/]+)(\/(.*))?/.exec(p)
+        return getTextAsync(m[1])
+            .then(v => {
+                if (m[3])
+                    return v.files[m[3]]
+                else return v.files;
+            })
+    },
+})
+

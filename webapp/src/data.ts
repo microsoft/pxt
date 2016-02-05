@@ -15,18 +15,14 @@ interface CacheEntry {
     api: VirtualApi;
 }
 
-export interface VirtualApi {
-    getAsync(path: string): Promise<any>;
-    getSync(path: string): any;
-    isSync(path: string): boolean;
-    expirationTime(path: string): number; // in milliseconds
-}
-
 var virtualApis: Util.StringMap<VirtualApi> = {}
-export function mountVirtualApi(protocol: string, handler: VirtualApi) {
-    Util.assert(!virtualApis[protocol])
-    virtualApis[protocol] = handler
-}
+
+mountVirtualApi("cloud", {
+    isSync: p => false,
+    getSync: p => null,
+    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)),
+    expirationTime: p => 60 * 1000,
+})
 
 var cachedData: Util.StringMap<CacheEntry> = {};
 
@@ -50,19 +46,18 @@ function unsubscribe(component: AnyComponent) {
 }
 
 function expired(ce: CacheEntry) {
-    let exp = ce.api.expirationTime(ce.path)
-    if (exp > 1e10)
+    if (!ce.api.expirationTime)
         return ce.data != null;
-    return ce.data == null || (Date.now() - ce.lastRefresh) > exp;
+    return ce.data == null || (Date.now() - ce.lastRefresh) > ce.api.expirationTime(ce.path)
 }
 
 function shouldCache(ce: CacheEntry) {
     if (!ce.data) return false
-    return /^me\/settings/.test(ce.path)
+    return /^cloud:me\/settings/.test(ce.path)
 }
 
 function loadCache() {
-    JSON.parse(window.localStorage["apiCache"] || "[]").forEach((e: any) => {
+    JSON.parse(window.localStorage["apiCache2"] || "[]").forEach((e: any) => {
         let ce = lookup(e.path)
         ce.data = e.data
     })
@@ -75,7 +70,7 @@ function saveCache() {
             data: e.data
         }
     })
-    window.localStorage["apiCache"] = JSON.stringify(obj)
+    window.localStorage["apiCache2"] = JSON.stringify(obj)
 }
 
 function matches(ce: CacheEntry, prefix: string) {
@@ -95,24 +90,11 @@ function notify(ce: CacheEntry) {
         Util.nextTick(() => ce.components.forEach(c => c.forceUpdate()))
 }
 
-let cloudApi: VirtualApi = {
-    isSync: p => false,
-    getSync: p => null,
-    getAsync: Cloud.privateGetAsync,
-    expirationTime: p => 60 * 1000,
-}
-
 function getVirtualApi(path: string) {
     let m = /^(\w+):/.exec(path)
-    if (m)
-        return virtualApis[m[1]]
-    return cloudApi;
-}
-
-export function stripProtocol(path: string) {
-    let m = /^(\w+):(.*)/.exec(path)
-    if (m) return m[2]
-    return path
+    if (!m || !virtualApis[m[1]])
+        Util.oops("bad data protocol: " + path)
+    return virtualApis[m[1]]
 }
 
 function queue(ce: CacheEntry) {
@@ -146,16 +128,6 @@ function lookup(path: string) {
     return cachedData[path]
 }
 
-export function invalidate(prefix: string) {
-    Util.values(cachedData).forEach(ce => {
-        if (matches(ce, prefix)) {
-            ce.lastRefresh = 0;
-            if (ce.components.length > 0)
-                queue(lookup(ce.path))
-        }
-    })
-}
-
 function getCached(component: AnyComponent, path: string) {
     subscribe(component, path)
     let r = lookup(path)
@@ -164,6 +136,39 @@ function getCached(component: AnyComponent, path: string) {
     if (expired(r))
         queue(r)
     return r.data
+}
+
+//
+// Public interface
+//
+
+export interface VirtualApi {
+    getAsync(path: string): Promise<any>;
+    getSync(path: string): any;
+    isSync(path: string): boolean;
+    expirationTime?(path: string): number; // in milliseconds
+}
+
+export function mountVirtualApi(protocol: string, handler: VirtualApi) {
+    Util.assert(!virtualApis[protocol])
+    virtualApis[protocol] = handler
+}
+
+export function stripProtocol(path: string) {
+    let m = /^(\w+):(.*)/.exec(path)
+    if (m) return m[2]
+    else Util.oops("protocol missing in: " + path)
+    return path
+}
+
+export function invalidate(prefix: string) {
+    Util.values(cachedData).forEach(ce => {
+        if (matches(ce, prefix)) {
+            ce.lastRefresh = 0;
+            if (ce.components.length > 0)
+                queue(lookup(ce.path))
+        }
+    })
 }
 
 export function getAsync(path: string) {
@@ -185,12 +190,15 @@ export function getAsync(path: string) {
 
 export class Component<T, S> extends React.Component<T, S> {
     subscriptions: CacheEntry[] = [];
+    renderCoreOk = false;
 
     constructor(props: T) {
         super(props);
     }
 
-    getApi(path: string) {
+    getData(path: string) {
+        if (!this.renderCoreOk)
+            Util.oops("Override renderCore() not render()")
         return getCached(this, path)
     }
 
@@ -208,6 +216,7 @@ export class Component<T, S> extends React.Component<T, S> {
 
     render() {
         unsubscribe(this)
+        this.renderCoreOk = true;
         return this.renderCore();
     }
 }

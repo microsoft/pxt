@@ -120,8 +120,8 @@ namespace Util {
         return -1;
     }
 
-    export function nextTick(f: () => void) { 
-        Promise.resolve().done(f)
+    export function nextTick(f: () => void) {
+        (<any>Promise)._async._schedule(f)
     }
 
 

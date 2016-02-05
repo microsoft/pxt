@@ -1,4 +1,5 @@
 import * as workspace from "./workspace";
+import * as data from "./data";
 
 export class File {
     constructor(public epkg: EditorPackage, public name: string, public content: string)
@@ -124,7 +125,22 @@ export function loadPkgAsync(id: string) {
     return theHost.downloadPackageAsync(mainPkg)
         .then(() => theHost.readFileAsync(mainPkg, yelm.configName))
         .then(str => {
+            data.invalidate("open:")
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()
         })
 }
+
+/*
+    open:<pkgName>/<filename> - one file
+*/
+data.mountVirtualApi("open", {
+    isSync: p => true,
+    getSync: p => {
+        let f = getEditorPkg(mainPkg).lookupFile(data.stripProtocol(p))
+        if (f) return f.content
+        return null
+    },
+    getAsync: null
+})
+
