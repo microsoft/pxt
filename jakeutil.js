@@ -20,11 +20,11 @@ function execCallback(task) {
 function expand(dir, ext) {
   if (Array.isArray(dir)) {
     let r = []
-    dir.forEach(f => expand(f).forEach(x => r.push(x)))
+    dir.forEach(f => expand(f, ext).forEach(x => r.push(x)))
     return r
   }
   if (fs.existsSync(dir) && fs.statSync(dir).isDirectory())
-    return fs.readdirSync(dir).map(f => dir + "/" + f)
+    return expand(fs.readdirSync(dir).map(f => dir + "/" + f), ext)
   else {
       if (ext && dir.slice(-ext.length) != ext)
         return []
@@ -33,7 +33,7 @@ function expand(dir, ext) {
 }
 
 function catFiles(out, files, pref) {
-  if (!pref) pref = '"use strict";' 
+  if (pref == null) pref = '"use strict";' 
   file(out, files, function () {
       let cont = files.map(f => fs.readFileSync(f, "utf8").replace(/\r/g, ""))
       cont.unshift(pref)
