@@ -71,7 +71,7 @@ class Settings extends data.Component<ISettingsProps, ISettingsState> {
         let fontSize = (ev: React.FormEvent) => par.setState({ fontSize: (ev.target as HTMLInputElement).value })
         return (
             <div id='settings'>
-                <div className="ui orange icon button popup-button">
+                <div className="ui icon button popup-button">
                     <i className="settings icon"></i>
                 </div>
                 <div className="ui popup transition hidden form">

@@ -83,7 +83,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
         }
         return (
             <div id='loginbox'>
-                <div className="ui orange buttons">
+                <div className="ui buttons">
                     <div className="ui button" onClick={buttonAction}>{name}</div>
                     <div className="ui floating dropdown icon button">
                         <i className="dropdown icon"></i>
@@ -104,21 +104,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
                         </div>
                     </div>
                 </div>
-
-
             </div>)
     }
 }
-
-/*
-                <div className="ui basic modal">
-                    <div className="ui icon header">
-                        <i className="sign in icon"></i>
-                        Signing in...
-                    </div>
-                    <div className="ui center aligned container description">
-                        <p>It will just be a moment.</p>
-                    </div>
-                </div>
-*/
 
