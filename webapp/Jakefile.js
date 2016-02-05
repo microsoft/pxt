@@ -13,7 +13,7 @@ task('precopy', function() {
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/jquery.js")
 })
 
-task('upper', ["precopy"], function() {
+task('upper', ["precopy"], {async:true}, function() {
   cmdIn(this, "..", 'jake built/yelmlib.js')  
 })
 
@@ -22,19 +22,19 @@ task('postcopy', ["upper"], function() {
     jake.cpR("../node_modules/typescript/lib/typescript.js", "built/typescript.js")
 })
 
-task('lower', ["postcopy"], function() {
+task('lower', ["postcopy"], {async:true}, function() {
     cmdIn(this, ".", 'node node_modules/typescript/lib/tsc')  
 })
 
-task('built/main.js', ["lower"], function() {
+file('built/main.js', ["lower"], {async:true}, function() {
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/src/app.js -o built/main.js')
 })
 
-task('built/themes', [], function() {
+file('built/themes', [], function() {
     jake.cpR("node_modules/semantic-ui-less/themes", "built/")
 })
 
-task('built/style.css', ["theme.config"], function() {
+file('built/style.css', ["theme.config"], {async:true}, function() {
     cmdIn(this, ".", 'node node_modules/less/bin/lessc style.less built/style.css --include-path=node_modules/semantic-ui-less')
 })
 
@@ -47,11 +47,12 @@ ju.catFiles("built/semantic.js",
         
 task('clean', function() {
   jake.rmRf("built")
-  expand("built").forEach(f => {
-      try {
-        fs.unlinkSync(f)
-      } catch (e) {
-          console.log("cannot unlink:", f, e.message)
-      }
-  })
+  if (fs.existsSync("built"))
+    expand("built").forEach(f => {
+        try {
+            fs.unlinkSync(f)
+        } catch (e) {
+            console.log("cannot unlink:", f, e.message)
+        }
+    })
 })
