@@ -27,7 +27,9 @@ export function navigateInWindow(url: string) {
 }
 
 export function findChild(c: React.Component<any, any>, selector: string) {
-    return $(ReactDOM.findDOMNode(c)).find(selector)
+    let self = $(ReactDOM.findDOMNode(c))
+    if (!selector) return self 
+    return self.find(selector)
 }
 
 export function parseQueryString(qs: string) {

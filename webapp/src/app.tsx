@@ -4,6 +4,7 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as sui from "./sui";
 import {LoginBox} from "./login";
 
 declare var require: any;
@@ -68,7 +69,7 @@ class Settings extends data.Component<ISettingsProps, ISettingsState> {
             '20px': "Medium",
             '24px': "Large",
         }
-        let fontSize = (ev: React.FormEvent) => par.setState({ fontSize: (ev.target as HTMLInputElement).value })
+        let fontSize = (v:string) => par.setState({ fontSize: v })
         return (
             <div id='settings'>
                 <div className="ui icon button popup-button">
@@ -84,16 +85,16 @@ class Settings extends data.Component<ISettingsProps, ISettingsState> {
 
                     <div className="field">
                         <label>Font size</label>
-                        <select className="ui selection dropdown " value={par.state.fontSize}
-                            onChange={fontSize}>
-                            {Object.keys(sizes).map(k => <option key={k} value={k}>{sizes[k]}</option>) }
-                        </select>
+                        <sui.Dropdown class="selection" value={par.state.fontSize} onChange={fontSize}>
+                            {Object.keys(sizes).map(k => <sui.Item value={k}>{sizes[k]}</sui.Item>) }
+                        </sui.Dropdown>
                     </div>
                 </div>
             </div>
         );
     }
 }
+
 
 class DropdownMenu extends data.Component<{}, {}> {
     componentDidMount() {

@@ -205,7 +205,7 @@ export class Component<T, S> extends React.Component<T, S> {
     componentWillUnmount(): void {
         unsubscribe(this)
     }
-
+    
     child(selector: string) {
         return core.findChild(this, selector)
     }
