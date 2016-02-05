@@ -115,9 +115,8 @@ class DropdownMenu extends data.Component<{}, {}> {
         )
         return (
             <div>
-                <div className="ui dropdown button floating">
-                    <div className="text">More</div>
-                    <i className="dropdown icon"></i>
+                <div className="ui dropdown icon button floating">
+                    <i className="wrench icon"></i>
                     <div className="menu">
                         {item("file", "New project", () => { }) }
                         {item("trash", "Remove project", () => { }) }
@@ -139,6 +138,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
 
     componentDidMount() {
         this.child(".ui.dropdown").dropdown();
+        this.child(".ui.button").popup();
     }
 
     componentDidUpdate() {
@@ -166,6 +166,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         if (!hd && headers[0]) {
             Util.nextTick(() => par.loadHeader(headers[0]))
         }
+        let needsUpload = hd && !hd.blobCurrent
         return (
             <div id='slotselector'>
                 <select className="ui selection search dropdown" value={hdId}
@@ -177,8 +178,9 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
                     ) }
                 </select>
 
-                <button className={"ui icon button " + btnClass} onClick={save}>
-                    <i className={"cloud icon " + (hd && !hd.blobCurrent ? "upload" : "") }></i>
+                <button className={"ui icon button " + btnClass} onClick={save}
+                    data-content={btnClass ? "Uploading..." : needsUpload ? "Will upload. Click to force." : "Stored in the cloud." }>
+                    <i className={"cloud icon " + (needsUpload ? "upload" : "") }></i>
                 </button>
 
             </div>

@@ -6,6 +6,7 @@ SEMJS = behaviors/api.js behaviors/colorize.js behaviors/form.js behaviors/state
 
 all: built/style.css built/semantic.js built/themes
 	cp node_modules/jquery/dist/jquery.js built/
+	jake built/yelmlib.js
 	cp ../built/yelmlib.js built/
 	cp ../node_modules/typescript/lib/typescript.js built/
 	node node_modules/typescript/lib/tsc
