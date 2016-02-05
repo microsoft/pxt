@@ -1,22 +1,50 @@
 import * as workspace from "./workspace";
 import * as data from "./data";
+import * as core from "./core";                    
 
 export class File {
+    inSyncWithEditor = true;
+    inSyncWithDisk = true;
+
     constructor(public epkg: EditorPackage, public name: string, public content: string)
     { }
 
     getName() {
         return this.epkg.yelmPkg.id + "/" + this.name
     }
-    
+
     getExtension() {
         let m = /\.([^\.]+)$/.exec(this.name)
         if (m) return m[1]
         return ""
     }
-    
-    setContent(newContent:string){
-        
+
+    markDirty() {
+        this.inSyncWithEditor = false;
+        this.updateStatus();
+    }
+
+    private updateStatus() {
+        data.invalidate("open-status:" + this.getName())
+    }
+
+    setContent(newContent: string) {
+        this.inSyncWithEditor = true;
+        if (newContent != this.content) {
+            this.inSyncWithDisk = false;
+            this.content = newContent;
+            this.updateStatus();
+            data.invalidate("open:" + this.getName())
+            this.epkg.saveFilesAsync()
+                .done(() => {
+                    if (this.content == newContent) {
+                        this.inSyncWithDisk = true;
+                        this.updateStatus();
+                    }
+                })
+        } else {
+            this.updateStatus();
+        }
     }
 }
 
@@ -32,6 +60,20 @@ export class EditorPackage {
 
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
+    }
+
+    saveFilesAsync() {
+        let cfgFile = this.files[yelm.configName]
+        if (cfgFile) {
+            try {
+                let cfg = <yelm.PackageConfig>JSON.parse(cfgFile.content)
+                this.header.name = cfg.name
+            } catch (e) {
+            }
+        }
+        return workspace.saveAsync(this.header, {
+            files: Util.mapStringMap(this.files, (k, f) => f.content)
+        })
     }
 
     sortedFiles() {
@@ -128,6 +170,9 @@ export function loadPkgAsync(id: string) {
             data.invalidate("open:")
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()
+                .catch(e => {
+                    core.errorNotification("Cannot load package: " + e.message)
+                })
         })
 }
 
@@ -139,6 +184,24 @@ data.mountVirtualApi("open", {
     getSync: p => {
         let f = getEditorPkg(mainPkg).lookupFile(data.stripProtocol(p))
         if (f) return f.content
+        return null
+    },
+    getAsync: null
+})
+
+/*
+    open-status:<pkgName>/<filename> - 
+*/
+data.mountVirtualApi("open-status", {
+    isSync: p => true,
+    getSync: p => {
+        let f = getEditorPkg(mainPkg).lookupFile(data.stripProtocol(p))
+        if (f) {
+            if (f.inSyncWithEditor && f.inSyncWithDisk)
+                return "saved"
+            else
+                return "unsaved"
+        }
         return null
     },
     getAsync: null

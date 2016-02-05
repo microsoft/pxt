@@ -283,9 +283,9 @@ export function syncAsync() {
             .then(txt => {
                 let scr = ""
                 if (isProject(h))
-                    scr = txt.files[Object.keys(txt.files)[0]] || ""
-                else
                     scr = JSON.stringify(txt.files)
+                else
+                    scr = txt.files[Object.keys(txt.files)[0]] || ""
                 let body = {
                     guid: h.id,
                     name: h.name,
@@ -389,7 +389,7 @@ data.mountVirtualApi("text", {
     isSync: p => false,
     getSync: null,
     getAsync: p => {
-        let m = /^\w+:([^\/]+)(\/(.*))?/.exec(p)
+        let m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
             .then(v => {
                 if (m[3])

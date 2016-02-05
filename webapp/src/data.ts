@@ -91,7 +91,7 @@ function notify(ce: CacheEntry) {
 }
 
 function getVirtualApi(path: string) {
-    let m = /^(\w+):/.exec(path)
+    let m = /^([\w\-]+):/.exec(path)
     if (!m || !virtualApis[m[1]])
         Util.oops("bad data protocol: " + path)
     return virtualApis[m[1]]
@@ -155,7 +155,7 @@ export function mountVirtualApi(protocol: string, handler: VirtualApi) {
 }
 
 export function stripProtocol(path: string) {
-    let m = /^(\w+):(.*)/.exec(path)
+    let m = /^([\w\-]+):(.*)/.exec(path)
     if (m) return m[2]
     else Util.oops("protocol missing in: " + path)
     return path
