@@ -12,7 +12,7 @@ let dimmer = `
 </div>
 `
 
-export type Component<S,T> = data.Component<S,T>;
+export type Component<S, T> = data.Component<S, T>;
 
 export function showLoading(msg: string) {
     let over = $(dimmer)
@@ -28,7 +28,7 @@ export function navigateInWindow(url: string) {
 
 export function findChild(c: React.Component<any, any>, selector: string) {
     let self = $(ReactDOM.findDOMNode(c))
-    if (!selector) return self 
+    if (!selector) return self
     return self.find(selector)
 }
 
@@ -67,5 +67,36 @@ export function warningNotification(msg: string) {
 export function infoNotification(msg: string) {
     console.log("INFO", msg)
     htmlmsg("info", msg)
+}
+
+
+export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream") {
+    var buf = Util.stringToUint8Array(Util.toUTF8(text))
+    browserDownloadUInt8Array(buf, name, contentType);
+}
+
+export var isMobileBrowser = /mobile/.test(navigator.userAgent);
+
+export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream") {
+    try {
+        if ((<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser) {
+            var b = new Blob([buf], { type: contentType })
+            var result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
+        } else {
+            var link = <any>window.document.createElement('a');
+            var dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf)) 
+            if (typeof link.download == "string") {
+                link.href = dataurl;
+                link.download = name;
+                document.body.appendChild(link); // for FF
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                document.location.href = dataurl;
+            }
+        }
+    } catch (e) {
+        errorNotification("saving file failed...")
+    }
 }
 

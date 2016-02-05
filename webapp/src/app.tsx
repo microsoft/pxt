@@ -91,9 +91,9 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
                     onChange={chgHeader}>
                     {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || "no name"} />) }
                 </sui.Dropdown>
-                
+
                 <sui.Button class={btnClass} onClick={save}
-                    icon={"cloud " + (needsUpload ? "upload" : "")}
+                    icon={"cloud " + (needsUpload ? "upload" : "") }
                     popup={btnClass ? "Uploading..." : needsUpload ? "Will upload. Click to force." : "Stored in the cloud."}
                     />
             </div>
@@ -261,6 +261,11 @@ class Editor extends data.Component<IAppProps, IAppState> {
     compile() {
         pkg.mainPkg.buildAsync()
             .then(resp => {
+                let hex = resp.outfiles["microbit.hex"]
+                if (hex) {
+                    let fn = "microbit-" + this.state.header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
+                    core.browserDownloadText(hex, fn, "application/x-microbit-hex")
+                }
                 console.log(resp)
             })
             .done()
@@ -298,7 +303,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                 <div id="menubar">
                     <div className={"ui menu" + this.state.inverted}>
                         <div className="item">
-                            <sui.Button class='primary' text='Compile' onClick={() => this.compile() } /> 
+                            <sui.Button class='primary' text='Compile' onClick={() => this.compile() } />
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />
@@ -356,7 +361,7 @@ $(document).ready(() => {
                 hd = workspace.getHeader(ent.id)
             theEditor.loadHeader(hd)
         })
-        
+
     window.addEventListener("unload", ev => {
         if (theEditor && !LoginBox.signingOut)
             theEditor.saveSettings()
