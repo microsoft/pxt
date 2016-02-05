@@ -28,40 +28,11 @@ interface IAppState {
 
 var theEditor: Editor;
 
-interface ISettingsState {
-}
-
 interface ISettingsProps {
     parent: Editor;
 }
 
-class Settings extends data.Component<ISettingsProps, ISettingsState> {
-    state: ISettingsState;
-    constructor(props: ISettingsProps) {
-        super(props);
-        this.state = {
-        };
-    }
-
-    componentDidMount() {
-        this.child(".popup-button").popup({
-            position: "bottom right",
-            on: "click",
-            hoverable: true,
-            delay: {
-                show: 50,
-                hide: 1000
-            }
-        });
-        this.child(".ui.dropdown").dropdown();
-    }
-
-    componentDidUpdate() {
-        this.child(".popup-button").popup('refresh');
-        this.child(".ui.dropdown").dropdown('refresh');
-    }
-
-
+class Settings extends data.Component<ISettingsProps, {}> {
     renderCore() {
         let par = this.props.parent
         let sizes: Util.StringMap<string> = {
@@ -69,28 +40,23 @@ class Settings extends data.Component<ISettingsProps, ISettingsState> {
             '20px': "Medium",
             '24px': "Large",
         }
-        let fontSize = (v:string) => par.setState({ fontSize: v })
+        let fontSize = (v: string) => par.setState({ fontSize: v })
         return (
-            <div id='settings'>
-                <div className="ui icon button popup-button">
-                    <i className="settings icon"></i>
-                </div>
-                <div className="ui popup transition hidden form">
-                    <div className="field">
+            <sui.Popup icon='settings'>
+                <div className='ui form'>
+                    <sui.Field>
                         <div className="ui toggle checkbox ">
                             <input type="checkbox" name="public" checked={!!par.state.inverted} onChange={() => par.swapTheme() } />
                             <label>Dark theme</label>
                         </div>
-                    </div>
-
-                    <div className="field">
-                        <label>Font size</label>
+                    </sui.Field>
+                    <sui.Field label="Font size">
                         <sui.Dropdown class="selection" value={par.state.fontSize} onChange={fontSize}>
                             {Object.keys(sizes).map(k => <sui.Item value={k}>{sizes[k]}</sui.Item>) }
                         </sui.Dropdown>
-                    </div>
+                    </sui.Field>
                 </div>
-            </div>
+            </sui.Popup>
         );
     }
 }

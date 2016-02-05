@@ -36,13 +36,9 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
     }
 
     componentDidUpdate() {
-        this.child("").dropdown({
-            onChange: (v: string) => {
-                if (this.props.onChange)
-                    this.props.onChange(v)
-            }
-        });
-        this.child("").dropdown('set selected', this.props.value)
+        this.child("")
+            .dropdown('set selected', this.props.value)
+            .dropdown("refresh")
     }
 
     renderCore() {
@@ -70,5 +66,50 @@ export class Item extends data.Component<ItemProps, {}> {
                 {genericContent(this.props) }
                 {this.props.children}
             </div>);
+    }
+}
+
+export class Popup extends data.Component<UiProps, {}> {
+    componentDidMount() {
+        this.child(".popup-button").popup({
+            position: "bottom right",
+            on: "click",
+            hoverable: true,
+            delay: {
+                show: 50,
+                hide: 1000
+            }
+        });
+    }
+
+    componentDidUpdate() {
+        this.child(".popup-button").popup('refresh');
+    }
+
+    renderCore() {
+        return (
+            <div>
+                <div className={genericClassName("ui button popup-button", this.props) }>
+                    {genericContent(this.props) }
+                </div>
+                <div className="ui popup transition hidden">
+                    {this.props.children}
+                </div>
+            </div>
+        );
+    }
+}
+
+export class Field extends data.Component<{
+    label?: string;
+    children?: any;
+}, {}> {
+    renderCore() {
+        return (
+            <div className="field">
+                {this.props.label ? <label>{this.props.label}</label> : null}
+                {this.props.children}
+            </div>
+        );
     }
 }
