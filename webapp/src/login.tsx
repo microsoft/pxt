@@ -13,14 +13,14 @@ export interface ILoginBoxState {
 
 
 function initLogin() {
-    let qs = core.parseQueryString((location.hash || "#").slice(1))
+    let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
     if (qs["access_token"]) {
         let ex = localStorage["oauthState"]
         if (ex && ex == qs["state"]) {
             window.localStorage["access_token"] = qs["access_token"]
             window.localStorage.removeItem("oauthState")
         }
-        location.hash = location.hash.replace(/[\#\&\?]*access_token.*/, "")
+        location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
     }
     Cloud.accessToken = window.localStorage["access_token"] || "";
 }
@@ -66,6 +66,13 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
 
     signout() {
         core.showLoading("Signing out...")
+        workspace.resetAsync()
+            .then(() => Cloud.privatePostAsync("logout", {}))
+            .catch((e:any) => {})
+            .then(() => {
+                window.location.reload()
+            })
+            .done()
     }
 
     options() {
