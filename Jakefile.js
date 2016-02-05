@@ -1,45 +1,9 @@
 "use strict";
 
-var child_process = require("child_process");
 var fs = require("fs");
-var util = require("util");
-
-// for use with child_process.exec/execFile
-function execCallback(task) {
-  return function (error, stdout, stderr) {
-    if (stdout) console.log(stdout.toString().replace(/\n$/, ""));
-    if (stderr) console.error(stderr.toString().replace(/\n$/, ""));
-    if (error) {
-      console.error(error);
-      task.fail(error);
-    }
-    else task.complete();
-  }
-}
-
-function expand(dir) {
-  if (Array.isArray(dir)) {
-    let r = []
-    dir.forEach(f => expand(f).forEach(x => r.push(x)))
-    return r
-  }
-  if (fs.existsSync(dir) && fs.statSync(dir).isDirectory())
-    return fs.readdirSync(dir).map(f => dir + "/" + f)
-  else return [dir]
-}
-
-function catFiles(out, files) {
-  file(out, files, function () {
-      let cont = files.map(f => fs.readFileSync(f, "utf8").replace(/\r/g, ""))
-      cont.unshift('"use strict";')
-    fs.writeFileSync(out, cont.join("\n"))
-  })
-}
-
-function cmdIn(task, dir, cmd) {
-  console.log(`[${task.name}] cd ${dir}; ${cmd}`)
-  child_process.exec(cmd, { cwd: dir }, execCallback(task))
-}
+var ju = require("./jakeutil")
+var expand = ju.expand;
+var cmdIn = ju.cmdIn;
 
 function tscIn(task, dir) {
   cmdIn(task, dir, 'node ../node_modules/typescript/bin/tsc')
@@ -72,7 +36,7 @@ file('libs/lang-test0/built/microbit.js', expand(['libs/mbit', 'libs/lang-test0'
   cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js build')
 })
 
-catFiles('built/yelm.js', [
+ju.catFiles('built/yelm.js', [
     "node_modules/typescript/lib/typescript.js", 
     "built/yelmlib.js",
     "built/nodeutil.js",
@@ -102,4 +66,3 @@ task('update', function() {
         "tsd reinstall"
   ], {printStdout: true});
 })
-
