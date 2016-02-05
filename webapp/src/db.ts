@@ -3,6 +3,13 @@ var PouchDB = require("pouchdb")
 import * as Promise from "bluebird";
 
 (window as any).Promise = Promise;
+(Promise as any).config({
+    // Enables all warnings except forgotten return statements.
+    warnings: {
+        wForgottenReturn: false
+    }
+});
+
 export let db = new PouchDB("mbit", { revs_limit: 2 })
 
 export class Table {    
