@@ -21,8 +21,8 @@ function genericClassName(cls: string, props: UiProps) {
 
 function genericContent(props: UiProps) {
     return [
-        props.icon ? (<i className={props.icon + " icon"}></i>) : null,
-        props.text ? (<span className='text'>{props.text}</span>) : null
+        props.icon ? (<i key='iconkey' className={props.icon + " icon"}></i>) : null,
+        props.text ? (<span key='textkey' className='text'>{props.text}</span>) : null
     ]
 }
 
@@ -31,8 +31,9 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
         this.child("").dropdown({
             action: this.props.menu ? "activate" : "hide",
             onChange: (v: string) => {
-                if (this.props.onChange)
+                if (this.props.onChange && v != this.props.value) {
                     this.props.onChange(v)
+                }
             }
         });
     }
@@ -47,6 +48,7 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
         return (
             <div className={genericClassName("ui dropdown", this.props) }>
                 {this.props.menu ? null : <input type="hidden" name="mydropdown"/>}
+                {this.props.icon ? null : (<i className="dropdown icon"></i>)}
                 {genericContent(this.props) }
                 {this.props.menu ? null : <div className="default text"></div>}
                 <div className="menu">
@@ -57,7 +59,7 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
 }
 
 export interface ItemProps extends UiProps {
-    value?: string;
+    key?: string;
     onClick?: () => void;
 }
 
@@ -65,8 +67,8 @@ export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
         return (
             <div className={genericClassName("ui item", this.props) }
-                key={this.props.value}
-                data-value={this.props.value}
+                key={this.props.key}
+                data-value={this.props.key}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}

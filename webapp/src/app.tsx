@@ -52,7 +52,7 @@ class Settings extends data.Component<ISettingsProps, {}> {
                     </sui.Field>
                     <sui.Field label="Font size">
                         <sui.Dropdown class="selection" value={par.state.fontSize} onChange={fontSize}>
-                            {Object.keys(sizes).map(k => <sui.Item value={k}>{sizes[k]}</sui.Item>) }
+                            {Object.keys(sizes).map(k => <sui.Item key={k}>{sizes[k]}</sui.Item>) }
                         </sui.Dropdown>
                     </sui.Field>
                 </div>
@@ -69,13 +69,10 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
     }
 
     componentDidMount() {
-        this.child(".ui.dropdown").dropdown();
         this.child(".ui.button").popup();
     }
 
     componentDidUpdate() {
-        this.child(".ui.dropdown").dropdown('set selected', this.child("select").val())
-        this.child(".ui.dropdown").dropdown('refresh');
     }
 
 
@@ -83,8 +80,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         let par = this.props.parent
         let headers: workspace.Header[] = this.getData("header:*")
         headers.sort((a, b) => b.recentUse - a.recentUse)
-        let chgHeader = (ev: React.FormEvent) => {
-            let id = (ev.target as HTMLInputElement).value
+        let chgHeader = (id: string) => {
             par.loadHeader(workspace.getHeader(id))
         }
         let hd = par.state.header
@@ -96,19 +92,19 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
                 .done()
         }
         if (!hd && headers[0]) {
-            Util.nextTick(() => par.loadHeader(headers[0]))
+            setTimeout(() => {
+                if (!par.state.header && headers[0]) {
+                    par.loadHeader(headers[0])
+                }
+            }, 1000)
         }
         let needsUpload = hd && !hd.blobCurrent
         return (
             <div id='slotselector'>
-                <select className="ui selection search dropdown" value={hdId}
+                <sui.Dropdown class='selection search' value={hdId}
                     onChange={chgHeader}>
-                    {headers.map(h =>
-                        <option key={h.id} value={h.id}>
-                            {h.name || "no name"}
-                        </option>
-                    ) }
-                </select>
+                    {headers.map(h => <sui.Item key={h.id} text={h.name || "no name"} />) }
+                </sui.Dropdown>
 
                 <button className={"ui icon button " + btnClass} onClick={save}
                     data-content={btnClass ? "Uploading..." : needsUpload ? "Will upload. Click to force." : "Stored in the cloud." }>
@@ -358,7 +354,8 @@ function render() {
 let myexports: any = {
     workspace,
     require,
-    core
+    core,
+    theEditor
 }
 Object.keys(myexports).forEach(k => (window as any)[k] = myexports[k])
 
@@ -377,10 +374,11 @@ $(document).ready(() => {
                 hd = workspace.getHeader(ent.id)
             theEditor.loadHeader(hd)
         })
+        
+    window.addEventListener("unload", ev => {
+        if (theEditor && !LoginBox.signingOut)
+            theEditor.saveSettings()
+    })
 })
 
 
-window.addEventListener("unload", ev => {
-    if (theEditor && !LoginBox.signingOut)
-        theEditor.saveSettings()
-})
