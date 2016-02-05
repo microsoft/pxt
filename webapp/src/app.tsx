@@ -52,7 +52,7 @@ class Settings extends data.Component<ISettingsProps, {}> {
                     </sui.Field>
                     <sui.Field label="Font size">
                         <sui.Dropdown class="selection" value={par.state.fontSize} onChange={fontSize}>
-                            {Object.keys(sizes).map(k => <sui.Item key={k}>{sizes[k]}</sui.Item>) }
+                            {Object.keys(sizes).map(k => <sui.Item key={k} value={k}>{sizes[k]}</sui.Item>) }
                         </sui.Dropdown>
                     </sui.Field>
                 </div>
@@ -62,20 +62,6 @@ class Settings extends data.Component<ISettingsProps, {}> {
 }
 
 class SlotSelector extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-        this.state = {
-        };
-    }
-
-    componentDidMount() {
-        this.child(".ui.button").popup();
-    }
-
-    componentDidUpdate() {
-    }
-
-
     renderCore() {
         let par = this.props.parent
         let headers: workspace.Header[] = this.getData("header:*")
@@ -103,14 +89,13 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
             <div id='slotselector'>
                 <sui.Dropdown class='selection search' value={hdId}
                     onChange={chgHeader}>
-                    {headers.map(h => <sui.Item key={h.id} text={h.name || "no name"} />) }
+                    {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || "no name"} />) }
                 </sui.Dropdown>
-
-                <button className={"ui icon button " + btnClass} onClick={save}
-                    data-content={btnClass ? "Uploading..." : needsUpload ? "Will upload. Click to force." : "Stored in the cloud." }>
-                    <i className={"cloud icon " + (needsUpload ? "upload" : "") }></i>
-                </button>
-
+                
+                <sui.Button class={btnClass} onClick={save}
+                    icon={"cloud " + (needsUpload ? "upload" : "")}
+                    popup={btnClass ? "Uploading..." : needsUpload ? "Will upload. Click to force." : "Stored in the cloud."}
+                    />
             </div>
         );
     }

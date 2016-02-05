@@ -48,7 +48,7 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
         return (
             <div className={genericClassName("ui dropdown", this.props) }>
                 {this.props.menu ? null : <input type="hidden" name="mydropdown"/>}
-                {this.props.icon ? null : (<i className="dropdown icon"></i>)}
+                {this.props.icon ? null : (<i className="dropdown icon"></i>) }
                 {genericContent(this.props) }
                 {this.props.menu ? null : <div className="default text"></div>}
                 <div className="menu">
@@ -59,7 +59,7 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
 }
 
 export interface ItemProps extends UiProps {
-    key?: string;
+    value?: string;
     onClick?: () => void;
 }
 
@@ -67,12 +67,39 @@ export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
         return (
             <div className={genericClassName("ui item", this.props) }
-                key={this.props.key}
-                data-value={this.props.key}
+                key={this.props.value}
+                data-value={this.props.value}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}
             </div>);
+    }
+}
+
+export interface ButtonProps extends UiProps {
+    onClick?: () => void;
+    popup?: string;
+}
+
+export class Button extends data.Component<ButtonProps, {}> {
+    componentDidMount() {
+        if (this.props.popup)
+            this.child("").popup();
+    }
+
+    componentDidUpdate() {
+        if (this.props.popup)
+            this.child("").popup();
+    }
+    renderCore() {
+        return (
+            <button className={genericClassName("ui button", this.props) }
+                data-content={this.props.popup}
+                onClick={this.props.onClick}>
+                {genericContent(this.props) }
+                {this.props.children}
+            </button>
+        );
     }
 }
 
