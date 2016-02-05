@@ -74,10 +74,10 @@ export function resetAsync() {
 
 function getTextCoreAsync(id: string): Promise<ScriptText> {
     return texts.getAsync(id)
-            .then(resp => {
-                lastTextRev[resp.id] = resp._rev
-                return resp;
-            })
+        .then(resp => {
+            lastTextRev[resp.id] = resp._rev
+            return resp;
+        })
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
@@ -167,16 +167,19 @@ function setTextAsync(t: ScriptText): Promise<void> {
 
     Util.assert(!!t.id)
     Util.assert(!!t.files)
-    
-    t._rev = lastTextRev[t.id]
-    
-    if (!t._rev)
-        return getTextCoreAsync(t.id).then(() => setTextAsync(t))
 
-    return texts.setAsync(t)
-        .then(resp => {
-            lastTextRev[t.id] = resp
-        })
+    t._rev = lastTextRev[t.id]
+
+    let final = () =>
+        texts.setAsync(t)
+            .then(resp => {
+                lastTextRev[t.id] = resp
+            })
+
+    if (!t._rev)
+        return getTextCoreAsync(t.id).catch(e => { }).then(final)
+
+    return final()
 }
 
 export function apiAsync(path: string, data?: any) {
