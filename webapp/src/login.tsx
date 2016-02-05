@@ -4,6 +4,7 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as sui from "./sui";
 
 export interface ILoginBoxProps {
 }
@@ -29,20 +30,6 @@ initLogin();
 
 export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
     static signingOut = false;
-    
-    constructor(props: ILoginBoxProps) {
-        super(props);
-        this.state = {
-        };
-    }
-
-    componentDidMount() {
-        this.child(".ui.dropdown").dropdown();
-    }
-
-    componentDidUpdate() {
-        this.child(".ui.dropdown").dropdown("refresh");
-    }
 
     signin(addParameters = "") {
 
@@ -71,7 +58,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
         core.showLoading("Signing out...")
         workspace.resetAsync()
             .then(() => Cloud.privatePostAsync("logout", {}))
-            .catch((e:any) => {})
+            .catch((e: any) => { })
             .then(() => {
                 window.location.reload()
             })
@@ -94,25 +81,12 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
         return (
             <div id='loginbox'>
                 <div className="ui buttons">
-                    <div className="ui button" onClick={buttonAction}>{name}</div>
-                    <div className="ui floating dropdown icon button">
-                        <i className="dropdown icon"></i>
-                        <div className="menu">
-                            {Cloud.isLoggedIn() ?
-                                [
-                                    <div key="signout" className="item" onClick={() => this.signout() }>
-                                        <i className="sign out icon"></i> Sign out
-                                    </div>,
-                                    <div key="settings" className="item" onClick={() => this.options() }>
-                                        <i className="settings icon"></i> Account options
-                                    </div>
-                                ] : [
-                                    <div key="signin" className="item" onClick={() => this.signin() }>
-                                        <i className="sign in icon"></i> Sign in
-                                    </div>
-                                ]}
-                        </div>
-                    </div>
+                    <sui.Button text={name} onClick={buttonAction} />
+                    <sui.Dropdown menu={true} class='floating icon button'>
+                        {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signout() } icon='sign out' text="Sign out" /> : null}
+                        {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.options() } icon='settings' text="Account options" /> : null}
+                        {!Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signin() } icon='sign in' text="Sign in" /> : null}
+                    </sui.Dropdown>
                 </div>
             </div>)
     }

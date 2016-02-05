@@ -298,10 +298,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                 <div id="menubar">
                     <div className={"ui menu" + this.state.inverted}>
                         <div className="item">
-                            <button className="ui primary button"
-                                onClick={() => this.compile() }>
-                                Compile
-                            </button>
+                            <sui.Button class='primary' text='Compile' onClick={() => this.compile() } /> 
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />
