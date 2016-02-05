@@ -26,6 +26,7 @@ export interface Header extends InstallHeader {
     blobId: string; // blob name for cloud version
     blobCurrent: boolean;      // has the current version of the script been pushed to cloud
     isDeleted: boolean;
+    saveId?: any;
 }
 
 export interface ScriptText {
@@ -85,13 +86,17 @@ function nowSeconds() {
 }
 
 export function saveAsync(h: Header, text?: ScriptText) {
-    h.recentUse = nowSeconds();
-    if (text || h.isDeleted) {
-        h.pubCurrent = false
-        h.blobCurrent = false
-        h.modificationTime = nowSeconds();
+    let clear = () => {
+        if (text || h.isDeleted) {
+            h.pubCurrent = false
+            h.blobCurrent = false
+            h.modificationTime = nowSeconds();
+            h.saveId = null;
+        }
     }
-    return saveCoreAsync(h, text)
+    h.recentUse = nowSeconds();
+    clear();
+    return saveCoreAsync(h, text).then(clear)
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
@@ -140,14 +145,17 @@ export function installByIdAsync(id: string) {
 
 function saveCoreAsync(h: Header, text?: ScriptText) {
     if (text && !text.id) text.id = h.id
+    if (text) h.saveId = null
     return headerQ.enqueue(h.id, () =>
         setTextAsync(text).then(() =>
             headers.setAsync(h).then(rev => {
                 h._rev = rev
                 data.invalidate("header:" + h.id)
                 data.invalidate("header:*")
-                if (text)
+                if (text) {
                     data.invalidate("text:" + h.id)
+                    h.saveId = null
+                }
             })))
 }
 
@@ -202,6 +210,44 @@ function isProject(h: Header) {
     return /prj$/.test(h.editor)
 }
 
+export function saveToCloudAsync(h: Header) {
+    return syncOneUpAsync(h)
+}
+
+function syncOneUpAsync(h: Header) {
+    let saveId = {}
+    return getTextAsync(h.id)
+        .then(txt => {
+            let scr = ""
+            if (isProject(h))
+                scr = JSON.stringify(txt.files)
+            else
+                scr = txt.files[Object.keys(txt.files)[0]] || ""
+            let body = {
+                guid: h.id,
+                name: h.name,
+                scriptId: h.pubId,
+                scriptVersion: { time: h.modificationTime, baseSnapshot: "*" },
+                meta: JSON.stringify(h.meta),
+                status: h.pubCurrent ? "published" : "unpublished",
+                recentUse: h.recentUse,
+                editor: h.editor,
+                script: scr
+            }
+            console.log(`sync up ${h.id}; ${body.script.length} chars`)
+            h.saveId = saveId;
+            return Cloud.privatePostAsync("me/installed", { bodies: [body] })
+        })
+        .then(resp => {
+            let chd = resp.headers[0] as CloudHeader
+            h.blobId = chd.scriptVersion.baseSnapshot
+            if (h.saveId === saveId)
+                h.blobCurrent = true
+            return saveCoreAsync(h)
+        })
+
+}
+
 export function syncAsync() {
     var numUp = 0
     var numDown = 0
@@ -252,6 +298,7 @@ export function syncAsync() {
                 delete header.isDeleted
                 header.pubId = resp.scriptId
                 header.pubCurrent = (resp.status == "published")
+                header.saveId = null
                 if (!header0)
                     allHeaders.push(header);
                 updated[header.id] = 1;
@@ -279,33 +326,7 @@ export function syncAsync() {
 
     function syncUpAsync(h: Header) {
         numUp++
-        return getTextAsync(h.id)
-            .then(txt => {
-                let scr = ""
-                if (isProject(h))
-                    scr = JSON.stringify(txt.files)
-                else
-                    scr = txt.files[Object.keys(txt.files)[0]] || ""
-                let body = {
-                    guid: h.id,
-                    name: h.name,
-                    scriptId: h.pubId,
-                    scriptVersion: { time: h.modificationTime, baseSnapshot: "*" },
-                    meta: JSON.stringify(h.meta),
-                    status: h.pubCurrent ? "published" : "unpublished",
-                    recentUse: h.recentUse,
-                    editor: h.editor,
-                    script: scr
-                }
-                console.log(`sync up ${h.id}; ${body.script.length} chars`)
-                return Cloud.privatePostAsync("me/installed", { bodies: [body] })
-            })
-            .then(resp => {
-                let chd = resp.headers[0] as CloudHeader
-                h.blobId = chd.scriptVersion.baseSnapshot
-                h.blobCurrent = true
-                return saveCoreAsync(h)
-            })
+        return syncOneUpAsync(h)
             .then(() => progress(--numUp))
     }
 

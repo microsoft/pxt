@@ -1,6 +1,6 @@
 import * as workspace from "./workspace";
 import * as data from "./data";
-import * as core from "./core";                    
+import * as core from "./core";
 
 export class File {
     inSyncWithEditor = true;
@@ -28,15 +28,15 @@ export class File {
         data.invalidate("open-status:" + this.getName())
     }
 
-    setContent(newContent: string) {
+    setContentAsync(newContent: string) {
         this.inSyncWithEditor = true;
         if (newContent != this.content) {
             this.inSyncWithDisk = false;
             this.content = newContent;
             this.updateStatus();
             data.invalidate("open:" + this.getName())
-            this.epkg.saveFilesAsync()
-                .done(() => {
+            return this.epkg.saveFilesAsync()
+                .then(() => {
                     if (this.content == newContent) {
                         this.inSyncWithDisk = true;
                         this.updateStatus();
@@ -44,6 +44,7 @@ export class File {
                 })
         } else {
             this.updateStatus();
+            return Promise.resolve()
         }
     }
 }
@@ -52,6 +53,8 @@ export class EditorPackage {
     files: Util.StringMap<File> = {};
     header: workspace.Header;
     onupdate = () => { };
+    saveScheduled = false;
+    savingNow = 0;
 
     constructor(public yelmPkg: yelm.Package) {
         if (yelmPkg.verProtocol() == "workspace")
@@ -61,8 +64,36 @@ export class EditorPackage {
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
     }
+    
+    private updateStatus() {
+        data.invalidate("pkg-status:" + this.header.id)
+    }
+
+    savePkgAsync() {
+        if (this.header.blobCurrent) return Promise.resolve();
+        this.savingNow++;
+        this.updateStatus();
+        return workspace.saveToCloudAsync(this.header)
+            .then(() => {
+                this.savingNow--;
+                this.updateStatus();
+                if (!this.header.blobCurrent)
+                    this.scheduleSave();
+            })
+    }
+
+    private scheduleSave() {
+        if (this.saveScheduled) return
+        this.saveScheduled = true;
+        setTimeout(() => {
+            this.saveScheduled = false;
+            this.savePkgAsync().done();
+        }, 5000)
+    }
 
     saveFilesAsync() {
+        if (!this.header) return Promise.resolve();
+        
         let cfgFile = this.files[yelm.configName]
         if (cfgFile) {
             try {
@@ -74,6 +105,7 @@ export class EditorPackage {
         return workspace.saveAsync(this.header, {
             files: Util.mapStringMap(this.files, (k, f) => f.content)
         })
+            .then(() => this.scheduleSave())
     }
 
     sortedFiles() {
@@ -195,7 +227,8 @@ data.mountVirtualApi("open", {
 data.mountVirtualApi("open-status", {
     isSync: p => true,
     getSync: p => {
-        let f = getEditorPkg(mainPkg).lookupFile(data.stripProtocol(p))
+        p = data.stripProtocol(p)
+        let f = getEditorPkg(mainPkg).lookupFile(p)
         if (f) {
             if (f.inSyncWithEditor && f.inSyncWithDisk)
                 return "saved"
@@ -203,6 +236,19 @@ data.mountVirtualApi("open-status", {
                 return "unsaved"
         }
         return null
+    },
+    getAsync: null
+})
+
+// pkg-status:<guid>
+data.mountVirtualApi("pkg-status", {
+    isSync: p => true,
+    getSync: p => {
+        p = data.stripProtocol(p)
+        let ep = allEditorPkgs().filter(pkg => pkg.header && pkg.header.id == p)[0]
+        if (ep)
+            return ep.savingNow ? "saving" : ""
+        return ""
     },
     getAsync: null
 })

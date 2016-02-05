@@ -67,3 +67,8 @@
 #msg > div:empty {
    display: none;
 }
+
+.ui.dropdown,
+.ui.buttons {
+    margin-right: 0.25em;
+}
