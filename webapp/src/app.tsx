@@ -161,7 +161,10 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         let save = () => {
             par.saveFileAsync()
                 .then(() => par.state.currFile.epkg.savePkgAsync())
-                .done()           
+                .done()
+        }
+        if (!hd && headers[0]) {
+            Util.nextTick(() => par.loadHeader(headers[0]))
         }
         return (
             <div id='slotselector'>
@@ -173,11 +176,11 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
                         </option>
                     ) }
                 </select>
-                
+
                 <button className={"ui icon button " + btnClass} onClick={save}>
-                    <i className={"cloud icon " + (hd && !hd.blobCurrent ? "upload" : "")}></i>
+                    <i className={"cloud icon " + (hd && !hd.blobCurrent ? "upload" : "") }></i>
                 </button>
-                
+
             </div>
         );
     }
@@ -320,7 +323,8 @@ class Editor extends data.Component<IAppProps, IAppState> {
     }
 
     loadHeader(h: workspace.Header) {
-        if (!h) return
+        if (!h)
+            return
         pkg.loadPkgAsync(h.id)
             .then(() => {
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
@@ -438,6 +442,6 @@ $(document).ready(() => {
 
 
 window.addEventListener("unload", ev => {
-    if (theEditor)
+    if (theEditor && !LoginBox.signingOut)
         theEditor.saveSettings()
 })

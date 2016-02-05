@@ -28,6 +28,8 @@ function initLogin() {
 initLogin();
 
 export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
+    static signingOut = false;
+    
     constructor(props: ILoginBoxProps) {
         super(props);
         this.state = {
@@ -65,6 +67,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
     }
 
     signout() {
+        LoginBox.signingOut = true;
         core.showLoading("Signing out...")
         workspace.resetAsync()
             .then(() => Cloud.privatePostAsync("logout", {}))
