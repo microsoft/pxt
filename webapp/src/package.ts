@@ -214,20 +214,17 @@ export function loadPkgAsync(id: string) {
     open:<pkgName>/<filename> - one file
 */
 data.mountVirtualApi("open", {
-    isSync: p => true,
     getSync: p => {
         let f = getEditorPkg(mainPkg).lookupFile(data.stripProtocol(p))
         if (f) return f.content
         return null
     },
-    getAsync: null
 })
 
 /*
     open-status:<pkgName>/<filename> - 
 */
 data.mountVirtualApi("open-status", {
-    isSync: p => true,
     getSync: p => {
         p = data.stripProtocol(p)
         let f = getEditorPkg(mainPkg).lookupFile(p)
@@ -239,12 +236,10 @@ data.mountVirtualApi("open-status", {
         }
         return null
     },
-    getAsync: null
 })
 
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {
-    isSync: p => true,
     getSync: p => {
         p = data.stripProtocol(p)
         let ep = allEditorPkgs().filter(pkg => pkg.header && pkg.header.id == p)[0]
@@ -252,6 +247,5 @@ data.mountVirtualApi("pkg-status", {
             return ep.savingNow ? "saving" : ""
         return ""
     },
-    getAsync: null
 })
 

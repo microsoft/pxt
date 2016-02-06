@@ -18,8 +18,6 @@ interface CacheEntry {
 var virtualApis: Util.StringMap<VirtualApi> = {}
 
 mountVirtualApi("cloud", {
-    isSync: p => false,
-    getSync: p => null,
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
 })
@@ -108,7 +106,7 @@ function queue(ce: CacheEntry) {
         notify(ce)
     }
 
-    if (ce.api.isSync(ce.path))
+    if (ce.api.isSync)
         final(ce.api.getSync(ce.path))
     else
         ce.api.getAsync(ce.path).done(final)
@@ -131,7 +129,7 @@ function lookup(path: string) {
 function getCached(component: AnyComponent, path: string) {
     subscribe(component, path)
     let r = lookup(path)
-    if (r.api.isSync(r.path))
+    if (r.api.isSync)
         return r.api.getSync(r.path)
     if (expired(r))
         queue(r)
@@ -143,14 +141,17 @@ function getCached(component: AnyComponent, path: string) {
 //
 
 export interface VirtualApi {
-    getAsync(path: string): Promise<any>;
-    getSync(path: string): any;
-    isSync(path: string): boolean;
+    getAsync?(path: string): Promise<any>;
+    getSync?(path: string): any;
+    isSync?: boolean;
     expirationTime?(path: string): number; // in milliseconds
 }
 
 export function mountVirtualApi(protocol: string, handler: VirtualApi) {
     Util.assert(!virtualApis[protocol])
+    Util.assert(!!handler.getSync || !!handler.getSync)
+    Util.assert(!!handler.getSync != !!handler.getSync)
+    handler.isSync = !!handler.getSync
     virtualApis[protocol] = handler
 }
 
@@ -174,7 +175,7 @@ export function invalidate(prefix: string) {
 export function getAsync(path: string) {
     let ce = lookup(path)
 
-    if (ce.api.isSync(ce.path))
+    if (ce.api.isSync)
         return Promise.resolve(ce.api.getSync(ce.path))
 
     if (!Cloud.isOnline() || !expired(ce))

@@ -405,13 +405,11 @@ export function syncAsync() {
 */
 
 data.mountVirtualApi("header", {
-    isSync: p => true,
     getSync: p => {
         p = data.stripProtocol(p)
         if (p == "*") return allHeaders.filter(f => !f.isDeleted)
         return getHeader(p)
     },
-    getAsync: null,
 })
 
 /*
@@ -419,8 +417,6 @@ data.mountVirtualApi("header", {
     text:<guid>/<filename> - one file
 */
 data.mountVirtualApi("text", {
-    isSync: p => false,
-    getSync: null,
     getAsync: p => {
         let m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
