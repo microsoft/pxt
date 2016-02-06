@@ -88,6 +88,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
                         {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signout() } icon='sign out' text={lf("Sign out")} /> : null}
                         {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.options() } icon='settings' text={lf("Account options")} /> : null}
                         {!Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signin() } icon='sign in' text={lf("Sign in")} /> : null}
+                        <sui.Item onClick={() => data.setOnline(false) } icon='plane' text={lf("Go offline")} />
                     </sui.Dropdown>
                 </div>
             </div>)

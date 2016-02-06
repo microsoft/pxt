@@ -7,18 +7,14 @@ namespace Cloud {
     function offlineError(url: string) {
         let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
         e.isOffline = true;
-        return e;
-    }
-
-    function throwOffline(url: string) {
-        if (!Cloud.isOnline()) {
-            throw offlineError(url);
-        }
+        return Promise.delay(1000).then(() => Promise.reject(e))
     }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url
-        throwOffline(options.url)
+        if (!Cloud.isOnline()) {
+            return offlineError(options.url);
+        }
         if (accessToken) {
             if (!options.headers) options.headers = {}
             options.headers["x-td-access-token"] = accessToken
@@ -30,7 +26,7 @@ namespace Cloud {
                         _isOnline = false;
                         onOffline();
                     }
-                    return Promise.reject(offlineError(options.url))
+                    return offlineError(options.url)
                 } else {
                     return Promise.reject(e)
                 }

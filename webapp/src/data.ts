@@ -20,6 +20,7 @@ var virtualApis: Util.StringMap<VirtualApi> = {}
 mountVirtualApi("cloud", {
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
 })
 
 mountVirtualApi("cloud-online", {
@@ -29,7 +30,7 @@ mountVirtualApi("cloud-online", {
 export function setOnline(st: boolean) {
     Cloud._isOnline = st
     invalidate("cloud-online:")
-    if (st)
+    if (!st)
         window.localStorage["offline"] = "1"
     else
         window.localStorage.removeItem("offline")
@@ -77,7 +78,7 @@ function loadCache() {
         let ce = lookup(e.path)
         ce.data = e.data
     })
-    
+
     if (window.localStorage["offline"])
         setOnline(false)
 }
@@ -118,6 +119,10 @@ function getVirtualApi(path: string) {
 
 function queue(ce: CacheEntry) {
     if (ce.queued) return
+
+    if (ce.api.isOffline && ce.api.isOffline())
+        return
+
     ce.queued = true
 
     let final = (res: any) => {
@@ -166,6 +171,7 @@ export interface VirtualApi {
     getSync?(path: string): any;
     isSync?: boolean;
     expirationTime?(path: string): number; // in milliseconds
+    isOffline?: () => boolean;
 }
 
 export function mountVirtualApi(protocol: string, handler: VirtualApi) {
