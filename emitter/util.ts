@@ -160,8 +160,13 @@ namespace Util {
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
         return httpRequestCoreAsync(options)
             .then(resp => {
-                if (resp.statusCode != 200 && !options.allowHttpErrors)
-                    throw new Error("Bad HTTP status code: " + resp.statusCode + " at " + options.url)
+                if (resp.statusCode != 200 && !options.allowHttpErrors) {
+                    let msg = Util.lf("Bad HTTP status code: {0} at {1}",
+                        resp.statusCode, options.url)
+                    let err: any = new Error(msg)
+                    err.statusCode = resp.statusCode
+                    return Promise.reject(err)
+                }
                 if (resp.text && /application\/json/.test(resp.headers["content-type"]))
                     resp.json = JSON.parse(resp.text)
                 return resp

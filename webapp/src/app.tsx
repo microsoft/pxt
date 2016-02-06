@@ -299,6 +299,12 @@ class Editor extends data.Component<IAppProps, IAppState> {
             ].concat(filesOf(pkg))
 
         let files = Util.concat(pkg.allEditorPkgs().map(filesWithHeader))
+        
+        let isOffline = !this.getData("cloud-online:api")
+        let goOnline = () => {
+            data.setOnline(true)
+            workspace.syncAsync().done();
+        }
 
         return (
             <div id='root' className={this.state.inverted || ""}>
@@ -319,6 +325,13 @@ class Editor extends data.Component<IAppProps, IAppState> {
                             </sui.Dropdown>
                         </div>
                         <div className="item right">
+                            {isOffline ? 
+                                <sui.Button 
+                                    text={lf("Go online")} 
+                                    class="green"
+                                    onClick={goOnline}
+                                    popup={lf("You're offline now.")} />
+                                : null}
                             <LoginBox />
                             <Settings parent={this} />
                         </div>

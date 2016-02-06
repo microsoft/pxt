@@ -22,6 +22,24 @@ mountVirtualApi("cloud", {
     expirationTime: p => 60 * 1000,
 })
 
+mountVirtualApi("cloud-online", {
+    getSync: p => Cloud.isOnline(),
+})
+
+export function setOnline(st: boolean) {
+    Cloud._isOnline = st
+    invalidate("cloud-online:")
+    if (st)
+        window.localStorage["offline"] = "1"
+    else
+        window.localStorage.removeItem("offline")
+}
+
+Cloud.onOffline = () => {
+    setOnline(Cloud.isOnline())
+    core.warningNotification(Util.lf("Going offline."))
+}
+
 var cachedData: Util.StringMap<CacheEntry> = {};
 
 function subscribe(component: AnyComponent, path: string) {
@@ -59,6 +77,9 @@ function loadCache() {
         let ce = lookup(e.path)
         ce.data = e.data
     })
+    
+    if (window.localStorage["offline"])
+        setOnline(false)
 }
 
 function saveCache() {
@@ -149,8 +170,8 @@ export interface VirtualApi {
 
 export function mountVirtualApi(protocol: string, handler: VirtualApi) {
     Util.assert(!virtualApis[protocol])
-    Util.assert(!!handler.getSync || !!handler.getSync)
-    Util.assert(!!handler.getSync != !!handler.getSync)
+    Util.assert(!!handler.getSync || !!handler.getAsync)
+    Util.assert(!!handler.getSync != !!handler.getAsync)
     handler.isSync = !!handler.getSync
     virtualApis[protocol] = handler
 }

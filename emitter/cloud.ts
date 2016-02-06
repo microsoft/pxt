@@ -2,15 +2,20 @@ namespace Cloud {
     export var apiRoot = "https://mbit.touchdevelop.com/api/";
     export var accessToken = "";
     export var _isOnline = true;
+    export var onOffline = () => { };
+
+    function offlineError(url: string) {
+        let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
+        e.isOffline = true;
+        return e;
+    }
 
     function throwOffline(url: string) {
         if (!Cloud.isOnline()) {
-            let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
-            e.isOffline = true;
-            throw e;
+            throw offlineError(url);
         }
     }
-    
+
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url
         throwOffline(options.url)
@@ -19,6 +24,17 @@ namespace Cloud {
             options.headers["x-td-access-token"] = accessToken
         }
         return Util.requestAsync(options)
+            .catch(e => {
+                if (e.statusCode == 0) {
+                    if (_isOnline) {
+                        _isOnline = false;
+                        onOffline();
+                    }
+                    return Promise.reject(offlineError(options.url))
+                } else {
+                    return Promise.reject(e)
+                }
+            })
     }
 
     export function privateGetAsync(path: string) {
