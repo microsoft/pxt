@@ -254,6 +254,93 @@ namespace Util {
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
 
+    export function _localize(s: string, account: boolean) {
+        return s
+    }
+
+    export function htmlEscape(_input: string) {
+        if (!_input) return _input; // null, undefined, empty string test
+        return _input.replace(/([^\w .!?\-$])/g, c => "&#" + c.charCodeAt(0) + ";");
+    }
+
+    export function jsStringQuote(s: string) {
+        return s.replace(/[^\w .!?\-$]/g,
+            (c) => {
+                var h = c.charCodeAt(0).toString(16);
+                return "\\u" + "0000".substr(0, 4 - h.length) + h;
+            });
+    }
+
+    export function jsStringLiteral(s: string) {
+        return "\"" + jsStringQuote(s) + "\"";
+    }
+
+    export function fmt_va(f: string, args: any[]): string {
+        if (args.length == 0) return f;
+        return f.replace(/\{([0-9]+)(\:[^\}]+)?\}/g, function(s: string, n: string, spec: string): string {
+            var v = args[parseInt(n)];
+            var r = "";
+            var fmtMatch = /^:f(\d*)\.(\d+)/.exec(spec);
+            if (fmtMatch) {
+                var precision = parseInt(fmtMatch[2])
+                var len = parseInt(fmtMatch[1]) || 0
+                var fillChar = /^0/.test(fmtMatch[1]) ? "0" : " ";
+                var num = (<number>v).toFixed(precision)
+                if (len > 0 && precision > 0) len += precision + 1;
+                if (len > 0) {
+                    while (num.length < len) {
+                        num = fillChar + num;
+                    }
+                }
+                r = num;
+            } else if (spec == ":x") {
+                r = "0x" + v.toString(16);
+            } else if (v === undefined) r = "(undef)";
+            else if (v === null) r = "(null)";
+            else if (v.toString) r = v.toString();
+            else r = v + "";
+            if (spec == ":a") {
+                if (/^\s*[euioah]/.test(r.toLowerCase()))
+                    r = "an " + r;
+                else if (/^\s*[bcdfgjklmnpqrstvwxz]/.test(r.toLowerCase()))
+                    r = "a " + r;
+            } else if (spec == ":s") {
+                if (v == 1) r = ""
+                else r = "s"
+            } else if (spec == ":q") {
+                r = Util.htmlEscape(r);
+            } else if (spec == ":jq") {
+                r = Util.jsStringQuote(r);
+            } else if (spec == ":uri") {
+                r = encodeURIComponent(r).replace(/'/g, "%27").replace(/"/g, "%22");
+            } else if (spec == ":url") {
+                r = encodeURI(r).replace(/'/g, "%27").replace(/"/g, "%22");
+            } else if (spec == ":%") {
+                r = (v * 100).toFixed(1).toString() + '%';
+            }
+            return r;
+        });
+    }
+
+    export function fmt(f: string, ...args: any[]) { return fmt_va(f, args); }
+
+
+
+    var sForPlural = true;
+    export function lf_va(format: string, args: any[]): string {
+        var lfmt = Util._localize(format, true)
+
+        if (!sForPlural && lfmt != format && /\d:s\}/.test(lfmt)) {
+            lfmt = lfmt.replace(/\{\d+:s\}/g, "")
+        }
+
+        return fmt_va(lfmt, args);
+    }
+
+    export function lf(format: string, ...args: any[]): string {
+        return lf_va(format, args);
+    }
+
     export var httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;
     export var sha256: (hashData: string) => string;
     export var getRandomBuf: (buf: Uint8Array) => void;

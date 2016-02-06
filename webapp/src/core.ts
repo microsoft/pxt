@@ -12,6 +12,8 @@ let dimmer = `
 </div>
 `
 
+var lf = Util.lf;
+
 export type Component<S, T> = data.Component<S, T>;
 
 export function showLoading(msg: string) {
@@ -96,7 +98,14 @@ export function browserDownloadUInt8Array(buf: Uint8Array, name: string, content
             }
         }
     } catch (e) {
-        errorNotification("saving file failed...")
+        errorNotification(lf("saving file failed..."))
+    }
+}
+
+export function handleNetworkError(e:any) {
+    let statusCode = <number> e.status
+    if (e.isOffline) {
+        warningNotification(lf("Network request failed; you appear to be offline"))
     }
 }
 

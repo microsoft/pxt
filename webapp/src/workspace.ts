@@ -10,6 +10,8 @@ let headers = new db.Table("header")
 let texts = new db.Table("text")
 let scripts = new db.Table("script")
 
+let lf = Util.lf
+
 export interface InstallHeader {
     name: string;
     meta: any;
@@ -323,11 +325,11 @@ export function syncAsync() {
     function progress(dummy: number) {
         let msg = ""
         if (numDown == 0 && numUp == 0)
-            msg = "All synced"
+            msg = lf("All synced")
         else {
-            msg = "Syncing ("
-            if (numDown) msg += numDown + " down"
-            if (numUp) msg += (numDown ? ", " : "") + numUp + " up"
+            msg = lf("Syncing") + " ("
+            if (numDown) msg += lf("{0} down", numDown)
+            if (numUp) msg += (numDown ? ", " : "") + lf("{0} up", numUp)
             msg += ")"
         }
         progressMsg(msg)
@@ -392,7 +394,7 @@ export function syncAsync() {
             progress(0)
             return Promise.all(waitFor)
         })
-        .then(() => progressMsg("Syncing done"))
+        .then(() => progressMsg(lf("Syncing done")))
         .then(() => pkg.notifySyncDone(updated))
 }
 

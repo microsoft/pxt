@@ -10,6 +10,8 @@ import {LoginBox} from "./login";
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
 
+var lf = Util.lf
+
 require('brace/mode/typescript');
 require('brace/mode/json');
 require('brace/mode/c_cpp');
@@ -36,9 +38,9 @@ class Settings extends data.Component<ISettingsProps, {}> {
     renderCore() {
         let par = this.props.parent
         let sizes: Util.StringMap<string> = {
-            '14px': "Small",
-            '20px': "Medium",
-            '24px': "Large",
+            '14px': lf("Small"),
+            '20px': lf("Medium"),
+            '24px': lf("Large"),
         }
         let fontSize = (v: string) => par.setState({ fontSize: v })
         return (
@@ -47,7 +49,7 @@ class Settings extends data.Component<ISettingsProps, {}> {
                     <sui.Field>
                         <div className="ui toggle checkbox ">
                             <input type="checkbox" name="public" checked={!!par.state.inverted} onChange={() => par.swapTheme() } />
-                            <label>Dark theme</label>
+                            <label>{lf("Dark theme")}</label>
                         </div>
                     </sui.Field>
                     <sui.Field label="Font size">
@@ -89,12 +91,12 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
             <div id='slotselector'>
                 <sui.Dropdown class='selection search' value={hdId}
                     onChange={chgHeader}>
-                    {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || "no name"} />) }
+                    {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || lf("no name")} />) }
                 </sui.Dropdown>
 
                 <sui.Button class={btnClass} onClick={save}
                     icon={"cloud " + (needsUpload ? "upload" : "") }
-                    popup={btnClass ? "Uploading..." : needsUpload ? "Will upload. Click to force." : "Stored in the cloud."}
+                    popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to force.") : lf("Stored in the cloud.")}
                     />
             </div>
         );
@@ -251,7 +253,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     header: h,
                     currFile: file
                 })
-                core.infoNotification("Project loaded: " + h.name)
+                core.infoNotification(lf("Project loaded: {0}", h.name))
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeader(h)
                 }
@@ -303,17 +305,17 @@ class Editor extends data.Component<IAppProps, IAppState> {
                 <div id="menubar">
                     <div className={"ui menu" + this.state.inverted}>
                         <div className="item">
-                            <sui.Button class='primary' text='Compile' onClick={() => this.compile() } />
+                            <sui.Button class='primary' text={lf("Compile")} onClick={() => this.compile() } />
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />
                         </div>
                         <div className="item">
                             <sui.Dropdown class="button floating" icon="wrench" menu={true}>
-                                <sui.Item icon="file" text="New project" onClick={() => { } } />
-                                <sui.Item icon="trash" text="Remove project" onClick={() => { } } />
+                                <sui.Item icon="file" text={lf("New project")} onClick={() => { } } />
+                                <sui.Item icon="trash" text={lf("Remove project")} onClick={() => { } } />
                                 <div className="divider"></div>
-                                <sui.Item icon="cloud download" text="Sync" onClick={() => workspace.syncAsync().done() } />
+                                <sui.Item icon="cloud download" text={lf("Sync")} onClick={() => workspace.syncAsync().done() } />
                             </sui.Dropdown>
                         </div>
                         <div className="item right">

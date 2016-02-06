@@ -2,6 +2,8 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
 
+var lf = Util.lf
+
 export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
@@ -64,7 +66,7 @@ export class EditorPackage {
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
     }
-    
+
     private updateStatus() {
         data.invalidate("pkg-status:" + this.header.id)
     }
@@ -93,7 +95,7 @@ export class EditorPackage {
 
     saveFilesAsync() {
         if (!this.header) return Promise.resolve();
-        
+
         let cfgFile = this.files[yelm.configName]
         if (cfgFile) {
             try {
@@ -161,10 +163,10 @@ class Host
     }
 
     resolveVersionAsync(pkg: yelm.Package) {
-        return Cloud.privateGetAsync(yelm.pkgPrefix + pkg.id).then(r => {
-            let id = r["scriptid"]
+        return data.getAsync("cloud:" + yelm.pkgPrefix + pkg.id).then(r => {
+            let id = (r || {})["scriptid"]
             if (!id)
-                Util.userError("scriptid no set on ptr for pkg " + pkg.id)
+                Util.userError(lf("cannot resolve package {0}", pkg.id))
             return id
         })
     }
@@ -203,7 +205,7 @@ export function loadPkgAsync(id: string) {
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()
                 .catch(e => {
-                    core.errorNotification("Cannot load package: " + e.message)
+                    core.errorNotification(lf("Cannot load package: {0}", e.message))
                 })
         })
 }

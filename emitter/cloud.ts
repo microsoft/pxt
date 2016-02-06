@@ -1,6 +1,7 @@
 namespace Cloud {
     export var apiRoot = "https://mbit.touchdevelop.com/api/";
     export var accessToken = "";
+    export var _isOnline = true;
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url
@@ -30,6 +31,7 @@ namespace Cloud {
     }
     
     export function isLoggedIn() { return !!accessToken }
+    export function isOnline() { return _isOnline; }
     
     export function getServiceUrl() {
         return apiRoot.replace(/\/api\/$/, "")

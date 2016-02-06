@@ -53,7 +53,7 @@ function expired(ce: CacheEntry) {
 
 function shouldCache(ce: CacheEntry) {
     if (!ce.data) return false
-    return /^cloud:me\/settings/.test(ce.path)
+    return /^cloud:(me\/settings|ptr-yelm-)/.test(ce.path)
 }
 
 function loadCache() {
@@ -177,7 +177,7 @@ export function getAsync(path: string) {
     if (ce.api.isSync(ce.path))
         return Promise.resolve(ce.api.getSync(ce.path))
 
-    if (!expired(ce))
+    if (!Cloud.isOnline() || !expired(ce))
         return Promise.resolve(ce.data)
 
     return new Promise((resolve, reject) => {
@@ -205,7 +205,7 @@ export class Component<T, S> extends React.Component<T, S> {
     componentWillUnmount(): void {
         unsubscribe(this)
     }
-    
+
     child(selector: string) {
         return core.findChild(this, selector)
     }
