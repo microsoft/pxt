@@ -3,8 +3,17 @@ namespace Cloud {
     export var accessToken = "";
     export var _isOnline = true;
 
+    function throwOffline(url: string) {
+        if (!Cloud.isOnline()) {
+            let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
+            e.isOffline = true;
+            throw e;
+        }
+    }
+    
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url
+        throwOffline(options.url)
         if (accessToken) {
             if (!options.headers) options.headers = {}
             options.headers["x-td-access-token"] = accessToken
@@ -29,14 +38,14 @@ namespace Cloud {
     export function privatePostAsync(path: string, data: any) {
         return privateRequestAsync({ url: path, data: data || {} }).then(resp => resp.json)
     }
-    
+
     export function isLoggedIn() { return !!accessToken }
     export function isOnline() { return _isOnline; }
-    
+
     export function getServiceUrl() {
         return apiRoot.replace(/\/api\/$/, "")
     }
-    
+
     export function getUserId() {
         let m = /^0(\w+)\./.exec(accessToken)
         if (m) return m[1]
@@ -390,7 +399,7 @@ namespace Cloud {
         canmanage: boolean;
         hasabusereports: boolean;
     }
-    
+
     export interface UserSettings {
         nickname?: string;
         aboutme?: string;

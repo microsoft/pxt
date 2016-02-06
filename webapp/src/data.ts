@@ -20,7 +20,7 @@ var virtualApis: Util.StringMap<VirtualApi> = {}
 mountVirtualApi("cloud", {
     isSync: p => false,
     getSync: p => null,
-    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)),
+    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
 })
 

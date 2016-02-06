@@ -396,6 +396,7 @@ export function syncAsync() {
         })
         .then(() => progressMsg(lf("Syncing done")))
         .then(() => pkg.notifySyncDone(updated))
+        .catch(core.handleNetworkError)
 }
 
 /*

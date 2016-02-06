@@ -106,6 +106,8 @@ export function handleNetworkError(e:any) {
     let statusCode = <number> e.status
     if (e.isOffline) {
         warningNotification(lf("Network request failed; you appear to be offline"))
+    } else {
+        throw e;
     }
 }
 
