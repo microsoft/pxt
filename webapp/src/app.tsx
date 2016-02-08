@@ -49,7 +49,7 @@ class Settings extends data.Component<ISettingsProps, {}> {
                     <sui.Field>
                         <div className="ui toggle checkbox ">
                             <input type="checkbox" name="public" checked={!!par.state.inverted} onChange={() => par.swapTheme() } />
-                            <label>{lf("Dark theme")}</label>
+                            <label>{lf("Dark theme") }</label>
                         </div>
                     </sui.Field>
                     <sui.Field label="Font size">
@@ -91,12 +91,12 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
             <div id='slotselector'>
                 <sui.Dropdown class='selection search' value={hdId}
                     onChange={chgHeader}>
-                    {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || lf("no name")} />) }
+                    {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || lf("no name") } />) }
                 </sui.Dropdown>
 
                 <sui.Button class={btnClass} onClick={save}
                     icon={"cloud " + (needsUpload ? "upload" : "") }
-                    popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to force.") : lf("Stored in the cloud.")}
+                    popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to force.") : lf("Stored in the cloud.") }
                     />
             </div>
         );
@@ -222,7 +222,8 @@ class Editor extends data.Component<IAppProps, IAppState> {
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
         let sess = this.editor.getSession()
         sess.setMode('ace/mode/' + mode);
-
+        
+        this.editor.setReadOnly(!file.epkg.header)
         this.saveFileAsync().done(); // before change
         this.editorFile = file;
         this.editor.setValue(file.content, -1)
@@ -280,15 +281,19 @@ class Editor extends data.Component<IAppProps, IAppState> {
         this.updateEditorFile();
 
         let filesOf = (pkg: pkg.EditorPackage) =>
-            pkg.sortedFiles().map(file =>
-                <a
-                    key={file.getName() }
-                    onClick={() => this.setFile(file) }
-                    className={(this.state.currFile == file ? "active " : "") + (pkg.yelmPkg.level == 0 ? "" : "nested ") + "item"}
-                    >
-                    {file.name} {this.getData("open-status:" + file.getName()) == "saved" ? "" : "*"}
-                </a>
-            )
+            pkg.sortedFiles().map(file => {
+                let status = this.getData("open-status:" + file.getName())
+                let isSaved = status == "saved" || status == "readonly"
+                return (
+                    <a
+                        key={file.getName() }
+                        onClick={() => this.setFile(file) }
+                        className={(this.state.currFile == file ? "active " : "") + (pkg.yelmPkg.level == 0 ? "" : "nested ") + "item"}
+                        >
+                        {file.name} {isSaved ? "" : "*"}
+                        {status == "readonly" ? <i className="lock icon"></i> : null}
+                    </a>);
+            })
 
         let filesWithHeader = (pkg: pkg.EditorPackage) =>
             pkg.yelmPkg.level == 0 ? filesOf(pkg) : [
@@ -299,7 +304,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
             ].concat(filesOf(pkg))
 
         let files = Util.concat(pkg.allEditorPkgs().map(filesWithHeader))
-        
+
         let isOffline = !this.getData("cloud-online:api")
         let goOnline = () => {
             data.setOnline(true)
@@ -311,26 +316,26 @@ class Editor extends data.Component<IAppProps, IAppState> {
                 <div id="menubar">
                     <div className={"ui menu" + this.state.inverted}>
                         <div className="item">
-                            <sui.Button class='primary' text={lf("Compile")} onClick={() => this.compile() } />
+                            <sui.Button class='primary' text={lf("Compile") } onClick={() => this.compile() } />
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />
                         </div>
                         <div className="item">
                             <sui.Dropdown class="button floating" icon="wrench" menu={true}>
-                                <sui.Item icon="file" text={lf("New project")} onClick={() => { } } />
-                                <sui.Item icon="trash" text={lf("Remove project")} onClick={() => { } } />
+                                <sui.Item icon="file" text={lf("New project") } onClick={() => { } } />
+                                <sui.Item icon="trash" text={lf("Remove project") } onClick={() => { } } />
                                 <div className="divider"></div>
-                                <sui.Item icon="cloud download" text={lf("Sync")} onClick={() => workspace.syncAsync().done() } />
+                                <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
                             </sui.Dropdown>
                         </div>
                         <div className="item right">
-                            {isOffline ? 
-                                <sui.Button 
-                                    text={lf("Go online")} 
+                            {isOffline ?
+                                <sui.Button
+                                    text={lf("Go online") }
                                     class="green"
                                     onClick={goOnline}
-                                    popup={lf("You're offline now.")} />
+                                    popup={lf("You're offline now.") } />
                                 : null}
                             <LoginBox />
                             <Settings parent={this} />
@@ -371,7 +376,7 @@ $(document).ready(() => {
         })
         .then(() => {
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
-            let hd = workspace.allHeaders[0]
+            let hd = workspace.getHeaders()[0]
             if (ent)
                 hd = workspace.getHeader(ent.id)
             theEditor.loadHeader(hd)

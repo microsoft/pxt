@@ -104,9 +104,8 @@ export class EditorPackage {
             } catch (e) {
             }
         }
-        return workspace.saveAsync(this.header, {
-            files: Util.mapStringMap(this.files, (k, f) => f.content)
-        })
+        let files = Util.mapStringMap(this.files, (k, f) => f.content)
+        return workspace.saveAsync(this.header, files)
             .then(() => this.scheduleSave())
     }
 
@@ -156,7 +155,7 @@ class Host
                 .then(files => epkg.setFiles(files))
         else if (proto == "workspace") {
             return workspace.getTextAsync(pkg.verArgument())
-                .then(scr => epkg.setFiles(scr.files))
+                .then(scr => epkg.setFiles(scr))
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
@@ -229,6 +228,9 @@ data.mountVirtualApi("open-status", {
         p = data.stripProtocol(p)
         let f = getEditorPkg(mainPkg).lookupFile(p)
         if (f) {
+            if (!f.epkg.header)
+                return "readonly"
+                
             if (f.inSyncWithEditor && f.inSyncWithDisk)
                 return "saved"
             else
