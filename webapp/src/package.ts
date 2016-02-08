@@ -11,8 +11,12 @@ export class File {
     constructor(public epkg: EditorPackage, public name: string, public content: string)
     { }
 
+    isReadonly() {
+        return !this.epkg.header
+    }
+
     getName() {
-        return this.epkg.yelmPkg.id + "/" + this.name
+        return this.epkg.getPkgId() + "/" + this.name
     }
 
     getExtension() {
@@ -58,12 +62,38 @@ export class EditorPackage {
     saveScheduled = false;
     savingNow = 0;
 
-    constructor(public yelmPkg: yelm.Package) {
-        if (yelmPkg.verProtocol() == "workspace")
+    id: string;
+    outputPkg: EditorPackage;
+
+    constructor(private yelmPkg: yelm.Package, private topPkg: EditorPackage) {
+        if (yelmPkg && yelmPkg.verProtocol() == "workspace")
             this.header = workspace.getHeader(yelmPkg.verArgument())
+    }
+    
+    getTopHeader() {
+        return this.topPkg.header;
+    }
+
+    makeTopLevel() {
+        this.topPkg = this;
+        this.outputPkg = new EditorPackage(null, this)
+        this.outputPkg.id = "built"
+    }
+
+    getYelmPkg() {
+        return this.yelmPkg;
+    }
+
+    getPkgId() {
+        return this.yelmPkg ? this.yelmPkg.id : this.id;
+    }
+
+    isTopLevel() {
+        return this.yelmPkg && this.yelmPkg.level == 0;
     }
 
     setFiles(files: Util.StringMap<string>) {
+        data.invalidate("open-status:")        
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
     }
 
@@ -118,7 +148,9 @@ export class EditorPackage {
     }
 
     pkgAndDeps(): EditorPackage[] {
-        return Util.values((<yelm.MainPackage>this.yelmPkg.parent).deps).map(getEditorPkg)
+        if (this.topPkg != this)
+            return this.topPkg.pkgAndDeps();
+        return Util.values((this.yelmPkg as yelm.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
     }
 
     lookupFile(name: string) {
@@ -178,11 +210,19 @@ export var mainPkg = new yelm.MainPackage(theHost);
 export function getEditorPkg(p: yelm.Package) {
     let r: EditorPackage = (p as any)._editorPkg
     if (r) return r
-    return ((p as any)._editorPkg = new EditorPackage(p))
+
+    let top: EditorPackage = null
+    if (p != mainPkg)
+        top = getEditorPkg(mainPkg)
+    let newOne = new EditorPackage(p, top)
+    if (p == mainPkg)
+        newOne.makeTopLevel();
+    (p as any)._editorPkg = newOne
+    return newOne
 }
 
 export function allEditorPkgs() {
-    return Util.values(mainPkg.deps).map(getEditorPkg)
+    return getEditorPkg(mainPkg).pkgAndDeps()
 }
 
 export function notifySyncDone(updated: Util.StringMap<number>) {
@@ -228,9 +268,9 @@ data.mountVirtualApi("open-status", {
         p = data.stripProtocol(p)
         let f = getEditorPkg(mainPkg).lookupFile(p)
         if (f) {
-            if (!f.epkg.header)
+            if (f.isReadonly())
                 return "readonly"
-                
+
             if (f.inSyncWithEditor && f.inSyncWithDisk)
                 return "saved"
             else

@@ -13,10 +13,12 @@ var ace: AceAjax.Ace = require("brace");
 var lf = Util.lf
 
 require('brace/mode/typescript');
+require('brace/mode/javascript');
 require('brace/mode/json');
 require('brace/mode/c_cpp');
 require('brace/mode/text');
 require('brace/mode/markdown');
+require('brace/mode/assembly_armthumb');
 
 interface IAppProps { }
 interface IAppState {
@@ -142,15 +144,15 @@ class Editor extends data.Component<IAppProps, IAppState> {
         sett.inverted = !!this.state.inverted
         sett.fontSize = this.state.fontSize
 
-        let f = this.editorFile
-        if (f && f.epkg.header) {
+        let f = this.editorFile        
+        if (f && f.epkg.getTopHeader()) {
             let n: FileHistoryEntry = {
-                id: f.epkg.header.id,
+                id: f.epkg.getTopHeader().id,
                 name: f.getName(),
                 pos: this.editor.getCursorPosition()
             }
             sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
-            if (this.settings.fileHistory.length > 100)
+            while (sett.fileHistory.length > 100)
                 sett.fileHistory.pop()
             sett.fileHistory.unshift(n)
         }
@@ -216,14 +218,16 @@ class Editor extends data.Component<IAppProps, IAppState> {
             "cpp": "c_cpp",
             "json": "json",
             "md": "markdown",
-            "ts": "typescript"
+            "ts": "typescript",
+            "js": "javascript",
+            "asm": "assembly_armthumb"
         }
         let mode = "text"
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
         let sess = this.editor.getSession()
         sess.setMode('ace/mode/' + mode);
         
-        this.editor.setReadOnly(!file.epkg.header)
+        this.editor.setReadOnly(file.isReadonly())
         this.saveFileAsync().done(); // before change
         this.editorFile = file;
         this.editor.setValue(file.content, -1)
@@ -269,7 +273,8 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     let fn = "microbit-" + this.state.header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
                     core.browserDownloadText(hex, fn, "application/x-microbit-hex")
                 }
-                console.log(resp)
+                let outp = pkg.getEditorPkg(pkg.mainPkg).outputPkg
+                outp.setFiles(resp.outfiles)                
             })
             .done()
     }
@@ -288,7 +293,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     <a
                         key={file.getName() }
                         onClick={() => this.setFile(file) }
-                        className={(this.state.currFile == file ? "active " : "") + (pkg.yelmPkg.level == 0 ? "" : "nested ") + "item"}
+                        className={(this.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
                         {file.name} {isSaved ? "" : "*"}
                         {status == "readonly" ? <i className="lock icon"></i> : null}
@@ -296,10 +301,10 @@ class Editor extends data.Component<IAppProps, IAppState> {
             })
 
         let filesWithHeader = (pkg: pkg.EditorPackage) =>
-            pkg.yelmPkg.level == 0 ? filesOf(pkg) : [
-                <div key={"hd-" + pkg.yelmPkg.id} className="header item">
+            pkg.isTopLevel() ? filesOf(pkg) : [
+                <div key={"hd-" + pkg.getPkgId()} className="header item">
                     <i className="folder icon"></i>
-                    {pkg.yelmPkg.id}
+                    {pkg.getPkgId()}
                 </div>
             ].concat(filesOf(pkg))
 

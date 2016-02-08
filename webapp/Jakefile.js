@@ -11,6 +11,7 @@ task('default', ['built/main.js', 'built/themes', 'built/style.css', "built/sema
 task('precopy', function () {
     jake.mkdirP("built")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/jquery.js")
+    jake.cpR("ace/mode/assembly_armthumb.js", "node_modules/brace/mode/")
 })
 
 task('upper', ["precopy"], { async: true }, function () {
