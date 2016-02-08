@@ -307,9 +307,10 @@ export function syncAsync() {
         Util.assert(idx >= 0)
         allScripts.splice(idx, 1)
         h.isDeleted = true;
-        return headers.deleteAsync(h)
-            .then(() => fetchTextRevAsync(e))
-            .then(() => texts.deleteAsync({ id: h.id, _rev: e.textRev }))
+        return headerQ.enqueue(h.id, () =>
+            headers.deleteAsync(h)
+                .then(() => fetchTextRevAsync(e))
+                .then(() => texts.deleteAsync({ id: h.id, _rev: e.textRev })))
     }
 
     function syncDownAsync(header0: Header, cloudHeader: CloudHeader) {
@@ -351,7 +352,7 @@ export function syncAsync() {
                     allScripts.push({
                         header: header,
                         text: null,
-                        id: header.id 
+                        id: header.id
                     })
                 updated[header.id] = 1;
                 return saveCoreAsync(header, files)
