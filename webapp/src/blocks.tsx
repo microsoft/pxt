@@ -35,8 +35,9 @@ export class Editor extends srceditor.Editor {
     setVisible(v: boolean) {
         super.setVisible(v);
         this.isVisible = v;
-        if (this.isVisible) $('.blocklyToolboxDiv, .blocklyWidgetDiv, .blocklyToolboxDiv').show();
-        else $('.blocklyToolboxDiv').hide();
+        var classes = '.blocklyToolboxDiv, .blocklyWidgetDiv, .blocklyToolboxDiv';
+        if (this.isVisible) $(classes).show();
+        else $(classes).hide();
     }
 
     saveBlockly(): string {
