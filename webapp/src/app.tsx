@@ -345,7 +345,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                 </div>
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
-                        <mbitview.MbitBoardView ref="simulator" />
+                        <mbitview.MbitBoardView ref="simulator" theme={mbitview.themes["blue"]} />
                     </div>
                     <div className={"ui vertical menu filemenu " + this.state.inverted}>
                         {files}
