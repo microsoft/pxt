@@ -2,6 +2,8 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
 
+var lf = Util.lf
+
 export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
@@ -64,7 +66,7 @@ export class EditorPackage {
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
     }
-    
+
     private updateStatus() {
         data.invalidate("pkg-status:" + this.header.id)
     }
@@ -93,7 +95,7 @@ export class EditorPackage {
 
     saveFilesAsync() {
         if (!this.header) return Promise.resolve();
-        
+
         let cfgFile = this.files[yelm.configName]
         if (cfgFile) {
             try {
@@ -102,9 +104,8 @@ export class EditorPackage {
             } catch (e) {
             }
         }
-        return workspace.saveAsync(this.header, {
-            files: Util.mapStringMap(this.files, (k, f) => f.content)
-        })
+        let files = Util.mapStringMap(this.files, (k, f) => f.content)
+        return workspace.saveAsync(this.header, files)
             .then(() => this.scheduleSave())
     }
 
@@ -154,17 +155,17 @@ class Host
                 .then(files => epkg.setFiles(files))
         else if (proto == "workspace") {
             return workspace.getTextAsync(pkg.verArgument())
-                .then(scr => epkg.setFiles(scr.files))
+                .then(scr => epkg.setFiles(scr))
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
     }
 
     resolveVersionAsync(pkg: yelm.Package) {
-        return Cloud.privateGetAsync(yelm.pkgPrefix + pkg.id).then(r => {
-            let id = r["scriptid"]
+        return data.getAsync("cloud:" + yelm.pkgPrefix + pkg.id).then(r => {
+            let id = (r || {})["scriptid"]
             if (!id)
-                Util.userError("scriptid no set on ptr for pkg " + pkg.id)
+                Util.userError(lf("cannot resolve package {0}", pkg.id))
             return id
         })
     }
@@ -203,7 +204,7 @@ export function loadPkgAsync(id: string) {
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()
                 .catch(e => {
-                    core.errorNotification("Cannot load package: " + e.message)
+                    core.errorNotification(lf("Cannot load package: {0}", e.message))
                 })
         })
 }
@@ -212,24 +213,24 @@ export function loadPkgAsync(id: string) {
     open:<pkgName>/<filename> - one file
 */
 data.mountVirtualApi("open", {
-    isSync: p => true,
     getSync: p => {
         let f = getEditorPkg(mainPkg).lookupFile(data.stripProtocol(p))
         if (f) return f.content
         return null
     },
-    getAsync: null
 })
 
 /*
     open-status:<pkgName>/<filename> - 
 */
 data.mountVirtualApi("open-status", {
-    isSync: p => true,
     getSync: p => {
         p = data.stripProtocol(p)
         let f = getEditorPkg(mainPkg).lookupFile(p)
         if (f) {
+            if (!f.epkg.header)
+                return "readonly"
+                
             if (f.inSyncWithEditor && f.inSyncWithDisk)
                 return "saved"
             else
@@ -237,12 +238,10 @@ data.mountVirtualApi("open-status", {
         }
         return null
     },
-    getAsync: null
 })
 
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {
-    isSync: p => true,
     getSync: p => {
         p = data.stripProtocol(p)
         let ep = allEditorPkgs().filter(pkg => pkg.header && pkg.header.id == p)[0]
@@ -250,6 +249,5 @@ data.mountVirtualApi("pkg-status", {
             return ep.savingNow ? "saving" : ""
         return ""
     },
-    getAsync: null
 })
 

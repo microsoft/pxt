@@ -18,11 +18,28 @@ interface CacheEntry {
 var virtualApis: Util.StringMap<VirtualApi> = {}
 
 mountVirtualApi("cloud", {
-    isSync: p => false,
-    getSync: p => null,
-    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)),
+    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
 })
+
+mountVirtualApi("cloud-online", {
+    getSync: p => Cloud.isOnline(),
+})
+
+export function setOnline(st: boolean) {
+    Cloud._isOnline = st
+    invalidate("cloud-online:")
+    if (!st)
+        window.localStorage["offline"] = "1"
+    else
+        window.localStorage.removeItem("offline")
+}
+
+Cloud.onOffline = () => {
+    setOnline(Cloud.isOnline())
+    core.warningNotification(Util.lf("Going offline."))
+}
 
 var cachedData: Util.StringMap<CacheEntry> = {};
 
@@ -53,7 +70,7 @@ function expired(ce: CacheEntry) {
 
 function shouldCache(ce: CacheEntry) {
     if (!ce.data) return false
-    return /^cloud:me\/settings/.test(ce.path)
+    return /^cloud:(me\/settings|ptr-yelm-)/.test(ce.path)
 }
 
 function loadCache() {
@@ -61,6 +78,9 @@ function loadCache() {
         let ce = lookup(e.path)
         ce.data = e.data
     })
+
+    if (window.localStorage["offline"])
+        setOnline(false)
 }
 
 function saveCache() {
@@ -99,6 +119,10 @@ function getVirtualApi(path: string) {
 
 function queue(ce: CacheEntry) {
     if (ce.queued) return
+
+    if (ce.api.isOffline && ce.api.isOffline())
+        return
+
     ce.queued = true
 
     let final = (res: any) => {
@@ -108,7 +132,7 @@ function queue(ce: CacheEntry) {
         notify(ce)
     }
 
-    if (ce.api.isSync(ce.path))
+    if (ce.api.isSync)
         final(ce.api.getSync(ce.path))
     else
         ce.api.getAsync(ce.path).done(final)
@@ -131,7 +155,7 @@ function lookup(path: string) {
 function getCached(component: AnyComponent, path: string) {
     subscribe(component, path)
     let r = lookup(path)
-    if (r.api.isSync(r.path))
+    if (r.api.isSync)
         return r.api.getSync(r.path)
     if (expired(r))
         queue(r)
@@ -143,14 +167,18 @@ function getCached(component: AnyComponent, path: string) {
 //
 
 export interface VirtualApi {
-    getAsync(path: string): Promise<any>;
-    getSync(path: string): any;
-    isSync(path: string): boolean;
+    getAsync?(path: string): Promise<any>;
+    getSync?(path: string): any;
+    isSync?: boolean;
     expirationTime?(path: string): number; // in milliseconds
+    isOffline?: () => boolean;
 }
 
 export function mountVirtualApi(protocol: string, handler: VirtualApi) {
     Util.assert(!virtualApis[protocol])
+    Util.assert(!!handler.getSync || !!handler.getAsync)
+    Util.assert(!!handler.getSync != !!handler.getAsync)
+    handler.isSync = !!handler.getSync
     virtualApis[protocol] = handler
 }
 
@@ -174,10 +202,10 @@ export function invalidate(prefix: string) {
 export function getAsync(path: string) {
     let ce = lookup(path)
 
-    if (ce.api.isSync(ce.path))
+    if (ce.api.isSync)
         return Promise.resolve(ce.api.getSync(ce.path))
 
-    if (!expired(ce))
+    if (!Cloud.isOnline() || !expired(ce))
         return Promise.resolve(ce.data)
 
     return new Promise((resolve, reject) => {
@@ -205,7 +233,7 @@ export class Component<T, S> extends React.Component<T, S> {
     componentWillUnmount(): void {
         unsubscribe(this)
     }
-    
+
     child(selector: string) {
         return core.findChild(this, selector)
     }

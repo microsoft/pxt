@@ -10,6 +10,10 @@ let headers = new db.Table("header")
 let texts = new db.Table("text")
 let scripts = new db.Table("script")
 
+let lf = Util.lf
+let allScripts: HeaderWithScript[] = [];
+
+
 export interface InstallHeader {
     name: string;
     meta: any;
@@ -29,20 +33,44 @@ export interface Header extends InstallHeader {
     saveId?: any;
 }
 
-export interface ScriptText {
-    _rev?: string;
-    id?: string;
-    files: Util.StringMap<string>;
+export type ScriptText = Util.StringMap<string>;
+
+interface HeaderWithScript {
+    id: string;
+    header: Header;
+    text: ScriptText;
+    textRev?: string;
+    textNeedsSave?: boolean;
 }
 
-export let allHeaders: Header[];
+function lookup(id: string) {
+    return allScripts.filter(x => x.id == id)[0]
+}
+
+export function getHeaders(withDeleted = false) {
+    let r = allScripts.map(x => x.header)
+    if (!withDeleted)
+        r = r.filter(r => !r.isDeleted)
+    return r
+}
 
 export function getHeader(id: string) {
-    return allHeaders.filter(h => !h.isDeleted && h.id == id)[0]
+    let e = lookup(id)
+    if (e && !e.header.isDeleted)
+        return e.header
+    return null
 }
 
 export function initAsync() {
-    return headers.getAllAsync().then(h => { allHeaders = h })
+    return headers.getAllAsync().then(h => {
+        allScripts = h.map((hh: Header) => {
+            return {
+                id: hh.id,
+                header: hh,
+                text: null
+            }
+        })
+    })
 }
 
 export class PromiseQueue {
@@ -62,9 +90,6 @@ export class PromiseQueue {
     }
 }
 
-let headerQ = new PromiseQueue();
-let lastTextRev: Util.StringMap<string> = {}
-
 export function resetAsync() {
     return db.db.destroy()
         .then(() => {
@@ -72,34 +97,84 @@ export function resetAsync() {
         })
 }
 
-function getTextCoreAsync(id: string): Promise<ScriptText> {
-    return texts.getAsync(id)
+function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
+    return texts.getAsync(e.id)
         .then(resp => {
-            lastTextRev[resp.id] = resp._rev
-            return resp;
+            if (!e.text) {
+                // otherwise we were beaten to it
+                e.text = resp.files;
+            }
+            e.textRev = resp._rev;
+            return e.text
         })
 }
 
+let headerQ = new PromiseQueue();
+
 export function getTextAsync(id: string): Promise<ScriptText> {
-    return headerQ.enqueue(id, () => getTextCoreAsync(id))
+    let e = lookup(id)
+    if (!e)
+        return Promise.resolve(null as ScriptText)
+    if (e.text)
+        return Promise.resolve(e.text)
+    return headerQ.enqueue(id, () => fetchTextAsync(e))
 }
 
-function nowSeconds() {
+export function nowSeconds() {
     return Math.round(Date.now() / 1000)
 }
 
+function fetchTextRevAsync(e: HeaderWithScript) {
+    if (e.textRev)
+        return Promise.resolve();
+    return fetchTextAsync(e).then(() => { }, err => { })
+}
+
+function saveCoreAsync(h: Header, text?: ScriptText) {
+    let e = lookup(h.id)
+
+    Util.assert(e.header === h)
+
+    if (text) {
+        h.saveId = null
+        e.textNeedsSave = true
+        e.text = text
+    }
+
+    return headerQ.enqueue(h.id, () => {
+        return (!text ? Promise.resolve() :
+            fetchTextRevAsync(e)
+                .then(() => {
+                    e.textNeedsSave = false;
+                    return texts.setAsync({
+                        id: e.id,
+                        files: e.text,
+                        _rev: e.textRev
+                    }).then(rev => {
+                        e.textRev = rev
+                    })
+                }))
+            .then(() => headers.setAsync(e.header))
+            .then(rev => {
+                h._rev = rev
+                data.invalidate("header:" + h.id)
+                data.invalidate("header:*")
+                if (text) {
+                    data.invalidate("text:" + h.id)
+                    h.saveId = null
+                }
+            })
+    })
+}
+
 export function saveAsync(h: Header, text?: ScriptText) {
-    let clear = () => {
-        if (text || h.isDeleted) {
-            h.pubCurrent = false
-            h.blobCurrent = false
-            h.modificationTime = nowSeconds();
-            h.saveId = null;
-        }
+    if (text || h.isDeleted) {
+        h.pubCurrent = false
+        h.blobCurrent = false
+        h.modificationTime = nowSeconds();
     }
     h.recentUse = nowSeconds();
-    clear();
-    return saveCoreAsync(h, text).then(clear)
+    return saveCoreAsync(h, text)
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
@@ -107,11 +182,13 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     h.id = Util.guidGen();
     h.recentUse = nowSeconds()
     h.modificationTime = h.recentUse;
-    text.id = h.id
+    let e: HeaderWithScript = {
+        id: h.id,
+        header: h,
+        text: text,
+    }
+    allScripts.push(e)
     return saveCoreAsync(h, text)
-        .then(() => {
-            allHeaders.push(h)
-        })
 }
 
 let scriptDlQ = new PromiseQueue();
@@ -138,48 +215,7 @@ export function installByIdAsync(id: string) {
                         pubCurrent: true,
                         meta: scr.meta,
                         editor: scr.editor
-                    },
-                    {
-                        _rev: undefined,
-                        id: undefined,
-                        files: files
-                    })))
-}
-
-function saveCoreAsync(h: Header, text?: ScriptText) {
-    if (text && !text.id) text.id = h.id
-    if (text) h.saveId = null
-    return headerQ.enqueue(h.id, () =>
-        setTextAsync(text).then(() =>
-            headers.setAsync(h).then(rev => {
-                h._rev = rev
-                data.invalidate("header:" + h.id)
-                data.invalidate("header:*")
-                if (text) {
-                    data.invalidate("text:" + h.id)
-                    h.saveId = null
-                }
-            })))
-}
-
-function setTextAsync(t: ScriptText): Promise<void> {
-    if (!t) return Promise.resolve();
-
-    Util.assert(!!t.id)
-    Util.assert(!!t.files)
-
-    t._rev = lastTextRev[t.id]
-
-    let final = () =>
-        texts.setAsync(t)
-            .then(resp => {
-                lastTextRev[t.id] = resp
-            })
-
-    if (!t._rev)
-        return getTextCoreAsync(t.id).catch(e => { }).then(final)
-
-    return final()
+                    }, files)))
 }
 
 export function apiAsync(path: string, data?: any) {
@@ -225,13 +261,15 @@ export function saveToCloudAsync(h: Header) {
 
 function syncOneUpAsync(h: Header) {
     let saveId = {}
+    let e = lookup(h.id)
     return getTextAsync(h.id)
-        .then(txt => {
+        .then(() => {
             let scr = ""
+            let files = e.text
             if (isProject(h))
-                scr = JSON.stringify(txt.files)
+                scr = JSON.stringify(files)
             else
-                scr = txt.files[Object.keys(txt.files)[0]] || ""
+                scr = files[Object.keys(files)[0]] || ""
             let body = {
                 guid: h.id,
                 name: h.name,
@@ -254,7 +292,6 @@ function syncOneUpAsync(h: Header) {
                 h.blobCurrent = true
             return saveCoreAsync(h)
         })
-
 }
 
 export function syncAsync() {
@@ -265,12 +302,15 @@ export function syncAsync() {
 
     function uninstallAsync(h: Header) {
         console.log(`uninstall local ${h.id}`)
-        let idx = allHeaders.indexOf(h)
+        let e = lookup(h.id)
+        let idx = allScripts.indexOf(e)
         Util.assert(idx >= 0)
-        allHeaders.splice(idx, 1)
+        allScripts.splice(idx, 1)
         h.isDeleted = true;
-        return headers.deleteAsync(h)
-            .then(() => texts.deleteAsync({ id: h.id, _rev: lastTextRev[h.id] }))
+        return headerQ.enqueue(h.id, () =>
+            headers.deleteAsync(h)
+                .then(() => fetchTextRevAsync(e))
+                .then(() => texts.deleteAsync({ id: h.id, _rev: e.textRev })))
     }
 
     function syncDownAsync(header0: Header, cloudHeader: CloudHeader) {
@@ -309,9 +349,13 @@ export function syncAsync() {
                 header.pubCurrent = (resp.status == "published")
                 header.saveId = null
                 if (!header0)
-                    allHeaders.push(header);
+                    allScripts.push({
+                        header: header,
+                        text: null,
+                        id: header.id
+                    })
                 updated[header.id] = 1;
-                return saveCoreAsync(header, { files: files })
+                return saveCoreAsync(header, files)
             })
             .then(() => progress(--numDown))
     }
@@ -323,11 +367,11 @@ export function syncAsync() {
     function progress(dummy: number) {
         let msg = ""
         if (numDown == 0 && numUp == 0)
-            msg = "All synced"
+            msg = lf("All synced")
         else {
-            msg = "Syncing ("
-            if (numDown) msg += numDown + " down"
-            if (numUp) msg += (numDown ? ", " : "") + numUp + " up"
+            msg = lf("Syncing") + " ("
+            if (numDown) msg += lf("{0} down", numDown)
+            if (numUp) msg += (numDown ? ", " : "") + lf("{0} up", numUp)
             msg += ")"
         }
         progressMsg(msg)
@@ -352,8 +396,9 @@ export function syncAsync() {
         .then((resp: InstalledHeaders) => {
             blobConatiner = resp.blobcontainer
             let cloudHeaders = Util.toDictionary(resp.headers, h => h.guid)
-            let existingHeaders = Util.toDictionary(allHeaders, h => h.id)
-            let waitFor = allHeaders.map(hd => {
+            let existingHeaders = Util.toDictionary(allScripts, h => h.id)
+            let waitFor = allScripts.map(e => {
+                let hd = e.header
                 if (cloudHeaders.hasOwnProperty(hd.id)) {
                     let chd = cloudHeaders[hd.id]
 
@@ -392,8 +437,9 @@ export function syncAsync() {
             progress(0)
             return Promise.all(waitFor)
         })
-        .then(() => progressMsg("Syncing done"))
+        .then(() => progressMsg(lf("Syncing done")))
         .then(() => pkg.notifySyncDone(updated))
+        .catch(core.handleNetworkError)
 }
 
 /*
@@ -402,13 +448,11 @@ export function syncAsync() {
 */
 
 data.mountVirtualApi("header", {
-    isSync: p => true,
     getSync: p => {
         p = data.stripProtocol(p)
-        if (p == "*") return allHeaders.filter(f => !f.isDeleted)
+        if (p == "*") return getHeaders()
         return getHeader(p)
     },
-    getAsync: null,
 })
 
 /*
@@ -416,15 +460,13 @@ data.mountVirtualApi("header", {
     text:<guid>/<filename> - one file
 */
 data.mountVirtualApi("text", {
-    isSync: p => false,
-    getSync: null,
     getAsync: p => {
         let m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
-            .then(v => {
+            .then(files => {
                 if (m[3])
-                    return v.files[m[3]]
-                else return v.files;
+                    return files[m[3]]
+                else return files;
             })
     },
 })

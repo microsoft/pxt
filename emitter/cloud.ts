@@ -1,14 +1,36 @@
 namespace Cloud {
     export var apiRoot = "https://mbit.touchdevelop.com/api/";
     export var accessToken = "";
+    export var _isOnline = true;
+    export var onOffline = () => { };
+
+    function offlineError(url: string) {
+        let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
+        e.isOffline = true;
+        return Promise.delay(1000).then(() => Promise.reject(e))
+    }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url
+        if (!Cloud.isOnline()) {
+            return offlineError(options.url);
+        }
         if (accessToken) {
             if (!options.headers) options.headers = {}
             options.headers["x-td-access-token"] = accessToken
         }
         return Util.requestAsync(options)
+            .catch(e => {
+                if (e.statusCode == 0) {
+                    if (_isOnline) {
+                        _isOnline = false;
+                        onOffline();
+                    }
+                    return offlineError(options.url)
+                } else {
+                    return Promise.reject(e)
+                }
+            })
     }
 
     export function privateGetAsync(path: string) {
@@ -28,13 +50,14 @@ namespace Cloud {
     export function privatePostAsync(path: string, data: any) {
         return privateRequestAsync({ url: path, data: data || {} }).then(resp => resp.json)
     }
-    
+
     export function isLoggedIn() { return !!accessToken }
-    
+    export function isOnline() { return _isOnline; }
+
     export function getServiceUrl() {
         return apiRoot.replace(/\/api\/$/, "")
     }
-    
+
     export function getUserId() {
         let m = /^0(\w+)\./.exec(accessToken)
         if (m) return m[1]
@@ -388,7 +411,7 @@ namespace Cloud {
         canmanage: boolean;
         hasabusereports: boolean;
     }
-    
+
     export interface UserSettings {
         nickname?: string;
         aboutme?: string;
