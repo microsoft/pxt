@@ -7,7 +7,8 @@ import * as core from "./core";
 import * as sui from "./sui";
 import * as mbitview from "./mbitview";
 import * as ace from "./ace"
-import {LoginBox} from "./login";
+import * as srceditor from "./srceditor"
+import {LoginBox} from "./login"
 
 var lf = Util.lf
 
@@ -15,16 +16,15 @@ interface IAppProps { }
 interface IAppState {
     header?: workspace.Header;
     currFile?: pkg.File;
-    inverted?: string;
-    fontSize?: string;
+    theme?: srceditor.Theme;
     fileState?: string;
 }
 
 
-var theEditor: Editor;
+var theEditor: ProjectView;
 
 interface ISettingsProps {
-    parent: Editor;
+    parent: ProjectView;
 }
 
 class Settings extends data.Component<ISettingsProps, {}> {
@@ -35,18 +35,21 @@ class Settings extends data.Component<ISettingsProps, {}> {
             '20px': lf("Medium"),
             '24px': lf("Large"),
         }
-        let fontSize = (v: string) => par.setState({ fontSize: v })
+        let fontSize = (v: string) => {
+            par.state.theme.fontSize = v;
+            par.forceUpdate()
+        }
         return (
             <sui.Popup icon='settings'>
                 <div className='ui form'>
                     <sui.Field>
                         <div className="ui toggle checkbox ">
-                            <input type="checkbox" name="public" checked={!!par.state.inverted} onChange={() => par.swapTheme() } />
+                            <input type="checkbox" name="public" checked={par.state.theme.inverted} onChange={() => par.swapTheme() } />
                             <label>{lf("Dark theme") }</label>
                         </div>
                     </sui.Field>
                     <sui.Field label="Font size">
-                        <sui.Dropdown class="selection" value={par.state.fontSize} onChange={fontSize}>
+                        <sui.Dropdown class="selection" value={par.state.theme.fontSize} onChange={fontSize}>
                             {Object.keys(sizes).map(k => <sui.Item key={k} value={k}>{sizes[k]}</sui.Item>) }
                         </sui.Dropdown>
                     </sui.Field>
@@ -99,48 +102,50 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
 interface FileHistoryEntry {
     id: string;
     name: string;
-    pos: AceAjax.Position;
+    pos: srceditor.ViewState;
 }
 
 interface EditorSettings {
-    inverted: boolean;
-    fontSize: string;
+    theme: srceditor.Theme;
     fileHistory: FileHistoryEntry[];
 }
 
-class Editor extends data.Component<IAppProps, IAppState> {
-    editor: ace.Wrapper;
-    editorFile: pkg.File; // TODO move to ace.Wrapper
+class ProjectView extends data.Component<IAppProps, IAppState> {
+    editor: srceditor.Editor;
+    editorFile: pkg.File;
+    aceEditor: ace.Wrapper;
     settings: EditorSettings;
 
     constructor(props: IAppProps) {
         super(props);
 
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
+        if (!this.settings.theme)
+            this.settings.theme = {}
         this.state = {
-            inverted: this.settings.inverted ? " inverted " : "",
-            fontSize: this.settings.fontSize || "20px"
+            theme: {
+                inverted: !!this.settings.theme.inverted,
+                fontSize: this.settings.theme.fontSize || "20px"
+            }
         };
         if (!this.settings.fileHistory) this.settings.fileHistory = []
     }
 
     swapTheme() {
-        this.setState({
-            inverted: this.state.inverted ? "" : " inverted "
-        })
+        this.state.theme.inverted = !this.state.theme.inverted
+        this.forceUpdate()
     }
 
     saveSettings() {
         let sett = this.settings
-        sett.inverted = !!this.state.inverted
-        sett.fontSize = this.state.fontSize
+        sett.theme = this.state.theme
 
         let f = this.editorFile
         if (f && f.epkg.getTopHeader()) {
             let n: FileHistoryEntry = {
                 id: f.epkg.getTopHeader().id,
                 name: f.getName(),
-                pos: this.editor.getCursorPosition()
+                pos: this.editor.getViewState()
             }
             sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
             while (sett.fileHistory.length > 100)
@@ -156,18 +161,18 @@ class Editor extends data.Component<IAppProps, IAppState> {
     }
 
     private setTheme() {
-        if (!this.editor) return        
-        this.editor.setTheme(!!this.state.inverted, this.state.fontSize)
+        if (!this.editor) return
+        this.editor.setTheme(this.state.theme)
     }
 
     saveFileAsync() {
         if (!this.editorFile)
             return Promise.resolve()
-        return this.editorFile.setContentAsync(this.editor.getValue())
+        return this.editorFile.setContentAsync(this.editor.getCurrentSource())
     }
 
     public componentDidMount() {
-        this.editor = ace.mkAce('maineditor', () => {
+        let changeHandler = () => {
             if (this.editorFile) this.editorFile.markDirty();
             if (!hasChangeTimer) {
                 hasChangeTimer = true
@@ -176,27 +181,34 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     this.saveFileAsync().done();
                 }, 1000);
             }
-        })
+        }
+        this.aceEditor = ace.mkAce('maineditor', changeHandler)
+        this.editor = this.aceEditor
 
         let hasChangeTimer = false
         this.setTheme();
+    }
+
+    private pickEditorFor(f: pkg.File): srceditor.Editor {
+        return this.aceEditor
     }
 
     private updateEditorFile() {
         if (this.state.currFile == this.editorFile)
             return;
         this.saveSettings();
-        
+
         this.saveFileAsync().done(); // before change
-        
-        this.editorFile = this.state.currFile;        
+
+        this.editorFile = this.state.currFile;
+        this.editor = this.pickEditorFor(this.editorFile)
         this.editor.loadFile(this.editorFile)
 
         this.saveFileAsync().done(); // cancel the change event generated by setValue() above
 
         let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
         if (e)
-            this.editor.loadPosition(e.pos)
+            this.editor.setViewState(e.pos)
     }
 
     setFile(fn: pkg.File) {
@@ -281,15 +293,15 @@ class Editor extends data.Component<IAppProps, IAppState> {
                 resp.outfiles["errors.txt"] = output
 
                 mainPkg.outputPkg.setFiles(resp.outfiles)
-                
+
                 let f = mainPkg.lookupFile(mainPkg.outputPkg.id + "/errors.txt")
                 if (f) {
                     // display total number of errors on the output file
                     f.numDiagnosticsOverride = resp.diagnostics.length
                     data.invalidate("open-meta:")
                 }
-                
-                this.editor.loadDiagnostics(this.editorFile)
+
+                this.editor.setDiagnostics(this.editorFile)
             })
             .done()
     }
@@ -333,10 +345,12 @@ class Editor extends data.Component<IAppProps, IAppState> {
             workspace.syncAsync().done();
         }
 
+        let inv = this.state.theme.inverted ? " inverted " : " "
+
         return (
-            <div id='root' className={this.state.inverted || ""}>
+            <div id='root' className={inv}>
                 <div id="menubar">
-                    <div className={"ui menu" + this.state.inverted}>
+                    <div className={"ui menu" + inv}>
                         <div className="item">
                             <sui.Button class='primary' text={lf("Compile") } onClick={() => this.compile() } />
                         </div>
@@ -368,7 +382,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     <div id="mbitboardview" className="ui vertical">
                         <mbitview.MbitBoard />
                     </div>
-                    <div className={"ui vertical menu filemenu " + this.state.inverted}>
+                    <div className={"ui vertical menu filemenu " + inv}>
                         {files}
                     </div>
                 </div>
@@ -380,7 +394,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
 }
 
 function render() {
-    ReactDOM.render(<Editor/>, $('#content')[0])
+    ReactDOM.render(<ProjectView/>, $('#content')[0])
 }
 
 function getEditor() {

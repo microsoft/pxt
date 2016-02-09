@@ -1,5 +1,6 @@
 import * as pkg from "./package";
 import * as core from "./core";
+import * as srceditor from "./srceditor"
 
 
 declare var require: any;
@@ -22,28 +23,28 @@ require('brace/theme/tomorrow_night_bright');
 var Range = (ace as any).acequire("ace/range").Range;
 
 
-export class Wrapper {
+export class Wrapper implements srceditor.Editor {
     constructor(public editor: AceAjax.Editor)
     { }
 
-    setTheme(inverted: boolean, fontSize: string) {
-        let th = inverted ? 'ace/theme/tomorrow_night_bright' : 'ace/theme/sqlserver'
+    setTheme(theme: srceditor.Theme) {
+        let th = theme.inverted ? 'ace/theme/tomorrow_night_bright' : 'ace/theme/sqlserver'
         if (this.editor.getTheme() != th) {
             this.editor.setTheme(th)
         }
-        this.editor.setFontSize(fontSize)
+        this.editor.setFontSize(theme.fontSize)
     }
 
-    getCursorPosition() {
+    getViewState() {
         return this.editor.getCursorPosition()
     }
 
-    getValue() {
+    getCurrentSource() {
         return this.editor.getValue()
     }
 
     lastSet: string;
-    setValue(v: string) {
+    private setValue(v: string) {
         this.lastSet = v;
         this.editor.setValue(v, -1)
     }
@@ -65,10 +66,10 @@ export class Wrapper {
         this.editor.setReadOnly(file.isReadonly())
         this.setValue(file.content)
 
-        this.loadDiagnostics(file)
+        this.setDiagnostics(file)
     }
 
-    loadDiagnostics(file: pkg.File) {
+    setDiagnostics(file: pkg.File) {
         let sess = this.editor.getSession();
         Object.keys(sess.getMarkers(true) || {}).forEach(m => sess.removeMarker(parseInt(m)))
         sess.clearAnnotations()
@@ -89,7 +90,7 @@ export class Wrapper {
         sess.setAnnotations(ann)
     }
 
-    loadPosition(pos: AceAjax.Position) {
+    setViewState(pos: AceAjax.Position) {
         this.editor.moveCursorToPosition(pos)
         this.editor.scrollToLine(pos.row - 1, true, false, () => { })
     }
