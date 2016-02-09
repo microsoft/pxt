@@ -144,7 +144,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
         sett.inverted = !!this.state.inverted
         sett.fontSize = this.state.fontSize
 
-        let f = this.editorFile        
+        let f = this.editorFile
         if (f && f.epkg.getTopHeader()) {
             let n: FileHistoryEntry = {
                 id: f.epkg.getTopHeader().id,
@@ -226,7 +226,8 @@ class Editor extends data.Component<IAppProps, IAppState> {
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
         let sess = this.editor.getSession()
         sess.setMode('ace/mode/' + mode);
-        
+        sess.clearAnnotations();
+
         this.editor.setReadOnly(file.isReadonly())
         this.saveFileAsync().done(); // before change
         this.editorFile = file;
@@ -265,6 +266,30 @@ class Editor extends data.Component<IAppProps, IAppState> {
             })
     }
 
+    newProject() {
+        let cfg: yelm.PackageConfig = {
+            name: lf("{0} bit", Util.getAwesomeAdj()),
+            dependencies: { mbit: "*" },
+            description: "",
+            files: ["main.ts"]
+        }
+        let files:workspace.ScriptText = {
+            "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
+            "main.ts": `basic.showString("Hi!")\n`
+        }
+        workspace.installAsync({ 
+            name: cfg.name,
+            meta: {},
+            editor: "tsprj",
+            pubId: "",
+            pubCurrent: false,
+        }, files)
+        .then(hd => {
+            this.loadHeader(hd)
+        })
+        .done()
+    }
+
     compile() {
         pkg.mainPkg.buildAsync()
             .then(resp => {
@@ -274,7 +299,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     core.browserDownloadText(hex, fn, "application/x-microbit-hex")
                 }
                 let outp = pkg.getEditorPkg(pkg.mainPkg).outputPkg
-                outp.setFiles(resp.outfiles)                
+                outp.setFiles(resp.outfiles)
             })
             .done()
     }
@@ -302,9 +327,9 @@ class Editor extends data.Component<IAppProps, IAppState> {
 
         let filesWithHeader = (pkg: pkg.EditorPackage) =>
             pkg.isTopLevel() ? filesOf(pkg) : [
-                <div key={"hd-" + pkg.getPkgId()} className="header item">
+                <div key={"hd-" + pkg.getPkgId() } className="header item">
                     <i className="folder icon"></i>
-                    {pkg.getPkgId()}
+                    {pkg.getPkgId() }
                 </div>
             ].concat(filesOf(pkg))
 
@@ -328,7 +353,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                         </div>
                         <div className="item">
                             <sui.Dropdown class="button floating" icon="wrench" menu={true}>
-                                <sui.Item icon="file" text={lf("New project") } onClick={() => { } } />
+                                <sui.Item icon="file" text={lf("New project") } onClick={() => this.newProject() } />
                                 <sui.Item icon="trash" text={lf("Remove project") } onClick={() => { } } />
                                 <div className="divider"></div>
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />

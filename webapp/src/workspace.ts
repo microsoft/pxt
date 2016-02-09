@@ -189,6 +189,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     }
     allScripts.push(e)
     return saveCoreAsync(h, text)
+        .then(() => h)
 }
 
 let scriptDlQ = new PromiseQueue();
