@@ -182,6 +182,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return this.editorFile.setContentAsync(this.editor.getCurrentSource())
     }
 
+    private typecheck() {
+        compiler.typecheckAsync()
+            .then(resp => {
+                this.editor.setDiagnostics(this.editorFile)
+            })
+            .done()
+    }
+
     private initEditors() {
         this.aceEditor = new ace.Editor(this);
         this.yelmjsonEditor = new yelmjson.Editor(this);
@@ -195,6 +203,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 setTimeout(() => {
                     hasChangeTimer = false;
                     this.saveFile();
+                    this.typecheck();
                 }, 1000);
             }
         }
@@ -230,6 +239,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.allEditors.forEach(e => e.setVisible(e == this.editor))
 
         this.saveFile(); // make sure state is up to date
+        this.typecheck();
 
         let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
         if (e)
