@@ -281,10 +281,11 @@ class Editor extends data.Component<IAppProps, IAppState> {
                 resp.outfiles["errors.txt"] = output
 
                 mainPkg.outputPkg.setFiles(resp.outfiles)
+                
                 let f = mainPkg.lookupFile(mainPkg.outputPkg.id + "/errors.txt")
                 if (f) {
                     // display total number of errors on the output file
-                    f.diagnostics = resp.diagnostics
+                    f.numDiagnosticsOverride = resp.diagnostics.length
                     data.invalidate("open-meta:")
                 }
                 

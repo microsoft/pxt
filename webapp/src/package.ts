@@ -8,6 +8,7 @@ export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
     diagnostics: ts.Diagnostic[];
+    numDiagnosticsOverride: number;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string)
     { }
@@ -288,6 +289,8 @@ data.mountVirtualApi("open-meta", {
             else
                 return "unsaved"
         } else if (op == "error") {
+            if (f.numDiagnosticsOverride != null)
+                return f.numDiagnosticsOverride
             return f.diagnostics ? f.diagnostics.length : 0
         } else {
             Util.oops();
