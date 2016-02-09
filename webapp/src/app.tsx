@@ -7,6 +7,7 @@ import * as core from "./core";
 import * as sui from "./sui";
 import * as mbitview from "./mbitview";
 import * as srceditor from "./srceditor"
+import * as compiler from "./compiler"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
@@ -309,46 +310,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     compile() {
-        pkg.mainPkg.buildAsync()
+        compiler.compileAsync()
             .then(resp => {
-                let hex = resp.outfiles["microbit.hex"]
-                if (hex) {
-                    let fn = "microbit-" + this.state.header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
-                    core.browserDownloadText(hex, fn, "application/x-microbit-hex")
-                }
-                let mainPkg = pkg.getEditorPkg(pkg.mainPkg)
-
-                mainPkg.forEachFile(f => f.diagnostics = [])
-
-                let output = "";
-
-                for (let diagnostic of resp.diagnostics) {
-                    if (diagnostic.file) {
-                        const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-                        const relativeFileName = diagnostic.file.fileName;
-                        output += `${relativeFileName}(${line + 1},${character + 1}): `;
-                        let localName = diagnostic.file.fileName.replace(/^yelm_modules\//, "")
-                        if (localName.indexOf('/') < 0) localName = "this/" + localName
-                        let f = mainPkg.lookupFile(localName)
-                        if (f)
-                            f.diagnostics.push(diagnostic)
-                    }
-
-                    const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
-                    output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
-                }
-
-                resp.outfiles["errors.txt"] = output
-
-                mainPkg.outputPkg.setFiles(resp.outfiles)
-
-                let f = mainPkg.lookupFile(mainPkg.outputPkg.id + "/errors.txt")
-                if (f) {
-                    // display total number of errors on the output file
-                    f.numDiagnosticsOverride = resp.diagnostics.length
-                    data.invalidate("open-meta:")
-                }
-
                 this.editor.setDiagnostics(this.editorFile)
             })
             .done()
@@ -464,13 +427,15 @@ let myexports: any = {
     require,
     core,
     getEditor,
-    theAce: ace
-}
-Object.keys(myexports).forEach(k => (window as any)[k] = myexports[k])
+    ace,
+    compiler
+};
+(window as any).E = myexports;
 
 
 $(document).ready(() => {
     $("#loading").remove();
+    compiler.init()
     workspace.initAsync()
         .then(() => {
             render()

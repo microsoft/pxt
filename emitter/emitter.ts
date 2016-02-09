@@ -229,7 +229,7 @@ namespace ts.mbit {
 
         return {
             diagnostics: diagnostics.getDiagnostics(),
-            emitSkipped: false
+            emitSkipped: !!opts.noEmit
         }
 
         function error(node: Node, msg: string, arg0?: any, arg1?: any, arg2?: any) {
@@ -293,7 +293,7 @@ namespace ts.mbit {
         }
 
         function finalEmit() {
-            if (diagnostics.getModificationCount())
+            if (diagnostics.getModificationCount() || opts.noEmit)
                 return;
             bin.serialize();
             bin.patchSrcHash();
