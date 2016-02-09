@@ -1,3 +1,30 @@
 #mbitboardview svg {
     width:100%;
 }
+
+.sim-button {
+    pointer-events: none;    
+}
+
+.sim-button-outer:hover {
+    stroke:grey;
+    stroke-width: 3px;
+}
+
+.sim-pin-touch:hover {
+    stroke:#D4AF37;
+    stroke-width:3px;
+}
+
+.sim-led-back:hover {
+    stroke:#a0a0a0;
+    stroke-width:3px;
+}
+.sim-led:hover {
+    stroke:#ff7f7f;
+    stroke-width:3px;
+}
+
+.hidden {
+    display:none;
+}
