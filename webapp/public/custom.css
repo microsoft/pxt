@@ -40,13 +40,14 @@
     width: 400px;
 }
 
-#root {
+.full-abs {
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
     right: 0;
 }
+
 #root.inverted {
     background: #1B1C1D;
 }

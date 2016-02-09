@@ -1,5 +1,7 @@
 import * as pkg from "./package";
 import * as core from "./core";
+import * as data from "./data";
+import * as app from "./app";
 
 
 export interface Theme {
@@ -8,11 +10,17 @@ export interface Theme {
 }
 
 export type ViewState = any;
+export type ProjectView = app.ProjectView;
 
+export interface ParentProps {
+    parent: ProjectView;
+}
 export class Editor {
     protected currTheme: Theme = {};
     protected currSource: string;
-    onChange = () => { };
+    constructor(public parent: ProjectView) {
+    }
+    changeCallback = () => { };
     setTheme(themeSetting: Theme): void {
         this.currTheme = themeSetting
     }
@@ -30,5 +38,12 @@ export class Editor {
     setViewState(view: ViewState): void { }
     acceptsFile(file: pkg.File) {
         return false
+    }
+    display(): JSX.Element {
+        return null
+    }
+    isReady = false;
+    prepare() {
+        this.isReady = true;
     }
 }
