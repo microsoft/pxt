@@ -16,6 +16,7 @@ interface ToolboxBlock {
 interface ToolboxCategory {
     name: string;
     colour: number;
+    gap?:number;
     blocks: ToolboxBlock[];
 }
 
@@ -63,20 +64,8 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         var blocklyDiv = document.getElementById('blocksEditor');
-        var toolbox: ToolboxCategory[] = [
-            {
-                name: "Control",
-                colour: 130,
-                blocks: [
-                    {
-                        type: "logic_compare"
-                    }
-                ]
-            },
-        ];
-        var toolboxXml = toolboxToXml(toolbox);
         Blockly.inject(blocklyDiv, {
-            toolbox: toolboxXml,
+            toolbox: document.getElementById('blocklyToolboxDefinition'),
             scrollbars: true,
             media: "./blockly/media/",
             sound: true,

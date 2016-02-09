@@ -1,4 +1,6 @@
 declare module goog {
+    function require(name:string) : void;
+    function provide(name:string): void;
     function isFunction(f: any): boolean;
 }
 declare module Blockly {
