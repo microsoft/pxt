@@ -7,6 +7,7 @@ var lf = Util.lf
 export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
+    diagnostics: ts.Diagnostic[];
 
     constructor(public epkg: EditorPackage, public name: string, public content: string)
     { }
@@ -31,7 +32,7 @@ export class File {
     }
 
     private updateStatus() {
-        data.invalidate("open-status:" + this.getName())
+        data.invalidate("open-meta:status:" + this.getName())
     }
 
     setContentAsync(newContent: string) {
@@ -69,7 +70,7 @@ export class EditorPackage {
         if (yelmPkg && yelmPkg.verProtocol() == "workspace")
             this.header = workspace.getHeader(yelmPkg.verArgument())
     }
-    
+
     getTopHeader() {
         return this.topPkg.header;
     }
@@ -93,8 +94,8 @@ export class EditorPackage {
     }
 
     setFiles(files: Util.StringMap<string>) {
-        data.invalidate("open-status:")        
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
+        data.invalidate("open-meta:")
     }
 
     private updateStatus() {
@@ -141,6 +142,12 @@ export class EditorPackage {
 
     sortedFiles() {
         return Util.values(this.files)
+    }
+
+    forEachFile(cb: (f: File) => void) {
+        this.pkgAndDeps().forEach(p => {
+            Util.values(p.files).forEach(cb)
+        })
     }
 
     getMainFile() {
@@ -261,13 +268,18 @@ data.mountVirtualApi("open", {
 })
 
 /*
-    open-status:<pkgName>/<filename> - 
+    open-meta:status:<pkgName>/<filename> - readonly/saved/unsaved
+    open-meta:errors:<pkgName>/<filename> - number of errors  
 */
-data.mountVirtualApi("open-status", {
+data.mountVirtualApi("open-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = getEditorPkg(mainPkg).lookupFile(p)
-        if (f) {
+        let m = /^([^:]+):(.*)/.exec(p)
+        let op = m[1]
+        let f = getEditorPkg(mainPkg).lookupFile(m[2])
+        if (!f) return null
+        
+        if (op == "status") {
             if (f.isReadonly())
                 return "readonly"
 
@@ -275,8 +287,12 @@ data.mountVirtualApi("open-status", {
                 return "saved"
             else
                 return "unsaved"
+        } else if (op == "error") {
+            return f.diagnostics ? f.diagnostics.length : 0
+        } else {
+            Util.oops();
+            return null
         }
-        return null
     },
 })
 
