@@ -63,7 +63,9 @@ export function createBoard(id?: string): IMbitBoard {
             0, 255, 0, 255, 0,
             0, 0, 255, 0, 0,
         ],
-        acceleration: [500,500,0]
+        acceleration: [500,500,0],
+        heading:90,
+        temperature: 21
     }
 }
 
@@ -206,7 +208,9 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> 
             <div>
                 <button className="mini compact ui button"
                     onMouseDown={ev => this.setState({ buttonAPressed: true, buttonBPressed: true, buttonABPressed: true }) }
-                    onMouseUp={ev => this.setState({ buttonAPressed: false, buttonBPressed: false, buttonABPressed: false }) }>A+B</button>            
+                    onMouseUp={ev => this.setState({ buttonAPressed: false, buttonBPressed: false, buttonABPressed: false }) }>
+                    <i className="circle icon"></i>A+B
+                </button>            
                 <button className="mini compact ui button">SHAKE</button>
                 <button className="mini compact ui button">LOGO UP</button>
                 <button className="mini compact ui button">LOGO DOWN</button>
