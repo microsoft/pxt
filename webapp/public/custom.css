@@ -81,6 +81,5 @@
 }
 
 .blocklyTreeLabel {
-    font:12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;    
-    font-size:20px;
+    font-family:normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;    
 }
