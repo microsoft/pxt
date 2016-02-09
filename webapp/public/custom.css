@@ -7,7 +7,7 @@
 
 #filelist {
   left: 0;
-  width: 300px;
+  width: 400px;
   padding: 0em 1em 0em 0.5em;
 }
 
@@ -33,7 +33,7 @@
 
 #maineditor {
   right: 0;
-  left: 300px;
+  left: 400px;
 }
 
 #settings .popup {
