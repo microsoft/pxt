@@ -23,9 +23,10 @@ require('brace/theme/tomorrow_night_bright');
 var Range = (ace as any).acequire("ace/range").Range;
 
 
-export class Wrapper implements srceditor.Editor {
-    constructor(public editor: AceAjax.Editor)
-    { }
+export class Wrapper extends srceditor.Editor {
+    constructor(public editor: AceAjax.Editor) {
+        super()
+    }
 
     setTheme(theme: srceditor.Theme) {
         let th = theme.inverted ? 'ace/theme/tomorrow_night_bright' : 'ace/theme/sqlserver'
@@ -41,6 +42,10 @@ export class Wrapper implements srceditor.Editor {
 
     getCurrentSource() {
         return this.editor.getValue()
+    }
+
+    acceptsFile(file: pkg.File) {
+        return true
     }
 
     lastSet: string;
@@ -65,7 +70,6 @@ export class Wrapper implements srceditor.Editor {
         sess.setMode('ace/mode/' + mode);
         this.editor.setReadOnly(file.isReadonly())
         this.setValue(file.content)
-
         this.setDiagnostics(file)
     }
 
@@ -96,7 +100,7 @@ export class Wrapper implements srceditor.Editor {
     }
 }
 
-export function mkAce(elt: string, chg: () => void) {
+export function mkAce(elt: string) {
     let editor = ace.edit(elt)
 
     let sess = editor.getSession()
@@ -111,7 +115,7 @@ export function mkAce(elt: string, chg: () => void) {
         if (w.lastSet != null) {
             w.lastSet = null
         } else {
-            chg();
+            w.onChange();
         }
     })
 

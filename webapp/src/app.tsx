@@ -114,6 +114,7 @@ class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
     aceEditor: ace.Wrapper;
+    allEditors:srceditor.Editor[];
     settings: EditorSettings;
 
     constructor(props: IAppProps) {
@@ -172,6 +173,8 @@ class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     public componentDidMount() {
+        this.aceEditor = ace.mkAce('maineditor')
+        
         let changeHandler = () => {
             if (this.editorFile) this.editorFile.markDirty();
             if (!hasChangeTimer) {
@@ -182,15 +185,17 @@ class ProjectView extends data.Component<IAppProps, IAppState> {
                 }, 1000);
             }
         }
-        this.aceEditor = ace.mkAce('maineditor', changeHandler)
-        this.editor = this.aceEditor
+        
+        this.allEditors = [this.aceEditor]        
+        this.allEditors.forEach(e => e.onChange = changeHandler)        
+        this.editor = this.allEditors[this.allEditors.length - 1]
 
         let hasChangeTimer = false
         this.setTheme();
     }
 
     private pickEditorFor(f: pkg.File): srceditor.Editor {
-        return this.aceEditor
+        return this.allEditors.filter(e => e.acceptsFile(f))[0]
     }
 
     private updateEditorFile() {
