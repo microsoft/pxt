@@ -33,7 +33,7 @@ export class File {
     }
 
     private updateStatus() {
-        data.invalidate("open-meta:status:" + this.getName())
+        data.invalidate("open-meta:" + this.getName())
     }
 
     setContentAsync(newContent: string) {
@@ -268,34 +268,31 @@ data.mountVirtualApi("open", {
     },
 })
 
+export interface FileMeta {
+    isReadonly: boolean;
+    isSaved: boolean;
+    numErrors: number;
+}
+
 /*
-    open-meta:status:<pkgName>/<filename> - readonly/saved/unsaved
-    open-meta:errors:<pkgName>/<filename> - number of errors  
+    open-meta:<pkgName>/<filename> - readonly/saved/unsaved + number of errors
 */
 data.mountVirtualApi("open-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let m = /^([^:]+):(.*)/.exec(p)
-        let op = m[1]
-        let f = getEditorPkg(mainPkg).lookupFile(m[2])
-        if (!f) return null
-        
-        if (op == "status") {
-            if (f.isReadonly())
-                return "readonly"
+        let f = getEditorPkg(mainPkg).lookupFile(p)
+        if (!f) return {}
 
-            if (f.inSyncWithEditor && f.inSyncWithDisk)
-                return "saved"
-            else
-                return "unsaved"
-        } else if (op == "error") {
-            if (f.numDiagnosticsOverride != null)
-                return f.numDiagnosticsOverride
-            return f.diagnostics ? f.diagnostics.length : 0
-        } else {
-            Util.oops();
-            return null
+        let fs: FileMeta = {
+            isReadonly: f.isReadonly(),
+            isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
+            numErrors: f.numDiagnosticsOverride
         }
+
+        if (fs.numErrors == null)
+            fs.numErrors = f.diagnostics ? f.diagnostics.length : 0
+
+        return fs
     },
 })
 
