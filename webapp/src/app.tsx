@@ -284,6 +284,30 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .done()
     }
 
+    newBlocksProject() {
+        let cfg: yelm.PackageConfig = {
+            name: lf("{0} block", Util.getAwesomeAdj()),
+            dependencies: { mbit: "*" },
+            description: "",
+            files: ["main.blocks"]
+        }
+        let files: workspace.ScriptText = {
+            "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
+            "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`
+        }
+        workspace.installAsync({
+            name: cfg.name,
+            meta: {},
+            editor: "blocksprj",
+            pubId: "",
+            pubCurrent: false,
+        }, files)
+            .then(hd => {
+                this.loadHeader(hd)
+            })
+            .done()
+    }
+
     compile() {
         pkg.mainPkg.buildAsync()
             .then(resp => {
@@ -388,7 +412,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div>
                         <div className="item">
                             <sui.Dropdown class="button floating" icon="wrench" menu={true}>
-                                <sui.Item icon="file" text={lf("New project") } onClick={() => this.newProject() } />
+                                <sui.Item icon="terminal" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
+                                <sui.Item icon="puzzle" text={lf("New Blocks project") } onClick={() => this.newBlocksProject() } />
                                 <sui.Item icon="trash" text={lf("Remove project") } onClick={() => { } } />
                                 {this.editor == this.aceEditor ? null :
                                     <sui.Item icon="write" text={lf("Edit text") } onClick={() => this.editText() } />
