@@ -10,65 +10,47 @@ export enum MbitDisplayMode {
     greyscale
 }
 
-export interface IMbitDisplay {
-    image?: number[];
-    brigthness?: number;
-    mode?: MbitDisplayMode
-    font?: IMbitFont;
-    lightLevel?: number;
-}
-
-export interface IMbitAccelerometer {
-    x: number;
-    y: number;
-    z: number;
-}
-
-export interface IMbitCompass {
-    heading: number;
-    x: number;
-    y: number;
-    z: number;
-}
-
 export interface IMbitThermometer {
     value: number;
 }
 
-export interface IBLEInterface {
-}
-
-export interface IMbitRadio {
-}
-
 export interface IMbitBoard {
     id?: string;
-    display?: IMbitDisplay;
+
+    // display
+    image?: number[];
+    brigthness?: number;
+    displayMode?: MbitDisplayMode
+    font?: IMbitFont;
+
+    // buttons    
     buttonAPressed?: boolean;
     buttonBPressed?: boolean;
     buttonABPressed?: boolean;
+
+    // pins
     P0Touched?: boolean;
     P1Touched?: boolean;
     P2Touched?: boolean;
-    
-    accelerometer?: IMbitAccelerometer;
-    compass?: IMbitCompass;
-    thermometer?: IMbitThermometer;
-    ble?: IBLEInterface;
-    radio?: IMbitRadio;
+
+    // sensors    
+    acceleration?: number[];
+    heading?: number;
+    temperature?: number;
+    lightLevel?: number;
 }
 
 export interface IMbitTheme {
     accent?: string;
     display?: string;
-    pin?:string;
-    pinTouched?:string;
+    pin?: string;
+    pinTouched?: string;
     ledOn?: string;
     ledOff?: string;
-    buttonOuter?:string;
-    buttonUp?:string;
+    buttonOuter?: string;
+    buttonUp?: string;
     buttonDown?: string;
-    
+
     pinOn?: string;
     pinOff?: string;
 }
@@ -76,17 +58,15 @@ export interface IMbitTheme {
 export function createBoard(id?: string): IMbitBoard {
     return {
         id: id || ("b" + Math.random()),
-        display: {
-            brigthness: 255,
-            mode: MbitDisplayMode.bw,
-            image: [
-                    0, 255, 0, 255, 0,
-                    255, 0, 255, 0, 255,
-                    255, 0, 0, 0, 255,
-                    0, 255, 0, 255, 0,
-                    0, 0, 255, 0, 0,
-                ]
-        }
+        brigthness: 255,
+        displayMode: MbitDisplayMode.bw,
+        image: [
+            0, 255, 0, 255, 0,
+            255, 0, 255, 0, 255,
+            255, 0, 0, 0, 255,
+            0, 255, 0, 255, 0,
+            0, 0, 255, 0, 0,
+        ]
     }
 }
 
@@ -96,44 +76,49 @@ export function createBoard(id?: string): IMbitBoard {
 "#3AFFB3",
 "#FF3A54"
 */
-export var themes : Util.StringMap<IMbitTheme> = {
+export var themes: Util.StringMap<IMbitTheme> = {
     "blue": {
         accent: "#3ADCFE",
         display: "#000",
-        pin:"#D4AF37",
+        pin: "#D4AF37",
         pinTouched: "#FFA500",
         ledOn: "#ff7f7f",
         ledOff: "#202020",
-        buttonOuter:"#979797",
-        buttonUp:"#000",
-        buttonDown:"#FFA500",
+        buttonOuter: "#979797",
+        buttonUp: "#000",
+        buttonDown: "#FFA500",
     },
 }
 
 export interface IMbitBoardProps {
-    theme?: IMbitTheme;    
+    theme?: IMbitTheme;
 }
 
 export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> {
-    constructor(props : IMbitBoardProps) {
+    constructor(props: IMbitBoardProps) {
         super(props);
         this.state = createBoard();
     }
 
     render() {
-        var leds : any[] = [];
-        var image = this.state.display.image;
-        var left = 154, top = 113, ledoffw=46, ledoffh=44;
-        for(var i = 0; i<5; ++i) {
-            var ledtop = i*ledoffh+top;
-            for(var j =0;j<5;++j) {
-                var ledleft = j*ledoffw+left;
-                var k = i*5+j;                
-                leds.push(<rect className="sim-led-back" key={"ledb"+i+"-"+j} x={ledleft} y={ledtop} width="10" height="20" fill={this.props.theme.ledOff} />)
-                leds.push(<rect className="sim-led" key={"led"+i+"-"+j} x={ledleft-2} y={ledtop-2} width="14" height="24" fill={this.props.theme.ledOn} opacity={image[k] /255} />)
+        var leds: any[] = [];
+        var image = this.state.image;
+        var brightness = this.state.brigthness / 255;
+        var mode = this.state.displayMode;
+        var left = 154, top = 113, ledoffw = 46, ledoffh = 44;
+        for (var i = 0; i < 5; ++i) {
+            var ledtop = i * ledoffh + top;
+            for (var j = 0; j < 5; ++j) {
+                var ledleft = j * ledoffw + left;
+                var k = i * 5 + j;
+                leds.push(<rect className="sim-led-back" key={"ledb" + i + "-" + j} x={ledleft} y={ledtop} width="10" height="20" rx="2" ry="2" fill={this.props.theme.ledOff} />)
+                leds.push(<rect key={"led" + i + "-" + j} x={ledleft - 2} y={ledtop - 2} width="14" height="24" rx="2" ry="2" fill={this.props.theme.ledOn} 
+                    className={"sim-led " + (image[k] == 0 ? "hidden" : "") } 
+                    opacity={(mode == MbitDisplayMode.bw ? (image[k] > 0 ? 255 : 0) : image[k])*brightness/255} 
+                    />)
             }
         }
-        
+
         return (
             <svg version="1.1" x="0px" y="0px" viewBox="0 0 498 406" enable-background="new 0 0 498 406">
                 <g>
@@ -160,20 +145,20 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> 
                     <rect className="sim-pin" fill={this.props.theme.pin} x="422" y="356.7" width="10.3" height="49.3"/>
                     <path className="sim-pin sim-pin-touch" d="M139.1,317.3c-12.8,0-22.1,10.3-23.1,23.1V406h46.2v-65.6C162.2,327.7,151.9,317.3,139.1,317.3zM139.3,360.1c-10.7,0-19.3-8.6-19.3-19.3c0-10.7,8.6-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3C158.6,351.5,150,360.1,139.3,360.1z"
                         fill={this.state.P1Touched ? this.props.theme.pinTouched : this.props.theme.pin}
-                        onMouseDown={ev => this.setState({ P1Touched: true}) }
-                        onMouseUp={ev => this.setState({ P1Touched: false}) }
+                        onMouseDown={ev => this.setState({ P1Touched: true }) }
+                        onMouseUp={ev => this.setState({ P1Touched: false }) }
                         />
                     <path className="sim-pin sim-pin-touch" d="M249,317.3c-12.8,0-22.1,10.3-23.1,23.1V406h46.2v-65.6C272.1,327.7,261.8,317.3,249,317.3z M249.4,360.1c-10.7,0-19.3-8.6-19.3-19.3c0-10.7,8.6-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3C268.7,351.5,260.1,360.1,249.4,360.1z"
                         fill={this.state.P2Touched ? this.props.theme.pinTouched : this.props.theme.pin}
-                        onMouseDown={ev => this.setState({ P2Touched: true}) }
-                        onMouseUp={ev => this.setState({ P2Touched: false}) }
-                        />                    
+                        onMouseDown={ev => this.setState({ P2Touched: true }) }
+                        onMouseUp={ev => this.setState({ P2Touched: false }) }
+                        />
                     <path className="sim-pin" fill={this.props.theme.pin} d="M359.9,317.3c-12.8,0-22.1,10.3-23.1,23.1V406H383v-65.6C383,327.7,372.7,317.3,359.9,317.3z M360,360.1c-10.7,0-19.3-8.6-19.3-19.3c0-10.7,8.6-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3C379.3,351.5,370.7,360.1,360,360.1z"/>
                     <path className="sim-pin" fill={this.props.theme.pin} d="M458,317.6c-13,0-23.6,10.6-23.6,23.6c0,0,0,0.1,0,0.1h0V406H469c4.3,0,8.4-1,12.6-2.7v-60.7c0-0.4,0-0.9,0-1.3C481.6,328.1,471,317.6,458,317.6z M457.8,360.9c-10.7,0-19.3-8.6-19.3-19.3c0-10.7,8.6-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3C477.1,352.2,468.4,360.9,457.8,360.9z"/>
                     <path className="sim-pin sim-pin-touch" d="M16.5,341.2c0,0.4-0.1,0.9-0.1,1.3v60.7c4.1,1.7,8.6,2.7,12.9,2.7h34.4v-64.7h0.3c0,0,0-0.1,0-0.1c0-13-10.6-23.6-23.7-23.6C27.2,317.6,16.5,328.1,16.5,341.2z M21.2,341.6c0-10.7,8.7-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3c0,10.7-8.6,19.3-19.3,19.3C29.9,360.9,21.2,352.2,21.2,341.6z"
                         fill={this.state.P0Touched ? this.props.theme.pinTouched : this.props.theme.pin}
-                        onMouseDown={ev => this.setState({ P0Touched: true}) }
-                        onMouseUp={ev => this.setState({ P0Touched: false}) }
+                        onMouseDown={ev => this.setState({ P0Touched: true }) }
+                        onMouseUp={ev => this.setState({ P0Touched: false }) }
                         />
                     <polygon className="sim-theme" fill={this.props.theme.accent} points="115,56.7 173.1,0 115,0"/>
                     <path className="sim-theme" fill={this.props.theme.accent} d="M114.2,0H25.9C12.1,2.1,0,13.3,0,27.7v83.9L114.2,0z"/>
@@ -194,15 +179,15 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> 
                     <path className="sim-theme" fill={this.props.theme.accent} d="M269.9,50.2L269.9,50.2l-39.5,0v0c-14.1,0.1-24.6,10.7-24.6,24.8c0,13.9,10.4,24.4,24.3,24.7v0h39.6c14.2,0,24.8-10.6,24.8-24.7C294.5,61,284,50.3,269.9,50.2 M269.7,89.2L269.7,89.2l-39.3,0c-7.7-0.1-14-6.4-14-14.2c0-7.8,6.4-14.2,14.2-14.2h39.1c7.8,0,14.2,6.4,14.2,14.2C283.9,82.9,277.5,89.2,269.7,89.2"/>
                     <path className="sim-theme" fill={this.props.theme.accent} d="M269.7,80.3c2.9,0,5.3-2.4,5.3-5.3c0-2.9-2.4-5.3-5.3-5.3c-2.9,0-5.3,2.4-5.3,5.3C264.4,77.9,266.8,80.3,269.7,80.3"/>
                     <path className="sim-button-outer" d="M474.3,232.6h-56.2c-0.5,0-1-0.4-1-1v-56.2c0-0.5,0.4-1,1-1h56.2c0.5,0,1,0.4,1,1v56.2C475.3,232.2,474.8,232.6,474.3,232.6"
-                        fill={this.props.theme.buttonOuter} 
-                        onMouseDown={ev => this.setState({ buttonBPressed: true}) }
-                        onMouseUp={ev => this.setState({ buttonBPressed: false}) }
+                        fill={this.props.theme.buttonOuter}
+                        onMouseDown={ev => this.setState({ buttonBPressed: true }) }
+                        onMouseUp={ev => this.setState({ buttonBPressed: false }) }
                         />
                     <path className="sim-button" fill={this.state.buttonBPressed ? this.props.theme.buttonDown : this.props.theme.buttonUp} d="M461.9,203.5c0,8.7-7,15.7-15.7,15.7c-8.7,0-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7C454.9,187.8,461.9,194.9,461.9,203.5"/>
                     <path className="sim-button-outer" d="M82.1,232.6H25.9c-0.5,0-1-0.4-1-1v-56.2c0-0.5,0.4-1,1-1h56.2c0.5,0,1,0.4,1,1v56.2C83,232.2,82.6,232.6,82.1,232.6"
                         fill={this.props.theme.buttonOuter}
-                        onMouseDown={ev => this.setState({ buttonAPressed: true}) }
-                        onMouseUp={ev => this.setState({ buttonAPressed: false}) }
+                        onMouseDown={ev => this.setState({ buttonAPressed: true }) }
+                        onMouseUp={ev => this.setState({ buttonAPressed: false }) }
                         />
                     <path className="sim-button" fill={this.state.buttonAPressed ? this.props.theme.buttonDown : this.props.theme.buttonUp} d="M69.7,203.5c0,8.7-7,15.7-15.7,15.7s-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7S69.7,194.9,69.7,203.5"/>
                     <path className="sim-display" fill={this.props.theme.display} d="M333.8,310.3H165.9c-8.3,0-15-6.7-15-15V127.5c0-8.3,6.7-15,15-15h167.8c8.3,0,15,6.7,15,15v167.8C348.8,303.6,342.1,310.3,333.8,310.3z"/>
