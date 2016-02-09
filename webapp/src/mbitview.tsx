@@ -184,7 +184,7 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoardSt
                 var ledleft = j*ledoffw+left;
                 var k = i*image.width+j;                
                 leds.push(<rect className="sim-led-back" key={"ledb"+i+"-"+j} x={ledleft} y={ledtop} width="10" height="20" fill={this.state.theme.ledOff} />)
-                leds.push(<rect className="sim-led" key={"led"+i+"-"+j} x={ledleft} y={ledtop} width="10" height="20" fill={this.state.theme.ledOn} opacity={image.data[k] /255} />)
+                leds.push(<rect className="sim-led" key={"led"+i+"-"+j} x={ledleft-2} y={ledtop-2} width="14" height="24" fill={this.state.theme.ledOn} opacity={image.data[k] /255} />)
             }
         }
         
