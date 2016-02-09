@@ -109,10 +109,11 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> 
                 var ledleft = j * ledoffw + left;
                 var k = i * 5 + j;
                 leds.push(<rect className="sim-led-back" key={"ledb" + i + "-" + j} x={ledleft} y={ledtop} width="10" height="20" rx="2" ry="2" fill={this.props.theme.ledOff} />)
-                leds.push(<rect key={"led" + i + "-" + j} x={ledleft - 2} y={ledtop - 2} width="14" height="24" rx="2" ry="2" fill={this.props.theme.ledOn} 
-                    className={"sim-led " + (image[k] == 0 ? "hidden" : "") } 
-                    opacity={(mode == MbitDisplayMode.bw ? (image[k] > 0 ? 255 : 0) : image[k])*brightness/255} 
-                    />)
+                if (image[k] > 0)
+                    leds.push(<rect key={"led" + i + "-" + j} x={ledleft - 2} y={ledtop - 2} width="14" height="24" rx="2" ry="2" fill={this.props.theme.ledOn} 
+                        className="sim-led " 
+                        opacity={(mode == MbitDisplayMode.bw ? (image[k] > 0 ? 255 : 0) : image[k])*brightness/255} 
+                        />)
             }
         }
         
@@ -126,6 +127,7 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> 
         }
 
         return (
+            <div>
             <svg version="1.1" x="0px" y="0px" viewBox="0 0 498 406" enable-background="new 0 0 498 406"
                 style={style}>
                 <g>
@@ -201,6 +203,10 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> 
                     {leds}
                 </g>
             </svg>
+            <button className="ui button"
+                onMouseDown={ev => this.setState({ buttonAPressed: true, buttonBPressed: true, buttonABPressed: true }) }
+                onMouseUp={ev => this.setState({ buttonAPressed: false, buttonBPressed: false, buttonABPressed: false }) }>A+B</button>            
+            </div>
         )
     }
 }
