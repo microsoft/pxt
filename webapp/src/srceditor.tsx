@@ -2,6 +2,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as data from "./data";
 import * as app from "./app";
+import * as React from "react";
 
 
 export interface Theme {
@@ -18,9 +19,13 @@ export interface ParentProps {
 export class Editor {
     protected currTheme: Theme = {};
     protected currSource: string;
+    isVisible = false;
     constructor(public parent: ProjectView) {
     }
     changeCallback = () => { };
+    setVisible(v: boolean) {
+        this.isVisible = v;
+    }
     setTheme(themeSetting: Theme): void {
         this.currTheme = themeSetting
     }
@@ -38,6 +43,16 @@ export class Editor {
     setViewState(view: ViewState): void { }
     acceptsFile(file: pkg.File) {
         return false
+    }
+    getId() {
+        return "editor"
+    }
+    displayOuter() {
+        return (
+            <div className='full-abs' key={this.getId()} id={this.getId()} style={{ display: this.isVisible ? "block" : "none" }}>
+                {this.display()}
+            </div>
+        )
     }
     display(): JSX.Element {
         return null

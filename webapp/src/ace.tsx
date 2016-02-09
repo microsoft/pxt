@@ -25,7 +25,7 @@ var Range = (ace as any).acequire("ace/range").Range;
 
 export class Editor extends srceditor.Editor {
     editor: AceAjax.Editor;
-    
+
     prepare() {
         this.editor = ace.edit("aceEditor")
 
@@ -42,12 +42,12 @@ export class Editor extends srceditor.Editor {
                 this.changeCallback();
             }
         })
-        
+
         this.isReady = true
     }
-    
-    display() {
-        return <div className='full-abs' key='aceEditor' id='aceEditor' />
+
+    getId() {
+        return "aceEditor"
     }
 
     setTheme(theme: srceditor.Theme) {

@@ -6,9 +6,11 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
 import * as mbitview from "./mbitview";
-import * as ace from "./ace"
 import * as srceditor from "./srceditor"
 import {LoginBox} from "./login"
+
+import * as ace from "./ace"
+import * as yelmjson from "./yelmjson"
 
 var lf = Util.lf
 
@@ -114,6 +116,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
     aceEditor: ace.Editor;
+    yelmjsonEditor: yelmjson.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
 
@@ -175,9 +178,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return Promise.resolve()
         return this.editorFile.setContentAsync(this.editor.getCurrentSource())
     }
-    
+
     private initEditors() {
         this.aceEditor = new ace.Editor(this);
+        this.yelmjsonEditor = new yelmjson.Editor(this);
 
         let hasChangeTimer = false
         let changeHandler = () => {
@@ -191,11 +195,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }
         }
 
-        this.allEditors = [this.aceEditor]
+        this.allEditors = [this.yelmjsonEditor, this.aceEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
-    
+
     public componentWillMount() {
         this.initEditors()
     }
@@ -209,16 +213,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return this.allEditors.filter(e => e.acceptsFile(f))[0]
     }
 
-    private updateEditorFile() {
-        if (this.state.currFile == this.editorFile)
+    private updateEditorFile(editorOverride: srceditor.Editor = null) {
+        if (this.state.currFile == this.editorFile && !editorOverride)
             return;
         this.saveSettings();
 
         this.saveFile(); // before change
 
         this.editorFile = this.state.currFile;
-        this.editor = this.pickEditorFor(this.editorFile)
+        this.editor = editorOverride || this.pickEditorFor(this.editorFile)
         this.editor.loadFile(this.editorFile)
+        this.allEditors.forEach(e => e.setVisible(e == this.editor))
 
         this.saveFile(); // make sure state is up to date
 
@@ -322,6 +327,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .done()
     }
 
+    editText() {
+        if (this.editor != this.aceEditor)
+            this.updateEditorFile(this.aceEditor)
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -377,6 +387,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Dropdown class="button floating" icon="wrench" menu={true}>
                                 <sui.Item icon="file" text={lf("New project") } onClick={() => this.newProject() } />
                                 <sui.Item icon="trash" text={lf("Remove project") } onClick={() => { } } />
+                                {this.editor == this.aceEditor ? null :
+                                    <sui.Item icon="write" text={lf("Edit text") } onClick={() => this.editText() } />
+                                }
                                 <div className="divider"></div>
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
                             </sui.Dropdown>
@@ -403,7 +416,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                 </div>
                 <div id="maineditor">
-                    {this.allEditors.map(e => e.display())}
+                    {this.allEditors.map(e => e.displayOuter()) }
                 </div>
             </div>
         );
