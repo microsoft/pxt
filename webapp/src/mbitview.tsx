@@ -203,9 +203,16 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> 
                     {leds}
                 </g>
             </svg>
-            <button className="ui button"
-                onMouseDown={ev => this.setState({ buttonAPressed: true, buttonBPressed: true, buttonABPressed: true }) }
-                onMouseUp={ev => this.setState({ buttonAPressed: false, buttonBPressed: false, buttonABPressed: false }) }>A+B</button>            
+            <div>
+                <button className="mini compact ui button"
+                    onMouseDown={ev => this.setState({ buttonAPressed: true, buttonBPressed: true, buttonABPressed: true }) }
+                    onMouseUp={ev => this.setState({ buttonAPressed: false, buttonBPressed: false, buttonABPressed: false }) }>A+B</button>            
+                <button className="mini compact ui button">SHAKE</button>
+                <button className="mini compact ui button">LOGO UP</button>
+                <button className="mini compact ui button">LOGO DOWN</button>
+                <button className="mini compact ui button">SCREEN UP</button>
+                <button className="mini compact ui button">SCREEN DOWN</button>            
+            </div>
             </div>
         )
     }
