@@ -11,6 +11,7 @@ import {LoginBox} from "./login"
 
 import * as ace from "./ace"
 import * as yelmjson from "./yelmjson"
+import * as blocks from "./blocks"
 
 var lf = Util.lf
 
@@ -117,6 +118,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     editorFile: pkg.File;
     aceEditor: ace.Editor;
     yelmjsonEditor: yelmjson.Editor;
+    blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
 
@@ -182,6 +184,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     private initEditors() {
         this.aceEditor = new ace.Editor(this);
         this.yelmjsonEditor = new yelmjson.Editor(this);
+        this.blocksEditor = new blocks.Editor(this);
 
         let hasChangeTimer = false
         let changeHandler = () => {
@@ -195,7 +198,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }
         }
 
-        this.allEditors = [this.yelmjsonEditor, this.aceEditor]
+        this.allEditors = [this.yelmjsonEditor, this.blocksEditor, this.aceEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
