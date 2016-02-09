@@ -4,6 +4,13 @@ import * as core from "./core";
 
 var lf = Util.lf
 
+let extWeight: Util.StringMap<number> = {
+    "ts": 10,
+    "blocks": 20,
+    "json": 30,
+    "md": 40,
+}
+
 export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
@@ -25,6 +32,14 @@ export class File {
         let m = /\.([^\.]+)$/.exec(this.name)
         if (m) return m[1]
         return ""
+    }
+
+    weight() {
+        if (/^main\./.test(this.name))
+            return 5;
+        if (extWeight.hasOwnProperty(this.getExtension()))
+            return extWeight[this.getExtension()]
+        return 60;
     }
 
     markDirty() {
@@ -142,7 +157,9 @@ export class EditorPackage {
     }
 
     sortedFiles() {
-        return Util.values(this.files)
+        let lst = Util.values(this.files)
+        lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
+        return lst
     }
 
     forEachFile(cb: (f: File) => void) {
@@ -152,7 +169,7 @@ export class EditorPackage {
     }
 
     getMainFile() {
-        return this.sortedFiles().filter(f => f.getExtension() == "ts")[0] || this.sortedFiles()[0]
+        return this.sortedFiles()[0]
     }
 
     pkgAndDeps(): EditorPackage[] {
