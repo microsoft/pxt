@@ -21,7 +21,8 @@ export class Editor extends srceditor.Editor {
     display() {
         let c = this.config
         let update = (v: any) => {
-            this.changeCallback()
+            this.parent.forceUpdate()
+            Util.nextTick(this.changeCallback)
         }
         return (
             <div className="ui segment form text container" style={{backgroundColor: "white"}}>
