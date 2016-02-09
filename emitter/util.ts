@@ -139,6 +139,31 @@ namespace Util {
         }
     }
 
+    export function randomPermute<T>(arr: T[]) {
+        for (var i = 0; i < arr.length; ++i) {
+            var j = randomUint32() % arr.length
+            var tmp = arr[i]
+            arr[i] = arr[j]
+            arr[j] = tmp
+        }
+    }
+
+    export function randomPick<T>(arr: T[]): T {
+        if (arr.length == 0) return null;
+        return arr[randomUint32() % arr.length];
+    }
+
+    var awesomeAdj: string[];
+    export function getAwesomeAdj(): string {
+        if (!awesomeAdj)
+            awesomeAdj = (
+                lf("amazing, astonishing, astounding, awe-inspiring, awesome, breathtaking, classic, cool, curious, distinct, exceptional, exclusive, extraordinary, fabulous, fantastic, glorious, great, ") +
+                lf("incredible, magical, marvellous, marvelous, mind-blowing, mind-boggling, miraculous, peculiar, phenomenal, rad, rockin', special, spectacular, startling, stunning, super-cool, ") +
+                lf("superior, supernatural, terrific, unbelievable, unearthly, unique, unprecedented, unusual, weird, wonderful, wondrous")
+            ).split(/\s*[,،、]\s*/)
+        return randomPick(awesomeAdj)
+    }
+    
     export var isNodeJS = false;
 
     export interface HttpRequestOptions {

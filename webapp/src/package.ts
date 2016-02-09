@@ -7,12 +7,18 @@ var lf = Util.lf
 export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
+    diagnostics: ts.Diagnostic[];
+    numDiagnosticsOverride: number;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string)
     { }
 
+    isReadonly() {
+        return !this.epkg.header
+    }
+
     getName() {
-        return this.epkg.yelmPkg.id + "/" + this.name
+        return this.epkg.getPkgId() + "/" + this.name
     }
 
     getExtension() {
@@ -27,7 +33,7 @@ export class File {
     }
 
     private updateStatus() {
-        data.invalidate("open-status:" + this.getName())
+        data.invalidate("open-meta:" + this.getName())
     }
 
     setContentAsync(newContent: string) {
@@ -58,13 +64,39 @@ export class EditorPackage {
     saveScheduled = false;
     savingNow = 0;
 
-    constructor(public yelmPkg: yelm.Package) {
-        if (yelmPkg.verProtocol() == "workspace")
+    id: string;
+    outputPkg: EditorPackage;
+
+    constructor(private yelmPkg: yelm.Package, private topPkg: EditorPackage) {
+        if (yelmPkg && yelmPkg.verProtocol() == "workspace")
             this.header = workspace.getHeader(yelmPkg.verArgument())
+    }
+
+    getTopHeader() {
+        return this.topPkg.header;
+    }
+
+    makeTopLevel() {
+        this.topPkg = this;
+        this.outputPkg = new EditorPackage(null, this)
+        this.outputPkg.id = "built"
+    }
+
+    getYelmPkg() {
+        return this.yelmPkg;
+    }
+
+    getPkgId() {
+        return this.yelmPkg ? this.yelmPkg.id : this.id;
+    }
+
+    isTopLevel() {
+        return this.yelmPkg && this.yelmPkg.level == 0;
     }
 
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
+        data.invalidate("open-meta:")
     }
 
     private updateStatus() {
@@ -113,12 +145,20 @@ export class EditorPackage {
         return Util.values(this.files)
     }
 
+    forEachFile(cb: (f: File) => void) {
+        this.pkgAndDeps().forEach(p => {
+            Util.values(p.files).forEach(cb)
+        })
+    }
+
     getMainFile() {
         return this.sortedFiles().filter(f => f.getExtension() == "ts")[0] || this.sortedFiles()[0]
     }
 
     pkgAndDeps(): EditorPackage[] {
-        return Util.values((<yelm.MainPackage>this.yelmPkg.parent).deps).map(getEditorPkg)
+        if (this.topPkg != this)
+            return this.topPkg.pkgAndDeps();
+        return Util.values((this.yelmPkg as yelm.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
     }
 
     lookupFile(name: string) {
@@ -178,11 +218,19 @@ export var mainPkg = new yelm.MainPackage(theHost);
 export function getEditorPkg(p: yelm.Package) {
     let r: EditorPackage = (p as any)._editorPkg
     if (r) return r
-    return ((p as any)._editorPkg = new EditorPackage(p))
+
+    let top: EditorPackage = null
+    if (p != mainPkg)
+        top = getEditorPkg(mainPkg)
+    let newOne = new EditorPackage(p, top)
+    if (p == mainPkg)
+        newOne.makeTopLevel();
+    (p as any)._editorPkg = newOne
+    return newOne
 }
 
 export function allEditorPkgs() {
-    return Util.values(mainPkg.deps).map(getEditorPkg)
+    return getEditorPkg(mainPkg).pkgAndDeps()
 }
 
 export function notifySyncDone(updated: Util.StringMap<number>) {
@@ -220,23 +268,31 @@ data.mountVirtualApi("open", {
     },
 })
 
+export interface FileMeta {
+    isReadonly: boolean;
+    isSaved: boolean;
+    numErrors: number;
+}
+
 /*
-    open-status:<pkgName>/<filename> - 
+    open-meta:<pkgName>/<filename> - readonly/saved/unsaved + number of errors
 */
-data.mountVirtualApi("open-status", {
+data.mountVirtualApi("open-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
         let f = getEditorPkg(mainPkg).lookupFile(p)
-        if (f) {
-            if (!f.epkg.header)
-                return "readonly"
-                
-            if (f.inSyncWithEditor && f.inSyncWithDisk)
-                return "saved"
-            else
-                return "unsaved"
+        if (!f) return {}
+
+        let fs: FileMeta = {
+            isReadonly: f.isReadonly(),
+            isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
+            numErrors: f.numDiagnosticsOverride
         }
-        return null
+
+        if (fs.numErrors == null)
+            fs.numErrors = f.diagnostics ? f.diagnostics.length : 0
+
+        return fs
     },
 })
 

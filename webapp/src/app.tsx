@@ -6,33 +6,25 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
 import * as mbitview from "./mbitview";
-import {LoginBox} from "./login";
-
-declare var require: any;
-var ace: AceAjax.Ace = require("brace");
+import * as ace from "./ace"
+import * as srceditor from "./srceditor"
+import {LoginBox} from "./login"
 
 var lf = Util.lf
-
-require('brace/mode/typescript');
-require('brace/mode/json');
-require('brace/mode/c_cpp');
-require('brace/mode/text');
-require('brace/mode/markdown');
 
 interface IAppProps { }
 interface IAppState {
     header?: workspace.Header;
     currFile?: pkg.File;
-    inverted?: string;
-    fontSize?: string;
+    theme?: srceditor.Theme;
     fileState?: string;
 }
 
 
-var theEditor: Editor;
+var theEditor: ProjectView;
 
 interface ISettingsProps {
-    parent: Editor;
+    parent: ProjectView;
 }
 
 class Settings extends data.Component<ISettingsProps, {}> {
@@ -43,18 +35,21 @@ class Settings extends data.Component<ISettingsProps, {}> {
             '20px': lf("Medium"),
             '24px': lf("Large"),
         }
-        let fontSize = (v: string) => par.setState({ fontSize: v })
+        let fontSize = (v: string) => {
+            par.state.theme.fontSize = v;
+            par.forceUpdate()
+        }
         return (
             <sui.Popup icon='settings'>
                 <div className='ui form'>
                     <sui.Field>
                         <div className="ui toggle checkbox ">
-                            <input type="checkbox" name="public" checked={!!par.state.inverted} onChange={() => par.swapTheme() } />
+                            <input type="checkbox" name="public" checked={par.state.theme.inverted} onChange={() => par.swapTheme() } />
                             <label>{lf("Dark theme") }</label>
                         </div>
                     </sui.Field>
                     <sui.Field label="Font size">
-                        <sui.Dropdown class="selection" value={par.state.fontSize} onChange={fontSize}>
+                        <sui.Dropdown class="selection" value={par.state.theme.fontSize} onChange={fontSize}>
                             {Object.keys(sizes).map(k => <sui.Item key={k} value={k}>{sizes[k]}</sui.Item>) }
                         </sui.Dropdown>
                     </sui.Field>
@@ -107,51 +102,54 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
 interface FileHistoryEntry {
     id: string;
     name: string;
-    pos: AceAjax.Position;
+    pos: srceditor.ViewState;
 }
 
 interface EditorSettings {
-    inverted: boolean;
-    fontSize: string;
+    theme: srceditor.Theme;
     fileHistory: FileHistoryEntry[];
 }
 
-class Editor extends data.Component<IAppProps, IAppState> {
-    editor: AceAjax.Editor;
+class ProjectView extends data.Component<IAppProps, IAppState> {
+    editor: srceditor.Editor;
     editorFile: pkg.File;
+    aceEditor: ace.Wrapper;
+    allEditors: srceditor.Editor[];
     settings: EditorSettings;
 
     constructor(props: IAppProps) {
         super(props);
 
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
+        if (!this.settings.theme)
+            this.settings.theme = {}
         this.state = {
-            inverted: this.settings.inverted ? " inverted " : "",
-            fontSize: this.settings.fontSize || "20px"
+            theme: {
+                inverted: !!this.settings.theme.inverted,
+                fontSize: this.settings.theme.fontSize || "20px"
+            }
         };
         if (!this.settings.fileHistory) this.settings.fileHistory = []
     }
 
     swapTheme() {
-        this.setState({
-            inverted: this.state.inverted ? "" : " inverted "
-        })
+        this.state.theme.inverted = !this.state.theme.inverted
+        this.forceUpdate()
     }
 
     saveSettings() {
         let sett = this.settings
-        sett.inverted = !!this.state.inverted
-        sett.fontSize = this.state.fontSize
+        sett.theme = this.state.theme
 
         let f = this.editorFile
-        if (f && f.epkg.header) {
+        if (f && f.epkg.getTopHeader()) {
             let n: FileHistoryEntry = {
-                id: f.epkg.header.id,
+                id: f.epkg.getTopHeader().id,
                 name: f.getName(),
-                pos: this.editor.getCursorPosition()
+                pos: this.editor.getViewState()
             }
             sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
-            if (this.settings.fileHistory.length > 100)
+            while (sett.fileHistory.length > 100)
                 sett.fileHistory.pop()
             sett.fileHistory.unshift(n)
         }
@@ -164,45 +162,44 @@ class Editor extends data.Component<IAppProps, IAppState> {
     }
 
     private setTheme() {
-        require('brace/theme/sqlserver');
-        require('brace/theme/tomorrow_night_bright');
-
         if (!this.editor) return
-        let th = this.state.inverted ? 'ace/theme/tomorrow_night_bright' : 'ace/theme/sqlserver'
-        if (this.editor.getTheme() != th) {
-            this.editor.setTheme(th)
-        }
-        this.editor.setFontSize(this.state.fontSize)
+        this.editor.setTheme(this.state.theme)
     }
 
+    saveFile() {
+        this.saveFileAsync().done()
+    }
+    
     saveFileAsync() {
         if (!this.editorFile)
             return Promise.resolve()
-        return this.editorFile.setContentAsync(this.editor.getValue())
+        return this.editorFile.setContentAsync(this.editor.getCurrentSource())
     }
 
     public componentDidMount() {
-        this.editor = ace.edit('maineditor');
+        this.aceEditor = ace.mkAce('maineditor')
 
-        let sess = this.editor.getSession()
-        sess.setNewLineMode("unix");
-        sess.setTabSize(4);
-        sess.setUseSoftTabs(true);
-        this.editor.$blockScrolling = Infinity;
-
-        let hasChangeTimer = false
-        sess.on("change", () => {
+        let changeHandler = () => {
             if (this.editorFile) this.editorFile.markDirty();
             if (!hasChangeTimer) {
                 hasChangeTimer = true
                 setTimeout(() => {
                     hasChangeTimer = false;
-                    this.saveFileAsync().done();
+                    this.saveFile();
                 }, 1000);
             }
-        })
+        }
 
+        this.allEditors = [this.aceEditor]
+        this.allEditors.forEach(e => e.onChange = changeHandler)
+        this.editor = this.allEditors[this.allEditors.length - 1]
+
+        let hasChangeTimer = false
         this.setTheme();
+    }
+
+    private pickEditorFor(f: pkg.File): srceditor.Editor {
+        return this.allEditors.filter(e => e.acceptsFile(f))[0]
     }
 
     private updateEditorFile() {
@@ -210,31 +207,17 @@ class Editor extends data.Component<IAppProps, IAppState> {
             return;
         this.saveSettings();
 
-        let file = this.state.currFile
+        this.saveFile(); // before change
 
-        let ext = file.getExtension()
-        let modeMap: any = {
-            "cpp": "c_cpp",
-            "json": "json",
-            "md": "markdown",
-            "ts": "typescript"
-        }
-        let mode = "text"
-        if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
-        let sess = this.editor.getSession()
-        sess.setMode('ace/mode/' + mode);
-        
-        this.editor.setReadOnly(!file.epkg.header)
-        this.saveFileAsync().done(); // before change
-        this.editorFile = file;
-        this.editor.setValue(file.content, -1)
-        this.saveFileAsync().done(); // cancel the change event generated by setValue() above
+        this.editorFile = this.state.currFile;
+        this.editor = this.pickEditorFor(this.editorFile)
+        this.editor.loadFile(this.editorFile)
 
-        let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == file.getName())[0]
-        if (e) {
-            this.editor.moveCursorToPosition(e.pos)
-            this.editor.scrollToLine(e.pos.row - 1, true, false, () => { })
-        }
+        this.saveFile(); // make sure state is up to date
+
+        let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+        if (e)
+            this.editor.setViewState(e.pos)
     }
 
     setFile(fn: pkg.File) {
@@ -262,6 +245,30 @@ class Editor extends data.Component<IAppProps, IAppState> {
             })
     }
 
+    newProject() {
+        let cfg: yelm.PackageConfig = {
+            name: lf("{0} bit", Util.getAwesomeAdj()),
+            dependencies: { mbit: "*" },
+            description: "",
+            files: ["main.ts"]
+        }
+        let files: workspace.ScriptText = {
+            "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
+            "main.ts": `basic.showString("Hi!")\n`
+        }
+        workspace.installAsync({
+            name: cfg.name,
+            meta: {},
+            editor: "tsprj",
+            pubId: "",
+            pubCurrent: false,
+        }, files)
+            .then(hd => {
+                this.loadHeader(hd)
+            })
+            .done()
+    }
+
     compile() {
         pkg.mainPkg.buildAsync()
             .then(resp => {
@@ -270,7 +277,40 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     let fn = "microbit-" + this.state.header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
                     core.browserDownloadText(hex, fn, "application/x-microbit-hex")
                 }
-                console.log(resp)
+                let mainPkg = pkg.getEditorPkg(pkg.mainPkg)
+
+                mainPkg.forEachFile(f => f.diagnostics = [])
+
+                let output = "";
+
+                for (let diagnostic of resp.diagnostics) {
+                    if (diagnostic.file) {
+                        const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
+                        const relativeFileName = diagnostic.file.fileName;
+                        output += `${relativeFileName}(${line + 1},${character + 1}): `;
+                        let localName = diagnostic.file.fileName.replace(/^yelm_modules\//, "")
+                        if (localName.indexOf('/') < 0) localName = "this/" + localName
+                        let f = mainPkg.lookupFile(localName)
+                        if (f)
+                            f.diagnostics.push(diagnostic)
+                    }
+
+                    const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
+                    output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
+                }
+
+                resp.outfiles["errors.txt"] = output
+
+                mainPkg.outputPkg.setFiles(resp.outfiles)
+
+                let f = mainPkg.lookupFile(mainPkg.outputPkg.id + "/errors.txt")
+                if (f) {
+                    // display total number of errors on the output file
+                    f.numDiagnosticsOverride = resp.diagnostics.length
+                    data.invalidate("open-meta:")
+                }
+
+                this.editor.setDiagnostics(this.editorFile)
             })
             .done()
     }
@@ -283,24 +323,24 @@ class Editor extends data.Component<IAppProps, IAppState> {
 
         let filesOf = (pkg: pkg.EditorPackage) =>
             pkg.sortedFiles().map(file => {
-                let status = this.getData("open-status:" + file.getName())
-                let isSaved = status == "saved" || status == "readonly"
+                let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
                 return (
                     <a
                         key={file.getName() }
                         onClick={() => this.setFile(file) }
-                        className={(this.state.currFile == file ? "active " : "") + (pkg.yelmPkg.level == 0 ? "" : "nested ") + "item"}
+                        className={(this.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
-                        {file.name} {isSaved ? "" : "*"}
-                        {status == "readonly" ? <i className="lock icon"></i> : null}
+                        {file.name} {meta.isSaved ? "" : "*"}
+                        {meta.isReadonly ? <i className="lock icon"></i> : null}
+                        {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                     </a>);
             })
 
         let filesWithHeader = (pkg: pkg.EditorPackage) =>
-            pkg.yelmPkg.level == 0 ? filesOf(pkg) : [
-                <div key={"hd-" + pkg.yelmPkg.id} className="header item">
+            pkg.isTopLevel() ? filesOf(pkg) : [
+                <div key={"hd-" + pkg.getPkgId() } className="header item">
                     <i className="folder icon"></i>
-                    {pkg.yelmPkg.id}
+                    {pkg.getPkgId() }
                 </div>
             ].concat(filesOf(pkg))
 
@@ -312,10 +352,12 @@ class Editor extends data.Component<IAppProps, IAppState> {
             workspace.syncAsync().done();
         }
 
+        let inv = this.state.theme.inverted ? " inverted " : " "
+
         return (
-            <div id='root' className={this.state.inverted || ""}>
+            <div id='root' className={inv}>
                 <div id="menubar">
-                    <div className={"ui menu" + this.state.inverted}>
+                    <div className={"ui menu" + inv}>
                         <div className="item">
                             <sui.Button class='primary' text={lf("Compile") } onClick={() => this.compile() } />
                         </div>
@@ -324,7 +366,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                         </div>
                         <div className="item">
                             <sui.Dropdown class="button floating" icon="wrench" menu={true}>
-                                <sui.Item icon="file" text={lf("New project") } onClick={() => { } } />
+                                <sui.Item icon="file" text={lf("New project") } onClick={() => this.newProject() } />
                                 <sui.Item icon="trash" text={lf("Remove project") } onClick={() => { } } />
                                 <div className="divider"></div>
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
@@ -347,7 +389,7 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     <div id="mbitboardview" className="ui vertical">
                         <mbitview.MbitBoardView ref="simulator" theme={mbitview.themes["blue"]} />
                     </div>
-                    <div className={"ui vertical menu filemenu " + this.state.inverted}>
+                    <div className={"ui vertical menu filemenu " + inv}>
                         {files}
                     </div>
                 </div>
@@ -359,14 +401,19 @@ class Editor extends data.Component<IAppProps, IAppState> {
 }
 
 function render() {
-    ReactDOM.render(<Editor/>, $('#content')[0])
+    ReactDOM.render(<ProjectView/>, $('#content')[0])
+}
+
+function getEditor() {
+    return theEditor
 }
 
 let myexports: any = {
     workspace,
     require,
     core,
-    theEditor
+    getEditor,
+    theAce: ace
 }
 Object.keys(myexports).forEach(k => (window as any)[k] = myexports[k])
 
@@ -391,5 +438,3 @@ $(document).ready(() => {
             theEditor.saveSettings()
     })
 })
-
-

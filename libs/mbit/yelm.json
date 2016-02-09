@@ -7,5 +7,6 @@
         "core.d.ts",
         "mbit.ts"
     ],
+    "public": true,
     "dependencies": {}
 }
