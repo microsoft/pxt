@@ -6,6 +6,10 @@ declare module goog {
 declare module Blockly {
     function fireUiEvent(node: any, eventName: string) : void;
     
+    module JavaScript {
+        function workspaceToCode(workspace : Workspace) : string;
+    }
+    
     class Block {
         static obtain(workspace: Workspace, prototypeName?: string): Block;
 

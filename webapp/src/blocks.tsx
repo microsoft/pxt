@@ -57,8 +57,11 @@ export class Editor extends srceditor.Editor {
         this.editor.clear();
         try {
             Blockly.Xml.domToWorkspace(this.editor, xml);
+            
+           // var js = Blockly.JavaScript.workspaceToCode(this.editor);
+           // console.log(js);
         } catch (e) {
-            console.error(e);
+            console.log(e);
         }
     }
 
