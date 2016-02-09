@@ -2,6 +2,8 @@ declare module goog {
     function isFunction(f: any): boolean;
 }
 declare module Blockly {
+    function fireUiEvent(node: any, eventName: string) : void;
+    
     class Block {
         static obtain(workspace: Workspace, prototypeName?: string): Block;
 

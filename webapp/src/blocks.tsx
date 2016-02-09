@@ -36,7 +36,11 @@ export class Editor extends srceditor.Editor {
         super.setVisible(v);
         this.isVisible = v;
         var classes = '.blocklyToolboxDiv, .blocklyWidgetDiv, .blocklyToolboxDiv';
-        if (this.isVisible) $(classes).show();
+        if (this.isVisible) {
+            $(classes).show();
+            // Fire a resize event since the toolbox may have changed width and height.
+            Blockly.fireUiEvent(window, 'resize'); 
+       }
         else $(classes).hide();
     }
 
