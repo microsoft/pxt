@@ -24,7 +24,7 @@ export function init() {
 }
 
 function setDiagnostics(resp: ts.mbit.CompileResult) {
-    let mainPkg = pkg.getEditorPkg(pkg.mainPkg)
+    let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
 
@@ -45,12 +45,17 @@ function setDiagnostics(resp: ts.mbit.CompileResult) {
         const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
         output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
+    
+    if (!output)
+    output = Util.lf("Everything seems fine!\n")
+    
+    let outputFile = "output.txt"
 
-    resp.outfiles["errors.txt"] = output
+    resp.outfiles[outputFile] = output
 
     mainPkg.outputPkg.setFiles(resp.outfiles)
 
-    let f = mainPkg.lookupFile(mainPkg.outputPkg.id + "/errors.txt")
+    let f = mainPkg.lookupFile(mainPkg.outputPkg.id + "/" + outputFile)
     if (f) {
         // display total number of errors on the output file
         f.numDiagnosticsOverride = resp.diagnostics.length
