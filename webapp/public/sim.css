@@ -2,7 +2,7 @@
     width:100%;
 }
 
-.sim-button {
+.sim-button, .sim-led {
     pointer-events: none;    
 }
 

@@ -127,11 +127,11 @@ export function createBoard(id?: string): IMbitBoard {
                 width: 5,
                 height: 5,
                 data: [
-                    0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0,
+                    0, 255, 0, 255, 0,
+                    255, 0, 255, 0, 255,
+                    255, 0, 0, 0, 255,
+                    0, 255, 0, 255, 0,
+                    0, 0, 255, 0, 0,
                 ]
             }
         },
@@ -175,6 +175,19 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoardSt
     }
 
     render() {
+        var leds : any[] = [];
+        var image = this.state.board.display.image;
+        var left = 154, top = 113, ledoffw=46, ledoffh=44;
+        for(var i = 0; i<image.width; ++i) {
+            var ledtop = i*ledoffh+top;
+            for(var j =0;j<image.height;++j) {
+                var ledleft = j*ledoffw+left;
+                var k = i*image.width+j;                
+                leds.push(<rect className="sim-led-back" key={"ledb"+i+"-"+j} x={ledleft} y={ledtop} width="10" height="20" fill={this.state.theme.ledOff} />)
+                leds.push(<rect className="sim-led" key={"led"+i+"-"+j} x={ledleft} y={ledtop} width="10" height="20" fill={this.state.theme.ledOn} opacity={image.data[k] /255} />)
+            }
+        }
+        
         return (
             <svg version="1.1" x="0px" y="0px" viewBox="0 0 498 406" enable-background="new 0 0 498 406">
                 <g>
@@ -235,6 +248,7 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoardSt
                         />
                     <path className="sim-button" fill={this.state.board.buttonAPressed ? this.state.theme.buttonDown : this.state.theme.buttonUp} d="M69.7,203.5c0,8.7-7,15.7-15.7,15.7s-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7S69.7,194.9,69.7,203.5"/>
                     <path className="sim-display" fill={this.state.theme.display} d="M333.8,310.3H165.9c-8.3,0-15-6.7-15-15V127.5c0-8.3,6.7-15,15-15h167.8c8.3,0,15,6.7,15,15v167.8C348.8,303.6,342.1,310.3,333.8,310.3z"/>
+                    {leds}
                 </g>
             </svg>
         )
