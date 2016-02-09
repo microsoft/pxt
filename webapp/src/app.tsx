@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
+import * as mbitview from "./mbitview";
 import {LoginBox} from "./login";
 
 declare var require: any;
@@ -373,6 +374,9 @@ class Editor extends data.Component<IAppProps, IAppState> {
                     </div>
                 </div>
                 <div id="filelist">
+                    <div id="mbitboardview" className="ui vertical">
+                        <mbitview.MbitBoard />
+                    </div>
                     <div className={"ui vertical menu filemenu " + this.state.inverted}>
                         {files}
                     </div>
