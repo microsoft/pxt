@@ -85,9 +85,9 @@ declare module Blockly {
         css?: boolean;
         media?: string;
         grid?: {
-            spacing?: boolean;
-            length?: boolean;
-            colour?: boolean;
+            spacing?: number;
+            length?: number;
+            colour?: string;
             snap?: boolean;
         };
         zoom?: {
