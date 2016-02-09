@@ -10,10 +10,6 @@ export enum MbitDisplayMode {
     greyscale
 }
 
-export interface IMbitThermometer {
-    value: number;
-}
-
 export interface IMbitBoard {
     id?: string;
 
@@ -66,7 +62,8 @@ export function createBoard(id?: string): IMbitBoard {
             255, 0, 0, 0, 255,
             0, 255, 0, 255, 0,
             0, 0, 255, 0, 0,
-        ]
+        ],
+        acceleration: [500,500,0]
     }
 }
 
@@ -118,9 +115,19 @@ export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> 
                     />)
             }
         }
+        
+        var af = 10 / 1023;
+        var style : React.CSSProperties = {}
+        var acc = this.state.acceleration;
+        if(acc) {
+            style.transform = "perspective(30em) rotateX(" + -acc[1]*af + "deg) rotateY(" + acc[0]*af +"deg)"
+            style.perspectiveOrigin = "50% 50% 50%";
+            style.perspective = "30em";            
+        }
 
         return (
-            <svg version="1.1" x="0px" y="0px" viewBox="0 0 498 406" enable-background="new 0 0 498 406">
+            <svg version="1.1" x="0px" y="0px" viewBox="0 0 498 406" enable-background="new 0 0 498 406"
+                style={style}>
                 <g>
                     <path d="M498,31.9C498,14.3,483.7,0,466.1,0H31.9C14.3,0,0,14.3,0,31.9v342.2C0,391.7,14.3,406,31.9,406h434.2c17.6,0,31.9-14.3,31.9-31.9V31.9z M14.3,206.7c-2.7,0-4.8-2.2-4.8-4.8c0-2.7,2.2-4.8,4.8-4.8c2.7,0,4.8,2.2,4.8,4.8C19.2,204.6,17,206.7,14.3,206.7z M486.2,206.7c-2.7,0-4.8-2.2-4.8-4.8c0-2.72.2-4.8,4.8-4.8c2.7,0,4.8,2.2,4.8,4.8C491,204.6,488.8,206.7,486.2,206.7z"/>
                     <path className="sim-pin" fill={this.props.theme.pin} d="M0,357.7v19.2c0,10.8,6.2,20.2,14.4,25.2v-44.4H0z"/>
