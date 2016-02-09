@@ -1,5 +1,5 @@
 declare module goog {
-    function isFunction(f : any) : boolean;
+    function isFunction(f: any): boolean;
 }
 declare module Blockly {
     class Block {
@@ -71,7 +71,7 @@ declare module Blockly {
 
     interface Options {
         readOnly?: boolean;
-        toolbox?: Element;
+        toolbox?: Element | string;
         trashcan?: boolean;
         collapse?: boolean;
         comments?: boolean;
@@ -79,16 +79,25 @@ declare module Blockly {
         scrollbars?: boolean;
         sound?: boolean;
         css?: boolean;
+        media?: string;
         grid?: {
             spacing?: boolean;
             length?: boolean;
             colour?: boolean;
             snap?: boolean;
         };
+        zoom?: {
+            enabled?: boolean;
+            controls?: boolean;
+            wheel?: boolean;
+            maxScale?: number;
+            minScale?: number;
+            scaleSpeed?: number;
+        };
         enableRealTime?: boolean;
     }
 
-    interface callbackHandler {}
+    interface callbackHandler { }
 
     function inject(elt: Element, options?: Options): void;
 
