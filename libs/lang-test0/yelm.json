@@ -6,6 +6,7 @@
         "README.md",
         "lang-test0.ts"
     ],
+    "public": true,
     "dependencies": {
         "mbit": "file:../mbit"
     }
