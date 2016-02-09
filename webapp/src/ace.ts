@@ -64,7 +64,7 @@ export class Wrapper {
         sess.setMode('ace/mode/' + mode);
         this.editor.setReadOnly(file.isReadonly())
         this.setValue(file.content)
-        
+
         this.loadDiagnostics(file)
     }
 
@@ -72,13 +72,21 @@ export class Wrapper {
         let sess = this.editor.getSession();
         Object.keys(sess.getMarkers(true) || {}).forEach(m => sess.removeMarker(parseInt(m)))
         sess.clearAnnotations()
+        let ann: AceAjax.Annotation[] = []
         if (file.diagnostics)
             for (let diagnostic of file.diagnostics) {
                 const p0 = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
                 const p1 = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start + diagnostic.length)
+                ann.push({
+                    row: p0.line,
+                    column: p0.character,
+                    text: ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+                    type: "error"
+                })
                 sess.addMarker(new Range(p0.line, p0.character, p1.line, p1.character),
                     "ace_error-marker", "ts-error", true)
             }
+        sess.setAnnotations(ann)
     }
 
     loadPosition(pos: AceAjax.Position) {
