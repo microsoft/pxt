@@ -147,3 +147,28 @@ export class Field extends data.Component<{
         );
     }
 }
+
+export class Input extends data.Component<{
+    label?: string;
+    class?: string;
+    value?: string;
+    type?: string;
+    onChange?: (v: string) => void;
+    lines?: number;
+}, {}> {
+    renderCore() {
+        let p = this.props
+        return (
+            <Field label={p.label}>
+                {!p.lines || p.lines == 1 ?
+                    <div className="ui input">
+                        <input type={p.type || "text"} value={p.value} onChange={v => p.onChange((v.target as any).value) }/>
+                    </div>
+                    :
+                    <textarea value={p.value} onChange={v => p.onChange((v.target as any).value) }>
+                    </textarea>
+                }
+            </Field>
+        );
+    }
+}

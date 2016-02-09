@@ -216,11 +216,11 @@ export function getAsync(path: string) {
     })
 }
 
-export class Component<T, S> extends React.Component<T, S> {
+export class Component<TProps, TState> extends React.Component<TProps, TState> {
     subscriptions: CacheEntry[] = [];
     renderCoreOk = false;
 
-    constructor(props: T) {
+    constructor(props: TProps) {
         super(props);
     }
 

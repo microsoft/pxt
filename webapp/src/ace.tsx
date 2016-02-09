@@ -1,3 +1,4 @@
+import * as React from "react";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
@@ -22,10 +23,31 @@ require('brace/theme/tomorrow_night_bright');
 
 var Range = (ace as any).acequire("ace/range").Range;
 
+export class Editor extends srceditor.Editor {
+    editor: AceAjax.Editor;
 
-export class Wrapper extends srceditor.Editor {
-    constructor(public editor: AceAjax.Editor) {
-        super()
+    prepare() {
+        this.editor = ace.edit("aceEditor")
+
+        let sess = this.editor.getSession()
+        sess.setNewLineMode("unix");
+        sess.setTabSize(4);
+        sess.setUseSoftTabs(true);
+        this.editor.$blockScrolling = Infinity;
+
+        sess.on("change", () => {
+            if (this.lastSet != null) {
+                this.lastSet = null
+            } else {
+                this.changeCallback();
+            }
+        })
+
+        this.isReady = true
+    }
+
+    getId() {
+        return "aceEditor"
     }
 
     setTheme(theme: srceditor.Theme) {
@@ -48,7 +70,7 @@ export class Wrapper extends srceditor.Editor {
         return true
     }
 
-    lastSet: string;
+    private lastSet: string;
     private setValue(v: string) {
         this.lastSet = v;
         this.editor.setValue(v, -1)
@@ -98,26 +120,4 @@ export class Wrapper extends srceditor.Editor {
         this.editor.moveCursorToPosition(pos)
         this.editor.scrollToLine(pos.row - 1, true, false, () => { })
     }
-}
-
-export function mkAce(elt: string) {
-    let editor = ace.edit(elt)
-
-    let sess = editor.getSession()
-    sess.setNewLineMode("unix");
-    sess.setTabSize(4);
-    sess.setUseSoftTabs(true);
-    editor.$blockScrolling = Infinity;
-
-    let w = new Wrapper(editor)
-
-    sess.on("change", () => {
-        if (w.lastSet != null) {
-            w.lastSet = null
-        } else {
-            w.onChange();
-        }
-    })
-
-    return w
 }
