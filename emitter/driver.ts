@@ -10,6 +10,7 @@ namespace ts.mbit {
         fileSystem: StringMap<string>;
         sourceFiles?: string[];
         hexinfo: any;
+        noEmit?: boolean;
     }
 
     export interface CompileResult {

@@ -6,7 +6,7 @@ var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 
 
-task('default', ['built/main.js', 'built/themes', 'built/style.css', "built/semantic.js"])
+task('default', ['built/main.js', 'built/worker.js', 'built/themes', 'built/style.css', "built/semantic.js"])
 
 task('precopy', function () {
     jake.mkdirP("built")
@@ -29,6 +29,10 @@ task('lower', ["postcopy"], { async: true }, function () {
 
 file('built/main.js', ["lower"], { async: true }, function () {
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/src/app.js -o built/main.js')
+})
+
+file('built/worker.js', ["lower"], function () {
+    jake.cpR("built/src/worker.js", "built/")
 })
 
 file('built/themes', [], function () {

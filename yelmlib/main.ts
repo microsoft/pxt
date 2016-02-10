@@ -185,7 +185,7 @@ namespace yelm {
             return ids.map(id => this.resolveDep(id))
         }
 
-        buildAsync() {
+        getCompileOptionsAsync() {
             let opts: ts.mbit.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
@@ -212,9 +212,12 @@ namespace yelm {
                                     })
                             } else return Promise.resolve()
                         }))))
-                    .then(() => {
-                        return ts.mbit.compile(opts)
-                    }))
+                    .then(() => opts))
+        }
+
+        buildAsync() {
+            return this.getCompileOptionsAsync()
+                .then(opts => ts.mbit.compile(opts))
         }
 
         initAsync(name: string) {

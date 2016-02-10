@@ -246,6 +246,10 @@ export function getEditorPkg(p: yelm.Package) {
     return newOne
 }
 
+export function mainEditorPkg() { 
+    return getEditorPkg(mainPkg)
+}
+
 export function allEditorPkgs() {
     return getEditorPkg(mainPkg).pkgAndDeps()
 }

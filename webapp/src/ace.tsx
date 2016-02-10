@@ -14,6 +14,7 @@ require('brace/mode/javascript');
 require('brace/mode/json');
 require('brace/mode/c_cpp');
 require('brace/mode/text');
+require('brace/mode/xml');
 require('brace/mode/markdown');
 require('brace/mode/assembly_armthumb');
 
@@ -84,6 +85,7 @@ export class Editor extends srceditor.Editor {
             "md": "markdown",
             "ts": "typescript",
             "js": "javascript",
+            "blocks": "xml",
             "asm": "assembly_armthumb"
         }
         let mode = "text"
