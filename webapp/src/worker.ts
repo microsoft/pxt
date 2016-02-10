@@ -4,15 +4,12 @@ importScripts(
 )
 
 onmessage = ev => {
-    switch (ev.data.op) {
-        case "compile":
-            let res = ts.mbit.compile(ev.data.arg)
-            postMessage({
-                op: "compile",
-                id: ev.data.id,
-                result: res
-            }, null)
-    }
+    let res = ts.mbit.service.performOperation(ev.data.op, ev.data.arg)
+    postMessage({
+        op: ev.data.op,
+        id: ev.data.id,
+        result: res
+    }, null)
 }
 
 postMessage({

@@ -23,7 +23,7 @@ export function init() {
     }
 }
 
-function setDiagnostics(resp: ts.mbit.CompileResult) {
+function setDiagnostics(resp: ts.mbit.CompileResult, isFull = false) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -45,22 +45,17 @@ function setDiagnostics(resp: ts.mbit.CompileResult) {
         const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
         output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
-    
+
     if (!output)
-    output = Util.lf("Everything seems fine!\n")
-    
-    let outputFile = "output.txt"
+        output = Util.lf("Everything seems fine!\n")
 
-    resp.outfiles[outputFile] = output
 
-    mainPkg.outputPkg.setFiles(resp.outfiles)
+    if (isFull)
+        mainPkg.outputPkg.setFiles(resp.outfiles)
 
-    let f = mainPkg.lookupFile(mainPkg.outputPkg.id + "/" + outputFile)
-    if (f) {
-        // display total number of errors on the output file
-        f.numDiagnosticsOverride = resp.diagnostics.length
-        data.invalidate("open-meta:")
-    }
+    let f = mainPkg.outputPkg.setFile("output.txt", output)
+    // display total number of errors on the output file
+    f.numDiagnosticsOverride = resp.diagnostics.length    
 
     return resp;
 }
@@ -75,15 +70,15 @@ export function compileAsync() {
                 core.browserDownloadText(hex, fn, "application/x-microbit-hex")
             }
 
-            return setDiagnostics(resp)
+            return setDiagnostics(resp, true)
         })
 }
 
 function compileCoreAsync(opts: ts.mbit.CompileOptions): Promise<ts.mbit.CompileResult> {
-    return workerOpAsync("compile", opts)
+    return workerOpAsync("compile", { options: opts })
 }
 
-function workerOpAsync(op: string, arg: any) {
+function workerOpAsync(op: string, arg: ts.mbit.service.OpArg) {
     return initPromise
         .then(() => new Promise<any>((resolve, reject) => {
             let id = "" + msgId++

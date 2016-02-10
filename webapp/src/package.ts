@@ -109,6 +109,13 @@ export class EditorPackage {
         return this.yelmPkg && this.yelmPkg.level == 0;
     }
 
+    setFile(n: string, v: string) {
+        let f = new File(this, n, v)
+        this.files[n] = f
+        data.invalidate("open-meta:")
+        return f
+    }
+
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
         data.invalidate("open-meta:")
@@ -246,7 +253,7 @@ export function getEditorPkg(p: yelm.Package) {
     return newOne
 }
 
-export function mainEditorPkg() { 
+export function mainEditorPkg() {
     return getEditorPkg(mainPkg)
 }
 

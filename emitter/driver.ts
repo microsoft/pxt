@@ -3,6 +3,7 @@
 /// <reference path="cloud.ts"/>
 /// <reference path="thumb.ts"/>
 /// <reference path="emitter.ts"/>
+/// <reference path="service.ts"/>
 /// <reference path="typescriptInternal.d.ts"/>
 
 namespace ts.mbit {
@@ -18,14 +19,8 @@ namespace ts.mbit {
         diagnostics: Diagnostic[];
         success: boolean;
     }
-
-    export function compile(opts: CompileOptions) {
-        let res: CompileResult = {
-            outfiles: {},
-            diagnostics: [],
-            success: false
-        }
-
+    
+    export function getTsCompilerOptions(opts: CompileOptions) {
         let options = ts.getDefaultCompilerOptions()
 
         options.target = ScriptTarget.ES5;
@@ -33,8 +28,19 @@ namespace ts.mbit {
         options.noImplicitAny = true;
         options.noImplicitReturns = true;
         
+        return options
+    }
+
+    export function compile(opts: CompileOptions) {
+        let res: CompileResult = {
+            outfiles: {},
+            diagnostics: [],
+            success: false
+        }
+        
         let fileText = opts.fileSystem
         let setParentNodes = true
+        let options = getTsCompilerOptions(opts)
 
         let host: CompilerHost = {
             getSourceFile: (fn, v, err) => {
