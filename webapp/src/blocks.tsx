@@ -32,6 +32,7 @@ function toolboxToXml(toolbox: ToolboxCategory[]): string {
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
+    delayLoadXml: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -43,6 +44,14 @@ export class Editor extends srceditor.Editor {
             Blockly.fireUiEvent(window, 'resize'); 
        }
         else $(classes).hide();
+    }
+    
+    domUpdate() {
+        if(this.delayLoadXml) {
+            var xml = this.delayLoadXml;
+            this.delayLoadXml = undefined;
+            this.loadBlockly(xml);
+        }
     }
 
     saveBlockly(): string {
@@ -114,7 +123,7 @@ export class Editor extends srceditor.Editor {
 
     loadFile(file: pkg.File) {
         this.setDiagnostics(file)
-        this.loadBlockly(file.content);
+        this.delayLoadXml = file.content;
     }
 
     setDiagnostics(file: pkg.File) {
