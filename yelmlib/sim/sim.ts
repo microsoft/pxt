@@ -19,6 +19,12 @@ namespace rt {
             setTimeout(() => { cb() }, ms)
         }
 
+        export function scrollString(s: string) {
+            let cb = getResume();
+            console.log("SCROLL:", s)
+            setTimeout(() => { cb() }, 100)
+        }
+
         export function runInBackground(a: RefAction) {
             incr(a)
             setTimeout(() => {
@@ -493,6 +499,7 @@ namespace rt {
         setupTop(cb: ResumeFn): void;
         malloc(): number; // 2k block
         free(ptr: number): void;
+        errorHandler: (e: any) => void;
     }
 
     export var currRuntime: Runtime;
@@ -539,8 +546,15 @@ namespace rt {
         }
 
         function loop(p: CodePtr) {
-            while (!!p) {
-                p = p.fn(p.pc)
+            try {
+                while (!!p) {
+                    p = p.fn(p.pc)
+                }
+            } catch (e) {
+                if (currRuntime.errorHandler)
+                    currRuntime.errorHandler(e)
+                else
+                    console.error("Simulator crashed, no error handler", e.stack)
             }
         }
 
@@ -641,7 +655,8 @@ namespace rt {
             mem,
             setupTop,
             malloc,
-            free
+            free,
+            errorHandler: null
         })
     }
 }

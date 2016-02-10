@@ -325,6 +325,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         compiler.compileAsync()
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile)
+                let hex = resp.outfiles["microbit.hex"]
+                if (hex) {
+                    let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
+                    core.browserDownloadText(hex, fn, "application/x-microbit-hex")
+                }
             })
             .done()
     }
@@ -336,6 +341,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
                     let r = rt.mkRuntime(js)
+                    r.errorHandler = (e:any) => {
+                        core.errorNotification(e.message)
+                        console.error("Simulator error", e.stack)
+                    }
                     r.run(() => {
                         console.log("DONE")
                         rt.dumpLivePointers();

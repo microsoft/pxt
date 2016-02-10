@@ -1,5 +1,3 @@
-/// <reference path="../../mbitsim/sim.ts" />
-
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";
@@ -9,7 +7,7 @@ import * as srceditor from "./srceditor"
 let tsWorker: Worker;
 let pendingMsgs: Util.StringMap<(v: any) => void> = {}
 let msgId = 0;
-let q:workspace.PromiseQueue;
+let q: workspace.PromiseQueue;
 
 export function init() {
     q = new workspace.PromiseQueue();
@@ -17,7 +15,7 @@ export function init() {
         pendingMsgs["ready"] = resolve;
     })
     q.enqueue("main", () => initPromise)
-     
+
     tsWorker = new Worker("./worker.js")
     tsWorker.onmessage = ev => {
         if (pendingMsgs.hasOwnProperty(ev.data.id)) {
@@ -64,15 +62,8 @@ export function compileAsync() {
     return pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => compileCoreAsync(opts))
         .then(resp => {
-            let hex = resp.outfiles["microbit.hex"]
-            if (hex) {
-                let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
-                core.browserDownloadText(hex, fn, "application/x-microbit-hex")
-            }
-
-            pkg.mainEditorPkg().setFiles(resp.outfiles)
+            pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
-
             return resp
         })
 }
