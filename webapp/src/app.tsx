@@ -277,6 +277,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return
         pkg.loadPkgAsync(h.id)
             .then(() => {
+                compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
                 let file = main.getMainFile()
@@ -345,8 +346,40 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         compiler.compileAsync()
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile)
+                let hex = resp.outfiles["microbit.hex"]
+                if (hex) {
+                    let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
+                    core.browserDownloadText(hex, fn, "application/x-microbit-hex")
+                }
             })
             .done()
+    }
+
+    simRuntime: mbitview.MbitRuntime;
+
+    run() {
+        compiler.compileAsync()
+            .then(resp => {
+                this.editor.setDiagnostics(this.editorFile)
+                let js = resp.outfiles["microbit.js"]
+                if (js) {
+                    if (this.simRuntime)
+                        this.simRuntime.kill();
+                    let r = new mbitview.MbitRuntime(js)
+                    this.simRuntime = r
+                    r.errorHandler = (e: any) => {
+                        core.errorNotification(e.message)
+                        console.error("Simulator error", e.stack)
+                    }
+                    r.run(() => {
+                        console.log("DONE")
+                        rt.dumpLivePointers();
+                        core.infoNotification("Done, check console")
+                    })
+                }
+            })
+            .done()
+
     }
 
     editText() {
@@ -400,7 +433,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 <div id="menubar">
                     <div className={"ui menu" + inv}>
                         <div className="item">
-                            <sui.Button class='primary' text={lf("Compile") } onClick={() => this.compile() } />
+                            <sui.Button class='primary' icon='attach' text={lf("Compile") } onClick={() => this.compile() } />
+                            <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />

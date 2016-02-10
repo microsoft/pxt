@@ -19,7 +19,7 @@ task('default', ['runprj'])
 
 task('clean', function() {
   // jake.rmRf("built") - doesn't work?
-  expand("built", "libs/lang-test0/built").forEach(f => {
+  expand(["built", "libs/lang-test0/built"]).forEach(f => {
       try {
         fs.unlinkSync(f)
       } catch (e) {
@@ -28,12 +28,8 @@ task('clean', function() {
   })
 })
 
-task('runprj', ['built/mbitsim.js', 'libs/lang-test0/built/microbit.js'], {async:true, parallelLimit: 10}, function() {
-  cmdIn(this, ".", 'node ' + this.prereqs.join(" "))
-})
-
-file('libs/lang-test0/built/microbit.js', expand(['libs/mbit', 'libs/lang-test0', 'built/yelm.js']), {async:true}, function() {
-  cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js build')
+task('runprj', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
+  cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
 })
 
 ju.catFiles('built/yelm.js', [
@@ -45,9 +41,8 @@ ju.catFiles('built/yelm.js', [
 
 file('built/nodeutil.js', ['built/cli.js'])
 
-compileDir("yelmlib", ["emitter"])
+compileDir("yelmlib")
 compileDir("cli", ["built/yelmlib.js"])
-compileDir("mbitsim")
 
 task('publish', function() {
    let pkg = JSON.parse(fs.readFileSync("package.json", "utf8"))

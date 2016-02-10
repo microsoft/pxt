@@ -1,5 +1,4 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
-/// <reference path="../emitter/driver.ts"/>
 
 namespace yelm {
     export interface Host {

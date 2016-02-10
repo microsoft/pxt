@@ -93,6 +93,12 @@ export interface IMbitBoardProps {
     theme?: IMbitTheme;
 }
 
+export class MbitRuntime extends rt.Runtime {
+    constructor(code:string) {
+        super(code)
+    }
+}
+
 export class MbitBoardView extends React.Component<IMbitBoardProps, IMbitBoard> {
     constructor(props: IMbitBoardProps) {
         super(props);

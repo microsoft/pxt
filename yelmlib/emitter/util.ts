@@ -1,4 +1,4 @@
-/// <reference path="../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../../typings/bluebird/bluebird.d.ts"/>
 
 namespace Util {
     export interface StringMap<T> {
