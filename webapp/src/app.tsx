@@ -303,11 +303,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             name: lf("{0} block", Util.getAwesomeAdj()),
             dependencies: { mbit: "*" },
             description: "",
-            files: ["main.blocks"]
+            files: ["main.blocks", "main.blocks.ts"]
         }
         let files: workspace.ScriptText = {
             "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
-            "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`
+            "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
+            "main.blocks.ts": ""
         }
         workspace.installAsync({
             name: cfg.name,
@@ -322,7 +323,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .done()
     }
 
+    saveTypeScript() {
+        if (!this.editor) return
+        let ts = this.editor.saveToTypeScript()
+        if (ts != null) {
+            pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
+        }
+    }
+
     compile() {
+        this.saveTypeScript()
         compiler.compileAsync()
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile)
@@ -446,7 +456,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 </div>
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
-                        <simview.MbitBoardView ref="simulator" theme={simsvg.randomTheme()} />
+                        <simview.MbitBoardView ref="simulator" theme={simsvg.randomTheme() } />
                     </div>
                     <div className={"ui vertical menu filemenu " + inv}>
                         {files}

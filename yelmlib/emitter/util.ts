@@ -6,11 +6,13 @@ namespace Util {
     }
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
+            debugger
             throw new Error(msg)
         }
     }
 
     export function oops(msg = "OOPS"): Error {
+        debugger
         throw new Error(msg)
     }
 

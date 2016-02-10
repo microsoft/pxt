@@ -62,4 +62,7 @@ export class Editor {
         this.isReady = true;
     }
     domUpdate() {}
+    saveToTypeScript(): string {
+        return null
+    }
 }

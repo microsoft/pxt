@@ -50,7 +50,7 @@ module Helpers {
     // A map from "classic" [JPropertyRef]s to their proper [parent].
     var knownPropertyRefs: { [index: string]: string } = {
         "post to wall": "String",
-        ":=": "Unknown",
+        "=": "Unknown",
     };
     ["=", "≠", "<", "≤", ">", "≥", "+", "-", "/", "*"].forEach(x => knownPropertyRefs[x] = "Number");
     ["and", "or", "not"].forEach(x => knownPropertyRefs[x] = "Boolean");
@@ -289,7 +289,7 @@ module Helpers {
     }
 
     export function mkAssign(x: J.JExpr, e: J.JExpr): J.JStmt {
-        var assign = mkSimpleCall(":=", [x, e]);
+        var assign = mkSimpleCall("=", [x, e]);
         var expr = mkExprHolder([], assign);
         return mkExprStmt(expr);
     }
@@ -298,7 +298,7 @@ module Helpers {
     //   [var x: t := e]
     export function mkDefAndAssign(x: string, t: J.JTypeRef, e: J.JExpr): J.JStmt {
         var def: J.JLocalDef = mkDef(x, t);
-        var assign = mkSimpleCall(":=", [mkLocalRef(x), e]);
+        var assign = mkSimpleCall("=", [mkLocalRef(x), e]);
         var expr = mkExprHolder([def], assign);
         return mkExprStmt(expr);
     }
@@ -484,7 +484,7 @@ function toTdType(t: Type): J.JTypeRef {
 }
 
 // This is for debugging only.
-function typeToString(t: Type) : string {
+function typeToString(t: Type): string {
     switch (t) {
         case Type.Number:
             return "Number";
@@ -1094,8 +1094,8 @@ function compileControlsFor(e: Environment, b: B.Block): J.JStmt[] {
                 compileStatements(e, bDo).concat([
                     H.mkExprStmt(
                         H.mkExprHolder([],
-                            // VAR :=
-                            H.mkSimpleCall(":=", [eVar,
+                            // VAR =
+                            H.mkSimpleCall("=", [eVar,
                                 // VAR + BY
                                 H.mkSimpleCall("+", [eVar, eBy])])))])),
         ];
@@ -1138,7 +1138,7 @@ function compileSet(e: Environment, b: B.Block): J.JStmt {
     var binding = lookup(e, bVar);
     var expr = compileExpression(e, bExpr);
     var ref = H.mkLocalRef(bVar);
-    return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall(":=", [ref, expr])));
+    return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, expr])));
 }
 
 function compileChange(e: Environment, b: B.Block): J.JStmt {
@@ -1147,7 +1147,7 @@ function compileChange(e: Environment, b: B.Block): J.JStmt {
     var binding = lookup(e, bVar);
     var expr = compileExpression(e, bExpr);
     var ref = H.mkLocalRef(bVar);
-    return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall(":=", [ref, H.mkSimpleCall("+", [ref, expr])])));
+    return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, H.mkSimpleCall("+", [ref, expr])])));
 }
 
 function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
@@ -1875,9 +1875,269 @@ function compileWorkspace(w: B.Workspace, options: CompileOptions): J.JApp {
     return H.mkApp(options.name, options.description, decls);
 }
 
-export function compile(b: B.Workspace, options: CompileOptions): J.JApp {
+export function compile(b: B.Workspace, options: CompileOptions): string {
     Errors.clear();
-    return compileWorkspace(b, options);
+    return tdASTtoTS(compileWorkspace(b, options));
 }
 
-// vim: set ts=2 sw=2 sts=2:
+function tdASTtoTS(app: J.JApp) {
+    let output = ""
+    let indent = ""
+    let currInlineAction: J.JInlineAction = null
+
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
+    let infixPriTable: Util.StringMap<number> = {
+        "=": 3,
+        "||": 5,
+        "&&": 6,
+        "|": 7,
+        "^": 8,
+        "&": 9,
+        "==": 10,
+        "!=": 10,
+        "===": 10,
+        "!==": 10,
+        "<": 11,
+        ">": 11,
+        "<=": 11,
+        ">=": 11,
+        ">>": 12,
+        ">>>": 12,
+        "<<": 12,
+        "+": 13,
+        "-": 13,
+        "*": 14,
+        "/": 14,
+        "%": 14,
+    }
+
+
+    function flatten(e0: J.JExpr) {
+        var r: J.JToken[] = []
+
+        function pushOp(c: string) {
+            r.push(<J.JOperator>{
+                nodeType: "operator",
+                id: "",
+                op: c
+            })
+        }
+
+        function call(e: J.JCall, outPrio: number) {
+            var infixPri = 0
+            if (infixPriTable.hasOwnProperty(e.name))
+                infixPri = infixPriTable[e.name]
+
+            if (infixPri) {
+                // This seems wrong
+                if (e.name == "-" &&
+                    (e.args[0].nodeType == "numberLiteral") &&
+                    ((<J.JNumberLiteral>e.args[0]).value === 0.0) &&
+                    (!(<J.JNumberLiteral>e.args[0]).stringForm)) {
+                    pushOp(e.name)
+                    rec(e.args[1], 98)
+                    return
+                }
+
+                if (infixPri < outPrio) pushOp("(");
+                if (e.args.length == 1) {
+                    pushOp(e.name)
+                    rec(e.args[0], infixPri)
+                } else {
+                    var bindLeft = infixPri != 3 && e.name != "**"
+                    rec(e.args[0], bindLeft ? infixPri : infixPri + 0.1)
+                    pushOp(e.name)
+                    rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)
+                }
+                if (infixPri < outPrio) pushOp(")");
+            } else {
+                rec(e.args[0], 1000)
+                r.push(<J.JPropertyRef><any>{
+                    nodeType: "propertyRef",
+                    name: e.name,
+                    parent: e.parent,
+                    declId: e.declId,
+                })
+                pushOp("(")
+                e.args.slice(1).forEach((ee, i) => {
+                    if (i > 0) pushOp(",")
+                    rec(ee, -1)
+                })
+                pushOp(")")
+            }
+        }
+
+        function rec(e: J.JExpr, prio: number) {
+            switch (e.nodeType) {
+                case "call":
+                    call(<J.JCall>e, prio)
+                    break;
+                case "numberLiteral":
+                    pushOp((<J.JNumberLiteral>e).value.toString())
+                    break;
+                case "stringLiteral":
+                case "booleanLiteral":
+                case "localRef":
+                case "placeholder":
+                case "singletonRef":
+                    r.push(e);
+                    break;
+                case "show":
+                case "break":
+                case "return":
+                case "continue":
+                    pushOp(e.nodeType)
+                    var ee = (<J.JReturn>e).expr
+                    if (ee)
+                        rec(ee, prio)
+                    break
+                default:
+                    Util.oops("invalid nodeType when flattning: " + e.nodeType)
+            }
+        }
+
+        rec(e0, -1)
+
+        return r
+    }
+
+
+    let byNodeType: Util.StringMap<(n: J.JNode) => void> = {
+        app: (n: J.JApp) => {
+            Util.assert(n.decls.length == 1)
+            Util.assert(n.decls[0].nodeType == "action");
+            (n.decls[0] as J.JAction).body.forEach(emit)
+        },
+
+        exprStmt: (n: J.JExprStmt) => {
+            emit(n.expr)
+            write(";\n")
+        },
+
+        inlineAction: (n: J.JInlineAction) => {
+            Util.assert(n.inParameters.length == 0)
+            write("() => ")
+            emitBlock(n.body)
+        },
+
+        inlineActions: (n: J.JInlineActions) => {
+            Util.assert(n.actions.length == 1)
+            currInlineAction = n.actions[0]
+            emit(n.expr)
+            if (currInlineAction.isImplicit) {
+                output = output.replace(/\)\s*$/, "")
+                write(", ")
+                emit(currInlineAction)
+                output = output.replace(/\s*$/, "")
+                write(")")
+            }
+            write(";\n")
+            byNodeType["exprStmt"](n)
+        },
+
+        exprHolder: (n: J.JExprHolder) => {
+            let toks = flatten(n.tree)
+            console.log(toks)
+            toks.forEach(emit)
+        },
+
+        localRef: (n: J.JLocalRef) => {
+            if (n.name == "_body_")
+                emit(currInlineAction)
+            else
+                localRef(n.name)
+        },
+
+        operator: (n: J.JOperator) => {
+            if (/^[\d()]/.test(n.op))
+                write(n.op)
+            else if (n.op == ",")
+                write(n.op + " ")
+            else
+                write(" " + n.op + " ")
+        },
+
+        singletonRef: (n: J.JSingletonRef) => {
+            write(jsName(n.name))
+        },
+
+        propertyRef: (n: J.JPropertyRef) => {
+            write("." + jsName(n.name))
+        },
+
+        stringLiteral: (n: J.JStringLiteral) => {
+            write(JSON.stringify(n.value))
+        },
+
+        "if": (n: J.JIf) => {
+            write("if (")
+            emit(n.condition)
+            write(") ")
+            emitBlock(n.thenBody)
+            if (n.elseBody) {
+                write("else ")
+                emitBlock(n.elseBody)
+            }
+        },
+
+        "for": (n: J.JFor) => {
+            write("for (let ")
+            localRef(n.index.name)
+            write(" = 0; ")
+            localRef(n.index.name)
+            write(" < ")
+            emit(n.bound)
+            write("; ")
+            localRef(n.index.name)
+            write("++) ")
+            emitBlock(n.body)
+        },
+
+        "while": (n: J.JWhile) => {
+            write("while (")
+            emit(n.condition)
+            write(") ")
+            emitBlock(n.body)
+        },
+
+
+    }
+
+    emit(app)
+
+    output = output.replace(/^\s*\n/mg, "").replace(/\s+;$/mg, ";")
+
+    return output;
+
+    function localRef(n: string) {
+        write(jsName(n))
+    }
+
+    function emitBlock(s: J.JStmt[]) {
+        block(() => {
+            s.forEach(emit)
+        })
+    }
+
+    function jsName(s: string) {
+        return s.replace(/ (.)/g, (f: string, m: string) => m.toUpperCase())
+    }
+
+    function emit(n: J.JNode) {
+        let f = byNodeType[n.nodeType]
+        if (!f) Util.oops("unsupported node type " + n.nodeType)
+        f(n)
+    }
+
+    function write(s: string) {
+        output += s.replace(/\n/g, "\n" + indent)
+    }
+
+    function block(f: () => void) {
+        indent += "    "
+        write("{\n")
+        f()
+        indent = indent.slice(4)
+        write("\n}\n")
+    }
+}

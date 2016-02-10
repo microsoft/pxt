@@ -33,6 +33,8 @@ jake
 * [ ] use "(x + y) | 0" etc instead of "x + y" in simulator
 * [ ] have buffered output mode in simulator
 * [ ] have output-independent simulator for running tests
+* [ ] do not generate empty action bodies for shim
+* [ ] check on compiler performance (1000ms on lang-test0)
 
 ## TODO for converter from TD
 

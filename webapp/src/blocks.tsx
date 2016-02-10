@@ -18,7 +18,7 @@ interface ToolboxBlock {
 interface ToolboxCategory {
     name: string;
     colour: number;
-    gap?:number;
+    gap?: number;
     blocks: ToolboxBlock[];
 }
 
@@ -43,20 +43,21 @@ export class Editor extends srceditor.Editor {
         if (this.isVisible) {
             $(classes).show();
             // Fire a resize event since the toolbox may have changed width and height.
-            Blockly.fireUiEvent(window, 'resize'); 
-       }
+            Blockly.fireUiEvent(window, 'resize');
+        }
         else $(classes).hide();
     }
-    
-    saveToTouchDevelop() : TDev.AST.Json.JApp {
+
+    saveToTypeScript(): string {
+        let cfg = pkg.mainPkg.config        
         return blocklycompiler.compile(this.editor, {
-            name: "main",
-            description: ""
+            name: cfg.name,
+            description: cfg.description
         })
     }
-    
+
     domUpdate() {
-        if(this.delayLoadXml) {
+        if (this.delayLoadXml) {
             var xml = this.delayLoadXml;
             this.delayLoadXml = undefined;
             this.loadBlockly(xml);
@@ -68,16 +69,16 @@ export class Editor extends srceditor.Editor {
         var text = Blockly.Xml.domToPrettyText(xml);
         return text;
     }
-   
+
     loadBlockly(s: string) {
         var text = s || "<xml></xml>";
         var xml = Blockly.Xml.textToDom(text);
         this.editor.clear();
         try {
             Blockly.Xml.domToWorkspace(this.editor, xml);
-            
-           // var js = Blockly.JavaScript.workspaceToCode(this.editor);
-           // console.log(js);
+
+            // var js = Blockly.JavaScript.workspaceToCode(this.editor);
+            // console.log(js);
         } catch (e) {
             console.log(e);
         }
