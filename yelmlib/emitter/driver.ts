@@ -1,10 +1,10 @@
-/// <reference path="../node_modules/typescript/lib/typescriptServices.d.ts"/>
+/// <reference path="../../node_modules/typescript/lib/typescriptServices.d.ts"/>
+
+// Enforce order:
 /// <reference path="util.ts"/>
 /// <reference path="cloud.ts"/>
 /// <reference path="thumb.ts"/>
 /// <reference path="emitter.ts"/>
-/// <reference path="service.ts"/>
-/// <reference path="typescriptInternal.d.ts"/>
 
 namespace ts.mbit {
     export interface CompileOptions {

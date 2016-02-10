@@ -35,16 +35,14 @@ task('runprj', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
 ju.catFiles('built/yelm.js', [
     "node_modules/typescript/lib/typescript.js", 
     "built/yelmlib.js",
-    "built/mbitsim.js",
     "built/nodeutil.js",
     "built/cli.js"
     ])
 
 file('built/nodeutil.js', ['built/cli.js'])
 
-compileDir("yelmlib", ["emitter"])
-compileDir("cli", ["built/yelmlib.js", "built/mbitsim.js"])
-compileDir("mbitsim", ["built/yelmlib.js"])
+compileDir("yelmlib")
+compileDir("cli", ["built/yelmlib.js"])
 
 task('publish', function() {
    let pkg = JSON.parse(fs.readFileSync("package.json", "utf8"))

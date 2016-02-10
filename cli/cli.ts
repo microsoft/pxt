@@ -1,7 +1,5 @@
-/// <reference path="../node_modules/typescript/lib/typescriptServices.d.ts"/>
 /// <reference path="../typings/node/node.d.ts"/>
 /// <reference path="../built/yelmlib.d.ts"/>
-/// <reference path="../built/mbitsim.d.ts"/>
 
 
 import * as fs from 'fs';

@@ -1,5 +1,3 @@
-/// <reference path="../built/yelmlib.d.ts"/>
-
 "use strict";
 
 namespace rt {
