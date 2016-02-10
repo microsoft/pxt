@@ -446,7 +446,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 </div>
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
-                        <simview.MbitBoardView ref="simulator" theme={simsvg.themes["blue"]} />
+                        <simview.MbitBoardView ref="simulator" theme={simsvg.randomTheme()} />
                     </div>
                     <div className={"ui vertical menu filemenu " + inv}>
                         {files}

@@ -71,9 +71,9 @@ export function createBoard(id?: string): IMbitBoard {
 "#3AFFB3",
 "#FF3A54"
 */
-export var themes: Util.StringMap<IMbitTheme> = {
-    "blue": {
-        accent: "#3ADCFE",
+export var themes: IMbitTheme[] = ["#3ADCFE", "#FFD43A", "#3AFFB3", "#FF3A54"].map(accent => {
+    return {
+        accent: accent,
         display: "#000",
         pin: "#D4AF37",
         pinTouched: "#FFA500",
@@ -82,7 +82,10 @@ export var themes: Util.StringMap<IMbitTheme> = {
         buttonOuter: "#979797",
         buttonUp: "#000",
         buttonDown: "#FFA500",
-    },
+}});
+
+export function randomTheme() : IMbitTheme {
+    return themes[Math.floor(Math.random() * themes.length)];
 }
 
 export interface IMbitBoardProps {
@@ -124,6 +127,7 @@ export class MbitBoardSvg
     public element : SVGSVGElement;
     private g: SVGElement;
     
+    private logos: SVGElement[];
     private display: SVGElement;
     private buttons: SVGElement[];
     private buttonsOuter: SVGElement[];
@@ -147,6 +151,7 @@ export class MbitBoardSvg
         Svg.fills(this.pins, theme.pin);
         Svg.fills(this.buttonsOuter, theme.buttonOuter);
         Svg.fills(this.buttons, theme.buttonUp);
+        Svg.fills(this.logos, theme.accent);
     }
     
     private updateState() {
@@ -197,6 +202,16 @@ export class MbitBoardSvg
 
         // script background
         this.display = Svg.path(this.g, "sim-display", "M333.8,310.3H165.9c-8.3,0-15-6.7-15-15V127.5c0-8.3,6.7-15,15-15h167.8c8.3,0,15,6.7,15,15v167.8C348.8,303.6,342.1,310.3,333.8,310.3z");
+
+        this.logos = [];
+        this.logos.push(Svg.child(this.g, "polygon", {class:"sim-theme", points:"115,56.7 173.1,0 115,0"}));      
+        this.logos.push(Svg.path(this.g, "sim-theme", "M114.2,0H25.9C12.1,2.1,0,13.3,0,27.7v83.9L114.2,0z"));
+        this.logos.push(Svg.child(this.g, "polygon", {class:"sim-theme", points:"173,27.9 202.5,0 173,0"}));      
+        this.logos.push(Svg.child(this.g, "polygon", {class:"sim-theme", points:"54.1,242.4 54.1,274.1 22.4,274.1"}));      
+        this.logos.push(Svg.child(this.g, "polygon", {class:"sim-theme", points:"446.2,164.6 446.2,132.8 477.9,132.8"}));      
+        this.logos.push(Svg.path(this.g, "sim-theme","M230.6,69.7c-2.9,0-5.3,2.4-5.3,5.3c0,2.9,2.4,5.3,5.3,5.3c2.9,0,5.3-2.4,5.3-5.3C235.9,72.1,233.5,69.7,230.6,69.7"));
+        this.logos.push(Svg.path(this.g, "sim-theme","M269.9,50.2L269.9,50.2l-39.5,0v0c-14.1,0.1-24.6,10.7-24.6,24.8c0,13.9,10.4,24.4,24.3,24.7v0h39.6c14.2,0,24.8-10.6,24.8-24.7C294.5,61,284,50.3,269.9,50.2 M269.7,89.2L269.7,89.2l-39.3,0c-7.7-0.1-14-6.4-14-14.2c0-7.8,6.4-14.2,14.2-14.2h39.1c7.8,0,14.2,6.4,14.2,14.2C283.9,82.9,277.5,89.2,269.7,89.2"));
+        this.logos.push(Svg.path(this.g, "sim-theme","M269.7,80.3c2.9,0,5.3-2.4,5.3-5.3c0-2.9-2.4-5.3-5.3-5.3c-2.9,0-5.3,2.4-5.3,5.3C264.4,77.9,266.8,80.3,269.7,80.3"));
         
         // P0, P1, P2
         this.pins = [
@@ -233,17 +248,7 @@ export class MbitBoardSvg
         Svg.path(this.g, "sim-label", "M444.4,378.3h7.4v2.5h-1.5c-0.6,3.3-3,5.5-7.1,5.5c-4.8,0-7.5-3.5-7.5-7.5c0-3.9,2.8-7.5,7.5-7.5c3.8,0,6.4,2.3,6.6,5h-3.5c-0.2-1.1-1.4-2.2-3.1-2.2c-2.7,0-4.1,2.3-4.1,4.7c0,2.5,1.4,4.7,4.4,4.7c2,0,3.2-1.2,3.4-2.7h-2.5V378.3z")
         Svg.path(this.g, "sim-label", "M461.4,380.9v-9.3h3.3v14.3h-3.5l-5.2-9.2v9.2h-3.3v-14.3h3.5L461.4,380.9z")
         Svg.path(this.g, "sim-label", "M472.7,371.6c4.8,0,7.5,3.5,7.5,7.2s-2.7,7.2-7.5,7.2h-5.3v-14.3H472.7z M470.8,374.4v8.6h1.8c2.7,0,4.2-2.1,4.2-4.3s-1.6-4.3-4.2-4.3H470.8z")
-        
-/*
-            <polygon className="sim-theme" fill={theme.accent} points="115,56.7 173.1,0 115,0"/>
-                    <path className="sim-theme" fill={theme.accent} d="M114.2,0H25.9C12.1,2.1,0,13.3,0,27.7v83.9L114.2,0z"/>
-                    <polygon className="sim-theme" fill={theme.accent} points="173,27.9 202.5,0 173,0 		"/>
-                    <polygon className="sim-theme" fill={theme.accent} points="54.1,242.4 54.1,274.1 22.4,274.1 	"/>
-                    <polygon className="sim-theme" fill={theme.accent} points="446.2,164.6 446.2,132.8 477.9,132.8 	"/>
-                    <path className="sim-theme" fill={theme.accent} d="M230.6,69.7c-2.9,0-5.3,2.4-5.3,5.3c0,2.9,2.4,5.3,5.3,5.3c2.9,0,5.3-2.4,5.3-5.3C235.9,72.1,233.5,69.7,230.6,69.7"/>
-                    <path className="sim-theme" fill={theme.accent} d="M269.9,50.2L269.9,50.2l-39.5,0v0c-14.1,0.1-24.6,10.7-24.6,24.8c0,13.9,10.4,24.4,24.3,24.7v0h39.6c14.2,0,24.8-10.6,24.8-24.7C294.5,61,284,50.3,269.9,50.2 M269.7,89.2L269.7,89.2l-39.3,0c-7.7-0.1-14-6.4-14-14.2c0-7.8,6.4-14.2,14.2-14.2h39.1c7.8,0,14.2,6.4,14.2,14.2C283.9,82.9,277.5,89.2,269.7,89.2"/>
-                    <path className="sim-theme" fill={theme.accent} d="M269.7,80.3c2.9,0,5.3-2.4,5.3-5.3c0-2.9-2.4-5.3-5.3-5.3c-2.9,0-5.3,2.4-5.3,5.3C264.4,77.9,266.8,80.3,269.7,80.3"/>
-*/                                
+  
         this.leds = [];
         this.ledsOuter = [];
         var brightness = this.state.brigthness / 255;
