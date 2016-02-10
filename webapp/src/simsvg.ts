@@ -232,10 +232,13 @@ export class MbitBoardSvg
         this.pins.push(Svg.path(this.g, "sim-ping", "M458,317.6c-13,0-23.6,10.6-23.6,23.6c0,0,0,0.1,0,0.1h0V406H469c4.3,0,8.4-1,12.6-2.7v-60.7c0-0.4,0-0.9,0-1.3C481.6,328.1,471,317.6,458,317.6z M457.8,360.9c-10.7,0-19.3-8.6-19.3-19.3c0-10.7,8.6-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3C477.1,352.2,468.4,360.9,457.8,360.9z"));
 
         this.buttonsOuter = []; this.buttons = [];
-        this.buttonsOuter.push(Svg.path(this.g, "sim-button-outer", "M474.3,232.6h-56.2c-0.5,0-1-0.4-1-1v-56.2c0-0.5,0.4-1,1-1h56.2c0.5,0,1,0.4,1,1v56.2C475.3,232.2,474.8,232.6,474.3,232.6"));
-        this.buttons.push(Svg.path(this.g, "sim-button", "M461.9,203.5c0,8.7-7,15.7-15.7,15.7c-8.7,0-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7C454.9,187.8,461.9,194.9,461.9,203.5"));
         this.buttonsOuter.push(Svg.path(this.g, "sim-button-outer", "M82.1,232.6H25.9c-0.5,0-1-0.4-1-1v-56.2c0-0.5,0.4-1,1-1h56.2c0.5,0,1,0.4,1,1v56.2C83,232.2,82.6,232.6,82.1,232.6"));
         this.buttons.push(Svg.path(this.g, "sim-button", "M69.7,203.5c0,8.7-7,15.7-15.7,15.7s-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7S69.7,194.9,69.7,203.5"));
+        this.buttonsOuter.push(Svg.path(this.g, "sim-button-outer", "M474.3,232.6h-56.2c-0.5,0-1-0.4-1-1v-56.2c0-0.5,0.4-1,1-1h56.2c0.5,0,1,0.4,1,1v56.2C475.3,232.2,474.8,232.6,474.3,232.6"));
+        this.buttons.push(Svg.path(this.g, "sim-button", "M461.9,203.5c0,8.7-7,15.7-15.7,15.7c-8.7,0-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7C454.9,187.8,461.9,194.9,461.9,203.5"));        
+        this.buttonsOuter.push(Svg.child(this.g, "rect", {class:"sim-button-outer", x:417, y:250, width:58, height:58}));
+        this.buttons.push(Svg.child(this.g, "circle", {class:"sim-button", cx:446, cy:278, r:16}));
+        
                 
         Svg.path(this.g, "sim-label", "M35.7,376.4c0-2.8,2.1-5.1,5.5-5.1c3.3,0,5.5,2.4,5.5,5.1v4.7c0,2.8-2.2,5.1-5.5,5.1c-3.3,0-5.5-2.4-5.5-5.1V376.4zM43.3,376.4c0-1.3-0.8-2.3-2.2-2.3c-1.3,0-2.1,1.1-2.1,2.3v4.7c0,1.2,0.8,2.3,2.1,2.3c1.3,0,2.2-1.1,2.2-2.3V376.4z");
         Svg.path(this.g, "sim-label", "M136.2,374.1c2.8,0,3.4-0.8,3.4-2.5h2.9v14.3h-3.4v-9.5h-3V374.1z");
@@ -275,7 +278,7 @@ export class MbitBoardSvg
             }
         }, false);
         
-        this.buttonsOuter.forEach((btn, index) => {
+        this.buttonsOuter.slice(0,1).forEach((btn, index) => {
             btn.addEventListener("mousedown", ev => {
                 this.state.buttonsPressed[index] = true;
                 Svg.fill(this.buttons[index], this.props.theme.buttonDown);                
@@ -284,6 +287,22 @@ export class MbitBoardSvg
                 this.state.buttonsPressed[index] = false;
                 Svg.fill(this.buttons[index], this.props.theme.buttonUp);                
             })
+        })
+        this.buttonsOuter[2].addEventListener("mousedown", ev => {
+                this.state.buttonsPressed[0] = true;
+                this.state.buttonsPressed[1] = true;
+                this.state.buttonsPressed[1] = true;
+                Svg.fill(this.buttons[0], this.props.theme.buttonDown);                
+                Svg.fill(this.buttons[1], this.props.theme.buttonDown);                
+                Svg.fill(this.buttons[2], this.props.theme.buttonDown);                
+            })
+        this.buttonsOuter[2].addEventListener("mouseup", ev => {
+                this.state.buttonsPressed[0] = false;
+                this.state.buttonsPressed[1] = false;
+                this.state.buttonsPressed[1] = false;
+                Svg.fill(this.buttons[0], this.props.theme.buttonUp);                
+                Svg.fill(this.buttons[1], this.props.theme.buttonUp);                
+                Svg.fill(this.buttons[2], this.props.theme.buttonUp);                
         })
         
     }

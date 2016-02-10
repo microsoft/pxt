@@ -30,11 +30,6 @@ export class MbitBoardView extends React.Component<simsvg.IMbitBoardProps, simsv
             <div>
                 <div ref="simsvg"></div>            
                 <div>
-                    <button className="mini compact ui button"
-                        onMouseDown={ev => this.setState({ buttonsPressed : [true,true,true] }) }
-                        onMouseUp={ev => this.setState({ buttonsPressed: [false, false] }) }>
-                        <i className="circle icon"></i>A+B
-                    </button>            
                     <button className="mini compact ui button">SHAKE</button>
                     <button className="mini compact ui button">LOGO UP</button>
                     <button className="mini compact ui button">LOGO DOWN</button>
