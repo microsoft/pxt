@@ -1,8 +1,6 @@
-/// <reference path="../typings/node/node.d.ts"/>
+/// <reference path="../built/yelmlib.d.ts"/>
 
 "use strict";
-
-let fs = require("fs");
 
 namespace rt {
     let quiet = false;
@@ -46,7 +44,7 @@ namespace rt {
     var refObjId = 1;
     var liveRefObjs: any = {};
 
-    class RefObject {
+    export class RefObject {
         id: number = refObjId++;
         refcnt: number = 1;
 
@@ -65,7 +63,7 @@ namespace rt {
         constructor(public func: LabelFn, public a0: any, public a1: any, public a2: any, public a3: any, public cb: ResumeFn = null) { }
     }
 
-    class RefRecord extends RefObject {
+    export class RefRecord extends RefObject {
         len: number;
         reflen: number;
         fields: any[] = [];
@@ -81,7 +79,7 @@ namespace rt {
         }
     }
 
-    class RefAction extends RefRecord {
+    export class RefAction extends RefRecord {
         func: LabelFn;
 
         ldclo(n: number) {
@@ -132,7 +130,7 @@ namespace rt {
         }
     }
 
-    class RefLocal extends RefObject {
+    export class RefLocal extends RefObject {
         v = 0;
 
         print() {
@@ -140,7 +138,7 @@ namespace rt {
         }
     }
 
-    class RefRefLocal extends RefObject {
+    export class RefRefLocal extends RefObject {
         v: any = null;
 
         destroy() {
@@ -291,7 +289,7 @@ namespace rt {
 
     // A ref-counted collection of either primitive or ref-counted objects (String, Image,
     // user-defined record, another collection)
-    class RefCollection extends RefObject {
+    export class RefCollection extends RefObject {
         data: any[] = [];
 
         // 1 - collection of refs (need decr)
@@ -649,15 +647,3 @@ namespace rt {
         })
     }
 }
-
-
-function main() {
-    let f = fs.readFileSync(process.argv[2], "utf8")
-    let r = rt.mkRuntime(f)
-    r.run(() => {
-        console.log("DONE")
-        rt.dumpLivePointers();
-    })
-}
-
-main();

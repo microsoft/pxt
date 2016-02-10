@@ -1,3 +1,5 @@
+/// <reference path="../../mbitsim/sim.ts" />
+
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";

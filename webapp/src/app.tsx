@@ -329,6 +329,24 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .done()
     }
 
+    run() {
+        compiler.compileAsync()
+            .then(resp => {
+                this.editor.setDiagnostics(this.editorFile)
+                let js = resp.outfiles["microbit.js"]
+                if (js) {
+                    let r = rt.mkRuntime(js)
+                    r.run(() => {
+                        console.log("DONE")
+                        rt.dumpLivePointers();
+                        core.infoNotification("Done, check console")
+                    })
+                }
+            })
+            .done()
+
+    }
+
     editText() {
         if (this.editor != this.aceEditor)
             this.updateEditorFile(this.aceEditor)
@@ -380,7 +398,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 <div id="menubar">
                     <div className={"ui menu" + inv}>
                         <div className="item">
-                            <sui.Button class='primary' text={lf("Compile") } onClick={() => this.compile() } />
+                            <sui.Button class='primary' icon='attach' text={lf("Compile") } onClick={() => this.compile() } />
+                            <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />

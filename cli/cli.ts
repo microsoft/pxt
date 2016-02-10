@@ -1,6 +1,7 @@
 /// <reference path="../node_modules/typescript/lib/typescriptServices.d.ts"/>
 /// <reference path="../typings/node/node.d.ts"/>
 /// <reference path="../built/yelmlib.d.ts"/>
+/// <reference path="../built/mbitsim.d.ts"/>
 
 
 import * as fs from 'fs';
@@ -227,8 +228,12 @@ function cmdDeploy() {
     cmdBuild(true)
 }
 
+function cmdRun() {
+    cmdBuild(false, true)
+}
 
-function cmdBuild(deploy = false) {
+
+function cmdBuild(deploy = false, run = false) {
     ensurePkgDir();
     mainPkg.buildAsync()
         .then(res => Util.mapStringMapAsync(res.outfiles, (fn, c) =>
@@ -250,6 +255,18 @@ function cmdBuild(deploy = false) {
                             console.log("wrote hex file to " + d)
                         }))
             })
+            .then(() => {
+                if (run) {
+                    let f = res.outfiles["microbit.js"]
+                    if (f) {
+                        let r = rt.mkRuntime(f)
+                        r.run(() => {
+                            console.log("DONE")
+                            rt.dumpLivePointers();
+                        })
+                    }
+                }
+            })
         )
         .done()
 }
@@ -269,6 +286,7 @@ let cmds: Command[] = [
     { n: "publish", f: cmdPublish, a: "", d: "publish current package" },
     { n: "build", f: cmdBuild, a: "", d: "build current package" },
     { n: "deploy", f: cmdDeploy, a: "", d: "build and deploy current package" },
+    { n: "run", f: cmdRun, a: "", d: "build and run current package in the simulator" },
     { n: "help", f: usage, a: "", d: "display this message" },
 
     { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call", o: 1 },
