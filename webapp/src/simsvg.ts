@@ -157,7 +157,7 @@ export class MbitBoardSvg
     private updateState() {
         let theme = this.props.theme;
         
-        this.state.buttonsPressed.slice(0,1).forEach((b, index) => {
+        this.state.buttonsPressed.forEach((b, index) => {
             Svg.fill(this.buttons[index], b ? theme.buttonDown : theme.buttonUp);            
         });
         
@@ -278,7 +278,7 @@ export class MbitBoardSvg
             }
         }, false);
         
-        this.buttonsOuter.slice(0,1).forEach((btn, index) => {
+        this.buttonsOuter.slice(0,2).forEach((btn, index) => {
             btn.addEventListener("mousedown", ev => {
                 this.state.buttonsPressed[index] = true;
                 Svg.fill(this.buttons[index], this.props.theme.buttonDown);                
