@@ -236,8 +236,8 @@ export class MbitBoardSvg
         this.buttons.push(Svg.path(this.g, "sim-button", "M69.7,203.5c0,8.7-7,15.7-15.7,15.7s-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7S69.7,194.9,69.7,203.5"));
         this.buttonsOuter.push(Svg.path(this.g, "sim-button-outer", "M474.3,232.6h-56.2c-0.5,0-1-0.4-1-1v-56.2c0-0.5,0.4-1,1-1h56.2c0.5,0,1,0.4,1,1v56.2C475.3,232.2,474.8,232.6,474.3,232.6"));
         this.buttons.push(Svg.path(this.g, "sim-button", "M461.9,203.5c0,8.7-7,15.7-15.7,15.7c-8.7,0-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7C454.9,187.8,461.9,194.9,461.9,203.5"));        
-        this.buttonsOuter.push(Svg.child(this.g, "rect", {class:"sim-button-outer", x:417, y:250, width:58, height:58}));
-        this.buttons.push(Svg.child(this.g, "circle", {class:"sim-button", cx:446, cy:278, r:16}));
+        this.buttonsOuter.push(Svg.child(this.g, "rect", {class:"sim-button-outer", x:417, y:250, width:58, height:58, rx:1, ry:1}));
+        this.buttons.push(Svg.child(this.g, "circle", {class:"sim-button", cx:446, cy:278, r:16.5}));
         
                 
         Svg.path(this.g, "sim-label", "M35.7,376.4c0-2.8,2.1-5.1,5.5-5.1c3.3,0,5.5,2.4,5.5,5.1v4.7c0,2.8-2.2,5.1-5.5,5.1c-3.3,0-5.5-2.4-5.5-5.1V376.4zM43.3,376.4c0-1.3-0.8-2.3-2.2-2.3c-1.3,0-2.1,1.1-2.1,2.3v4.7c0,1.2,0.8,2.3,2.1,2.3c1.3,0,2.2-1.1,2.2-2.3V376.4z");
