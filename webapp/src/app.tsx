@@ -8,6 +8,7 @@ import * as sui from "./sui";
 import * as mbitview from "./mbitview";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
+import * as simsvg from "./simsvg"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
@@ -60,6 +61,26 @@ class Settings extends data.Component<ISettingsProps, {}> {
                 </div>
             </sui.Popup>
         );
+    }
+}
+
+class SimSvgView extends React.Component<simsvg.IMbitBoardProps, simsvg.IMbitBoard> {
+    view : simsvg.MbitBoardSvg;
+    constructor(props: simsvg.IMbitBoardProps) {
+        super(props);               
+        this.view = new simsvg.MbitBoardSvg(props);
+        this.state = this.view.state;
+    }
+    
+    componentDidMount() {
+        var el : any = this.refs["simsvg"];
+        el.appendChild(this.view.element);
+        
+        this.forceUpdate();
+    }
+    
+    render() {
+        return (<div ref="simsvg"></div>);
     }
 }
 
@@ -411,7 +432,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 </div>
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
-                        <mbitview.MbitBoardView ref="simulator" theme={mbitview.themes["blue"]} />
+                        <SimSvgView theme={mbitview.themes["blue"]} />
                     </div>
                     <div className={"ui vertical menu filemenu " + inv}>
                         {files}
@@ -424,6 +445,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         );
     }
 }
+
+//                         <mbitview.MbitBoardView ref="simulator" theme={mbitview.themes["blue"]} />
 
 function render() {
     ReactDOM.render(<ProjectView/>, $('#content')[0])
