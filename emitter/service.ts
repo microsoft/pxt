@@ -59,6 +59,14 @@ namespace ts.mbit.service {
         options?: CompileOptions;
     }
 
+    function fileDiags(fn: string) {
+        let d = service.getSyntacticDiagnostics(fn)
+        if (!d || !d.length)
+            d = service.getSemanticDiagnostics(fn)
+        if (!d) d = []
+        return d
+    }
+
     let operations: Util.StringMap<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
@@ -68,10 +76,18 @@ namespace ts.mbit.service {
         setOptions: v => {
             host.setOpts(v.options)
         },
-        
+
         compile: v => {
             return compile(v.options)
-        }
+        },
+
+        fileDiags: v => fileDiags(v.fileName),
+
+        allDiags: () => {
+            let global = service.getCompilerOptionsDiagnostics() || []
+            let byFile = host.getScriptFileNames().map(fileDiags)  
+            return global.concat(Util.concat(byFile))
+        },
     }
 
     export function performOperation(op: string, arg: OpArg) {
