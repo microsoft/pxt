@@ -1,5 +1,5 @@
 
-export interface IMbitTheme {
+export interface IBoardTheme {
     accent?: string;
     display?: string;
     pin?: string;
@@ -20,7 +20,7 @@ export interface IMbitTheme {
 "#3AFFB3",
 "#FF3A54"
 */
-export var themes: IMbitTheme[] = ["#3ADCFE", "#FFD43A", "#3AFFB3", "#FF3A54"].map(accent => {
+export var themes: IBoardTheme[] = ["#3ADCFE", "#FFD43A", "#3AFFB3", "#FF3A54"].map(accent => {
     return {
         accent: accent,
         display: "#000",
@@ -33,12 +33,12 @@ export var themes: IMbitTheme[] = ["#3ADCFE", "#FFD43A", "#3AFFB3", "#FF3A54"].m
         buttonDown: "#FFA500",
 }});
 
-export function randomTheme() : IMbitTheme {
+export function randomTheme() : IBoardTheme {
     return themes[Math.floor(Math.random() * themes.length)];
 }
 
 export interface IBoardProps {
-    theme?: IMbitTheme;
+    theme?: IBoardTheme;
 }
 
 class Svg {
@@ -84,7 +84,7 @@ export class MbitBoardSvg
     private ledsOuter: SVGElement[];
     private leds: SVGElement[];
        
-    constructor(public props: IBoardProps = { theme: themes[0] }, public state : rt.state.IBoard = rt.state.createBoard()) {
+    constructor(public props: IBoardProps, public state: rt.state.IBoard) {
         this.buildDom();               
         this.updateTheme();
         this.updateState();
@@ -104,29 +104,30 @@ export class MbitBoardSvg
     }
     
     private updateState() {
+        let state = this.state;
+        if (!state) return;
         let theme = this.props.theme;
         
-        this.state.buttonsPressed.forEach((b, index) => {
+        state.buttonsPressed.forEach((b, index) => {
             Svg.fill(this.buttons[index], b ? theme.buttonDown : theme.buttonUp);            
         });
         
-        var bw =  this.state.displayMode == rt.state.DisplayMode.bw         
-        var img = this.state.image;
+        var bw =  state.displayMode == rt.state.DisplayMode.bw         
+        var img = state.image;
         this.leds.forEach((led,i) => {
             var sel = (<SVGStylable><any>led)
-            if (img[i] == 0) sel.style.display = 'none';
-            else {
-                 sel.style.display = 'inherit';
-                 sel.style.opacity = ((bw ? img[i] > 0 ? 255 : 0 : img[i]) / 255.0) + "";
-            }
+            sel.style.opacity = ((bw ? img.data[i] > 0 ? 255 : 0 : img.data[i]) / 255.0) + "";
         })
         
         this.updateTilt();        
     }
     
     private updateTilt() {
+        let state = this.state;
+        if (!state) return;
+        
         var af = 8 / 1023;
-        var acc = this.state.acceleration;
+        var acc = state.acceleration;
         if(acc && !isNaN(acc[0]) && !isNaN(acc[1])) {
             this.element.style.transform = "perspective(30em) rotateX(" + -acc[1]*af + "deg) rotateY(" + acc[0]*af +"deg)"
             this.element.style.perspectiveOrigin = "50% 50% 50%";
@@ -203,8 +204,6 @@ export class MbitBoardSvg
   
         this.leds = [];
         this.ledsOuter = [];
-        var brightness = this.state.brigthness / 255;
-        var mode = this.state.displayMode;
         var left = 154, top = 113, ledoffw = 46, ledoffh = 44;
         for (var i = 0; i < 5; ++i) {
             var ledtop = i * ledoffh + top;
@@ -219,36 +218,41 @@ export class MbitBoardSvg
     
     private attachEvents() {
         this.element.addEventListener("mousemove", (ev: MouseEvent) => {
-            if (this.state.acceleration) {
-                this.state.acceleration[0] = Math.floor(((ev.clientX / this.element.clientWidth) - 0.5) * 1023);
-                this.state.acceleration[1]  =Math.floor(((ev.clientY / this.element.clientHeight) - 0.5) * 1023);
-                this.state.acceleration[2] = Math.floor(Math.sqrt(1023*1023 - this.state.acceleration[0] *this.state.acceleration[0] -this.state.acceleration[1] *this.state.acceleration[1] ));
+            var state = this.state;
+            if (!state.acceleration) return;
+            
+                state.acceleration[0] = Math.floor(((ev.clientX / this.element.clientWidth) - 0.5) * 1023);
+                state.acceleration[1]  =Math.floor(((ev.clientY / this.element.clientHeight) - 0.5) * 1023);
+                state.acceleration[2] = Math.floor(Math.sqrt(Math.max(1023*1023 - state.acceleration[0] *state.acceleration[0] -state.acceleration[1] *state.acceleration[1])));
                 this.updateTilt();
-            }
         }, false);
         
         this.buttonsOuter.slice(0,2).forEach((btn, index) => {
             btn.addEventListener("mousedown", ev => {
-                this.state.buttonsPressed[index] = true;
+                var state = this.state;
+                state.buttonsPressed[index] = true;
                 Svg.fill(this.buttons[index], this.props.theme.buttonDown);                
             })
             btn.addEventListener("mouseup", ev => {
-                this.state.buttonsPressed[index] = false;
+                var state = this.state;
+                state.buttonsPressed[index] = false;
                 Svg.fill(this.buttons[index], this.props.theme.buttonUp);                
             })
         })
         this.buttonsOuter[2].addEventListener("mousedown", ev => {
-                this.state.buttonsPressed[0] = true;
-                this.state.buttonsPressed[1] = true;
-                this.state.buttonsPressed[1] = true;
+                var state = this.state;
+                state.buttonsPressed[0] = true;
+                state.buttonsPressed[1] = true;
+                state.buttonsPressed[1] = true;
                 Svg.fill(this.buttons[0], this.props.theme.buttonDown);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonDown);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonDown);                
             })
         this.buttonsOuter[2].addEventListener("mouseup", ev => {
-                this.state.buttonsPressed[0] = false;
-                this.state.buttonsPressed[1] = false;
-                this.state.buttonsPressed[1] = false;
+                var state = this.state;
+                state.buttonsPressed[0] = false;
+                state.buttonsPressed[1] = false;
+                state.buttonsPressed[1] = false;
                 Svg.fill(this.buttons[0], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonUp);                
