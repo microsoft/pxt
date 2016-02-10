@@ -1333,6 +1333,31 @@ Blockly.Blocks['radio_datagram_send'] = {
     }
 };
 
+Blockly.Blocks['radio_datagram_send_numbers'] = {
+    init: function()
+    {
+        this.setColour(blockColors.radio);
+        this.appendDummyInput().appendField("send numbers");
+        this.appendValueInput("VALUE0")
+            .setCheck("Number")
+            .appendField("0:");
+        this.appendValueInput("VALUE1")
+            .setCheck("Number")
+            .appendField("1:");
+        this.appendValueInput("VALUE2")
+            .setCheck("Number")
+            .appendField("2:");
+        this.appendValueInput("VALUE3")
+            .setCheck("Number")
+            .appendField("3:");
+      //  this.setInputsInline(true);
+        this.setPreviousStatement(true);
+        this.setNextStatement(true);            
+        this.setTooltip('Broadcasts a number to other micro:bits over radio.');
+        this.setHelpUrl("https://www.microbit.co.uk/functions/send-numbers");
+    }
+};
+
 Blockly.Blocks['radio_datagram_receive'] = {
     init: function () {
         this.setHelpUrl('./functions/receive-number');
@@ -1345,7 +1370,34 @@ Blockly.Blocks['radio_datagram_receive'] = {
     }
 };
 
-Blockly.Blocks['radio_datagraph_received_event'] = {
+Blockly.Blocks['radio_datagram_received_number_at'] = {
+    init: function () {
+        this.setHelpUrl('./functions/received-number-at');
+        this.setColour(blockColors.radio);
+        this.appendDummyInput()
+            .appendField("received number");
+        this.appendValueInput("VALUE")
+            .setCheck("Number")
+            .appendField("at");
+        this.setInputsInline(true);
+        this.setOutput(true, "Number");
+        this.setTooltip('Reads the next packet received by the radio. 0 if queue empty.');
+    }
+};
+
+Blockly.Blocks['radio_datagram_rssi'] = {
+    init: function () {
+        this.setHelpUrl('./functions/received-signal-strength');
+        this.setColour(blockColors.radio);
+        this.appendDummyInput()
+            .appendField("received signal strength");
+        this.setInputsInline(true);
+        this.setOutput(true, "Number");
+        this.setTooltip('Gets the received signal strength indicator (RSSI) from the packet received by receive number.');
+    }
+};
+
+Blockly.Blocks['radio_datagram_received_event'] = {
     init: function()
     {
         this.setColour(blockColors.radio);

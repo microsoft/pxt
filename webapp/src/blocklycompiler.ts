@@ -1614,6 +1614,16 @@ var stdCallTable: { [blockType: string]: StdFunc } = {
         f: "receive number",
         args: []
     },
+    radio_datagram_received_number_at: {
+        namespace: "radio",
+        f: "received number at",
+        args: [{ field: "VALUE" }]
+    },
+    radio_datagram_rssi: {
+        namespace: "radio",
+        f: "receive signal strength",
+        args: []
+    },
     radio_set_group: {
         namespace: "radio",
         f: "set group",
