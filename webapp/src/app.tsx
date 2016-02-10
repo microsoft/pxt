@@ -165,6 +165,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     componentDidUpdate() {
         this.saveSettings()
+        this.editor.domUpdate();
     }
 
     private setTheme() {

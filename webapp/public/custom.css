@@ -73,3 +73,21 @@
 .ui.buttons {
     margin-right: 0.25rem;
 }
+
+/* blockly */
+
+.blocklyToolboxDiv {
+    background:#ebebeb;
+}
+
+.blocklyTreeLabel, .blocklyText {
+    font:12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;   
+}
+
+.blocklyText {    
+    font-size:18px;
+}
+
+.blocklyTreeLabel {
+    font-size:20px;
+}

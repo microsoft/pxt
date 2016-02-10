@@ -61,4 +61,5 @@ export class Editor {
     prepare() {
         this.isReady = true;
     }
+    domUpdate() {}
 }

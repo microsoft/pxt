@@ -16,6 +16,7 @@ interface ToolboxBlock {
 interface ToolboxCategory {
     name: string;
     colour: number;
+    gap?:number;
     blocks: ToolboxBlock[];
 }
 
@@ -31,6 +32,7 @@ function toolboxToXml(toolbox: ToolboxCategory[]): string {
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
+    delayLoadXml: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -42,6 +44,14 @@ export class Editor extends srceditor.Editor {
             Blockly.fireUiEvent(window, 'resize'); 
        }
         else $(classes).hide();
+    }
+    
+    domUpdate() {
+        if(this.delayLoadXml) {
+            var xml = this.delayLoadXml;
+            this.delayLoadXml = undefined;
+            this.loadBlockly(xml);
+        }
     }
 
     saveBlockly(): string {
@@ -56,27 +66,18 @@ export class Editor extends srceditor.Editor {
         this.editor.clear();
         try {
             Blockly.Xml.domToWorkspace(this.editor, xml);
+            
+           // var js = Blockly.JavaScript.workspaceToCode(this.editor);
+           // console.log(js);
         } catch (e) {
-            console.error(e);
+            console.log(e);
         }
     }
 
     prepare() {
         var blocklyDiv = document.getElementById('blocksEditor');
-        var toolbox: ToolboxCategory[] = [
-            {
-                name: "Control",
-                colour: 130,
-                blocks: [
-                    {
-                        type: "logic_compare"
-                    }
-                ]
-            },
-        ];
-        var toolboxXml = toolboxToXml(toolbox);
         Blockly.inject(blocklyDiv, {
-            toolbox: toolboxXml,
+            toolbox: document.getElementById('blocklyToolboxDefinition'),
             scrollbars: true,
             media: "./blockly/media/",
             sound: true,
@@ -122,7 +123,7 @@ export class Editor extends srceditor.Editor {
 
     loadFile(file: pkg.File) {
         this.setDiagnostics(file)
-        this.loadBlockly(file.content);
+        this.delayLoadXml = file.content;
     }
 
     setDiagnostics(file: pkg.File) {

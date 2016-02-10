@@ -1,8 +1,14 @@
 declare module goog {
+    function require(name:string) : void;
+    function provide(name:string): void;
     function isFunction(f: any): boolean;
 }
 declare module Blockly {
     function fireUiEvent(node: any, eventName: string) : void;
+    
+    module JavaScript {
+        function workspaceToCode(workspace : Workspace) : string;
+    }
     
     class Block {
         static obtain(workspace: Workspace, prototypeName?: string): Block;
@@ -83,9 +89,9 @@ declare module Blockly {
         css?: boolean;
         media?: string;
         grid?: {
-            spacing?: boolean;
-            length?: boolean;
-            colour?: boolean;
+            spacing?: number;
+            length?: number;
+            colour?: string;
             snap?: boolean;
         };
         zoom?: {
