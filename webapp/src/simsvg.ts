@@ -151,6 +151,11 @@ export class MbitBoardSvg
     
     private updateState() {
         let theme = this.props.theme;
+        
+        this.state.buttonsPressed.slice(0,1).forEach((b, index) => {
+            Svg.fill(this.buttons[index], b ? theme.buttonDown : theme.buttonUp);            
+        });
+        
         var bw =  this.state.displayMode == MbitDisplayMode.bw         
         var img = this.state.image;
         this.leds.forEach((led,i) => {
@@ -265,14 +270,14 @@ export class MbitBoardSvg
             }
         }, false);
         
-        this.buttons.forEach((btn, index) => {
+        this.buttonsOuter.forEach((btn, index) => {
             btn.addEventListener("mousedown", ev => {
                 this.state.buttonsPressed[index] = true;
-                Svg.fill(btn, this.props.theme.buttonDown);                
+                Svg.fill(this.buttons[index], this.props.theme.buttonDown);                
             })
             btn.addEventListener("mouseup", ev => {
                 this.state.buttonsPressed[index] = false;
-                Svg.fill(btn, this.props.theme.buttonUp);                
+                Svg.fill(this.buttons[index], this.props.theme.buttonUp);                
             })
         })
         
