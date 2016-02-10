@@ -1,10 +1,12 @@
 /// <reference path="./blockly.d.ts" />
 /// <reference path="../typings/jquery/jquery.d.ts" />
+/// <reference path='touchdevelop.d.ts'/>
 
 import * as React from "react";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
+import * as blocklycompiler from "./blocklycompiler"
 
 
 var lf = Util.lf
@@ -44,6 +46,13 @@ export class Editor extends srceditor.Editor {
             Blockly.fireUiEvent(window, 'resize'); 
        }
         else $(classes).hide();
+    }
+    
+    saveToTouchDevelop() : TDev.AST.Json.JApp {
+        return blocklycompiler.compile(this.editor, {
+            name: "main",
+            description: ""
+        })
     }
     
     domUpdate() {
