@@ -1,35 +1,3 @@
-export interface IMbitFont {
-    chars: Util.StringMap<number[]>;
-}
-
-export enum MbitDisplayMode {
-    bw,
-    greyscale
-}
-
-export interface IMbitBoard {
-    id?: string;
-
-    // display
-    image?: number[];
-    brigthness?: number;
-    displayMode?: MbitDisplayMode
-    font?: IMbitFont;
-
-    // buttons    
-    buttonsPressed?: boolean[];
-
-    // pins
-    P0Touched?: boolean;
-    P1Touched?: boolean;
-    P2Touched?: boolean;
-
-    // sensors    
-    acceleration?: number[];
-    heading?: number;
-    temperature?: number;
-    lightLevel?: number;
-}
 
 export interface IMbitTheme {
     accent?: string;
@@ -44,25 +12,6 @@ export interface IMbitTheme {
 
     pinOn?: string;
     pinOff?: string;
-}
-
-export function createBoard(id?: string): IMbitBoard {
-    return {
-        id: id || ("b" + Math.random()),
-        brigthness: 255,
-        displayMode: MbitDisplayMode.bw,
-        image: [
-            0, 255, 0, 255, 0,
-            255, 0, 255, 0, 255,
-            255, 0, 0, 0, 255,
-            0, 255, 0, 255, 0,
-            0, 0, 255, 0, 0,
-        ],
-        buttonsPressed: [false, false, false],
-        acceleration: [0,0,-1023],
-        heading:90,
-        temperature: 21
-    }
 }
 
 /*
@@ -88,7 +37,7 @@ export function randomTheme() : IMbitTheme {
     return themes[Math.floor(Math.random() * themes.length)];
 }
 
-export interface IMbitBoardProps {
+export interface IBoardProps {
     theme?: IMbitTheme;
 }
 
@@ -135,7 +84,7 @@ export class MbitBoardSvg
     private ledsOuter: SVGElement[];
     private leds: SVGElement[];
        
-    constructor(public props: IMbitBoardProps = { theme: themes[0] }, public state : IMbitBoard = createBoard()) {
+    constructor(public props: IBoardProps = { theme: themes[0] }, public state : rt.state.IBoard = rt.state.createBoard()) {
         this.buildDom();               
         this.updateTheme();
         this.updateState();
@@ -161,7 +110,7 @@ export class MbitBoardSvg
             Svg.fill(this.buttons[index], b ? theme.buttonDown : theme.buttonUp);            
         });
         
-        var bw =  this.state.displayMode == MbitDisplayMode.bw         
+        var bw =  this.state.displayMode == rt.state.DisplayMode.bw         
         var img = this.state.image;
         this.leds.forEach((led,i) => {
             var sel = (<SVGStylable><any>led)
@@ -176,9 +125,9 @@ export class MbitBoardSvg
     }
     
     private updateTilt() {
-        var af = 10 / 1023;
+        var af = 8 / 1023;
         var acc = this.state.acceleration;
-        if(acc) {
+        if(acc && !isNaN(acc[0]) && !isNaN(acc[1])) {
             this.element.style.transform = "perspective(30em) rotateX(" + -acc[1]*af + "deg) rotateY(" + acc[0]*af +"deg)"
             this.element.style.perspectiveOrigin = "50% 50% 50%";
             this.element.style.perspective = "30em";            
