@@ -491,172 +491,179 @@ namespace rt {
         finalCallback?: ResumeFn;
     }
 
-    export interface Runtime {
-        run(cb: ResumeFn): void;
-        getResume(): ResumeFn;
-        numGlobals: number;
-        mem: any;
-        setupTop(cb: ResumeFn): void;
-        malloc(): number; // 2k block
-        free(ptr: number): void;
-        errorHandler: (e: any) => void;
-    }
-
     export var currRuntime: Runtime;
     export function getResume() { return currRuntime.getResume() }
 
-    export function mkRuntime(code: string): Runtime {
-        var sp: number, lr: LR;
-        var rr0: any, rr1: any, rr2: any, rr3: any;
-        var r4: any, r5: any, r6: any, r7: any;
-        var mem: any = {}
-        var entryPoint: LabelFn;
-        var currResume: ResumeFn;
+    export class Runtime {
+        private baseStack = 1000000;
+        private freeStacks: number[] = [];
+        numGlobals = 1000;
+        mem: any;
+        errorHandler: (e: any) => void;
+        dead = false;
 
-        var baseStack = 1000000;
-        var freeStacks: number[] = [];
+        getResume: () => ResumeFn;
+        run: (cb: ResumeFn) => void;
+        setupTop: (cb: ResumeFn) => void;
 
-        function malloc() {
-            if (freeStacks.length > 0)
-                return freeStacks.pop();
-            baseStack += 2000;
-            return baseStack;
+        // 2k block
+        malloc() {
+            if (this.freeStacks.length > 0)
+                return this.freeStacks.pop();
+            this.baseStack += 2000;
+            return this.baseStack;
         }
 
-        function free(p: number) {
-            freeStacks.push(p)
+        free(p: number) {
+            this.freeStacks.push(p)
         }
 
-        function oops(msg: string) {
-            throw new Error("mbitsim error: " + msg)
+        kill() {
+            this.dead = true
         }
+        
+        constructor(code: string) {
+            var sp: number, lr: LR;
+            var rr0: any, rr1: any, rr2: any, rr3: any;
+            var r4: any, r5: any, r6: any, r7: any;
+            var mem: any = {}
+            var entryPoint: LabelFn;
+            var currResume: ResumeFn;
 
-        function push(v: any) {
-            sp -= 4;
-            if (sp % 1000 == 0)
-                oops("stack overflow")
-            mem[sp] = v;
-            //console.log(`PUSH ${sp} ${v}`)
-        }
+            this.mem = mem
+            var runtime = this
 
-        function pop() {
-            //console.log(`POP ${sp} ${mem[sp]}`)
-            sp += 4;
-            return mem[sp - 4]
-        }
+            function oops(msg: string) {
+                throw new Error("mbitsim error: " + msg)
+            }
 
-        function loop(p: CodePtr) {
-            try {
-                while (!!p) {
-                    p = p.fn(p.pc)
+            function push(v: any) {
+                sp -= 4;
+                if (sp % 1000 == 0)
+                    oops("stack overflow")
+                mem[sp] = v;
+                //console.log(`PUSH ${sp} ${v}`)
+            }
+
+            function pop() {
+                //console.log(`POP ${sp} ${mem[sp]}`)
+                sp += 4;
+                return mem[sp - 4]
+            }
+
+            function loop(p: CodePtr) {
+                if (runtime.dead) {
+                    console.log("Runtime terminated")
+                    return
                 }
-            } catch (e) {
-                if (currRuntime.errorHandler)
-                    currRuntime.errorHandler(e)
-                else
-                    console.error("Simulator crashed, no error handler", e.stack)
-            }
-        }
-
-        function actionCall(fn: LabelFn, retPC: number, cb?: ResumeFn): CodePtr {
-            lr = {
-                caller: lr,
-                retPC: retPC,
-                currFn: fn,
-                baseSP: sp,
-                finalCallback: cb
-            }
-            return { fn, pc: 0 }
-        }
-
-        function leave(v: any): CodePtr {
-            let topLr = lr
-            lr = lr.caller
-            let popped = pop()
-            if (popped != topLr) oops("lrpop")
-            rr0 = v;
-            if (topLr.finalCallback)
-                topLr.finalCallback(v);
-            return { fn: lr.currFn, pc: topLr.retPC }
-        }
-
-        function setupTop(cb: ResumeFn) {
-            setupTopCore(cb)
-            setupResume(0)
-        }
-
-        function setupTopCore(cb: ResumeFn) {
-            let stackTop = malloc();
-            sp = stackTop;
-            lr = {
-                caller: null,
-                retPC: 0,
-                baseSP: sp,
-                currFn: () => {
-                    free(stackTop)
-                    if (cb)
-                        cb(rr0)
-                    return null
+                try {
+                    currRuntime = runtime
+                    while (!!p) {
+                        p = p.fn(p.pc)
+                    }
+                } catch (e) {
+                    if (runtime.errorHandler)
+                        runtime.errorHandler(e)
+                    else
+                        console.error("Simulator crashed, no error handler", e.stack)
                 }
             }
-        }
 
-        function topCall(fn: LabelFn, cb: ResumeFn) {
-            setupTopCore(cb)
-            loop(actionCall(fn, 0))
-        }
-
-        function storeRegs() {
-            let _lr = lr
-            let _sp = sp
-            let _r4 = r4
-            let _r5 = r5
-            let _r6 = r6
-            let _r7 = r7
-            return () => {
-                lr = _lr
-                sp = _sp
-                r4 = _r4
-                r5 = _r5
-                r6 = _r6
-                r7 = _r7
-            }
-        }
-
-        function setupResume(retPC: number) {
-            if (currResume) oops("already has resume")
-            let restore = storeRegs()
-            currResume = (v) => {
-                restore();
-                if (v instanceof FnWrapper) {
-                    let w = <FnWrapper>v
-                    rr0 = w.a0
-                    rr1 = w.a1
-                    rr2 = w.a2
-                    rr3 = w.a3
-                    return loop(actionCall(w.func, retPC, w.cb))
+            function actionCall(fn: LabelFn, retPC: number, cb?: ResumeFn): CodePtr {
+                lr = {
+                    caller: lr,
+                    retPC: retPC,
+                    currFn: fn,
+                    baseSP: sp,
+                    finalCallback: cb
                 }
+                return { fn, pc: 0 }
+            }
+
+            function leave(v: any): CodePtr {
+                let topLr = lr
+                lr = lr.caller
+                let popped = pop()
+                if (popped != topLr) oops("lrpop")
                 rr0 = v;
-                return loop({ fn: lr.currFn, pc: retPC })
+                if (topLr.finalCallback)
+                    topLr.finalCallback(v);
+                return { fn: lr.currFn, pc: topLr.retPC }
             }
-        }
 
-        eval(code)
+            function setupTop(cb: ResumeFn) {
+                setupTopCore(cb)
+                setupResume(0)
+            }
 
-        return (currRuntime = {
-            run: (cb) => topCall(entryPoint, cb),
-            getResume: () => {
+            function setupTopCore(cb: ResumeFn) {
+                let stackTop = runtime.malloc();
+                sp = stackTop;
+                lr = {
+                    caller: null,
+                    retPC: 0,
+                    baseSP: sp,
+                    currFn: () => {
+                        runtime.free(stackTop)
+                        if (cb)
+                            cb(rr0)
+                        return null
+                    }
+                }
+            }
+
+            function topCall(fn: LabelFn, cb: ResumeFn) {
+                setupTopCore(cb)
+                loop(actionCall(fn, 0))
+            }
+
+            function storeRegs() {
+                let _lr = lr
+                let _sp = sp
+                let _r4 = r4
+                let _r5 = r5
+                let _r6 = r6
+                let _r7 = r7
+                return () => {
+                    lr = _lr
+                    sp = _sp
+                    r4 = _r4
+                    r5 = _r5
+                    r6 = _r6
+                    r7 = _r7
+                }
+            }
+
+            function setupResume(retPC: number) {
+                if (currResume) oops("already has resume")
+                let restore = storeRegs()
+                currResume = (v) => {
+                    restore();
+                    if (v instanceof FnWrapper) {
+                        let w = <FnWrapper>v
+                        rr0 = w.a0
+                        rr1 = w.a1
+                        rr2 = w.a2
+                        rr3 = w.a3
+                        return loop(actionCall(w.func, retPC, w.cb))
+                    }
+                    rr0 = v;
+                    return loop({ fn: lr.currFn, pc: retPC })
+                }
+            }
+
+            eval(code)
+
+            this.run = (cb) => topCall(entryPoint, cb)
+            this.getResume = () => {
                 if (!currResume) oops("noresume")
                 let r = currResume
                 currResume = null
                 return r
-            },
-            numGlobals: 1000,
-            mem,
-            setupTop,
-            malloc,
-            free,
-            errorHandler: null
-        })
+            }
+            this.setupTop = setupTop
+
+            currRuntime = this;
+        }
     }
 }

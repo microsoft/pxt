@@ -334,14 +334,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .done()
     }
 
+    simRuntime: mbitview.MbitRuntime;
+
     run() {
         compiler.compileAsync()
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
-                    let r = rt.mkRuntime(js)
-                    r.errorHandler = (e:any) => {
+                    if (this.simRuntime)
+                        this.simRuntime.kill();
+                    let r = new mbitview.MbitRuntime(js)
+                    this.simRuntime = r
+                    r.errorHandler = (e: any) => {
                         core.errorNotification(e.message)
                         console.error("Simulator error", e.stack)
                     }

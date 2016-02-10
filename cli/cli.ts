@@ -257,7 +257,7 @@ function cmdBuild(deploy = false, run = false) {
                 if (run) {
                     let f = res.outfiles["microbit.js"]
                     if (f) {
-                        let r = rt.mkRuntime(f)
+                        let r = new rt.Runtime(f)
                         r.run(() => {
                             console.log("DONE")
                             rt.dumpLivePointers();
