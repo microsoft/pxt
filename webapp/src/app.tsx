@@ -68,7 +68,6 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
     renderCore() {
         let par = this.props.parent
         let headers: workspace.Header[] = this.getData("header:*")
-        headers.sort((a, b) => b.recentUse - a.recentUse)
         let chgHeader = (id: string) => {
             par.loadHeader(workspace.getHeader(id))
         }
@@ -275,6 +274,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             })
     }
 
+    removeProject() {
+        core.confirmDelete(pkg.mainEditorPkg().header.name, () => {
+            let curr = pkg.mainEditorPkg().header
+            curr.isDeleted = true
+            return workspace.saveAsync(curr, {})
+                .then(() => {
+                    this.loadHeader(workspace.getHeaders()[0])
+                })
+        })
+    }
+
     newProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} bit", Util.getAwesomeAdj()),
@@ -433,13 +443,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Dropdown class="button floating" icon="wrench" menu={true}>
                                 <sui.Item icon="terminal" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
                                 <sui.Item icon="puzzle" text={lf("New Blocks project") } onClick={() => this.newBlocksProject() } />
-                                <sui.Item icon="trash" text={lf("Remove project") } onClick={() => { } } />
                                 {this.editor == this.aceEditor ? null :
                                     <sui.Item icon="write" text={lf("Edit text") } onClick={() => this.editText() } />
                                 }
                                 <div className="divider"></div>
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
                             </sui.Dropdown>
+                            <sui.Button class='red' icon='trash' onClick={() => this.removeProject() } />
                         </div>
                         <div className="item right">
                             {isOffline ?

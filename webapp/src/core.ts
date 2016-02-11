@@ -74,13 +74,13 @@ export function infoNotification(msg: string) {
 export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream") {
     var buf = Util.stringToUint8Array(Util.toUTF8(text))
     var uri = browserDownloadUInt8Array(buf, name, contentType);
-    $('#compilemsg').finish().html("Compilation done. <a href='" + encodeURI(uri) + "' download='"+ name + "' target='_blank'>Use this link to save to another location.</a>").fadeIn('fast').delay(7000).fadeOut('slow');    
+    $('#compilemsg').finish().html("Compilation done. <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>Use this link to save to another location.</a>").fadeIn('fast').delay(7000).fadeOut('slow');
 }
 
 export var isMobileBrowser = /mobile/.test(navigator.userAgent);
 
-export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream") : string {
-    var dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf)) 
+export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream"): string {
+    var dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf))
     try {
         if ((<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser) {
             var b = new Blob([buf], { type: contentType })
@@ -103,8 +103,8 @@ export function browserDownloadUInt8Array(buf: Uint8Array, name: string, content
     return dataurl;
 }
 
-export function handleNetworkError(e:any) {
-    let statusCode = <number> e.status
+export function handleNetworkError(e: any) {
+    let statusCode = <number>e.status
     if (e.isOffline) {
         warningNotification(lf("Network request failed; you appear to be offline"))
     } else {
@@ -112,3 +112,70 @@ export function handleNetworkError(e:any) {
     }
 }
 
+export interface ConfirmOptions {
+    header: string;
+    body?: string;
+    agreeLbl?: string;
+    disagreeLbl?: string;
+    agreeIcon?: string;
+    agreeClass?: string;
+}
+
+export function confirmAsync(options: ConfirmOptions) {
+    let html = `
+  <div class="ui small modal">
+    <div class="header">
+        ${Util.htmlEscape(options.header)}      
+    </div>
+    <div class="content">
+      <p>${Util.htmlEscape(options.body || "")}</p>
+    </div>
+    <div class="actions">
+      <div class="ui right labeled icon button">
+        ${Util.htmlEscape(options.disagreeLbl || lf("Cancel"))}
+        <i class="cancel icon"></i>
+      </div>
+      <div class="ui approve right labeled icon button ${options.agreeClass || "positive"}">
+        ${Util.htmlEscape(options.agreeLbl || lf("Go ahead!"))}
+        <i class="${options.agreeIcon || "checkmark"} icon"></i>
+      </div>
+    </div>
+  </div>
+  `
+    let modal = $(html)
+    let done = false
+    $('#root').append(modal)
+
+    return new Promise((resolve, reject) =>
+        modal.modal({
+            onHidden: () => {
+                modal.remove()
+            },
+            onApprove: () => {
+                if (!done) {
+                    done = true
+                    resolve(true)
+                }
+            },
+            onHide: () => {
+                if (!done) {
+                    done = true
+                    resolve(false)
+                }
+            },
+        }).modal("show"))
+}
+
+export function confirmDelete(what: string, cb: () => Promise<void>) {
+    confirmAsync({
+        header: lf("Are you sure to delete '{0}'?", what),
+        body: lf("It will be deleted for good. No undo."),
+        agreeLbl: lf("Delete"),
+        agreeClass: "red",
+        agreeIcon: "trash",
+    }).then(res => {
+        if (res) {
+            cb().done()
+        }
+    }).done()
+}

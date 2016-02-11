@@ -35,6 +35,8 @@ jake
 * [ ] have output-independent simulator for running tests
 * [ ] do not generate empty action bodies for shim
 * [ ] check on compiler performance (1000ms on lang-test0)
+* [ ] forever() seems to have issues
+* [ ] make blocks output file read only
 
 ## TODO for converter from TD
 

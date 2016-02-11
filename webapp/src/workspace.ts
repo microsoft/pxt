@@ -51,6 +51,7 @@ export function getHeaders(withDeleted = false) {
     let r = allScripts.map(x => x.header)
     if (!withDeleted)
         r = r.filter(r => !r.isDeleted)
+    r.sort((a, b) => b.recentUse - a.recentUse)
     return r
 }
 
@@ -391,7 +392,8 @@ export function syncAsync() {
     function syncDeleteAsync(h: Header) {
         let body = {
             guid: h.id,
-            status: "deleted"
+            status: "deleted",
+            scriptVersion: { time: nowSeconds(), baseSnapshot: "*" }
         }
         return Cloud.privatePostAsync("me/installed", { bodies: [body] })
             .then(() => uninstallAsync(h))
