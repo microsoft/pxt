@@ -71,22 +71,22 @@ export function infoNotification(msg: string) {
     htmlmsg("info", msg)
 }
 
-
 export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream") {
     var buf = Util.stringToUint8Array(Util.toUTF8(text))
-    browserDownloadUInt8Array(buf, name, contentType);
+    var uri = browserDownloadUInt8Array(buf, name, contentType);
+    $('#compilemsg').finish().html("Compilation done. <a href='" + encodeURI(uri) + "' download='"+ name + "' target='_blank'>Use this link to save to another location.</a>").fadeIn('fast').delay(7000).fadeOut('slow');    
 }
 
 export var isMobileBrowser = /mobile/.test(navigator.userAgent);
 
-export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream") {
+export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream") : string {
+    var dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf)) 
     try {
         if ((<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser) {
             var b = new Blob([buf], { type: contentType })
             var result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
         } else {
             var link = <any>window.document.createElement('a');
-            var dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf)) 
             if (typeof link.download == "string") {
                 link.href = dataurl;
                 link.download = name;
@@ -100,6 +100,7 @@ export function browserDownloadUInt8Array(buf: Uint8Array, name: string, content
     } catch (e) {
         errorNotification(lf("saving file failed..."))
     }
+    return dataurl;
 }
 
 export function handleNetworkError(e:any) {
