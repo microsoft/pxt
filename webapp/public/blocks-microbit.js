@@ -4,6 +4,18 @@ goog.provide('Blockly.Blocks.device');
 
 goog.require('Blockly.Blocks');
 
+function iconToFieldImage(c) {
+    var canvas= document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.font="56px Icons";
+    ctx.textAlign = "center";
+    ctx.fillText(c,canvas.width/2, 56);
+    return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
+}
+
 var buttonsDropdownOn = [
   ["A", "A"],
   ["B", "B"],
@@ -241,6 +253,7 @@ Blockly.Blocks['device_print_message'] = {
     this.setHelpUrl("./functions/show-string");
     this.setColour(blockColors.basic);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf031"))
         .appendField("show");
     this.appendValueInput("message")
         .setCheck("String")
@@ -259,6 +272,7 @@ Blockly.Blocks['device_show_number'] = {
     this.setHelpUrl('./functions/show-number');
     this.setColour(blockColors.basic);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf1ec"))
         .appendField("show number");
     this.appendValueInput("number")
         .setCheck("Number")
@@ -289,6 +303,7 @@ Blockly.Blocks['device_gesture_event'] = {
     this.setHelpUrl('./functions/on-shake');
     this.setColour(blockColors.input);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf135"))
         .appendField("on");
     this.appendDummyInput()
         .appendField(new Blockly.FieldDropdown(accelerationEventDropdown), "NAME");        
@@ -305,6 +320,7 @@ Blockly.Blocks['device_pin_event'] = {
     this.setHelpUrl('./functions/on-pin-pressed');
     this.setColour(blockColors.input);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf094"))
         .appendField("on pin");
     this.appendDummyInput()
         .appendField(new Blockly.FieldDropdown(analogPinsDropdown), "NAME");
@@ -323,6 +339,7 @@ Blockly.Blocks['device_button_event'] = {
     this.setHelpUrl('./functions/on-button-pressed');
     this.setColour(blockColors.input);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf192"))
         .appendField("on button");
     this.appendDummyInput()
         .appendField(new Blockly.FieldDropdown(buttonsDropdownOn), "NAME");
@@ -343,6 +360,7 @@ Blockly.Blocks['device_get_button'] = {
     this.setHelpUrl('./functions/button-is-pressed');
     this.setColour(blockColors.input);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf192"))
         .appendField("button");
     this.appendDummyInput()
         .appendField(new Blockly.FieldDropdown(buttonsDropdownOn), "NAME");
@@ -360,6 +378,7 @@ Blockly.Blocks['device_get_button2'] = {
     this.setHelpUrl('https://live.microbit.co.uk/functions/button-is-pressed');
     this.setColour(blockColors.input);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf192"))
         .appendField("button");
     this.appendDummyInput()
         .appendField(new Blockly.FieldDropdown(buttonsDropdownIs), "NAME");
@@ -517,6 +536,7 @@ Blockly.Blocks['device_get_brightness'] = {
         this.setHelpUrl('./functions/brightness');
         this.setColour(blockColors.led);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf042"))
             .appendField("brightness");
         this.setOutput(true, "Number");
         this.setTooltip('Get the current brightness of the screen (between 0 and 255).');
@@ -528,6 +548,7 @@ Blockly.Blocks['device_set_brightness'] = {
         this.setHelpUrl('./functions/set-brightness');
         this.setColour(blockColors.led);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf042"))
             .appendField("set brightness");
         this.appendValueInput("value")
             .setCheck("Number");
@@ -543,6 +564,7 @@ Blockly.Blocks['device_get_acceleration'] = {
         this.setHelpUrl('./functions/acceleration');
         this.setColour(blockColors.input);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf135"))
             .appendField("acceleration (mg)");
         this.appendDummyInput()
             .appendField(new Blockly.FieldDropdown(dimensionDropdown), "NAME");
@@ -557,6 +579,7 @@ Blockly.Blocks['device_get_rotation'] = {
         this.setHelpUrl('./functions/rotation');
         this.setColour(blockColors.input);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf197"))
             .appendField("rotation (°)");
         this.appendDummyInput()
             .appendField(new Blockly.FieldDropdown(rotationDropDown), "NAME");
@@ -571,6 +594,7 @@ Blockly.Blocks['device_get_magnetic_force'] = {
         this.setHelpUrl('./functions/magnetic-force');
         this.setColour(blockColors.input);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf076"))
             .appendField("magnetic force (microT)");
         this.appendDummyInput()
             .appendField(new Blockly.FieldDropdown(dimensionDropdown), "NAME");
@@ -585,6 +609,7 @@ Blockly.Blocks['device_get_light_level'] = {
         this.setHelpUrl('./functions/light-level');
         this.setColour(blockColors.input);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf185"))
             .appendField("light level");
         this.setInputsInline(true);
         this.setOutput(true, "Number");
@@ -597,6 +622,7 @@ Blockly.Blocks['device_get_running_time'] = {
         this.setHelpUrl('./functions/running_time');
         this.setColour(blockColors.input);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf017"))
             .appendField("running time (ms)");
         this.setOutput(true, "Number");
         this.setTooltip('Get the number of milliseconds elapsed since the script began. 1,000 milliseconds = 1 second');
@@ -609,6 +635,7 @@ Blockly.Blocks['device_clear_display'] = {
     this.setHelpUrl('./functions/clear-screen');
     this.setColour(blockColors.basic);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf12d"))
         .appendField("clear screen");
     this.setInputsInline(true);
     this.setPreviousStatement(true);
@@ -623,6 +650,7 @@ Blockly.Blocks['device_plot'] = {
     this.setHelpUrl('./functions/plot');
     this.setColour(blockColors.led);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf205"))
         .appendField("plot");
     this.appendValueInput("x")
         .setCheck("Number")
@@ -642,6 +670,7 @@ Blockly.Blocks['device_unplot'] = {
     this.setHelpUrl('./functions/unplot');
     this.setColour(blockColors.led);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf204"))
         .appendField("unplot");
     this.appendValueInput("x")
         .setCheck("Number")
@@ -661,6 +690,7 @@ Blockly.Blocks['device_stop_animation'] = {
     this.setHelpUrl('./functions/stop-animation');
     this.setColour(blockColors.led);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf04d"))
         .appendField("stop animation");
     this.setPreviousStatement(true);
     this.setNextStatement(true);
@@ -674,6 +704,7 @@ Blockly.Blocks['device_point'] = {
     this.setHelpUrl('./functions/point');
     this.setColour(blockColors.led);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf10c"))
         .appendField("point");
     this.appendValueInput("x")
         .setCheck("Number")
@@ -692,6 +723,7 @@ Blockly.Blocks['device_plot_bar_graph'] = {
     this.setHelpUrl('./functions/plot-bar-graph');
     this.setColour(blockColors.led);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf080"))
         .appendField("plot bar graph");
     this.appendValueInput("value")
         .setCheck("Number")
@@ -711,6 +743,7 @@ Blockly.Blocks['device_temperature'] = {
         this.setHelpUrl('./functions/temperature');
         this.setColour(blockColors.input);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf06d"))
             .appendField("temperature (°C)");
         this.setInputsInline(true);
         this.setOutput(true, "Number");
@@ -723,6 +756,7 @@ Blockly.Blocks['device_heading'] = {
         this.setHelpUrl('./functions/compass-heading');
         this.setColour(blockColors.input);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf14e"))
             .appendField("compass heading (°)");
         this.setInputsInline(true);
         this.setOutput(true, "Number");
@@ -736,13 +770,14 @@ Blockly.Blocks['device_show_leds'] = {
         this.setColour(blockColors.basic);
         this.setPreviousStatement(true);
         this.setNextStatement(true);
-        this.appendDummyInput().appendField("show leds");
-        this.appendDummyInput().appendField("  0   1   2   3   4");
-        this.appendDummyInput().appendField("0").appendField(new Blockly.FieldCheckbox("FALSE"), "LED00").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED10").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED20").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED30").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED40");
-        this.appendDummyInput().appendField("1").appendField(new Blockly.FieldCheckbox("FALSE"), "LED01").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED11").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED21").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED31").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED41");
-        this.appendDummyInput().appendField("2").appendField(new Blockly.FieldCheckbox("FALSE"), "LED02").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED12").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED22").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED32").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED42");
-        this.appendDummyInput().appendField("3").appendField(new Blockly.FieldCheckbox("FALSE"), "LED03").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED13").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED23").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED33").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED43");
-        this.appendDummyInput().appendField("4").appendField(new Blockly.FieldCheckbox("FALSE"), "LED04").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED14").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED24").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED34").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED44");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf00a"))
+            .appendField("show leds");
+        this.appendDummyInput().appendField(new Blockly.FieldCheckbox("FALSE"), "LED00").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED10").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED20").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED30").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED40");
+        this.appendDummyInput().appendField(new Blockly.FieldCheckbox("FALSE"), "LED01").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED11").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED21").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED31").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED41");
+        this.appendDummyInput().appendField(new Blockly.FieldCheckbox("FALSE"), "LED02").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED12").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED22").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED32").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED42");
+        this.appendDummyInput().appendField(new Blockly.FieldCheckbox("FALSE"), "LED03").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED13").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED23").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED33").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED43");
+        this.appendDummyInput().appendField(new Blockly.FieldCheckbox("FALSE"), "LED04").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED14").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED24").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED34").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED44");
         this.setTooltip('Show the given led pattern on the display.');
         this.setHelpUrl("./functions/show-leds");
     }
@@ -841,6 +876,7 @@ Blockly.Blocks['device_pause'] = {
     this.setHelpUrl('./functions/pause');
     this.setColour(blockColors.basic);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf110"))
         .appendField("pause (ms)");
     this.appendValueInput("pause")
         .setCheck("Number");
@@ -856,6 +892,7 @@ Blockly.Blocks['device_forever'] = {
     this.setHelpUrl('./functions/forever');
     this.setColour(blockColors.basic);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf01e"))
         .appendField("forever");
     this.appendStatementInput("HANDLER")
         .setCheck("null");
@@ -944,6 +981,7 @@ Blockly.Blocks['device_random'] = {
     this.setHelpUrl('./blocks/contents');
     this.setColour(230);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf074"))
         .appendField("pick random 0 to")
         .appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), "limit");
     this.setInputsInline(true);
@@ -1174,7 +1212,9 @@ Blockly.Blocks['devices_camera'] = {
     init: function()
     {
         this.setColour(blockColors.antenna);
-        this.appendDummyInput().appendField("tell camera to ");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf030"))
+            .appendField("tell camera to ");
         this.appendDummyInput()
             .appendField(new Blockly.FieldDropdown(cameraMessageDropdown), "property");
         this.setInputsInline(true);
@@ -1189,7 +1229,9 @@ Blockly.Blocks['devices_alert'] = {
     init: function()
     {
         this.setColour(blockColors.antenna);
-        this.appendDummyInput().appendField("raise alert to ");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf0f3"))
+            .appendField("raise alert to ");
         this.appendDummyInput()
             .appendField(new Blockly.FieldDropdown(alertMessageDropdown), "property");
         this.setInputsInline(true);
@@ -1204,7 +1246,9 @@ Blockly.Blocks['devices_remote_control'] = {
     init: function()
     {
         this.setColour(blockColors.antenna);
-        this.appendDummyInput().appendField("tell remote control to ");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf144"))
+            .appendField("tell remote control to ");
         this.appendDummyInput()
             .appendField(new Blockly.FieldDropdown(remoteControlMessageDropdown), "property");
         this.setInputsInline(true);
@@ -1219,7 +1263,9 @@ Blockly.Blocks['devices_gamepad_event'] = {
     init: function()
     {
         this.setColour(blockColors.antenna);
-        this.appendDummyInput().appendField("on gamepad button");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf11b"))
+            .appendField("on gamepad button");
         this.appendDummyInput()
             .appendField(new Blockly.FieldDropdown(gamepadButtonEventDropdown), "NAME");
         this.appendStatementInput("HANDLER")
@@ -1235,7 +1281,9 @@ Blockly.Blocks['devices_device_info_event'] = {
     init: function()
     {
         this.setColour(blockColors.antenna);
-        this.appendDummyInput().appendField("on notified");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf10a"))
+            .appendField("on notified");
         this.appendDummyInput()
             .appendField(new Blockly.FieldDropdown(deviceInfoEventDropdown), "NAME");
         this.appendStatementInput("HANDLER")
@@ -1252,6 +1300,7 @@ Blockly.Blocks['devices_signal_strength'] = {
         this.setHelpUrl('./functions/signal-strength');
         this.setColour(blockColors.antenna);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf012"))
             .appendField("signal strengh");
         this.setInputsInline(true);
         this.setOutput(true, "Number");
@@ -1263,7 +1312,9 @@ Blockly.Blocks['devices_signal_strength_changed_event'] = {
     init: function()
     {
         this.setColour(blockColors.antenna);
-        this.appendDummyInput().appendField("on signal strength changed");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf012"))
+            .appendField("on signal strength changed");
         this.appendStatementInput("HANDLER")
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField("do");
@@ -1277,7 +1328,9 @@ Blockly.Blocks['radio_set_group'] = {
     init: function()
     {
         this.setColour(blockColors.radio);
-        this.appendDummyInput().appendField("set group");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf0c0"))
+            .appendField("set group");
         this.appendValueInput("ID")
             .setCheck("Number");
         this.setInputsInline(true);
@@ -1292,7 +1345,9 @@ Blockly.Blocks['radio_broadcast'] = {
     init: function()
     {
         this.setColour(blockColors.radio);
-        this.appendDummyInput().appendField("broadcast message");
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf1d8"))
+            .appendField("broadcast message");
         this.appendValueInput("MESSAGE")
             .setCheck("Number");
         this.setInputsInline(true);
@@ -1307,7 +1362,9 @@ Blockly.Blocks['radio_broadcast_received_event'] = {
     init: function()
     {
         this.setColour(blockColors.radio);
-        this.appendDummyInput().appendField("on message received")
+        this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf1d8"))
+            .appendField("on message received")
             .appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), "MESSAGE");
         this.appendStatementInput("HANDLER")
             .setAlign(Blockly.ALIGN_RIGHT)
@@ -1390,6 +1447,7 @@ Blockly.Blocks['radio_datagram_rssi'] = {
         this.setHelpUrl('./functions/received-signal-strength');
         this.setColour(blockColors.radio);
         this.appendDummyInput()
+            .appendField(iconToFieldImage("\uf012"))
             .appendField("received signal strength");
         this.setInputsInline(true);
         this.setOutput(true, "Number");
@@ -1523,6 +1581,7 @@ Blockly.Blocks['device_play_note'] = {
     this.setHelpUrl('./functions/play-note');
     this.setColour(blockColors.music);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf025"))
         .appendField("play tone (Hz)");
     this.appendValueInput("note")
         .setCheck("Number")
@@ -1542,6 +1601,7 @@ Blockly.Blocks['device_ring'] = {
     this.setHelpUrl('./functions/ring');
     this.setColour(blockColors.music);
     this.appendDummyInput()
+        .appendField(iconToFieldImage("\uf025"))
         .appendField("ring tone (Hz)");
     this.appendValueInput("note")
         .setCheck("Number");
