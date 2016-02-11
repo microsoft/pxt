@@ -80,11 +80,15 @@ export class PromiseQueue {
         if (!this.promises.hasOwnProperty(id)) {
             this.promises[id] = Promise.resolve()
         }
-        let newOne = this.promises[id].then(() => f().then(v => {
-            if (this.promises[id] === newOne)
-                delete this.promises[id];
-            return v;
-        }))
+        let newOne = this.promises[id]
+            .catch(e => {
+                Util.nextTick(() => { throw e })
+            })
+            .then(() => f().then(v => {
+                if (this.promises[id] === newOne)
+                    delete this.promises[id];
+                return v;
+            }))
         this.promises[id] = newOne;
         return newOne;
     }
