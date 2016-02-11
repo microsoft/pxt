@@ -309,7 +309,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let files: workspace.ScriptText = {
             "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
             "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
-            "main.blocks.ts": ""
+            "main.blocks.ts": "\n"
         }
         workspace.installAsync({
             name: cfg.name,

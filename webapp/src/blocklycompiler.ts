@@ -2120,6 +2120,9 @@ function tdASTtoTS(app: J.JApp) {
     emit(app)
 
     output = output.replace(/^\s*\n/mg, "").replace(/\s+;$/mg, ";")
+    
+    // never return empty string - TS compiler service thinks it's an error
+    output += "\n"
 
     return output;
 

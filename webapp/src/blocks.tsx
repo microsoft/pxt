@@ -49,7 +49,7 @@ export class Editor extends srceditor.Editor {
     }
 
     saveToTypeScript(): string {
-        let cfg = pkg.mainPkg.config        
+        let cfg = pkg.mainPkg.config
         return blocklycompiler.compile(this.editor, {
             name: cfg.name,
             description: cfg.description
@@ -65,6 +65,11 @@ export class Editor extends srceditor.Editor {
     }
 
     saveBlockly(): string {
+        // make sure we don't return an empty document before we get started
+        // otherwise it may get saved and we're in trouble
+        if (this.delayLoadXml)
+            return this.delayLoadXml;
+            
         var xml = Blockly.Xml.workspaceToDom(this.editor);
         var text = Blockly.Xml.domToPrettyText(xml);
         return text;
