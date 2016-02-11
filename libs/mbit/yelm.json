@@ -5,7 +5,8 @@
     "files": [
         "README.md",
         "core.d.ts",
-        "mbit.ts"
+        "mbit.ts",
+        "screen.ts"
     ],
     "public": true,
     "dependencies": {}
