@@ -317,7 +317,7 @@ enum Notes {
 
 namespace basic {
     //% help=functions/show-string weight=87
-    //% shim=micro_bit::scrollString async
+    //% shim=micro_bit::scrollString async block="show string %1"
     /**
      * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.
      * @param interval how fast to shift characters; eg: 150, 100, 200, -100
@@ -336,7 +336,7 @@ namespace basic {
      * @param ms how long to pause for, eg: 100, 200, 500, 1000, 2000
      */
     //% help=functions/pause weight=88
-    //% shim=micro_bit::pause async 
+    //% shim=micro_bit::pause async block="pause for %1 ms"
     export function pause(ms: number): void { }
 
     /**
@@ -362,7 +362,7 @@ namespace input {
      * Get the button state (pressed or not) for ``A`` and ``B``.
      */
     //% help=functions/button-is-pressed weight=59
-    //% shim=micro_bit::isButtonPressed
+    //% shim=micro_bit::isButtonPressed block="button %1 is pressed"
     export function buttonIsPressed(button: Button): boolean { return false; }
 }
 

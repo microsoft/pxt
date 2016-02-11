@@ -190,6 +190,13 @@ export class EditorPackage {
     }
 }
 
+function getEmbeddedScript(id: string): Util.StringMap<string> {
+    let e = (window as any).yelmEmbed
+    if (e && e.hasOwnProperty(id))
+        return e[id]
+    return null
+}
+
 class Host
     implements yelm.Host {
 
@@ -213,19 +220,24 @@ class Host
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
-        if (proto == "pub")
+        if (proto == "pub") {
             // make sure it sits in cache
             return workspace.getScriptFilesAsync(pkg.verArgument())
                 .then(files => epkg.setFiles(files))
-        else if (proto == "workspace") {
+        } else if (proto == "workspace") {
             return workspace.getTextAsync(pkg.verArgument())
                 .then(scr => epkg.setFiles(scr))
+        } else if (proto == "embed") {
+            epkg.setFiles(getEmbeddedScript(pkg.verArgument()))
+            return Promise.resolve()
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
     }
 
     resolveVersionAsync(pkg: yelm.Package) {
+        if (getEmbeddedScript(pkg.id))
+            return Promise.resolve("embed:" + pkg.id)
         return data.getAsync("cloud:" + yelm.pkgPrefix + pkg.id).then(r => {
             let id = (r || {})["scriptid"]
             if (!id)
@@ -233,7 +245,6 @@ class Host
             return id
         })
     }
-
 }
 
 var theHost = new Host();

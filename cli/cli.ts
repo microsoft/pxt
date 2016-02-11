@@ -247,6 +247,21 @@ function cmdService() {
         })
 }
 
+function cmdGenEmbed() {
+    let fn = "built/yelmembed.js"
+    mainPkg.filesToBePublishedAsync()
+        .then(res => {
+            return mainPkg.host().writeFileAsync(mainPkg, fn,
+                "window.yelmEmbed = window.yelmEmbed || {};\n" +
+                "window.yelmEmbed[" + JSON.stringify(mainPkg.config.name) + "] = " + 
+                JSON.stringify(res, null, 2) + "\n")
+        })
+        .then(() => {
+            console.log("wrote results to " + fn)
+        })
+}
+
+
 
 function cmdBuild(deploy = false, run = false) {
     ensurePkgDir();
@@ -303,6 +318,7 @@ let cmds: Command[] = [
     { n: "deploy", f: cmdDeploy, a: "", d: "build and deploy current package" },
     { n: "run", f: cmdRun, a: "", d: "build and run current package in the simulator" },
     { n: "service", f: cmdService, a: "OPERATION", d: "simulate a query to web worker" },
+    { n: "genembed", f: cmdGenEmbed, a: "", d: "generate built/yelmembed.js from current package" },
     { n: "help", f: usage, a: "", d: "display this message" },
 
     { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call", o: 1 },

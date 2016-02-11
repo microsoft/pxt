@@ -6,7 +6,7 @@ var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 
 
-task('default', ['built/main.js', 'built/worker.js', 'built/themes', 'built/style.css', "built/semantic.js"])
+task('default', ['built/main.js', 'built/worker.js', 'built/themes', 'built/style.css', "built/semantic.js", 'built/yelmembed.js'])
 
 task('precopy', function () {
     jake.mkdirP("built")
@@ -15,7 +15,7 @@ task('precopy', function () {
 })
 
 task('upper', ["precopy"], { async: true }, function () {
-    cmdIn(this, "..", 'jake built/yelmlib.js')
+    cmdIn(this, "..", 'jake webapp')
 })
 
 task('postcopy', ["upper"], function () {
@@ -34,6 +34,11 @@ file('built/main.js', ["lower"], { async: true }, function () {
 file('built/worker.js', ["lower"], function () {
     jake.cpR("built/src/worker.js", "built/")
 })
+
+ju.catFiles('built/yelmembed.js', [
+    "../libs/mbit/built/yelmembed.js", 
+    ])
+
 
 file('built/themes', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes", "built/")

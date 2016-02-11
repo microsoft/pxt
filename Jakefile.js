@@ -32,6 +32,12 @@ task('runprj', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
 })
 
+task('webapp', ['built/yelmlib.js', 'embed'])
+
+task('embed', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
+  cmdIn(this, "libs/mbit", 'node ../../built/yelm.js genembed')
+})
+
 ju.catFiles('built/yelm.js', [
     "node_modules/typescript/lib/typescript.js", 
     "built/yelmlib.js",

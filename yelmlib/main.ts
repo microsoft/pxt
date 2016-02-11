@@ -65,7 +65,8 @@ namespace yelm {
 
             if (!v || v == "*")
                 return this.host().resolveVersionAsync(this).then(id => {
-                    return (this.resolvedVersion = "pub:" + id);
+                    if (!/:/.test(id)) id = "pub:" + id
+                    return (this.resolvedVersion = id);
                 })
             return Promise.resolve(v)
         }
@@ -218,8 +219,8 @@ namespace yelm {
             return this.getCompileOptionsAsync()
                 .then(opts => ts.mbit.compile(opts))
         }
-        
-        serviceAsync(op:string) {
+
+        serviceAsync(op: string) {
             return this.getCompileOptionsAsync()
                 .then(opts => {
                     ts.mbit.service.performOperation("reset", {})
@@ -254,10 +255,8 @@ namespace yelm {
                 })
         }
 
-        publishAsync() {
+        filesToBePublishedAsync() {
             let files: Util.StringMap<string> = {};
-            let text: string;
-            let scrInfo: { id: string; } = null;
 
             return this.loadAsync()
                 .then(() => {
@@ -282,8 +281,16 @@ namespace yelm {
                                     Util.userError("referenced file missing: " + f)
                                 files[f] = str
                             }))))
-                .then(() => {
-                    text = JSON.stringify(Util.sortObjectFields(files), null, 2)
+                .then(() => Util.sortObjectFields(files))
+        }
+        
+        publishAsync() {
+            let text: string;
+            let scrInfo: { id: string; } = null;
+
+            return this.filesToBePublishedAsync()
+                .then(files => {
+                    text = JSON.stringify(files, null, 2)
                     let hash = Util.sha256(text).substr(0, 32)
                     info(`checking for pre-existing script at ${hash}`)
                     return Cloud.privateGetAsync("scripthash/" + hash)

@@ -149,6 +149,7 @@ namespace ts.mbit {
         name: string;
         description: string;
         type: string;
+        initializer?: string;
     }
 
     export interface BlockFunc {
@@ -177,6 +178,7 @@ namespace ts.mbit {
     }
 
     function typeToString(t: TypeNode) {
+        if (!t) return "None"
         return t.getText()
     }
 
@@ -218,7 +220,6 @@ namespace ts.mbit {
 
         for (let decl of funDecls) {
             let attrs = parseComments(decl)
-            attrs.block = "needs to be added" // TODO remove me
             if (attrs.block) {
                 res.functions.push({
                     name: (decl.name as Identifier).text,
@@ -231,7 +232,8 @@ namespace ts.mbit {
                         return {
                             name: n,
                             description: attrs.paramHelp[n] || "",
-                            type: typeToString(p.type)
+                            type: typeToString(p.type),
+                            initializer: p.initializer ? p.initializer.getText() : undefined
                         }
                     })
                 })

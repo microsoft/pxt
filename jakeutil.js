@@ -41,6 +41,7 @@ function expand(dir, ext) {
 function catFiles(out, files, pref) {
     if (pref == null) pref = '"use strict";'
     file(out, files, function () {
+        console.log("[cat] " + out + " <- " + files.join(" "))
         let cont = files.map(f => fs.readFileSync(f, "utf8").replace(/\r/g, ""))
         cont.unshift(pref)
         fs.writeFileSync(out, cont.join("\n"))
