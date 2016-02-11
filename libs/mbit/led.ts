@@ -1,11 +1,11 @@
-namespace led {    
+namespace led {
     /**
      * Toggles a particular pixel
-     * {namespace:led}
-     * {help:functions/toggle}
+     * @param x TODO
+     * @param y TODO
      */
-    export function toggle(x: number, y: number) : void
-    {
+    //% help=functions/toggle
+    export function toggle(x: number, y: number): void {
         if (led.point(x, y)) {
             led.unplot(x, y);
         }
@@ -16,11 +16,9 @@ namespace led {
 
     /**
      * Turns all LEDS on
-     * {namespace:led}
-     * {help:functions/plot-all}
      */
-    export function plotAll() : void
-    {
+    //% help=functions/plot-all
+    export function plotAll(): void {
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 5; j++) {
                 led.plot(i, j);
@@ -30,11 +28,9 @@ namespace led {
 
     /**
      * Inverts the current LED display
-     * {namespace:led}
-     * {help:functions/toggle-all}
      */
-    export function toggleAll() : void
-    {
+    //% help=functions/toggle-all
+    export function toggleAll(): void {
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 5; j++) {
                 led.toggle(i, j);
@@ -44,12 +40,10 @@ namespace led {
 
     /**
      * Fades in the screen display.
-     * {namespace:led}
-     * {hints:ms:700,2000}
-     * {help:functions/fade-in}
+     * @param ms TODO
      */
-    export function fadeIn(ms: number) : void
-    {
+    //% help=functions/fade-in
+    export function fadeIn(ms: number): void {
         if (ms < 20) {
             led.setBrightness(255);
             return;
@@ -68,12 +62,10 @@ namespace led {
 
     /**
      * Fades out the screen brightness.
-     * {namespace:led}
-     * {hints:ms:700,2000}
-     * {help:functions/fade-out}
+     * @param ms TODO
      */
-    export function fadeOut(ms: number) : void
-    {
+    //% help=functions/fade-out
+    export function fadeOut(ms: number): void {
         if (ms < 20) {
             led.setBrightness(0);
             return;
@@ -91,29 +83,12 @@ namespace led {
     }
 
     /**
-     * {shim:}
-     */
-    function testFade() : void
-    {
-        led.plot(2, 2);
-        while (true) {
-            led.fadeOut(700);
-            led.fadeIn(700);
-        }
-    }
-
-    /**
      * Takes a screenshot of the LED screen and returns an image.
-     * {namespace:led}
-     * {shim:uBit.display.screenShot}
-     * {help:functions/screenshot}
      */
-    export function screenshot() : Image
-    {
-        return null;
+    //% shim=uBit.display.screenShot async help=functions/screenshot
+    export function screenshot(): Image {
         /*
-        TODO
-        let img: micro_bit.Image;
+        let img: Image;
         img = image.createImage("");
         for (let i = 0; i < 5; i++) {
             for (let j = 0; j < 5; j++) {
@@ -124,36 +99,60 @@ namespace led {
         }
         return img;
         */
+        return null;
     }
 
     /**
      * Displays a vertical bar graph based on the ``value`` and ``high`` value.
-     * {hints:high:1023}
-     * {namespace:led}
-     * {help:/functions/plot-bar-graph}
-     * {weight:20}
+     * @param value TODO
+     * @param high TODO
      */
-    export function plotBarGraph(value: number, high: number) : void
-    {
-        // TODO
+    //% help=/functions/plot-bar-graph weight=20
+    //% block="plot bar graph |from %1 |to %2"
+    export function plotBarGraph(value: number, high: number): void {
         let v = pins.map(Math.abs(value), 0, high, 0, 5);
         if (v <= 0) {
-            basic.plotLeds("0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 1 0 0");
+            basic.plotLeds(`0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 1 0 0`);
         }
         else if (v == 1) {
-            basic.plotLeds("0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n1 1 1 1 1");
+            basic.plotLeds(`0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+1 1 1 1 1`);
         }
         else if (v == 2) {
-            basic.plotLeds("0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n1 1 1 1 1\n1 1 1 1 1");
+            basic.plotLeds(`0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+1 1 1 1 1
+1 1 1 1 1`);
         }
         else if (v == 3) {
-            basic.plotLeds("0 0 0 0 0\n0 0 0 0 0\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1");
+            basic.plotLeds(`0 0 0 0 0
+0 0 0 0 0
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1`);
         }
         else if (v == 4) {
-            basic.plotLeds("0 0 0 0 0\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1");
+            basic.plotLeds(`0 0 0 0 0
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1`);
         }
         else {
-            basic.plotLeds("1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1");
+            basic.plotLeds(`1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1`);
         }
     }
+
 }

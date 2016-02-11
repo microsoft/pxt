@@ -6,7 +6,7 @@
         "README.md",
         "core.d.ts",
         "mbit.ts",
-        "screen.ts"
+        "led.ts"
     ],
     "public": true,
     "dependencies": {}
