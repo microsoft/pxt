@@ -1213,7 +1213,7 @@ function compileNumberEvent(e: Environment, b: B.Block, event: string, args: str
 
 function compileImage(e: Environment, b: B.Block, big: boolean, n: string, f: string, args?: J.JExpr[]): J.JCall {
     args = args === undefined ? [] : args;
-    var state = "";
+    var state = "\n";
     var rows = 5;
     var columns = big ? 10 : 5;
     for (var i = 0; i < rows; ++i) {
@@ -1222,7 +1222,7 @@ function compileImage(e: Environment, b: B.Block, big: boolean, n: string, f: st
         for (var j = 0; j < columns; ++j) {
             if (j > 0)
                 state += ' ';
-            state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "1" : "0";
+            state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "#" : ".";
         }
     }
     return H.namespaceCall(n, f, [<J.JExpr>H.mkStringLiteral(state)].concat(args));
@@ -2011,6 +2011,11 @@ function tdASTtoTS(app: J.JApp) {
         return r
     }
 
+    function stringLit(s:string) {
+        if (s.length > 20 && /\n/.test(s))
+            return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
+        else return JSON.stringify(s)
+    }
 
     let byNodeType: Util.StringMap<(n: J.JNode) => void> = {
         app: (n: J.JApp) => {
@@ -2075,7 +2080,7 @@ function tdASTtoTS(app: J.JApp) {
         },
 
         stringLiteral: (n: J.JStringLiteral) => {
-            write(JSON.stringify(n.value))
+            output += stringLit(n.value) 
         },
 
         booleanLiteral: (n: J.JBooleanLiteral) => {
