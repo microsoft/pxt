@@ -16,6 +16,13 @@ namespace Util {
         throw new Error(msg)
     }
 
+    export function flatClone<T>(obj: T): T {
+        if (obj == null) return null
+        let r: any = {}
+        Object.keys(obj).forEach((k) => { r[k] = (obj as any)[k] })
+        return r;
+    }
+
     export function clone<T>(v: T): T {
         if (v == null) return null
         return JSON.parse(JSON.stringify(v))
@@ -165,7 +172,7 @@ namespace Util {
             ).split(/\s*[,،、]\s*/)
         return randomPick(awesomeAdj)
     }
-    
+
     export var isNodeJS = false;
 
     export interface HttpRequestOptions {

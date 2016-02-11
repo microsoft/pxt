@@ -6,7 +6,6 @@
         "outDir": "../built",
         "rootDir": ".",
         "newLine": "LF",
-        "module": "commonjs",
         "sourceMap": true
     }
 }

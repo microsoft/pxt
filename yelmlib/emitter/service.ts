@@ -81,12 +81,12 @@ namespace ts.mbit.service {
             return compile(v.options)
         },
 
-        fileDiags: v => fileDiags(v.fileName),
+        fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 
         allDiags: () => {
             let global = service.getCompilerOptionsDiagnostics() || []
             let byFile = host.getScriptFileNames().map(fileDiags)  
-            return global.concat(Util.concat(byFile))
+            return patchUpDiagnostics(global.concat(Util.concat(byFile)))
         },
     }
 

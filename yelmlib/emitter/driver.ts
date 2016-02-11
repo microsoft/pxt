@@ -19,16 +19,28 @@ namespace ts.mbit {
         diagnostics: Diagnostic[];
         success: boolean;
     }
-    
+
     export function getTsCompilerOptions(opts: CompileOptions) {
         let options = ts.getDefaultCompilerOptions()
 
         options.target = ScriptTarget.ES5;
-        options.module = ModuleKind.CommonJS;
+        options.module = ModuleKind.None;
         options.noImplicitAny = true;
         options.noImplicitReturns = true;
-        
+
         return options
+    }
+
+    export function patchUpDiagnostics(diags: Diagnostic[]) {
+        let highPri = diags.filter(d => d.code == 1148)
+        if (highPri.length > 0)
+            diags = highPri;
+        return diags.map(d => {
+            d = Util.flatClone(d)
+            if (d.code == 1148)
+                d.messageText = Util.lf("all symbols in top-level scope are always exported; please use a namespace if you want to export only some")
+            return d
+        })
     }
 
     export function compile(opts: CompileOptions) {
@@ -37,7 +49,7 @@ namespace ts.mbit {
             diagnostics: [],
             success: false
         }
-        
+
         let fileText = opts.fileSystem
         let setParentNodes = true
         let options = getTsCompilerOptions(opts)
@@ -73,7 +85,7 @@ namespace ts.mbit {
 
         // If we didn't have any syntactic errors, then also try getting the global and
         // semantic errors.
-        res.diagnostics = program.getOptionsDiagnostics().concat(program.getGlobalDiagnostics());        
+        res.diagnostics = program.getOptionsDiagnostics().concat(program.getGlobalDiagnostics());
 
         if (res.diagnostics.length == 0) {
             res.diagnostics = program.getSemanticDiagnostics();
@@ -83,6 +95,8 @@ namespace ts.mbit {
             const mbitOutput = emitMBit(program, host, opts);
             res.diagnostics = mbitOutput.diagnostics
         }
+
+        res.diagnostics = patchUpDiagnostics(res.diagnostics)
 
         if (res.diagnostics.length == 0)
             res.success = true
