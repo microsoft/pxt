@@ -218,6 +218,15 @@ namespace yelm {
             return this.getCompileOptionsAsync()
                 .then(opts => ts.mbit.compile(opts))
         }
+        
+        serviceAsync(op:string) {
+            return this.getCompileOptionsAsync()
+                .then(opts => {
+                    ts.mbit.service.performOperation("reset", {})
+                    ts.mbit.service.performOperation("setOpts", { options: opts })
+                    return ts.mbit.service.performOperation(op, {})
+                })
+        }
 
         initAsync(name: string) {
             return this.host().readFileAsync(this, configName)

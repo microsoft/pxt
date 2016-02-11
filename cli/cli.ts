@@ -230,6 +230,23 @@ function cmdRun() {
     cmdBuild(false, true)
 }
 
+function cmdService() {
+    let fn = "built/response.json"
+    mainPkg.serviceAsync(cmdArgs[0])
+        .then(res => {
+            if (res.errorMessage) {
+                console.error("Error calling service:", res.errorMessage)
+                process.exit(1)
+                return Promise.resolve()
+            } else {
+                return mainPkg.host().writeFileAsync(mainPkg, fn, JSON.stringify(res, null, 1))
+            }
+        })
+        .then(() => {
+            console.log("wrote results to " + fn)
+        })
+}
+
 
 function cmdBuild(deploy = false, run = false) {
     ensurePkgDir();
@@ -285,6 +302,7 @@ let cmds: Command[] = [
     { n: "build", f: cmdBuild, a: "", d: "build current package" },
     { n: "deploy", f: cmdDeploy, a: "", d: "build and deploy current package" },
     { n: "run", f: cmdRun, a: "", d: "build and run current package in the simulator" },
+    { n: "service", f: cmdService, a: "OPERATION", d: "simulate a query to web worker" },
     { n: "help", f: usage, a: "", d: "display this message" },
 
     { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call", o: 1 },

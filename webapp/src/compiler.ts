@@ -62,6 +62,7 @@ export function compileAsync() {
     return pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => compileCoreAsync(opts))
         .then(resp => {
+            workerOpAsync("blocks", {}).done(v => console.log(v))//TODO
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
             return resp

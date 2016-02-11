@@ -15,11 +15,11 @@ namespace ts.mbit {
         console.log(stringKind(n))
     }
 
-    function userError(msg: string):Error {
+    function userError(msg: string): Error {
         debugger;
         var e = new Error(msg);
         (<any>e).bitvmUserError = true;
-        throw e;        
+        throw e;
     }
 
     function isRefType(t: Type) {
@@ -81,11 +81,16 @@ namespace ts.mbit {
             isTopLevelFunctionDecl(decl)
     }
 
-    interface CommentAttrs {
+    export interface CommentAttrs {
         shim?: string;
         enumval?: string;
         helper?: string;
         async?: boolean;
+        block?: string;
+        
+        _name?: string;
+        jsDoc?: string;
+        paramHelp?: Util.StringMap<string>;
     }
 
     interface ClassInfo {
@@ -97,6 +102,159 @@ namespace ts.mbit {
     let lf = thumb.lf;
     let checker: TypeChecker;
 
+    function getComments(node: Node) {
+        let src = getSourceFileOfNode(node)
+        let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
+        if (!doc) return "";
+        let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
+        return cmt;
+    }
+
+    function parseComments(node: Node): CommentAttrs {
+        if (!node) return {}
+        let cmt = getComments(node)
+        let res: CommentAttrs = {}
+        let didSomething = true
+        while (didSomething) {
+            didSomething = false
+            cmt = cmt.replace(/\/\/%[ \t]*(\w+)(=("([^"\n]+)"|'([^'\n]+)'|([^\s]+)))?/,
+                (f: string, n: string, d0: string, d1: string,
+                    v0: string, v1: string, v2: string) => {
+                    let v = d0 ? (v0 || v1 || v2) : "true";
+                    (<any>res)[n] = v;
+                    didSomething = true
+                    return "//% "
+                })
+        }
+
+        res.paramHelp = {}
+        res.jsDoc = ""
+        res._name = getName(node)
+        cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
+            doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
+            doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
+                res.paramHelp[name] = desc
+                return ""
+            })
+            res.jsDoc += doccmt
+            return ""
+        })
+
+        res.jsDoc = res.jsDoc.trim()
+
+        return res
+    }
+
+    export interface ParameterDesc {
+        name: string;
+        description: string;
+        type: string;
+    }
+
+    export interface BlockFunc {
+        attributes: CommentAttrs;
+        name: string;
+        namespace: string;
+        isMethod: boolean;
+        parameters: ParameterDesc[];
+        retType: string;
+    }
+    
+    export interface BlockEnum {
+        name: string;
+        values: CommentAttrs[];
+    }
+    
+    export interface BlockInfo {
+        functions: BlockFunc[];
+        enums: BlockEnum[];
+    }
+
+    function getName(node: Node & { name?: Identifier | BindingPattern; }) {
+        if (!node.name || node.name.kind != SyntaxKind.Identifier)
+            return "???"
+        return (node.name as Identifier).text
+    }
+
+    function typeToString(t: TypeNode) {
+        return t.getText()
+    }
+
+    export function getBlocks(program: Program) {
+        let funDecls: FunctionLikeDeclaration[] = []
+        let enumDecls: EnumDeclaration[] = []
+
+        let collectDecls = (stmt: Node) => {
+            if (stmt.kind == SyntaxKind.ModuleDeclaration) {
+                let mod = <ModuleDeclaration>stmt
+                if (mod.body.kind == SyntaxKind.ModuleBlock) {
+                    let blk = <ModuleBlock>mod.body
+                    blk.statements.forEach(collectDecls)
+                }
+            } else if (stmt.kind == SyntaxKind.InterfaceDeclaration) {
+                let iface = stmt as InterfaceDeclaration
+                iface.members.forEach(collectDecls)
+            } else {
+                if (stmt.kind == SyntaxKind.FunctionDeclaration || stmt.kind == SyntaxKind.MethodDeclaration)
+                    funDecls.push(<any>stmt)
+                if (stmt.kind == SyntaxKind.EnumDeclaration)
+                    enumDecls.push(<any>stmt)
+            }
+        }
+
+        for (let srcFile of program.getSourceFiles()) {
+            srcFile.statements.forEach(collectDecls)
+        }
+
+        let res: BlockInfo = {
+            functions: [],
+            enums: enumDecls.map(e => {
+                return {
+                    name: getName(e),
+                    values: e.members.map(m => parseComments(m))
+                }
+            })
+        }
+
+        for (let decl of funDecls) {
+            let attrs = parseComments(decl)
+            attrs.block = "needs to be added" // TODO remove me
+            if (attrs.block) {
+                res.functions.push({
+                    name: (decl.name as Identifier).text,
+                    namespace: getNamespace(decl),
+                    isMethod: decl.kind == SyntaxKind.MethodDeclaration,
+                    attributes: attrs,
+                    retType: typeToString(decl.type),
+                    parameters: decl.parameters.map(p => {
+                        let n = getName(p)
+                        return {
+                            name: n,
+                            description: attrs.paramHelp[n] || "",
+                            type: typeToString(p.type)
+                        }
+                    })
+                })
+            }
+        }
+
+        return res
+    }
+
+    function getNamespace(decl: Node): string {
+        if (!decl) return ""
+        decl = decl.parent
+        if (!decl) return ""
+        let upper = getNamespace(decl)
+        switch (decl.kind) {
+            case SyntaxKind.ModuleBlock:
+                return upper
+            case SyntaxKind.ModuleDeclaration:
+                return (upper ? upper + "." : "") + getName(decl as ModuleDeclaration)
+            default:
+                return "";
+        }
+    }
 
     function isArrayType(t: Type) {
         return (t.flags & TypeFlags.Reference) && t.symbol.name == "Array"
@@ -529,31 +687,6 @@ namespace ts.mbit {
             markUsed(decl)
             return decl
         }
-        function getComments(node: Node) {
-            let src = getSourceFileOfNode(node)
-            let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
-            if (!doc) return "";
-            let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
-            return cmt;
-        }
-        function parseComments(node: Node): CommentAttrs {
-            if (!node) return {}
-            let cmt = getComments(node)
-            let res = {}
-            let didSomething = true
-            while (didSomething) {
-                didSomething = false
-                cmt = cmt.replace(/\/\/%[ \t]*(\w+)(=("([^"\n]+)"|'([^'\n]+)'|([^\s]+)))?/,
-                    (f: string, n: string, d0: string, d1: string,
-                        v0: string, v1: string, v2: string) => {
-                        let v = d0 ? (v0 || v1 || v2) : "true";
-                        (<any>res)[n] = v;
-                        didSomething = true
-                        return "//% "
-                    })
-            }
-            return res
-        }
         function isRefExpr(e: Expression) {
             // we generate a fake NULL expression for default arguments
             if (e.kind == SyntaxKind.NullKeyword)
@@ -616,7 +749,7 @@ namespace ts.mbit {
                     return false;
             }
         }
-        
+
         function emitPlainCall(decl: Declaration, args: Expression[], hasRet = false) {
             args.forEach(emit)
             let mode = hasRet ? "F0" : "P0"
@@ -742,7 +875,7 @@ namespace ts.mbit {
                 if (classDecl.kind != SyntaxKind.ClassDeclaration) {
                     userError("new expression only supported on class types")
                 }
-                let ctor = classDecl.members.filter(n => n.kind == SyntaxKind.Constructor)[0]                
+                let ctor = classDecl.members.filter(n => n.kind == SyntaxKind.Constructor)[0]
                 let info = getClassInfo(t)
                 proc.emitInt(info.reffields.length)
                 proc.emitInt(info.allfields.length)
@@ -754,7 +887,7 @@ namespace ts.mbit {
                     let args = node.arguments.slice(0)
                     addDefaultParameters(checker.getResolvedSignature(node), args)
                     // this will emit and pop all arguments, and decrement the record ref count, but leave it on stack
-                    emitPlainCall(ctor, args, false)                    
+                    emitPlainCall(ctor, args, false)
                 } else {
                     if (node.arguments && node.arguments.length)
                         userError(lf("constructor with arguments not found"));
@@ -1035,7 +1168,7 @@ namespace ts.mbit {
                 let bexpr = <BinaryExpression>node
                 return (bexpr.operatorToken.kind == SyntaxKind.EqualsToken)
             }
-            
+
             return false
         }
 

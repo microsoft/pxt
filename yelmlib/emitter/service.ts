@@ -88,6 +88,10 @@ namespace ts.mbit.service {
             let byFile = host.getScriptFileNames().map(fileDiags)  
             return patchUpDiagnostics(global.concat(Util.concat(byFile)))
         },
+        
+        blocks: () => {
+            return mbit.getBlocks(service.getProgram())
+        },
     }
 
     export function performOperation(op: string, arg: OpArg) {

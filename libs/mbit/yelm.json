@@ -1,7 +1,7 @@
 {
     "name": "mbit",
     "description": "The base mbit library",
-    "installedVersion": "jhublt",
+    "installedVersion": "hgdjzr",
     "files": [
         "README.md",
         "core.d.ts",
