@@ -21,6 +21,7 @@ namespace rt {
     export class Runtime {
         private baseStack = 1000000;
         private freeStacks: number[] = [];
+        public state : state.IBoard = state.createBoard();
         numGlobals = 1000;
         mem: any;
         errorHandler: (e: any) => void;
