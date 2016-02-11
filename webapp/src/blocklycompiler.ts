@@ -2036,18 +2036,17 @@ function tdASTtoTS(app: J.JApp) {
             emit(n.expr)
             if (currInlineAction.isImplicit) {
                 output = output.replace(/\)\s*$/, "")
-                write(", ")
+                if (!/\($/.test(output))
+                    write(", ")
                 emit(currInlineAction)
                 output = output.replace(/\s*$/, "")
                 write(")")
             }
             write(";\n")
-            byNodeType["exprStmt"](n)
         },
 
         exprHolder: (n: J.JExprHolder) => {
             let toks = flatten(n.tree)
-            console.log(toks)
             toks.forEach(emit)
         },
 
@@ -2079,7 +2078,12 @@ function tdASTtoTS(app: J.JApp) {
             write(JSON.stringify(n.value))
         },
 
+        booleanLiteral: (n: J.JBooleanLiteral) => {
+            write(n.value ? "true" : "false")
+        },
+
         "if": (n: J.JIf) => {
+            if (n.isElseIf) write("else ")
             write("if (")
             emit(n.condition)
             write(") ")

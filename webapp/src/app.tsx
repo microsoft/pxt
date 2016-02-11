@@ -181,6 +181,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     saveFileAsync() {
         if (!this.editorFile)
             return Promise.resolve()
+        this.saveTypeScript()
         return this.editorFile.setContentAsync(this.editor.getCurrentSource())
     }
 
@@ -332,7 +333,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     compile() {
-        this.saveTypeScript()
         compiler.compileAsync()
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile)
