@@ -811,7 +811,7 @@ namespace music {
 
 }
 
-export interface Image {
+interface Image {
     /**
      * Shows an frame from the image at offset ``x offset``.
      * @param xOffset TODO
