@@ -35,6 +35,10 @@ namespace ts.mbit {
         return isRefType(tp)
     }
 
+    function isStringLiteral(node: Node) {
+        return (node.kind == SyntaxKind.StringLiteral || node.kind == SyntaxKind.NoSubstitutionTemplateLiteral)
+    }
+
     function getEnclosingMethod(node: Node): MethodDeclaration {
         if (!node) return null;
         if (node.kind == SyntaxKind.MethodDeclaration || node.kind == SyntaxKind.Constructor)
@@ -87,7 +91,8 @@ namespace ts.mbit {
         helper?: string;
         async?: boolean;
         block?: string;
-        
+        imageLiteral?: boolean;
+
         _name?: string;
         jsDoc?: string;
         paramHelp?: Util.StringMap<string>;
@@ -160,12 +165,12 @@ namespace ts.mbit {
         parameters: ParameterDesc[];
         retType: string;
     }
-    
+
     export interface BlockEnum {
         name: string;
         values: CommentAttrs[];
     }
-    
+
     export interface BlockInfo {
         functions: BlockFunc[];
         enums: BlockEnum[];
@@ -520,6 +525,56 @@ namespace ts.mbit {
             return info;
         }
 
+        function emitImageLiteral(s: string): LiteralExpression {
+            if (!s)
+                s = "0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n";
+
+            let x = 0;
+            let w = 0;
+            let h = 0;
+            let lit = "";
+            s += "\n"
+            for (let i = 0; i < s.length; ++i) {
+                switch (s[i]) {
+                    case ".":
+                    case "_":
+                    case "0": lit += "0,"; x++; break;
+                    case "#":
+                    case "*":
+                    case "1": lit += "1,"; x++; break;
+                    case "\t":
+                    case "\r":
+                    case " ": break;
+                    case "\n":
+                        if (x) {
+                            if (w == 0)
+                                w = x;
+                            else if (x != w)
+                                userError(lf("lines in image literal have to have the same width (got {0} and then {1} pixels)", w, x))
+                            x = 0;
+                            h++;
+                        }
+                        break;
+                    default:
+                        userError(lf("Only 0 . _ (off) and 1 # * (on) are allowed in image literals"))
+                }
+            }
+
+            var lbl = "_img" + bin.lblNo++
+
+            bin.emitLiteral(".balign 4");
+            bin.emitLiteral(lbl + ": .short 0xffff")
+            bin.emitLiteral("        .short " + w + ", " + h)
+            if (lit.length % 4 != 0)
+                lit += "42" // pad
+            bin.emitLiteral("        .byte " + lit)
+
+            return <any>{
+                kind: SyntaxKind.NumericLiteral,
+                imageLiteral: lbl
+            }
+        }
+
         function emitLocalLoad(decl: VarOrParam) {
             let l = lookupLocation(decl)
             recordUse(decl)
@@ -561,8 +616,11 @@ namespace ts.mbit {
         function emitSuper(node: Node) { }
         function emitLiteral(node: LiteralExpression) {
             if (node.kind == SyntaxKind.NumericLiteral) {
-                proc.emitInt(parseInt(node.text))
-            } else if (node.kind == SyntaxKind.StringLiteral) {
+                if ((<any>node).imageLiteral)
+                    proc.emitLdPtr((<any>node).imageLiteral, true)
+                else
+                    proc.emitInt(parseInt(node.text))
+            } else if (isStringLiteral(node)) {
                 if (node.text == "") {
                     proc.emitCall("string::mkEmpty", 0)
                 } else {
@@ -691,8 +749,12 @@ namespace ts.mbit {
         }
         function isRefExpr(e: Expression) {
             // we generate a fake NULL expression for default arguments
-            if (e.kind == SyntaxKind.NullKeyword)
+            // we also generate a fake numeric literal for image literals
+            if (e.kind == SyntaxKind.NullKeyword || e.kind == SyntaxKind.NumericLiteral)
                 return false
+            //TODO - check this:
+            // if (isStringLiteral(e))
+            //    return false
             return isRefType(typeOf(e))
         }
         function getMask(args: Expression[]) {
@@ -764,7 +826,7 @@ namespace ts.mbit {
                 proc.emit("push {r0}");
         }
 
-        function addDefaultParameters(sig: Signature, args: Expression[]) {
+        function addDefaultParameters(sig: Signature, args: Expression[], attrs: CommentAttrs) {
             if (!sig) return;
             let parms = sig.getParameters();
             if (parms.length > args.length) {
@@ -787,6 +849,14 @@ namespace ts.mbit {
                     }
                 })
             }
+
+            if (attrs.imageLiteral) {
+                if (!isStringLiteral(args[0])) {
+                    userError(lf("Only image literals (string literals) supported here; {0}", stringKind(args[0])))
+                }
+
+                args[0] = emitImageLiteral((args[0] as StringLiteral).text)
+            }
         }
 
         function emitCallExpression(node: CallExpression) {
@@ -802,7 +872,7 @@ namespace ts.mbit {
                 emitPlainCall(decl, args, hasRet)
             }
 
-            addDefaultParameters(checker.getResolvedSignature(node), args);
+            addDefaultParameters(checker.getResolvedSignature(node), args, attrs);
 
             if (decl.kind == SyntaxKind.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
@@ -887,7 +957,7 @@ namespace ts.mbit {
                     proc.emitCallRaw("bitvm::incr")
                     // here the record is still on stack
                     let args = node.arguments.slice(0)
-                    addDefaultParameters(checker.getResolvedSignature(node), args)
+                    addDefaultParameters(checker.getResolvedSignature(node), args, parseComments(ctor))
                     // this will emit and pop all arguments, and decrement the record ref count, but leave it on stack
                     emitPlainCall(ctor, args, false)
                 } else {
@@ -1589,8 +1659,8 @@ namespace ts.mbit {
                     return emitBlock(<Block>node);
                 case SyntaxKind.NumericLiteral:
                 case SyntaxKind.StringLiteral:
-                    //case SyntaxKind.RegularExpressionLiteral:
-                    //case SyntaxKind.NoSubstitutionTemplateLiteral:
+                case SyntaxKind.NoSubstitutionTemplateLiteral:
+                    //case SyntaxKind.RegularExpressionLiteral:                    
                     //case SyntaxKind.TemplateHead:
                     //case SyntaxKind.TemplateMiddle:
                     //case SyntaxKind.TemplateTail:

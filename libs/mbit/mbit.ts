@@ -448,28 +448,25 @@ namespace serial {
 namespace basic {
     /**
      * Shows a sequence of LED screens as an animation with an ``interval`` delay between each frame
-     * {language:leds:bitmatrix}
      * @param leds TODO
      * @param interval TODO
      */
-    //% help=functions/show-animation shim=micro_bit::showAnimation
+    //% help=functions/show-animation shim=micro_bit::showAnimation imageLiteral
     export function showAnimation(leds: string, interval: number) : void {}
 
     /**
      * Draws an image on the LED screen and pauses for the given milliseconds.
-     * {language:leds:bitframe}
      * @param leds TODO
      * @param ms TODO
      */
-    //% help=functions/show-leds weight=95 shim=micro_bit::showLeds
+    //% help=functions/show-leds weight=95 shim=micro_bit::showLeds imageLiteral
     export function showLeds(leds: string, ms: number) : void {}
 
     /**
      * Draws an image on the LED screen.
-     * {language:leds:bitframe}
      * @param leds TODO
      */
-    //% help=functions/plot-leds weight=80 shim=micro_bit::plotLeds async
+    //% help=functions/plot-leds weight=80 shim=micro_bit::plotLeds async imageLiteral
     export function plotLeds(leds: string) : void {}
 }
 

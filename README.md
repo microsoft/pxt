@@ -10,7 +10,7 @@ jake
 
 ## TODO
 
-* [ ] image literals
+* [x] image literals
 * [x] code in top-level scope
 * [x] only compile what's needed
 * [x] don't emit unused global vars
