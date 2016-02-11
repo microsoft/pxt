@@ -9,7 +9,7 @@ enum Button {
     AB,
 }
 
-enum Dimesion {
+enum Dimension {
     //% enumval=0
     X,
     //% enumval=1
@@ -809,4 +809,13 @@ namespace music {
         playTone(frequency, ms);
     }
 
+}
+
+export interface Image {
+    /**
+     * Shows an frame from the image at offset ``x offset``.
+     * @param xOffset TODO
+     */
+    //% help=functions/show-image weight=69 shim=micro_bit::showImage
+    showImage(xOffset: number) : void;
 }
