@@ -519,10 +519,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 <div id="menubar">
                     <div className={"ui menu" + inv}>
                         <div className="item">
-                            <sui.Button class='primary' icon='attach' text={lf("Compile") } onClick={() => this.compile() } />
-                            <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
-                        </div>
-                        <div className="item">
                             <SlotSelector parent={this} />
                         </div>
                         <div className="item">
@@ -555,6 +551,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
                         <simview.MbitBoardView ref="simulator" theme={simsvg.randomTheme() } />
+                    </div>
+                    <div className="item">
+                        <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
+                        <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />
                     </div>
                     <div className={"ui vertical menu filemenu " + inv}>
                         {files}
