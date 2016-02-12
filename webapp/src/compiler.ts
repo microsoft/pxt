@@ -58,15 +58,17 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.length
 }
 
+export function getBlocksAsync() {
+    return typecheckAsync()
+        .then(() => workerOpAsync("blocks", {}))
+        .then(v => v as ts.mbit.BlockInfo)
+}
+
 export function compileAsync() {
     return pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => compileCoreAsync(opts))
         .then(resp => {
             // TODO remove this
-            workerOpAsync("blocks", {}).done(v => {
-                console.log(JSON.stringify(v.functions, null, 1))
-                console.log(v)                
-            })
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
             return resp

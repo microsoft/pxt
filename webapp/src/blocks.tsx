@@ -7,6 +7,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as blocklycompiler from "./blocklycompiler"
+import * as compiler from "./compiler"
 
 
 var lf = Util.lf
@@ -35,6 +36,7 @@ function toolboxToXml(toolbox: ToolboxCategory[]): string {
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
+    loadingXml: boolean;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -58,9 +60,17 @@ export class Editor extends srceditor.Editor {
 
     domUpdate() {
         if (this.delayLoadXml) {
-            var xml = this.delayLoadXml;
-            this.delayLoadXml = undefined;
-            this.loadBlockly(xml);
+            if (this.loadingXml) return
+            this.loadingXml = true
+            compiler.getBlocksAsync()
+                .finally(() => { this.loadingXml = false })
+                .then(blockInfo => {
+                    console.log(blockInfo)
+                    var xml = this.delayLoadXml;
+                    this.delayLoadXml = undefined;
+                    this.loadBlockly(xml);
+                })
+                .done()
         }
     }
 
@@ -69,7 +79,7 @@ export class Editor extends srceditor.Editor {
         // otherwise it may get saved and we're in trouble
         if (this.delayLoadXml)
             return this.delayLoadXml;
-            
+
         var xml = Blockly.Xml.workspaceToDom(this.editor);
         var text = Blockly.Xml.domToPrettyText(xml);
         return text;
