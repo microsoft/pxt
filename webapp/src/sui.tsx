@@ -178,3 +178,39 @@ export class Input extends data.Component<{
         );
     }
 }
+
+export class Modal extends data.Component<{ 
+    children?: any;
+    addClass?: string;
+    headerClass?: string;
+    header: string;    
+}, {
+    visible?: boolean;
+}> {
+    show() {
+        this.setState({ visible: true })
+    }
+    
+    hide() {
+        this.setState({ visible: false })
+    }
+    
+    renderCore() {
+        if (!this.state.visible) return null;
+        return (
+            <div className="ui mydimmer dimmer modals page transition visible active" onClick={ev => {
+                if (/mydimmer/.test((ev.target as HTMLElement).className))
+                    this.hide()
+            } }>
+                <div className={"ui modal transition visible active " + (this.props.addClass || "")}>
+                    <div className={"ui top attached label " + (this.props.headerClass || "teal")}>
+                        {this.props.header}
+                        <i className='cancel link icon' onClick={() => this.hide()}/>
+                    </div>
+                    {this.props.children}
+                </div>
+            </div>
+        );
+    }
+}
+
