@@ -1029,10 +1029,14 @@ namespace ts.mbit {
             proc.emit("@stackempty litfunc");
         }
 
-        function emitFunLit(node: FunctionLikeDeclaration) {
+        function emitFunLit(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node) + "_Lit"
             proc.emit("@js r0 = " + lbl)
             proc.emitLdPtr(lbl, true)
+            if (!raw) {
+                // TODO rename this to functionData or something
+                proc.emitCall("bitvm::stringData", 0)
+            }
         }
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
@@ -1069,7 +1073,7 @@ namespace ts.mbit {
                 assert(getEnclosingFunction(node) != null)
                 proc.emitInt(refs.length)
                 proc.emitInt(caps.length)
-                emitFunLit(node)
+                emitFunLit(node, true)
                 proc.emitCall("action::mk", 0)
                 caps.forEach((l, i) => {
                     proc.emitInt(i)
@@ -1088,8 +1092,6 @@ namespace ts.mbit {
             } else {
                 if (isExpression) {
                     emitFunLit(node)
-                    // TODO rename this to functionData or something
-                    proc.emitCall("bitvm::stringData", 0)
                 }
             }
 

@@ -92,6 +92,7 @@ function defaultArgs(x: number, y = 3, z = 7) {
 }
 
 function testDefaultArgs() {
+    msg("testDefaultArgs");
     assert(defaultArgs(1) == 11, "defl0")
     assert(defaultArgs(1, 4) == 12, "defl1")
     assert(defaultArgs(1, 4, 8) == 13, "defl2")
@@ -296,8 +297,11 @@ function inBg() {
         glb1 = glb1 + 10 + (q - k)
         rec.str = "foo"
     })
+    control.inBackground(() => {
+        glb1 = glb1 + 1
+    })
     basic.pause(50)
-    assert(glb1 == 17, "inbg0")
+    assert(glb1 == 18, "inbg0")
     assert(rec.str == "foo", "inbg1")
 }
 
@@ -305,6 +309,7 @@ function runTwice(fn: Action): void {
     msg("r2 start");
     fn();
     fn();
+    msg("r2 stop");
 }
 
 function iter(max: number, fn: (v: number) => void) {
@@ -339,6 +344,7 @@ function add7() {
 }
 
 function testFunDecl() {
+    msg("testFunDecl");
     let x = 12;
     sum = 0;
     function addX() {
@@ -349,7 +355,9 @@ function testFunDecl() {
     }
     runTwice(addX)
     assert(sum == 24, "cap")
+    msg("testAdd10");
     runTwice(add10);
+    msg("end-testAdd10");
     assert(sum == 44, "nocap");
     runTwice(add7);
     assert(sum == 44 + 14, "glb")
@@ -481,6 +489,7 @@ function byRefParam_2(pxx: number): void {
 }
 
 function testByRefParams(): void {
+    msg("testByRefParams");
     refparamWrite("a" + "b");
     refparamWrite2(new Testrec());
     refparamWrite3(new Testrec());
@@ -519,9 +528,9 @@ function refparamWrite3(testrec: Testrec): void {
     assert(testrec.str == "foox", "ff");
 }
 
-
 function testMemoryFree() : void
 {
+    msg("testMemoryFree");
     for (let i = 0; i < 1000; i++) {
         allocImage();
     }
@@ -538,6 +547,7 @@ function createObj() {
 
 function testMemoryFreeHOF() : void
 {
+    msg("testMemoryFreeHOF");
     for (let i = 0; i < 1000; i++) {
         runOnce(() => {
             let tmp = createObj();
