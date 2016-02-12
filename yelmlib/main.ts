@@ -255,12 +255,12 @@ namespace yelm {
                 })
         }
 
-        filesToBePublishedAsync() {
+        filesToBePublishedAsync(allowPrivate = false) {
             let files: Util.StringMap<string> = {};
 
             return this.loadAsync()
                 .then(() => {
-                    if (!this.config.public)
+                    if (!allowPrivate && !this.config.public)
                         Util.userError('Only packages with "public":true can be published')
                     let cfg = Util.clone(this.config)
                     delete cfg.installedVersion

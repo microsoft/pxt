@@ -30,6 +30,7 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
     componentDidMount() {
         this.child("").dropdown({
             action: "hide",
+            fullTextSearch: true,
             onChange: (v: string) => {
                 if (this.props.onChange && v != this.props.value) {
                     this.props.onChange(v)

@@ -146,6 +146,10 @@ export class EditorPackage {
             this.savePkgAsync().done();
         }, 5000)
     }
+    
+    getAllFiles() {
+        return Util.mapStringMap(this.files, (k, f) => f.content)
+    }
 
     saveFilesAsync() {
         if (!this.header) return Promise.resolve();
@@ -158,8 +162,7 @@ export class EditorPackage {
             } catch (e) {
             }
         }
-        let files = Util.mapStringMap(this.files, (k, f) => f.content)
-        return workspace.saveAsync(this.header, files)
+        return workspace.saveAsync(this.header, this.getAllFiles())
             .then(() => this.scheduleSave())
     }
 

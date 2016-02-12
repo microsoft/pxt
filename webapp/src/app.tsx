@@ -118,8 +118,8 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
             this.setState({ searchFor: (v.target as any).value })
         };
         let parent = this.props.parent
-        let hide = () => parent.setState({ searchVisible: false })        
-        let install = (scr:Cloud.JsonScript) => {
+        let hide = () => parent.setState({ searchVisible: false })
+        let install = (scr: Cloud.JsonScript) => {
             hide()
             workspace.installByIdAsync(scr.id)
                 .then(r => {
@@ -131,7 +131,7 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
             <div className="ui dimmer modals page transition visible active" onClick={ev => {
                 if (/dimmer/.test((ev.target as HTMLElement).className))
                     hide()
-            }}>
+            } }>
                 <div className="ui small modal transition visible active searchdialog">
                     <div className="ui top attached label teal">
                         {lf("Search for scripts...") }
@@ -446,10 +446,34 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     publish() {
-        core.shareLinkAsync({
-            header: lf("Link to your project"),
-            link: "https://example.com/"
-        })
+        let mpkg = pkg.mainPkg
+        let epkg = pkg.getEditorPkg(mpkg)
+        core.infoNotification(lf("Publishing..."))
+        //let loading = core.showLoading(lf("Publishing..."))        
+        this.saveFileAsync()
+            .then(() => mpkg.filesToBePublishedAsync(true))
+            .then(files => {
+                if (epkg.header.pubCurrent)
+                    return Promise.resolve(epkg.header.pubId)
+                let meta = {
+                    description: mpkg.config.description,
+                    islibrary: false
+                }
+                return workspace.publishAsync(epkg.header, files, meta)
+                    .then(inf => inf.id)
+            })
+            .then(inf => {
+                //    loading.remove(); 
+                return inf;
+            })
+            .then(inf => core.shareLinkAsync({
+                header: lf("Link to your project"),
+                link: "/" + inf
+            }))
+            .catch(e => {
+                //loading.remove()
+                core.errorNotification(e.message)
+            })
             .done()
     }
 

@@ -5,7 +5,7 @@ import * as data from "./data";
 import * as pkg from "./package";
 
 let dimmer = `
-<div class="ui page dimmer">
+<div class="ui page dimmer" id='loading'>
   <div class="content">
     <div class="ui text large loader msg">Please wait</div>
   </div>

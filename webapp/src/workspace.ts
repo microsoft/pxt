@@ -172,6 +172,37 @@ function saveCoreAsync(h: Header, text?: ScriptText) {
     })
 }
 
+export interface ScriptMeta {
+    description: string;
+    islibrary: boolean;
+}
+
+export function publishAsync(h: Header, text: ScriptText, meta:ScriptMeta) {
+    let saveId = {}
+    let e = lookup(h.id)
+    h.saveId = saveId
+    let stext = JSON.stringify(text, null, 2) + "\n" 
+    let scrReq = {
+        baseid: h.pubId,
+        name: h.name,
+        description: meta.description,
+        islibrary: meta.islibrary,
+        ishidden: false,
+        userplatform: ["yelm-web"],
+        editor: h.editor,
+        text: stext
+    }
+    console.log(`publishing script; ${stext.length} bytes`)
+    return Cloud.privatePostAsync("scripts", scrReq)
+        .then((inf:Cloud.JsonScript) => {
+            h.pubId = inf.id
+            h.pubCurrent = h.saveId === saveId            
+            console.log(`published; id /${inf.id}`)
+            return saveAsync(h)
+                .then(() => inf)
+        })
+}
+
 export function saveAsync(h: Header, text?: ScriptText) {
     if (text || h.isDeleted) {
         h.pubCurrent = false
