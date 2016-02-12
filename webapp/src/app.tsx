@@ -339,11 +339,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             name: lf("{0} bit", Util.getAwesomeAdj()),
             dependencies: { mbit: "*" },
             description: "",
-            files: ["main.ts"]
+            files: ["main.ts", "README.md"]
         }
         let files: workspace.ScriptText = {
             "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
-            "main.ts": `basic.showString("Hi!")\n`
+            "main.ts": `basic.showString("Hi!")\n`,
+            "README.md": lf("Describe your project here!")
         }
         workspace.installAsync({
             name: cfg.name,
@@ -363,12 +364,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             name: lf("{0} block", Util.getAwesomeAdj()),
             dependencies: { mbit: "*" },
             description: "",
-            files: ["main.blocks", "main.blocks.ts"]
+            files: ["main.blocks", "main.blocks.ts", "README.md"]
         }
         let files: workspace.ScriptText = {
             "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
             "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
-            "main.blocks.ts": "\n"
+            "main.blocks.ts": "\n",
+            "README.md": lf("Describe your project here!")
         }
         workspace.installAsync({
             name: cfg.name,
