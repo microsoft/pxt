@@ -23,7 +23,6 @@ interface IAppState {
     currFile?: pkg.File;
     theme?: srceditor.Theme;
     fileState?: string;
-    searchVisible?: boolean;
     showFiles?: boolean;
 }
 
@@ -108,6 +107,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
 
 class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }> {
     prevData: Cloud.JsonScript[] = [];
+    modal: sui.Modal;
 
     renderCore() {
         let res = this.state.searchFor ?
@@ -118,45 +118,34 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
         let upd = (v: any) => {
             this.setState({ searchFor: (v.target as any).value })
         };
-        let parent = this.props.parent
-        let hide = () => parent.setState({ searchVisible: false })
         let install = (scr: Cloud.JsonScript) => {
-            hide()
+            if (this.modal) this.modal.hide();
             workspace.installByIdAsync(scr.id)
                 .then(r => {
-                    parent.loadHeader(r)
+                    this.props.parent.loadHeader(r)
                 })
                 .done()
         }
         return (
-            <div className="ui dimmer modals page transition visible active" onClick={ev => {
-                if (/dimmer/.test((ev.target as HTMLElement).className))
-                    hide()
-            } }>
-                <div className="ui small modal transition visible active searchdialog">
-                    <div className="ui top attached label teal">
-                        {lf("Search for scripts...") }
-                        <i className='cancel link icon' onClick={hide}/>
+            <sui.Modal ref={v => this.modal = v} header={lf("Search for scripts...") } addClass="small searchdialog" >
+                <div className="ui content form">
+                    <div className="ui fluid icon input">
+                        <input type="text" placeholder="Search..." onChange={upd} />
+                        <i className="search icon"/>
                     </div>
-                    <div className="ui content form">
-                        <div className="ui fluid icon input">
-                            <input type="text" placeholder="Search..." onChange={upd} />
-                            <i className="search icon"/>
-                        </div>
-                        <div className="ui relaxed divided list">
-                            {data.map(scr =>
-                                <div className="item" onClick={() => install(scr) }>
-                                    <i className="large file middle aligned icon"></i>
-                                    <div className="content">
-                                        <a className="header">{scr.name} /{scr.id}</a>
-                                        <div className="description">{Util.timeSince(scr.time) } by {scr.username}</div>
-                                    </div>
+                    <div className="ui relaxed divided list">
+                        {data.map(scr =>
+                            <div className="item" onClick={() => install(scr) }>
+                                <i className="large file middle aligned icon"></i>
+                                <div className="content">
+                                    <a className="header">{scr.name} /{scr.id}</a>
+                                    <div className="description">{Util.timeSince(scr.time) } by {scr.username}</div>
                                 </div>
-                            ) }
-                        </div>
+                            </div>
+                        ) }
                     </div>
                 </div>
-            </div>
+            </sui.Modal>
         );
     }
 }
@@ -181,6 +170,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
+    scriptSearch: ScriptSearch;
 
     constructor(props: IAppProps) {
         super(props);
@@ -450,7 +440,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let mpkg = pkg.mainPkg
         let epkg = pkg.getEditorPkg(mpkg)
         core.infoNotification(lf("Publishing..."))
-        core.showLoading(lf("Publishing..."))        
+        core.showLoading(lf("Publishing..."))
         this.saveFileAsync()
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
@@ -514,11 +504,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
 
         let inv = this.state.theme.inverted ? " inverted " : " "
-        let filelist : JSX.Element = undefined;
+        let filelist: JSX.Element = undefined;
         if (this.state.showFiles)
             filelist = <div className={"ui vertical menu filemenu " + inv}>
-                        {files}
-                    </div>        
+                {files}
+            </div>
 
         return (
             <div id='root' className={"full-abs " + inv}>
@@ -537,7 +527,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <div className="divider"></div>
                                 <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
-                                <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.setState({ searchVisible: true }) } />
+                                <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
                             </sui.Dropdown>
                             <sui.Button class='red' icon='trash' onClick={() => this.removeProject() } />
                         </div>
@@ -561,16 +551,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="item">
                         <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
                         <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />
-                        <sui.Button icon='folder' onClick={() => this.setState({ showFiles: !this.state.showFiles })} />
-                    </div>         
-                    {filelist}           
+                        <sui.Button icon='folder' onClick={() => this.setState({ showFiles: !this.state.showFiles }) } />
+                    </div>
+                    {filelist}
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
-                {this.state.searchVisible ?
-                    <ScriptSearch parent={this} /> :
-                    null}
+                <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
             </div>
         );
     }
