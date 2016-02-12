@@ -179,3 +179,69 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
         }
     }).done()
 }
+
+export interface ShareOptions {
+    header: string;
+    body?: string;
+    link: string;
+    okClass?: string;
+    okIcon?: string;
+    okLabel?: string;
+}
+
+export function shareLinkAsync(options: ShareOptions) {
+    let html = `
+  <div class="ui small modal">
+    <div class="header">
+        ${Util.htmlEscape(options.header)}      
+    </div>
+    <div class="content">    
+      <p>${Util.htmlEscape(options.body || "")}</p>
+      <div class="ui fluid action input">
+         <input class="linkinput" type="text" value="${Util.htmlEscape(options.link)}">
+         <button class="ui teal right labeled icon button copybtn" data-content="${lf("Copied!")}">
+            ${lf("Copy")}
+            <i class="copy icon"></i>
+         </button>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="ui approve right labeled icon button ${options.okClass || "teal"}">
+        ${Util.htmlEscape(options.okLabel || lf("OK"))}
+        <i class="${options.okIcon || "checkmark"} icon"></i>
+      </div>
+    </div>
+  </div>
+  `
+    let modal = $(html)
+    let btn = modal.find('.copybtn')
+    btn.click(() => {
+        let inp = modal.find('.linkinput');
+        (inp[0] as HTMLInputElement).setSelectionRange(0, inp.val().length);
+        try {
+            document.execCommand("copy");
+            btn.popup({
+                on: "manual",
+                inline: true
+            })
+            btn.popup("show")
+        } catch (e) {
+        }
+    })
+    let done = false
+    $('body').append(modal)
+
+    return new Promise((resolve, reject) =>
+        modal.modal({
+            onHidden: () => {
+                modal.remove()
+            },
+            onHide: () => {
+                if (!done) {
+                    done = true
+                    resolve(false)
+                }
+            },
+        }).modal("show"))
+}
+

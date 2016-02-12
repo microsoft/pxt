@@ -386,6 +386,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (this.editor != this.aceEditor)
             this.updateEditorFile(this.aceEditor)
     }
+    
+    publish() {
+        core.shareLinkAsync({
+            header: lf("Link to your project"),
+            link: "https://example.com/"
+        })
+        .done()
+    }
 
     renderCore() {
         theEditor = this;
@@ -447,6 +455,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     <sui.Item icon="write" text={lf("Edit text") } onClick={() => this.editText() } />
                                 }
                                 <div className="divider"></div>
+                                <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
                             </sui.Dropdown>
                             <sui.Button class='red' icon='trash' onClick={() => this.removeProject() } />

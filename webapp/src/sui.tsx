@@ -29,7 +29,7 @@ function genericContent(props: UiProps) {
 export class Dropdown extends data.Component<DropdownProps, {}> {
     componentDidMount() {
         this.child("").dropdown({
-            action: this.props.menu ? "activate" : "hide",
+            action: "hide",
             onChange: (v: string) => {
                 if (this.props.onChange && v != this.props.value) {
                     this.props.onChange(v)
@@ -82,15 +82,20 @@ export interface ButtonProps extends UiProps {
 }
 
 export class Button extends data.Component<ButtonProps, {}> {
-    componentDidMount() {
+    popup() {
         if (this.props.popup)
-            this.child("").popup();
+            this.child("").popup({
+            });
+    }
+    
+    componentDidMount() {
+        this.popup()
     }
 
     componentDidUpdate() {
-        if (this.props.popup)
-            this.child("").popup();
+        this.popup()
     }
+    
     renderCore() {
         return (
             <button className={genericClassName("ui button", this.props) }
