@@ -108,7 +108,7 @@ namespace music {
     //% help=functions/play-tone weight=90
     export function playTone(frequency: number, ms: number) : void 
     {
-        pins.analogSetPitchPin("P0");
+        pins.analogSetPitchPin(pins.AnalogPins.P0);
         pins.analogPitch(frequency, ms);
     }
 

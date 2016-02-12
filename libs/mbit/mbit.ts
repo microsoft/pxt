@@ -14,12 +14,8 @@ namespace console {
     }
 }
 
-
-interface Image {
-    /**
-     * Shows an frame from the image at offset ``x offset``.
-     * @param xOffset TODO
-     */
-    //% help=functions/show-image weight=69 shim=micro_bit::showImage
-    showImage(xOffset: number) : void;
+namespace math {
+    export function clamp(min: number, max:number, value:number): number {
+        return Math.min(max, Math.max(min, value));
+    }
 }

@@ -6,6 +6,7 @@
         "README.md",
         "core.d.ts",
         "mbit.ts",
+        "image.ts",
         "basic.ts",
         "input.ts",
         "control.ts",        
