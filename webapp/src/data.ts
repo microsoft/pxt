@@ -222,6 +222,7 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
 
     constructor(props: TProps) {
         super(props);
+        this.state = <any>{}
     }
 
     getData(path: string) {

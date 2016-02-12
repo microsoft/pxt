@@ -23,6 +23,7 @@ interface IAppState {
     currFile?: pkg.File;
     theme?: srceditor.Theme;
     fileState?: string;
+    searchVisible?: boolean;
 }
 
 
@@ -30,6 +31,7 @@ var theEditor: ProjectView;
 
 interface ISettingsProps {
     parent: ProjectView;
+    visible?: boolean;
 }
 
 class Settings extends data.Component<ISettingsProps, {}> {
@@ -102,6 +104,62 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         );
     }
 }
+
+class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }> {
+    prevData: Cloud.JsonScript[] = [];
+
+    renderCore() {
+        let res = this.state.searchFor ?
+            this.getData("cloud:scripts?q=" + encodeURIComponent(this.state.searchFor)) : null
+        if (res)
+            this.prevData = res.items
+        let data = this.prevData
+        let upd = (v: any) => {
+            this.setState({ searchFor: (v.target as any).value })
+        };
+        let parent = this.props.parent
+        let hide = () => parent.setState({ searchVisible: false })        
+        let install = (scr:Cloud.JsonScript) => {
+            hide()
+            workspace.installByIdAsync(scr.id)
+                .then(r => {
+                    parent.loadHeader(r)
+                })
+                .done()
+        }
+        return (
+            <div className="ui dimmer modals page transition visible active" onClick={ev => {
+                if (/dimmer/.test((ev.target as HTMLElement).className))
+                    hide()
+            }}>
+                <div className="ui small modal transition visible active searchdialog">
+                    <div className="ui top attached label teal">
+                        {lf("Search for scripts...") }
+                        <i className='cancel link icon' onClick={hide}/>
+                    </div>
+                    <div className="ui content form">
+                        <div className="ui fluid icon input">
+                            <input type="text" placeholder="Search..." onChange={upd} />
+                            <i className="search icon"/>
+                        </div>
+                        <div className="ui relaxed divided list">
+                            {data.map(scr =>
+                                <div className="item" onClick={() => install(scr) }>
+                                    <i className="large file middle aligned icon"></i>
+                                    <div className="content">
+                                        <a className="header">{scr.name} /{scr.id}</a>
+                                        <div className="description">{Util.timeSince(scr.time) } by {scr.username}</div>
+                                    </div>
+                                </div>
+                            ) }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+}
+
 
 export interface FileHistoryEntry {
     id: string;
@@ -386,13 +444,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (this.editor != this.aceEditor)
             this.updateEditorFile(this.aceEditor)
     }
-    
+
     publish() {
         core.shareLinkAsync({
             header: lf("Link to your project"),
             link: "https://example.com/"
         })
-        .done()
+            .done()
     }
 
     renderCore() {
@@ -457,6 +515,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <div className="divider"></div>
                                 <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
+                                <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.setState({ searchVisible: true }) } />
                             </sui.Dropdown>
                             <sui.Button class='red' icon='trash' onClick={() => this.removeProject() } />
                         </div>
@@ -484,6 +543,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
+                {this.state.searchVisible ?
+                    <ScriptSearch parent={this} /> :
+                    null}
             </div>
         );
     }

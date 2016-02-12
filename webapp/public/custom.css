@@ -50,6 +50,7 @@
     top: 0;
     bottom: 0;
     right: 0;
+    overflow: hidden;
 }
 
 #root.inverted {
@@ -76,6 +77,22 @@
 .ui.dropdown,
 .ui.buttons {
     margin-right: 0.25rem;
+}
+
+.searchdialog {
+    margin-top: -15em !important;
+}
+
+.searchdialog .list {
+    height: 20em;
+    overflow-y: scroll;
+    overflow-x: hidden; 
+}
+
+.ui.top.attached.label .link.icon {
+    position: absolute;
+    top: 9px;
+    right: 8px;
 }
 
 /* blockly */

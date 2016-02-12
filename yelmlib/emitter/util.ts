@@ -173,6 +173,42 @@ namespace Util {
         return randomPick(awesomeAdj)
     }
 
+    export function isoTime(time: number) {
+        var d = new Date(time * 1000)
+        return Util.fmt("{0}-{1:f02.0}-{2:f02.0} {3:f02.0}:{4:f02.0}:{5:f02.0}",
+            d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds())
+    }
+
+    export function timeSince(time: number) {
+        var now = Date.now();
+        time *= 1000;
+        var diff = (now - time) / 1000;
+        if (isNaN(diff)) return ""
+
+        if (diff < -30) {
+            diff = -diff;
+            if (diff < 60) return lf("in a few seconds");
+            if (diff < 2 * 60) return lf("in a minute");
+            if (diff < 60 * 60) return lf("in {0} minute{0:s}", Math.floor(diff / 60));
+            if (diff < 2 * 60 * 60) return lf("in an hour");
+            if (diff < 60 * 60 * 24) return lf("in {0} hour{0:s}", Math.floor(diff / 60 / 60))
+            if (diff < 60 * 60 * 24 * 30) return lf("in {0} day{0:s}", Math.floor(diff / 60 / 60 / 24))
+            if (diff < 60 * 60 * 24 * 365) return lf("in {0} month{0:s}", Math.floor(diff / 60 / 60 / 24 / 30))
+            return lf("in {0} year{0:s}", Math.floor(diff / 60 / 60 / 24 / 365))
+        } else {
+            if (diff < 0) return lf("now");
+            if (diff < 10) return lf("a few seconds ago");
+            if (diff < 60) return lf("{0} second{0:s} ago", Math.floor(diff))
+            if (diff < 2 * 60) return lf("a minute ago");
+            if (diff < 60 * 60) return lf("{0} minute{0:s} ago", Math.floor(diff / 60))
+            if (diff < 2 * 60 * 60) return lf("an hour ago");
+            if (diff < 60 * 60 * 24) return lf("{0} hour{0:s} ago", Math.floor(diff / 60 / 60))
+            if (diff < 60 * 60 * 24 * 30) return lf("{0} day{0:s} ago", Math.floor(diff / 60 / 60 / 24))
+            if (diff < 60 * 60 * 24 * 365) return lf("{0} month{0:s} ago", Math.floor(diff / 60 / 60 / 24 / 30))
+            return lf("{0} year{0:s} ago", Math.floor(diff / 60 / 60 / 24 / 365))
+        }
+    }
+
     export var isNodeJS = false;
 
     export interface HttpRequestOptions {
