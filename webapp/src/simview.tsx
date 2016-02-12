@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as simsvg from "./simsvg"
+import * as simsvg from "./simsvg";
+import * as sui from "./sui"
 
 export class MbitRuntime extends rt.Runtime {
     constructor(code:string) {
@@ -26,16 +27,20 @@ export class MbitBoardView extends React.Component<simsvg.IBoardProps, rt.state.
     }
 
     render() {
+        var events = ["shake", "logo up", "logo down", "screen up", "screendown"];
+        var eid = events[0];
+                /*
+                <div>                
+                    <sui.Dropdown class='selection search' value={eid}>
+                        {events.map(h => <sui.Item key={h} value={h} text={h} />) }
+                    </sui.Dropdown>
+                    <sui.Button class="secondary" icon="lab" popup="Simulate event."/>
+                </div>
+                */
+        
         return (
             <div>
                 <div ref="simsvg"></div>            
-                <div>
-                    <button className="mini compact ui button">SHAKE</button>
-                    <button className="mini compact ui button">LOGO UP</button>
-                    <button className="mini compact ui button">LOGO DOWN</button>
-                    <button className="mini compact ui button">SCREEN UP</button>
-                    <button className="mini compact ui button">SCREEN DOWN</button>            
-                </div>
             </div>
         )
     }
