@@ -53,6 +53,14 @@ Yelm is a package manager for mbit.
 
 Yelm is a city in Washington state, with a name short enough for a command line tool.
 
+## Docs
+
+We use mkdocs to generate the docs under the ``/docs`` folder. To setup mkdocs, 
+````
+pip install mkdocs
+mkdocs serve
+````
+
 ## License
 
 MIT
