@@ -35,6 +35,14 @@ namespace input {
         P2,
     }
     
+    export enum Gestures {
+        Shake,
+        LogoUp,
+        LogoDown,
+        ScreenUp,
+        ScreenDown
+    }
+    
     /**
      * Get the button state (pressed or not) for ``A`` and ``B``.
      */
@@ -100,7 +108,7 @@ namespace input {
      * Get the magnetic force value in ``micro-Teslas`` (``µT``). This function is not supported in the simulator.
      * @param dimension TODO
      */
-    //% help=functions/magnetic-force weight=43 shim=micro_bit::getMagneticForce async
+    //% help=functions/magnetic-force weight=43 shim=micro_bit::getMagneticForce
     export function magneticForce(dimension: Dimension) : number { return 0; }
 
     /**
@@ -113,7 +121,65 @@ namespace input {
     /**
      * Reads the light level applied to the LED screen in a range from ``0`` (dark) to ``255`` bright. In the simulator, the ``acceleration y`` is used to emulate this value.
      */
-    //% help=functions/light-level weight=55 shim=micro_bit::lightLevel async
+    //% help=functions/light-level weight=55 shim=micro_bit::lightLevel
     export function lightLevel() : number { return 0; }
-}
 
+    /**
+     * Attaches code to run when the screen is facing up.
+     * @param body TODO
+     */
+    //% help=functions/on-gesture shim=micro_bit::onGesture
+    export function onGesture(gesture : Gestures, body:Action) : void
+    {
+    }
+
+    /**
+     * Attaches code to run when the screen is facing up.
+     * @param body TODO
+     */
+    //% help=functions/on-screen-up
+    export function onScreenUp(body:Action) : void
+    {
+        onGesture(Gestures.ScreenUp, body);
+    }
+
+    /**
+     * Attaches code to run when the screen is facing down.
+     * @param body TODO
+     */
+    //% help=functions/on-screen-down
+    export function onScreenDown(body:Action) : void
+    {
+        onGesture(Gestures.ScreenDown, body);
+    }
+
+    /**
+     * Attaches code to run when the device is shaken.
+     * @param body TODO
+     */
+    //% help=functions/on-shake
+    export function onShake(body:Action) : void
+    {
+        onGesture(Gestures.Shake, body);
+    }
+
+    /**
+     * Attaches code to run when the logo is oriented upwards and the board is vertical.
+     * @param body TODO
+     */
+    //% help=functions/on-logo-up
+    export function onLogoUp(body:Action) : void
+    {
+        onGesture(Gestures.LogoUp, body);
+    }
+
+    /**
+     * Attaches code to run when the logo is oriented downwards and the board is vertical.
+     * @param body TODO
+     */
+    //% help=functions/on-logo-down
+    export function onLogoDown(body:Action) : void
+    {
+        onGesture(Gestures.LogoDown, body);
+    }
+}
