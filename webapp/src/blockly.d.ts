@@ -67,6 +67,7 @@ declare module Blockly {
         getAllBlocks(): Block[];
         addChangeListener(f: () => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
+        updateToolbox(newTree: Element | string) : void;
     }
 
     module Xml {
