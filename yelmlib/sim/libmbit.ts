@@ -18,12 +18,18 @@ namespace rt.micro_bit {
     }
 
     export function runInBackground(a: RefAction) {
+        runtime.runFiberAsync(a).done()
+    }
+
+    export function forever(a: RefAction) {
+        function loop() {
+            runtime.runFiberAsync(a)
+                .then(() => Promise.delay(20))
+                .then(loop)
+                .done()
+        }
         incr(a)
-        setTimeout(() => {
-            runtime.setupTop(() => { })
-            action.run(a)
-            decr(a) // if it's still running, action.run() has taken care of incrementing the counter
-        }, 1)
+        loop()
     }
 
     export function serialSendString(s: string) {

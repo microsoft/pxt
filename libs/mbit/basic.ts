@@ -52,7 +52,7 @@ namespace basic {
      * Repeats the code forever in the background. On each iteration, allows other codes to run.
      * @param body TODO
      */
-    //% help=functions/forever weight=55 shim=micro_bit::forever async
+    //% help=functions/forever weight=55 shim=micro_bit::forever
     export function forever(body:() => void) : void {}
 
     /**
