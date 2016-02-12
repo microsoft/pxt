@@ -5,6 +5,7 @@ namespace input {
         //% enumval=MICROBIT_ID_BUTTON_A
         B,
         //% enumval=MICROBIT_ID_BUTTON_AB
+        //% blockId="A+B"
         AB,
     }
     
@@ -56,6 +57,7 @@ namespace input {
      * @param body TODO
      */
     //% help=functions/on-button-pressed weight=58 shim=micro_bit::onButtonPressed async
+    //% blockType=device_button_event block="on button %1 pressed"
     export function onButtonPressed(name: Button, body:Action) : void {}
 
     /**
@@ -95,7 +97,8 @@ namespace input {
      * @param name TODO
      * @param body TODO
      */
-    //% help=functions/on-pin-pressed weight=57 shim=micro_bit::onPinPressed async
+    //% help=functions/on-pin-pressed weight=57 shim=micro_bit::onPinPressed
+    //% blockType=device_pin_event block="on pin %1 pressed"
     export function onPinPressed(name: TouchPins, body:Action) : void {}
 
     /**
@@ -129,6 +132,7 @@ namespace input {
      * @param body TODO
      */
     //% help=functions/on-gesture shim=micro_bit::onGesture
+    //% blockType=device_gesture_event block="on %1"
     export function onGesture(gesture : Gestures, body:Action) : void
     {
     }

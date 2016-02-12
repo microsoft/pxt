@@ -91,6 +91,8 @@ namespace ts.mbit {
         helper?: string;
         async?: boolean;
         block?: string;
+        blockType?: string;
+        icon?: string;
         imageLiteral?: boolean;
 
         _name?: string;
