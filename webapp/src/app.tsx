@@ -24,6 +24,7 @@ interface IAppState {
     theme?: srceditor.Theme;
     fileState?: string;
     searchVisible?: boolean;
+    showFiles?: boolean;
 }
 
 
@@ -513,6 +514,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
 
         let inv = this.state.theme.inverted ? " inverted " : " "
+        let filelist : JSX.Element = undefined;
+        if (this.state.showFiles)
+            filelist = <div className={"ui vertical menu filemenu " + inv}>
+                        {files}
+                    </div>        
 
         return (
             <div id='root' className={"full-abs " + inv}>
@@ -555,10 +561,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="item">
                         <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
                         <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />
-                    </div>
-                    <div className={"ui vertical menu filemenu " + inv}>
-                        {files}
-                    </div>
+                        <sui.Button icon='folder' onClick={() => this.setState({ showFiles: !this.state.showFiles })} />
+                    </div>         
+                    {filelist}           
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
