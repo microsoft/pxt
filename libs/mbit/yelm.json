@@ -6,7 +6,15 @@
         "README.md",
         "core.d.ts",
         "mbit.ts",
-        "led.ts"
+        "basic.ts",
+        "input.ts",
+        "control.ts",        
+        "led.ts",
+        "music.ts",
+        "game.ts",
+        "pins.ts",
+        "devices.ts",
+        "serial.ts"
     ],
     "public": true,
     "dependencies": {}
