@@ -15,7 +15,7 @@ namespace basic {
     //% help=functions/show-number
     //% weight=89
     //% shim=micro_bit::scrollNumber
-    //% blockId=device_show_number block="show number %1" blockGap=8
+    //% blockId=device_show_number block="show number %number" blockGap=8
     //% async
     export function showNumber(value: number, interval: number = 150): void { }
     
