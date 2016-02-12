@@ -23,6 +23,13 @@ mountVirtualApi("cloud", {
     isOffline: () => !Cloud.isOnline(),
 })
 
+mountVirtualApi("td-cloud", {
+    getAsync: p => 
+        Util.httpGetJsonAsync("https://www.touchdevelop.com/api/" + stripProtocol(p))
+            .catch(core.handleNetworkError), 
+    expirationTime: p => 60 * 1000,
+})
+
 mountVirtualApi("cloud-online", {
     getSync: p => Cloud.isOnline(),
 })
