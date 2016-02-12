@@ -17,6 +17,18 @@ import * as blocks from "./blocks"
 
 var lf = Util.lf
 
+export interface FileHistoryEntry {
+    id: string;
+    name: string;
+    pos: srceditor.ViewState;
+}
+
+export interface EditorSettings {
+    theme: srceditor.Theme;
+    showFiles?: boolean;
+    fileHistory: FileHistoryEntry[];
+}
+
 interface IAppProps { }
 interface IAppState {
     header?: workspace.Header;
@@ -151,17 +163,6 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
 }
 
 
-export interface FileHistoryEntry {
-    id: string;
-    name: string;
-    pos: srceditor.ViewState;
-}
-
-export interface EditorSettings {
-    theme: srceditor.Theme;
-    fileHistory: FileHistoryEntry[];
-}
-
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
@@ -179,6 +180,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (!this.settings.theme)
             this.settings.theme = {}
         this.state = {
+            showFiles: !!this.settings.showFiles,
             theme: {
                 inverted: !!this.settings.theme.inverted,
                 fontSize: this.settings.theme.fontSize || "20px"
@@ -195,6 +197,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     saveSettings() {
         let sett = this.settings
         sett.theme = this.state.theme
+        sett.showFiles = !!this.state.showFiles
 
         let f = this.editorFile
         if (f && f.epkg.getTopHeader()) {
@@ -387,6 +390,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     saveTypeScript() {
         if (!this.editor) return
+        if (this.editorFile.epkg != pkg.mainEditorPkg())
+            return;
         let ts = this.editor.saveToTypeScript()
         if (ts != null) {
             pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
@@ -553,7 +558,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="item">
                         <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
                         <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />
-                        <sui.Button icon='folder' onClick={() => this.setState({ showFiles: !this.state.showFiles }) } />
+                        <sui.Button icon='folder' onClick={() => {
+                            this.setState({ showFiles: !this.state.showFiles });
+                            this.saveSettings();
+                        } } />
                     </div>
                     {filelist}
                 </div>
