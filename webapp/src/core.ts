@@ -4,24 +4,23 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";
 
-let dimmer = `
-<div class="ui page dimmer" id='loading'>
-  <div class="content">
-    <div class="ui text large loader msg">Please wait</div>
-  </div>
-</div>
-`
-
 var lf = Util.lf;
 
 export type Component<S, T> = data.Component<S, T>;
 
+export function hideLoading() {
+    $('.ui.page.dimmer .loadingcontent').remove();
+    $('body').dimmer('hide');
+}
+
 export function showLoading(msg: string) {
-    let over = $(dimmer)
-    over.find(".msg").text(msg)
-    $(document.body).append(over)
-    over.dimmer("show")
-    return over
+    $('body').dimmer('show');
+    $('.ui.page.dimmer').html(`
+  <div class="content loadingcontent">
+    <div class="ui text large loader msg">Please wait</div>
+  </div>
+`)
+    $('.ui.page.dimmer .msg').text(msg)
 }
 
 export function navigateInWindow(url: string) {

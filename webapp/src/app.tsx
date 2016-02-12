@@ -449,7 +449,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let mpkg = pkg.mainPkg
         let epkg = pkg.getEditorPkg(mpkg)
         core.infoNotification(lf("Publishing..."))
-        //let loading = core.showLoading(lf("Publishing..."))        
+        core.showLoading(lf("Publishing..."))        
         this.saveFileAsync()
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
@@ -462,16 +462,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 return workspace.publishAsync(epkg.header, files, meta)
                     .then(inf => inf.id)
             })
-            .then(inf => {
-                //    loading.remove(); 
-                return inf;
-            })
+            .finally(core.hideLoading)
             .then(inf => core.shareLinkAsync({
                 header: lf("Link to your project"),
                 link: "/" + inf
             }))
             .catch(e => {
-                //loading.remove()
                 core.errorNotification(e.message)
             })
             .done()
