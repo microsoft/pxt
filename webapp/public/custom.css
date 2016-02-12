@@ -9,6 +9,8 @@
   left: 0;
   width: 400px;
   padding: 0em 1em 0em 0.5em;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #menubar {
