@@ -21,7 +21,7 @@ namespace rt {
     export class Runtime {
         private baseStack = 1000000;
         private freeStacks: number[] = [];
-        public state : state.IBoard = state.createBoard();
+        public state: state.IBoard = state.createBoard();
         numGlobals = 1000;
         mem: any;
         errorHandler: (e: any) => void;
@@ -30,6 +30,16 @@ namespace rt {
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => void;
+
+        runFiberAsync(a: RefAction) {
+            incr(a)
+            return new Promise<any>((resolve, reject) =>
+                Util.nextTick(() => {
+                    this.setupTop(resolve)
+                    action.run(a)
+                    decr(a) // if it's still running, action.run() has taken care of incrementing the counter
+                }))
+        }
 
         // 2k block
         malloc() {
@@ -46,7 +56,7 @@ namespace rt {
         kill() {
             this.dead = true
         }
-        
+
         constructor(code: string) {
             var sp: number, lr: LR;
             var rr0: any, rr1: any, rr2: any, rr3: any;

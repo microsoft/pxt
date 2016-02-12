@@ -63,6 +63,7 @@ export class Editor extends srceditor.Editor {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
             this.loadingXml = true
+            core.showLoading(lf("loading blocks..."));
             compiler.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(blockInfo => {
@@ -74,8 +75,13 @@ export class Editor extends srceditor.Editor {
                     var xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
+                    
                 })
-                .done()
+                .done(() => {
+                    core.hideLoading();                    
+                }, e => {
+                    core.hideLoading();                    
+                })
         }
     }
     
