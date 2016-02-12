@@ -1,4 +1,7 @@
 site_name: yelm
+site_description: Typescript compiler for micro:bit.
 pages:
 - Home: index.md
 theme: readthedocs
+repo_url: https://github.com/microsoft/yelm/
+copyright: Copyright &copy; 2016 Microsoft

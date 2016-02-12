@@ -1,2 +1,0 @@
-# Home
-The docs.

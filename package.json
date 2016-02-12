@@ -1,28 +1,31 @@
 {
-    "name": "yelm",
-    "version": "0.0.16",
-    "description": "TypeScript to mbit comiler",
-    "keywords": [
-        "TypeScript",
-        "microbit"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Microsoft/tsmbit.git"
-    },
-    "author": "",
-    "license": "MIT",
-    "homepage": "https://github.com/Microsoft/tsmbit#readme",
-    "files": [
-        "README.md",
-        "built/yelm.js",
-        "built/yelmlib.js",
-        "built/yelmlib.d.ts",
-        "generated/hexinfo.js"
-    ],
-    "preferGlobal": true,
-    "dependencies": {
-        "bluebird": "^3.1.4",
-        "typescript": "^1.8.0-dev.20160124"
-    }
+  "name": "yelm",
+  "version": "0.0.16",
+  "description": "TypeScript to mbit comiler",
+  "keywords": [
+    "TypeScript",
+    "microbit"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Microsoft/tsmbit.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "homepage": "https://github.com/Microsoft/tsmbit#readme",
+  "files": [
+    "README.md",
+    "built/yelm.js",
+    "built/yelmlib.js",
+    "built/yelmlib.d.ts",
+    "generated/hexinfo.js"
+  ],
+  "preferGlobal": true,
+  "dependencies": {
+    "bluebird": "^3.1.4",
+    "typescript": "^1.8.0-dev.20160124"
+  },
+  "devDependencies": {
+    "nw-builder": "^2.2.0"
+  }
 }

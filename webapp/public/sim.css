@@ -1,7 +1,6 @@
-#mbitboardview svg {
-    width:100%;
+svg.sim {
+    margin-bottom:1em;
 }
-
 .sim-button {
     pointer-events: none;    
 }
