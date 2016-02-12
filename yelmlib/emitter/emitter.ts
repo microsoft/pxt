@@ -91,7 +91,11 @@ namespace ts.mbit {
         helper?: string;
         async?: boolean;
         block?: string;
+        blockId?: string;
+        blockGap?: string;
+        icon?: string;
         imageLiteral?: boolean;
+        weight?: number;
 
         _name?: string;
         jsDoc?: string;

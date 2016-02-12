@@ -8,6 +8,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as blocklycompiler from "./blocklycompiler"
 import * as compiler from "./compiler"
+import * as blocklyloader from "./blocklyloader"
 
 
 var lf = Util.lf
@@ -62,18 +63,28 @@ export class Editor extends srceditor.Editor {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
             this.loadingXml = true
+            core.showLoading(lf("loading blocks..."));
             compiler.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(blockInfo => {
                     console.log(blockInfo)
+
+                    var toolbox = document.getElementById('blocklyToolboxDefinition');
+                    blocklyloader.injectToolbox(this.editor, toolbox, blockInfo)
+                    
                     var xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
+                    
                 })
-                .done()
+                .done(() => {
+                    core.hideLoading();                    
+                }, e => {
+                    core.hideLoading();                    
+                })
         }
     }
-
+    
     saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble
