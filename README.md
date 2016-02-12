@@ -1,11 +1,41 @@
-# ARM Thumb / mbit emitter for TypeScript
+# Yelm - Experimental Programming Environment for micro:bit
+
+Yelm combines the following:
+
+* a TypeScript library defining APIs available on the micro:bit
+* an ARM Thumb machine code emitter for TypeScript
+* a Blockly-based editor along with converter to TypeScript
+* a webapp hosting the Blockly-based editor and ACE-based editor for TypeScript
+* a command-line package manager
+
+Yelm is an experimental platform for research on new ways of programming, especially
+focused on computer science education.
+
+## Name
+
+Yelm is a city near Mt Rainier in Washington State with a name short enough for
+command line tool. It also stands for Your Experimental programming Language
+environment for Micro:bit-compatible devices.
+
 
 ## Build
+
+Building yelm command line tools:
 
 ```
 tsd reinstall
 npm install
 jake
+```
+
+Building webapp:
+```
+cd webapp
+tsd reinstall
+npm install
+jake
+node server.js &
+open http://localhost:3232
 ```
 
 ## TODO
@@ -40,18 +70,10 @@ jake
 
 ## TODO for converter from TD
 
-* [ ] multi-line strings into backtick literals
+* [x] multi-line strings into backtick literals
 * [ ] use bit operators for bits.XYZ
-* [ ] fish out {shim:...} and friends
-* [ ] {hints:...} -> @param x Blah, eg: 100, 200 (?)
-
-## Yelm
-
-Yelm is a package manager for mbit. 
-
-### Name
-
-Yelm is a city in Washington state, with a name short enough for a command line tool.
+* [x] fish out {shim:...} and friends
+* [x] {hints:...} -> @param x Blah, eg: 100, 200 (?)
 
 ## Docs
 
