@@ -22,7 +22,7 @@ module ts.mbit.thumb {
         coremsg: string;
         hints: string;
     }
-    
+
     interface EmitResult {
         stack: number;
         opcode: number;
@@ -100,8 +100,10 @@ module ts.mbit.thumb {
             let s = this.jsFormat
             let regs: string[] = null
             let na = 0
-            this.args.forEach(formal => {
-                if (/^\$/.test(formal)) {
+
+            for (let i = 0; i < this.args.length; ++i) {
+                let formal = this.args[i]
+                if (formal[0] == "$") {
                     let repl: string = null
                     let numArg = asm.numArgs[na++]
                     let enc = encoders[formal]
@@ -136,15 +138,15 @@ module ts.mbit.thumb {
                     }
                     s = s.replace(formal, repl)
                 }
-            })
+            }
 
             if (regs) {
                 s = regs.map(x => s.replace("$reglist", x)).join("\n")
                 s = s.replace("pc = pop()", "return leave(r0)")
             }
 
-            if (!/"/.test(s)) {
-                s = s.replace(/mem\[r5 \+ (\d+)\]/, (t:string, n:string) => "r5.ldclo(" + n + ")")
+            if (s.indexOf('"') < 0 && s.indexOf("mem[r5") >= 0) {
+                s = s.replace(/mem\[r5 \+ (\d+)\]/, (t: string, n: string) => "r5.ldclo(" + n + ")")
             }
 
             return s
@@ -162,7 +164,7 @@ module ts.mbit.thumb {
             for (var i = 0; i < this.args.length; ++i) {
                 var formal = this.args[i]
                 var actual = tokens[j++]
-                if (/^\$/.test(formal)) {
+                if (formal[0] == "$") {
                     var enc = encoders[formal]
                     var v: number = null
                     if (enc.isRegister) {
@@ -361,6 +363,7 @@ module ts.mbit.thumb {
         public errors: InlineError[] = [];
         public buf: number[];
         public js: string;
+        private numJsLabels = 0;
         public savedJs: string;
         private labels: StringMap<number> = {};
         private stackpointers: StringMap<number> = {};
@@ -384,55 +387,65 @@ module ts.mbit.thumb {
             if (!s)
                 return null;
 
-            var mul = 1
-            while (m = /^([^\*]*)\*(.*)$/.exec(s)) {
-                var tmp = this.parseOneInt(m[1])
-                if (tmp == null) return null;
-                mul *= tmp;
-                s = m[2]
-            }
+            if (s == "0") return 0;
 
-            if (/^-/.test(s)) {
+            var mul = 1
+
+            if (s.indexOf("*") >= 0)
+                while (m = /^([^\*]*)\*(.*)$/.exec(s)) {
+                    var tmp = this.parseOneInt(m[1])
+                    if (tmp == null) return null;
+                    mul *= tmp;
+                    s = m[2]
+                }
+
+            if (s[0] == "-") {
                 mul *= -1;
                 s = s.slice(1)
             }
 
             var v: number = null
 
-            var m = /^0x([a-f0-9]+)$/i.exec(s)
-            if (m) v = parseInt(m[1], 16)
-
-            m = /^0b([01]+)$/i.exec(s)
-            if (m) v = parseInt(m[1], 2)
+            if (s[0] == "0") {
+                if (s[1] == "x" || s[1] == "X") {
+                    var m = /^0x([a-f0-9]+)$/i.exec(s)
+                    if (m) v = parseInt(m[1], 16)
+                } else if (s[1] == "b" || s[1] == "B") {
+                    m = /^0b([01]+)$/i.exec(s)
+                    if (m) v = parseInt(m[1], 2)
+                }
+            }
 
             m = /^(\d+)$/i.exec(s)
             if (m) v = parseInt(m[1], 10)
 
-            m = /^(\w+)@(-?\d+)$/.exec(s)
-            if (m) {
-                if (mul != 1)
-                    this.directiveError(lf("multiplication not supported with saved stacks"));
-                if (this.stackpointers.hasOwnProperty(m[1]))
-                    v = 4 * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
-                else
-                    this.directiveError(lf("saved stack not found"))
-            }
+            if (s.indexOf("@") >= 0) {
+                m = /^(\w+)@(-?\d+)$/.exec(s)
+                if (m) {
+                    if (mul != 1)
+                        this.directiveError(lf("multiplication not supported with saved stacks"));
+                    if (this.stackpointers.hasOwnProperty(m[1]))
+                        v = 4 * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                    else
+                        this.directiveError(lf("saved stack not found"))
+                }
 
-            m = /^(.*)@(hi|lo)$/.exec(s)
-            if (m && this.looksLikeLabel(m[1])) {
-                v = this.lookupLabel(m[1], true)
-                if (v != null) {
-                    v >>= 1;
-                    if (0 <= v && v <= 0xffff) {
-                        if (m[2] == "hi")
-                            v = (v >> 8) & 0xff
-                        else if (m[2] == "lo")
-                            v = v & 0xff
-                        else
-                            oops()
-                    } else {
-                        this.directiveError(lf("@hi/lo out of range"))
-                        v = null
+                m = /^(.*)@(hi|lo)$/.exec(s)
+                if (m && this.looksLikeLabel(m[1])) {
+                    v = this.lookupLabel(m[1], true)
+                    if (v != null) {
+                        v >>= 1;
+                        if (0 <= v && v <= 0xffff) {
+                            if (m[2] == "hi")
+                                v = (v >> 8) & 0xff
+                            else if (m[2] == "lo")
+                                v = v & 0xff
+                            else
+                                oops()
+                        } else {
+                            this.directiveError(lf("@hi/lo out of range"))
+                            v = null
+                        }
                     }
                 }
             }
@@ -735,28 +748,41 @@ module ts.mbit.thumb {
             }
         }
 
+        private handleOneInstruction(ln: Line, instr: Instruction) {
+            var op = instr.emit(ln);
+            if (!op.error) {
+                this.stack += op.stack;
+                if (this.checkStack && this.stack < 0)
+                    this.pushError(lf("stack underflow"))
+                this.emitShort(op.opcode);
+                if (op.opcode2 != null)
+                    this.emitShort(op.opcode2);
+                ln.instruction = instr;
+                ln.numArgs = op.numArgs;
+
+                if (this.finalEmit) {
+                    let js = instr.emitJs(ln, op)
+                    if (js)
+                        this.js += js.replace(/^/gm, "    ") + "\n"
+                }
+                return true;
+            }
+            return false;
+        }
+
         private handleInstruction(ln: Line) {
+            if (ln.instruction) {
+                if (this.handleOneInstruction(ln, ln.instruction))
+                    return;
+            }
+
             var getIns = (n: string) => instructions.hasOwnProperty(n) ? instructions[n] : [];
 
-            var ins = ln.instruction ? [ln.instruction] : getIns(ln.words[0])
-            for (var i = 0; i < ins.length; ++i) {
-                var op = ins[i].emit(ln);
-                if (!op.error) {
-                    this.stack += op.stack;
-                    if (this.checkStack && this.stack < 0)
-                        this.pushError(lf("stack underflow"))
-                    this.emitShort(op.opcode);
-                    if (op.opcode2 != null)
-                        this.emitShort(op.opcode2);
-                    ln.instruction = ins[i];
-                    ln.numArgs = op.numArgs;
-
-                    if (this.finalEmit) {
-                        let js = ins[i].emitJs(ln, op)
-                        if (js)
-                            this.js += js.replace(/^/gm, "    ") + "\n"
-                    }
-                    return;
+            if (!ln.instruction) {
+                var ins = getIns(ln.words[0])
+                for (var i = 0; i < ins.length; ++i) {
+                    if (this.handleOneInstruction(ln, ins[i]))
+                        return;
                 }
             }
 
@@ -798,28 +824,33 @@ module ts.mbit.thumb {
                 var words = tokenize(l.text) || [];
                 l.words = words;
 
-                var m = /^([\.\w]+):$/.exec(words[0])
+                let w0 = words[0] || ""
 
-                if (m) {
-                    l.type = "label";
-                    l.text = m[1] + ":"
-                    l.words = [m[1]]
-                    if (words.length > 1) {
-                        words.shift()
-                        l = this.mkLine(tx.replace(/^[^:]*:/, ""))
-                        l.words = words
-                    } else {
-                        return;
+                if (w0.charAt(w0.length - 1) == ":") {
+                    var m = /^([\.\w]+):$/.exec(words[0])
+                    if (m) {
+                        l.type = "label";
+                        l.text = m[1] + ":"
+                        l.words = [m[1]]
+                        if (words.length > 1) {
+                            words.shift()
+                            l = this.mkLine(tx.replace(/^[^:]*:/, ""))
+                            l.words = words
+                            w0 = words[0] || ""
+                        } else {
+                            return;
+                        }
                     }
                 }
 
-                if (/^\*/.test(l.words[0])) {
+                if (w0.charAt(0) == "*") {
                     l.text = l.text.replace("*", "")
-                    l.words[0] = l.words[0].slice(1)
+                    w0 = l.words[0] = l.words[0].slice(1)
                     l.noJs = true
                 }
 
-                if (/^[\.@]/.test(l.words[0])) {
+                let c0 = w0.charAt(0)
+                if (c0 == "." || c0 == "@") {
                     l.type = "directive";
                     if (l.words[0] == "@scope")
                         this.handleDirective(l);
@@ -838,14 +869,15 @@ module ts.mbit.thumb {
                 this.savedJs = this.js
             }
 
-            if (/^\./.test(lblname)) {
+            if (lblname.charAt(0) == ".") {
                 this.js += "  case " + this.location() + ":  // " + lblname + "\n"
             } else {
                 let suff = ""
-                if (/function \(step\)/.test(this.js))
+                if (this.numJsLabels)
                     this.js += "} } }\n\n"
                 else
                     suff = " = entryPoint "
+                this.numJsLabels++;
                 this.js += "var " + lblname + suff + " = function (step) {\n" +
                     "var r0 = rr0, r1 = rr1, r2 = rr2, r3 = rr3\n" +
                     "while (true) { switch (step) {\n"
@@ -858,6 +890,7 @@ module ts.mbit.thumb {
             this.buf = [];
 
             this.js = "";
+            this.numJsLabels = 0;
             this.savedJs = null;
 
             this.lines.forEach(l => {
@@ -1083,14 +1116,36 @@ module ts.mbit.thumb {
     var encoders: StringMap<Encoder>;
 
     function tokenize(line: string): string[] {
-        line = line.replace(/[\[\]\!\{\},]/g, m => " " + m + " ")
-        var words = line.split(/\s/).filter(s => !!s)
-        if (!words[0]) return null
-        if (/^;/.test(words[0])) return null
-        for (var i = 1; i < words.length; ++i) {
-            if (/^;/.test(words[i]))
-                return words.slice(0, i);
+        let words: string[] = []
+        let w = ""
+        loop: for (let i = 0; i < line.length; ++i) {
+            switch (line[i]) {
+                case "[":
+                case "]":
+                case "!":
+                case "{":
+                case "}":
+                case ",":
+                    if (w) { words.push(w); w = "" }
+                    words.push(line[i])
+                    break;
+                case " ":
+                case "\t":
+                case "\r":
+                case "\n":
+                    if (w) { words.push(w); w = "" }
+                    break;
+                case ";":
+                    if (!w) break loop;
+                    w += line[i]
+                    break;
+                default:
+                    w += line[i]
+                    break;
+            }
         }
+        if (w) { words.push(w); w = "" }
+        if (!words[0]) return null
         return words
     }
 
