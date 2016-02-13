@@ -758,8 +758,9 @@ namespace ts.mbit {
             // we also generate a fake numeric literal for image literals
             if (e.kind == SyntaxKind.NullKeyword || e.kind == SyntaxKind.NumericLiteral)
                 return false
-            //if (isStringLiteral(e))
-            //    return false
+            // no point doing the incr/decr for these - they are statically allocated anyways
+            if (isStringLiteral(e))
+                return false
             return isRefType(typeOf(e))
         }
         function getMask(args: Expression[]) {
