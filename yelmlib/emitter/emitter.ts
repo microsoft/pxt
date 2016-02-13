@@ -1087,8 +1087,11 @@ namespace ts.mbit {
                     info.location.emitStore(proc)
                 }
             } else {
-                if (isExpression)
+                if (isExpression) {
                     emitFunLit(node)
+                    // TODO rename this to functionData or something
+                    proc.emitCall("bitvm::stringData", 0)
+                }
             }
 
             scope(() => {
