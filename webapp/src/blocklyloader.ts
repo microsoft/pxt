@@ -32,7 +32,7 @@ function parameterNames(fn : ts.mbit.BlockFunc) : Util.StringMap<string> {
     fn.parameters.forEach(pr => attrNames[pr.name] = pr.name);
     if (fn.attributes.block) {
         Object.keys(attrNames).forEach(k => attrNames[k] = "");
-        /%[a-zA-Z0-9]+/g.exec(fn.attributes.block).forEach((m, i) => {
+        (/%[a-zA-Z0-9]+/g.exec(fn.attributes.block) || []).forEach((m, i) => {
             attrNames[fn.parameters[i].name] = m.slice(1);
         })
     }
@@ -115,23 +115,30 @@ function injectBlockDefinition(fn : ts.mbit.BlockFunc, attrNames: Util.StringMap
                         if(pre) i.appendField(pre);
                     }
                 }                
-            })    
+            })
+            
+            var body = fn.parameters.filter(pr => pr.type == "() => void")[0];
+            if(body) {
+                this.appendStatementInput(attrNames[body.name])
+                    .setCheck("null");
+            }            
             
             this.setInputsInline(fn.parameters.length < 4);
-            this.setPreviousStatement(fn.retType == "void");
-            this.setNextStatement(fn.retType == "void");
+            if (!/^on /.test(fn.name)) {
+                this.setPreviousStatement(fn.retType == "void");
+                this.setNextStatement(fn.retType == "void");
+            }
             this.setTooltip(fn.attributes.jsDoc);            
         }
     }
 }
 
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: ts.mbit.BlockInfo): void {
-    blockInfo.functions.sort((f1, f2) => {
-        return (f1.attributes.weight || 0) - (f2.attributes.weight || 0);
+    blockInfo.functions.sort((f1, f2) => {        
+        return (f2.attributes.weight || 50) - (f1.attributes.weight+1 || 50);
     })
 
     var tb = <Element>toolbox.cloneNode(true);
-    console.log('toolbox base:\n' + tb.innerHTML)
     blockInfo.functions
         .filter(fn => !!fn.attributes.blockId && !!fn.attributes.block)
         .filter(fn => !tb.querySelector("block[type='" + fn.attributes.blockId + "']"))
@@ -140,7 +147,5 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
             injectToolbox(tb, fn, pnames);
             injectBlockDefinition(fn, pnames);
         })
-
-    console.log('toolbox updated:\n' + tb.innerHTML)
     workspace.updateToolbox(tb)
 }
