@@ -65,7 +65,7 @@ open http://localhost:3232
 * [ ] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues
 * [ ] make blocks output file read only
-* [ ] skip unreferenced globals when initilized with literal
+* [x] skip unreferenced globals when initilized with literal
 * [ ] do not DECR no-closure functions
 
 ## TODO for converter from TD

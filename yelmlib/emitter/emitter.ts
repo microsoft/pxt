@@ -80,8 +80,22 @@ namespace ts.mbit {
             decl.kind == SyntaxKind.Constructor
     }
 
+    function isSideEffectfulInitializer(init: Expression) {
+        if (!init) return false;
+        switch (init.kind) {
+            case SyntaxKind.NullKeyword:
+            case SyntaxKind.NumericLiteral:
+            case SyntaxKind.StringLiteral:
+            case SyntaxKind.TrueKeyword:
+            case SyntaxKind.FalseKeyword:
+                return false;
+            default:
+                return true;
+        }
+    }
+
     function isOnDemandDecl(decl: Declaration) {
-        return (isGlobalVar(decl) && !(<VariableDeclaration>decl).initializer) ||
+        return (isGlobalVar(decl) && !isSideEffectfulInitializer((<VariableDeclaration>decl).initializer)) ||
             isTopLevelFunctionDecl(decl)
     }
 
@@ -89,7 +103,7 @@ namespace ts.mbit {
         shim?: string;
         enumval?: string;
         helper?: string;
-        help?:string;
+        help?: string;
         async?: boolean;
         block?: string;
         blockId?: string;
