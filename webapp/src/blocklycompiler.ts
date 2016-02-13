@@ -1,5 +1,6 @@
 ///<reference path='blockly.d.ts'/>
 ///<reference path='touchdevelop.d.ts'/>
+import * as blockyloader from "./blocklyloader"
 
 ///////////////////////////////////////////////////////////////////////////////
 //                A compiler from Blocky to TouchDevelop                     //
@@ -731,8 +732,8 @@ function infer(e: Environment, w: B.Workspace) {
                     break;
 
                 default:
-                    if (b.type in stdCallTable) {
-                        stdCallTable[b.type].args.forEach((p: StdArg) => {
+                    if (b.type in e.stdCallTable) {
+                        e.stdCallTable[b.type].args.forEach((p: StdArg) => {
                             if (p.field && !b.getFieldValue(p.field)) {
                                 var i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
                                 // This will throw if someone modified blocks-custom.js and forgot to add
@@ -742,7 +743,7 @@ function infer(e: Environment, w: B.Workspace) {
                                 unionParam(e, b, p.field, ground(t));
                             }
                         });
-                        compileStdCall(e, b, stdCallTable[b.type]);
+                        compileStdCall(e, b, e.stdCallTable[b.type]);
                     }
             }
         } catch (e) {
@@ -956,12 +957,12 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
         case 'device_build_big_image':
             return compileImage(e, b, true, "image", "create image");
         case 'game_sprite_property':
-            return compileStdCall(e, b, stdCallTable["game_sprite_" + b.getFieldValue("property")]);
+            return compileStdCall(e, b, e.stdCallTable["game_sprite_" + b.getFieldValue("property")]);
         case 'device_beat':
             return compileBeat(e, b);
         default:
-            if (b.type in stdCallTable)
-                return compileStdCall(e, b, stdCallTable[b.type]);
+            if (b.type in e.stdCallTable)
+                return compileStdCall(e, b, e.stdCallTable[b.type]);
             else {
                 console.error("Unable to compile expression: " + b.type);
                 return defaultValueForType(returnType(e, b));
@@ -977,6 +978,7 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
 
 interface Environment {
     bindings: Binding[];
+    stdCallTable : Util.StringMap<StdFunc>; 
 }
 
 interface Binding {
@@ -993,7 +995,8 @@ function isCompiledAsForIndex(b: Binding) {
 function extend(e: Environment, x: string, t: Type): Environment {
     assert(lookup(e, x) == null);
     return {
-        bindings: [{ name: x, type: ground(t), usedAsForIndex: 0 }].concat(e.bindings)
+        bindings: [{ name: x, type: ground(t), usedAsForIndex: 0 }].concat(e.bindings),
+        stdCallTable: e.stdCallTable
     };
 }
 
@@ -1012,8 +1015,11 @@ function fresh(e: Environment, s: string): string {
     return unique;
 }
 
-var empty: Environment = {
-    bindings: []
+function emptyEnv() : Environment {
+    return {
+        bindings: [],
+        stdCallTable: JSON.parse(JSON.stringify(defaultCallTable))
+    }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1255,30 +1261,10 @@ interface StdFunc {
     namespace?: string;
 }
 
-var stdCallTable: { [blockType: string]: StdFunc } = {
-    device_clear_display: {
-        namespace: "basic",
-        f: "clear screen",
-        args: []
-    },
-    device_show_number: {
-        namespace: "basic",
-        f: "show number",
-        args: [{ field: "number" }, { literal: 150 }]
-    },
+var defaultCallTable: Util.StringMap<StdFunc> = {
     device_show_letter: {
         f: "show letter",
         args: [{ field: "letter" }]
-    },
-    device_pause: {
-        namespace: "basic",
-        f: "pause",
-        args: [{ field: "pause" }]
-    },
-    device_print_message: {
-        namespace: "basic",
-        f: "show string",
-        args: [{ field: "message" }, { literal: 150 }]
     },
     device_plot: {
         namespace: "led",
@@ -1725,19 +1711,19 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
                     break;
 
                 case 'game_turn_sprite':
-                    stmts.push(compileStdBlock(e, b, stdCallTable["game_turn_" + b.getFieldValue("direction")]));
+                    stmts.push(compileStdBlock(e, b, e.stdCallTable["game_turn_" + b.getFieldValue("direction")]));
                     break;
                 case 'game_sprite_set_property':
-                    stmts.push(compileStdBlock(e, b, stdCallTable["game_sprite_set_" + b.getFieldValue("property")]));
+                    stmts.push(compileStdBlock(e, b, e.stdCallTable["game_sprite_set_" + b.getFieldValue("property")]));
                     break;
                 case 'game_sprite_change_xy':
-                    stmts.push(compileStdBlock(e, b, stdCallTable["game_sprite_change_" + b.getFieldValue("property")]));
+                    stmts.push(compileStdBlock(e, b, e.stdCallTable["game_sprite_change_" + b.getFieldValue("property")]));
                     break;
                 default:
-                    if (b.type in stdCallTable)
-                        stmts.push(compileStdBlock(e, b, stdCallTable[b.type]));
+                    if (b.type in e.stdCallTable)
+                        stmts.push(compileStdBlock(e, b, e.stdCallTable[b.type]));
                     else
-                        console.log("Not generating code for (not a statement / not supported): " + b.type);
+                        console.error("Not generating code for (not a statement / not supported): " + b.type);
             }
         }
         b = b.getNextBlock();
@@ -1778,9 +1764,29 @@ function findParent(b: B.Block) {
 // - All variables have been assigned an initial [Point] in the union-find.
 // - Variables have been marked to indicate if they are compatible with the
 //   TouchDevelop for-loop model.
-function mkEnv(w: B.Workspace): Environment {
+function mkEnv(w: B.Workspace, blockInfo: ts.mbit.BlockInfo): Environment {
     // The to-be-returned environment.
-    var e = empty;
+    var e = emptyEnv();
+    
+    // append functions in stdcalltable
+    if (blockInfo)
+    blockInfo.functions.filter(fn => !!fn.attributes.blockId && !!fn.attributes.block)
+        .forEach(fn => {
+            if (e.stdCallTable[fn.attributes.blockId]) {
+                console.error("compiler: function " + fn.attributes.blockId + " already defined");
+                return;
+            }
+            var fieldMap = blockyloader.parameterNames(fn);
+            e.stdCallTable[fn.attributes.blockId] = {
+                namespace: fn.namespace,               
+                f: fn.name,
+                isExtensionMethod: fn.isMethod,
+                args : fn.parameters.map(p => {
+                    if (fieldMap[p.name]) return { field: fieldMap[p.name] };
+                    else return null;
+                }).filter(a => !!a)
+            }
+        })
 
     // First pass: collect loop variables.
     w.getAllBlocks().forEach((b: B.Block) => {
@@ -1839,10 +1845,10 @@ function mkEnv(w: B.Workspace): Environment {
     return e;
 }
 
-function compileWorkspace(w: B.Workspace, options: CompileOptions): J.JApp {
+function compileWorkspace(w: B.Workspace, blockInfo : ts.mbit.BlockInfo, options: CompileOptions): J.JApp {
     try {
         var decls: J.JDecl[] = [];
-        var e = mkEnv(w);
+        var e = mkEnv(w, blockInfo);
         infer(e, w);
 
         // All variables in this script are compiled as locals within main.
@@ -1885,9 +1891,9 @@ function compileWorkspace(w: B.Workspace, options: CompileOptions): J.JApp {
     return H.mkApp(options.name, options.description, decls);
 }
 
-export function compile(b: B.Workspace, options: CompileOptions): string {
+export function compile(b: B.Workspace, blockInfo : ts.mbit.BlockInfo, options: CompileOptions): string {
     Errors.clear();
-    return tdASTtoTS(compileWorkspace(b, options));
+    return tdASTtoTS(compileWorkspace(b, blockInfo, options));
 }
 
 function tdASTtoTS(app: J.JApp) {

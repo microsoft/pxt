@@ -26,7 +26,7 @@ function createShadowValue(name: string, num: boolean, v: string): Element {
     return value;
 }
 
-function parameterNames(fn : ts.mbit.BlockFunc) : Util.StringMap<string> {
+export function parameterNames(fn : ts.mbit.BlockFunc) : Util.StringMap<string> {
     // collect blockly parameter name mapping
     var attrNames: Util.StringMap<string> = {};
     fn.parameters.forEach(pr => attrNames[pr.name] = pr.name);

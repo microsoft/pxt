@@ -10,34 +10,13 @@ import * as blocklycompiler from "./blocklycompiler"
 import * as compiler from "./compiler"
 import * as blocklyloader from "./blocklyloader"
 
-
 var lf = Util.lf
-
-interface ToolboxBlock {
-    type: string;
-}
-
-interface ToolboxCategory {
-    name: string;
-    colour: number;
-    gap?: number;
-    blocks: ToolboxBlock[];
-}
-
-function toolboxToXml(toolbox: ToolboxCategory[]): string {
-    return '<xml>\n'
-        + toolbox.map(cat => {
-            return '  <category name="' + cat.name + '" colour="' + cat.colour + '">\n' + cat.blocks.map(block => {
-                return '    <block type="' + block.type + '"></block>\n';
-            }).join('\n') + '  </category>\n'
-        }).join('\n')
-        + '</xml>';
-}
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
     loadingXml: boolean;
+    blockInfo: ts.mbit.BlockInfo;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -53,7 +32,7 @@ export class Editor extends srceditor.Editor {
 
     saveToTypeScript(): string {
         let cfg = pkg.mainPkg.config
-        return blocklycompiler.compile(this.editor, {
+        return blocklycompiler.compile(this.editor, this.blockInfo, {
             name: cfg.name,
             description: cfg.description
         })
@@ -66,11 +45,11 @@ export class Editor extends srceditor.Editor {
             core.showLoading(lf("loading blocks..."));
             compiler.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
-                .then(blockInfo => {
-                    console.log(blockInfo)
+                .then(bi => {
+                    this.blockInfo = bi;
 
                     var toolbox = document.getElementById('blocklyToolboxDefinition');
-                    blocklyloader.injectBlocks(this.editor, toolbox, blockInfo)
+                    blocklyloader.injectBlocks(this.editor, toolbox, this.blockInfo)
                     
                     var xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
