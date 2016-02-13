@@ -61,8 +61,6 @@ open http://localhost:3232
 * [ ] bit operators (&, |, etc)
 * [ ] inline assembly
 * [ ] use "(x + y) | 0" etc instead of "x + y" in simulator
-* [ ] have buffered output mode in simulator
-* [ ] have output-independent simulator for running tests
 * [x] do not generate empty action bodies for shim
 * [ ] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues
