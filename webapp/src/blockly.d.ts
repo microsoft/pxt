@@ -6,9 +6,15 @@ declare module goog {
 declare module Blockly {
     function fireUiEvent(node: any, eventName: string) : void;
     
-    module JavaScript {
-        function workspaceToCode(workspace : Workspace) : string;
+    var ALIGN_RIGHT : number;
+    
+    class FieldImage {
+        constructor(url:string, width:number, height:number, def:string);
     }
+    
+    var Blocks : Util.StringMap<{
+        init: () => void;
+    }>;
     
     class Block {
         static obtain(workspace: Workspace, prototypeName?: string): Block;

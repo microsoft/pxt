@@ -267,7 +267,7 @@ Blockly.Blocks['device_print_message'] = {
 };
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#xiu9u7
-Blockly.Blocks['device_show_number'] = {
+/*Blockly.Blocks['device_show_number'] = {
   init: function() {
     this.setHelpUrl('./functions/show-number');
     this.setColour(blockColors.basic);
@@ -282,7 +282,7 @@ Blockly.Blocks['device_show_number'] = {
     this.setNextStatement(true);
     this.setTooltip('Shows the specified number and scrolls it if necessary.');
   }
-};
+};*/
 
 Blockly.Blocks['device_shake_event'] = {
   init: function() {
@@ -630,6 +630,7 @@ Blockly.Blocks['device_get_running_time'] = {
 };
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#nwf7c5
+/*
 Blockly.Blocks['device_clear_display'] = {
   init: function() {
     this.setHelpUrl('./functions/clear-screen');
@@ -642,7 +643,7 @@ Blockly.Blocks['device_clear_display'] = {
     this.setNextStatement(true);
     this.setTooltip('Turns all LEDs off.');
   }
-};
+};*/
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#rhpgfx
 Blockly.Blocks['device_plot'] = {
@@ -870,7 +871,7 @@ Blockly.Blocks['device_scroll_image'] = {
   }
 };
 
-
+/*
 Blockly.Blocks['device_pause'] = {
   init: function() {
     this.setHelpUrl('./functions/pause');
@@ -886,7 +887,9 @@ Blockly.Blocks['device_pause'] = {
     this.setTooltip('Stop execution for the given delay, hence allowing other threads of execution to run.');
   }
 };
+*/
 
+/*
 Blockly.Blocks['device_forever'] = {
   init: function() {
     this.setHelpUrl('./functions/forever');
@@ -900,7 +903,7 @@ Blockly.Blocks['device_forever'] = {
     //this.setPreviousStatement(true, "null");
     this.setTooltip('Run a sequence of operations repeatedly, in the background.');
   }
-};
+};*/
 
 Blockly.Blocks['device_comment2'] = {
   init: function() {

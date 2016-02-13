@@ -15,7 +15,7 @@ namespace basic {
     //% help=functions/show-number
     //% weight=89
     //% shim=micro_bit::scrollNumber
-    //% blockId=device_show_number block="show number %number" blockGap=8
+    //% blockId=device_show_number block="show |number %number" blockGap=8 icon="\uf1ec"
     //% async
     export function showNumber(value: number, interval: number = 150): void { }
     
@@ -49,7 +49,7 @@ namespace basic {
      */
     //% help=functions/clear-screen weight=79
     //% shim=micro_bit::clearScreen
-    //% blockId=device_clear_display block="clear screen"
+    //% blockId=device_clear_display block="clear screen" icon="\uf12d"
     export function clearScreen(): void { }
 
     /**
@@ -57,7 +57,7 @@ namespace basic {
      * @param body TODO
      */
     //% help=functions/forever weight=55
-    //% blockId=device_forever block="forever"
+    //% blockId=device_forever block="forever" icon="\uf01e"
     export function forever(body:() => void) : void {
         control.inBackground(() => {
             while(true) {
@@ -72,7 +72,7 @@ namespace basic {
      * @param ms how long to pause for, eg: 100, 200, 500, 1000, 2000
      */
     //% help=functions/pause weight=88
-    //% shim=micro_bit::pause async block="pause for %1 ms"
-    //% blockId=device_pause
+    //% shim=micro_bit::pause async block="pause for %pause ms"
+    //% blockId=device_pause icon="\uf110"
     export function pause(ms: number): void { }
 }
