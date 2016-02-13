@@ -121,7 +121,7 @@ namespace ts.mbit {
     }
 
     function parseComments(node: Node): CommentAttrs {
-        if (!node) return {}
+        if (!node || (node as any).isRootFunction) return {}
         let cmt = getComments(node)
         let res: CommentAttrs = {}
         let didSomething = true
@@ -376,7 +376,8 @@ namespace ts.mbit {
             },
             parent: src,
             pos: 0,
-            end: 0
+            end: 0,
+            isRootFunction: true
         }
 
         markUsed(rootFunction);
@@ -1048,7 +1049,6 @@ namespace ts.mbit {
 
             if (!isUsed(node))
                 return;
-
 
             let attrs = parseComments(node)
             if (attrs.shim != null)
