@@ -751,13 +751,12 @@ namespace ts.mbit {
             markUsed(decl)
             return decl
         }
-        function isRefExpr(e: Expression) {
+        function isRefCountedExpr(e: Expression) {
             // we generate a fake NULL expression for default arguments
             // we also generate a fake numeric literal for image literals
             if (e.kind == SyntaxKind.NullKeyword || e.kind == SyntaxKind.NumericLiteral)
                 return false
-            //TODO - check this:
-            // if (isStringLiteral(e))
+            //if (isStringLiteral(e))
             //    return false
             return isRefType(typeOf(e))
         }
@@ -765,7 +764,7 @@ namespace ts.mbit {
             assert(args.length <= 8)
             var m = 0
             args.forEach((a, i) => {
-                if (isRefExpr(a))
+                if (isRefCountedExpr(a))
                     m |= (1 << i)
             })
             return m
@@ -1048,6 +1047,11 @@ namespace ts.mbit {
 
             if (!isUsed(node))
                 return;
+
+
+            let attrs = parseComments(node)
+            if (attrs.shim != null)
+                return
 
             let info = getFunctionInfo(node)
 

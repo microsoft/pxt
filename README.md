@@ -63,7 +63,7 @@ open http://localhost:3232
 * [ ] use "(x + y) | 0" etc instead of "x + y" in simulator
 * [ ] have buffered output mode in simulator
 * [ ] have output-independent simulator for running tests
-* [ ] do not generate empty action bodies for shim
+* [x] do not generate empty action bodies for shim
 * [ ] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues
 * [ ] make blocks output file read only
