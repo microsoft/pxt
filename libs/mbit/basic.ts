@@ -57,14 +57,8 @@ namespace basic {
      * @param body TODO
      */
     //% help=functions/forever weight=55
-    //% blockId=device_forever block="forever" icon="\uf01e"
+    //% blockId=device_forever block="forever" icon="\uf01e" shim=micro_bit::forever
     export function forever(body:() => void) : void {
-        control.inBackground(() => {
-            while(true) {
-                body();
-                basic.pause(20);
-            }
-        })
     }
 
     /**
