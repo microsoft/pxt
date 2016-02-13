@@ -75,6 +75,8 @@ open http://localhost:3232
 * [ ] use bit operators for bits.XYZ
 * [x] fish out {shim:...} and friends
 * [x] {hints:...} -> @param x Blah, eg: 100, 200 (?)
+* [ ] async is flipped
+* [ ] use `expr as Type` not `<Type> expr`
 
 ## Docs
 
