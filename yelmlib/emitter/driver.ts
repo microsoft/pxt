@@ -18,6 +18,7 @@ namespace ts.mbit {
         outfiles: StringMap<string>;
         diagnostics: Diagnostic[];
         success: boolean;
+        times:Util.StringMap<number>;
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {
@@ -44,10 +45,12 @@ namespace ts.mbit {
     }
 
     export function compile(opts: CompileOptions) {
+        let startTime = Date.now()
         let res: CompileResult = {
             outfiles: {},
             diagnostics: [],
-            success: false
+            success: false,
+            times: {}
         }
 
         let fileText = opts.fileSystem
@@ -90,9 +93,13 @@ namespace ts.mbit {
         if (res.diagnostics.length == 0) {
             res.diagnostics = program.getSemanticDiagnostics();
         }
+        
+        let emitStart = Date.now()
+        res.times["typescript"] = emitStart - startTime 
 
         if (res.diagnostics.length == 0) {
             const mbitOutput = emitMBit(program, host, opts);
+            res.times["emitmbit"] = Date.now() - emitStart
             res.diagnostics = mbitOutput.diagnostics
         }
 

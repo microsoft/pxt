@@ -253,7 +253,7 @@ function cmdGenEmbed() {
         .then(res => {
             return mainPkg.host().writeFileAsync(mainPkg, fn,
                 "window.yelmEmbed = window.yelmEmbed || {};\n" +
-                "window.yelmEmbed[" + JSON.stringify(mainPkg.config.name) + "] = " + 
+                "window.yelmEmbed[" + JSON.stringify(mainPkg.config.name) + "] = " +
                 JSON.stringify(res, null, 2) + "\n")
         })
         .then(() => {
@@ -261,6 +261,37 @@ function cmdGenEmbed() {
         })
 }
 
+
+function cmdTime() {
+    ensurePkgDir();
+    let min:Util.StringMap<number> = null;
+    let loop = () =>
+        mainPkg.buildAsync()
+            .then(res => {
+                if (!min) min = res.times
+                else {
+                    Util.iterStringMap(min, (k, v) => {
+                        min[k] = Math.min(v, res.times[k])
+                    })
+                }
+                console.log(res.times)
+            })
+    loop()
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(() => console.log("MIN", min))
+}
 
 
 function cmdBuild(deploy = false, run = false) {
@@ -319,6 +350,7 @@ let cmds: Command[] = [
     { n: "run", f: cmdRun, a: "", d: "build and run current package in the simulator" },
     { n: "service", f: cmdService, a: "OPERATION", d: "simulate a query to web worker" },
     { n: "genembed", f: cmdGenEmbed, a: "", d: "generate built/yelmembed.js from current package" },
+    { n: "time", f: cmdTime, a: "", d: "measure performance of the compiler on the current package" },
     { n: "help", f: usage, a: "", d: "display this message" },
 
     { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call", o: 1 },
