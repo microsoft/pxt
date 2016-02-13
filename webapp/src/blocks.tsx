@@ -70,7 +70,7 @@ export class Editor extends srceditor.Editor {
                     console.log(blockInfo)
 
                     var toolbox = document.getElementById('blocklyToolboxDefinition');
-                    blocklyloader.injectToolbox(this.editor, toolbox, blockInfo)
+                    blocklyloader.injectBlocks(this.editor, toolbox, blockInfo)
                     
                     var xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;

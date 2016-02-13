@@ -89,6 +89,7 @@ namespace ts.mbit {
         shim?: string;
         enumval?: string;
         helper?: string;
+        help?:string;
         async?: boolean;
         block?: string;
         blockId?: string;

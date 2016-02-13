@@ -267,7 +267,7 @@ Blockly.Blocks['device_print_message'] = {
 };
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#xiu9u7
-Blockly.Blocks['device_show_number'] = {
+/*Blockly.Blocks['device_show_number'] = {
   init: function() {
     this.setHelpUrl('./functions/show-number');
     this.setColour(blockColors.basic);
@@ -282,7 +282,7 @@ Blockly.Blocks['device_show_number'] = {
     this.setNextStatement(true);
     this.setTooltip('Shows the specified number and scrolls it if necessary.');
   }
-};
+};*/
 
 Blockly.Blocks['device_shake_event'] = {
   init: function() {
