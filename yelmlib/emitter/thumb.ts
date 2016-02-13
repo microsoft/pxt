@@ -351,6 +351,7 @@ module ts.mbit.thumb {
 
         public baseOffset: number;
         public finalEmit: boolean;
+        public reallyFinalEmit: boolean;
         public checkStack = true;
         public inlineMode = false;
         public lookupExternalLabel: (name: string) => number;
@@ -760,10 +761,14 @@ module ts.mbit.thumb {
                 ln.instruction = instr;
                 ln.numArgs = op.numArgs;
 
-                if (this.finalEmit) {
+                if (this.reallyFinalEmit) {
                     let js = instr.emitJs(ln, op)
-                    if (js)
-                        this.js += js.replace(/^/gm, "    ") + "\n"
+                    if (js) {
+                        if (js.indexOf("\n") >= 0)
+                            this.js += js.replace(/^/gm, "    ") + "\n"
+                        else
+                            this.js += "    " + js + "\n"
+                    }
                 }
                 return true;
             }
@@ -1034,7 +1039,7 @@ module ts.mbit.thumb {
             }
         }
 
-        private peepPass() {
+        private peepPass(reallyFinal:boolean) {
             if (this.disablePeepHole)
                 return;
 
@@ -1048,6 +1053,7 @@ module ts.mbit.thumb {
             this.iterLines();
             assert(!this.checkStack || this.stack == 0);
             this.finalEmit = true;
+            this.reallyFinalEmit = reallyFinal || this.peepOps == 0;
             this.iterLines();
 
             this.stats += lf("; peep hole pass: {0} instructions removed and {1} updated\n", this.peepDel, this.peepOps - this.peepDel)
@@ -1073,13 +1079,15 @@ module ts.mbit.thumb {
                 return;
 
             this.finalEmit = true;
+            this.reallyFinalEmit = this.disablePeepHole;
             this.iterLines();
 
             if (this.errors.length > 0)
                 return;
 
-            for (var i = 0; i < 5; ++i) {
-                this.peepPass();
+            let maxPasses = 5
+            for (var i = 0; i < maxPasses; ++i) {
+                this.peepPass(i == maxPasses);
                 if (this.peepOps == 0) break;
             }
         }
