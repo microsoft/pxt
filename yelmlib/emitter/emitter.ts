@@ -141,10 +141,10 @@ namespace ts.mbit {
         let didSomething = true
         while (didSomething) {
             didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*(\w+)(=("([^"\n]+)"|'([^'\n]+)'|([^\s]+)))?/,
+            cmt = cmt.replace(/\/\/%[ \t]*(\w+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]+)))?/,
                 (f: string, n: string, d0: string, d1: string,
-                    v0: string, v1: string, v2: string) => {
-                    let v = d0 ? (v0 || v1 || v2) : "true";
+                    v0: string, v1: string, v2: string) => {                    
+                    let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     (<any>res)[n] = v;
                     didSomething = true
                     return "//% "
