@@ -1,7 +1,7 @@
 {
     "name": "lang-test0",
     "description": "Test for the TypeScript -> HEX compiler",
-    "installedVersion": "hjrtpb",
+    "installedVersion": "hpmapc",
     "files": [
         "README.md",
         "lang-test0.ts"

@@ -67,6 +67,7 @@ open http://localhost:3232
 * [ ] make blocks output file read only
 * [x] skip unreferenced globals when initilized with literal
 * [ ] do not DECR no-closure functions
+* [ ] after uninstall pouch db throws 404 after reload
 
 ## TODO for converter from TD
 
