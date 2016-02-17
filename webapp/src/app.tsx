@@ -68,9 +68,9 @@ class Settings extends data.Component<ISettingsProps, {}> {
                         </div>
                     </sui.Field>
                     <sui.Field label="Font size">
-                        <sui.Dropdown class="selection" value={par.state.theme.fontSize} onChange={fontSize}>
+                        <sui.DropdownList class="selection" value={par.state.theme.fontSize} onChange={fontSize}>
                             {Object.keys(sizes).map(k => <sui.Item key={k} value={k}>{sizes[k]}</sui.Item>) }
-                        </sui.Dropdown>
+                        </sui.DropdownList>
                     </sui.Field>
                 </div>
             </sui.Popup>
@@ -103,10 +103,10 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         let needsUpload = hd && !hd.blobCurrent
         return (
             <div id='slotselector'>
-                <sui.Dropdown class='selection search' value={hdId}
+                <sui.DropdownList class='selection search' value={hdId}
                     onChange={chgHeader}>
                     {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || lf("no name") } />) }
-                </sui.Dropdown>
+                </sui.DropdownList>
 
                 <sui.Button class={btnClass} onClick={save}
                     icon={"cloud " + (needsUpload ? "upload" : "") }
@@ -526,7 +526,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <SlotSelector parent={this} />
                         </div>
                         <div className="item">
-                            <sui.Dropdown class="button floating" icon="wrench" menu={true} popup={lf("Project operations")}>
+                            <sui.DropdownMenu class="button floating" text={lf("Project")}>
                                 <sui.Item icon="terminal" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
                                 <sui.Item icon="puzzle" text={lf("New Blocks project") } onClick={() => this.newBlocksProject() } />
                                 {this.editor == this.aceEditor ? null :
@@ -536,7 +536,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
                                 <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
-                            </sui.Dropdown>
+                            </sui.DropdownMenu>
                             {this.editor.menu()}                            
                             <sui.Button class='red' icon='trash' popup={lf("Delete project")} onClick={() => this.removeProject() } />
                         </div>

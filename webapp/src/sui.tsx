@@ -16,7 +16,6 @@ export interface WithPopupProps extends UiProps {
 export interface DropdownProps extends WithPopupProps {
     value?: string;
     onChange?: (v: string) => void;
-    menu?: boolean;
 }
 
 function genericClassName(cls: string, props: UiProps) {
@@ -56,7 +55,7 @@ export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
 
 }
 
-export class Dropdown extends UiElement<DropdownProps> {
+export class DropdownMenu extends UiElement<DropdownProps> {
     componentDidMount() {
         this.popup()
         this.child("").dropdown({
@@ -71,8 +70,6 @@ export class Dropdown extends UiElement<DropdownProps> {
     }
 
     componentDidUpdate() {
-        if (!this.props.menu)
-            this.child("").dropdown('set selected', this.props.value)
         this.child("").dropdown("refresh")
         this.popup()
     }
@@ -80,10 +77,28 @@ export class Dropdown extends UiElement<DropdownProps> {
     renderCore() {
         return (
             <div className={genericClassName("ui dropdown", this.props) }>
-                {this.props.menu ? null : <input type="hidden" name="mydropdown"/>}
-                {this.props.icon ? null : (<i className="dropdown icon"></i>) }
+                {genericContent(this.props) }                
+                <div className="menu">
+                    {this.props.children}
+                </div>
+            </div>);
+    }
+}
+
+export class DropdownList extends DropdownMenu {
+
+    componentDidUpdate() {
+        this.child("").dropdown('set selected', this.props.value)
+        super.componentDidUpdate()
+    }
+
+    renderCore() {
+        return (
+            <div className={genericClassName("ui dropdown", this.props) }>
+                <input type="hidden" name="mydropdown"/>
+                {this.props.icon ? null : (<i className="dropdown icon"></i>)}
                 {genericContent(this.props) }
-                {this.props.menu ? null : <div className="default text"></div>}
+                <div className="default text"></div>
                 <div className="menu">
                     {this.props.children}
                 </div>
