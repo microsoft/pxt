@@ -138,3 +138,14 @@
 #aceEditor .ace_search {
     max-width: 500px;
 }
+
+#content .completer {
+    position: absolute;
+    z-index: 10;
+    left: 10px;
+    top: 10px;
+    width: 25em;
+    max-height: 20em;
+    overflow-y: auto;
+    margin: 0.3em 0;    
+}

@@ -4,6 +4,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
+import * as data from "./data";
 
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
@@ -31,9 +32,122 @@ require("brace/ext/searchbox");
 var acequire = (ace as any).acequire;
 var Range = acequire("ace/range").Range;
 
+export interface CompletionCache {
+    apisInfo: ts.mbit.ApisInfo;
+    completionInfo: ts.CompletionInfo;
+    posTxt: string;
+}
+
+export class AceCompleter extends data.Component<{ parent: Editor; }, {
+    visible?: boolean;
+    cache?: CompletionCache;
+}> {
+    // ACE interface
+    get activated() { return !!this.state.visible }
+    showPopup() {
+        this.setState({ visible: true })
+    }
+    detach() {
+        this.setState({ visible: false })
+    }
+    cancelContextMenu() { }
+
+    queryingFor: string;
+
+    queryCompletionAsync(pos: AceAjax.Position, posTxt: string) {
+        if (this.queryingFor == posTxt) return Promise.resolve()
+
+        this.queryingFor = posTxt
+        let editor = this.props.parent.editor
+        let str = editor.session.getValue()
+        let lines = pos.row
+        let chars = pos.column
+        let i = 0;
+        for (; i < str.length; ++i) {
+            if (lines == 0) {
+                if (chars-- == 0)
+                    break;
+            } else if (str[i] == '\n') lines--;
+        }
+
+        let cache: CompletionCache = {
+            apisInfo: null,
+            completionInfo: null,
+            posTxt: posTxt
+        }
+
+        return compiler.workerOpAsync("getCompletions", {
+            fileName: this.props.parent.currFile.getTypeScriptName(),
+            fileContent: str,
+            position: i
+        })
+            .then(compl => { cache.completionInfo = compl })
+            .then(() => compiler.getApisInfoAsync())
+            .then(info => { cache.apisInfo = info })
+            .then(() => this.setState({ cache: cache }))
+    }
+
+    fetchCompletionInfo(textPos: AceAjax.Position) {
+        let posTxt = this.props.parent.currFile.getName() + ":" + textPos.row + ":" + textPos.column
+        let cache = this.state.cache
+        if (!cache || cache.posTxt != posTxt) {
+            this.queryCompletionAsync(textPos, posTxt).done();
+            return null;
+        }
+
+        return cache.completionInfo.entries;
+    }
+
+    // React interface
+    componentDidMount() {
+        this.props.parent.completer = this;
+    }
+    renderCore() {
+        let editor = this.props.parent.editor
+        if (!editor || !this.state.visible) return null
+
+        let mode = editor.session.getMode();
+        if (mode.$id != "ace/mode/typescript") return null;
+
+        let renderer: any = editor.renderer
+
+        let textPos = editor.getCursorPosition();
+        let line = editor.session.getLine(textPos.row);
+        let pref = line.slice(0, textPos.column)
+        let m = /(\w*)$/.exec(pref)
+        pref = m ? m[1].toLowerCase() : ""
+
+        textPos.column -= pref.length
+
+        let pos = renderer.$cursorLayer.getPixelPosition(textPos, false);
+        pos.top -= renderer.scrollTop;
+        pos.left -= renderer.scrollLeft;
+        pos.top += renderer.layerConfig.lineHeight;
+        pos.left += renderer.gutterWidth;
+
+        let info = this.fetchCompletionInfo(textPos);
+
+        if (!info) return null; // or Loading... ?
+
+        info = info.filter(e => Util.startsWith(e.name.toLowerCase(), pref))
+        
+        let prefRange = new Range(textPos.row, textPos.column, textPos.row, textPos.column + pref.length);
+
+        return (
+            <div className='ui vertical menu completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
+                {info.map(e => <sui.Item class='link' key={e.name} text={e.name} value={e.name} onClick={() => {
+                    editor.session.replace(prefRange, e.name);
+                    this.detach()
+                }} />) }
+            </div>
+        )
+    }
+}
+
 export class Editor extends srceditor.Editor {
     editor: AceAjax.Editor;
     currFile: pkg.File;
+    completer: AceCompleter;
 
     menu() {
         return (
@@ -47,8 +161,18 @@ export class Editor extends srceditor.Editor {
         )
     }
 
+    display() {
+        return (
+            <div>
+                <div className='full-abs' id='aceEditorInner' />
+                <AceCompleter parent={this} />
+            </div>
+        )
+    }
+
     prepare() {
-        this.editor = ace.edit("aceEditor")
+        this.editor = ace.edit("aceEditorInner");
+        (this.editor as any).completer = this.completer;
 
         let langTools = acequire("ace/ext/language_tools");
 
@@ -79,7 +203,6 @@ export class Editor extends srceditor.Editor {
                                 meta: e.kind
                             }
                         })
-                        console.log(prefix, entries.length, compl.entries.length)
                         callback(null, entries)
                     })
                 } else {
@@ -96,8 +219,12 @@ export class Editor extends srceditor.Editor {
             enableLiveAutocompletion: true
         });
 
+        this.editor.commands.on("exec", function(e: any) {
+            console.info("beforeExec", e.command.name)
+        });
 
-        (this.editor.commands as any).on("afterExec", function(e: any) {
+        this.editor.commands.on("afterExec", function(e: any) {
+            console.info("afterExec", e.command.name)
             if (e.command.name == "insertstring" && e.args == ".") {
                 //var all = e.editor.completers;
                 //e.editor.completers = [completers];
