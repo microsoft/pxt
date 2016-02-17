@@ -538,8 +538,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
                             </sui.DropdownMenu>
                             <sui.Button class='red' icon='trash' popup={lf("Delete project") } onClick={() => this.removeProject() } />
-                            {this.editor.menu() }
                         </div>
+                        {this.editor.menu() }
                         <div className="item right">
                             {isOffline ?
                                 <sui.Button
