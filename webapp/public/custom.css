@@ -114,3 +114,20 @@
 .blocklyTreeLabel {
     font-size:20px;
 }
+
+
+#aceEditor .ace_search .ace_search_field {
+    height: 1.4em;
+}
+
+#aceEditor .ace_search .ace_searchbtn,
+#aceEditor .ace_search .ace_replacebtn,
+#aceEditor .ace_search .ace_button {
+    height: 1.4em;
+    min-width: 1.4em;
+    width: auto;
+}
+
+#aceEditor .ace_search {
+    max-width: 500px;
+}

@@ -44,6 +44,9 @@ export class Editor {
     acceptsFile(file: pkg.File) {
         return false
     }
+    menu():JSX.Element {
+        return null;
+    }
     getId() {
         return "editor"
     }

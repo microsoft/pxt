@@ -3,7 +3,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
-
+import * as sui from "./sui";
 
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
@@ -21,7 +21,10 @@ require('brace/mode/assembly_armthumb');
 
 require('brace/theme/sqlserver');
 require('brace/theme/tomorrow_night_bright');
+
 require("brace/ext/language_tools");
+require("brace/ext/keybinding_menu");
+require("brace/ext/searchbox");
 
 
 
@@ -31,6 +34,16 @@ var Range = acequire("ace/range").Range;
 export class Editor extends srceditor.Editor {
     editor: AceAjax.Editor;
     currFile: pkg.File;
+
+    menu() {
+        return (
+            <sui.Dropdown class="button floating" icon="edit" menu={true}>
+                <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
+                <sui.Item icon="wizard" text={lf("Replace") } onClick={() => this.editor.execCommand("replace") } />
+                <sui.Item icon="help" text={lf("Keyboard shortcuts") } onClick={() => this.editor.execCommand("showKeyboardShortcuts") } />
+            </sui.Dropdown>
+        )
+    }
 
     prepare() {
         this.editor = ace.edit("aceEditor")
@@ -81,12 +94,23 @@ export class Editor extends srceditor.Editor {
             enableLiveAutocompletion: true
         });
 
-        (this.editor.commands as any).on("afterExec", function(e:any) {
+
+        (this.editor.commands as any).on("afterExec", function(e: any) {
             if (e.command.name == "insertstring" && e.args == ".") {
                 //var all = e.editor.completers;
                 //e.editor.completers = [completers];
                 e.editor.execCommand("startAutocomplete");
                 //e.editor.completers = all;
+            }
+        });
+
+        this.editor.commands.addCommand({
+            name: "showKeyboardShortcuts",
+            bindKey: { win: "Ctrl-Alt-h", mac: "Command-Alt-h" },
+            exec: () => {
+                let module = acequire("ace/ext/keybinding_menu")
+                module.init(this.editor);
+                (this.editor as any).showKeyboardShortcuts()
             }
         })
 
