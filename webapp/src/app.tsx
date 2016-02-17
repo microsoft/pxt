@@ -394,7 +394,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         let ts = this.editor.saveToTypeScript()
         if (ts != null) {
-            pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
+            let f = pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
+            f.isVirtual = true
         }
     }
 
@@ -589,7 +590,8 @@ let myexports: any = {
     core,
     getEditor,
     ace,
-    compiler
+    compiler,
+    pkg
 };
 (window as any).E = myexports;
 

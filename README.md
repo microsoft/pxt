@@ -64,7 +64,7 @@ open http://localhost:3232
 * [x] do not generate empty action bodies for shim
 * [x] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues
-* [ ] make blocks output file read only
+* [x] make blocks output file read only
 * [x] skip unreferenced globals when initilized with literal
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload

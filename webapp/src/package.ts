@@ -16,12 +16,13 @@ export class File {
     inSyncWithDisk = true;
     diagnostics: ts.Diagnostic[];
     numDiagnosticsOverride: number;
+    isVirtual = false;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string)
     { }
 
     isReadonly() {
-        return !this.epkg.header
+        return !this.epkg.header || this.isVirtual
     }
 
     getName() {
