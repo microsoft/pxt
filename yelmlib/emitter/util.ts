@@ -67,6 +67,11 @@ namespace Util {
         else return 1;
     }
 
+    export function startsWith(a: string, b: string) {
+        if (a.length < b.length) return false
+        return a.slice(0, b.length) == b 
+    }
+
     export function sortObjectFields<T>(o: T): T {
         let keys = Object.keys(o)
         keys.sort(strcmp)

@@ -29,6 +29,11 @@ export class File {
         return this.epkg.getPkgId() + "/" + this.name
     }
 
+    getTypeScriptName() {
+        if (this.epkg.isTopLevel()) return this.name
+        else return "yelm_modules/" + this.epkg.getPkgId() + "/" + this.name
+    }
+
     getExtension() {
         let m = /\.([^\.]+)$/.exec(this.name)
         if (m) return m[1]
@@ -147,7 +152,7 @@ export class EditorPackage {
             this.savePkgAsync().done();
         }, 5000)
     }
-    
+
     getAllFiles() {
         return Util.mapStringMap(this.files, (k, f) => f.content)
     }
@@ -188,9 +193,13 @@ export class EditorPackage {
             return this.topPkg.pkgAndDeps();
         return Util.values((this.yelmPkg as yelm.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
     }
+    
+    filterFiles(cond:(f:File)=>boolean) {
+        return Util.concat(this.pkgAndDeps().map(e => Util.values(e.files).filter(cond)))
+    }
 
     lookupFile(name: string) {
-        return Util.concat(this.pkgAndDeps().map(e => Util.values(e.files).filter(f => f.getName() == name)))[0]
+        return this.filterFiles(f => f.getName() == name)[0]
     }
 }
 

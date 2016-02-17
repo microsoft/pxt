@@ -8,6 +8,19 @@ namespace ts.mbit.service {
     class Host implements LanguageServiceHost {
         opts = emptyOptions;
         fileVersions: Util.StringMap<number> = {};
+        projectVer = 0;
+        
+        getProjectVersion() {
+            return this.projectVer + ""
+        }
+
+        setFile(fn: string, cont: string) {
+            if (this.opts.fileSystem[fn] != cont) {
+                this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
+                this.opts.fileSystem[fn] = cont
+                this.projectVer++
+            }
+        }
 
         setOpts(o: CompileOptions) {
             Util.iterStringMap(o.fileSystem, (fn, v) => {
@@ -16,6 +29,7 @@ namespace ts.mbit.service {
                 }
             })
             this.opts = o
+            this.projectVer++
         }
 
         getCompilationSettings(): CompilerOptions {
@@ -55,6 +69,7 @@ namespace ts.mbit.service {
 
     export interface OpArg {
         fileName?: string;
+        fileContent?: string;
         position?: number;
         options?: CompileOptions;
     }
@@ -77,6 +92,13 @@ namespace ts.mbit.service {
             host.setOpts(v.options)
         },
 
+        getCompletions: v => {
+            if (v.fileContent) {
+                host.setFile(v.fileName, v.fileContent);
+            }
+            return service.getCompletionsAtPosition(v.fileName, v.position)
+        },
+
         compile: v => {
             return compile(v.options)
         },
@@ -85,10 +107,10 @@ namespace ts.mbit.service {
 
         allDiags: () => {
             let global = service.getCompilerOptionsDiagnostics() || []
-            let byFile = host.getScriptFileNames().map(fileDiags)  
+            let byFile = host.getScriptFileNames().map(fileDiags)
             return patchUpDiagnostics(global.concat(Util.concat(byFile)))
         },
-        
+
         blocks: () => {
             return mbit.getBlocks(service.getProgram())
         },

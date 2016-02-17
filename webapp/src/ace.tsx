@@ -2,6 +2,7 @@ import * as React from "react";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
+import * as compiler from "./compiler"
 
 
 declare var require: any;
@@ -20,15 +21,74 @@ require('brace/mode/assembly_armthumb');
 
 require('brace/theme/sqlserver');
 require('brace/theme/tomorrow_night_bright');
+require("brace/ext/language_tools");
 
 
-var Range = (ace as any).acequire("ace/range").Range;
+
+var acequire = (ace as any).acequire;
+var Range = acequire("ace/range").Range;
 
 export class Editor extends srceditor.Editor {
     editor: AceAjax.Editor;
+    currFile: pkg.File;
 
     prepare() {
         this.editor = ace.edit("aceEditor")
+
+        let langTools = acequire("ace/ext/language_tools");
+
+        let tsCompleter = {
+            getCompletions: (editor: AceAjax.Editor, session: AceAjax.IEditSession, pos: AceAjax.Position, prefix: string, callback: any) => {
+                let mode = session.getMode();
+                if ((mode as any).$id == "ace/mode/typescript") {
+                    let str = session.getValue()
+                    let lines = pos.row
+                    let chars = pos.column
+                    let i = 0;
+                    for (; i < str.length; ++i) {
+                        if (lines == 0) {
+                            if (chars-- == 0)
+                                break;
+                        } else if (str[i] == '\n') lines--;
+                    }
+
+                    compiler.workerOpAsync("getCompletions", {
+                        fileName: this.currFile.getTypeScriptName(),
+                        fileContent: str,
+                        position: i
+                    }).done((compl: ts.CompletionInfo) => {
+                        let entries = compl.entries.map(e => {
+                            return {
+                                name: e.name,
+                                value: e.name,
+                                meta: e.kind
+                            }
+                        })
+                        console.log(prefix, entries.length, compl.entries.length)
+                        callback(null, entries)
+                    })
+                } else {
+                    langTools.textCompleter(editor, session, pos, prefix, callback)
+                }
+            }
+        }
+
+        langTools.setCompleters([tsCompleter, langTools.keyWordCompleter]);
+
+        this.editor.setOptions({
+            enableBasicAutocompletion: true,
+            // enableSnippets: true,
+            enableLiveAutocompletion: true
+        });
+
+        (this.editor.commands as any).on("afterExec", function(e:any) {
+            if (e.command.name == "insertstring" && e.args == ".") {
+                //var all = e.editor.completers;
+                //e.editor.completers = [completers];
+                e.editor.execCommand("startAutocomplete");
+                //e.editor.completers = all;
+            }
+        })
 
         let sess = this.editor.getSession()
         sess.setNewLineMode("unix");
@@ -93,6 +153,7 @@ export class Editor extends srceditor.Editor {
         let sess = this.editor.getSession()
         sess.setMode('ace/mode/' + mode);
         this.editor.setReadOnly(file.isReadonly())
+        this.currFile = file;
         this.setValue(file.content)
         this.setDiagnostics(file)
     }

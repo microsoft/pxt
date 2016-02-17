@@ -38,9 +38,7 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
             const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
             const relativeFileName = diagnostic.file.fileName;
             output += `${relativeFileName}(${line + 1},${character + 1}): `;
-            let localName = diagnostic.file.fileName.replace(/^yelm_modules\//, "")
-            if (localName.indexOf('/') < 0) localName = "this/" + localName
-            let f = mainPkg.lookupFile(localName)
+            let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.file.fileName)[0]
             if (f)
                 f.diagnostics.push(diagnostic)
         }
@@ -79,7 +77,7 @@ function compileCoreAsync(opts: ts.mbit.CompileOptions): Promise<ts.mbit.Compile
     return workerOpAsync("compile", { options: opts })
 }
 
-function workerOpAsync(op: string, arg: ts.mbit.service.OpArg) {
+export function workerOpAsync(op: string, arg: ts.mbit.service.OpArg) {
     return q.enqueue("main", () => new Promise<any>((resolve, reject) => {
         let id = "" + msgId++
         pendingMsgs[id] = v => {
