@@ -15,7 +15,7 @@ task('precopy', function () {
 })
 
 task('upper', ["precopy"], { async: true }, function () {
-    cmdIn(this, "..", 'jake webapp')
+    cmdIn(this, "..", 'jake')
 })
 
 task('postcopy', ["upper"], function () {
