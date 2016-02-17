@@ -56,17 +56,6 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.length
 }
 
-export function getBlocksAsync() {
-    return typecheckAsync()
-        .then(() => workerOpAsync("apiInfo", {}))
-        .then(v => {
-            let info = v as ts.mbit.ApisInfo
-            info = Util.flatClone(info)
-            info.functions = info.functions.filter(f => !!f.attributes.block)
-            return info
-        })
-}
-
 export function compileAsync() {
     return pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => compileCoreAsync(opts))
@@ -100,13 +89,49 @@ export function workerOpAsync(op: string, arg: ts.mbit.service.OpArg) {
     }))
 }
 
+var firstTypecheck: Promise<void>;
+var cachedApis: ts.mbit.ApisInfo;
+var refreshApis = false;
+
+function waitForFirstTypecheckAsync() {
+    if (firstTypecheck) return firstTypecheck;
+    else return typecheckAsync();
+}
+
 export function typecheckAsync() {
-    return pkg.mainPkg.getCompileOptionsAsync()
+    let p = pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => workerOpAsync("setOptions", { options: opts }))
         .then(() => workerOpAsync("allDiags", {}))
         .then(setDiagnostics)
+        .then(() => {
+            if (refreshApis || !cachedApis)
+                return workerOpAsync("apiInfo", {})
+                    .then(apis => {
+                        refreshApis = false;
+                        cachedApis = apis;
+                    })
+            else return Promise.resolve()
+        })
+    if (!firstTypecheck) firstTypecheck = p;
+    return p;
+}
+
+export function getBlocksAsync() {
+    return waitForFirstTypecheckAsync()
+        .then(() => {
+            let info = Util.flatClone(cachedApis)
+            info.functions = info.functions.filter(f => !!f.attributes.block)
+            return info
+        })
+}
+
+export function getApisInfoAsync() {
+    return waitForFirstTypecheckAsync()
+        .then(() => cachedApis)
 }
 
 export function newProject() {
-    workerOpAsync("reset", {}).done()
+    firstTypecheck = null;
+    cachedApis = null;
+    workerOpAsync("reset", {}).done();
 }
