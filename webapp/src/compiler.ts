@@ -58,8 +58,13 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
 
 export function getBlocksAsync() {
     return typecheckAsync()
-        .then(() => workerOpAsync("blocks", {}))
-        .then(v => v as ts.mbit.BlockInfo)
+        .then(() => workerOpAsync("apiInfo", {}))
+        .then(v => {
+            let info = v as ts.mbit.ApisInfo
+            info = Util.flatClone(info)
+            info.functions = info.functions.filter(f => !!f.attributes.block)
+            return info
+        })
 }
 
 export function compileAsync() {

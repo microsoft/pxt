@@ -1764,7 +1764,7 @@ function findParent(b: B.Block) {
 // - All variables have been assigned an initial [Point] in the union-find.
 // - Variables have been marked to indicate if they are compatible with the
 //   TouchDevelop for-loop model.
-function mkEnv(w: B.Workspace, blockInfo: ts.mbit.BlockInfo): Environment {
+function mkEnv(w: B.Workspace, blockInfo: ts.mbit.ApisInfo): Environment {
     // The to-be-returned environment.
     var e = emptyEnv();
     
@@ -1845,7 +1845,7 @@ function mkEnv(w: B.Workspace, blockInfo: ts.mbit.BlockInfo): Environment {
     return e;
 }
 
-function compileWorkspace(w: B.Workspace, blockInfo : ts.mbit.BlockInfo, options: CompileOptions): J.JApp {
+function compileWorkspace(w: B.Workspace, blockInfo : ts.mbit.ApisInfo, options: CompileOptions): J.JApp {
     try {
         var decls: J.JDecl[] = [];
         var e = mkEnv(w, blockInfo);
@@ -1891,7 +1891,7 @@ function compileWorkspace(w: B.Workspace, blockInfo : ts.mbit.BlockInfo, options
     return H.mkApp(options.name, options.description, decls);
 }
 
-export function compile(b: B.Workspace, blockInfo : ts.mbit.BlockInfo, options: CompileOptions): string {
+export function compile(b: B.Workspace, blockInfo : ts.mbit.ApisInfo, options: CompileOptions): string {
     Errors.clear();
     return tdASTtoTS(compileWorkspace(b, blockInfo, options));
 }

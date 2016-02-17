@@ -143,7 +143,7 @@ namespace ts.mbit {
             didSomething = false
             cmt = cmt.replace(/\/\/%[ \t]*(\w+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]+)))?/,
                 (f: string, n: string, d0: string, d1: string,
-                    v0: string, v1: string, v2: string) => {                    
+                    v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     (<any>res)[n] = v;
                     didSomething = true
@@ -176,7 +176,7 @@ namespace ts.mbit {
         initializer?: string;
     }
 
-    export interface BlockFunc {
+    export interface FunctionInfo {
         attributes: CommentAttrs;
         name: string;
         namespace: string;
@@ -185,14 +185,14 @@ namespace ts.mbit {
         retType: string;
     }
 
-    export interface BlockEnum {
+    export interface EnumInfo {
         name: string;
         values: CommentAttrs[];
     }
 
-    export interface BlockInfo {
-        functions: BlockFunc[];
-        enums: BlockEnum[];
+    export interface ApisInfo {
+        functions: FunctionInfo[];
+        enums: EnumInfo[];
     }
 
     function getName(node: Node & { name?: Identifier | BindingPattern; }) {
@@ -206,7 +206,7 @@ namespace ts.mbit {
         return t.getText()
     }
 
-    export function getBlocks(program: Program) {
+    export function getApiInfo(program: Program) {
         let funDecls: FunctionLikeDeclaration[] = []
         let enumDecls: EnumDeclaration[] = []
 
@@ -232,7 +232,7 @@ namespace ts.mbit {
             srcFile.statements.forEach(collectDecls)
         }
 
-        let res: BlockInfo = {
+        let res: ApisInfo = {
             functions: [],
             enums: enumDecls.map(e => {
                 return {
@@ -244,24 +244,22 @@ namespace ts.mbit {
 
         for (let decl of funDecls) {
             let attrs = parseComments(decl)
-            if (attrs.block) {
-                res.functions.push({
-                    name: (decl.name as Identifier).text,
-                    namespace: getNamespace(decl),
-                    isMethod: decl.kind == SyntaxKind.MethodDeclaration,
-                    attributes: attrs,
-                    retType: typeToString(decl.type),
-                    parameters: decl.parameters.map(p => {
-                        let n = getName(p)
-                        return {
-                            name: n,
-                            description: attrs.paramHelp[n] || "",
-                            type: typeToString(p.type),
-                            initializer: p.initializer ? p.initializer.getText() : undefined
-                        }
-                    })
+            res.functions.push({
+                name: (decl.name as Identifier).text,
+                namespace: getNamespace(decl),
+                isMethod: decl.kind == SyntaxKind.MethodDeclaration,
+                attributes: attrs,
+                retType: typeToString(decl.type),
+                parameters: decl.parameters.map(p => {
+                    let n = getName(p)
+                    return {
+                        name: n,
+                        description: attrs.paramHelp[n] || "",
+                        type: typeToString(p.type),
+                        initializer: p.initializer ? p.initializer.getText() : undefined
+                    }
                 })
-            }
+            })
         }
 
         return res
@@ -342,12 +340,12 @@ namespace ts.mbit {
 
     type VarOrParam = VariableDeclaration | ParameterDeclaration;
 
-    interface VariableInfo {
+    interface VariableAddInfo {
         captured?: boolean;
         written?: boolean;
     }
 
-    interface FunctionInfo {
+    interface FunctionAddInfo {
         capturedVars: VarOrParam[];
         location?: mbit.Location;
         thisParameter?: ParameterDeclaration; // a bit bogus
@@ -359,8 +357,8 @@ namespace ts.mbit {
         let classInfos: StringMap<ClassInfo> = {}
         let usedDecls: StringMap<boolean> = {}
         let usedWorkList: Declaration[] = []
-        let variableStatus: StringMap<VariableInfo> = {};
-        let functionInfo: StringMap<FunctionInfo> = {};
+        let variableStatus: StringMap<VariableAddInfo> = {};
+        let functionInfo: StringMap<FunctionAddInfo> = {};
 
         mbit.staticBytecodeInfo = opts.hexinfo;
         mbit.setup();
@@ -1986,7 +1984,7 @@ namespace ts.mbit {
             isarg = false;
             iscap = false;
 
-            constructor(public index: number, public def: Declaration, public info: VariableInfo) {
+            constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
                 if (!isRefDecl(this.def) && typeOf(this.def).flags & TypeFlags.Void) {
                     oops("void-typed variable, " + this.toString())
                 }
@@ -2111,7 +2109,7 @@ namespace ts.mbit {
         export class Procedure {
             numArgs = 0;
             action: FunctionLikeDeclaration;
-            info: FunctionInfo;
+            info: FunctionAddInfo;
             seqNo: number;
             lblNo = 0;
             isRoot = false;
@@ -2139,7 +2137,7 @@ namespace ts.mbit {
                 return text || "inline"
             }
 
-            mkLocal(def: Declaration, info: VariableInfo) {
+            mkLocal(def: Declaration, info: VariableAddInfo) {
                 var l = new Location(this.locals.length, def, info)
                 //if (def) console.log("LOCAL: " + def.getName() + ": ref=" + def.isByRef() + " cap=" + def._isCaptured + " mut=" + def._isMutable)
                 this.locals.push(l)

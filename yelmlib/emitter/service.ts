@@ -111,8 +111,8 @@ namespace ts.mbit.service {
             return patchUpDiagnostics(global.concat(Util.concat(byFile)))
         },
 
-        blocks: () => {
-            return mbit.getBlocks(service.getProgram())
+        apiInfo: () => {
+            return mbit.getApiInfo(service.getProgram())
         },
     }
 

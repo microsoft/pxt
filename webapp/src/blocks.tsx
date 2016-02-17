@@ -16,7 +16,7 @@ export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
     loadingXml: boolean;
-    blockInfo: ts.mbit.BlockInfo;
+    blockInfo: ts.mbit.ApisInfo;
 
     setVisible(v: boolean) {
         super.setVisible(v);
