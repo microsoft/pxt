@@ -517,7 +517,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             filelist = <div className={"ui vertical menu filemenu " + inv}>
                 {files}
             </div>
-        
+
         return (
             <div id='root' className={"full-abs " + inv}>
                 <div id="menubar">
@@ -526,7 +526,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <SlotSelector parent={this} />
                         </div>
                         <div className="item">
-                            <sui.DropdownMenu class="button floating" text={lf("Project")}>
+                            <sui.DropdownMenu class="button floating" text={lf("Project") } icon="wrench">
                                 <sui.Item icon="terminal" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
                                 <sui.Item icon="puzzle" text={lf("New Blocks project") } onClick={() => this.newBlocksProject() } />
                                 {this.editor == this.aceEditor ? null :
@@ -537,8 +537,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
                                 <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
                             </sui.DropdownMenu>
-                            {this.editor.menu()}                            
-                            <sui.Button class='red' icon='trash' popup={lf("Delete project")} onClick={() => this.removeProject() } />
+                            <sui.Button class='red' icon='trash' popup={lf("Delete project") } onClick={() => this.removeProject() } />
+                            {this.editor.menu() }
                         </div>
                         <div className="item right">
                             {isOffline ?

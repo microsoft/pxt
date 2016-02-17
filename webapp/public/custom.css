@@ -97,6 +97,11 @@
     right: 8px;
 }
 
+#content .ui.button > .icon-and-text {
+    margin-right: 4px;
+    margin-left: -2px;
+}
+
 /* blockly */
 
 .blocklyToolboxDiv {
@@ -115,6 +120,8 @@
     font-size:20px;
 }
 
+
+/* ACE */
 
 #aceEditor .ace_search .ace_search_field {
     height: 1.4em;

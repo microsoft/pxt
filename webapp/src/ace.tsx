@@ -37,7 +37,7 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <sui.DropdownMenu class="button floating" text={lf("Edit")}>
+            <sui.DropdownMenu class="button floating" text={lf("Edit")} icon="edit">
                 <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
                 <sui.Item icon="wizard" text={lf("Replace") } onClick={() => this.editor.execCommand("replace") } />
                 <sui.Item icon="help circle" text={lf("Keyboard shortcuts") } onClick={() => this.editor.execCommand("showKeyboardShortcuts") } />

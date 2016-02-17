@@ -24,7 +24,7 @@ function genericClassName(cls: string, props: UiProps) {
 
 function genericContent(props: UiProps) {
     return [
-        props.icon ? (<i key='iconkey' className={props.icon + " icon"}></i>) : null,
+        props.icon ? (<i key='iconkey' className={props.icon + " icon " + (props.text ? " icon-and-text " : "")}></i>) : null,
         props.text ? (<span key='textkey' className='text'>{props.text}</span>) : null
     ]
 }
