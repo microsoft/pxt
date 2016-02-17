@@ -9,7 +9,11 @@ export interface UiProps {
     class?: string;
 }
 
-export interface DropdownProps extends UiProps {
+export interface WithPopupProps extends UiProps {
+    popup?: string;
+}
+
+export interface DropdownProps extends WithPopupProps {
     value?: string;
     onChange?: (v: string) => void;
     menu?: boolean;
@@ -26,8 +30,35 @@ function genericContent(props: UiProps) {
     ]
 }
 
-export class Dropdown extends data.Component<DropdownProps, {}> {
+export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
+    popup() {
+        if (this.props.popup) {
+            let ch = this.child("")
+            ch.popup({
+                content: this.props.popup
+            });
+            if (!ch.data("hasPopupHide")) {
+                ch.data("hasPopupHide", "yes")
+                ch.on("click", () => {
+                    ch.popup("hide")
+                })
+            }
+        }
+    }
+
     componentDidMount() {
+        this.popup()
+    }
+
+    componentDidUpdate() {
+        this.popup()
+    }
+
+}
+
+export class Dropdown extends UiElement<DropdownProps> {
+    componentDidMount() {
+        this.popup()
         this.child("").dropdown({
             action: "hide",
             fullTextSearch: true,
@@ -43,6 +74,7 @@ export class Dropdown extends data.Component<DropdownProps, {}> {
         if (!this.props.menu)
             this.child("").dropdown('set selected', this.props.value)
         this.child("").dropdown("refresh")
+        this.popup()
     }
 
     renderCore() {
@@ -77,30 +109,14 @@ export class Item extends data.Component<ItemProps, {}> {
     }
 }
 
-export interface ButtonProps extends UiProps {
+export interface ButtonProps extends WithPopupProps {
     onClick?: () => void;
-    popup?: string;
 }
 
-export class Button extends data.Component<ButtonProps, {}> {
-    popup() {
-        if (this.props.popup)
-            this.child("").popup({
-            });
-    }
-    
-    componentDidMount() {
-        this.popup()
-    }
-
-    componentDidUpdate() {
-        this.popup()
-    }
-    
+export class Button extends UiElement<ButtonProps> {
     renderCore() {
         return (
             <button className={genericClassName("ui button", this.props) }
-                data-content={this.props.popup}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}
@@ -179,22 +195,22 @@ export class Input extends data.Component<{
     }
 }
 
-export class Modal extends data.Component<{ 
+export class Modal extends data.Component<{
     children?: any;
     addClass?: string;
     headerClass?: string;
-    header: string;    
+    header: string;
 }, {
-    visible?: boolean;
-}> {
+        visible?: boolean;
+    }> {
     show() {
         this.setState({ visible: true })
     }
-    
+
     hide() {
         this.setState({ visible: false })
     }
-    
+
     renderCore() {
         if (!this.state.visible) return null;
         return (
@@ -202,10 +218,10 @@ export class Modal extends data.Component<{
                 if (/mydimmer/.test((ev.target as HTMLElement).className))
                     this.hide()
             } }>
-                <div className={"ui modal transition visible active " + (this.props.addClass || "")}>
-                    <div className={"ui top attached label " + (this.props.headerClass || "teal")}>
+                <div className={"ui modal transition visible active " + (this.props.addClass || "") }>
+                    <div className={"ui top attached label " + (this.props.headerClass || "teal") }>
                         {this.props.header}
-                        <i className='cancel link icon' onClick={() => this.hide()}/>
+                        <i className='cancel link icon' onClick={() => this.hide() }/>
                     </div>
                     {this.props.children}
                 </div>

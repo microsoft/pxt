@@ -526,7 +526,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <SlotSelector parent={this} />
                         </div>
                         <div className="item">
-                            <sui.Dropdown class="button floating" icon="wrench" menu={true}>
+                            <sui.Dropdown class="button floating" icon="wrench" menu={true} popup={lf("Project operations")}>
                                 <sui.Item icon="terminal" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
                                 <sui.Item icon="puzzle" text={lf("New Blocks project") } onClick={() => this.newBlocksProject() } />
                                 {this.editor == this.aceEditor ? null :
@@ -538,7 +538,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
                             </sui.Dropdown>
                             {this.editor.menu()}                            
-                            <sui.Button class='red' icon='trash' onClick={() => this.removeProject() } />
+                            <sui.Button class='red' icon='trash' popup={lf("Delete project")} onClick={() => this.removeProject() } />
                         </div>
                         <div className="item right">
                             {isOffline ?
