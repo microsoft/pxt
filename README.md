@@ -74,7 +74,7 @@ open http://localhost:3232
 
 * [x] make blocks output file read only
 * [ ] do not type-check while auto-completing
-* [ ] scroll completion window with keyboard
+* [x] scroll completion window with keyboard
 
 ### converter from TD to TS (different repo)
 

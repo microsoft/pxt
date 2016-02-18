@@ -116,7 +116,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
     }
 
     selectedIndex() {
-        return Util.indexOfMatching(this.entries, e => e.name == this.state.selectedEntry);
+        let idx = Util.indexOfMatching(this.entries, e => e.name == this.state.selectedEntry);
+        if (idx < 0 && this.entries.length > 0)
+            return 0;
+        else
+            return idx;
     }
 
     moveCursor(delta: number) {
@@ -159,8 +163,6 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
     commitAtCursorOrInsert(s: string) {
         let editor = this.props.parent.editor
         let idx = this.selectedIndex()
-        if (idx < 0 && this.entries.length > 0)
-            idx = 0;
         if (idx < 0) {
             editor.insert(s)
             this.detach()
@@ -181,6 +183,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
     componentDidMount() {
         this.props.parent.completer = this;
     }
+
+    componentDidUpdate() {
+        core.scrollIntoView(this.child(".item.active"))
+    }
+
     renderCore() {
         let editor = this.props.parent.editor
         if (!editor) return null
@@ -221,12 +228,12 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         this.entries = info;
 
         this.completionRange = new Range(textPos.row, textPos.column, textPos.row, textPos.column + pref.length);
-        let sentry = this.state.selectedEntry
+        let idx = this.selectedIndex();
 
         return (
             <div className='ui vertical menu completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
-                {info.map(e =>
-                    <sui.Item class={'link ' + (e.name == sentry ? "active" : "") }
+                {info.map((e, i) =>
+                    <sui.Item class={'link ' + (i == idx ? "active" : "") }
                         key={e.name} text={e.name + " " + e.kind} value={e.name}
                         onClick={() => this.commit(e) }
                         />
@@ -282,7 +289,7 @@ export class Editor extends srceditor.Editor {
             console.info("afterExec", e.command.name)
             if (this.isTypescript) {
                 if (this.completer.activated) {
-                    if (e.command.name == "insertstring" &&  !/^[\w]$/.test(e.args)) {
+                    if (e.command.name == "insertstring" && !/^[\w]$/.test(e.args)) {
                         this.completer.detach();
                     } else if (!approvedCommands.hasOwnProperty(e.command.name)) {
                         this.completer.detach();
@@ -290,7 +297,7 @@ export class Editor extends srceditor.Editor {
                         this.completer.forceUpdate();
                     }
                 } else {
-                    if (e.command.name == "insertstring" &&  /^[a-zA-Z\.]$/.test(e.args)) {
+                    if (e.command.name == "insertstring" && /^[a-zA-Z\.]$/.test(e.args)) {
                         this.completer.showPopup();
                     }
                 }
