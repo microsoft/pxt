@@ -245,12 +245,327 @@ namespace game {
     var img: Image;
     var sprites: LedSprite[];
 
-    export interface LedSprite {
-        _x?: number;
-        _y?: number;
-        _dir?: number;
-        _brightness?: number;
-        _blink?: number;
+    export class LedSprite {
+        _x: number;
+        _y: number;
+        _dir: number;
+        _brightness: number;
+        _blink: number;
+        /**
+         * Move a certain number of LEDs
+         * @param this TODO
+         * @param leds TODO
+         */
+        public move(leds: number): void {
+            if (this._dir == 0) {
+                this._y = this._y - leds;
+            }
+            else if (this._dir == 45) {
+                this._x = this._x + leds;
+                this._y = this._y - leds;
+            }
+            else if (this._dir == 90) {
+                this._x = this._x + leds;
+            }
+            else if (this._dir == 135) {
+                this._x = this._x + leds;
+                this._y = this._y + leds;
+            }
+            else if (this._dir == 180) {
+                this._y = this._y + leds;
+            }
+            else if (this._dir == -45) {
+                this._x = this._x - leds;
+                this._y = this._y - leds;
+            }
+            else if (this._dir == -90) {
+                this._x = this._x - leds;
+            }
+            else {
+                this._x = this._x - leds;
+                this._y = this._y + leds;
+            }
+            this._x = math.clamp(0, 4, this._x);
+            this._y = math.clamp(0, 4, this._y);
+            plot();
+        }
+
+        /**
+         * Go to this position on the screen
+         * @param this TODO
+         * @param x TODO
+         * @param y TODO
+         */
+        public goTo(x: number, y: number): void {
+            this._x = x;
+            this._y = y;
+            this._x = math.clamp(0, 4, this._x);
+            this._y = math.clamp(0, 4, this._y);
+            plot();
+        }
+
+        /**
+         * If touching the edge of the stage, then bounce away.
+         * @param this TODO
+         */
+        public ifOnEdge_Bounce(): void {
+            if (this._dir == 0 && this._y == 0) {
+                this._dir = 180;
+            }
+            else if (this._dir == 45 && (this._x == 4 || this._y == 0)) {
+                if (this._x == 0 && this._y == 0) {
+                    this._dir = -135;
+                }
+                else if (this._y == 0) {
+                    this._dir = 135;
+                }
+                else {
+                    this._dir = -45;
+                }
+            }
+            else if (this._dir == 90 && this._x == 4) {
+                this._dir = -90;
+            }
+            else if (this._dir == 135 && (this._x == 4 || this._y == 4)) {
+                if (this.x() == 4 && this.y() == 4) {
+                    this._dir = -45;
+                }
+                else if (this._y == 4) {
+                    this._dir = 45;
+                }
+                else {
+                    this._dir = -135;
+                }
+            }
+            else if (this._dir == 180 && this._y == 4) {
+                this._dir = 0;
+            }
+            else if (this._dir == -45 && (this._x == 0 || this._y == 0)) {
+                if (this.x() == 0 && this.y() == 0) {
+                    this._dir = 135;
+                }
+                else if (this._y == 0) {
+                    this._dir = -135;
+                }
+                else {
+                    this._dir = 45;
+                }
+            }
+            else if (this._dir == -90 && this._x == 0) {
+                this._dir = 90;
+            }
+            else if (this._dir == -135 && (this._x == 0 || this._y == 4)) {
+                if (this._x == 0 && this._y == 4) {
+                    this._dir = 45;
+                }
+                else if (this._y == 4) {
+                    this._dir = -45;
+                }
+                else {
+                    this._dir = 135;
+                }
+            }
+            plot();
+        }
+
+        /**
+         * Turn to the right (clockwise)
+         * @param this TODO
+         * @param degrees TODO
+         */
+        public turnRight(degrees: number): void {
+            this.setDirection(this._dir + degrees);
+        }
+
+        /**
+         * Turn to the left (counter-clockwise)
+         * @param this TODO
+         * @param degrees TODO
+         */
+        public turnLeft(degrees: number): void {
+            this.turnRight(- degrees);
+        }
+
+        /**
+         * Set the direction of the current sprite, rounded to the nearest multiple of 45
+         * @param this TODO
+         * @param degrees TODO
+         */
+        public setDirection(degrees: number): void {
+            this._dir = ((degrees / 45) % 8) * 45;
+            if (this._dir <= -180) {
+                this._dir = this._dir + 360;
+            }
+            else if (this._dir > 180) {
+                this._dir = this._dir - 360;
+            }
+            plot();
+        }
+
+        /**
+         * Reports the ``x`` position of a sprite on the LED screen
+         * @param this TODO
+         */
+        public x(): number {
+            return this._x;
+        }
+
+        /**
+         * Reports the ``y`` position of a sprite on the LED screen
+         * @param this TODO
+         */
+        public y(): number {
+            return this._y;
+        }
+
+        /**
+         * Reports the current direction of a sprite
+         * @param this TODO
+         */
+        public direction(): number {
+            return this._dir;
+        }
+
+        /**
+         * Set the ``x`` position of a sprite
+         * @param this TODO
+         * @param x TODO
+         */
+        public setX(x: number): void {
+            this.goTo(x, this._y);
+        }
+
+        /**
+         * Set the ``y`` position of a sprite
+         * @param this TODO
+         * @param y TODO
+         */
+        public setY(y: number): void {
+            this.goTo(this._x, y);
+        }
+
+        /**
+         * Changes the ``y`` position by the given amount
+         * @param this TODO
+         * @param y TODO
+         */
+        public changeYBy(y: number): void {
+            this.goTo(this._x, this._y + y);
+        }
+
+        /**
+         * Changes the ``x`` position by the given amount
+         * @param this TODO
+         * @param x TODO
+         */
+        public changeXBy(x: number): void {
+            this.goTo(this._x + x, this._y);
+        }
+
+        /**
+         * Reports true if sprite is touching specified sprite
+         * @param this TODO
+         * @param other TODO
+         */
+        public isTouching(other: LedSprite): boolean {
+            return this._x == other._x && this._y == other._y;
+        }
+
+        /**
+         * Reports true if sprite is touching an edge
+         * @param this TODO
+         */
+        public isTouchingEdge(): boolean {
+            return this._x == 0 || this._x == 4 || this._y == 0 || this._y == 4;
+        }
+
+        /**
+         * Turns on the sprite (on by default)
+         * @param this TODO
+         */
+        public on(): void {
+            this.setBrightness(255);
+        }
+
+        /**
+         * Turns off the sprite (on by default)
+         * @param this TODO
+         */
+        public off(): void {
+            this.setBrightness(0);
+        }
+
+        /**
+         * Set the ``brightness`` of a sprite
+         * @param this TODO
+         * @param brightness TODO
+         */
+        public setBrightness(brightness: number): void {
+            this._brightness = math.clamp(0, 255, brightness);
+            plot();
+        }
+
+        /**
+         * Reports the ``brightness` of a sprite on the LED screen
+         * @param this TODO
+         */
+        public brightness(): number {
+            let r: number;
+            return this._brightness;
+        }
+
+        /**
+         * Changes the ``y`` position by the given amount
+         * @param this TODO
+         * @param value TODO
+         */
+        public changeBrightnessBy(value: number): void {
+            this.setBrightness(this._brightness + value);
+        }
+
+        /**
+         * Changes the ``direction`` position by the given amount by turning right
+         * @param this TODO
+         * @param angle TODO
+         */
+        public changeDirectionBy(angle: number): void {
+            this.turnRight(angle);
+        }
+
+        /**
+         * Deletes the sprite from the game engine. All further operation of the sprite will not have any effect.
+         * @param sprite TODO
+         */
+        public _delete(sprite: LedSprite): void {
+            sprites.removeElement(sprite);
+        }
+
+        /**
+         * Sets the blink duration interval in millisecond.
+         * @param sprite TODO
+         * @param ms TODO
+         */
+        public setBlink(ms: number): void {
+            this._blink = math.clamp(0, 10000, ms);
+        }
+
+        /**
+         * Changes the ``blink`` duration by the given amount of millisecons
+         * @param this TODO
+         * @param ms TODO
+         */
+        public changeBlinkBy(ms: number): void {
+            this.setBlink(this._blink + ms);
+        }
+
+        /**
+         * Reports the ``blink`` duration of a sprite
+         * @param this TODO
+         */
+        public blink(): number {
+            let r: number;
+            return this._blink;
+        }
     }
 
     function init(): void {
@@ -297,322 +612,6 @@ namespace game {
     }
 
     /**
-     * Move a certain number of LEDs
-     * @param _this TODO
-     * @param leds TODO
-     */
-    export function move(_this: LedSprite, leds: number): void {
-        if (_this._dir == 0) {
-            _this._y = _this._y - leds;
-        }
-        else if (_this._dir == 45) {
-            _this._x = _this._x + leds;
-            _this._y = _this._y - leds;
-        }
-        else if (_this._dir == 90) {
-            _this._x = _this._x + leds;
-        }
-        else if (_this._dir == 135) {
-            _this._x = _this._x + leds;
-            _this._y = _this._y + leds;
-        }
-        else if (_this._dir == 180) {
-            _this._y = _this._y + leds;
-        }
-        else if (_this._dir == -45) {
-            _this._x = _this._x - leds;
-            _this._y = _this._y - leds;
-        }
-        else if (_this._dir == -90) {
-            _this._x = _this._x - leds;
-        }
-        else {
-            _this._x = _this._x - leds;
-            _this._y = _this._y + leds;
-        }
-        _this._x = math.clamp(0, 4, _this._x);
-        _this._y = math.clamp(0, 4, _this._y);
-        plot();
-    }
-
-    /**
-     * Go to this position on the screen
-     * @param _this TODO
-     * @param x TODO
-     * @param y TODO
-     */
-    export function goTo(_this: LedSprite, x: number, y: number): void {
-        _this._x = x;
-        _this._y = y;
-        _this._x = math.clamp(0, 4, _this._x);
-        _this._y = math.clamp(0, 4, _this._y);
-        plot();
-    }
-
-    /**
-     * If touching the edge of the stage, then bounce away.
-     * @param _this TODO
-     */
-    export function ifOnEdge_Bounce(_this: LedSprite): void {
-        if (_this._dir == 0 && _this._y == 0) {
-            _this._dir = 180;
-        }
-        else if (_this._dir == 45 && (_this._x == 4 || _this._y == 0)) {
-            if (_this._x == 0 && _this._y == 0) {
-                _this._dir = -135;
-            }
-            else if (_this._y == 0) {
-                _this._dir = 135;
-            }
-            else {
-                _this._dir = -45;
-            }
-        }
-        else if (_this._dir == 90 && _this._x == 4) {
-            _this._dir = -90;
-        }
-        else if (_this._dir == 135 && (_this._x == 4 || _this._y == 4)) {
-            if (x(_this) == 4 && y(_this) == 4) {
-                _this._dir = -45;
-            }
-            else if (_this._y == 4) {
-                _this._dir = 45;
-            }
-            else {
-                _this._dir = -135;
-            }
-        }
-        else if (_this._dir == 180 && _this._y == 4) {
-            _this._dir = 0;
-        }
-        else if (_this._dir == -45 && (_this._x == 0 || _this._y == 0)) {
-            if (x(_this) == 0 && y(_this) == 0) {
-                _this._dir = 135;
-            }
-            else if (_this._y == 0) {
-                _this._dir = -135;
-            }
-            else {
-                _this._dir = 45;
-            }
-        }
-        else if (_this._dir == -90 && _this._x == 0) {
-            _this._dir = 90;
-        }
-        else if (_this._dir == -135 && (_this._x == 0 || _this._y == 4)) {
-            if (_this._x == 0 && _this._y == 4) {
-                _this._dir = 45;
-            }
-            else if (_this._y == 4) {
-                _this._dir = -45;
-            }
-            else {
-                _this._dir = 135;
-            }
-        }
-        plot();
-    }
-
-    /**
-     * Turn to the right (clockwise)
-     * @param _this TODO
-     * @param degrees TODO
-     */
-    export function turnRight(_this: LedSprite, degrees: number): void {
-        setDirection(_this, _this._dir + degrees);
-    }
-
-    /**
-     * Turn to the left (counter-clockwise)
-     * @param _this TODO
-     * @param degrees TODO
-     */
-    export function turnLeft(_this: LedSprite, degrees: number): void {
-        turnRight(_this, - degrees);
-    }
-
-    /**
-     * Set the direction of the current sprite, rounded to the nearest multiple of 45
-     * @param _this TODO
-     * @param degrees TODO
-     */
-    export function setDirection(_this: LedSprite, degrees: number): void {
-        _this._dir = ((degrees / 45) % 8) * 45;
-        if (_this._dir <= -180) {
-            _this._dir = _this._dir + 360;
-        }
-        else if (_this._dir > 180) {
-            _this._dir = _this._dir - 360;
-        }
-        plot();
-    }
-
-    /**
-     * Reports the ``x`` position of a sprite on the LED screen
-     * @param _this TODO
-     */
-    export function x(_this: LedSprite): number {
-        return _this._x;
-    }
-
-    /**
-     * Reports the ``y`` position of a sprite on the LED screen
-     * @param _this TODO
-     */
-    export function y(_this: LedSprite): number {
-        return _this._y;
-    }
-
-    /**
-     * Reports the current direction of a sprite
-     * @param _this TODO
-     */
-    export function direction(_this: LedSprite): number {
-        return _this._dir;
-    }
-
-    /**
-     * Set the ``x`` position of a sprite
-     * @param _this TODO
-     * @param x TODO
-     */
-    export function setX(_this: LedSprite, x: number): void {
-        goTo(_this, x, _this._y);
-    }
-
-    /**
-     * Set the ``y`` position of a sprite
-     * @param _this TODO
-     * @param y TODO
-     */
-    export function setY(_this: LedSprite, y: number): void {
-        goTo(_this, _this._x, y);
-    }
-
-    /**
-     * Changes the ``y`` position by the given amount
-     * @param _this TODO
-     * @param y TODO
-     */
-    export function changeYBy(_this: LedSprite, y: number): void {
-        goTo(_this, _this._x, _this._y + y);
-    }
-
-    /**
-     * Changes the ``x`` position by the given amount
-     * @param _this TODO
-     * @param x TODO
-     */
-    export function changeXBy(_this: LedSprite, x: number): void {
-        goTo(_this, _this._x + x, _this._y);
-    }
-
-    /**
-     * Reports true if sprite is touching specified sprite
-     * @param _this TODO
-     * @param other TODO
-     */
-    export function isTouching(_this: LedSprite, other: LedSprite): boolean {
-        return _this._x == other._x && _this._y == other._y;
-    }
-
-    /**
-     * Reports true if sprite is touching an edge
-     * @param _this TODO
-     */
-    export function isTouchingEdge(_this: LedSprite): boolean {
-        return _this._x == 0 || _this._x == 4 || _this._y == 0 || _this._y == 4;
-    }
-
-    /**
-     * Turns on the sprite (on by default)
-     * @param _this TODO
-     */
-    export function on(_this: LedSprite): void {
-        setBrightness(_this, 255);
-    }
-
-    /**
-     * Turns off the sprite (on by default)
-     * @param _this TODO
-     */
-    export function off(_this: LedSprite): void {
-        setBrightness(_this, 0);
-    }
-
-    /**
-     * Set the ``brightness`` of a sprite
-     * @param _this TODO
-     * @param brightness TODO
-     */
-    export function setBrightness(_this: LedSprite, brightness: number): void {
-        _this._brightness = math.clamp(0, 255, brightness);
-        plot();
-    }
-
-    /**
-     * Reports the ``brightness` of a sprite on the LED screen
-     * @param _this TODO
-     */
-    export function brightness(_this: LedSprite): number {
-        let r: number;
-        return brightness(_this);
-    }
-
-    /**
-     * Changes the ``y`` position by the given amount
-     * @param _this TODO
-     * @param value TODO
-     */
-    export function changeBrightnessBy(_this: LedSprite, value: number): void {
-        setBrightness(_this, _this._brightness + value);
-    }
-
-    /**
-     * Changes the ``direction`` position by the given amount by turning right
-     * @param _this TODO
-     * @param angle TODO
-     */
-    export function changeDirectionBy(_this: LedSprite, angle: number): void {
-        turnRight(_this, angle);
-    }
-
-    /**
-     * Deletes the sprite from the game engine. All further operation of the sprite will not have any effect.
-     * @param sprite TODO
-     */
-    export function _delete(sprite: LedSprite): void {
-        sprites.removeElement(sprite);
-    }
-
-    /**
-     * Sets the blink duration interval in millisecond.
-     * @param sprite TODO
-     * @param ms TODO
-     */
-    export function setBlink(sprite: LedSprite, ms: number): void {
-        sprite._blink = math.clamp(0, 10000, ms);
-    }
-
-    /**
-     * Changes the ``blink`` duration by the given amount of millisecons
-     * @param _this TODO
-     * @param ms TODO
-     */
-    export function changeBlinkBy(_this: LedSprite, ms: number): void {
-        setBlink(_this, _this._blink + ms);
-    }
-
-    /**
-     * Reports the ``blink`` duration of a sprite
-     * @param _this TODO
-     */
-    export function blink(_this: LedSprite): number {
-        let r: number;
-        return _this._blink;
-    }
-
-    /**
      * Creates a new LED sprite pointing to the right.
      * @param x TODO
      * @param y TODO
@@ -621,7 +620,7 @@ namespace game {
     export function createSprite(x: number, y: number): LedSprite {
         let r: LedSprite;
         init();
-        let p : LedSprite = {};
+        let p = new LedSprite();
         p._x = math.clamp(0, 4, x);
         p._y = math.clamp(0, 4, y);
         p._dir = 90;
