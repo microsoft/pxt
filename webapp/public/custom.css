@@ -147,5 +147,6 @@
     width: 25em;
     max-height: 20em;
     overflow-y: auto;
-    margin: 0.3em 0;    
+    margin-top: 0.4em;
+    margin-left: -1.1em;
 }

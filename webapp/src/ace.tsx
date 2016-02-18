@@ -43,20 +43,28 @@ export interface CompletionCache {
 export class AceCompleter extends data.Component<{ parent: Editor; }, {
     visible?: boolean;
     cache?: CompletionCache;
+    selectedEntry?: string;
 }> {
+    queryingFor: string;
+    firstTime = true;
+    completionRange: AceAjax.Range;
+    keyHandler: any;
+    entries: ts.CompletionEntry[] = [];
+
     // ACE interface
     get activated() { return !!this.state.visible }
     showPopup() {
         this.setState({ visible: true })
     }
     detach() {
+        this.entries = []
         if (this.state.visible)
-            this.setState({ visible: false })
+            this.setState({
+                visible: false,
+                selectedEntry: null
+            })
     }
     cancelContextMenu() { }
-
-    queryingFor: string;
-    firstTime = true;
 
     queryCompletionAsync(pos: AceAjax.Position, posTxt: string) {
         if (this.queryingFor == posTxt) return Promise.resolve()
@@ -77,7 +85,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let cache: CompletionCache = {
             apisInfo: null,
             completionInfo: null,
-            posTxt: posTxt
+            posTxt: posTxt,
         }
 
         return compiler.workerOpAsync("getCompletions", {
@@ -102,6 +110,22 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         return cache.completionInfo.entries;
     }
 
+    selectedIndex() {
+        return Util.indexOfMatching(this.entries, e => e.name == this.state.selectedEntry);
+    }
+
+    moveCursor(delta: number) {
+        let pos = this.selectedIndex()
+        pos += delta
+        if (pos < 0) {
+            this.detach()
+        } else if (pos >= this.entries.length) {
+            // do nothing
+        } else {
+            this.setState({ selectedEntry: this.entries[pos].name })
+        }
+    }
+
     initFirst() {
         let editor = this.props.parent.editor
         this.firstTime = false;
@@ -109,21 +133,44 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         editor.on("mousewheel", () => this.detach())
         editor.on("change", e => {
             var cursor = (editor.selection as any).lead;
-            if (cursor.row != this.basePos.row || cursor.column < this.basePos.column) {
-                this.detach();
-            }
+            if (this.completionRange) {
+                let basePos = this.completionRange.start
+                if (cursor.row != basePos.row || cursor.column < basePos.column) {
+                    this.detach();
+                }
+            } else this.detach();
         });
 
         this.keyHandler = new HashHandler();
         this.keyHandler.bindKeys({
-            "Up": () => { },
-            "Down": () => { },
+            "Up": () => this.moveCursor(-1),
+            "Down": () => this.moveCursor(1),
             "Esc": () => this.detach(),
+            "Return": () => this.commitAtCursorOrInsert("\n"),
+            "Tab": () => this.commitAtCursorOrInsert("\t"),
         })
     }
 
-    basePos: AceAjax.Position = { column: 0, row: 0 };
-    keyHandler: any;
+    commitAtCursorOrInsert(s: string) {
+        let editor = this.props.parent.editor
+        let idx = this.selectedIndex()
+        if (idx < 0 && s == "\t" && this.entries.length > 0)
+            idx = 0;
+        if (idx < 0) {
+            editor.insert(s)
+            this.detach()
+        } else {
+            this.commit(this.entries[idx])
+        }
+    }
+
+    commit(e: ts.CompletionEntry) {
+        let editor = this.props.parent.editor
+        if (!editor || !this.completionRange) return
+        editor.session.replace(this.completionRange, e.name);
+        this.detach()
+    }
+
 
     // React interface
     componentDidMount() {
@@ -153,8 +200,6 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let m = /(\w*)$/.exec(pref)
         pref = m ? m[1].toLowerCase() : ""
 
-        this.basePos = textPos;
-
         textPos.column -= pref.length
 
         let pos = renderer.$cursorLayer.getPixelPosition(textPos, false);
@@ -168,15 +213,19 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         if (!info) return null; // or Loading... ?
 
         info = info.filter(e => Util.startsWith(e.name.toLowerCase(), pref))
+        this.entries = info;
 
-        let prefRange = new Range(textPos.row, textPos.column, textPos.row, textPos.column + pref.length);
+        this.completionRange = new Range(textPos.row, textPos.column, textPos.row, textPos.column + pref.length);
+        let sentry = this.state.selectedEntry
 
         return (
             <div className='ui vertical menu completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
-                {info.map(e => <sui.Item class='link' key={e.name} text={e.name} value={e.name} onClick={() => {
-                    editor.session.replace(prefRange, e.name);
-                    this.detach()
-                } } />) }
+                {info.map(e =>
+                    <sui.Item class={'link ' + (e.name == sentry ? "active" : "") }
+                        key={e.name} text={e.name} value={e.name}
+                        onClick={() => this.commit(e) }
+                        />
+                ) }
             </div>
         )
     }
