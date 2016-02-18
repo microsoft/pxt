@@ -34,9 +34,11 @@ var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
 
+type CompletionEntry = ts.mbit.service.MbitCompletionEntry;
+
 export interface CompletionCache {
     apisInfo: ts.mbit.ApisInfo;
-    completionInfo: ts.CompletionInfo;
+    completionInfo: ts.mbit.service.MbitCompletionInfo;
     posTxt: string;
 }
 
@@ -49,7 +51,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
     firstTime = true;
     completionRange: AceAjax.Range;
     keyHandler: any;
-    entries: ts.CompletionEntry[] = [];
+    entries: CompletionEntry[] = [];
 
     // ACE interface
     get activated() { return !!this.state.visible }
@@ -93,7 +95,10 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             fileContent: str,
             position: i
         })
-            .then(compl => { cache.completionInfo = compl })
+            .then(compl => {
+                cache.completionInfo = compl;
+                console.log(compl)
+            })
             .then(() => compiler.getApisInfoAsync())
             .then(info => { cache.apisInfo = info })
             .then(() => this.setState({ cache: cache }))
@@ -154,7 +159,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
     commitAtCursorOrInsert(s: string) {
         let editor = this.props.parent.editor
         let idx = this.selectedIndex()
-        if (idx < 0 && s == "\t" && this.entries.length > 0)
+        if (idx < 0 && this.entries.length > 0)
             idx = 0;
         if (idx < 0) {
             editor.insert(s)
@@ -164,7 +169,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         }
     }
 
-    commit(e: ts.CompletionEntry) {
+    commit(e: CompletionEntry) {
         let editor = this.props.parent.editor
         if (!editor || !this.completionRange) return
         editor.session.replace(this.completionRange, e.name);
@@ -222,7 +227,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             <div className='ui vertical menu completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
                 {info.map(e =>
                     <sui.Item class={'link ' + (e.name == sentry ? "active" : "") }
-                        key={e.name} text={e.name} value={e.name}
+                        key={e.name} text={e.name + " " + e.kind} value={e.name}
                         onClick={() => this.commit(e) }
                         />
                 ) }
@@ -262,12 +267,6 @@ export class Editor extends srceditor.Editor {
         this.editor = ace.edit("aceEditorInner");
         let langTools = acequire("ace/ext/language_tools");
 
-        this.editor.setOptions({
-            enableBasicAutocompletion: true,
-            // enableSnippets: true,
-            enableLiveAutocompletion: true
-        });
-
         this.editor.commands.on("exec", (e: any) => {
             console.info("beforeExec", e.command.name)
         });
@@ -283,13 +282,15 @@ export class Editor extends srceditor.Editor {
             console.info("afterExec", e.command.name)
             if (this.isTypescript) {
                 if (this.completer.activated) {
-                    if (!approvedCommands.hasOwnProperty(e.command.name)) {
+                    if (e.command.name == "insertstring" &&  !/^[\w]$/.test(e.args)) {
+                        this.completer.detach();
+                    } else if (!approvedCommands.hasOwnProperty(e.command.name)) {
                         this.completer.detach();
                     } else {
                         this.completer.forceUpdate();
                     }
                 } else {
-                    if (e.command.name == "insertstring" && e.args == ".") {
+                    if (e.command.name == "insertstring" &&  /^[a-zA-Z\.]$/.test(e.args)) {
                         this.completer.showPopup();
                     }
                 }
@@ -376,8 +377,16 @@ export class Editor extends srceditor.Editor {
         if (curr) curr.detach();
         if (this.isTypescript) {
             (this.editor as any).completer = this.completer;
+            this.editor.setOptions({
+                enableBasicAutocompletion: false,
+                enableLiveAutocompletion: false
+            });
         } else {
             (this.editor as any).completer = null;
+            this.editor.setOptions({
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true
+            });
         }
 
         this.currFile = file;

@@ -9,7 +9,7 @@ namespace ts.mbit.service {
         opts = emptyOptions;
         fileVersions: Util.StringMap<number> = {};
         projectVer = 0;
-        
+
         getProjectVersion() {
             return this.projectVer + ""
         }
@@ -74,12 +74,33 @@ namespace ts.mbit.service {
         options?: CompileOptions;
     }
 
+    export interface MbitCompletionEntry {
+        name: string;
+        kind: string;
+    }
+
+    export interface MbitCompletionInfo {
+        entries: MbitCompletionEntry[];
+        isMemberCompletion: boolean;
+        isNewIdentifierLocation: boolean;
+        isTypeLocation: boolean;
+    }
+
     function fileDiags(fn: string) {
         let d = service.getSyntacticDiagnostics(fn)
         if (!d || !d.length)
             d = service.getSemanticDiagnostics(fn)
         if (!d) d = []
         return d
+    }
+
+    interface InternalCompletionData {
+        symbols: ts.Symbol[];
+        isMemberCompletion: boolean;
+        isNewIdentifierLocation: boolean;
+        location: ts.Node;
+        isRightOfDot: boolean;
+        isJsDocTagName: boolean;
     }
 
     let operations: Util.StringMap<(v: OpArg) => any> = {
@@ -96,7 +117,82 @@ namespace ts.mbit.service {
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
             }
-            return service.getCompletionsAtPosition(v.fileName, v.position)
+
+            let program = service.getProgram() // this synchornizes host data as well
+            let data: InternalCompletionData = (service as any).getCompletionData(v.fileName, v.position);
+            let typechecker = program.getTypeChecker()
+
+            let r: MbitCompletionInfo = {
+                entries: [],
+                isMemberCompletion: data.isMemberCompletion,
+                isNewIdentifierLocation: data.isNewIdentifierLocation,
+                isTypeLocation: false // TODO
+            }
+
+
+            for (let s of data.symbols) {
+
+                let tmp = ts.getLocalSymbolForExportDefault(s)
+                let name = typechecker.symbolToString(tmp || s)
+                let flags = s.getFlags()
+                let kind = ""
+
+                let decl = s.valueDeclaration
+                let isAmbient = false
+                if (decl && ts.isInAmbientContext(decl))
+                    isAmbient = true
+
+                /* The following are skipped below, possible to do   
+           Class             // Class
+           Interface         // Interface
+           TypeLiteral       // Type Literal
+           ObjectLiteral     // Object Literal
+           Constructor       // Constructor
+           Signature         // Call, construct, or index signature
+           TypeParameter     // Type parameter
+           TypeAlias         // Type alias
+           Alias             // An alias for another symbol (see comment in isAliasSymbolDeclaration in checker)
+           Instantiated      // Instantiated symbol
+           Merged            // Merged symbol (created during program binding)
+           Transient         // Transient symbol (created during type check)
+           Prototype         // Prototype property (no source representation)
+           SyntheticProperty // Property in union or intersection type
+           Optional          // Optional property
+           ExportStar        // Export * declaration
+           */
+
+                if (flags & SymbolFlags.Module) {
+                    kind = "module"
+                } else if (flags & SymbolFlags.Variable) {
+                    // local or global
+                    // also let, const, parameter
+                    
+                    // Ambient vars are things like Array, Number, etc
+                    if (!isAmbient)
+                        kind = "var"
+                } else if (flags & SymbolFlags.Function) {
+                    // local or global
+                    kind = "function"
+                } else if (flags & SymbolFlags.Enum) {
+                    // local or global
+                    kind = "enum"
+                } else if (flags & SymbolFlags.EnumMember) {
+                    // local or global
+                    kind = "enummember"
+                } else if (flags & (SymbolFlags.Accessor | SymbolFlags.Property)) {
+                    kind = "field"
+                } else if (flags & SymbolFlags.Method) {
+                    kind = "method"
+                }
+
+                if (!kind) continue;
+                r.entries.push({
+                    name,
+                    kind
+                });
+            }
+
+            return r;
         },
 
         compile: v => {

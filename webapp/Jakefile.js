@@ -20,7 +20,15 @@ task('upper', ["precopy"], { async: true }, function () {
 
 task('postcopy', ["upper"], function () {
     jake.cpR("../built/yelmlib.js", "built/yelmlib.js")
-    jake.cpR("../node_modules/typescript/lib/typescript.js", "built/typescript.js")
+
+    let additionalExports = [
+      "getCompletionData"
+    ]
+
+    let ts = fs.readFileSync("../node_modules/typescript/lib/typescript.js", "utf8")
+    ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/, 
+        f => f + " " + additionalExports.map(s => s + ": " + s + ",").join(" "))
+    fs.writeFileSync("built/typescript.js", ts)
 })
 
 task('lower', ["postcopy"], { async: true }, function () {

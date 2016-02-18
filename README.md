@@ -38,7 +38,9 @@ node server.js &
 open http://localhost:3232
 ```
 
-## TODO
+## TODOs
+
+### package mgr + compiler
 
 * [x] image literals
 * [x] code in top-level scope
@@ -64,12 +66,17 @@ open http://localhost:3232
 * [x] do not generate empty action bodies for shim
 * [x] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues
-* [x] make blocks output file read only
 * [x] skip unreferenced globals when initilized with literal
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload
 
-## TODO for converter from TD
+### web app
+
+* [x] make blocks output file read only
+* [ ] do not type-check while auto-completing
+* [ ] scroll completion window with keyboard
+
+### converter from TD to TS (different repo)
 
 * [x] multi-line strings into backtick literals
 * [ ] use bit operators for bits.XYZ
