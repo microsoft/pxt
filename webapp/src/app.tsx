@@ -162,6 +162,45 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
     }
 }
 
+class FileList extends data.Component<ISettingsProps, {}> {
+    renderCore() {
+        let parent = this.props.parent
+        if (!parent.state.showFiles)
+            return null;
+
+        let filesOf = (pkg: pkg.EditorPackage) =>
+            pkg.sortedFiles().map(file => {
+                let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
+                return (
+                    <a
+                        key={file.getName() }
+                        onClick={() => parent.setFile(file) }
+                        className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
+                        >
+                        {file.name} {meta.isSaved ? "" : "*"}
+                        {meta.isReadonly ? <i className="lock icon"></i> : null}
+                        {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+                    </a>);
+            })
+
+        let filesWithHeader = (pkg: pkg.EditorPackage) =>
+            pkg.isTopLevel() ? filesOf(pkg) : [
+                <div key={"hd-" + pkg.getPkgId() } className="header item">
+                    <i className="folder icon"></i>
+                    {pkg.getPkgId() }
+                </div>
+            ].concat(filesOf(pkg))
+
+        let inv = parent.state.theme.inverted ? " inverted " : " "
+
+        return (
+            <div className={"ui vertical menu filemenu " + inv}>
+                {Util.concat(pkg.allEditorPkgs().map(filesWithHeader)) }
+            </div>
+        )
+    }
+}
+
 
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
@@ -480,31 +519,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             this.updateEditorFile();
         }
 
-        let filesOf = (pkg: pkg.EditorPackage) =>
-            pkg.sortedFiles().map(file => {
-                let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
-                return (
-                    <a
-                        key={file.getName() }
-                        onClick={() => this.setFile(file) }
-                        className={(this.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
-                        >
-                        {file.name} {meta.isSaved ? "" : "*"}
-                        {meta.isReadonly ? <i className="lock icon"></i> : null}
-                        {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-                    </a>);
-            })
-
-        let filesWithHeader = (pkg: pkg.EditorPackage) =>
-            pkg.isTopLevel() ? filesOf(pkg) : [
-                <div key={"hd-" + pkg.getPkgId() } className="header item">
-                    <i className="folder icon"></i>
-                    {pkg.getPkgId() }
-                </div>
-            ].concat(filesOf(pkg))
-
-        let files = Util.concat(pkg.allEditorPkgs().map(filesWithHeader))
-
         let isOffline = !this.getData("cloud-online:api")
         let goOnline = () => {
             data.setOnline(true)
@@ -512,11 +526,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
 
         let inv = this.state.theme.inverted ? " inverted " : " "
-        let filelist: JSX.Element = undefined;
-        if (this.state.showFiles)
-            filelist = <div className={"ui vertical menu filemenu " + inv}>
-                {files}
-            </div>
 
         return (
             <div id='root' className={"full-abs " + inv}>
@@ -565,7 +574,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             this.saveSettings();
                         } } />
                     </div>
-                    {filelist}
+                    <FileList parent={this} />                    
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
