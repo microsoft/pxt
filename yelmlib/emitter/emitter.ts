@@ -169,31 +169,6 @@ namespace ts.mbit {
         return res
     }
 
-    export interface ParameterDesc {
-        name: string;
-        description: string;
-        type: string;
-        initializer?: string;
-    }
-
-    export interface FunctionInfo {
-        attributes: CommentAttrs;
-        name: string;
-        namespace: string;
-        isMethod: boolean;
-        parameters: ParameterDesc[];
-        retType: string;
-    }
-
-    export interface EnumInfo {
-        name: string;
-        values: CommentAttrs[];
-    }
-
-    export interface ApisInfo {
-        functions: FunctionInfo[];
-        enums: EnumInfo[];
-    }
 
     function getName(node: Node & { name?: Identifier | BindingPattern; }) {
         if (!node.name || node.name.kind != SyntaxKind.Identifier)

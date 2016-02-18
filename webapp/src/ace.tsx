@@ -34,11 +34,11 @@ var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
 
-type CompletionEntry = ts.mbit.service.MbitCompletionEntry;
+type CompletionEntry = ts.mbit.CompletionEntry;
 
 export interface CompletionCache {
     apisInfo: ts.mbit.ApisInfo;
-    completionInfo: ts.mbit.service.MbitCompletionInfo;
+    completionInfo: ts.mbit.CompletionInfo;
     posTxt: string;
 }
 

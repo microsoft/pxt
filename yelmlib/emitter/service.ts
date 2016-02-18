@@ -1,3 +1,114 @@
+namespace ts.mbit {
+    export interface ParameterDesc {
+        name: string;
+        description: string;
+        type: string;
+        initializer?: string;
+    }
+
+    export interface FunctionInfo {
+        attributes: CommentAttrs;
+        name: string;
+        namespace: string;
+        isMethod: boolean;
+        parameters: ParameterDesc[];
+        retType: string;
+    }
+
+    export interface EnumInfo {
+        name: string;
+        values: CommentAttrs[];
+    }
+
+    export interface ApisInfo {
+        functions: FunctionInfo[];
+        enums: EnumInfo[];
+    }
+
+    export interface CompletionEntry {
+        name: string;
+        kind: string;
+        qualifiedName: string;
+    }
+
+    export interface CompletionInfo {
+        entries: CompletionEntry[];
+        isMemberCompletion: boolean;
+        isNewIdentifierLocation: boolean;
+        isTypeLocation: boolean;
+    }
+
+    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo) {
+        let typechecker = program.getTypeChecker()
+        
+        for (let s of symbols) {
+
+            let tmp = ts.getLocalSymbolForExportDefault(s)
+            let name = typechecker.symbolToString(tmp || s)
+            let flags = s.getFlags()
+            let kind = ""
+
+            let decl = s.valueDeclaration
+            let isAmbient = false
+            if (decl && ts.isInAmbientContext(decl))
+                isAmbient = true
+
+            /* The following are skipped below, possible to do   
+       Class             // Class
+       Interface         // Interface
+       TypeLiteral       // Type Literal
+       ObjectLiteral     // Object Literal
+       Constructor       // Constructor
+       Signature         // Call, construct, or index signature
+       TypeParameter     // Type parameter
+       TypeAlias         // Type alias
+       Alias             // An alias for another symbol (see comment in isAliasSymbolDeclaration in checker)
+       Instantiated      // Instantiated symbol
+       Merged            // Merged symbol (created during program binding)
+       Transient         // Transient symbol (created during type check)
+       Prototype         // Prototype property (no source representation)
+       SyntheticProperty // Property in union or intersection type
+       Optional          // Optional property
+       ExportStar        // Export * declaration
+       */
+
+            if (flags & SymbolFlags.Module) {
+                kind = "module"
+            } else if (flags & SymbolFlags.Variable) {
+                // local or global
+                // also let, const, parameter
+
+                // Ambient vars are things like Array, Number, etc
+                if (!isAmbient)
+                    kind = "var"
+            } else if (flags & SymbolFlags.Function) {
+                // local or global
+                kind = "function"
+            } else if (flags & SymbolFlags.Enum) {
+                // local or global
+                kind = "enum"
+            } else if (flags & SymbolFlags.EnumMember) {
+                // local or global
+                kind = "enummember"
+            } else if (flags & (SymbolFlags.Accessor | SymbolFlags.Property)) {
+                kind = "field"
+            } else if (flags & SymbolFlags.Method) {
+                kind = "method"
+            }
+
+            let qualifiedName = typechecker.getFullyQualifiedName(s)
+
+            if (!kind) continue;
+            r.entries.push({
+                name,
+                kind,
+                qualifiedName
+            });
+        }
+    }
+}
+
+
 namespace ts.mbit.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
@@ -74,18 +185,6 @@ namespace ts.mbit.service {
         options?: CompileOptions;
     }
 
-    export interface MbitCompletionEntry {
-        name: string;
-        kind: string;
-    }
-
-    export interface MbitCompletionInfo {
-        entries: MbitCompletionEntry[];
-        isMemberCompletion: boolean;
-        isNewIdentifierLocation: boolean;
-        isTypeLocation: boolean;
-    }
-
     function fileDiags(fn: string) {
         let d = service.getSyntacticDiagnostics(fn)
         if (!d || !d.length)
@@ -122,75 +221,14 @@ namespace ts.mbit.service {
             let data: InternalCompletionData = (service as any).getCompletionData(v.fileName, v.position);
             let typechecker = program.getTypeChecker()
 
-            let r: MbitCompletionInfo = {
+            let r: CompletionInfo = {
                 entries: [],
                 isMemberCompletion: data.isMemberCompletion,
                 isNewIdentifierLocation: data.isNewIdentifierLocation,
                 isTypeLocation: false // TODO
             }
-
-
-            for (let s of data.symbols) {
-
-                let tmp = ts.getLocalSymbolForExportDefault(s)
-                let name = typechecker.symbolToString(tmp || s)
-                let flags = s.getFlags()
-                let kind = ""
-
-                let decl = s.valueDeclaration
-                let isAmbient = false
-                if (decl && ts.isInAmbientContext(decl))
-                    isAmbient = true
-
-                /* The following are skipped below, possible to do   
-           Class             // Class
-           Interface         // Interface
-           TypeLiteral       // Type Literal
-           ObjectLiteral     // Object Literal
-           Constructor       // Constructor
-           Signature         // Call, construct, or index signature
-           TypeParameter     // Type parameter
-           TypeAlias         // Type alias
-           Alias             // An alias for another symbol (see comment in isAliasSymbolDeclaration in checker)
-           Instantiated      // Instantiated symbol
-           Merged            // Merged symbol (created during program binding)
-           Transient         // Transient symbol (created during type check)
-           Prototype         // Prototype property (no source representation)
-           SyntheticProperty // Property in union or intersection type
-           Optional          // Optional property
-           ExportStar        // Export * declaration
-           */
-
-                if (flags & SymbolFlags.Module) {
-                    kind = "module"
-                } else if (flags & SymbolFlags.Variable) {
-                    // local or global
-                    // also let, const, parameter
-                    
-                    // Ambient vars are things like Array, Number, etc
-                    if (!isAmbient)
-                        kind = "var"
-                } else if (flags & SymbolFlags.Function) {
-                    // local or global
-                    kind = "function"
-                } else if (flags & SymbolFlags.Enum) {
-                    // local or global
-                    kind = "enum"
-                } else if (flags & SymbolFlags.EnumMember) {
-                    // local or global
-                    kind = "enummember"
-                } else if (flags & (SymbolFlags.Accessor | SymbolFlags.Property)) {
-                    kind = "field"
-                } else if (flags & SymbolFlags.Method) {
-                    kind = "method"
-                }
-
-                if (!kind) continue;
-                r.entries.push({
-                    name,
-                    kind
-                });
-            }
+            
+            fillCompletionEntries(program, data.symbols, r)
 
             return r;
         },
