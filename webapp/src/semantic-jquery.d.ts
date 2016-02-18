@@ -15,5 +15,9 @@ declare module AceAjax {
     export interface TextMode {
         $id: string;
     }
-
+    
+    export interface Editor {
+        on(ev: 'change', callback: (ev: EditorChangeEvent) => any): void;
+        on(ev: string, callback: Function): void;
+    }
 }

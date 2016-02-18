@@ -31,6 +31,8 @@ require("brace/ext/searchbox");
 
 var acequire = (ace as any).acequire;
 var Range = acequire("ace/range").Range;
+var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
+
 
 export interface CompletionCache {
     apisInfo: ts.mbit.ApisInfo;
@@ -48,11 +50,13 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         this.setState({ visible: true })
     }
     detach() {
-        this.setState({ visible: false })
+        if (this.state.visible)
+            this.setState({ visible: false })
     }
     cancelContextMenu() { }
 
     queryingFor: string;
+    firstTime = true;
 
     queryCompletionAsync(pos: AceAjax.Position, posTxt: string) {
         if (this.queryingFor == posTxt) return Promise.resolve()
@@ -98,17 +102,49 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         return cache.completionInfo.entries;
     }
 
+    initFirst() {
+        let editor = this.props.parent.editor
+        this.firstTime = false;
+        editor.on("mousedown", () => this.detach())
+        editor.on("mousewheel", () => this.detach())
+        editor.on("change", e => {
+            var cursor = (editor.selection as any).lead;
+            if (cursor.row != this.basePos.row || cursor.column < this.basePos.column) {
+                this.detach();
+            }
+        });
+
+        this.keyHandler = new HashHandler();
+        this.keyHandler.bindKeys({
+            "Up": () => { },
+            "Down": () => { },
+            "Esc": () => this.detach(),
+        })
+    }
+
+    basePos: AceAjax.Position = { column: 0, row: 0 };
+    keyHandler: any;
+
     // React interface
     componentDidMount() {
         this.props.parent.completer = this;
     }
     renderCore() {
         let editor = this.props.parent.editor
-        if (!editor || !this.state.visible) return null
+        if (!editor) return null
+
+        if (this.keyHandler)
+            (editor as any).keyBinding.removeKeyboardHandler(this.keyHandler);
+
+        if (!this.state.visible) return null
 
         let mode = editor.session.getMode();
         if (mode.$id != "ace/mode/typescript") return null;
 
+        if (this.firstTime)
+            this.initFirst();
+
+        (editor as any).keyBinding.addKeyboardHandler(this.keyHandler);
         let renderer: any = editor.renderer
 
         let textPos = editor.getCursorPosition();
@@ -116,6 +152,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let pref = line.slice(0, textPos.column)
         let m = /(\w*)$/.exec(pref)
         pref = m ? m[1].toLowerCase() : ""
+
+        this.basePos = textPos;
 
         textPos.column -= pref.length
 
@@ -130,7 +168,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         if (!info) return null; // or Loading... ?
 
         info = info.filter(e => Util.startsWith(e.name.toLowerCase(), pref))
-        
+
         let prefRange = new Range(textPos.row, textPos.column, textPos.row, textPos.column + pref.length);
 
         return (
@@ -138,7 +176,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 {info.map(e => <sui.Item class='link' key={e.name} text={e.name} value={e.name} onClick={() => {
                     editor.session.replace(prefRange, e.name);
                     this.detach()
-                }} />) }
+                } } />) }
             </div>
         )
     }
@@ -148,6 +186,7 @@ export class Editor extends srceditor.Editor {
     editor: AceAjax.Editor;
     currFile: pkg.File;
     completer: AceCompleter;
+    isTypescript = false;
 
     menu() {
         return (
@@ -172,46 +211,7 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         this.editor = ace.edit("aceEditorInner");
-        (this.editor as any).completer = this.completer;
-
         let langTools = acequire("ace/ext/language_tools");
-
-        let tsCompleter = {
-            getCompletions: (editor: AceAjax.Editor, session: AceAjax.IEditSession, pos: AceAjax.Position, prefix: string, callback: any) => {
-                let mode = session.getMode();
-                if ((mode as any).$id == "ace/mode/typescript") {
-                    let str = session.getValue()
-                    let lines = pos.row
-                    let chars = pos.column
-                    let i = 0;
-                    for (; i < str.length; ++i) {
-                        if (lines == 0) {
-                            if (chars-- == 0)
-                                break;
-                        } else if (str[i] == '\n') lines--;
-                    }
-
-                    compiler.workerOpAsync("getCompletions", {
-                        fileName: this.currFile.getTypeScriptName(),
-                        fileContent: str,
-                        position: i
-                    }).done((compl: ts.CompletionInfo) => {
-                        let entries = compl.entries.map(e => {
-                            return {
-                                name: e.name,
-                                value: e.name,
-                                meta: e.kind
-                            }
-                        })
-                        callback(null, entries)
-                    })
-                } else {
-                    langTools.textCompleter(editor, session, pos, prefix, callback)
-                }
-            }
-        }
-
-        langTools.setCompleters([tsCompleter, langTools.keyWordCompleter]);
 
         this.editor.setOptions({
             enableBasicAutocompletion: true,
@@ -219,18 +219,33 @@ export class Editor extends srceditor.Editor {
             enableLiveAutocompletion: true
         });
 
-        this.editor.commands.on("exec", function(e: any) {
+        this.editor.commands.on("exec", (e: any) => {
             console.info("beforeExec", e.command.name)
         });
 
-        this.editor.commands.on("afterExec", function(e: any) {
+        let approvedCommands = {
+            insertstring: 1,
+            backspace: 1,
+            Down: 1,
+            Up: 1,
+        }
+
+        this.editor.commands.on("afterExec", (e: any) => {
             console.info("afterExec", e.command.name)
-            if (e.command.name == "insertstring" && e.args == ".") {
-                //var all = e.editor.completers;
-                //e.editor.completers = [completers];
-                e.editor.execCommand("startAutocomplete");
-                //e.editor.completers = all;
+            if (this.isTypescript) {
+                if (this.completer.activated) {
+                    if (!approvedCommands.hasOwnProperty(e.command.name)) {
+                        this.completer.detach();
+                    } else {
+                        this.completer.forceUpdate();
+                    }
+                } else {
+                    if (e.command.name == "insertstring" && e.args == ".") {
+                        this.completer.showPopup();
+                    }
+                }
             }
+
         });
 
         this.editor.commands.addCommand({
@@ -305,7 +320,17 @@ export class Editor extends srceditor.Editor {
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
         let sess = this.editor.getSession()
         sess.setMode('ace/mode/' + mode);
-        this.editor.setReadOnly(file.isReadonly())
+        this.editor.setReadOnly(file.isReadonly());
+        this.isTypescript = mode == "typescript";
+
+        let curr = (this.editor as any).completer as AceCompleter;
+        if (curr) curr.detach();
+        if (this.isTypescript) {
+            (this.editor as any).completer = this.completer;
+        } else {
+            (this.editor as any).completer = null;
+        }
+
         this.currFile = file;
         this.setValue(file.content)
         this.setDiagnostics(file)
