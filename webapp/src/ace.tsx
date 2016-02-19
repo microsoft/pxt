@@ -34,12 +34,18 @@ var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
 
-type CompletionEntry = ts.mbit.SymbolInfo;
+export interface CompletionEntry {
+    name: string;
+    symbolInfo: ts.mbit.SymbolInfo;
+    lastScore: number;
+    searchName: string;
+    searchDesc: string;
+}
 
 export interface CompletionCache {
     apisInfo: ts.mbit.ApisInfo;
     completionInfo: ts.mbit.CompletionInfo;
-    entries: ts.mbit.SymbolInfo[];
+    entries: CompletionEntry[];
     posTxt: string;
 }
 
@@ -89,7 +95,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             apisInfo: null,
             completionInfo: null,
             posTxt: posTxt,
-            entries: null
+            entries: []
         }
 
         return compiler.getApisInfoAsync()
@@ -105,22 +111,56 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(compl => {
                 cache.completionInfo = compl;
                 console.log(compl)
-                let res = cache.completionInfo.isMemberCompletion ? [] : Util.values(cache.apisInfo.byQName)
-                Util.iterStringMap(cache.completionInfo.entries, (k, v) => res.push(v));
-                cache.entries = res
+                let sanitize = (s: string) => (s || "").toLowerCase() + " "
+                let mkEntry = (q: string, si: ts.mbit.SymbolInfo): CompletionEntry => {
+                    return {
+                        name: q,
+                        symbolInfo: si,
+                        lastScore: 0,
+                        searchDesc: sanitize(q) + sanitize(si.attributes.jsDoc),
+                        searchName: sanitize(si.name)
+                    }
+                }
+                if (!cache.completionInfo.isMemberCompletion)
+                    Util.iterStringMap(cache.apisInfo.byQName, (k, v) => {
+                        cache.entries.push(mkEntry(k, v))
+                    })
+                Util.iterStringMap(cache.completionInfo.entries, (k, v) => {
+                    cache.entries.push(mkEntry(k, v))
+                })
             })
             .then(() => this.setState({ cache: cache }))
     }
 
-    fetchCompletionInfo(textPos: AceAjax.Position) {
+    fetchCompletionInfo(textPos: AceAjax.Position, pref: string) {
         let posTxt = this.props.parent.currFile.getName() + ":" + textPos.row + ":" + textPos.column
         let cache = this.state.cache
         if (!cache || cache.posTxt != posTxt) {
             this.queryCompletionAsync(textPos, posTxt).done();
             return null;
         }
-        
-        return cache.entries
+
+        if (cache.entries) {
+            pref = pref.toLowerCase()
+            for (let e of cache.entries) {
+                e.lastScore = 0
+                let idx = e.searchName.indexOf(pref)
+                if (idx == 0)
+                    e.lastScore += 100
+                else if (idx > 0)
+                    e.lastScore += 50
+                else {
+                    idx = e.searchDesc.indexOf(pref)
+                    if (idx >= 0)
+                        e.lastScore += 10;
+                }
+            }
+            let res = cache.entries.filter(e => e.lastScore > 0);
+            res.sort((a, b) => (b.lastScore - a.lastScore) || Util.strcmp(a.searchName, b.searchName))
+            return res 
+        }
+
+        return null
     }
 
     selectedIndex() {
@@ -218,7 +258,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let line = editor.session.getLine(textPos.row);
         let pref = line.slice(0, textPos.column)
         let m = /(\w*)$/.exec(pref)
-        pref = m ? m[1].toLowerCase() : ""
+        pref = m ? m[1] : ""
 
         textPos.column -= pref.length
 
@@ -228,11 +268,10 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         pos.top += renderer.layerConfig.lineHeight;
         pos.left += renderer.gutterWidth;
 
-        let info = this.fetchCompletionInfo(textPos);
+        let info = this.fetchCompletionInfo(textPos, pref);
 
         if (!info) return null; // or Loading... ?
 
-        info = info.filter(e => Util.startsWith(e.name.toLowerCase(), pref))
         this.entries = info;
 
         this.completionRange = new Range(textPos.row, textPos.column, textPos.row, textPos.column + pref.length);
@@ -242,7 +281,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             <div className='ui vertical menu completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
                 {info.map((e, i) =>
                     <sui.Item class={'link ' + (i == idx ? "active" : "") }
-                        key={e.name} text={e.name + " " + e.kind} value={e.name}
+                        key={e.name} text={e.name}
                         onClick={() => this.commit(e) }
                         />
                 ) }
