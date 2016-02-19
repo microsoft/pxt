@@ -136,7 +136,7 @@ namespace ts.mbit {
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
                 attributes,
-                retType: typeOf(decl.type, decl, hasParams),
+                retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
                 parameters: !hasParams ? null : (decl.parameters || []).map(p => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""

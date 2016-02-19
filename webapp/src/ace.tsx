@@ -60,12 +60,14 @@ export interface CompletionCache {
     posTxt: string;
 }
 
-function treatForSearch(s: string) {
-    return (s || "").toLowerCase() + " "
+function fixupSearch(e: CompletionEntry) {
+    e.searchName = (e.searchName || "").toLowerCase() + " ";
+    e.searchDesc = " " + (e.searchDesc || "").toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+    return e
 }
 
-function mkSyntheticEntry(name: string, desc: string): CompletionEntry {
-    return {
+function mkSyntheticEntry(name: string, desc: string) {
+    return fixupSearch({
         name: name,
         symbolInfo: {
             attributes: {
@@ -75,12 +77,12 @@ function mkSyntheticEntry(name: string, desc: string): CompletionEntry {
             namespace: "",
             kind: SK.None,
             parameters: null,
-            retType: "void",
+            retType: "",
         },
         lastScore: 0,
-        searchDesc: treatForSearch(desc),
-        searchName: treatForSearch(name)
-    }
+        searchName: name,
+        searchDesc: desc,
+    })
 }
 
 export class AceCompleter extends data.Component<{ parent: Editor; }, {
@@ -145,15 +147,13 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(compl => {
                 cache.completionInfo = compl;
                 console.log(compl)
-                let mkEntry = (q: string, si: ts.mbit.SymbolInfo): CompletionEntry => {
-                    return {
-                        name: si.isContextual ? si.name : q,
-                        symbolInfo: si,
-                        lastScore: 0,
-                        searchDesc: treatForSearch(q) + treatForSearch(si.attributes.jsDoc),
-                        searchName: treatForSearch(si.name)
-                    }
-                }
+                let mkEntry = (q: string, si: ts.mbit.SymbolInfo) => fixupSearch({
+                    name: si.isContextual ? si.name : q,
+                    symbolInfo: si,
+                    lastScore: 0,
+                    searchDesc: q + " " + (si.attributes.jsDoc || ""),
+                    searchName: si.name
+                })
                 if (!cache.completionInfo.isMemberCompletion)
                     Util.iterStringMap(cache.apisInfo.byQName, (k, v) => {
                         if (v.kind == SK.Method || v.kind == SK.Property) {
@@ -179,6 +179,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         if (cache.entries) {
             pref = pref.toLowerCase()
+            let spcPref = " " + pref;
             for (let e of cache.entries) {
                 e.lastScore = 0
                 let idx = e.searchName.indexOf(pref)
@@ -187,7 +188,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 else if (idx > 0)
                     e.lastScore += 50
                 else {
-                    idx = e.searchDesc.indexOf(pref)
+                    idx = e.searchDesc.indexOf(spcPref)
                     if (idx >= 0)
                         e.lastScore += 10;
                 }
@@ -382,7 +383,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             if (si.parameters) {
                 args = "(" + si.parameters.map(p => p.name + ":" + friendlyTypeName(p.type)).join(", ") + ")"
             }
-            if (si.retType != "void")
+            if (si.retType && si.retType != "void")
                 args += " : " + friendlyTypeName(si.retType)
             return args
         }
@@ -395,7 +396,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                         onClick={() => this.commit(e) }
                         >
                         <div className="name">
-                            {highlight(e.name, pref) }
+                            <span className="funname">{highlight(e.name, pref) }</span>
                             <span className="args">{getArgs(e) }</span>
                         </div>
                         <div className="doc">
