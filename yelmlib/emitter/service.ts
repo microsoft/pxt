@@ -24,7 +24,6 @@ namespace ts.mbit {
         kind: SymbolKind;
         parameters: ParameterDesc[];
         retType: string;
-        qualifiedName: string;
     }
 
     export interface EnumInfo {
@@ -33,7 +32,7 @@ namespace ts.mbit {
     }
 
     export interface ApisInfo {
-        symbols: SymbolInfo[];
+        byQName: Util.StringMap<SymbolInfo>;
     }
 
     export interface CompletionEntry {

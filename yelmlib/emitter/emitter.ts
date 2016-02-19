@@ -231,7 +231,7 @@ namespace ts.mbit {
 
     export function getApiInfo(program: Program) {
         let res: ApisInfo = {
-            symbols: [],
+            byQName: {}
         }
 
         let typechecker = program.getTypeChecker()
@@ -244,14 +244,16 @@ namespace ts.mbit {
 
                 if (attributes.weight < 0)
                     return;
-
-                res.symbols.push({
+                    
+                let qName = getFullName(typechecker, decl.symbol)
+                let m = /^(.*)\.(.*)/.exec(qName)
+                
+                res.byQName[qName] = {
                     kind,
-                    name: getName(decl),
-                    namespace: getNamespace(decl),
+                    namespace: m ? m[1] : "",
+                    name: m ? m[2] : qName,                    
                     attributes,
                     retType: typeToString(decl.type),
-                    qualifiedName: getFullName(typechecker, decl.symbol),
                     parameters: (decl.parameters || []).map(p => {
                         let n = getName(p)
                         return {
@@ -261,7 +263,7 @@ namespace ts.mbit {
                             initializer: p.initializer ? p.initializer.getText() : undefined
                         }
                     })
-                })
+                }
             }
 
             if (stmt.kind == SyntaxKind.ModuleDeclaration) {
@@ -291,21 +293,6 @@ namespace ts.mbit {
         }
 
         return res
-    }
-
-    function getNamespace(decl: Node): string {
-        if (!decl) return ""
-        decl = decl.parent
-        if (!decl) return ""
-        let upper = getNamespace(decl)
-        switch (decl.kind) {
-            case SyntaxKind.ModuleBlock:
-                return upper
-            case SyntaxKind.ModuleDeclaration:
-                return (upper ? upper + "." : "") + getName(decl as ModuleDeclaration)
-            default:
-                return "";
-        }
     }
 
     function isArrayType(t: Type) {

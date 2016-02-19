@@ -160,7 +160,7 @@ export function getBlocksAsync(): Promise<BlocksInfo> {
     return compiler.getApisInfoAsync()
         .then(info => {
             return {
-                blocks: info.symbols.filter(s => !!s.attributes.block && !!s.attributes.blockId)
+                blocks: Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId)
             }
         })
 }

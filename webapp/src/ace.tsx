@@ -93,7 +93,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         return compiler.getApisInfoAsync()
             .then(info => {
                 cache.apisInfo = info;
-                console.log(info.symbols.map(f => f.qualifiedName))
+                console.log(info)
             })
             .then(() => compiler.workerOpAsync("getCompletions", {
                 fileName: this.props.parent.currFile.getTypeScriptName(),
