@@ -73,9 +73,16 @@ namespace Util {
         else return 1;
     }
 
-    export function startsWith(a: string, b: string) {
-        if (a.length < b.length) return false
-        return a.slice(0, b.length) == b
+    export function endsWith(str: string, suffix: string) {
+        if (str.length < suffix.length) return false
+        if (suffix.length == 0) return true
+        return str.slice(-suffix.length) == suffix
+    }
+
+    export function startsWith(str: string, prefix: string) {
+        if (str.length < prefix.length) return false
+        if (prefix.length == 0) return true
+        return str.slice(0, prefix.length) == prefix
     }
 
     export function sortObjectFields<T>(o: T): T {

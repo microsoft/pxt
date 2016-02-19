@@ -244,21 +244,21 @@ export function shareLinkAsync(options: ShareOptions) {
         }).modal("show"))
 }
 
-export function scrollIntoView(item: JQuery) {
+export function scrollIntoView(item: JQuery, margin = 0) {
     if (!item.length) return;
 
     let parent = item.offsetParent();
 
-    let itemTop = item.position().top;
-    let itemH = item.outerHeight(true);
+    let itemTop = Math.max(item.position().top - margin, 0);
+    let itemBottom = item.position().top + item.outerHeight(true) + margin;
     let selfTop = $(parent).scrollTop();
     let selfH = $(parent).height();
     let newTop = selfTop;
 
     if (itemTop < selfTop) {
         newTop = itemTop;
-    } else if (itemTop + itemH > selfTop + selfH) {
-        newTop = itemTop - selfH + itemH;
+    } else if (itemBottom > selfTop + selfH) {
+        newTop = itemBottom - selfH;
     }
 
     if (newTop != selfTop) {

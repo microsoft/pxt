@@ -43,6 +43,7 @@ var defaultImgLit = `
 . . . . .
 . . . . .
 `
+var maxCompleteItems = 20;
 
 export interface CompletionEntry {
     name: string;
@@ -57,6 +58,29 @@ export interface CompletionCache {
     completionInfo: ts.mbit.CompletionInfo;
     entries: CompletionEntry[];
     posTxt: string;
+}
+
+function treatForSearch(s: string) {
+    return (s || "").toLowerCase() + " "
+}
+
+function mkSyntheticEntry(name: string, desc: string): CompletionEntry {
+    return {
+        name: name,
+        symbolInfo: {
+            attributes: {
+                jsDoc: desc,
+            },
+            name: name,
+            namespace: "",
+            kind: SK.None,
+            parameters: null,
+            retType: "void",
+        },
+        lastScore: 0,
+        searchDesc: treatForSearch(desc),
+        searchName: treatForSearch(name)
+    }
 }
 
 export class AceCompleter extends data.Component<{ parent: Editor; }, {
@@ -121,14 +145,13 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(compl => {
                 cache.completionInfo = compl;
                 console.log(compl)
-                let sanitize = (s: string) => (s || "").toLowerCase() + " "
                 let mkEntry = (q: string, si: ts.mbit.SymbolInfo): CompletionEntry => {
                     return {
                         name: si.isContextual ? si.name : q,
                         symbolInfo: si,
                         lastScore: 0,
-                        searchDesc: sanitize(q) + sanitize(si.attributes.jsDoc),
-                        searchName: sanitize(si.name)
+                        searchDesc: treatForSearch(q) + treatForSearch(si.attributes.jsDoc),
+                        searchName: treatForSearch(si.name)
                     }
                 }
                 if (!cache.completionInfo.isMemberCompletion)
@@ -146,7 +169,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(() => this.setState({ cache: cache }))
     }
 
-    fetchCompletionInfo(textPos: AceAjax.Position, pref: string) {
+    fetchCompletionInfo(textPos: AceAjax.Position, pref: string, isTopLevel: boolean) {
         let posTxt = this.props.parent.currFile.getName() + ":" + textPos.row + ":" + textPos.column
         let cache = this.state.cache
         if (!cache || cache.posTxt != posTxt) {
@@ -168,6 +191,17 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     if (idx >= 0)
                         e.lastScore += 10;
                 }
+                let k = e.symbolInfo.kind
+                if (isTopLevel) {
+                    if (k == SK.Enum || k == SK.EnumMember)
+                        e.lastScore *= 1e-5;
+                }
+
+                if (!e.symbolInfo.isContextual && (k == SK.Method || k == SK.Property))
+                    e.lastScore *= 1e-3;
+
+                if (e.symbolInfo.isContextual)
+                    e.lastScore *= 1.1;
             }
             let res = cache.entries.filter(e => e.lastScore > 0);
             res.sort((a, b) => (b.lastScore - a.lastScore) || Util.strcmp(a.searchName, b.searchName))
@@ -246,6 +280,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let text = e.name
         let si = e.symbolInfo
 
+        if (si.kind == SK.None) return
+
         let imgLit = !!si.attributes.imageLiteral
 
         let defaultVal = (p: ts.mbit.ParameterDesc) => {
@@ -309,9 +345,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         let textPos = editor.getCursorPosition();
         let line = editor.session.getLine(textPos.row);
-        let pref = line.slice(0, textPos.column)
-        let m = /(\w*)$/.exec(pref)
-        pref = m ? m[1] : ""
+        let linepref = line.slice(0, textPos.column)
+        let m = /(\w*)$/.exec(linepref)
+        let pref = m ? m[1] : ""
+        let before = linepref.slice(0, linepref.length - pref.length).trim()
+        let isTopLevel = !before || Util.endsWith(before, "{")  // }
 
         textPos.column -= pref.length
 
@@ -321,9 +359,17 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         pos.top += renderer.layerConfig.lineHeight;
         pos.left += renderer.gutterWidth;
 
-        let info = this.fetchCompletionInfo(textPos, pref);
+        let info = this.fetchCompletionInfo(textPos, pref, isTopLevel);
 
         if (!info) return null; // or Loading... ?
+
+        let hasMore = false
+
+        if (info.length > maxCompleteItems) {
+            info = info.slice(0, maxCompleteItems)
+            info.push(mkSyntheticEntry(lf("There's more!"), lf("Keep typing to explore functionality")))
+            hasMore = true
+        }
 
         this.entries = info;
 
