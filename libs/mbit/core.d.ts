@@ -139,14 +139,8 @@ interface String {
     /** Converts all the alphabetic characters in a string to lowercase. */
     toLowerCase(): string;
 
-    /** Converts all alphabetic characters to lowercase, taking into account the host environment's current locale. */
-    toLocaleLowerCase(): string;
-
     /** Converts all the alphabetic characters in a string to uppercase. */
     toUpperCase(): string;
-
-    /** Returns a string where all alphabetic characters have been converted to uppercase, taking into account the host environment's current locale. */
-    toLocaleUpperCase(): string;
 
     /** Returns the length of a String object. */
     //% shim=string::count

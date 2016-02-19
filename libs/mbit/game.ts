@@ -246,11 +246,22 @@ namespace game {
     var sprites: LedSprite[];
 
     export class LedSprite {
-        _x: number;
-        _y: number;
-        _dir: number;
-        _brightness: number;
-        _blink: number;
+        private _x: number;
+        private _y: number;
+        private _dir: number;
+        private _brightness: number;
+        private _blink: number;
+
+        constructor(x: number, y: number) {
+            this._x = math.clamp(0, 4, x);
+            this._y = math.clamp(0, 4, y);
+            this._dir = 90;
+            this._brightness = 255;
+            init();
+            sprites.push(this);
+            plot();
+        }
+
         /**
          * Move a certain number of LEDs
          * @param this TODO
@@ -536,7 +547,7 @@ namespace game {
          * Deletes the sprite from the game engine. All further operation of the sprite will not have any effect.
          * @param sprite TODO
          */
-        public _delete(sprite: LedSprite): void {
+        public delete(sprite: LedSprite): void {
             sprites.removeElement(sprite);
         }
 
@@ -565,6 +576,20 @@ namespace game {
         public blink(): number {
             let r: number;
             return this._blink;
+        }
+
+        //% weight=-1
+        public _plot(now: number) {
+            let ps = this
+            if (ps._brightness > 0) {
+                let r = 0;
+                if (ps._blink > 0) {
+                    r = (now / ps._blink) % 2;
+                }
+                if (r == 0) {
+                    img.setPixelBrightness(ps._x, ps._y, img.pixelBrightness(ps._x, ps._y) + ps._brightness);
+                }
+            }
         }
     }
 
@@ -597,16 +622,7 @@ namespace game {
         let now = input.runningTime();
         img.clear();
         for (let i = 0; i < sprites.length; i++) {
-            let ps = sprites[i];
-            if (ps._brightness > 0) {
-                let r = 0;
-                if (ps._blink > 0) {
-                    r = (now / ps._blink) % 2;
-                }
-                if (r == 0) {
-                    img.setPixelBrightness(ps._x, ps._y, img.pixelBrightness(ps._x, ps._y) + ps._brightness);
-                }
-            }
+            sprites[i]._plot(now);
         }
         img.plotImage(0);
     }
@@ -618,13 +634,8 @@ namespace game {
      */
     //% weight=60
     export function createSprite(x: number, y: number): LedSprite {
-        let r: LedSprite;
         init();
-        let p = new LedSprite();
-        p._x = math.clamp(0, 4, x);
-        p._y = math.clamp(0, 4, y);
-        p._dir = 90;
-        p._brightness = 255;
+        let p = new LedSprite(x, y);
         sprites.push(p);
         plot();
         return p;

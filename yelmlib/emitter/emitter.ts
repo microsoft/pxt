@@ -151,6 +151,9 @@ namespace ts.mbit {
                 })
         }
 
+        if (typeof res.weight == "string")
+            res.weight = parseInt(res.weight as any)
+
         res.paramHelp = {}
         res.jsDoc = ""
         res._name = getName(node)
@@ -199,7 +202,12 @@ namespace ts.mbit {
     }
 
     export function isExported(decl: Declaration) {
-        if (decl.kind == SyntaxKind.VariableDeclaration) decl = decl.parent.parent as Declaration
+        if (decl.kind == SyntaxKind.VariableDeclaration)
+            decl = decl.parent.parent as Declaration
+
+        if (decl.modifiers && decl.modifiers.some(m => m.kind == SyntaxKind.PrivateKeyword || m.kind == SyntaxKind.ProtectedKeyword))
+            return false;
+            
         return (decl.parent && decl.parent.kind == SyntaxKind.SourceFile) ||
             (decl.symbol && !!(decl.symbol as any).parent)
     }
@@ -244,6 +252,9 @@ namespace ts.mbit {
                 if (kind != SymbolKind.None && isExported(stmt as Declaration)) {
                     let decl: FunctionLikeDeclaration = stmt as any;
                     let attributes = parseComments(decl)
+
+                    if (attributes.weight < 0)
+                        return;
 
                     res.functions.push({
                         kind,
