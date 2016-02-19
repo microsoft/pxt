@@ -284,6 +284,17 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         this.completionRange = new Range(textPos.row, textPos.column, textPos.row, textPos.column + pref.length);
         let idx = this.selectedIndex();
 
+        let getArgs = (e: CompletionEntry) => {
+            let si = e.symbolInfo
+            let args = ""
+            if (si.kind == SK.Function || si.kind == SK.Property) {
+                args = "(" + (si.parameters || []).map(p => p.name + ":" + p.type).join(", ") + ")"
+            }
+            if (si.retType != "void")
+                args += " : " + si.retType
+            return args
+        }
+
         return (
             <div className='ui vertical menu completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
                 {info.map((e, i) =>
@@ -291,8 +302,13 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                         key={e.name}
                         onClick={() => this.commit(e) }
                         >
-                        <div className="name">{highlight(e.name, pref)}</div>
-                        <div className="doc">{highlight(e.symbolInfo.attributes.jsDoc || "", pref)}</div>
+                        <div className="name">
+                            {highlight(e.name, pref) }
+                            <span className="args">{getArgs(e) }</span>
+                        </div>
+                        <div className="doc">
+                            {highlight(e.symbolInfo.attributes.jsDoc || "", pref) }
+                        </div>
                     </sui.Item>
                 ) }
             </div>
