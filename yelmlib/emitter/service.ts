@@ -53,11 +53,10 @@ namespace ts.mbit {
         return typechecker.getFullyQualifiedName(symbol);
     }
 
-    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo) {
+    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, lastApiInfo: ApisInfo) {
         let typechecker = program.getTypeChecker()
 
         for (let s of symbols) {
-
             let tmp = ts.getLocalSymbolForExportDefault(s)
             let name = typechecker.symbolToString(tmp || s)
             let flags = s.getFlags()
@@ -192,6 +191,7 @@ namespace ts.mbit.service {
 
     let service: LanguageService;
     let host: Host;
+    let lastApiInfo: ApisInfo;
 
     export interface OpArg {
         fileName?: string;
@@ -243,7 +243,7 @@ namespace ts.mbit.service {
                 isTypeLocation: false // TODO
             }
 
-            fillCompletionEntries(program, data.symbols, r)
+            fillCompletionEntries(program, data.symbols, r, lastApiInfo)
 
             return r;
         },
@@ -261,7 +261,7 @@ namespace ts.mbit.service {
         },
 
         apiInfo: () => {
-            return mbit.getApiInfo(service.getProgram())
+            return (lastApiInfo = mbit.getApiInfo(service.getProgram()))
         },
     }
 

@@ -116,15 +116,6 @@ export function typecheckAsync() {
     return p;
 }
 
-export function getBlocksAsync() {
-    return waitForFirstTypecheckAsync()
-        .then(() => {
-            let info = Util.flatClone(cachedApis)
-            info.symbols = info.symbols.filter(f => !!f.attributes.block)
-            return info
-        })
-}
-
 export function getApisInfoAsync() {
     return waitForFirstTypecheckAsync()
         .then(() => cachedApis)

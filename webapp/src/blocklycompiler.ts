@@ -978,7 +978,7 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
 
 interface Environment {
     bindings: Binding[];
-    stdCallTable : Util.StringMap<StdFunc>; 
+    stdCallTable: Util.StringMap<StdFunc>;
 }
 
 interface Binding {
@@ -1015,7 +1015,7 @@ function fresh(e: Environment, s: string): string {
     return unique;
 }
 
-function emptyEnv() : Environment {
+function emptyEnv(): Environment {
     return {
         bindings: [],
         stdCallTable: JSON.parse(JSON.stringify(defaultCallTable))
@@ -1764,29 +1764,29 @@ function findParent(b: B.Block) {
 // - All variables have been assigned an initial [Point] in the union-find.
 // - Variables have been marked to indicate if they are compatible with the
 //   TouchDevelop for-loop model.
-function mkEnv(w: B.Workspace, blockInfo: ts.mbit.ApisInfo): Environment {
+function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment {
     // The to-be-returned environment.
     var e = emptyEnv();
-    
+
     // append functions in stdcalltable
     if (blockInfo)
-    blockInfo.symbols.filter(fn => !!fn.attributes.blockId && !!fn.attributes.block)
-        .forEach(fn => {
-            if (e.stdCallTable[fn.attributes.blockId]) {
-                console.error("compiler: function " + fn.attributes.blockId + " already defined");
-                return;
-            }
-            var fieldMap = blockyloader.parameterNames(fn);
-            e.stdCallTable[fn.attributes.blockId] = {
-                namespace: fn.namespace,               
-                f: fn.name,
-                isExtensionMethod: fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property,
-                args : fn.parameters.map(p => {
-                    if (fieldMap[p.name]) return { field: fieldMap[p.name] };
-                    else return null;
-                }).filter(a => !!a)
-            }
-        })
+        blockInfo.blocks
+            .forEach(fn => {
+                if (e.stdCallTable[fn.attributes.blockId]) {
+                    console.error("compiler: function " + fn.attributes.blockId + " already defined");
+                    return;
+                }
+                var fieldMap = blockyloader.parameterNames(fn);
+                e.stdCallTable[fn.attributes.blockId] = {
+                    namespace: fn.namespace,
+                    f: fn.name,
+                    isExtensionMethod: fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property,
+                    args: fn.parameters.map(p => {
+                        if (fieldMap[p.name]) return { field: fieldMap[p.name] };
+                        else return null;
+                    }).filter(a => !!a)
+                }
+            })
 
     // First pass: collect loop variables.
     w.getAllBlocks().forEach((b: B.Block) => {
@@ -1845,7 +1845,7 @@ function mkEnv(w: B.Workspace, blockInfo: ts.mbit.ApisInfo): Environment {
     return e;
 }
 
-function compileWorkspace(w: B.Workspace, blockInfo : ts.mbit.ApisInfo, options: CompileOptions): J.JApp {
+function compileWorkspace(w: B.Workspace, blockInfo: blockyloader.BlocksInfo, options: CompileOptions): J.JApp {
     try {
         var decls: J.JDecl[] = [];
         var e = mkEnv(w, blockInfo);
@@ -1891,7 +1891,7 @@ function compileWorkspace(w: B.Workspace, blockInfo : ts.mbit.ApisInfo, options:
     return H.mkApp(options.name, options.description, decls);
 }
 
-export function compile(b: B.Workspace, blockInfo : ts.mbit.ApisInfo, options: CompileOptions): string {
+export function compile(b: B.Workspace, blockInfo: blockyloader.BlocksInfo, options: CompileOptions): string {
     Errors.clear();
     return tdASTtoTS(compileWorkspace(b, blockInfo, options));
 }
@@ -2017,7 +2017,7 @@ function tdASTtoTS(app: J.JApp) {
         return r
     }
 
-    function stringLit(s:string) {
+    function stringLit(s: string) {
         if (s.length > 20 && /\n/.test(s))
             return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
         else return JSON.stringify(s)
@@ -2086,7 +2086,7 @@ function tdASTtoTS(app: J.JApp) {
         },
 
         stringLiteral: (n: J.JStringLiteral) => {
-            output += stringLit(n.value) 
+            output += stringLit(n.value)
         },
 
         booleanLiteral: (n: J.JBooleanLiteral) => {
@@ -2131,7 +2131,7 @@ function tdASTtoTS(app: J.JApp) {
     emit(app)
 
     output = output.replace(/^\s*\n/mg, "").replace(/\s+;$/mg, ";")
-    
+
     // never return empty string - TS compiler service thinks it's an error
     output += "\n"
 
@@ -2169,3 +2169,4 @@ function tdASTtoTS(app: J.JApp) {
         write("\n}\n")
     }
 }
+

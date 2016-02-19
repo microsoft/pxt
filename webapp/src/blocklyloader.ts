@@ -1,6 +1,8 @@
 /// <reference path="./blockly.d.ts" />
 
-var blockColors : Util.StringMap<number> = {
+import * as compiler from "./compiler"
+
+var blockColors: Util.StringMap<number> = {
     basic: 190,
     led: 3,
     input: 300,
@@ -26,7 +28,7 @@ function createShadowValue(name: string, num: boolean, v: string): Element {
     return value;
 }
 
-export function parameterNames(fn : ts.mbit.SymbolInfo) : Util.StringMap<string> {
+export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<string> {
     // collect blockly parameter name mapping
     var attrNames: Util.StringMap<string> = {};
     fn.parameters.forEach(pr => attrNames[pr.name] = pr.name);
@@ -64,29 +66,29 @@ function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.Stri
     category.appendChild(block);
 }
 
-function iconToFieldImage(c : string) : Blockly.FieldImage {
-    var canvas= document.createElement('canvas');
+function iconToFieldImage(c: string): Blockly.FieldImage {
+    var canvas = document.createElement('canvas');
     canvas.width = 64;
     canvas.height = 64;
     var ctx = canvas.getContext('2d');
     ctx.fillStyle = 'white';
-    ctx.font="56px Icons";
+    ctx.font = "56px Icons";
     ctx.textAlign = "center";
-    ctx.fillText(c,canvas.width/2, 56);
+    ctx.fillText(c, canvas.width / 2, 56);
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(fn : ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
+function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
     if (Blockly.Blocks[fn.attributes.blockId]) {
         console.error("duplicate block definition: " + fn.attributes.blockId);
         return;
     }
-        
+
     Blockly.Blocks[fn.attributes.blockId] = {
         init: function() {
             this.setHelpUrl("./" + fn.attributes.help);
             this.setColour(blockColors[fn.namespace] || 255);
-            
+
             fn.attributes.block.split('|').map(n => {
                 var m = /([^%]*)%([a-zA-Z0-0]+)/.exec(n);
                 if (!m) {
@@ -101,46 +103,45 @@ function injectBlockDefinition(fn : ts.mbit.SymbolInfo, attrNames: Util.StringMa
                         console.error("block " + fn.attributes.blockId + ": unkown parameter " + p);
                         return;
                     }
-                    
+
                     var pr = fn.parameters.filter(p => p.name == n)[0];
                     if (pr.type == "number") {
                         var i = this.appendValueInput(p)
                             .setAlign(Blockly.ALIGN_RIGHT)
-                            .setCheck("Number");                        
-                        if(pre) i.appendField(pre);
+                            .setCheck("Number");
+                        if (pre) i.appendField(pre);
                     } else if (pr.type == "string") {
                         var i = this.appendValueInput(p)
                             .setAlign(Blockly.ALIGN_RIGHT)
                             .setCheck("String");
-                        if(pre) i.appendField(pre);
+                        if (pre) i.appendField(pre);
                     }
-                }                
+                }
             })
-            
+
             var body = fn.parameters.filter(pr => pr.type == "() => void")[0];
-            if(body) {
+            if (body) {
                 this.appendStatementInput(attrNames[body.name])
                     .setCheck("null");
-            }            
-            
+            }
+
             this.setInputsInline(fn.parameters.length < 4);
             if (!/^on /.test(fn.name)) {
                 this.setPreviousStatement(fn.retType == "void");
                 this.setNextStatement(fn.retType == "void");
             }
-            this.setTooltip(fn.attributes.jsDoc);            
+            this.setTooltip(fn.attributes.jsDoc);
         }
     }
 }
 
-export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: ts.mbit.ApisInfo): void {
-    blockInfo.symbols.sort((f1, f2) => {        
-        return (f2.attributes.weight || 50) - (f1.attributes.weight+1 || 50);
+export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
+    blockInfo.blocks.sort((f1, f2) => {
+        return (f2.attributes.weight || 50) - (f1.attributes.weight + 1 || 50);
     })
 
     var tb = <Element>toolbox.cloneNode(true);
-    blockInfo.symbols
-        .filter(fn => !!fn.attributes.blockId && !!fn.attributes.block)
+    blockInfo.blocks
         .filter(fn => !tb.querySelector("block[type='" + fn.attributes.blockId + "']"))
         .forEach(fn => {
             var pnames = parameterNames(fn);
@@ -148,4 +149,18 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
             injectBlockDefinition(fn, pnames);
         })
     workspace.updateToolbox(tb)
+}
+
+
+export interface BlocksInfo {
+    blocks: ts.mbit.SymbolInfo[];
+}
+
+export function getBlocksAsync(): Promise<BlocksInfo> {
+    return compiler.getApisInfoAsync()
+        .then(info => {
+            return {
+                blocks: info.symbols.filter(s => !!s.attributes.block && !!s.attributes.blockId)
+            }
+        })
 }

@@ -16,7 +16,7 @@ export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
     loadingXml: boolean;
-    blockInfo: ts.mbit.ApisInfo;
+    blockInfo: blocklyloader.BlocksInfo;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -43,7 +43,7 @@ export class Editor extends srceditor.Editor {
             if (this.loadingXml) return
             this.loadingXml = true
             core.showLoading(lf("loading blocks..."));
-            compiler.getBlocksAsync()
+            blocklyloader.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;

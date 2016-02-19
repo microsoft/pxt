@@ -90,20 +90,20 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             posTxt: posTxt,
         }
 
-        return compiler.workerOpAsync("getCompletions", {
-            fileName: this.props.parent.currFile.getTypeScriptName(),
-            fileContent: str,
-            position: i
-        })
+        return compiler.getApisInfoAsync()
+            .then(info => {
+                cache.apisInfo = info;
+                console.log(info.symbols.map(f => f.qualifiedName))
+            })
+            .then(() => compiler.workerOpAsync("getCompletions", {
+                fileName: this.props.parent.currFile.getTypeScriptName(),
+                fileContent: str,
+                position: i
+            }))
             .then(compl => {
                 cache.completionInfo = compl;
                 console.log(compl)
             })
-            .then(() => compiler.getApisInfoAsync())
-            .then(info => { 
-                cache.apisInfo = info;
-                //console.log(info.symbols.map(f => f.qualifiedName).join("\n"))
-             })
             .then(() => this.setState({ cache: cache }))
     }
 
