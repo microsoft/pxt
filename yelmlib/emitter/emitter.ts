@@ -196,6 +196,12 @@ namespace ts.mbit {
                 return SymbolKind.Function;
             case SyntaxKind.VariableDeclaration:
                 return SymbolKind.Variable;
+            case SyntaxKind.ModuleDeclaration:
+                return SymbolKind.Module;
+            case SyntaxKind.EnumDeclaration:
+                return SymbolKind.Enum;
+            case SyntaxKind.EnumMember:
+                return SymbolKind.EnumMember;
             default:
                 return SymbolKind.None
         }
@@ -207,7 +213,7 @@ namespace ts.mbit {
 
         if (decl.modifiers && decl.modifiers.some(m => m.kind == SyntaxKind.PrivateKeyword || m.kind == SyntaxKind.ProtectedKeyword))
             return false;
-            
+
         return (decl.parent && decl.parent.kind == SyntaxKind.SourceFile) ||
             (decl.symbol && !!(decl.symbol as any).parent)
     }
@@ -225,13 +231,39 @@ namespace ts.mbit {
 
     export function getApiInfo(program: Program) {
         let res: ApisInfo = {
-            functions: [],
-            enums: []
+            symbols: [],
         }
 
         let typechecker = program.getTypeChecker()
 
         let collectDecls = (stmt: Node) => {
+            let kind = getSymbolKind(stmt)
+            if (kind != SymbolKind.None && isExported(stmt as Declaration)) {
+                let decl: FunctionLikeDeclaration = stmt as any;
+                let attributes = parseComments(decl)
+
+                if (attributes.weight < 0)
+                    return;
+
+                res.symbols.push({
+                    kind,
+                    name: getName(decl),
+                    namespace: getNamespace(decl),
+                    attributes,
+                    retType: typeToString(decl.type),
+                    qualifiedName: getFullName(typechecker, decl.symbol),
+                    parameters: (decl.parameters || []).map(p => {
+                        let n = getName(p)
+                        return {
+                            name: n,
+                            description: attributes.paramHelp[n] || "",
+                            type: typeToString(p.type),
+                            initializer: p.initializer ? p.initializer.getText() : undefined
+                        }
+                    })
+                })
+            }
+
             if (stmt.kind == SyntaxKind.ModuleDeclaration) {
                 let mod = <ModuleDeclaration>stmt
                 if (mod.body.kind == SyntaxKind.ModuleBlock) {
@@ -247,42 +279,9 @@ namespace ts.mbit {
             } else if (stmt.kind == SyntaxKind.VariableStatement) {
                 let vs = stmt as VariableStatement
                 vs.declarationList.declarations.forEach(collectDecls)
-            } else {
-                let kind = getSymbolKind(stmt)
-                if (kind != SymbolKind.None && isExported(stmt as Declaration)) {
-                    let decl: FunctionLikeDeclaration = stmt as any;
-                    let attributes = parseComments(decl)
-
-                    if (attributes.weight < 0)
-                        return;
-
-                    res.functions.push({
-                        kind,
-                        name: getName(decl),
-                        namespace: getNamespace(decl),
-                        attributes,
-                        retType: typeToString(decl.type),
-                        qualifiedName: getFullName(typechecker, decl.symbol),
-                        parameters: (decl.parameters || []).map(p => {
-                            let n = getName(p)
-                            return {
-                                name: n,
-                                description: attributes.paramHelp[n] || "",
-                                type: typeToString(p.type),
-                                initializer: p.initializer ? p.initializer.getText() : undefined
-                            }
-                        })
-                    })
-
-                }
-
-                if (stmt.kind == SyntaxKind.EnumDeclaration) {
-                    let e = stmt as EnumDeclaration
-                    res.enums.push({
-                        name: getName(e),
-                        values: e.members.map(m => parseComments(m))
-                    })
-                }
+            } else if (stmt.kind == SyntaxKind.EnumDeclaration) {
+                let e = stmt as EnumDeclaration
+                e.members.forEach(collectDecls)
             }
         }
 

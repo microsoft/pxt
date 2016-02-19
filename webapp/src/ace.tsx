@@ -102,7 +102,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(() => compiler.getApisInfoAsync())
             .then(info => { 
                 cache.apisInfo = info;
-                //console.log(info.functions.map(f => f.qualifiedName).join("\n"))
+                //console.log(info.symbols.map(f => f.qualifiedName).join("\n"))
              })
             .then(() => this.setState({ cache: cache }))
     }

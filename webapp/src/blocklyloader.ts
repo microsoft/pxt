@@ -134,12 +134,12 @@ function injectBlockDefinition(fn : ts.mbit.SymbolInfo, attrNames: Util.StringMa
 }
 
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: ts.mbit.ApisInfo): void {
-    blockInfo.functions.sort((f1, f2) => {        
+    blockInfo.symbols.sort((f1, f2) => {        
         return (f2.attributes.weight || 50) - (f1.attributes.weight+1 || 50);
     })
 
     var tb = <Element>toolbox.cloneNode(true);
-    blockInfo.functions
+    blockInfo.symbols
         .filter(fn => !!fn.attributes.blockId && !!fn.attributes.block)
         .filter(fn => !tb.querySelector("block[type='" + fn.attributes.blockId + "']"))
         .forEach(fn => {

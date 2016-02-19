@@ -1770,7 +1770,7 @@ function mkEnv(w: B.Workspace, blockInfo: ts.mbit.ApisInfo): Environment {
     
     // append functions in stdcalltable
     if (blockInfo)
-    blockInfo.functions.filter(fn => !!fn.attributes.blockId && !!fn.attributes.block)
+    blockInfo.symbols.filter(fn => !!fn.attributes.blockId && !!fn.attributes.block)
         .forEach(fn => {
             if (e.stdCallTable[fn.attributes.blockId]) {
                 console.error("compiler: function " + fn.attributes.blockId + " already defined");

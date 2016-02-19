@@ -12,6 +12,9 @@ namespace ts.mbit {
         Property,
         Function,
         Variable,
+        Module,
+        Enum,
+        EnumMember
     }
 
     export interface SymbolInfo {
@@ -30,8 +33,7 @@ namespace ts.mbit {
     }
 
     export interface ApisInfo {
-        functions: SymbolInfo[];
-        enums: EnumInfo[];
+        symbols: SymbolInfo[];
     }
 
     export interface CompletionEntry {
