@@ -76,98 +76,6 @@ interface Array<T> {
     [n: number]: T;
 }
 
-interface ArrayConstructor {
-    new (arrayLength?: number): any[];
-    new <T>(arrayLength: number): T[];
-    isArray(arg: any): arg is Array<any>;
-    prototype: Array<any>;
-}
-
-declare var Array: ArrayConstructor;
-
-
-interface PropertyDescriptor {
-    configurable?: boolean;
-    enumerable?: boolean;
-    value?: any;
-    writable?: boolean;
-    get? (): any;
-    set? (v: any): void;
-}
-
-interface PropertyDescriptorMap {
-    [s: string]: PropertyDescriptor;
-}
-
-interface Object {
-    /** The initial value of Object.prototype.constructor is the standard built-in Object constructor. */
-    constructor: Function;
-}
-
-interface ObjectConstructor {
-    new (value?: any): Object;
-
-    /** A reference to the prototype for a class of objects. */
-    prototype: Object;
-
-}
-
-/**
-  * Provides functionality common to all JavaScript objects.
-  */
-declare var Object: ObjectConstructor;
-
-/**
-  * Creates a new function.
-  */
-interface Function {
-    /**
-      * Calls the function, substituting the specified object for the this value of the function, and the specified array for the arguments of the function.
-      * @param thisArg The object to be used as the this object.
-      * @param argArray A set of arguments to be passed to the function.
-      */
-    apply(thisArg: any, argArray?: any): any;
-
-    /**
-      * Calls a method of an object, substituting another object for the current object.
-      * @param thisArg The object to be used as the current object.
-      * @param argArray A list of arguments to be passed to the method.
-      */
-    call(thisArg: any, ...argArray: any[]): any;
-
-    /**
-      * For a given function, creates a bound function that has the same body as the original function. 
-      * The this object of the bound function is associated with the specified object, and has the specified initial parameters.
-      * @param thisArg An object to which the this keyword can refer inside the new function.
-      * @param argArray A list of arguments to be passed to the new function.
-      */
-    bind(thisArg: any, ...argArray: any[]): any;
-
-    prototype: any;
-    length: number;
-
-    // Non-standard extensions
-    arguments: any;
-    caller: Function;
-}
-
-interface FunctionConstructor {
-    /**
-      * Creates a new function.
-      * @param args A list of arguments the function accepts.
-      */
-    new (...args: string[]): Function;
-    (...args: string[]): Function;
-    prototype: Function;
-}
-
-declare var Function: FunctionConstructor;
-
-interface IArguments {
-    [index: number]: any;
-    length: number;
-    callee: Function;
-}
 
 interface String {
 
@@ -256,29 +164,26 @@ interface String {
   //% shim=string::to_number
 declare function parseInt(s: string): number;
 
-
-interface StringConstructor {
-    new (value?: any): String;
-    (value?: any): string;
-    prototype: String;
-    fromCharCode(...codes: number[]): string;
-}
-
-/** 
-  * Allows manipulation and formatting of text strings and determination and location of substrings within strings. 
-  */
-declare var String: StringConstructor;
+interface Object {}
+interface Function {}
+interface IArguments {}
+interface RegExp {}
 
 interface Boolean {
+    /**
+      * Returns a string representation of an object.
+      */
+    //% shim=boolean::to_string
+    toString(): string;
 }
 
-interface BooleanConstructor {
-    new (value?: any): Boolean;
-    (value?: any): boolean;
-    prototype: Boolean;
+declare namespace String {
+    /**
+      * Make a string from the given ASCII character code. 
+      */
+    //% shim=number::to_character
+    export function fromCharCode(code:number): string;
 }
-
-declare var Boolean: BooleanConstructor;
 
 interface Number {
     /**
@@ -286,43 +191,6 @@ interface Number {
       */
     //% shim=number::to_string
     toString(): string;
-}
-
-interface NumberConstructor {
-    new (value?: any): Number;
-    (value?: any): number;
-    prototype: Number;
-
-    /** The largest number that can be represented in JavaScript. Equal to approximately 1.79E+308. */
-    MAX_VALUE: number;
-
-    /** The closest number to zero that can be represented in JavaScript. Equal to approximately 5.00E-324. */
-    MIN_VALUE: number;
-
-    /** 
-      * A value that is not a number.
-      * In equality comparisons, NaN does not equal any value, including itself. To test whether a value is equivalent to NaN, use the isNaN function.
-      */
-    NaN: number;
-
-    /** 
-      * A value that is less than the largest negative number that can be represented in JavaScript.
-      * JavaScript displays NEGATIVE_INFINITY values as -infinity. 
-      */
-    NEGATIVE_INFINITY: number;
-
-    /**
-      * A value greater than the largest number that can be represented in JavaScript. 
-      * JavaScript displays POSITIVE_INFINITY values as infinity. 
-      */
-    POSITIVE_INFINITY: number;
-}
-
-/** An object that represents a number of any kind. All JavaScript numbers are 64-bit floating-point numbers. */
-declare var Number: NumberConstructor;
-
-interface RegExp {
-
 }
 
 declare namespace Math {
