@@ -39,6 +39,7 @@ type CompletionEntry = ts.mbit.SymbolInfo;
 export interface CompletionCache {
     apisInfo: ts.mbit.ApisInfo;
     completionInfo: ts.mbit.CompletionInfo;
+    entries: ts.mbit.SymbolInfo[];
     posTxt: string;
 }
 
@@ -88,6 +89,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             apisInfo: null,
             completionInfo: null,
             posTxt: posTxt,
+            entries: null
         }
 
         return compiler.getApisInfoAsync()
@@ -103,6 +105,9 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(compl => {
                 cache.completionInfo = compl;
                 console.log(compl)
+                let res = cache.completionInfo.isMemberCompletion ? [] : Util.values(cache.apisInfo.byQName)
+                Util.iterStringMap(cache.completionInfo.entries, (k, v) => res.push(v));
+                cache.entries = res
             })
             .then(() => this.setState({ cache: cache }))
     }
@@ -114,8 +119,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             this.queryCompletionAsync(textPos, posTxt).done();
             return null;
         }
-
-        return cache.completionInfo.entries;
+        
+        return cache.entries
     }
 
     selectedIndex() {
@@ -294,6 +299,8 @@ export class Editor extends srceditor.Editor {
                 if (this.completer.activated) {
                     if (e.command.name == "insertstring" && !/^[\w]$/.test(e.args)) {
                         this.completer.detach();
+                        if (e.args == ".")
+                            this.completer.showPopup();
                     } else if (!approvedCommands.hasOwnProperty(e.command.name)) {
                         this.completer.detach();
                     } else {

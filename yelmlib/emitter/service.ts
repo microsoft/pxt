@@ -24,6 +24,7 @@ namespace ts.mbit {
         kind: SymbolKind;
         parameters: ParameterDesc[];
         retType: string;
+        isContextual?: boolean;
     }
 
     export interface EnumInfo {
@@ -42,7 +43,7 @@ namespace ts.mbit {
     }
 
     export interface CompletionInfo {
-        entries: SymbolInfo[];
+        entries: Util.StringMap<SymbolInfo>;
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
@@ -94,7 +95,7 @@ namespace ts.mbit {
     }
 
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
-        function typeOf(tn:TypeNode, n: Node, stripParams = false) {
+        function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             if (tn) return tn.getText();
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
@@ -195,19 +196,25 @@ namespace ts.mbit {
 
         for (let s of symbols) {
             let qName = getFullName(typechecker, s)
+
             if (!r.isMemberCompletion && Util.lookup(lastApiInfo.byQName, qName))
                 continue; // global symbol
+
+            if (Util.lookup(r.entries, qName))
+                continue;
 
             let decl = s.valueDeclaration || s.declarations[0]
             if (!decl) continue;
 
             let si = createSymbolInfo(typechecker, qName, decl)
             if (!si) continue;
+            
+            si.isContextual = true;
 
             //let tmp = ts.getLocalSymbolForExportDefault(s)
             //let name = typechecker.symbolToString(tmp || s)
 
-            r.entries.push(si);
+            r.entries[qName] = si;
         }
     }
 }
@@ -327,7 +334,7 @@ namespace ts.mbit.service {
             let typechecker = program.getTypeChecker()
 
             let r: CompletionInfo = {
-                entries: [],
+                entries: {},
                 isMemberCompletion: data.isMemberCompletion,
                 isNewIdentifierLocation: data.isNewIdentifierLocation,
                 isTypeLocation: false // TODO
