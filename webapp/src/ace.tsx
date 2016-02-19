@@ -245,7 +245,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         let text = e.name
         let si = e.symbolInfo
-        
+
         let imgLit = !!si.attributes.imageLiteral
 
         let defaultVal = (p: ts.mbit.ParameterDesc) => {
@@ -254,7 +254,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             if (p.type == "number") return "0"
             else if (p.type == "string") {
                 if (imgLit) {
-                    imgLit=false
+                    imgLit = false
                     return "`" + defaultImgLit + "`";
                 }
                 return "\"\""

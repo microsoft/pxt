@@ -74,14 +74,29 @@ namespace ts.mbit {
     }
 
     function isExported(decl: Declaration) {
-        if (decl.kind == SyntaxKind.VariableDeclaration)
-            decl = decl.parent.parent as Declaration
-
         if (decl.modifiers && decl.modifiers.some(m => m.kind == SyntaxKind.PrivateKeyword || m.kind == SyntaxKind.ProtectedKeyword))
             return false;
 
-        return (decl.parent && decl.parent.kind == SyntaxKind.SourceFile) ||
-            (decl.symbol && !!(decl.symbol as any).parent)
+        let symbol = decl.symbol
+        
+        if (!symbol)
+            return false;
+
+        while (true) {
+            let parSymbol: Symbol = (symbol as any).parent
+            if (parSymbol) symbol = parSymbol
+            else break
+        }
+
+        let topDecl = symbol.valueDeclaration || symbol.declarations[0]
+        
+        if (topDecl.kind == SyntaxKind.VariableDeclaration)
+            topDecl = topDecl.parent.parent as Declaration
+
+        if (topDecl.parent && topDecl.parent.kind == SyntaxKind.SourceFile)
+            return true;
+        else
+            return false;
     }
 
     function isInYelmModule(decl: Node): boolean {
@@ -96,7 +111,7 @@ namespace ts.mbit {
     }
 
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
-        function typeOf(tn: TypeNode, n: Node, stripParams = false) {            
+        function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
             if (stripParams) {
@@ -212,7 +227,7 @@ namespace ts.mbit {
 
             let si = createSymbolInfo(typechecker, qName, decl)
             if (!si) continue;
-            
+
             si.isContextual = true;
 
             //let tmp = ts.getLocalSymbolForExportDefault(s)
