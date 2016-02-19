@@ -1,0 +1,11 @@
+{
+    "name": "hello",
+    "description": "Hello world",
+    "files": [
+        "hello.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "mbit": "file:../mbit"
+    }
+}
