@@ -262,7 +262,7 @@ namespace ts.mbit {
                         namespace: getNamespace(decl),
                         attributes,
                         retType: typeToString(decl.type),
-                        qualifiedName: getFullName(typechecker, decl),
+                        qualifiedName: getFullName(typechecker, decl.symbol),
                         parameters: (decl.parameters || []).map(p => {
                             let n = getName(p)
                             return {

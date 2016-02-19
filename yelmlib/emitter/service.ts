@@ -5,7 +5,7 @@ namespace ts.mbit {
         type: string;
         initializer?: string;
     }
-    
+
     export enum SymbolKind {
         None,
         Method,
@@ -47,8 +47,8 @@ namespace ts.mbit {
         isTypeLocation: boolean;
     }
 
-    export function getFullName(typechecker: TypeChecker, decl: Declaration):string {
-        return typechecker.getFullyQualifiedName(decl.symbol);
+    export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
+        return typechecker.getFullyQualifiedName(symbol);
     }
 
     export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo) {
@@ -109,7 +109,7 @@ namespace ts.mbit {
                 kind = "method"
             }
 
-            let qualifiedName = getFullName(typechecker, s.valueDeclaration)
+            let qualifiedName = getFullName(typechecker, s)
 
             if (!kind) continue;
             r.entries.push({
