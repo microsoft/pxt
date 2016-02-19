@@ -291,13 +291,31 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                         key={e.name}
                         onClick={() => this.commit(e) }
                         >
-                        <div className="name">{e.name}</div>
-                        <div className="doc">{e.symbolInfo.attributes.jsDoc || ""}</div>
+                        <div className="name">{highlight(e.name, pref)}</div>
+                        <div className="doc">{highlight(e.symbolInfo.attributes.jsDoc || "", pref)}</div>
                     </sui.Item>
                 ) }
             </div>
         )
     }
+}
+
+function highlight(text: string, str: string, limit = 100) {
+    let tmp = text.toLowerCase();
+    let spl: JSX.Element[] = []
+    let written = 0
+    while (true) {
+        let idx = str ? tmp.indexOf(str) : -1
+        let len = idx == 0 ? str.length :
+            idx < 0 ? tmp.length : idx
+        spl.push(<span key={spl.length} className={idx == 0 ? "highlight" : ""}>{text.slice(0, len) }</span>)
+        text = text.slice(len)
+        tmp = tmp.slice(len)
+        written += len
+        if (!tmp || written > limit)
+            break;
+    }
+    return spl;
 }
 
 export class Editor extends srceditor.Editor {

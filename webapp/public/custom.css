@@ -166,3 +166,7 @@
     text-overflow: ellipsis;
     height: 1.2em;
 }
+
+.highlight {
+    border-bottom: 2px solid rgba(50, 205, 50, 0.64);     
+}
