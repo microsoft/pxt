@@ -4,6 +4,7 @@ namespace ts.mbit {
         description: string;
         type: string;
         initializer?: string;
+        defaults?: string[];
     }
 
     export enum SymbolKind {
@@ -95,14 +96,13 @@ namespace ts.mbit {
     }
 
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
-        function typeOf(tn: TypeNode, n: Node, stripParams = false) {
-            if (tn) return tn.getText();
+        function typeOf(tn: TypeNode, n: Node, stripParams = false) {            
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
             if (stripParams) {
                 t = t.getCallSignatures()[0].getReturnType()
             }
-            return typechecker.typeToString(t)
+            return typechecker.typeToString(t, null, TypeFormatFlags.UseFullyQualifiedType)
         }
 
         let kind = getSymbolKind(stmt)
@@ -114,20 +114,24 @@ namespace ts.mbit {
                 return null;
 
             let m = /^(.*)\.(.*)/.exec(qName)
+            let hasParams = kind == SymbolKind.Function || kind == SymbolKind.Method
 
             return {
                 kind,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
                 attributes,
-                retType: typeOf(decl.type, decl, !!decl.parameters),
-                parameters: (decl.parameters || []).map(p => {
+                retType: typeOf(decl.type, decl, hasParams),
+                parameters: !hasParams ? null : (decl.parameters || []).map(p => {
                     let n = getName(p)
+                    let desc = attributes.paramHelp[n] || ""
+                    let m = /\beg\.?:\s*(.+)/.exec(desc)
                     return {
                         name: n,
-                        description: attributes.paramHelp[n] || "",
+                        description: desc,
                         type: typeOf(p.type, p),
-                        initializer: p.initializer ? p.initializer.getText() : undefined
+                        initializer: p.initializer ? p.initializer.getText() : undefined,
+                        defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined
                     }
                 })
             }

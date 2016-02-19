@@ -35,6 +35,7 @@ var acequire = (ace as any).acequire;
 var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
+var placeholderChar = "◊";
 
 export interface CompletionEntry {
     name: string;
@@ -225,11 +226,41 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         }
     }
 
+    lookupInfo(name: string) {
+        if (this.state.cache)
+            return Util.lookup(this.state.cache.apisInfo.byQName, name)
+        return null;
+    }
+
     commit(e: CompletionEntry) {
         let editor = this.props.parent.editor
         if (!editor || !this.completionRange) return
+
         let text = e.name
-        editor.session.replace(this.completionRange, e.name);
+        let si = e.symbolInfo
+
+        let defaultVal = (p: ts.mbit.ParameterDesc) => {
+            if (p.initializer) return p.initializer
+            if (p.defaults) return p.defaults[0]
+            if (p.type == "number") return "0"
+            else if (p.type == "string") return "\"\""
+            let si = this.lookupInfo(p.type)
+            if (si && si.kind == SK.Enum) {
+                let en = Util.values(this.state.cache.apisInfo.byQName).filter(e => e.namespace == p.type)[0]
+                if (en)
+                    return en.namespace + "." + en.name;
+            }
+            let m = /^\((.*)\) => (.*)$/.exec(p.type)
+            if (m)
+                return "(" + m[1] + ") => { }"
+            return placeholderChar;
+        }
+
+        if (si.parameters) {
+            text += "(" + si.parameters.map(defaultVal).join(", ") + ")"
+        }
+
+        editor.session.replace(this.completionRange, text);
         this.detach()
     }
 
@@ -287,11 +318,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let getArgs = (e: CompletionEntry) => {
             let si = e.symbolInfo
             let args = ""
-            if (si.kind == SK.Function || si.kind == SK.Property) {
-                args = "(" + (si.parameters || []).map(p => p.name + ":" + p.type).join(", ") + ")"
+            if (si.parameters) {
+                args = "(" + si.parameters.map(p => p.name + ":" + friendlyTypeName(p.type)).join(", ") + ")"
             }
             if (si.retType != "void")
-                args += " : " + si.retType
+                args += " : " + friendlyTypeName(si.retType)
             return args
         }
 
@@ -314,6 +345,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             </div>
         )
     }
+}
+
+function friendlyTypeName(tp: string) {
+    if (tp == "() => void") return "Action"
+    return tp.replace(/.*\./, "")
 }
 
 function highlight(text: string, str: string, limit = 100) {
