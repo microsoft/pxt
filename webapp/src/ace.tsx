@@ -36,6 +36,13 @@ var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
 var placeholderChar = "◊";
+var defaultImgLit = `
+. . . . .
+. . . . .
+. . # . .
+. . . . .
+. . . . .
+`
 
 export interface CompletionEntry {
     name: string;
@@ -238,12 +245,20 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         let text = e.name
         let si = e.symbolInfo
+        
+        let imgLit = !!si.attributes.imageLiteral
 
         let defaultVal = (p: ts.mbit.ParameterDesc) => {
             if (p.initializer) return p.initializer
             if (p.defaults) return p.defaults[0]
             if (p.type == "number") return "0"
-            else if (p.type == "string") return "\"\""
+            else if (p.type == "string") {
+                if (imgLit) {
+                    imgLit=false
+                    return "`" + defaultImgLit + "`";
+                }
+                return "\"\""
+            }
             let si = this.lookupInfo(p.type)
             if (si && si.kind == SK.Enum) {
                 let en = Util.values(this.state.cache.apisInfo.byQName).filter(e => e.namespace == p.type)[0]
