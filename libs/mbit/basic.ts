@@ -1,3 +1,6 @@
+/**
+ * Provides access to basic micro:bit functionality.
+ */
 namespace basic {
     /**
      * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.

@@ -9,6 +9,8 @@ import * as data from "./data";
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
 
+let SK = ts.mbit.SymbolKind;
+
 var lf = Util.lf
 
 require('brace/mode/typescript');
@@ -123,7 +125,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 }
                 if (!cache.completionInfo.isMemberCompletion)
                     Util.iterStringMap(cache.apisInfo.byQName, (k, v) => {
-                        cache.entries.push(mkEntry(k, v))
+                        if (v.kind == SK.Method || v.kind == SK.Property) {
+                            // don't know how to insert these yet
+                        } else {
+                            cache.entries.push(mkEntry(k, v))
+                        }
                     })
                 Util.iterStringMap(cache.completionInfo.entries, (k, v) => {
                     cache.entries.push(mkEntry(k, v))
@@ -157,7 +163,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             }
             let res = cache.entries.filter(e => e.lastScore > 0);
             res.sort((a, b) => (b.lastScore - a.lastScore) || Util.strcmp(a.searchName, b.searchName))
-            return res 
+            return res
         }
 
         return null
@@ -282,9 +288,12 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             <div className='ui vertical menu completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
                 {info.map((e, i) =>
                     <sui.Item class={'link ' + (i == idx ? "active" : "") }
-                        key={e.name} text={e.name}
+                        key={e.name}
                         onClick={() => this.commit(e) }
-                        />
+                        >
+                        <div className="name">{e.name}</div>
+                        <div className="doc">{e.symbolInfo.attributes.jsDoc || ""}</div>
+                    </sui.Item>
                 ) }
             </div>
         )
