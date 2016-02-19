@@ -48,6 +48,12 @@ namespace Util {
         return Object.keys(m || {}).map(k => m[k])
     }
 
+    export function lookup<T>(m: StringMap<T>, key: string): T {
+        if (m.hasOwnProperty(key))
+            return m[key]
+        return null
+    }
+
     export function pushRange<T>(trg: T[], src: T[]) {
         for (let i = 0; i < src.length; ++i)
             trg.push(src[i])
@@ -69,7 +75,7 @@ namespace Util {
 
     export function startsWith(a: string, b: string) {
         if (a.length < b.length) return false
-        return a.slice(0, b.length) == b 
+        return a.slice(0, b.length) == b
     }
 
     export function sortObjectFields<T>(o: T): T {

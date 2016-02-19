@@ -42,10 +42,148 @@ namespace ts.mbit {
     }
 
     export interface CompletionInfo {
-        entries: CompletionEntry[];
+        entries: SymbolInfo[];
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
+    }
+
+    function getSymbolKind(node: Node) {
+        switch (node.kind) {
+            case SyntaxKind.MethodDeclaration:
+            case SyntaxKind.MethodSignature:
+                return SymbolKind.Method;
+            case SyntaxKind.PropertyDeclaration:
+            case SyntaxKind.PropertySignature:
+                return SymbolKind.Property;
+            case SyntaxKind.FunctionDeclaration:
+                return SymbolKind.Function;
+            case SyntaxKind.VariableDeclaration:
+                return SymbolKind.Variable;
+            case SyntaxKind.ModuleDeclaration:
+                return SymbolKind.Module;
+            case SyntaxKind.EnumDeclaration:
+                return SymbolKind.Enum;
+            case SyntaxKind.EnumMember:
+                return SymbolKind.EnumMember;
+            default:
+                return SymbolKind.None
+        }
+    }
+
+    function isExported(decl: Declaration) {
+        if (decl.kind == SyntaxKind.VariableDeclaration)
+            decl = decl.parent.parent as Declaration
+
+        if (decl.modifiers && decl.modifiers.some(m => m.kind == SyntaxKind.PrivateKeyword || m.kind == SyntaxKind.ProtectedKeyword))
+            return false;
+
+        return (decl.parent && decl.parent.kind == SyntaxKind.SourceFile) ||
+            (decl.symbol && !!(decl.symbol as any).parent)
+    }
+
+    function isInYelmModule(decl: Node): boolean {
+        while (decl) {
+            if (decl.kind == SyntaxKind.SourceFile) {
+                let src = decl as SourceFile
+                return src.fileName.indexOf("yelm_modules") >= 0
+            }
+            decl = decl.parent
+        }
+        return false
+    }
+
+    function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
+        function typeOf(tn:TypeNode, n: Node, stripParams = false) {
+            if (tn) return tn.getText();
+            let t = typechecker.getTypeAtLocation(n)
+            if (!t) return "None"
+            if (stripParams) {
+                t = t.getCallSignatures()[0].getReturnType()
+            }
+            return typechecker.typeToString(t)
+        }
+
+        let kind = getSymbolKind(stmt)
+        if (kind != SymbolKind.None) {
+            let decl: FunctionLikeDeclaration = stmt as any;
+            let attributes = parseComments(decl)
+
+            if (attributes.weight < 0)
+                return null;
+
+            let m = /^(.*)\.(.*)/.exec(qName)
+
+            return {
+                kind,
+                namespace: m ? m[1] : "",
+                name: m ? m[2] : qName,
+                attributes,
+                retType: typeOf(decl.type, decl, !!decl.parameters),
+                parameters: (decl.parameters || []).map(p => {
+                    let n = getName(p)
+                    return {
+                        name: n,
+                        description: attributes.paramHelp[n] || "",
+                        type: typeOf(p.type, p),
+                        initializer: p.initializer ? p.initializer.getText() : undefined
+                    }
+                })
+            }
+        }
+        return null;
+    }
+
+    export function getApiInfo(program: Program) {
+        let res: ApisInfo = {
+            byQName: {}
+        }
+
+        let typechecker = program.getTypeChecker()
+
+        let collectDecls = (stmt: Node) => {
+            if (stmt.kind == SyntaxKind.VariableStatement) {
+                let vs = stmt as VariableStatement
+                vs.declarationList.declarations.forEach(collectDecls)
+                return
+            }
+
+            // if (!isExported(stmt as Declaration)) return; ?
+
+            if (isExported(stmt as Declaration)) {
+                if (!stmt.symbol) {
+                    console.warn("no symbol", stmt)
+                    return;
+                }
+                let qName = getFullName(typechecker, stmt.symbol)
+                let si = createSymbolInfo(typechecker, qName, stmt)
+                if (si)
+                    res.byQName[qName] = si
+            }
+
+            if (stmt.kind == SyntaxKind.ModuleDeclaration) {
+                let mod = <ModuleDeclaration>stmt
+                if (mod.body.kind == SyntaxKind.ModuleBlock) {
+                    let blk = <ModuleBlock>mod.body
+                    blk.statements.forEach(collectDecls)
+                }
+            } else if (stmt.kind == SyntaxKind.InterfaceDeclaration) {
+                let iface = stmt as InterfaceDeclaration
+                iface.members.forEach(collectDecls)
+            } else if (stmt.kind == SyntaxKind.ClassDeclaration) {
+                let iface = stmt as ClassDeclaration
+                iface.members.forEach(collectDecls)
+            } else if (stmt.kind == SyntaxKind.EnumDeclaration) {
+                let e = stmt as EnumDeclaration
+                e.members.forEach(collectDecls)
+            }
+        }
+
+        for (let srcFile of program.getSourceFiles()) {
+            srcFile.statements.forEach(collectDecls)
+        }
+
+        return res
     }
 
     export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
@@ -56,67 +194,20 @@ namespace ts.mbit {
         let typechecker = program.getTypeChecker()
 
         for (let s of symbols) {
-            let tmp = ts.getLocalSymbolForExportDefault(s)
-            let name = typechecker.symbolToString(tmp || s)
-            let flags = s.getFlags()
-            let kind = ""
+            let qName = getFullName(typechecker, s)
+            if (!r.isMemberCompletion && Util.lookup(lastApiInfo.byQName, qName))
+                continue; // global symbol
 
-            let decl = s.valueDeclaration
-            let isAmbient = false
-            if (decl && ts.isInAmbientContext(decl))
-                isAmbient = true
+            let decl = s.valueDeclaration || s.declarations[0]
+            if (!decl) continue;
 
-            /* The following are skipped below, possible to do   
-       Class             // Class
-       Interface         // Interface
-       TypeLiteral       // Type Literal
-       ObjectLiteral     // Object Literal
-       Constructor       // Constructor
-       Signature         // Call, construct, or index signature
-       TypeParameter     // Type parameter
-       TypeAlias         // Type alias
-       Alias             // An alias for another symbol (see comment in isAliasSymbolDeclaration in checker)
-       Instantiated      // Instantiated symbol
-       Merged            // Merged symbol (created during program binding)
-       Transient         // Transient symbol (created during type check)
-       Prototype         // Prototype property (no source representation)
-       SyntheticProperty // Property in union or intersection type
-       Optional          // Optional property
-       ExportStar        // Export * declaration
-       */
+            let si = createSymbolInfo(typechecker, qName, decl)
+            if (!si) continue;
 
-            if (flags & SymbolFlags.Module) {
-                kind = "module"
-            } else if (flags & SymbolFlags.Variable) {
-                // local or global
-                // also let, const, parameter
+            //let tmp = ts.getLocalSymbolForExportDefault(s)
+            //let name = typechecker.symbolToString(tmp || s)
 
-                // Ambient vars are things like Array, Number, etc
-                if (!isAmbient)
-                    kind = "var"
-            } else if (flags & SymbolFlags.Function) {
-                // local or global
-                kind = "function"
-            } else if (flags & SymbolFlags.Enum) {
-                // local or global
-                kind = "enum"
-            } else if (flags & SymbolFlags.EnumMember) {
-                // local or global
-                kind = "enummember"
-            } else if (flags & (SymbolFlags.Accessor | SymbolFlags.Property)) {
-                kind = "field"
-            } else if (flags & SymbolFlags.Method) {
-                kind = "method"
-            }
-
-            let qualifiedName = getFullName(typechecker, s)
-
-            if (!kind) continue;
-            r.entries.push({
-                name,
-                kind,
-                qualifiedName
-            });
+            r.entries.push(si);
         }
     }
 }

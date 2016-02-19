@@ -134,7 +134,7 @@ namespace ts.mbit {
         return cmt;
     }
 
-    function parseComments(node: Node): CommentAttrs {
+    export function parseComments(node: Node): CommentAttrs {
         if (!node || (node as any).isRootFunction) return {}
         let cmt = getComments(node)
         let res: CommentAttrs = {}
@@ -173,126 +173,10 @@ namespace ts.mbit {
     }
 
 
-    function getName(node: Node & { name?: any; }) {
+    export function getName(node: Node & { name?: any; }) {
         if (!node.name || node.name.kind != SyntaxKind.Identifier)
             return "???"
         return (node.name as Identifier).text
-    }
-
-    function typeToString(t: TypeNode) {
-        if (!t) return "None"
-        return t.getText()
-    }
-
-    export function getSymbolKind(node: Node) {
-        switch (node.kind) {
-            case SyntaxKind.MethodDeclaration:
-            case SyntaxKind.MethodSignature:
-                return SymbolKind.Method;
-            case SyntaxKind.PropertyDeclaration:
-            case SyntaxKind.PropertySignature:
-                return SymbolKind.Property;
-            case SyntaxKind.FunctionDeclaration:
-                return SymbolKind.Function;
-            case SyntaxKind.VariableDeclaration:
-                return SymbolKind.Variable;
-            case SyntaxKind.ModuleDeclaration:
-                return SymbolKind.Module;
-            case SyntaxKind.EnumDeclaration:
-                return SymbolKind.Enum;
-            case SyntaxKind.EnumMember:
-                return SymbolKind.EnumMember;
-            default:
-                return SymbolKind.None
-        }
-    }
-
-    export function isExported(decl: Declaration) {
-        if (decl.kind == SyntaxKind.VariableDeclaration)
-            decl = decl.parent.parent as Declaration
-
-        if (decl.modifiers && decl.modifiers.some(m => m.kind == SyntaxKind.PrivateKeyword || m.kind == SyntaxKind.ProtectedKeyword))
-            return false;
-
-        return (decl.parent && decl.parent.kind == SyntaxKind.SourceFile) ||
-            (decl.symbol && !!(decl.symbol as any).parent)
-    }
-
-    export function isInYelmModule(decl: Node): boolean {
-        while (decl) {
-            if (decl.kind == SyntaxKind.SourceFile) {
-                let src = decl as SourceFile
-                return src.fileName.indexOf("yelm_modules") >= 0
-            }
-            decl = decl.parent
-        }
-        return false
-    }
-
-    export function getApiInfo(program: Program) {
-        let res: ApisInfo = {
-            byQName: {}
-        }
-
-        let typechecker = program.getTypeChecker()
-
-        let collectDecls = (stmt: Node) => {
-            let kind = getSymbolKind(stmt)
-            if (kind != SymbolKind.None && isExported(stmt as Declaration)) {
-                let decl: FunctionLikeDeclaration = stmt as any;
-                let attributes = parseComments(decl)
-
-                if (attributes.weight < 0)
-                    return;
-                    
-                let qName = getFullName(typechecker, decl.symbol)
-                let m = /^(.*)\.(.*)/.exec(qName)
-                
-                res.byQName[qName] = {
-                    kind,
-                    namespace: m ? m[1] : "",
-                    name: m ? m[2] : qName,                    
-                    attributes,
-                    retType: typeToString(decl.type),
-                    parameters: (decl.parameters || []).map(p => {
-                        let n = getName(p)
-                        return {
-                            name: n,
-                            description: attributes.paramHelp[n] || "",
-                            type: typeToString(p.type),
-                            initializer: p.initializer ? p.initializer.getText() : undefined
-                        }
-                    })
-                }
-            }
-
-            if (stmt.kind == SyntaxKind.ModuleDeclaration) {
-                let mod = <ModuleDeclaration>stmt
-                if (mod.body.kind == SyntaxKind.ModuleBlock) {
-                    let blk = <ModuleBlock>mod.body
-                    blk.statements.forEach(collectDecls)
-                }
-            } else if (stmt.kind == SyntaxKind.InterfaceDeclaration) {
-                let iface = stmt as InterfaceDeclaration
-                iface.members.forEach(collectDecls)
-            } else if (stmt.kind == SyntaxKind.ClassDeclaration) {
-                let iface = stmt as ClassDeclaration
-                iface.members.forEach(collectDecls)
-            } else if (stmt.kind == SyntaxKind.VariableStatement) {
-                let vs = stmt as VariableStatement
-                vs.declarationList.declarations.forEach(collectDecls)
-            } else if (stmt.kind == SyntaxKind.EnumDeclaration) {
-                let e = stmt as EnumDeclaration
-                e.members.forEach(collectDecls)
-            }
-        }
-
-        for (let srcFile of program.getSourceFiles()) {
-            if (isInYelmModule(srcFile))
-                srcFile.statements.forEach(collectDecls)
-        }
-
-        return res
     }
 
     function isArrayType(t: Type) {

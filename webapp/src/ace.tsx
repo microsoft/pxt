@@ -34,7 +34,7 @@ var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
 
-type CompletionEntry = ts.mbit.CompletionEntry;
+type CompletionEntry = ts.mbit.SymbolInfo;
 
 export interface CompletionCache {
     apisInfo: ts.mbit.ApisInfo;
