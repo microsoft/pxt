@@ -199,7 +199,20 @@ namespace ts.mbit {
     }
 
     export function isExported(decl: Declaration) {
-        return decl.symbol && !!(decl.symbol as any).parent
+        if (decl.kind == SyntaxKind.VariableDeclaration) decl = decl.parent.parent as Declaration
+        return (decl.parent && decl.parent.kind == SyntaxKind.SourceFile) ||
+            (decl.symbol && !!(decl.symbol as any).parent)
+    }
+
+    export function isInYelmModule(decl: Node): boolean {
+        while (decl) {
+            if (decl.kind == SyntaxKind.SourceFile) {
+                let src = decl as SourceFile
+                return src.fileName.indexOf("yelm_modules") >= 0
+            }
+            decl = decl.parent
+        }
+        return false
     }
 
     export function getApiInfo(program: Program) {
@@ -223,6 +236,9 @@ namespace ts.mbit {
             } else if (stmt.kind == SyntaxKind.ClassDeclaration) {
                 let iface = stmt as ClassDeclaration
                 iface.members.forEach(collectDecls)
+            } else if (stmt.kind == SyntaxKind.VariableStatement) {
+                let vs = stmt as VariableStatement
+                vs.declarationList.declarations.forEach(collectDecls)
             } else {
                 let kind = getSymbolKind(stmt)
                 if (kind != SymbolKind.None && isExported(stmt as Declaration)) {
@@ -260,7 +276,8 @@ namespace ts.mbit {
         }
 
         for (let srcFile of program.getSourceFiles()) {
-            srcFile.statements.forEach(collectDecls)
+            if (isInYelmModule(srcFile))
+                srcFile.statements.forEach(collectDecls)
         }
 
         return res
