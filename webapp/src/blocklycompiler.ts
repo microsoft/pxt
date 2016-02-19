@@ -1780,7 +1780,7 @@ function mkEnv(w: B.Workspace, blockInfo: ts.mbit.ApisInfo): Environment {
             e.stdCallTable[fn.attributes.blockId] = {
                 namespace: fn.namespace,               
                 f: fn.name,
-                isExtensionMethod: fn.isMethod,
+                isExtensionMethod: fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property,
                 args : fn.parameters.map(p => {
                     if (fieldMap[p.name]) return { field: fieldMap[p.name] };
                     else return null;

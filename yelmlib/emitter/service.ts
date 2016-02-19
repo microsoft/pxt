@@ -5,14 +5,23 @@ namespace ts.mbit {
         type: string;
         initializer?: string;
     }
+    
+    export enum SymbolKind {
+        None,
+        Method,
+        Property,
+        Function,
+        Variable,
+    }
 
-    export interface FunctionInfo {
+    export interface SymbolInfo {
         attributes: CommentAttrs;
         name: string;
         namespace: string;
-        isMethod: boolean;
+        kind: SymbolKind;
         parameters: ParameterDesc[];
         retType: string;
+        qualifiedName: string;
     }
 
     export interface EnumInfo {
@@ -21,7 +30,7 @@ namespace ts.mbit {
     }
 
     export interface ApisInfo {
-        functions: FunctionInfo[];
+        functions: SymbolInfo[];
         enums: EnumInfo[];
     }
 
@@ -38,9 +47,13 @@ namespace ts.mbit {
         isTypeLocation: boolean;
     }
 
+    export function getFullName(typechecker: TypeChecker, decl: Declaration):string {
+        return typechecker.getFullyQualifiedName(decl.symbol);
+    }
+
     export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo) {
         let typechecker = program.getTypeChecker()
-        
+
         for (let s of symbols) {
 
             let tmp = ts.getLocalSymbolForExportDefault(s)
@@ -96,7 +109,7 @@ namespace ts.mbit {
                 kind = "method"
             }
 
-            let qualifiedName = typechecker.getFullyQualifiedName(s)
+            let qualifiedName = getFullName(typechecker, s.valueDeclaration)
 
             if (!kind) continue;
             r.entries.push({
@@ -227,7 +240,7 @@ namespace ts.mbit.service {
                 isNewIdentifierLocation: data.isNewIdentifierLocation,
                 isTypeLocation: false // TODO
             }
-            
+
             fillCompletionEntries(program, data.symbols, r)
 
             return r;

@@ -26,7 +26,7 @@ function createShadowValue(name: string, num: boolean, v: string): Element {
     return value;
 }
 
-export function parameterNames(fn : ts.mbit.FunctionInfo) : Util.StringMap<string> {
+export function parameterNames(fn : ts.mbit.SymbolInfo) : Util.StringMap<string> {
     // collect blockly parameter name mapping
     var attrNames: Util.StringMap<string> = {};
     fn.parameters.forEach(pr => attrNames[pr.name] = pr.name);
@@ -39,7 +39,7 @@ export function parameterNames(fn : ts.mbit.FunctionInfo) : Util.StringMap<strin
     return attrNames;
 }
 
-function injectToolbox(tb: Element, fn: ts.mbit.FunctionInfo, attrNames: Util.StringMap<string>) {
+function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
     //
     // toolbox update
     //
@@ -76,7 +76,7 @@ function iconToFieldImage(c : string) : Blockly.FieldImage {
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(fn : ts.mbit.FunctionInfo, attrNames: Util.StringMap<string>) {
+function injectBlockDefinition(fn : ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
     if (Blockly.Blocks[fn.attributes.blockId]) {
         console.error("duplicate block definition: " + fn.attributes.blockId);
         return;

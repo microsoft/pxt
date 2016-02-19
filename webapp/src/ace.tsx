@@ -100,7 +100,10 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 console.log(compl)
             })
             .then(() => compiler.getApisInfoAsync())
-            .then(info => { cache.apisInfo = info })
+            .then(info => { 
+                cache.apisInfo = info;
+                console.log(info.functions.map(f => f.qualifiedName).join("\n"))
+             })
             .then(() => this.setState({ cache: cache }))
     }
 
