@@ -114,7 +114,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 let sanitize = (s: string) => (s || "").toLowerCase() + " "
                 let mkEntry = (q: string, si: ts.mbit.SymbolInfo): CompletionEntry => {
                     return {
-                        name: q,
+                        name: si.isContextual ? si.name : q,
                         symbolInfo: si,
                         lastScore: 0,
                         searchDesc: sanitize(q) + sanitize(si.attributes.jsDoc),
@@ -222,6 +222,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
     commit(e: CompletionEntry) {
         let editor = this.props.parent.editor
         if (!editor || !this.completionRange) return
+        let text = e.name
         editor.session.replace(this.completionRange, e.name);
         this.detach()
     }
