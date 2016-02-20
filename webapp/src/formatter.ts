@@ -28,6 +28,74 @@ function lookupKind(k: ts.SyntaxKind) {
 
 let SK = ts.SyntaxKind;
 
+function infixOperatorPrecedence(kind: ts.SyntaxKind) {
+    switch (kind) {
+        case SK.CommaToken:
+            return 2;
+            
+        case SK.EqualsToken:
+        case SK.PlusEqualsToken:
+        case SK.MinusEqualsToken:
+        case SK.AsteriskEqualsToken:
+        case SK.AsteriskAsteriskEqualsToken:
+        case SK.SlashEqualsToken:
+        case SK.PercentEqualsToken:
+        case SK.LessThanLessThanEqualsToken:
+        case SK.GreaterThanGreaterThanEqualsToken:
+        case SK.GreaterThanGreaterThanGreaterThanEqualsToken:
+        case SK.AmpersandEqualsToken:
+        case SK.BarEqualsToken:
+        case SK.CaretEqualsToken:
+            return 5;
+        
+        case SK.QuestionToken:
+        case SK.ColonToken:
+            return 7; // ternary operator
+            
+        case SK.BarBarToken:
+            return 10;
+        case SK.AmpersandAmpersandToken:
+            return 20;
+        case SK.BarToken:
+            return 30;
+        case SK.CaretToken:
+            return 40;
+        case SK.AmpersandToken:
+            return 50;
+        case SK.EqualsEqualsToken:
+        case SK.ExclamationEqualsToken:
+        case SK.EqualsEqualsEqualsToken:
+        case SK.ExclamationEqualsEqualsToken:
+            return 60;
+        case SK.LessThanToken:
+        case SK.GreaterThanToken:
+        case SK.LessThanEqualsToken:
+        case SK.GreaterThanEqualsToken:
+        case SK.InstanceOfKeyword:
+        case SK.InKeyword:
+        case SK.AsKeyword:
+            return 70;
+        case SK.LessThanLessThanToken:
+        case SK.GreaterThanGreaterThanToken:
+        case SK.GreaterThanGreaterThanGreaterThanToken:
+            return 80;
+        case SK.PlusToken:
+        case SK.MinusToken:
+            return 90;
+        case SK.AsteriskToken:
+        case SK.SlashToken:
+        case SK.PercentToken:
+            return 100;
+        case SK.AsteriskAsteriskToken:
+            return 101;
+        case SK.DotToken:
+            return 120;
+
+        default:
+            return 0;
+    }
+}
+
 function getTokKind(kind: ts.SyntaxKind) {
     switch (kind) {
         case SK.EndOfFileToken:
