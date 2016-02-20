@@ -5,7 +5,6 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
-import * as formatter from "./formatter";
 
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
@@ -495,7 +494,7 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 if (insString == "\n") {
-                    let formatted = formatter.format(this.editor.getValue())
+                    let formatted = ts.mbit.format(this.editor.getValue())
                     if (formatted)
                         this.editor.setValue(formatted)
                 }
