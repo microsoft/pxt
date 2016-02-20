@@ -5,6 +5,7 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
+import * as formatter from "./formatter";
 
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
@@ -477,8 +478,9 @@ export class Editor extends srceditor.Editor {
         this.editor.commands.on("afterExec", (e: any) => {
             console.info("afterExec", e.command.name)
             if (this.isTypescript) {
+                let insString: string = e.command.name == "insertstring" ? e.args : null
                 if (this.completer.activated) {
-                    if (e.command.name == "insertstring" && !/^[\w]$/.test(e.args)) {
+                    if (insString && !/^[\w]$/.test(insString)) {
                         this.completer.detach();
                         if (e.args == ".")
                             this.completer.showPopup();
@@ -488,9 +490,14 @@ export class Editor extends srceditor.Editor {
                         this.completer.forceUpdate();
                     }
                 } else {
-                    if (e.command.name == "insertstring" && /^[a-zA-Z\.]$/.test(e.args)) {
+                    if (/^[a-zA-Z\.]$/.test(insString)) {
                         this.completer.showPopup();
                     }
+                }
+                if (insString == "\n") {
+                    let formatted = formatter.format(this.editor.getValue())
+                    if (formatted)
+                        this.editor.setValue(formatted)
                 }
             }
 
