@@ -293,6 +293,23 @@ function cmdTime() {
         .then(() => console.log("MIN", min))
 }
 
+function cmdFormat() {
+    if (cmdArgs.length > 0) {
+        for (let f of cmdArgs) {
+            let t = fs.readFileSync(f, "utf8")
+            t = ts.mbit.format(t)
+            if (!t) {
+                console.log("already formatted:", f)
+            } else {
+                let fn = f + "-fmt.ts"
+                fs.writeFileSync(fn, t, "utf8")
+                console.log("written:", fn)
+            }
+        }
+    } else {
+        // TODO format files in current package
+    }
+}
 
 function cmdBuild(deploy = false, run = false) {
     ensurePkgDir();
@@ -351,6 +368,7 @@ let cmds: Command[] = [
     { n: "service", f: cmdService, a: "OPERATION", d: "simulate a query to web worker" },
     { n: "genembed", f: cmdGenEmbed, a: "", d: "generate built/yelmembed.js from current package" },
     { n: "time", f: cmdTime, a: "", d: "measure performance of the compiler on the current package" },
+    { n: "format", f: cmdFormat, a: "file.ts...", d: "pretty-print TS files" },
     { n: "help", f: usage, a: "", d: "display this message" },
 
     { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call", o: 1 },

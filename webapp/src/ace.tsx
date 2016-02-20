@@ -493,7 +493,7 @@ export class Editor extends srceditor.Editor {
                         this.completer.showPopup();
                     }
                 }
-                if (insString == "\n") {
+                if (false && insString == "\n") {
                     let formatted = ts.mbit.format(this.editor.getValue())
                     if (formatted)
                         this.editor.setValue(formatted)

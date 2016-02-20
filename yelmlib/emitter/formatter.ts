@@ -138,13 +138,26 @@ namespace ts.mbit {
 
     function tokenize(input: string) {
         let scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, input, msg => {
-            console.log("scanner error", msg.message)
+            let pos = scanner.getTextPos()            
+            console.log("scanner error", pos, msg.message)
         })
 
         let tokens: Token[] = []
         let braceBalance = 0
+        let templateLevel = -1;
         while (true) {
             let kind = scanner.scan()
+            
+            if (kind == SK.CloseBraceToken && braceBalance == templateLevel) {
+                templateLevel = -1;
+                kind = scanner.reScanTemplateToken()
+            }
+            
+            if (kind == SK.SlashToken || kind == SK.SlashEqualsToken) {
+                let tmp = scanner.reScanSlashToken()
+                if (tmp == SK.RegularExpressionLiteral)
+                    kind = tmp;
+            }
 
             let tok: Token = {
                 kind: getTokKind(kind),
@@ -158,10 +171,14 @@ namespace ts.mbit {
 
             if (kind == SK.CloseBraceToken) {
                 if (--braceBalance < 0)
-                    braceBalance = -100000;
+                    braceBalance = -10000000;
             }
 
             tokens.push(tok)
+            
+            if (kind == SK.TemplateHead || kind == SK.TemplateMiddle) {
+                templateLevel = braceBalance;
+            }
 
             if (tok.kind == TokenKind.EOF)
                 break;
@@ -269,6 +286,6 @@ namespace ts.mbit {
         let res = output.map(t => t.text).join("")
         if (res == input)
             return null;
-        return null;
+        return res;
     }
 }
