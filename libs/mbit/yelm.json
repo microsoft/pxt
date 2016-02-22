@@ -11,6 +11,7 @@
         "input.ts",
         "control.ts",        
         "led.ts",
+        "radio.ts",
         "music.ts",
         "game.ts",
         "pins.ts",
