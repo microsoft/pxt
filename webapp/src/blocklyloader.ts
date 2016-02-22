@@ -16,6 +16,19 @@ var blockColors: Util.StringMap<number> = {
     radio: 270,
 }
 
+// list of built-in blocks, should be touched.
+var builtinBlocks: Util.StringMap<any> = {};
+Object.keys(Blockly.Blocks).forEach(k => builtinBlocks[k] = Blockly.Blocks[k]);
+
+// blocks cached
+interface CachedBlock {
+    hash: string;
+    block: {
+        init: () => void;
+    };
+}
+var cachedBlocks: Util.StringMap<CachedBlock> = {};
+
 function createShadowValue(name: string, num: boolean, v: string): Element {
     var value = document.createElement("value");
     value.setAttribute("name", name);
@@ -79,60 +92,79 @@ function iconToFieldImage(c: string): Blockly.FieldImage {
 }
 
 function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
-    if (Blockly.Blocks[fn.attributes.blockId]) {
-        console.error("duplicate block definition: " + fn.attributes.blockId);
+    var id = fn.attributes.blockId;
+    
+    if (builtinBlocks[id]) {
+        console.error('trying to override builtin block ' + id);
+        return;
+    }
+    
+    var hash = JSON.stringify(fn);       
+    if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
+        console.log('block already in toolbox: ' + id);
         return;
     }
 
-    Blockly.Blocks[fn.attributes.blockId] = {
-        init: function() {
-            this.setHelpUrl("./" + fn.attributes.help);
-            this.setColour(blockColors[fn.namespace] || 255);
+    if (Blockly.Blocks[fn.attributes.blockId]) {
+        console.error("duplicate block definition: " + id);
+        return;
+    }
 
-            fn.attributes.block.split('|').map(n => {
-                var m = /([^%]*)%([a-zA-Z0-0]+)/.exec(n);
-                if (!m) {
-                    var i = this.appendDummyInput();
-                    if (fn.attributes.icon) i.appendField(iconToFieldImage(fn.attributes.icon))
-                    i.appendField(n);
-                } else {
-                    // find argument
-                    var pre = m[1]; var p = m[2];
-                    var n = Object.keys(attrNames).filter(k => attrNames[k] == p)[0];
-                    if (!n) {
-                        console.error("block " + fn.attributes.blockId + ": unkown parameter " + p);
-                        return;
-                    }
+    var cachedBlock: CachedBlock = {
+        hash: hash,
+        block: {
+            init: function() {
+                this.setHelpUrl("./" + fn.attributes.help);
+                this.setColour(blockColors[fn.namespace] || 255);
 
-                    var pr = fn.parameters.filter(p => p.name == n)[0];
-                    if (pr.type == "number") {
-                        var i = this.appendValueInput(p)
-                            .setAlign(Blockly.ALIGN_RIGHT)
-                            .setCheck("Number");
-                        if (pre) i.appendField(pre);
-                    } else if (pr.type == "string") {
-                        var i = this.appendValueInput(p)
-                            .setAlign(Blockly.ALIGN_RIGHT)
-                            .setCheck("String");
-                        if (pre) i.appendField(pre);
+                fn.attributes.block.split('|').map(n => {
+                    var m = /([^%]*)%([a-zA-Z0-0]+)/.exec(n);
+                    if (!m) {
+                        var i = this.appendDummyInput();
+                        if (fn.attributes.icon) i.appendField(iconToFieldImage(fn.attributes.icon))
+                        i.appendField(n);
+                    } else {
+                        // find argument
+                        var pre = m[1]; var p = m[2];
+                        var n = Object.keys(attrNames).filter(k => attrNames[k] == p)[0];
+                        if (!n) {
+                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + p);
+                            return;
+                        }
+
+                        var pr = fn.parameters.filter(p => p.name == n)[0];
+                        if (pr.type == "number") {
+                            var i = this.appendValueInput(p)
+                                .setAlign(Blockly.ALIGN_RIGHT)
+                                .setCheck("Number");
+                            if (pre) i.appendField(pre);
+                        } else if (pr.type == "string") {
+                            var i = this.appendValueInput(p)
+                                .setAlign(Blockly.ALIGN_RIGHT)
+                                .setCheck("String");
+                            if (pre) i.appendField(pre);
+                        }
                     }
+                })
+
+                var body = fn.parameters.filter(pr => pr.type == "() => void")[0];
+                if (body) {
+                    this.appendStatementInput(attrNames[body.name])
+                        .setCheck("null");
                 }
-            })
 
-            var body = fn.parameters.filter(pr => pr.type == "() => void")[0];
-            if (body) {
-                this.appendStatementInput(attrNames[body.name])
-                    .setCheck("null");
+                this.setInputsInline(fn.parameters.length < 4);
+                if (!/^on /.test(fn.name)) {
+                    this.setPreviousStatement(fn.retType == "void");
+                    this.setNextStatement(fn.retType == "void");
+                }
+                this.setTooltip(fn.attributes.jsDoc);
             }
-
-            this.setInputsInline(fn.parameters.length < 4);
-            if (!/^on /.test(fn.name)) {
-                this.setPreviousStatement(fn.retType == "void");
-                this.setNextStatement(fn.retType == "void");
-            }
-            this.setTooltip(fn.attributes.jsDoc);
         }
     }
+    
+    cachedBlocks[id] = cachedBlock;
+    Blockly.Blocks[id] = cachedBlock.block;
 }
 
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
