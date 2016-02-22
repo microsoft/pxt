@@ -67,9 +67,9 @@ function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.Stri
 
     fn.parameters.filter(pr => !!attrNames[pr.name]).forEach(pr => {
         if (pr.type == "number")
-            block.appendChild(createShadowValue(attrNames[pr.name], true, pr.initializer || "0"));
+            block.appendChild(createShadowValue(attrNames[pr.name], true, pr.defaults ? pr.defaults[0] : "0"));
         else if (pr.type == "string")
-            block.appendChild(createShadowValue(attrNames[pr.name], false, ""));
+            block.appendChild(createShadowValue(attrNames[pr.name], false, pr.defaults ? pr.defaults[0] : ""));
     })
 
     var category = tb.querySelector("category[name~='" + fn.namespace[0].toUpperCase() + fn.namespace.slice(1) + "']");

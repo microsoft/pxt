@@ -248,7 +248,7 @@ Blockly.Variables.flyoutCategory = function(workspace) {
 };
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#tmkc86
-Blockly.Blocks['device_print_message'] = {
+/* Blockly.Blocks['device_print_message'] = {
   init: function() {
     this.setHelpUrl("./functions/show-string");
     this.setColour(blockColors.basic);
@@ -264,7 +264,7 @@ Blockly.Blocks['device_print_message'] = {
     this.setTooltip('Shows the specified string and scrolls it if necessary.');
     this.setInputsInline(true);
  }
-};
+}; */
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#xiu9u7
 /*Blockly.Blocks['device_show_number'] = {

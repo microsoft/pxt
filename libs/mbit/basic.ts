@@ -4,10 +4,14 @@
 namespace basic {
     /**
      * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.
+     * @param text the text to scroll on the screen, eg: Hello!
      * @param interval how fast to shift characters; eg: 150, 100, 200, -100
      */
-    //% help=functions/show-string weight=87
-    //% shim=micro_bit::scrollString async block="show string %1" async
+    //% help=functions/show-string 
+    //% weight=87
+    //% shim=micro_bit::scrollString async 
+    //% block="show|string %text=2" icon="\uf031" 
+    //% async
     //% blockId=device_print_message
     export function showString(text: string, interval: number = 150): void { }
 
@@ -16,9 +20,9 @@ namespace basic {
      * @param interval speed of scroll; eg: 150, 100, 200, -100
      */
     //% help=functions/show-number
-    //% weight=89
+    //% weight=96
     //% shim=micro_bit::scrollNumber
-    //% blockId=device_show_number block="show |number %number" blockGap=8 icon="\uf1ec"
+    //% blockId=device_show_number block="show|number %number=2" blockGap=8 icon="\uf1ec"
     //% async
     export function showNumber(value: number, interval: number = 150): void { }
     
@@ -35,7 +39,10 @@ namespace basic {
      * @param leds TODO
      * @param ms TODO
      */
-    //% help=functions/show-leds weight=95 shim=micro_bit::showLeds imageLiteral async
+    //% help=functions/show-leds 
+    //% weight=95 
+    //% shim=micro_bit::showLeds 
+    //% imageLiteral async
     //% blockId=device_show_leds
     export function showLeds(leds: string, ms: number) : void {}
 
@@ -68,7 +75,7 @@ namespace basic {
      * Pause for the specified time in milliseconds
      * @param ms how long to pause for, eg: 100, 200, 500, 1000, 2000
      */
-    //% help=functions/pause weight=88
+    //% help=functions/pause weight=54
     //% shim=micro_bit::pause async block="pause for %pause ms"
     //% blockId=device_pause icon="\uf110"
     export function pause(ms: number): void { }
