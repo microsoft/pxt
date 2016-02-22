@@ -23,11 +23,13 @@ Object.keys(Blockly.Blocks).forEach(k => builtinBlocks[k] = Blockly.Blocks[k]);
 // blocks cached
 interface CachedBlock {
     hash: string;
+    fn: ts.mbit.SymbolInfo;
     block: {
         init: () => void;
     };
 }
 var cachedBlocks: Util.StringMap<CachedBlock> = {};
+var cachedToolbox: string = "";
 
 function createShadowValue(name: string, num: boolean, v: string): Element {
     var value = document.createElement("value");
@@ -91,27 +93,28 @@ function iconToFieldImage(c: string): Blockly.FieldImage {
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
+function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) : boolean {
     var id = fn.attributes.blockId;
     
     if (builtinBlocks[id]) {
         console.error('trying to override builtin block ' + id);
-        return;
+        return false;
     }
     
     var hash = JSON.stringify(fn);       
     if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
         console.log('block already in toolbox: ' + id);
-        return;
+        return true;
     }
 
     if (Blockly.Blocks[fn.attributes.blockId]) {
         console.error("duplicate block definition: " + id);
-        return;
+        return false;
     }
 
     var cachedBlock: CachedBlock = {
         hash: hash,
+        fn: fn,
         block: {
             init: function() {
                 this.setHelpUrl("./" + fn.attributes.help);
@@ -165,24 +168,46 @@ function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap
     
     cachedBlocks[id] = cachedBlock;
     Blockly.Blocks[id] = cachedBlock.block;
+    
+    return true;
 }
 
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
+
     blockInfo.blocks.sort((f1, f2) => {
         return (f2.attributes.weight || 50) - (f1.attributes.weight + 1 || 50);
     })
 
+    var currentBlocks : Util.StringMap<number> = {};
+    
+    // create new toolbox and update block definitions
     var tb = <Element>toolbox.cloneNode(true);
     blockInfo.blocks
         .filter(fn => !tb.querySelector("block[type='" + fn.attributes.blockId + "']"))
         .forEach(fn => {
             var pnames = parameterNames(fn);
-            injectToolbox(tb, fn, pnames);
-            injectBlockDefinition(fn, pnames);
+            if(injectBlockDefinition(fn, pnames)) {
+                injectToolbox(tb, fn, pnames);
+                currentBlocks[fn.attributes.blockId] = 1;
+            }
         })
-    workspace.updateToolbox(tb)
+        
+    // remove ununsed blocks
+    Object
+        .keys(cachedBlocks).filter(k => !currentBlocks[k])
+        .forEach(k => removeBlock(cachedBlocks[k].fn));
+    
+    // update toolbox   
+    if (tb.innerHTML != cachedToolbox) {
+        cachedToolbox = tb.innerHTML;    
+        workspace.updateToolbox(tb)
+    }
 }
 
+function removeBlock(fn : ts.mbit.SymbolInfo) {
+    delete Blockly.Blocks[fn.attributes.blockId];
+    delete cachedBlocks[fn.attributes.blockId];
+}
 
 export interface BlocksInfo {
     blocks: ts.mbit.SymbolInfo[];
