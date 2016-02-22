@@ -104,7 +104,7 @@ namespace game {
             unplugEvents();
             led.stopAnimation();
             led.setBrightness(255);
-            led.setDisplayMode(led.DisplayMode.BackAndWhite);
+            led.setDisplayMode(DisplayMode.BackAndWhite);
             while (true) {
                 for (let i = 0; i < 8; i++) {
                     basic.clearScreen();
@@ -232,9 +232,9 @@ namespace game {
     }
 
     function unplugEvents(): void {
-        input.onButtonPressed(input.Button.A, () => { });
-        input.onButtonPressed(input.Button.B, () => { });
-        input.onButtonPressed(input.Button.AB, () => {
+        input.onButtonPressed(Button.A, () => { });
+        input.onButtonPressed(Button.B, () => { });
+        input.onButtonPressed(Button.AB, () => {
             control.reset();
         });
     }
@@ -601,7 +601,7 @@ namespace game {
 0 0 0 0 0
 0 0 0 0 0`);
             sprites = (<LedSprite[]>[]);
-            led.setDisplayMode(led.DisplayMode.Greyscale);
+            led.setDisplayMode(DisplayMode.Greyscale);
             basic.forever(() => {
                 basic.pause(30);
                 plot();
