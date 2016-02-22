@@ -149,7 +149,7 @@ function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap
 
                 var body = fn.parameters.filter(pr => pr.type == "() => void")[0];
                 if (body) {
-                    this.appendStatementInput(attrNames[body.name])
+                    this.appendStatementInput(attrNames[body.name] || "HANDLER")
                         .setCheck("null");
                 }
 
