@@ -155,8 +155,18 @@ function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap
                     this.appendStatementInput(attrNames[body.name] || "HANDLER")
                         .setCheck("null");
                 }
+                
+                if (fn.attributes.imageLiteral) {
+                    for(var r = 0; r < 5;++r) {
+                        var ri = this.appendDummyInput();
+                        for(var c = 0; c < 5; ++c) {
+                            if (c >0) ri.appendField(" ");
+                            ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
+                        }
+                    }
+                }
 
-                this.setInputsInline(fn.parameters.length < 4);
+                this.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
                 if (!/^on /.test(fn.name)) {
                     this.setPreviousStatement(fn.retType == "void");
                     this.setNextStatement(fn.retType == "void");

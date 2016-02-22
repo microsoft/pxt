@@ -765,6 +765,7 @@ Blockly.Blocks['device_heading'] = {
     }
 };
 
+/*
 Blockly.Blocks['device_show_leds'] = {
     init: function()
     {
@@ -782,7 +783,7 @@ Blockly.Blocks['device_show_leds'] = {
         this.setTooltip('Show the given led pattern on the display.');
         this.setHelpUrl("./functions/show-leds");
     }
-};
+}; */
 
 Blockly.Blocks['device_build_image'] = {
     init: function()

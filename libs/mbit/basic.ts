@@ -32,19 +32,20 @@ namespace basic {
      * @param interval TODO
      */
     //% help=functions/show-animation shim=micro_bit::showAnimation imageLiteral async
-    export function showAnimation(leds: string, interval: number) : void {}
+    export function showAnimation(leds: string, interval: number = 400) : void {}
 
     /**
      * Draws an image on the LED screen and pauses for the given milliseconds.
      * @param leds TODO
-     * @param ms TODO
+     * @param interval TODO
      */
     //% help=functions/show-leds 
     //% weight=95 
     //% shim=micro_bit::showLeds 
     //% imageLiteral async
     //% blockId=device_show_leds
-    export function showLeds(leds: string, ms: number) : void {}
+    //% block="show leds" icon="\uf00a"
+    export function showLeds(leds: string, interval: number = 400) : void {}
 
     /**
      * Draws an image on the LED screen.
