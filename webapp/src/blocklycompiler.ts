@@ -1391,37 +1391,7 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         isExtensionMethod: true,
         f: "brightness",
         args: [{ field: "sprite" }]
-    },
-    radio_broadcast: {
-        namespace: "radio",
-        f: "broadcast message",
-        args: [{ field: "MESSAGE" }]
-    },
-    radio_datagram_send: {
-        namespace: "radio",
-        f: "send number",
-        args: [{ field: "MESSAGE" }]
-    },
-    radio_datagram_receive: {
-        namespace: "radio",
-        f: "receive number",
-        args: []
-    },
-    radio_datagram_received_number_at: {
-        namespace: "radio",
-        f: "received number at",
-        args: [{ field: "VALUE" }]
-    },
-    radio_datagram_rssi: {
-        namespace: "radio",
-        f: "receive signal strength",
-        args: []
-    },
-    radio_set_group: {
-        namespace: "radio",
-        f: "set group",
-        args: [{ field: "ID" }]
-    },
+    }
 }
 
 function compileStatements(e: Environment, b: B.Block): J.JStmt[] {

@@ -61,7 +61,7 @@ namespace led {
      * @param high maximum value, eg: 1023, 255
      */
     //% help=/functions/plot-bar-graph weight=20
-    //% blockId=device_plot_bar_graph block="plot bar graph |of %value |up to %high" icon="\uf080" blockExternalInputs=true
+    //% blockId=device_plot_bar_graph block="plot bar graph of %value |up to %high" icon="\uf080" blockExternalInputs=true
     export function plotBarGraph(value: number, high: number = 1023): void {
         let v = pins.map(Math.abs(value), 0, high, 0, 5);
         if (v <= 0) {

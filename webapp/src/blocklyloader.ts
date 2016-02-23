@@ -147,16 +147,27 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
     return true;
 }
 
+function initField(i:any, ni:number, fn:ts.mbit.SymbolInfo, pre: string, right? :boolean, type? : string) : any {
+    if (ni == 0 && fn.attributes.icon) 
+        i.appendField(iconToFieldImage(fn.attributes.icon))
+    if(pre)
+        i.appendField(pre);
+    if(right) 
+        i.setAlign(Blockly.ALIGN_RIGHT)
+    if (type) 
+        i.setCheck(type);
+    return i;            
+}
+
 function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     block.setHelpUrl("./" + fn.attributes.help);
     block.setColour(blockColors[fn.namespace] || 255);
 
     fn.attributes.block.split('|').map((n, ni) => {
-        let m = /([^%]*)%([a-zA-Z0-0]+)/.exec(n);
+        let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
+        let i : any;
         if (!m) {
-            let i = block.appendDummyInput();
-            if (ni == 0 && fn.attributes.icon) i.appendField(iconToFieldImage(fn.attributes.icon))
-            i.appendField(n);
+            i = initField(block.appendDummyInput(), ni, fn, n);
         } else {
             // find argument
             let pre = m[1]; if (pre) pre = pre.trim();
@@ -169,29 +180,20 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
 
             let pr = fn.parameters.filter(p => p.name == n)[0];
             if (pr.type == "number") {
-                let i = block.appendValueInput(p)
-                    .setAlign(Blockly.ALIGN_RIGHT)
-                    .setCheck("Number");
-                if (pre) i.appendField(pre);
+                i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
             }
             else if (pr.type == "boolean") {
-                let i = block.appendValueInput(p)
-                    .setCheck("Boolean");
-                if (pre) i.appendField(pre);
+                i = initField(block.appendValueInput(p), ni, fn, pre, true, "Boolean");
             } else if (pr.type == "string") {
-                let i = block.appendValueInput(p)
-                    .setAlign(Blockly.ALIGN_RIGHT)
-                    .setCheck("String");
-                if (pre) i.appendField(pre);
+                i = initField(block.appendValueInput(p), ni, fn, pre, true, "String");
             } else {
                 let prtype = Util.lookup(info.apis.byQName, pr.type);
                 if (prtype && prtype.kind == ts.mbit.SymbolKind.Enum) {
                     let dd = Util.values(info.apis.byQName)
                         .filter(e => e.namespace == pr.type)
                         .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);
-                    let i = block.appendDummyInput()
-                        .appendField(new Blockly.FieldDropdown(dd), "NAME");
-                    if (pre) i.appendField(pre);
+                    i = initField(block.appendDummyInput(), ni, fn, pre, true);
+                    i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
                 }
             }
         }
