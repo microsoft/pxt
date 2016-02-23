@@ -344,7 +344,12 @@ namespace ts.mbit {
         function delimitIn(t: Token) {
             if (t.kind == TokenKind.Tree) {
                 let tree = t as TreeToken
-                tree.children.forEach(delimitIn)
+                if (t.synKind == SK.OpenBraceToken) {
+                    delimitStmts(tree.children)
+                    // we ignore the result here
+                } else {
+                    tree.children.forEach(delimitIn)
+                }
             }
         }
 
