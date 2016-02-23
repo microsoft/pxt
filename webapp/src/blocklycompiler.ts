@@ -1262,26 +1262,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         args: [{ field: "sprite" }, { field: "offset" }],
         isExtensionMethod: true
     },
-    game_start_countdown: {
-        namespace: "game",
-        f: "start countdown",
-        args: [{ field: "duration" }]
-    },
-    game_score: {
-        namespace: "game",
-        f: "score",
-        args: []
-    },
-    game_add_score: {
-        namespace: "game",
-        f: "add score",
-        args: [{ field: "points" }]
-    },
-    game_game_over: {
-        namespace: "game",
-        f: "game over",
-        args: []
-    },
     game_create_sprite: {
         namespace: "game",
         f: "create sprite",
