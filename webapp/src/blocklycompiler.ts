@@ -1180,16 +1180,6 @@ function compileStdBlock(e: Environment, b: B.Block, f: StdFunc) {
     return H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, f)));
 }
 
-function compileComment2(e: Environment, b: B.Block): J.JStmt {
-    return H.mkComment(b.getFieldValue("comment"));
-}
-
-function compileComment(e: Environment, b: B.Block): J.JStmt {
-    var arg = compileExpression(e, b.getInputTargetBlock("comment"));
-    assert(arg.nodeType == "stringLiteral");
-    return H.mkComment((<J.JStringLiteral>arg).value);
-}
-
 function mkCallWithCallback(e: Environment, n: string, f: string, args: J.JExpr[], body: J.JStmt[]): J.JStmt {
     var def = H.mkDef("_body_", H.mkGTypeRef("Action"));
     return H.mkInlineActions(
@@ -1262,10 +1252,6 @@ interface StdFunc {
 }
 
 var defaultCallTable: Util.StringMap<StdFunc> = {
-    device_make_StringImage: {
-        f: "create image from string",
-        args: [{ field: "NAME" }]
-    },
     device_scroll_image: {
         f: "scroll image",
         args: [{ field: "sprite" }, { field: "frame offset" }, { field: "delay" }],
@@ -1275,11 +1261,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "show image",
         args: [{ field: "sprite" }, { field: "offset" }],
         isExtensionMethod: true
-    },
-    device_get_button: {
-        namespace: "input",
-        f: "button is pressed",
-        args: [{ field: "NAME" }]
     },
     game_start_countdown: {
         namespace: "game",
@@ -1472,15 +1453,6 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
                     stmts.push(compileChange(e, b));
                     break;
 
-                case 'device_comment2':
-                    stmts.push(compileComment2(e, b));
-                    break;
-
-                // For legacy
-                case 'device_comment':
-                    stmts.push(compileComment(e, b));
-                    break;
-
                 case 'device_forever':
                     stmts.push(compileForever(e, b));
                     break;
@@ -1502,11 +1474,6 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
                 case 'radio_datagraph_received_event':
                     stmts.push(compileEvent(e, b, "on data received", [], "radio"));
                     break;
-
-                case 'device_shake_event':
-                    stmts.push(compileEvent(e, b, "on shake", []));
-                    break;
-
                 case 'device_gesture_event':
                     stmts.push(compileEvent(e, b, "on " + b.getFieldValue("NAME"), []));
                     break;
