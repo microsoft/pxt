@@ -301,7 +301,7 @@ function cmdFormat() {
             if (!t) {
                 console.log("already formatted:", f)
             } else {
-                let fn = "fmt/" + f
+                let fn = "tmp/" + f
                 fs.writeFileSync(fn, t, "utf8")
                 console.log("written:", fn)
             }
