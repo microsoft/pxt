@@ -20,6 +20,10 @@ declare module Blockly {
         constructor(val:string);
     }
     
+    class FieldDropdown {
+        constructor(val: string[][]);
+    }
+    
     class Block {
         static obtain(workspace: Workspace, prototypeName?: string): Block;
 
