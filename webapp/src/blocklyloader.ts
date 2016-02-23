@@ -201,7 +201,7 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
 
     let body = fn.parameters.filter(pr => pr.type == "() => void")[0];
     if (body) {
-        block.appendStatementInput(attrNames[body.name] || "HANDLER")
+        block.appendStatementInput("HANDLER")
             .setCheck("null");
     }
 
