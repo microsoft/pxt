@@ -246,10 +246,9 @@ Blockly.Blocks['device_while'] = {
 
 Blockly.Blocks['device_random'] = {
   init: function() {
-    this.setHelpUrl('./blocks/contents');
+    this.setHelpUrl('./functions/random');
     this.setColour(230);
     this.appendDummyInput()
-        .appendField(iconToFieldImage("\uf074"))
         .appendField("pick random 0 to")
         .appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), "limit");
     this.setInputsInline(true);
