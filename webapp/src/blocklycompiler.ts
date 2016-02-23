@@ -743,7 +743,7 @@ function infer(e: Environment, w: B.Workspace) {
                                 unionParam(e, b, p.field, ground(t));
                             }
                         });
-                        compileStdCall(e, b, e.stdCallTable[b.type]);
+                        compileCall(e,b);
                     }
             }
         } catch (e) {
@@ -961,8 +961,8 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
         case 'device_beat':
             return compileBeat(e, b);
         default:
-            if (b.type in e.stdCallTable)
-                return compileStdCall(e, b, e.stdCallTable[b.type]);
+            var call = e.stdCallTable[b.type];
+            if (call) return compileCall(e, b);
             else {
                 console.error("Unable to compile expression: " + b.type);
                 return defaultValueForType(returnType(e, b));
@@ -1156,6 +1156,13 @@ function compileChange(e: Environment, b: B.Block): J.JStmt {
     return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, H.mkSimpleCall("+", [ref, expr])])));
 }
 
+function compileCall(e: Environment, b: B.Block) {
+    var call = e.stdCallTable[b.type];
+    return call.hasHandler 
+        ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
+        : compileStdCall(e, b, e.stdCallTable[b.type]);
+}
+
 function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
     var args = func.args.map((p: StdArg) => {
         var lit: any = p.literal;
@@ -1189,7 +1196,7 @@ function mkCallWithCallback(e: Environment, n: string, f: string, args: J.JExpr[
             H.namespaceCall(n, f, args)));
 }
 
-function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string = "input"): J.JStmt {
+function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
     var bBody = b.getInputTargetBlock("HANDLER");
     var compiledArgs = args.map((arg: string) => {
         return H.mkStringLiteral(b.getFieldValue(arg));
@@ -1198,7 +1205,7 @@ function compileEvent(e: Environment, b: B.Block, event: string, args: string[],
     return mkCallWithCallback(e, ns, event, compiledArgs, body);
 }
 
-function compileNumberEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string = "input"): J.JStmt {
+function compileNumberEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
     var bBody = b.getInputTargetBlock("HANDLER");
     var compiledArgs = args.map((arg: string) => {
         return H.mkNumberLiteral(parseInt(b.getFieldValue(arg)));
@@ -1248,6 +1255,7 @@ interface StdFunc {
     f: string;
     args: StdArg[];
     isExtensionMethod?: boolean
+    hasHandler?: boolean;
     namespace?: string;
 }
 
@@ -1425,11 +1433,11 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
                     stmts.push(compileEvent(e, b, "on data received", [], "radio"));
                     break;
                 case 'device_gesture_event':
-                    stmts.push(compileEvent(e, b, "on " + b.getFieldValue("NAME"), []));
+                    stmts.push(compileEvent(e, b, "on " + b.getFieldValue("NAME"), [], "input"));
                     break;
 
                 case 'device_pin_event':
-                    stmts.push(compileEvent(e, b, "on pin pressed", ["NAME"]));
+                    stmts.push(compileEvent(e, b, "on pin pressed", ["NAME"], "input"));
                     break;
 
                 case 'device_show_leds':
@@ -1447,10 +1455,9 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
                     stmts.push(compileStdBlock(e, b, e.stdCallTable["game_sprite_change_" + b.getFieldValue("property")]));
                     break;
                 default:
-                    if (b.type in e.stdCallTable)
-                        stmts.push(compileStdBlock(e, b, e.stdCallTable[b.type]));
-                    else
-                        console.error("Not generating code for (not a statement / not supported): " + b.type);
+                    let call = e.stdCallTable[b.type];
+                    if (call) stmts.push(compileCall(e, b));
+                    else console.error("Not generating code for (not a statement / not supported): " + b.type);
             }
         }
         b = b.getNextBlock();
@@ -1508,6 +1515,7 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
                     namespace: fn.namespace,
                     f: fn.name,
                     isExtensionMethod: fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property,
+                    hasHandler: fn.parameters.some(p => p.type == "() => void"),
                     args: fn.parameters.map(p => {
                         if (fieldMap[p.name]) return { field: fieldMap[p.name].name };
                         else return null;
