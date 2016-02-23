@@ -2,6 +2,7 @@
 
 var fs = require("fs");
 var ju = require("./jakeutil")
+var path = require("path")
 var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 
@@ -15,7 +16,12 @@ function compileDir(name, deps) {
   file('built/' + name + '.js', dd, {async : true}, function () { tscIn(this, name) })
 }
 
-task('default', ['runprj', 'embed'])
+function loadText(filename)
+{
+    return fs.readFileSync(filename, "utf8");
+}
+
+task('default', ['updatestrings', 'runprj', 'embed'])
 
 task('clean', function() {
   // jake.rmRf("built") - doesn't work?
@@ -64,4 +70,64 @@ task('update', function() {
         "npm install",
         "tsd reinstall"
   ], {printStdout: true});
+})
+
+task('updatestrings', function() {
+    var errCnt = 0;
+    var translationStrings = {}
+    var translationHelpStrings = {}
+
+    function processLf(filename)
+    {
+        if (!/\.(ts|tsx|html)$/.test(filename)) return
+        if (/\.d\.ts$/.test(filename)) return
+
+        console.log('extracting strings from %s', filename);    
+        loadText(filename).split('\n').forEach((line, idx) => {
+            function err(msg) {
+                console.log("%s(%d): %s", filename, idx, msg);
+                errCnt++;
+            }
+
+            while (true) {
+                var newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                    var m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
+                    if (m) {
+                        try {
+                            var str = JSON.parse(m[1])
+                            translationStrings[str] = 1
+                        } catch (e) {
+                            err("cannot JSON-parse " + m[1])
+                        }
+                    } else {
+                        if (!/util\.ts$/.test(filename))
+                            err("invalid format of lf() argument: " + args)
+                    }
+                    return "BLAH " + args
+                })
+                if (newLine == line) return;
+                line = newLine
+            }
+        })
+    }    
+    
+    var fileCnt = 0;
+    var srcPaths = ["libs/mbit", "webapp/src"]
+    srcPaths.forEach(pth => {
+        fs.readdirSync(pth).forEach((fn) => {
+            fileCnt++;
+            processLf(path.join(pth, fn));
+        })
+    });
+
+    Object.keys(translationHelpStrings).forEach(k => translationStrings[k] = 1)
+    var tr = Object.keys(translationStrings)
+    tr.sort()
+
+    console.log('strings: ' + tr.length);
+    fs.writeFileSync("built/localization.json", JSON.stringify({ strings: tr }, null, 1))
+
+    console.log("*** Stop; " + fileCnt + " files");
+    if (errCnt > 0)
+        console.log("%d errors", errCnt);
 })
