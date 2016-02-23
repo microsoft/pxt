@@ -1,0 +1,7 @@
+{
+    "name": "yelm",
+    "main": "app.html",
+    "version": "0.1.0.0",
+    "dom_storage_quota":100,
+    "no-edit-menu": true
+}
