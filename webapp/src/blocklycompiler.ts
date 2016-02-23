@@ -1321,41 +1321,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "map",
         args: [{ field: "value" }, { field: "fromLow" }, { field: "fromHigh" }, { field: "toLow" }, { field: "toHigh" }]
     },
-    device_play_note: {
-        namespace: "music",
-        f: "play tone",
-        args: [{ field: "note" }, { field: "duration" }]
-    },
-    device_ring: {
-        namespace: "music",
-        f: "ring tone",
-        args: [{ field: "note" }]
-    },
-    device_rest: {
-        namespace: "music",
-        f: "rest",
-        args: [{ field: "duration" }]
-    },
-    device_note: {
-        namespace: "music",
-        f: "note frequency",
-        args: [{ field: "note" }]
-    },
-    device_tempo: {
-        namespace: "music",
-        f: "tempo",
-        args: []
-    },
-    device_change_tempo: {
-        namespace: "music",
-        f: "change tempo by",
-        args: [{ field: "value" }]
-    },
-    device_set_tempo: {
-        namespace: "music",
-        f: "set tempo",
-        args: [{ field: "value" }]
-    },
     game_start_countdown: {
         namespace: "game",
         f: "start countdown",
@@ -1651,7 +1616,7 @@ function findParent(b: B.Block) {
 //   TouchDevelop for-loop model.
 function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment {
     // The to-be-returned environment.
-    var e = emptyEnv();
+    let e = emptyEnv();
 
     // append functions in stdcalltable
     if (blockInfo)
@@ -1661,13 +1626,13 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
                     console.error("compiler: function " + fn.attributes.blockId + " already defined");
                     return;
                 }
-                var fieldMap = blockyloader.parameterNames(fn);
+                let fieldMap = blockyloader.parameterNames(fn);
                 e.stdCallTable[fn.attributes.blockId] = {
                     namespace: fn.namespace,
                     f: fn.name,
                     isExtensionMethod: fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property,
                     args: fn.parameters.map(p => {
-                        if (fieldMap[p.name]) return { field: fieldMap[p.name] };
+                        if (fieldMap[p.name]) return { field: fieldMap[p.name].name };
                         else return null;
                     }).filter(a => !!a)
                 }
@@ -1676,7 +1641,7 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
     // First pass: collect loop variables.
     w.getAllBlocks().forEach((b: B.Block) => {
         if (b.type == "controls_for" || b.type == "controls_simple_for") {
-            var x = b.getFieldValue("VAR");
+            let x = b.getFieldValue("VAR");
             // It's ok for two loops to share the same variable.
             if (lookup(e, x) == null)
                 e = extend(e, x, Type.Number);
@@ -1705,21 +1670,21 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
     // variable if needed.
     w.getAllBlocks().forEach((b: B.Block) => {
         if (b.type == "variables_set" || b.type == "variables_change") {
-            var x = b.getFieldValue("VAR");
+            let x = b.getFieldValue("VAR");
             if (lookup(e, x) == null)
                 e = extend(e, x, null);
 
-            var binding = lookup(e, x);
+            let binding = lookup(e, x);
             if (binding.usedAsForIndex)
                 // Second reason why we can't compile as a TouchDevelop for-loop: loop
                 // index is assigned to
                 binding.incompatibleWithFor = true;
         } else if (b.type == "variables_get") {
-            var x = b.getFieldValue("VAR");
+            let x = b.getFieldValue("VAR");
             if (lookup(e, x) == null)
                 e = extend(e, x, null);
 
-            var binding = lookup(e, x);
+            let binding = lookup(e, x);
             if (binding.usedAsForIndex && !variableIsScoped(b, x))
                 // Third reason why we can't compile to a TouchDevelop for-loop: loop
                 // index is read outside the loop.

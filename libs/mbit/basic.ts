@@ -10,7 +10,7 @@ namespace basic {
     //% help=functions/show-number
     //% weight=96
     //% shim=micro_bit::scrollNumber
-    //% blockId=device_show_number block="show|number %number=2" blockGap=8 icon="\uf1ec"
+    //% blockId=device_show_number block="show|number %number" blockGap=8 icon="\uf1ec"
     //% async
     export function showNumber(value: number, interval: number = 150): void { }
 
@@ -35,7 +35,7 @@ namespace basic {
     //% help=functions/show-string 
     //% weight=87 blockGap=8
     //% shim=micro_bit::scrollString async 
-    //% block="show|string %text=2" icon="\uf031" 
+    //% block="show|string %text" icon="\uf031" 
     //% async
     //% blockId=device_print_message
     export function showString(text: string, interval: number = 150): void { }

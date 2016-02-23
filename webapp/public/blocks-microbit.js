@@ -1568,6 +1568,7 @@ Blockly.Blocks['controls_simple_for'] = {
   }
 };
 
+/*
 Blockly.Blocks['device_note'] = {
   init: function() {
     this.setHelpUrl('./functions/note');
@@ -1578,7 +1579,7 @@ Blockly.Blocks['device_note'] = {
     this.setOutput(true, "Number");
     this.setTooltip('Gets the frequency of a note.');
   }
-};
+};*/
 
 
 ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"].forEach(function (x) {
@@ -1607,7 +1608,7 @@ Blockly.Blocks['device_note'] = {
     };
 });
 
-
+/*
 Blockly.Blocks['device_play_note'] = {
   init: function() {
     this.setHelpUrl('./functions/play-note');
@@ -1626,8 +1627,9 @@ Blockly.Blocks['device_play_note'] = {
     this.setNextStatement(true);
     this.setTooltip('Play a given note on P0. You can also provide a specific frequency.');
   }
-};
+};*/
 
+/*
 Blockly.Blocks['device_ring'] = {
   init: function() {
     this.setHelpUrl('./functions/ring');
@@ -1642,8 +1644,9 @@ Blockly.Blocks['device_ring'] = {
     this.setNextStatement(true);
     this.setTooltip('Rings a given note on P0. You can also provide a specific frequency.');
   }
-};
+};*/
 
+/*
 Blockly.Blocks['device_rest'] = {
   init: function() {
     this.setHelpUrl('./functions/rest');
@@ -1657,7 +1660,7 @@ Blockly.Blocks['device_rest'] = {
     this.setNextStatement(true);
     this.setTooltip('Rests (plays nothing) for a specified time through pin P0.');
   }
-};
+};*/
 
 Blockly.Blocks['device_beat'] = {
     init: function()
@@ -1674,6 +1677,7 @@ Blockly.Blocks['device_beat'] = {
     }
 };
 
+/*
 Blockly.Blocks['device_tempo'] = {
     init: function()
     {
@@ -1685,8 +1689,9 @@ Blockly.Blocks['device_tempo'] = {
         this.setTooltip('Gets the tempo (bpm)');
         this.setHelpUrl("./functions/tempo");
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_change_tempo'] = {
     init: function()
     {
@@ -1701,8 +1706,9 @@ Blockly.Blocks['device_change_tempo'] = {
         this.setTooltip('Change the tempo by the given amount');
         this.setHelpUrl("./functions/tempo");
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_set_tempo'] = {
     init: function()
     {
@@ -1717,7 +1723,7 @@ Blockly.Blocks['device_set_tempo'] = {
         this.setTooltip('Sets the tempo to the given amount of beats per minute (bpm)');
         this.setHelpUrl("./functions/tempo");
     }
-};
+};*/
 
 Blockly.Blocks['variables_change'] = {
   init: function() {

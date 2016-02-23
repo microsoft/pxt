@@ -45,7 +45,7 @@ namespace led {
      * @param value the brightness value, eg:255, 127, 0
      */
     //% help=functions/set-brightness weight=59 shim=micro_bit::setBrightness
-    //% blockId=device_set_brightness block="set brightness" icon="\uf042"
+    //% blockId=device_set_brightness block="set brightness %value" icon="\uf042"
     export function setBrightness(value: number): void { }
 
     /**
