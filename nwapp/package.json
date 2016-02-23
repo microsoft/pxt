@@ -1,0 +1,11 @@
+{
+  "name": "yelm",
+  "main": "app.html",
+  "node-main": "app.js",
+  "version": "0.1.0.0",
+  "dom_storage_quota": 100,
+  "no-edit-menu": true,
+  "dependencies": {
+    "drivelist": "^2.0.7"
+  }
+}

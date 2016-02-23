@@ -31,52 +31,64 @@ interface CachedBlock {
 var cachedBlocks: Util.StringMap<CachedBlock> = {};
 var cachedToolbox: string = "";
 
-function createShadowValue(name: string, num: boolean, v: string): Element {
-    var value = document.createElement("value");
+function createShadowValue(name: string, type: string, v?: string): Element {
+    let value = document.createElement("value");
     value.setAttribute("name", name);
-    var shadow = document.createElement("shadow"); value.appendChild(shadow);
-    shadow.setAttribute("type", num ? "math_number" : "text");
-    var field = document.createElement("field"); shadow.appendChild(field);
-    field.setAttribute("name", num ? "NUM" : "TEXT");
-    field.innerText = v || "";
-
+    let shadow = document.createElement("shadow"); value.appendChild(shadow);
+    shadow.setAttribute("type", type == "number" ? "math_number" : type == "string" ? "text" : type);
+    if (type == "number" || type == "string") {
+        let field = document.createElement("field"); shadow.appendChild(field);
+        field.setAttribute("name", type == "number" ? "NUM" : "TEXT");
+        field.innerText = v || "";
+    }
     return value;
 }
 
-export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<string> {
+export interface BlockParameter {
+    name: string;
+    type?: string;
+}
+
+export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<BlockParameter> {
     // collect blockly parameter name mapping
-    let attrNames: Util.StringMap<string> = {};
-    fn.parameters.forEach(pr => attrNames[pr.name] = pr.name);
+    let attrNames: Util.StringMap<BlockParameter> = {};
+    fn.parameters.forEach(pr => attrNames[pr.name] = { name: pr.name });
     if (fn.attributes.block) {
-        Object.keys(attrNames).forEach(k => attrNames[k] = "");
-        let rx = /%[a-zA-Z0-9]+/g;
-        let m : RegExpExecArray;
+        Object.keys(attrNames).forEach(k => attrNames[k].name = "");
+        let rx = /%([a-zA-Z0-9_]+)(=([a-zA-Z0-9_]+))?/g;
+        let m: RegExpExecArray;
         let i = 0;
-        while(m = rx.exec(fn.attributes.block)) {
-            attrNames[fn.parameters[i++].name] = m[0].slice(1);
+        while (m = rx.exec(fn.attributes.block)) {
+            var at = attrNames[fn.parameters[i++].name];
+            at.name = m[1];
+            if (m[3]) at.type = m[3];
         }
     }
     return attrNames;
 }
 
-function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
+function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     //
     // toolbox update
     //
-    var block = document.createElement("block");
+    let block = document.createElement("block");
     block.setAttribute("type", fn.attributes.blockId);
     if (fn.attributes.blockGap)
         block.setAttribute("gap", fn.attributes.blockGap);
 
-    fn.parameters.filter(pr => !!attrNames[pr.name]).forEach(pr => {
-        if (pr.type == "number")
-            block.appendChild(createShadowValue(attrNames[pr.name], true, pr.defaults ? pr.defaults[0] : "0"));
-        else if (pr.type == "string")
-            block.appendChild(createShadowValue(attrNames[pr.name], false, pr.defaults ? pr.defaults[0] : ""));
-    })
+    fn.parameters.filter(pr => !!attrNames[pr.name].name)
+        .forEach(pr => {
+            let attr = attrNames[pr.name];
+            if (attr.type)
+                block.appendChild(createShadowValue(attr.name, attr.type));
+            else if (pr.type == "number")
+                block.appendChild(createShadowValue(attr.name, pr.type, pr.defaults ? pr.defaults[0] : "0"));
+            else if (pr.type == "string")
+                block.appendChild(createShadowValue(attr.name, pr.type, pr.defaults ? pr.defaults[0] : ""));
+        })
 
-    var catName = fn.namespace[0].toUpperCase() + fn.namespace.slice(1);
-    var category = tb.querySelector("category[name~='" + catName + "']");
+    let catName = fn.namespace[0].toUpperCase() + fn.namespace.slice(1);
+    let category = tb.querySelector("category[name~='" + catName + "']");
     if (!category) {
         console.log('toolbox: adding category ' + fn.namespace)
         category = document.createElement("category");
@@ -102,7 +114,7 @@ function iconToFieldImage(c: string): Blockly.FieldImage {
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>): boolean {
+function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): boolean {
     let id = fn.attributes.blockId;
 
     if (builtinBlocks[id]) {
@@ -135,21 +147,32 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
     return true;
 }
 
-function initBlock(block:any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
+function initField(i:any, ni:number, fn:ts.mbit.SymbolInfo, pre: string, right? :boolean, type? : string) : any {
+    if (ni == 0 && fn.attributes.icon) 
+        i.appendField(iconToFieldImage(fn.attributes.icon))
+    if(pre)
+        i.appendField(pre);
+    if(right) 
+        i.setAlign(Blockly.ALIGN_RIGHT)
+    if (type) 
+        i.setCheck(type);
+    return i;            
+}
+
+function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     block.setHelpUrl("./" + fn.attributes.help);
     block.setColour(blockColors[fn.namespace] || 255);
 
     fn.attributes.block.split('|').map((n, ni) => {
-        let m = /([^%]*)%([a-zA-Z0-0]+)/.exec(n);
+        let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
+        let i : any;
         if (!m) {
-            let i = block.appendDummyInput();
-            if (ni == 0 && fn.attributes.icon) i.appendField(iconToFieldImage(fn.attributes.icon))
-            i.appendField(n);
+            i = initField(block.appendDummyInput(), ni, fn, n);
         } else {
             // find argument
-            let pre = m[1]; 
+            let pre = m[1]; if (pre) pre = pre.trim();
             let p = m[2];
-            let n = Object.keys(attrNames).filter(k => attrNames[k] == p)[0];
+            let n = Object.keys(attrNames).filter(k => attrNames[k].name == p)[0];
             if (!n) {
                 console.error("block " + fn.attributes.blockId + ": unkown parameter " + p);
                 return;
@@ -157,29 +180,20 @@ function initBlock(block:any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrName
 
             let pr = fn.parameters.filter(p => p.name == n)[0];
             if (pr.type == "number") {
-                let i = block.appendValueInput(p)
-                    .setAlign(Blockly.ALIGN_RIGHT)
-                    .setCheck("Number");
-                if (pre) i.appendField(pre);
+                i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
             }
             else if (pr.type == "boolean") {
-                let i = block.appendValueInput(p)
-                    .setCheck("Boolean");
-                if (pre) i.appendField(pre);
+                i = initField(block.appendValueInput(p), ni, fn, pre, true, "Boolean");
             } else if (pr.type == "string") {
-                let i = block.appendValueInput(p)
-                    .setAlign(Blockly.ALIGN_RIGHT)
-                    .setCheck("String");
-                if (pre) i.appendField(pre);
+                i = initField(block.appendValueInput(p), ni, fn, pre, true, "String");
             } else {
                 let prtype = Util.lookup(info.apis.byQName, pr.type);
                 if (prtype && prtype.kind == ts.mbit.SymbolKind.Enum) {
                     let dd = Util.values(info.apis.byQName)
                         .filter(e => e.namespace == pr.type)
                         .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);
-                    let i = block.appendDummyInput()
-                        .appendField(new Blockly.FieldDropdown(dd), "NAME");
-                    if (pre) i.appendField(pre);
+                    i = initField(block.appendDummyInput(), ni, fn, pre, true);
+                    i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
                 }
             }
         }

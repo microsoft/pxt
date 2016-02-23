@@ -45,7 +45,7 @@ namespace led {
      * @param value the brightness value, eg:255, 127, 0
      */
     //% help=functions/set-brightness weight=59 shim=micro_bit::setBrightness
-    //% blockId=device_set_brightness block="set brightness" icon="\uf042"
+    //% blockId=device_set_brightness block="set brightness %value" icon="\uf042"
     export function setBrightness(value: number): void { }
 
     /**
@@ -61,7 +61,7 @@ namespace led {
      * @param high maximum value, eg: 1023, 255
      */
     //% help=/functions/plot-bar-graph weight=20
-    //% blockId=device_plot_bar_graph block="plot bar graph |of %value |up to %high" icon="\uf080" blockExternalInputs=true
+    //% blockId=device_plot_bar_graph block="plot bar graph of %value |up to %high" icon="\uf080" blockExternalInputs=true
     export function plotBarGraph(value: number, high: number = 1023): void {
         let v = pins.map(Math.abs(value), 0, high, 0, 5);
         if (v <= 0) {

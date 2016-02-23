@@ -1180,16 +1180,6 @@ function compileStdBlock(e: Environment, b: B.Block, f: StdFunc) {
     return H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, f)));
 }
 
-function compileComment2(e: Environment, b: B.Block): J.JStmt {
-    return H.mkComment(b.getFieldValue("comment"));
-}
-
-function compileComment(e: Environment, b: B.Block): J.JStmt {
-    var arg = compileExpression(e, b.getInputTargetBlock("comment"));
-    assert(arg.nodeType == "stringLiteral");
-    return H.mkComment((<J.JStringLiteral>arg).value);
-}
-
 function mkCallWithCallback(e: Environment, n: string, f: string, args: J.JExpr[], body: J.JStmt[]): J.JStmt {
     var def = H.mkDef("_body_", H.mkGTypeRef("Action"));
     return H.mkInlineActions(
@@ -1262,10 +1252,6 @@ interface StdFunc {
 }
 
 var defaultCallTable: Util.StringMap<StdFunc> = {
-    device_make_StringImage: {
-        f: "create image from string",
-        args: [{ field: "NAME" }]
-    },
     device_scroll_image: {
         f: "scroll image",
         args: [{ field: "sprite" }, { field: "frame offset" }, { field: "delay" }],
@@ -1275,86 +1261,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "show image",
         args: [{ field: "sprite" }, { field: "offset" }],
         isExtensionMethod: true
-    },
-    device_get_button: {
-        namespace: "input",
-        f: "button is pressed",
-        args: [{ field: "NAME" }]
-    },
-    device_get_digital_pin: {
-        namespace: "pins",
-        f: "digital read pin",
-        args: [{ field: "name" }]
-    },
-    device_set_digital_pin: {
-        namespace: "pins",
-        f: "digital write pin",
-        args: [{ field: "name" }, { field: "value" }]
-    },
-    device_get_analog_pin: {
-        namespace: "pins",
-        f: "analog read pin",
-        args: [{ field: "name" }]
-    },
-    device_set_analog_pin: {
-        namespace: "pins",
-        f: "analog write pin",
-        args: [{ field: "name" }, { field: "value" }]
-    },
-    device_set_analog_period: {
-        namespace: "pins",
-        f: "analog set period",
-        args: [{ field: "pin" }, { field: "micros" }]
-    },
-    device_set_servo_pin: {
-        namespace: "pins",
-        f: "servo write pin",
-        args: [{ field: "name" }, { field: "value" }]
-    },
-    device_set_servo_pulse: {
-        namespace: "pins",
-        f: "servo set pulse",
-        args: [{ field: "pin" }, { field: "micros" }]
-    },
-    math_map: {
-        namespace: "pins",
-        f: "map",
-        args: [{ field: "value" }, { field: "fromLow" }, { field: "fromHigh" }, { field: "toLow" }, { field: "toHigh" }]
-    },
-    device_play_note: {
-        namespace: "music",
-        f: "play tone",
-        args: [{ field: "note" }, { field: "duration" }]
-    },
-    device_ring: {
-        namespace: "music",
-        f: "ring tone",
-        args: [{ field: "note" }]
-    },
-    device_rest: {
-        namespace: "music",
-        f: "rest",
-        args: [{ field: "duration" }]
-    },
-    device_note: {
-        namespace: "music",
-        f: "note frequency",
-        args: [{ field: "note" }]
-    },
-    device_tempo: {
-        namespace: "music",
-        f: "tempo",
-        args: []
-    },
-    device_change_tempo: {
-        namespace: "music",
-        f: "change tempo by",
-        args: [{ field: "value" }]
-    },
-    device_set_tempo: {
-        namespace: "music",
-        f: "set tempo",
-        args: [{ field: "value" }]
     },
     game_start_countdown: {
         namespace: "game",
@@ -1485,37 +1391,7 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         isExtensionMethod: true,
         f: "brightness",
         args: [{ field: "sprite" }]
-    },
-    radio_broadcast: {
-        namespace: "radio",
-        f: "broadcast message",
-        args: [{ field: "MESSAGE" }]
-    },
-    radio_datagram_send: {
-        namespace: "radio",
-        f: "send number",
-        args: [{ field: "MESSAGE" }]
-    },
-    radio_datagram_receive: {
-        namespace: "radio",
-        f: "receive number",
-        args: []
-    },
-    radio_datagram_received_number_at: {
-        namespace: "radio",
-        f: "received number at",
-        args: [{ field: "VALUE" }]
-    },
-    radio_datagram_rssi: {
-        namespace: "radio",
-        f: "receive signal strength",
-        args: []
-    },
-    radio_set_group: {
-        namespace: "radio",
-        f: "set group",
-        args: [{ field: "ID" }]
-    },
+    }
 }
 
 function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
@@ -1547,15 +1423,6 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
                     stmts.push(compileChange(e, b));
                     break;
 
-                case 'device_comment2':
-                    stmts.push(compileComment2(e, b));
-                    break;
-
-                // For legacy
-                case 'device_comment':
-                    stmts.push(compileComment(e, b));
-                    break;
-
                 case 'device_forever':
                     stmts.push(compileForever(e, b));
                     break;
@@ -1577,11 +1444,6 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
                 case 'radio_datagraph_received_event':
                     stmts.push(compileEvent(e, b, "on data received", [], "radio"));
                     break;
-
-                case 'device_shake_event':
-                    stmts.push(compileEvent(e, b, "on shake", []));
-                    break;
-
                 case 'device_gesture_event':
                     stmts.push(compileEvent(e, b, "on " + b.getFieldValue("NAME"), []));
                     break;
@@ -1651,7 +1513,7 @@ function findParent(b: B.Block) {
 //   TouchDevelop for-loop model.
 function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment {
     // The to-be-returned environment.
-    var e = emptyEnv();
+    let e = emptyEnv();
 
     // append functions in stdcalltable
     if (blockInfo)
@@ -1661,13 +1523,13 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
                     console.error("compiler: function " + fn.attributes.blockId + " already defined");
                     return;
                 }
-                var fieldMap = blockyloader.parameterNames(fn);
+                let fieldMap = blockyloader.parameterNames(fn);
                 e.stdCallTable[fn.attributes.blockId] = {
                     namespace: fn.namespace,
                     f: fn.name,
                     isExtensionMethod: fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property,
                     args: fn.parameters.map(p => {
-                        if (fieldMap[p.name]) return { field: fieldMap[p.name] };
+                        if (fieldMap[p.name]) return { field: fieldMap[p.name].name };
                         else return null;
                     }).filter(a => !!a)
                 }
@@ -1676,7 +1538,7 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
     // First pass: collect loop variables.
     w.getAllBlocks().forEach((b: B.Block) => {
         if (b.type == "controls_for" || b.type == "controls_simple_for") {
-            var x = b.getFieldValue("VAR");
+            let x = b.getFieldValue("VAR");
             // It's ok for two loops to share the same variable.
             if (lookup(e, x) == null)
                 e = extend(e, x, Type.Number);
@@ -1705,21 +1567,21 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
     // variable if needed.
     w.getAllBlocks().forEach((b: B.Block) => {
         if (b.type == "variables_set" || b.type == "variables_change") {
-            var x = b.getFieldValue("VAR");
+            let x = b.getFieldValue("VAR");
             if (lookup(e, x) == null)
                 e = extend(e, x, null);
 
-            var binding = lookup(e, x);
+            let binding = lookup(e, x);
             if (binding.usedAsForIndex)
                 // Second reason why we can't compile as a TouchDevelop for-loop: loop
                 // index is assigned to
                 binding.incompatibleWithFor = true;
         } else if (b.type == "variables_get") {
-            var x = b.getFieldValue("VAR");
+            let x = b.getFieldValue("VAR");
             if (lookup(e, x) == null)
                 e = extend(e, x, null);
 
-            var binding = lookup(e, x);
+            let binding = lookup(e, x);
             if (binding.usedAsForIndex && !variableIsScoped(b, x))
                 // Third reason why we can't compile to a TouchDevelop for-loop: loop
                 // index is read outside the loop.

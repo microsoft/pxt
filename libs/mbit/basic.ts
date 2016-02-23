@@ -10,7 +10,7 @@ namespace basic {
     //% help=functions/show-number
     //% weight=96
     //% shim=micro_bit::scrollNumber
-    //% blockId=device_show_number block="show|number %number=2" blockGap=8 icon="\uf1ec"
+    //% blockId=device_show_number block="show|number %number" blockGap=8 icon="\uf1ec"
     //% async
     export function showNumber(value: number, interval: number = 150): void { }
 
@@ -35,7 +35,7 @@ namespace basic {
     //% help=functions/show-string 
     //% weight=87 blockGap=8
     //% shim=micro_bit::scrollString async 
-    //% block="show|string %text=2" icon="\uf031" 
+    //% block="show|string %text" icon="\uf031" 
     //% async
     //% blockId=device_print_message
     export function showString(text: string, interval: number = 150): void { }
@@ -77,7 +77,7 @@ namespace basic {
      * @param ms how long to pause for, eg: 100, 200, 500, 1000, 2000
      */
     //% help=functions/pause weight=54
-    //% shim=micro_bit::pause async block="pause for %pause ms"
+    //% shim=micro_bit::pause async block="pause (ms) %pause"
     //% blockId=device_pause icon="\uf110"
     export function pause(ms: number): void { }
 }
