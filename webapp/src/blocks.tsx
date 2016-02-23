@@ -43,7 +43,11 @@ export class Editor extends srceditor.Editor {
             if (this.loadingXml) return
             this.loadingXml = true
             
-            //core.showLoading(lf("loading blocks..."));
+            let loading = document.createElement("div");
+            loading.className = "ui inverted loading";
+            let editorDiv = document.getElementById("blocksEditor");
+            editorDiv.appendChild(loading);
+            
             blocklyloader.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
@@ -58,9 +62,9 @@ export class Editor extends srceditor.Editor {
                     
                 })
                 .done(() => {
-                    //core.hideLoading();                    
+                    editorDiv.removeChild(loading);
                 }, e => {
-                    //core.hideLoading();                    
+                    editorDiv.removeChild(loading);
                 })
         }
     }
