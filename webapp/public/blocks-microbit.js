@@ -700,6 +700,7 @@ Blockly.Blocks['device_unplot'] = {
   }
 };*/
 
+/*
 Blockly.Blocks['device_stop_animation'] = {
   init: function() {
     this.setHelpUrl('./functions/stop-animation');
@@ -711,7 +712,7 @@ Blockly.Blocks['device_stop_animation'] = {
     this.setNextStatement(true);
     this.setTooltip('Cancels all current and pending animations.');
   }
-};
+};*/
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#jw5b4i
 /*
