@@ -545,8 +545,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
                                 <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
                                 <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
+                                <div className="divider"></div>
+                                <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                             </sui.DropdownMenu>
-                            <sui.Button class='red' icon='trash' popup={lf("Delete project") } onClick={() => this.removeProject() } />
                         </div>
                         {this.editor.menu() }
                         <div className="item right">
