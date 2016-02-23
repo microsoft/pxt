@@ -1,5 +1,5 @@
 namespace ts.mbit {
-    
+
     enum TokenKind {
         None,
         Whitespace,
@@ -10,7 +10,13 @@ namespace ts.mbit {
         CommentBlock,
         NewLine,
         Literal,
+        Tree,       // nested list of tokens; synKind stays what it was
+        Block,      // Trees with synKind == OpenBraceToken get turned into Blocks
         EOF
+    }
+
+    interface Stmt {
+        tokens: Token[];
     }
 
     interface Token {
@@ -18,6 +24,15 @@ namespace ts.mbit {
         text: string;
         pos: number;
         synKind: ts.SyntaxKind;
+    }
+
+    interface TreeToken extends Token {
+        children: Token[];
+        endText?: string; // if it has proper ending token, this is the text of it                
+    }
+
+    interface BlockToken extends Token {
+        stmts: Stmt[]; // for Block          
     }
 
     function lookupKind(k: ts.SyntaxKind) {
@@ -138,7 +153,7 @@ namespace ts.mbit {
 
     function tokenize(input: string) {
         let scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, input, msg => {
-            let pos = scanner.getTextPos()            
+            let pos = scanner.getTextPos()
             console.log("scanner error", pos, msg.message)
         })
 
@@ -147,12 +162,12 @@ namespace ts.mbit {
         let templateLevel = -1;
         while (true) {
             let kind = scanner.scan()
-            
+
             if (kind == SK.CloseBraceToken && braceBalance == templateLevel) {
                 templateLevel = -1;
                 kind = scanner.reScanTemplateToken()
             }
-            
+
             if (kind == SK.SlashToken || kind == SK.SlashEqualsToken) {
                 let tmp = scanner.reScanSlashToken()
                 if (tmp == SK.RegularExpressionLiteral)
@@ -175,7 +190,7 @@ namespace ts.mbit {
             }
 
             tokens.push(tok)
-            
+
             if (kind == SK.TemplateHead || kind == SK.TemplateMiddle) {
                 templateLevel = braceBalance;
             }
@@ -189,81 +204,55 @@ namespace ts.mbit {
         return { tokens, braceBalance }
     }
 
-    export function format(input: string): string {
-        let r = tokenize(input)
-        let tokens = r.tokens
-
-        if (r.braceBalance != 0) return null
-
+    // Add Tree tokens where needed
+    function matchBraces(tokens: Token[]) {
         let braceStack: {
             synKind: ts.SyntaxKind;
-            lineNo: number;
-            indent: string;
+            token: TreeToken;
         }[] = []
-
-        let output: Token[] = []
-        let lineNo = 1;
 
         let braceTop = () => braceStack[braceStack.length - 1]
 
         braceStack.push({
             synKind: SK.EndOfFileToken,
-            lineNo: -1,
-            indent: ""
+            token: {
+                children: [],
+            } as any,
         })
 
-        let pushClose = (synKind: ts.SyntaxKind) => {
-            let prev = braceTop()
-            let indent = prev.indent
-            if (prev.lineNo != lineNo)
-                indent += "    "
-            braceStack.push({ synKind, lineNo, indent })
+        let pushClose = (tok: Token, synKind: ts.SyntaxKind) => {
+            let token = tok as TreeToken
+            token.children = []
+            token.kind = TokenKind.Tree
+            braceStack.push({ synKind, token })
         }
-
-        let printWhitespace = (ind: string) =>
-            output.push({
-                kind: TokenKind.Whitespace,
-                text: ind,
-                synKind: SK.WhitespaceTrivia,
-                pos: - 1,
-            })
-
-        let atLineStart = true
 
         for (let i = 0; i < tokens.length; ++i) {
             let token = tokens[i]
 
+            let top = braceStack[braceStack.length - 1]
+            top.token.children.push(token)
+
             switch (token.kind) {
-                case TokenKind.NewLine:
-                    lineNo++;
-                    atLineStart = true;
-                    break;
-                case TokenKind.Whitespace:
-                    if (atLineStart)
-                        continue; // skip white space at the beginning of line
-                    if (tokens[i + 1].kind == TokenKind.NewLine)
-                        continue; // skip white space and the end of line                    
-                    break;
                 case TokenKind.Operator:
                     switch (token.synKind) {
                         case SK.OpenBraceToken:
-                            pushClose(SK.CloseBraceToken);
-                            break;
                         case SK.OpenParenToken:
-                            pushClose(SK.CloseParenToken);
-                            break;
                         case SK.OpenBracketToken:
-                            pushClose(SK.CloseBracketToken);
+                            pushClose(token, token.synKind + 1);
                             break;
                         case SK.CloseBraceToken:
                         case SK.CloseParenToken:
                         case SK.CloseBracketToken:
+                            top.token.children.pop();
                             while (true) {
-                                let top = braceStack.pop()
-                                if (top.synKind == token.synKind)
+                                top = braceStack.pop()
+                                if (top.synKind == token.synKind) {
+                                    top.token.endText = token.text;
                                     break;
+                                }
                                 // don't go past brace with other closing parens
-                                if (top.synKind == SK.CloseBraceToken) {
+                                if (braceStack.length == 0 || top.synKind == SK.CloseBraceToken) {
                                     braceStack.push(top);
                                     break;
                                 }
@@ -274,18 +263,237 @@ namespace ts.mbit {
                     }
                     break;
             }
-
-            if (token.kind != TokenKind.NewLine && atLineStart) {
-                atLineStart = false;
-                printWhitespace(braceTop().indent);
-            }
-
-            output.push(token)
         }
 
-        let res = output.map(t => t.text).join("")
-        if (res == input)
+        return braceStack[0].token.children
+    }
+
+    function mkEOF(): Token {
+        return {
+            kind: TokenKind.EOF,
+            synKind: SK.EndOfFileToken,
+            pos: 0,
+            text: ""
+        }
+    }
+
+    function delimitStmts(tokens: Token[]): Stmt[] {
+        let res: Stmt[] = []
+        let i = 0;
+
+        tokens = tokens.concat([mkEOF()])
+
+        while (i < tokens.length - 1) {
+            let stmtBeg = i
+            skipToStmtEnd();
+            Util.assert(i > stmtBeg)
+            let toks = tokens.slice(stmtBeg, i)
+            toks.forEach(delimitIn)
+            res.push({
+                tokens: toks
+            })
+        }
+
+        return res
+
+        function delimitIn(t: Token) {
+            if (t.kind == TokenKind.Tree) {
+                let tree = t as TreeToken
+                if (t.synKind == SK.OpenBraceToken) {
+                    let blk = t as BlockToken
+                    blk.stmts = delimitStmts(tree.children)
+                    delete tree.children
+                    blk.kind = TokenKind.Block
+                } else {
+                    tree.children.forEach(delimitIn)
+                }
+            }
+        }
+
+        function nextNonWs(stopOnNewLine = false) {
+            while (true) {
+                i++;
+                switch (tokens[i].kind) {
+                    case TokenKind.Whitespace:
+                    case TokenKind.CommentBlock:
+                    case TokenKind.CommentLine:
+                        break;
+                    case TokenKind.NewLine:
+                        if (stopOnNewLine) break;
+                        break;
+                    default:
+                        return;
+                }
+            }
+        }
+
+        function skipOptionalNewLine() {
+            while (tokens[i].kind == TokenKind.Whitespace) { i++; }
+            if (tokens[i].kind == TokenKind.NewLine) i++;
+        }
+
+        function skipUntilBrace() {
+            while (true) {
+                i++;
+                switch (tokens[i].kind) {
+                    case TokenKind.EOF:
+                        return;
+                    case TokenKind.Tree:
+                        if (tokens[i].synKind == SK.OpenBraceToken) {
+                            i++;
+                            skipOptionalNewLine();
+                            return;
+                        }
+                        break;
+                }
+            }
+        }
+
+        function expectBlock() {
+            nextNonWs()
+            if (tokens[i].synKind == SK.OpenBraceToken) {
+                i++;
+                skipOptionalNewLine();
+            } else {
+                // TODO stick them into a block
+                skipToStmtEnd();
+            }
+        }
+
+        function skipToStmtEnd() {
+            while (true) {
+                let t = tokens[i]
+
+                if (t.kind == TokenKind.EOF)
+                    return;
+
+                if (t.synKind == SK.SemicolonToken) {
+                    i++;
+                    skipOptionalNewLine();
+                    return;
+                }
+
+                if (infixOperatorPrecedence(t.synKind)) {
+                    nextNonWs(true)
+                    t = tokens[i]
+                    // an infix operator at the end of the line prevents the newline from ending the statement
+                    if (t.kind == TokenKind.NewLine)
+                        i++;
+                    continue;
+                }
+
+                if (t.kind == TokenKind.NewLine) {
+                    let bkp = i
+                    nextNonWs();
+                    t = tokens[i]
+                    // if we get a infix operator other than +/- after newline, it's a continuation
+                    if (infixOperatorPrecedence(t.synKind) && t.synKind != SK.PlusToken && t.synKind != SK.MinusToken) {
+                        continue;
+                    } else {
+                        i = bkp + 1
+                        return;
+                    }
+                }
+
+                switch (t.synKind) {
+                    case SK.ForKeyword:
+                    case SK.WhileKeyword:
+                    case SK.IfKeyword:
+                        nextNonWs();
+                        if (tokens[i].synKind == SK.OpenParenToken) {
+                            expectBlock();
+                        } else {
+                            continue; // just continue until new line
+                        }
+                        return;
+
+                    case SK.DoKeyword:
+                        expectBlock();
+                        i--;
+                        nextNonWs();
+                        if (tokens[i].synKind == SK.WhileKeyword) {
+                            i++;
+                            continue;
+                        } else {
+                            return;
+                        }
+
+                    case SK.ElseKeyword:
+                        expectBlock();
+                        return;
+
+                    case SK.ClassKeyword:
+                    case SK.InterfaceKeyword:
+                        skipUntilBrace();
+                        break;
+                }
+
+                i++;
+            }
+        }
+    }
+
+    function isWhitespaceOrNewLine(tok: Token) {
+        return tok && (tok.kind == TokenKind.Whitespace || tok.kind == TokenKind.NewLine)
+    }
+
+
+    export function format(input: string): string {
+        let r = tokenize(input)
+
+        if (r.braceBalance != 0) return null
+
+        let topTokens = r.tokens
+        topTokens = matchBraces(topTokens)
+        let topStmts = delimitStmts(topTokens)
+        
+        let ind = ""
+        let output = ""
+        
+        topStmts.forEach(ppStmt)
+        
+        if (output == input)
             return null;
-        return res;
+        
+        return output
+
+        function trimWhitespace(toks: Token[]) {
+            toks = toks.slice(0)
+            while (toks[0] && toks[0].kind == TokenKind.Whitespace)
+                toks.shift()
+            while (isWhitespaceOrNewLine(toks[toks.length - 1]))
+                toks.pop()
+            return toks
+        }
+
+        function ppStmt(s: Stmt) {
+            output += ind
+            trimWhitespace(s.tokens).forEach(ppToken);
+            output += "\n"
+        }
+
+        function ppToken(t: Token) {
+            output += t.text;
+            let prev = ind
+            switch (t.kind) {
+                case TokenKind.Tree:
+                    let tree = t as TreeToken
+                    ind += "    "
+                    tree.children.forEach(ppToken)
+                    ind = prev
+                    if (tree.endText)
+                        output += tree.endText
+                    break;
+                case TokenKind.Block:
+                    let blk = t as BlockToken;
+                    output += "\n"
+                    ind += "    "
+                    blk.stmts.forEach(ppStmt)
+                    break;
+                case TokenKind.NewLine:
+                    output += ind
+                    break;
+            }
+        }
     }
 }
