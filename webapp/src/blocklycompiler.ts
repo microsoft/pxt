@@ -1525,16 +1525,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "brightness",
         args: [{ field: "sprite" }]
     },
-    devices_remote_control: {
-        namespace: "devices",
-        f: "tell remote control to",
-        args: [{ field: "property" }]
-    },
-    devices_alert: {
-        namespace: "devices",
-        f: "raise alert to",
-        args: [{ field: "property" }]
-    },
     devices_signal_strength: {
         namespace: "devices",
         f: "signal strength",
@@ -1624,22 +1614,6 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
 
                 // Special treatment for the event handlers (they require a specific
                 // compilation scheme with action-handlers).
-                case 'device_button_event':
-                    stmts.push(compileEvent(e, b, "on button pressed", ["NAME"]));
-                    break;
-
-                case 'devices_device_info_event':
-                    stmts.push(compileEvent(e, b, "on notified", ["NAME"], "devices"));
-                    break;
-
-                case 'devices_gamepad_event':
-                    stmts.push(compileEvent(e, b, "on gamepad button", ["NAME"], "devices"));
-                    break;
-
-                case 'devices_signal_strength_changed_event':
-                    stmts.push(compileEvent(e, b, "on signal strength changed", [], "devices"));
-                    break;
-
                 case 'radio_broadcast_received_event':
                     stmts.push(compileNumberEvent(e, b, "on message received", ["MESSAGE"], "radio"));
                     break;

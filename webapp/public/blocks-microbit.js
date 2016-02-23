@@ -1244,6 +1244,7 @@ Blockly.Blocks['devices_camera'] = {
     }
 };*/
 
+/*
 Blockly.Blocks['devices_alert'] = {
     init: function()
     {
@@ -1259,8 +1260,9 @@ Blockly.Blocks['devices_alert'] = {
         this.setTooltip('Sends an alert event');
         this.setHelpUrl("./functions/raise-alert-to");
     }
-};
+};*/
 
+/*
 Blockly.Blocks['devices_remote_control'] = {
     init: function()
     {
@@ -1276,8 +1278,9 @@ Blockly.Blocks['devices_remote_control'] = {
         this.setTooltip('Sends an remote control event');
         this.setHelpUrl("./functions/tell-remote-control-to");
     }
-};
+};*/
 
+/*
 Blockly.Blocks['devices_gamepad_event'] = {
     init: function()
     {
@@ -1294,8 +1297,9 @@ Blockly.Blocks['devices_gamepad_event'] = {
         this.setTooltip('Registers code to run when the micro:bit receives a gamepad (DPAD) from the device');
         this.setHelpUrl("./functions/on-gamepad-button");
     }
-};
+};*/
 
+/*
 Blockly.Blocks['devices_device_info_event'] = {
     init: function()
     {
@@ -1312,8 +1316,9 @@ Blockly.Blocks['devices_device_info_event'] = {
         this.setTooltip('Registers code to run when the micro:bit receives an event from the device');
         this.setHelpUrl("./functions/on-device-notification");
     }
-};
+};*/
 
+/*
 Blockly.Blocks['devices_signal_strength'] = {
     init: function () {
         this.setHelpUrl('./functions/signal-strength');
@@ -1325,8 +1330,9 @@ Blockly.Blocks['devices_signal_strength'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Gets the signal strength reported by the paired device from 0 (no signal) to 4 (full strength).');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['devices_signal_strength_changed_event'] = {
     init: function()
     {
@@ -1341,7 +1347,7 @@ Blockly.Blocks['devices_signal_strength_changed_event'] = {
         this.setTooltip('Registers code to run when the signal strength on the paired device changes.');
         this.setHelpUrl("./functions/on-signal-strength-changed-event");
     }
-};
+};*/
 
 Blockly.Blocks['radio_set_group'] = {
     init: function()
