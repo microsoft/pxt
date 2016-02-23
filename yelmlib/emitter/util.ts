@@ -346,9 +346,23 @@ namespace Util {
         function f() { return (randomUint32() | 0x10000).toString(16).slice(-4); }
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
-
+    
+    var _localizeLang: string = "en";
+    var _localizeStrings : StringMap<string> = {};
+    
     export function _localize(s: string, account: boolean) {
-        return s
+        return _localizeStrings[s] || s;
+    }
+    
+    export function updateLocalizationAsync(lang: string) : Promise<any> {
+        if (_localizeLang != lang)
+            return Util.httpGetJsonAsync('./locales/' + lang + '/strings.json')
+                .then(tr => {         
+                    _localizeStrings = tr || {};           
+                    _localizeLang = lang;
+                }, e => {})
+        //                    
+        return undefined;
     }
 
     export function htmlEscape(_input: string) {
@@ -416,8 +430,6 @@ namespace Util {
     }
 
     export function fmt(f: string, ...args: any[]) { return fmt_va(f, args); }
-
-
 
     var sForPlural = true;
     export function lf_va(format: string, args: any[]): string {

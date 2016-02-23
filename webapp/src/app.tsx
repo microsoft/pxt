@@ -609,8 +609,10 @@ let myexports: any = {
 
 $(document).ready(() => {
     $("#loading").remove();
-    compiler.init()
-    workspace.initAsync()
+    var lang = /lang=([a-z][a-z])/i.exec(window.location.href);
+    Util.updateLocalizationAsync(lang ? lang[1] : (navigator.userLanguage || navigator.language))
+        .then(() =>  compiler.init())
+        .then(() => workspace.initAsync())
         .then(() => {
             render()
             workspace.syncAsync().done()
