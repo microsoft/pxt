@@ -15,6 +15,8 @@ namespace ts.mbit {
         EOF
     }
 
+    var inputForMsg = ""
+
     interface Stmt {
         tokens: Token[];
     }
@@ -44,6 +46,11 @@ namespace ts.mbit {
     }
 
     let SK = ts.SyntaxKind;
+
+    function showMsg(pos: number, msg: string) {
+        let ctx = inputForMsg.slice(pos - 20, pos) + "<*>" + inputForMsg.slice(pos, pos + 20)
+        console.log(ctx.replace(/\n/g, "<NL>"), ":", msg)
+    }
 
     function infixOperatorPrecedence(kind: ts.SyntaxKind) {
         switch (kind) {
@@ -152,6 +159,7 @@ namespace ts.mbit {
     }
 
     function tokenize(input: string) {
+        inputForMsg = input
         let scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, input, msg => {
             let pos = scanner.getTextPos()
             console.log("scanner error", pos, msg.message)
@@ -336,14 +344,7 @@ namespace ts.mbit {
         function delimitIn(t: Token) {
             if (t.kind == TokenKind.Tree) {
                 let tree = t as TreeToken
-                if (t.synKind == SK.OpenBraceToken) {
-                    let blk = t as BlockToken
-                    blk.stmts = delimitStmts(tree.children)
-                    delete tree.children
-                    blk.kind = TokenKind.Block
-                } else {
-                    tree.children.forEach(delimitIn)
-                }
+                tree.children.forEach(delimitIn)
             }
         }
 
@@ -369,7 +370,7 @@ namespace ts.mbit {
             if (tokens[i].kind == TokenKind.NewLine) i++;
         }
 
-        function skipUntilBrace() {
+        function skipUntilBlock() {
             while (true) {
                 i++;
                 switch (tokens[i].kind) {
@@ -377,8 +378,8 @@ namespace ts.mbit {
                         return;
                     case TokenKind.Tree:
                         if (tokens[i].synKind == SK.OpenBraceToken) {
-                            i++;
-                            skipOptionalNewLine();
+                            i--;
+                            expectBlock();
                             return;
                         }
                         break;
@@ -389,6 +390,13 @@ namespace ts.mbit {
         function expectBlock() {
             nextNonWs()
             if (tokens[i].synKind == SK.OpenBraceToken) {
+                let tree = tokens[i] as TreeToken
+                Util.assert(tree.kind == TokenKind.Tree)
+                let blk = tokens[i] as BlockToken
+                blk.stmts = delimitStmts(tree.children)
+                delete tree.children
+                blk.kind = TokenKind.Block
+
                 i++;
                 skipOptionalNewLine();
             } else {
@@ -408,6 +416,15 @@ namespace ts.mbit {
                     i++;
                     skipOptionalNewLine();
                     return;
+                }
+
+                if (t.synKind == SK.EqualsGreaterThanToken) {
+                    nextNonWs()
+                    if (tokens[i].synKind == SK.OpenBraceToken) {
+                        i--;
+                        expectBlock();
+                    }
+                    continue;
                 }
 
                 if (infixOperatorPrecedence(t.synKind)) {
@@ -436,6 +453,7 @@ namespace ts.mbit {
                     case SK.ForKeyword:
                     case SK.WhileKeyword:
                     case SK.IfKeyword:
+                    case SK.CatchKeyword:
                         nextNonWs();
                         if (tokens[i].synKind == SK.OpenParenToken) {
                             expectBlock();
@@ -456,13 +474,17 @@ namespace ts.mbit {
                         }
 
                     case SK.ElseKeyword:
+                    case SK.TryKeyword:
+                    case SK.FinallyKeyword:
                         expectBlock();
                         return;
 
                     case SK.ClassKeyword:
                     case SK.InterfaceKeyword:
-                        skipUntilBrace();
+                    case SK.FunctionKeyword:
+                        skipUntilBlock();
                         break;
+
                 }
 
                 i++;
@@ -512,11 +534,26 @@ namespace ts.mbit {
 
         topStmts.forEach(ppStmt)
 
+        topStmts.forEach(s => s.tokens.forEach(findNonBlocks))
+
         if (output == input)
             return null;
 
         return output
-        
+
+        function findNonBlocks(t: Token) {
+            if (t.kind == TokenKind.Tree) {
+                let tree = t as TreeToken
+                if (t.synKind == SK.OpenBraceToken) {
+                    showMsg(t.pos, "left behind X")
+                }
+
+                tree.children.forEach(findNonBlocks)
+            } else if (t.kind == TokenKind.Block) {
+                (t as BlockToken).stmts.forEach(s => s.tokens.forEach(findNonBlocks))
+            }
+        }
+
         function ppStmt(s: Stmt) {
             output += ind
             let prev = ind
