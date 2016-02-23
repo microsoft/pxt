@@ -395,6 +395,7 @@ Blockly.Blocks['device_get_button2'] = {
 };
 */
 
+/*
 Blockly.Blocks['device_get_digital_pin'] = {
     init: function () {
         this.setHelpUrl('./functions/digital-read-pin');
@@ -406,8 +407,9 @@ Blockly.Blocks['device_get_digital_pin'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Read the value of a pin (either 0 or 1).');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_set_digital_pin'] = {
     init: function () {
         this.setHelpUrl('./functions/digital-write-pin');
@@ -424,8 +426,9 @@ Blockly.Blocks['device_set_digital_pin'] = {
         this.setNextStatement(true);
         this.setTooltip('Set the value of a pin (either 0 or 1).');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_get_analog_pin'] = {
     init: function () {
         this.setHelpUrl('./functions/analog-read-pin');
@@ -437,8 +440,9 @@ Blockly.Blocks['device_get_analog_pin'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Read an analog value on a pin (between 0 and 1023).');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_set_analog_pin'] = {
     init: function () {
         this.setHelpUrl('./functions/analog-write-pin');
@@ -455,8 +459,9 @@ Blockly.Blocks['device_set_analog_pin'] = {
         this.setNextStatement(true);
         this.setTooltip('Set an analog value on a pin (between 0 and 1023).');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_set_analog_period'] = {
     init: function () {
         this.setHelpUrl('./functions/analog-set-period');
@@ -473,8 +478,9 @@ Blockly.Blocks['device_set_analog_period'] = {
         this.setNextStatement(true);
         this.setTooltip('Configures the PWM in micro-seconds.');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_set_servo_pin'] = {
     init: function () {
         this.setHelpUrl('./functions/servo-write-pin');
@@ -491,8 +497,9 @@ Blockly.Blocks['device_set_servo_pin'] = {
         this.setNextStatement(true);
         this.setTooltip('Sets the angle of the shaft of a servo in degrees between 0 and 180. For a continuous servo, will set the speed of the servo.');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_set_servo_pulse'] = {
     init: function () {
         this.setHelpUrl('./functions/servo-set-pulse');
@@ -509,8 +516,9 @@ Blockly.Blocks['device_set_servo_pulse'] = {
         this.setNextStatement(true);
         this.setTooltip('Configures the period to be 20ms and sets the pulse width, based on the value it is given.');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['math_map'] = {
     init: function () {
         this.setHelpUrl('./functions/map');
@@ -534,7 +542,7 @@ Blockly.Blocks['math_map'] = {
         this.setOutput(true, "Number");
         this.setTooltip("Re-maps a number from one range to another.");
     }
-};
+};*/
 
 /*
 Blockly.Blocks['device_get_brightness'] = {

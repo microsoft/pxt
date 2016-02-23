@@ -1281,46 +1281,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "button is pressed",
         args: [{ field: "NAME" }]
     },
-    device_get_digital_pin: {
-        namespace: "pins",
-        f: "digital read pin",
-        args: [{ field: "name" }]
-    },
-    device_set_digital_pin: {
-        namespace: "pins",
-        f: "digital write pin",
-        args: [{ field: "name" }, { field: "value" }]
-    },
-    device_get_analog_pin: {
-        namespace: "pins",
-        f: "analog read pin",
-        args: [{ field: "name" }]
-    },
-    device_set_analog_pin: {
-        namespace: "pins",
-        f: "analog write pin",
-        args: [{ field: "name" }, { field: "value" }]
-    },
-    device_set_analog_period: {
-        namespace: "pins",
-        f: "analog set period",
-        args: [{ field: "pin" }, { field: "micros" }]
-    },
-    device_set_servo_pin: {
-        namespace: "pins",
-        f: "servo write pin",
-        args: [{ field: "name" }, { field: "value" }]
-    },
-    device_set_servo_pulse: {
-        namespace: "pins",
-        f: "servo set pulse",
-        args: [{ field: "pin" }, { field: "micros" }]
-    },
-    math_map: {
-        namespace: "pins",
-        f: "map",
-        args: [{ field: "value" }, { field: "fromLow" }, { field: "fromHigh" }, { field: "toLow" }, { field: "toHigh" }]
-    },
     game_start_countdown: {
         namespace: "game",
         f: "start countdown",
