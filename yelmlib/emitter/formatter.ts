@@ -204,6 +204,42 @@ namespace ts.mbit {
         return { tokens, braceBalance }
     }
 
+    function skipWhitespace(tokens: Token[], i: number) {
+        while (tokens[i] && tokens[i].kind == TokenKind.Whitespace)
+            i++;
+        return i;
+    }
+
+    // We do not want empty lines in the source to get lost - they serve as a sort of comment dividing parts of code
+    // We turn them into empty comments here
+    function emptyLinesToComments(tokens: Token[]) {
+        let output: Token[] = []
+        let atLineBeg = true
+
+        for (let i = 0; i < tokens.length; ++i) {
+            if (atLineBeg) {
+                let bkp = i
+                i = skipWhitespace(tokens, i)
+                if (tokens[i].kind == TokenKind.NewLine) {
+                    output.push({
+                        text: "",
+                        kind: TokenKind.CommentLine,
+                        pos: tokens[i].pos,
+                        synKind: SK.SingleLineCommentTrivia
+                    })
+                } else {
+                    i = bkp
+                }
+            }
+
+            output.push(tokens[i])
+
+            atLineBeg = tokens[i].kind == TokenKind.NewLine
+        }
+
+        return output
+    }
+
     // Add Tree tokens where needed
     function matchBraces(tokens: Token[]) {
         let braceStack: {
@@ -281,13 +317,14 @@ namespace ts.mbit {
         let res: Stmt[] = []
         let i = 0;
 
-        tokens = tokens.concat([mkEOF()])
+        tokens = trimWhitespace(tokens)
+        tokens.push(mkEOF())
 
-        while (i < tokens.length - 1) {
+        while (tokens[i].kind != TokenKind.EOF) {
             let stmtBeg = i
             skipToStmtEnd();
-            Util.assert(i > stmtBeg)
-            let toks = tokens.slice(stmtBeg, i)
+            Util.assert(i > stmtBeg, `Error at ${tokens[i].text}`)
+            let toks = trimWhitespace(tokens.slice(stmtBeg, i))
             toks.forEach(delimitIn)
             res.push({
                 tokens: toks
@@ -437,6 +474,28 @@ namespace ts.mbit {
         return tok && (tok.kind == TokenKind.Whitespace || tok.kind == TokenKind.NewLine)
     }
 
+    function removeIndent(tokens: Token[]) {
+        let output: Token[] = []
+        let atLineBeg = true;
+        for (let i = 0; i < tokens.length; ++i) {
+            if (atLineBeg)
+                i = skipWhitespace(tokens, i)
+            if (tokens[i]) {
+                output.push(tokens[i])
+                atLineBeg = tokens[i].kind == TokenKind.NewLine
+            }
+        }
+        return output
+    }
+
+    function trimWhitespace(toks: Token[]) {
+        toks = toks.slice(0)
+        while (isWhitespaceOrNewLine(toks[0]))
+            toks.shift()
+        while (isWhitespaceOrNewLine(toks[toks.length - 1]))
+            toks.pop()
+        return toks
+    }
 
     export function format(input: string): string {
         let r = tokenize(input)
@@ -444,32 +503,31 @@ namespace ts.mbit {
         if (r.braceBalance != 0) return null
 
         let topTokens = r.tokens
+        topTokens = emptyLinesToComments(topTokens)
         topTokens = matchBraces(topTokens)
         let topStmts = delimitStmts(topTokens)
-        
+
         let ind = ""
         let output = ""
-        
+
         topStmts.forEach(ppStmt)
-        
+
         if (output == input)
             return null;
-        
+
         return output
-
-        function trimWhitespace(toks: Token[]) {
-            toks = toks.slice(0)
-            while (toks[0] && toks[0].kind == TokenKind.Whitespace)
-                toks.shift()
-            while (isWhitespaceOrNewLine(toks[toks.length - 1]))
-                toks.pop()
-            return toks
-        }
-
+        
         function ppStmt(s: Stmt) {
             output += ind
-            trimWhitespace(s.tokens).forEach(ppToken);
+            let prev = ind
+            ind += "    "
+            ppToks(s.tokens)
+            ind = prev
             output += "\n"
+        }
+
+        function ppToks(ts: Token[]) {
+            removeIndent(ts).forEach(ppToken)
         }
 
         function ppToken(t: Token) {
@@ -479,7 +537,7 @@ namespace ts.mbit {
                 case TokenKind.Tree:
                     let tree = t as TreeToken
                     ind += "    "
-                    tree.children.forEach(ppToken)
+                    ppToks(tree.children)
                     ind = prev
                     if (tree.endText)
                         output += tree.endText
@@ -487,11 +545,13 @@ namespace ts.mbit {
                 case TokenKind.Block:
                     let blk = t as BlockToken;
                     output += "\n"
-                    ind += "    "
                     blk.stmts.forEach(ppStmt)
+                    output += ind.slice(4) + "}"
                     break;
                 case TokenKind.NewLine:
                     output += ind
+                    break;
+                case TokenKind.Whitespace:
                     break;
             }
         }
