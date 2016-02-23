@@ -210,7 +210,7 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
 
     blockInfo.blocks.sort((f1, f2) => {
-        return (f2.attributes.weight || 50) - (f1.attributes.weight + 1 || 50);
+        return (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
     })
 
     var currentBlocks : Util.StringMap<number> = {};
