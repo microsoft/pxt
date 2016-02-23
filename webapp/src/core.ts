@@ -17,7 +17,7 @@ export function showLoading(msg: string) {
     $('body').dimmer('show');
     $('.ui.page.dimmer').html(`
   <div class="content loadingcontent">
-    <div class="ui text large loader msg">` + lf("Please wait") + `</div>
+    <div class="ui text large loader msg">{lf("Please wait")}</div>
   </div>
 `)
     $('.ui.page.dimmer .msg').text(msg)

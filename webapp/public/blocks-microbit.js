@@ -173,7 +173,7 @@ var blockColors = {
     //comments: 156,
     images: 45,
     variables: 330,
-    antenna: 156,
+    devices: 156,
     radio: 270,
 }
 
@@ -248,7 +248,7 @@ Blockly.Variables.flyoutCategory = function(workspace) {
 };
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#tmkc86
-Blockly.Blocks['device_print_message'] = {
+/* Blockly.Blocks['device_print_message'] = {
   init: function() {
     this.setHelpUrl("./functions/show-string");
     this.setColour(blockColors.basic);
@@ -264,7 +264,7 @@ Blockly.Blocks['device_print_message'] = {
     this.setTooltip('Shows the specified string and scrolls it if necessary.');
     this.setInputsInline(true);
  }
-};
+}; */
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#xiu9u7
 /*Blockly.Blocks['device_show_number'] = {
@@ -298,6 +298,7 @@ Blockly.Blocks['device_shake_event'] = {
   }
 };
 
+/*
 Blockly.Blocks['device_gesture_event'] = {
   init: function() {
     this.setHelpUrl('./functions/on-shake');
@@ -313,8 +314,9 @@ Blockly.Blocks['device_gesture_event'] = {
     this.setInputsInline(true);
     this.setTooltip('React to a gesture.');
   }
-};
+};*/
 
+/*
 Blockly.Blocks['device_pin_event'] = {
   init: function() {
     this.setHelpUrl('./functions/on-pin-pressed');
@@ -332,8 +334,9 @@ Blockly.Blocks['device_pin_event'] = {
     this.setInputsInline(true);
     this.setTooltip('React to a pin press.');
   }
-};
+}; */
 
+/*
 Blockly.Blocks['device_button_event'] = {
   init: function() {
     this.setHelpUrl('./functions/on-button-pressed');
@@ -351,7 +354,7 @@ Blockly.Blocks['device_button_event'] = {
     this.setInputsInline(true);
     this.setTooltip('React to a button press.');
   }
-};
+}; */
 
 // The old "button is pressed" that also has A+B. We have to keep this one
 // defined otherwise old scripts won't load!
@@ -373,6 +376,7 @@ Blockly.Blocks['device_get_button'] = {
 };
 
 // The new "button is pressed" that doesn't have A+B.
+/*
 Blockly.Blocks['device_get_button2'] = {
   init: function() {
     this.setHelpUrl('https://live.microbit.co.uk/functions/button-is-pressed');
@@ -389,6 +393,7 @@ Blockly.Blocks['device_get_button2'] = {
     this.setTooltip('Test whether a button is pressed or not.');
   }
 };
+*/
 
 Blockly.Blocks['device_get_digital_pin'] = {
     init: function () {
@@ -559,6 +564,7 @@ Blockly.Blocks['device_set_brightness'] = {
     }
 };
 
+/*
 Blockly.Blocks['device_get_acceleration'] = {
     init: function () {
         this.setHelpUrl('./functions/acceleration');
@@ -572,8 +578,9 @@ Blockly.Blocks['device_get_acceleration'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Returns the acceleration on an axis (between -2048 and 2047).');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_get_rotation'] = {
     init: function () {
         this.setHelpUrl('./functions/rotation');
@@ -587,8 +594,9 @@ Blockly.Blocks['device_get_rotation'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Returns the rotation in degrees.');
     }
-};
+}; */
 
+/*
 Blockly.Blocks['device_get_magnetic_force'] = {
     init: function () {
         this.setHelpUrl('./functions/magnetic-force');
@@ -602,8 +610,9 @@ Blockly.Blocks['device_get_magnetic_force'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Get the magnetic force on an axis (in micro Tesla).');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_get_light_level'] = {
     init: function () {
         this.setHelpUrl('./functions/light-level');
@@ -615,8 +624,9 @@ Blockly.Blocks['device_get_light_level'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Get the light level from 0 (dark) to 255 (bright).');
     }
-};
+}; */
 
+/*
 Blockly.Blocks['device_get_running_time'] = {
     init: function () {
         this.setHelpUrl('./functions/running_time');
@@ -627,7 +637,7 @@ Blockly.Blocks['device_get_running_time'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Get the number of milliseconds elapsed since the script began. 1,000 milliseconds = 1 second');
     }
-};
+};*/
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#nwf7c5
 /*
@@ -739,6 +749,7 @@ Blockly.Blocks['device_plot_bar_graph'] = {
   }
 };
 
+/*
 Blockly.Blocks['device_temperature'] = {
     init: function () {
         this.setHelpUrl('./functions/temperature');
@@ -751,7 +762,9 @@ Blockly.Blocks['device_temperature'] = {
         this.setTooltip('Returns a temperature in Celsius degrees.');
     }
 };
+*/
 
+/*
 Blockly.Blocks['device_heading'] = {
     init: function () {
         this.setHelpUrl('./functions/compass-heading');
@@ -764,7 +777,9 @@ Blockly.Blocks['device_heading'] = {
         this.setTooltip('Returns an orientation (between 0 and 360°). 0 is North.');
     }
 };
+*/
 
+/*
 Blockly.Blocks['device_show_leds'] = {
     init: function()
     {
@@ -782,7 +797,7 @@ Blockly.Blocks['device_show_leds'] = {
         this.setTooltip('Show the given led pattern on the display.');
         this.setHelpUrl("./functions/show-leds");
     }
-};
+}; */
 
 Blockly.Blocks['device_build_image'] = {
     init: function()
@@ -1211,10 +1226,11 @@ Blockly.Blocks['game_sprite_set_property'] = {
     }
 };
 
+/*
 Blockly.Blocks['devices_camera'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf030"))
             .appendField("tell camera to ");
@@ -1226,12 +1242,12 @@ Blockly.Blocks['devices_camera'] = {
         this.setTooltip('Sends a camera event');
         this.setHelpUrl("./functions/tell-camera-to");
     }
-};
+};*/
 
 Blockly.Blocks['devices_alert'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf0f3"))
             .appendField("raise alert to ");
@@ -1248,7 +1264,7 @@ Blockly.Blocks['devices_alert'] = {
 Blockly.Blocks['devices_remote_control'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf144"))
             .appendField("tell remote control to ");
@@ -1265,7 +1281,7 @@ Blockly.Blocks['devices_remote_control'] = {
 Blockly.Blocks['devices_gamepad_event'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf11b"))
             .appendField("on gamepad button");
@@ -1283,7 +1299,7 @@ Blockly.Blocks['devices_gamepad_event'] = {
 Blockly.Blocks['devices_device_info_event'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf10a"))
             .appendField("on notified");
@@ -1301,7 +1317,7 @@ Blockly.Blocks['devices_device_info_event'] = {
 Blockly.Blocks['devices_signal_strength'] = {
     init: function () {
         this.setHelpUrl('./functions/signal-strength');
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf012"))
             .appendField("signal strengh");
@@ -1314,7 +1330,7 @@ Blockly.Blocks['devices_signal_strength'] = {
 Blockly.Blocks['devices_signal_strength_changed_event'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf012"))
             .appendField("on signal strength changed");

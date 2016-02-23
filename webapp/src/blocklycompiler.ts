@@ -1291,16 +1291,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "plot bar graph",
         args: [{ field: "value" }, { field: "high" }]
     },
-    device_temperature: {
-        namespace: "input",
-        f: "temperature",
-        args: []
-    },
-    device_heading: {
-        namespace: "input",
-        f: "compass heading",
-        args: []
-    },
     device_make_StringImage: {
         f: "create image from string",
         args: [{ field: "NAME" }]
@@ -1319,36 +1309,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         namespace: "input",
         f: "button is pressed",
         args: [{ field: "NAME" }]
-    },
-    device_get_button2: {
-        namespace: "input",
-        f: "button is pressed",
-        args: [{ field: "NAME" }]
-    },
-    device_get_acceleration: {
-        namespace: "input",
-        f: "acceleration",
-        args: [{ field: "NAME" }]
-    },
-    device_get_rotation: {
-        namespace: "input",
-        f: "rotation",
-        args: [{ field: "NAME" }]
-    },
-    device_get_magnetic_force: {
-        namespace: "input",
-        f: "magnetic force",
-        args: [{ field: "NAME" }]
-    },
-    device_get_light_level: {
-        namespace: "input",
-        f: "light level",
-        args: []
-    },
-    device_get_running_time: {
-        namespace: "input",
-        f: "running time",
-        args: []
     },
     device_get_digital_pin: {
         namespace: "pins",
@@ -1564,11 +1524,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         isExtensionMethod: true,
         f: "brightness",
         args: [{ field: "sprite" }]
-    },
-    devices_camera: {
-        namespace: "devices",
-        f: "tell camera to",
-        args: [{ field: "property" }]
     },
     devices_remote_control: {
         namespace: "devices",

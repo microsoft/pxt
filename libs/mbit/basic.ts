@@ -2,50 +2,43 @@
  * Provides access to basic micro:bit functionality.
  */
 namespace basic {
-    /**
-     * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.
-     * @param interval how fast to shift characters; eg: 150, 100, 200, -100
-     */
-    //% help=functions/show-string weight=87
-    //% shim=micro_bit::scrollString async block="show string %1" async
-    //% blockId=device_print_message
-    export function showString(text: string, interval: number = 150): void { }
 
     /**
      * Scroll a number on the screen and shift by one column every ``interval`` milliseconds. If the number fits on the screen (i.e. is a single digit), does not scroll.
      * @param interval speed of scroll; eg: 150, 100, 200, -100
      */
     //% help=functions/show-number
-    //% weight=89
+    //% weight=96
     //% shim=micro_bit::scrollNumber
-    //% blockId=device_show_number block="show |number %number" blockGap=8 icon="\uf1ec"
+    //% blockId=device_show_number block="show|number %number=2" blockGap=8 icon="\uf1ec"
     //% async
     export function showNumber(value: number, interval: number = 150): void { }
-    
-    /**
-     * Shows a sequence of LED screens as an animation with an ``interval`` delay between each frame
-     * @param leds TODO
-     * @param interval TODO
-     */
-    //% help=functions/show-animation shim=micro_bit::showAnimation imageLiteral async
-    export function showAnimation(leds: string, interval: number) : void {}
 
     /**
      * Draws an image on the LED screen and pauses for the given milliseconds.
      * @param leds TODO
-     * @param ms TODO
+     * @param interval TODO
      */
-    //% help=functions/show-leds weight=95 shim=micro_bit::showLeds imageLiteral async
+    //% help=functions/show-leds 
+    //% weight=95 blockGap=8
+    //% shim=micro_bit::showLeds 
+    //% imageLiteral async
     //% blockId=device_show_leds
-    export function showLeds(leds: string, ms: number) : void {}
+    //% block="show leds" icon="\uf00a"
+    export function showLeds(leds: string, interval: number = 400) : void {}
 
     /**
-     * Draws an image on the LED screen.
-     * @param leds TODO
+     * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.
+     * @param text the text to scroll on the screen, eg: Hello!
+     * @param interval how fast to shift characters; eg: 150, 100, 200, -100
      */
-    //% help=functions/plot-leds weight=80 shim=micro_bit::plotLeds imageLiteral
-    export function plotLeds(leds: string) : void {}
-
+    //% help=functions/show-string 
+    //% weight=87 blockGap=8
+    //% shim=micro_bit::scrollString async 
+    //% block="show|string %text=2" icon="\uf031" 
+    //% async
+    //% blockId=device_print_message
+    export function showString(text: string, interval: number = 150): void { }
 
     /**
      * Turn off all LEDs
@@ -54,12 +47,27 @@ namespace basic {
     //% shim=micro_bit::clearScreen
     //% blockId=device_clear_display block="clear screen" icon="\uf12d"
     export function clearScreen(): void { }
+    
+    /**
+     * Shows a sequence of LED screens as an animation with an ``interval`` delay between each frame
+     * @param leds TODO
+     * @param interval TODO
+     */
+    //% help=functions/show-animation shim=micro_bit::showAnimation imageLiteral async
+    export function showAnimation(leds: string, interval: number = 400) : void {}
+
+    /**
+     * Draws an image on the LED screen.
+     * @param leds TODO
+     */
+    //% help=functions/plot-leds weight=80 shim=micro_bit::plotLeds imageLiteral
+    export function plotLeds(leds: string) : void {}
 
     /**
      * Repeats the code forever in the background. On each iteration, allows other codes to run.
      * @param body TODO
      */
-    //% help=functions/forever weight=55
+    //% help=functions/forever weight=55 blockGap=8
     //% blockId=device_forever block="forever" icon="\uf01e" shim=micro_bit::forever
     export function forever(body:() => void) : void {
     }
@@ -68,7 +76,7 @@ namespace basic {
      * Pause for the specified time in milliseconds
      * @param ms how long to pause for, eg: 100, 200, 500, 1000, 2000
      */
-    //% help=functions/pause weight=88
+    //% help=functions/pause weight=54
     //% shim=micro_bit::pause async block="pause for %pause ms"
     //% blockId=device_pause icon="\uf110"
     export function pause(ms: number): void { }

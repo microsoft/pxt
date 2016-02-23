@@ -12,7 +12,7 @@ var blockColors: Util.StringMap<number> = {
     game: 176,
     images: 45,
     variables: 330,
-    antenna: 156,
+    devices: 156,
     radio: 270,
 }
 
@@ -67,9 +67,9 @@ function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.Stri
 
     fn.parameters.filter(pr => !!attrNames[pr.name]).forEach(pr => {
         if (pr.type == "number")
-            block.appendChild(createShadowValue(attrNames[pr.name], true, pr.initializer || "0"));
+            block.appendChild(createShadowValue(attrNames[pr.name], true, pr.defaults ? pr.defaults[0] : "0"));
         else if (pr.type == "string")
-            block.appendChild(createShadowValue(attrNames[pr.name], false, ""));
+            block.appendChild(createShadowValue(attrNames[pr.name], false, pr.defaults ? pr.defaults[0] : ""));
     })
 
     var category = tb.querySelector("category[name~='" + fn.namespace[0].toUpperCase() + fn.namespace.slice(1) + "']");
@@ -93,7 +93,7 @@ function iconToFieldImage(c: string): Blockly.FieldImage {
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) : boolean {
+function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) : boolean {
     var id = fn.attributes.blockId;
     
     if (builtinBlocks[id]) {
@@ -120,11 +120,11 @@ function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap
                 this.setHelpUrl("./" + fn.attributes.help);
                 this.setColour(blockColors[fn.namespace] || 255);
 
-                fn.attributes.block.split('|').map(n => {
+                fn.attributes.block.split('|').map((n,ni) => {
                     var m = /([^%]*)%([a-zA-Z0-0]+)/.exec(n);
                     if (!m) {
                         var i = this.appendDummyInput();
-                        if (fn.attributes.icon) i.appendField(iconToFieldImage(fn.attributes.icon))
+                        if (ni == 0 && fn.attributes.icon) i.appendField(iconToFieldImage(fn.attributes.icon))
                         i.appendField(n);
                     } else {
                         // find argument
@@ -141,23 +141,58 @@ function injectBlockDefinition(fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap
                                 .setAlign(Blockly.ALIGN_RIGHT)
                                 .setCheck("Number");
                             if (pre) i.appendField(pre);
+                        }
+                        else if (pr.type == "boolean") {
+                            var i = this.appendValueInput(p)
+                                .setCheck("Boolean");
+                            if (pre) i.appendField(pre);
                         } else if (pr.type == "string") {
                             var i = this.appendValueInput(p)
                                 .setAlign(Blockly.ALIGN_RIGHT)
                                 .setCheck("String");
                             if (pre) i.appendField(pre);
+                        } else {
+                            var prtype = Util.lookup(info.apis.byQName, pr.type);
+                            if (prtype && prtype.kind == ts.mbit.SymbolKind.Enum) {
+                                let dd = Util.values(info.apis.byQName)
+                                    .filter(e => e.namespace == pr.type)
+                                    .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);                                
+                                var i = this.appendDummyInput()
+                                    .appendField(new Blockly.FieldDropdown(dd), "NAME");
+                                if (pre) i.appendField(pre);
+                            }
                         }
                     }
-                })
+                });
 
                 var body = fn.parameters.filter(pr => pr.type == "() => void")[0];
                 if (body) {
                     this.appendStatementInput(attrNames[body.name] || "HANDLER")
                         .setCheck("null");
                 }
+                
+                if (fn.attributes.imageLiteral) {
+                    for(var r = 0; r < 5;++r) {
+                        var ri = this.appendDummyInput();
+                        for(var c = 0; c < 5; ++c) {
+                            if (c >0) ri.appendField(" ");
+                            ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
+                        }
+                    }
+                }
 
-                this.setInputsInline(fn.parameters.length < 4);
-                if (!/^on /.test(fn.name)) {
+                this.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+                
+                switch(fn.retType) {
+                    case "number": this.setOutput(true, "Number");break;
+                    case "string": this.setOutput(true, "String"); break;
+                    case "boolean": this.setOutput(true, "Boolean"); break;
+                    case "void": break; // do nothing
+                    //TODO
+                    default: this.setOutput(true);
+                }
+                
+                if (!/^on /.test(fn.attributes.block)) {
                     this.setPreviousStatement(fn.retType == "void");
                     this.setNextStatement(fn.retType == "void");
                 }
@@ -186,7 +221,7 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
         .filter(fn => !tb.querySelector("block[type='" + fn.attributes.blockId + "']"))
         .forEach(fn => {
             var pnames = parameterNames(fn);
-            if(injectBlockDefinition(fn, pnames)) {
+            if(injectBlockDefinition(blockInfo, fn, pnames)) {
                 injectToolbox(tb, fn, pnames);
                 currentBlocks[fn.attributes.blockId] = 1;
             }
@@ -210,6 +245,7 @@ function removeBlock(fn : ts.mbit.SymbolInfo) {
 }
 
 export interface BlocksInfo {
+    apis: ts.mbit.ApisInfo;
     blocks: ts.mbit.SymbolInfo[];
 }
 
@@ -217,6 +253,7 @@ export function getBlocksAsync(): Promise<BlocksInfo> {
     return compiler.getApisInfoAsync()
         .then(info => {
             return {
+                apis: info,
                 blocks: Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId)
             }
         })

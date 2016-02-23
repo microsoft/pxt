@@ -1,18 +1,18 @@
+enum DisplayMode {
+    //% enumval=0
+    BackAndWhite,
+    //% enumval=1
+    Greyscale,
+}
+
 namespace led {
-    export enum DisplayMode {
-        //% enumval=0
-        BackAndWhite,
-        //% enumval=1
-        Greyscale,
-    }
-    
     /**
      * Turn on the specified LED using ``x``, ``y`` coordinates (``x`` is horizontal, ``y`` is vertical)
      * @param x TODO
      * @param y TODO
      */
     //% help=functions/plot weight=78 shim=micro_bit::plot async
-    export function plot(x: number, y: number) : void {}
+    export function plot(x: number, y: number): void { }
 
     /**
      * Get the on/off state of the specified LED using ``x, y`` coordinates.
@@ -20,7 +20,7 @@ namespace led {
      * @param y TODO
      */
     //% help=functions/point weight=76 shim=micro_bit::point async
-    export function point(x: number, y: number) : boolean { return false;}
+    export function point(x: number, y: number): boolean { return false; }
 
     /**
      * Turn off the specified LED using x, y coordinates (x is horizontal, y is vertical)
@@ -28,34 +28,34 @@ namespace led {
      * @param y TODO
      */
     //% help=functions/unplot weight=77 shim=micro_bit::unPlot async
-    export function unplot(x: number, y: number) : void {}
+    export function unplot(x: number, y: number): void { }
 
     /**
      * Get the screen brightness from 0 (off) to 255 (full bright).
      */
     //% help=functions/brightness weight=75 shim=micro_bit::getBrightness async
-    export function brightness() : number { return 0;}
+    export function brightness(): number { return 0; }
 
     /**
      * Set the screen brightness from 0 (off) to 255 (full bright).
      * @param value TODO
      */
     //% help=functions/set-brightness weight=74 shim=micro_bit::setBrightness async
-    export function setBrightness(value: number) : void {}
+    export function setBrightness(value: number): void { }
 
     /**
      * Cancels the current animation and clears other pending animations.
      */
     //% weight=10 shim=uBit.display.stopAnimation async help=functions/stop-animation
-    export function stopAnimation() : void {}
+    export function stopAnimation(): void { }
 
     /**
      * Sets the display mode between black and white and greyscale for rendering LEDs.
      * @param mode TODO
      */
     //% shim=micro_bit::setDisplayMode async weight=1 help=/functions/set-display-mode
-    export function setDisplayMode(mode: DisplayMode) : void {}
-    
+    export function setDisplayMode(mode: DisplayMode): void { }
+
     /**
      * Toggles a particular pixel
      * @param x TODO
