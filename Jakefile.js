@@ -120,12 +120,15 @@ task('updatestrings', function() {
         })
     });
 
-    Object.keys(translationHelpStrings).forEach(k => translationStrings[k] = 1)
+    Object.keys(translationHelpStrings).forEach(k => translationStrings[k] = k)
     var tr = Object.keys(translationStrings)
     tr.sort()
 
     console.log('strings: ' + tr.length);
     fs.writeFileSync("built/localization.json", JSON.stringify({ strings: tr }, null, 1))
+    var strings = {};
+    tr.forEach(function(k) { strings[k] = k; });
+    fs.writeFileSync("built/strings.json", JSON.stringify(strings, null, 2));
 
     console.log("*** Stop; " + fileCnt + " files");
     if (errCnt > 0)
