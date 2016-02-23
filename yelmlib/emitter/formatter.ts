@@ -25,6 +25,7 @@ namespace ts.mbit {
         kind: TokenKind;
         text: string;
         pos: number;
+        lineNo: number;
         synKind: ts.SyntaxKind;
     }
 
@@ -47,9 +48,10 @@ namespace ts.mbit {
 
     let SK = ts.SyntaxKind;
 
-    function showMsg(pos: number, msg: string) {
+    function showMsg(t: Token, msg: string) {
+        let pos = t.pos
         let ctx = inputForMsg.slice(pos - 20, pos) + "<*>" + inputForMsg.slice(pos, pos + 20)
-        console.log(ctx.replace(/\n/g, "<NL>"), ":", msg)
+        console.log(ctx.replace(/\n/g, "<NL>"), ": L ", t.lineNo, msg)
     }
 
     function infixOperatorPrecedence(kind: ts.SyntaxKind) {
@@ -185,6 +187,7 @@ namespace ts.mbit {
             let tok: Token = {
                 kind: getTokKind(kind),
                 synKind: kind,
+                lineNo: 0,
                 pos: scanner.getTokenPos(),
                 text: scanner.getTokenText(),
             }
@@ -223,6 +226,7 @@ namespace ts.mbit {
     function emptyLinesToComments(tokens: Token[]) {
         let output: Token[] = []
         let atLineBeg = true
+        let lineNo = 1;
 
         for (let i = 0; i < tokens.length; ++i) {
             if (atLineBeg) {
@@ -233,6 +237,7 @@ namespace ts.mbit {
                         text: "",
                         kind: TokenKind.CommentLine,
                         pos: tokens[i].pos,
+                        lineNo,
                         synKind: SK.SingleLineCommentTrivia
                     })
                 } else {
@@ -242,7 +247,16 @@ namespace ts.mbit {
 
             output.push(tokens[i])
 
-            atLineBeg = tokens[i].kind == TokenKind.NewLine
+            tokens[i].lineNo = lineNo
+
+            if (tokens[i].kind == TokenKind.NewLine) {
+                atLineBeg = true
+                lineNo++;
+            } else {
+                atLineBeg = false
+            }
+
+
         }
 
         return output
@@ -317,13 +331,26 @@ namespace ts.mbit {
             kind: TokenKind.EOF,
             synKind: SK.EndOfFileToken,
             pos: 0,
+            lineNo: 0,
             text: ""
         }
     }
 
-    function delimitStmts(tokens: Token[]): Stmt[] {
+    function mkSpace(t:Token, s:string): Token {
+        return {
+            kind: TokenKind.Whitespace,
+            synKind: SK.WhitespaceTrivia,
+            pos: t.pos,
+            lineNo: t.lineNo,
+            text: s
+        }
+    }
+
+    function delimitStmts(tokens: Token[], ctxToken: Token = null): Stmt[] {
         let res: Stmt[] = []
         let i = 0;
+        let currCtxToken: Token;
+        let didBlock = false;
 
         tokens = trimWhitespace(tokens)
         tokens.push(mkEOF())
@@ -334,6 +361,22 @@ namespace ts.mbit {
             Util.assert(i > stmtBeg, `Error at ${tokens[i].text}`)
             let toks = trimWhitespace(tokens.slice(stmtBeg, i))
             toks.forEach(delimitIn)
+            let merge = false
+            if (res.length > 0) {
+                let prev = res[res.length - 1]
+                let prevKind = prev.tokens[0].synKind
+                let thisKind = toks[0].synKind
+                if ((prevKind == SK.IfKeyword && thisKind == SK.ElseKeyword) ||
+                    (prevKind == SK.TryKeyword && thisKind == SK.CatchKeyword) ||
+                    (prevKind == SK.TryKeyword && thisKind == SK.FinallyKeyword) ||
+                    (prevKind == SK.CatchKeyword && thisKind == SK.FinallyKeyword)
+                ) {
+                    toks.unshift(mkSpace(toks[0], " "))
+                    Util.pushRange(res[res.length - 1].tokens, toks)
+                    continue;
+                }
+            }
+
             res.push({
                 tokens: toks
             })
@@ -344,12 +387,8 @@ namespace ts.mbit {
         function delimitIn(t: Token) {
             if (t.kind == TokenKind.Tree) {
                 let tree = t as TreeToken
-                if (t.synKind == SK.OpenBraceToken) {
-                    delimitStmts(tree.children)
-                    // we ignore the result here
-                } else {
-                    tree.children.forEach(delimitIn)
-                }
+                delimitStmts(tree.children, tree)
+                // we ignore the result here
             }
         }
 
@@ -392,17 +431,22 @@ namespace ts.mbit {
             }
         }
 
+        function handleBlock() {
+            Util.assert(tokens[i].synKind == SK.OpenBraceToken)
+            let tree = tokens[i] as TreeToken
+            Util.assert(tree.kind == TokenKind.Tree)
+            let blk = tokens[i] as BlockToken
+            blk.stmts = delimitStmts(tree.children, currCtxToken)
+            delete tree.children
+            blk.kind = TokenKind.Block
+            i++;
+            didBlock = true
+        }
+
         function expectBlock() {
             nextNonWs()
             if (tokens[i].synKind == SK.OpenBraceToken) {
-                let tree = tokens[i] as TreeToken
-                Util.assert(tree.kind == TokenKind.Tree)
-                let blk = tokens[i] as BlockToken
-                blk.stmts = delimitStmts(tree.children)
-                delete tree.children
-                blk.kind = TokenKind.Block
-
-                i++;
+                handleBlock()
                 skipOptionalNewLine();
             } else {
                 // TODO stick them into a block
@@ -413,6 +457,8 @@ namespace ts.mbit {
         function skipToStmtEnd() {
             while (true) {
                 let t = tokens[i]
+                currCtxToken = t
+                didBlock = false
 
                 if (t.kind == TokenKind.EOF)
                     return;
@@ -426,10 +472,9 @@ namespace ts.mbit {
                 if (t.synKind == SK.EqualsGreaterThanToken) {
                     nextNonWs()
                     if (tokens[i].synKind == SK.OpenBraceToken) {
-                        i--;
-                        expectBlock();
+                        handleBlock();
+                        continue;
                     }
-                    continue;
                 }
 
                 if (infixOperatorPrecedence(t.synKind)) {
@@ -450,6 +495,17 @@ namespace ts.mbit {
                         continue;
                     } else {
                         i = bkp + 1
+                        return;
+                    }
+                }
+
+                if (t.synKind == SK.OpenBraceToken && ctxToken && ctxToken.synKind == SK.ClassKeyword) {
+                    let jj = i - 1;
+                    while (jj >= 0 && tokens[jj].kind == TokenKind.Whitespace)
+                        jj--;
+                    if (jj < 0 || tokens[jj].synKind != SK.EqualsToken) {
+                        i--;
+                        expectBlock(); // method body
                         return;
                     }
                 }
@@ -488,10 +544,10 @@ namespace ts.mbit {
                     case SK.InterfaceKeyword:
                     case SK.FunctionKeyword:
                         skipUntilBlock();
-                        break;
-
+                        return;
                 }
 
+                Util.assert(!didBlock, "forgot continue/return after expectBlock")
                 i++;
             }
         }
@@ -503,7 +559,7 @@ namespace ts.mbit {
 
     function removeIndent(tokens: Token[]) {
         let output: Token[] = []
-        let atLineBeg = true;
+        let atLineBeg = false;
         for (let i = 0; i < tokens.length; ++i) {
             if (atLineBeg)
                 i = skipWhitespace(tokens, i)
@@ -524,6 +580,13 @@ namespace ts.mbit {
         return toks
     }
 
+    export function toStr(v: any) {
+        if (Array.isArray(v)) return v.map(toStr).join(" : ")
+        if (typeof v.text == "string")
+            return JSON.stringify(v.text)
+        return v + ""
+    }
+
     export function format(input: string): string {
         let r = tokenize(input)
 
@@ -536,6 +599,7 @@ namespace ts.mbit {
 
         let ind = ""
         let output = ""
+        let indIncrLine = 0
 
         topStmts.forEach(ppStmt)
 
@@ -550,7 +614,7 @@ namespace ts.mbit {
             if (t.kind == TokenKind.Tree) {
                 let tree = t as TreeToken
                 if (t.synKind == SK.OpenBraceToken) {
-                    showMsg(t.pos, "left behind X")
+                    //showMsg(t, "left behind X")
                 }
 
                 tree.children.forEach(findNonBlocks)
@@ -559,42 +623,61 @@ namespace ts.mbit {
             }
         }
 
+        function incrIndent(parToken: Token, f: () => void) {
+            if (indIncrLine == parToken.lineNo) {
+                f()
+            } else {
+                indIncrLine = parToken.lineNo
+                let prev = ind
+                ind += "    "
+                f()
+                ind = prev
+            }
+        }
+
         function ppStmt(s: Stmt) {
+            let toks = removeIndent(s.tokens)
+
+            if (toks.length == 1 && toks[0].text == "") {
+                output += "\n"
+                return
+            }
+
             output += ind
-            let prev = ind
-            ind += "    "
-            ppToks(s.tokens)
-            ind = prev
+            incrIndent(toks[0], () => {
+                ppToks(toks)
+            })
             output += "\n"
         }
 
-        function ppToks(ts: Token[]) {
-            removeIndent(ts).forEach(ppToken)
-        }
-
-        function ppToken(t: Token) {
-            output += t.text;
-            let prev = ind
-            switch (t.kind) {
-                case TokenKind.Tree:
-                    let tree = t as TreeToken
-                    ind += "    "
-                    ppToks(tree.children)
-                    ind = prev
-                    if (tree.endText)
-                        output += tree.endText
-                    break;
-                case TokenKind.Block:
-                    let blk = t as BlockToken;
-                    output += "\n"
-                    blk.stmts.forEach(ppStmt)
-                    output += ind.slice(4) + "}"
-                    break;
-                case TokenKind.NewLine:
-                    output += ind
-                    break;
-                case TokenKind.Whitespace:
-                    break;
+        function ppToks(tokens: Token[]) {
+            for (let i = 0; i < tokens.length; ++i) {
+                let t = tokens[i]
+                output += t.text;
+                switch (t.kind) {
+                    case TokenKind.Tree:
+                        let tree = t as TreeToken
+                        incrIndent(t, () => {
+                            ppToks(removeIndent(tree.children))
+                        })
+                        if (tree.endText)
+                            output += tree.endText
+                        break;
+                    case TokenKind.Block:
+                        let blk = t as BlockToken;
+                        output += "\n"
+                        blk.stmts.forEach(ppStmt)
+                        output += ind.slice(4) + "}"
+                        break;
+                    case TokenKind.NewLine:
+                        if (i == tokens.length - 1)
+                            output += ind.slice(4)
+                        else
+                            output += ind
+                        break;
+                    case TokenKind.Whitespace:
+                        break;
+                }
             }
         }
     }
