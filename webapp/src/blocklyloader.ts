@@ -12,7 +12,7 @@ var blockColors: Util.StringMap<number> = {
     game: 176,
     images: 45,
     variables: 330,
-    antenna: 156,
+    devices: 156,
     radio: 270,
 }
 

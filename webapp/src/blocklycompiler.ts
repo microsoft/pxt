@@ -1525,11 +1525,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "brightness",
         args: [{ field: "sprite" }]
     },
-    devices_camera: {
-        namespace: "devices",
-        f: "tell camera to",
-        args: [{ field: "property" }]
-    },
     devices_remote_control: {
         namespace: "devices",
         f: "tell remote control to",

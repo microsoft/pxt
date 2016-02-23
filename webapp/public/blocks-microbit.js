@@ -173,7 +173,7 @@ var blockColors = {
     //comments: 156,
     images: 45,
     variables: 330,
-    antenna: 156,
+    devices: 156,
     radio: 270,
 }
 
@@ -1226,10 +1226,11 @@ Blockly.Blocks['game_sprite_set_property'] = {
     }
 };
 
+/*
 Blockly.Blocks['devices_camera'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf030"))
             .appendField("tell camera to ");
@@ -1241,12 +1242,12 @@ Blockly.Blocks['devices_camera'] = {
         this.setTooltip('Sends a camera event');
         this.setHelpUrl("./functions/tell-camera-to");
     }
-};
+};*/
 
 Blockly.Blocks['devices_alert'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf0f3"))
             .appendField("raise alert to ");
@@ -1263,7 +1264,7 @@ Blockly.Blocks['devices_alert'] = {
 Blockly.Blocks['devices_remote_control'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf144"))
             .appendField("tell remote control to ");
@@ -1280,7 +1281,7 @@ Blockly.Blocks['devices_remote_control'] = {
 Blockly.Blocks['devices_gamepad_event'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf11b"))
             .appendField("on gamepad button");
@@ -1298,7 +1299,7 @@ Blockly.Blocks['devices_gamepad_event'] = {
 Blockly.Blocks['devices_device_info_event'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf10a"))
             .appendField("on notified");
@@ -1316,7 +1317,7 @@ Blockly.Blocks['devices_device_info_event'] = {
 Blockly.Blocks['devices_signal_strength'] = {
     init: function () {
         this.setHelpUrl('./functions/signal-strength');
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf012"))
             .appendField("signal strengh");
@@ -1329,7 +1330,7 @@ Blockly.Blocks['devices_signal_strength'] = {
 Blockly.Blocks['devices_signal_strength_changed_event'] = {
     init: function()
     {
-        this.setColour(blockColors.antenna);
+        this.setColour(blockColors.devices);
         this.appendDummyInput()
             .appendField(iconToFieldImage("\uf012"))
             .appendField("on signal strength changed");
