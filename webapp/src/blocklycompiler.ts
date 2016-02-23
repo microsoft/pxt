@@ -1262,35 +1262,6 @@ interface StdFunc {
 }
 
 var defaultCallTable: Util.StringMap<StdFunc> = {
-    device_show_letter: {
-        f: "show letter",
-        args: [{ field: "letter" }]
-    },
-    device_plot: {
-        namespace: "led",
-        f: "plot",
-        args: [{ field: "x" }, { field: "y" }]
-    },
-    device_unplot: {
-        namespace: "led",
-        f: "unplot",
-        args: [{ field: "x" }, { field: "y" }]
-    },
-    device_stop_animation: {
-        namespace: "led",
-        f: "stop animation",
-        args: []
-    },
-    device_point: {
-        namespace: "led",
-        f: "point",
-        args: [{ field: "x" }, { field: "y" }]
-    },
-    device_plot_bar_graph: {
-        namespace: "led",
-        f: "plot bar graph",
-        args: [{ field: "value" }, { field: "high" }]
-    },
     device_make_StringImage: {
         f: "create image from string",
         args: [{ field: "NAME" }]
@@ -1349,16 +1320,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         namespace: "pins",
         f: "map",
         args: [{ field: "value" }, { field: "fromLow" }, { field: "fromHigh" }, { field: "toLow" }, { field: "toHigh" }]
-    },
-    device_get_brightness: {
-        namespace: "led",
-        f: "brightness",
-        args: []
-    },
-    device_set_brightness: {
-        namespace: "led",
-        f: "set brightness",
-        args: [{ field: "value" }]
     },
     device_play_note: {
         namespace: "music",
@@ -1524,11 +1485,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         isExtensionMethod: true,
         f: "brightness",
         args: [{ field: "sprite" }]
-    },
-    devices_signal_strength: {
-        namespace: "devices",
-        f: "signal strength",
-        args: []
     },
     radio_broadcast: {
         namespace: "radio",

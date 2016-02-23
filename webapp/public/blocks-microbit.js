@@ -536,6 +536,7 @@ Blockly.Blocks['math_map'] = {
     }
 };
 
+/*
 Blockly.Blocks['device_get_brightness'] = {
     init: function () {
         this.setHelpUrl('./functions/brightness');
@@ -546,8 +547,9 @@ Blockly.Blocks['device_get_brightness'] = {
         this.setOutput(true, "Number");
         this.setTooltip('Get the current brightness of the screen (between 0 and 255).');
     }
-};
+};*/
 
+/*
 Blockly.Blocks['device_set_brightness'] = {
     init: function () {
         this.setHelpUrl('./functions/set-brightness');
@@ -562,7 +564,7 @@ Blockly.Blocks['device_set_brightness'] = {
         this.setNextStatement(true);
         this.setTooltip('Set the current brightness of the screen (between 0 and 255).');
     }
-};
+};*/
 
 /*
 Blockly.Blocks['device_get_acceleration'] = {
@@ -655,6 +657,7 @@ Blockly.Blocks['device_clear_display'] = {
   }
 };*/
 
+/*
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#rhpgfx
 Blockly.Blocks['device_plot'] = {
   init: function() {
@@ -674,8 +677,9 @@ Blockly.Blocks['device_plot'] = {
     this.setNextStatement(true);
     this.setTooltip('Turns the LED at coordinates (x, y) on.');
   }
-};
+};*/
 
+/*
 Blockly.Blocks['device_unplot'] = {
   init: function() {
     this.setHelpUrl('./functions/unplot');
@@ -694,7 +698,7 @@ Blockly.Blocks['device_unplot'] = {
     this.setNextStatement(true);
     this.setTooltip('Turns the LED at coordinates (x, y) off.');
   }
-};
+};*/
 
 Blockly.Blocks['device_stop_animation'] = {
   init: function() {
@@ -710,6 +714,7 @@ Blockly.Blocks['device_stop_animation'] = {
 };
 
 //https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#jw5b4i
+/*
 Blockly.Blocks['device_point'] = {
   init: function() {
     this.setHelpUrl('./functions/point');
@@ -727,8 +732,9 @@ Blockly.Blocks['device_point'] = {
     this.setOutput(true, "Boolean");
     this.setTooltip('Returns true if the LED at coordinates (x, y) is on, false otherwise.');
   }
-};
+};*/
 
+/*
 Blockly.Blocks['device_plot_bar_graph'] = {
   init: function() {
     this.setHelpUrl('./functions/plot-bar-graph');
@@ -747,7 +753,7 @@ Blockly.Blocks['device_plot_bar_graph'] = {
     this.setNextStatement(true);
     this.setTooltip('Displays a bar graph of the value compared to high.');
   }
-};
+};*/
 
 /*
 Blockly.Blocks['device_temperature'] = {

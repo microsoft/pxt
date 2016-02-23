@@ -45,13 +45,16 @@ function createShadowValue(name: string, num: boolean, v: string): Element {
 
 export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<string> {
     // collect blockly parameter name mapping
-    var attrNames: Util.StringMap<string> = {};
+    let attrNames: Util.StringMap<string> = {};
     fn.parameters.forEach(pr => attrNames[pr.name] = pr.name);
     if (fn.attributes.block) {
         Object.keys(attrNames).forEach(k => attrNames[k] = "");
-        (/%[a-zA-Z0-9]+/g.exec(fn.attributes.block) || []).forEach((m, i) => {
-            attrNames[fn.parameters[i].name] = m.slice(1);
-        })
+        let rx = /%[a-zA-Z0-9]+/g;
+        let m : RegExpExecArray;
+        let i = 0;
+        while(m = rx.exec(fn.attributes.block)) {
+            attrNames[fn.parameters[i++].name] = m[0].slice(1);
+        }
     }
     return attrNames;
 }
@@ -72,36 +75,42 @@ function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.Stri
             block.appendChild(createShadowValue(attrNames[pr.name], false, pr.defaults ? pr.defaults[0] : ""));
     })
 
-    var category = tb.querySelector("category[name~='" + fn.namespace[0].toUpperCase() + fn.namespace.slice(1) + "']");
+    var catName = fn.namespace[0].toUpperCase() + fn.namespace.slice(1);
+    var category = tb.querySelector("category[name~='" + catName + "']");
     if (!category) {
         console.log('toolbox: adding category ' + fn.namespace)
         category = document.createElement("category");
+        category.setAttribute("name", catName)
         tb.appendChild(category);
     }
     category.appendChild(block);
 }
 
+var iconCanvasCache: Util.StringMap<HTMLCanvasElement> = {};
 function iconToFieldImage(c: string): Blockly.FieldImage {
-    var canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
-    var ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'white';
-    ctx.font = "56px Icons";
-    ctx.textAlign = "center";
-    ctx.fillText(c, canvas.width / 2, 56);
+    let canvas = iconCanvasCache[c];
+    if (!canvas) {
+        canvas = iconCanvasCache[c] = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.font = "56px Icons";
+        ctx.textAlign = "center";
+        ctx.fillText(c, canvas.width / 2, 56);
+    }
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) : boolean {
-    var id = fn.attributes.blockId;
-    
+function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>): boolean {
+    let id = fn.attributes.blockId;
+
     if (builtinBlocks[id]) {
         console.error('trying to override builtin block ' + id);
         return false;
     }
-    
-    var hash = JSON.stringify(fn);       
+
+    let hash = JSON.stringify(fn);
     if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
         console.log('block already in toolbox: ' + id);
         return true;
@@ -116,95 +125,98 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
         hash: hash,
         fn: fn,
         block: {
-            init: function() {
-                this.setHelpUrl("./" + fn.attributes.help);
-                this.setColour(blockColors[fn.namespace] || 255);
+            init: function() { initBlock(this, info, fn, attrNames) }
+        }
+    }
 
-                fn.attributes.block.split('|').map((n,ni) => {
-                    var m = /([^%]*)%([a-zA-Z0-0]+)/.exec(n);
-                    if (!m) {
-                        var i = this.appendDummyInput();
-                        if (ni == 0 && fn.attributes.icon) i.appendField(iconToFieldImage(fn.attributes.icon))
-                        i.appendField(n);
-                    } else {
-                        // find argument
-                        var pre = m[1]; var p = m[2];
-                        var n = Object.keys(attrNames).filter(k => attrNames[k] == p)[0];
-                        if (!n) {
-                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + p);
-                            return;
-                        }
+    cachedBlocks[id] = cachedBlock;
+    Blockly.Blocks[id] = cachedBlock.block;
 
-                        var pr = fn.parameters.filter(p => p.name == n)[0];
-                        if (pr.type == "number") {
-                            var i = this.appendValueInput(p)
-                                .setAlign(Blockly.ALIGN_RIGHT)
-                                .setCheck("Number");
-                            if (pre) i.appendField(pre);
-                        }
-                        else if (pr.type == "boolean") {
-                            var i = this.appendValueInput(p)
-                                .setCheck("Boolean");
-                            if (pre) i.appendField(pre);
-                        } else if (pr.type == "string") {
-                            var i = this.appendValueInput(p)
-                                .setAlign(Blockly.ALIGN_RIGHT)
-                                .setCheck("String");
-                            if (pre) i.appendField(pre);
-                        } else {
-                            var prtype = Util.lookup(info.apis.byQName, pr.type);
-                            if (prtype && prtype.kind == ts.mbit.SymbolKind.Enum) {
-                                let dd = Util.values(info.apis.byQName)
-                                    .filter(e => e.namespace == pr.type)
-                                    .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);                                
-                                var i = this.appendDummyInput()
-                                    .appendField(new Blockly.FieldDropdown(dd), "NAME");
-                                if (pre) i.appendField(pre);
-                            }
-                        }
-                    }
-                });
+    return true;
+}
 
-                var body = fn.parameters.filter(pr => pr.type == "() => void")[0];
-                if (body) {
-                    this.appendStatementInput(attrNames[body.name] || "HANDLER")
-                        .setCheck("null");
-                }
-                
-                if (fn.attributes.imageLiteral) {
-                    for(var r = 0; r < 5;++r) {
-                        var ri = this.appendDummyInput();
-                        for(var c = 0; c < 5; ++c) {
-                            if (c >0) ri.appendField(" ");
-                            ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
-                        }
-                    }
-                }
+function initBlock(block:any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<string>) {
+    block.setHelpUrl("./" + fn.attributes.help);
+    block.setColour(blockColors[fn.namespace] || 255);
 
-                this.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
-                
-                switch(fn.retType) {
-                    case "number": this.setOutput(true, "Number");break;
-                    case "string": this.setOutput(true, "String"); break;
-                    case "boolean": this.setOutput(true, "Boolean"); break;
-                    case "void": break; // do nothing
-                    //TODO
-                    default: this.setOutput(true);
+    fn.attributes.block.split('|').map((n, ni) => {
+        let m = /([^%]*)%([a-zA-Z0-0]+)/.exec(n);
+        if (!m) {
+            let i = block.appendDummyInput();
+            if (ni == 0 && fn.attributes.icon) i.appendField(iconToFieldImage(fn.attributes.icon))
+            i.appendField(n);
+        } else {
+            // find argument
+            let pre = m[1]; 
+            let p = m[2];
+            let n = Object.keys(attrNames).filter(k => attrNames[k] == p)[0];
+            if (!n) {
+                console.error("block " + fn.attributes.blockId + ": unkown parameter " + p);
+                return;
+            }
+
+            let pr = fn.parameters.filter(p => p.name == n)[0];
+            if (pr.type == "number") {
+                let i = block.appendValueInput(p)
+                    .setAlign(Blockly.ALIGN_RIGHT)
+                    .setCheck("Number");
+                if (pre) i.appendField(pre);
+            }
+            else if (pr.type == "boolean") {
+                let i = block.appendValueInput(p)
+                    .setCheck("Boolean");
+                if (pre) i.appendField(pre);
+            } else if (pr.type == "string") {
+                let i = block.appendValueInput(p)
+                    .setAlign(Blockly.ALIGN_RIGHT)
+                    .setCheck("String");
+                if (pre) i.appendField(pre);
+            } else {
+                let prtype = Util.lookup(info.apis.byQName, pr.type);
+                if (prtype && prtype.kind == ts.mbit.SymbolKind.Enum) {
+                    let dd = Util.values(info.apis.byQName)
+                        .filter(e => e.namespace == pr.type)
+                        .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);
+                    let i = block.appendDummyInput()
+                        .appendField(new Blockly.FieldDropdown(dd), "NAME");
+                    if (pre) i.appendField(pre);
                 }
-                
-                if (!/^on /.test(fn.attributes.block)) {
-                    this.setPreviousStatement(fn.retType == "void");
-                    this.setNextStatement(fn.retType == "void");
-                }
-                this.setTooltip(fn.attributes.jsDoc);
+            }
+        }
+    });
+
+    let body = fn.parameters.filter(pr => pr.type == "() => void")[0];
+    if (body) {
+        block.appendStatementInput(attrNames[body.name] || "HANDLER")
+            .setCheck("null");
+    }
+
+    if (fn.attributes.imageLiteral) {
+        for (let r = 0; r < 5; ++r) {
+            let ri = block.appendDummyInput();
+            for (let c = 0; c < 5; ++c) {
+                if (c > 0) ri.appendField(" ");
+                ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
             }
         }
     }
-    
-    cachedBlocks[id] = cachedBlock;
-    Blockly.Blocks[id] = cachedBlock.block;
-    
-    return true;
+
+    block.setInputsInline(!fn.attributes.blockExternalInputs && fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+
+    switch (fn.retType) {
+        case "number": block.setOutput(true, "Number"); break;
+        case "string": block.setOutput(true, "String"); break;
+        case "boolean": block.setOutput(true, "Boolean"); break;
+        case "void": break; // do nothing
+        //TODO
+        default: block.setOutput(true);
+    }
+
+    if (!/^on /.test(fn.attributes.block)) {
+        block.setPreviousStatement(fn.retType == "void");
+        block.setNextStatement(fn.retType == "void");
+    }
+    block.setTooltip(fn.attributes.jsDoc);
 }
 
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
@@ -213,33 +225,33 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
         return (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
     })
 
-    var currentBlocks : Util.StringMap<number> = {};
-    
+    let currentBlocks: Util.StringMap<number> = {};
+
     // create new toolbox and update block definitions
-    var tb = <Element>toolbox.cloneNode(true);
+    let tb = <Element>toolbox.cloneNode(true);
     blockInfo.blocks
         .filter(fn => !tb.querySelector("block[type='" + fn.attributes.blockId + "']"))
         .forEach(fn => {
-            var pnames = parameterNames(fn);
-            if(injectBlockDefinition(blockInfo, fn, pnames)) {
+            let pnames = parameterNames(fn);
+            if (injectBlockDefinition(blockInfo, fn, pnames)) {
                 injectToolbox(tb, fn, pnames);
                 currentBlocks[fn.attributes.blockId] = 1;
             }
         })
-        
+
     // remove ununsed blocks
     Object
         .keys(cachedBlocks).filter(k => !currentBlocks[k])
         .forEach(k => removeBlock(cachedBlocks[k].fn));
-    
+
     // update toolbox   
     if (tb.innerHTML != cachedToolbox) {
-        cachedToolbox = tb.innerHTML;    
+        cachedToolbox = tb.innerHTML;
         workspace.updateToolbox(tb)
     }
 }
 
-function removeBlock(fn : ts.mbit.SymbolInfo) {
+function removeBlock(fn: ts.mbit.SymbolInfo) {
     delete Blockly.Blocks[fn.attributes.blockId];
     delete cachedBlocks[fn.attributes.blockId];
 }

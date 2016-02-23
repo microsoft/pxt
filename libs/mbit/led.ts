@@ -1,7 +1,7 @@
 enum DisplayMode {
-    //% enumval=0
+    //% enumval=0 blockId="black and white"
     BackAndWhite,
-    //% enumval=1
+    //% enumval=1 blockId="greyscale"
     Greyscale,
 }
 
@@ -11,44 +11,103 @@ namespace led {
      * @param x TODO
      * @param y TODO
      */
-    //% help=functions/plot weight=78 shim=micro_bit::plot async
+    //% help=functions/plot weight=78 shim=micro_bit::plot
+    //% blockId=device_plot block="plot|x %x|y %y" icon="\uf205" blockGap=8
     export function plot(x: number, y: number): void { }
-
-    /**
-     * Get the on/off state of the specified LED using ``x, y`` coordinates.
-     * @param x TODO
-     * @param y TODO
-     */
-    //% help=functions/point weight=76 shim=micro_bit::point async
-    export function point(x: number, y: number): boolean { return false; }
 
     /**
      * Turn off the specified LED using x, y coordinates (x is horizontal, y is vertical)
      * @param x TODO
      * @param y TODO
      */
-    //% help=functions/unplot weight=77 shim=micro_bit::unPlot async
+    //% help=functions/unplot weight=77 shim=micro_bit::unPlot
+    //% blockId=device_unplot block="unplot|x %x|y %y" icon="\uf204" blockGap=8
     export function unplot(x: number, y: number): void { }
+
+    /**
+     * Get the on/off state of the specified LED using ``x, y`` coordinates.
+     * @param x TODO
+     * @param y TODO
+     */
+    //% help=functions/point weight=76 shim=micro_bit::point
+    //% blockId=device_point block="point|x %x|y %y" icon="\uf10c"
+    export function point(x: number, y: number): boolean { return false; }
 
     /**
      * Get the screen brightness from 0 (off) to 255 (full bright).
      */
-    //% help=functions/brightness weight=75 shim=micro_bit::getBrightness async
+    //% help=functions/brightness weight=60 shim=micro_bit::getBrightness
+    //% blockId=device_get_brightness block="brightness" icon="\uf042" blockGap=8
     export function brightness(): number { return 0; }
 
     /**
      * Set the screen brightness from 0 (off) to 255 (full bright).
-     * @param value TODO
+     * @param value the brightness value, eg:255, 127, 0
      */
-    //% help=functions/set-brightness weight=74 shim=micro_bit::setBrightness async
+    //% help=functions/set-brightness weight=59 shim=micro_bit::setBrightness
+    //% blockId=device_set_brightness block="set brightness" icon="\uf042"
     export function setBrightness(value: number): void { }
 
     /**
      * Cancels the current animation and clears other pending animations.
      */
-    //% weight=10 shim=uBit.display.stopAnimation async help=functions/stop-animation
+    //% weight=50 shim=uBit.display.stopAnimation async help=functions/stop-animation
+    //% blockId=device_stop_animation block="stop animation" icon="\uf04d"
     export function stopAnimation(): void { }
 
+    /**
+     * Displays a vertical bar graph based on the ``value`` and ``high`` value.
+     * @param value current value to plot
+     * @param high maximum value, eg: 1023, 255
+     */
+    //% help=/functions/plot-bar-graph weight=20
+    //% blockId=device_plot_bar_graph block="plot bar graph |of %value |up to %high" icon="\uf080" blockExternalInputs=true
+    export function plotBarGraph(value: number, high: number = 1023): void {
+        let v = pins.map(Math.abs(value), 0, high, 0, 5);
+        if (v <= 0) {
+            basic.plotLeds(`0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 1 0 0`);
+        }
+        else if (v == 1) {
+            basic.plotLeds(`0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+1 1 1 1 1`);
+        }
+        else if (v == 2) {
+            basic.plotLeds(`0 0 0 0 0
+0 0 0 0 0
+0 0 0 0 0
+1 1 1 1 1
+1 1 1 1 1`);
+        }
+        else if (v == 3) {
+            basic.plotLeds(`0 0 0 0 0
+0 0 0 0 0
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1`);
+        }
+        else if (v == 4) {
+            basic.plotLeds(`0 0 0 0 0
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1`);
+        }
+        else {
+            basic.plotLeds(`1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1`);
+        }
+    }
+    
     /**
      * Sets the display mode between black and white and greyscale for rendering LEDs.
      * @param mode TODO
@@ -100,7 +159,7 @@ namespace led {
      * @param ms TODO
      */
     //% help=functions/fade-in
-    export function fadeIn(ms: number): void {
+    export function fadeIn(ms: number = 700): void {
         if (ms < 20) {
             led.setBrightness(255);
             return;
@@ -122,7 +181,7 @@ namespace led {
      * @param ms TODO
      */
     //% help=functions/fade-out
-    export function fadeOut(ms: number): void {
+    export function fadeOut(ms: number = 700): void {
         if (ms < 20) {
             led.setBrightness(0);
             return;
@@ -159,57 +218,5 @@ namespace led {
         return null;
     }
 
-    /**
-     * Displays a vertical bar graph based on the ``value`` and ``high`` value.
-     * @param value TODO
-     * @param high TODO
-     */
-    //% help=/functions/plot-bar-graph weight=20
-    //% block="plot bar graph |from %1 |to %2"
-    export function plotBarGraph(value: number, high: number): void {
-        let v = pins.map(Math.abs(value), 0, high, 0, 5);
-        if (v <= 0) {
-            basic.plotLeds(`0 0 0 0 0
-0 0 0 0 0
-0 0 0 0 0
-0 0 0 0 0
-0 0 1 0 0`);
-        }
-        else if (v == 1) {
-            basic.plotLeds(`0 0 0 0 0
-0 0 0 0 0
-0 0 0 0 0
-0 0 0 0 0
-1 1 1 1 1`);
-        }
-        else if (v == 2) {
-            basic.plotLeds(`0 0 0 0 0
-0 0 0 0 0
-0 0 0 0 0
-1 1 1 1 1
-1 1 1 1 1`);
-        }
-        else if (v == 3) {
-            basic.plotLeds(`0 0 0 0 0
-0 0 0 0 0
-1 1 1 1 1
-1 1 1 1 1
-1 1 1 1 1`);
-        }
-        else if (v == 4) {
-            basic.plotLeds(`0 0 0 0 0
-1 1 1 1 1
-1 1 1 1 1
-1 1 1 1 1
-1 1 1 1 1`);
-        }
-        else {
-            basic.plotLeds(`1 1 1 1 1
-1 1 1 1 1
-1 1 1 1 1
-1 1 1 1 1
-1 1 1 1 1`);
-        }
-    }
 
 }
