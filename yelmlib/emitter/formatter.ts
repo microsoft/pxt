@@ -27,6 +27,7 @@ namespace ts.mbit {
         pos: number;
         lineNo: number;
         synKind: ts.SyntaxKind;
+        blockSpanLength?: number;
     }
 
     interface TreeToken extends Token {
@@ -336,13 +337,24 @@ namespace ts.mbit {
         }
     }
 
-    function mkSpace(t:Token, s:string): Token {
+    function mkSpace(t: Token, s: string): Token {
         return {
             kind: TokenKind.Whitespace,
             synKind: SK.WhitespaceTrivia,
             pos: t.pos,
             lineNo: t.lineNo,
             text: s
+        }
+    }
+
+    function mkBlock(toks: Token[]): BlockToken {
+        return {
+            kind: TokenKind.Block,
+            synKind: SK.OpenBraceToken,
+            pos: toks[0].pos,
+            lineNo: toks[0].lineNo,
+            stmts: [{ tokens: toks }],
+            text: "{"
         }
     }
 
@@ -359,30 +371,54 @@ namespace ts.mbit {
             let stmtBeg = i
             skipToStmtEnd();
             Util.assert(i > stmtBeg, `Error at ${tokens[i].text}`)
-            let toks = trimWhitespace(tokens.slice(stmtBeg, i))
-            toks.forEach(delimitIn)
+            addStatement(tokens.slice(stmtBeg, i))
+        }
+
+        return res
+
+        function addStatement(tokens: Token[]) {
+            tokens = trimWhitespace(tokens)
+            tokens.forEach(delimitIn)
+            tokens = injectBlocks(tokens)
+
             let merge = false
             if (res.length > 0) {
                 let prev = res[res.length - 1]
                 let prevKind = prev.tokens[0].synKind
-                let thisKind = toks[0].synKind
+                let thisKind = tokens[0].synKind
                 if ((prevKind == SK.IfKeyword && thisKind == SK.ElseKeyword) ||
                     (prevKind == SK.TryKeyword && thisKind == SK.CatchKeyword) ||
                     (prevKind == SK.TryKeyword && thisKind == SK.FinallyKeyword) ||
                     (prevKind == SK.CatchKeyword && thisKind == SK.FinallyKeyword)
                 ) {
-                    toks.unshift(mkSpace(toks[0], " "))
-                    Util.pushRange(res[res.length - 1].tokens, toks)
-                    continue;
+                    tokens.unshift(mkSpace(tokens[0], " "))
+                    Util.pushRange(res[res.length - 1].tokens, tokens)
+                    return;
                 }
             }
 
             res.push({
-                tokens: toks
+                tokens: tokens
             })
         }
 
-        return res
+        function injectBlocks(tokens: Token[]) {
+            let output: Token[] = []
+            let i = 0;
+            while (i < tokens.length) {
+                if (tokens[i].blockSpanLength) {
+                    let inner = tokens.slice(i, i + tokens[i].blockSpanLength)
+                    delete tokens[i].blockSpanLength
+                    injectBlocks(inner)
+                    i += inner.length
+                    output.push(mkSpace(inner[0], " "))
+                    output.push(mkBlock(trimWhitespace(inner)))
+                } else {
+                    output.push(tokens[i++])
+                }
+            }
+            return output
+        }
 
         function delimitIn(t: Token) {
             if (t.kind == TokenKind.Tree) {
@@ -444,6 +480,8 @@ namespace ts.mbit {
         }
 
         function expectBlock() {
+            let begTok = tokens[i + 1]
+            let begIdx = i + 1
             nextNonWs()
             if (tokens[i].synKind == SK.OpenBraceToken) {
                 handleBlock()
@@ -451,6 +489,7 @@ namespace ts.mbit {
             } else {
                 // TODO stick them into a block
                 skipToStmtEnd();
+                begTok.blockSpanLength = i - begIdx
             }
         }
 
