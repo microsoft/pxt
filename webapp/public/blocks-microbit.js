@@ -257,61 +257,6 @@ Blockly.Blocks['device_random'] = {
   }
 };
 
-Blockly.Blocks['game_start_countdown'] = {
-  init: function() {
-    this.setHelpUrl('./blocks/game-library');
-    this.setColour(blockColors.game);
-    this.appendValueInput("duration")
-        .setCheck("Number")
-        .appendField("start countdown of ");
-    this.appendDummyInput()
-        .appendField("ms");
-    this.setInputsInline(true);
-    this.setTooltip('Starts a countdown game.');
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-  }
-};
-
-Blockly.Blocks['game_score'] = {
-  init: function() {
-    this.setHelpUrl('./blocks/game-library');
-    this.setColour(blockColors.game);
-    this.appendDummyInput()
-        .appendField("score");
-    this.setInputsInline(true);
-    this.setTooltip('Gets the current score.');
-    this.setOutput(true, 'Number');
-  }
-};
-
-Blockly.Blocks['game_add_score'] = {
-  init: function() {
-    this.setHelpUrl('./blocks/game-library');
-    this.setColour(blockColors.game);
-    this.appendValueInput("points")
-        .setCheck("Number")
-        .appendField("change score by");
-    this.setInputsInline(true);
-    this.setTooltip('Change score by the given amount of points.');
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-  }
-};
-
-Blockly.Blocks['game_game_over'] = {
-  init: function() {
-    this.setHelpUrl('./blocks/game-library');
-    this.setColour(blockColors.game);
-    this.appendDummyInput()
-        .appendField("game over");
-    this.setInputsInline(true);
-    this.setTooltip('Ends the game.');
-    this.setPreviousStatement(true);
-    this.setNextStatement(false);
-  }
-};
-
 Blockly.Blocks['game_create_sprite'] = {
     init: function()
     {

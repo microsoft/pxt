@@ -8,49 +8,24 @@ namespace game {
     var _countdownPause: number = 0;
     var _level: number = 1;
     var _gameId: number = 0;
+    var img: Image;
+    var sprites: LedSprite[];
 
     /**
      * Gets the current score
      */
     //% weight=10 help=td/game-library
+    //% blockId=game_score block="score" blockGap=8
     export function score(): number {
         return _score;
     }
-
-    /**
-     * Sets the current score value
-     * @param value TODO
-     */
-    //% weight=10 help=td/game-library
-    export function setScore(value: number): void {
-        _score = Math.max(0, value);
-    }
-
-    /**
-     * Gets the current life
-     */
-    //% weight=10 help=td/game-library
-    export function life(): number {
-        return _life;
-    }
-
-    /**
-     * Sets the current life value
-     * @param value TODO
-     */
-    //% weight=10 help=td/game-library
-    export function setLife(value: number): void {
-        _life = Math.max(0, value);
-        if (_life <= 0) {
-            gameOver();
-        }
-    }
-
+    
     /**
      * Adds points to the current score
      * @param points TODO
      */
-    //% weight=10 help=td/game-library
+    //% weight=9 help=td/game-library
+    //% blockId=game_add_score block="change score by|%points" blockGap=8
     export function addScore(points: number): void {
         setScore(_score + points);
         control.inBackground(() => {
@@ -61,22 +36,14 @@ namespace game {
 0 0 0 0 0 0 0 1 0 0 0 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 0 1 0 0 0 0 0`, 20);
         });
-    }
-
-    /**
-     * Adds life points to the current life
-     * @param lives TODO
-     */
-    //% weight=10 help=td/game-library
-    export function addLife(lives: number): void {
-        setLife(_life + lives);
-    }
+    }    
 
     /**
      * Starts a game countdown timer
-     * @param ms TODO
+     * @param ms countdown duration in milliseconds, eg: 10000
      */
-    //% weight=11 help=td/game-library
+    //% weight=9 help=td/game-library
+    //% blockId=game_start_countdown block="start countdown|(ms) %duration" blockGap=8
     export function startCountdown(ms: number): void {
         if (checkStart()) {
             basic.showAnimation(`1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0
@@ -92,12 +59,13 @@ namespace game {
                 gameOver();
             });
         }
-    }
-
+    }    
+    
     /**
      * Displays a game over animation.
      */
-    //% weight=10 help=td/game-library
+    //% weight=8 help=td/game-library
+    //% blockId=game_game_over block="game over"
     export function gameOver(): void {
         if (!_isGameOver) {
             _isGameOver = true;
@@ -132,6 +100,44 @@ namespace game {
                 basic.pause(10000);
             }
         }
+    }
+        
+    /**
+     * Sets the current score value
+     * @param value TODO
+     */
+    //% weight=10 help=td/game-library
+    export function setScore(value: number): void {
+        _score = Math.max(0, value);
+    }
+
+    /**
+     * Gets the current life
+     */
+    //% weight=10 help=td/game-library
+    export function life(): number {
+        return _life;
+    }
+
+    /**
+     * Sets the current life value
+     * @param value TODO
+     */
+    //% weight=10 help=td/game-library
+    export function setLife(value: number): void {
+        _life = Math.max(0, value);
+        if (_life <= 0) {
+            gameOver();
+        }
+    }
+
+    /**
+     * Adds life points to the current life
+     * @param lives TODO
+     */
+    //% weight=10 help=td/game-library
+    export function addLife(lives: number): void {
+        setLife(_life + lives);
     }
 
     /**
@@ -238,12 +244,6 @@ namespace game {
             control.reset();
         });
     }
-
-}
-
-namespace game {
-    var img: Image;
-    var sprites: LedSprite[];
 
     export class LedSprite {
         private _x: number;
