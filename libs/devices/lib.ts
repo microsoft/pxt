@@ -166,7 +166,9 @@ namespace devices {
      */
     //% help=functions/signal-strength weight=24 shim=micro_bit::signalStrength
     //% blockId=devices_signal_strength block="signal strength" blockGap=14 icon="\uf012" blockGap=14
-    export function signalStrength(): number { return 0; }
+    export function signalStrength(): number {
+        return 0;
+    }
 
     /**
      * Registers code to run when the device notifies about a change of signal strength.

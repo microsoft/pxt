@@ -63,7 +63,9 @@ namespace pins {
      */
     //% help=functions/digital-read-pin weight=30 shim=micro_bit::digitalReadPin
     //% blockId=device_get_digital_pin block="digital read|pin %name" blockGap=8
-    export function digitalReadPin(name: DigitalPins): number { return 0; }
+    export function digitalReadPin(name: DigitalPins): number {
+        return 0;
+    }
 
     /**
       * Set a pin or connector value to either 0 or 1.
@@ -80,7 +82,9 @@ namespace pins {
      */
     //% help=functions/analog-read-pin weight=25 shim=micro_bit::analogReadPin
     //% blockId=device_get_analog_pin block="analog read|pin %name" blockGap="8" 
-    export function analogReadPin(name: AnalogPins): number { return 0; }
+    export function analogReadPin(name: AnalogPins): number {
+        return 0;
+    }
 
     /**
      * Set the connector value as analog. Value must be comprised between 0 and 1023.

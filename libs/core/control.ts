@@ -4,7 +4,7 @@ namespace control {
     //% help=functions/in-background shim=micro_bit::runInBackground
      */
     export function inBackground(body: Action): void { }
-    
+
     /**
      * Resets the BBC micro:bit.
      */

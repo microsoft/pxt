@@ -1,10 +1,8 @@
 //%  shim=uBit.panic
-function panic(code2: number): void {
-}
+function panic(code2: number): void { }
 
 //%  shim=micro_bit::showDigit
-function showDigit(code2: number): void {
-}
+function showDigit(code2: number): void { }
 
 function msg(s: string): void {
     //console.log(s)
@@ -60,8 +58,9 @@ testMemoryFreeHOF();
 
 // test some top-level code
 let xsum = 0;
-for (let i = 0; i < 11; ++i)
+for (let i = 0; i < 11; ++i) {
     xsum = xsum + i;
+}
 assert(xsum == 55, "mainfor")
 
 control.inBackground(() => {
@@ -96,11 +95,11 @@ function testDefaultArgs() {
     assert(defaultArgs(1) == 11, "defl0")
     assert(defaultArgs(1, 4) == 12, "defl1")
     assert(defaultArgs(1, 4, 8) == 13, "defl2")
-    
+
     assert(optargs(1) == 1, "opt0");
     assert(optargs(1, 2) == 3, "opt1");
     assert(optargs(1, 2, 3) == 3, "opt2");
-    
+
     assert(optstring(3) == 6, "os0")
     assert(optstring(3, "7") == 10, "os1")
     assert(optstring2(3) == 6, "os0")
@@ -112,14 +111,16 @@ function optargs(x: number, y?: number, z?:number) {
 }
 
 function optstring(x:number, s?:string) {
-    if (s != null)
+    if (s != null) {
         return parseInt(s) + x;
+    }
     return x * 2;
 }
 
 function optstring2(x:number, s:string = null) {
-    if (s != null)
+    if (s != null) {
         return parseInt(s) + x;
+    }
     return x * 2;
 }
 
@@ -164,15 +165,13 @@ function testIf(): void {
     let b = false;
     if (!b) {
         glb1 = 7;
-    }
-    else {
+    } else {
         assert(false, "b0");
     }
     assert(glb1 == 7, "glb3");
     if (b) {
         assert(false, "b1");
-    }
-    else {
+    } else {
         glb1 = 8;
     }
     assert(glb1 == 8, "glb3");
@@ -313,8 +312,9 @@ function runTwice(fn: Action): void {
 }
 
 function iter(max: number, fn: (v: number) => void) {
-    for (var i = 0; i < max; ++i)
+    for (var i = 0; i < max; ++i) {
         fn(i);
+    }
 }
 
 function testIter() {
@@ -391,57 +391,49 @@ function testLazyOps(): void {
     lazyAcc = 0;
     if (incrLazyAcc(10, false) && incrLazyAcc(1, true)) {
         assert(false, "");
-    }
-    else {
+    } else {
         assert(lazyAcc == 10, "lazy1");
     }
     assert(lazyAcc == 10, "lazy2");
     if (incrLazyAcc(100, true) && incrLazyAcc(1, false)) {
         assert(false, "");
-    }
-    else {
+    } else {
         assert(lazyAcc == 111, "lazy4");
     }
     lazyAcc = 0;
     if (incrLazyAcc(100, true) && incrLazyAcc(8, true)) {
         assert(lazyAcc == 108, "lazy5");
-    }
-    else {
+    } else {
         assert(false, "");
     }
     lazyAcc = 0;
     if (incrLazyAcc(10, true) || incrLazyAcc(1, true)) {
         assert(lazyAcc == 10, "lazy1b");
-    }
-    else {
+    } else {
         assert(false, "");
     }
     assert(lazyAcc == 10, "lazy2xx");
     if (incrLazyAcc(100, false) || incrLazyAcc(1, false)) {
         assert(false, "");
-    }
-    else {
+    } else {
         assert(lazyAcc == 111, "lazy4x");
     }
     lazyAcc = 0;
     if (incrLazyAcc(100, false) || incrLazyAcc(8, true)) {
         assert(lazyAcc == 108, "lazy5");
-    }
-    else {
+    } else {
         assert(false, "");
     }
     lazyAcc = 0;
     if (incrLazyAcc(10, true) && incrLazyAcc(1, true) && incrLazyAcc(100, false)) {
         assert(false, "");
-    }
-    else {
+    } else {
         assert(lazyAcc == 111, "lazy10");
     }
     lazyAcc = 0;
     if (incrLazyAcc(10, true) && incrLazyAcc(1, true) || incrLazyAcc(100, false)) {
         assert(lazyAcc == 11, "lazy101");
-    }
-    else {
+    } else {
         assert(false, "");
     }
 }
@@ -529,7 +521,7 @@ function refparamWrite3(testrec: Testrec): void {
 }
 
 function testMemoryFree() : void
-{
+    {
     msg("testMemoryFree");
     for (let i = 0; i < 1000; i++) {
         allocImage();
@@ -537,7 +529,7 @@ function testMemoryFree() : void
 }
 
 function runOnce(fn:Action) : void
-{
+    {
     fn();
 }
 
@@ -546,7 +538,7 @@ function createObj() {
 }
 
 function testMemoryFreeHOF() : void
-{
+    {
     msg("testMemoryFreeHOF");
     for (let i = 0; i < 1000; i++) {
         runOnce(() => {
@@ -556,33 +548,33 @@ function testMemoryFreeHOF() : void
 }
 
 function allocImage() : void
-{
+    {
     let tmp = createObj();
 }
 
 class Foo {
     pin: number;
     buf: number[];
-    
+
     constructor(k:number, l:number) {
         this.pin = k - l
     }
-    
+
     setPin(p:number) {
         this.pin = p
     }
-    
+
     getPin() {
         return this.pin
     }
-    
+
     init() {
         this.buf = [1, 2]
     }
 }
 
 function testClass()
-{
+    {
     let f = new Foo(272, 100);
     assert(f.getPin() == 172, "ctor")
     f.setPin(42)
