@@ -162,6 +162,8 @@ namespace ts.mbit {
 
     }
 
+    var brokenRegExps = false;
+
     function tokenize(input: string) {
         inputForMsg = input
         let scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, input, msg => {
@@ -180,7 +182,7 @@ namespace ts.mbit {
                 kind = scanner.reScanTemplateToken()
             }
 
-            if (kind == SK.SlashToken || kind == SK.SlashEqualsToken) {
+            if (brokenRegExps && kind == SK.SlashToken || kind == SK.SlashEqualsToken) {
                 let tmp = scanner.reScanSlashToken()
                 if (tmp == SK.RegularExpressionLiteral)
                     kind = tmp;
@@ -617,6 +619,8 @@ namespace ts.mbit {
                         return;
 
                     case SK.ClassKeyword:
+                    case SK.NamespaceKeyword:
+                    case SK.ModuleKeyword:
                     case SK.InterfaceKeyword:
                     case SK.FunctionKeyword:
                         skipUntilBlock();
