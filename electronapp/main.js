@@ -2,6 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const electron = require('electron');
+const child_process = require('child_process');
 
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
@@ -9,6 +10,39 @@ const BrowserWindow = electron.BrowserWindow;
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
+
+function copyFile(source, target) {
+  var rd = fs.createReadStream(source);
+  rd.on("error", done);
+
+  var wr = fs.createWriteStream(target);
+  wr.on("error", done);
+  wr.on("close", function(ex) {
+    done();
+  });
+  rd.pipe(wr);
+
+  function done(err) {
+    console.log(err);
+  }
+}
+
+function deployHexFile(file) {
+    if (process.platform == "win32") {
+        child_process.exec("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem", function (error, stdout, stderr) {
+            let drives = []
+            stdout.split(/\n/).forEach(ln => {
+                let m = /^([A-Z]:).*\s*MICROBIT/.exec(ln)
+                if (m) drives.push(m[1])
+            })
+
+            drives.forEach(function(drive) {
+                copyFile(file, path.join(drive, "firmware.hex"));
+            })
+        })
+    }
+}
+
 
 function createWindow() {
     // Create the browser window.
@@ -31,8 +65,8 @@ function createWindow() {
             console.log('Received bytes: ' + item.getReceivedBytes());
         });
         item.on('done', function (e, state) {
-            // ready to copy
-            
+            if (state == "completed")
+                deployHexFile(fpath);
         });
     });
     // and load the index.html of the app.
