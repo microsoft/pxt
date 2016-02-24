@@ -378,18 +378,23 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     
     newVisualStudioProject() {
         core.confirmAsync({
-            header: lf("create a Visual Studio Code project"),
+            header: lf("New Visual Studio Code project"),
             htmlBody:
-`<p>${lf("Install Node.js and Visual Studio Code. Open a console where you want to create your project and run these commands:")}</p>
+`<p>${lf("<b>yelm</b> comes with command line tools to integrate into existing editors.")}
+${lf("To get started, <a href='{0}' target='_blank'>install Node.js</a>, open a console and run:", "https://nodejs.org/en/download/")}</p>
 <pre>
-npm install yelm-cli --save-dev
-mkdir myproject
-cd myproject
+[sudo] npm install -g yelm-cli
+mkdir myproject && cd myproject
 yelm init myproject
 code
 </pre>
+<p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
+<pre>
+code .
+Ctrl+Shift+B
+</pre>
 `,
-            agreeLbl: lf("got it!")      
+            agreeLbl: lf("Got it!")      
         }).done();
     }
 
