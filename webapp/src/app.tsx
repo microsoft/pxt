@@ -500,7 +500,7 @@ Ctrl+Shift+B
                     }
                     r.run(() => {
                         console.log("DONE")
-                        rt.dumpLivePointers();
+                        yelm.rt.dumpLivePointers();
                         core.infoNotification("Done, check console")
                     })
                 }

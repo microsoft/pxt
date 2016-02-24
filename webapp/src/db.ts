@@ -10,7 +10,7 @@ import * as Promise from "bluebird";
     }
 });
 
-export let db = new PouchDB("mbit", { revs_limit: 2 })
+export let db = new PouchDB("yelm", { revs_limit: 2 })
 
 export class Table {    
     constructor(public name:string)

@@ -1,3 +1,4 @@
+import rt = yelm.rt;
 
 export interface IBoardTheme {
     accent?: string;

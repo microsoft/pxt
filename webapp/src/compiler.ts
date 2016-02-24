@@ -67,11 +67,11 @@ export function compileAsync() {
         })
 }
 
-function compileCoreAsync(opts: ts.mbit.CompileOptions): Promise<ts.mbit.CompileResult> {
+function compileCoreAsync(opts: ts.yelm.CompileOptions): Promise<ts.yelm.CompileResult> {
     return workerOpAsync("compile", { options: opts })
 }
 
-export function workerOpAsync(op: string, arg: ts.mbit.service.OpArg) {
+export function workerOpAsync(op: string, arg: ts.yelm.service.OpArg) {
     return q.enqueue("main", () => new Promise<any>((resolve, reject) => {
         let id = "" + msgId++
         pendingMsgs[id] = v => {
@@ -90,7 +90,7 @@ export function workerOpAsync(op: string, arg: ts.mbit.service.OpArg) {
 }
 
 var firstTypecheck: Promise<void>;
-var cachedApis: ts.mbit.ApisInfo;
+var cachedApis: ts.yelm.ApisInfo;
 var refreshApis = false;
 
 function waitForFirstTypecheckAsync() {

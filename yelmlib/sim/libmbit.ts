@@ -1,6 +1,6 @@
 // Display/button/etc related stuff
 
-namespace rt.micro_bit {
+namespace yelm.rt.micro_bit {
     export function panic(code: number) {
         console.log("PANIC:", code)
         throw new Error("PANIC " + code)

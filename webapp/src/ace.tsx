@@ -9,7 +9,7 @@ import * as data from "./data";
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
 
-let SK = ts.mbit.SymbolKind;
+let SK = ts.yelm.SymbolKind;
 
 var lf = Util.lf
 
@@ -47,15 +47,15 @@ var maxCompleteItems = 20;
 
 export interface CompletionEntry {
     name: string;
-    symbolInfo: ts.mbit.SymbolInfo;
+    symbolInfo: ts.yelm.SymbolInfo;
     lastScore: number;
     searchName: string;
     searchDesc: string;
 }
 
 export interface CompletionCache {
-    apisInfo: ts.mbit.ApisInfo;
-    completionInfo: ts.mbit.CompletionInfo;
+    apisInfo: ts.yelm.ApisInfo;
+    completionInfo: ts.yelm.CompletionInfo;
     entries: CompletionEntry[];
     posTxt: string;
 }
@@ -147,7 +147,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(compl => {
                 cache.completionInfo = compl;
                 console.log(compl)
-                let mkEntry = (q: string, si: ts.mbit.SymbolInfo) => fixupSearch({
+                let mkEntry = (q: string, si: ts.yelm.SymbolInfo) => fixupSearch({
                     name: si.isContextual ? si.name : q,
                     symbolInfo: si,
                     lastScore: 0,
@@ -285,7 +285,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         let imgLit = !!si.attributes.imageLiteral
 
-        let defaultVal = (p: ts.mbit.ParameterDesc) => {
+        let defaultVal = (p: ts.yelm.ParameterDesc) => {
             if (p.initializer) return p.initializer
             if (p.defaults) return p.defaults[0]
             if (p.type == "number") return "0"
@@ -497,7 +497,7 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 if (false && insString == "\n") {
-                    let formatted = ts.mbit.format(this.editor.getValue())
+                    let formatted = ts.yelm.format(this.editor.getValue())
                     if (formatted)
                         this.editor.setValue(formatted)
                 }

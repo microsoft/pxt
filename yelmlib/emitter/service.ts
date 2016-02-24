@@ -1,4 +1,4 @@
-namespace ts.mbit {
+namespace ts.yelm {
     export interface ParameterDesc {
         name: string;
         description: string;
@@ -239,7 +239,7 @@ namespace ts.mbit {
 }
 
 
-namespace ts.mbit.service {
+namespace ts.yelm.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],
@@ -377,7 +377,7 @@ namespace ts.mbit.service {
         },
 
         apiInfo: () => {
-            return (lastApiInfo = mbit.getApiInfo(service.getProgram()))
+            return (lastApiInfo = getApiInfo(service.getProgram()))
         },
     }
 

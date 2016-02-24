@@ -1,4 +1,4 @@
-namespace rt.state {
+namespace yelm.rt.state {
     export enum DisplayMode {
         bw,
         greyscale

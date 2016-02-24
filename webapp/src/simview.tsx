@@ -3,6 +3,8 @@ import * as ReactDOM from "react-dom";
 import * as simsvg from "./simsvg";
 import * as sui from "./sui"
 
+import rt = yelm.rt;
+
 export class MbitRuntime extends rt.Runtime {
     constructor(code:string) {
         super(code)

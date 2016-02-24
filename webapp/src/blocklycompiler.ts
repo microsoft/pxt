@@ -1466,7 +1466,7 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
                 e.stdCallTable[fn.attributes.blockId] = {
                     namespace: fn.namespace,
                     f: fn.name,
-                    isExtensionMethod: fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property,
+                    isExtensionMethod: fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property,
                     hasHandler: fn.parameters.some(p => p.type == "() => void"),
                     args: fn.parameters.map(p => {
                         if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };

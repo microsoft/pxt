@@ -1,7 +1,7 @@
 {
   "name": "webapp",
   "version": "1.0.0",
-  "description": "Web app for tsmbit",
+  "description": "Web app for yelm",
   "private": true,
   "dependencies": {
     "brace": "^0.7.0",

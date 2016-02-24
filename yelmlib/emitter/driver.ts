@@ -6,7 +6,7 @@
 /// <reference path="thumb.ts"/>
 /// <reference path="emitter.ts"/>
 
-namespace ts.mbit {
+namespace ts.yelm {
     export interface CompileOptions {
         fileSystem: StringMap<string>;
         sourceFiles?: string[];
@@ -98,9 +98,9 @@ namespace ts.mbit {
         res.times["typescript"] = emitStart - startTime 
 
         if (res.diagnostics.length == 0) {
-            const mbitOutput = emitMBit(program, host, opts);
-            res.times["emitmbit"] = Date.now() - emitStart
-            res.diagnostics = mbitOutput.diagnostics
+            const binOutput = compileBinary(program, host, opts);
+            res.times["compilebinary"] = Date.now() - emitStart
+            res.diagnostics = binOutput.diagnostics
         }
 
         res.diagnostics = patchUpDiagnostics(res.diagnostics)

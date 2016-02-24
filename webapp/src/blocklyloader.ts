@@ -15,7 +15,7 @@ Object.keys(Blockly.Blocks).forEach(k => builtinBlocks[k] = Blockly.Blocks[k]);
 // blocks cached
 interface CachedBlock {
     hash: string;
-    fn: ts.mbit.SymbolInfo;
+    fn: ts.yelm.SymbolInfo;
     block: {
         init: () => void;
     };
@@ -42,7 +42,7 @@ export interface BlockParameter {
     shadowValue?: string;
 }
 
-export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<BlockParameter> {
+export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockParameter> {
     // collect blockly parameter name mapping
     const instance = fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property;
     let attrNames: Util.StringMap<BlockParameter> = {};
@@ -68,7 +68,7 @@ export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<BlockPara
     return attrNames;
 }
 
-function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     //
     // toolbox update
     //
@@ -113,7 +113,7 @@ function iconToFieldImage(c: string): Blockly.FieldImage {
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): boolean {
+function injectBlockDefinition(info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): boolean {
     let id = fn.attributes.blockId;
 
     if (builtinBlocks[id]) {
@@ -146,8 +146,8 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
     return true;
 }
 
-function initField(i: any, ni: number, fn: ts.mbit.SymbolInfo, pre: string, right?: boolean, type?: string): any {
-    if (ni == 0 && fn.attributes.icon)
+function initField(i:any, ni:number, fn:ts.yelm.SymbolInfo, pre: string, right? :boolean, type? : string) : any {
+    if (ni == 0 && fn.attributes.icon) 
         i.appendField(iconToFieldImage(fn.attributes.icon))
     if (pre)
         i.appendField(pre);
@@ -158,7 +158,7 @@ function initField(i: any, ni: number, fn: ts.mbit.SymbolInfo, pre: string, righ
     return i;
 }
 
-function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     block.setHelpUrl("./" + fn.attributes.help);
     const ns = fn.namespace.split('.')[0];
     const instance = fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property;
@@ -195,7 +195,7 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
                 i = initField(block.appendValueInput(p), ni, fn, pre, true, "String");
             } else {
                 let prtype = Util.lookup(info.apis.byQName, pr.type);
-                if (prtype && prtype.kind == ts.mbit.SymbolKind.Enum) {
+                if (prtype && prtype.kind == ts.yelm.SymbolKind.Enum) {
                     let dd = Util.values(info.apis.byQName)
                         .filter(e => e.namespace == pr.type)
                         .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);
@@ -281,14 +281,14 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
     }
 }
 
-function removeBlock(fn: ts.mbit.SymbolInfo) {
+function removeBlock(fn: ts.yelm.SymbolInfo) {
     delete Blockly.Blocks[fn.attributes.blockId];
     delete cachedBlocks[fn.attributes.blockId];
 }
 
 export interface BlocksInfo {
-    apis: ts.mbit.ApisInfo;
-    blocks: ts.mbit.SymbolInfo[];
+    apis: ts.yelm.ApisInfo;
+    blocks: ts.yelm.SymbolInfo[];
 }
 
 export function getBlocksAsync(): Promise<BlocksInfo> {

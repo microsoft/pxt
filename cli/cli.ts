@@ -107,7 +107,7 @@ export function compileAsync(...fileNames: string[]) {
 
     let hexinfo = require("../generated/hexinfo.js");
 
-    let res = ts.mbit.compile({
+    let res = ts.yelm.compile({
         fileSystem: fileText,
         sourceFiles: fileNames,
         hexinfo: hexinfo
@@ -314,7 +314,7 @@ export function formatAsync(...fileNames: string[]) {
     if (fileNames.length > 0) {
         for (let f of fileNames) {
             let t = fs.readFileSync(f, "utf8")
-            t = ts.mbit.format(t)
+            t = ts.yelm.format(t)
             let fn = f + ".new"
             if (!t) {
                 console.log("already formatted:", f)
@@ -368,10 +368,10 @@ function buildCoreAsync(mode: BuildOption) {
                 if (mode == BuildOption.Run) {
                     let f = res.outfiles["microbit.js"]
                     if (f) {
-                        let r = new rt.Runtime(f)
+                        let r = new yelm.rt.Runtime(f)
                         r.run(() => {
                             console.log("DONE")
-                            rt.dumpLivePointers();
+                            yelm.rt.dumpLivePointers();
                         })
                     }
                 }
