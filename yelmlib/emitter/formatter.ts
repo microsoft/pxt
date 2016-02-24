@@ -370,14 +370,13 @@ namespace ts.mbit {
         }
     }
 
-    function delimitStmts(tokens: Token[], ctxToken: Token = null): Stmt[] {
+    function delimitStmts(tokens: Token[], inStmtCtx: boolean, ctxToken: Token = null): Stmt[] {
         let res: Stmt[] = []
         let i = 0;
         let currCtxToken: Token;
         let didBlock = false;
 
-        tokens = trimWhitespace(tokens)
-        tokens.push(mkEOF())
+        tokens = tokens.concat([mkEOF()])
 
         while (tokens[i].kind != TokenKind.EOF) {
             let stmtBeg = i
@@ -389,12 +388,14 @@ namespace ts.mbit {
         return res
 
         function addStatement(tokens: Token[]) {
-            tokens = trimWhitespace(tokens)
+            if (inStmtCtx)
+                tokens = trimWhitespace(tokens)
+            if (tokens.length == 0) return
             tokens.forEach(delimitIn)
             tokens = injectBlocks(tokens)
 
             let merge = false
-            if (res.length > 0) {
+            if (inStmtCtx && res.length > 0) {
                 let prev = res[res.length - 1]
                 let prevKind = prev.tokens[0].synKind
                 let thisKind = tokens[0].synKind
@@ -424,7 +425,7 @@ namespace ts.mbit {
                     delete inner[0].blockSpanLength
                     delete inner[0].blockSpanIsVirtual
                     i += inner.length
-                    inner = injectBlocks(inner)                    
+                    inner = injectBlocks(inner)
                     if (isVirtual) {
                         output.push(mkVirtualTree(inner))
                     } else {
@@ -441,8 +442,7 @@ namespace ts.mbit {
         function delimitIn(t: Token) {
             if (t.kind == TokenKind.Tree) {
                 let tree = t as TreeToken
-                delimitStmts(tree.children, tree)
-                // we ignore the result here
+                tree.children = Util.concat(delimitStmts(tree.children, false, tree).map(s => s.tokens))
             }
         }
 
@@ -490,7 +490,7 @@ namespace ts.mbit {
             let tree = tokens[i] as TreeToken
             Util.assert(tree.kind == TokenKind.Tree)
             let blk = tokens[i] as BlockToken
-            blk.stmts = delimitStmts(tree.children, currCtxToken)
+            blk.stmts = delimitStmts(tree.children, true, currCtxToken)
             delete tree.children
             blk.kind = TokenKind.Block
             i++;
@@ -520,7 +520,7 @@ namespace ts.mbit {
                 if (t.kind == TokenKind.EOF)
                     return;
 
-                if (t.synKind == SK.SemicolonToken) {
+                if (inStmtCtx && t.synKind == SK.SemicolonToken) {
                     i++;
                     skipOptionalNewLine();
                     return;
@@ -534,13 +534,16 @@ namespace ts.mbit {
                     } else {
                         let begIdx = i
                         skipToStmtEnd()
-                        tokens[begIdx].blockSpanLength = i - begIdx
+                        let j = i
+                        while (tokens[j].kind == TokenKind.NewLine)
+                            j--;
+                        tokens[begIdx].blockSpanLength = j - begIdx
                         tokens[begIdx].blockSpanIsVirtual = true
                         return
                     }
                 }
 
-                if (infixOperatorPrecedence(t.synKind)) {
+                if (inStmtCtx && infixOperatorPrecedence(t.synKind)) {
                     nextNonWs(true)
                     t = tokens[i]
                     // an infix operator at the end of the line prevents the newline from ending the statement
@@ -549,7 +552,7 @@ namespace ts.mbit {
                     continue;
                 }
 
-                if (t.kind == TokenKind.NewLine) {
+                if (inStmtCtx && t.kind == TokenKind.NewLine) {
                     nextNonWs();
                     t = tokens[i]
                     // if we get a infix operator other than +/- after newline, it's a continuation
@@ -654,7 +657,7 @@ namespace ts.mbit {
     }
 
     export function toStr(v: any) {
-        if (Array.isArray(v)) return v.map(toStr).join(" : ")
+        if (Array.isArray(v)) return "[[ " + v.map(toStr).join("  ") + " ]]"
         if (typeof v.text == "string")
             return JSON.stringify(v.text)
         return v + ""
@@ -668,7 +671,7 @@ namespace ts.mbit {
         let topTokens = r.tokens
         topTokens = emptyLinesToComments(topTokens)
         topTokens = matchBraces(topTokens)
-        let topStmts = delimitStmts(topTokens)
+        let topStmts = delimitStmts(topTokens, true)
 
         let ind = ""
         let output = ""

@@ -308,10 +308,11 @@ function cmdFormat() {
         for (let f of cmdArgs) {
             let t = fs.readFileSync(f, "utf8")
             t = ts.mbit.format(t)
+            let fn = "tmp/" + f
             if (!t) {
                 console.log("already formatted:", f)
+                fs.unlink(fn, err => { })
             } else {
-                let fn = "tmp/" + f
                 fs.writeFileSync(fn, t, "utf8")
                 console.log("written:", fn)
             }
