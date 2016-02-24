@@ -13,6 +13,7 @@
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
     "semantic-ui-less": "^2.1.8",
+    "bluebird": "^3.1.4",
     "typescript": "^1.9.0-dev.20160201"
   },
   "devDependencies": {
