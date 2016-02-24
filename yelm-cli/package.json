@@ -1,10 +1,10 @@
 {
   "name": "yelm-cli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "yelm - command line interface",
   "keywords": [
-      "TypeScript",
-      "microbit"
+    "TypeScript",
+    "microbit"
   ],
   "repository": {
     "type": "git",
@@ -14,14 +14,13 @@
   "license": "MIT",
   "homepage": "https://github.com/Microsoft/yelm#readme",
   "files": [
-      "README.md",
-      "cli.js",
-      "yelm"
+    "README.md",
+    "cli.js",
+    "yelm"
   ],
   "preferGlobal": true,
   "bin": {
-     "yelm": "./yelm"
+    "yelm": "./yelm"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }

@@ -6,7 +6,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
-Promise = require("bluebird");
+let prevExports = (global as any).savedModuleExports
+if (prevExports) {
+    module.exports = prevExports
+}
 
 export interface UserConfig {
     accessToken?: string;
@@ -34,9 +37,9 @@ function reportDiagnosticSimply(diagnostic: ts.Diagnostic): void {
     console.log(output);
 }
 
-function fatal(msg: string) {
+function fatal(msg: string): Promise<any> {
     console.log("Fatal error:", msg)
-    process.exit(1)
+    throw new Error(msg)
 }
 
 let globalConfig: UserConfig = {}
@@ -69,25 +72,25 @@ function initConfig() {
     }
 }
 
-let cmdArgs: string[];
-
-function cmdLogin() {
-    if (/^http/.test(cmdArgs[0])) {
-        globalConfig.accessToken = cmdArgs[0]
+export function loginAsync(access_token: string) {
+    if (/^http/.test(access_token)) {
+        globalConfig.accessToken = access_token
         saveConfig()
     } else {
         let root = Cloud.apiRoot.replace(/api\/$/, "")
         console.log("USAGE:")
         console.log(`  yelm login https://example.com/?access_token=...`)
         console.log(`Go to ${root}oauth/gettoken to obtain the token.`)
-        fatal("Bad usage")
+        return fatal("Bad usage")
     }
+
+    return Promise.resolve()
 }
 
-function cmdApi() {
-    let dat = cmdArgs[1] ? eval("(" + cmdArgs[1] + ")") : null
-    Cloud.privateRequestAsync({
-        url: cmdArgs[0],
+export function apiAsync(path: string, postArguments?: string) {
+    let dat = postArguments ? eval("(" + postArguments + ")") : null
+    return Cloud.privateRequestAsync({
+        url: path,
         data: dat
     })
         .then(resp => {
@@ -95,9 +98,8 @@ function cmdApi() {
         })
 }
 
-function cmdCompile() {
+export function compileAsync(...fileNames: string[]) {
     let fileText: any = {}
-    let fileNames = cmdArgs
 
     fileNames.forEach(fn => {
         fileText[fn] = fs.readFileSync(fn, "utf8")
@@ -116,7 +118,10 @@ function cmdCompile() {
 
     reportDiagnostics(res.diagnostics);
 
-    process.exit(res.success ? 0 : 1)
+    if (!res.success)
+        return Promise.reject(new Error("Errors compiling"))
+
+    return Promise.resolve()
 }
 
 let readFileAsync: any = Promise.promisify(fs.readFile)
@@ -211,37 +216,34 @@ class Host
 
 let mainPkg = new yelm.MainPackage(new Host())
 
-function cmdInstall() {
+export function installAsync(packageName?: string) {
     ensurePkgDir();
-    if (cmdArgs[0]) {
-        Promise.mapSeries(cmdArgs, n => mainPkg.installPkgAsync(n)).done()
+    if (packageName) {
+        return mainPkg.installPkgAsync(packageName)
     } else {
-        mainPkg.installAllAsync().done()
+        return mainPkg.installAllAsync()
     }
 }
 
-function cmdInit() {
-    mainPkg.initAsync(cmdArgs[0] || "")
+export function initAsync(packageName: string) {
+    return mainPkg.initAsync(packageName || "")
         .then(() => mainPkg.installAllAsync())
-        .done()
 }
 
-function cmdPublish() {
+export function publishAsync() {
     ensurePkgDir();
-    mainPkg.publishAsync().done()
+    return mainPkg.publishAsync()
 }
 
-function cmdDeploy() {
-    cmdBuild(true)
+enum BuildOption {
+    JustBuild,
+    Run,
+    Deploy
 }
 
-function cmdRun() {
-    cmdBuild(false, true)
-}
-
-function cmdService() {
+export function serviceAsync(cmd: string) {
     let fn = "built/response.json"
-    mainPkg.serviceAsync(cmdArgs[0])
+    return mainPkg.serviceAsync(cmd)
         .then(res => {
             if (res.errorMessage) {
                 console.error("Error calling service:", res.errorMessage)
@@ -256,9 +258,9 @@ function cmdService() {
         })
 }
 
-function cmdGenEmbed() {
+export function genembedAsync() {
     let fn = "built/yelmembed.js"
-    mainPkg.filesToBePublishedAsync()
+    return mainPkg.filesToBePublishedAsync()
         .then(res => {
             return mainPkg.host().writeFileAsync(mainPkg, fn,
                 "window.yelmEmbed = window.yelmEmbed || {};\n" +
@@ -270,8 +272,7 @@ function cmdGenEmbed() {
         })
 }
 
-
-function cmdTime() {
+export function timeAsync() {
     ensurePkgDir();
     let min: Util.StringMap<number> = null;
     let loop = () =>
@@ -286,7 +287,7 @@ function cmdTime() {
                 }
                 console.log(res.times)
             })
-    loop()
+    return loop()
         .then(loop)
         .then(loop)
         .then(loop)
@@ -303,15 +304,15 @@ function cmdTime() {
         .then(() => console.log("MIN", min))
 }
 
-function cmdFormat() {
+export function formatAsync(...fileNames: string[]) {
     let inPlace = false
-    if (cmdArgs[0] == "-i") {
-        cmdArgs.shift()
+    if (fileNames[0] == "-i") {
+        fileNames.shift()
         inPlace = true
     }
 
-    if (cmdArgs.length > 0) {
-        for (let f of cmdArgs) {
+    if (fileNames.length > 0) {
+        for (let f of fileNames) {
             let t = fs.readFileSync(f, "utf8")
             t = ts.mbit.format(t)
             let fn = f + ".new"
@@ -332,11 +333,13 @@ function cmdFormat() {
     } else {
         // TODO format files in current package
     }
+
+    return Promise.resolve()
 }
 
-function cmdBuild(deploy = false, run = false) {
+function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
-    mainPkg.buildAsync()
+    return mainPkg.buildAsync()
         .then(res => Util.mapStringMapAsync(res.outfiles, (fn, c) =>
             mainPkg.host().writeFileAsync(mainPkg, "built/" + fn, c))
             .then(() => {
@@ -345,7 +348,7 @@ function cmdBuild(deploy = false, run = false) {
                     process.exit(1)
                 }
             })
-            .then(() => deploy ? getBitDrivesAsync() : null)
+            .then(() => mode == BuildOption.Deploy ? getBitDrivesAsync() : null)
             .then(drives => {
                 if (!drives) {
                     return
@@ -362,7 +365,7 @@ function cmdBuild(deploy = false, run = false) {
                         }))
             })
             .then(() => {
-                if (run) {
+                if (mode == BuildOption.Run) {
                     let f = res.outfiles["microbit.js"]
                     if (f) {
                         let r = new rt.Runtime(f)
@@ -374,43 +377,65 @@ function cmdBuild(deploy = false, run = false) {
                 }
             })
         )
-        .done()
+}
+
+export function buildAsync() {
+    return buildCoreAsync(BuildOption.JustBuild)
+}
+
+export function deployAsync() {
+    return buildCoreAsync(BuildOption.Deploy)
+}
+
+export function runAsync() {
+    return buildCoreAsync(BuildOption.Run)
 }
 
 interface Command {
-    n: string;
-    f: () => void;
-    a: string;
-    d: string;
-    o?: number;
+    name: string;
+    fn: () => void;
+    argDesc: string;
+    desc: string;
+    priority?: number;
 }
 
-let cmds: Command[] = [
-    { n: "login", f: cmdLogin, a: "ACCESS_TOKEN", d: "set access token config variable" },
-    { n: "init", f: cmdInit, a: "PACKAGE_NAME", d: "start new package" },
-    { n: "install", f: cmdInstall, a: "[PACKAGE...]", d: "install new packages, or all packages" },
-    { n: "publish", f: cmdPublish, a: "", d: "publish current package" },
-    { n: "build", f: cmdBuild, a: "", d: "build current package" },
-    { n: "deploy", f: cmdDeploy, a: "", d: "build and deploy current package" },
-    { n: "run", f: cmdRun, a: "", d: "build and run current package in the simulator" },
-    { n: "service", f: cmdService, a: "OPERATION", d: "simulate a query to web worker" },
-    { n: "genembed", f: cmdGenEmbed, a: "", d: "generate built/yelmembed.js from current package" },
-    { n: "time", f: cmdTime, a: "", d: "measure performance of the compiler on the current package" },
-    { n: "format", f: cmdFormat, a: "[-i] file.ts...", d: "pretty-print TS files; -i = in-place" },
-    { n: "help", f: usage, a: "", d: "display this message" },
+let cmds: Command[] = []
 
-    { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call", o: 1 },
-    { n: "compile", f: cmdCompile, a: "FILE...", d: "hex-compile given set of files", o: 1 },
-]
+function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 0) {
+    let m = /^(\S+)(\s+)(.*?)\s+- (.*)/.exec(desc)
+    cmds.push({
+        name: m[1],
+        argDesc: m[3],
+        desc: m[4],
+        fn: cb,
+        priority: priority
+    })
+}
 
-function usage() {
+cmd("login    ACCESS_TOKEN    - set access token config variable", loginAsync)
+cmd("init     PACKAGE_NAME    - start new package", initAsync)
+cmd("install  [PACKAGE...]    - install new packages, or all packages", installAsync)
+cmd("publish                  - publish current package", publishAsync)
+cmd("build                    - build current package", buildAsync)
+cmd("deploy                   - build and deploy current package", deployAsync)
+cmd("run                      - build and run current package in the simulator", runAsync)
+cmd("format   [-i] file.ts... - pretty-print TS files; -i = in-place", formatAsync)
+cmd("help                     - display this message", helpAsync)
+
+cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
+cmd("genembed                 - generate built/yelmembed.js from current package", genembedAsync, 1)
+cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)
+cmd("compile  FILE...         - hex-compile given set of files", compileAsync, 2)
+cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)
+
+export function helpAsync(all?: string) {
     let f = (s: string, n: number) => {
         while (s.length < n) {
             s += " "
         }
         return s
     }
-    let showAll = cmdArgs[0] == "all"
+    let showAll = all == "all"
     console.log("USAGE: yelm command args...")
     if (showAll) {
         console.log("All commands:")
@@ -418,11 +443,11 @@ function usage() {
         console.log("Common commands (use 'yelm help all' to show all):")
     }
     cmds.forEach(cmd => {
-        if (showAll || !cmd.o) {
-            console.log(f(cmd.n, 10) + f(cmd.a, 20) + cmd.d);
+        if (showAll || !cmd.priority) {
+            console.log(f(cmd.name, 10) + f(cmd.argDesc, 20) + cmd.desc);
         }
     })
-    process.exit(1)
+    return Promise.resolve()
 }
 
 function goToPkgDir() {
@@ -463,15 +488,11 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-export function main() {
-    // no, please, I want to handle my errors myself
-    let async = (<any>Promise)._async
-    async.fatalError = (e: any) => async.throwLater(e);
+export function mainCli() {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
     let args = process.argv.slice(2)
-    cmdArgs = args.slice(1)
 
     initConfig();
 
@@ -481,11 +502,25 @@ export function main() {
         cmd = "deploy"
     }
 
-    let cc = cmds.filter(c => c.n == cmd)[0]
+    let cc = cmds.filter(c => c.name == cmd)[0]
     if (!cc) {
-        usage()
+        helpAsync()
+            .then(() => process.exit(1))
+    } else {
+        cc.fn.apply(null, args.slice(1))
     }
-    cc.f()
 }
 
-main();
+function initGlobals() {
+    let g = global as any
+    g.yelm = yelm;
+    g.ts = ts;
+    g.Util = Util;
+    g.Cloud = Cloud;
+}
+
+initGlobals();
+
+if (require.main === module) {
+    mainCli();
+}

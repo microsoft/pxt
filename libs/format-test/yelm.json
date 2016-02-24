@@ -1,0 +1,11 @@
+{
+    "name": "format-test",
+    "description": "Test for 'yelm format' command",
+    "files": [
+        "format-ok.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "core": "file:../core"
+    }
+}

@@ -46,8 +46,8 @@ function main() {
         console.error("cannot find built/yelm.js; maybe try 'yelm selfinstall'")
         process.exit(1)
     }
-    
-    require(path)
+
+    require(path).mainCli();
 }
 
 main();

@@ -3,7 +3,7 @@
         "target": "es5",
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "declaration": false,
+        "declaration": true,
         "outDir": "../built",
         "module": "commonjs",
         "rootDir": ".",

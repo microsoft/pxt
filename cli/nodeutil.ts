@@ -6,6 +6,8 @@ import * as https from 'https';
 import * as events from 'events';
 import * as crypto from 'crypto';
 
+Promise = require("bluebird");
+
 function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
         var bufs: Buffer[] = []
@@ -97,6 +99,10 @@ function sha256(hashData: string): string {
 
 
 function init() {
+    // no, please, I want to handle my errors myself
+    let async = (<any>Promise)._async
+    async.fatalError = (e: any) => async.throwLater(e);
+
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
     Util.sha256 = sha256;
