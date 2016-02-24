@@ -5,6 +5,7 @@ enum DisplayMode {
     Greyscale,
 }
 
+//% color=3 weight=91
 namespace led {
     /**
      * Turn on the specified LED using ``x``, ``y`` coordinates (``x`` is horizontal, ``y`` is vertical)

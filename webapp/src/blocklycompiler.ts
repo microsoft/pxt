@@ -698,11 +698,6 @@ function infer(e: Environment, w: B.Workspace) {
                 case "controls_simple_for":
                     unionParam(e, b, "TO", ground(Type.Number));
                     break;
-
-                case "text_print":
-                    unionParam(e, b, "TEXT", ground(Type.String));
-                    break;
-
                 case "variables_set":
                 case "variables_change":
                     var x = b.getFieldValue("VAR");
@@ -718,11 +713,6 @@ function infer(e: Environment, w: B.Workspace) {
                         }
                     }
                     break;
-
-                case "device_comment":
-                    unionParam(e, b, "comment", ground(Type.String));
-                    break;
-
                 case "controls_repeat_ext":
                     unionParam(e, b, "TIMES", ground(Type.Number));
                     break;
@@ -1194,7 +1184,7 @@ function mkCallWithCallback(e: Environment, n: string, f: string, args: J.JExpr[
 function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
     var bBody = b.getInputTargetBlock("HANDLER");
     var compiledArgs = args.map((arg: string) => {
-        return H.mkStringLiteral(b.getFieldValue(arg));
+        return H.mkLocalRef(b.getFieldValue(arg))
     });
     var body = compileStatements(e, bBody);
     return mkCallWithCallback(e, ns, event, compiledArgs, body);

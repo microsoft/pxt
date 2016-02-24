@@ -97,6 +97,7 @@ enum Notes {
     B5,
 }
 
+//% color=52 weight=91
 namespace music {
     var beatsPerMinute: number = 120;
 

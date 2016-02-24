@@ -1,0 +1,12 @@
+{
+    "name": "devices",
+    "description": "The BLE specific services",
+    "files": [
+        "README.md",
+        "devices.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "mbit": "file:../mbit"        
+    }
+}

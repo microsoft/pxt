@@ -15,7 +15,6 @@
         "music.ts",
         "game.ts",
         "pins.ts",
-        "devices.ts",
         "serial.ts"
     ],
     "public": true,

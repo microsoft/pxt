@@ -109,6 +109,7 @@ namespace ts.mbit {
         blockId?: string;
         blockGap?: string;
         blockExternalInputs?:boolean;
+        color?:number;
         icon?: string;
         imageLiteral?: boolean;
         weight?: number;
