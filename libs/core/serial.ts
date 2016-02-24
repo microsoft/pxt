@@ -26,22 +26,19 @@ namespace serial {
      * Sends a piece of text through Serial connection.
      */
     //% shim=micro_bit::serialSendString
-    export function writeString(text: string): void {
-    }
+    export function writeString(text: string): void { }
 
     /**
      * Sends the current pixel values, byte-per-pixel, over serial.
      */
     //% shim=micro_bit::serialSendDisplayState
-    export function writeScreen(): void {
-    }
+    export function writeScreen(): void { }
 
     /**
      * Reads the screen from serial.
      */
     //% shim=micro_bit::serialReadDisplayState
-    export function readScreen(): void {
-    }
+    export function readScreen(): void { }
 
     /**
      * Writes a ``name: value`` pair line to the serial.
@@ -52,5 +49,5 @@ namespace serial {
         writeString(": ");
         writeNumber(value);
         writeLine("");
-    }    
+    }
 }

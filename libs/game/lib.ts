@@ -20,7 +20,7 @@ namespace game {
     export function score(): number {
         return _score;
     }
-    
+
     /**
      * Adds points to the current score
      * @param points TODO
@@ -37,7 +37,7 @@ namespace game {
 0 0 0 0 0 0 0 1 0 0 0 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 0 0 1 0 0 0 0 0`, 20);
         });
-    }    
+    }
 
     /**
      * Starts a game countdown timer
@@ -60,8 +60,8 @@ namespace game {
                 gameOver();
             });
         }
-    }    
-    
+    }
+
     /**
      * Displays a game over animation.
      */
@@ -94,15 +94,14 @@ namespace game {
                     showScore();
                 }
             }
-        }
-        else {
+        } else {
             // already in game over mode in another fiber
             while (true) {
                 basic.pause(10000);
             }
         }
     }
-        
+
     /**
      * Sets the current score value
      * @param value TODO
@@ -148,8 +147,7 @@ namespace game {
     export function currentTime(): number {
         if (_endTime > 0) {
             return Math.max(0, _endTime - input.runningTime());
-        }
-        else {
+        } else {
             return input.runningTime() - _startTime;
         }
     }
@@ -232,8 +230,7 @@ namespace game {
     function checkStart(): boolean {
         if (_countdownPause > 0 || _startTime > 0) {
             return false;
-        }
-        else {
+        } else {
             return true;
         }
     }
@@ -271,29 +268,22 @@ namespace game {
         public move(leds: number): void {
             if (this._dir == 0) {
                 this._y = this._y - leds;
-            }
-            else if (this._dir == 45) {
+            } else if (this._dir == 45) {
                 this._x = this._x + leds;
                 this._y = this._y - leds;
-            }
-            else if (this._dir == 90) {
+            } else if (this._dir == 90) {
                 this._x = this._x + leds;
-            }
-            else if (this._dir == 135) {
+            } else if (this._dir == 135) {
                 this._x = this._x + leds;
                 this._y = this._y + leds;
-            }
-            else if (this._dir == 180) {
+            } else if (this._dir == 180) {
                 this._y = this._y + leds;
-            }
-            else if (this._dir == -45) {
+            } else if (this._dir == -45) {
                 this._x = this._x - leds;
                 this._y = this._y - leds;
-            }
-            else if (this._dir == -90) {
+            } else if (this._dir == -90) {
                 this._x = this._x - leds;
-            }
-            else {
+            } else {
                 this._x = this._x - leds;
                 this._y = this._y + leds;
             }
@@ -323,57 +313,42 @@ namespace game {
         public ifOnEdge_Bounce(): void {
             if (this._dir == 0 && this._y == 0) {
                 this._dir = 180;
-            }
-            else if (this._dir == 45 && (this._x == 4 || this._y == 0)) {
+            } else if (this._dir == 45 && (this._x == 4 || this._y == 0)) {
                 if (this._x == 0 && this._y == 0) {
                     this._dir = -135;
-                }
-                else if (this._y == 0) {
+                } else if (this._y == 0) {
                     this._dir = 135;
-                }
-                else {
+                } else {
                     this._dir = -45;
                 }
-            }
-            else if (this._dir == 90 && this._x == 4) {
+            } else if (this._dir == 90 && this._x == 4) {
                 this._dir = -90;
-            }
-            else if (this._dir == 135 && (this._x == 4 || this._y == 4)) {
+            } else if (this._dir == 135 && (this._x == 4 || this._y == 4)) {
                 if (this.x() == 4 && this.y() == 4) {
                     this._dir = -45;
-                }
-                else if (this._y == 4) {
+                } else if (this._y == 4) {
                     this._dir = 45;
-                }
-                else {
+                } else {
                     this._dir = -135;
                 }
-            }
-            else if (this._dir == 180 && this._y == 4) {
+            } else if (this._dir == 180 && this._y == 4) {
                 this._dir = 0;
-            }
-            else if (this._dir == -45 && (this._x == 0 || this._y == 0)) {
+            } else if (this._dir == -45 && (this._x == 0 || this._y == 0)) {
                 if (this.x() == 0 && this.y() == 0) {
                     this._dir = 135;
-                }
-                else if (this._y == 0) {
+                } else if (this._y == 0) {
                     this._dir = -135;
-                }
-                else {
+                } else {
                     this._dir = 45;
                 }
-            }
-            else if (this._dir == -90 && this._x == 0) {
+            } else if (this._dir == -90 && this._x == 0) {
                 this._dir = 90;
-            }
-            else if (this._dir == -135 && (this._x == 0 || this._y == 4)) {
+            } else if (this._dir == -135 && (this._x == 0 || this._y == 4)) {
                 if (this._x == 0 && this._y == 4) {
                     this._dir = 45;
-                }
-                else if (this._y == 4) {
+                } else if (this._y == 4) {
                     this._dir = -45;
-                }
-                else {
+                } else {
                     this._dir = 135;
                 }
             }
@@ -407,8 +382,7 @@ namespace game {
             this._dir = ((degrees / 45) % 8) * 45;
             if (this._dir <= -180) {
                 this._dir = this._dir + 360;
-            }
-            else if (this._dir > 180) {
+            } else if (this._dir > 180) {
                 this._dir = this._dir - 360;
             }
             plot();

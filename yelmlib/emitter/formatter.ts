@@ -28,6 +28,7 @@ namespace ts.mbit {
         lineNo: number;
         synKind: ts.SyntaxKind;
         blockSpanLength?: number;
+        blockSpanIsVirtual?: boolean;
     }
 
     interface TreeToken extends Token {
@@ -161,6 +162,8 @@ namespace ts.mbit {
 
     }
 
+    var brokenRegExps = false;
+
     function tokenize(input: string) {
         inputForMsg = input
         let scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, input, msg => {
@@ -179,7 +182,7 @@ namespace ts.mbit {
                 kind = scanner.reScanTemplateToken()
             }
 
-            if (kind == SK.SlashToken || kind == SK.SlashEqualsToken) {
+            if (brokenRegExps && kind == SK.SlashToken || kind == SK.SlashEqualsToken) {
                 let tmp = scanner.reScanSlashToken()
                 if (tmp == SK.RegularExpressionLiteral)
                     kind = tmp;
@@ -358,14 +361,24 @@ namespace ts.mbit {
         }
     }
 
-    function delimitStmts(tokens: Token[], ctxToken: Token = null): Stmt[] {
+    function mkVirtualTree(toks: Token[]): TreeToken {
+        return {
+            kind: TokenKind.Tree,
+            synKind: SK.WhitespaceTrivia,
+            pos: toks[0].pos,
+            lineNo: toks[0].lineNo,
+            children: toks,
+            text: ""
+        }
+    }
+
+    function delimitStmts(tokens: Token[], inStmtCtx: boolean, ctxToken: Token = null): Stmt[] {
         let res: Stmt[] = []
         let i = 0;
         let currCtxToken: Token;
         let didBlock = false;
 
-        tokens = trimWhitespace(tokens)
-        tokens.push(mkEOF())
+        tokens = tokens.concat([mkEOF()])
 
         while (tokens[i].kind != TokenKind.EOF) {
             let stmtBeg = i
@@ -377,12 +390,14 @@ namespace ts.mbit {
         return res
 
         function addStatement(tokens: Token[]) {
-            tokens = trimWhitespace(tokens)
+            if (inStmtCtx)
+                tokens = trimWhitespace(tokens)
+            if (tokens.length == 0) return
             tokens.forEach(delimitIn)
             tokens = injectBlocks(tokens)
 
             let merge = false
-            if (res.length > 0) {
+            if (inStmtCtx && res.length > 0) {
                 let prev = res[res.length - 1]
                 let prevKind = prev.tokens[0].synKind
                 let thisKind = tokens[0].synKind
@@ -408,11 +423,17 @@ namespace ts.mbit {
             while (i < tokens.length) {
                 if (tokens[i].blockSpanLength) {
                     let inner = tokens.slice(i, i + tokens[i].blockSpanLength)
-                    delete tokens[i].blockSpanLength
-                    injectBlocks(inner)
+                    let isVirtual = !!inner[0].blockSpanIsVirtual
+                    delete inner[0].blockSpanLength
+                    delete inner[0].blockSpanIsVirtual
                     i += inner.length
-                    output.push(mkSpace(inner[0], " "))
-                    output.push(mkBlock(trimWhitespace(inner)))
+                    inner = injectBlocks(inner)
+                    if (isVirtual) {
+                        output.push(mkVirtualTree(inner))
+                    } else {
+                        output.push(mkSpace(inner[0], " "))
+                        output.push(mkBlock(trimWhitespace(inner)))
+                    }
                 } else {
                     output.push(tokens[i++])
                 }
@@ -423,8 +444,7 @@ namespace ts.mbit {
         function delimitIn(t: Token) {
             if (t.kind == TokenKind.Tree) {
                 let tree = t as TreeToken
-                delimitStmts(tree.children, tree)
-                // we ignore the result here
+                tree.children = Util.concat(delimitStmts(tree.children, false, tree).map(s => s.tokens))
             }
         }
 
@@ -472,7 +492,7 @@ namespace ts.mbit {
             let tree = tokens[i] as TreeToken
             Util.assert(tree.kind == TokenKind.Tree)
             let blk = tokens[i] as BlockToken
-            blk.stmts = delimitStmts(tree.children, currCtxToken)
+            blk.stmts = delimitStmts(tree.children, true, currCtxToken)
             delete tree.children
             blk.kind = TokenKind.Block
             i++;
@@ -480,29 +500,29 @@ namespace ts.mbit {
         }
 
         function expectBlock() {
-            let begTok = tokens[i + 1]
             let begIdx = i + 1
             nextNonWs()
             if (tokens[i].synKind == SK.OpenBraceToken) {
                 handleBlock()
                 skipOptionalNewLine();
             } else {
-                // TODO stick them into a block
                 skipToStmtEnd();
-                begTok.blockSpanLength = i - begIdx
+                tokens[begIdx].blockSpanLength = i - begIdx
             }
         }
 
         function skipToStmtEnd() {
             while (true) {
                 let t = tokens[i]
+                let bkp = i
+
                 currCtxToken = t
                 didBlock = false
 
                 if (t.kind == TokenKind.EOF)
                     return;
 
-                if (t.synKind == SK.SemicolonToken) {
+                if (inStmtCtx && t.synKind == SK.SemicolonToken) {
                     i++;
                     skipOptionalNewLine();
                     return;
@@ -513,10 +533,19 @@ namespace ts.mbit {
                     if (tokens[i].synKind == SK.OpenBraceToken) {
                         handleBlock();
                         continue;
+                    } else {
+                        let begIdx = i
+                        skipToStmtEnd()
+                        let j = i
+                        while (tokens[j].kind == TokenKind.NewLine)
+                            j--;
+                        tokens[begIdx].blockSpanLength = j - begIdx
+                        tokens[begIdx].blockSpanIsVirtual = true
+                        return
                     }
                 }
 
-                if (infixOperatorPrecedence(t.synKind)) {
+                if (inStmtCtx && infixOperatorPrecedence(t.synKind)) {
                     nextNonWs(true)
                     t = tokens[i]
                     // an infix operator at the end of the line prevents the newline from ending the statement
@@ -525,8 +554,7 @@ namespace ts.mbit {
                     continue;
                 }
 
-                if (t.kind == TokenKind.NewLine) {
-                    let bkp = i
+                if (inStmtCtx && t.kind == TokenKind.NewLine) {
                     nextNonWs();
                     t = tokens[i]
                     // if we get a infix operator other than +/- after newline, it's a continuation
@@ -548,6 +576,8 @@ namespace ts.mbit {
                         return;
                     }
                 }
+
+                Util.assert(bkp == i)
 
                 switch (t.synKind) {
                     case SK.ForKeyword:
@@ -574,12 +604,23 @@ namespace ts.mbit {
                         }
 
                     case SK.ElseKeyword:
+                        nextNonWs();
+                        if (tokens[i].synKind == SK.IfKeyword) {
+                            continue; // 'else if' - keep scanning
+                        } else {
+                            i = bkp;
+                            expectBlock();
+                            return;
+                        }
+
                     case SK.TryKeyword:
                     case SK.FinallyKeyword:
                         expectBlock();
                         return;
 
                     case SK.ClassKeyword:
+                    case SK.NamespaceKeyword:
+                    case SK.ModuleKeyword:
                     case SK.InterfaceKeyword:
                     case SK.FunctionKeyword:
                         skipUntilBlock();
@@ -620,7 +661,7 @@ namespace ts.mbit {
     }
 
     export function toStr(v: any) {
-        if (Array.isArray(v)) return v.map(toStr).join(" : ")
+        if (Array.isArray(v)) return "[[ " + v.map(toStr).join("  ") + " ]]"
         if (typeof v.text == "string")
             return JSON.stringify(v.text)
         return v + ""
@@ -634,7 +675,7 @@ namespace ts.mbit {
         let topTokens = r.tokens
         topTokens = emptyLinesToComments(topTokens)
         topTokens = matchBraces(topTokens)
-        let topStmts = delimitStmts(topTokens)
+        let topStmts = delimitStmts(topTokens, true)
 
         let ind = ""
         let output = ""
@@ -704,11 +745,17 @@ namespace ts.mbit {
                         break;
                     case TokenKind.Block:
                         let blk = t as BlockToken;
-                        output += "\n"
-                        blk.stmts.forEach(ppStmt)
-                        output += ind.slice(4) + "}"
+                        if (blk.stmts.length == 0) {
+                            output += " }"
+                        } else {
+                            output += "\n"
+                            blk.stmts.forEach(ppStmt)
+                            output += ind.slice(4) + "}"
+                        }
                         break;
                     case TokenKind.NewLine:
+                        if (tokens[i + 1] && tokens[i + 1].kind == TokenKind.CommentLine && tokens[i + 1].text == "")
+                            break; // no indent for empty line
                         if (i == tokens.length - 1)
                             output += ind.slice(4)
                         else

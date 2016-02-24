@@ -32,14 +32,18 @@ namespace led {
      */
     //% help=functions/point weight=76 shim=micro_bit::point
     //% blockId=device_point block="point|x %x|y %y" icon="\uf10c"
-    export function point(x: number, y: number): boolean { return false; }
+    export function point(x: number, y: number): boolean {
+        return false;
+    }
 
     /**
      * Get the screen brightness from 0 (off) to 255 (full bright).
      */
     //% help=functions/brightness weight=60 shim=micro_bit::getBrightness
     //% blockId=device_get_brightness block="brightness" icon="\uf042" blockGap=8
-    export function brightness(): number { return 0; }
+    export function brightness(): number {
+        return 0;
+    }
 
     /**
      * Set the screen brightness from 0 (off) to 255 (full bright).
@@ -64,43 +68,38 @@ namespace led {
     //% help=/functions/plot-bar-graph weight=20
     //% blockId=device_plot_bar_graph block="plot bar graph of %value |up to %high" icon="\uf080" blockExternalInputs=true
     export function plotBarGraph(value: number, high: number = 1023): void {
-        let v = (value * 4) / high;        
+        let v = (value * 4) / high;
         if (v <= 0) {
             basic.plotLeds(`0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
 0 0 1 0 0`);
-        }
-        else if (v == 1) {
+        } else if (v == 1) {
             basic.plotLeds(`0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
 1 1 1 1 1`);
-        }
-        else if (v == 2) {
+        } else if (v == 2) {
             basic.plotLeds(`0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
 1 1 1 1 1
 1 1 1 1 1`);
-        }
-        else if (v == 3) {
+        } else if (v == 3) {
             basic.plotLeds(`0 0 0 0 0
 0 0 0 0 0
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1`);
-        }
-        else if (v == 4) {
+        } else if (v == 4) {
             basic.plotLeds(`0 0 0 0 0
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1`);
-        }
-        else {
+        } else {
             basic.plotLeds(`1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
@@ -108,7 +107,7 @@ namespace led {
 1 1 1 1 1`);
         }
     }
-    
+
     /**
      * Sets the display mode between black and white and greyscale for rendering LEDs.
      * @param mode TODO
@@ -125,8 +124,7 @@ namespace led {
     export function toggle(x: number, y: number): void {
         if (led.point(x, y)) {
             led.unplot(x, y);
-        }
-        else {
+        } else {
             led.plot(x, y);
         }
     }
