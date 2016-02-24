@@ -69,7 +69,7 @@ namespace rt {
             var _this = this
 
             function oops(msg: string) {
-                throw new Error("mbitsim error: " + msg)
+                throw new Error("sim error: " + msg)
             }
 
             function push(v: any) {

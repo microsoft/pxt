@@ -5,6 +5,7 @@ enum DisplayMode {
     Greyscale,
 }
 
+//% color=3 weight=91
 namespace led {
     /**
      * Turn on the specified LED using ``x``, ``y`` coordinates (``x`` is horizontal, ``y`` is vertical)
@@ -63,7 +64,7 @@ namespace led {
     //% help=/functions/plot-bar-graph weight=20
     //% blockId=device_plot_bar_graph block="plot bar graph of %value |up to %high" icon="\uf080" blockExternalInputs=true
     export function plotBarGraph(value: number, high: number = 1023): void {
-        let v = pins.map(Math.abs(value), 0, high, 0, 5);
+        let v = (value * 4) / high;        
         if (v <= 0) {
             basic.plotLeds(`0 0 0 0 0
 0 0 0 0 0

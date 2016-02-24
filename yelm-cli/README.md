@@ -1,6 +1,6 @@
 # yelm CLI
 
-Yelm is a package manager for mbit. 
+Yelm is a package manager. 
 
 This NPM packages provides a command line interface to yelm.
 

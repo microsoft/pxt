@@ -1,8 +1,9 @@
 {
-    "name": "hello",
-    "description": "Hello world",
+    "name": "led",
+    "description": "The led services",
     "files": [
-        "hello.ts"
+        "README.md",
+        "lib.ts"
     ],
     "public": true,
     "dependencies": {

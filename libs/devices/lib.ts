@@ -115,6 +115,7 @@ enum MesDpadButtonInfo {
     _4Up,
 }
 
+//% color=156 weight=80
 namespace devices {
     /**
      * Sends a ``camera`` command to the parent device.

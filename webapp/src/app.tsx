@@ -379,7 +379,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     newProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} bit", Util.getAwesomeAdj()),
-            dependencies: { mbit: "*" },
+            dependencies: { core: "*", led:"*", music: "*", radio: "*", game:"*", pins:"*" },
             description: "",
             files: ["main.ts", "README.md"]
         }
@@ -404,7 +404,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     newBlocksProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} block", Util.getAwesomeAdj()),
-            dependencies: { mbit: "*" },
+            dependencies: { core: "*", led:"*", music: "*", radio: "*", game:"*", pins:"*" },
             description: "",
             files: ["main.blocks", "main.blocks.ts", "README.md"]
         }
@@ -532,12 +532,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 <div id="menubar">
                     <div className={"ui menu" + inv}>
                         <div className="item">
-                            <SlotSelector parent={this} />
-                        </div>
-                        <div className="item">
                             <sui.DropdownMenu class="button floating" text={lf("Project") } icon="wrench">
-                                <sui.Item icon="terminal" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
                                 <sui.Item icon="puzzle" text={lf("New Blocks project") } onClick={() => this.newBlocksProject() } />
+                                <sui.Item icon="terminal" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
                                 {this.editor == this.aceEditor ? null :
                                     <sui.Item icon="write" text={lf("Edit text") } onClick={() => this.editText() } />
                                 }
@@ -549,6 +546,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                             </sui.DropdownMenu>
                         </div>
+                        <div className="item">
+                            <SlotSelector parent={this} />
+                        </div>
                         {this.editor.menu() }
                         <div className="item right">
                             {isOffline ?
@@ -559,7 +559,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     popup={lf("You're offline now.") } />
                                 : null}
                             <LoginBox />
-                            <Settings parent={this} />
                         </div>
                     </div>
                 </div>

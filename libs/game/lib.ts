@@ -1,4 +1,5 @@
 
+//% color=176 weight=90
 namespace game {
     var _score: number = 0;
     var _life: number = 3;

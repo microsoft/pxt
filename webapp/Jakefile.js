@@ -44,7 +44,13 @@ file('built/worker.js', ["lower"], function () {
 })
 
 ju.catFiles('built/yelmembed.js', [
-    "../libs/mbit/built/yelmembed.js", 
+    "../libs/core/built/yelmembed.js", 
+    "../libs/music/built/yelmembed.js", 
+    "../libs/radio/built/yelmembed.js", 
+    "../libs/game/built/yelmembed.js", 
+    "../libs/led/built/yelmembed.js", 
+    "../libs/pins/built/yelmembed.js", 
+    "../libs/devices/built/yelmembed.js"
     ])
 
 

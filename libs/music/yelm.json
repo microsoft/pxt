@@ -1,0 +1,12 @@
+{
+    "name": "music",
+    "description": "The music library",
+    "files": [
+        "README.md",
+        "lib.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "core": "file:../core"        
+    }
+}

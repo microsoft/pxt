@@ -1,0 +1,12 @@
+{
+    "name": "pins",
+    "description": "The pins services",
+    "files": [
+        "README.md",
+        "lib.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "core": "file:../core"        
+    }
+}

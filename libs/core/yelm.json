@@ -1,6 +1,6 @@
 {
-    "name": "mbit",
-    "description": "The base mbit library",
+    "name": "core",
+    "description": "The core mbit library",
     "installedVersion": "hgdjzr",
     "files": [
         "README.md",
@@ -10,12 +10,6 @@
         "basic.ts",
         "input.ts",
         "control.ts",        
-        "led.ts",
-        "radio.ts",
-        "music.ts",
-        "game.ts",
-        "pins.ts",
-        "devices.ts",
         "serial.ts"
     ],
     "public": true,

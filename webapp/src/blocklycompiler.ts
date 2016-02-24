@@ -698,11 +698,6 @@ function infer(e: Environment, w: B.Workspace) {
                 case "controls_simple_for":
                     unionParam(e, b, "TO", ground(Type.Number));
                     break;
-
-                case "text_print":
-                    unionParam(e, b, "TEXT", ground(Type.String));
-                    break;
-
                 case "variables_set":
                 case "variables_change":
                     var x = b.getFieldValue("VAR");
@@ -718,11 +713,6 @@ function infer(e: Environment, w: B.Workspace) {
                         }
                     }
                     break;
-
-                case "device_comment":
-                    unionParam(e, b, "comment", ground(Type.String));
-                    break;
-
                 case "controls_repeat_ext":
                     unionParam(e, b, "TIMES", ground(Type.Number));
                     break;
@@ -1133,11 +1123,6 @@ function compileForever(e: Environment, b: B.Block): J.JStmt {
     return mkCallWithCallback(e, "basic", "forever", [], body);
 }
 
-function compilePrint(e: Environment, b: B.Block): J.JStmt {
-    var text = compileExpression(e, b.getInputTargetBlock("TEXT"));
-    return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("post to wall", [text])));
-}
-
 function compileSet(e: Environment, b: B.Block): J.JStmt {
     var bVar = b.getFieldValue("VAR");
     var bExpr = b.getInputTargetBlock("VALUE");
@@ -1160,7 +1145,7 @@ function compileCall(e: Environment, b: B.Block) {
     var call = e.stdCallTable[b.type];
     return call.hasHandler 
         ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
-        : compileStdCall(e, b, e.stdCallTable[b.type]);
+        : H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, e.stdCallTable[b.type])));
 }
 
 function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
@@ -1199,7 +1184,7 @@ function mkCallWithCallback(e: Environment, n: string, f: string, args: J.JExpr[
 function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
     var bBody = b.getInputTargetBlock("HANDLER");
     var compiledArgs = args.map((arg: string) => {
-        return H.mkStringLiteral(b.getFieldValue(arg));
+        return H.mkLocalRef(b.getFieldValue(arg))
     });
     var body = compileStatements(e, bBody);
     return mkCallWithCallback(e, ns, event, compiledArgs, body);
@@ -1393,16 +1378,10 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
                 case 'controls_if':
                     append(stmts, compileControlsIf(e, <B.IfBlock>b));
                     break;
-
                 case 'controls_for':
                 case 'controls_simple_for':
                     append(stmts, compileControlsFor(e, b));
                     break;
-
-                case 'text_print':
-                    stmts.push(compilePrint(e, b));
-                    break;
-
                 case 'variables_set':
                     stmts.push(compileSet(e, b));
                     break;
@@ -1425,26 +1404,9 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
 
                 // Special treatment for the event handlers (they require a specific
                 // compilation scheme with action-handlers).
-                case 'radio_broadcast_received_event':
-                    stmts.push(compileNumberEvent(e, b, "on message received", ["MESSAGE"], "radio"));
-                    break;
-
-                case 'radio_datagraph_received_event':
-                    stmts.push(compileEvent(e, b, "on data received", [], "radio"));
-                    break;
                 case 'device_gesture_event':
                     stmts.push(compileEvent(e, b, "on " + b.getFieldValue("NAME"), [], "input"));
                     break;
-
-                case 'device_pin_event':
-                    stmts.push(compileEvent(e, b, "on pin pressed", ["NAME"], "input"));
-                    break;
-
-                case 'device_show_leds':
-                    stmts.push(H.mkExprStmt(H.mkExprHolder([],
-                        compileImage(e, b, false, "basic", "show leds", [H.mkNumberLiteral(400)]))));
-                    break;
-
                 case 'game_turn_sprite':
                     stmts.push(compileStdBlock(e, b, e.stdCallTable["game_turn_" + b.getFieldValue("direction")]));
                     break;
@@ -1517,7 +1479,7 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
                     isExtensionMethod: fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property,
                     hasHandler: fn.parameters.some(p => p.type == "() => void"),
                     args: fn.parameters.map(p => {
-                        if (fieldMap[p.name]) return { field: fieldMap[p.name].name };
+                        if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
                         else return null;
                     }).filter(a => !!a)
                 }
@@ -1859,8 +1821,6 @@ function tdASTtoTS(app: J.JApp) {
             write(") ")
             emitBlock(n.body)
         },
-
-
     }
 
     emit(app)

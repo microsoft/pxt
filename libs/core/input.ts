@@ -48,6 +48,7 @@ enum Gestures {
     ScreenDown
 }
 
+//% color=300 weight=99
 namespace input {
     /**
      * Do something when a button (``A``, ``B`` or both ``A+B``) is pressed

@@ -3,17 +3,9 @@
 import * as compiler from "./compiler"
 
 var blockColors: Util.StringMap<number> = {
-    basic: 190,
-    led: 3,
-    input: 300,
     loops: 120,
-    pins: 351,
-    music: 52,
-    game: 176,
     images: 45,
-    variables: 330,
-    devices: 156,
-    radio: 270,
+    variables: 330
 }
 
 // list of built-in blocks, should be touched.
@@ -67,7 +59,7 @@ export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<BlockPara
     return attrNames;
 }
 
-function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     //
     // toolbox update
     //
@@ -93,6 +85,8 @@ function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.Stri
         console.log('toolbox: adding category ' + fn.namespace)
         category = document.createElement("category");
         category.setAttribute("name", catName)
+        var ns = info.apis.byQName[fn.namespace];
+        if (ns.attributes.color) category.setAttribute("colour", ns.attributes.color)
         tb.appendChild(category);
     }
     category.appendChild(block);
@@ -161,7 +155,10 @@ function initField(i:any, ni:number, fn:ts.mbit.SymbolInfo, pre: string, right? 
 
 function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     block.setHelpUrl("./" + fn.attributes.help);
-    block.setColour(blockColors[fn.namespace] || 255);
+    block.setColour(
+        info.apis.byQName[fn.namespace].attributes.color 
+        || blockColors[fn.namespace] 
+        || 255);
 
     fn.attributes.block.split('|').map((n, ni) => {
         let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
@@ -201,7 +198,7 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
 
     let body = fn.parameters.filter(pr => pr.type == "() => void")[0];
     if (body) {
-        block.appendStatementInput(attrNames[body.name] || "HANDLER")
+        block.appendStatementInput("HANDLER")
             .setCheck("null");
     }
 
@@ -236,7 +233,10 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
 
     blockInfo.blocks.sort((f1, f2) => {
-        return (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
+        let c = (blockInfo.apis.byQName[f2.namespace].attributes.weight || 50) - (blockInfo.apis.byQName[f1.namespace].attributes.weight || 50); 
+        if (c != 0) return c;
+        c = (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
+        return c;
     })
 
     let currentBlocks: Util.StringMap<number> = {};
@@ -248,7 +248,7 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
         .forEach(fn => {
             let pnames = parameterNames(fn);
             if (injectBlockDefinition(blockInfo, fn, pnames)) {
-                injectToolbox(tb, fn, pnames);
+                injectToolbox(tb, blockInfo, fn, pnames);
                 currentBlocks[fn.attributes.blockId] = 1;
             }
         })
