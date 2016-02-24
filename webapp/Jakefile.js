@@ -50,6 +50,7 @@ ju.catFiles('built/yelmembed.js', [
     "../libs/game/built/yelmembed.js", 
     "../libs/led/built/yelmembed.js", 
     "../libs/pins/built/yelmembed.js", 
+    "../libs/serial/built/yelmembed.js",
     "../libs/devices/built/yelmembed.js"
     ])
 

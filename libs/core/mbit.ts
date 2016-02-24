@@ -13,8 +13,12 @@ namespace helpers {
 
 namespace console {
     export function log(msg: string) {
-        serial.writeLine(msg);
+        writeString(msg);
+        writeString("\r\n");
     }
+    
+    //% shim=micro_bit::serialSendString
+    function writeString(text: string): void { }
 }
 
 namespace math {

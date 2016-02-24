@@ -1,9 +1,9 @@
 {
-    "name": "music",
-    "description": "The music library",
+    "name": "serial",
+    "description": "The serial services",
     "files": [
         "README.md",
-        "music.ts"
+        "serial.ts"
     ],
     "public": true,
     "dependencies": {

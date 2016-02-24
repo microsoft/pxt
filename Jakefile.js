@@ -42,6 +42,7 @@ task('embed', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "libs/core", 'node ../../built/yelm.js genembed')
   cmdIn(this, "libs/music", 'node ../../built/yelm.js genembed')
   cmdIn(this, "libs/radio", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/serial", 'node ../../built/yelm.js genembed')
   cmdIn(this, "libs/led", 'node ../../built/yelm.js genembed')
   cmdIn(this, "libs/game", 'node ../../built/yelm.js genembed')
   cmdIn(this, "libs/pins", 'node ../../built/yelm.js genembed')
@@ -125,6 +126,7 @@ task('updatestrings', function() {
         "libs/led", 
         "libs/game", 
         "libs/radio", 
+        "libs/serial", 
         "libs/music", 
         "webapp/src"]
     srcPaths.forEach(pth => {

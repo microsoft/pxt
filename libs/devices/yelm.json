@@ -3,7 +3,7 @@
     "description": "The BLE specific services",
     "files": [
         "README.md",
-        "lib.ts"
+        "devices.ts"
     ],
     "public": true,
     "dependencies": {

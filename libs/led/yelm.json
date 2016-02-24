@@ -3,7 +3,7 @@
     "description": "The led services",
     "files": [
         "README.md",
-        "lib.ts"
+        "led.ts"
     ],
     "public": true,
     "dependencies": {

@@ -9,8 +9,7 @@
         "image.ts",
         "basic.ts",
         "input.ts",
-        "control.ts",        
-        "serial.ts"
+        "control.ts"
     ],
     "public": true,
     "dependencies": {}

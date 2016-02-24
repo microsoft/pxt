@@ -3,7 +3,7 @@
     "description": "The game services",
     "files": [
         "README.md",
-        "lib.ts"
+        "game.ts"
     ],
     "public": true,
     "dependencies": {

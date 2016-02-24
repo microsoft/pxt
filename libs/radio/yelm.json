@@ -3,7 +3,7 @@
     "description": "The radio services",
     "files": [
         "README.md",
-        "lib.ts"
+        "radio.ts"
     ],
     "public": true,
     "dependencies": {

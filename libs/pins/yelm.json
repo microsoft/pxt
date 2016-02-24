@@ -3,7 +3,7 @@
     "description": "The pins services",
     "files": [
         "README.md",
-        "lib.ts"
+        "pins.ts"
     ],
     "public": true,
     "dependencies": {
