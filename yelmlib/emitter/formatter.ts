@@ -747,6 +747,8 @@ namespace ts.mbit {
                         }
                         break;
                     case TokenKind.NewLine:
+                        if (tokens[i + 1] && tokens[i + 1].kind == TokenKind.CommentLine && tokens[i + 1].text == "")
+                            break; // no indent for empty line
                         if (i == tokens.length - 1)
                             output += ind.slice(4)
                         else
