@@ -15,7 +15,9 @@
     "semantic-ui-less": "^2.1.8",
     "typescript": "^1.9.0-dev.20160201"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "tsd": "^0.6.5"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

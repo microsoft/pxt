@@ -139,6 +139,7 @@ task('updatestrings', function() {
     tr.sort()
 
     console.log('strings: ' + tr.length);
+    if (!fs.existsSync("built")) fs.mkdirSync("built");
     fs.writeFileSync("built/localization.json", JSON.stringify({ strings: tr }, null, 1))
     var strings = {};
     tr.forEach(function(k) { strings[k] = k; });
