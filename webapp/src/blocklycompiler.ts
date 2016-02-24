@@ -875,12 +875,9 @@ function defaultValueForType(t: Point): J.JExpr {
             return H.mkNumberLiteral(0);
         case Type.String:
             return H.mkStringLiteral("");
-        case Type.Image:
-            return H.namespaceCall("image", "create image", [H.mkStringLiteral("")]);
-        case Type.Sprite:
-            return H.namespaceCall("game", "invalid sprite", []);
+        default:
+            return H.mkLocalRef("null");
     }
-    throw new Error("No default value for type");
 }
 
 function compileNote(e: Environment, b: B.Block): J.JExpr {
@@ -947,8 +944,6 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
             return compileImage(e, b, false, "image", "create image");
         case 'device_build_big_image':
             return compileImage(e, b, true, "image", "create image");
-        case 'game_sprite_property':
-            return compileStdCall(e, b, e.stdCallTable["game_sprite_" + b.getFieldValue("property")]);
         case 'device_beat':
             return compileBeat(e, b);
         default:
@@ -1255,91 +1250,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "show image",
         args: [{ field: "sprite" }, { field: "offset" }],
         isExtensionMethod: true
-    },
-    game_turn_left: {
-        isExtensionMethod: true,
-        f: "turn left",
-        args: [{ field: "sprite" }, { field: "angle" }]
-    },
-    game_turn_right: {
-        isExtensionMethod: true,
-        f: "turn right",
-        args: [{ field: "sprite" }, { field: "angle" }]
-    },
-    game_sprite_change_x: {
-        isExtensionMethod: true,
-        f: "change x by",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_change_y: {
-        isExtensionMethod: true,
-        f: "change y by",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_change_direction: {
-        isExtensionMethod: true,
-        f: "change direction by",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_change_blink: {
-        isExtensionMethod: true,
-        f: "change blink by",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_change_brightness: {
-        isExtensionMethod: true,
-        f: "change brightness by",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_set_x: {
-        isExtensionMethod: true,
-        f: "set x",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_set_y: {
-        isExtensionMethod: true,
-        f: "set y",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_set_direction: {
-        isExtensionMethod: true,
-        f: "set direction",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_set_blink: {
-        isExtensionMethod: true,
-        f: "set blink",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_set_brightness: {
-        isExtensionMethod: true,
-        f: "set brightness",
-        args: [{ field: "sprite" }, { field: "value" }]
-    },
-    game_sprite_x: {
-        isExtensionMethod: true,
-        f: "x",
-        args: [{ field: "sprite" }]
-    },
-    game_sprite_y: {
-        isExtensionMethod: true,
-        f: "y",
-        args: [{ field: "sprite" }]
-    },
-    game_sprite_direction: {
-        isExtensionMethod: true,
-        f: "direction",
-        args: [{ field: "sprite" }]
-    },
-    game_sprite_blink: {
-        isExtensionMethod: true,
-        f: "blink",
-        args: [{ field: "sprite" }]
-    },
-    game_sprite_brightness: {
-        isExtensionMethod: true,
-        f: "brightness",
-        args: [{ field: "sprite" }]
     }
 }
 
@@ -1376,15 +1286,6 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
 
                 case 'device_while':
                     stmts.push(compileWhile(e, b));
-                    break;
-
-                // Special treatment for the event handlers (they require a specific
-                // compilation scheme with action-handlers).
-                case 'game_sprite_set_property':
-                    stmts.push(compileStdBlock(e, b, e.stdCallTable["game_sprite_set_" + b.getFieldValue("property")]));
-                    break;
-                case 'game_sprite_change_xy':
-                    stmts.push(compileStdBlock(e, b, e.stdCallTable["game_sprite_change_" + b.getFieldValue("property")]));
                     break;
                 default:
                     let call = e.stdCallTable[b.type];
