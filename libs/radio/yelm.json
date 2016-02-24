@@ -1,0 +1,12 @@
+{
+    "name": "radio",
+    "description": "The radio services",
+    "files": [
+        "README.md",
+        "radio.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "core": "file:../core"        
+    }
+}

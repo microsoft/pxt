@@ -5,7 +5,7 @@ namespace rt {
 
     export function check(cond: boolean) {
         if (!cond)
-            throw new Error("mbit sim: check failed")
+            throw new Error("sim: check failed")
     }
 
     var refObjId = 1;

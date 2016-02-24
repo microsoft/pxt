@@ -59,7 +59,7 @@ export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<BlockPara
     return attrNames;
 }
 
-function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     //
     // toolbox update
     //
@@ -85,6 +85,8 @@ function injectToolbox(tb: Element, fn: ts.mbit.SymbolInfo, attrNames: Util.Stri
         console.log('toolbox: adding category ' + fn.namespace)
         category = document.createElement("category");
         category.setAttribute("name", catName)
+        var ns = info.apis.byQName[fn.namespace];
+        if (ns.attributes.color) category.setAttribute("colour", ns.attributes.color)
         tb.appendChild(category);
     }
     category.appendChild(block);
@@ -246,7 +248,7 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
         .forEach(fn => {
             let pnames = parameterNames(fn);
             if (injectBlockDefinition(blockInfo, fn, pnames)) {
-                injectToolbox(tb, fn, pnames);
+                injectToolbox(tb, blockInfo, fn, pnames);
                 currentBlocks[fn.attributes.blockId] = 1;
             }
         })

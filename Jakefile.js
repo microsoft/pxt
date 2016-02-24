@@ -39,7 +39,9 @@ task('runprj', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
 })
 
 task('embed', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
-  cmdIn(this, "libs/mbit", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/core", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/radio", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/devices", 'node ../../built/yelm.js genembed')
 })
 
 ju.catFiles('built/yelm.js', [
@@ -112,7 +114,7 @@ task('updatestrings', function() {
     }    
     
     var fileCnt = 0;
-    var srcPaths = ["libs/mbit", "webapp/src"]
+    var srcPaths = ["libs/core", "libs/devices", "libs/radio", "webapp/src"]
     srcPaths.forEach(pth => {
         fs.readdirSync(pth).forEach((fn) => {
             fileCnt++;

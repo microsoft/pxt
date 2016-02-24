@@ -8,6 +8,6 @@
     ],
     "public": true,
     "dependencies": {
-        "mbit": "file:../mbit"
+        "core": "file:../core"
     }
 }

@@ -1,18 +1,18 @@
 {
   "name": "yelm-cli",
   "version": "0.0.3",
-  "description": "TypeScript to mbit comiler - command line interface",
+  "description": "yelm - command line interface",
   "keywords": [
       "TypeScript",
       "microbit"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/tsmbit.git"
+    "url": "git+https://github.com/Microsoft/yelm.git"
   },
   "author": "",
   "license": "MIT",
-  "homepage": "https://github.com/Microsoft/tsmbit#readme",
+  "homepage": "https://github.com/Microsoft/yelm#readme",
   "files": [
       "README.md",
       "cli.js",

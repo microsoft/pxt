@@ -242,7 +242,7 @@ namespace yelm {
                         files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
                         testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),
                         dependencies: {
-                            "mbit": "*"
+                            "core": "*"
                         }
                     }
                     this.validateConfig();

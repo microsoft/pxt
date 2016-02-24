@@ -1,5 +1,3 @@
-// APIs which have nothing to do with mbit
-
 namespace rt {
     // A ref-counted collection of either primitive or ref-counted objects (String, Image,
     // user-defined record, another collection)
