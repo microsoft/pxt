@@ -141,7 +141,9 @@ namespace music {
      */
     //% shim=TD_ID async weight=50 help=functions/note-frequency
     //% blockId=device_note block="%note"
-    export function noteFrequency(name: Notes): number { return name; }
+    export function noteFrequency(name: Notes): number {
+        return name;
+    }
 
     /**
      * Returns the duration of a beat in milli-seconds

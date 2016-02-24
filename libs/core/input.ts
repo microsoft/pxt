@@ -60,8 +60,7 @@ namespace input {
     //% blockId=device_button_event 
     //% block="on button|%NAME|pressed" 
     //% icon="\uf192"
-    export function onButtonPressed(button: Button, body: Action): void { 
-    }
+    export function onButtonPressed(button: Button, body: Action): void { }
 
     /**
      * Attaches code to run when the screen is facing up.
@@ -69,8 +68,7 @@ namespace input {
      */
     //% help=functions/on-gesture shim=micro_bit::onGesture weight=84
     //% blockId=device_gesture_event block="on |%NAME" icon="\uf135"
-    export function onGesture(gesture: Gestures, body: Action): void {
-    }
+    export function onGesture(gesture: Gestures, body: Action): void { }
 
     /**
      * Do something when a pin(``P0``, ``P1`` or both ``P2``) is pressed.
@@ -89,8 +87,8 @@ namespace input {
     //% block="button|%NAME|is pressed"
     //% blockId=device_get_button2
     //% icon="\uf192" blockGap=8
-    export function buttonIsPressed(button: Button): boolean { 
-        return false; 
+    export function buttonIsPressed(button: Button): boolean {
+        return false;
     }
 
 
@@ -101,7 +99,9 @@ namespace input {
     //% weight=56 icon="\uf14e"
     //% shim=micro_bit::compassHeading
     //% blockId=device_heading block="compass heading (°)" blockGap=8
-    export function compassHeading(): number { return 0; }
+    export function compassHeading(): number {
+        return 0;
+    }
 
 
     /**
@@ -110,7 +110,9 @@ namespace input {
     //% weight=55 icon="\uf06d"
     //% help=functions/temperature shim=uBit.thermometer.getTemperature
     //% blockId=device_temperature block="temperature (°C)" blockGap=8
-    export function temperature(): number { return 0; }
+    export function temperature(): number {
+        return 0;
+    }
 
     /**
      * Get the acceleration value in milli-gravitys (when the board is laying flat with the screen up, x=0, y=0 and z=-1024)
@@ -119,7 +121,9 @@ namespace input {
     //% help=functions/acceleration weight=54 icon="\uf135"
     //% shim=micro_bit::getAcceleration
     //% blockId=device_acceleration block="acceleration (mg)|%NAME" blockGap=8
-    export function acceleration(dimension: Dimension): number { return 0; }
+    export function acceleration(dimension: Dimension): number {
+        return 0;
+    }
 
 
     /**
@@ -127,7 +131,9 @@ namespace input {
      */
     //% help=functions/light-level weight=55 shim=micro_bit::lightLevel
     //% blockId=device_get_light_level block="light level" blockGap=8 icon="\uf185"
-    export function lightLevel(): number { return 0; }
+    export function lightLevel(): number {
+        return 0;
+    }
 
     /**
      * The pitch of the device, rotation along the ``x-axis``, in degrees.
@@ -135,7 +141,9 @@ namespace input {
      */
     //% help=/functions/rotation weight=60 shim=micro_bit::getRotation
     //% blockId=device_get_rotation block="rotation (°)|%NAME" blockGap=8 icon="\uf197"
-    export function rotation(kind: Rotation): number { return 0; }
+    export function rotation(kind: Rotation): number {
+        return 0;
+    }
 
     /**
      * Get the magnetic force value in ``micro-Teslas`` (``µT``). This function is not supported in the simulator.
@@ -143,14 +151,18 @@ namespace input {
      */
     //% help=functions/magnetic-force weight=43 shim=micro_bit::getMagneticForce
     //% blockId=device_get_magnetic_force block="magnetic force (µT)|%NAME" blockGap=8 icon="\uf076"
-    export function magneticForce(dimension: Dimension): number { return 0; }
+    export function magneticForce(dimension: Dimension): number {
+        return 0;
+    }
 
     /**
      * Gets the number of milliseconds elapsed since power on.
      */
     //% help=functions/running-time shim=micro_bit::getCurrentTime
     //% blockId=device_get_running_time block="running time (ms)" blockGap=8 icon="\uf017"
-    export function runningTime(): number { return 0; }
+    export function runningTime(): number {
+        return 0;
+    }
 
     /**
      * Obsolete, compass calibration is automatic.
@@ -163,7 +175,9 @@ namespace input {
      * @param name TODO
      */
     //% help=functions/pin-is-pressed weight=58 shim=micro_bit::isPinTouched block="pin|%NAME|is pressed" icon="\uf094"
-    export function pinIsPressed(name: TouchPins): boolean { return false; }
+    export function pinIsPressed(name: TouchPins): boolean {
+        return false;
+    }
 
     /**
      * Attaches code to run when the screen is facing up.

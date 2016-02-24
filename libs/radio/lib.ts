@@ -9,7 +9,7 @@ namespace radio {
      */
     //% blockId=radio_broadcast block="broadcast message %MESSAGE" icon="\uf1d8" blockGap=12
     export function broadcastMessage(message: number) : void
-    {
+        {
         /*
         if (message < 0 || message > 65325) {
             simulator.warning("message should be between 0 and 65535.");
@@ -27,7 +27,7 @@ namespace radio {
      */
     //% blockId=radio_broadcast_received_event block="on message received" icon="\uf1d8"
     export function onMessageReceived(message: number, body:Action) : void
-    {
+        {
         /*
         if (message < 0 || message > 65325) {
             TD.simulator.warning("message should be between 0 and 65535.");
@@ -44,8 +44,7 @@ namespace radio {
      * {weight:78}
      */
     //% blockId=radio_datagram_send block="send number %MESSAGE" blockGap=8
-    export function sendNumber(value: number) : void {
-    }
+    export function sendNumber(value: number) : void { }
 
     /**
      * Reads the next packet as a number from the radio queue.
@@ -56,7 +55,7 @@ namespace radio {
      */
     //% blockId=radio_datagram_receive block="receive number"
     export function receiveNumber() : number
-    {
+        {
         //noBleWarning();
         return 0;
     }
@@ -78,8 +77,8 @@ namespace radio {
      */
     //% blockId=radio_datagram_received_event block="on data received"
     export function onDataReceived(body:Action) : void
-    {
-  //      noBleWarning();
+        {
+        //      noBleWarning();
     }
 
     /**
@@ -91,8 +90,8 @@ namespace radio {
      */
     //% blockId=radio_datagram_send_numbers block="send numbers|0: %VALUE0|1: %VALUE1|2: %VALUE2|3: %VALUE3" blockGap=8
     export function sendNumbers(value_0: number, value_1: number, value_2: number, value_3: number) : void
-    {
-//        noBleWarning();
+        {
+        //        noBleWarning();
     }
 
     /**
@@ -105,7 +104,7 @@ namespace radio {
      */
     //% blockId=radio_datagram_received_number_at block="receive number|at %VALUE" blockGap=8
     export function receivedNumberAt(index: number) : number {
-  /*      if (index < 0 || index >= 4) {
+        /*      if (index < 0 || index >= 4) {
             TD.simulator.warning("index should be between ``0`` and ``3``.");
         }*/
         return 0;
@@ -121,7 +120,7 @@ namespace radio {
      */
     //% blockId=radio_datagram_rssi block="received signal strength"
     export function receivedSignalStrength() : number
-    {
+        {
         return 0;
     }
 
@@ -135,7 +134,7 @@ namespace radio {
      */
     //% blockId=radio_set_group block="set group %ID"
     export function setGroup(id: number) : void
-    {
+        {
         /*
         if (id < 0 || id > 255) {
             TD.simulator.warning("id should be between 0 and 255.");
