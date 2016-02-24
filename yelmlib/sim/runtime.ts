@@ -1,4 +1,4 @@
-namespace rt {
+namespace yelm.rt {
     export type LabelFn = (n: number) => CodePtr;
     export type ResumeFn = (v?: any) => void;
 

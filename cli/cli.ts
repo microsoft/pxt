@@ -368,10 +368,10 @@ function buildCoreAsync(mode: BuildOption) {
                 if (mode == BuildOption.Run) {
                     let f = res.outfiles["microbit.js"]
                     if (f) {
-                        let r = new rt.Runtime(f)
+                        let r = new yelm.rt.Runtime(f)
                         r.run(() => {
                             console.log("DONE")
-                            rt.dumpLivePointers();
+                            yelm.rt.dumpLivePointers();
                         })
                     }
                 }
