@@ -6,6 +6,6 @@
   "dom_storage_quota": 100,
   "no-edit-menu": true,
   "dependencies": {
-    "drivelist": "^2.0.7"
+      "yelm-cli": "latest"
   }
 }

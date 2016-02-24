@@ -71,14 +71,21 @@ export function infoNotification(msg: string) {
 }
 
 export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream") {
+    console.log('trigger download')
     var buf = Util.stringToUint8Array(Util.toUTF8(text))
+    window.postMessage({
+                type:'download',
+                name: name,
+                contentType: contentType,
+                buf: buf
+        }, "*")
+        
     var uri = browserDownloadUInt8Array(buf, name, contentType);
-    $('#compilemsg').finish().html("Compilation done. <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>Use this link to save to another location.</a>").fadeIn('fast').delay(7000).fadeOut('slow');
 }
 
 export var isMobileBrowser = /mobile/.test(navigator.userAgent);
 
-export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream"): string {
+function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream"): string {
     var dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf))
     try {
         if ((<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser) {

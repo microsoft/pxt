@@ -1,17 +1,9 @@
-var drivelist = require('drivelist');
-var fs = require('fs');
+/*
+windowObject.addEventListener('message', onMessage);
 
-function copyHexFile(name, buf) {
-    drivelist.list(function(error, disks) {
-            if (error) {
-                console.error(error);
-                return;
-            }
-            
-            console.output(JSON.stringify(disks));
-            disks.forEach(function(disk) {                
-                if (/^MICROBIT/.test(disk.description)) {
-                }
-            })
-    });
-}
+function onMessage(e) {
+    var data = e.data;
+    var name = data.name;
+    var buf = data.buf;
+    console.log('received ' + name + ', ' + buf.length + ' bytes');    
+}*/

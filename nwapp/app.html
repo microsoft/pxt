@@ -1,9 +1,14 @@
 <head>
-    <script>
-        function bodyOnLoad(){
-          window.location.assign("http://localhost:3232/");
-        }
-    </script>
+<style>
+#yelm {
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+}
+</style>
 </head>
-<body onload="bodyOnLoad()">
+<body>
+    <iframe nwdisable id="yelm" src="http://localhost:3232/" />
 </body>

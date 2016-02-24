@@ -34,6 +34,28 @@ task('clean', function() {
   })
 })
 
+var nwjsversion = "0.12.3"
+task('buildnwapp', [], {async:true}, function() {
+    var tsk = this;
+    var NwBuilder = require('nw-builder');
+    var nw = new NwBuilder({
+        files: './nwapp/**/**', // use the glob format
+        platforms: ['win32'],
+        version: '0.12.3',
+        cacheDir: './nwcache',
+        buildDir: './nwbuilt',
+    });
+    nw.on('log',  console.log);
+
+    // Build returns a promise
+    nw.build().then(function () {
+        tsk.complete()
+    }).catch(function (error) {
+        console.error(error);
+        tsk.fail(error)
+    });
+})
+
 task('runprj', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
 })
