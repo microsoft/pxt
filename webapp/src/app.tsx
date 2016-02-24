@@ -383,12 +383,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             header: lf("New Visual Studio Code project"),
             htmlBody:
 `<p>${lf("<b>yelm</b> comes with command line tools to integrate into existing editors.")}
-${lf("To get started, <a href='{0}' target='_blank'>install Node.js</a>, open a console and run:", "https://nodejs.org/en/download/")}</p>
+${lf("To create an new yelm project, <a href='{0}' target='_blank'>install Node.js</a>, open a console and run:", "https://nodejs.org/en/download/")}</p>
 <pre>
 [sudo] npm install -g yelm-cli
 mkdir myproject && cd myproject
 yelm init myproject
-code
 </pre>
 <p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
 <pre>
