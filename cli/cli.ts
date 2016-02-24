@@ -6,6 +6,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
+import Util = yelm.Util;
+import Cloud = yelm.Cloud;
+
 let prevExports = (global as any).savedModuleExports
 if (prevExports) {
     module.exports = prevExports

@@ -10,6 +10,8 @@ let headers = new db.Table("header")
 let texts = new db.Table("text")
 let scripts = new db.Table("script")
 
+import Util = yelm.Util;
+import Cloud = yelm.Cloud;
 let lf = Util.lf
 let allScripts: HeaderWithScript[] = [];
 

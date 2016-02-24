@@ -8,6 +8,7 @@ import * as blockyloader from "./blocklyloader"
 
 import J = TDev.AST.Json;
 import B = Blockly;
+import Util = yelm.Util;
 
 // A series of utility functions for constructing various J* AST nodes.
 module Helpers {

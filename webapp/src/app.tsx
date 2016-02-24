@@ -15,6 +15,8 @@ import * as ace from "./ace"
 import * as yelmjson from "./yelmjson"
 import * as blocks from "./blocks"
 
+import Cloud = yelm.Cloud;
+import Util = yelm.Util;
 var lf = Util.lf
 
 export interface FileHistoryEntry {

@@ -11,6 +11,7 @@ var ace: AceAjax.Ace = require("brace");
 
 let SK = ts.yelm.SymbolKind;
 
+import Util = yelm.Util;
 var lf = Util.lf
 
 require('brace/mode/typescript');

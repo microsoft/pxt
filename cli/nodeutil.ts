@@ -8,6 +8,8 @@ import * as crypto from 'crypto';
 
 Promise = require("bluebird");
 
+import Util = yelm.Util;
+
 function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
         var bufs: Buffer[] = []

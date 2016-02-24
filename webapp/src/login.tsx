@@ -6,6 +6,9 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
 
+import Cloud = yelm.Cloud;
+import Util = yelm.Util;
+
 export interface ILoginBoxProps {
 }
 

@@ -4,6 +4,8 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
 
+import Cloud = yelm.Cloud;
+import Util = yelm.Util;
 
 var lf = Util.lf
 

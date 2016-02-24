@@ -4,6 +4,9 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 
+import Cloud = yelm.Cloud;
+import Util = yelm.Util;
+
 let tsWorker: Worker;
 let pendingMsgs: Util.StringMap<(v: any) => void> = {}
 let msgId = 0;

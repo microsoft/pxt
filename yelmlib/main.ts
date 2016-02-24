@@ -1,6 +1,9 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="emitter/util.ts"/>
 
 namespace yelm {
+    export import Util = ts.yelm.Util;
+    
     export interface Host {
         readFileAsync(pkg: Package, filename: string): Promise<string>;
         writeFileAsync(pkg: Package, filename: string, contents: string): Promise<void>;

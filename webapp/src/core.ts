@@ -4,6 +4,9 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";
 
+import Cloud = yelm.Cloud;
+import Util = yelm.Util;
+
 var lf = Util.lf;
 
 export type Component<S, T> = data.Component<S, T>;

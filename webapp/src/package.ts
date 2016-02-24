@@ -2,6 +2,8 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
 
+import Cloud = yelm.Cloud;
+import Util = yelm.Util;
 var lf = Util.lf
 
 let extWeight: Util.StringMap<number> = {

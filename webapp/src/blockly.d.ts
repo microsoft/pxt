@@ -12,7 +12,7 @@ declare module Blockly {
         constructor(url:string, width:number, height:number, def:string);
     }
     
-    var Blocks : Util.StringMap<{
+    var Blocks : yelm.Util.StringMap<{
         init: () => void;
     }>;
     

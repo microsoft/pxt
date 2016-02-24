@@ -5,6 +5,9 @@ import * as core from "./core";
 export type Action = () => void;
 export type AnyComponent = Component<any, any>;
 
+import Cloud = yelm.Cloud;
+import Util = yelm.Util;
+
 interface CacheEntry {
     path: string;
     data: any;

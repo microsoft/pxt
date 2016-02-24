@@ -1,6 +1,7 @@
 /// <reference path="./blockly.d.ts" />
 
 import * as compiler from "./compiler"
+import Util = yelm.Util;
 
 var blockColors: Util.StringMap<number> = {
     loops: 120,
