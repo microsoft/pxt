@@ -60,8 +60,9 @@ function initConfig() {
         globalConfig = config
         if (config.accessToken) {
             let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(config.accessToken)
-            if (!mm)
+            if (!mm) {
                 fatal("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+            }
             Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
             Cloud.accessToken = mm[2]
         }
@@ -123,28 +124,33 @@ let writeFileAsync: any = Promise.promisify(fs.writeFile)
 let execAsync = Promise.promisify(child_process.exec)
 
 function getBitDrivesAsync(): Promise<string[]> {
-    if (process.platform == "win32")
+    if (process.platform == "win32") {
         return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem")
             .then(buf => {
                 let res: string[] = []
                 buf.toString("utf8").split(/\n/).forEach(ln => {
                     let m = /^([A-Z]:).* MICROBIT/.exec(ln)
-                    if (m) res.push(m[1] + "/")
+                    if (m) {
+                        res.push(m[1] + "/")
+                    }
                 })
                 return res
             })
-    else return Promise.resolve([])
+    } else {
+        return Promise.resolve([])
+    }
 }
 
 class Host
     implements yelm.Host {
     resolve(module: yelm.Package, filename: string) {
-        if (module.level == 0)
+        if (module.level == 0) {
             return "./" + filename
-        else if (module.verProtocol() == "file")
+        } else if (module.verProtocol() == "file") {
             return module.verArgument() + "/" + filename
-        else
+        } else {
             return "yelm_modules/" + module + "/" + filename
+        }
     }
 
     readFileAsync(module: yelm.Package, filename: string): Promise<string> {
@@ -160,8 +166,9 @@ class Host
             let dir = p.replace(/\/[^\/]+$/, "")
             if (dir != p) {
                 check(dir)
-                if (!fs.existsSync(dir))
+                if (!fs.existsSync(dir)) {
                     fs.mkdirSync(dir)
+                }
             }
         }
         check(p)
@@ -175,14 +182,14 @@ class Host
     downloadPackageAsync(pkg: yelm.Package) {
         let proto = pkg.verProtocol()
 
-        if (proto == "pub")
+        if (proto == "pub") {
             return Cloud.downloadScriptFilesAsync(pkg.verArgument())
                 .then(resp =>
                     Util.mapStringMapAsync(resp, (fn: string, cont: string) => {
                         return pkg.host().writeFileAsync(pkg, fn, cont)
                     }))
                 .then(() => { })
-        else if (proto == "file") {
+        } else if (proto == "file") {
             console.log(`skip download of local pkg: ${pkg.version()}`)
             return Promise.resolve()
         } else {
@@ -193,8 +200,9 @@ class Host
     resolveVersionAsync(pkg: yelm.Package) {
         return Cloud.privateGetAsync(yelm.pkgPrefix + pkg.id).then(r => {
             let id = r["scriptid"]
-            if (!id)
+            if (!id) {
                 Util.userError("scriptid no set on ptr for pkg " + pkg.id)
+            }
             return id
         })
     }
@@ -205,10 +213,11 @@ let mainPkg = new yelm.MainPackage(new Host())
 
 function cmdInstall() {
     ensurePkgDir();
-    if (cmdArgs[0])
+    if (cmdArgs[0]) {
         Promise.mapSeries(cmdArgs, n => mainPkg.installPkgAsync(n)).done()
-    else
+    } else {
         mainPkg.installAllAsync().done()
+    }
 }
 
 function cmdInit() {
@@ -264,12 +273,13 @@ function cmdGenEmbed() {
 
 function cmdTime() {
     ensurePkgDir();
-    let min:Util.StringMap<number> = null;
+    let min: Util.StringMap<number> = null;
     let loop = () =>
         mainPkg.buildAsync()
             .then(res => {
-                if (!min) min = res.times
-                else {
+                if (!min) {
+                    min = res.times
+                } else {
                     Util.iterStringMap(min, (k, v) => {
                         min[k] = Math.min(v, res.times[k])
                     })
@@ -318,15 +328,20 @@ function cmdBuild(deploy = false, run = false) {
             mainPkg.host().writeFileAsync(mainPkg, "built/" + fn, c))
             .then(() => {
                 reportDiagnostics(res.diagnostics);
-                if (!res.success) process.exit(1)
+                if (!res.success) {
+                    process.exit(1)
+                }
             })
             .then(() => deploy ? getBitDrivesAsync() : null)
             .then(drives => {
-                if (!drives) return
-                if (drives.length == 0)
+                if (!drives) {
+                    return
+                }
+                if (drives.length == 0) {
                     console.log("cannot find any drives to deploy to")
-                else
+                } else {
                     console.log("copy microbit.hex to " + drives.join(", "))
+                }
                 Promise.map(drives, d =>
                     writeFileAsync(d + "microbit.hex", res.outfiles["microbit.hex"])
                         .then(() => {
@@ -377,29 +392,35 @@ let cmds: Command[] = [
 
 function usage() {
     let f = (s: string, n: number) => {
-        while (s.length < n) s += " "
+        while (s.length < n) {
+            s += " "
+        }
         return s
     }
     let showAll = cmdArgs[0] == "all"
     console.log("USAGE: yelm command args...")
-    if (showAll)
+    if (showAll) {
         console.log("All commands:")
-    else
+    } else {
         console.log("Common commands (use 'yelm help all' to show all):")
+    }
     cmds.forEach(cmd => {
-        if (showAll || !cmd.o)
+        if (showAll || !cmd.o) {
             console.log(f(cmd.n, 10) + f(cmd.a, 20) + cmd.d);
+        }
     })
     process.exit(1)
 }
 
 function goToPkgDir() {
     let goUp = (s: string): string => {
-        if (fs.existsSync(s + "/" + yelm.configName))
+        if (fs.existsSync(s + "/" + yelm.configName)) {
             return s
+        }
         let s2 = path.resolve(path.join(s, ".."))
-        if (s != s2)
+        if (s != s2) {
             return goUp(s2)
+        }
         return null
     }
     let dir = goUp(process.cwd())
@@ -448,7 +469,9 @@ export function main() {
     }
 
     let cc = cmds.filter(c => c.n == cmd)[0]
-    if (!cc) usage()
+    if (!cc) {
+        usage()
+    }
     cc.f()
 }
 
