@@ -1316,21 +1316,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         f: "set brightness",
         args: [{ field: "sprite" }, { field: "value" }]
     },
-    game_sprite_bounce: {
-        isExtensionMethod: true,
-        f: "if on edge, bounce",
-        args: [{ field: "sprite" }]
-    },
-    game_sprite_touching_sprite: {
-        isExtensionMethod: true,
-        f: "is touching",
-        args: [{ field: "sprite" }, { field: "other" }]
-    },
-    game_sprite_touching_edge: {
-        isExtensionMethod: true,
-        f: "is touching edge",
-        args: [{ field: "sprite" }]
-    },
     game_sprite_x: {
         isExtensionMethod: true,
         f: "x",

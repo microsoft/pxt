@@ -40,6 +40,7 @@ function createShadowValue(name: string, type: string, v?: string): Element {
 export interface BlockParameter {
     name: string;
     type?: string;
+    shadowType?: string;
     shadowValue?: string;
 }
 
@@ -49,7 +50,11 @@ export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockPara
     let attrNames: Util.StringMap<BlockParameter> = {};
 
     if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
-    fn.parameters.forEach(pr => attrNames[pr.name] = { name: pr.name, type: pr.type, shadowValue: pr.defaults ? pr.defaults[0] : undefined });
+    fn.parameters.forEach(pr => attrNames[pr.name] = { 
+        name: pr.name, 
+        type: pr.type, 
+        shadowValue: pr.defaults ? pr.defaults[0] : undefined
+    });
     if (fn.attributes.block) {
         Object.keys(attrNames).forEach(k => attrNames[k].name = "");
         let rx = /%([a-zA-Z0-9_]+)(=([a-zA-Z0-9_]+))?/g;
@@ -63,7 +68,7 @@ export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockPara
 
             var at = attrNames[fn.parameters[i++].name];
             at.name = m[1];
-            if (m[3]) at.type = m[3];
+            if (m[3]) at.shadowType = m[3];
         }
     }
     return attrNames;
@@ -78,7 +83,10 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
     if (fn.attributes.blockGap)
         block.setAttribute("gap", fn.attributes.blockGap);
 
-    fn.parameters.filter(pr => !!attrNames[pr.name].name)
+    fn.parameters.filter(pr => !!attrNames[pr.name].name && 
+        (/string|number/.test(attrNames[pr.name].type) 
+        || !!attrNames[pr.name].shadowType 
+        || !!attrNames[pr.name].shadowValue))
         .forEach(pr => {
             let attr = attrNames[pr.name];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue));
@@ -185,7 +193,7 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
             let pr = attrNames[n];
 
             if (instance && n == "this") {
-                i = initField(block.appendValueInput(n), ni, fn, pre, true, attrNames[n].type);
+                i = initField(block.appendValueInput(n), ni, fn, pre, true, pr.type);
             }
             else if (pr.type == "number") {
                 i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
@@ -202,6 +210,8 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
                         .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);
                     i = initField(block.appendDummyInput(), ni, fn, pre, true);
                     i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
+                } else {
+                    i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);                    
                 }
             }
         }

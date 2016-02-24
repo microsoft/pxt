@@ -327,7 +327,8 @@ namespace game {
          * If touching the edge of the stage, then bounce away.
          * @param this TODO
          */
-        public ifOnEdge_Bounce(): void {
+        //% blockId=game_sprite_bounce block="if %sprite|on edge, bounce" blockGap=8
+        public ifOnEdgeBounce(): void {
             if (this._dir == 0 && this._y == 0) {
                 this._dir = 180;
             } else if (this._dir == 45 && (this._x == 4 || this._y == 0)) {
@@ -470,6 +471,7 @@ namespace game {
          * @param this TODO
          * @param other TODO
          */
+        //% blockId=game_sprite_touching_sprite block="%sprite|touching %other|?" blockGap=8
         public isTouching(other: LedSprite): boolean {
             return this._x == other._x && this._y == other._y;
         }
@@ -478,6 +480,7 @@ namespace game {
          * Reports true if sprite is touching an edge
          * @param this TODO
          */
+        //% blockId=game_sprite_touching_edge block="%sprite|touching edge?" blockGap=8
         public isTouchingEdge(): boolean {
             return this._x == 0 || this._x == 4 || this._y == 0 || this._y == 4;
         }

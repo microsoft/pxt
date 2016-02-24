@@ -278,54 +278,6 @@ Blockly.Blocks['game_turn_sprite'] = {
     }
 };
 
-Blockly.Blocks['game_sprite_bounce'] = {
-    init: function()
-    {
-        this.setColour(blockColors.game);
-        this.appendValueInput("sprite")
-            .setCheck("sprite")
-            .appendField("if");
-        this.appendDummyInput().appendField("on edge, bounce");
-        this.setInputsInline(true);
-        this.setPreviousStatement(true);
-        this.setNextStatement(true);            
-        this.setTooltip('If touching the edge of the screen, then bounce away');
-        this.setHelpUrl("./functions/sprites-library");
-    }
-};
-
-Blockly.Blocks['game_sprite_touching_sprite'] = {
-    init: function()
-    {
-        this.setColour(blockColors.game);
-        this.appendValueInput("sprite")
-            .setCheck("sprite");
-        this.appendValueInput("other")
-            .setCheck("sprite")
-            .appendField("touching");
-        this.appendDummyInput().appendField("?");
-        this.setOutput(true, 'Boolean');
-        this.setInputsInline(true);
-        this.setTooltip('Reports true if both sprites are touching.');
-        this.setHelpUrl("./functions/sprites-library");
-    }
-};
-
-Blockly.Blocks['game_sprite_touching_edge'] = {
-    init: function()
-    {
-        this.setColour(blockColors.game);
-        this.appendValueInput("sprite")
-            .setCheck("sprite");
-        this.appendDummyInput()
-            .appendField("touching edge?");
-        this.setOutput(true, 'Boolean');
-        this.setInputsInline(true);
-        this.setTooltip('Reports true if the sprite is on the edge of the screen.');
-        this.setHelpUrl("./functions/sprites-library");
-    }
-};
-
 Blockly.Blocks['game_sprite_property'] = {
     init: function()
     {
