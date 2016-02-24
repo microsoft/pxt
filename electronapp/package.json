@@ -1,0 +1,15 @@
+{
+  "name": "yelm-app",
+  "version": "0.1.0",
+  "description": "A yelm electron app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron main.js"
+  },
+  "devDependencies": {
+    "electron-prebuilt": "^0.36.0"
+  },
+  "dependencies": {
+    "yelm-cli": "0.0.2"
+  }
+}
