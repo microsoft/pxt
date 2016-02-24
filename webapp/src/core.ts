@@ -114,6 +114,7 @@ export function handleNetworkError(e: any) {
 export interface ConfirmOptions {
     header: string;
     body?: string;
+    htmlBody?:string;
     agreeLbl?: string;
     disagreeLbl?: string;
     agreeIcon?: string;
@@ -128,6 +129,7 @@ export function confirmAsync(options: ConfirmOptions) {
     </div>
     <div class="content">
       <p>${Util.htmlEscape(options.body || "")}</p>
+      ${options.htmlBody || ""}
     </div>
     <div class="actions">
       <div class="ui right labeled icon button">

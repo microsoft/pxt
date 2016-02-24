@@ -375,6 +375,22 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 })
         })
     }
+    
+    newVisualStudioProject() {
+        core.confirmAsync({
+            header: lf("create a Visual Studio Code project"),
+            htmlBody:
+`<p>${lf("Install Node.js and Visual Studio Code. Open a console where you want to create your project and run these commands:")}</p>
+<pre>
+npm install yelm-cli --saveDev
+yelm init myproject
+cd myproject
+code
+</pre>
+`,
+            agreeLbl: lf("got it!")      
+        }).done();
+    }
 
     newProject() {
         let cfg: yelm.PackageConfig = {
@@ -534,7 +550,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="item">
                             <sui.DropdownMenu class="button floating" text={lf("Project") } icon="wrench">
                                 <sui.Item icon="puzzle" text={lf("New Blocks project") } onClick={() => this.newBlocksProject() } />
-                                <sui.Item icon="terminal" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
+                                <sui.Item icon="keyboard" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
+                                <sui.Item icon="terminal" text={lf("New Visual Studio Code project") } onClick={() => this.newVisualStudioProject() } />
                                 {this.editor == this.aceEditor ? null :
                                     <sui.Item icon="write" text={lf("Edit text") } onClick={() => this.editText() } />
                                 }
