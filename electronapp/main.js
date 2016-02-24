@@ -12,19 +12,19 @@ const BrowserWindow = electron.BrowserWindow;
 let mainWindow;
 
 function copyFile(source, target) {
-  var rd = fs.createReadStream(source);
-  rd.on("error", done);
+    var rd = fs.createReadStream(source);
+    rd.on("error", done);
 
-  var wr = fs.createWriteStream(target);
-  wr.on("error", done);
-  wr.on("close", function(ex) {
-    done();
-  });
-  rd.pipe(wr);
+    var wr = fs.createWriteStream(target);
+    wr.on("error", done);
+    wr.on("close", function (ex) {
+        done();
+    });
+    rd.pipe(wr);
 
-  function done(err) {
-    console.log(err);
-  }
+    function done(err) {
+        console.log(err);
+    }
 }
 
 function deployHexFile(file) {
@@ -36,13 +36,28 @@ function deployHexFile(file) {
                 if (m) drives.push(m[1])
             })
 
-            drives.forEach(function(drive) {
+            drives.forEach(function (drive) {
                 copyFile(file, path.join(drive, "firmware.hex"));
             })
         })
     }
 }
 
+function downloadAndDeployHexFile(event, item, webContents) {
+    if (item.getMimeType() != "application/x-microbit-hex") return;
+    let downoads = app.getPath("downloads") + "/yelm";
+    if (!fs.existsSync(downoads)) fs.mkdirSync(downoads);
+    let fpath = path.join(downoads, item.getFilename());
+    console.log('saving to ' + fpath)
+    item.setSavePath(fpath);
+    item.on('updated', function () {
+        console.log('Received bytes: ' + item.getReceivedBytes());
+    });
+    item.on('done', function (e, state) {
+        if (state == "completed")
+            deployHexFile(fpath);
+    });
+}
 
 function createWindow() {
     // Create the browser window.
@@ -55,20 +70,8 @@ function createWindow() {
         title: "yelm"
     });
     mainWindow.setMenu(null)
-    mainWindow.webContents.session.on('will-download', function (event, item, webContents) {
-        let downoads = app.getPath("downloads") + "/yelm";
-        if (!fs.existsSync(downoads)) fs.mkdirSync(downoads);
-        let fpath = path.join(downoads, item.getFilename());
-        console.log('saving to ' + fpath)
-        item.setSavePath(fpath);
-        item.on('updated', function () {
-            console.log('Received bytes: ' + item.getReceivedBytes());
-        });
-        item.on('done', function (e, state) {
-            if (state == "completed")
-                deployHexFile(fpath);
-        });
-    });
+    mainWindow.webContents.session.on('will-download', downloadAndDeployHexFile)
+
     // and load the index.html of the app.
     mainWindow.loadURL('http://localhost:3232');
 
