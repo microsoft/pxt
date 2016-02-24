@@ -1,4 +1,6 @@
-# Yelm - Experimental Programming Environment for micro:bit
+# yelm - Experimental Programming Environment for micro:bit
+
+[![Build Status](https://travis-ci.org/Microsoft/yelm.svg?branch=master)](https://travis-ci.org/Microsoft/yelm)
 
 Yelm combines the following:
 
