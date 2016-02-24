@@ -1,6 +1,6 @@
 {
-    "name": "radio",
-    "description": "The radio services",
+    "name": "pins",
+    "description": "The pins services",
     "files": [
         "README.md",
         "lib.ts"

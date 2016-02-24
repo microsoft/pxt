@@ -10,10 +10,6 @@
         "basic.ts",
         "input.ts",
         "control.ts",        
-        "led.ts",
-        "music.ts",
-        "game.ts",
-        "pins.ts",
         "serial.ts"
     ],
     "public": true,

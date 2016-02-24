@@ -1,0 +1,13 @@
+{
+    "name": "game",
+    "description": "The game services",
+    "files": [
+        "README.md",
+        "lib.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "core": "file:../core",
+        "led": "file:../led"      
+    }
+}

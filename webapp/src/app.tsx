@@ -379,7 +379,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     newProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} bit", Util.getAwesomeAdj()),
-            dependencies: { core: "*", radio: "*" },
+            dependencies: { core: "*", led:"*", music: "*", radio: "*", game:"*", pins:"*" },
             description: "",
             files: ["main.ts", "README.md"]
         }
@@ -404,7 +404,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     newBlocksProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} block", Util.getAwesomeAdj()),
-            dependencies: { core: "*", radio: "*" },
+            dependencies: { core: "*", led:"*", music: "*", radio: "*", game:"*", pins:"*" },
             description: "",
             files: ["main.blocks", "main.blocks.ts", "README.md"]
         }
