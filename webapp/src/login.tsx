@@ -85,10 +85,11 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
                 <div className="ui buttons">
                     <sui.Button text={name} onClick={buttonAction} />
                     <sui.DropdownMenu class='floating icon button' icon='dropdown'>
-                        {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signout() } icon='sign out' text={lf("Sign out")} /> : null}
                         {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.options() } icon='settings' text={lf("Account options")} /> : null}
                         {!Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signin() } icon='sign in' text={lf("Sign in")} /> : null}
+                        {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signout() } icon='sign out' text={lf("Sign out")} /> : null}
                         <sui.Item onClick={() => data.setOnline(false) } icon='plane' text={lf("Go offline")} />
+                        <sui.Item onClick={() => {window.location.href = "https://crowdin.com/project/yelm"} } icon='translate' text={lf("Help translate yelm!")} />
                     </sui.DropdownMenu>
                 </div>
             </div>)

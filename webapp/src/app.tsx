@@ -382,9 +382,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             htmlBody:
 `<p>${lf("Install Node.js and Visual Studio Code. Open a console where you want to create your project and run these commands:")}</p>
 <pre>
-npm install yelm-cli --saveDev
-yelm init myproject
+npm install yelm-cli --save-dev
+mkdir myproject
 cd myproject
+yelm init myproject
 code
 </pre>
 `,
