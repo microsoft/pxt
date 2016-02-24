@@ -44,7 +44,7 @@ export interface BlockParameter {
 
 export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockParameter> {
     // collect blockly parameter name mapping
-    const instance = fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property;
+    const instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
     let attrNames: Util.StringMap<BlockParameter> = {};
 
     if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
@@ -161,7 +161,7 @@ function initField(i:any, ni:number, fn:ts.yelm.SymbolInfo, pre: string, right? 
 function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     block.setHelpUrl("./" + fn.attributes.help);
     const ns = fn.namespace.split('.')[0];
-    const instance = fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property;
+    const instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
     block.setColour(
         info.apis.byQName[ns].attributes.color
         || blockColors[ns]
