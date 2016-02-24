@@ -9,6 +9,7 @@ import * as srceditor from "./srceditor"
 import * as blocklycompiler from "./blocklycompiler"
 import * as compiler from "./compiler"
 import * as blocklyloader from "./blocklyloader"
+import * as sui from "./sui";
 
 var lf = Util.lf
 
@@ -144,5 +145,13 @@ export class Editor extends srceditor.Editor {
     }
 
     setDiagnostics(file: pkg.File) {
+    }
+    
+    menu() {
+        return (
+            <div className="item">
+                <sui.Button class="button floating" text={lf("Show Code") } icon="keyboard" onClick={() => this.parent.saveTypeScript(true)} />
+            </div>
+        )        
     }
 }

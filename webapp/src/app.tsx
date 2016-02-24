@@ -444,7 +444,7 @@ code
             .done()
     }
 
-    saveTypeScript() {
+    saveTypeScript(open?:boolean) {
         if (!this.editor) return
         if (this.editorFile.epkg != pkg.mainEditorPkg())
             return;
@@ -452,6 +452,7 @@ code
         if (ts != null) {
             let f = pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
             f.isVirtual = true
+            if (open) this.setFile(f);
         }
     }
 
