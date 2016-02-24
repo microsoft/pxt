@@ -74,6 +74,9 @@ export function browserDownloadText(text: string, name: string, contentType: str
     console.log('trigger download')
     var buf = Util.stringToUint8Array(Util.toUTF8(text))
     var uri = browserDownloadUInt8Array(buf, name, contentType);
+    $('#compilemsg').finish()
+        .html("Compilation done. <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>Use this link to save to another location.</a>")
+        .fadeIn('fast').delay(7000).fadeOut('slow');
 }
 
 export var isMobileBrowser = /mobile/.test(navigator.userAgent);
