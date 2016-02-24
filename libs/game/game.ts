@@ -1,3 +1,22 @@
+enum Direction {
+    //% blockId=right    
+    Right,
+    //% blockId=left
+    Left
+}
+
+enum LedSpriteProperty {
+    //% blockId=x
+    X,
+    //% blockId=y
+    Y,
+    //% blockId=direction
+    Direction,
+    //% blockId=brightness
+    Brightness,
+    //% blockId=blink
+    Blink
+}
 
 //% color=176 weight=90
 namespace game {
@@ -30,7 +49,7 @@ namespace game {
     /**
      * Gets the current score
      */
-    //% weight=10 help=td/game-library
+    //% weight=9 help=td/game-library
     //% blockId=game_score block="score" blockGap=8
     export function score(): number {
         return _score;
@@ -38,9 +57,9 @@ namespace game {
 
     /**
      * Adds points to the current score
-     * @param points TODO
+     * @param points amount of points to change, eg: 1
      */
-    //% weight=9 help=td/game-library
+    //% weight=10 help=td/game-library
     //% blockId=game_add_score block="change score by|%points" blockGap=8
     export function addScore(points: number): void {
         setScore(_score + points);
@@ -281,7 +300,7 @@ namespace game {
          * @param leds number of leds to move, eg: 1, -1
          */
         //% weight=50
-        //% blockId=game_move_sprite block="move %sprite|by %leds"
+        //% blockId=game_move_sprite block="%sprite|move by %leds" blockGap=8
         public move(leds: number): void {
             if (this._dir == 0) {
                 this._y = this._y - leds;
@@ -327,7 +346,8 @@ namespace game {
          * If touching the edge of the stage, then bounce away.
          * @param this TODO
          */
-        //% blockId=game_sprite_bounce block="if %sprite|on edge, bounce" blockGap=8
+        //% weight=18
+        //% blockId=game_sprite_bounce block="%sprite|if on edge, bounce"
         public ifOnEdgeBounce(): void {
             if (this._dir == 0 && this._y == 0) {
                 this._dir = 180;
@@ -372,6 +392,21 @@ namespace game {
             }
             plot();
         }
+        
+        /**
+         * Turn the sprite
+         * @param this TODO
+         * @param direction left or right
+         * @param degrees angle in degrees to turn, eg: 45, 90, 180, 135
+         */
+        //% weight=49
+        //% blockId=game_turn_sprite block="%sprite|turn %direction|by (°) %degrees"
+        public turn(direction : Direction, degrees: number) {
+            if (direction == Direction.Right)
+                this.setDirection(this._dir + degrees);
+            else
+                this.setDirection(this._dir - degrees);
+        }
 
         /**
          * Turn to the right (clockwise)
@@ -379,7 +414,7 @@ namespace game {
          * @param degrees TODO
          */
         public turnRight(degrees: number): void {
-            this.setDirection(this._dir + degrees);
+            this.turn(Direction.Right, degrees);
         }
 
         /**
@@ -388,7 +423,58 @@ namespace game {
          * @param degrees TODO
          */
         public turnLeft(degrees: number): void {
-            this.turnRight(- degrees);
+            this.turn(Direction.Left, degrees);
+        }
+
+        /**
+         * Sets a property of the sprite
+         * @param property the name of the property to change
+         * @param the updated value
+         */
+        //% weight=29
+        //% blockId=game_sprite_set_property block="%sprite|set %property|to %value" blockGap=8
+        public set(property : LedSpriteProperty, value:number) {
+            switch(property) {
+                case LedSpriteProperty.X: this.setX(value); break;
+                case LedSpriteProperty.Y: this.setY(value); break;
+                case LedSpriteProperty.Direction: this.setDirection(value); break;
+                case LedSpriteProperty.Brightness: this.setBrightness(value); break;
+                case LedSpriteProperty.Blink: this.setBlink(value); break;
+            }
+        }
+
+        /**
+         * Changes a property of the sprite
+         * @param property the name of the property to change
+         * @param value amount of change, eg: 1
+         */
+        //% weight=30
+        //% blockId=game_sprite_change_xy block="%sprite|change %property|by %value" blockGap=8
+        public change(property : LedSpriteProperty, value:number) {
+            switch(property) {
+                case LedSpriteProperty.X: this.changeXBy(value); break;
+                case LedSpriteProperty.Y: this.changeYBy(value); break;
+                case LedSpriteProperty.Direction: this.changeDirectionBy(value); break;
+                case LedSpriteProperty.Brightness: this.changeBrightnessBy(value); break;
+                case LedSpriteProperty.Blink: this.changeBlinkBy(value); break;
+            }
+        }
+                
+        /**
+         * Gets a property of the sprite
+         * @param property the name of the property to change
+         */
+        //% weight=28
+        //% blockId=game_sprite_property block="%sprite|%property"
+        public get(property : LedSpriteProperty) {
+            switch(property) {
+                case LedSpriteProperty.X: return this.x();
+                case LedSpriteProperty.Y: return this.y();
+                case LedSpriteProperty.Direction: return this.direction()
+                case LedSpriteProperty.Brightness: return this.brightness();
+                case LedSpriteProperty.Blink: return this.blink();
+                default: return 0;
+            }
         }
 
         /**
@@ -471,6 +557,7 @@ namespace game {
          * @param this TODO
          * @param other TODO
          */
+        //% weight=20
         //% blockId=game_sprite_touching_sprite block="%sprite|touching %other|?" blockGap=8
         public isTouching(other: LedSprite): boolean {
             return this._x == other._x && this._y == other._y;
@@ -480,6 +567,7 @@ namespace game {
          * Reports true if sprite is touching an edge
          * @param this TODO
          */
+        //% weight=19
         //% blockId=game_sprite_touching_edge block="%sprite|touching edge?" blockGap=8
         public isTouchingEdge(): boolean {
             return this._x == 0 || this._x == 4 || this._y == 0 || this._y == 4;

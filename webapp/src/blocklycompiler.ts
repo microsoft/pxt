@@ -1380,12 +1380,6 @@ function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
 
                 // Special treatment for the event handlers (they require a specific
                 // compilation scheme with action-handlers).
-                case 'device_gesture_event':
-                    stmts.push(compileEvent(e, b, "on " + b.getFieldValue("NAME"), [], "input"));
-                    break;
-                case 'game_turn_sprite':
-                    stmts.push(compileStdBlock(e, b, e.stdCallTable["game_turn_" + b.getFieldValue("direction")]));
-                    break;
                 case 'game_sprite_set_property':
                     stmts.push(compileStdBlock(e, b, e.stdCallTable["game_sprite_set_" + b.getFieldValue("property")]));
                     break;
