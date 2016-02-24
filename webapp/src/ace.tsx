@@ -441,6 +441,9 @@ export class Editor extends srceditor.Editor {
     menu() {
         return (
             <div className="item">
+                {this.currFile && this.currFile.isVirtual 
+                    ? <sui.Button class="button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile)} /> 
+                    : '' }
                 <sui.DropdownMenu class="button floating" text={lf("Edit") } icon="edit">
                     <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
                     <sui.Item icon="wizard" text={lf("Replace") } onClick={() => this.editor.execCommand("replace") } />

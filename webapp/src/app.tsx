@@ -455,6 +455,14 @@ code
             if (open) this.setFile(f);
         }
     }
+    
+    openBlocks(file : pkg.File) {
+        if (file.isVirtual) {
+            var bfname = file.getName().substr(0, file.getName().length-".ts".length);
+            var bfile = pkg.mainEditorPkg().lookupFile(bfname);
+            if (bfile) this.setFile(bfile);
+        }
+    }
 
     compile() {
         compiler.compileAsync()
