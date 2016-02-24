@@ -11,5 +11,4 @@ notifications:
 cache:
   directories:
     - node_modules
-    - nwcache
     - typings

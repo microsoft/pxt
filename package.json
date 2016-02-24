@@ -26,7 +26,6 @@
         "typescript": "^1.8.0-dev.20160124"
     },
     "devDependencies": {
-        "nw-builder": "^2.2.0",
         "tsd": "^0.6.5"
     }
 }

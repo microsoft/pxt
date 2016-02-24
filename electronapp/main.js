@@ -1,9 +1,9 @@
 'use strict';
+var fs = require('fs')
+var path = require('path')
 
 const electron = require('electron');
-// Module to control application life.
 const app = electron.app;
-// Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow;
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -22,15 +22,16 @@ function createWindow() {
     });
     mainWindow.setMenu(null)
     mainWindow.webContents.session.on('will-download', function (event, item, webContents) {
-        // Set the save path, making Electron not to prompt a save dialog.
-        item.setSavePath(item.getFilename());
-        console.log(item.getMimeType());
-        console.log(item.getFilename());
-        console.log(item.getTotalBytes());
+        let downoads = app.getPath("downloads") + "/yelm";
+        if (!fs.existsSync(downoads)) fs.mkdirSync(downoads);
+        let fpath = path.join(downoads, item.getFilename());
+        console.log('saving to ' + fpath)
+        item.setSavePath(fpath);
         item.on('updated', function () {
             console.log('Received bytes: ' + item.getReceivedBytes());
         });
         item.on('done', function (e, state) {
+            // ready to copy
             
         });
     });

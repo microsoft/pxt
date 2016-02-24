@@ -73,13 +73,6 @@ export function infoNotification(msg: string) {
 export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream") {
     console.log('trigger download')
     var buf = Util.stringToUint8Array(Util.toUTF8(text))
-    window.postMessage({
-                type:'download',
-                name: name,
-                contentType: contentType,
-                buf: buf
-        }, "*")
-        
     var uri = browserDownloadUInt8Array(buf, name, contentType);
 }
 
