@@ -249,7 +249,7 @@ namespace ts.yelm {
         thisParameter?: ParameterDeclaration; // a bit bogus
     }
 
-    export function emitMBit(program: Program, host: CompilerHost, opts: CompileOptions): EmitResult {
+    export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: StringMap<ClassInfo> = {}
