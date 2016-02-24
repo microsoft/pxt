@@ -186,7 +186,7 @@ namespace yelm {
         }
 
         getCompileOptionsAsync() {
-            let opts: ts.mbit.CompileOptions = {
+            let opts: ts.yelm.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
                 hexinfo: {}
@@ -217,15 +217,15 @@ namespace yelm {
 
         buildAsync() {
             return this.getCompileOptionsAsync()
-                .then(opts => ts.mbit.compile(opts))
+                .then(opts => ts.yelm.compile(opts))
         }
 
         serviceAsync(op: string) {
             return this.getCompileOptionsAsync()
                 .then(opts => {
-                    ts.mbit.service.performOperation("reset", {})
-                    ts.mbit.service.performOperation("setOpts", { options: opts })
-                    return ts.mbit.service.performOperation(op, {})
+                    ts.yelm.service.performOperation("reset", {})
+                    ts.yelm.service.performOperation("setOpts", { options: opts })
+                    return ts.yelm.service.performOperation(op, {})
                 })
         }
 

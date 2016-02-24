@@ -1,4 +1,4 @@
-module ts.mbit.thumb {
+module ts.yelm.thumb {
     /* Docs:
      *
      * Thumb 16-bit Instruction Set Quick Reference Card

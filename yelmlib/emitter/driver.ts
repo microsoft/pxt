@@ -6,7 +6,7 @@
 /// <reference path="thumb.ts"/>
 /// <reference path="emitter.ts"/>
 
-namespace ts.mbit {
+namespace ts.yelm {
     export interface CompileOptions {
         fileSystem: StringMap<string>;
         sourceFiles?: string[];

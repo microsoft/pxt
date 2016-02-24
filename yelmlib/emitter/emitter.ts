@@ -1,10 +1,7 @@
-namespace ts {
+namespace ts.yelm {
     export var assert = Util.assert;
     export var oops = Util.oops;
     export type StringMap<T> = Util.StringMap<T>;
-}
-
-namespace ts.mbit {
 
     function stringKind(n: Node) {
         if (!n) return "<null>"

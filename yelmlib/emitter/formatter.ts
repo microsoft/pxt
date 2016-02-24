@@ -1,4 +1,4 @@
-namespace ts.mbit {
+namespace ts.yelm {
 
     enum TokenKind {
         None,
