@@ -31,7 +31,7 @@ function createShadowValue(name: string, type: string, v?: string): Element {
     if (type == "number" || type == "string") {
         let field = document.createElement("field"); shadow.appendChild(field);
         field.setAttribute("name", type == "number" ? "NUM" : "TEXT");
-        field.innerText = v || "";
+        field.innerText = v || (type == "number" ? "0" : "");
     }
     return value;
 }
@@ -39,18 +39,27 @@ function createShadowValue(name: string, type: string, v?: string): Element {
 export interface BlockParameter {
     name: string;
     type?: string;
+    shadowValue?: string;
 }
 
 export function parameterNames(fn: ts.mbit.SymbolInfo): Util.StringMap<BlockParameter> {
     // collect blockly parameter name mapping
+    const instance = fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property;
     let attrNames: Util.StringMap<BlockParameter> = {};
-    fn.parameters.forEach(pr => attrNames[pr.name] = { name: pr.name });
+
+    if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
+    fn.parameters.forEach(pr => attrNames[pr.name] = { name: pr.name, type: pr.type, shadowValue: pr.defaults ? pr.defaults[0] : undefined });
     if (fn.attributes.block) {
         Object.keys(attrNames).forEach(k => attrNames[k].name = "");
         let rx = /%([a-zA-Z0-9_]+)(=([a-zA-Z0-9_]+))?/g;
         let m: RegExpExecArray;
         let i = 0;
         while (m = rx.exec(fn.attributes.block)) {
+            if (i == 0 && instance) {
+                attrNames["this"].name = m[1];
+                m = rx.exec(fn.attributes.block); if (!m) break;
+            }
+
             var at = attrNames[fn.parameters[i++].name];
             at.name = m[1];
             if (m[3]) at.type = m[3];
@@ -71,22 +80,18 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.mbit.SymbolInfo, at
     fn.parameters.filter(pr => !!attrNames[pr.name].name)
         .forEach(pr => {
             let attr = attrNames[pr.name];
-            if (attr.type)
-                block.appendChild(createShadowValue(attr.name, attr.type));
-            else if (pr.type == "number")
-                block.appendChild(createShadowValue(attr.name, pr.type, pr.defaults ? pr.defaults[0] : "0"));
-            else if (pr.type == "string")
-                block.appendChild(createShadowValue(attr.name, pr.type, pr.defaults ? pr.defaults[0] : ""));
+            block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue));
         })
 
-    let catName = fn.namespace[0].toUpperCase() + fn.namespace.slice(1);
+    let ns = fn.namespace.split('.')[0];
+    let catName = ns[0].toUpperCase() + ns.slice(1);
     let category = tb.querySelector("category[name~='" + catName + "']");
     if (!category) {
         console.log('toolbox: adding category ' + fn.namespace)
         category = document.createElement("category");
         category.setAttribute("name", catName)
-        var ns = info.apis.byQName[fn.namespace];
-        if (ns.attributes.color) category.setAttribute("colour", ns.attributes.color)
+        var nsn = info.apis.byQName[fn.namespace];
+        if (nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
         tb.appendChild(category);
     }
     category.appendChild(block);
@@ -141,28 +146,30 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
     return true;
 }
 
-function initField(i:any, ni:number, fn:ts.mbit.SymbolInfo, pre: string, right? :boolean, type? : string) : any {
-    if (ni == 0 && fn.attributes.icon) 
+function initField(i: any, ni: number, fn: ts.mbit.SymbolInfo, pre: string, right?: boolean, type?: string): any {
+    if (ni == 0 && fn.attributes.icon)
         i.appendField(iconToFieldImage(fn.attributes.icon))
-    if(pre)
+    if (pre)
         i.appendField(pre);
-    if(right) 
+    if (right)
         i.setAlign(Blockly.ALIGN_RIGHT)
-    if (type) 
+    if (type)
         i.setCheck(type);
-    return i;            
+    return i;
 }
 
 function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     block.setHelpUrl("./" + fn.attributes.help);
+    const ns = fn.namespace.split('.')[0];
+    const instance = fn.kind == ts.mbit.SymbolKind.Method || fn.kind == ts.mbit.SymbolKind.Property;
     block.setColour(
-        info.apis.byQName[fn.namespace].attributes.color 
-        || blockColors[fn.namespace] 
+        info.apis.byQName[ns].attributes.color
+        || blockColors[ns]
         || 255);
 
     fn.attributes.block.split('|').map((n, ni) => {
         let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
-        let i : any;
+        let i: any;
         if (!m) {
             i = initField(block.appendDummyInput(), ni, fn, n);
         } else {
@@ -174,9 +181,12 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
                 console.error("block " + fn.attributes.blockId + ": unkown parameter " + p);
                 return;
             }
+            let pr = attrNames[n];
 
-            let pr = fn.parameters.filter(p => p.name == n)[0];
-            if (pr.type == "number") {
+            if (instance && n == "this") {
+                i = initField(block.appendValueInput(n), ni, fn, pre, true, attrNames[n].type);
+            }
+            else if (pr.type == "number") {
                 i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
             }
             else if (pr.type == "boolean") {
@@ -196,45 +206,51 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.mbit.SymbolInfo, attrNam
         }
     });
 
-    let body = fn.parameters.filter(pr => pr.type == "() => void")[0];
-    if (body) {
-        block.appendStatementInput("HANDLER")
-            .setCheck("null");
-    }
+let body = fn.parameters.filter(pr => pr.type == "() => void")[0];
+if (body) {
+    block.appendStatementInput("HANDLER")
+        .setCheck("null");
+}
 
-    if (fn.attributes.imageLiteral) {
-        for (let r = 0; r < 5; ++r) {
-            let ri = block.appendDummyInput();
-            for (let c = 0; c < 5; ++c) {
-                if (c > 0) ri.appendField(" ");
-                ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
-            }
+if (fn.attributes.imageLiteral) {
+    for (let r = 0; r < 5; ++r) {
+        let ri = block.appendDummyInput();
+        for (let c = 0; c < 5; ++c) {
+            if (c > 0) ri.appendField(" ");
+            ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
         }
     }
+}
 
-    block.setInputsInline(!fn.attributes.blockExternalInputs && fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+block.setInputsInline(!fn.attributes.blockExternalInputs && fn.parameters.length < 4 && !fn.attributes.imageLiteral);
 
-    switch (fn.retType) {
-        case "number": block.setOutput(true, "Number"); break;
-        case "string": block.setOutput(true, "String"); break;
-        case "boolean": block.setOutput(true, "Boolean"); break;
-        case "void": break; // do nothing
-        //TODO
-        default: block.setOutput(true);
-    }
+switch (fn.retType) {
+    case "number": block.setOutput(true, "Number"); break;
+    case "string": block.setOutput(true, "String"); break;
+    case "boolean": block.setOutput(true, "Boolean"); break;
+    case "void": break; // do nothing
+    //TODO
+    default: block.setOutput(true, fn.retType);
+}
 
-    if (!/^on /.test(fn.attributes.block)) {
-        block.setPreviousStatement(fn.retType == "void");
-        block.setNextStatement(fn.retType == "void");
-    }
-    block.setTooltip(fn.attributes.jsDoc);
+if (!/^on /.test(fn.attributes.block)) {
+    block.setPreviousStatement(fn.retType == "void");
+    block.setNextStatement(fn.retType == "void");
+}
+block.setTooltip(fn.attributes.jsDoc);
 }
 
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
 
     blockInfo.blocks.sort((f1, f2) => {
-        let c = (blockInfo.apis.byQName[f2.namespace].attributes.weight || 50) - (blockInfo.apis.byQName[f1.namespace].attributes.weight || 50); 
-        if (c != 0) return c;
+        let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
+        let ns2 = blockInfo.apis.byQName[f2.namespace.split('.')[0]];
+        if (ns1 && !ns2) return -1; if (ns2 && !ns1) return 1;
+        let c = 0;
+        if (ns1 && ns2) {
+            c = (ns2.attributes.weight || 50) - (ns1.attributes.weight || 50);
+            if (c != 0) return c;
+        }
         c = (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
         return c;
     })

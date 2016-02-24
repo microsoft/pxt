@@ -11,6 +11,21 @@ namespace game {
     var _gameId: number = 0;
     var img: Image;
     var sprites: LedSprite[];
+    
+    /**
+     * Creates a new LED sprite pointing to the right.
+     * @param x sprite horizontal coordinate, eg: 2
+     * @param y sprite vertical coordinate, eg: 2
+     */
+    //% weight=60
+    //% blockId=game_create_sprite block="create sprite at|x: %x|y: %y"
+    export function createSprite(x: number, y: number): LedSprite {
+        init();
+        let p = new LedSprite(x, y);
+        sprites.push(p);
+        plot();
+        return p;
+    }    
 
     /**
      * Gets the current score
@@ -262,9 +277,11 @@ namespace game {
 
         /**
          * Move a certain number of LEDs
-         * @param this TODO
-         * @param leds TODO
+         * @param this the sprite to move
+         * @param leds number of leds to move, eg: 1, -1
          */
+        //% weight=50
+        //% blockId=game_move_sprite block="move %sprite|by %leds"
         public move(leds: number): void {
             if (this._dir == 0) {
                 this._y = this._y - leds;
@@ -600,20 +617,6 @@ namespace game {
             sprites[i]._plot(now);
         }
         img.plotImage(0);
-    }
-
-    /**
-     * Creates a new LED sprite pointing to the right.
-     * @param x TODO
-     * @param y TODO
-     */
-    //% weight=60
-    export function createSprite(x: number, y: number): LedSprite {
-        init();
-        let p = new LedSprite(x, y);
-        sprites.push(p);
-        plot();
-        return p;
     }
 
     /**

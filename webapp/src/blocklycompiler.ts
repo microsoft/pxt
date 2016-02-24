@@ -1255,16 +1255,6 @@ var defaultCallTable: Util.StringMap<StdFunc> = {
         args: [{ field: "sprite" }, { field: "offset" }],
         isExtensionMethod: true
     },
-    game_create_sprite: {
-        namespace: "game",
-        f: "create sprite",
-        args: [{ field: "x" }, { field: "y" }]
-    },
-    game_move_sprite: {
-        isExtensionMethod: true,
-        f: "move",
-        args: [{ field: "sprite" }, { field: "leds" }]
-    },
     game_turn_left: {
         isExtensionMethod: true,
         f: "turn left",

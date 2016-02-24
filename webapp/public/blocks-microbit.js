@@ -257,42 +257,6 @@ Blockly.Blocks['device_random'] = {
   }
 };
 
-Blockly.Blocks['game_create_sprite'] = {
-    init: function()
-    {
-        this.setColour(blockColors.game);
-        this.appendDummyInput().appendField("create sprite at");
-        this.appendValueInput("x")
-            .setCheck("Number")
-            .appendField("x:");
-        this.appendValueInput("y")
-            .setCheck("Number")
-            .appendField("y:");
-        this.setInputsInline(true);
-        this.setOutput(true, 'sprite');
-        this.setTooltip('An LED sprite.');
-        this.setHelpUrl("./functions/sprites-library");
-    }
-};
-
-Blockly.Blocks['game_move_sprite'] = {
-    init: function()
-    {
-        this.setColour(blockColors.game);
-        this.appendDummyInput().appendField("move");
-        this.appendValueInput("sprite")
-            .setCheck("sprite")
-        this.appendValueInput("leds")
-            .setCheck("Number")
-            .appendField("by");
-        this.setInputsInline(true);
-        this.setPreviousStatement(true);
-        this.setNextStatement(true);            
-        this.setTooltip('Moves the sprite by the given LEDs');
-        this.setHelpUrl("./functions/sprites-library");
-    }
-};
-
 Blockly.Blocks['game_turn_sprite'] = {
     init: function()
     {
