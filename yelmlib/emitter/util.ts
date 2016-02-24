@@ -354,15 +354,21 @@ namespace Util {
         return _localizeStrings[s] || s;
     }
     
-    export function updateLocalizationAsync(lang: string) : Promise<any> {
-        if (_localizeLang != lang)
-            return Util.httpGetJsonAsync('./locales/' + lang + '/strings.json')
+    export function updateLocalizationAsync(code: string) : Promise<any> {
+        // normalize code (keep synched with localized files)
+        if (!/^(es|pt|zh)/i.test(code))
+            code = code.split('-')[0]
+            
+        if (_localizeLang != code)
+            return Util.httpGetJsonAsync('./locales/' + code + '/strings.json')
                 .then(tr => {         
                     _localizeStrings = tr || {};           
-                    _localizeLang = lang;
-                }, e => {})
+                    _localizeLang = code;
+                }, e => {
+                    console.error('failed to load localizations')
+                })
         //                    
-        return undefined;
+        return Promise.resolve(undefined);
     }
 
     export function htmlEscape(_input: string) {
