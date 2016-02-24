@@ -7,7 +7,6 @@
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../core",
-        "pins": "file:../pins"        
+        "core": "file:../core"
     }
 }
