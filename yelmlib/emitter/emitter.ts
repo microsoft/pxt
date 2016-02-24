@@ -105,8 +105,8 @@ namespace ts.yelm {
         block?: string;
         blockId?: string;
         blockGap?: string;
-        blockExternalInputs?:boolean;
-        color?:string;
+        blockExternalInputs?: boolean;
+        color?: string;
         icon?: string;
         imageLiteral?: boolean;
         weight?: number;
@@ -245,7 +245,7 @@ namespace ts.yelm {
 
     interface FunctionAddInfo {
         capturedVars: VarOrParam[];
-        location?: mbit.Location;
+        location?: Location;
         thisParameter?: ParameterDeclaration; // a bit bogus
     }
 
@@ -258,14 +258,14 @@ namespace ts.yelm {
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
 
-        mbit.staticBytecodeInfo = opts.hexinfo;
-        mbit.setup();
+        hex.staticBytecodeInfo = opts.hexinfo;
+        hex.setup();
 
-        let bin: mbit.Binary;
-        let proc: mbit.Procedure;
+        let bin: Binary;
+        let proc: Procedure;
 
         function reset() {
-            bin = new mbit.Binary();
+            bin = new Binary();
             proc = null
         }
 
@@ -384,9 +384,9 @@ namespace ts.yelm {
             // this doesn't actully write file, it just stores it for the cli.ts to write it
             writeFileSync("microbit.asm", bin.csource)
             bin.assemble();
-            const hex = bin.patchHex(false).join("\r\n") + "\r\n"
+            const myhex = hex.patchHex(bin, false).join("\r\n") + "\r\n"
             writeFileSync("microbit.asm", bin.csource) // optimized
-            writeFileSync("microbit.hex", hex)
+            writeFileSync("microbit.hex", myhex)
             writeFileSync("microbit.js", bin.jssource)
         }
 
@@ -395,13 +395,13 @@ namespace ts.yelm {
                 userError("void-typed variables not supported")
         }
 
-        function lookupLocation(decl: Declaration): mbit.Location {
+        function lookupLocation(decl: Declaration): Location {
             if (isGlobalVar(decl)) {
                 markUsed(decl)
                 typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
-                    ex = new mbit.Location(bin.globals.length, decl, getVarInfo(decl))
+                    ex = new Location(bin.globals.length, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
                 return ex
@@ -598,7 +598,7 @@ namespace ts.yelm {
                 let ev = attrs.enumval
                 if (!ev)
                     userError(lf("{enumval:...} missing"))
-                var inf = mbit.lookupFunc(ev)
+                var inf = hex.lookupFunc(ev)
                 if (!inf)
                     userError(lf("unhandled enum value: {0}", ev))
                 if (inf.type == "E")
@@ -699,7 +699,7 @@ namespace ts.yelm {
                 return
             }
 
-            let inf = mbit.lookupFunc(attrs.shim)
+            let inf = hex.lookupFunc(attrs.shim)
             if (inf) {
                 if (!hasRet) {
                     if (inf.type != "P")
@@ -979,7 +979,7 @@ namespace ts.yelm {
             let prim = info.capturedVars.filter(v => !isRef(v))
             let caps = refs.concat(prim)
             let locals = caps.map((v, i) => {
-                let l = new mbit.Location(i, v, getVarInfo(v))
+                let l = new Location(i, v, getVarInfo(v))
                 l.iscap = true
                 return l;
             })
@@ -1013,7 +1013,7 @@ namespace ts.yelm {
 
             scope(() => {
                 let isRoot = proc == null
-                proc = new mbit.Procedure();
+                proc = new Procedure();
                 proc.isRoot = isRoot
                 proc.action = node;
                 proc.info = info;
@@ -1035,7 +1035,7 @@ namespace ts.yelm {
                 proc.pushLocals();
 
                 proc.args = getParameters(node).map((p, i) => {
-                    let l = new mbit.Location(i, p, getVarInfo(p))
+                    let l = new Location(i, p, getVarInfo(p))
                     l.isarg = true
                     return l
                 })
@@ -1731,7 +1731,7 @@ namespace ts.yelm {
         }
     }
 
-    module mbit {
+    module hex {
         export interface FuncInfo {
             name: string;
             type: string;
@@ -1878,568 +1878,7 @@ namespace ts.yelm {
         }
 
 
-        export class Location {
-            isarg = false;
-            iscap = false;
-
-            constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
-                if (!isRefDecl(this.def) && typeOf(this.def).flags & TypeFlags.Void) {
-                    oops("void-typed variable, " + this.toString())
-                }
-            }
-
-            toString() {
-                var n = ""
-                if (this.def) n += (<any>this.def.name).text || "?"
-                if (this.isarg) n = "ARG " + n
-                if (this.isRef()) n = "REF " + n
-                if (this.isByRefLocal()) n = "BYREF " + n
-                return "[" + n + "]"
-            }
-
-            isRef() {
-                return this.def && isRefDecl(this.def)
-            }
-
-            isGlobal() {
-                return isGlobalVar(this.def)
-            }
-
-            isLocal() {
-                return isLocalVar(this.def) || isParameter(this.def)
-            }
-
-            refSuff() {
-                if (this.isRef()) return "Ref"
-                else return ""
-            }
-
-            isByRefLocal() {
-                return this.isLocal() && this.info.captured && this.info.written
-            }
-
-            emitStoreByRef(proc: Procedure) {
-                if (this.isByRefLocal()) {
-                    this.emitLoadLocal(proc);
-                    proc.emit("pop {r1}");
-                    proc.emitCallRaw("bitvm::stloc" + this.refSuff()); // unref internal
-                } else {
-                    this.emitStore(proc)
-                }
-            }
-
-            asmref(proc: Procedure) {
-                if (this.iscap) {
-                    assert(0 <= this.index && this.index < 32)
-                    return "[r5, #4*" + this.index + "]"
-                } else if (this.isarg) {
-                    var idx = proc.args.length - this.index - 1
-                    return "[sp, args@" + idx + "] ; " + this.toString()
-                } else {
-                    var idx = this.index
-                    return "[sp, locals@" + idx + "] ; " + this.toString()
-                }
-            }
-
-            emitStoreCore(proc: Procedure) {
-                proc.emit("str r0, " + this.asmref(proc))
-            }
-
-            emitStore(proc: Procedure) {
-                if (this.iscap && proc.binary.finalPass) {
-                    debugger
-                    oops("store for captured")
-                }
-
-                if (this.isGlobal()) {
-                    proc.emitInt(this.index)
-                    proc.emitCall("bitvm::stglb" + this.refSuff(), 0); // unref internal
-                } else {
-                    assert(!this.isByRefLocal())
-                    if (this.isRef()) {
-                        this.emitLoadCore(proc);
-                        proc.emitCallRaw("bitvm::decr");
-                    }
-                    proc.emit("pop {r0}");
-                    this.emitStoreCore(proc)
-                }
-            }
-
-            emitLoadCore(proc: Procedure) {
-                proc.emit("ldr r0, " + this.asmref(proc))
-            }
-
-            emitLoadByRef(proc: Procedure) {
-                if (this.isByRefLocal()) {
-                    this.emitLoadLocal(proc);
-                    proc.emitCallRaw("bitvm::ldloc" + this.refSuff())
-                    proc.emit("push {r0}");
-                } else this.emitLoad(proc);
-            }
-
-            emitLoadLocal(proc: Procedure) {
-                this.emitLoadCore(proc)
-            }
-
-            emitLoad(proc: Procedure, direct = false) {
-                if (this.isGlobal()) {
-                    proc.emitInt(this.index)
-                    proc.emitCall("bitvm::ldglb" + this.refSuff(), 0); // unref internal
-                } else {
-                    assert(direct || !this.isByRefLocal())
-                    this.emitLoadLocal(proc);
-                    proc.emit("push {r0}");
-                    if (this.isRef() || this.isByRefLocal()) {
-                        proc.emitCallRaw("bitvm::incr");
-                    }
-                }
-            }
-
-            emitClrIfRef(proc: Procedure) {
-                assert(!this.isGlobal() && !this.iscap)
-                if (this.isRef() || this.isByRefLocal()) {
-                    this.emitLoadCore(proc);
-                    proc.emitCallRaw("bitvm::decr");
-                }
-            }
-        }
-
-        export class Procedure {
-            numArgs = 0;
-            action: FunctionLikeDeclaration;
-            info: FunctionAddInfo;
-            seqNo: number;
-            lblNo = 0;
-            isRoot = false;
-
-            prebody = "";
-            body = "";
-            locals: Location[] = [];
-            captured: Location[] = [];
-            args: Location[] = [];
-            binary: Binary;
-            parent: Procedure;
-
-            hasReturn() {
-                let sig = checker.getSignatureFromDeclaration(this.action)
-                let rettp = checker.getReturnTypeOfSignature(sig)
-                return !(rettp.flags & TypeFlags.Void)
-            }
-
-            toString() {
-                return this.prebody + this.body
-            }
-
-            getName() {
-                let text = this.action && this.action.name ? (<Identifier>this.action.name).text : null
-                return text || "inline"
-            }
-
-            mkLocal(def: Declaration, info: VariableAddInfo) {
-                var l = new Location(this.locals.length, def, info)
-                //if (def) console.log("LOCAL: " + def.getName() + ": ref=" + def.isByRef() + " cap=" + def._isCaptured + " mut=" + def._isMutable)
-                this.locals.push(l)
-                return l
-            }
-
-            localIndex(l: Declaration, noargs = false): Location {
-                return this.captured.filter(n => n.def == l)[0] ||
-                    this.locals.filter(n => n.def == l)[0] ||
-                    (noargs ? null : this.args.filter(n => n.def == l)[0])
-            }
-
-            emitClrs() {
-                if (this.isRoot) return;
-                var lst = this.locals.concat(this.args)
-                lst.forEach(p => {
-                    p.emitClrIfRef(this)
-                })
-            }
-
-            emitCallRaw(name: string) {
-                var inf = lookupFunc(name)
-                assert(!!inf, "unimplemented raw function: " + name)
-                this.emit("bl " + name + " ; *" + inf.type + inf.args + " (raw)")
-            }
-
-            emitCall(name: string, mask: number, isAsync = false) {
-                var inf = lookupFunc(name)
-                assert(!!inf, "unimplemented function: " + name)
-
-                assert(inf.args <= 4)
-
-                if (inf.args >= 4)
-                    this.emit("pop {r3}");
-                if (inf.args >= 3)
-                    this.emit("pop {r2}");
-                if (inf.args >= 2)
-                    this.emit("pop {r1}");
-                if (inf.args >= 1)
-                    this.emit("pop {r0}");
-
-                var reglist: string[] = []
-
-                for (var i = 0; i < 4; ++i) {
-                    if (mask & (1 << i))
-                        reglist.push("r" + i)
-                }
-
-                var numMask = reglist.length
-
-                if (inf.type == "F" && mask != 0) {
-                    // reserve space for return val
-                    reglist.push("r7")
-                    this.emit("@stackmark retval")
-                }
-
-                assert((mask & ~0xf) == 0)
-
-                if (reglist.length > 0)
-                    this.emit("push {" + reglist.join(",") + "}")
-
-                let lbl = ""
-                if (isAsync)
-                    lbl = this.mkLabel("async")
-
-                this.emit("bl " + name + " ; *" + inf.type + inf.args + " " + lbl)
-
-                if (lbl) this.emitLbl(lbl)
-
-                if (inf.type == "F") {
-                    if (mask == 0)
-                        this.emit("push {r0}");
-                    else {
-                        this.emit("str r0, [sp, retval@-1]")
-                    }
-                }
-                else if (inf.type == "P") {
-                    // ok
-                }
-                else oops("invalid call type " + inf.type)
-
-                while (numMask-- > 0) {
-                    this.emitCall("bitvm::decr", 0);
-                }
-            }
-
-            emitJmp(trg: string, name = "JMP") {
-                var lbl = ""
-                if (name == "JMPZ") {
-                    lbl = this.mkLabel("jmpz")
-                    this.emit("pop {r0}");
-                    this.emit("*cmp r0, #0")
-                    this.emit("*bne " + lbl) // this is to *skip* the following 'b' instruction; bne itself has a very short range
-                    this.emit("@js if (!r0)")
-                } else if (name == "JMPNZ") {
-                    lbl = this.mkLabel("jmpnz")
-                    this.emit("pop {r0}");
-                    this.emit("*cmp r0, #0")
-                    this.emit("*beq " + lbl)
-                    this.emit("@js if (r0)")
-                } else if (name == "JMP") {
-                    // ok
-                } else {
-                    oops("bad jmp");
-                }
-
-                this.emit("bb " + trg)
-                if (lbl)
-                    this.emitLbl(lbl)
-            }
-
-            mkLabel(root: string): string {
-                return "." + root + "." + this.seqNo + "." + this.lblNo++;
-            }
-
-            emitLbl(lbl: string) {
-                this.emit(lbl + ":")
-            }
-
-            emit(name: string) {
-                this.body += asmline(name)
-            }
-
-            emitMov(v: number) {
-                assert(0 <= v && v <= 255)
-                this.emit("movs r0, #" + v)
-            }
-
-            emitAdd(v: number) {
-                assert(0 <= v && v <= 255)
-                this.emit("adds r0, #" + v)
-            }
-
-            emitLdPtr(lbl: string, push = false) {
-                assert(!!lbl)
-                this.emit("*movs r0, " + lbl + "@hi  ; ldptr " + lbl)
-                this.emit("*lsls r0, r0, #8")
-                this.emit("*adds r0, " + lbl + "@lo  ; endldptr");
-                if (push)
-                    this.emit("push {r0}")
-            }
-
-            emitInt(v: number, keepInR0 = false) {
-                assert(v != null);
-
-                var n = Math.floor(v)
-                var isNeg = false
-                if (n < 0) {
-                    isNeg = true
-                    n = -n
-                }
-
-                if (n <= 255) {
-                    this.emitMov(n)
-                } else if (n <= 0xffff) {
-                    this.emitMov((n >> 8) & 0xff)
-                    this.emit("lsls r0, r0, #8")
-                    this.emitAdd(n & 0xff)
-                } else {
-                    this.emitMov((n >> 24) & 0xff)
-                    this.emit("lsls r0, r0, #8")
-                    this.emitAdd((n >> 16) & 0xff)
-                    this.emit("lsls r0, r0, #8")
-                    this.emitAdd((n >> 8) & 0xff)
-                    this.emit("lsls r0, r0, #8")
-                    this.emitAdd((n >> 0) & 0xff)
-                }
-                if (isNeg) {
-                    this.emit("negs r0, r0")
-                }
-
-                if (!keepInR0)
-                    this.emit("push {r0}")
-            }
-
-            stackEmpty() {
-                this.emit("@stackempty locals");
-            }
-
-            pushLocals() {
-                assert(this.prebody == "")
-                this.prebody = this.body
-                this.body = ""
-            }
-
-            popLocals() {
-                var suff = this.body
-                this.body = this.prebody
-
-                var len = this.locals.length
-
-                if (len > 0) this.emit("movs r0, #0")
-                this.locals.forEach(l => {
-                    this.emit("push {r0} ; loc")
-                })
-                this.emit("@stackmark locals")
-
-                this.body += suff
-
-                assert(0 <= len && len < 127);
-                if (len > 0) this.emit("add sp, #4*" + len + " ; pop locals " + len)
-            }
-        }
-
-        function hexBytes(bytes: number[]) {
-            var chk = 0
-            var r = ":"
-            bytes.forEach(b => chk += b)
-            bytes.push((-chk) & 0xff)
-            bytes.forEach(b => r += ("0" + b.toString(16)).slice(-2))
-            return r.toUpperCase();
-        }
-
-        export class Binary {
-            procs: Procedure[] = [];
-            globals: Location[] = [];
-            buf: number[];
-            csource = "";
-            jssource = "";
-            finalPass = false;
-
-            strings: StringMap<string> = {};
-            stringsBody = "";
-            lblNo = 0;
-
-            isDataRecord(s: string) {
-                if (!s) return false
-                var m = /^:......(..)/.exec(s)
-                assert(!!m)
-                return m[1] == "00"
-            }
-
-            patchHex(shortForm: boolean) {
-                var myhex = hex.slice(0, bytecodeStartIdx)
-
-                assert(this.buf.length < 32000)
-
-                var ptr = 0
-
-                function nextLine(buf: number[], addr: number) {
-                    var bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
-                    for (var j = 0; j < 8; ++j) {
-                        bytes.push((buf[ptr] || 0) & 0xff)
-                        bytes.push((buf[ptr] || 0) >>> 8)
-                        ptr++
-                    }
-                    return bytes
-                }
-
-                var hd = [0x4207, this.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
-                var tmp = hexTemplateHash()
-                for (var i = 0; i < 4; ++i)
-                    hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
-
-                myhex[jmpStartIdx] = hexBytes(nextLine(hd, jmpStartAddr))
-
-                ptr = 0
-
-                if (shortForm) myhex = []
-
-                var addr = bytecodeStartAddr;
-                var upper = (addr - 16) >> 16
-                while (ptr < this.buf.length) {
-                    if ((addr >> 16) != upper) {
-                        upper = addr >> 16
-                        myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
-                    }
-
-                    myhex.push(hexBytes(nextLine(this.buf, addr)))
-                    addr += 16
-                }
-
-                if (!shortForm)
-                    hex.slice(bytecodeStartIdx).forEach(l => myhex.push(l))
-
-                return myhex;
-            }
-
-            addProc(proc: Procedure) {
-                this.procs.push(proc)
-                proc.seqNo = this.procs.length
-                proc.binary = this
-            }
-
-
-            stringLiteral(s: string) {
-                var r = "\""
-                for (var i = 0; i < s.length; ++i) {
-                    // TODO generate warning when seeing high character ?
-                    var c = s.charCodeAt(i) & 0xff
-                    var cc = String.fromCharCode(c)
-                    if (cc == "\\" || cc == "\"")
-                        r += "\\" + cc
-                    else if (cc == "\n")
-                        r += "\\n"
-                    else if (c <= 0xf)
-                        r += "\\x0" + c.toString(16)
-                    else if (c < 32 || c > 127)
-                        r += "\\x" + c.toString(16)
-                    else
-                        r += cc;
-                }
-                return r + "\""
-            }
-
-            emitLiteral(s: string) {
-                this.stringsBody += s + "\n"
-            }
-
-            emitString(s: string): string {
-                if (this.strings.hasOwnProperty(s))
-                    return this.strings[s]
-
-                var lbl = "_str" + this.lblNo++
-                this.strings[s] = lbl;
-                this.emitLiteral(".balign 4");
-                this.emitLiteral(lbl + "meta: .short 0xffff, " + s.length)
-                this.emitLiteral(lbl + ": .string " + this.stringLiteral(s))
-                return lbl
-            }
-
-            emit(s: string) {
-                this.csource += asmline(s)
-            }
-
-            serialize() {
-                assert(this.csource == "");
-
-                this.emit("; start")
-                this.emit(".hex 708E3B92C615A841C49866C975EE5197")
-                this.emit(".hex " + hexTemplateHash() + " ; hex template hash")
-                this.emit(".hex 0000000000000000 ; @SRCHASH@")
-                this.emit(".space 16 ; reserved")
-
-                this.procs.forEach(p => {
-                    this.csource += "\n" + p.body
-                })
-
-                this.csource += "_end_js:\n"
-
-                this.csource += this.stringsBody
-
-                this.emit("_program_end:");
-            }
-
-            patchSrcHash() {
-                //TODO
-                //var srcSha = Random.sha256buffer(Util.stringToUint8Array(Util.toUTF8(this.csource)))
-                //this.csource = this.csource.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + srcSha.slice(0, 16).toUpperCase() + " ; program hash\n")
-            }
-
-            assemble() {
-                thumb.test(); // just in case
-
-                var b = new thumb.File();
-                b.lookupExternalLabel = lookupFunctionAddr;
-                b.normalizeExternalLabel = s => {
-                    let inf = lookupFunc(s)
-                    if (inf) return inf.name;
-                    return s
-                }
-                // b.throwOnError = true;
-                b.emit(this.csource);
-                this.csource = b.getSource(!peepDbg);
-                this.jssource = b.savedJs || b.js;
-                if (b.errors.length > 0) {
-                    var userErrors = ""
-                    b.errors.forEach(e => {
-                        var m = /^user(\d+)/.exec(e.scope)
-                        if (m) {
-                            // This generally shouldn't happen, but it may for certin kind of global 
-                            // errors - jump range and label redefinitions
-                            var no = parseInt(m[1])
-                            var proc = this.procs.filter(p => p.seqNo == no)[0]
-                            if (proc && proc.action)
-                                userErrors += lf("At function {0}:\n", proc.getName())
-                            else
-                                userErrors += lf("At inline assembly:\n")
-                            userErrors += e.message
-                        }
-                    })
-
-                    if (userErrors) {
-                        //TODO
-                        console.log(lf("errors in inline assembly"))
-                        console.log(userErrors)
-                    } else {
-                        throw new Error(b.errors[0].message)
-                    }
-                } else {
-                    this.buf = b.buf;
-                }
-            }
-        }
-
-        export var peepDbg = false;
-
-        function asmline(s: string) {
-            if (!/(^[\s;])|(:$)/.test(s))
-                s = "    " + s
-            return s + "\n"
-        }
-
-        function hexTemplateHash() {
+        export function hexTemplateHash() {
             var sha = currentSetup ? currentSetup.slice(0, 16) : ""
             while (sha.length < 16) sha += "0"
             return sha.toUpperCase()
@@ -2460,5 +1899,572 @@ namespace ts.yelm {
             if (currentSetup == null)
                 setupFor(emptyExtInfo(), null)
         }
+
+        function hexBytes(bytes: number[]) {
+            var chk = 0
+            var r = ":"
+            bytes.forEach(b => chk += b)
+            bytes.push((-chk) & 0xff)
+            bytes.forEach(b => r += ("0" + b.toString(16)).slice(-2))
+            return r.toUpperCase();
+        }
+
+        export function patchHex(bin: Binary, shortForm: boolean) {
+            var myhex = hex.slice(0, bytecodeStartIdx)
+
+            assert(bin.buf.length < 32000)
+
+            var ptr = 0
+
+            function nextLine(buf: number[], addr: number) {
+                var bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
+                for (var j = 0; j < 8; ++j) {
+                    bytes.push((buf[ptr] || 0) & 0xff)
+                    bytes.push((buf[ptr] || 0) >>> 8)
+                    ptr++
+                }
+                return bytes
+            }
+
+            var hd = [0x4207, bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
+            var tmp = hexTemplateHash()
+            for (var i = 0; i < 4; ++i)
+                hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
+
+            myhex[jmpStartIdx] = hexBytes(nextLine(hd, jmpStartAddr))
+
+            ptr = 0
+
+            if (shortForm) myhex = []
+
+            var addr = bytecodeStartAddr;
+            var upper = (addr - 16) >> 16
+            while (ptr < bin.buf.length) {
+                if ((addr >> 16) != upper) {
+                    upper = addr >> 16
+                    myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
+                }
+
+                myhex.push(hexBytes(nextLine(bin.buf, addr)))
+                addr += 16
+            }
+
+            if (!shortForm)
+                hex.slice(bytecodeStartIdx).forEach(l => myhex.push(l))
+
+            return myhex;
+        }
+
+
     }
+
+    function asmline(s: string) {
+        if (!/(^[\s;])|(:$)/.test(s))
+            s = "    " + s
+        return s + "\n"
+    }
+
+    export var peepDbg = false;
+
+    class Location {
+        isarg = false;
+        iscap = false;
+
+        constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
+            if (!isRefDecl(this.def) && typeOf(this.def).flags & TypeFlags.Void) {
+                oops("void-typed variable, " + this.toString())
+            }
+        }
+
+        toString() {
+            var n = ""
+            if (this.def) n += (<any>this.def.name).text || "?"
+            if (this.isarg) n = "ARG " + n
+            if (this.isRef()) n = "REF " + n
+            if (this.isByRefLocal()) n = "BYREF " + n
+            return "[" + n + "]"
+        }
+
+        isRef() {
+            return this.def && isRefDecl(this.def)
+        }
+
+        isGlobal() {
+            return isGlobalVar(this.def)
+        }
+
+        isLocal() {
+            return isLocalVar(this.def) || isParameter(this.def)
+        }
+
+        refSuff() {
+            if (this.isRef()) return "Ref"
+            else return ""
+        }
+
+        isByRefLocal() {
+            return this.isLocal() && this.info.captured && this.info.written
+        }
+
+        emitStoreByRef(proc: Procedure) {
+            if (this.isByRefLocal()) {
+                this.emitLoadLocal(proc);
+                proc.emit("pop {r1}");
+                proc.emitCallRaw("bitvm::stloc" + this.refSuff()); // unref internal
+            } else {
+                this.emitStore(proc)
+            }
+        }
+
+        asmref(proc: Procedure) {
+            if (this.iscap) {
+                assert(0 <= this.index && this.index < 32)
+                return "[r5, #4*" + this.index + "]"
+            } else if (this.isarg) {
+                var idx = proc.args.length - this.index - 1
+                return "[sp, args@" + idx + "] ; " + this.toString()
+            } else {
+                var idx = this.index
+                return "[sp, locals@" + idx + "] ; " + this.toString()
+            }
+        }
+
+        emitStoreCore(proc: Procedure) {
+            proc.emit("str r0, " + this.asmref(proc))
+        }
+
+        emitStore(proc: Procedure) {
+            if (this.iscap && proc.binary.finalPass) {
+                debugger
+                oops("store for captured")
+            }
+
+            if (this.isGlobal()) {
+                proc.emitInt(this.index)
+                proc.emitCall("bitvm::stglb" + this.refSuff(), 0); // unref internal
+            } else {
+                assert(!this.isByRefLocal())
+                if (this.isRef()) {
+                    this.emitLoadCore(proc);
+                    proc.emitCallRaw("bitvm::decr");
+                }
+                proc.emit("pop {r0}");
+                this.emitStoreCore(proc)
+            }
+        }
+
+        emitLoadCore(proc: Procedure) {
+            proc.emit("ldr r0, " + this.asmref(proc))
+        }
+
+        emitLoadByRef(proc: Procedure) {
+            if (this.isByRefLocal()) {
+                this.emitLoadLocal(proc);
+                proc.emitCallRaw("bitvm::ldloc" + this.refSuff())
+                proc.emit("push {r0}");
+            } else this.emitLoad(proc);
+        }
+
+        emitLoadLocal(proc: Procedure) {
+            this.emitLoadCore(proc)
+        }
+
+        emitLoad(proc: Procedure, direct = false) {
+            if (this.isGlobal()) {
+                proc.emitInt(this.index)
+                proc.emitCall("bitvm::ldglb" + this.refSuff(), 0); // unref internal
+            } else {
+                assert(direct || !this.isByRefLocal())
+                this.emitLoadLocal(proc);
+                proc.emit("push {r0}");
+                if (this.isRef() || this.isByRefLocal()) {
+                    proc.emitCallRaw("bitvm::incr");
+                }
+            }
+        }
+
+        emitClrIfRef(proc: Procedure) {
+            assert(!this.isGlobal() && !this.iscap)
+            if (this.isRef() || this.isByRefLocal()) {
+                this.emitLoadCore(proc);
+                proc.emitCallRaw("bitvm::decr");
+            }
+        }
+    }
+
+    class Procedure {
+        numArgs = 0;
+        action: FunctionLikeDeclaration;
+        info: FunctionAddInfo;
+        seqNo: number;
+        lblNo = 0;
+        isRoot = false;
+
+        prebody = "";
+        body = "";
+        locals: Location[] = [];
+        captured: Location[] = [];
+        args: Location[] = [];
+        binary: Binary;
+        parent: Procedure;
+
+        hasReturn() {
+            let sig = checker.getSignatureFromDeclaration(this.action)
+            let rettp = checker.getReturnTypeOfSignature(sig)
+            return !(rettp.flags & TypeFlags.Void)
+        }
+
+        toString() {
+            return this.prebody + this.body
+        }
+
+        getName() {
+            let text = this.action && this.action.name ? (<Identifier>this.action.name).text : null
+            return text || "inline"
+        }
+
+        mkLocal(def: Declaration, info: VariableAddInfo) {
+            var l = new Location(this.locals.length, def, info)
+            //if (def) console.log("LOCAL: " + def.getName() + ": ref=" + def.isByRef() + " cap=" + def._isCaptured + " mut=" + def._isMutable)
+            this.locals.push(l)
+            return l
+        }
+
+        localIndex(l: Declaration, noargs = false): Location {
+            return this.captured.filter(n => n.def == l)[0] ||
+                this.locals.filter(n => n.def == l)[0] ||
+                (noargs ? null : this.args.filter(n => n.def == l)[0])
+        }
+
+        emitClrs() {
+            if (this.isRoot) return;
+            var lst = this.locals.concat(this.args)
+            lst.forEach(p => {
+                p.emitClrIfRef(this)
+            })
+        }
+
+        emitCallRaw(name: string) {
+            var inf = hex.lookupFunc(name)
+            assert(!!inf, "unimplemented raw function: " + name)
+            this.emit("bl " + name + " ; *" + inf.type + inf.args + " (raw)")
+        }
+
+        emitCall(name: string, mask: number, isAsync = false) {
+            var inf = hex.lookupFunc(name)
+            assert(!!inf, "unimplemented function: " + name)
+
+            assert(inf.args <= 4)
+
+            if (inf.args >= 4)
+                this.emit("pop {r3}");
+            if (inf.args >= 3)
+                this.emit("pop {r2}");
+            if (inf.args >= 2)
+                this.emit("pop {r1}");
+            if (inf.args >= 1)
+                this.emit("pop {r0}");
+
+            var reglist: string[] = []
+
+            for (var i = 0; i < 4; ++i) {
+                if (mask & (1 << i))
+                    reglist.push("r" + i)
+            }
+
+            var numMask = reglist.length
+
+            if (inf.type == "F" && mask != 0) {
+                // reserve space for return val
+                reglist.push("r7")
+                this.emit("@stackmark retval")
+            }
+
+            assert((mask & ~0xf) == 0)
+
+            if (reglist.length > 0)
+                this.emit("push {" + reglist.join(",") + "}")
+
+            let lbl = ""
+            if (isAsync)
+                lbl = this.mkLabel("async")
+
+            this.emit("bl " + name + " ; *" + inf.type + inf.args + " " + lbl)
+
+            if (lbl) this.emitLbl(lbl)
+
+            if (inf.type == "F") {
+                if (mask == 0)
+                    this.emit("push {r0}");
+                else {
+                    this.emit("str r0, [sp, retval@-1]")
+                }
+            }
+            else if (inf.type == "P") {
+                // ok
+            }
+            else oops("invalid call type " + inf.type)
+
+            while (numMask-- > 0) {
+                this.emitCall("bitvm::decr", 0);
+            }
+        }
+
+        emitJmp(trg: string, name = "JMP") {
+            var lbl = ""
+            if (name == "JMPZ") {
+                lbl = this.mkLabel("jmpz")
+                this.emit("pop {r0}");
+                this.emit("*cmp r0, #0")
+                this.emit("*bne " + lbl) // this is to *skip* the following 'b' instruction; bne itself has a very short range
+                this.emit("@js if (!r0)")
+            } else if (name == "JMPNZ") {
+                lbl = this.mkLabel("jmpnz")
+                this.emit("pop {r0}");
+                this.emit("*cmp r0, #0")
+                this.emit("*beq " + lbl)
+                this.emit("@js if (r0)")
+            } else if (name == "JMP") {
+                // ok
+            } else {
+                oops("bad jmp");
+            }
+
+            this.emit("bb " + trg)
+            if (lbl)
+                this.emitLbl(lbl)
+        }
+
+        mkLabel(root: string): string {
+            return "." + root + "." + this.seqNo + "." + this.lblNo++;
+        }
+
+        emitLbl(lbl: string) {
+            this.emit(lbl + ":")
+        }
+
+        emit(name: string) {
+            this.body += asmline(name)
+        }
+
+        emitMov(v: number) {
+            assert(0 <= v && v <= 255)
+            this.emit("movs r0, #" + v)
+        }
+
+        emitAdd(v: number) {
+            assert(0 <= v && v <= 255)
+            this.emit("adds r0, #" + v)
+        }
+
+        emitLdPtr(lbl: string, push = false) {
+            assert(!!lbl)
+            this.emit("*movs r0, " + lbl + "@hi  ; ldptr " + lbl)
+            this.emit("*lsls r0, r0, #8")
+            this.emit("*adds r0, " + lbl + "@lo  ; endldptr");
+            if (push)
+                this.emit("push {r0}")
+        }
+
+        emitInt(v: number, keepInR0 = false) {
+            assert(v != null);
+
+            var n = Math.floor(v)
+            var isNeg = false
+            if (n < 0) {
+                isNeg = true
+                n = -n
+            }
+
+            if (n <= 255) {
+                this.emitMov(n)
+            } else if (n <= 0xffff) {
+                this.emitMov((n >> 8) & 0xff)
+                this.emit("lsls r0, r0, #8")
+                this.emitAdd(n & 0xff)
+            } else {
+                this.emitMov((n >> 24) & 0xff)
+                this.emit("lsls r0, r0, #8")
+                this.emitAdd((n >> 16) & 0xff)
+                this.emit("lsls r0, r0, #8")
+                this.emitAdd((n >> 8) & 0xff)
+                this.emit("lsls r0, r0, #8")
+                this.emitAdd((n >> 0) & 0xff)
+            }
+            if (isNeg) {
+                this.emit("negs r0, r0")
+            }
+
+            if (!keepInR0)
+                this.emit("push {r0}")
+        }
+
+        stackEmpty() {
+            this.emit("@stackempty locals");
+        }
+
+        pushLocals() {
+            assert(this.prebody == "")
+            this.prebody = this.body
+            this.body = ""
+        }
+
+        popLocals() {
+            var suff = this.body
+            this.body = this.prebody
+
+            var len = this.locals.length
+
+            if (len > 0) this.emit("movs r0, #0")
+            this.locals.forEach(l => {
+                this.emit("push {r0} ; loc")
+            })
+            this.emit("@stackmark locals")
+
+            this.body += suff
+
+            assert(0 <= len && len < 127);
+            if (len > 0) this.emit("add sp, #4*" + len + " ; pop locals " + len)
+        }
+    }
+
+
+
+    class Binary {
+        procs: Procedure[] = [];
+        globals: Location[] = [];
+        buf: number[];
+        csource = "";
+        jssource = "";
+        finalPass = false;
+
+        strings: StringMap<string> = {};
+        stringsBody = "";
+        lblNo = 0;
+
+        isDataRecord(s: string) {
+            if (!s) return false
+            var m = /^:......(..)/.exec(s)
+            assert(!!m)
+            return m[1] == "00"
+        }
+
+        addProc(proc: Procedure) {
+            this.procs.push(proc)
+            proc.seqNo = this.procs.length
+            proc.binary = this
+        }
+
+
+        stringLiteral(s: string) {
+            var r = "\""
+            for (var i = 0; i < s.length; ++i) {
+                // TODO generate warning when seeing high character ?
+                var c = s.charCodeAt(i) & 0xff
+                var cc = String.fromCharCode(c)
+                if (cc == "\\" || cc == "\"")
+                    r += "\\" + cc
+                else if (cc == "\n")
+                    r += "\\n"
+                else if (c <= 0xf)
+                    r += "\\x0" + c.toString(16)
+                else if (c < 32 || c > 127)
+                    r += "\\x" + c.toString(16)
+                else
+                    r += cc;
+            }
+            return r + "\""
+        }
+
+        emitLiteral(s: string) {
+            this.stringsBody += s + "\n"
+        }
+
+        emitString(s: string): string {
+            if (this.strings.hasOwnProperty(s))
+                return this.strings[s]
+
+            var lbl = "_str" + this.lblNo++
+            this.strings[s] = lbl;
+            this.emitLiteral(".balign 4");
+            this.emitLiteral(lbl + "meta: .short 0xffff, " + s.length)
+            this.emitLiteral(lbl + ": .string " + this.stringLiteral(s))
+            return lbl
+        }
+
+        emit(s: string) {
+            this.csource += asmline(s)
+        }
+
+        serialize() {
+            assert(this.csource == "");
+
+            this.emit("; start")
+            this.emit(".hex 708E3B92C615A841C49866C975EE5197")
+            this.emit(".hex " + hex.hexTemplateHash() + " ; hex template hash")
+            this.emit(".hex 0000000000000000 ; @SRCHASH@")
+            this.emit(".space 16 ; reserved")
+
+            this.procs.forEach(p => {
+                this.csource += "\n" + p.body
+            })
+
+            this.csource += "_end_js:\n"
+
+            this.csource += this.stringsBody
+
+            this.emit("_program_end:");
+        }
+
+        patchSrcHash() {
+            //TODO
+            //var srcSha = Random.sha256buffer(Util.stringToUint8Array(Util.toUTF8(this.csource)))
+            //this.csource = this.csource.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + srcSha.slice(0, 16).toUpperCase() + " ; program hash\n")
+        }
+
+        assemble() {
+            thumb.test(); // just in case
+
+            var b = new thumb.File();
+            b.lookupExternalLabel = hex.lookupFunctionAddr;
+            b.normalizeExternalLabel = s => {
+                let inf = hex.lookupFunc(s)
+                if (inf) return inf.name;
+                return s
+            }
+            // b.throwOnError = true;
+            b.emit(this.csource);
+            this.csource = b.getSource(!peepDbg);
+            this.jssource = b.savedJs || b.js;
+            if (b.errors.length > 0) {
+                var userErrors = ""
+                b.errors.forEach(e => {
+                    var m = /^user(\d+)/.exec(e.scope)
+                    if (m) {
+                        // This generally shouldn't happen, but it may for certin kind of global 
+                        // errors - jump range and label redefinitions
+                        var no = parseInt(m[1])
+                        var proc = this.procs.filter(p => p.seqNo == no)[0]
+                        if (proc && proc.action)
+                            userErrors += lf("At function {0}:\n", proc.getName())
+                        else
+                            userErrors += lf("At inline assembly:\n")
+                        userErrors += e.message
+                    }
+                })
+
+                if (userErrors) {
+                    //TODO
+                    console.log(lf("errors in inline assembly"))
+                    console.log(userErrors)
+                } else {
+                    throw new Error(b.errors[0].message)
+                }
+            } else {
+                this.buf = b.buf;
+            }
+        }
+    }
+
+
 }
