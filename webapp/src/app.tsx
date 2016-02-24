@@ -642,7 +642,7 @@ let myexports: any = {
 
 $(document).ready(() => {
     $("#loading").remove();
-    var lang = /lang=([a-z][a-z])/i.exec(window.location.href);
+    var lang = /lang=([a-z]{2,}(-[A-Z]+))/i.exec(window.location.href);
     Util.updateLocalizationAsync(lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() =>  compiler.init())
         .then(() => workspace.initAsync())
