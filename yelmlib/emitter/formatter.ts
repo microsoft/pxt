@@ -28,6 +28,7 @@ namespace ts.mbit {
         lineNo: number;
         synKind: ts.SyntaxKind;
         blockSpanLength?: number;
+        blockSpanIsVirtual?: boolean;
     }
 
     interface TreeToken extends Token {
@@ -358,6 +359,17 @@ namespace ts.mbit {
         }
     }
 
+    function mkVirtualTree(toks: Token[]): TreeToken {
+        return {
+            kind: TokenKind.Tree,
+            synKind: SK.WhitespaceTrivia,
+            pos: toks[0].pos,
+            lineNo: toks[0].lineNo,
+            children: toks,
+            text: ""
+        }
+    }
+
     function delimitStmts(tokens: Token[], ctxToken: Token = null): Stmt[] {
         let res: Stmt[] = []
         let i = 0;
@@ -408,11 +420,17 @@ namespace ts.mbit {
             while (i < tokens.length) {
                 if (tokens[i].blockSpanLength) {
                     let inner = tokens.slice(i, i + tokens[i].blockSpanLength)
-                    delete tokens[i].blockSpanLength
-                    injectBlocks(inner)
+                    let isVirtual = !!inner[0].blockSpanIsVirtual
+                    delete inner[0].blockSpanLength
+                    delete inner[0].blockSpanIsVirtual
                     i += inner.length
-                    output.push(mkSpace(inner[0], " "))
-                    output.push(mkBlock(trimWhitespace(inner)))
+                    inner = injectBlocks(inner)                    
+                    if (isVirtual) {
+                        output.push(mkVirtualTree(inner))
+                    } else {
+                        output.push(mkSpace(inner[0], " "))
+                        output.push(mkBlock(trimWhitespace(inner)))
+                    }
                 } else {
                     output.push(tokens[i++])
                 }
@@ -480,22 +498,22 @@ namespace ts.mbit {
         }
 
         function expectBlock() {
-            let begTok = tokens[i + 1]
             let begIdx = i + 1
             nextNonWs()
             if (tokens[i].synKind == SK.OpenBraceToken) {
                 handleBlock()
                 skipOptionalNewLine();
             } else {
-                // TODO stick them into a block
                 skipToStmtEnd();
-                begTok.blockSpanLength = i - begIdx
+                tokens[begIdx].blockSpanLength = i - begIdx
             }
         }
 
         function skipToStmtEnd() {
             while (true) {
                 let t = tokens[i]
+                let bkp = i
+
                 currCtxToken = t
                 didBlock = false
 
@@ -513,6 +531,12 @@ namespace ts.mbit {
                     if (tokens[i].synKind == SK.OpenBraceToken) {
                         handleBlock();
                         continue;
+                    } else {
+                        let begIdx = i
+                        skipToStmtEnd()
+                        tokens[begIdx].blockSpanLength = i - begIdx
+                        tokens[begIdx].blockSpanIsVirtual = true
+                        return
                     }
                 }
 
@@ -526,7 +550,6 @@ namespace ts.mbit {
                 }
 
                 if (t.kind == TokenKind.NewLine) {
-                    let bkp = i
                     nextNonWs();
                     t = tokens[i]
                     // if we get a infix operator other than +/- after newline, it's a continuation
@@ -548,6 +571,8 @@ namespace ts.mbit {
                         return;
                     }
                 }
+
+                Util.assert(bkp == i)
 
                 switch (t.synKind) {
                     case SK.ForKeyword:
@@ -574,6 +599,15 @@ namespace ts.mbit {
                         }
 
                     case SK.ElseKeyword:
+                        nextNonWs();
+                        if (tokens[i].synKind == SK.IfKeyword) {
+                            continue; // 'else if' - keep scanning
+                        } else {
+                            i = bkp;
+                            expectBlock();
+                            return;
+                        }
+
                     case SK.TryKeyword:
                     case SK.FinallyKeyword:
                         expectBlock();
@@ -704,9 +738,13 @@ namespace ts.mbit {
                         break;
                     case TokenKind.Block:
                         let blk = t as BlockToken;
-                        output += "\n"
-                        blk.stmts.forEach(ppStmt)
-                        output += ind.slice(4) + "}"
+                        if (blk.stmts.length == 0) {
+                            output += " }"
+                        } else {
+                            output += "\n"
+                            blk.stmts.forEach(ppStmt)
+                            output += ind.slice(4) + "}"
+                        }
                         break;
                     case TokenKind.NewLine:
                         if (i == tokens.length - 1)
