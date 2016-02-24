@@ -34,7 +34,7 @@ task('clean', function() {
   })
 })
 
-task('runprj', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
+task('runprj', ['built/yelm.js', 'built/yelm.d.ts'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
 })
 
@@ -54,19 +54,25 @@ ju.catFiles('built/yelm.js', [
     "built/yelmlib.js",
     "built/nodeutil.js",
     "built/cli.js"
-    ])
+    ],
+`
+"use strict";
+// make sure TypeScript doesn't overwrite our module.exports
+global.savedModuleExports = module.exports;
+module.exports = null;
+`)
 
 file('built/nodeutil.js', ['built/cli.js'])
+file('built/yelm.d.ts', ['built/cli.js'], function() {
+  jake.cpR("built/cli.d.ts", "built/yelm.d.ts")
+})
 
 compileDir("yelmlib")
 compileDir("cli", ["built/yelmlib.js"])
 
 task('publish', function() {
-   let pkg = JSON.parse(fs.readFileSync("package.json", "utf8"))
-   let m = /(.*)\.(\d+)$/.exec(pkg.version)
-   pkg.version = m[1] + "." + (parseInt(m[2]) + 1)
-   fs.writeFileSync("package.json", JSON.stringify(pkg, null, 4) + "\n")
   jake.exec([
+        "npm version patch",
         "npm publish",
   ], {printStdout: true});
 })
@@ -89,7 +95,7 @@ task('updatestrings', function() {
         if (!/\.(ts|tsx|html)$/.test(filename)) return
         if (/\.d\.ts$/.test(filename)) return
 
-        console.log('extracting strings from %s', filename);    
+        //console.log('extracting strings from %s', filename);    
         loadText(filename).split('\n').forEach((line, idx) => {
             function err(msg) {
                 console.log("%s(%d): %s", filename, idx, msg);
