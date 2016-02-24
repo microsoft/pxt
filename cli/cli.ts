@@ -304,17 +304,29 @@ function cmdTime() {
 }
 
 function cmdFormat() {
+    let inPlace = false
+    if (cmdArgs[0] == "-i") {
+        cmdArgs.shift()
+        inPlace = true
+    }
+
     if (cmdArgs.length > 0) {
         for (let f of cmdArgs) {
             let t = fs.readFileSync(f, "utf8")
             t = ts.mbit.format(t)
-            let fn = "tmp/" + f
+            let fn = f + ".new"
             if (!t) {
                 console.log("already formatted:", f)
-                fs.unlink(fn, err => { })
+                if (!inPlace)
+                    fs.unlink(fn, err => { })
             } else {
-                fs.writeFileSync(fn, t, "utf8")
-                console.log("written:", fn)
+                if (inPlace) {
+                    fs.writeFileSync(f, t, "utf8")
+                    console.log("replaced:", f)
+                } else {
+                    fs.writeFileSync(fn, t, "utf8")
+                    console.log("written:", fn)
+                }
             }
         }
     } else {
@@ -384,7 +396,7 @@ let cmds: Command[] = [
     { n: "service", f: cmdService, a: "OPERATION", d: "simulate a query to web worker" },
     { n: "genembed", f: cmdGenEmbed, a: "", d: "generate built/yelmembed.js from current package" },
     { n: "time", f: cmdTime, a: "", d: "measure performance of the compiler on the current package" },
-    { n: "format", f: cmdFormat, a: "file.ts...", d: "pretty-print TS files" },
+    { n: "format", f: cmdFormat, a: "[-i] file.ts...", d: "pretty-print TS files; -i = in-place" },
     { n: "help", f: usage, a: "", d: "display this message" },
 
     { n: "api", f: cmdApi, a: "PATH [DATA]", d: "do authenticated API call", o: 1 },
