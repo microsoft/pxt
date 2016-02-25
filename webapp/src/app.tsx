@@ -471,13 +471,18 @@ Ctrl+Shift+B
     }
 
     compile() {
+        console.log('compiling...')
         compiler.compileAsync()
-            .then(resp => {
+            .then(resp => {                
+                console.log('done')
                 this.editor.setDiagnostics(this.editorFile)
                 let hex = resp.outfiles["microbit.hex"]
                 if (hex) {
                     let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
+                    console.log('saving ' + fn)
                     core.browserDownloadText(hex, fn, "application/x-microbit-hex")
+                } else {
+                    console.log('no .hex file produced')
                 }
             })
             .done()
