@@ -1344,15 +1344,22 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
                     return;
                 }
                 let fieldMap = blockyloader.parameterNames(fn);
+                let instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
+                let args = fn.parameters.map(p => {
+                        if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
+                        else return null;
+                    }).filter(a => !!a);
+                if (instance)
+                    args.unshift({ 
+                        field: fieldMap["this"].name
+                    });
+                    
                 e.stdCallTable[fn.attributes.blockId] = {
                     namespace: fn.namespace,
                     f: fn.name,
-                    isExtensionMethod: fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property,
+                    isExtensionMethod: instance,
                     hasHandler: fn.parameters.some(p => p.type == "() => void"),
-                    args: fn.parameters.map(p => {
-                        if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
-                        else return null;
-                    }).filter(a => !!a)
+                    args: args
                 }
             })
 

@@ -191,9 +191,8 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
                 return;
             }
             let pr = attrNames[n];
-
             if (instance && n == "this") {
-                i = initField(block.appendValueInput(n), ni, fn, pre, true, pr.type);
+                i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);
             }
             else if (pr.type == "number") {
                 i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
