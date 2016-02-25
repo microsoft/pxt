@@ -446,69 +446,10 @@ module Errors {
 // type doesn't match the inferred type, it's an error. If the type was
 // undetermined as of yet, the type of the variable becomes the expected type.
 
-// Starts at 1, otherwise you can't write "if (type) ...".
-enum Type { Number = 1, Boolean, String, Image, Unit, Sprite };
-
-// From a Blockly string annotation to a [Type].
-function toType(t: string): Type {
-    switch (t) {
-        case "String":
-            return Type.String;
-        case "Number":
-            return Type.Number;
-        case "Boolean":
-            return Type.Boolean;
-        case "image":
-            return Type.Image;
-        case "sprite":
-            return Type.Sprite;
-        default:
-            throw new Error("Unknown type");
-    }
-}
-
-// From a [Type] to a TouchDevelop type.
-function toTdType(t: Type): J.JTypeRef {
-    switch (t) {
-        case Type.Number:
-            return H.mkTypeRef("Number");
-        case Type.Boolean:
-            return H.mkTypeRef("Boolean");
-        case Type.String:
-            return H.mkTypeRef("String");
-        case Type.Image:
-            return H.mkLTypeRef("Image");
-        case Type.Sprite:
-            return H.mkLTypeRef("Led Sprite");
-        default:
-            throw new Error("Cannot convert unit");
-    }
-}
-
-// This is for debugging only.
-function typeToString(t: Type): string {
-    switch (t) {
-        case Type.Number:
-            return "Number";
-        case Type.Boolean:
-            return "Boolean";
-        case Type.String:
-            return "String";
-        case Type.Image:
-            return "Image";
-        case Type.Sprite:
-            return "Sprite";
-        case Type.Unit:
-            throw new Error("Should be forbidden by Blockly");
-        default:
-            throw new Error("Unknown type");
-    }
-}
-
 class Point {
     constructor(
         public link: Point,
-        public type: Type
+        public type: string
     ) { }
 }
 
@@ -533,30 +474,22 @@ function union(p1: Point, p2: Point) {
 }
 
 // Ground types.
-function mkPoint(t: Type): Point {
+function mkPoint(t: string): Point {
     return new Point(null, t);
 }
-var pNumber = mkPoint(Type.Number);
-var pBoolean = mkPoint(Type.Boolean);
-var pString = mkPoint(Type.String);
-var pImage = mkPoint(Type.Image);
-var pUnit = mkPoint(Type.Unit);
-var pSprite = mkPoint(Type.Sprite);
+var pNumber = mkPoint("number");
+var pBoolean = mkPoint("boolean");
+var pString = mkPoint("string");
+var pImage = mkPoint("input.LedImage");
+var pUnit = mkPoint("void");
 
-function ground(t?: Type): Point {
+function ground(t?: string): Point {
     switch (t) {
-        case Type.Number:
-            return pNumber;
-        case Type.Boolean:
-            return pBoolean;
-        case Type.String:
-            return pString;
-        case Type.Image:
-            return pImage;
-        case Type.Sprite:
-            return pSprite;
-        case Type.Unit:
-            return pUnit;
+        case "number": return pNumber;
+        case "boolean": return pBoolean;
+        case "string": return pString;
+        case "input.LedImage": return pImage;
+        case "void": return pUnit;
         default:
             // Unification variable.
             return mkPoint(null);
@@ -585,13 +518,13 @@ function returnType(e: Environment, b: B.Block): Point {
     assert(!b.outputConnection || b.outputConnection.check_ && b.outputConnection.check_.length > 0);
 
     if (!b.outputConnection)
-        return ground(Type.Unit);
+        return ground(pUnit.type);
 
-    return ground(toType(b.outputConnection.check_[0]));
+    return ground(b.outputConnection.check_[0]);
 }
 
 // Basic type unification routine; easy, because there's no structural types.
-function unify(t1: Type, t2: Type) {
+function unify(t1: string, t2: string) {
     if (t1 == null)
         return t2;
     else if (t2 == null)
@@ -599,7 +532,7 @@ function unify(t1: Type, t2: Type) {
     else if (t1 == t2)
         return t1;
     else
-        throw new Error("cannot mix " + typeToString(t1) + " with " + typeToString(t2));
+        throw new Error("cannot mix " + t1 + " with " + t2);
 }
 
 function mkPlaceholderBlock(): B.Block {
@@ -645,12 +578,12 @@ function infer(e: Environment, w: B.Workspace) {
         try {
             switch (b.type) {
                 case "math_op2":
-                    unionParam(e, b, "x", ground(Type.Number));
-                    unionParam(e, b, "y", ground(Type.Number));
+                    unionParam(e, b, "x", ground(pNumber.type));
+                    unionParam(e, b, "y", ground(pNumber.type));
                     break;
 
                 case "math_op3":
-                    unionParam(e, b, "x", ground(Type.Number));
+                    unionParam(e, b, "x", ground(pNumber.type));
                     break;
 
                 case "math_arithmetic":
@@ -658,12 +591,12 @@ function infer(e: Environment, w: B.Workspace) {
                     switch (b.getFieldValue("OP")) {
                         case "ADD": case "MINUS": case "MULTIPLY": case "DIVIDE":
                         case "LT": case "LTE": case "GT": case "GTE": case "POWER":
-                            unionParam(e, b, "A", ground(Type.Number));
-                            unionParam(e, b, "B", ground(Type.Number));
+                            unionParam(e, b, "A", ground(pNumber.type));
+                            unionParam(e, b, "B", ground(pNumber.type));
                             break;
                         case "AND": case "OR":
-                            unionParam(e, b, "A", ground(Type.Boolean));
-                            unionParam(e, b, "B", ground(Type.Boolean));
+                            unionParam(e, b, "A", ground(pBoolean.type));
+                            unionParam(e, b, "B", ground(pBoolean.type));
                             break;
                         case "EQ": case "NEQ":
                             attachPlaceholderIf(b, "A");
@@ -676,28 +609,28 @@ function infer(e: Environment, w: B.Workspace) {
                                 throwBlockError("Comparing objects of different types", b);
                             }
                             var t = find(p1).type;
-                            if (t != Type.String && t != Type.Boolean && t != Type.Number && t != null)
+                            if (t != pString.type && t != pBoolean.type && t != pNumber.type && t != null)
                                 throwBlockError("I can only compare strings, booleans and numbers", b);
                             break;
                     }
                     break;
 
                 case "logic_operation":
-                    unionParam(e, b, "A", ground(Type.Boolean));
-                    unionParam(e, b, "B", ground(Type.Boolean));
+                    unionParam(e, b, "A", ground(pBoolean.type));
+                    unionParam(e, b, "B", ground(pBoolean.type));
                     break;
 
                 case "logic_negate":
-                    unionParam(e, b, "BOOL", ground(Type.Boolean));
+                    unionParam(e, b, "BOOL", ground(pBoolean.type));
                     break;
 
                 case "controls_if":
                     for (var i = 0; i <= (<B.IfBlock>b).elseifCount_; ++i)
-                        unionParam(e, b, "IF" + i, ground(Type.Boolean));
+                        unionParam(e, b, "IF" + i, ground(pBoolean.type));
                     break;
 
                 case "controls_simple_for":
-                    unionParam(e, b, "TO", ground(Type.Number));
+                    unionParam(e, b, "TO", ground(pNumber.type));
                     break;
                 case "variables_set":
                 case "variables_change":
@@ -715,11 +648,11 @@ function infer(e: Environment, w: B.Workspace) {
                     }
                     break;
                 case "controls_repeat_ext":
-                    unionParam(e, b, "TIMES", ground(Type.Number));
+                    unionParam(e, b, "TIMES", ground(pNumber.type));
                     break;
 
                 case "device_while":
-                    unionParam(e, b, "COND", ground(Type.Boolean));
+                    unionParam(e, b, "COND", ground(pBoolean.type));
                     break;
 
                 default:
@@ -730,7 +663,7 @@ function infer(e: Environment, w: B.Workspace) {
                                 // This will throw if someone modified blocks-custom.js and forgot to add
                                 // [setCheck]s in the block definition. This is intentional and MUST be
                                 // fixed.
-                                var t = toType(i.connection.check_[0]);
+                                var t = i.connection.check_[0];
                                 unionParam(e, b, p.field, ground(t));
                             }
                         });
@@ -749,7 +682,7 @@ function infer(e: Environment, w: B.Workspace) {
     // assigned to), just unify it with int...
     e.bindings.forEach((b: Binding) => {
         if (find(b.type).type == null)
-            union(b.type, ground(Type.Number));
+            union(b.type, ground(pNumber.type));
     });
 }
 
@@ -803,12 +736,12 @@ function compileArithmetic(e: Environment, b: B.Block): J.JExpr {
     var args = [compileExpression(e, left), compileExpression(e, right)];
     var t = returnType(e, left).type;
 
-    if (t == Type.String) {
+    if (t == pString.type) {
         if (bOp == "EQ")
             return H.stringCall("equals", args);
         else if (bOp == "NEQ")
             return H.booleanCall("not", [H.stringCall("equals", args)]);
-    } else if (t == Type.Boolean) {
+    } else if (t == pBoolean.type) {
         if (bOp == "EQ")
             return H.booleanCall("equals", args);
         else if (bOp == "NEQ")
@@ -864,16 +797,16 @@ function compileRandom(e: Environment, b: B.Block): J.JExpr {
 
 function defaultValueForType(t: Point): J.JExpr {
     if (t.type == null) {
-        union(t, ground(Type.Number));
+        union(t, ground(pNumber.type));
         t = find(t);
     }
 
     switch (t.type) {
-        case Type.Boolean:
+        case "boolean":
             return H.mkBooleanLiteral(false);
-        case Type.Number:
+        case "number":
             return H.mkNumberLiteral(0);
-        case Type.String:
+        case "string":
             return H.mkStringLiteral("");
         default:
             return H.mkLocalRef("null");
@@ -914,8 +847,6 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
         return defaultValueForType(returnType(e, b));
 
     // Tricks for musical notes...
-    if (b.type.match(/^device_note_/))
-        return compileNote(e, b); // legacy
     if (b.type.match(/^device_duration_/))
         return compileDuration(e, b);
 
@@ -978,7 +909,7 @@ function isCompiledAsForIndex(b: Binding) {
     return b.usedAsForIndex && !b.incompatibleWithFor;
 }
 
-function extend(e: Environment, x: string, t: Type): Environment {
+function extend(e: Environment, x: string, t: string): Environment {
     assert(lookup(e, x) == null);
     return {
         bindings: [{ name: x, type: ground(t), usedAsForIndex: 0 }].concat(e.bindings),
@@ -1064,7 +995,7 @@ function compileControlsFor(e: Environment, b: B.Block): J.JStmt[] {
         // Evaluate the bound first, and store it in b (bound may change over
         // several loop iterations).
         var local = fresh(e, "bound");
-        e = extend(e, local, Type.Number);
+        e = extend(e, local, pNumber.type);
         var eLocal = H.mkLocalRef(local);
         var eTo = compileExpression(e, bTo);
         var eVar = H.mkLocalRef(bVar);
@@ -1369,7 +1300,7 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
             let x = b.getFieldValue("VAR");
             // It's ok for two loops to share the same variable.
             if (lookup(e, x) == null)
-                e = extend(e, x, Type.Number);
+                e = extend(e, x, pNumber.type);
             lookup(e, x).usedAsForIndex++;
             // Unless the loop starts at 0 and and increments by one, we can't compile
             // as a TouchDevelop for loop. Also, if multiple loops share the same
@@ -1431,7 +1362,7 @@ function compileWorkspace(w: B.Workspace, blockInfo: blockyloader.BlocksInfo, op
         e.bindings.forEach((b: Binding) => {
             var btype = find(b.type);
             if (!isCompiledAsForIndex(b))
-                stmtsVariables.push(H.mkDefAndAssign(b.name, toTdType(find(b.type).type), defaultValueForType(find(b.type))));
+                stmtsVariables.push(H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type))));
         });
         // It's magic! The user can either assign to "whole note" (and everything
         // works out), or not do it, and if they need it, the variable will be
@@ -1439,8 +1370,8 @@ function compileWorkspace(w: B.Workspace, blockInfo: blockyloader.BlocksInfo, op
         var foundWholeNote = e.bindings.filter(x => x.name == "whole note").length > 0;
         var needsWholeNote = w.getAllBlocks().filter(x => !!x.type.match(/^device_duration_/)).length > 0;
         if (!foundWholeNote && needsWholeNote) {
-            stmtsVariables.push(H.mkDefAndAssign("whole note", toTdType(Type.Number), H.mkNumberLiteral(2000)));
-            e = extend(e, "whole note", Type.Number);
+            stmtsVariables.push(H.mkDefAndAssign("whole note", H.mkTypeRef(pNumber.type), H.mkNumberLiteral(2000)));
+            e = extend(e, "whole note", pNumber.type);
         }
 
         // [stmtsHandlers] contains calls to register event handlers. They must be
