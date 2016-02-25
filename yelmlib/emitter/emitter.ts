@@ -1731,23 +1731,34 @@ namespace ts.yelm {
         }
     }
 
+    export interface FuncInfo {
+        name: string;
+        type: string;
+        args: number;
+        value: number;
+    }
+
+    export interface ExtensionInfo {
+        enums: StringMap<number>;
+        functions: FuncInfo[];
+        errors: string;
+        sha: string;
+        compileData: string;
+        hasExtension: boolean;
+    }
+    
+    export function emptyExtInfo() {
+        return <ExtensionInfo>{
+            enums: {},
+            functions: [],
+            errors: "",
+            sha: "",
+            compileData: "",
+            hasExtension: false,
+        }
+    }
+
     module hex {
-        export interface FuncInfo {
-            name: string;
-            type: string;
-            args: number;
-            value: number;
-        }
-
-        export interface ExtensionInfo {
-            enums: StringMap<number>;
-            functions: FuncInfo[];
-            errors: string;
-            sha: string;
-            compileData: string;
-            hasExtension: boolean;
-        }
-
         var funcInfo: StringMap<FuncInfo>;
         var hex: string[];
         var jmpStartAddr: number;
@@ -1882,17 +1893,6 @@ namespace ts.yelm {
             var sha = currentSetup ? currentSetup.slice(0, 16) : ""
             while (sha.length < 16) sha += "0"
             return sha.toUpperCase()
-        }
-
-        function emptyExtInfo() {
-            return <ExtensionInfo>{
-                enums: {},
-                functions: [],
-                errors: "",
-                sha: "",
-                compileData: "",
-                hasExtension: false,
-            }
         }
 
         export function setup() {
