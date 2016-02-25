@@ -393,9 +393,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             hideAgree: true,
             onLoaded: (_) => {
               _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProject()})
-              _.find('#newtypescript').click(() => {this.newTypeScriptProject()})
+              _.find('#newtypescript').click(() => {_.modal('hide'); this.newTypeScriptProject()})
               _.find('#newkodu').click(() => { window.location.href = 'https://www.kodugamelab.com/bbc-microbit/' })
-              _.find('#newvisualstudiocode').click(() => {this.newVisualStudioProject()})
+              _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject()})
             },
             htmlBody: `
 <div class="ui two column grid">
@@ -649,17 +649,15 @@ Ctrl+Shift+B
                 <div id="menubar">
                     <div className={"ui menu" + inv}>
                         <div className="item">
-                            <sui.DropdownMenu class="button floating" text={lf("Project") } icon="wrench">
-                                <sui.Item icon="puzzle" text={lf("New Project") } onClick={() => this.newProject() } />                                                                
-                                {this.editor == this.aceEditor ? null :
-                                    <sui.Item icon="write" text={lf("Edit text") } onClick={() => this.editText() } />
-                                }
-                                <div className="divider"></div>
-                                <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
-                                <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
-                                <div className="divider"></div>
-                                <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
-                            </sui.DropdownMenu>
+                            <div className="ui buttons">
+                                <sui.Button text={lf("New Project")} onClick={() => this.newProject() } />
+                                <sui.DropdownMenu class='floating icon button' icon='dropdown'>
+                                    <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
+                                    <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
+                                    <div className="divider"></div>
+                                    <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
+                                </sui.DropdownMenu>
+                            </div>
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />
