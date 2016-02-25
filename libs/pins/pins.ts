@@ -55,7 +55,7 @@ enum AnalogPins {
 }
 
 
-//% color=351 weight=88
+//% color=351 weight=30
 namespace pins {
     /**
      * Read the specified pin or connector as either 0 or 1

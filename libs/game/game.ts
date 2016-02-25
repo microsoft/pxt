@@ -18,7 +18,7 @@ enum LedSpriteProperty {
     Blink
 }
 
-//% color=176 weight=90
+//% color=176 weight=32
 namespace game {
     var _score: number = 0;
     var _life: number = 3;

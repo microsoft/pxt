@@ -1,4 +1,4 @@
-//% color=270 weight=90
+//% color=270 weight=34
 namespace radio {
     /**
      * Sends a message id to other micro:bit in the group using radio.

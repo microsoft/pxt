@@ -1,4 +1,4 @@
-//% color=45 weight=15
+//% color=45 weight=31
 namespace images {
     /**
      * Creates an image that fits on the LED screen.

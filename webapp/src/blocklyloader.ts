@@ -99,9 +99,21 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
         console.log('toolbox: adding category ' + ns)
         category = document.createElement("category");
         category.setAttribute("name", catName)
-        var nsn = info.apis.byQName[ns];
+        let nsn = info.apis.byQName[ns];
+        category.setAttribute("weight", nsn.attributes.weight.toString())
         if (nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
-        tb.appendChild(category);
+        // find the place to insert the category        
+        let categories = tb.querySelectorAll("category");
+        let ci = 0;
+        for(ci = 0; ci < categories.length; ++ci) {
+            let cat = categories.item(ci);
+            if (parseInt(cat.getAttribute("weight") || "50") < (nsn.attributes.weight || 50)) {
+                tb.insertBefore(category, cat);
+                break;
+            }
+        }
+        if (ci == categories.length)
+            tb.appendChild(category);
     }
     category.appendChild(block);
 }
