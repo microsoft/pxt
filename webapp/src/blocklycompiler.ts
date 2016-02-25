@@ -879,7 +879,7 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
             return compileBeat(e, b);
         default:
             var call = e.stdCallTable[b.type];
-            if (call) return compileCall(e, b);
+            if (call) return compileStdCall(e, b, call);
             else {
                 console.error("Unable to compile expression: " + b.type);
                 return defaultValueForType(returnType(e, b));
@@ -1068,7 +1068,7 @@ function compileChange(e: Environment, b: B.Block): J.JStmt {
     return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, H.mkSimpleCall("+", [ref, expr])])));
 }
 
-function compileCall(e: Environment, b: B.Block) {
+function compileCall(e: Environment, b: B.Block) : J.JStmt {
     var call = e.stdCallTable[b.type];
     return call.hasHandler 
         ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
@@ -1112,15 +1112,6 @@ function compileEvent(e: Environment, b: B.Block, event: string, args: string[],
     var bBody = b.getInputTargetBlock("HANDLER");
     var compiledArgs = args.map((arg: string) => {
         return H.mkLocalRef(b.getFieldValue(arg))
-    });
-    var body = compileStatements(e, bBody);
-    return mkCallWithCallback(e, ns, event, compiledArgs, body);
-}
-
-function compileNumberEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
-    var bBody = b.getInputTargetBlock("HANDLER");
-    var compiledArgs = args.map((arg: string) => {
-        return H.mkNumberLiteral(parseInt(b.getFieldValue(arg)));
     });
     var body = compileStatements(e, bBody);
     return mkCallWithCallback(e, ns, event, compiledArgs, body);
@@ -1364,15 +1355,6 @@ function compileWorkspace(w: B.Workspace, blockInfo: blockyloader.BlocksInfo, op
             if (!isCompiledAsForIndex(b))
                 stmtsVariables.push(H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type))));
         });
-        // It's magic! The user can either assign to "whole note" (and everything
-        // works out), or not do it, and if they need it, the variable will be
-        // declared and assigned to automatically.
-        var foundWholeNote = e.bindings.filter(x => x.name == "whole note").length > 0;
-        var needsWholeNote = w.getAllBlocks().filter(x => !!x.type.match(/^device_duration_/)).length > 0;
-        if (!foundWholeNote && needsWholeNote) {
-            stmtsVariables.push(H.mkDefAndAssign("whole note", H.mkTypeRef(pNumber.type), H.mkNumberLiteral(2000)));
-            e = extend(e, "whole note", pNumber.type);
-        }
 
         // [stmtsHandlers] contains calls to register event handlers. They must be
         // executed before the code that goes in the main function, as that latter
