@@ -667,7 +667,7 @@ function infer(e: Environment, w: B.Workspace) {
                                 unionParam(e, b, p.field, ground(t));
                             }
                         });
-                        compileCall(e,b);
+                        compileCall(e, b);
                     }
             }
         } catch (e) {
@@ -879,7 +879,10 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
             return compileBeat(e, b);
         default:
             var call = e.stdCallTable[b.type];
-            if (call) return compileStdCall(e, b, call);
+            if (call) {
+                if (call.imageLiteral) return compileImage(e, b, false, call.namespace, call.f, call.args.map(ar => compileArgument(e,b,ar)))
+                else return compileStdCall(e, b, call);
+            }
             else {
                 console.error("Unable to compile expression: " + b.type);
                 return defaultValueForType(returnType(e, b));
@@ -1068,24 +1071,27 @@ function compileChange(e: Environment, b: B.Block): J.JStmt {
     return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, H.mkSimpleCall("+", [ref, expr])])));
 }
 
-function compileCall(e: Environment, b: B.Block) : J.JStmt {
+function compileCall(e: Environment, b: B.Block): J.JStmt {
     var call = e.stdCallTable[b.type];
-    return call.hasHandler 
-        ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
+    return call.imageLiteral
+        ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, false, call.namespace, call.f, call.args.map(ar => compileArgument(e,b,ar)))))
+        : call.hasHandler ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
         : H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, e.stdCallTable[b.type])));
 }
 
+function compileArgument(e: Environment, b: B.Block, p: StdArg): J.JExpr {
+    var lit: any = p.literal;
+    if (lit)
+        return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
+    var f = b.getFieldValue(p.field);
+    if (f)
+        return H.mkStringLiteral(f);
+    else
+        return compileExpression(e, b.getInputTargetBlock(p.field))
+}
+
 function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
-    var args = func.args.map((p: StdArg) => {
-        var lit: any = p.literal;
-        if (lit)
-            return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
-        var f = b.getFieldValue(p.field);
-        if (f)
-            return H.mkStringLiteral(f);
-        else
-            return compileExpression(e, b.getInputTargetBlock(p.field))
-    });
+    var args = func.args.map((p: StdArg) => compileArgument(e,b,p));
     if (func.isExtensionMethod) {
         return H.extensionCall(func.f, args);
     } else if (func.namespace) {
@@ -1157,7 +1163,8 @@ interface StdArg {
 interface StdFunc {
     f: string;
     args: StdArg[];
-    isExtensionMethod?: boolean
+    isExtensionMethod?: boolean;
+    imageLiteral?: boolean;
     hasHandler?: boolean;
     namespace?: string;
 }
@@ -1268,18 +1275,19 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
                 let fieldMap = blockyloader.parameterNames(fn);
                 let instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
                 let args = fn.parameters.map(p => {
-                        if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
-                        else return null;
-                    }).filter(a => !!a);
+                    if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
+                    else return null;
+                }).filter(a => !!a);
                 if (instance)
-                    args.unshift({ 
+                    args.unshift({
                         field: fieldMap["this"].name
                     });
-                    
+
                 e.stdCallTable[fn.attributes.blockId] = {
                     namespace: fn.namespace,
                     f: fn.name,
                     isExtensionMethod: instance,
+                    imageLiteral: fn.attributes.imageLiteral,
                     hasHandler: fn.parameters.some(p => p.type == "() => void"),
                     args: args
                 }
