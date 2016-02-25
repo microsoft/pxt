@@ -103,14 +103,14 @@ export function apiAsync(path: string, postArguments?: string) {
 
 function extensionAsync(add: string) {
     let dat = {
-    "config": "ws",
-    "tag": "v74",
-    "replaceFiles": {
-        "/generated/xtest.cpp": "namespace xtest {\n    GLUE void hello()\n    {\n        uBit.panic(123);\n " + add + "   }\n}\n",
-        "/generated/extpointers.inc": "(uint32_t)(void*)::xtest::hello,\n",
-        "/generated/extensions.inc": "#include \"xtest.cpp\"\n"
-    },
-    "dependencies": {}
+        "config": "ws",
+        "tag": "v74",
+        "replaceFiles": {
+            "/generated/xtest.cpp": "namespace xtest {\n    GLUE void hello()\n    {\n        uBit.panic(123);\n " + add + "   }\n}\n",
+            "/generated/extpointers.inc": "(uint32_t)(void*)::xtest::hello,\n",
+            "/generated/extensions.inc": "#include \"xtest.cpp\"\n"
+        },
+        "dependencies": {}
     }
     let dat2 = { data: new Buffer(JSON.stringify(dat), "utf8").toString("base64") }
     return Cloud.privateRequestAsync({
@@ -182,14 +182,16 @@ class Host
         }
     }
 
-    readFileAsync(module: yelm.Package, filename: string): Promise<string> {
-        return (<Promise<string>>readFileAsync(this.resolve(module, filename), "utf8"))
-            .then(txt => txt, err => {
-                return null
-            })
+    readFile(module: yelm.Package, filename: string): string {
+        let resolved = this.resolve(module, filename)
+        try {
+            return fs.readFileSync(resolved, "utf8")
+        } catch (e) {
+            return null
+        }
     }
 
-    writeFileAsync(module: yelm.Package, filename: string, contents: string): Promise<void> {
+    writeFile(module: yelm.Package, filename: string, contents: string): void {
         let p = this.resolve(module, filename)
         let check = (p: string) => {
             let dir = p.replace(/\/[^\/]+$/, "")
@@ -201,7 +203,7 @@ class Host
             }
         }
         check(p)
-        return writeFileAsync(p, contents, "utf8")
+        fs.writeFileSync(p, contents, "utf8")
     }
 
     getHexInfoAsync() {
@@ -214,10 +216,9 @@ class Host
         if (proto == "pub") {
             return Cloud.downloadScriptFilesAsync(pkg.verArgument())
                 .then(resp =>
-                    Util.mapStringMapAsync(resp, (fn: string, cont: string) => {
-                        return pkg.host().writeFileAsync(pkg, fn, cont)
+                    Util.iterStringMap(resp, (fn: string, cont: string) => {
+                        pkg.host().writeFile(pkg, fn, cont)
                     }))
-                .then(() => { })
         } else if (proto == "file") {
             console.log(`skip download of local pkg: ${pkg.version()}`)
             return Promise.resolve()
@@ -272,13 +273,10 @@ export function serviceAsync(cmd: string) {
             if (res.errorMessage) {
                 console.error("Error calling service:", res.errorMessage)
                 process.exit(1)
-                return Promise.resolve()
             } else {
-                return mainPkg.host().writeFileAsync(mainPkg, fn, JSON.stringify(res, null, 1))
+                mainPkg.host().writeFile(mainPkg, fn, JSON.stringify(res, null, 1))
+                console.log("wrote results to " + fn)
             }
-        })
-        .then(() => {
-            console.log("wrote results to " + fn)
         })
 }
 
@@ -286,12 +284,10 @@ export function genembedAsync() {
     let fn = "built/yelmembed.js"
     return mainPkg.filesToBePublishedAsync()
         .then(res => {
-            return mainPkg.host().writeFileAsync(mainPkg, fn,
+            mainPkg.host().writeFile(mainPkg, fn,
                 "window.yelmEmbed = window.yelmEmbed || {};\n" +
                 "window.yelmEmbed[" + JSON.stringify(mainPkg.config.name) + "] = " +
                 JSON.stringify(res, null, 2) + "\n")
-        })
-        .then(() => {
             console.log("wrote results to " + fn)
         })
 }
@@ -361,46 +357,53 @@ export function formatAsync(...fileNames: string[]) {
     return Promise.resolve()
 }
 
+function deployCoreAsync(res: ts.yelm.CompileResult) {
+    return getBitDrivesAsync()
+        .then(drives => {
+            if (drives.length == 0) {
+                console.log("cannot find any drives to deploy to")
+            } else {
+                console.log("copy microbit.hex to " + drives.join(", "))
+            }
+            return Promise.map(drives, d =>
+                writeFileAsync(d + "microbit.hex", res.outfiles["microbit.hex"])
+                    .then(() => {
+                        console.log("wrote hex file to " + d)
+                    }))
+        })
+        .then(() => { })
+}
+
+function runCoreAsync(res: ts.yelm.CompileResult) {
+    let f = res.outfiles["microbit.js"]
+    if (f) {
+        let r = new yelm.rt.Runtime(f)
+        r.run(() => {
+            console.log("DONE")
+            yelm.rt.dumpLivePointers();
+        })
+    }
+    return Promise.resolve()
+}
+
 function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
     return mainPkg.buildAsync()
-        .then(res => Util.mapStringMapAsync(res.outfiles, (fn, c) =>
-            mainPkg.host().writeFileAsync(mainPkg, "built/" + fn, c))
-            .then(() => {
-                reportDiagnostics(res.diagnostics);
-                if (!res.success) {
-                    process.exit(1)
-                }
-            })
-            .then(() => mode == BuildOption.Deploy ? getBitDrivesAsync() : null)
-            .then(drives => {
-                if (!drives) {
-                    return
-                }
-                if (drives.length == 0) {
-                    console.log("cannot find any drives to deploy to")
-                } else {
-                    console.log("copy microbit.hex to " + drives.join(", "))
-                }
-                Promise.map(drives, d =>
-                    writeFileAsync(d + "microbit.hex", res.outfiles["microbit.hex"])
-                        .then(() => {
-                            console.log("wrote hex file to " + d)
-                        }))
-            })
-            .then(() => {
-                if (mode == BuildOption.Run) {
-                    let f = res.outfiles["microbit.js"]
-                    if (f) {
-                        let r = new yelm.rt.Runtime(f)
-                        r.run(() => {
-                            console.log("DONE")
-                            yelm.rt.dumpLivePointers();
-                        })
-                    }
-                }
-            })
-        )
+        .then(res => {
+            Util.iterStringMap(res.outfiles, (fn, c) =>
+                mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
+            reportDiagnostics(res.diagnostics);
+            if (!res.success) {
+                process.exit(1)
+            }
+
+            if (mode == BuildOption.Deploy)
+                return deployCoreAsync(res);
+            else if (mode == BuildOption.Run)
+                return runCoreAsync(res);
+            else
+                return null;
+        })
 }
 
 export function buildAsync() {

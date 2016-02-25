@@ -1,3 +1,5 @@
+/// <reference path="emitter/util.ts"/>
+
 namespace yelm.cpp {
     import U = ts.yelm.Util;
     import Y = ts.yelm;

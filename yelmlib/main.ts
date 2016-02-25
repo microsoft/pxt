@@ -3,10 +3,10 @@
 
 namespace yelm {
     export import Util = ts.yelm.Util;
-    
+
     export interface Host {
-        readFileAsync(pkg: Package, filename: string): Promise<string>;
-        writeFileAsync(pkg: Package, filename: string, contents: string): Promise<void>;
+        readFile(pkg: Package, filename: string): string;
+        writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(): Promise<any>;
         resolveVersionAsync(pkg: Package): Promise<string>;
@@ -58,9 +58,9 @@ namespace yelm {
             return null
         }
 
-        protected saveConfigAsync() {
+        protected saveConfig() {
             let cfg = JSON.stringify(this.config, null, 4) + "\n"
-            return this.host().writeFileAsync(this, configName, cfg)
+            this.host().writeFile(this, configName, cfg)
         }
 
         private resolveVersionAsync() {
@@ -81,13 +81,13 @@ namespace yelm {
                     if (this.config && this.config.installedVersion == verNo)
                         return
                     return this.host().downloadPackageAsync(this)
-                        .then(() => this.host().readFileAsync(this, configName))
-                        .then(confStr => {
+                        .then(() => {
+                            let confStr = this.host().readFile(this, configName)
                             if (!confStr)
                                 Util.userError(`package ${this.id} is missing ${configName}`)
                             this.parseConfig(confStr)
                             this.config.installedVersion = this.version()
-                            return this.saveConfigAsync()
+                            this.saveConfig()
                         })
                         .then(() => {
                             info(`installed ${this.id} /${verNo}`)
@@ -115,18 +115,15 @@ namespace yelm {
         loadAsync(isInstall = false): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
             this.isLoaded = true
-            return this.host().readFileAsync(this, configName)
-                .then(str => {
-                    if (str == null) {
-                        if (!isInstall)
-                            Util.userError("Package not installed: " + this.id)
-                    } else {
-                        this.parseConfig(str)
-                    }
-                    if (isInstall)
-                        return this.downloadAsync()
-                    else return null
-                })
+            let str = this.host().readFile(this, configName)
+            if (str == null) {
+                if (!isInstall)
+                    Util.userError("Package not installed: " + this.id)
+            } else {
+                this.parseConfig(str)
+            }
+
+            return (isInstall ? this.downloadAsync() : Promise.resolve())
                 .then(() =>
                     Util.mapStringMapAsync(this.config.dependencies, (id, ver) => {
                         let mod = this.resolveDep(id)
@@ -174,7 +171,7 @@ namespace yelm {
                     this.config.dependencies[name] = "*"
                 })
                 .then(() => this.installAllAsync())
-                .then(() => this.saveConfigAsync())
+                .then(() => this.saveConfig())
         }
 
         sortedDeps() {
@@ -201,21 +198,20 @@ namespace yelm {
                     return this.host().getHexInfoAsync()
                         .then(inf => opts.hexinfo = inf)
                 })
-                .then(() => Promise.all(Util.concat(this.sortedDeps()
-                    .map(pkg =>
-                        pkg.getFiles().map(f => {
+                .then(() => {
+                    for (let pkg of this.sortedDeps()) {
+                        for (let f of pkg.getFiles()) {
                             if (/\.ts$/.test(f)) {
                                 let sn = f
                                 if (pkg.level > 0)
                                     sn = "yelm_modules/" + pkg.id + "/" + f
                                 opts.sourceFiles.push(sn)
-                                return this.host().readFileAsync(pkg, f)
-                                    .then(str => {
-                                        opts.fileSystem[sn] = str
-                                    })
-                            } else return Promise.resolve()
-                        }))))
-                    .then(() => opts))
+                                opts.fileSystem[sn] = this.host().readFile(pkg, f)
+                            }
+                        }
+                    }
+                    return opts;
+                })
         }
 
         buildAsync() {
@@ -233,29 +229,29 @@ namespace yelm {
         }
 
         initAsync(name: string) {
-            return this.host().readFileAsync(this, configName)
-                .then(str => {
-                    if (str)
-                        Util.userError("config already present")
+            let str = this.host().readFile(this, configName)
+            if (str)
+                Util.userError("config already present")
 
-                    this.config = {
-                        name: name,
-                        description: "",
-                        installedVersion: "",
-                        files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
-                        testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),
-                        dependencies: {
-                            "core": "*"
-                        }
-                    }
-                    this.validateConfig();
-                    return this.saveConfigAsync()
-                })
-                .then(() => Util.mapStringMapAsync(defaultFiles, (k, v) =>
-                    this.host().writeFileAsync(this, k, v.replace(/@NAME@/g, name))))
-                .then(() => {
-                    info("package initialized")
-                })
+            this.config = {
+                name: name,
+                description: "",
+                installedVersion: "",
+                files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
+                testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),
+                dependencies: {
+                    "core": "*"
+                }
+            }
+            this.validateConfig();
+            this.saveConfig()
+
+            Util.iterStringMap(defaultFiles, (k, v) => {
+                this.host().writeFile(this, k, v.replace(/@NAME@/g, name))
+            })
+            info("package initialized")
+
+            return Promise.resolve()
         }
 
         filesToBePublishedAsync(allowPrivate = false) {
@@ -275,18 +271,17 @@ namespace yelm {
                         }
                     })
                     files[configName] = JSON.stringify(cfg, null, 4)
+                    for (let f of this.getFiles()) {
+                        let str = this.host().readFile(this, f)
+                        if (str == null)
+                            Util.userError("referenced file missing: " + f)
+                        files[f] = str
+                    }
+
+                    return Util.sortObjectFields(files)
                 })
-                .then(() => Promise.all(
-                    this.getFiles().map(f =>
-                        this.host().readFileAsync(this, f)
-                            .then(str => {
-                                if (str == null)
-                                    Util.userError("referenced file missing: " + f)
-                                files[f] = str
-                            }))))
-                .then(() => Util.sortObjectFields(files))
         }
-        
+
         publishAsync() {
             let text: string;
             let scrInfo: { id: string; } = null;
@@ -343,8 +338,8 @@ namespace yelm {
                 .then(() => {
                     if (this.config.installedVersion != scrInfo.id) {
                         this.config.installedVersion = scrInfo.id
-                        return this.saveConfigAsync();
-                    } else return null
+                        this.saveConfig();
+                    }
                 })
         }
     }
