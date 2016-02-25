@@ -2,6 +2,7 @@
 /// <reference path="emitter/util.ts"/>
 
 namespace yelm {
+    export import U = ts.yelm.Util;
     export import Util = ts.yelm.Util;
 
     export interface Host {
@@ -13,15 +14,15 @@ namespace yelm {
     }
     
     export interface DalConfig {
-        dependencies?: Util.StringMap<string>;
-        config?: Util.StringMap<string>;
+        dependencies?: U.Map<string>;
+        config?: U.Map<string>;
     }
 
     export interface PackageConfig {
         name: string;
         installedVersion?: string;
         description?: string;
-        dependencies: Util.StringMap<string>;
+        dependencies: U.Map<string>;
         files: string[];
         testFiles?: string[];
         public?: boolean;
@@ -94,7 +95,7 @@ namespace yelm {
                         .then(() => {
                             let confStr = this.readFile(configName)
                             if (!confStr)
-                                Util.userError(`package ${this.id} is missing ${configName}`)
+                                U.userError(`package ${this.id} is missing ${configName}`)
                             this.parseConfig(confStr)
                             this.config.installedVersion = this.version()
                             this.saveConfig()
@@ -108,12 +109,12 @@ namespace yelm {
 
         protected validateConfig() {
             if (!this.config.dependencies)
-                Util.userError("Missing dependencies in config of: " + this.id)
+                U.userError("Missing dependencies in config of: " + this.id)
             if (!Array.isArray(this.config.files))
-                Util.userError("Missing files in config of: " + this.id)
+                U.userError("Missing files in config of: " + this.id)
             if (typeof this.config.name != "string" || !this.config.name ||
                 (this.config.public && !/^[a-z][a-z0-9\-]+$/.test(this.config.name)))
-                Util.userError("Invalid package name: " + this.config.name)
+                U.userError("Invalid package name: " + this.config.name)
         }
 
         private parseConfig(str: string) {
@@ -128,19 +129,19 @@ namespace yelm {
             let str = this.readFile(configName)
             if (str == null) {
                 if (!isInstall)
-                    Util.userError("Package not installed: " + this.id)
+                    U.userError("Package not installed: " + this.id)
             } else {
                 this.parseConfig(str)
             }
 
             return (isInstall ? this.downloadAsync() : Promise.resolve())
                 .then(() =>
-                    Util.mapStringMapAsync(this.config.dependencies, (id, ver) => {
+                    U.mapStringMapAsync(this.config.dependencies, (id, ver) => {
                         let mod = this.resolveDep(id)
                         ver = ver || "*"
                         if (mod) {
                             if (mod._verspec != ver)
-                                Util.userError("Version spec mismatch on " + id)
+                                U.userError("Version spec mismatch on " + id)
                             mod.level = Math.min(mod.level, this.level + 1)
                             return Promise.resolve()
                         } else {
@@ -162,7 +163,7 @@ namespace yelm {
 
     export class MainPackage
         extends Package {
-        public deps: Util.StringMap<Package> = {};
+        public deps: U.Map<Package> = {};
 
         constructor(public _host: Host) {
             super("this", "file:.", null)
@@ -241,7 +242,7 @@ namespace yelm {
         initAsync(name: string) {
             let str = this.readFile(configName)
             if (str)
-                Util.userError("config already present")
+                U.userError("config already present")
 
             this.config = {
                 name: name,
@@ -256,7 +257,7 @@ namespace yelm {
             this.validateConfig();
             this.saveConfig()
 
-            Util.iterStringMap(defaultFiles, (k, v) => {
+            U.iterStringMap(defaultFiles, (k, v) => {
                 this.host().writeFile(this, k, v.replace(/@NAME@/g, name))
             })
             info("package initialized")
@@ -265,15 +266,15 @@ namespace yelm {
         }
 
         filesToBePublishedAsync(allowPrivate = false) {
-            let files: Util.StringMap<string> = {};
+            let files: U.Map<string> = {};
 
             return this.loadAsync()
                 .then(() => {
                     if (!allowPrivate && !this.config.public)
-                        Util.userError('Only packages with "public":true can be published')
-                    let cfg = Util.clone(this.config)
+                        U.userError('Only packages with "public":true can be published')
+                    let cfg = U.clone(this.config)
                     delete cfg.installedVersion
-                    Util.iterStringMap(cfg.dependencies, (k, v) => {
+                    U.iterStringMap(cfg.dependencies, (k, v) => {
                         if (v != "*" && !/^pub:/.test(v)) {
                             cfg.dependencies[k] = "*"
                             if (v)
@@ -284,11 +285,11 @@ namespace yelm {
                     for (let f of this.getFiles()) {
                         let str = this.readFile(f)
                         if (str == null)
-                            Util.userError("referenced file missing: " + f)
+                            U.userError("referenced file missing: " + f)
                         files[f] = str
                     }
 
-                    return Util.sortObjectFields(files)
+                    return U.sortObjectFields(files)
                 })
         }
 
@@ -299,7 +300,7 @@ namespace yelm {
             return this.filesToBePublishedAsync()
                 .then(files => {
                     text = JSON.stringify(files, null, 2)
-                    let hash = Util.sha256(text).substr(0, 32)
+                    let hash = U.sha256(text).substr(0, 32)
                     info(`checking for pre-existing script at ${hash}`)
                     return Cloud.privateGetAsync("scripthash/" + hash)
                         .then(resp => {
@@ -360,7 +361,7 @@ namespace yelm {
         console.log(msg)
     }
 
-    var defaultFiles: Util.StringMap<string> = {
+    var defaultFiles: U.Map<string> = {
         "README.md":
         `# @NAME@
 

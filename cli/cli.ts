@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
-import Util = yelm.Util;
+import U = yelm.Util;
 import Cloud = yelm.Cloud;
 
 let prevExports = (global as any).savedModuleExports
@@ -216,7 +216,7 @@ class Host
         if (proto == "pub") {
             return Cloud.downloadScriptFilesAsync(pkg.verArgument())
                 .then(resp =>
-                    Util.iterStringMap(resp, (fn: string, cont: string) => {
+                    U.iterStringMap(resp, (fn: string, cont: string) => {
                         pkg.host().writeFile(pkg, fn, cont)
                     }))
         } else if (proto == "file") {
@@ -231,7 +231,7 @@ class Host
         return Cloud.privateGetAsync(yelm.pkgPrefix + pkg.id).then(r => {
             let id = r["scriptid"]
             if (!id) {
-                Util.userError("scriptid no set on ptr for pkg " + pkg.id)
+                U.userError("scriptid no set on ptr for pkg " + pkg.id)
             }
             return id
         })
@@ -294,14 +294,14 @@ export function genembedAsync() {
 
 export function timeAsync() {
     ensurePkgDir();
-    let min: Util.StringMap<number> = null;
+    let min: U.Map<number> = null;
     let loop = () =>
         mainPkg.buildAsync()
             .then(res => {
                 if (!min) {
                     min = res.times
                 } else {
-                    Util.iterStringMap(min, (k, v) => {
+                    U.iterStringMap(min, (k, v) => {
                         min[k] = Math.min(v, res.times[k])
                     })
                 }
@@ -390,7 +390,7 @@ function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
     return mainPkg.buildAsync()
         .then(res => {
-            Util.iterStringMap(res.outfiles, (fn, c) =>
+            U.iterStringMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
             reportDiagnostics(res.diagnostics);
             if (!res.success) {

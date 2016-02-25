@@ -1,9 +1,10 @@
 /// <reference path="../../typings/bluebird/bluebird.d.ts"/>
 
 namespace ts.yelm.Util {
-    export interface StringMap<T> {
+    export interface Map<T> {
         [index: string]: T;
     }
+    export type StringMap<T> = Map<T>;
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
             debugger
@@ -28,27 +29,27 @@ namespace ts.yelm.Util {
         return JSON.parse(JSON.stringify(v))
     }
 
-    export function iterStringMap<T>(m: StringMap<T>, f: (k: string, v: T) => void) {
+    export function iterStringMap<T>(m: Map<T>, f: (k: string, v: T) => void) {
         Object.keys(m).forEach(k => f(k, m[k]))
     }
 
-    export function mapStringMap<T, S>(m: StringMap<T>, f: (k: string, v: T) => S) {
-        let r: StringMap<S> = {}
+    export function mapStringMap<T, S>(m: Map<T>, f: (k: string, v: T) => S) {
+        let r: Map<S> = {}
         Object.keys(m).forEach(k => r[k] = f(k, m[k]))
         return r
     }
 
-    export function mapStringMapAsync<T, S>(m: StringMap<T>, f: (k: string, v: T) => Promise<S>) {
-        let r: StringMap<S> = {}
+    export function mapStringMapAsync<T, S>(m: Map<T>, f: (k: string, v: T) => Promise<S>) {
+        let r: Map<S> = {}
         return Promise.all(Object.keys(m).map(k => f(k, m[k]).then(v => r[k] = v)))
             .then(() => r)
     }
 
-    export function values<T>(m: StringMap<T>) {
+    export function values<T>(m: Map<T>) {
         return Object.keys(m || {}).map(k => m[k])
     }
 
-    export function lookup<T>(m: StringMap<T>, key: string): T {
+    export function lookup<T>(m: Map<T>, key: string): T {
         if (m.hasOwnProperty(key))
             return m[key]
         return null
@@ -120,8 +121,8 @@ namespace ts.yelm.Util {
         return v;
     }
 
-    export function groupBy<T>(arr: T[], f: (t: T) => string): StringMap<T[]> {
-        var r: StringMap<T[]> = {}
+    export function groupBy<T>(arr: T[], f: (t: T) => string): Map<T[]> {
+        var r: Map<T[]> = {}
         arr.forEach(e => {
             var k = f(e)
             if (!r.hasOwnProperty(k)) r[k] = []
@@ -130,8 +131,8 @@ namespace ts.yelm.Util {
         return r
     }
 
-    export function toDictionary<T>(arr: T[], f: (t: T) => string): StringMap<T> {
-        var r: StringMap<T> = {}
+    export function toDictionary<T>(arr: T[], f: (t: T) => string): Map<T> {
+        var r: Map<T> = {}
         arr.forEach(e => { r[f(e)] = e })
         return r
     }
@@ -164,7 +165,7 @@ namespace ts.yelm.Util {
     }
 
     export function memoize<S, T>(getId: (v: S) => string, createNew: (v: S) => T): (id: S) => T {
-        let cache: Util.StringMap<T> = {}
+        let cache: Util.Map<T> = {}
         return (v: S) => {
             let id = getId(v)
             if (cache.hasOwnProperty(id))
@@ -240,13 +241,13 @@ namespace ts.yelm.Util {
         url: string;
         method?: string; // default to GET
         data?: any;
-        headers?: StringMap<string>;
+        headers?: Map<string>;
         allowHttpErrors?: boolean; // don't treat non-200 responses as errors
     }
 
     export interface HttpResponse {
         statusCode: number;
-        headers: StringMap<string>;
+        headers: Map<string>;
         buffer?: any;
         text?: string;
         json?: any;
@@ -355,7 +356,7 @@ namespace ts.yelm.Util {
     }
 
     var _localizeLang: string = "en";
-    var _localizeStrings: StringMap<string> = {};
+    var _localizeStrings: Map<string> = {};
 
     export function _localize(s: string, account: boolean) {
         return _localizeStrings[s] || s;

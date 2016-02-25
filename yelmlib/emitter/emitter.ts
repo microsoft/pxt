@@ -1,7 +1,7 @@
 namespace ts.yelm {
     export var assert = Util.assert;
     export var oops = Util.oops;
-    export type StringMap<T> = Util.StringMap<T>;
+    export type StringMap<T> = Util.Map<T>;
 
     function stringKind(n: Node) {
         if (!n) return "<null>"
@@ -113,7 +113,7 @@ namespace ts.yelm {
 
         _name?: string;
         jsDoc?: string;
-        paramHelp?: Util.StringMap<string>;
+        paramHelp?: Util.Map<string>;
     }
 
     interface ClassInfo {

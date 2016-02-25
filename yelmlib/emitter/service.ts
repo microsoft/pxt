@@ -34,7 +34,7 @@ namespace ts.yelm {
     }
 
     export interface ApisInfo {
-        byQName: Util.StringMap<SymbolInfo>;
+        byQName: Util.Map<SymbolInfo>;
     }
 
     export interface CompletionEntry {
@@ -44,7 +44,7 @@ namespace ts.yelm {
     }
 
     export interface CompletionInfo {
-        entries: Util.StringMap<SymbolInfo>;
+        entries: Util.Map<SymbolInfo>;
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
@@ -248,7 +248,7 @@ namespace ts.yelm.service {
 
     class Host implements LanguageServiceHost {
         opts = emptyOptions;
-        fileVersions: Util.StringMap<number> = {};
+        fileVersions: Util.Map<number> = {};
         projectVer = 0;
 
         getProjectVersion() {
@@ -333,7 +333,7 @@ namespace ts.yelm.service {
         isJsDocTagName: boolean;
     }
 
-    let operations: Util.StringMap<(v: OpArg) => any> = {
+    let operations: Util.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
             host.setOpts(emptyOptions)

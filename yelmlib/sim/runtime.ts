@@ -34,7 +34,7 @@ namespace yelm.rt {
         runFiberAsync(a: RefAction) {
             incr(a)
             return new Promise<any>((resolve, reject) =>
-                Util.nextTick(() => {
+                U.nextTick(() => {
                     this.setupTop(resolve)
                     action.run(a)
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
