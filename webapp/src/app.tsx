@@ -93,6 +93,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         let save = () => {
             par.saveFileAsync()
                 .then(() => par.state.currFile.epkg.savePkgAsync())
+                .then(() => workspace.syncAsync())
                 .done()
         }
         if (!hd && headers[0]) {
@@ -112,7 +113,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
 
                 <sui.Button class={btnClass} onClick={save}
                     icon={"cloud " + (needsUpload ? "upload" : "") }
-                    popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to force.") : lf("Stored in the cloud.") }
+                    popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
                     />
             </div>
         );
@@ -655,7 +656,6 @@ Ctrl+Shift+B
                                 }
                                 <div className="divider"></div>
                                 <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
-                                <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
                                 <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
                                 <div className="divider"></div>
                                 <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
