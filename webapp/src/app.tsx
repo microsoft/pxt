@@ -443,7 +443,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newvisualstudiocode" class="ui fluid card approve">
         <div class="image">
-        <img src="/images/newkodu.png">
+        <img src="/images/newvisualstudiocode.png">
         </div>
         <div class="content">
         <div class="header">Visual Studio Code</div>
