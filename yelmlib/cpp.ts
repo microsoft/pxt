@@ -23,17 +23,12 @@ namespace yelm.cpp {
         return null;
     }
 
-    export interface GlueJson {
-        dependencies?: U.StringMap<string>;
-        config?: U.StringMap<string>;
-    }
-
-    export function getExtensionInfoAsync(mainPkg: MainPackage): Promise<Y.ExtensionInfo> {
+    export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         var res = Y.emptyExtInfo();
         var fileRepl: U.StringMap<string> = {}
         var pointersInc = ""
         var includesInc = ""
-        var totalConfig: GlueJson = {
+        var totalConfig: DalConfig = {
             dependencies: {},
             config: {},
         }
@@ -108,21 +103,17 @@ namespace yelm.cpp {
             includesInc += "#include \"" + currNs + ".cpp\"\n"
             fileRepl["/generated/" + currNs + ".cpp"] = src
         }
-        
-        return null;
-        
-        /*
 
-        function parseJson(src: string) {
-            var parsed = RT.JsonParser.parse(src, err);
-            if (!parsed) return;
-            var json = <GlueJson>parsed.value();
+        function parseJson(pkg: Package) {
+            let json = pkg.config.dal
             if (!json) return;
 
             res.hasExtension = true
 
-            if (json.dependencies)
+            // TODO check for conflicts
+            if (json.dependencies) {
                 Util.jsonCopyFrom(totalConfig.dependencies, json.dependencies)
+            }
 
             if (json.config)
                 Object.keys(json.config).forEach(k => {
@@ -137,39 +128,17 @@ namespace yelm.cpp {
 
         if (mainPkg) {
             // TODO computeReachableNodes(pkg, true)
-            let fileCache: U.StringMap<string> = {}
-            let waitList: Promise<void>[] = []
-
-            U.iterStringMap(mainPkg.deps, (id, pkg) => {
+            for (let pkg of mainPkg.sortedDeps()) {
+                thisErrors = ""
                 for (let fn of pkg.getFiles()) {
                     if (U.endsWith(fn, ".cpp")) {
-                        waitList.push(
-                            pkg.host().readFileAsync(pkg, fn)
-                                .then(text => {
-                                    fileCache[id + "/" + fn] = text
-                                })
-                        )
+                        parseCpp(pkg.readFile(fn))
                     }
                 }
-            })
-
-            return Promise.all(waitList)
-                .then(() => {
-                    U.iterStringMap(mainPkg.deps, (id, pkg) => {
-                        thisErrors = ""
-                        
-                        if (r.getName() == "glue.cpp")
-                            parseCpp(src)
-                        else
-                            parseJson(src)
-                        if (thisErrors) {
-                            res.errors += lf("Library {0}:\n", l.getName()) + thisErrors
-                        }
-
-                    })
-                    return res;
-                })
-
+                if (thisErrors) {
+                    res.errors += lf("Packge {0}:\n", pkg.id) + thisErrors
+                }
+            }
         }
 
         if (res.errors)
@@ -181,15 +150,15 @@ namespace yelm.cpp {
         fileRepl["/generated/extensions.inc"] = includesInc
         var creq = {
             config: "ws",
-            tag: Cloud.config.microbitGitTag,
+            tag: "v75",
             replaceFiles: fileRepl,
             dependencies: totalConfig.dependencies,
         }
-        var reqData = Util.toUTF8(JSON.stringify(creq))
-        res.sha = Random.sha256buffer(Util.stringToUint8Array(reqData))
-        res.compileData = Util.base64Encode(reqData)
+
+        let data = JSON.stringify(creq)
+        res.sha = Util.sha256(data)
+        res.compileData = btoa(Util.toUTF8(data))
         return res;
-        */
     }
 
 }

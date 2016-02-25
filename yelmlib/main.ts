@@ -11,6 +11,11 @@ namespace yelm {
         getHexInfoAsync(): Promise<any>;
         resolveVersionAsync(pkg: Package): Promise<string>;
     }
+    
+    export interface DalConfig {
+        dependencies?: Util.StringMap<string>;
+        config?: Util.StringMap<string>;
+    }
 
     export interface PackageConfig {
         name: string;
@@ -20,6 +25,7 @@ namespace yelm {
         files: string[];
         testFiles?: string[];
         public?: boolean;
+        dal?: DalConfig;
     }
 
     export class Package {
@@ -51,6 +57,10 @@ namespace yelm {
         }
 
         host() { return this.parent._host }
+        
+        readFile(fn:string) {
+            return this.host().readFile(this, fn)
+        }
 
         resolveDep(id: string) {
             if (this.parent.deps.hasOwnProperty(id))
@@ -82,7 +92,7 @@ namespace yelm {
                         return
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
-                            let confStr = this.host().readFile(this, configName)
+                            let confStr = this.readFile(configName)
                             if (!confStr)
                                 Util.userError(`package ${this.id} is missing ${configName}`)
                             this.parseConfig(confStr)
@@ -115,7 +125,7 @@ namespace yelm {
         loadAsync(isInstall = false): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
             this.isLoaded = true
-            let str = this.host().readFile(this, configName)
+            let str = this.readFile(configName)
             if (str == null) {
                 if (!isInstall)
                     Util.userError("Package not installed: " + this.id)
@@ -206,7 +216,7 @@ namespace yelm {
                                 if (pkg.level > 0)
                                     sn = "yelm_modules/" + pkg.id + "/" + f
                                 opts.sourceFiles.push(sn)
-                                opts.fileSystem[sn] = this.host().readFile(pkg, f)
+                                opts.fileSystem[sn] = pkg.readFile(f)
                             }
                         }
                     }
@@ -229,7 +239,7 @@ namespace yelm {
         }
 
         initAsync(name: string) {
-            let str = this.host().readFile(this, configName)
+            let str = this.readFile(configName)
             if (str)
                 Util.userError("config already present")
 
@@ -272,7 +282,7 @@ namespace yelm {
                     })
                     files[configName] = JSON.stringify(cfg, null, 4)
                     for (let f of this.getFiles()) {
-                        let str = this.host().readFile(this, f)
+                        let str = this.readFile(f)
                         if (str == null)
                             Util.userError("referenced file missing: " + f)
                         files[f] = str
