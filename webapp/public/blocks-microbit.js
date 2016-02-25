@@ -110,22 +110,6 @@ Blockly.Variables.flyoutCategory = function(workspace) {
   }
   return xmlList;
 };
-Blockly.Blocks['device_build_image'] = {
-    init: function()
-    {
-        this.setColour(blockColors.images);
-        this.appendDummyInput().appendField("create image");
-        this.appendDummyInput().appendField("    0     1     2     3     4");
-        this.appendDummyInput().appendField("0").appendField(new Blockly.FieldCheckbox("FALSE"), "LED00").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED10").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED20").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED30").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED40");
-        this.appendDummyInput().appendField("1").appendField(new Blockly.FieldCheckbox("FALSE"), "LED01").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED11").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED21").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED31").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED41");
-        this.appendDummyInput().appendField("2").appendField(new Blockly.FieldCheckbox("FALSE"), "LED02").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED12").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED22").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED32").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED42");
-        this.appendDummyInput().appendField("3").appendField(new Blockly.FieldCheckbox("FALSE"), "LED03").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED13").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED23").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED33").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED43");
-        this.appendDummyInput().appendField("4").appendField(new Blockly.FieldCheckbox("FALSE"), "LED04").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED14").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED24").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED34").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED44");
-        this.setOutput(true, 'image');
-        this.setTooltip('An image that fits on the LED array.');
-        this.setHelpUrl("./functions/create-image");
-    }
-};
 
 Blockly.Blocks['device_build_big_image'] = {
     init: function()
@@ -154,47 +138,6 @@ Blockly.Blocks['device_build_big_image'] = {
         this.setTooltip("A larger image that will be scrolled across the LED display.");
         this.setHelpUrl("./functions/create-image");
     }
-};
-
-Blockly.Blocks['device_show_image_offset'] = {
-  init: function() {
-    this.setHelpUrl('./functions/show-image');
-    this.setColour(blockColors.images);
-    this.appendDummyInput()
-        .appendField("show image");
-    this.appendValueInput("sprite").setCheck('image');
-    this.appendValueInput("offset")
-        .setCheck("Number")
-        .appendField("at offset");
-    this.setTooltip('For a given (possibly big) image, display only frame, starting at offset.');
-    this.setPreviousStatement(!0);
-    this.setNextStatement(!0);
-    this.setInputsInline(true);
-  }
-};
-
-Blockly.Blocks['device_scroll_image'] = {
-  init: function() {
-    this.setHelpUrl('./functions/scroll-image');
-    this.setColour(blockColors.images);
-    this.appendDummyInput()
-        .appendField("scroll image");
-    this.appendValueInput("sprite").setCheck('image')
-        .setAlign(Blockly.ALIGN_RIGHT);
-//        .appendField("image");
-    this.appendValueInput("frame offset")
-        .setCheck("Number")
-        .setAlign(Blockly.ALIGN_RIGHT)
-        .appendField("with offset");
-    this.appendValueInput("delay")
-        .setCheck("Number")
-        .setAlign(Blockly.ALIGN_RIGHT)
-        .appendField("and interval (ms)");
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-    this.setTooltip('Display an image, scrolling it if it doesn\'t fit on the display.');
-    this.setInputsInline(true);
-  }
 };
 
 

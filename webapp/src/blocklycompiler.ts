@@ -938,7 +938,7 @@ function fresh(e: Environment, s: string): string {
 function emptyEnv(): Environment {
     return {
         bindings: [],
-        stdCallTable: JSON.parse(JSON.stringify(defaultCallTable))
+        stdCallTable: {}
     }
 };
 
@@ -1167,19 +1167,6 @@ interface StdFunc {
     imageLiteral?: boolean;
     hasHandler?: boolean;
     namespace?: string;
-}
-
-var defaultCallTable: Util.StringMap<StdFunc> = {
-    device_scroll_image: {
-        f: "scroll image",
-        args: [{ field: "sprite" }, { field: "frame offset" }, { field: "delay" }],
-        isExtensionMethod: true
-    },
-    device_show_image_offset: {
-        f: "show image",
-        args: [{ field: "sprite" }, { field: "offset" }],
-        isExtensionMethod: true
-    }
 }
 
 function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
