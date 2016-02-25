@@ -93,7 +93,10 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         let save = () => {
             par.saveFileAsync()
                 .then(() => par.state.currFile.epkg.savePkgAsync())
-                .then(() => workspace.syncAsync())
+                .then(() => {
+                    data.setOnline(true)                    
+                    return workspace.syncAsync()                    
+                })
                 .done()
         }
         if (!hd && headers[0]) {
