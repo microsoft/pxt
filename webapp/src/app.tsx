@@ -400,7 +400,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             htmlBody: `
 <div class="ui two column grid">
   <div class="column">
-    <div id="newblockproject" class="ui fluid card approve">
+    <div id="newblockproject" class="ui fluid card link">
         <div class="image">
         <img src="/images/newblock.png">
         </div>
@@ -413,7 +413,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     </div>
   </div>
   <div class="column">
-    <div id="newtypescript" class="ui fluid card approve">
+    <div id="newtypescript" class="ui fluid card link">
         <div class="image">
         <img src="/images/newtypescript.png">
         </div>
@@ -428,7 +428,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 </div>
 <div class="ui two column grid">
   <div class="column">
-    <div id="newkodu" class="ui fluid card approve">
+    <div id="newkodu" class="ui fluid card link">
         <div class="image">
         <img src="/images/newkodu.png">
         </div>
@@ -441,7 +441,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     </div>
   </div>
   <div class="column">
-    <div id="newvisualstudiocode" class="ui fluid card approve">
+    <div id="newvisualstudiocode" class="ui fluid card link">
         <div class="image">
         <img src="/images/newvisualstudiocode.png">
         </div>
