@@ -871,16 +871,12 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
             return compileVariableGet(e, b);
         case "text":
             return compileText(e, b);
-        case 'device_build_image':
-            return compileImage(e, b, false, "image", "create image");
-        case 'device_build_big_image':
-            return compileImage(e, b, true, "image", "create image");
         case 'device_beat':
             return compileBeat(e, b);
         default:
             var call = e.stdCallTable[b.type];
             if (call) {
-                if (call.imageLiteral) return compileImage(e, b, false, call.namespace, call.f, call.args.map(ar => compileArgument(e,b,ar)))
+                if (call.imageLiteral) return compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e,b,ar)))
                 else return compileStdCall(e, b, call);
             }
             else {
@@ -1074,7 +1070,7 @@ function compileChange(e: Environment, b: B.Block): J.JStmt {
 function compileCall(e: Environment, b: B.Block): J.JStmt {
     var call = e.stdCallTable[b.type];
     return call.imageLiteral
-        ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, false, call.namespace, call.f, call.args.map(ar => compileArgument(e,b,ar)))))
+        ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e,b,ar)))))
         : call.hasHandler ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
         : H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, e.stdCallTable[b.type])));
 }
@@ -1123,11 +1119,11 @@ function compileEvent(e: Environment, b: B.Block, event: string, args: string[],
     return mkCallWithCallback(e, ns, event, compiledArgs, body);
 }
 
-function compileImage(e: Environment, b: B.Block, big: boolean, n: string, f: string, args?: J.JExpr[]): J.JCall {
+function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: J.JExpr[]): J.JCall {
     args = args === undefined ? [] : args;
     var state = "\n";
     var rows = 5;
-    var columns = big ? 10 : 5;
+    var columns = frames * 5;
     for (var i = 0; i < rows; ++i) {
         if (i > 0)
             state += '\n';
@@ -1164,7 +1160,7 @@ interface StdFunc {
     f: string;
     args: StdArg[];
     isExtensionMethod?: boolean;
-    imageLiteral?: boolean;
+    imageLiteral?: number;
     hasHandler?: boolean;
     namespace?: string;
 }
