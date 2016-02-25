@@ -129,7 +129,7 @@ namespace input {
     /**
      * Reads the light level applied to the LED screen in a range from ``0`` (dark) to ``255`` bright. In the simulator, the ``acceleration y`` is used to emulate this value.
      */
-    //% help=functions/light-level weight=55 shim=micro_bit::lightLevel
+    //% help=functions/light-level weight=53 shim=micro_bit::lightLevel
     //% blockId=device_get_light_level block="light level" blockGap=8 icon="\uf185"
     export function lightLevel(): number {
         return 0;
@@ -139,7 +139,7 @@ namespace input {
      * The pitch of the device, rotation along the ``x-axis``, in degrees.
      * @param kind TODO
      */
-    //% help=/functions/rotation weight=60 shim=micro_bit::getRotation
+    //% help=/functions/rotation weight=52 shim=micro_bit::getRotation
     //% blockId=device_get_rotation block="rotation (°)|%NAME" blockGap=8 icon="\uf197"
     export function rotation(kind: Rotation): number {
         return 0;
@@ -149,7 +149,7 @@ namespace input {
      * Get the magnetic force value in ``micro-Teslas`` (``µT``). This function is not supported in the simulator.
      * @param dimension TODO
      */
-    //% help=functions/magnetic-force weight=43 shim=micro_bit::getMagneticForce
+    //% help=functions/magnetic-force weight=51 shim=micro_bit::getMagneticForce
     //% blockId=device_get_magnetic_force block="magnetic force (µT)|%NAME" blockGap=8 icon="\uf076"
     export function magneticForce(dimension: Dimension): number {
         return 0;
@@ -158,7 +158,7 @@ namespace input {
     /**
      * Gets the number of milliseconds elapsed since power on.
      */
-    //% help=functions/running-time shim=micro_bit::getCurrentTime
+    //% help=functions/running-time shim=micro_bit::getCurrentTime weight=50
     //% blockId=device_get_running_time block="running time (ms)" blockGap=8 icon="\uf017"
     export function runningTime(): number {
         return 0;
