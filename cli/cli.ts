@@ -101,6 +101,27 @@ export function apiAsync(path: string, postArguments?: string) {
         })
 }
 
+function extensionAsync(add: string) {
+    let dat = {
+    "config": "ws",
+    "tag": "v74",
+    "replaceFiles": {
+        "/generated/xtest.cpp": "namespace xtest {\n    GLUE void hello()\n    {\n        uBit.panic(123);\n " + add + "   }\n}\n",
+        "/generated/extpointers.inc": "(uint32_t)(void*)::xtest::hello,\n",
+        "/generated/extensions.inc": "#include \"xtest.cpp\"\n"
+    },
+    "dependencies": {}
+    }
+    let dat2 = { data: new Buffer(JSON.stringify(dat), "utf8").toString("base64") }
+    return Cloud.privateRequestAsync({
+        url: "compile/extension",
+        data: dat2
+    })
+        .then(resp => {
+            console.log(resp.json)
+        })
+}
+
 export function compileAsync(...fileNames: string[]) {
     let fileText: any = {}
 
@@ -431,6 +452,8 @@ cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2
 cmd("compile  FILE...         - hex-compile given set of files", compileAsync, 2)
 cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)
 
+cmd("extension ADD_TEXT       - try compile extension", extensionAsync, 10)
+
 export function helpAsync(all?: string) {
     let f = (s: string, n: number) => {
         while (s.length < n) {
@@ -446,6 +469,7 @@ export function helpAsync(all?: string) {
         console.log("Common commands (use 'yelm help all' to show all):")
     }
     cmds.forEach(cmd => {
+        if (cmd.priority >= 10) return;
         if (showAll || !cmd.priority) {
             console.log(f(cmd.name, 10) + f(cmd.argDesc, 20) + cmd.desc);
         }
@@ -518,8 +542,6 @@ function initGlobals() {
     let g = global as any
     g.yelm = yelm;
     g.ts = ts;
-    g.Util = Util;
-    g.Cloud = Cloud;
 }
 
 initGlobals();
