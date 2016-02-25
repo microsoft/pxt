@@ -67,6 +67,13 @@ namespace ts.yelm.Util {
         return r
     }
 
+    export function jsonCopyFrom<T>(trg: T, src: T) {
+        var v = clone(src)
+        for (let k of Object.keys(src)) {
+            (trg as any)[k] = (v as any)[k]
+        }
+    }
+
     export function strcmp(a: string, b: string) {
         if (a == b) return 0;
         if (a < b) return -1;
@@ -346,23 +353,23 @@ namespace ts.yelm.Util {
         function f() { return (randomUint32() | 0x10000).toString(16).slice(-4); }
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
-    
+
     var _localizeLang: string = "en";
-    var _localizeStrings : StringMap<string> = {};
-    
+    var _localizeStrings: StringMap<string> = {};
+
     export function _localize(s: string, account: boolean) {
         return _localizeStrings[s] || s;
     }
-    
-    export function updateLocalizationAsync(code: string) : Promise<any> {
+
+    export function updateLocalizationAsync(code: string): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|zh)/i.test(code))
             code = code.split('-')[0]
-            
+
         if (_localizeLang != code)
             return Util.httpGetJsonAsync('./locales/' + code + '/strings.json')
-                .then(tr => {         
-                    _localizeStrings = tr || {};           
+                .then(tr => {
+                    _localizeStrings = tr || {};
                     _localizeLang = code;
                 }, e => {
                     console.error('failed to load localizations')

@@ -215,15 +215,15 @@ function getEmbeddedScript(id: string): Util.StringMap<string> {
 class Host
     implements yelm.Host {
 
-    readFileAsync(module: yelm.Package, filename: string): Promise<string> {
+    readFile(module: yelm.Package, filename: string): string {
         let epkg = getEditorPkg(module)
         let file = epkg.files[filename]
-        return Promise.resolve(file ? file.content : null)
+        return file ? file.content : null
     }
 
-    writeFileAsync(module: yelm.Package, filename: string, contents: string): Promise<void> {
+    writeFile(module: yelm.Package, filename: string, contents: string): void {
         if (filename == yelm.configName)
-            return Promise.resolve(); // ignore config writes
+            return; // ignore config writes
         throw Util.oops("trying to write " + module + " / " + filename)
     }
 
@@ -300,7 +300,7 @@ export function loadPkgAsync(id: string) {
     mainPkg._verspec = "workspace:" + id
 
     return theHost.downloadPackageAsync(mainPkg)
-        .then(() => theHost.readFileAsync(mainPkg, yelm.configName))
+        .then(() => theHost.readFile(mainPkg, yelm.configName))
         .then(str => {
             data.invalidate("open:")
             if (!str) return Promise.resolve()
