@@ -96,10 +96,10 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
     let catName = ns[0].toUpperCase() + ns.slice(1);
     let category = tb.querySelector("category[name~='" + catName + "']");
     if (!category) {
-        console.log('toolbox: adding category ' + fn.namespace)
+        console.log('toolbox: adding category ' + ns)
         category = document.createElement("category");
         category.setAttribute("name", catName)
-        var nsn = info.apis.byQName[fn.namespace];
+        var nsn = info.apis.byQName[ns];
         if (nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
         tb.appendChild(category);
     }
