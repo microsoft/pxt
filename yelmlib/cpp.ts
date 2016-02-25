@@ -98,10 +98,6 @@ namespace yelm.cpp {
                     }
                 }
             })
-            if (!currNs)
-                err("missing namespace declaration")
-            includesInc += "#include \"" + currNs + ".cpp\"\n"
-            fileRepl["/generated/" + currNs + ".cpp"] = src
         }
 
         function parseJson(pkg: Package) {
@@ -112,7 +108,7 @@ namespace yelm.cpp {
 
             // TODO check for conflicts
             if (json.dependencies) {
-                Util.jsonCopyFrom(totalConfig.dependencies, json.dependencies)
+                U.jsonCopyFrom(totalConfig.dependencies, json.dependencies)
             }
 
             if (json.config)
@@ -132,7 +128,11 @@ namespace yelm.cpp {
                 thisErrors = ""
                 for (let fn of pkg.getFiles()) {
                     if (U.endsWith(fn, ".cpp")) {
-                        parseCpp(pkg.readFile(fn))
+                        let src = pkg.readFile(fn)
+                        parseCpp(src)
+                        let fullName = pkg.level == 0 ? fn : "yelm_modules/" + pkg.id + "/" + fn
+                        fileRepl["/" + fullName] = src
+                        includesInc += `#include "${fullName}"\n` 
                     }
                 }
                 if (thisErrors) {
@@ -145,9 +145,10 @@ namespace yelm.cpp {
             return res;
 
         if (cfginc)
-            fileRepl["/generated/extconfig.h"] = cfginc
-        fileRepl["/generated/extpointers.inc"] = pointersInc
-        fileRepl["/generated/extensions.inc"] = includesInc
+            fileRepl["/ext/config.h"] = cfginc
+        fileRepl["/ext/pointers.inc"] = pointersInc
+        fileRepl["/ext/refs.inc"] = includesInc
+        
         var creq = {
             config: "ws",
             tag: "v75",
@@ -156,9 +157,8 @@ namespace yelm.cpp {
         }
 
         let data = JSON.stringify(creq)
-        res.sha = Util.sha256(data)
-        res.compileData = btoa(Util.toUTF8(data))
+        res.sha = U.sha256(data)
+        res.compileData = btoa(U.toUTF8(data))
         return res;
     }
-
 }
