@@ -1134,7 +1134,7 @@ function compileImage(e: Environment, b: B.Block, big: boolean, n: string, f: st
         for (var j = 0; j < columns; ++j) {
             if (j > 0)
                 state += ' ';
-            state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "#" : ".";
+            state += /TRUE/.test(b.getFieldValue("LED" + i + j)) ? "#" : ".";
         }
     }
     return H.namespaceCall(n, f, [<J.JExpr>H.mkStringLiteral(state)].concat(args));
