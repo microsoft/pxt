@@ -518,8 +518,6 @@ function initGlobals() {
     let g = global as any
     g.yelm = yelm;
     g.ts = ts;
-    g.Util = Util;
-    g.Cloud = Cloud;
 }
 
 initGlobals();
