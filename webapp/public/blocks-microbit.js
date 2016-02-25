@@ -5,26 +5,20 @@ goog.provide('Blockly.Blocks.device');
 goog.require('Blockly.Blocks');
 
 
-var leftRightDropdown = [
-  ["right", "right"],
-  ["left", "left"],
-];
-
-var spritePropertyDropdown = [
-  ["x", "x"],
-  ["y", "y"],
-  ["direction", "direction"],
-  ["blink", "blink"],
-  ["brightness", "brightness"]
-];
-
-var accelerationEventDropdown = [
-  ["shake", "shake"],
-  ["screen up", "screen up"],
-  ["screen down", "screen down"],  
-  ["logo up", "logo up"],  
-  ["logo down", "logo down"],  
-];
+Blockly.FieldCheckbox.prototype.init = function(block) {
+  if (this.sourceBlock_) {
+    // Checkbox has already been initialized once.
+    return;
+  }
+  Blockly.FieldCheckbox.superClass_.init.call(this, block);
+  // The checkbox doesn't use the inherited text element.
+  // Instead it uses a custom checkmark element that is either visible or not.
+  this.checkElement_ = Blockly.createSvgElement('text',
+      {'class': 'blocklyText blocklyLed', 'x': 0, 'y': 12}, this.fieldGroup_);
+  var textNode = document.createTextNode('■');
+  this.checkElement_.appendChild(textNode);
+  this.checkElement_.style.display = this.state_ ? 'block' : 'none';
+};
 
 var beatFractions = [
     ["1", "1"],

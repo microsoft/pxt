@@ -130,6 +130,9 @@
     font-size:20px;
 }
 
+.blocklyLed {
+    fill:red !important;
+}
 
 /* ACE */
 
