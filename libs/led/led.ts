@@ -201,7 +201,7 @@ namespace led {
      * Takes a screenshot of the LED screen and returns an image.
      */
     //% shim=uBit.display.screenShot async help=functions/screenshot
-    export function screenshot(): Image {
+    export function screenshot(): images.Image {
         /*
         let img: Image;
         img = image.createImage("");

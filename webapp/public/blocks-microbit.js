@@ -5,26 +5,20 @@ goog.provide('Blockly.Blocks.device');
 goog.require('Blockly.Blocks');
 
 
-var leftRightDropdown = [
-  ["right", "right"],
-  ["left", "left"],
-];
-
-var spritePropertyDropdown = [
-  ["x", "x"],
-  ["y", "y"],
-  ["direction", "direction"],
-  ["blink", "blink"],
-  ["brightness", "brightness"]
-];
-
-var accelerationEventDropdown = [
-  ["shake", "shake"],
-  ["screen up", "screen up"],
-  ["screen down", "screen down"],  
-  ["logo up", "logo up"],  
-  ["logo down", "logo down"],  
-];
+Blockly.FieldCheckbox.prototype.init = function(block) {
+  if (this.sourceBlock_) {
+    // Checkbox has already been initialized once.
+    return;
+  }
+  Blockly.FieldCheckbox.superClass_.init.call(this, block);
+  // The checkbox doesn't use the inherited text element.
+  // Instead it uses a custom checkmark element that is either visible or not.
+  this.checkElement_ = Blockly.createSvgElement('text',
+      {'class': 'blocklyText blocklyLed', 'x': 0, 'y': 12}, this.fieldGroup_);
+  var textNode = document.createTextNode('■');
+  this.checkElement_.appendChild(textNode);
+  this.checkElement_.style.display = this.state_ ? 'block' : 'none';
+};
 
 var beatFractions = [
     ["1", "1"],
@@ -35,18 +29,8 @@ var beatFractions = [
 ];
 
 var blockColors = {
-    basic: 190,
-    led: 3,
-    input: 300,
     loops: 120,
-    pins: 351,
-    music: 52,
-    game: 176,
-    //comments: 156,
-    images: 45,
     variables: 330,
-    devices: 156,
-    radio: 270,
 }
 
 Blockly.Variables.flyoutCategory = function(workspace) {
@@ -110,93 +94,6 @@ Blockly.Variables.flyoutCategory = function(workspace) {
   }
   return xmlList;
 };
-Blockly.Blocks['device_build_image'] = {
-    init: function()
-    {
-        this.setColour(blockColors.images);
-        this.appendDummyInput().appendField("create image");
-        this.appendDummyInput().appendField("    0     1     2     3     4");
-        this.appendDummyInput().appendField("0").appendField(new Blockly.FieldCheckbox("FALSE"), "LED00").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED10").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED20").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED30").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED40");
-        this.appendDummyInput().appendField("1").appendField(new Blockly.FieldCheckbox("FALSE"), "LED01").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED11").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED21").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED31").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED41");
-        this.appendDummyInput().appendField("2").appendField(new Blockly.FieldCheckbox("FALSE"), "LED02").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED12").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED22").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED32").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED42");
-        this.appendDummyInput().appendField("3").appendField(new Blockly.FieldCheckbox("FALSE"), "LED03").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED13").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED23").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED33").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED43");
-        this.appendDummyInput().appendField("4").appendField(new Blockly.FieldCheckbox("FALSE"), "LED04").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED14").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED24").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED34").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED44");
-        this.setOutput(true, 'image');
-        this.setTooltip('An image that fits on the LED array.');
-        this.setHelpUrl("./functions/create-image");
-    }
-};
-
-Blockly.Blocks['device_build_big_image'] = {
-    init: function()
-    {
-        this.setColour(blockColors.images);
-        this.appendDummyInput().appendField("create big image");
-        this.appendDummyInput().appendField("    0     1     2     3     4       5     6     7     8     9");
-
-        this.appendDummyInput().appendField("0").appendField(new Blockly.FieldCheckbox("FALSE"), "LED00").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED10").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED20").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED30").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED40")
-            .appendField("   ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED50").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED60").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED70").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED80").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED90");
-
-        this.appendDummyInput().appendField("1").appendField(new Blockly.FieldCheckbox("FALSE"), "LED01").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED11").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED21").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED31").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED41")
-            .appendField("   ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED51").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED61").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED71").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED81").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED91");
-
-        this.appendDummyInput().appendField("2").appendField(new Blockly.FieldCheckbox("FALSE"), "LED02").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED12").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED22").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED32").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED42")
-            .appendField("   ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED52").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED62").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED72").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED82").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED92");
-
-        this.appendDummyInput().appendField("3").appendField(new Blockly.FieldCheckbox("FALSE"), "LED03").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED13").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED23").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED33").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED43")
-            .appendField("   ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED53").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED63").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED73").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED83").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED93");
-
-        this.appendDummyInput().appendField("4").appendField(new Blockly.FieldCheckbox("FALSE"), "LED04").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED14").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED24").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED34").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED44")
-            .appendField("   ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED54").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED64").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED74").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED84").appendField(" ").appendField(new Blockly.FieldCheckbox("FALSE"), "LED94");
-
-
-        this.setOutput(true, 'image');
-        this.setTooltip("A larger image that will be scrolled across the LED display.");
-        this.setHelpUrl("./functions/create-image");
-    }
-};
-
-Blockly.Blocks['device_show_image_offset'] = {
-  init: function() {
-    this.setHelpUrl('./functions/show-image');
-    this.setColour(blockColors.images);
-    this.appendDummyInput()
-        .appendField("show image");
-    this.appendValueInput("sprite").setCheck('image');
-    this.appendValueInput("offset")
-        .setCheck("Number")
-        .appendField("at offset");
-    this.setTooltip('For a given (possibly big) image, display only frame, starting at offset.');
-    this.setPreviousStatement(!0);
-    this.setNextStatement(!0);
-    this.setInputsInline(true);
-  }
-};
-
-Blockly.Blocks['device_scroll_image'] = {
-  init: function() {
-    this.setHelpUrl('./functions/scroll-image');
-    this.setColour(blockColors.images);
-    this.appendDummyInput()
-        .appendField("scroll image");
-    this.appendValueInput("sprite").setCheck('image')
-        .setAlign(Blockly.ALIGN_RIGHT);
-//        .appendField("image");
-    this.appendValueInput("frame offset")
-        .setCheck("Number")
-        .setAlign(Blockly.ALIGN_RIGHT)
-        .appendField("with offset");
-    this.appendValueInput("delay")
-        .setCheck("Number")
-        .setAlign(Blockly.ALIGN_RIGHT)
-        .appendField("and interval (ms)");
-    this.setPreviousStatement(true);
-    this.setNextStatement(true);
-    this.setTooltip('Display an image, scrolling it if it doesn\'t fit on the display.');
-    this.setInputsInline(true);
-  }
-};
-
 
 Blockly.Blocks['math_op2'] = {
   init: function() {

@@ -23,7 +23,7 @@ namespace basic {
     //% help=functions/show-leds 
     //% weight=95 blockGap=8
     //% shim=micro_bit::showLeds 
-    //% imageLiteral async
+    //% imageLiteral=1 async
     //% blockId=device_show_leds
     //% block="show leds" icon="\uf00a"
     export function showLeds(leds: string, interval: number = 400) : void { }
@@ -54,14 +54,14 @@ namespace basic {
      * @param leds TODO
      * @param interval TODO
      */
-    //% help=functions/show-animation shim=micro_bit::showAnimation imageLiteral async
+    //% help=functions/show-animation shim=micro_bit::showAnimation imageLiteral=1 async
     export function showAnimation(leds: string, interval: number = 400) : void { }
 
     /**
      * Draws an image on the LED screen.
      * @param leds TODO
      */
-    //% help=functions/plot-leds weight=80 shim=micro_bit::plotLeds imageLiteral
+    //% help=functions/plot-leds weight=80 shim=micro_bit::plotLeds imageLiteral=1
     export function plotLeds(leds: string) : void { }
 
     /**

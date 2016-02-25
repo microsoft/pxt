@@ -108,7 +108,7 @@ namespace ts.yelm {
         blockExternalInputs?: boolean;
         color?: string;
         icon?: string;
-        imageLiteral?: boolean;
+        imageLiteral?: number;
         weight?: number;
 
         _name?: string;
@@ -442,8 +442,7 @@ namespace ts.yelm {
         }
 
         function emitImageLiteral(s: string): LiteralExpression {
-            if (!s)
-                s = "0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n";
+            if (!s) s = "0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n0 0 0 0 0\n";
 
             let x = 0;
             let w = 0;

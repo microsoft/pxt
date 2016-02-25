@@ -28,7 +28,7 @@ namespace game {
     var _countdownPause: number = 0;
     var _level: number = 1;
     var _gameId: number = 0;
-    var img: Image;
+    var img: images.Image;
     var sprites: LedSprite[];
     
     /**
@@ -678,7 +678,8 @@ namespace game {
 
     function init(): void {
         if (img == null) {
-            img = image.createImage(`0 0 0 0 0
+            img = images.createImage(
+`0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0

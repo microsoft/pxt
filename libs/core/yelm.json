@@ -1,12 +1,12 @@
 {
     "name": "core",
-    "description": "The core mbit library",
+    "description": "The core library",
     "installedVersion": "hgdjzr",
     "files": [
         "README.md",
         "core.d.ts",
         "mbit.ts",
-        "image.ts",
+        "images.ts",
         "basic.ts",
         "input.ts",
         "control.ts"

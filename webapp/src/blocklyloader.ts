@@ -96,10 +96,10 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
     let catName = ns[0].toUpperCase() + ns.slice(1);
     let category = tb.querySelector("category[name~='" + catName + "']");
     if (!category) {
-        console.log('toolbox: adding category ' + fn.namespace)
+        console.log('toolbox: adding category ' + ns)
         category = document.createElement("category");
         category.setAttribute("name", catName)
-        var nsn = info.apis.byQName[fn.namespace];
+        var nsn = info.apis.byQName[ns];
         if (nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
         tb.appendChild(category);
     }
@@ -191,9 +191,8 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
                 return;
             }
             let pr = attrNames[n];
-
             if (instance && n == "this") {
-                i = initField(block.appendValueInput(n), ni, fn, pre, true, pr.type);
+                i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);
             }
             else if (pr.type == "number") {
                 i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
@@ -226,8 +225,9 @@ if (body) {
 if (fn.attributes.imageLiteral) {
     for (let r = 0; r < 5; ++r) {
         let ri = block.appendDummyInput();
-        for (let c = 0; c < 5; ++c) {
-            if (c > 0) ri.appendField(" ");
+        for (let c = 0; c < fn.attributes.imageLiteral * 5; ++c) {
+            if (c > 0 && c%5==0) ri.appendField("  ");
+            else if (c > 0) ri.appendField(" ");
             ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
         }
     }
