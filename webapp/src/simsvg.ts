@@ -40,6 +40,7 @@ export function randomTheme() : IBoardTheme {
 
 export interface IBoardProps {
     theme?: IBoardTheme;
+    disableTilt?:boolean;
 }
 
 class Svg {
@@ -120,7 +121,8 @@ export class MbitBoardSvg
             sel.style.opacity = ((bw ? img.data[i] > 0 ? 255 : 0 : img.data[i]) / 255.0) + "";
         })
         
-        this.updateTilt();        
+        if (!this.props.disableTilt)
+            this.updateTilt();        
     }
     
     private updateTilt() {
