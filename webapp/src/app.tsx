@@ -93,6 +93,10 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         let save = () => {
             par.saveFileAsync()
                 .then(() => par.state.currFile.epkg.savePkgAsync())
+                .then(() => {
+                    data.setOnline(true)                    
+                    return workspace.syncAsync()                    
+                })
                 .done()
         }
         if (!hd && headers[0]) {
@@ -112,7 +116,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
 
                 <sui.Button class={btnClass} onClick={save}
                     icon={"cloud " + (needsUpload ? "upload" : "") }
-                    popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to force.") : lf("Stored in the cloud.") }
+                    popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
                     />
             </div>
         );
@@ -141,19 +145,27 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
                 .done()
         }
         return (
-            <sui.Modal ref={v => this.modal = v} header={lf("Search for scripts...") } addClass="small searchdialog" >
+            <sui.Modal ref={v => this.modal = v} header={lf("Search for scripts...") } addClass="large searchdialog" >
+                
                 <div className="ui content form">
                     <div className="ui fluid icon input">
                         <input type="text" placeholder="Search..." onChange={upd} />
                         <i className="search icon"/>
                     </div>
-                    <div className="ui relaxed divided list">
+                    <div className="ui three stackable cards">
                         {data.map(scr =>
-                            <div className="item" onClick={() => install(scr) }>
-                                <i className="large file middle aligned icon"></i>
+                            <div className="card" key={scr.id} onClick={() => install(scr) }>
                                 <div className="content">
-                                    <a className="header">{scr.name} /{scr.id}</a>
-                                    <div className="description">{Util.timeSince(scr.time) } by {scr.username}</div>
+                                    <div className="header">{scr.name}</div>
+                                    <div className="meta">
+                                        <span className="date">by {scr.username} {Util.timeSince(scr.time) }</span>
+                                    </div>
+                                </div>
+                                <div className="extra content">
+                                    <span className="right floated">/{scr.id}</span>
+                                    <a>
+                                        {Util.timeSince(scr.time) }
+                                    </a>
                                 </div>
                             </div>
                         ) }
@@ -378,6 +390,77 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
     
+    newProject() {
+        core.confirmAsync({
+            header: lf("Create new project"),
+            hideAgree: true,
+            onLoaded: (_) => {
+              _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProject()})
+              _.find('#newtypescript').click(() => {_.modal('hide'); this.newTypeScriptProject()})
+              _.find('#newkodu').click(() => { window.location.href = 'https://www.kodugamelab.com/bbc-microbit/' })
+              _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject()})
+            },
+            htmlBody: `
+<div class="ui two column grid">
+  <div class="column">
+    <div id="newblockproject" class="ui fluid card link">
+        <div class="image">
+        <img src="/images/newblock.png">
+        </div>
+        <div class="content">
+        <div class="header">Block Editor</div>
+        <div class="meta">
+            <a>Drag and Drop Coding</a>
+        </div>
+        </div>
+    </div>
+  </div>
+  <div class="column">
+    <div id="newtypescript" class="ui fluid card link">
+        <div class="image">
+        <img src="/images/newtypescript.png">
+        </div>
+        <div class="content">
+        <div class="header">JavaScript</div>
+        <div class="meta">
+            <span class="date">Text based Coding</span>
+        </div>
+        </div>
+    </div>
+  </div>
+</div>
+<div class="ui two column grid">
+  <div class="column">
+    <div id="newkodu" class="ui fluid card link">
+        <div class="image">
+        <img src="/images/newkodu.png">
+        </div>
+        <div class="content">
+        <div class="header">Kodu</div>
+        <div class="meta">
+            <a>Tile based Coding</a>
+        </div>
+        </div>
+    </div>
+  </div>
+  <div class="column">
+    <div id="newvisualstudiocode" class="ui fluid card link">
+        <div class="image">
+        <img src="/images/newvisualstudiocode.png">
+        </div>
+        <div class="content">
+        <div class="header">Visual Studio Code</div>
+        <div class="meta">
+            <span class="date">For Professional Developers</span>
+        </div>
+        </div>
+    </div>
+  </div>
+</div>
+`
+        }).done();
+    }
+    
     newVisualStudioProject() {
         core.confirmAsync({
             header: lf("New Visual Studio Code project"),
@@ -399,7 +482,7 @@ Ctrl+Shift+B
         }).done();
     }
 
-    newProject() {
+    newTypeScriptProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} bit", Util.getAwesomeAdj()),
             dependencies: { core: "*", led:"*", music: "*", radio: "*", game:"*", pins:"*" },
@@ -569,20 +652,15 @@ Ctrl+Shift+B
                 <div id="menubar">
                     <div className={"ui menu" + inv}>
                         <div className="item">
-                            <sui.DropdownMenu class="button floating" text={lf("Project") } icon="wrench">
-                                <sui.Item icon="puzzle" text={lf("New Blocks project") } onClick={() => this.newBlocksProject() } />
-                                <sui.Item icon="keyboard" text={lf("New TypeScript project") } onClick={() => this.newProject() } />
-                                <sui.Item icon="terminal" text={lf("New Visual Studio Code project") } onClick={() => this.newVisualStudioProject() } />
-                                {this.editor == this.aceEditor ? null :
-                                    <sui.Item icon="write" text={lf("Edit text") } onClick={() => this.editText() } />
-                                }
-                                <div className="divider"></div>
-                                <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
-                                <sui.Item icon="cloud download" text={lf("Sync") } onClick={() => workspace.syncAsync().done() } />
-                                <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
-                                <div className="divider"></div>
-                                <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
-                            </sui.DropdownMenu>
+                            <div className="ui buttons">
+                                <sui.Button text={lf("New Project")} onClick={() => this.newProject() } />
+                                <sui.DropdownMenu class='floating icon button' icon='dropdown'>
+                                    <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
+                                    <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
+                                    <div className="divider"></div>
+                                    <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
+                                </sui.DropdownMenu>
+                            </div>
                         </div>
                         <div className="item">
                             <SlotSelector parent={this} />

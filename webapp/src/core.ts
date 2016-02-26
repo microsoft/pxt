@@ -125,6 +125,8 @@ export interface ConfirmOptions {
     disagreeLbl?: string;
     agreeIcon?: string;
     agreeClass?: string;
+    hideAgree?:boolean;
+    onLoaded?: (_: JQuery) => void;
 }
 
 export function confirmAsync(options: ConfirmOptions) {
@@ -134,25 +136,31 @@ export function confirmAsync(options: ConfirmOptions) {
         ${Util.htmlEscape(options.header)}      
     </div>
     <div class="content">
-      <p>${Util.htmlEscape(options.body || "")}</p>
+      ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
       ${options.htmlBody || ""}
     </div>
     <div class="actions">
       <div class="ui right labeled icon button">
         ${Util.htmlEscape(options.disagreeLbl || lf("Cancel"))}
         <i class="cancel icon"></i>
-      </div>
+      </div>`
+    if (!options.hideAgree) {
+        html += `
       <div class="ui approve right labeled icon button ${options.agreeClass || "positive"}">
         ${Util.htmlEscape(options.agreeLbl || lf("Go ahead!"))}
         <i class="${options.agreeIcon || "checkmark"} icon"></i>
-      </div>
+      </div>`
+    }      
+    
+    html +=`
     </div>
   </div>
   `
     let modal = $(html)
     let done = false
     $('#root').append(modal)
-
+    if (options.onLoaded) options.onLoaded(modal)
+    
     return new Promise((resolve, reject) =>
         modal.modal({
             onHidden: () => {
