@@ -11,6 +11,7 @@ namespace ts.yelm {
         fileSystem: StringMap<string>;
         sourceFiles?: string[];
         hexinfo: any;
+        extinfo?: ExtensionInfo;
         noEmit?: boolean;
     }
 
@@ -18,7 +19,7 @@ namespace ts.yelm {
         outfiles: StringMap<string>;
         diagnostics: Diagnostic[];
         success: boolean;
-        times:Util.StringMap<number>;
+        times:Util.Map<number>;
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {

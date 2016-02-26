@@ -1,7 +1,8 @@
 namespace ts.yelm {
     export var assert = Util.assert;
     export var oops = Util.oops;
-    export type StringMap<T> = Util.StringMap<T>;
+    export type StringMap<T> = Util.Map<T>;
+    export import U = ts.yelm.Util;
 
     function stringKind(n: Node) {
         if (!n) return "<null>"
@@ -113,7 +114,7 @@ namespace ts.yelm {
 
         _name?: string;
         jsDoc?: string;
-        paramHelp?: Util.StringMap<string>;
+        paramHelp?: Util.Map<string>;
     }
 
     interface ClassInfo {
@@ -258,8 +259,7 @@ namespace ts.yelm {
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
 
-        hex.staticBytecodeInfo = opts.hexinfo;
-        hex.setup();
+        hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
 
         let bin: Binary;
         let proc: Procedure;
@@ -1737,23 +1737,37 @@ namespace ts.yelm {
         value: number;
     }
 
+    export interface MicrobitConfig {
+        dependencies?: U.Map<string>;
+        config?: U.Map<string>;
+    }
+
     export interface ExtensionInfo {
-        enums: StringMap<number>;
+        enums: U.Map<number>;
         functions: FuncInfo[];
+        generatedFiles: U.Map<string>;
+        extensionFiles: U.Map<string>;
+        microbitConfig: MicrobitConfig;
         errors: string;
         sha: string;
         compileData: string;
         hasExtension: boolean;
     }
     
-    export function emptyExtInfo() {
-        return <ExtensionInfo>{
+    export function emptyExtInfo():ExtensionInfo {
+        return {
             enums: {},
             functions: [],
+            generatedFiles: {},
+            extensionFiles: {},
             errors: "",
             sha: "",
             compileData: "",
             hasExtension: false,
+            microbitConfig: {
+                dependencies: {},
+                config: {}
+            }
         }
     }
 
@@ -1789,14 +1803,13 @@ namespace ts.yelm {
         }
 
         var currentSetup: string = null;
-        export var staticBytecodeInfo: any;
         export function setupFor(extInfo: ExtensionInfo, bytecodeInfo: any) {
             if (isSetupFor(extInfo))
                 return;
 
             currentSetup = extInfo.sha;
 
-            var jsinf = bytecodeInfo || staticBytecodeInfo
+            var jsinf = bytecodeInfo
             hex = jsinf.hex;
 
             var i = 0;
@@ -1865,8 +1878,12 @@ namespace ts.yelm {
                     var inf = funs.shift()
                     if (!inf) return;
                     funcInfo[inf.name] = inf;
-                    inf.value = parseInt(swapBytes(s.slice(0, 8)), 16) & 0xfffffffe
-                    assert(!!inf.value)
+                    let hexb = s.slice(0, 8)
+                    //console.log(inf.name, hexb)
+                    inf.value = parseInt(swapBytes(hexb), 16) & 0xfffffffe
+                    if (!inf.value) {
+                        U.oops("No value for " + inf.name + " / " + hexb)
+                    }
                     s = s.slice(8)
                 }
             }
@@ -1892,11 +1909,6 @@ namespace ts.yelm {
             var sha = currentSetup ? currentSetup.slice(0, 16) : ""
             while (sha.length < 16) sha += "0"
             return sha.toUpperCase()
-        }
-
-        export function setup() {
-            if (currentSetup == null)
-                setupFor(emptyExtInfo(), null)
         }
 
         function hexBytes(bytes: number[]) {

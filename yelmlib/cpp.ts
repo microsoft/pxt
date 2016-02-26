@@ -25,13 +25,8 @@ namespace yelm.cpp {
 
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         var res = Y.emptyExtInfo();
-        var fileRepl: U.StringMap<string> = {}
         var pointersInc = ""
         var includesInc = ""
-        var totalConfig: DalConfig = {
-            dependencies: {},
-            config: {},
-        }
         var thisErrors = ""
         var err = (s: string) => thisErrors += "   " + s + "\n";
         var cfginc = ""
@@ -98,21 +93,17 @@ namespace yelm.cpp {
                     }
                 }
             })
-            if (!currNs)
-                err("missing namespace declaration")
-            includesInc += "#include \"" + currNs + ".cpp\"\n"
-            fileRepl["/generated/" + currNs + ".cpp"] = src
         }
 
         function parseJson(pkg: Package) {
-            let json = pkg.config.dal
+            let json = pkg.config.microbit
             if (!json) return;
 
             res.hasExtension = true
 
             // TODO check for conflicts
             if (json.dependencies) {
-                Util.jsonCopyFrom(totalConfig.dependencies, json.dependencies)
+                U.jsonCopyFrom(res.microbitConfig.dependencies, json.dependencies)
             }
 
             if (json.config)
@@ -125,14 +116,21 @@ namespace yelm.cpp {
                     cfginc += "#define " + k + " " + json.config[k] + "\n"
                 })
         }
+        
+        res.microbitConfig.dependencies["yelm-microbit-core"] = "microsoft/yelm-microbit-core#master";
 
         if (mainPkg) {
             // TODO computeReachableNodes(pkg, true)
             for (let pkg of mainPkg.sortedDeps()) {
                 thisErrors = ""
+                parseJson(pkg)
                 for (let fn of pkg.getFiles()) {
                     if (U.endsWith(fn, ".cpp")) {
-                        parseCpp(pkg.readFile(fn))
+                        let src = pkg.readFile(fn)
+                        parseCpp(src)
+                        let fullName = pkg.level == 0 ? fn : "yelm_modules/" + pkg.id + "/" + fn
+                        res.extensionFiles["/ext/" + fullName] = src
+                        includesInc += `#include "${fullName}"\n`
                     }
                 }
                 if (thisErrors) {
@@ -144,21 +142,37 @@ namespace yelm.cpp {
         if (res.errors)
             return res;
 
-        if (cfginc)
-            fileRepl["/generated/extconfig.h"] = cfginc
-        fileRepl["/generated/extpointers.inc"] = pointersInc
-        fileRepl["/generated/extensions.inc"] = includesInc
+        res.generatedFiles["/ext/config.h"] = cfginc
+        res.generatedFiles["/ext/pointers.inc"] = pointersInc
+        res.generatedFiles["/ext/refs.inc"] = includesInc
+
+        let moduleJson = {
+            "name": "yelm-microbit-app",
+            "version": "0.0.0",
+            "description": "Auto-generated. Do not edit.",
+            "license": "n/a",
+            "dependencies": res.microbitConfig.dependencies,
+            "targetDependencies": {},
+            "bin": "./source"
+        }
+        
+        res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
+        res.generatedFiles["/source/main.cpp"] = `#include "BitVM.h"\nvoid app_main() { bitvm::start(); }\n`        
+
+        let tmp = res.extensionFiles
+        U.jsonCopyFrom(tmp, res.generatedFiles)
+
         var creq = {
             config: "ws",
             tag: "v75",
-            replaceFiles: fileRepl,
-            dependencies: totalConfig.dependencies,
+            replaceFiles: tmp,
+            dependencies: res.microbitConfig.dependencies,
         }
 
         let data = JSON.stringify(creq)
-        res.sha = Util.sha256(data)
-        res.compileData = btoa(Util.toUTF8(data))
+        res.sha = U.sha256(data)
+        res.compileData = btoa(U.toUTF8(data))
+
         return res;
     }
-
 }
