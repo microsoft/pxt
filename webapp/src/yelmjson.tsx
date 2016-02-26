@@ -29,10 +29,12 @@ export class Editor extends srceditor.Editor {
         }
         return (
             <div className="ui two column grid">
-                <div className="column">
-                    <projectcard.ProjectCard cfg={c} />
+                <div className="ui column">
+                    <div className="ui segment">                    
+                        <projectcard.ProjectCard cfg={c} />
+                    </div>
                 </div>
-                <div className="column">
+                <div className="ui column">
                     <div className="ui segment form text container" style={{backgroundColor: "white"}}>
                         <sui.Field>
                             <div className="ui toggle checkbox ">

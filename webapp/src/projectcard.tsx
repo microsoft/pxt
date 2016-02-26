@@ -23,9 +23,13 @@ export class ProjectCard extends React.Component<ProjectCardProps, ProjectCardSt
         var cfg = this.props.cfg;
         return (
             <div className="ui card">
+                <div className="content">
+                    <div className="right floated meta">14h</div>
+                    Me
+                </div>
                 <div className="image">
                     <simview.MbitBoardView disableTilt={true} theme={simsvg.randomTheme()} />
-                </div>
+                </div>            
                 <div className="content">
                     <a className="header">{cfg.name}</a>
                     <div className="meta">

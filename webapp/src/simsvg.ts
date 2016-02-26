@@ -121,11 +121,11 @@ export class MbitBoardSvg
             sel.style.opacity = ((bw ? img.data[i] > 0 ? 255 : 0 : img.data[i]) / 255.0) + "";
         })
         
-        if (!this.props.disableTilt)
-            this.updateTilt();        
+        this.updateTilt();        
     }
     
     private updateTilt() {
+        if (this.props.disableTilt) return;
         let state = this.state;
         if (!state) return;
         
