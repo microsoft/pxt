@@ -3,6 +3,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
+import * as projectcard from "./projectcard"
 
 import Cloud = yelm.Cloud;
 import Util = yelm.Util;
@@ -27,16 +28,25 @@ export class Editor extends srceditor.Editor {
             Util.nextTick(this.changeCallback)
         }
         return (
-            <div className="ui segment form text container" style={{backgroundColor: "white"}}>
-                <sui.Field>
-                    <div className="ui toggle checkbox ">
-                        <input type="checkbox" name="public" checked={c.public}
-                            onChange={() => update(c.public = !c.public) } />
-                        <label>{lf("Public package (library)") }</label>
+            <div className="ui two column grid">
+                <div className="ui column">
+                    <div className="ui segment">                    
+                        <projectcard.ProjectCard cfg={c} />
                     </div>
-                </sui.Field>
-                <sui.Input label={lf("Name") } value={c.name} onChange={v => update(c.name = v) } />
-                <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
+                </div>
+                <div className="ui column">
+                    <div className="ui segment form text container" style={{backgroundColor: "white"}}>
+                        <sui.Field>
+                            <div className="ui toggle checkbox ">
+                                <input type="checkbox" name="public" checked={c.public}
+                                    onChange={() => update(c.public = !c.public) } />
+                                <label>{lf("Public package (library)") }</label>
+                            </div>
+                        </sui.Field>
+                        <sui.Input label={lf("Name") } value={c.name} onChange={v => update(c.name = v) } />
+                        <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
+                    </div>
+                </div>
             </div>
         )
     }

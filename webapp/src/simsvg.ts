@@ -40,6 +40,7 @@ export function randomTheme() : IBoardTheme {
 
 export interface IBoardProps {
     theme?: IBoardTheme;
+    disableTilt?:boolean;
 }
 
 class Svg {
@@ -124,6 +125,7 @@ export class MbitBoardSvg
     }
     
     private updateTilt() {
+        if (this.props.disableTilt) return;
         let state = this.state;
         if (!state) return;
         
