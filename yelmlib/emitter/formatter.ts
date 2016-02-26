@@ -719,12 +719,12 @@ namespace ts.yelm {
                 case SK.OpenBracketToken:
                     needsSpace = false
                     break;
-                    
+
                 case SK.PlusPlusToken:
                 case SK.MinusMinusToken:
                     if (last.kind == TokenKind.Tree || last.kind == TokenKind.Identifier || last.kind == TokenKind.Keyword)
                         needsSpace = false
-                    /* fall through */
+                /* fall through */
                 case SK.PlusToken:
                 case SK.MinusToken:
                     if (lastNonTrivialToken.kind == TokenKind.EOF ||
@@ -764,6 +764,25 @@ namespace ts.yelm {
             i++
         }
         return output
+    }
+
+    function finalFormat(ind: string, token: Token) {
+        if (token.synKind == SK.NoSubstitutionTemplateLiteral &&
+            /^`[\s\.#01]*`$/.test(token.text)) {
+            let lines = token.text.slice(1, token.text.length - 1).split("\n").map(l => l.replace(/\s/g, "")).filter(l => !!l)
+            if (lines.length < 4 || lines.length > 5) return;
+            let numFrames = Math.floor((Math.max(...lines.map(l => l.length)) + 2) / 5)
+            if (numFrames <= 0) numFrames = 1
+            let out = "`\n"
+            for (let i = 0; i < 5; ++i) {
+                let l = lines[i] || ""
+                while (l.length < numFrames * 5)
+                    l += "."
+                out += ind + l.replace(/./g, m => " " + m).slice(1) + "\n"
+            }
+            out += ind + "`"
+            token.text = out
+        }
     }
 
     export function toStr(v: any) {
@@ -840,6 +859,7 @@ namespace ts.yelm {
             tokens = normalizeSpace(tokens)
             for (let i = 0; i < tokens.length; ++i) {
                 let t = tokens[i]
+                finalFormat(ind, t)
                 output += t.text;
                 switch (t.kind) {
                     case TokenKind.Tree:

@@ -3,6 +3,7 @@
     "description": "Test for 'yelm format' command",
     "files": [
         "simple.ts",
+        "images.ts",
         "preserve.ts"
     ],
     "public": true,
