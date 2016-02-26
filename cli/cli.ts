@@ -206,8 +206,12 @@ class Host
         fs.writeFileSync(p, contents, "utf8")
     }
 
-    getHexInfoAsync() {
-        return Promise.resolve(require(__dirname + "/../generated/hexinfo.js"))
+    getHexInfoAsync(extInfo: ts.yelm.ExtensionInfo) {
+        if (extInfo.sha === baseExtInfo.sha)
+            return Promise.resolve(require(__dirname + "/../generated/hexinfo.js"))
+
+        return buildHexAsync(extInfo)
+            .then(() => patchHexInfo(extInfo))
     }
 
     downloadPackageAsync(pkg: yelm.Package) {
@@ -240,6 +244,7 @@ class Host
 }
 
 let mainPkg = new yelm.MainPackage(new Host())
+let baseExtInfo = yelm.cpp.getExtensionInfo(null);
 
 export function installAsync(packageName?: string) {
     ensurePkgDir();
@@ -324,6 +329,127 @@ export function timeAsync() {
         .then(() => console.log("MIN", min))
 }
 
+export function mkdirP(thePath: string) {
+    if (thePath == ".") return;
+    if (!fs.existsSync(thePath)) {
+        mkdirP(path.dirname(thePath))
+        fs.mkdirSync(thePath)
+    }
+}
+
+let ytPath = "built/yt"
+let ytTarget = "bbc-microbit-classic-gcc"
+
+interface BuildCache {
+    sha?: string;
+    modSha?: string;
+}
+
+function runYottaAsync(args: string[]) {
+    let ypath: string = process.env["YOTTA_PATH"]
+    let ytCommand = "yotta"
+    let env = U.clone(process.env)
+    if (/;[A-Z]:\\/.test(ypath)) {
+        for (let pp of ypath.split(";")) {
+            let q = path.join(pp, "yotta.exe")
+            if (fs.existsSync(q)) {
+                ytCommand = q
+                env["PATH"] = env["PATH"] + ypath
+                break
+            }
+        }
+    }
+
+    console.log("*** " + ytCommand + " " + args.join(" "))
+    let child = child_process.spawn("yotta", args, {
+        cwd: ytPath,
+        stdio: "inherit",
+        env: env
+    })
+    return new Promise<void>((resolve, reject) => {
+        child.on("close", (code: number) => {
+            if (code === 0) resolve()
+            else reject(new Error("yotta " + args.join(" ") + ": exit code " + code))
+        })
+    })
+}
+
+function patchHexInfo(extInfo: ts.yelm.ExtensionInfo) {
+    let infopath = ytPath + "/yotta_modules/yelm-microbit-core/generated/metainfo.json"
+
+    let hexPath = ytPath + "/build/" + ytTarget + "/source/yelm-microbit-app-combined.hex"
+
+    let hexinfo = JSON.parse(fs.readFileSync(infopath, "utf8"))
+    hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+
+    return hexinfo
+}
+
+function buildHexAsync(extInfo: ts.yelm.ExtensionInfo) {
+    let yottaTasks = Promise.resolve()
+    let buildCachePath = ytPath + "/buildcache.json"
+    let buildCache: BuildCache = {}
+    if (fs.existsSync(buildCachePath)) {
+        buildCache = JSON.parse(fs.readFileSync(buildCachePath, "utf8"))
+    }
+
+    if (buildCache.sha == extInfo.sha) {
+        console.log("Skipping yotta build.")
+        return yottaTasks
+    }
+
+    console.log("Writing yotta files to " + ytPath)
+
+    let allFiles = U.clone(extInfo.generatedFiles)
+    U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
+
+    U.iterStringMap(allFiles, (fn, v) => {
+        fn = ytPath + fn
+        mkdirP(path.dirname(fn))
+        let existing: string = null
+        if (fs.existsSync(fn))
+            existing = fs.readFileSync(fn, "utf8")
+        if (existing !== v)
+            fs.writeFileSync(fn, v)
+    })
+
+    let glbConfig = ytPath + "/yotta_modules/microbit-dal/inc/MicroBitConfig.h"
+    if (fs.existsSync(glbConfig)) {
+        // yotta doesn't seem to pick this dependency up
+        let stConfig = fs.statSync(ytPath + "/ext/config.h")
+        let stGlbConfig = fs.statSync(glbConfig)
+        if (stConfig.mtime.getTime() > stGlbConfig.mtime.getTime()) {
+            fs.appendFileSync(glbConfig, "\n")
+        }
+    }
+
+    let saveCache = () => fs.writeFileSync(buildCachePath, JSON.stringify(buildCache, null, 4) + "\n")
+
+    let modSha = U.sha256(extInfo.generatedFiles["/module.json"])
+    if (buildCache.modSha !== modSha) {
+        yottaTasks = yottaTasks
+            .then(() => runYottaAsync(["target", ytTarget]))
+            .then(() => runYottaAsync(["update"]))
+            .then(() => {
+                buildCache.sha = ""
+                buildCache.modSha = modSha
+                saveCache();
+            })
+    } else {
+        console.log("Skipping yotta update.")
+    }
+
+    yottaTasks = yottaTasks
+        .then(() => runYottaAsync(["build"]))
+        .then(() => {
+            buildCache.sha = extInfo.sha
+            saveCache()
+        })
+
+    return yottaTasks
+
+}
+
 export function formatAsync(...fileNames: string[]) {
     let inPlace = false
     if (fileNames[0] == "-i") {
@@ -396,6 +522,8 @@ function buildCoreAsync(mode: BuildOption) {
             if (!res.success) {
                 process.exit(1)
             }
+
+            console.log("Package built; hexsize=" + (res.outfiles["microbit.hex"] || "").length)
 
             if (mode == BuildOption.Deploy)
                 return deployCoreAsync(res);

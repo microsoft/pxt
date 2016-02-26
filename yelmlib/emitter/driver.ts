@@ -11,6 +11,7 @@ namespace ts.yelm {
         fileSystem: StringMap<string>;
         sourceFiles?: string[];
         hexinfo: any;
+        extinfo?: ExtensionInfo;
         noEmit?: boolean;
     }
 

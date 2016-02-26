@@ -9,15 +9,10 @@ namespace yelm {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
-        getHexInfoAsync(): Promise<any>;
+        getHexInfoAsync(extInfo:ts.yelm.ExtensionInfo): Promise<any>;
         resolveVersionAsync(pkg: Package): Promise<string>;
     }
     
-    export interface DalConfig {
-        dependencies?: U.Map<string>;
-        config?: U.Map<string>;
-    }
-
     export interface PackageConfig {
         name: string;
         installedVersion?: string;
@@ -26,7 +21,7 @@ namespace yelm {
         files: string[];
         testFiles?: string[];
         public?: boolean;
-        dal?: DalConfig;
+        microbit?: ts.yelm.MicrobitConfig;
     }
 
     export class Package {
@@ -206,8 +201,15 @@ namespace yelm {
             return this.loadAsync()
                 .then(() => {
                     info(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
-                    return this.host().getHexInfoAsync()
-                        .then(inf => opts.hexinfo = inf)
+                    let ext = cpp.getExtensionInfo(this)                    
+                    return this.host().getHexInfoAsync(ext)
+                        .then(inf => {
+                            delete ext.compileData;
+                            delete ext.generatedFiles;
+                            delete ext.extensionFiles;
+                            opts.extinfo = ext
+                            opts.hexinfo = inf
+                        })
                 })
                 .then(() => {
                     for (let pkg of this.sortedDeps()) {

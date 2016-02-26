@@ -1,0 +1,17 @@
+{
+    "name": "cpp-test",
+    "description": "Testing C++",
+    "files": [
+        "support.cpp",
+        "hello.ts"
+    ],
+    "public": true,
+    "microbit": {
+        "config": {
+            "MICROBIT_BLE_ENABLED": "0"
+        }
+    },
+    "dependencies": {
+        "core": "file:../core"
+    }
+}

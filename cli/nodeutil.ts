@@ -113,6 +113,9 @@ function init() {
         for (let i = 0; i < buf.length; ++i)
             buf[i] = tmp[i]
     }
+
+    (global as any).btoa = (str:string) => new Buffer(str, "binary").toString("base64");
+    (global as any).atob = (str:string) => new Buffer(str, "base64").toString("binary");
 }
 
 init();
