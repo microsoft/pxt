@@ -778,7 +778,10 @@ namespace ts.yelm {
                 let l = lines[i] || ""
                 while (l.length < numFrames * 5)
                     l += "."
-                out += ind + l.replace(/./g, m => " " + m).slice(1) + "\n"
+                l = l.replace(/0/g, ".")
+                l = l.replace(/1/g, "#")
+                l = l.replace(/...../g, m => "/" + m)
+                out += ind + l.replace(/./g, m => " " + m).replace(/\//g, " ").slice(3) + "\n"
             }
             out += ind + "`"
             token.text = out
