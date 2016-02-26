@@ -452,35 +452,74 @@ function buildHexAsync(extInfo: ts.yelm.ExtensionInfo) {
 
 export function formatAsync(...fileNames: string[]) {
     let inPlace = false
+    let testMode = false
+
     if (fileNames[0] == "-i") {
         fileNames.shift()
         inPlace = true
     }
 
-    if (fileNames.length > 0) {
-        for (let f of fileNames) {
-            let t = fs.readFileSync(f, "utf8")
-            t = ts.yelm.format(t)
-            let fn = f + ".new"
-            if (!t) {
-                console.log("already formatted:", f)
-                if (!inPlace)
-                    fs.unlink(fn, err => { })
-            } else {
-                if (inPlace) {
-                    fs.writeFileSync(f, t, "utf8")
-                    console.log("replaced:", f)
-                } else {
-                    fs.writeFileSync(fn, t, "utf8")
-                    console.log("written:", fn)
-                }
-            }
-        }
-    } else {
-        // TODO format files in current package
+    if (fileNames[0] == "-t") {
+        fileNames.shift()
+        testMode = true
     }
 
-    return Promise.resolve()
+    let fileList = Promise.resolve()
+    if (fileNames.length == 0) {
+        fileList = mainPkg
+            .loadAsync()
+            .then(() => {
+                fileNames = mainPkg.getFiles().filter(f => U.endsWith(f, ".ts"))
+            })
+    }
+
+    return fileList
+        .then(() => {
+            let numErr = 0
+            for (let f of fileNames) {
+                let input = fs.readFileSync(f, "utf8")
+                let formatted = ts.yelm.format(input)
+                let expected = testMode && fs.existsSync(f + ".exp") ? fs.readFileSync(f + ".exp", "utf8") : null
+                let fn = f + ".new"
+                
+                if (testMode) {
+                    if (formatted == null)
+                        formatted = input
+                    if (expected == null)
+                        expected = input
+                }
+
+                if (formatted == null) {
+                    console.log("already formatted:", f)
+                    if (!inPlace)
+                        fs.unlink(fn, err => { })
+                } else {
+                    if (testMode) {
+                        if (formatted != expected) {
+                            fs.writeFileSync(fn, formatted, "utf8")
+                            console.log("format test FAILED; written:", fn)
+                            numErr++;
+                        } else {
+                            fs.unlink(fn, err => { })
+                            console.log("format test OK:", f)
+                        }
+                    } else if (inPlace) {
+                        fs.writeFileSync(f, formatted, "utf8")
+                        console.log("replaced:", f)
+                    } else {
+                        fs.writeFileSync(fn, formatted, "utf8")
+                        console.log("written:", fn)
+                    }
+                }
+            }
+            
+            if (numErr) {
+                console.log(`${numErr} formatting test(s) FAILED.`)
+                process.exit(1)
+            } else {
+                console.log(`${fileNames.length} formatting test(s) OK`)
+            }
+        })
 }
 
 function deployCoreAsync(res: ts.yelm.CompileResult) {
