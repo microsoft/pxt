@@ -350,6 +350,16 @@ namespace ts.yelm {
         }
     }
 
+    function mkNewLine(t: Token): Token {
+        return {
+            kind: TokenKind.NewLine,
+            synKind: SK.NewLineTrivia,
+            pos: t.pos,
+            lineNo: t.lineNo,
+            text: "\n"
+        }
+    }
+
     function mkBlock(toks: Token[]): BlockToken {
         return {
             kind: TokenKind.Block,
@@ -661,23 +671,57 @@ namespace ts.yelm {
     }
 
     function normalizeSpace(tokens: Token[]) {
-        let output: Token[] = []        
-        for (let i = 0; i < tokens.length; ++i) {
-            let space = tokens[i].text == " " ? tokens[i] : mkSpace(tokens[i], " ")
-            let j = i
-            while (j < tokens.length && isWhitespaceOrNewLine(tokens[j]))
-                j++;
-            let nextTok = tokens[j]
-            if (nextTok) {
-                if (nextTok.synKind == SK.OpenBraceToken) {
-                    output.push(space)
-                    output.push(nextTok)
-                    i = j
-                    continue                    
-                }
+        let output: Token[] = []
+        let i = 0
+
+        tokens = tokens.concat([mkEOF()])
+        while (i < tokens.length) {
+            i = skipWhitespace(tokens, i)
+
+            let token = tokens[i]
+            if (token.kind == TokenKind.EOF)
+                break;
+
+            let j = skipWhitespace(tokens, i + 1)
+            if (token.kind == TokenKind.NewLine && tokens[j].synKind == SK.OpenBraceToken) {
+                i = j // skip NL
+                continue
             }
-            
-            output.push(tokens[i])
+
+            let needsSpace = true
+
+            let last = output.length == 0 ? mkNewLine(token) : output[output.length - 1]
+
+            switch (last.synKind) {
+                case SK.DotToken:
+                    needsSpace = false
+                    break
+            }
+
+            switch (token.synKind) {
+                case SK.PlusPlusToken:
+                case SK.MinusMinusToken:
+                case SK.DotToken:
+                case SK.CommaToken:
+                case SK.NewLineTrivia:
+                case SK.ColonToken:
+                case SK.SemicolonToken:
+                    needsSpace = false
+                    break;
+                case SK.OpenParenToken:
+                    if (last.kind == TokenKind.Identifier)
+                        needsSpace = false
+                    break;
+            }
+
+            if (last.kind == TokenKind.NewLine)
+                needsSpace = false
+
+            if (needsSpace)
+                output.push(mkSpace(token, " "))
+            output.push(token)
+
+            i++
         }
         return output
     }
