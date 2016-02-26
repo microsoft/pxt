@@ -660,6 +660,28 @@ namespace ts.yelm {
         return toks
     }
 
+    function normalizeSpace(tokens: Token[]) {
+        let output: Token[] = []        
+        for (let i = 0; i < tokens.length; ++i) {
+            let space = tokens[i].text == " " ? tokens[i] : mkSpace(tokens[i], " ")
+            let j = i
+            while (j < tokens.length && isWhitespaceOrNewLine(tokens[j]))
+                j++;
+            let nextTok = tokens[j]
+            if (nextTok) {
+                if (nextTok.synKind == SK.OpenBraceToken) {
+                    output.push(space)
+                    output.push(nextTok)
+                    i = j
+                    continue                    
+                }
+            }
+            
+            output.push(tokens[i])
+        }
+        return output
+    }
+
     export function toStr(v: any) {
         if (Array.isArray(v)) return "[[ " + v.map(toStr).join("  ") + " ]]"
         if (typeof v.text == "string")
@@ -731,6 +753,7 @@ namespace ts.yelm {
         }
 
         function ppToks(tokens: Token[]) {
+            tokens = normalizeSpace(tokens)
             for (let i = 0; i < tokens.length; ++i) {
                 let t = tokens[i]
                 output += t.text;
