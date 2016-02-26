@@ -29,6 +29,7 @@ namespace ts.yelm {
         synKind: ts.SyntaxKind;
         blockSpanLength?: number;
         blockSpanIsVirtual?: boolean;
+        isPrefix?: boolean;
     }
 
     interface TreeToken extends Token {
@@ -673,6 +674,7 @@ namespace ts.yelm {
     function normalizeSpace(tokens: Token[]) {
         let output: Token[] = []
         let i = 0
+        let lastNonTrivialToken = mkEOF()
 
         tokens = tokens.concat([mkEOF()])
         while (i < tokens.length) {
@@ -693,24 +695,59 @@ namespace ts.yelm {
             let last = output.length == 0 ? mkNewLine(token) : output[output.length - 1]
 
             switch (last.synKind) {
+                case SK.ExclamationToken:
+                case SK.TildeToken:
                 case SK.DotToken:
                     needsSpace = false
                     break
+
+                case SK.PlusToken:
+                case SK.MinusToken:
+                case SK.PlusPlusToken:
+                case SK.MinusMinusToken:
+                    if (last.isPrefix)
+                        needsSpace = false
+                    break;
             }
 
             switch (token.synKind) {
-                case SK.PlusPlusToken:
-                case SK.MinusMinusToken:
                 case SK.DotToken:
                 case SK.CommaToken:
                 case SK.NewLineTrivia:
                 case SK.ColonToken:
                 case SK.SemicolonToken:
+                case SK.OpenBracketToken:
                     needsSpace = false
+                    break;
+                    
+                case SK.PlusPlusToken:
+                case SK.MinusMinusToken:
+                    if (last.kind == TokenKind.Tree || last.kind == TokenKind.Identifier || last.kind == TokenKind.Keyword)
+                        needsSpace = false
+                    /* fall through */
+                case SK.PlusToken:
+                case SK.MinusToken:
+                    if (lastNonTrivialToken.kind == TokenKind.EOF ||
+                        infixOperatorPrecedence(lastNonTrivialToken.synKind) ||
+                        lastNonTrivialToken.synKind == SK.SemicolonToken)
+                        token.isPrefix = true
                     break;
                 case SK.OpenParenToken:
                     if (last.kind == TokenKind.Identifier)
                         needsSpace = false
+                    if (last.kind == TokenKind.Keyword)
+                        switch (last.synKind) {
+                            case SK.IfKeyword:
+                            case SK.ForKeyword:
+                            case SK.WhileKeyword:
+                            case SK.SwitchKeyword:
+                            case SK.ReturnKeyword:
+                            case SK.ThrowKeyword:
+                            case SK.CatchKeyword:
+                                break;
+                            default:
+                                needsSpace = false
+                        }
                     break;
             }
 
@@ -720,6 +757,9 @@ namespace ts.yelm {
             if (needsSpace)
                 output.push(mkSpace(token, " "))
             output.push(token)
+
+            if (token.kind != TokenKind.NewLine)
+                lastNonTrivialToken = token
 
             i++
         }
