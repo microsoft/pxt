@@ -40,6 +40,7 @@ namespace ts.yelm {
 
     interface BlockToken extends Token {
         stmts: Stmt[]; // for Block          
+        endToken: Token; // if it has proper ending token, this is the text of it
     }
 
     function lookupKind(k: ts.SyntaxKind) {
@@ -377,7 +378,8 @@ namespace ts.yelm {
             pos: toks[0].pos,
             lineNo: toks[0].lineNo,
             stmts: [{ tokens: toks }],
-            text: "{"
+            text: "{",
+            endToken: null
         }
     }
 
@@ -824,6 +826,9 @@ namespace ts.yelm {
 
         topStmts.forEach(s => s.tokens.forEach(findNonBlocks))
 
+        if (outpos == -1)
+            outpos = output.length
+
         return {
             formatted: output,
             pos: outpos
@@ -869,7 +874,7 @@ namespace ts.yelm {
             output += "\n"
         }
 
-        function flushToken(t: Token) {
+        function writeToken(t: Token) {
             if (outpos == -1 && t.pos + t.text.length >= pos) {
                 outpos = output.length + (pos - t.pos);
             }
@@ -881,7 +886,7 @@ namespace ts.yelm {
             for (let i = 0; i < tokens.length; ++i) {
                 let t = tokens[i]
                 finalFormat(ind, t)
-                flushToken(t)
+                writeToken(t)
                 switch (t.kind) {
                     case TokenKind.Tree:
                         let tree = t as TreeToken
@@ -889,19 +894,22 @@ namespace ts.yelm {
                             ppToks(removeIndent(tree.children))
                         })
                         if (tree.endToken) {
-                            flushToken(tree.endToken)
+                            writeToken(tree.endToken)
                         }
                         break;
                     case TokenKind.Block:
-                        // TODO use endToken here
                         let blk = t as BlockToken;
                         if (blk.stmts.length == 0) {
-                            output += " }"
+                            output += " "
                         } else {
                             output += "\n"
                             blk.stmts.forEach(ppStmt)
-                            output += ind.slice(4) + "}"
+                            output += ind.slice(4)
                         }
+                        if (blk.endToken)
+                            writeToken(blk.endToken)
+                        else
+                            output += "}"
                         break;
                     case TokenKind.NewLine:
                         if (tokens[i + 1] && tokens[i + 1].kind == TokenKind.CommentLine &&
