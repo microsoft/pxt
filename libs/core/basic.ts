@@ -30,7 +30,7 @@ namespace basic {
 
     /**
      * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.
-     * @param text the text to scroll on the screen, eg: Hello!
+     * @param text the text to scroll on the screen, eg: "Hello!"
      * @param interval how fast to shift characters; eg: 150, 100, 200, -100
      */
     //% help=functions/show-string 

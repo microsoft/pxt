@@ -25,6 +25,8 @@ var cachedBlocks: Util.StringMap<CachedBlock> = {};
 var cachedToolbox: string = "";
 
 function createShadowValue(name: string, type: string, v?: string): Element {
+    if (v && v.slice(0, 1) == "\"")
+        v = JSON.parse(v);
     let value = document.createElement("value");
     value.setAttribute("name", name);
     let shadow = document.createElement("shadow"); value.appendChild(shadow);
@@ -50,9 +52,9 @@ export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockPara
     let attrNames: Util.StringMap<BlockParameter> = {};
 
     if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
-    fn.parameters.forEach(pr => attrNames[pr.name] = { 
-        name: pr.name, 
-        type: pr.type, 
+    fn.parameters.forEach(pr => attrNames[pr.name] = {
+        name: pr.name,
+        type: pr.type,
         shadowValue: pr.defaults ? pr.defaults[0] : undefined
     });
     if (fn.attributes.block) {
@@ -83,10 +85,10 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
     if (fn.attributes.blockGap)
         block.setAttribute("gap", fn.attributes.blockGap);
 
-    fn.parameters.filter(pr => !!attrNames[pr.name].name && 
-        (/string|number/.test(attrNames[pr.name].type) 
-        || !!attrNames[pr.name].shadowType 
-        || !!attrNames[pr.name].shadowValue))
+    fn.parameters.filter(pr => !!attrNames[pr.name].name &&
+        (/string|number/.test(attrNames[pr.name].type)
+            || !!attrNames[pr.name].shadowType
+            || !!attrNames[pr.name].shadowValue))
         .forEach(pr => {
             let attr = attrNames[pr.name];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue));
@@ -105,7 +107,7 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
         // find the place to insert the category        
         let categories = tb.querySelectorAll("category");
         let ci = 0;
-        for(ci = 0; ci < categories.length; ++ci) {
+        for (ci = 0; ci < categories.length; ++ci) {
             let cat = categories.item(ci);
             if (parseInt(cat.getAttribute("weight") || "50") < (nsn.attributes.weight || 50)) {
                 tb.insertBefore(category, cat);
@@ -167,8 +169,8 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
     return true;
 }
 
-function initField(i:any, ni:number, fn:ts.yelm.SymbolInfo, pre: string, right? :boolean, type? : string) : any {
-    if (ni == 0 && fn.attributes.icon) 
+function initField(i: any, ni: number, fn: ts.yelm.SymbolInfo, pre: string, right?: boolean, type?: string): any {
+    if (ni == 0 && fn.attributes.icon)
         i.appendField(iconToFieldImage(fn.attributes.icon))
     if (pre)
         i.appendField(pre);
@@ -222,45 +224,45 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
                     i = initField(block.appendDummyInput(), ni, fn, pre, true);
                     i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
                 } else {
-                    i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);                    
+                    i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);
                 }
             }
         }
     });
 
-let body = fn.parameters.filter(pr => pr.type == "() => void")[0];
-if (body) {
-    block.appendStatementInput("HANDLER")
-        .setCheck("null");
-}
+    let body = fn.parameters.filter(pr => pr.type == "() => void")[0];
+    if (body) {
+        block.appendStatementInput("HANDLER")
+            .setCheck("null");
+    }
 
-if (fn.attributes.imageLiteral) {
-    for (let r = 0; r < 5; ++r) {
-        let ri = block.appendDummyInput();
-        for (let c = 0; c < fn.attributes.imageLiteral * 5; ++c) {
-            if (c > 0 && c%5==0) ri.appendField("  ");
-            else if (c > 0) ri.appendField(" ");
-            ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
+    if (fn.attributes.imageLiteral) {
+        for (let r = 0; r < 5; ++r) {
+            let ri = block.appendDummyInput();
+            for (let c = 0; c < fn.attributes.imageLiteral * 5; ++c) {
+                if (c > 0 && c % 5 == 0) ri.appendField("  ");
+                else if (c > 0) ri.appendField(" ");
+                ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
+            }
         }
     }
-}
 
-block.setInputsInline(!fn.attributes.blockExternalInputs && fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+    block.setInputsInline(!fn.attributes.blockExternalInputs && fn.parameters.length < 4 && !fn.attributes.imageLiteral);
 
-switch (fn.retType) {
-    case "number": block.setOutput(true, "Number"); break;
-    case "string": block.setOutput(true, "String"); break;
-    case "boolean": block.setOutput(true, "Boolean"); break;
-    case "void": break; // do nothing
-    //TODO
-    default: block.setOutput(true, fn.retType);
-}
+    switch (fn.retType) {
+        case "number": block.setOutput(true, "Number"); break;
+        case "string": block.setOutput(true, "String"); break;
+        case "boolean": block.setOutput(true, "Boolean"); break;
+        case "void": break; // do nothing
+        //TODO
+        default: block.setOutput(true, fn.retType);
+    }
 
-if (!/^on /.test(fn.attributes.block)) {
-    block.setPreviousStatement(fn.retType == "void");
-    block.setNextStatement(fn.retType == "void");
-}
-block.setTooltip(fn.attributes.jsDoc);
+    if (!/^on /.test(fn.attributes.block)) {
+        block.setPreviousStatement(fn.retType == "void");
+        block.setNextStatement(fn.retType == "void");
+    }
+    block.setTooltip(fn.attributes.jsDoc);
 }
 
 export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
