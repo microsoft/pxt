@@ -494,10 +494,10 @@ export class Editor extends srceditor.Editor {
             return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
         }
 
-        let formatCode = (whenNeeded = false) => {
+        let formatCode = (isEnter = false) => {
             let data = this.textAndPosition(this.editor.getCursorPosition())
             let tmp = ts.yelm.format(data.programText, data.charNo)
-            if (whenNeeded && tmp.formatted == data.programText)
+            if (isEnter && tmp.formatted == data.programText)
                 return;
             let formatted = tmp.formatted
             let line = 1
@@ -533,7 +533,7 @@ export class Editor extends srceditor.Editor {
                         this.completer.showPopup();
                     }
                 }
-                if (false && insString == "\n") {
+                if (insString == "\n") {
                     formatCode(true);
                 }
             }

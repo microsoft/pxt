@@ -30,6 +30,7 @@ namespace ts.yelm {
         blockSpanLength?: number;
         blockSpanIsVirtual?: boolean;
         isPrefix?: boolean;
+        isCursor?: boolean;
     }
 
     interface TreeToken extends Token {
@@ -228,7 +229,7 @@ namespace ts.yelm {
 
     // We do not want empty lines in the source to get lost - they serve as a sort of comment dividing parts of code
     // We turn them into empty comments here
-    function emptyLinesToComments(tokens: Token[]) {
+    function emptyLinesToComments(tokens: Token[], cursorPos: number) {
         let output: Token[] = []
         let atLineBeg = true
         let lineNo = 1;
@@ -238,12 +239,18 @@ namespace ts.yelm {
                 let bkp = i
                 i = skipWhitespace(tokens, i)
                 if (tokens[i].kind == TokenKind.NewLine) {
+                    let isCursor = false
+                    if (cursorPos >= 0 && tokens[i].pos >= cursorPos) {
+                        cursorPos = -1;
+                        isCursor = true
+                    }
                     output.push({
                         text: "",
                         kind: TokenKind.CommentLine,
                         pos: tokens[i].pos,
                         lineNo,
-                        synKind: SK.SingleLineCommentTrivia
+                        synKind: SK.SingleLineCommentTrivia,
+                        isCursor: isCursor
                     })
                 } else {
                     i = bkp
@@ -261,7 +268,9 @@ namespace ts.yelm {
                 atLineBeg = false
             }
 
-
+            if (cursorPos >= 0 && tokens[i].pos >= cursorPos) {
+                cursorPos = -1;
+            }
         }
 
         return output
@@ -801,7 +810,7 @@ namespace ts.yelm {
         if (r.braceBalance != 0) return null
 
         let topTokens = r.tokens
-        topTokens = emptyLinesToComments(topTokens)
+        topTokens = emptyLinesToComments(topTokens, pos)
         topTokens = matchBraces(topTokens)
         let topStmts = delimitStmts(topTokens, true)
 
@@ -847,7 +856,7 @@ namespace ts.yelm {
         function ppStmt(s: Stmt) {
             let toks = removeIndent(s.tokens)
 
-            if (toks.length == 1 && toks[0].text == "") {
+            if (toks.length == 1 && !toks[0].isCursor && toks[0].text == "") {
                 output += "\n"
                 return
             }
@@ -864,8 +873,9 @@ namespace ts.yelm {
             for (let i = 0; i < tokens.length; ++i) {
                 let t = tokens[i]
                 finalFormat(ind, t)
-                if (outpos == -1 && t.pos + t.text.length >= pos)
+                if (outpos == -1 && t.pos + t.text.length >= pos) {
                     outpos = output.length + (pos - t.pos);
+                }
                 output += t.text;
                 switch (t.kind) {
                     case TokenKind.Tree:
@@ -887,7 +897,8 @@ namespace ts.yelm {
                         }
                         break;
                     case TokenKind.NewLine:
-                        if (tokens[i + 1] && tokens[i + 1].kind == TokenKind.CommentLine && tokens[i + 1].text == "")
+                        if (tokens[i + 1] && tokens[i + 1].kind == TokenKind.CommentLine &&
+                            tokens[i + 1].text == "" && !tokens[i + 1].isCursor)
                             break; // no indent for empty line
                         if (i == tokens.length - 1)
                             output += ind.slice(4)
