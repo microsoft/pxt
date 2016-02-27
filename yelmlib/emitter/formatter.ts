@@ -35,7 +35,7 @@ namespace ts.yelm {
 
     interface TreeToken extends Token {
         children: Token[];
-        endText?: string; // if it has proper ending token, this is the text of it                
+        endToken: Token; // if it has proper ending token, this is the text of it
     }
 
     interface BlockToken extends Token {
@@ -320,7 +320,7 @@ namespace ts.yelm {
                             while (true) {
                                 top = braceStack.pop()
                                 if (top.synKind == token.synKind) {
-                                    top.token.endText = token.text;
+                                    top.token.endToken = token;
                                     break;
                                 }
                                 // don't go past brace with other closing parens
@@ -388,6 +388,7 @@ namespace ts.yelm {
             pos: toks[0].pos,
             lineNo: toks[0].lineNo,
             children: toks,
+            endToken: null,
             text: ""
         }
     }
@@ -868,25 +869,31 @@ namespace ts.yelm {
             output += "\n"
         }
 
+        function flushToken(t: Token) {
+            if (outpos == -1 && t.pos + t.text.length >= pos) {
+                outpos = output.length + (pos - t.pos);
+            }
+            output += t.text;
+        }
+
         function ppToks(tokens: Token[]) {
             tokens = normalizeSpace(tokens)
             for (let i = 0; i < tokens.length; ++i) {
                 let t = tokens[i]
                 finalFormat(ind, t)
-                if (outpos == -1 && t.pos + t.text.length >= pos) {
-                    outpos = output.length + (pos - t.pos);
-                }
-                output += t.text;
+                flushToken(t)
                 switch (t.kind) {
                     case TokenKind.Tree:
                         let tree = t as TreeToken
                         incrIndent(t, () => {
                             ppToks(removeIndent(tree.children))
                         })
-                        if (tree.endText)
-                            output += tree.endText
+                        if (tree.endToken) {
+                            flushToken(tree.endToken)
+                        }
                         break;
                     case TokenKind.Block:
+                        // TODO use endToken here
                         let blk = t as BlockToken;
                         if (blk.stmts.length == 0) {
                             output += " }"
