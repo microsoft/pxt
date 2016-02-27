@@ -12,10 +12,10 @@ namespace ts.yelm.Util {
         }
     }
     
-    export function repeatMap<T>(n : number, fn : () => T) : T[] {
+    export function repeatMap<T>(n : number, fn : (index:number) => T) : T[] {
         n = n || 0;
         let r : T[] = [];
-        for(let i = 0;i<n;++i) r.push(fn());
+        for(let i = 0;i<n;++i) r.push(fn(i));
         return r;
     }
 

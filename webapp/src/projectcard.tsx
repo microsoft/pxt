@@ -7,10 +7,41 @@ import * as sui from "./sui"
 let lf = yelm.Util.lf;
 let repeat = yelm.Util.repeatMap;
 
+interface SocialNetwork {
+    parse: (text: string) => { source: string; id: string }
+}
+
+let socialNetworks: SocialNetwork[] = [{
+    parse: text => {
+        let links: string[] = [];
+        if (text)
+            text.replace(/https?:\/\/(youtu\.be\/([a-z0-9\-_]+))|(www\.youtube\.com\/watch\?v=([a-z0-9\-_]+))/i,
+                (m, m2, id1, m3, id2) => {
+                    var ytid = id1 || id2;
+                    links.push(ytid); return ''
+                });
+        if(links[0]) return {source:'youtube', id:links[0]};
+        else return undefined;
+    }
+}, {
+    parse: text => {
+        let m = /https?:\/\/vimeo\.com\/\S*?(\d{6,})/i.exec(text)
+        if (m) return { source:"vimeo", id:m[1]};
+        else return undefined;
+    }
+}
+];
+
+
+
 export interface ProjectCardProps {
-    url?:string;
-    username:string;
-    cfg : yelm.PackageConfig;
+    url?: string;
+    promoUrl?: string;
+    username: string;
+    name?: string;
+    time?: number;
+    description?: string;
+    card?: yelm.PackageCard;
 }
 export interface ProjectCardState { }
 
@@ -22,33 +53,39 @@ export class ProjectCard extends React.Component<ProjectCardProps, ProjectCardSt
         this.state = {};
     }
 
+    componentDidUpdate() {
+        ($('.ui.embed') as any).embed();
+    }
+
     render() {
-        let cfg = this.props.cfg;
-        let card = cfg.card || {}
+        let card = this.props.card || {}
+        let promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];
+
         return (
             <div className="ui card">
                 <div className="content">
                     <div className="right floated meta">
                         {card.any ? (<i className="any icon">{card.any > 0 ? card.any : ""}</i>) : ""}
-                        {repeat(card.hardware, () => <i className="small certificate black icon" ></i>)}
-                        {repeat(card.software, () => <i className="small square teal icon" ></i>)}
+                        {repeat(card.hardware, (k) => <i ref={"hardware" + k} className="small certificate black icon" ></i>) }
+                        {repeat(card.software, (k) => <i ref={"software" + k}className="small square teal icon" ></i>) }
                     </div>
                     {this.props.username}
                 </div>
                 <div className="image">
-                    <simview.MbitBoardView disableTilt={true} theme={simsvg.randomTheme()} />
-                </div>            
+                    {promo ? <div className="ui embed" data-source={promo.source} data-id={promo.id}></div>
+                        : <simview.MbitBoardView disableTilt={true} theme={simsvg.randomTheme() } />}
+                </div>
                 <div className="content">
-                    <a className="header">{cfg.name}</a>
+                    <a className="header">{this.props.name}</a>
                     <div className="meta">
-                        <span className="date">{cfg.installedVersion}</span>
+                        {this.props.time ? <span className="date">{yelm.Util.timeSince(this.props.time) }</span> : ""}
                     </div>
-                    <div className="description">{cfg.description ? cfg.description : lf("No description.")}</div>
+                    <div className="description">{this.props.description || lf("No description.") }</div>
                 </div>
                 <div className="extra content">
                     {card.power || card.toughness ? (<div className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
                     <a href={this.props.url || "https://yelm.io/"}>
-                            {this.props.url || "yelm.io"}
+                        {this.props.url || "yelm.io"}
                     </a>
                 </div>
             </div>

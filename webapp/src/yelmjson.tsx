@@ -35,7 +35,13 @@ export class Editor extends srceditor.Editor {
             <div className="ui four column grid">
                 <div className="ui column">
                     <div className="ui segment">                    
-                        <projectcard.ProjectCard url="yelm.io/abc" username="me" cfg={c} />
+                        <projectcard.ProjectCard 
+                            url="yelm.io/abc" 
+                            username="me" 
+                            name={c.name}
+                            description={c.description} 
+                            card={c.card} 
+                            />
                     </div>
                 </div>
                 <div className="ui three column">
@@ -49,6 +55,10 @@ export class Editor extends srceditor.Editor {
                         </sui.Field>
                         <sui.Input label={lf("Name") } value={c.name} onChange={v => update(c.name = v) } />
                         <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
+                        <sui.Input label={lf("Picture or video (YouTube, Vimeo, Instagram)")} value={card.promoUrl || ""} onChange={v => {
+                            initCard();
+                            update(c.card.promoUrl = v)
+                        }} />
                         <div className="three fields">
                         <sui.Input inputLabel={lf("Any")} type="number" value={(card.any || 0).toString()} onChange={v => {
                             initCard();
