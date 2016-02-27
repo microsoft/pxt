@@ -65,9 +65,9 @@ export class ProjectCard extends React.Component<ProjectCardProps, ProjectCardSt
             <div className="ui card">
                 <div className="content">
                     <div className="right floated meta">
-                        {card.any ? (<i className="any icon">{card.any > 0 ? card.any : ""}</i>) : ""}
-                        {repeat(card.hardware, (k) => <i ref={"hardware" + k} className="small certificate black icon" ></i>) }
-                        {repeat(card.software, (k) => <i ref={"software" + k}className="small square teal icon" ></i>) }
+                        {card.any ? (<i className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
+                        {repeat(card.hardware, (k) => <i ref={"hardware" + k} className="certificate black icon" ></i>) }
+                        {repeat(card.software, (k) => <i ref={"software" + k}className="square teal icon" ></i>) }
                     </div>
                     {this.props.username}
                 </div>
