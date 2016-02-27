@@ -222,21 +222,6 @@ Blockly.Blocks['controls_simple_for'] = {
 };
 
 
-Blockly.Blocks['device_beat'] = {
-    init: function()
-    {
-        this.setColour(blockColors.music);
-        this.appendDummyInput()
-            .appendField(new Blockly.FieldDropdown(beatFractions), "fraction");
-        this.appendDummyInput()
-            .appendField("beat (ms)");
-        this.setOutput(true, "Number");
-        this.setInputsInline(true);
-        this.setTooltip('Gets the duration of a fraction of a beat from the current tempo (bpm)');
-        this.setHelpUrl("./functions/tempo");
-    }
-};
-
 Blockly.Blocks['variables_change'] = {
   init: function() {
     this.appendDummyInput()

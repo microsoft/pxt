@@ -24,16 +24,22 @@ interface CachedBlock {
 var cachedBlocks: Util.StringMap<CachedBlock> = {};
 var cachedToolbox: string = "";
 
-function createShadowValue(name: string, type: string, v?: string): Element {
+function createShadowValue(name: string, type: string, v?: string, shadowType?: string): Element {
     let value = document.createElement("value");
     value.setAttribute("name", name);
+    if (shadowType) {
+        let b = document.createElement("block"); value.appendChild(b);
+        b.setAttribute("type", shadowType);
+        return value;
+    }
+    
     let shadow = document.createElement("shadow"); value.appendChild(shadow);
     shadow.setAttribute("type", type == "number" ? "math_number" : type == "string" ? "text" : type);
     if (type == "number" || type == "string") {
         let field = document.createElement("field"); shadow.appendChild(field);
         field.setAttribute("name", type == "number" ? "NUM" : "TEXT");
         field.innerText = v || (type == "number" ? "0" : "");
-    }
+    } 
     return value;
 }
 
@@ -89,7 +95,7 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
         || !!attrNames[pr.name].shadowValue))
         .forEach(pr => {
             let attr = attrNames[pr.name];
-            block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue));
+            block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
         })
 
     let ns = fn.namespace.split('.')[0];

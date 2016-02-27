@@ -1,8 +1,8 @@
 enum Notes {
     //% enumval=262
     C,
-    //% enumval=277
-    CSharp_,
+    //% enumval=277 blockId=C#
+    CSharp,
     //% enumval=294
     D,
     //% enumval=311
@@ -11,12 +11,12 @@ enum Notes {
     E,
     //% enumval=349
     F,
-    //% enumval=370
-    FSharp_,
+    //% enumval=370  blockId=F#
+    FSharp,
     //% enumval=392
     G,
-    //% enumval=415
-    GSharp_,
+    //% enumval=415  blockId=G#
+    GSharp,
     //% enumval=440
     A,
     //% enumval=466
@@ -25,8 +25,8 @@ enum Notes {
     B,
     //% enumval=131
     C3,
-    //% enumval=139
-    CSharp_3,
+    //% enumval=139  blockId=C#3
+    CSharp3,
     //% enumval=147
     D3,
     //% enumval=156
@@ -35,12 +35,12 @@ enum Notes {
     E3,
     //% enumval=175
     F3,
-    //% enumval=185
-    FSharp_3,
+    //% enumval=185 blockId=F#3
+    FSharp3,
     //% enumval=196
     G3,
-    //% enumval=208
-    GSharp_3,
+    //% enumval=208 blockId=G#3
+    GSharp3,
     //% enumval=220
     A3,
     //% enumval=233
@@ -49,8 +49,8 @@ enum Notes {
     B3,
     //% enumval=262
     C4,
-    //% enumval=277
-    CSharp_4,
+    //% enumval=277  blockId=C#4
+    CSharp4,
     //% enumval=294
     D4,
     //% enumval=311
@@ -59,12 +59,12 @@ enum Notes {
     E4,
     //% enumval=349
     F4,
-    //% enumval=370
-    FSharp_4,
+    //% enumval=370 blockId=F#3
+    FSharp4,
     //% enumval=392
     G4,
-    //% enumval=415
-    GSharp_4,
+    //% enumval=415  blockId=G#3
+    GSharp4,
     //% enumval=440
     A4,
     //% enumval=466
@@ -73,8 +73,8 @@ enum Notes {
     B4,
     //% enumval=523
     C5,
-    //% enumval=555
-    CSharp_5,
+    //% enumval=555 blockId=C#5
+    CSharp5,
     //% enumval=587
     D5,
     //% enumval=622
@@ -83,18 +83,31 @@ enum Notes {
     E5,
     //% enumval=698
     F5,
-    //% enumval=740
-    FSharp_5,
+    //% enumval=740  blockId=F#5
+    FSharp5,
     //% enumval=784
     G5,
-    //% enumval=831
-    GSharp_5,
+    //% enumval=831 blockId=G#5
+    GSharp5,
     //% enumval=880
     A5,
     //% enumval=932
     Bb5,
     //% enumval=989
     B5,
+}
+
+enum BeatFraction {
+    //% enumVal=1 blockId=1
+    Whole = 1,
+    //% enumVal=2 blockId="1/2"
+    Half = 2,
+    //% enumVal=4 blockId="1/4"
+    Quater = 4,
+    //% enumVal=8 blockId="1/8"
+    Heighth = 8,
+    //% enumVal=16 blockId="1/16"
+    Sixteenth = 16
 }
 
 //% color=52 weight=33
@@ -149,9 +162,10 @@ namespace music {
      * Returns the duration of a beat in milli-seconds
      */
     //% help=/functions/beat weight=49
-    export function beat(): number {
+    //% blockId=device_beat block="%fraction|beat"
+    export function beat(fraction : BeatFraction = BeatFraction.Whole): number {
         let ms: number;
-        return 60000 / beatsPerMinute;
+        return 60000 / fraction / beatsPerMinute;
     }
 
     /**

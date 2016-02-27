@@ -813,16 +813,6 @@ function defaultValueForType(t: Point): J.JExpr {
     }
 }
 
-function compileBeat(e: Environment, b: B.Block): J.JExpr {
-    var matches = b.getFieldValue("fraction").match(/^1\/(\d+)/);
-    if (matches)
-        return H.mkSimpleCall("/", [
-            H.namespaceCall("music", "beat", []),
-            H.mkNumberLiteral(parseInt(matches[1]))]);
-    else
-        return H.namespaceCall("music", "beat", []);
-}
-
 // [t] is the expected type; we assume that we never null block children
 // (because placeholder blocks have been inserted by the type-checking phase
 // whenever a block was actually missing).
@@ -852,8 +842,6 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
             return compileVariableGet(e, b);
         case "text":
             return compileText(e, b);
-        case 'device_beat':
-            return compileBeat(e, b);
         default:
             var call = e.stdCallTable[b.type];
             if (call) {
