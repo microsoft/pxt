@@ -36,6 +36,7 @@ var acequire = (ace as any).acequire;
 var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
+var cursorMarker = "\uE108"
 var placeholderChar = "◊";
 var defaultImgLit = `
 . . . . .
@@ -288,9 +289,9 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             else if (p.type == "string") {
                 if (imgLit) {
                     imgLit = false
-                    return "`" + defaultImgLit + "`";
+                    return "`" + defaultImgLit + cursorMarker + "`";
                 }
-                return "\"\""
+                return `"${cursorMarker}"`
             }
             let si = this.lookupInfo(p.type)
             if (si && si.kind == SK.Enum) {
@@ -300,16 +301,17 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             }
             let m = /^\((.*)\) => (.*)$/.exec(p.type)
             if (m)
-                return "(" + m[1] + ") => { }"
+                return `(${m[1]}) => {\n    ${cursorMarker}\n}`
             return placeholderChar;
         }
 
         if (si.parameters) {
-            text += "(" + si.parameters.map(defaultVal).join(", ") + ")"
+            text += "(" + si.parameters.filter(p => !p.initializer).map(defaultVal).join(", ") + ")"
         }
 
         editor.session.replace(this.completionRange, text);
         this.detach()
+        this.props.parent.formatCode();
     }
 
 
@@ -474,6 +476,35 @@ export class Editor extends srceditor.Editor {
 
     }
 
+    formatCode(isEnter = false) {
+        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
+            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
+        }
+
+        let data = this.textAndPosition(this.editor.getCursorPosition())
+        let cursorOverride = data.programText.indexOf(cursorMarker)
+        if (cursorOverride >= 0) {
+            isEnter = false
+            data.programText = data.programText.replace(new RegExp(cursorMarker, "g"), "")
+            data.charNo = cursorOverride
+        }
+        let tmp = ts.yelm.format(data.programText, data.charNo)
+        if (isEnter && tmp.formatted == data.programText)
+            return;
+        let formatted = tmp.formatted
+        let line = 1
+        let col = 0
+        //console.log(data.charNo, tmp.pos)
+        for (let i = 0; i < formatted.length; ++i) {
+            let c = formatted.charCodeAt(i)
+            col++
+            if (i >= tmp.pos)
+                break;
+            if (c == 10) { line++; col = 0 }
+        }
+        this.editor.setValue(formatted, -1)
+        this.editor.gotoLine(line, col - 1, false)
+    }
 
     prepare() {
         this.editor = ace.edit("aceEditorInner");
@@ -488,30 +519,6 @@ export class Editor extends srceditor.Editor {
             backspace: 1,
             Down: 1,
             Up: 1,
-        }
-
-        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
-            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
-        }
-
-        let formatCode = (isEnter = false) => {
-            let data = this.textAndPosition(this.editor.getCursorPosition())
-            let tmp = ts.yelm.format(data.programText, data.charNo)
-            if (isEnter && tmp.formatted == data.programText)
-                return;
-            let formatted = tmp.formatted
-            let line = 1
-            let col = 0
-            //console.log(data.charNo, tmp.pos)
-            for (let i = 0; i < formatted.length; ++i) {
-                let c = formatted.charCodeAt(i)
-                col++
-                if (i >= tmp.pos)
-                    break;
-                if (c == 10) { line++; col = 0 }
-            }
-            this.editor.setValue(formatted, -1)
-            this.editor.gotoLine(line, col - 1, false)
         }
 
         this.editor.commands.on("afterExec", (e: any) => {
@@ -534,7 +541,7 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 if (insString == "\n") {
-                    formatCode(true);
+                    this.formatCode(true);
                 }
             }
 
@@ -553,7 +560,7 @@ export class Editor extends srceditor.Editor {
         this.editor.commands.addCommand({
             name: "formatCode",
             bindKey: { win: "Alt-Shift-f", mac: "Alt-Shift-f" },
-            exec: () => formatCode()
+            exec: () => this.formatCode()
         })
 
         let sess = this.editor.getSession()
