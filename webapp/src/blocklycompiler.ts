@@ -813,21 +813,6 @@ function defaultValueForType(t: Point): J.JExpr {
     }
 }
 
-function compileNote(e: Environment, b: B.Block): J.JExpr {
-    var note = b.type.match(/^device_note_([A-G])/)[1];
-    return H.namespaceCall("music", "note", [H.mkStringLiteral(note)]);
-}
-
-function compileDuration(e: Environment, b: B.Block): J.JExpr {
-    var matches = b.type.match(/^device_duration_1\/(\d+)/);
-    if (matches)
-        return H.mkSimpleCall("/", [
-            H.namespaceCall("music", "tempo", []),
-            H.mkNumberLiteral(parseInt(matches[1]))]);
-    else
-        return H.namespaceCall("music", "tempo", []);
-}
-
 function compileBeat(e: Environment, b: B.Block): J.JExpr {
     var matches = b.getFieldValue("fraction").match(/^1\/(\d+)/);
     if (matches)
@@ -845,10 +830,6 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
     assert(b != null);
     if (b.disabled || b.type == "placeholder")
         return defaultValueForType(returnType(e, b));
-
-    // Tricks for musical notes...
-    if (b.type.match(/^device_duration_/))
-        return compileDuration(e, b);
 
     switch (b.type) {
         case "math_number":
@@ -1081,7 +1062,7 @@ function compileArgument(e: Environment, b: B.Block, p: StdArg): J.JExpr {
         return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
     var f = b.getFieldValue(p.field);
     if (f)
-        return H.mkStringLiteral(f);
+        return H.mkLocalRef(f);
     else
         return compileExpression(e, b.getInputTargetBlock(p.field))
 }
