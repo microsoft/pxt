@@ -81,6 +81,13 @@ class Settings extends data.Component<ISettingsProps, {}> {
 }
 
 class SlotSelector extends data.Component<ISettingsProps, {}> {
+    
+    componentDidMount() {
+        let headers: workspace.Header[] = this.getData("header:*")
+        if (!headers.length)
+            this.props.parent.newProject();
+    }
+    
     renderCore() {
         let par = this.props.parent
         let headers: workspace.Header[] = this.getData("header:*")
