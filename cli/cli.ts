@@ -478,41 +478,36 @@ export function formatAsync(...fileNames: string[]) {
             let numErr = 0
             for (let f of fileNames) {
                 let input = fs.readFileSync(f, "utf8")
-                let formatted = ts.yelm.format(input)
+                let tmp = ts.yelm.format(input, 0)
+                let formatted = tmp.formatted
                 let expected = testMode && fs.existsSync(f + ".exp") ? fs.readFileSync(f + ".exp", "utf8") : null
                 let fn = f + ".new"
-                
+
                 if (testMode) {
-                    if (formatted == null)
-                        formatted = input
                     if (expected == null)
                         expected = input
-                }
-
-                if (formatted == null) {
+                    if (formatted != expected) {
+                        fs.writeFileSync(fn, formatted, "utf8")
+                        console.log("format test FAILED; written:", fn)
+                        numErr++;
+                    } else {
+                        fs.unlink(fn, err => { })
+                        console.log("format test OK:", f)
+                    }
+                } else if (formatted == input) {
                     console.log("already formatted:", f)
                     if (!inPlace)
                         fs.unlink(fn, err => { })
+                } else if (inPlace) {
+                    fs.writeFileSync(f, formatted, "utf8")
+                    console.log("replaced:", f)
                 } else {
-                    if (testMode) {
-                        if (formatted != expected) {
-                            fs.writeFileSync(fn, formatted, "utf8")
-                            console.log("format test FAILED; written:", fn)
-                            numErr++;
-                        } else {
-                            fs.unlink(fn, err => { })
-                            console.log("format test OK:", f)
-                        }
-                    } else if (inPlace) {
-                        fs.writeFileSync(f, formatted, "utf8")
-                        console.log("replaced:", f)
-                    } else {
-                        fs.writeFileSync(fn, formatted, "utf8")
-                        console.log("written:", fn)
-                    }
+                    fs.writeFileSync(fn, formatted, "utf8")
+                    console.log("written:", fn)
                 }
+
             }
-            
+
             if (numErr) {
                 console.log(`${numErr} formatting test(s) FAILED.`)
                 process.exit(1)

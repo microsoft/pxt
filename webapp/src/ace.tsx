@@ -116,17 +116,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         if (this.queryingFor == posTxt) return Promise.resolve()
 
         this.queryingFor = posTxt
-        let editor = this.props.parent.editor
-        let str = editor.session.getValue()
-        let lines = pos.row
-        let chars = pos.column
-        let i = 0;
-        for (; i < str.length; ++i) {
-            if (lines == 0) {
-                if (chars-- == 0)
-                    break;
-            } else if (str[i] == '\n') lines--;
-        }
+        let textAndPos = this.props.parent.textAndPosition(pos)
 
         let cache: CompletionCache = {
             apisInfo: null,
@@ -142,8 +132,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             })
             .then(() => compiler.workerOpAsync("getCompletions", {
                 fileName: this.props.parent.currFile.getTypeScriptName(),
-                fileContent: str,
-                position: i
+                fileContent: textAndPos.programText,
+                position: textAndPos.charNo
             }))
             .then(compl => {
                 cache.completionInfo = compl;
@@ -151,7 +141,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     cache.completionInfo = null
                     return
                 }
-                console.log(compl)
+                // console.log(compl)
                 let mkEntry = (q: string, si: ts.yelm.SymbolInfo) => fixupSearch({
                     name: si.isContextual ? si.name : q,
                     symbolInfo: si,
@@ -468,6 +458,23 @@ export class Editor extends srceditor.Editor {
         )
     }
 
+    textAndPosition(pos: AceAjax.Position) {
+        let programText = this.editor.session.getValue()
+        let lines = pos.row
+        let chars = pos.column
+        let charNo = 0;
+        for (; charNo < programText.length; ++charNo) {
+            if (lines == 0) {
+                if (chars-- == 0)
+                    break;
+            } else if (programText[charNo] == '\n') lines--;
+        }
+
+        return { programText, charNo }
+
+    }
+
+
     prepare() {
         this.editor = ace.edit("aceEditorInner");
         let langTools = acequire("ace/ext/language_tools");
@@ -483,10 +490,28 @@ export class Editor extends srceditor.Editor {
             Up: 1,
         }
 
-        let formatCode = () => {
-            let formatted = ts.yelm.format(this.editor.getValue())
-            if (formatted)
-                this.editor.setValue(formatted)
+        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
+            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
+        }
+
+        let formatCode = (whenNeeded = false) => {
+            let data = this.textAndPosition(this.editor.getCursorPosition())
+            let tmp = ts.yelm.format(data.programText, data.charNo)
+            if (whenNeeded && tmp.formatted == data.programText)
+                return;
+            let formatted = tmp.formatted
+            let line = 1
+            let col = 0
+            //console.log(data.charNo, tmp.pos)
+            for (let i = 0; i < formatted.length; ++i) {
+                let c = formatted.charCodeAt(i)
+                col++
+                if (i >= tmp.pos)
+                    break;
+                if (c == 10) { line++; col = 0 }
+            }
+            this.editor.setValue(formatted, -1)
+            this.editor.gotoLine(line, col - 1, false)
         }
 
         this.editor.commands.on("afterExec", (e: any) => {
@@ -509,7 +534,7 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 if (false && insString == "\n") {
-                    formatCode();
+                    formatCode(true);
                 }
             }
 
@@ -528,7 +553,7 @@ export class Editor extends srceditor.Editor {
         this.editor.commands.addCommand({
             name: "formatCode",
             bindKey: { win: "Alt-Shift-f", mac: "Alt-Shift-f" },
-            exec: formatCode
+            exec: () => formatCode()
         })
 
         let sess = this.editor.getSession()

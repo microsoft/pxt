@@ -345,7 +345,7 @@ namespace ts.yelm {
         return {
             kind: TokenKind.Whitespace,
             synKind: SK.WhitespaceTrivia,
-            pos: t.pos,
+            pos: t.pos - s.length,
             lineNo: t.lineNo,
             text: s
         }
@@ -795,7 +795,7 @@ namespace ts.yelm {
         return v + ""
     }
 
-    export function format(input: string): string {
+    export function format(input: string, pos: number) {
         let r = tokenize(input)
 
         if (r.braceBalance != 0) return null
@@ -807,16 +807,17 @@ namespace ts.yelm {
 
         let ind = ""
         let output = ""
+        let outpos = -1
         let indIncrLine = 0
 
         topStmts.forEach(ppStmt)
 
         topStmts.forEach(s => s.tokens.forEach(findNonBlocks))
 
-        if (output == input)
-            return null;
-
-        return output
+        return {
+            formatted: output,
+            pos: outpos
+        }
 
         function findNonBlocks(t: Token) {
             if (t.kind == TokenKind.Tree) {
@@ -863,6 +864,8 @@ namespace ts.yelm {
             for (let i = 0; i < tokens.length; ++i) {
                 let t = tokens[i]
                 finalFormat(ind, t)
+                if (outpos == -1 && t.pos + t.text.length >= pos)
+                    outpos = output.length + (pos - t.pos);
                 output += t.text;
                 switch (t.kind) {
                     case TokenKind.Tree:
