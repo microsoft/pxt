@@ -253,7 +253,13 @@ namespace yelm {
                 files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
                 testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),
                 dependencies: {
-                    "core": "*"
+                    "core": "*",
+                    "game": "*",
+                    "led": "*",
+                    "music": "*",                    
+                    "radio": "*",
+                    "pins": "*",
+                    "serial": "*"
                 }
             }
             this.validateConfig();
@@ -389,7 +395,53 @@ Put some info here.
         ".gitignore":
         `built
 node_modules
+yotta_modules
+yotta_targets
 yelm_modules
+`,
+        ".vscode/settings.json":
+`{
+    "editor.formatOnType": true,
+    "files.autoSave": "afterDelay",
+	"search.exclude": {
+		"**/built": true,
+		"**/node_modules": true,
+		"**/yotta_modules": true,
+		"**/yotta_targets": true,
+		"**/yelm_modules": true
+	}
+}`,     
+        ".vscode/tasks.json":
 `
+// A task runner that calls the Yelm compiler (yelm) and
+{
+	"version": "0.1.0",
+
+	// The command is yelm. Assumes that yelm has been installed using npm install -g yelm-cli
+	"command": "yelm",
+
+	// The command is a shell script
+	"isShellCommand": true,
+
+	// Show the output window always.
+	"showOutput": "always",
+
+    "tasks": [{
+        "taskName": "deploy",
+        "isBuildCommand": true,
+	    "problemMatcher": "$tsc",
+    	"args": ["deploy"]
+    }, {
+        "taskName": "test",
+        "isTestCommand": true,
+	    "problemMatcher": "$tsc",
+    	"args": ["test"]
+    }, {
+        "taskName": "publish",
+	    "problemMatcher": "$tsc",
+    	"args": ["publish"]
+    }]
+}
+`        
     }
 }

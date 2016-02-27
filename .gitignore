@@ -9,3 +9,4 @@ nwcache/
 nwbuilt/
 tmp/
 *.ts.new
+temp/
