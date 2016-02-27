@@ -390,6 +390,29 @@ Put some info here.
         `built
 node_modules
 yelm_modules
+`,
+        ".vscode/tasks.json":
 `
+// A task runner that calls the Yelm compiler (yelm) and
+{
+	"version": "0.1.0",
+
+	// The command is yelm. Assumes that yelm has been installed using npm install -g yelm-cli
+	"command": "yelm",
+
+	// The command is a shell script
+	"isShellCommand": true,
+
+	// Show the output window only if unrecognized errors occur.
+	"showOutput": "silent",
+
+	// args is the HelloWorld program to compile.
+	"args": [],
+
+	// use the standard tsc problem matcher to find compile problems
+	// in the output.
+	"problemMatcher": "$tsc"
+}
+`        
     }
 }

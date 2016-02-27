@@ -7,9 +7,9 @@ namespace radio {
      * {help:/functions/broadcast-message}
      * {shim:micro_bit::broadcastMessage}
      */
+    //% weight=70
     //% blockId=radio_broadcast block="broadcast message %MESSAGE" icon="\uf1d8" blockGap=12
-    export function broadcastMessage(message: number) : void
-        {
+    export function broadcastMessage(message: number) : void {
         /*
         if (message < 0 || message > 65325) {
             simulator.warning("message should be between 0 and 65535.");
@@ -25,9 +25,9 @@ namespace radio {
      * {help:/functions/on-message-received}
      * {shim:micro_bit::onBroadcastMessageReceived}
      */
-    //% blockId=radio_broadcast_received_event block="on message received" icon="\uf1d8"
-    export function onMessageReceived(message: number, body:Action) : void
-        {
+    //% weight=69
+    //% blockId=radio_broadcast_received_event block="on message received %message" icon="\uf1d8"
+    export function onMessageReceived(message: number, body:Action) : void {
         /*
         if (message < 0 || message > 65325) {
             TD.simulator.warning("message should be between 0 and 65535.");
@@ -42,7 +42,8 @@ namespace radio {
      * {namespace:radio}
      * {shim:micro_bit::datagramSendNumber}
      * {weight:78}
-     */
+     */    
+    //% weight=60
     //% blockId=radio_datagram_send block="send number %MESSAGE" blockGap=8
     export function sendNumber(value: number) : void { }
 
@@ -53,7 +54,8 @@ namespace radio {
      * {namespace:radio}
      * {shim:micro_bit::datagramReceiveNumber}
      */
-    //% blockId=radio_datagram_receive block="receive number"
+    //% weight=59
+    //% blockId=radio_datagram_receive block="receive number" blockGap=12
     export function receiveNumber() : number
         {
         //noBleWarning();
@@ -75,7 +77,8 @@ namespace radio {
      * {help:/functions/on-data-received}
      * {shim:micro_bit::onDatagramReceived}
      */
-    //% blockId=radio_datagram_received_event block="on data received"
+    //% weight=58
+    //% blockId=radio_datagram_received_event block="on data received" blockGap=8
     export function onDataReceived(body:Action) : void
         {
         //      noBleWarning();
@@ -88,6 +91,7 @@ namespace radio {
      * {shim:micro_bit::datagramSendNumbers}
      * {weight:20}
      */
+    //% weight=57
     //% blockId=radio_datagram_send_numbers block="send numbers|0: %VALUE0|1: %VALUE1|2: %VALUE2|3: %VALUE3" blockGap=8
     export function sendNumbers(value_0: number, value_1: number, value_2: number, value_3: number) : void
         {
@@ -102,6 +106,7 @@ namespace radio {
      * {shim:micro_bit::datagramGetNumber}
      * {hints:index:0,1,2,3}
      */
+    //% weight=56
     //% blockId=radio_datagram_received_number_at block="receive number|at %VALUE" blockGap=8
     export function receivedNumberAt(index: number) : number {
         /*      if (index < 0 || index >= 4) {
@@ -118,6 +123,7 @@ namespace radio {
      * {shim:micro_bit::datagramGetRSSI}
      * {weight:18}
      */
+    //% weight=55
     //% blockId=radio_datagram_rssi block="received signal strength"
     export function receivedSignalStrength() : number
         {
@@ -132,6 +138,7 @@ namespace radio {
      * {help:/functions/set-group}
      * {shim:micro_bit::setGroup}
      */
+    //% weight=10
     //% blockId=radio_set_group block="set group %ID"
     export function setGroup(id: number) : void
         {
