@@ -53,6 +53,7 @@ export interface CompletionEntry {
     lastScore: number;
     searchName: string;
     searchDesc: string;
+    snippet?: string;
 }
 
 export interface CompletionCache {
@@ -63,7 +64,7 @@ export interface CompletionCache {
 }
 
 function fixupSearch(e: CompletionEntry) {
-    e.searchName = (e.searchName || "").toLowerCase() + " ";
+    e.searchName = (e.searchName || "").replace(/\s+/g, "").toLowerCase() + " ";
     e.searchDesc = " " + (e.searchDesc || "").toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
     return e
 }
@@ -86,6 +87,24 @@ function mkSyntheticEntry(name: string, desc: string) {
         searchDesc: desc,
     })
 }
+
+function mkSnippet(name: string, desc: string, code: string) {
+    let e = mkSyntheticEntry(name, desc)
+    e.snippet = code
+    return e
+}
+
+let block = `{\n ${cursorMarker}\n}`
+// TODO auto-rename of locals
+let snippets = [
+    mkSnippet("if", "Do something depending on condition", `if (${cursorMarker}) ${block}`),
+    mkSnippet("if else", "Do something or something else depending on condition", `if (${cursorMarker}) ${block} else ${block}`),
+    mkSnippet("while", "Loop while condition is true", `while (true) {\n ${cursorMarker}\nbasic.pause(20)\n}`),
+    mkSnippet("for", "Repeat a given number of times", `for (let i = 0; i < 5; i++) ${block}`),
+    // for each not support at the moment in the compiler
+    //mkSnippet("for each", "Do something for all elements of an array", `for (let e of ${placeholderChar}) ${block}`),
+    // switch also not supported
+]
 
 export class AceCompleter extends data.Component<{ parent: Editor; }, {
     visible?: boolean;
@@ -151,7 +170,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     searchName: si.name
                 })
                 cache.entries = []
-                if (!cache.completionInfo.isMemberCompletion)
+                if (!cache.completionInfo.isMemberCompletion) {
                     Util.iterStringMap(cache.apisInfo.byQName, (k, v) => {
                         if (v.kind == SK.Method || v.kind == SK.Property) {
                             // don't know how to insert these yet
@@ -159,6 +178,9 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                             cache.entries.push(mkEntry(k, v))
                         }
                     })
+                    // TODO only do it at the beginning of a line
+                    Util.pushRange(cache.entries, snippets)
+                }
                 Util.iterStringMap(cache.completionInfo.entries, (k, v) => {
                     cache.entries.push(mkEntry(k, v))
                 })
@@ -278,7 +300,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let text = e.name
         let si = e.symbolInfo
 
-        if (si.kind == SK.None) return
+        if (e.snippet) {
+            text = e.snippet
+        } else {
+            if (si.kind == SK.None) return
+        }
 
         let imgLit = !!si.attributes.imageLiteral
 
