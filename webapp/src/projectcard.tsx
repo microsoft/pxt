@@ -5,6 +5,7 @@ import * as simview from "./simview"
 import * as sui from "./sui"
 
 let lf = yelm.Util.lf;
+let repeat = yelm.Util.repeatMap;
 
 export interface ProjectCardProps {
     url?:string;
@@ -28,9 +29,9 @@ export class ProjectCard extends React.Component<ProjectCardProps, ProjectCardSt
             <div className="ui card">
                 <div className="content">
                     <div className="right floated meta">
-                        {card.any ? (<i className="any icon">{card.any > 1 ? card.any : ""}</i>) : ""}
-                        {card.hardware ? (<i className="hardare icon">{card.hardware > 1 ? card.hardware : ""}</i>) : ""}
-                        {card.software ? (<i className="software icon">{card.software > 1 ? card.software : ""}</i>) : ""}
+                        {card.any ? (<i className="any icon">{card.any > 0 ? card.any : ""}</i>) : ""}
+                        {repeat(card.hardware, () => <i className="small certificate black icon" ></i>)}
+                        {repeat(card.software, () => <i className="small square teal icon" ></i>)}
                     </div>
                     {this.props.username}
                 </div>

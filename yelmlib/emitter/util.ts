@@ -11,6 +11,13 @@ namespace ts.yelm.Util {
             throw new Error(msg)
         }
     }
+    
+    export function repeatMap<T>(n : number, fn : () => T) : T[] {
+        n = n || 0;
+        let r : T[] = [];
+        for(let i = 0;i<n;++i) r.push(fn());
+        return r;
+    }
 
     export function oops(msg = "OOPS"): Error {
         debugger
