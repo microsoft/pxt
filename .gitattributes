@@ -11,6 +11,7 @@
 *.css text eol=lf
 *.html text eol=lf
 *.py text eol=lf
+*.exp text eol=lf
 
 # do not enforce text for everything - it causes issues with random binary files
 
