@@ -132,7 +132,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             apisInfo: null,
             completionInfo: null,
             posTxt: posTxt,
-            entries: []
+            entries: null
         }
 
         return compiler.getApisInfoAsync()
@@ -147,6 +147,10 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             }))
             .then(compl => {
                 cache.completionInfo = compl;
+                if (!cache.completionInfo || !cache.completionInfo.entries) {
+                    cache.completionInfo = null
+                    return
+                }
                 console.log(compl)
                 let mkEntry = (q: string, si: ts.yelm.SymbolInfo) => fixupSearch({
                     name: si.isContextual ? si.name : q,
@@ -155,6 +159,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     searchDesc: q + " " + (si.attributes.jsDoc || ""),
                     searchName: si.name
                 })
+                cache.entries = []
                 if (!cache.completionInfo.isMemberCompletion)
                     Util.iterStringMap(cache.apisInfo.byQName, (k, v) => {
                         if (v.kind == SK.Method || v.kind == SK.Property) {
@@ -442,8 +447,8 @@ export class Editor extends srceditor.Editor {
     menu() {
         return (
             <div className="item">
-                {this.currFile && this.currFile.isVirtual 
-                    ? <sui.Button class="button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile)} /> 
+                {this.currFile && this.currFile.isVirtual
+                    ? <sui.Button class="button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
                     : '' }
                 <sui.DropdownMenu class="button floating" text={lf("Edit") } icon="edit">
                     <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
@@ -478,6 +483,12 @@ export class Editor extends srceditor.Editor {
             Up: 1,
         }
 
+        let formatCode = () => {
+            let formatted = ts.yelm.format(this.editor.getValue())
+            if (formatted)
+                this.editor.setValue(formatted)
+        }
+
         this.editor.commands.on("afterExec", (e: any) => {
             console.info("afterExec", e.command.name)
             if (this.isTypescript) {
@@ -498,9 +509,7 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 if (false && insString == "\n") {
-                    let formatted = ts.yelm.format(this.editor.getValue())
-                    if (formatted)
-                        this.editor.setValue(formatted)
+                    formatCode();
                 }
             }
 
@@ -514,6 +523,12 @@ export class Editor extends srceditor.Editor {
                 module.init(this.editor);
                 (this.editor as any).showKeyboardShortcuts()
             }
+        })
+
+        this.editor.commands.addCommand({
+            name: "formatCode",
+            bindKey: { win: "Alt-Shift-f", mac: "Alt-Shift-f" },
+            exec: formatCode
         })
 
         let sess = this.editor.getSession()
