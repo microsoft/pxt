@@ -406,6 +406,12 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             let args = ""
             if (si.parameters) {
                 args = "(" + si.parameters.map(p => p.name + ":" + friendlyTypeName(p.type)).join(", ") + ")"
+            } else if (e.snippet) {
+                let snip = e.snippet
+                if (Util.startsWith(snip, e.name)) snip = snip.slice(e.name.length)
+                else snip = " " + snip
+                snip = Util.replaceAll(snip, cursorMarker, "")                
+                return snip.replace(/\s+/g, " ") 
             }
             if (si.retType && si.retType != "void")
                 args += " : " + friendlyTypeName(si.retType)
@@ -511,7 +517,7 @@ export class Editor extends srceditor.Editor {
         let cursorOverride = data.programText.indexOf(cursorMarker)
         if (cursorOverride >= 0) {
             isEnter = false
-            data.programText = data.programText.replace(new RegExp(cursorMarker, "g"), "")
+            data.programText = Util.replaceAll(data.programText, cursorMarker, "")
             data.charNo = cursorOverride
         }
         let tmp = ts.yelm.format(data.programText, data.charNo)

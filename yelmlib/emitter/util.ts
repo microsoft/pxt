@@ -93,6 +93,11 @@ namespace ts.yelm.Util {
         return str.slice(0, prefix.length) == prefix
     }
 
+    export function replaceAll(str: string, old: string, new_: string): string {
+        if (!old) return str;
+        return str.split(old).join(new_);
+    }
+
     export function sortObjectFields<T>(o: T): T {
         let keys = Object.keys(o)
         keys.sort(strcmp)
