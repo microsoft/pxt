@@ -13,6 +13,15 @@ namespace yelm {
         resolveVersionAsync(pkg: Package): Promise<string>;
     }
     
+    export interface PackageCard {
+        promoUrl?: string;
+        any?: number;
+        hardware?: number;
+        software?:number;
+        power?:number;
+        toughness?:number;
+    }
+    
     export interface PackageConfig {
         name: string;
         installedVersion?: string;
@@ -22,6 +31,7 @@ namespace yelm {
         testFiles?: string[];
         public?: boolean;
         microbit?: ts.yelm.MicrobitConfig;
+        card?: PackageCard;
     }
 
     export class Package {
