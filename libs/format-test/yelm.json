@@ -2,7 +2,9 @@
     "name": "format-test",
     "description": "Test for 'yelm format' command",
     "files": [
-        "format-ok.ts"
+        "simple.ts",
+        "images.ts",
+        "preserve.ts"
     ],
     "public": true,
     "dependencies": {

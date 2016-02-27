@@ -350,7 +350,10 @@ namespace ts.yelm.service {
 
             let program = service.getProgram() // this synchornizes host data as well
             let data: InternalCompletionData = (service as any).getCompletionData(v.fileName, v.position);
-            let typechecker = program.getTypeChecker()
+            
+            if (!data) return {}
+            
+            let typechecker = program.getTypeChecker()                        
 
             let r: CompletionInfo = {
                 entries: {},

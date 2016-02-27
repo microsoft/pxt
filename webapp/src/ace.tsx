@@ -116,23 +116,13 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         if (this.queryingFor == posTxt) return Promise.resolve()
 
         this.queryingFor = posTxt
-        let editor = this.props.parent.editor
-        let str = editor.session.getValue()
-        let lines = pos.row
-        let chars = pos.column
-        let i = 0;
-        for (; i < str.length; ++i) {
-            if (lines == 0) {
-                if (chars-- == 0)
-                    break;
-            } else if (str[i] == '\n') lines--;
-        }
+        let textAndPos = this.props.parent.textAndPosition(pos)
 
         let cache: CompletionCache = {
             apisInfo: null,
             completionInfo: null,
             posTxt: posTxt,
-            entries: []
+            entries: null
         }
 
         return compiler.getApisInfoAsync()
@@ -142,12 +132,16 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             })
             .then(() => compiler.workerOpAsync("getCompletions", {
                 fileName: this.props.parent.currFile.getTypeScriptName(),
-                fileContent: str,
-                position: i
+                fileContent: textAndPos.programText,
+                position: textAndPos.charNo
             }))
             .then(compl => {
                 cache.completionInfo = compl;
-                console.log(compl)
+                if (!cache.completionInfo || !cache.completionInfo.entries) {
+                    cache.completionInfo = null
+                    return
+                }
+                // console.log(compl)
                 let mkEntry = (q: string, si: ts.yelm.SymbolInfo) => fixupSearch({
                     name: si.isContextual ? si.name : q,
                     symbolInfo: si,
@@ -155,6 +149,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     searchDesc: q + " " + (si.attributes.jsDoc || ""),
                     searchName: si.name
                 })
+                cache.entries = []
                 if (!cache.completionInfo.isMemberCompletion)
                     Util.iterStringMap(cache.apisInfo.byQName, (k, v) => {
                         if (v.kind == SK.Method || v.kind == SK.Property) {
@@ -442,8 +437,8 @@ export class Editor extends srceditor.Editor {
     menu() {
         return (
             <div className="item">
-                {this.currFile && this.currFile.isVirtual 
-                    ? <sui.Button class="button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile)} /> 
+                {this.currFile && this.currFile.isVirtual
+                    ? <sui.Button class="button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
                     : '' }
                 <sui.DropdownMenu class="button floating" text={lf("Edit") } icon="edit">
                     <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
@@ -463,6 +458,23 @@ export class Editor extends srceditor.Editor {
         )
     }
 
+    textAndPosition(pos: AceAjax.Position) {
+        let programText = this.editor.session.getValue()
+        let lines = pos.row
+        let chars = pos.column
+        let charNo = 0;
+        for (; charNo < programText.length; ++charNo) {
+            if (lines == 0) {
+                if (chars-- == 0)
+                    break;
+            } else if (programText[charNo] == '\n') lines--;
+        }
+
+        return { programText, charNo }
+
+    }
+
+
     prepare() {
         this.editor = ace.edit("aceEditorInner");
         let langTools = acequire("ace/ext/language_tools");
@@ -476,6 +488,30 @@ export class Editor extends srceditor.Editor {
             backspace: 1,
             Down: 1,
             Up: 1,
+        }
+
+        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
+            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
+        }
+
+        let formatCode = (isEnter = false) => {
+            let data = this.textAndPosition(this.editor.getCursorPosition())
+            let tmp = ts.yelm.format(data.programText, data.charNo)
+            if (isEnter && tmp.formatted == data.programText)
+                return;
+            let formatted = tmp.formatted
+            let line = 1
+            let col = 0
+            //console.log(data.charNo, tmp.pos)
+            for (let i = 0; i < formatted.length; ++i) {
+                let c = formatted.charCodeAt(i)
+                col++
+                if (i >= tmp.pos)
+                    break;
+                if (c == 10) { line++; col = 0 }
+            }
+            this.editor.setValue(formatted, -1)
+            this.editor.gotoLine(line, col - 1, false)
         }
 
         this.editor.commands.on("afterExec", (e: any) => {
@@ -497,10 +533,8 @@ export class Editor extends srceditor.Editor {
                         this.completer.showPopup();
                     }
                 }
-                if (false && insString == "\n") {
-                    let formatted = ts.yelm.format(this.editor.getValue())
-                    if (formatted)
-                        this.editor.setValue(formatted)
+                if (insString == "\n") {
+                    formatCode(true);
                 }
             }
 
@@ -514,6 +548,12 @@ export class Editor extends srceditor.Editor {
                 module.init(this.editor);
                 (this.editor as any).showKeyboardShortcuts()
             }
+        })
+
+        this.editor.commands.addCommand({
+            name: "formatCode",
+            bindKey: { win: "Alt-Shift-f", mac: "Alt-Shift-f" },
+            exec: () => formatCode()
         })
 
         let sess = this.editor.getSession()

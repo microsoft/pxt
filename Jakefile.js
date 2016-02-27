@@ -21,7 +21,7 @@ function loadText(filename)
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'runprj', 'embed'])
+task('default', ['updatestrings', 'runprj', 'embed', 'testfmt'])
 
 task('clean', function() {
   // jake.rmRf("built") - doesn't work?
@@ -36,6 +36,10 @@ task('clean', function() {
 
 task('runprj', ['built/yelm.js', 'built/yelm.d.ts'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
+})
+
+task('testfmt', ['built/yelm.js'], {async:true}, function() {
+  cmdIn(this, "libs/format-test", 'node ../../built/yelm.js format -t')
 })
 
 task('embed', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {

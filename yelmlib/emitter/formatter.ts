@@ -29,11 +29,13 @@ namespace ts.yelm {
         synKind: ts.SyntaxKind;
         blockSpanLength?: number;
         blockSpanIsVirtual?: boolean;
+        isPrefix?: boolean;
+        isCursor?: boolean;
     }
 
     interface TreeToken extends Token {
         children: Token[];
-        endText?: string; // if it has proper ending token, this is the text of it                
+        endToken: Token; // if it has proper ending token, this is the text of it
     }
 
     interface BlockToken extends Token {
@@ -227,7 +229,7 @@ namespace ts.yelm {
 
     // We do not want empty lines in the source to get lost - they serve as a sort of comment dividing parts of code
     // We turn them into empty comments here
-    function emptyLinesToComments(tokens: Token[]) {
+    function emptyLinesToComments(tokens: Token[], cursorPos: number) {
         let output: Token[] = []
         let atLineBeg = true
         let lineNo = 1;
@@ -237,12 +239,18 @@ namespace ts.yelm {
                 let bkp = i
                 i = skipWhitespace(tokens, i)
                 if (tokens[i].kind == TokenKind.NewLine) {
+                    let isCursor = false
+                    if (cursorPos >= 0 && tokens[i].pos >= cursorPos) {
+                        cursorPos = -1;
+                        isCursor = true
+                    }
                     output.push({
                         text: "",
                         kind: TokenKind.CommentLine,
                         pos: tokens[i].pos,
                         lineNo,
-                        synKind: SK.SingleLineCommentTrivia
+                        synKind: SK.SingleLineCommentTrivia,
+                        isCursor: isCursor
                     })
                 } else {
                     i = bkp
@@ -260,7 +268,9 @@ namespace ts.yelm {
                 atLineBeg = false
             }
 
-
+            if (cursorPos >= 0 && tokens[i].pos >= cursorPos) {
+                cursorPos = -1;
+            }
         }
 
         return output
@@ -310,7 +320,7 @@ namespace ts.yelm {
                             while (true) {
                                 top = braceStack.pop()
                                 if (top.synKind == token.synKind) {
-                                    top.token.endText = token.text;
+                                    top.token.endToken = token;
                                     break;
                                 }
                                 // don't go past brace with other closing parens
@@ -344,9 +354,19 @@ namespace ts.yelm {
         return {
             kind: TokenKind.Whitespace,
             synKind: SK.WhitespaceTrivia,
-            pos: t.pos,
+            pos: t.pos - s.length,
             lineNo: t.lineNo,
             text: s
+        }
+    }
+
+    function mkNewLine(t: Token): Token {
+        return {
+            kind: TokenKind.NewLine,
+            synKind: SK.NewLineTrivia,
+            pos: t.pos,
+            lineNo: t.lineNo,
+            text: "\n"
         }
     }
 
@@ -368,6 +388,7 @@ namespace ts.yelm {
             pos: toks[0].pos,
             lineNo: toks[0].lineNo,
             children: toks,
+            endToken: null,
             text: ""
         }
     }
@@ -660,6 +681,123 @@ namespace ts.yelm {
         return toks
     }
 
+    function normalizeSpace(tokens: Token[]) {
+        let output: Token[] = []
+        let i = 0
+        let lastNonTrivialToken = mkEOF()
+
+        tokens = tokens.concat([mkEOF()])
+        while (i < tokens.length) {
+            i = skipWhitespace(tokens, i)
+
+            let token = tokens[i]
+            if (token.kind == TokenKind.EOF)
+                break;
+
+            let j = skipWhitespace(tokens, i + 1)
+            if (token.kind == TokenKind.NewLine && tokens[j].synKind == SK.OpenBraceToken) {
+                i = j // skip NL
+                continue
+            }
+
+            let needsSpace = true
+
+            let last = output.length == 0 ? mkNewLine(token) : output[output.length - 1]
+
+            switch (last.synKind) {
+                case SK.ExclamationToken:
+                case SK.TildeToken:
+                case SK.DotToken:
+                    needsSpace = false
+                    break
+
+                case SK.PlusToken:
+                case SK.MinusToken:
+                case SK.PlusPlusToken:
+                case SK.MinusMinusToken:
+                    if (last.isPrefix)
+                        needsSpace = false
+                    break;
+            }
+
+            switch (token.synKind) {
+                case SK.DotToken:
+                case SK.CommaToken:
+                case SK.NewLineTrivia:
+                case SK.ColonToken:
+                case SK.SemicolonToken:
+                case SK.OpenBracketToken:
+                    needsSpace = false
+                    break;
+
+                case SK.PlusPlusToken:
+                case SK.MinusMinusToken:
+                    if (last.kind == TokenKind.Tree || last.kind == TokenKind.Identifier || last.kind == TokenKind.Keyword)
+                        needsSpace = false
+                /* fall through */
+                case SK.PlusToken:
+                case SK.MinusToken:
+                    if (lastNonTrivialToken.kind == TokenKind.EOF ||
+                        infixOperatorPrecedence(lastNonTrivialToken.synKind) ||
+                        lastNonTrivialToken.synKind == SK.SemicolonToken)
+                        token.isPrefix = true
+                    break;
+                case SK.OpenParenToken:
+                    if (last.kind == TokenKind.Identifier)
+                        needsSpace = false
+                    if (last.kind == TokenKind.Keyword)
+                        switch (last.synKind) {
+                            case SK.IfKeyword:
+                            case SK.ForKeyword:
+                            case SK.WhileKeyword:
+                            case SK.SwitchKeyword:
+                            case SK.ReturnKeyword:
+                            case SK.ThrowKeyword:
+                            case SK.CatchKeyword:
+                                break;
+                            default:
+                                needsSpace = false
+                        }
+                    break;
+            }
+
+            if (last.kind == TokenKind.NewLine)
+                needsSpace = false
+
+            if (needsSpace)
+                output.push(mkSpace(token, " "))
+            output.push(token)
+
+            if (token.kind != TokenKind.NewLine)
+                lastNonTrivialToken = token
+
+            i++
+        }
+        return output
+    }
+
+    function finalFormat(ind: string, token: Token) {
+        if (token.synKind == SK.NoSubstitutionTemplateLiteral &&
+            /^`[\s\.#01]*`$/.test(token.text)) {
+            let lines = token.text.slice(1, token.text.length - 1).split("\n").map(l => l.replace(/\s/g, "")).filter(l => !!l)
+            if (lines.length < 4 || lines.length > 5) return;
+            let numFrames = Math.floor((Math.max(...lines.map(l => l.length)) + 2) / 5)
+            if (numFrames <= 0) numFrames = 1
+            let out = "`\n"
+            for (let i = 0; i < 5; ++i) {
+                let l = lines[i] || ""
+                while (l.length < numFrames * 5)
+                    l += "."
+                l = l.replace(/0/g, ".")
+                l = l.replace(/1/g, "#")
+                l = l.replace(/...../g, m => "/" + m)
+                out += ind + l.replace(/./g, m => " " + m).replace(/\//g, " ").slice(3) + "\n"
+            }
+            out += ind + "`"
+            token.text = out
+        }
+    }
+
     export function toStr(v: any) {
         if (Array.isArray(v)) return "[[ " + v.map(toStr).join("  ") + " ]]"
         if (typeof v.text == "string")
@@ -667,28 +805,29 @@ namespace ts.yelm {
         return v + ""
     }
 
-    export function format(input: string): string {
+    export function format(input: string, pos: number) {
         let r = tokenize(input)
 
         if (r.braceBalance != 0) return null
 
         let topTokens = r.tokens
-        topTokens = emptyLinesToComments(topTokens)
+        topTokens = emptyLinesToComments(topTokens, pos)
         topTokens = matchBraces(topTokens)
         let topStmts = delimitStmts(topTokens, true)
 
         let ind = ""
         let output = ""
+        let outpos = -1
         let indIncrLine = 0
 
         topStmts.forEach(ppStmt)
 
         topStmts.forEach(s => s.tokens.forEach(findNonBlocks))
 
-        if (output == input)
-            return null;
-
-        return output
+        return {
+            formatted: output,
+            pos: outpos
+        }
 
         function findNonBlocks(t: Token) {
             if (t.kind == TokenKind.Tree) {
@@ -718,7 +857,7 @@ namespace ts.yelm {
         function ppStmt(s: Stmt) {
             let toks = removeIndent(s.tokens)
 
-            if (toks.length == 1 && toks[0].text == "") {
+            if (toks.length == 1 && !toks[0].isCursor && toks[0].text == "") {
                 output += "\n"
                 return
             }
@@ -730,20 +869,31 @@ namespace ts.yelm {
             output += "\n"
         }
 
+        function flushToken(t: Token) {
+            if (outpos == -1 && t.pos + t.text.length >= pos) {
+                outpos = output.length + (pos - t.pos);
+            }
+            output += t.text;
+        }
+
         function ppToks(tokens: Token[]) {
+            tokens = normalizeSpace(tokens)
             for (let i = 0; i < tokens.length; ++i) {
                 let t = tokens[i]
-                output += t.text;
+                finalFormat(ind, t)
+                flushToken(t)
                 switch (t.kind) {
                     case TokenKind.Tree:
                         let tree = t as TreeToken
                         incrIndent(t, () => {
                             ppToks(removeIndent(tree.children))
                         })
-                        if (tree.endText)
-                            output += tree.endText
+                        if (tree.endToken) {
+                            flushToken(tree.endToken)
+                        }
                         break;
                     case TokenKind.Block:
+                        // TODO use endToken here
                         let blk = t as BlockToken;
                         if (blk.stmts.length == 0) {
                             output += " }"
@@ -754,7 +904,8 @@ namespace ts.yelm {
                         }
                         break;
                     case TokenKind.NewLine:
-                        if (tokens[i + 1] && tokens[i + 1].kind == TokenKind.CommentLine && tokens[i + 1].text == "")
+                        if (tokens[i + 1] && tokens[i + 1].kind == TokenKind.CommentLine &&
+                            tokens[i + 1].text == "" && !tokens[i + 1].isCursor)
                             break; // no indent for empty line
                         if (i == tokens.length - 1)
                             output += ind.slice(4)
