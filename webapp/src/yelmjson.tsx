@@ -32,13 +32,13 @@ export class Editor extends srceditor.Editor {
         }
         let card = c.card || {};
         return (
-            <div className="ui two column grid">
+            <div className="ui four column grid">
                 <div className="ui column">
                     <div className="ui segment">                    
                         <projectcard.ProjectCard url="yelm.io/abc" username="me" cfg={c} />
                     </div>
                 </div>
-                <div className="ui column">
+                <div className="ui three column">
                     <div className="ui segment form text container" style={{backgroundColor: "white"}}>
                         <sui.Field>
                             <div className="ui toggle checkbox ">
@@ -49,31 +49,35 @@ export class Editor extends srceditor.Editor {
                         </sui.Field>
                         <sui.Input label={lf("Name") } value={c.name} onChange={v => update(c.name = v) } />
                         <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
-                        <sui.Input label={lf("Any")} value={(card.any || 0).toString()} onChange={v => {
+                        <div className="three fields">
+                        <sui.Input inputLabel={lf("Any")} type="number" value={(card.any || 0).toString()} onChange={v => {
                             initCard();
-                            let vi = parseInt(v) || 0
+                            let vi = Math.max(0, parseInt(v) || 0)
                             update(c.card.any = vi)
                         }} />
-                        <sui.Input label={lf("Hardware")} value={(card.hardware || 0).toString()} onChange={v => {
+                        <sui.Input inputLabel={lf("Hardware")} type="number" value={(card.hardware || 0).toString()} onChange={v => {
                             initCard();
-                            let vi = parseInt(v) || 0
+                            let vi = Math.max(0, parseInt(v) || 0)
                             update(c.card.hardware = vi)
                         }} />
-                        <sui.Input label={lf("Software")} value={(card.software || 0).toString()} onChange={v => {
+                        <sui.Input inputLabel={lf("Software")} type="number" value={(card.software || 0).toString()} onChange={v => {
                             initCard();
-                            let vi = parseInt(v) || 0
+                            let vi = Math.max(0, parseInt(v) || 0)
                             update(c.card.software = vi)
                         }} />
-                        <sui.Input label={lf("Power")} value={(card.power || 0).toString()} onChange={v => {
+                        </div>
+                        <div className="two fields">
+                        <sui.Input inputLabel={lf("Power")} type="number" value={(card.power || 0).toString()} onChange={v => {
                             initCard();
-                            let vi = parseInt(v) || 0
+                            let vi = Math.max(0, parseInt(v) || 0)
                             update(c.card.power = vi)
-                        }} />
-                        <sui.Input label={lf("Toughness")} value={(card.toughness || 0).toString()} onChange={v => {
+                        }} /> /
+                        <sui.Input inputLabel={lf("Toughness")} type="number" value={(card.toughness || 0).toString()} onChange={v => {
                             initCard();
-                            let vi = parseInt(v) || 0
+                            let vi = Math.max(0, parseInt(v) || 0)
                             update(c.card.toughness = vi)
                         }} />
+                        </div>
                     </div>
                 </div>
             </div>

@@ -187,6 +187,7 @@ export class Field extends data.Component<{
 
 export class Input extends data.Component<{
     label?: string;
+    inputLabel?: string;
     class?: string;
     value?: string;
     type?: string;
@@ -198,7 +199,8 @@ export class Input extends data.Component<{
         return (
             <Field label={p.label}>
                 {!p.lines || p.lines == 1 ?
-                    <div className="ui input">
+                    <div className={"ui input" + (p.inputLabel ? " labelled" : "")}>
+                        {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                         <input type={p.type || "text"} value={p.value} onChange={v => p.onChange((v.target as any).value) }/>
                     </div>
                     :
