@@ -389,8 +389,22 @@ Put some info here.
         ".gitignore":
         `built
 node_modules
+yotta_modules
+yotta_targets
 yelm_modules
 `,
+        ".vscode/settings.json":
+`{
+    "editor.formatOnType": true,
+    "files.autoSave": "afterDelay",
+	"search.exclude": {
+		"**/built": true,
+		"**/node_modules": true,
+		"**/yotta_modules": true,
+		"**/yotta_targets": true,
+		"**/yelm_modules": true
+	}
+}`,     
         ".vscode/tasks.json":
 `
 // A task runner that calls the Yelm compiler (yelm) and
@@ -403,15 +417,24 @@ yelm_modules
 	// The command is a shell script
 	"isShellCommand": true,
 
-	// Show the output window only if unrecognized errors occur.
-	"showOutput": "silent",
+	// Show the output window always.
+	"showOutput": "always",
 
-	// args is the HelloWorld program to compile.
-	"args": [],
-
-	// use the standard tsc problem matcher to find compile problems
-	// in the output.
-	"problemMatcher": "$tsc"
+    "tasks": [{
+        "taskName": "deploy",
+        "isBuildCommand": true,
+	    "problemMatcher": "$tsc",
+    	"args": ["deploy"]
+    }, {
+        "taskName": "test",
+        "isTestCommand": true,
+	    "problemMatcher": "$tsc",
+    	"args": ["test"]
+    }, {
+        "taskName": "publish",
+	    "problemMatcher": "$tsc",
+    	"args": ["publish"]
+    }]
 }
 `        
     }
