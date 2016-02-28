@@ -36,6 +36,7 @@ var acequire = (ace as any).acequire;
 var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
+var cursorMarker = "\uE108"
 var placeholderChar = "◊";
 var defaultImgLit = `
 . . . . .
@@ -52,6 +53,7 @@ export interface CompletionEntry {
     lastScore: number;
     searchName: string;
     searchDesc: string;
+    snippet?: string;
 }
 
 export interface CompletionCache {
@@ -62,7 +64,7 @@ export interface CompletionCache {
 }
 
 function fixupSearch(e: CompletionEntry) {
-    e.searchName = (e.searchName || "").toLowerCase() + " ";
+    e.searchName = (e.searchName || "").replace(/\s+/g, "").toLowerCase() + " ";
     e.searchDesc = " " + (e.searchDesc || "").toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
     return e
 }
@@ -85,6 +87,24 @@ function mkSyntheticEntry(name: string, desc: string) {
         searchDesc: desc,
     })
 }
+
+function mkSnippet(name: string, desc: string, code: string) {
+    let e = mkSyntheticEntry(name, desc)
+    e.snippet = code
+    return e
+}
+
+let block = `{\n ${cursorMarker}\n}`
+// TODO auto-rename of locals
+let snippets = [
+    mkSnippet("if", "Do something depending on condition", `if (${cursorMarker}) ${block}`),
+    mkSnippet("if else", "Do something or something else depending on condition", `if (${cursorMarker}) ${block} else ${block}`),
+    mkSnippet("while", "Loop while condition is true", `while (true) {\n ${cursorMarker}\nbasic.pause(20)\n}`),
+    mkSnippet("for", "Repeat a given number of times", `for (let i = 0; i < 5; i++) ${block}`),
+    // for each not support at the moment in the compiler
+    //mkSnippet("for each", "Do something for all elements of an array", `for (let e of ${placeholderChar}) ${block}`),
+    // switch also not supported
+]
 
 export class AceCompleter extends data.Component<{ parent: Editor; }, {
     visible?: boolean;
@@ -150,7 +170,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     searchName: si.name
                 })
                 cache.entries = []
-                if (!cache.completionInfo.isMemberCompletion)
+                if (!cache.completionInfo.isMemberCompletion) {
                     Util.iterStringMap(cache.apisInfo.byQName, (k, v) => {
                         if (v.kind == SK.Method || v.kind == SK.Property) {
                             // don't know how to insert these yet
@@ -158,6 +178,9 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                             cache.entries.push(mkEntry(k, v))
                         }
                     })
+                    // TODO only do it at the beginning of a line
+                    Util.pushRange(cache.entries, snippets)
+                }
                 Util.iterStringMap(cache.completionInfo.entries, (k, v) => {
                     cache.entries.push(mkEntry(k, v))
                 })
@@ -277,7 +300,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let text = e.name
         let si = e.symbolInfo
 
-        if (si.kind == SK.None) return
+        if (e.snippet) {
+            text = e.snippet
+        } else {
+            if (si.kind == SK.None) return
+        }
 
         let imgLit = !!si.attributes.imageLiteral
 
@@ -288,9 +315,9 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             else if (p.type == "string") {
                 if (imgLit) {
                     imgLit = false
-                    return "`" + defaultImgLit + "`";
+                    return "`" + defaultImgLit + cursorMarker + "`";
                 }
-                return "\"\""
+                return `"${cursorMarker}"`
             }
             let si = this.lookupInfo(p.type)
             if (si && si.kind == SK.Enum) {
@@ -300,16 +327,17 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             }
             let m = /^\((.*)\) => (.*)$/.exec(p.type)
             if (m)
-                return "(" + m[1] + ") => { }"
+                return `(${m[1]}) => {\n    ${cursorMarker}\n}`
             return placeholderChar;
         }
 
         if (si.parameters) {
-            text += "(" + si.parameters.map(defaultVal).join(", ") + ")"
+            text += "(" + si.parameters.filter(p => !p.initializer).map(defaultVal).join(", ") + ")"
         }
 
         editor.session.replace(this.completionRange, text);
         this.detach()
+        this.props.parent.formatCode();
     }
 
 
@@ -378,6 +406,12 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             let args = ""
             if (si.parameters) {
                 args = "(" + si.parameters.map(p => p.name + ":" + friendlyTypeName(p.type)).join(", ") + ")"
+            } else if (e.snippet) {
+                let snip = e.snippet
+                if (Util.startsWith(snip, e.name)) snip = snip.slice(e.name.length)
+                else snip = " " + snip
+                snip = Util.replaceAll(snip, cursorMarker, "")                
+                return snip.replace(/\s+/g, " ") 
             }
             if (si.retType && si.retType != "void")
                 args += " : " + friendlyTypeName(si.retType)
@@ -474,6 +508,35 @@ export class Editor extends srceditor.Editor {
 
     }
 
+    formatCode(isEnter = false) {
+        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
+            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
+        }
+
+        let data = this.textAndPosition(this.editor.getCursorPosition())
+        let cursorOverride = data.programText.indexOf(cursorMarker)
+        if (cursorOverride >= 0) {
+            isEnter = false
+            data.programText = Util.replaceAll(data.programText, cursorMarker, "")
+            data.charNo = cursorOverride
+        }
+        let tmp = ts.yelm.format(data.programText, data.charNo)
+        if (isEnter && tmp.formatted == data.programText)
+            return;
+        let formatted = tmp.formatted
+        let line = 1
+        let col = 0
+        //console.log(data.charNo, tmp.pos)
+        for (let i = 0; i < formatted.length; ++i) {
+            let c = formatted.charCodeAt(i)
+            col++
+            if (i >= tmp.pos)
+                break;
+            if (c == 10) { line++; col = 0 }
+        }
+        this.editor.setValue(formatted, -1)
+        this.editor.gotoLine(line, col - 1, false)
+    }
 
     prepare() {
         this.editor = ace.edit("aceEditorInner");
@@ -488,30 +551,6 @@ export class Editor extends srceditor.Editor {
             backspace: 1,
             Down: 1,
             Up: 1,
-        }
-
-        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
-            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
-        }
-
-        let formatCode = (isEnter = false) => {
-            let data = this.textAndPosition(this.editor.getCursorPosition())
-            let tmp = ts.yelm.format(data.programText, data.charNo)
-            if (isEnter && tmp.formatted == data.programText)
-                return;
-            let formatted = tmp.formatted
-            let line = 1
-            let col = 0
-            //console.log(data.charNo, tmp.pos)
-            for (let i = 0; i < formatted.length; ++i) {
-                let c = formatted.charCodeAt(i)
-                col++
-                if (i >= tmp.pos)
-                    break;
-                if (c == 10) { line++; col = 0 }
-            }
-            this.editor.setValue(formatted, -1)
-            this.editor.gotoLine(line, col - 1, false)
         }
 
         this.editor.commands.on("afterExec", (e: any) => {
@@ -534,7 +573,7 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 if (insString == "\n") {
-                    formatCode(true);
+                    this.formatCode(true);
                 }
             }
 
@@ -553,7 +592,7 @@ export class Editor extends srceditor.Editor {
         this.editor.commands.addCommand({
             name: "formatCode",
             bindKey: { win: "Alt-Shift-f", mac: "Alt-Shift-f" },
-            exec: () => formatCode()
+            exec: () => this.formatCode()
         })
 
         let sess = this.editor.getSession()
