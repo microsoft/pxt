@@ -2,6 +2,18 @@ declare module goog {
     function require(name:string) : void;
     function provide(name:string): void;
     function isFunction(f: any): boolean;
+    
+    module string {
+        var caseInsensitiveCompare : (a:string,b:string) =>number;
+    }
+        
+    module array {
+        function remove(ar:string[], v:string) : void;    
+    }
+    
+    module dom {
+        function createDom(name:string, ns?: string, children?: any) : HTMLElement;
+    }
 }
 declare module Blockly {
     var selected: any;
@@ -14,16 +26,35 @@ declare module Blockly {
         constructor(url:string, width:number, height:number, def:string);
     }
     
-    var Blocks : yelm.Util.StringMap<{
-        codeCard: any;
+    interface BlockDefinition {
+        codeCard?: any;
         init: () => void;
-    }>;
+        getVars?: () => any[];
+        renameVar?: (oldName:string, newName:string) => void;
+        customContextMenu?: any;        
+    }
     
-    class FieldCheckbox {
+    var Blocks : yelm.Util.StringMap<BlockDefinition>;    
+    
+    class Field {
+        init(block:Block): void;        
+        static superClass_: Field;
+    }
+    
+    class FieldVariable extends Field {
+        constructor(d:any);
+    }
+    
+    class FieldCheckbox extends Field {
         constructor(val:string);
     }
     
-    class FieldDropdown {
+    class FieldTextInput extends Field {
+        constructor(text:string, validator:any);
+        static numberValidator : any;
+    }
+    
+    class FieldDropdown extends Field {
         constructor(val: string[][]);
     }
     
@@ -139,4 +170,30 @@ declare module Blockly {
     interface callbackHandler { }
 
     function inject(elt: Element, options?: Options): Workspace;
+   
+    function createSvgElement(tag:string, options:any, fg:any) : any;
+   
+    module Names {
+        function equals(old : string, n : any) : boolean;
+    }
+   
+    module Variables {
+        function allVariables(wp : Workspace) : string[];
+        var flyoutCategory : (wp : Workspace) => HTMLElement[];
+    }
+    
+    module ContextMenu {
+        function callbackFactory(block: Block, xml : HTMLElement):void;
+    }
+    
+    module Msg {
+        var VARIABLES_DEFAULT_NAME : string;
+        var VARIABLES_SET_CREATE_GET: string;
+        var CONTROLS_FOR_INPUT_DO: string;
+        var CONTROLS_FOR_TOOLTIP: string;
+    }
+    
+    module BlockSvg {
+        var START_HAT : boolean;
+    }
 }
