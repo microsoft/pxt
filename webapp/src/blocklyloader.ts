@@ -1,7 +1,10 @@
 /// <reference path="./blockly.d.ts" />
 
 import * as compiler from "./compiler"
+import * as codecard from "./codecard"
 import Util = yelm.Util;
+
+let lf = Util.lf;
 
 var blockColors: Util.StringMap<number> = {
     loops: 120,
@@ -82,7 +85,7 @@ export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockPara
     return attrNames;
 }
 
-function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+function createToolboxBlock(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) : HTMLElement {
     //
     // toolbox update
     //
@@ -90,7 +93,6 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
     block.setAttribute("type", fn.attributes.blockId);
     if (fn.attributes.blockGap)
         block.setAttribute("gap", fn.attributes.blockGap);
-
     fn.parameters.filter(pr => !!attrNames[pr.name].name &&
         (/string|number/.test(attrNames[pr.name].type)
             || !!attrNames[pr.name].shadowType
@@ -99,7 +101,10 @@ function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, at
             let attr = attrNames[pr.name];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
         })
+    return block;
+}
 
+function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, block : HTMLElement) {
     let ns = fn.namespace.split('.')[0];
     let catName = ns[0].toUpperCase() + ns.slice(1);
     let category = tb.querySelector("category[name~='" + catName + "']");
@@ -142,7 +147,7 @@ function iconToFieldImage(c: string): Blockly.FieldImage {
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): boolean {
+function injectBlockDefinition(info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml : HTMLElement): boolean {
     let id = fn.attributes.blockId;
 
     if (builtinBlocks[id]) {
@@ -165,7 +170,7 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
         hash: hash,
         fn: fn,
         block: {
-            init: function() { initBlock(this, info, fn, attrNames) }
+            init: function() { initBlock(this, info, fn, attrNames, blockXml) }
         }
     }
 
@@ -187,10 +192,31 @@ function initField(i: any, ni: number, fn: ts.yelm.SymbolInfo, pre: string, righ
     return i;
 }
 
-function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
-    block.setHelpUrl("./" + fn.attributes.help);
+function mkCard(fn : ts.yelm.SymbolInfo, blockXml : HTMLElement) : codecard.CodeCardProps {
+    return {
+        header: fn.name,
+        name: fn.namespace + '.' + fn.name,
+        description: fn.attributes.jsDoc,
+        url: fn.attributes.help,        
+        blocksXml: `<xml xmlns="http://www.w3.org/1999/xhtml">
+        ${blockXml.outerHTML}
+</xml>`,
+        card: {
+            software: 1
+        }
+    }
+}
+
+function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml : HTMLElement) {
+    var help = "./" + fn.attributes.help;
+    block.setHelpUrl(showHelp 
+        ? () => {
+            showHelp(mkCard(fn, blockXml));
+            return help;
+        } : help);
     const ns = fn.namespace.split('.')[0];
     const instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
+    block.setTooltip(fn.attributes.jsDoc);
     block.setColour(
         info.apis.byQName[ns].attributes.color
         || blockColors[ns]
@@ -294,8 +320,9 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
         .filter(fn => !tb.querySelector("block[type='" + fn.attributes.blockId + "']"))
         .forEach(fn => {
             let pnames = parameterNames(fn);
-            if (injectBlockDefinition(blockInfo, fn, pnames)) {
-                injectToolbox(tb, blockInfo, fn, pnames);
+            let block = createToolboxBlock(tb, blockInfo, fn, pnames);
+            if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
+                injectToolbox(tb, blockInfo, fn, block);
                 currentBlocks[fn.attributes.blockId] = 1;
             }
         })
@@ -320,6 +347,12 @@ function removeBlock(fn: ts.yelm.SymbolInfo) {
 export interface BlocksInfo {
     apis: ts.yelm.ApisInfo;
     blocks: ts.yelm.SymbolInfo[];
+}
+
+var showHelp : (card: codecard.CodeCardProps) => void = undefined;
+
+export function setShowHelp(f : (card: codecard.CodeCardProps) => void) {
+    showHelp = f;
 }
 
 export function getBlocksAsync(): Promise<BlocksInfo> {

@@ -89,7 +89,7 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
                 </div>
                 <div className="extra content">
                     {card.power || card.toughness ? (<div className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
-                    <a href={this.props.url || "https://yelm.io/"}>
+                    <a target="_blank" href={this.props.url || "https://yelm.io/"}>
                         {this.props.url || "yelm.io"}
                     </a>
                 </div>

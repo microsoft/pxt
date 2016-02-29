@@ -9,11 +9,13 @@ import * as simview from "./simview";
 import * as simsvg from "./simsvg"
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
+import * as blocklyloader from "./blocklyloader"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
 import * as yelmjson from "./yelmjson"
 import * as blocks from "./blocks"
+import * as codecard from "./codecard"
 
 import Cloud = yelm.Cloud;
 import Util = yelm.Util;
@@ -38,6 +40,7 @@ interface IAppState {
     theme?: srceditor.Theme;
     fileState?: string;
     showFiles?: boolean;
+    helpCard?: codecard.CodeCardProps;
 }
 
 
@@ -307,6 +310,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     private initEditors() {
         this.aceEditor = new ace.Editor(this);
         this.yelmjsonEditor = new yelmjson.Editor(this);
+        blocklyloader.setShowHelp((card) => {
+            this.setHelp(card);
+        });
         this.blocksEditor = new blocks.Editor(this);
 
         let hasChangeTimer = false
@@ -361,7 +367,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setFile(fn: pkg.File) {
-        this.setState({ currFile: fn })
+        this.setState({ 
+            currFile: fn,
+            helpCard: undefined
+        })
     }
 
     loadHeader(h: workspace.Header) {
@@ -418,7 +427,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         <div class="content">
         <div class="header">Block Editor</div>
         <div class="meta">
-            <a>Drag and Drop Coding</a>
+            <a>${lf("Drag and Drop Coding")}</a>
         </div>
         </div>
     </div>
@@ -431,7 +440,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         <div class="content">
         <div class="header">JavaScript</div>
         <div class="meta">
-            <span class="date">Text based Coding</span>
+            <span class="date">${lf("Text based Coding")}</span>
         </div>
         </div>
     </div>
@@ -446,7 +455,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         <div class="content">
         <div class="header">Kodu</div>
         <div class="meta">
-            <a>Tile based Coding</a>
+            <a>${lf("Tile based Coding")}</a>
         </div>
         </div>
     </div>
@@ -459,7 +468,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         <div class="content">
         <div class="header">Visual Studio Code</div>
         <div class="meta">
-            <span class="date">For Professional Developers</span>
+            <span class="date">${lf("For Professional Developers")}</span>
         </div>
         </div>
     </div>
@@ -638,6 +647,10 @@ Ctrl+Shift+B
             })
             .done()
     }
+    
+    setHelp(helpCard: codecard.CodeCardProps) {
+        this.setState({ helpCard: helpCard })
+    }
 
     renderCore() {
         theEditor = this;
@@ -702,6 +715,7 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
+                    {this.state.helpCard ? <div id="helpcard"><codecard.CodeCard {...this.state.helpCard} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
             </div>
