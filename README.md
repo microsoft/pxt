@@ -2,22 +2,23 @@
 
 [![Build Status](https://travis-ci.org/Microsoft/yelm.svg?branch=master)](https://travis-ci.org/Microsoft/yelm)
 
-Yelm combines the following:
+Yelm is a platform for creating special-purpose programming experiences for
+beginners, especially focused on computer science education. Yelm underlaying
+programming language is a subset of TypeScript (leaving out JavaScript dynamic
+features).
 
-* a TypeScript library defining APIs available on the micro:bit
-* an ARM Thumb machine code emitter for TypeScript
-* a Blockly-based editor along with converter to TypeScript
-* a webapp hosting the Blockly-based editor and ACE-based editor for TypeScript
+The main features of Yelm are:
+* a Blockly-based code editor along with converter to the text format
+* an ACE-based text editor with enhanced, robust auto-completion and auto-correction
+* a TypeScript library defining APIs available on microbit devices
+* an ARM Thumb machine code emitter
 * a command-line package manager
-
-Yelm is an experimental platform for research on new ways of programming, especially
-focused on computer science education.
 
 ## Name
 
 Yelm is a city near Mt Rainier in Washington State with a name short enough for
 command line tool. It also stands for Your Experimental programming Language
-environment for Micro:bit-compatible devices.
+environment for microbit-compatible devices.
 
 
 ## Build
