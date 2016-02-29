@@ -105,7 +105,7 @@ export class MbitBoardSvg
         Svg.fills(this.logos, theme.accent);
     }
     
-    private updateState() {
+    public updateState() {
         let state = this.state;
         if (!state) return;
         let theme = this.props.theme;

@@ -49,10 +49,12 @@ namespace yelm.rt.state {
             this.data = data;
         }        
         public get(x:number, y:number) : number {
-            return this.data[y*this.width+y];
+            // TODO range checking
+            return this.data[y*this.width+x];
         }
         public set(x:number, y:number, v:number){
-            this.data[y*this.width+y] = v;
+            // TODO range checking
+            this.data[y*this.width+x] = v;
         }
         public copyTo(xSrcIndex: number, length: number, target: Image, xTargetIndex: number) : void
         {
@@ -65,15 +67,15 @@ namespace yelm.rt.state {
         }        
     }
     
-    function createImage(width:number) : Image {
+    export function createImage(width:number) : Image {
         return new Image(width, new Array(width*5));        
     }
     
-    function createImageFromBuffer(data:number[]) : Image {
+    export function createImageFromBuffer(data:number[]) : Image {
         return new Image(data.length/5,data);
     }
     
-    function createImageFromString(text: string) : Image
+    export function createImageFromString(text: string) : Image
     {
         let font = runtime.state.font;
         let w = font.width;

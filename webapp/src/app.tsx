@@ -604,7 +604,8 @@ Ctrl+Shift+B
                 if (js) {
                     if (this.simRuntime)
                         this.simRuntime.kill();
-                    let r = new simview.MbitRuntime(js)
+                    let sim = this.refs["simulator"] as simview.MbitBoardView
+                    let r = new simview.MbitRuntime(js, sim.view)
                     this.simRuntime = r
                     r.errorHandler = (e: any) => {
                         core.errorNotification(e.message)

@@ -480,13 +480,15 @@ namespace ts.yelm {
             bin.emitLiteral(".balign 4");
             bin.emitLiteral(lbl + ": .short 0xffff")
             bin.emitLiteral("        .short " + w + ", " + h)
+            let jsLit = "new rt.state.Image(" + w + ", [" + lit + "])"          
             if (lit.length % 4 != 0)
                 lit += "42" // pad
             bin.emitLiteral("        .byte " + lit)
 
             return <any>{
                 kind: SyntaxKind.NumericLiteral,
-                imageLiteral: lbl
+                imageLiteral: lbl,
+                jsLit
             }
         }
 
@@ -531,8 +533,10 @@ namespace ts.yelm {
         function emitSuper(node: Node) { }
         function emitLiteral(node: LiteralExpression) {
             if (node.kind == SyntaxKind.NumericLiteral) {
-                if ((<any>node).imageLiteral)
+                if ((<any>node).imageLiteral) {
+                    proc.emit("@js r0 = " + (<any>node).jsLit)
                     proc.emitLdPtr((<any>node).imageLiteral, true)
+                }
                 else
                     proc.emitInt(parseInt(node.text))
             } else if (isStringLiteral(node)) {
