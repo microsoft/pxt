@@ -20,14 +20,6 @@ Blockly.FieldCheckbox.prototype.init = function(block) {
   this.checkElement_.style.display = this.state_ ? 'block' : 'none';
 };
 
-var beatFractions = [
-    ["1", "1"],
-    ["1/2", "1/2"],
-    ["1/4", "1/4"],
-    ["1/8", "1/8"],
-    ["1/16", "1/16"],
-];
-
 var blockColors = {
     loops: 120,
     variables: 330,
@@ -244,22 +236,32 @@ Blockly.BlockSvg.START_HAT = true;
 // Here's a helper to override the help URL for a block that's *already defined
 // by Blockly*. For blocks that we define ourselves, just change the call to
 // setHelpUrl in the corresponding definition above.
-function monkeyPatchBlock(name, url) {
-    var old = Blockly.Blocks[name].init;
-    Blockly.Blocks[name].init = function () {
+function monkeyPatchBlock(id, name, url) {
+    var old = Blockly.Blocks[id].init;
+    // fix sethelpurl
+    Blockly.Blocks[id].init = function () {
         // The magic of dynamic this-binding.
         old.call(this);
         this.setHelpUrl(url);
+        if (!old.codeCard) {
+            var tb = document.getElementById('blocklyToolboxDefinition');
+            var xml = tb ? tb.querySelector("category block[type~='" + id + "']") : undefined;
+            this.codeCard = {
+                name: name,
+                description: this.tooltip,
+                blocksXml: xml ? ("<xml>" + xml.outerHTML + "</xml>") : undefined,
+                url: url
+            }
+        }
     };
 }
 
-monkeyPatchBlock("controls_if", "./blocks/if");
-monkeyPatchBlock("controls_repeat_ext", "./blocks/repeat");
-monkeyPatchBlock("variables_set", "./blocks/assign");
-//monkeyPatchBlock("variables_get", "./blocks/number");
-monkeyPatchBlock("math_number", "./blocks/number");
-monkeyPatchBlock("logic_compare", "./blocks/boolean");
-monkeyPatchBlock("logic_operation", "./blocks/boolean");
-monkeyPatchBlock("logic_negate", "./blocks/boolean");
-monkeyPatchBlock("logic_boolean", "./blocks/boolean");
-monkeyPatchBlock("math_arithmetic", "./blocks/boolean");
+monkeyPatchBlock("controls_if", "if", "blocks/if");
+monkeyPatchBlock("controls_repeat_ext", "for loop", "blocks/repeat");
+monkeyPatchBlock("variables_set", "variable assignment", "blocks/assign");
+monkeyPatchBlock("math_number", "number", "blocks/number");
+monkeyPatchBlock("logic_compare", "boolean operator", "blocks/boolean");
+monkeyPatchBlock("logic_operation", "boolean operation", "blocks/boolean");
+monkeyPatchBlock("logic_negate", "not operator", "blocks/boolean");
+monkeyPatchBlock("logic_boolean", "boolean value", "blocks/boolean");
+monkeyPatchBlock("math_arithmetic", "arithmetic operation", "blocks/boolean");
