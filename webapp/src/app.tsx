@@ -386,9 +386,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             })
     }
     
-    projectSettings() {
-    }
-
     removeProject() {
         core.confirmDelete(pkg.mainEditorPkg().header.name, () => {
             let curr = pkg.mainEditorPkg().header
@@ -666,7 +663,6 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.Button text={lf("New Project")} onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
-                                    <sui.Item icon="settings" text={lf("Settings") } onClick={() => this.projectSettings() } />
                                     <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
                                     <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
                                     <div className="divider"></div>
