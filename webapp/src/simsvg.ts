@@ -121,7 +121,9 @@ export class MbitBoardSvg
             sel.style.opacity = ((bw ? img.data[i] > 0 ? 255 : 0 : img.data[i]) / 255.0) + "";
         })
         
-        this.updateTilt();        
+        this.updateTilt();     
+        (<any>this.buttonsOuter[2]).style.visibility = this.state.buttonAB ? 'visible' : 'hidden';   
+        (<any>this.buttons[2]).style.visibility = this.state.buttonAB ? 'visible' : 'hidden';   
     }
     
     private updateTilt() {
@@ -192,6 +194,8 @@ export class MbitBoardSvg
         this.buttons.push(Svg.path(this.g, "sim-button", "M461.9,203.5c0,8.7-7,15.7-15.7,15.7c-8.7,0-15.7-7-15.7-15.7c0-8.7,7-15.7,15.7-15.7C454.9,187.8,461.9,194.9,461.9,203.5"));        
         this.buttonsOuter.push(Svg.child(this.g, "rect", {class:"sim-button-outer", x:417, y:250, width:58, height:58, rx:1, ry:1}));
         this.buttons.push(Svg.child(this.g, "circle", {class:"sim-button", cx:446, cy:278, r:16.5}));
+        (<any>this.buttonsOuter[2]).style.visibility = 'hidden';
+        (<any>this.buttons[2]).style.visibility = 'hidden';
         
                 
         Svg.path(this.g, "sim-label", "M35.7,376.4c0-2.8,2.1-5.1,5.5-5.1c3.3,0,5.5,2.4,5.5,5.1v4.7c0,2.8-2.2,5.1-5.5,5.1c-3.3,0-5.5-2.4-5.5-5.1V376.4zM43.3,376.4c0-1.3-0.8-2.3-2.2-2.3c-1.3,0-2.1,1.1-2.1,2.3v4.7c0,1.2,0.8,2.3,2.1,2.3c1.3,0,2.2-1.1,2.2-2.3V376.4z");
@@ -268,7 +272,6 @@ export class MbitBoardSvg
                 Svg.fill(this.buttons[0], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonUp);                
-        })
-        
+        })        
     }
 }

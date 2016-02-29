@@ -14,6 +14,7 @@ namespace yelm.rt.state {
         font?: Image;
 
         // buttons    
+        buttonAB?: boolean;
         buttonsPressed?: boolean[];
 
         // pins
