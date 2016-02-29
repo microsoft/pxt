@@ -601,7 +601,7 @@ export function init() {
                 let xml : HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
                 this.codeCard = {
                     name: name,
-                    description: this.tooltip,
+                    description: goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip,
                     blocksXml: xml ? ("<xml>" + xml.outerHTML + "</xml>") : undefined,
                     url: url
                 }
