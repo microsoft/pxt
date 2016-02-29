@@ -119,7 +119,7 @@ export class Editor extends srceditor.Editor {
 
     loadFile(file: pkg.File) {
         this.config = JSON.parse(file.content)
-        this.setDiagnostics(file)
+        this.setDiagnostics(file, this.snapshotState())
     }
     
     menu() {

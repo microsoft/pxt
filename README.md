@@ -77,7 +77,7 @@ open http://localhost:3232
 ### web app
 
 * [x] make blocks output file read only
-* [ ] do not type-check while auto-completing
+* [x] do not type-check while auto-completing
 * [x] scroll completion window with keyboard
 * [x] indent when entering first character on a line
 * [ ] save source in hex
