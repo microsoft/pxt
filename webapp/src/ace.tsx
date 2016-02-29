@@ -410,8 +410,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 let snip = e.snippet
                 if (Util.startsWith(snip, e.name)) snip = snip.slice(e.name.length)
                 else snip = " " + snip
-                snip = Util.replaceAll(snip, cursorMarker, "")                
-                return snip.replace(/\s+/g, " ") 
+                snip = Util.replaceAll(snip, cursorMarker, "")
+                return snip.replace(/\s+/g, " ")
             }
             if (si.retType && si.retType != "void")
                 args += " : " + friendlyTypeName(si.retType)
@@ -508,7 +508,7 @@ export class Editor extends srceditor.Editor {
 
     }
 
-    formatCode(isEnter = false) {
+    formatCode(isAutomatic = false) {
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
             return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
         }
@@ -516,12 +516,12 @@ export class Editor extends srceditor.Editor {
         let data = this.textAndPosition(this.editor.getCursorPosition())
         let cursorOverride = data.programText.indexOf(cursorMarker)
         if (cursorOverride >= 0) {
-            isEnter = false
+            isAutomatic = false
             data.programText = Util.replaceAll(data.programText, cursorMarker, "")
             data.charNo = cursorOverride
         }
         let tmp = ts.yelm.format(data.programText, data.charNo)
-        if (isEnter && tmp.formatted == data.programText)
+        if (isAutomatic && tmp.formatted == data.programText)
             return;
         let formatted = tmp.formatted
         let line = 1
@@ -538,12 +538,29 @@ export class Editor extends srceditor.Editor {
         this.editor.gotoLine(line, col - 1, false)
     }
 
+    getCurrLinePrefix() {
+        let pos = this.editor.getCursorPosition()
+        let line = this.editor.getSession().getLine(pos.row)
+        return line.slice(0, pos.row)
+    }
+
     prepare() {
         this.editor = ace.edit("aceEditorInner");
         let langTools = acequire("ace/ext/language_tools");
+        
+        let needsFormat = false
 
         this.editor.commands.on("exec", (e: any) => {
             console.info("beforeExec", e.command.name)
+            if (!this.isTypescript) return;
+
+            let insString: string = e.command.name == "insertstring" ? e.args : null
+            if (insString == "\n") needsFormat = true
+            if (insString && insString.trim() && insString.length == 1) {
+                if (!this.getCurrLinePrefix().trim()) {
+                    needsFormat = true
+                }
+            }
         });
 
         let approvedCommands = {
@@ -555,28 +572,26 @@ export class Editor extends srceditor.Editor {
 
         this.editor.commands.on("afterExec", (e: any) => {
             console.info("afterExec", e.command.name)
-            if (this.isTypescript) {
-                let insString: string = e.command.name == "insertstring" ? e.args : null
-                if (this.completer.activated) {
-                    if (insString && !/^[\w]$/.test(insString)) {
-                        this.completer.detach();
-                        if (e.args == ".")
-                            this.completer.showPopup();
-                    } else if (!approvedCommands.hasOwnProperty(e.command.name)) {
-                        this.completer.detach();
-                    } else {
-                        this.completer.forceUpdate();
-                    }
-                } else {
-                    if (/^[a-zA-Z\.]$/.test(insString)) {
+            if (!this.isTypescript) return;
+
+            let insString: string = e.command.name == "insertstring" ? e.args : null
+            if (this.completer.activated) {
+                if (insString && !/^[\w]$/.test(insString)) {
+                    this.completer.detach();
+                    if (e.args == ".")
                         this.completer.showPopup();
-                    }
+                } else if (!approvedCommands.hasOwnProperty(e.command.name)) {
+                    this.completer.detach();
+                } else {
+                    this.completer.forceUpdate();
                 }
-                if (insString == "\n") {
-                    this.formatCode(true);
+            } else {
+                if (needsFormat) this.formatCode(true)
+                if (/^[a-zA-Z\.]$/.test(insString)) {
+                    this.completer.showPopup();
                 }
             }
-
+            needsFormat = false
         });
 
         this.editor.commands.addCommand({
