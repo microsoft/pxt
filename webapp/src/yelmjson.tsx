@@ -121,4 +121,12 @@ export class Editor extends srceditor.Editor {
         this.config = JSON.parse(file.content)
         this.setDiagnostics(file)
     }
+    
+    menu() {
+        return (
+            <div className="item">
+                <sui.Button class="button floating" text={lf("Edit Text") } icon="keyboard" onClick={() => this.parent.editText() } />
+            </div>
+        )        
+    }
 }
