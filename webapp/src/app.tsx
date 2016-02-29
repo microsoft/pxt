@@ -298,11 +298,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveTypeScript()
         return this.editorFile.setContentAsync(this.editor.getCurrentSource())
     }
+    
+    public typecheckNow() {
+        this.saveFile();
+        this.typecheck()
+    }
 
     private typecheck() {
+        let state = this.editor.snapshotState()
         compiler.typecheckAsync()
             .then(resp => {
-                this.editor.setDiagnostics(this.editorFile)
+                this.editor.setDiagnostics(this.editorFile, state)
             })
             .done()
     }
@@ -320,7 +326,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 setTimeout(() => {
                     hasChangeTimer = false;
                     this.saveFile();
-                    this.typecheck();
+                    if (!this.editor.isIncomplete())
+                        this.typecheck();
                 }, 1000);
             }
         }
@@ -569,10 +576,11 @@ Ctrl+Shift+B
 
     compile() {
         console.log('compiling...')
+        let state = this.editor.snapshotState()
         compiler.compileAsync()
             .then(resp => {                
                 console.log('done')
-                this.editor.setDiagnostics(this.editorFile)
+                this.editor.setDiagnostics(this.editorFile, state)
                 let hex = resp.outfiles["microbit.hex"]
                 if (hex) {
                     let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
@@ -588,9 +596,10 @@ Ctrl+Shift+B
     simRuntime: simview.MbitRuntime;
 
     run() {
+        let state = this.editor.snapshotState()
         compiler.compileAsync()
             .then(resp => {
-                this.editor.setDiagnostics(this.editorFile)
+                this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
                     if (this.simRuntime)

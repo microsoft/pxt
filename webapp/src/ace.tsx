@@ -124,11 +124,13 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
     }
     detach() {
         this.entries = []
-        if (this.state.visible)
+        if (this.state.visible) {
             this.setState({
                 visible: false,
                 selectedEntry: null
             })
+            this.props.parent.parent.typecheckNow();
+        }
     }
     cancelContextMenu() { }
 
@@ -544,10 +546,14 @@ export class Editor extends srceditor.Editor {
         return line.slice(0, pos.row)
     }
 
+    isIncomplete() {
+        return this.completer.activated
+    }
+
     prepare() {
         this.editor = ace.edit("aceEditorInner");
         let langTools = acequire("ace/ext/language_tools");
-        
+
         let needsFormat = false
 
         this.editor.commands.on("exec", (e: any) => {
@@ -620,6 +626,7 @@ export class Editor extends srceditor.Editor {
             if (this.lastSet != null) {
                 this.lastSet = null
             } else {
+                this.updateDiagnostics();
                 this.changeCallback();
             }
         })
@@ -693,14 +700,41 @@ export class Editor extends srceditor.Editor {
 
         this.currFile = file;
         this.setValue(file.content)
-        this.setDiagnostics(file)
+        this.setDiagnostics(file, this.snapshotState())
     }
 
-    setDiagnostics(file: pkg.File) {
+    snapshotState() {
+        return this.editor.getSession().doc.getAllLines()
+    }
+
+    private diagSnapshot: string[];
+    private annotationLines:number[];
+
+    updateDiagnostics() {
+        if (this.needsDiagUpdate())
+            this.updateDiagnosticsCore();
+    }
+
+    private needsDiagUpdate() {
+        if (!this.annotationLines) return false
+        let lines: string[] = (this.editor.getSession().doc as any).$lines
+        for (let line of this.annotationLines) {
+            if (this.diagSnapshot[line] !== lines[line])
+                return true;
+        }
+        return false;
+    }
+
+    private updateDiagnosticsCore() {
         let sess = this.editor.getSession();
         Object.keys(sess.getMarkers(true) || {}).forEach(m => sess.removeMarker(parseInt(m)))
         sess.clearAnnotations()
         let ann: AceAjax.Annotation[] = []
+        let file = this.currFile
+
+        let lines: string[] = (sess.doc as any).$lines
+        this.annotationLines = []
+
         if (file.diagnostics)
             for (let diagnostic of file.diagnostics) {
                 const p0 = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
@@ -711,10 +745,30 @@ export class Editor extends srceditor.Editor {
                     text: ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
                     type: "error"
                 })
-                sess.addMarker(new Range(p0.line, p0.character, p1.line, p1.character),
-                    "ace_error-marker", "ts-error", true)
+
+                p1.line = Math.min(p1.line, p0.line + 1) // don't show errors longer than 2 lines
+
+                let outdated = false
+                for (let line = p0.line; line <= p1.line; line++) {
+                    if (lines[line] !== this.diagSnapshot[line])
+                        outdated = true
+                }
+                if (!outdated) {
+                    for (let line = p0.line; line <= p1.line; line++) {
+                        this.annotationLines.push(line)
+                    }
+                    sess.addMarker(new Range(p0.line, p0.character, p1.line, p1.character),
+                        "ace_error-marker", "ts-error", true)
+                }
             }
         sess.setAnnotations(ann)
+
+    }
+
+    setDiagnostics(file: pkg.File, snapshot: string[]) {
+        Util.assert(this.currFile == file)
+        this.diagSnapshot = snapshot
+        this.updateDiagnosticsCore()
     }
 
     setViewState(pos: AceAjax.Position) {

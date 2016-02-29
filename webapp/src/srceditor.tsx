@@ -16,6 +16,7 @@ export type ProjectView = app.ProjectView;
 export interface ParentProps {
     parent: ProjectView;
 }
+
 export class Editor {
     protected currTheme: Theme = {};
     protected currSource: string;
@@ -37,14 +38,14 @@ export class Editor {
     }
     loadFile(file: pkg.File): void {
         this.currSource = file.content
-        this.setDiagnostics(file)
+        this.setDiagnostics(file, this.snapshotState())
     }
-    setDiagnostics(file: pkg.File): void { }
+    setDiagnostics(file: pkg.File, snapshot:any): void { }
     setViewState(view: ViewState): void { }
     acceptsFile(file: pkg.File) {
         return false
     }
-    menu():JSX.Element {
+    menu(): JSX.Element {
         return null;
     }
     getId() {
@@ -52,8 +53,8 @@ export class Editor {
     }
     displayOuter() {
         return (
-            <div className='full-abs' key={this.getId()} id={this.getId()} style={{ display: this.isVisible ? "block" : "none" }}>
-                {this.display()}
+            <div className='full-abs' key={this.getId() } id={this.getId() } style={{ display: this.isVisible ? "block" : "none" }}>
+                {this.display() }
             </div>
         )
     }
@@ -64,8 +65,14 @@ export class Editor {
     prepare() {
         this.isReady = true;
     }
-    domUpdate() {}
+    domUpdate() { }
     saveToTypeScript(): string {
+        return null
+    }
+    isIncomplete() {
+        return false
+    }
+    snapshotState():any {
         return null
     }
 }
