@@ -395,6 +395,38 @@ namespace ts.yelm {
         }
     }
 
+    function isExprEnd(t: Token) {
+        if (!t) return false;
+
+        switch (t.synKind) {
+            case SK.IfKeyword:
+            case SK.ElseKeyword:
+            case SK.LetKeyword:
+            case SK.ConstKeyword:
+            case SK.VarKeyword:
+            case SK.DoKeyword:
+            case SK.WhileKeyword:
+            case SK.SwitchKeyword:
+            case SK.CaseKeyword:
+            case SK.DefaultKeyword:
+            case SK.ForKeyword:
+            case SK.ReturnKeyword:
+            case SK.BreakKeyword:
+            case SK.ContinueKeyword:
+            case SK.TryKeyword:
+            case SK.CatchKeyword:
+            case SK.FinallyKeyword:
+            case SK.DeleteKeyword:
+            case SK.FunctionKeyword:
+            case SK.ClassKeyword:
+            case SK.YieldKeyword:
+            case SK.DebuggerKeyword:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     function delimitStmts(tokens: Token[], inStmtCtx: boolean, ctxToken: Token = null): Stmt[] {
         let res: Stmt[] = []
         let i = 0;
@@ -569,12 +601,15 @@ namespace ts.yelm {
                 }
 
                 if (inStmtCtx && infixOperatorPrecedence(t.synKind)) {
-                    nextNonWs(true)
-                    t = tokens[i]
+                    let begIdx = i
                     // an infix operator at the end of the line prevents the newline from ending the statement
-                    if (t.kind == TokenKind.NewLine)
-                        i++;
-                    continue;
+                    nextNonWs()
+                    if (isExprEnd(tokens[i])) {
+                        // unless next line starts with something statement-like
+                        i = begIdx
+                    } else {
+                        continue;
+                    }
                 }
 
                 if (inStmtCtx && t.kind == TokenKind.NewLine) {
