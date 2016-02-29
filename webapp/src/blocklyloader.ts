@@ -21,6 +21,7 @@ interface CachedBlock {
     hash: string;
     fn: ts.yelm.SymbolInfo;
     block: {
+        codeCard: codecard.CodeCardProps;
         init: () => void;
     };
 }
@@ -170,7 +171,8 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
         hash: hash,
         fn: fn,
         block: {
-            init: function() { initBlock(this, info, fn, attrNames, blockXml) }
+            codeCard: mkCard(fn, blockXml),
+            init: function() { initBlock(this, info, fn, attrNames) }
         }
     }
 
@@ -207,13 +209,9 @@ function mkCard(fn : ts.yelm.SymbolInfo, blockXml : HTMLElement) : codecard.Code
     }
 }
 
-function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml : HTMLElement) {
+function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     var help = "./" + fn.attributes.help;
-    block.setHelpUrl(showHelp 
-        ? () => {
-            showHelp(mkCard(fn, blockXml));
-            return help;
-        } : help);
+    block.setHelpUrl(help);        
     const ns = fn.namespace.split('.')[0];
     const instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
     block.setTooltip(fn.attributes.jsDoc);
@@ -347,12 +345,6 @@ function removeBlock(fn: ts.yelm.SymbolInfo) {
 export interface BlocksInfo {
     apis: ts.yelm.ApisInfo;
     blocks: ts.yelm.SymbolInfo[];
-}
-
-var showHelp : (card: codecard.CodeCardProps) => void = undefined;
-
-export function setShowHelp(f : (card: codecard.CodeCardProps) => void) {
-    showHelp = f;
 }
 
 export function getBlocksAsync(): Promise<BlocksInfo> {

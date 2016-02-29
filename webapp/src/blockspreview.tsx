@@ -19,15 +19,26 @@ export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPre
     workspace : Blockly.Workspace;
     constructor(props: BlocksPreviewProps) {
         super(props);
-        this.state = {}
     }
     
-    componentDidUpdate() {
+    getInitialState() {
+        return {};
+    }    
+    
+    renderSvg() {
         let el = $(ReactDOM.findDOMNode(this));
         let svg = blocklyrenderer.render(this.props.xml);
         
         el.children().remove();
-        el.append(svg);
+        el.append(svg);        
+    }
+    
+    componentDidMount() {
+        this.renderSvg();
+    }
+    
+    componentDidUpdate() {
+        this.renderSvg();
     }
 
     render() {

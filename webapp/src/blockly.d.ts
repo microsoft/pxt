@@ -4,6 +4,8 @@ declare module goog {
     function isFunction(f: any): boolean;
 }
 declare module Blockly {
+    var selected: any;
+    function bindEvent_(node: any, eventName: string, target: any, fn : () => void): void;
     function fireUiEvent(node: any, eventName: string) : void;
     
     var ALIGN_RIGHT : number;
@@ -13,6 +15,7 @@ declare module Blockly {
     }
     
     var Blocks : yelm.Util.StringMap<{
+        codeCard: any;
         init: () => void;
     }>;
     
@@ -82,6 +85,7 @@ declare module Blockly {
         addChangeListener(f: () => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string) : void;
+        getCanvas() : any;
         getMetrics(): {            
             absoluteLeft: number;
             absoluteTop: number;
