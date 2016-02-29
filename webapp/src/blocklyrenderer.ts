@@ -31,7 +31,7 @@ export function render(blocksXml: string): JQuery {
             .attr('transform', `translate(${-metrics.contentLeft}, ${-metrics.contentTop}) scale(1)`)
         svg.find('.blocklyMainBackground').remove();
         svg[0].setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
-        svg.attr('width', `100%`);
+        svg.removeAttr('width');
         svg.removeAttr('height');
         
         return svg;

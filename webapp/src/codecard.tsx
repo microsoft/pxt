@@ -68,27 +68,27 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
             <div className="ui card">
                 <div className="content">
                     <div className="right floated meta">
-                        {card.any ? (<i className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
-                        {repeat(card.hardware, (k) => <i ref={"hardware" + k} className="certificate black icon" ></i>) }
-                        {repeat(card.software, (k) => <i ref={"software" + k}className="square teal icon" ></i>) }
+                        {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
+                        {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
+                        {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
                     </div>
                     {this.props.header || this.props.name}
                 </div>
                 <div className="image">
-                    {promo ? <div className="ui embed" data-source={promo.source} data-id={promo.id}></div>
+                    {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div>
                         : this.props.blocksXml 
-                        ? <blockspreview.BlocksPreview xml={this.props.blocksXml} />
-                        : <simview.MbitBoardView disableTilt={true} theme={simsvg.randomTheme() } />}
+                        ? <blockspreview.BlocksPreview key="promoblocks" xml={this.props.blocksXml} />
+                        : <simview.MbitBoardView key="promosim" disableTilt={true} theme={simsvg.randomTheme() } />}
                 </div>
                 <div className="content">
                     <a className="header">{this.props.name}</a>
                     <div className="meta">
-                        {this.props.time ? <span className="date">{yelm.Util.timeSince(this.props.time) }</span> : ""}
+                        {this.props.time ? <span key="date" className="date">{yelm.Util.timeSince(this.props.time) }</span> : ""}
                     </div>
                     <div className="description">{this.props.description || lf("No description.") }</div>
                 </div>
                 <div className="extra content">
-                    {card.power || card.toughness ? (<div className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
+                    {card.power || card.toughness ? (<div key="powertough" className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
                     <a target="_blank" href={this.props.url || "https://yelm.io/"}>
                         {this.props.url || "yelm.io"}
                     </a>

@@ -112,6 +112,11 @@ export class Editor extends srceditor.Editor {
         this.editor.addChangeListener(() => {
             this.changeCallback();
         })
+        Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
+            let selected = Blockly.selected;
+            let card = selected ? selected.codeCard : undefined;
+            this.parent.setHelp(card);
+        })
 
         this.isReady = true
     }

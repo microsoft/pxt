@@ -310,9 +310,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     private initEditors() {
         this.aceEditor = new ace.Editor(this);
         this.yelmjsonEditor = new yelmjson.Editor(this);
-        blocklyloader.setShowHelp((card) => {
-            this.setHelp(card);
-        });
         this.blocksEditor = new blocks.Editor(this);
 
         let hasChangeTimer = false
