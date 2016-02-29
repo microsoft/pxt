@@ -120,12 +120,13 @@ export function handleNetworkError(e: any) {
 export interface ConfirmOptions {
     header: string;
     body?: string;
-    htmlBody?:string;
+    htmlBody?: string;
     agreeLbl?: string;
     disagreeLbl?: string;
     agreeIcon?: string;
     agreeClass?: string;
-    hideAgree?:boolean;
+    hideCancel?: boolean;
+    hideAgree?: boolean;
     onLoaded?: (_: JQuery) => void;
 }
 
@@ -138,31 +139,40 @@ export function confirmAsync(options: ConfirmOptions) {
     <div class="content">
       ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
       ${options.htmlBody || ""}
-    </div>
-    <div class="actions">
-      <div class="ui right labeled icon button">
+    </div>`
+    if (!options.hideCancel || !options.hideAgree) {
+        html += `<div class="actions">`
+        if (!options.hideCancel) {
+            html += `<div class="ui right labeled icon button">
         ${Util.htmlEscape(options.disagreeLbl || lf("Cancel"))}
         <i class="cancel icon"></i>
       </div>`
-    if (!options.hideAgree) {
-        html += `
+        }
+        if (!options.hideAgree) {
+            html += `
       <div class="ui approve right labeled icon button ${options.agreeClass || "positive"}">
         ${Util.htmlEscape(options.agreeLbl || lf("Go ahead!"))}
         <i class="${options.agreeIcon || "checkmark"} icon"></i>
       </div>`
-    }      
+        }
+        
+        html += `</div>`
+    }
+    html += `</div>`
     
-    html +=`
-    </div>
-  </div>
-  `
     let modal = $(html)
     let done = false
     $('#root').append(modal)
     if (options.onLoaded) options.onLoaded(modal)
-    
+
+    modal.find('img').on('load', () => {
+        modal.modal('refresh')                
+    })
+
     return new Promise((resolve, reject) =>
         modal.modal({
+            observeChanges: true,
+            closable: !options.hideCancel,
             onHidden: () => {
                 modal.remove()
             },

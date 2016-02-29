@@ -85,7 +85,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
     componentDidMount() {
         let headers: workspace.Header[] = this.getData("header:*")
         if (!headers.length)
-            this.props.parent.newProject();
+            this.props.parent.newProject(true);
     }
     
     renderCore() {
@@ -385,6 +385,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 }
             })
     }
+    
+    projectSettings() {
+    }
 
     removeProject() {
         core.confirmDelete(pkg.mainEditorPkg().header.name, () => {
@@ -397,15 +400,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
     
-    newProject() {
+    newProject(hideCancel = false) {
         core.confirmAsync({
             header: lf("Create new project"),
+            hideCancel: hideCancel,
             hideAgree: true,
             onLoaded: (_) => {
-              _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProject()})
-              _.find('#newtypescript').click(() => {_.modal('hide'); this.newTypeScriptProject()})
-              _.find('#newkodu').click(() => { window.location.href = 'https://www.kodugamelab.com/bbc-microbit/' })
-              _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject()})
+                _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProject()})
+                _.find('#newtypescript').click(() => {_.modal('hide'); this.newTypeScriptProject()})
+                _.find('#newkodu').click(() => { window.location.href = 'https://www.kodugamelab.com/bbc-microbit/' })
+                _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject()})
             },
             htmlBody: `
 <div class="ui two column grid">
@@ -662,6 +666,7 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.Button text={lf("New Project")} onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
+                                    <sui.Item icon="settings" text={lf("Settings") } onClick={() => this.projectSettings() } />
                                     <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
                                     <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
                                     <div className="divider"></div>
