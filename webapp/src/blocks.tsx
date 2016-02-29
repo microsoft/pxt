@@ -23,7 +23,7 @@ export class Editor extends srceditor.Editor {
     setVisible(v: boolean) {
         super.setVisible(v);
         this.isVisible = v;
-        var classes = '.blocklyToolboxDiv, .blocklyWidgetDiv, .blocklyToolboxDiv';
+        let classes = '.blocklyToolboxDiv, .blocklyWidgetDiv, .blocklyToolboxDiv';
         if (this.isVisible) {
             $(classes).show();
             // Fire a resize event since the toolbox may have changed width and height.
@@ -55,10 +55,10 @@ export class Editor extends srceditor.Editor {
                 .then(bi => {
                     this.blockInfo = bi;
 
-                    var toolbox = document.getElementById('blocklyToolboxDefinition');
+                    let toolbox = document.getElementById('blocklyToolboxDefinition');
                     blocklyloader.injectBlocks(this.editor, toolbox, this.blockInfo)
                     
-                    var xml = this.delayLoadXml;
+                    let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
                     
@@ -77,16 +77,16 @@ export class Editor extends srceditor.Editor {
         if (this.delayLoadXml)
             return this.delayLoadXml;
 
-        var xml = Blockly.Xml.workspaceToDom(this.editor);
-        var text = Blockly.Xml.domToPrettyText(xml);
+        let xml = Blockly.Xml.workspaceToDom(this.editor);
+        let text = Blockly.Xml.domToPrettyText(xml);
         return text;
     }
 
     loadBlockly(s: string) {
-        var text = s || "<xml></xml>";
-        var xml = Blockly.Xml.textToDom(text);
         this.editor.clear();
         try {
+            let text = s || "<xml></xml>";
+            let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(this.editor, xml);
         } catch (e) {
             console.log(e);
@@ -94,7 +94,7 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
-        var blocklyDiv = document.getElementById('blocksEditor');
+        let blocklyDiv = document.getElementById('blocksEditor');
         this.editor = Blockly.inject(blocklyDiv, {
             toolbox: document.getElementById('blocklyToolboxDefinition'),
             scrollbars: true,

@@ -135,6 +135,12 @@
     text-shadow: 0px 0px 7px #f00;
 }
 
+.blocklyPreview {
+ position: absolute;
+ top: 50%; left: 50%;
+ transform: translate(-50%,-50%);    
+}
+
 /* ACE */
 
 #aceEditor .ace_search .ace_search_field {

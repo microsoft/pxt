@@ -82,6 +82,18 @@ declare module Blockly {
         addChangeListener(f: () => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string) : void;
+        getMetrics(): {            
+            absoluteLeft: number;
+            absoluteTop: number;
+            contentHeight:number;
+            contentLeft:number;
+            contentTop: number;
+            contentWidth: number;
+            viewHeight: number;
+            viewLeft: number;
+            viewTop: number;
+            viewWidth: number;       
+        }
     }
 
     module Xml {

@@ -3,7 +3,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
-import * as projectcard from "./projectcard"
+import * as codecard from "./codecard"
 
 import Cloud = yelm.Cloud;
 import Util = yelm.Util;
@@ -31,13 +31,15 @@ export class Editor extends srceditor.Editor {
             if (!c.card) c.card = {}
         }
         let card = c.card || {};
+        let mainFile = pkg.mainEditorPkg().getMainFile();
+                
         return (
             <div className="ui four column grid">
                 <div className="ui column">
                     <div className="ui segment">                    
-                        <projectcard.ProjectCard 
+                        <codecard.CodeCard 
                             url="yelm.io/abc" 
-                            username="me" 
+                            header="me" 
                             name={c.name}
                             description={c.description} 
                             card={c.card} 

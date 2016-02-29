@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 import * as simsvg from "./simsvg";
 import * as simview from "./simview"
 import * as sui from "./sui"
+import * as blockspreview from "./blockspreview"
 
 let lf = yelm.Util.lf;
 let repeat = yelm.Util.repeatMap;
@@ -34,20 +35,22 @@ let socialNetworks: SocialNetwork[] = [{
 
 
 
-export interface ProjectCardProps {
-    url?: string;
-    promoUrl?: string;
-    username: string;
-    name?: string;
-    time?: number;
+export interface CodeCardProps {
+    name: string;
+    
     description?: string;
+    promoUrl?: string;
+    blocksXml?: string;
+    header?: string;
+    time?: number;
     card?: yelm.PackageCard;
+    url?: string;
 }
-export interface ProjectCardState { }
+export interface CodeCardState { }
 
-export class ProjectCard extends React.Component<ProjectCardProps, ProjectCardState> {
+export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
 
-    constructor(props: ProjectCardProps) {
+    constructor(props: CodeCardProps) {
         super(props);
 
         this.state = {};
@@ -59,7 +62,7 @@ export class ProjectCard extends React.Component<ProjectCardProps, ProjectCardSt
 
     render() {
         let card = this.props.card || {}
-        let promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];
+        let promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];        
 
         return (
             <div className="ui card">
@@ -69,10 +72,12 @@ export class ProjectCard extends React.Component<ProjectCardProps, ProjectCardSt
                         {repeat(card.hardware, (k) => <i ref={"hardware" + k} className="certificate black icon" ></i>) }
                         {repeat(card.software, (k) => <i ref={"software" + k}className="square teal icon" ></i>) }
                     </div>
-                    {this.props.username}
+                    {this.props.header || this.props.name}
                 </div>
                 <div className="image">
                     {promo ? <div className="ui embed" data-source={promo.source} data-id={promo.id}></div>
+                        : this.props.blocksXml 
+                        ? <blockspreview.BlocksPreview xml={this.props.blocksXml} />
                         : <simview.MbitBoardView disableTilt={true} theme={simsvg.randomTheme() } />}
                 </div>
                 <div className="content">
