@@ -71,12 +71,21 @@ open http://localhost:3232
 * [x] skip unreferenced globals when initilized with literal
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload
+* [ ] `ptr-<username>-*` as the main way publishing packages
 
 ### web app
 
 * [x] make blocks output file read only
 * [ ] do not type-check while auto-completing
 * [x] scroll completion window with keyboard
+* [ ] indent when entering first character on a line
+* [ ] save source in hex
+* [ ] Save json
+* [ ] Drag and drop load
+* [ ] Link up simulator
+* [ ] Flag to hide from TS auto completion (eg: set sprite property with enum)
+* [ ] add markdown processor for docs
+
 
 ### converter from TD to TS (different repo)
 
