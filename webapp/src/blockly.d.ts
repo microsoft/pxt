@@ -122,7 +122,5 @@ declare module Blockly {
 
     interface callbackHandler { }
 
-    function inject(elt: Element, options?: Options): void;
-
-    var mainWorkspace: Workspace;
+    function inject(elt: Element, options?: Options): Workspace;
 }

@@ -172,7 +172,7 @@ export function confirmAsync(options: ConfirmOptions) {
     return new Promise((resolve, reject) =>
         modal.modal({
             observeChanges: true,
-            closable: !options.hideCancel,
+            closeable: !options.hideCancel,
             onHidden: () => {
                 modal.remove()
             },

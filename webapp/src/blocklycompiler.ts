@@ -535,21 +535,21 @@ function unify(t1: string, t2: string) {
         throw new Error("cannot mix " + t1 + " with " + t2);
 }
 
-function mkPlaceholderBlock(): B.Block {
+function mkPlaceholderBlock(e: Environment): B.Block {
     // XXX define a proper placeholder block type
     return <any>{
         type: "placeholder",
         p: mkPoint(null),
-        workspace: Blockly.mainWorkspace,
+        workspace: e.workspace,
     };
 }
 
-function attachPlaceholderIf(b: B.Block, n: string) {
+function attachPlaceholderIf(e : Environment, b: B.Block, n: string) {
     // Ugly hack to keep track of the type we want there.
     if (!b.getInputTargetBlock(n)) {
         var i = b.inputList.filter(x => x.name == n)[0];
         assert(i != null);
-        i.connection.targetConnection = new B.Connection(mkPlaceholderBlock(), 0);
+        i.connection.targetConnection = new B.Connection(mkPlaceholderBlock(e), 0);
     }
 }
 
@@ -566,7 +566,7 @@ function removeAllPlaceholders(w: B.Workspace) {
 // Unify the *return* type of the parameter [n] of block [b] with point [p].
 function unionParam(e: Environment, b: B.Block, n: string, p: Point) {
     try {
-        attachPlaceholderIf(b, n);
+        attachPlaceholderIf(e, b, n);
         union(returnType(e, b.getInputTargetBlock(n)), p);
     } catch (e) {
         throwBlockError("The parameter " + n + " of this block is of the wrong type. More precisely: " + e, b);
@@ -599,8 +599,8 @@ function infer(e: Environment, w: B.Workspace) {
                             unionParam(e, b, "B", ground(pBoolean.type));
                             break;
                         case "EQ": case "NEQ":
-                            attachPlaceholderIf(b, "A");
-                            attachPlaceholderIf(b, "B");
+                            attachPlaceholderIf(e, b, "A");
+                            attachPlaceholderIf(e, b, "B");
                             var p1 = returnType(e, b.getInputTargetBlock("A"));
                             var p2 = returnType(e, b.getInputTargetBlock("B"));
                             try {
@@ -636,7 +636,7 @@ function infer(e: Environment, w: B.Workspace) {
                 case "variables_change":
                     var x = b.getFieldValue("VAR");
                     var p1 = lookup(e, x).type;
-                    attachPlaceholderIf(b, "VALUE");
+                    attachPlaceholderIf(e, b, "VALUE");
                     var rhs = b.getInputTargetBlock("VALUE");
                     if (rhs) {
                         var tr = returnType(e, rhs);
@@ -862,6 +862,7 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
 // Environments are persistent.
 
 interface Environment {
+    workspace: Blockly.Workspace;
     bindings: Binding[];
     stdCallTable: Util.StringMap<StdFunc>;
 }
@@ -880,6 +881,7 @@ function isCompiledAsForIndex(b: Binding) {
 function extend(e: Environment, x: string, t: string): Environment {
     assert(lookup(e, x) == null);
     return {
+        workspace: e.workspace,
         bindings: [{ name: x, type: ground(t), usedAsForIndex: 0 }].concat(e.bindings),
         stdCallTable: e.stdCallTable
     };
@@ -900,8 +902,9 @@ function fresh(e: Environment, s: string): string {
     return unique;
 }
 
-function emptyEnv(): Environment {
+function emptyEnv(w : Blockly.Workspace): Environment {
     return {
+        workspace: w,
         bindings: [],
         stdCallTable: {}
     }
@@ -1214,7 +1217,7 @@ function findParent(b: B.Block) {
 //   TouchDevelop for-loop model.
 function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment {
     // The to-be-returned environment.
-    let e = emptyEnv();
+    let e = emptyEnv(w);
 
     // append functions in stdcalltable
     if (blockInfo)

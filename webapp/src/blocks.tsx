@@ -95,7 +95,7 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         var blocklyDiv = document.getElementById('blocksEditor');
-        Blockly.inject(blocklyDiv, {
+        this.editor = Blockly.inject(blocklyDiv, {
             toolbox: document.getElementById('blocklyToolboxDefinition'),
             scrollbars: true,
             media: "./blockly/media/",
@@ -109,7 +109,6 @@ export class Editor extends srceditor.Editor {
                 scaleSpeed: 1.1
             },
         });
-        this.editor = Blockly.mainWorkspace;
         this.editor.addChangeListener(() => {
             this.changeCallback();
         })
