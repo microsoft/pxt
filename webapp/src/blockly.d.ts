@@ -107,13 +107,17 @@ declare module Blockly {
     class DefOrCallBlock extends Block {
         arguments_: string[];
     }
+    
+    interface BlocklyEvent {
+        type : string;
+    }
 
     class Workspace {
         clear(): void;
         dispose(): void;
         getTopBlocks(ordered: boolean): Block[];
         getAllBlocks(): Block[];
-        addChangeListener(f: () => void): callbackHandler;
+        addChangeListener(f: (e : BlocklyEvent) => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string) : void;
         getCanvas() : any;
@@ -195,5 +199,9 @@ declare module Blockly {
     
     module BlockSvg {
         var START_HAT : boolean;
+    }
+    
+    module Events {
+        var DELETE : string;
     }
 }

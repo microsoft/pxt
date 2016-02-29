@@ -44,12 +44,12 @@ export class Editor extends srceditor.Editor {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
             this.loadingXml = true
-            
+
             let loading = document.createElement("div");
             loading.className = "ui inverted loading";
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
-            
+
             blocklyloader.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
@@ -57,11 +57,11 @@ export class Editor extends srceditor.Editor {
 
                     let toolbox = document.getElementById('blocklyToolboxDefinition');
                     blocklyloader.injectBlocks(this.editor, toolbox, this.blockInfo)
-                    
+
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
-                    
+
                 })
                 .done(() => {
                     editorDiv.removeChild(loading);
@@ -70,7 +70,7 @@ export class Editor extends srceditor.Editor {
                 })
         }
     }
-    
+
     saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble
@@ -93,6 +93,12 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    updateHelpCard() {
+        let selected = Blockly.selected;
+        let card = selected ? selected.codeCard : undefined;
+        this.parent.setHelp(card);
+    }
+
     prepare() {
         let blocklyDiv = document.getElementById('blocksEditor');
         this.editor = Blockly.inject(blocklyDiv, {
@@ -109,13 +115,12 @@ export class Editor extends srceditor.Editor {
                 scaleSpeed: 1.1
             },
         });
-        this.editor.addChangeListener(() => {
+        this.editor.addChangeListener((ev) => {
             this.changeCallback();
+            this.updateHelpCard();
         })
         Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
-            let selected = Blockly.selected;
-            let card = selected ? selected.codeCard : undefined;
-            this.parent.setHelp(card);
+            this.updateHelpCard();
         })
 
         this.isReady = true
@@ -151,12 +156,12 @@ export class Editor extends srceditor.Editor {
 
     setDiagnostics(file: pkg.File) {
     }
-    
+
     menu() {
         return (
             <div className="item">
-                <sui.Button class="button floating" text={lf("Show Code") } icon="keyboard" onClick={() => this.parent.saveTypeScript(true)} />
+                <sui.Button class="button floating" text={lf("Show Code") } icon="keyboard" onClick={() => this.parent.saveTypeScript(true) } />
             </div>
-        )        
+        )
     }
 }
