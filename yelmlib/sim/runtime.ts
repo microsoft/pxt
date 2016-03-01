@@ -41,11 +41,16 @@ namespace yelm.rt {
         stateChanged: () => void;
         dead = false;
         running = false;
+        startTime = 0;
         target: Target;
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => void;
+
+        runningTime() : number {
+            return Util.now() - this.startTime;
+        }
 
         runFiberAsync(a: RefAction) {
             incr(a)
@@ -94,6 +99,7 @@ namespace yelm.rt {
         setRunning(r : boolean) {
             if (this.running != r) {
                 this.running = r;
+                if (this.running) this.startTime = Util.now();
                 if (this.stateChanged) this.stateChanged();                                
             }            
         }

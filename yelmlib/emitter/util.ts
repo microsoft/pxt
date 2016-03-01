@@ -355,6 +355,10 @@ namespace ts.yelm.Util {
         }
         return res;
     }
+    
+    export function now() : number {
+        return Date.now();
+    }
 
     export function randomUint32() {
         let buf = new Uint8Array(4)

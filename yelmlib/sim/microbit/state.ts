@@ -58,6 +58,10 @@ namespace yelm.rt.micro_bit {
                 }
             }
         }
+        public clear() : void {
+            for(var i = 0;i < this.data.length; ++i)
+                this.data[i] = 0;
+        }
     }
 
     export function createImage(width: number): Image {
