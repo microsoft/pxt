@@ -36,6 +36,7 @@ let socialNetworks: SocialNetwork[] = [{
 export interface CodeCardProps {
     name: string;
     
+    color?: string; // one of semantic ui colors
     description?: string;
     promoUrl?: string;
     blocksXml?: string;
@@ -61,9 +62,14 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
     render() {
         let card = this.props.card || {}
         let promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];        
+        let color = this.props.color || "";
+        if (!color) {
+            if (card.hardware && !card.software) color = 'black';
+            else if (card.software && !card.hardware) color = 'teal';
+        }
 
         return (
-            <div className="ui card">
+            <div className={"ui card " + color}>
                 <div className="content">
                     <div className="right floated meta">
                         {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
