@@ -31,6 +31,32 @@ namespace yelm.rt {
         public updateView() { }
     }
 
+    export class EventQueue<T> {
+        events: T[] = [];
+        handler: RefAction;
+        runtime: Runtime;
+        
+        public push(e: T) {
+            if (!this.handler) return;
+            
+            this.events.push(e)
+            
+            // if this is the first event pushed - start processing
+            if (this.events.length == 1)
+                this.poke();
+        }
+        
+        private poke() {
+            let top = this.events.shift()
+            this.runtime.runFiberAsync(this.handler, top)
+                .done(() => {
+                    // we're done processing the current event, if there is still something left to do, do it
+                    if (this.events.length > 0)
+                        this.poke();
+                })
+        }
+    }
+
     export class Runtime {
         private baseStack = 1000000;
         private freeStacks: number[] = [];
@@ -49,16 +75,16 @@ namespace yelm.rt {
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => void;
 
-        runningTime() : number {
+        runningTime(): number {
             return Util.now() - this.startTime;
         }
 
-        runFiberAsync(a: RefAction) {
+        runFiberAsync(a: RefAction, arg0?:any, arg1?:any) {
             incr(a)
             return new Promise<any>((resolve, reject) =>
                 U.nextTick(() => {
                     this.setupTop(resolve)
-                    action.run(a)
+                    action.run2(a, arg0, arg1)
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
@@ -96,13 +122,13 @@ namespace yelm.rt {
                 this.updateDisplay()
             }
         }
-        
-        setRunning(r : boolean) {
+
+        setRunning(r: boolean) {
             if (this.running != r) {
                 this.running = r;
                 if (this.running) this.startTime = Util.now();
-                if (this.stateChanged) this.stateChanged();                                
-            }            
+                if (this.stateChanged) this.stateChanged();
+            }
         }
 
         constructor(code: string, targetName: string) {
@@ -260,7 +286,7 @@ namespace yelm.rt {
             if (!trg) {
                 U.userError(U.lf("target {0} not supported", targetName))
             }
-            
+
             this.target = trg;
             trg.initCurrentRuntime();
         }

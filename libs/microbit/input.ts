@@ -1,7 +1,7 @@
 enum Button {
     //% enumval=MICROBIT_ID_BUTTON_A
     A,
-    //% enumval=MICROBIT_ID_BUTTON_A
+    //% enumval=MICROBIT_ID_BUTTON_B
     B,
     //% enumval=MICROBIT_ID_BUTTON_AB
     //% blockId="A+B"
