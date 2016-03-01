@@ -19,7 +19,8 @@ namespace ts.yelm {
         outfiles: StringMap<string>;
         diagnostics: Diagnostic[];
         success: boolean;
-        times:Util.Map<number>;
+        times:U.Map<number>;
+        enums:U.Map<number>;
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {
@@ -51,8 +52,11 @@ namespace ts.yelm {
             outfiles: {},
             diagnostics: [],
             success: false,
-            times: {}
+            times: {},
+            enums: U.clone(opts.hexinfo.enums || {})
         }
+        
+        U.jsonCopyFrom(res.enums, opts.extinfo.enums)
 
         let fileText = opts.fileSystem
         let setParentNodes = true
