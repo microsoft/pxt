@@ -725,12 +725,12 @@ Ctrl+Shift+B
                         </div>
                     </div>
                 </div>
-                <div id="filelist" className="ui landscape only">
+                <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
                         <microbitView.BoardView ref="microbitsimulator" runtime={this.simRuntime} />
                         <minecraftView.BoardView ref="minecraftsimulator" runtime={this.simRuntime} />
                     </div>
-                    <div className="ui item">
+                    <div className="ui item landscape only">
                         {this.simRuntime && this.simRuntime.running
                             ? <sui.Button key='stopbtn' class='primary' icon='stop' text={lf("Stop") } onClick={() => this.stopSimulator() } />
                             : <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } /> }
@@ -740,15 +740,13 @@ Ctrl+Shift+B
                             this.saveSettings();
                         } } />
                     </div>
-                    <FileList parent={this} />
+                    <div className="ui landscape only">                    
+                        <FileList parent={this} />
+                    </div>
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div className="ui large screen only grid" id="helpcard"><codecard.CodeCard {...this.state.helpCard} /></div> : null }
-                </div>
-                <div id="simulatoroverlay" className="ui vertical portrait only">
-                    <microbitView.BoardView ref="microbitsimulatoroverlay" runtime={this.simRuntime} />
-                    <minecraftView.BoardView ref="minecraftsimulatoroverlay" runtime={this.simRuntime} />
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
             </div>
