@@ -506,7 +506,14 @@ Ctrl+Shift+B
     newTypeScriptProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} bit", Util.getAwesomeAdj()),
-            dependencies: { core: "*", led:"*", music: "*", radio: "*", game:"*", pins:"*" },
+            dependencies: { 
+                "microbit": "*", 
+                "microbit-led":"*", 
+                "microbit-music": "*", 
+                "microbit-radio": "*", 
+                "microbit-game":"*", 
+                "microbit-pins":"*" 
+            },
             description: "",
             files: ["main.ts", "README.md"]
         }
@@ -531,7 +538,14 @@ Ctrl+Shift+B
     newBlocksProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} block", Util.getAwesomeAdj()),
-            dependencies: { core: "*", led:"*", music: "*", radio: "*", game:"*", pins:"*" },
+            dependencies: { 
+                "microbit": "*", 
+                "microbit-led":"*", 
+                "microbit-music": "*", 
+                "microbit-radio": "*", 
+                "microbit-game":"*", 
+                "microbit-pins":"*" 
+            },
             description: "",
             files: ["main.blocks", "main.blocks.ts", "README.md"]
         }

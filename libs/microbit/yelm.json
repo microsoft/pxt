@@ -1,6 +1,6 @@
 {
-    "name": "core",
-    "description": "The core library",
+    "name": "microbit",
+    "description": "The microbit core library",
     "installedVersion": "hgdjzr",
     "files": [
         "README.md",

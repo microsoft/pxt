@@ -1,5 +1,5 @@
 {
-    "name": "pins",
+    "name": "microbit-pins",
     "description": "The pins services",
     "files": [
         "README.md",
@@ -7,6 +7,6 @@
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../core"        
+        "microbit": "file:../microbit"        
     }
 }

@@ -43,14 +43,14 @@ task('testfmt', ['built/yelm.js'], {async:true}, function() {
 })
 
 task('embed', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
-  cmdIn(this, "libs/core", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/music", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/radio", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/serial", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/led", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/game", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/pins", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/devices", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/microbit", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/microbit-music", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/microbit-radio", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/microbit-serial", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/microbit-led", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/microbit-game", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/microbit-pins", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/microbit-devices", 'node ../../built/yelm.js genembed')
 })
 
 ju.catFiles('built/yelm.js', [
@@ -130,14 +130,14 @@ task('updatestrings', function() {
     
     var fileCnt = 0;
     var srcPaths = [
-        "libs/core", 
-        "libs/devices", 
-        "libs/pins",
-        "libs/led", 
-        "libs/game", 
-        "libs/radio", 
-        "libs/serial", 
-        "libs/music", 
+        "libs/microbit", 
+        "libs/microbit-devices", 
+        "libs/microbit-pins",
+        "libs/microbit-led", 
+        "libs/microbit-game", 
+        "libs/microbit-radio", 
+        "libs/microbit-serial", 
+        "libs/microbit-music", 
         "webapp/src"]
     srcPaths.forEach(pth => {
         fs.readdirSync(pth).forEach((fn) => {

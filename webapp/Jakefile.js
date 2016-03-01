@@ -44,14 +44,14 @@ file('built/worker.js', ["lower"], function () {
 })
 
 ju.catFiles('built/yelmembed.js', [
-    "../libs/core/built/yelmembed.js", 
-    "../libs/music/built/yelmembed.js", 
-    "../libs/radio/built/yelmembed.js", 
-    "../libs/game/built/yelmembed.js", 
-    "../libs/led/built/yelmembed.js", 
-    "../libs/pins/built/yelmembed.js", 
-    "../libs/serial/built/yelmembed.js",
-    "../libs/devices/built/yelmembed.js"
+    "../libs/microbit/built/yelmembed.js", 
+    "../libs/microbit-music/built/yelmembed.js", 
+    "../libs/microbit-radio/built/yelmembed.js", 
+    "../libs/microbit-game/built/yelmembed.js", 
+    "../libs/microbit-led/built/yelmembed.js", 
+    "../libs/microbit-pins/built/yelmembed.js", 
+    "../libs/microbit-serial/built/yelmembed.js",
+    "../libs/microbit-devices/built/yelmembed.js"
     ])
 
 

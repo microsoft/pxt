@@ -1,5 +1,5 @@
 {
-    "name": "game",
+    "name": "microbit-game",
     "description": "The game services",
     "files": [
         "README.md",
@@ -7,7 +7,7 @@
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../core",
-        "led": "file:../led"      
+        "microbit": "file:../microbit",
+        "microbit-led": "file:../microbit-led"      
     }
 }

@@ -1,5 +1,5 @@
 {
-    "name": "music",
+    "name": "microbit-music",
     "description": "The music library",
     "files": [
         "README.md",
@@ -7,6 +7,6 @@
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../core"        
+        "microbit": "file:../microbit"        
     }
 }

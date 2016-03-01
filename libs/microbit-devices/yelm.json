@@ -1,5 +1,5 @@
 {
-    "name": "devices",
+    "name": "microbit-devices",
     "description": "The BLE specific services",
     "files": [
         "README.md",
@@ -7,6 +7,6 @@
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../core"        
+        "microbit": "file:../microbit"        
     }
 }

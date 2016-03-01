@@ -8,6 +8,6 @@
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../core"
+        "core": "file:../microbit"
     }
 }
