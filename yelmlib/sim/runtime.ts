@@ -21,7 +21,7 @@ namespace yelm.rt {
     export class Runtime {
         private baseStack = 1000000;
         private freeStacks: number[] = [];
-        public state: state.IBoard = state.createBoard();
+        public state: micro_bit.IBoard = micro_bit.createBoard();
         numGlobals = 1000;
         mem: any;
         errorHandler: (e: any) => void;

@@ -86,7 +86,7 @@ export class MbitBoardSvg
     private ledsOuter: SVGElement[];
     private leds: SVGElement[];
        
-    constructor(public props: IBoardProps, public state: rt.state.IBoard) {
+    constructor(public props: IBoardProps, public state: rt.micro_bit.IBoard) {
         this.buildDom();               
         this.updateTheme();
         this.updateState();
@@ -114,7 +114,7 @@ export class MbitBoardSvg
             Svg.fill(this.buttons[index], b ? theme.buttonDown : theme.buttonUp);            
         });
         
-        var bw =  state.displayMode == rt.state.DisplayMode.bw         
+        var bw =  state.displayMode == rt.micro_bit.DisplayMode.bw         
         var img = state.image;
         this.leds.forEach((led,i) => {
             var sel = (<SVGStylable><any>led)

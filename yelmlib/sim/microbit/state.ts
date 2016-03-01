@@ -1,4 +1,4 @@
-namespace yelm.rt.state {
+namespace yelm.rt.micro_bit {
     export enum DisplayMode {
         bw,
         greyscale

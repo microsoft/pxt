@@ -18,13 +18,13 @@ export class MbitRuntime extends rt.Runtime {
     }
 }
 
-export class MbitBoardView extends React.Component<simsvg.IBoardProps, rt.state.IBoard> {
+export class MbitBoardView extends React.Component<simsvg.IBoardProps, rt.micro_bit.IBoard> {
     view: simsvg.MbitBoardSvg;
 
     constructor(props: simsvg.IBoardProps) {
         super(props);
 
-        this.state = rt.state.createBoard();
+        this.state = rt.micro_bit.createBoard();
         this.view = new simsvg.MbitBoardSvg(props, this.state);
     }
 

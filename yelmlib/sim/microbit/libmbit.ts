@@ -78,7 +78,7 @@ namespace yelm.rt.micro_bit {
         runtime.queueDisplayUpdate()
     }
 
-    export function showAnimation(leds: state.Image, interval: number = 400): void {
+    export function showAnimation(leds: micro_bit.Image, interval: number = 400): void {
         let cb = getResume()
         let off = 0
         runtime.animationQ.enqueue({
@@ -94,7 +94,7 @@ namespace yelm.rt.micro_bit {
         })
     }
 
-    export function plotLeds(leds: state.Image): void {
+    export function plotLeds(leds: micro_bit.Image): void {
         leds.copyTo(0, 5, runtime.state.image, 0)
         runtime.queueDisplayUpdate()
     }
