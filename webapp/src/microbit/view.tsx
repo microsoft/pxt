@@ -6,7 +6,7 @@ import * as sui from "../sui"
 import rt = yelm.rt;
 import U = yelm.U;
 
-export class MicrobitBoardView extends React.Component<simsvg.IBoardProps, {}> {
+export class BoardView extends React.Component<simsvg.IBoardProps, {}> {
     view: simsvg.MicrobitBoardSvg;
 
     componentDidUpdate() {
