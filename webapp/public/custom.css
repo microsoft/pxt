@@ -43,9 +43,10 @@
 }
 
 #helpcard {
-    position:absolute;
-    right: 2em;
-    top: 1em;
+    position: absolute;
+    right: 2rem;
+    top: 0.5rem;
+    margin: 0;
 }
 
 #settings .popup {

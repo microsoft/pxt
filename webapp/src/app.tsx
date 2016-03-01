@@ -749,7 +749,7 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div id="helpcard"><codecard.CodeCard {...this.state.helpCard} /></div> : null }
+                    {this.state.helpCard ? <div className="ui large screen only grid" id="helpcard"><codecard.CodeCard {...this.state.helpCard} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
             </div>
