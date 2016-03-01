@@ -693,12 +693,6 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
-        let isOffline = !this.getData("cloud-online:api")
-        let goOnline = () => {
-            data.setOnline(true)
-            workspace.syncAsync().done();
-        }
-
         let inv = this.state.theme.inverted ? " inverted " : " "
 
         return (
@@ -721,13 +715,6 @@ Ctrl+Shift+B
                         </div>
                         {this.editor.menu() }
                         <div className="item right">
-                            {isOffline ?
-                                <sui.Button
-                                    text={lf("Go online") }
-                                    class="green"
-                                    onClick={goOnline}
-                                    popup={lf("You're offline now.") } />
-                                : null}
                             <LoginBox />
                         </div>
                     </div>
