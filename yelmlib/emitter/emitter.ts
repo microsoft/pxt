@@ -4,6 +4,8 @@ namespace ts.yelm {
     export type StringMap<T> = Util.Map<T>;
     export import U = ts.yelm.Util;
 
+    let EK = ir.EK;
+
     function stringKind(n: Node) {
         if (!n) return "<null>"
         return (<any>ts).SyntaxKind[n.kind]
@@ -31,6 +33,15 @@ namespace ts.yelm {
         //let tp = checker.getDeclaredTypeOfSymbol(def.symbol)
         let tp = typeOf(def)
         return isRefType(tp)
+    }
+
+    export function setLocationProps(l: ir.Location) {
+        l._isRef = isRefDecl(l.def)
+        l._isLocal = isLocalVar(l.def)
+        l._isGlobal = isGlobalVar(l.def)
+        if (!l.isRef() && typeOf(l.def).flags & TypeFlags.Void) {
+            oops("void-typed variable, " + l.toString())
+        }
     }
 
     function isStringLiteral(node: Node) {
@@ -237,16 +248,16 @@ namespace ts.yelm {
     }
 
 
-    type VarOrParam = VariableDeclaration | ParameterDeclaration;
+    export type VarOrParam = VariableDeclaration | ParameterDeclaration;
 
-    interface VariableAddInfo {
+    export interface VariableAddInfo {
         captured?: boolean;
         written?: boolean;
     }
 
-    interface FunctionAddInfo {
+    export interface FunctionAddInfo {
         capturedVars: VarOrParam[];
-        location?: Location;
+        location?: ir.Location;
         thisParameter?: ParameterDeclaration; // a bit bogus
     }
 
@@ -262,7 +273,7 @@ namespace ts.yelm {
         hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
 
         let bin: Binary;
-        let proc: Procedure;
+        let proc: ir.Procedure;
 
         function reset() {
             bin = new Binary();
@@ -395,7 +406,7 @@ namespace ts.yelm {
                 userError("void-typed variables not supported")
         }
 
-        function lookupLocation(decl: Declaration): Location {
+        function lookupLocation(decl: Declaration): ir.Location {
             if (isGlobalVar(decl)) {
                 markUsed(decl)
                 typeCheckVar(decl)
@@ -534,23 +545,20 @@ namespace ts.yelm {
         function emitLiteral(node: LiteralExpression) {
             if (node.kind == SyntaxKind.NumericLiteral) {
                 if ((<any>node).imageLiteral) {
-                    proc.emit("@js r0 = " + (<any>node).jsLit)
-                    proc.emitLdPtr((<any>node).imageLiteral, true)
+                    return ir.ptrlit((<any>node).imageLiteral, (<any>node).jsLit)
+                } else {
+                    return ir.numlit(parseInt(node.text))
                 }
-                else
-                    proc.emitInt(parseInt(node.text))
             } else if (isStringLiteral(node)) {
                 if (node.text == "") {
-                    proc.emitCall("string::mkEmpty", 0)
+                    return ir.rtcall("string::mkEmpty", [])
                 } else {
                     let lbl = bin.emitString(node.text)
-                    proc.emit("@js r0 = " + JSON.stringify(node.text))
-                    proc.emitLdPtr(lbl + "meta", false);
-                    proc.emitCallRaw("bitvm::stringData")
-                    proc.emit("push {r0}");
+                    let ptr = ir.ptrlit(lbl, JSON.stringify(node.text))
+                    return ir.rtcall("bitvm::stringData", [ptr])
                 }
             } else {
-                oops();
+                throw oops();
             }
         }
         function emitTemplateExpression(node: TemplateExpression) { }
@@ -566,25 +574,20 @@ namespace ts.yelm {
         function emitArrayLiteral(node: ArrayLiteralExpression) {
             let eltT = arrayElementType(typeOf(node))
             let isRef = isRefType(eltT)
+            let flag = 0
             if (eltT.flags & TypeFlags.String)
-                proc.emitInt(3);
+                flag = 3;
             else if (isRef)
-                proc.emitInt(1);
-            else
-                proc.emitInt(0);
-            proc.emitCall("collection::mk", 0)
+                flag = 1;
+            let coll = proc.emitTmp(ir.rtcall("collection::mk", [ir.numlit(flag)]))
             for (let elt of node.elements) {
-                emit(elt)
-                proc.emit("pop {r1}")
-                proc.emit("ldr r0, [sp, #0]")
-                if (isRef)
-                    proc.emit("push {r1}")
-                proc.emitCallRaw("collection::add")
+                let e = proc.emitTmp(emitExpr(elt))
+                proc.emitExpr(ir.rtcall("collection::add", [coll, e]))
                 if (isRef) {
-                    proc.emit("pop {r0}")
-                    proc.emitCallRaw("bitvm::decr")
+                    proc.emitExpr(ir.op(EK.Decr, [e]))
                 }
             }
+            return coll
         }
         function emitObjectLiteral(node: ObjectLiteralExpression) { }
         function emitPropertyAssignment(node: PropertyDeclaration) {
@@ -594,7 +597,7 @@ namespace ts.yelm {
         }
         function emitShorthandPropertyAssignment(node: ShorthandPropertyAssignment) { }
         function emitComputedPropertyName(node: ComputedPropertyName) { }
-        function emitPropertyAccess(node: PropertyAccessExpression) {
+        function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
             let attrs = parseComments(decl);
             if (decl.kind == SyntaxKind.EnumMember) {
@@ -605,24 +608,23 @@ namespace ts.yelm {
                 if (!inf)
                     userError(lf("unhandled enum value: {0}", ev))
                 if (inf.type == "E")
-                    proc.emitInt(inf.value)
+                    return ir.numlit(inf.value)
                 else if (inf.type == "F" && inf.args == 0)
-                    proc.emitCall(ev, 0)
+                    return ir.rtcall(ev, [])
                 else
-                    userError(lf("not valid enum: {0}; is it procedure name?", ev))
+                    throw userError(lf("not valid enum: {0}; is it procedure name?", ev))
             } else if (decl.kind == SyntaxKind.PropertySignature) {
                 if (attrs.shim) {
-                    emitShim(decl, node, [node.expression])
+                    return emitShim(decl, node, [node.expression])
                 } else {
-                    unhandled(node, "no {shim:...}");
+                    throw unhandled(node, "no {shim:...}");
                 }
             } else if (decl.kind == SyntaxKind.PropertyDeclaration) {
                 let idx = fieldIndex(node)
-                emit(node.expression)
-                proc.emitInt(idx)
-                proc.emitCall("bitvm::ldfld" + refSuff(node), 0) // internal unref
+                return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
+                //OLD proc.emitCall("bitvm::ldfld" + refSuff(node), 0) // internal unref
             } else {
-                unhandled(node, stringKind(decl));
+                throw unhandled(node, stringKind(decl));
             }
         }
 
@@ -686,20 +688,19 @@ namespace ts.yelm {
             return m
         }
 
-        function emitShim(decl: Declaration, node: Node, args: Expression[]) {
+        function emitShim(decl: Declaration, node: Node, args: Expression[]): ir.Expr {
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let nm = attrs.shim
 
             if (nm == "TD_NOOP") {
                 assert(!hasRet)
-                return
+                return ir.numlit(0)
             }
 
             if (nm == "TD_ID") {
                 assert(args.length == 1)
-                emit(args[0])
-                return
+                return emitExpr(args[0])
             }
 
             let inf = hex.lookupFunc(attrs.shim)
@@ -717,8 +718,7 @@ namespace ts.yelm {
                 userError("function not found: " + nm)
             }
 
-            args.forEach(emit)
-            proc.emitCall(attrs.shim, getMask(args), attrs.async);
+            return ir.rtcallMask(attrs.shim, getMask(args), attrs.async, args.map(emitExpr))
         }
 
         function isNumericLiteral(node: Expression) {
@@ -1179,7 +1179,11 @@ namespace ts.yelm {
                 let fld = info.allfields.filter(f => (<Identifier>f.name).text == pacc.name.text)[0]
                 if (!fld)
                     userError(lf("field {0} not found", pacc.name.text))
-                return info.allfields.indexOf(fld)
+                return {
+                    idx: info.allfields.indexOf(fld),
+                    name: pacc.name.text,
+                    isRef: isRefType(typeOf(pacc))
+                }
             } else {
                 throw unhandled(pacc, "bad field access")
             }
@@ -1190,6 +1194,7 @@ namespace ts.yelm {
             else return ""
         }
 
+        /* OLD
         function emitStore(expr: Expression) {
             if (expr.kind == SyntaxKind.Identifier) {
                 let decl = getDecl(expr)
@@ -1215,19 +1220,26 @@ namespace ts.yelm {
             } else {
                 unhandled(expr, "assignment target")
             }
-
-        }
+            }*/
 
         function handleAssignment(node: BinaryExpression) {
-            emit(node.right)
-            if (!isBogusReturn(node)) {
-                proc.emit("pop {r0}")
-                proc.emit("push {r0}")
-                proc.emit("push {r0}")
-                if (isRefType)
-                    proc.emitCallRaw("bitvm::incr");
+            let trg = emitExpr(node.left)
+            switch (trg.exprKind) {
+                case EK.FieldAccess:
+                case EK.LocalRef:
+                case EK.GlobalRef:
+                    break;
+
+                default:
+                    unhandled(node, "assignment target")
             }
-            emitStore(node.left)
+
+            let r = ir.op(EK.Store, [trg, emitExpr(node.left)])
+
+            if (isRefType(typeOf(node.right)))
+                r = ir.op(EK.Incr, [r])
+
+            return r
         }
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
@@ -1246,19 +1258,16 @@ namespace ts.yelm {
             proc.emit("push {r0}")
         }
 
-        function emitBinaryExpression(node: BinaryExpression) {
+        function emitBinaryExpression(node: BinaryExpression): ir.Expr {
             if (node.operatorToken.kind == SyntaxKind.EqualsToken) {
-                handleAssignment(node);
-                return
+                return handleAssignment(node);
             }
 
             let lt = typeOf(node.left)
             let rt = typeOf(node.right)
 
             let shim = (n: string) => {
-                emit(node.left)
-                emit(node.right)
-                proc.emitCall(n, getMask([node.left, node.right]))
+                return ir.rtcallMask(n, getMask([node.left, node.right]), false, [emitExpr(node.left), emitExpr(node.right)])
             }
 
             if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
@@ -1533,36 +1542,38 @@ namespace ts.yelm {
             node.statements.forEach(emit)
         }
 
-        function emitIntLiteral(n: number) {
-            proc.emitInt(n)
-        }
-
         function handleError(node: Node, e: any) {
             if (!e.bitvmUserError)
                 console.log(e.stack)
             error(node, e.message)
         }
 
-        function emit(node: Node) {
-            //if (proc)
-            //    proc.emit(";" + stringKind(node))
+        function emitExpr(node: Node): ir.Expr {
+            try {
+                let expr = emitExprCore(node);
+                if (expr.isExpr()) return expr
+                throw new Error("expecting expression")
+            } catch (e) {
+                handleError(node, e);
+                return null
+            }
+        }
+
+        function emit(node: Node): void {
             try {
                 emitNodeCore(node);
             } catch (e) {
                 handleError(node, e);
+                return null
             }
         }
 
-        function emitNodeCore(node: Node) {
+        function emitNodeCore(node: Node): void {
             switch (node.kind) {
+
+
                 case SyntaxKind.SourceFile:
                     return emitSourceFileNode(<SourceFile>node);
-                case SyntaxKind.NullKeyword:
-                    return emitIntLiteral(0);
-                case SyntaxKind.TrueKeyword:
-                    return emitIntLiteral(1);
-                case SyntaxKind.FalseKeyword:
-                    return emitIntLiteral(0);
                 case SyntaxKind.InterfaceDeclaration:
                     return emitInterfaceDeclaration(<InterfaceDeclaration>node);
                 case SyntaxKind.VariableStatement:
@@ -1585,20 +1596,8 @@ namespace ts.yelm {
                 case SyntaxKind.Block:
                 case SyntaxKind.ModuleBlock:
                     return emitBlock(<Block>node);
-                case SyntaxKind.NumericLiteral:
-                case SyntaxKind.StringLiteral:
-                case SyntaxKind.NoSubstitutionTemplateLiteral:
-                    //case SyntaxKind.RegularExpressionLiteral:                    
-                    //case SyntaxKind.TemplateHead:
-                    //case SyntaxKind.TemplateMiddle:
-                    //case SyntaxKind.TemplateTail:
-                    return emitLiteral(<LiteralExpression>node);
-                case SyntaxKind.PropertyAccessExpression:
-                    return emitPropertyAccess(<PropertyAccessExpression>node);
                 case SyntaxKind.VariableDeclaration:
                     return emitVariableDeclaration(<VariableDeclaration>node);
-                case SyntaxKind.Identifier:
-                    return emitIdentifier(<Identifier>node);
                 case SyntaxKind.IfStatement:
                     return emitIfStatement(<IfStatement>node);
                 case SyntaxKind.WhileStatement:
@@ -1614,6 +1613,39 @@ namespace ts.yelm {
                     return emitLabeledStatement(<LabeledStatement>node);
                 case SyntaxKind.ReturnStatement:
                     return emitReturnStatement(<ReturnStatement>node);
+                case SyntaxKind.ClassDeclaration:
+                    return emitClassDeclaration(<ClassDeclaration>node);
+                case SyntaxKind.PropertyDeclaration:
+                case SyntaxKind.PropertyAssignment:
+                    return emitPropertyAssignment(<PropertyDeclaration>node);
+                case SyntaxKind.Identifier:
+                    return emitIdentifier(<Identifier>node);
+                case SyntaxKind.TypeAliasDeclaration:
+                    // skip
+                    return
+                default:
+                    unhandled(node);
+            }
+        }
+
+        function emitExprCore(node: Node): ir.Expr {
+            switch (node.kind) {
+                case SyntaxKind.NullKeyword:
+                    return ir.numlit(null);
+                case SyntaxKind.TrueKeyword:
+                    return ir.numlit(true);
+                case SyntaxKind.FalseKeyword:
+                    return ir.numlit(false);
+                case SyntaxKind.NumericLiteral:
+                case SyntaxKind.StringLiteral:
+                case SyntaxKind.NoSubstitutionTemplateLiteral:
+                    //case SyntaxKind.RegularExpressionLiteral:                    
+                    //case SyntaxKind.TemplateHead:
+                    //case SyntaxKind.TemplateMiddle:
+                    //case SyntaxKind.TemplateTail:
+                    return emitLiteral(<LiteralExpression>node);
+                case SyntaxKind.PropertyAccessExpression:
+                    return emitPropertyAccess(<PropertyAccessExpression>node);
                 case SyntaxKind.BinaryExpression:
                     return emitBinaryExpression(<BinaryExpression>node);
                 case SyntaxKind.PrefixUnaryExpression:
@@ -1628,20 +1660,14 @@ namespace ts.yelm {
                     return emitTypeAssertion(<TypeAssertion>node);
                 case SyntaxKind.ArrayLiteralExpression:
                     return emitArrayLiteral(<ArrayLiteralExpression>node);
-                case SyntaxKind.ClassDeclaration:
-                    return emitClassDeclaration(<ClassDeclaration>node);
-                case SyntaxKind.PropertyDeclaration:
-                case SyntaxKind.PropertyAssignment:
-                    return emitPropertyAssignment(<PropertyDeclaration>node);
                 case SyntaxKind.NewExpression:
                     return emitNewExpression(<NewExpression>node);
-                case SyntaxKind.TypeAliasDeclaration:
-                    // skip
-                    return
                 case SyntaxKind.ThisKeyword:
                     return emitThis(node);
+
                 default:
                     unhandled(node);
+                    return null
 
                 /*    
                 case SyntaxKind.Parameter:
