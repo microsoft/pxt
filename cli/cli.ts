@@ -537,7 +537,14 @@ function deployCoreAsync(res: ts.yelm.CompileResult) {
 function runCoreAsync(res: ts.yelm.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
+        let trgName = mainPkg.getTarget()
+        let trg = yelm.rt.getTargets().filter(t => t.name == trgName)[0]
+        if (!trg) {
+            U.userError(U.lf("target {0} not supported", trg))
+        }
+        
         let r = new yelm.rt.Runtime(f)
+        trg.initCurrentRuntime();
         r.run(() => {
             console.log("DONE")
             yelm.rt.dumpLivePointers();

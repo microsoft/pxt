@@ -9,19 +9,19 @@ namespace yelm {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
-        getHexInfoAsync(extInfo:ts.yelm.ExtensionInfo): Promise<any>;
+        getHexInfoAsync(extInfo: ts.yelm.ExtensionInfo): Promise<any>;
         resolveVersionAsync(pkg: Package): Promise<string>;
     }
-    
+
     export interface PackageCard {
         promoUrl?: string;
         any?: number;
         hardware?: number;
-        software?:number;
-        power?:number;
-        toughness?:number;
+        software?: number;
+        power?: number;
+        toughness?: number;
     }
-    
+
     export interface PackageConfig {
         name: string;
         installedVersion?: string;
@@ -30,6 +30,7 @@ namespace yelm {
         files: string[];
         testFiles?: string[];
         public?: boolean;
+        target?: string;
         microbit?: ts.yelm.MicrobitConfig;
         card?: PackageCard;
     }
@@ -63,8 +64,8 @@ namespace yelm {
         }
 
         host() { return this.parent._host }
-        
-        readFile(fn:string) {
+
+        readFile(fn: string) {
             return this.host().readFile(this, fn)
         }
 
@@ -177,6 +178,25 @@ namespace yelm {
             this.deps[this.id] = this;
         }
 
+        getTarget() {
+            let trg = ""
+            let prevId = ""
+            U.iterStringMap(this.deps, (id, pkg) => {
+                if (pkg.config.target) {
+                    if (trg && trg != pkg.config.target) {
+                        U.userError(U.lf("package target mismatch, {0} -> {1} and {2} -> {3}", prevId, trg, id, pkg.config.target))
+                    } else {
+                        trg = pkg.config.target
+                        prevId = id
+                    }
+                }
+            })
+
+            if (!trg)
+                U.userError(U.lf("target not specified in any dependency"))
+            return trg
+        }
+
         installAllAsync() {
             return this.loadAsync(true)
         }
@@ -211,7 +231,7 @@ namespace yelm {
             return this.loadAsync()
                 .then(() => {
                     info(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
-                    let ext = cpp.getExtensionInfo(this)                    
+                    let ext = cpp.getExtensionInfo(this)
                     return this.host().getHexInfoAsync(ext)
                         .then(inf => {
                             delete ext.compileData;
@@ -266,7 +286,7 @@ namespace yelm {
                     "core": "*",
                     "game": "*",
                     "led": "*",
-                    "music": "*",                    
+                    "music": "*",
                     "radio": "*",
                     "pins": "*",
                     "serial": "*"
@@ -410,7 +430,7 @@ yotta_targets
 yelm_modules
 `,
         ".vscode/settings.json":
-`{
+        `{
     "editor.formatOnType": true,
     "files.autoSave": "afterDelay",
 	"search.exclude": {
@@ -420,9 +440,9 @@ yelm_modules
 		"**/yotta_targets": true,
 		"**/yelm_modules": true
 	}
-}`,     
+}`,
         ".vscode/tasks.json":
-`
+        `
 // A task runner that calls the Yelm compiler (yelm) and
 {
 	"version": "0.1.0",
@@ -452,6 +472,6 @@ yelm_modules
     	"args": ["publish"]
     }]
 }
-`        
+`
     }
 }
