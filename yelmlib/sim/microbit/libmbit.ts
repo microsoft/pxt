@@ -15,6 +15,10 @@ namespace yelm.rt.micro_bit {
     export function board() {
         return runtime.board as Board
     }
+    
+    export function enums() {
+        return runtime.enums as any as Enums
+    }
 
     export interface AnimationOptions {
         interval: number;
