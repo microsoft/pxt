@@ -26,7 +26,7 @@ namespace basic {
     //% imageLiteral=1 async
     //% blockId=device_show_leds
     //% block="show leds" icon="\uf00a"
-    export function showLeds(leds: string, interval: number = 400) : void { }
+    export function showLeds(leds: string, interval: number = 400): void { }
 
     /**
      * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.
@@ -55,14 +55,14 @@ namespace basic {
      * @param interval TODO
      */
     //% help=functions/show-animation shim=micro_bit::showAnimation imageLiteral=1 async
-    export function showAnimation(leds: string, interval: number = 400) : void { }
+    export function showAnimation(leds: string, interval: number = 400): void { }
 
     /**
      * Draws an image on the LED screen.
      * @param leds TODO
      */
     //% help=functions/plot-leds weight=80 shim=micro_bit::plotLeds imageLiteral=1
-    export function plotLeds(leds: string) : void { }
+    export function plotLeds(leds: string): void { }
 
     /**
      * Repeats the code forever in the background. On each iteration, allows other codes to run.
@@ -70,7 +70,7 @@ namespace basic {
      */
     //% help=functions/forever weight=55 blockGap=8
     //% blockId=device_forever block="forever" icon="\uf01e" shim=micro_bit::forever
-    export function forever(body:() => void) : void { }
+    export function forever(body: () => void): void { }
 
     /**
      * Pause for the specified time in milliseconds
