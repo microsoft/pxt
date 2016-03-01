@@ -106,6 +106,7 @@ export class Editor extends srceditor.Editor {
             scrollbars: true,
             media: "./blockly/media/",
             sound: true,
+            trashcan:false,
             zoom: {
                 enabled: true,
                 controls: true,
