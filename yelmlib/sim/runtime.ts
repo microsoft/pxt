@@ -1,15 +1,15 @@
 namespace yelm.rt {
     export type LabelFn = (n: number) => CodePtr;
     export type ResumeFn = (v?: any) => void;
-    
+
     export interface Target {
         name: string;
         initCurrentRuntime: () => void;
     }
-    
-    export function getTargets():Target[] {
+
+    export function getTargets(): Target[] {
         return [micro_bit.target]
-    } 
+    }
 
     export interface CodePtr {
         fn: LabelFn;
@@ -39,6 +39,7 @@ namespace yelm.rt {
         mem: any;
         errorHandler: (e: any) => void;
         dead = false;
+        target: Target;
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -70,7 +71,7 @@ namespace yelm.rt {
             this.dead = true
         }
 
-        updateDisplay() { 
+        updateDisplay() {
             this.board.updateView()
         }
 
@@ -86,7 +87,7 @@ namespace yelm.rt {
             }
         }
 
-        constructor(code: string) {
+        constructor(code: string, targetName: string) {
             // These variables are used by the generated code as well
             // ---
             var sp: number, lr: LR;
@@ -233,6 +234,14 @@ namespace yelm.rt {
             this.setupTop = setupTop
 
             runtime = this;
+
+            let trg = yelm.rt.getTargets().filter(t => t.name == targetName)[0]
+            if (!trg) {
+                U.userError(U.lf("target {0} not supported", targetName))
+            }
+            
+            this.target = trg;
+            trg.initCurrentRuntime();
         }
     }
 }

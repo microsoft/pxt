@@ -6,36 +6,25 @@ import * as sui from "./sui"
 import rt = yelm.rt;
 import U = yelm.U;
 
-export class MbitRuntime extends rt.Runtime {
-    constructor(code: string, private view:simsvg.MbitBoardSvg) {
-        super(code)
-        U.assert(!!view)
-        this.state = view.state;
-    }
-
-    updateDisplay() {
-        this.view.updateState()
-    }
-}
-
-export class MbitBoardView extends React.Component<simsvg.IBoardProps, rt.micro_bit.IBoard> {
+export class MicrobitBoardView extends React.Component<simsvg.IBoardProps, {}> {
     view: simsvg.MbitBoardSvg;
 
-    constructor(props: simsvg.IBoardProps) {
-        super(props);
-
-        this.state = rt.micro_bit.createBoard();
-        this.view = new simsvg.MbitBoardSvg(props, this.state);
-    }
-
-    componentDidMount() {
-        var el: any = this.refs["simsvg"];
-        el.appendChild(this.view.element);
-
-        this.forceUpdate();
+    componentDidUpdate() {
+        if (this.view && !$(this.view.element).parentsUntil("body").length) {
+            $(this.refs["simsvg"]).empty().append(this.view.element)
+        }
     }
 
     render() {
+        let runtime = this.props.runtime
+        
+        if (!runtime) return null
+        
+        if (runtime.target.name != "microbit") return null;
+
+        if (!this.view || this.view.board !== runtime.board)
+            this.view = new simsvg.MbitBoardSvg(this.props)
+
         var events = ["shake", "logo up", "logo down", "screen up", "screendown"];
         var eid = events[0];
         /*

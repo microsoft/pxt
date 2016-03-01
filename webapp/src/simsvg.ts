@@ -39,6 +39,7 @@ export function randomTheme() : IBoardTheme {
 }
 
 export interface IBoardProps {
+    runtime: yelm.rt.Runtime;
     theme?: IBoardTheme;
     disableTilt?:boolean;
 }
@@ -85,8 +86,11 @@ export class MbitBoardSvg
     private pins: SVGElement[];
     private ledsOuter: SVGElement[];
     private leds: SVGElement[];
+    public board: rt.micro_bit.Board;
        
-    constructor(public props: IBoardProps, public state: rt.micro_bit.IBoard) {
+    constructor(public props: IBoardProps) {
+        this.board = this.props.runtime.board as rt.micro_bit.Board;
+        this.board.updateView = () => this.updateState();
         this.buildDom();               
         this.updateTheme();
         this.updateState();
@@ -106,7 +110,7 @@ export class MbitBoardSvg
     }
     
     public updateState() {
-        let state = this.state;
+        let state = this.board;
         if (!state) return;
         let theme = this.props.theme;
         
@@ -126,7 +130,7 @@ export class MbitBoardSvg
     
     private updateTilt() {
         if (this.props.disableTilt) return;
-        let state = this.state;
+        let state = this.board;
         if (!state) return;
         
         var af = 10 / 1023;
@@ -222,7 +226,7 @@ export class MbitBoardSvg
     
     private attachEvents() {
         this.element.addEventListener("mousemove", (ev: MouseEvent) => {
-            var state = this.state;
+            var state = this.board;
             if (!state.acceleration) return;            
                 state.acceleration[0] = Math.floor(((ev.clientX / this.element.clientWidth) - 0.5) * 1023);
                 state.acceleration[1]  =Math.floor(((ev.clientY / this.element.clientHeight) - 0.5) * 1023);
@@ -230,7 +234,7 @@ export class MbitBoardSvg
                 this.updateTilt();
         }, false);
         this.element.addEventListener("mouseleave", (ev: MouseEvent) => {
-            var state = this.state;
+            var state = this.board;
             if (!state.acceleration) return;
             
                 state.acceleration[0] = 0;
@@ -241,18 +245,18 @@ export class MbitBoardSvg
         
         this.buttonsOuter.slice(0,2).forEach((btn, index) => {
             btn.addEventListener("mousedown", ev => {
-                var state = this.state;
+                var state = this.board;
                 state.buttonsPressed[index] = true;
                 Svg.fill(this.buttons[index], this.props.theme.buttonDown);                
             })
             btn.addEventListener("mouseup", ev => {
-                var state = this.state;
+                var state = this.board;
                 state.buttonsPressed[index] = false;
                 Svg.fill(this.buttons[index], this.props.theme.buttonUp);                
             })
         })
         this.buttonsOuter[2].addEventListener("mousedown", ev => {
-                var state = this.state;
+                var state = this.board;
                 state.buttonsPressed[0] = true;
                 state.buttonsPressed[1] = true;
                 state.buttonsPressed[1] = true;
@@ -261,7 +265,7 @@ export class MbitBoardSvg
                 Svg.fill(this.buttons[2], this.props.theme.buttonDown);                
             })
         this.buttonsOuter[2].addEventListener("mouseup", ev => {
-                var state = this.state;
+                var state = this.board;
                 state.buttonsPressed[0] = false;
                 state.buttonsPressed[1] = false;
                 state.buttonsPressed[1] = false;
