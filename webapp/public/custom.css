@@ -239,4 +239,7 @@
         min-width:200px; 
         top:initial;           
     }
+    .blocklyTreeLabel {
+        font-size:14px;
+    }    
 }
