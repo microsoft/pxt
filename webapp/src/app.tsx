@@ -426,26 +426,28 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 <div class="ui two column grid">
   <div class="column">
     <div id="newblockproject" class="ui fluid card link">
-        <div class="image">
-        <img src="/images/newblock.png">
+        <div class="ui slide masked reveal image">
+            <img class="visible content" src="/images/newblock.png">
+            <img class="hidden content" src="/images/newblock2.png">
         </div>
         <div class="content">
         <div class="header">Block Editor</div>
-        <div class="meta">
-            <a>${lf("Drag and Drop Coding")}</a>
+        <div class="description">
+            ${lf("Drag and Drop Coding")}
         </div>
         </div>
     </div>
   </div>
   <div class="column">
     <div id="newtypescript" class="ui fluid card link">
-        <div class="image">
-        <img src="/images/newtypescript.png">
+        <div class="ui slide masked reveal image">
+            <img class="visible content" src="/images/newtypescript.png">
+            <img class="hidden content" src="/images/newtypescript2.png">
         </div>
         <div class="content">
         <div class="header">JavaScript</div>
-        <div class="meta">
-            <span class="date">${lf("Text based Coding")}</span>
+        <div class="description">
+            ${lf("Text based Coding")}
         </div>
         </div>
     </div>
@@ -459,8 +461,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         </div>
         <div class="content">
         <div class="header">Kodu</div>
-        <div class="meta">
-            <a>${lf("Tile based Coding")}</a>
+        <div class="description">
+            ${lf("Tile based Coding")}
         </div>
         </div>
     </div>
@@ -472,8 +474,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         </div>
         <div class="content">
         <div class="header">Visual Studio Code</div>
-        <div class="meta">
-            <span class="date">${lf("For Professional Developers")}</span>
+        <div class="description">
+            ${lf("For Professional Developers")}
         </div>
         </div>
     </div>
