@@ -6,7 +6,9 @@
         "core.d.ts",
         "helpers.ts",
         "basic.ts",
-        "control.ts"
+        "control.ts",
+        "world.ts",
+        "player.ts"
     ],
     "target": "minecraft",
     "public": true,
