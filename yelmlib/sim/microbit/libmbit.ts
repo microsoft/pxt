@@ -203,8 +203,52 @@ namespace yelm.rt.micro_bit {
             return bts[2] || (bts[0] && bts[0]);
     }
     
-    export function isPinTouched(pin: number) : boolean {
-        return board().pinsTouched[pin];
+    export function ioP0() { return board().pins[0]; }
+    export function ioP1() { return board().pins[1]; }
+    export function ioP2() { return board().pins[2]; }
+    export function ioP3() { return board().pins[3]; }
+    export function ioP4() { return board().pins[4]; }
+    export function ioP5() { return board().pins[5]; }
+    export function ioP6() { return board().pins[6]; }
+    export function ioP7() { return board().pins[7]; }
+    export function ioP8() { return board().pins[8]; }
+    export function ioP9() { return board().pins[9]; }
+    export function ioP10() { return board().pins[10]; }
+    export function ioP11() { return board().pins[11]; }
+    export function ioP12() { return board().pins[12]; }
+    export function ioP13() { return board().pins[13]; }
+    export function ioP14() { return board().pins[14]; }
+    export function ioP15() { return board().pins[15]; }
+    export function ioP16() { return board().pins[16]; }
+    export function ioP19() { return board().pins[19]; }
+    export function ioP20() { return board().pins[20]; }
+    
+    export function isPinTouched(pin: Pin) : boolean {
+        return pin.touched;
+    }
+    
+    export function compassHeading() : number {
+        var b = board();
+        if (!b.usesAcceleration) {
+            b.usesAcceleration = true;
+            runtime.queueDisplayUpdate();
+        }
+        return b.heading;       
+    }
+    
+    export function getAcceleration(dimension: number) : number {
+        var b = board();
+        if (!b.usesAcceleration) {
+            b.usesAcceleration = true;
+            runtime.queueDisplayUpdate();
+        }
+        var acc = b.acceleration;
+        switch(dimension) {
+            case 0: return acc[0];
+            case 1: return acc[1];
+            case 2: return acc[2];
+            default: return Math.sqrt(acc[0]*acc[0]+acc[1]*acc[1]+acc[2]*acc[2]);
+        }
     }
     
     export function lightLevel() : number {

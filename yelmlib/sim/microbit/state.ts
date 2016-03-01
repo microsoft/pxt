@@ -3,6 +3,13 @@ namespace yelm.rt.micro_bit {
         bw,
         greyscale
     }
+    
+    export class Pin {
+        touched = false;
+        value = 0;
+        input = false;
+        analog = false;
+    }
 
     export class Board extends BaseBoard {
         id: string;
@@ -18,12 +25,15 @@ namespace yelm.rt.micro_bit {
         buttonsPressed = [false, false, false];
 
         // pins
-        pinsTouched = [false, false, false];
+        pins = Util.repeatMap(20, i => new Pin())
 
         // sensors    
         usesAcceleration = false;
         acceleration = [0, 0, -1023];
+        
+        usesHeading = false;
         heading = 90;
+        
         temperature = 21;
         lightLevel = 128;
         
