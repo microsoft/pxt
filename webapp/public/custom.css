@@ -214,3 +214,32 @@
 .highlight {
     border-bottom: 2px solid #FFC107;     
 }
+
+.ui.portrait.only {
+    display:none;    
+}
+
+/* protrait mode */
+@media screen and (max-width: 768px) {
+    #maineditor {
+        left: 0;
+    }
+    .ui.landscape.only {
+        display:none !important;
+    }
+    .ui.portrait.only {
+        display:inherit !important;
+    }
+    #filelist {
+        position:absolute;
+        z-index:5;
+        bottom:1rem;
+        left:1rem;
+        width: 30%;
+        min-width:200px; 
+        top:initial;           
+    }
+    .blocklyTreeLabel {
+        font-size:14px;
+    }    
+}

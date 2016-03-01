@@ -44,6 +44,8 @@ export interface CodeCardProps {
     time?: number;
     card?: yelm.PackageCard;
     url?: string;
+    
+    onClick?: (e: React.MouseEvent) => boolean;
 }
 export interface CodeCardState { }
 
@@ -69,7 +71,7 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
         }
 
         return (
-            <div className={"ui card " + color}>
+            <div className={"ui card " + color + (this.props.onClick ? " link" : "")} onClick={this.props.onClick}>
                 {this.props.header ?
                 <div key="header" className="content">
                     <div className="right floated meta">
@@ -93,13 +95,14 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
                     </div>
                     <div className="description">{this.props.description || lf("No description.") }</div>
                 </div>
-                <div className="extra content">
+                {this.props.url || card.power || card.toughness ?
+                <div key="extra" className="extra content">
                     {card.power || card.toughness ? (<div key="powertough" className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
                     {this.props.url ?
                     <a target="_blank" href={this.props.url}>
                         {this.props.url}
                     </a> : ""}
-                </div>
+                </div> : ""}
             </div>
         )
     }

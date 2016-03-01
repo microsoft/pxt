@@ -473,11 +473,11 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <div className="item">
+            <div>
                 {this.currFile && this.currFile.isVirtual
-                    ? <sui.Button class="button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
+                    ? <sui.Button class="ui button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
                     : '' }
-                <sui.DropdownMenu class="button floating" text={lf("Edit") } icon="edit">
+                <sui.DropdownMenu class="ui button floating" text={lf("Edit") } icon="edit">
                     <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
                     <sui.Item icon="wizard" text={lf("Replace") } onClick={() => this.editor.execCommand("replace") } />
                     <sui.Item icon="help circle" text={lf("Keyboard shortcuts") } onClick={() => this.editor.execCommand("showKeyboardShortcuts") } />
@@ -769,12 +769,14 @@ export class Editor extends srceditor.Editor {
     private annotationToCodeCard(annotation : AceAjax.Annotation) : codecard.CodeCardProps {
            if (!annotation) return undefined;
            return {
+               header: lf("line {0}", annotation.row+1),
                name: lf("error"),
                description: annotation.text,
                color: 'red',
-               card: {
-                   power: annotation.row,
-                   toughness: annotation.column
+               onClick: (e) => {
+                this.setViewState(annotation);
+                e.preventDefault();
+                return false;
                }
            }
     }
