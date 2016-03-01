@@ -126,8 +126,8 @@ export class MicrobitBoardSvg
         })
         
         this.updateTilt();     
-        (<any>this.buttonsOuter[2]).style.visibility = this.state.buttonAB ? 'visible' : 'hidden';   
-        (<any>this.buttons[2]).style.visibility = this.state.buttonAB ? 'visible' : 'hidden';   
+        (<any>this.buttonsOuter[2]).style.visibility = state.buttonAB ? 'visible' : 'hidden';   
+        (<any>this.buttons[2]).style.visibility = state.buttonAB ? 'visible' : 'hidden';   
     }
     
     private updateTilt() {
