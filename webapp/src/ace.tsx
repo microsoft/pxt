@@ -769,12 +769,14 @@ export class Editor extends srceditor.Editor {
     private annotationToCodeCard(annotation : AceAjax.Annotation) : codecard.CodeCardProps {
            if (!annotation) return undefined;
            return {
+               header: lf("line {0}", annotation.row+1),
                name: lf("error"),
                description: annotation.text,
                color: 'red',
-               card: {
-                   power: annotation.row,
-                   toughness: annotation.column
+               onClick: (e) => {
+                this.setViewState(annotation);
+                e.preventDefault();
+                return false;
                }
            }
     }
