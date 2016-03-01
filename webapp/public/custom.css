@@ -222,9 +222,10 @@
 #simulatoroverlay {
     position:absolute;
     z-index:5;
-    bottom:2rem;
-    left:5rem;
-    width: 30%;    
+    bottom:1rem;
+    left:1rem;
+    width: 30%;
+    min-width:200px;    
 }
 
 /* protrait mode */

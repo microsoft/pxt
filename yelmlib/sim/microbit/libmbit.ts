@@ -192,8 +192,8 @@ namespace yelm.rt.micro_bit {
     
     /* input */
     export function isButtonPressed(button : number) : boolean {
-        if (button == 2 && !board().buttonAB) {
-            board().buttonAB = true;
+        if (button == 2 && !board().usesButtonAB) {
+            board().usesButtonAB = true;
             runtime.queueDisplayUpdate();
         }
         var bts = board().buttonsPressed;
