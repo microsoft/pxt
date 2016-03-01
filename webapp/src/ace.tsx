@@ -5,6 +5,7 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
+import * as codecard from "./codecard";
 
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
@@ -762,7 +763,20 @@ export class Editor extends srceditor.Editor {
                 }
             }
         sess.setAnnotations(ann)
-
+        this.parent.setHelp(this.annotationToCodeCard(ann[0]))
+    }
+    
+    private annotationToCodeCard(annotation : AceAjax.Annotation) : codecard.CodeCardProps {
+           if (!annotation) return undefined;
+           return {
+               name: lf("error"),
+               description: annotation.text,
+               color: 'red',
+               card: {
+                   power: annotation.row,
+                   toughness: annotation.column
+               }
+           }
     }
 
     setDiagnostics(file: pkg.File, snapshot: string[]) {
