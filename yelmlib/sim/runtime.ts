@@ -38,7 +38,9 @@ namespace yelm.rt {
         numGlobals = 1000;
         mem: any;
         errorHandler: (e: any) => void;
+        stateChanged: () => void;
         dead = false;
+        running = false;
         target: Target;
 
         getResume: () => ResumeFn;
@@ -69,6 +71,8 @@ namespace yelm.rt {
 
         kill() {
             this.dead = true
+            // TODO fix this
+            this.setRunning(false);
         }
 
         updateDisplay() {
@@ -85,6 +89,13 @@ namespace yelm.rt {
                 this.numDisplayUpdates = 0
                 this.updateDisplay()
             }
+        }
+        
+        setRunning(r : boolean) {
+            if (this.running != r) {
+                this.running = r;
+                if (this.stateChanged) this.stateChanged();                                
+            }            
         }
 
         constructor(code: string, targetName: string) {
@@ -183,6 +194,8 @@ namespace yelm.rt {
 
             function topCall(fn: LabelFn, cb: ResumeFn) {
                 U.assert(!!_this.board)
+                U.assert(!_this.running)
+                _this.setRunning(true);
                 setupTopCore(cb)
                 loop(actionCall(fn, 0))
             }

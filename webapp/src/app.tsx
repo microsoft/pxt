@@ -618,9 +618,14 @@ Ctrl+Shift+B
             core.errorNotification(e.message)
             console.error("Simulator error", e.stack)
         }
+        r.stateChanged = () => { this.forceUpdate() }
+    }
+    
+    stopSimulator() {
+        if (this.simRuntime) this.simRuntime.kill();
     }
 
-    run() {
+    runSimulator() {
         let state = this.editor.snapshotState()
         compiler.compileAsync()
             .then(resp => {
@@ -628,7 +633,6 @@ Ctrl+Shift+B
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
                     this.setupRuntime(js)
-                    this.forceUpdate()
                     this.simRuntime.run(() => {
                         console.log("DONE")
                         yelm.rt.dumpLivePointers();
@@ -732,7 +736,9 @@ Ctrl+Shift+B
                         <minecraftView.BoardView ref="minesimulator" runtime={this.simRuntime} />
                     </div>
                     <div className="item">
-                        <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
+                        {this.simRuntime && this.simRuntime.running 
+                            ? <sui.Button key='stopbtn' class='primary' icon='stop' text={lf("Stop") } onClick={() => this.stopSimulator() } />
+                            : <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } /> }
                         <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />
                         <sui.Button icon='folder' onClick={() => {
                             this.setState({ showFiles: !this.state.showFiles });

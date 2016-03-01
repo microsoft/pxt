@@ -88,7 +88,12 @@ namespace yelm.rt.micro_bit {
     }
 
     export function plot(x: number, y: number) {
-        board().image.set(x, y, 1);
+        board().image.set(x, y, 255);
+        runtime.queueDisplayUpdate()
+    }
+    
+    export function unPlot(x: number, y: number) {
+        board().image.set(x, y, 0);
         runtime.queueDisplayUpdate()
     }
 
