@@ -1,7 +1,5 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as simsvg from "./simsvg";
-import * as simview from "./simview"
 import * as sui from "./sui"
 import * as blockspreview from "./blockspreview"
 

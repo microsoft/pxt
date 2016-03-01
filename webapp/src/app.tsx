@@ -5,8 +5,7 @@ import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
-import * as simview from "./simview";
-import * as simsvg from "./simsvg"
+import * as microbitView from "./microbit/view";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as blocklyloader from "./blocklyloader"
@@ -598,7 +597,7 @@ Ctrl+Shift+B
     setupRuntime(js:string) {
         if (this.simRuntime)
             this.simRuntime.kill();
-        let sim = this.refs["simulator"] as simview.MicrobitBoardView
+        let sim = this.refs["simulator"] as microbitView.MicrobitBoardView
         let r = new yelm.rt.Runtime(js, pkg.mainPkg.getTarget())
         this.simRuntime = r
         r.errorHandler = (e: any) => {
@@ -713,7 +712,7 @@ Ctrl+Shift+B
                 </div>
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
-                        <simview.MicrobitBoardView ref="simulator" runtime={this.simRuntime}  theme={simsvg.randomTheme() }/>
+                        <microbitView.MicrobitBoardView ref="simulator" runtime={this.simRuntime} />
                     </div>
                     <div className="item">
                         <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />

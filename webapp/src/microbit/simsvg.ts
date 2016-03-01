@@ -74,7 +74,7 @@ class Svg {
     
 }
 
-export class MbitBoardSvg
+export class MicrobitBoardSvg
 {
     public element : SVGSVGElement;
     private g: SVGElement;

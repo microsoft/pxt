@@ -1,13 +1,13 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as simsvg from "./simsvg";
-import * as sui from "./sui"
+import * as sui from "../sui"
 
 import rt = yelm.rt;
 import U = yelm.U;
 
 export class MicrobitBoardView extends React.Component<simsvg.IBoardProps, {}> {
-    view: simsvg.MbitBoardSvg;
+    view: simsvg.MicrobitBoardSvg;
 
     componentDidUpdate() {
         if (this.view && !$(this.view.element).parentsUntil("body").length) {
@@ -17,13 +17,17 @@ export class MicrobitBoardView extends React.Component<simsvg.IBoardProps, {}> {
 
     render() {
         let runtime = this.props.runtime
-        
+
         if (!runtime) return null
-        
+
         if (runtime.target.name != "microbit") return null;
 
-        if (!this.view || this.view.board !== runtime.board)
-            this.view = new simsvg.MbitBoardSvg(this.props)
+        if (!this.view || this.view.board !== runtime.board) {
+            let props = U.flatClone(this.props)
+            if (!props.theme)
+                props.theme = simsvg.randomTheme();
+            this.view = new simsvg.MicrobitBoardSvg(props)
+        }
 
         var events = ["shake", "logo up", "logo down", "screen up", "screendown"];
         var eid = events[0];
