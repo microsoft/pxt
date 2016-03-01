@@ -509,13 +509,13 @@ Ctrl+Shift+B
     newTypeScriptProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} bit", Util.getAwesomeAdj()),
-            dependencies: { 
-                "microbit": "*", 
-                "microbit-led":"*", 
-                "microbit-music": "*", 
-                "microbit-radio": "*", 
-                "microbit-game":"*", 
-                "microbit-pins":"*" 
+            dependencies: {
+                "microbit": "*",
+                "microbit-led": "*",
+                "microbit-music": "*",
+                "microbit-radio": "*",
+                "microbit-game": "*",
+                "microbit-pins": "*"
             },
             description: "",
             files: ["main.ts", "README.md"]
@@ -541,13 +541,13 @@ Ctrl+Shift+B
     newBlocksProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} block", Util.getAwesomeAdj()),
-            dependencies: { 
-                "microbit": "*", 
-                "microbit-led":"*", 
-                "microbit-music": "*", 
-                "microbit-radio": "*", 
-                "microbit-game":"*", 
-                "microbit-pins":"*" 
+            dependencies: {
+                "microbit": "*",
+                "microbit-led": "*",
+                "microbit-music": "*",
+                "microbit-radio": "*",
+                "microbit-game": "*",
+                "microbit-pins": "*"
             },
             description: "",
             files: ["main.blocks", "main.blocks.ts", "README.md"]
@@ -611,7 +611,7 @@ Ctrl+Shift+B
     }
 
     simRuntime: yelm.rt.Runtime;
-    setupRuntime(js:string) {
+    setupRuntime(js: string) {
         if (this.simRuntime)
             this.simRuntime.kill();
         let r = new yelm.rt.Runtime(js, pkg.mainPkg.getTarget())
@@ -622,7 +622,7 @@ Ctrl+Shift+B
         }
         r.stateChanged = () => { this.forceUpdate() }
     }
-    
+
     stopSimulator() {
         if (this.simRuntime) this.simRuntime.kill();
     }
@@ -649,7 +649,7 @@ Ctrl+Shift+B
     editText() {
         if (this.editor != this.aceEditor) {
             this.updateEditorFile(this.aceEditor)
-           this.forceUpdate();
+            this.forceUpdate();
         }
     }
 
@@ -699,7 +699,7 @@ Ctrl+Shift+B
             <div id='root' className={"full-abs " + inv}>
                 <div id="menubar">
                     <div className={"ui menu" + inv}>
-                        <div className="item">
+                        <div className="ui item">
                             <div className="ui buttons">
                                 <sui.Button text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
@@ -710,22 +710,28 @@ Ctrl+Shift+B
                                 </sui.DropdownMenu>
                             </div>
                         </div>
-                        <div className="item">
+                        <div className="ui item landscape only">
                             <SlotSelector parent={this} />
                         </div>
-                        {this.editor.menu() }
-                        <div className="item right">
+                        <div id="actionbar" className="ui item">
+                            {this.simRuntime && this.simRuntime.running
+                                ? <sui.Button key='stopbtn' class='icon primary portrait only' icon='stop' onClick={() => this.stopSimulator() } />
+                                : <sui.Button key='runbtn' class='icon primary portrait only' icon='play' onClick={() => this.runSimulator() } /> }
+                            <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } />
+                            {this.editor.menu() }
+                        </div>
+                        <div className="ui item right">
                             <LoginBox />
                         </div>
                     </div>
                 </div>
-                <div id="filelist">
+                <div id="filelist" className="ui landscape only">
                     <div id="mbitboardview" className="ui vertical">
-                        <microbitView.BoardView ref="simulator" runtime={this.simRuntime} />
-                        <minecraftView.BoardView ref="minesimulator" runtime={this.simRuntime} />
+                        <microbitView.BoardView ref="microbitsimulator" runtime={this.simRuntime} />
+                        <minecraftView.BoardView ref="minecraftsimulator" runtime={this.simRuntime} />
                     </div>
-                    <div className="item">
-                        {this.simRuntime && this.simRuntime.running 
+                    <div className="ui item">
+                        {this.simRuntime && this.simRuntime.running
                             ? <sui.Button key='stopbtn' class='primary' icon='stop' text={lf("Stop") } onClick={() => this.stopSimulator() } />
                             : <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } /> }
                         <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />
@@ -739,6 +745,10 @@ Ctrl+Shift+B
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div className="ui large screen only grid" id="helpcard"><codecard.CodeCard {...this.state.helpCard} /></div> : null }
+                </div>
+                <div id="simulatoroverlay" className="ui vertical portrait only">
+                    <microbitView.BoardView ref="microbitsimulatoroverlay" runtime={this.simRuntime} />
+                    <minecraftView.BoardView ref="minecraftsimulatoroverlay" runtime={this.simRuntime} />
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
             </div>

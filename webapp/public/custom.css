@@ -214,3 +214,28 @@
 .highlight {
     border-bottom: 2px solid #FFC107;     
 }
+
+.ui.portrait.only {
+    display:none;    
+}
+
+#simulatoroverlay {
+    position:absolute;
+    z-index:5;
+    bottom:2rem;
+    left:5rem;
+    width: 30%;    
+}
+
+/* protrait mode */
+@media screen and (max-width: 768px) {
+    #maineditor {
+        left: 0;
+    }
+    .ui.landscape.only {
+        display:none !important;
+    }
+    .ui.portrait.only {
+        display:inherit !important;
+    }
+}
