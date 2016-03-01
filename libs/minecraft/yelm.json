@@ -1,0 +1,15 @@
+{
+    "name": "minecraft",
+    "description": "The core minecraft library",
+    "files": [
+        "README.md",
+        "core.d.ts",
+        "helpers.ts",
+        "basic.ts",
+        "control.ts"
+    ],
+    "target": "minecraft",
+    "public": true,
+    "dependencies": {},
+    "installedVersion": "psbckh"
+}

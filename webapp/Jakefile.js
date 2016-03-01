@@ -51,7 +51,8 @@ ju.catFiles('built/yelmembed.js', [
     "../libs/microbit-led/built/yelmembed.js", 
     "../libs/microbit-pins/built/yelmembed.js", 
     "../libs/microbit-serial/built/yelmembed.js",
-    "../libs/microbit-devices/built/yelmembed.js"
+    "../libs/microbit-devices/built/yelmembed.js",
+    "../libs/minecraft/built/yelmembed.js"
     ])
 
 

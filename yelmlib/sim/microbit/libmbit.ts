@@ -2,6 +2,20 @@
 
 namespace yelm.rt.micro_bit {
 
+    function initBoard() {
+        U.assert(!runtime.board)
+        runtime.board = new Board()
+    }
+    
+    export var target:Target = {
+        name: "microbit",
+        initCurrentRuntime: initBoard
+    }
+
+    export function board() {
+        return runtime.board as Board
+    }
+
     export interface AnimationOptions {
         interval: number;
         // false means last frame
@@ -12,8 +26,8 @@ namespace yelm.rt.micro_bit {
     export class AnimationQueue {
         private queue: AnimationOptions[] = [];
         private process: () => void;
-        
-        constructor(private runtime:Runtime) {
+
+        constructor(private runtime: Runtime) {
             this.process = () => {
                 let top = this.queue[0]
                 if (!top) return
@@ -74,28 +88,29 @@ namespace yelm.rt.micro_bit {
     }
 
     export function plot(x: number, y: number) {
-        runtime.state.image.set(x, y, 1);
+        board().image.set(x, y, 1);
         runtime.queueDisplayUpdate()
     }
 
-    export function showAnimation(leds: state.Image, interval: number = 400): void {
+    export function showAnimation(leds: micro_bit.Image, interval: number = 400): void {
         let cb = getResume()
         let off = 0
-        runtime.animationQ.enqueue({
+
+        board().animationQ.enqueue({
             interval: interval,
             frame: () => {
                 if (off >= leds.width)
                     return false;
-                leds.copyTo(off, 5, runtime.state.image, 0)
-                off += 5;                                
+                leds.copyTo(off, 5, board().image, 0)
+                off += 5;
                 return true;
             },
             whenDone: cb
         })
     }
 
-    export function plotLeds(leds: state.Image): void {
-        leds.copyTo(0, 5, runtime.state.image, 0)
+    export function plotLeds(leds: micro_bit.Image): void {
+        leds.copyTo(0, 5, board().image, 0)
         runtime.queueDisplayUpdate()
     }
 

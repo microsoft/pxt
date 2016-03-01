@@ -5,8 +5,8 @@ import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
-import * as simview from "./simview";
-import * as simsvg from "./simsvg"
+import * as microbitView from "./microbit/view";
+import * as minecraftView from "./minecraft/view";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as blocklyloader from "./blocklyloader"
@@ -84,13 +84,13 @@ class Settings extends data.Component<ISettingsProps, {}> {
 }
 
 class SlotSelector extends data.Component<ISettingsProps, {}> {
-    
+
     componentDidMount() {
         let headers: workspace.Header[] = this.getData("header:*")
         if (!headers.length)
             this.props.parent.newProject(true);
     }
-    
+
     renderCore() {
         let par = this.props.parent
         let headers: workspace.Header[] = this.getData("header:*")
@@ -104,8 +104,8 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
             par.saveFileAsync()
                 .then(() => par.state.currFile.epkg.savePkgAsync())
                 .then(() => {
-                    data.setOnline(true)                    
-                    return workspace.syncAsync()                    
+                    data.setOnline(true)
+                    return workspace.syncAsync()
                 })
                 .done()
         }
@@ -156,7 +156,7 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
         }
         return (
             <sui.Modal ref={v => this.modal = v} header={lf("Search for scripts...") } addClass="large searchdialog" >
-                
+
                 <div className="ui content form">
                     <div className="ui fluid icon input">
                         <input type="text" placeholder="Search..." onChange={upd} />
@@ -298,7 +298,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveTypeScript()
         return this.editorFile.setContentAsync(this.editor.getCurrentSource())
     }
-    
+
     public typecheckNow() {
         this.saveFile();
         this.typecheck()
@@ -371,7 +371,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setFile(fn: pkg.File) {
-        this.setState({ 
+        this.setState({
             currFile: fn,
             helpCard: undefined
         })
@@ -388,6 +388,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let file = main.getMainFile()
                 if (e)
                     file = main.lookupFile(e.name) || file
+                this.setupRuntime(";") // setup for empty program
                 this.setState({
                     header: h,
                     currFile: file
@@ -398,7 +399,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 }
             })
     }
-    
+
     removeProject() {
         core.confirmDelete(pkg.mainEditorPkg().header.name, () => {
             let curr = pkg.mainEditorPkg().header
@@ -409,17 +410,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 })
         })
     }
-    
+
     newProject(hideCancel = false) {
         core.confirmAsync({
             header: lf("Create new project"),
             hideCancel: hideCancel,
             hideAgree: true,
             onLoaded: (_) => {
-                _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProject()})
-                _.find('#newtypescript').click(() => {_.modal('hide'); this.newTypeScriptProject()})
+                _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProject() })
+                _.find('#newtypescript').click(() => { _.modal('hide'); this.newTypeScriptProject() })
                 _.find('#newkodu').click(() => { window.location.href = 'https://www.kodugamelab.com/bbc-microbit/' })
-                _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject()})
+                _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject() })
             },
             htmlBody: `
 <div class="ui two column grid">
@@ -481,12 +482,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 `
         }).done();
     }
-    
+
     newVisualStudioProject() {
         core.confirmAsync({
             header: lf("New Visual Studio Code project"),
             htmlBody:
-`<p>${lf("<b>yelm</b> comes with command line tools to integrate into existing editors.")}
+            `<p>${lf("<b>yelm</b> comes with command line tools to integrate into existing editors.")}
 ${lf("To create an new yelm project, <a href='{0}' target='_blank'>install Node.js</a>, open a console and run:", "https://nodejs.org/en/download/")}</p>
 <pre>
 [sudo] npm install -g yelm-cli
@@ -499,7 +500,7 @@ code .
 Ctrl+Shift+B
 </pre>
 `,
-            agreeLbl: lf("Got it!")      
+            agreeLbl: lf("Got it!")
         }).done();
     }
 
@@ -568,7 +569,7 @@ Ctrl+Shift+B
             .done()
     }
 
-    saveTypeScript(open?:boolean) {
+    saveTypeScript(open?: boolean) {
         if (!this.editor) return
         if (this.editorFile.epkg != pkg.mainEditorPkg())
             return;
@@ -579,10 +580,10 @@ Ctrl+Shift+B
             if (open) this.setFile(f);
         }
     }
-    
-    openBlocks(file : pkg.File) {
+
+    openBlocks(file: pkg.File) {
         if (file.isVirtual) {
-            var bfname = file.getName().substr(0, file.getName().length-".ts".length);
+            var bfname = file.getName().substr(0, file.getName().length - ".ts".length);
             var bfile = pkg.mainEditorPkg().lookupFile(bfname);
             if (bfile) this.setFile(bfile);
         }
@@ -592,7 +593,7 @@ Ctrl+Shift+B
         console.log('compiling...')
         let state = this.editor.snapshotState()
         compiler.compileAsync()
-            .then(resp => {                
+            .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
                 let hex = resp.outfiles["microbit.hex"]
@@ -607,7 +608,17 @@ Ctrl+Shift+B
             .done()
     }
 
-    simRuntime: simview.MbitRuntime;
+    simRuntime: yelm.rt.Runtime;
+    setupRuntime(js:string) {
+        if (this.simRuntime)
+            this.simRuntime.kill();
+        let r = new yelm.rt.Runtime(js, pkg.mainPkg.getTarget())
+        this.simRuntime = r
+        r.errorHandler = (e: any) => {
+            core.errorNotification(e.message)
+            console.error("Simulator error", e.stack)
+        }
+    }
 
     run() {
         let state = this.editor.snapshotState()
@@ -616,16 +627,9 @@ Ctrl+Shift+B
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
-                    if (this.simRuntime)
-                        this.simRuntime.kill();
-                    let sim = this.refs["simulator"] as simview.MbitBoardView
-                    let r = new simview.MbitRuntime(js, sim.view)
-                    this.simRuntime = r
-                    r.errorHandler = (e: any) => {
-                        core.errorNotification(e.message)
-                        console.error("Simulator error", e.stack)
-                    }
-                    r.run(() => {
+                    this.setupRuntime(js)
+                    this.forceUpdate()
+                    this.simRuntime.run(() => {
                         console.log("DONE")
                         yelm.rt.dumpLivePointers();
                         core.infoNotification("Done, check console")
@@ -668,7 +672,7 @@ Ctrl+Shift+B
             })
             .done()
     }
-    
+
     setHelp(helpCard: codecard.CodeCardProps) {
         this.setState({ helpCard: helpCard })
     }
@@ -695,7 +699,7 @@ Ctrl+Shift+B
                     <div className={"ui menu" + inv}>
                         <div className="item">
                             <div className="ui buttons">
-                                <sui.Button text={lf("New Project")} onClick={() => this.newProject() } />
+                                <sui.Button text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
                                     <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
@@ -722,7 +726,8 @@ Ctrl+Shift+B
                 </div>
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
-                        <simview.MbitBoardView ref="simulator" theme={simsvg.randomTheme() } />
+                        <microbitView.BoardView ref="simulator" runtime={this.simRuntime} />
+                        <minecraftView.BoardView ref="minesimulator" runtime={this.simRuntime} />
                     </div>
                     <div className="item">
                         <sui.Button class='primary' icon='play' text={lf("Run") } onClick={() => this.run() } />
@@ -732,7 +737,7 @@ Ctrl+Shift+B
                             this.saveSettings();
                         } } />
                     </div>
-                    <FileList parent={this} />                    
+                    <FileList parent={this} />
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
@@ -772,7 +777,7 @@ $(document).ready(() => {
         .then(() => {
             blocklyloader.init();
             return compiler.init();
-        })        
+        })
         .then(() => workspace.initAsync())
         .then(() => {
             render()

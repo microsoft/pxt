@@ -1,0 +1,12 @@
+{
+    "name": "minecraft-hello",
+    "description": "Hello world",
+    "files": [
+        "hello.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "minecraft": "file:../minecraft"
+    },
+    "installedVersion": "rqdaoo"
+}

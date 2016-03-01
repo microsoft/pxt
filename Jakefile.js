@@ -51,6 +51,7 @@ task('embed', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "libs/microbit-game", 'node ../../built/yelm.js genembed')
   cmdIn(this, "libs/microbit-pins", 'node ../../built/yelm.js genembed')
   cmdIn(this, "libs/microbit-devices", 'node ../../built/yelm.js genembed')
+  cmdIn(this, "libs/minecraft", 'node ../../built/yelm.js genembed')
 })
 
 ju.catFiles('built/yelm.js', [
@@ -138,6 +139,7 @@ task('updatestrings', function() {
         "libs/microbit-radio", 
         "libs/microbit-serial", 
         "libs/microbit-music", 
+        "libs/minecraft", 
         "webapp/src"]
     srcPaths.forEach(pth => {
         fs.readdirSync(pth).forEach((fn) => {

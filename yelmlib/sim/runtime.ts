@@ -2,6 +2,15 @@ namespace yelm.rt {
     export type LabelFn = (n: number) => CodePtr;
     export type ResumeFn = (v?: any) => void;
 
+    export interface Target {
+        name: string;
+        initCurrentRuntime: () => void;
+    }
+
+    export function getTargets(): Target[] {
+        return [micro_bit.target, minecraft.target]
+    }
+
     export interface CodePtr {
         fn: LabelFn;
         pc: number;
@@ -18,15 +27,19 @@ namespace yelm.rt {
     export var runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
+    export class BaseBoard {
+        public updateView() { }
+    }
+
     export class Runtime {
         private baseStack = 1000000;
         private freeStacks: number[] = [];
-        public state: state.IBoard = state.createBoard();
+        public board: BaseBoard;
         numGlobals = 1000;
         mem: any;
         errorHandler: (e: any) => void;
         dead = false;
-        animationQ = new micro_bit.AnimationQueue(this);
+        target: Target;
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -58,7 +71,9 @@ namespace yelm.rt {
             this.dead = true
         }
 
-        updateDisplay() { }
+        updateDisplay() {
+            this.board.updateView()
+        }
 
         private numDisplayUpdates = 0;
         queueDisplayUpdate() {
@@ -72,7 +87,7 @@ namespace yelm.rt {
             }
         }
 
-        constructor(code: string) {
+        constructor(code: string, targetName: string) {
             // These variables are used by the generated code as well
             // ---
             var sp: number, lr: LR;
@@ -167,6 +182,7 @@ namespace yelm.rt {
             }
 
             function topCall(fn: LabelFn, cb: ResumeFn) {
+                U.assert(!!_this.board)
                 setupTopCore(cb)
                 loop(actionCall(fn, 0))
             }
@@ -218,6 +234,14 @@ namespace yelm.rt {
             this.setupTop = setupTop
 
             runtime = this;
+
+            let trg = yelm.rt.getTargets().filter(t => t.name == targetName)[0]
+            if (!trg) {
+                U.userError(U.lf("target {0} not supported", targetName))
+            }
+            
+            this.target = trg;
+            trg.initCurrentRuntime();
         }
     }
 }

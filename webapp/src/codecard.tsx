@@ -1,7 +1,5 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as simsvg from "./simsvg";
-import * as simview from "./simview"
 import * as sui from "./sui"
 import * as blockspreview from "./blockspreview"
 
@@ -78,7 +76,8 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
                     {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div>
                         : this.props.blocksXml 
                         ? <blockspreview.BlocksPreview key="promoblocks" xml={this.props.blocksXml} />
-                        : <simview.MbitBoardView key="promosim" disableTilt={true} theme={simsvg.randomTheme() } />}
+                        : null // <simview.MicrobitBoardView key="promosim" disableTilt={true} theme={simsvg.randomTheme() } />
+                    }
                 </div>
                 <div className="content">
                     <a className="header">{this.props.name}</a>
