@@ -43,6 +43,7 @@ namespace yelm.rt {
         running = false;
         startTime = 0;
         target: Target;
+        enums: U.Map<number>;
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -200,6 +201,7 @@ namespace yelm.rt {
 
             function topCall(fn: LabelFn, cb: ResumeFn) {
                 U.assert(!!_this.board)
+                U.assert(!!_this.enums)
                 U.assert(!_this.running)
                 _this.setRunning(true);
                 setupTopCore(cb)

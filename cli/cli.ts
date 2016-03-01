@@ -538,6 +538,7 @@ function runCoreAsync(res: ts.yelm.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
         let r = new yelm.rt.Runtime(f, mainPkg.getTarget())
+        r.enums = res.enums
         r.run(() => {
             console.log("DONE")
             yelm.rt.dumpLivePointers();

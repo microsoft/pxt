@@ -388,7 +388,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let file = main.getMainFile()
                 if (e)
                     file = main.lookupFile(e.name) || file
-                this.setupRuntime(";") // setup for empty program
+                this.setupRuntime(null) // setup for empty program
                 this.setState({
                     header: h,
                     currFile: file
@@ -611,10 +611,12 @@ Ctrl+Shift+B
     }
 
     simRuntime: yelm.rt.Runtime;
-    setupRuntime(js:string) {
+    setupRuntime(resp:ts.yelm.CompileResult) {
         if (this.simRuntime)
             this.simRuntime.kill();
+        let js = (resp && resp.outfiles["microbit.js"]) || ";"
         let r = new yelm.rt.Runtime(js, pkg.mainPkg.getTarget())
+        if (resp) r.enums = resp.enums
         this.simRuntime = r
         r.errorHandler = (e: any) => {
             core.errorNotification(e.message)
@@ -634,7 +636,7 @@ Ctrl+Shift+B
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
-                    this.setupRuntime(js)
+                    this.setupRuntime(resp)
                     this.simRuntime.run(() => {
                         console.log("DONE")
                         yelm.rt.dumpLivePointers();
