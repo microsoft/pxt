@@ -218,7 +218,7 @@ class FileList extends data.Component<ISettingsProps, {}> {
         let inv = parent.state.theme.inverted ? " inverted " : " "
 
         return (
-            <div className={"ui vertical menu filemenu " + inv}>
+            <div className={"ui vertical menu filemenu landscape only " + inv}>
                 {Util.concat(pkg.allEditorPkgs().map(filesWithHeader)) }
             </div>
         )
@@ -740,9 +740,7 @@ Ctrl+Shift+B
                             this.saveSettings();
                         } } />
                     </div>
-                    <div className="ui landscape only">                    
-                        <FileList parent={this} />
-                    </div>
+                    <FileList parent={this} />
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
