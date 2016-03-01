@@ -480,7 +480,7 @@ namespace ts.yelm {
             bin.emitLiteral(".balign 4");
             bin.emitLiteral(lbl + ": .short 0xffff")
             bin.emitLiteral("        .short " + w + ", " + h)
-            let jsLit = "new rt.state.Image(" + w + ", [" + lit + "])"          
+            let jsLit = "new rt.state.Image(" + w + ", [" + lit + "])"
             if (lit.length % 4 != 0)
                 lit += "42" // pad
             bin.emitLiteral("        .byte " + lit)
@@ -1757,8 +1757,8 @@ namespace ts.yelm {
         compileData: string;
         hasExtension: boolean;
     }
-    
-    export function emptyExtInfo():ExtensionInfo {
+
+    export function emptyExtInfo(): ExtensionInfo {
         return {
             enums: {},
             functions: [],

@@ -83,10 +83,12 @@ open http://localhost:3232
 * [ ] save source in hex
 * [ ] Save json
 * [ ] Drag and drop load
-* [ ] Link up simulator
+* [x] Link up simulator
 * [ ] Flag to hide from TS auto completion (eg: set sprite property with enum)
 * [ ] add markdown processor for docs
-
+* [ ] help for specific arguments
+* [ ] stepping debugger
+* [ ] attaching runtime warning to specific lines of code or block
 
 ### converter from TD to TS (different repo)
 

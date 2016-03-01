@@ -26,6 +26,7 @@ namespace yelm.rt {
         mem: any;
         errorHandler: (e: any) => void;
         dead = false;
+        animationQ = new micro_bit.AnimationQueue(this);
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -63,14 +64,14 @@ namespace yelm.rt {
         queueDisplayUpdate() {
             this.numDisplayUpdates++
         }
-        
+
         maybeUpdateDisplay() {
             if (this.numDisplayUpdates) {
                 this.numDisplayUpdates = 0
                 this.updateDisplay()
             }
         }
-        
+
         constructor(code: string) {
             // These variables are used by the generated code as well
             // ---
