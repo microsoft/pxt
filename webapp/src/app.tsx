@@ -218,7 +218,7 @@ class FileList extends data.Component<ISettingsProps, {}> {
         let inv = parent.state.theme.inverted ? " inverted " : " "
 
         return (
-            <div className={"ui vertical menu filemenu " + inv}>
+            <div className={"ui vertical menu filemenu landscape only " + inv}>
                 {Util.concat(pkg.allEditorPkgs().map(filesWithHeader)) }
             </div>
         )
@@ -388,7 +388,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let file = main.getMainFile()
                 if (e)
                     file = main.lookupFile(e.name) || file
-                this.setupRuntime(";") // setup for empty program
+                this.setupRuntime(null) // setup for empty program
                 this.setState({
                     header: h,
                     currFile: file
@@ -426,26 +426,28 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 <div class="ui two column grid">
   <div class="column">
     <div id="newblockproject" class="ui fluid card link">
-        <div class="image">
-        <img src="/images/newblock.png">
+        <div class="ui slide masked reveal image">
+            <img class="visible content" src="/images/newblock.png">
+            <img class="hidden content" src="/images/newblock2.png">
         </div>
         <div class="content">
         <div class="header">Block Editor</div>
-        <div class="meta">
-            <a>${lf("Drag and Drop Coding")}</a>
+        <div class="description">
+            ${lf("Drag and Drop Coding")}
         </div>
         </div>
     </div>
   </div>
   <div class="column">
     <div id="newtypescript" class="ui fluid card link">
-        <div class="image">
-        <img src="/images/newtypescript.png">
+        <div class="ui slide masked reveal image">
+            <img class="visible content" src="/images/newtypescript.png">
+            <img class="hidden content" src="/images/newtypescript2.png">
         </div>
         <div class="content">
         <div class="header">JavaScript</div>
-        <div class="meta">
-            <span class="date">${lf("Text based Coding")}</span>
+        <div class="description">
+            ${lf("Text based Coding")}
         </div>
         </div>
     </div>
@@ -459,8 +461,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         </div>
         <div class="content">
         <div class="header">Kodu</div>
-        <div class="meta">
-            <a>${lf("Tile based Coding")}</a>
+        <div class="description">
+            ${lf("Tile based Coding")}
         </div>
         </div>
     </div>
@@ -472,8 +474,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         </div>
         <div class="content">
         <div class="header">Visual Studio Code</div>
-        <div class="meta">
-            <span class="date">${lf("For Professional Developers")}</span>
+        <div class="description">
+            ${lf("For Professional Developers")}
         </div>
         </div>
     </div>
@@ -507,13 +509,13 @@ Ctrl+Shift+B
     newTypeScriptProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} bit", Util.getAwesomeAdj()),
-            dependencies: { 
-                "microbit": "*", 
-                "microbit-led":"*", 
-                "microbit-music": "*", 
-                "microbit-radio": "*", 
-                "microbit-game":"*", 
-                "microbit-pins":"*" 
+            dependencies: {
+                "microbit": "*",
+                "microbit-led": "*",
+                "microbit-music": "*",
+                "microbit-radio": "*",
+                "microbit-game": "*",
+                "microbit-pins": "*"
             },
             description: "",
             files: ["main.ts", "README.md"]
@@ -539,13 +541,13 @@ Ctrl+Shift+B
     newBlocksProject() {
         let cfg: yelm.PackageConfig = {
             name: lf("{0} block", Util.getAwesomeAdj()),
-            dependencies: { 
-                "microbit": "*", 
-                "microbit-led":"*", 
-                "microbit-music": "*", 
-                "microbit-radio": "*", 
-                "microbit-game":"*", 
-                "microbit-pins":"*" 
+            dependencies: {
+                "microbit": "*",
+                "microbit-led": "*",
+                "microbit-music": "*",
+                "microbit-radio": "*",
+                "microbit-game": "*",
+                "microbit-pins": "*"
             },
             description: "",
             files: ["main.blocks", "main.blocks.ts", "README.md"]
@@ -609,10 +611,12 @@ Ctrl+Shift+B
     }
 
     simRuntime: yelm.rt.Runtime;
-    setupRuntime(js:string) {
+    setupRuntime(resp:ts.yelm.CompileResult) {
         if (this.simRuntime)
             this.simRuntime.kill();
+        let js = (resp && resp.outfiles["microbit.js"]) || ";"
         let r = new yelm.rt.Runtime(js, pkg.mainPkg.getTarget())
+        if (resp) r.enums = resp.enums
         this.simRuntime = r
         r.errorHandler = (e: any) => {
             core.errorNotification(e.message)
@@ -620,7 +624,7 @@ Ctrl+Shift+B
         }
         r.stateChanged = () => { this.forceUpdate() }
     }
-    
+
     stopSimulator() {
         if (this.simRuntime) this.simRuntime.kill();
     }
@@ -632,7 +636,7 @@ Ctrl+Shift+B
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
-                    this.setupRuntime(js)
+                    this.setupRuntime(resp)
                     this.simRuntime.run(() => {
                         console.log("DONE")
                         yelm.rt.dumpLivePointers();
@@ -647,7 +651,7 @@ Ctrl+Shift+B
     editText() {
         if (this.editor != this.aceEditor) {
             this.updateEditorFile(this.aceEditor)
-           this.forceUpdate();
+            this.forceUpdate();
         }
     }
 
@@ -691,19 +695,13 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
-        let isOffline = !this.getData("cloud-online:api")
-        let goOnline = () => {
-            data.setOnline(true)
-            workspace.syncAsync().done();
-        }
-
         let inv = this.state.theme.inverted ? " inverted " : " "
 
         return (
             <div id='root' className={"full-abs " + inv}>
                 <div id="menubar">
                     <div className={"ui menu" + inv}>
-                        <div className="item">
+                        <div className="ui item">
                             <div className="ui buttons">
                                 <sui.Button text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
@@ -714,29 +712,28 @@ Ctrl+Shift+B
                                 </sui.DropdownMenu>
                             </div>
                         </div>
-                        <div className="item">
+                        <div className="ui item landscape only">
                             <SlotSelector parent={this} />
                         </div>
-                        {this.editor.menu() }
-                        <div className="item right">
-                            {isOffline ?
-                                <sui.Button
-                                    text={lf("Go online") }
-                                    class="green"
-                                    onClick={goOnline}
-                                    popup={lf("You're offline now.") } />
-                                : null}
+                        <div id="actionbar" className="ui item">
+                            {this.simRuntime && this.simRuntime.running
+                                ? <sui.Button key='stopbtn' class='icon primary portrait only' icon='stop' onClick={() => this.stopSimulator() } />
+                                : <sui.Button key='runbtn' class='icon primary portrait only' icon='play' onClick={() => this.runSimulator() } /> }
+                            <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } />
+                            {this.editor.menu() }
+                        </div>
+                        <div className="ui item right">
                             <LoginBox />
                         </div>
                     </div>
                 </div>
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
-                        <microbitView.BoardView ref="simulator" runtime={this.simRuntime} />
-                        <minecraftView.BoardView ref="minesimulator" runtime={this.simRuntime} />
+                        <microbitView.BoardView ref="microbitsimulator" runtime={this.simRuntime} />
+                        <minecraftView.BoardView ref="minecraftsimulator" runtime={this.simRuntime} />
                     </div>
-                    <div className="item">
-                        {this.simRuntime && this.simRuntime.running 
+                    <div className="ui item landscape only">
+                        {this.simRuntime && this.simRuntime.running
                             ? <sui.Button key='stopbtn' class='primary' icon='stop' text={lf("Stop") } onClick={() => this.stopSimulator() } />
                             : <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } /> }
                         <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />

@@ -126,17 +126,17 @@ export class MicrobitBoardSvg
         })
         
         this.updateTilt();     
-        (<any>this.buttonsOuter[2]).style.visibility = state.buttonAB ? 'visible' : 'hidden';   
-        (<any>this.buttons[2]).style.visibility = state.buttonAB ? 'visible' : 'hidden';   
+        (<any>this.buttonsOuter[2]).style.visibility = state.usesButtonAB ? 'visible' : 'hidden';   
+        (<any>this.buttons[2]).style.visibility = state.usesButtonAB ? 'visible' : 'hidden';   
     }
     
     private updateTilt() {
         if (this.props.disableTilt) return;
         let state = this.board;
-        if (!state) return;
-        
-        var af = 10 / 1023;
-        var acc = state.acceleration;
+        if (!state || !state.usesAcceleration) return;
+
+        var acc = state.acceleration;        
+        var af = 8 / 1023;
         if(acc && !isNaN(acc[0]) && !isNaN(acc[1])) {
             this.element.style.transform = "perspective(30em) rotateX(" + -acc[1]*af + "deg) rotateY(" + acc[0]*af +"deg)"
             this.element.style.perspectiveOrigin = "50% 50% 50%";
@@ -263,7 +263,7 @@ export class MicrobitBoardSvg
                 var state = this.board;
                 state.buttonsPressed[0] = true;
                 state.buttonsPressed[1] = true;
-                state.buttonsPressed[1] = true;
+                state.buttonsPressed[2] = true;
                 Svg.fill(this.buttons[0], this.props.theme.buttonDown);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonDown);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonDown);                
@@ -272,7 +272,7 @@ export class MicrobitBoardSvg
                 var state = this.board;
                 state.buttonsPressed[0] = false;
                 state.buttonsPressed[1] = false;
-                state.buttonsPressed[1] = false;
+                state.buttonsPressed[2] = false;
                 Svg.fill(this.buttons[0], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonUp);                

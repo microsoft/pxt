@@ -14,13 +14,14 @@ namespace yelm.rt.micro_bit {
         font: Image;
 
         // buttons    
-        buttonAB: boolean = false;
+        usesButtonAB: boolean = false;
         buttonsPressed = [false, false, false];
 
         // pins
         pinsTouched = [false, false, false];
 
         // sensors    
+        usesAcceleration = false;
         acceleration = [0, 0, -1023];
         heading = 90;
         temperature = 21;
@@ -57,6 +58,10 @@ namespace yelm.rt.micro_bit {
                     target.set(xTargetIndex + x, y, value);
                 }
             }
+        }
+        public clear() : void {
+            for(var i = 0;i < this.data.length; ++i)
+                this.data[i] = 0;
         }
     }
 

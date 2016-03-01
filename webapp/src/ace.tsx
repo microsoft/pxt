@@ -5,6 +5,7 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
+import * as codecard from "./codecard";
 
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
@@ -472,11 +473,11 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <div className="item">
+            <div>
                 {this.currFile && this.currFile.isVirtual
-                    ? <sui.Button class="button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
+                    ? <sui.Button class="ui button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
                     : '' }
-                <sui.DropdownMenu class="button floating" text={lf("Edit") } icon="edit">
+                <sui.DropdownMenu class="ui button floating" text={lf("Edit") } icon="edit">
                     <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
                     <sui.Item icon="wizard" text={lf("Replace") } onClick={() => this.editor.execCommand("replace") } />
                     <sui.Item icon="help circle" text={lf("Keyboard shortcuts") } onClick={() => this.editor.execCommand("showKeyboardShortcuts") } />
@@ -762,7 +763,22 @@ export class Editor extends srceditor.Editor {
                 }
             }
         sess.setAnnotations(ann)
-
+        this.parent.setHelp(this.annotationToCodeCard(ann[0]))
+    }
+    
+    private annotationToCodeCard(annotation : AceAjax.Annotation) : codecard.CodeCardProps {
+           if (!annotation) return undefined;
+           return {
+               header: lf("line {0}", annotation.row+1),
+               name: lf("error"),
+               description: annotation.text,
+               color: 'red',
+               onClick: (e) => {
+                this.setViewState(annotation);
+                e.preventDefault();
+                return false;
+               }
+           }
     }
 
     setDiagnostics(file: pkg.File, snapshot: string[]) {

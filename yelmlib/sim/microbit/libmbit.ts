@@ -15,6 +15,10 @@ namespace yelm.rt.micro_bit {
     export function board() {
         return runtime.board as Board
     }
+    
+    export function enums() {
+        return runtime.enums as any as Enums
+    }
 
     export interface AnimationOptions {
         interval: number;
@@ -86,16 +90,21 @@ namespace yelm.rt.micro_bit {
         console.log("PANIC:", code)
         throw new Error("PANIC " + code)
     }
-
-    export function plot(x: number, y: number) {
-        board().image.set(x, y, 255);
+    
+    /* basic */
+    export function showDigit(v: number) {
+        if (!quiet)
+            console.log("DIGIT:", v)
+    }    
+    
+    export function clearScreen() {
+        board().image.clear();
         runtime.queueDisplayUpdate()
     }
     
-    export function unPlot(x: number, y: number) {
-        board().image.set(x, y, 0);
-        runtime.queueDisplayUpdate()
-    }
+    export function showLeds(leds: micro_bit.Image, delay: number) : void {
+        showAnimation(leds, delay);
+    }    
 
     export function showAnimation(leds: micro_bit.Image, interval: number = 400): void {
         let cb = getResume()
@@ -113,26 +122,12 @@ namespace yelm.rt.micro_bit {
             whenDone: cb
         })
     }
-
-    export function plotLeds(leds: micro_bit.Image): void {
-        leds.copyTo(0, 5, board().image, 0)
-        runtime.queueDisplayUpdate()
-    }
-
-    export function pause(ms: number) {
-        let cb = getResume();
-        setTimeout(() => { cb() }, ms)
-    }
-
+    
     export function scrollString(s: string) {
         let cb = getResume();
         console.log("SCROLL:", s)
         setTimeout(() => { cb() }, 100)
-    }
-
-    export function runInBackground(a: RefAction) {
-        runtime.runFiberAsync(a).done()
-    }
+    }    
 
     export function forever(a: RefAction) {
         function loop() {
@@ -144,15 +139,90 @@ namespace yelm.rt.micro_bit {
         incr(a)
         loop()
     }
+    
+    export function pause(ms: number) {
+        let cb = getResume();
+        setTimeout(() => { cb() }, ms)
+    }
+    
+    /* leds */
+    export function plot(x: number, y: number) {
+        board().image.set(x, y, 255);
+        runtime.queueDisplayUpdate()
+    }
+    
+    export function unPlot(x: number, y: number) {
+        board().image.set(x, y, 0);
+        runtime.queueDisplayUpdate()
+    }
+    
+    export function point(x: number, y: number) : boolean {
+        return !!board().image.get(x,y);
+    }
+    
+    export function brightness() : number {
+        return board().brigthness;
+    }
+    
+    export function setBrightness(value: number) : void {
+        board().brigthness = value;
+        runtime.queueDisplayUpdate()
+    }
+    
+    export function stopAnimation() : void {
+        board().animationQ.cancelAll();
+    }
+    
+    export function plotLeds(leds: micro_bit.Image): void {
+        leds.copyTo(0, 5, board().image, 0)
+        runtime.queueDisplayUpdate()
+    }
+    
+    export function setDisplayMode(mode: DisplayMode) : void {
+        board().displayMode = mode;
+        runtime.queueDisplayUpdate()        
+    }
 
+    /* control */
+    export function runInBackground(a: RefAction) {
+        runtime.runFiberAsync(a).done()
+    }
+
+    /* serial */
     export function serialSendString(s: string) {
         if (s.trim() && !quiet)
             console.log("SERIAL:", s)
     }
-
-    export function showDigit(v: number) {
-        if (!quiet)
-            console.log("DIGIT:", v)
+    
+    /* input */
+    export function isButtonPressed(button : number) : boolean {
+        if (button == 2 && !board().usesButtonAB) {
+            board().usesButtonAB = true;
+            runtime.queueDisplayUpdate();
+        }
+        var bts = board().buttonsPressed;
+        if (button <= 1)
+            return bts[button];
+        else // A+B 
+            return bts[2] || (bts[0] && bts[0]);
+    }
+    
+    export function isPinTouched(pin: number) : boolean {
+        return board().pinsTouched[pin];
+    }
+    
+    export function lightLevel() : number {
+        // TODO
+        return 0;
+    }
+    
+    export function getMagneticForce() : number {
+        // TODO
+        return 0;
+    }
+    
+    export function getCurrentTime() : number {
+        return runtime.runningTime();
     }
 }
 

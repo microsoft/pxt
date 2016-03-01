@@ -599,8 +599,12 @@ export function init() {
             if (!this.codeCard) {
                 let tb = document.getElementById('blocklyToolboxDefinition');
                 let xml : HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
-                this.codeCard = {
+                this.codeCard = <codecard.CodeCardProps>{
+                    header: name,
                     name: name,
+                    card: {
+                        software: 1
+                    },
                     description: goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip,
                     blocksXml: xml ? ("<xml>" + xml.outerHTML + "</xml>") : undefined,
                     url: url

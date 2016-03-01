@@ -36,6 +36,7 @@ let socialNetworks: SocialNetwork[] = [{
 export interface CodeCardProps {
     name: string;
     
+    color?: string; // one of semantic ui colors
     description?: string;
     promoUrl?: string;
     blocksXml?: string;
@@ -43,6 +44,8 @@ export interface CodeCardProps {
     time?: number;
     card?: yelm.PackageCard;
     url?: string;
+    
+    onClick?: (e: React.MouseEvent) => boolean;
 }
 export interface CodeCardState { }
 
@@ -61,17 +64,23 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
     render() {
         let card = this.props.card || {}
         let promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];        
+        let color = this.props.color || "";
+        if (!color) {
+            if (card.hardware && !card.software) color = 'black';
+            else if (card.software && !card.hardware) color = 'teal';
+        }
 
         return (
-            <div className="ui card">
-                <div className="content">
+            <div className={"ui card " + color + (this.props.onClick ? " link" : "")} onClick={this.props.onClick}>
+                {this.props.header ?
+                <div key="header" className="content">
                     <div className="right floated meta">
                         {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
                         {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
                         {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
                     </div>
-                    {this.props.header || this.props.name}
-                </div>
+                    {this.props.header}
+                </div> : "" }
                 <div className="image">
                     {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div>
                         : this.props.blocksXml 
@@ -86,12 +95,14 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
                     </div>
                     <div className="description">{this.props.description || lf("No description.") }</div>
                 </div>
-                <div className="extra content">
+                {this.props.url || card.power || card.toughness ?
+                <div key="extra" className="extra content">
                     {card.power || card.toughness ? (<div key="powertough" className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
-                    <a target="_blank" href={this.props.url || "https://yelm.io/"}>
-                        {this.props.url || "yelm.io"}
-                    </a>
-                </div>
+                    {this.props.url ?
+                    <a target="_blank" href={this.props.url}>
+                        {this.props.url}
+                    </a> : ""}
+                </div> : ""}
             </div>
         )
     }
