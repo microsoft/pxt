@@ -641,8 +641,10 @@ Ctrl+Shift+B
     }
 
     editText() {
-        if (this.editor != this.aceEditor)
+        if (this.editor != this.aceEditor) {
             this.updateEditorFile(this.aceEditor)
+           this.forceUpdate();
+        }
     }
 
     publish() {
