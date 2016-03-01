@@ -1,6 +1,15 @@
 namespace yelm.rt {
     export type LabelFn = (n: number) => CodePtr;
     export type ResumeFn = (v?: any) => void;
+    
+    export interface Target {
+        name: string;
+        initCurrentRuntime: () => void;
+    }
+    
+    export function getTargets():Target[] {
+        return [micro_bit.target]
+    } 
 
     export interface CodePtr {
         fn: LabelFn;
@@ -18,15 +27,18 @@ namespace yelm.rt {
     export var runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
+    export class BaseBoard {
+        public updateView() { }
+    }
+
     export class Runtime {
         private baseStack = 1000000;
         private freeStacks: number[] = [];
-        public state: micro_bit.IBoard = micro_bit.createBoard();
+        public board: BaseBoard;
         numGlobals = 1000;
         mem: any;
         errorHandler: (e: any) => void;
         dead = false;
-        animationQ = new micro_bit.AnimationQueue(this);
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -58,7 +70,9 @@ namespace yelm.rt {
             this.dead = true
         }
 
-        updateDisplay() { }
+        updateDisplay() { 
+            this.board.updateView()
+        }
 
         private numDisplayUpdates = 0;
         queueDisplayUpdate() {
@@ -167,6 +181,7 @@ namespace yelm.rt {
             }
 
             function topCall(fn: LabelFn, cb: ResumeFn) {
+                U.assert(!!_this.board)
                 setupTopCore(cb)
                 loop(actionCall(fn, 0))
             }

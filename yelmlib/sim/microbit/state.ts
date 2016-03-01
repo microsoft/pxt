@@ -4,40 +4,33 @@ namespace yelm.rt.micro_bit {
         greyscale
     }
 
-    export interface IBoard {
-        id?: string;
+    export class Board extends BaseBoard {
+        id: string;
 
         // display
-        image?: Image;
-        brigthness?: number;
-        displayMode?: DisplayMode
-        font?: Image;
+        image = createImage(5);
+        brigthness = 255;
+        displayMode = DisplayMode.bw;
+        font: Image;
 
         // buttons    
-        buttonsPressed?: boolean[];
+        buttonsPressed = [false, false, false];
 
         // pins
-        pinsTouched?: boolean[];
+        pinsTouched = [false, false, false];
 
         // sensors    
-        acceleration?: number[];
-        heading?: number;
-        temperature?: number;
-        lightLevel?: number;
-    }
-
-    export function createBoard(id?: string): IBoard {
-        return {
-            id: id || ("b" + Math.random()),
-            brigthness: 255,
-            displayMode: DisplayMode.bw,
-            image: createImage(5),
-            buttonsPressed: [false, false, false],
-            pinsTouched: [false, false, false],
-            acceleration: [0, 0, -1023],
-            heading: 90,
-            temperature: 21,
-            lightLevel: 128
+        acceleration = [0, 0, -1023];
+        heading = 90;
+        temperature = 21;
+        lightLevel = 128;
+        
+        animationQ: AnimationQueue;
+        
+        constructor() {
+            super()
+            this.id = "b" + Math.random();
+            this.animationQ = new AnimationQueue(runtime);
         }
     }
 
@@ -75,7 +68,7 @@ namespace yelm.rt.micro_bit {
     }
 
     export function createImageFromString(text: string): Image {
-        let font = runtime.state.font;
+        let font = board().font;
         let w = font.width;
         let sprite = createImage(6 * text.length - 1);
         let k = 0;
