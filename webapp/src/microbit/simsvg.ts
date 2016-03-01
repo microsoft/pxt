@@ -263,7 +263,7 @@ export class MicrobitBoardSvg
                 var state = this.board;
                 state.buttonsPressed[0] = true;
                 state.buttonsPressed[1] = true;
-                state.buttonsPressed[1] = true;
+                state.buttonsPressed[2] = true;
                 Svg.fill(this.buttons[0], this.props.theme.buttonDown);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonDown);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonDown);                
@@ -272,7 +272,7 @@ export class MicrobitBoardSvg
                 var state = this.board;
                 state.buttonsPressed[0] = false;
                 state.buttonsPressed[1] = false;
-                state.buttonsPressed[1] = false;
+                state.buttonsPressed[2] = false;
                 Svg.fill(this.buttons[0], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonUp);                
