@@ -24,21 +24,14 @@ namespace yelm.rt.micro_bit {
         listen(id:number, evid:number, handler: RefAction) {
             let k = id + ':' + evid;           
             let queue = this.queues[k];
-            if (!queue) queue = this.queues[k] = new EventQueue<number>();
+            if (!queue) queue = this.queues[k] = new EventQueue<number>(this.runtime);
             queue.handler = handler;
         }
         
-        queueEvent(id: number, evid: number, value: number = 0) {
+        queue(id: number, evid: number, value: number = 0) {
             let k = id + ':' + evid;           
             let queue = this.queues[k];
-            if (queue)
-                queue.push(value);
-        }
-        
-        dispatchEvent(id:number, evid:number) {
-            let k = id + ':' + evid;           
-            let queue = this.queues[k];
-            if (queue) queue.push(0);                        
+            if (queue) queue.push(value);
         }
     }
     

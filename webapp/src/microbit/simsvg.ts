@@ -259,7 +259,7 @@ export class MicrobitBoardSvg
                 Svg.fill(this.buttons[index], this.props.theme.buttonUp);
                 
                 let ens = this.props.runtime.enums;
-                this.board.bus.queueEvent(ens[this.buttons[index].id], ens["MICROBIT_BUTTON_EVT_CLICK"]);
+                this.board.bus.queue(ens[state.buttons[index].id], ens["MICROBIT_BUTTON_EVT_CLICK"]);
             })
         })
         this.buttonsOuter[2].addEventListener("mousedown", ev => {
@@ -279,6 +279,9 @@ export class MicrobitBoardSvg
                 Svg.fill(this.buttons[0], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonUp);                
+                
+                let ens = this.props.runtime.enums;
+                this.board.bus.queue(ens[state.buttons[2].id], ens["MICROBIT_BUTTON_EVT_CLICK"]);
         })        
     }
 }

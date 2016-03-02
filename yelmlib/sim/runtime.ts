@@ -34,7 +34,8 @@ namespace yelm.rt {
     export class EventQueue<T> {
         events: T[] = [];
         handler: RefAction;
-        runtime: Runtime;
+        
+        constructor(public runtime: Runtime) {}
         
         public push(e: T) {
             if (!this.handler) return;
