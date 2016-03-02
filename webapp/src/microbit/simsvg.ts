@@ -114,8 +114,8 @@ export class MicrobitBoardSvg
         if (!state) return;
         let theme = this.props.theme;
         
-        state.buttonsPressed.forEach((b, index) => {
-            Svg.fill(this.buttons[index], b ? theme.buttonDown : theme.buttonUp);            
+        state.buttons.forEach((btn, index) => {
+            Svg.fill(this.buttons[index], btn.pressed ? theme.buttonDown : theme.buttonUp);            
         });
         
         var bw =  state.displayMode == rt.micro_bit.DisplayMode.bw         
@@ -230,7 +230,7 @@ export class MicrobitBoardSvg
     
     private attachEvents() {
         this.element.addEventListener("mousemove", (ev: MouseEvent) => {
-            var state = this.board;
+            let state = this.board;
             if (!state.acceleration) return;            
                 state.acceleration[0] = Math.floor(((ev.clientX / this.element.clientWidth) - 0.5) * 1023);
                 state.acceleration[1]  =Math.floor(((ev.clientY / this.element.clientHeight) - 0.5) * 1023);
@@ -238,7 +238,7 @@ export class MicrobitBoardSvg
                 this.updateTilt();
         }, false);
         this.element.addEventListener("mouseleave", (ev: MouseEvent) => {
-            var state = this.board;
+            let state = this.board;
             if (!state.acceleration) return;
             
                 state.acceleration[0] = 0;
@@ -249,30 +249,33 @@ export class MicrobitBoardSvg
         
         this.buttonsOuter.slice(0,2).forEach((btn, index) => {
             btn.addEventListener("mousedown", ev => {
-                var state = this.board;
-                state.buttonsPressed[index] = true;
+                let state = this.board;
+                state.buttons[index].pressed = true;
                 Svg.fill(this.buttons[index], this.props.theme.buttonDown);                
             })
             btn.addEventListener("mouseup", ev => {
-                var state = this.board;
-                state.buttonsPressed[index] = false;
-                Svg.fill(this.buttons[index], this.props.theme.buttonUp);                
+                let state = this.board;
+                state.buttons[index].pressed = false;
+                Svg.fill(this.buttons[index], this.props.theme.buttonUp);
+                
+                let ens = this.props.runtime.enums;
+                this.board.bus.queueEvent(ens[this.buttons[index].id], ens["MICROBIT_BUTTON_EVT_CLICK"]);
             })
         })
         this.buttonsOuter[2].addEventListener("mousedown", ev => {
-                var state = this.board;
-                state.buttonsPressed[0] = true;
-                state.buttonsPressed[1] = true;
-                state.buttonsPressed[2] = true;
+                let state = this.board;
+                state.buttons[0].pressed = true;
+                state.buttons[1].pressed = true;
+                state.buttons[2].pressed = true;
                 Svg.fill(this.buttons[0], this.props.theme.buttonDown);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonDown);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonDown);                
             })
         this.buttonsOuter[2].addEventListener("mouseup", ev => {
-                var state = this.board;
-                state.buttonsPressed[0] = false;
-                state.buttonsPressed[1] = false;
-                state.buttonsPressed[2] = false;
+                let state = this.board;
+                state.buttons[0].pressed = false;
+                state.buttons[1].pressed = false;
+                state.buttons[2].pressed = false;
                 Svg.fill(this.buttons[0], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[1], this.props.theme.buttonUp);                
                 Svg.fill(this.buttons[2], this.props.theme.buttonUp);                

@@ -10,9 +10,43 @@ namespace yelm.rt.micro_bit {
         input = false;
         analog = false;
     }
-
+    
+    export class Button {
+        constructor(public id : string) {}
+        pressed: boolean;
+    }
+    
+    export class EventBus {
+        private queues : U.Map<EventQueue<number>> = {};
+        
+        constructor(private runtime : Runtime) { }
+        
+        listen(id:number, evid:number, handler: RefAction) {
+            let k = id + ':' + evid;           
+            let queue = this.queues[k];
+            if (!queue) queue = this.queues[k] = new EventQueue<number>();
+            queue.handler = handler;
+        }
+        
+        queueEvent(id: number, evid: number, value: number = 0) {
+            let k = id + ':' + evid;           
+            let queue = this.queues[k];
+            if (queue)
+                queue.push(value);
+        }
+        
+        dispatchEvent(id:number, evid:number) {
+            let k = id + ':' + evid;           
+            let queue = this.queues[k];
+            if (queue) queue.push(0);                        
+        }
+    }
+    
     export class Board extends BaseBoard {
         id: string;
+        
+        // the bus
+        bus : EventBus;
 
         // display
         image = createImage(5);
@@ -22,7 +56,7 @@ namespace yelm.rt.micro_bit {
 
         // buttons    
         usesButtonAB: boolean = false;
-        buttonsPressed = [false, false, false];
+        buttons : Button[];
 
         // pins
         pins = Util.repeatMap(21, i => new Pin())
@@ -43,12 +77,16 @@ namespace yelm.rt.micro_bit {
             super()
             this.id = "b" + Math.random();
             this.animationQ = new AnimationQueue(runtime);
+            this.bus = new EventBus(runtime);
+            this.buttons = ["MICROBIT_ID_BUTTON_A", 
+               "MICROBIT_ID_BUTTON_B", 
+                "MICROBIT_ID_BUTTON_AB"].map(id => new Button(id));
         }
     }
 
     export class Image {
         public width: number;
-        public data: number[];
+    public data: number[];
         constructor(width: number, data: number[]) {
             this.width = width;
             this.data = data;

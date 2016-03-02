@@ -54,5 +54,6 @@ namespace yelm.rt.micro_bit {
         MICROBIT_ID_BUTTON_A: number;
         MICROBIT_ID_BUTTON_B: number;
         MICROBIT_ID_BUTTON_AB: number;
+        MICROBIT_BUTTON_EVT_CLICK: number;
     }
 }
