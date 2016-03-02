@@ -31,7 +31,8 @@ namespace yelm.rt {
             let data: SimulatorMessage = event.data || {};
             let kind = data.kind || '';
             switch (kind || '') {
-                case 'run': run(<SimulatorRunMessage>data);
+                case 'run': run(<SimulatorRunMessage>data);break;
+                case 'stop': stop(); break;
                 default: console.error('unknown message');
             }
         }
@@ -43,11 +44,15 @@ namespace yelm.rt {
         }
         
         var runtime : yelm.rt.Runtime;        
-        export function run(msg: SimulatorRunMessage) {
+        export function stop() {
             if (runtime) {
                 console.log('stopping preview runtime...')
                 runtime.kill();
-            }
+            }            
+        }
+        
+        export function run(msg: SimulatorRunMessage) {
+            stop();
             // TODO test data
             console.log('starting ' + msg.target);
             runtime = new Runtime(msg.code, msg.target);
