@@ -4,11 +4,9 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../built/yelmsim.js",
+        "outDir": "../built",
         "rootDir": ".",
         "newLine": "LF",
-        "moduleResolution": "node",
-        "isolatedModules": false,
         "sourceMap": true
     }
 }
