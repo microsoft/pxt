@@ -1016,7 +1016,7 @@ namespace ts.yelm {
 
                 proc.emitLblDirect(getLabels(node).ret)
 
-                //proc.stackEmpty();
+                proc.stackEmpty();
 
                 if (procHasReturn(proc)) {
                     let v = proc.emitTmp(ir.op(EK.RetVal, []))
@@ -1353,7 +1353,7 @@ namespace ts.yelm {
                 }
             }
             proc.emitExpr(v)
-            //proc.stackEmpty();
+            proc.stackEmpty();
         }
 
         function emitForStatement(node: ForStatement) {
@@ -1439,7 +1439,7 @@ namespace ts.yelm {
             // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
-                //proc.stackEmpty();
+                proc.stackEmpty();
             }
         }
         function emitClassExpression(node: ClassExpression) { }
@@ -2437,6 +2437,7 @@ namespace ts.yelm {
 
 
     function irToAssembly(proc: ir.Procedure) {
+        let jmpLblNo = 0
         let resText = ""
         let write = (s: string) => resText += asmline(s);
 
@@ -2460,6 +2461,8 @@ ${getFunctionLabel(proc.action)}:
 
         proc.resolve()
 
+        let exprStack: ir.Stmt[] = []
+
         for (let i = 0; i < proc.body.length; ++i) {
             emitStmt(proc.body[i])
         }
@@ -2478,12 +2481,71 @@ ${getFunctionLabel(proc.action)}:
 
         function emitStmt(s: ir.Stmt) {
             switch (s.stmtKind) {
-                case ir.SK.Expr:                
+                case ir.SK.Expr:
+                    emitExpr(s.expr)
+                    if (s.numUses) {
+                        exprStack.push(s)
+                        write("push {r0}")
+                    }
+                    break;
+                case ir.SK.StackEmpty:
+                    U.assert(exprStack.length == 0)
                     break;
                 case ir.SK.Jmp:
+                    emitJmp(s);
                     break;
                 case ir.SK.Label:
+                    write(s.lblName + ":")
                     break;
+                default: oops();
+            }
+        }
+
+        function emitJmp(jmp: ir.Stmt) {
+            if (jmp.expr) {
+                let lbl = ".jmpz." + jmpLblNo++
+                emitExpr(jmp.expr)
+
+                write("*cmp r0, #0")
+
+                if (jmp.jmpNZ) {
+                    write("*beq " + lbl) // this is to *skip* the following 'b' instruction; beq itself has a very short range
+                    write("@js if (r0)")
+                } else {
+                    write("*bne " + lbl)
+                    write("@js if (!r0)")
+                }
+
+                write("bb " + jmp.lblName)
+                write(lbl + ":")
+            } else {
+                write("bb " + jmp.lblName)
+            }
+        }
+
+        // result in R0
+        function emitExpr(e: ir.Expr) {
+            switch (e.exprKind) {
+                case EK.NumberLiteral:
+                    if (e.data === true) emitInt(1);
+                    else if (e.data === false) emitInt(0);
+                    else if (e.data === null) emitInt(0);
+                    else if (typeof e.data == "number") emitInt(e.data)
+                    else oops();
+                    break;
+                case EK.PointerLiteral:
+                    emitLdPtr(e.data);
+                    write("@js r0 = " + e.jsInfo)
+                    break;
+                case EK.RuntimeCall:
+                case EK.ProcCall:
+                case EK.TmpRef:
+                case EK.FieldAccess:
+                case EK.Store:
+                case EK.CellRef:
+                case EK.Incr:
+                case EK.Decr:
+                case EK.RetVal:
                 default: oops();
             }
         }
@@ -2515,6 +2577,120 @@ ${getFunctionLabel(proc.action)}:
             write("pop {r5, pc}");
             write("@stackempty litfunc");
         }
+
+        function emitCallRaw(name: string) {
+            var inf = hex.lookupFunc(name)
+            assert(!!inf, "unimplemented raw function: " + name)
+            write("bl " + name + " ; *" + inf.type + inf.args + " (raw)")
+        }
+
+        function writeCall(name: string, mask: number, isAsync = false) {
+            var inf = hex.lookupFunc(name)
+            assert(!!inf, "unimplemented function: " + name)
+
+            assert(inf.args <= 4)
+
+            if (inf.args >= 4)
+                write("pop {r3}");
+            if (inf.args >= 3)
+                write("pop {r2}");
+            if (inf.args >= 2)
+                write("pop {r1}");
+            if (inf.args >= 1)
+                write("pop {r0}");
+
+            var reglist: string[] = []
+
+            for (var i = 0; i < 4; ++i) {
+                if (mask & (1 << i))
+                    reglist.push("r" + i)
+            }
+
+            var numMask = reglist.length
+
+            if (inf.type == "F" && mask != 0) {
+                // reserve space for return val
+                reglist.push("r7")
+                write("@stackmark retval")
+            }
+
+            assert((mask & ~0xf) == 0)
+
+            if (reglist.length > 0)
+                write("push {" + reglist.join(",") + "}")
+
+            let lbl = ""
+            if (isAsync)
+                lbl = ".async." + jmpLblNo++
+
+            write("bl " + name + " ; *" + inf.type + inf.args + " " + lbl)
+
+            if (lbl) write(lbl + ":")
+
+            if (inf.type == "F") {
+                if (mask == 0)
+                    write("push {r0}");
+                else {
+                    write("str r0, [sp, retval@-1]")
+                }
+            }
+            else if (inf.type == "P") {
+                // ok
+            }
+            else oops("invalid call type " + inf.type)
+
+            while (numMask-- > 0) {
+                writeCall("bitvm::decr", 0);
+            }
+        }
+
+        function writeMov(v: number) {
+            assert(0 <= v && v <= 255)
+            write("movs r0, #" + v)
+        }
+
+        function writeAdd(v: number) {
+            assert(0 <= v && v <= 255)
+            write("adds r0, #" + v)
+        }
+
+        function emitLdPtr(lbl: string) {
+            assert(!!lbl)
+            write("*movs r0, " + lbl + "@hi  ; ldptr " + lbl)
+            write("*lsls r0, r0, #8")
+            write("*adds r0, " + lbl + "@lo  ; endldptr");
+        }
+
+        function emitInt(v: number) {
+            assert(v != null);
+
+            var n = Math.floor(v)
+            var isNeg = false
+            if (n < 0) {
+                isNeg = true
+                n = -n
+            }
+
+            if (n <= 255) {
+                writeMov(n)
+            } else if (n <= 0xffff) {
+                writeMov((n >> 8) & 0xff)
+                write("lsls r0, r0, #8")
+                writeAdd(n & 0xff)
+            } else {
+                writeMov((n >> 24) & 0xff)
+                write("lsls r0, r0, #8")
+                writeAdd((n >> 16) & 0xff)
+                write("lsls r0, r0, #8")
+                writeAdd((n >> 8) & 0xff)
+                write("lsls r0, r0, #8")
+                writeAdd((n >> 0) & 0xff)
+            }
+            if (isNeg) {
+                write("negs r0, r0")
+            }
+        }
+
 
     }
 

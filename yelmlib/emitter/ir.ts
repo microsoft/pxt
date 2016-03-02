@@ -5,7 +5,6 @@ namespace ts.yelm.ir {
     export enum EK {
         None,
         NumberLiteral,
-        StringLiteral,
         PointerLiteral,
         RuntimeCall,
         ProcCall,
@@ -42,12 +41,13 @@ namespace ts.yelm.ir {
         Expr,
         Label,
         Jmp,
+        StackEmpty,
     }
 
     export class Stmt extends Node {
         public lblName: string;
         public lbl: Stmt;
-        public negatedJump: boolean;
+        public jmpNZ: boolean;
         public numUses = 0;
 
         constructor(
@@ -189,6 +189,10 @@ namespace ts.yelm.ir {
                 this.locals.filter(n => n.def == l)[0] ||
                 (noargs ? null : this.args.filter(n => n.def == l)[0])
         }
+        
+        stackEmpty() {
+            this.emit(stmt(SK.StackEmpty, null))
+        }
 
         emitClrIfRef(p: Cell) {
             assert(!p.isGlobal() && !p.iscap)
@@ -206,7 +210,7 @@ namespace ts.yelm.ir {
         emitJmp(trg: string | Stmt, expr?: Expr, isNZ = false) {
             let jmp = stmt(SK.Jmp, expr)
 
-            if (isNZ) jmp.negatedJump = true
+            if (isNZ) jmp.jmpNZ = true
 
             if (typeof trg == "string")
                 jmp.lblName = trg as any
