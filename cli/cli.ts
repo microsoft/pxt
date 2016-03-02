@@ -1,5 +1,6 @@
 /// <reference path="../typings/node/node.d.ts"/>
 /// <reference path="../built/yelmlib.d.ts"/>
+/// <reference path="../built/yelmsim.d.ts"/>
 
 
 import * as fs from 'fs';

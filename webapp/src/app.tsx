@@ -5,8 +5,7 @@ import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
-import * as microbitView from "./microbit/view";
-import * as minecraftView from "./minecraft/view";
+import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as blocklyloader from "./blocklyloader"
@@ -388,7 +387,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let file = main.getMainFile()
                 if (e)
                     file = main.lookupFile(e.name) || file
-                this.setupRuntime(null) // setup for empty program
                 this.setState({
                     header: h,
                     currFile: file
@@ -610,25 +608,6 @@ Ctrl+Shift+B
             .done()
     }
 
-    simRuntime: yelm.rt.Runtime;
-    setupRuntime(resp:ts.yelm.CompileResult) {
-        if (this.simRuntime)
-            this.simRuntime.kill();
-        let js = (resp && resp.outfiles["microbit.js"]) || ";"
-        let r = new yelm.rt.Runtime(js, pkg.mainPkg.getTarget())
-        if (resp) r.enums = resp.enums
-        this.simRuntime = r
-        r.errorHandler = (e: any) => {
-            core.errorNotification(e.message)
-            console.error("Simulator error", e.stack)
-        }
-        r.stateChanged = () => { this.forceUpdate() }
-    }
-
-    stopSimulator() {
-        if (this.simRuntime) this.simRuntime.kill();
-    }
-
     runSimulator() {
         let state = this.editor.snapshotState()
         compiler.compileAsync()
@@ -636,12 +615,10 @@ Ctrl+Shift+B
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
-                    this.setupRuntime(resp)
-                    this.simRuntime.run(() => {
-                        console.log("DONE")
-                        yelm.rt.dumpLivePointers();
-                        core.infoNotification("Done, check console")
-                    })
+                    simulator.Simulator.run(
+                        pkg.mainPkg.getTarget(), 
+                        js,
+                        resp.enums)
                 }
             })
             .done()
@@ -716,9 +693,7 @@ Ctrl+Shift+B
                             <SlotSelector parent={this} />
                         </div>
                         <div id="actionbar" className="ui item">
-                            {this.simRuntime && this.simRuntime.running
-                                ? <sui.Button key='stopbtn' class='icon primary portrait only' icon='stop' onClick={() => this.stopSimulator() } />
-                                : <sui.Button key='runbtn' class='icon primary portrait only' icon='play' onClick={() => this.runSimulator() } /> }
+                            <sui.Button key='runbtn' class='icon primary portrait only' icon='play' onClick={() => this.runSimulator() } />
                             <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } />
                             {this.editor.menu() }
                         </div>
@@ -729,13 +704,10 @@ Ctrl+Shift+B
                 </div>
                 <div id="filelist">
                     <div id="mbitboardview" className="ui vertical">
-                        <microbitView.BoardView ref="microbitsimulator" runtime={this.simRuntime} />
-                        <minecraftView.BoardView ref="minecraftsimulator" runtime={this.simRuntime} />
+                        <simulator.Simulator ref="simulator" />
                     </div>
                     <div className="ui item landscape only">
-                        {this.simRuntime && this.simRuntime.running
-                            ? <sui.Button key='stopbtn' class='primary' icon='stop' text={lf("Stop") } onClick={() => this.stopSimulator() } />
-                            : <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } /> }
+                        <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } />
                         <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />
                         <sui.Button icon='folder' onClick={() => {
                             this.setState({ showFiles: !this.state.showFiles });

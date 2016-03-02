@@ -18,7 +18,7 @@ namespace yelm.rt.micro_bit {
     }
     
     export class EventBus {
-        private queues : U.Map<EventQueue<number>> = {};
+        private queues : Map<EventQueue<number>> = {};
         
         constructor(private runtime : Runtime) { }
         
@@ -53,7 +53,7 @@ namespace yelm.rt.micro_bit {
         buttons : Button[];
 
         // pins
-        pins = Util.repeatMap(21, i => new Pin("MICROBIT_ID_IO_P" + i))
+        pins = U.repeatMap(21, i => new Pin("MICROBIT_ID_IO_P" + i))
 
         // sensors    
         usesAcceleration = false;

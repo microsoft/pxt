@@ -1,4 +1,40 @@
+/// <reference path="../typings/bluebird/bluebird.d.ts"/>
+
 namespace yelm.rt {
+    export module U {
+        export function assert(cond: boolean, msg = "Assertion failed") {
+            if (!cond) {
+                debugger
+                throw new Error(msg)
+            }
+        }        
+        
+        export function repeatMap<T>(n : number, fn : (index:number) => T) : T[] {
+            n = n || 0;
+            let r : T[] = [];
+            for(let i = 0;i<n;++i) r.push(fn(i));
+            return r;
+        }
+        
+        export function userError(msg: string): Error {
+            let e = new Error(msg);
+            (<any>e).isUserError = true;
+            throw e
+        }
+        
+        export function now() : number {
+            return Date.now();
+        }
+        
+        export function nextTick(f: () => void) {
+            (<any>Promise)._async._schedule(f)
+        }
+    }
+    
+    export interface Map<T> {
+        [index: string]: T;
+    }
+    
     export type LabelFn = (n: number) => CodePtr;
     export type ResumeFn = (v?: any) => void;
 
@@ -71,14 +107,14 @@ namespace yelm.rt {
         running = false;
         startTime = 0;
         target: Target;
-        enums: U.Map<number>;
+        enums: Map<number>;
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => void;
 
         runningTime(): number {
-            return Util.now() - this.startTime;
+            return U.now() - this.startTime;
         }
 
         runFiberAsync(a: RefAction, arg0?:any, arg1?:any) {
@@ -128,7 +164,7 @@ namespace yelm.rt {
         setRunning(r: boolean) {
             if (this.running != r) {
                 this.running = r;
-                if (this.running) this.startTime = Util.now();
+                if (this.running) this.startTime = U.now();
                 if (this.stateChanged) this.stateChanged();
             }
         }
@@ -286,7 +322,7 @@ namespace yelm.rt {
 
             let trg = yelm.rt.getTargets().filter(t => t.name == targetName)[0]
             if (!trg) {
-                U.userError(U.lf("target {0} not supported", targetName))
+                U.userError("target " + targetName + " not supported")
             }
 
             this.target = trg;

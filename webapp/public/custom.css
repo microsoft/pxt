@@ -5,6 +5,15 @@
   bottom: 0;
 }
 
+#simframe {
+    border: none;
+    width: 242px;
+    height:210px;
+    margin: 0;
+    padding: 0;
+    background:transparent;    
+}
+
 #filelist {
   left: 0;
   width: 280px;
@@ -235,8 +244,6 @@
         z-index:5;
         bottom:1rem;
         left:1rem;
-        width: 30%;
-        min-width:200px; 
         top:initial;           
     }
     .blocklyTreeLabel {

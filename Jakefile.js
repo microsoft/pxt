@@ -57,6 +57,7 @@ task('embed', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
 ju.catFiles('built/yelm.js', [
     "node_modules/typescript/lib/typescript.js", 
     "built/yelmlib.js",
+    "built/yelmsim.js",
     "built/nodeutil.js",
     "built/cli.js"
     ],
@@ -74,10 +75,9 @@ file('built/yelm.d.ts', ['built/cli.js'], function() {
 
 compileDir("yelmlib")
 compileDir("yelmsim", ["built/yelmlib.js"])
-compileDir("cli", ["built/yelmlib.js"])
+compileDir("cli", ["built/yelmlib.js", "built/yelmsim.js"])
 
 ju.catFiles('built/sim.js', [
-    "built/yelmlib.js",
     "built/yelmsim.js"
     ],`
 "use strict";
