@@ -35,7 +35,7 @@ namespace ts.yelm {
         return isRefType(tp)
     }
 
-    export function setLocationProps(l: ir.Location) {
+    export function setLocationProps(l: ir.Cell) {
         l._isRef = isRefDecl(l.def)
         l._isLocal = isLocalVar(l.def)
         l._isGlobal = isGlobalVar(l.def)
@@ -257,7 +257,7 @@ namespace ts.yelm {
 
     export interface FunctionAddInfo {
         capturedVars: VarOrParam[];
-        location?: ir.Location;
+        location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
     }
 
@@ -406,13 +406,13 @@ namespace ts.yelm {
                 userError("void-typed variables not supported")
         }
 
-        function lookupLocation(decl: Declaration): ir.Location {
+        function lookupCell(decl: Declaration): ir.Cell {
             if (isGlobalVar(decl)) {
                 markUsed(decl)
                 typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
-                    ex = new Location(bin.globals.length, decl, getVarInfo(decl))
+                    ex = new ir.Cell(bin.globals.length, decl, getVarInfo(decl)) 
                     bin.globals.push(ex)
                 }
                 return ex
@@ -504,26 +504,26 @@ namespace ts.yelm {
         }
 
         function emitLocalLoad(decl: VarOrParam) {
-            let l = lookupLocation(decl)
+            let l = lookupCell(decl)
             recordUse(decl)
-            l.emitLoadByRef(proc)
+            return l.load()
         }
 
-        function emitIdentifier(node: Identifier) {
+        function emitIdentifier(node: Identifier):ir.Expr {
             let decl = getDecl(node)
             if (decl && (decl.kind == SyntaxKind.VariableDeclaration || decl.kind == SyntaxKind.Parameter)) {
-                emitLocalLoad(<VarOrParam>decl)
+                return emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SyntaxKind.FunctionDeclaration) {
                 let f = <FunctionDeclaration>decl
                 let info = getFunctionInfo(f)
                 if (info.location) {
-                    info.location.emitLoad(proc)
+                    return info.location.load()
                 } else {
                     assert(!bin.finalPass || info.capturedVars.length == 0)
-                    emitFunLit(f)
+                    return emitFunLit(f)
                 }
             } else {
-                unhandled(node, "id")
+                throw unhandled(node, "id")
             }
         }
 
@@ -628,7 +628,7 @@ namespace ts.yelm {
             }
         }
 
-        function emitIndexedAccess(node: ElementAccessExpression) {
+        function emitIndexedAccess(node: ElementAccessExpression):ir.Expr {
             let t = typeOf(node.expression)
 
             let collType = ""
@@ -639,14 +639,14 @@ namespace ts.yelm {
 
             if (collType) {
                 if (typeOf(node.argumentExpression).flags & TypeFlags.Number) {
-                    emit(node.expression)
-                    emit(node.argumentExpression)
-                    proc.emitCall(collType + "::at", 1)
+                    let arr = emitExpr(node.expression)
+                    let idx = emitExpr(node.argumentExpression)
+                    return ir.rtcall(collType + "::at", [arr, idx])
                 } else {
-                    unhandled(node, lf("non-numeric indexer on {0}", collType))
+                    throw unhandled(node, lf("non-numeric indexer on {0}", collType))
                 }
             } else {
-                unhandled(node, "unsupported indexer")
+                throw unhandled(node, "unsupported indexer")
             }
         }
 
@@ -734,6 +734,9 @@ namespace ts.yelm {
         }
 
         function emitPlainCall(decl: Declaration, args: Expression[], hasRet = false) {
+            return ir.op(EK.ProcCall, args.map(emitExpr), decl)
+            
+            /*
             args.forEach(emit)
             let mode = hasRet ? "F0" : "P0"
             let lbl = proc.mkLabel("call")
@@ -743,6 +746,7 @@ namespace ts.yelm {
                 proc.emit("add sp, #4*" + args.length)
             if (hasRet)
                 proc.emit("push {r0}");
+                */
         }
 
         function addDefaultParameters(sig: Signature, args: Expression[], attrs: CommentAttrs) {
@@ -946,12 +950,12 @@ namespace ts.yelm {
 
         function emitFunLit(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node) + "_Lit"
-            proc.emit("@js r0 = " + lbl)
-            proc.emitLdPtr(lbl, true)
+            let r = ir.ptrlit(lbl, lbl)
             if (!raw) {
                 // TODO rename this to functionData or something
-                proc.emitCall("bitvm::stringData", 0)
+                r = ir.rtcall("bitvm::stringData", [r])
             }
+            return r
         }
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
@@ -1194,20 +1198,20 @@ namespace ts.yelm {
             else return ""
         }
 
-        /* OLD
-        function emitStore(expr: Expression) {
-            if (expr.kind == SyntaxKind.Identifier) {
-                let decl = getDecl(expr)
+        function emitStore(trg: Expression, src:ir.Expr) {
+            if (trg.kind == SyntaxKind.Identifier) {
+                let decl = getDecl(trg)
                 if (decl && (decl.kind == SyntaxKind.VariableDeclaration || decl.kind == SyntaxKind.Parameter)) {
-                    let l = lookupLocation(decl)
+                    let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
                     l.emitStoreByRef(proc)
                 } else {
-                    unhandled(expr, "target identifier")
+                    unhandled(trg, "target identifier")
                 }
-            } else if (expr.kind == SyntaxKind.PropertyAccessExpression) {
+            } else if (trg.kind == SyntaxKind.PropertyAccessExpression) {
+                /*
                 // TODO add C++ support function to simplify this
-                let pacc = <PropertyAccessExpression>expr
+                let pacc = <PropertyAccessExpression>trg
                 let tp = typeOf(pacc.expression)
                 let idx = fieldIndex(pacc)
                 emit(pacc.expression)
@@ -1216,30 +1220,20 @@ namespace ts.yelm {
                 proc.emit("push {r0}")
                 proc.emitInt(idx)
                 proc.emit("push {r1}")
-                proc.emitCall("bitvm::stfld" + refSuff(expr), 0); // it does the decr itself, no mask
+                proc.emitCall("bitvm::stfld" + refSuff(trg), 0); // it does the decr itself, no mask
+                */
+                proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), src]))
             } else {
-                unhandled(expr, "assignment target")
+                unhandled(trg, "assignment target")
             }
-            }*/
+        }
 
         function handleAssignment(node: BinaryExpression) {
-            let trg = emitExpr(node.left)
-            switch (trg.exprKind) {
-                case EK.FieldAccess:
-                case EK.LocalRef:
-                case EK.GlobalRef:
-                    break;
-
-                default:
-                    unhandled(node, "assignment target")
-            }
-
-            let r = ir.op(EK.Store, [trg, emitExpr(node.left)])
-
+            let src = proc.emitTmp(emitExpr(node.right))
+            emitStore(node.left, src)            
             if (isRefType(typeOf(node.right)))
-                r = ir.op(EK.Incr, [r])
-
-            return r
+                src = ir.op(EK.Incr, [src])
+            return src
         }
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
@@ -1503,7 +1497,7 @@ namespace ts.yelm {
                 return;
             typeCheckVar(node)
             let loc = isGlobalVar(node) ?
-                lookupLocation(node) : proc.mkLocal(node, getVarInfo(node))
+                lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 loc.emitClrIfRef(proc) // we might be in a loop
                 proc.emitCallRaw("bitvm::mkloc" + loc.refSuff())
@@ -2373,7 +2367,7 @@ namespace ts.yelm {
 
     class Binary {
         procs: Procedure[] = [];
-        globals: Location[] = [];
+        globals: ir.Cell[] = [];
         buf: number[];
         csource = "";
         jssource = "";

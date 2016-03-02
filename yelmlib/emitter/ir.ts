@@ -12,8 +12,7 @@ namespace ts.yelm.ir {
         TmpRef,
         FieldAccess,
         Store,
-        LocalRef,
-        GlobalRef,
+        CellRef,        
         Incr,
         Decr,
     }
@@ -57,7 +56,7 @@ namespace ts.yelm.ir {
         isStmt() { return true }
     }
 
-    export class Location {
+    export class Cell {
         isarg = false;
         iscap = false;
         _isRef = false;
@@ -86,12 +85,36 @@ namespace ts.yelm.ir {
         isLocal() { return this._isLocal }
         isGlobal() { return this._isGlobal }
 
-        refCore() {
-            return op(EK.LocalRef, null, this)
+        loadCore() {
+            return op(EK.CellRef, null, this)
+        }
+
+        load() {
+            let r = this.loadCore()
+            if (this.isByRefLocal()) {
+                r = rtcall("bitvm::ldloc" + this.refSuff(), [r])
+            }
+
+            if (this.isRef())
+                r = op(EK.Incr, [r])
+
+            return r
         }
 
         isByRefLocal() {
             return this.isLocal() && this.info.captured && this.info.written
+        }
+
+        storeDirect(src: Expr) {
+            return op(EK.Store, [this.loadCore(), src])
+        }
+
+        storeByRef(src: Expr) {
+            if (this.isByRefLocal()) {
+                return rtcall("bitvm::stloc" + this.refSuff(), [this.loadCore(), src])
+            } else {
+                return this.storeDirect(src)
+            }
         }
     }
 
@@ -101,9 +124,9 @@ namespace ts.yelm.ir {
         info: FunctionAddInfo;
         seqNo: number;
         isRoot = false;
-        locals: Location[] = [];
-        captured: Location[] = [];
-        args: Location[] = [];
+        locals: Cell[] = [];
+        captured: Cell[] = [];
+        args: Cell[] = [];
         parent: Procedure;
 
         body: Stmt[] = [];
@@ -113,11 +136,11 @@ namespace ts.yelm.ir {
         emit(stmt: Stmt) {
             this.body.push(stmt)
         }
-        
+
         emitExpr(expr: Expr) {
             this.emit(stmt(SK.Expr, expr))
         }
-        
+
         emitTmp(expr: Expr) {
             switch (expr.exprKind) {
                 case EK.NumberLiteral:
@@ -142,12 +165,12 @@ namespace ts.yelm.ir {
         }
 
         mkLocal(def: Declaration, info: VariableAddInfo) {
-            var l = new Location(this.locals.length, def, info)
+            var l = new Cell(this.locals.length, def, info)
             this.locals.push(l)
             return l
         }
 
-        localIndex(l: Declaration, noargs = false): Location {
+        localIndex(l: Declaration, noargs = false): Cell {
             return this.captured.filter(n => n.def == l)[0] ||
                 this.locals.filter(n => n.def == l)[0] ||
                 (noargs ? null : this.args.filter(n => n.def == l)[0])
@@ -159,7 +182,7 @@ namespace ts.yelm.ir {
             lst.forEach(p => {
                 assert(!p.isGlobal() && !p.iscap)
                 if (p.isRef() || p.isByRefLocal()) {
-                    this.emitExpr(op(EK.Decr, [p.refCore()]))
+                    this.emitExpr(op(EK.Decr, [p.loadCore()]))
                 }
             })
         }
