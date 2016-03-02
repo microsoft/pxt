@@ -50,6 +50,45 @@ namespace ts.yelm.ir {
             }
         }
 
+        toString(): string {
+            switch (this.exprKind) {
+                case EK.NumberLiteral:
+                    return this.data + ""
+                case EK.PointerLiteral:
+                    return this.data + ""
+                case EK.CellRef:
+                    return (this.data as Cell).toString()
+                case EK.JmpValue:
+                    return "JMPVALUE"
+
+                case EK.Shared:
+                    return `SHARED(${this.args[0].toString()})`
+
+                case EK.Incr:
+                    return `INCR(${this.args[0].toString()})`
+
+                case EK.Decr:
+                    return `DECR(${this.args[0].toString()})`
+
+                case EK.FieldAccess:
+                    return `${this.args[0].toString()}.${(this.data as FieldAccessInfo).name}`
+
+                case EK.RuntimeCall:
+                    return this.data + "(" + this.args.map(a => a.toString()).join(", ") + ")"
+
+                case EK.ProcCall:
+                    return getDeclName(this.data) + "(" + this.args.map(a => a.toString()).join(", ") + ")"
+
+                case EK.Sequence:
+                    return "(" + this.args.map(a => a.toString()).join("; ") + ")"
+
+                case EK.Store:
+                    return `{ ${this.args[0].toString()} := ${this.args[1].toString()} }`
+
+                default: throw oops();
+            }
+        }
+
         canUpdateCells(): boolean {
             switch (this.exprKind) {
                 case EK.NumberLiteral:
@@ -61,7 +100,7 @@ namespace ts.yelm.ir {
                 case EK.Shared:
                     if (this.isStateless()) return false;
                     return this.args[0].canUpdateCells()
-                    
+
                 case EK.Incr:
                 case EK.Decr:
                 case EK.FieldAccess:
@@ -74,7 +113,7 @@ namespace ts.yelm.ir {
 
                 case EK.Store:
                     return true;
-                
+
                 default: throw oops();
             }
         }
@@ -109,6 +148,32 @@ namespace ts.yelm.ir {
         }
 
         isStmt() { return true }
+
+        toString(): string {
+            let inner = this.expr ? this.expr.toString() : "{null}"
+            switch (this.stmtKind) {
+                case ir.SK.Expr:
+                    return "    " + inner + "\n"
+                case ir.SK.Jmp:
+                    let fin = `goto ${this.lblName}\n`
+                    switch (this.jmpMode) {
+                        case JmpMode.Always:
+                            if (this.expr)
+                                return `    { JMPVALUE := ${inner} } ${fin}`
+                            else return "    " + fin
+                        case JmpMode.IfZero:
+                            return `    if (! ${inner}) ${fin}`
+                        case JmpMode.IfNotZero:
+                            return `    if (${inner}) ${fin}`
+                        default: throw oops();
+                    }
+                case ir.SK.StackEmpty:
+                    return "@stackempty\n"
+                case ir.SK.Label:
+                    return this.lblName + ":\n"
+                default: throw oops();
+            }
+        }
     }
 
     export class Cell {
@@ -186,6 +251,10 @@ namespace ts.yelm.ir {
         body: Stmt[] = [];
         lblNo = 0;
         action: ts.FunctionLikeDeclaration;
+        
+        toString():string {
+            return `\nPROC ${getDeclName(this.action)}\n${this.body.map(s => s.toString()).join("")}\n`
+        }
 
         emit(stmt: Stmt) {
             this.body.push(stmt)
@@ -281,8 +350,10 @@ namespace ts.yelm.ir {
                         break;
                     case ir.SK.Jmp:
                         s.lbl = U.lookup(lbls, s.lblName)
+                        if (!s.lbl) oops("missing label: " + s.lblName)
                         s.lbl.lblNumUses++
                         break;
+                    case ir.SK.StackEmpty:
                     case ir.SK.Label:
                         break;
                     default: oops();
@@ -295,7 +366,7 @@ namespace ts.yelm.ir {
         f(e)
         if (e.args)
             for (let a of e.args)
-                iterExpr(e, f)
+                iterExpr(a, f)
     }
 
     export function stmt(kind: SK, expr: Expr): Stmt {
@@ -330,7 +401,7 @@ namespace ts.yelm.ir {
     }
 
     export function rtcallMask(name: string, mask: number, isAsync: boolean, args: Expr[]) {
-        let decrs:ir.Expr[] = []
+        let decrs: ir.Expr[] = []
         args = args.map((a, i) => {
             if (mask & (1 << i)) {
                 a = shared(a)
@@ -340,14 +411,14 @@ namespace ts.yelm.ir {
         })
         let r = op(EK.RuntimeCall, args, name)
         r.isAsync = isAsync
-        
+
         if (decrs.length > 0) {
             r = shared(r)
             decrs.unshift(r)
             decrs.push(r)
-            r = op(EK.Sequence, decrs) 
+            r = op(EK.Sequence, decrs)
         }
-        
+
         return r
     }
 }

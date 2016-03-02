@@ -4,6 +4,7 @@
 /// <reference path="util.ts"/>
 /// <reference path="cloud.ts"/>
 /// <reference path="thumb.ts"/>
+/// <reference path="ir.ts"/>
 /// <reference path="emitter.ts"/>
 
 namespace ts.yelm {

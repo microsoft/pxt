@@ -238,7 +238,7 @@ namespace ts.yelm {
         return !(rettp.flags & TypeFlags.Void)
     }
 
-    function getDeclName(node: Declaration) {
+    export function getDeclName(node: Declaration) {
         let text = node && node.name ? (<Identifier>node.name).text : null
         if (!text && node.kind == SyntaxKind.Constructor)
             text = "constructor"
@@ -979,7 +979,7 @@ namespace ts.yelm {
                 }
             }
 
-            assert(!!lit == !isExpression)
+            assert(!!lit == isExpression)
 
             scope(() => {
                 let isRoot = proc == null
@@ -2368,7 +2368,7 @@ namespace ts.yelm {
             this.emit(".space 16 ; reserved")
 
             this.procs.forEach(p => {
-                this.csource += "\n" + p.body
+                this.csource += "\n" + irToAssembly(this, p)
             })
 
             this.csource += "_end_js:\n"
@@ -2433,6 +2433,8 @@ namespace ts.yelm {
         let jmpLblNo = 0
         let resText = ""
         let write = (s: string) => { resText += asmline(s); }
+        
+        console.log(proc.toString())
 
         write(`
 ;
