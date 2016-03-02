@@ -7,6 +7,8 @@
         "out": "../built/yelmsim.js",
         "rootDir": ".",
         "newLine": "LF",
+        "moduleResolution": "node",
+        "isolatedModules": false,
         "sourceMap": true
     }
 }
