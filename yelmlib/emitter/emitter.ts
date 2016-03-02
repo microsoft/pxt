@@ -232,6 +232,12 @@ namespace ts.yelm {
         return checkType(r)
     }
 
+    function procHasReturn(proc: ir.Procedure) {
+        let sig = checker.getSignatureFromDeclaration(proc.action)
+        let rettp = checker.getReturnTypeOfSignature(sig)
+        return !(rettp.flags & TypeFlags.Void)
+    }
+
     function getDeclName(node: Declaration) {
         let text = node && node.name ? (<Identifier>node.name).text : null
         if (!text && node.kind == SyntaxKind.Constructor)
@@ -887,11 +893,11 @@ namespace ts.yelm {
         }
         function emitTaggedTemplateExpression(node: TaggedTemplateExpression) { }
         function emitTypeAssertion(node: TypeAssertion) {
-            emit(node.expression)
+            return emitExpr(node.expression)
         }
         function emitAsExpression(node: AsExpression) { }
         function emitParenExpression(node: ParenthesizedExpression) {
-            emit(node.expression)
+            return emitExpr(node.expression)
         }
 
         function getParameters(node: FunctionLikeDeclaration) {
@@ -912,34 +918,35 @@ namespace ts.yelm {
         }
 
         function emitLambdaWrapper(node: FunctionLikeDeclaration) {
-            proc.emit("")
-            proc.emit(".section code");
-            proc.emit(".balign 4");
-            proc.emitLbl(getFunctionLabel(node) + "_Lit");
-            proc.emit(".short 0xffff, 0x0000   ; action literal");
-            proc.emit("@stackmark litfunc");
-            proc.emit("push {r5, lr}");
-            proc.emit("mov r5, r1");
+            let r = ""
+            let write = (s: string) => r += s;
+            write("")
+            write(".section code");
+            write(".balign 4");
+            write(getFunctionLabel(node) + "_Lit");
+            write(".short 0xffff, 0x0000   ; action literal");
+            write("@stackmark litfunc");
+            write("push {r5, lr}");
+            write("mov r5, r1");
 
             let parms = getParameters(node)
 
             parms.forEach((p, i) => {
                 if (i >= 2)
                     userError(lf("only up to two parameters supported in lambdas"))
-                proc.emit(`push {r${i + 2}}`)
+                write(`push {r${i + 2}}`)
             })
-            proc.emit("@stackmark args");
+            write("@stackmark args");
 
-            let mode = proc.hasReturn() ? "F0" : "P0"
-            let nxt = proc.mkLabel("call")
-            proc.emit("bl " + getFunctionLabel(node) + " ; *R " + nxt)
-            proc.emitLbl(nxt)
+            write("bl " + getFunctionLabel(node))
 
-            proc.emit("@stackempty args")
+            write("@stackempty args")
             if (parms.length)
-                proc.emit("add sp, #4*" + parms.length + " ; pop args")
-            proc.emit("pop {r5, pc}");
-            proc.emit("@stackempty litfunc");
+                write("add sp, #4*" + parms.length + " ; pop args")
+            write("pop {r5, pc}");
+            write("@stackempty litfunc");
+
+            return r
         }
 
         function emitFunLit(node: FunctionLikeDeclaration, raw = false) {
@@ -998,7 +1005,7 @@ namespace ts.yelm {
                     let v = loc.loadCore()
                     if (loc.isRef() || loc.isByRefLocal())
                         v = ir.op(EK.Incr, [v])
-                    proc.emitExpr(ir.rtcall("bitvm::stclo", [lit, ir.numlit(i), v]))    
+                    proc.emitExpr(ir.rtcall("bitvm::stclo", [lit, ir.numlit(i), v]))
                 })
                 if (node.kind == SyntaxKind.FunctionDeclaration) {
                     info.location = proc.mkLocal(node, getVarInfo(node))
@@ -1011,6 +1018,8 @@ namespace ts.yelm {
                 }
             }
 
+            assert(!!lit == !isExpression)
+
             scope(() => {
                 let isRoot = proc == null
                 proc = new ir.Procedure();
@@ -1019,6 +1028,8 @@ namespace ts.yelm {
                 proc.info = info;
                 proc.captured = locals;
                 bin.addProc(proc);
+
+                /*
 
                 proc.emit("")
                 proc.emit(";")
@@ -1033,9 +1044,10 @@ namespace ts.yelm {
                 proc.emit("push {lr}");
 
                 proc.pushLocals();
+                */
 
                 proc.args = getParameters(node).map((p, i) => {
-                    let l = new Location(i, p, getVarInfo(p))
+                    let l = new ir.Cell(i, p, getVarInfo(p))
                     l.isarg = true
                     return l
                 })
@@ -1043,30 +1055,27 @@ namespace ts.yelm {
                 proc.args.forEach(l => {
                     if (l.isByRefLocal()) {
                         // TODO add C++ support function to do this
-                        proc.emitCallRaw("bitvm::mkloc" + l.refSuff())
-                        proc.emit("push {r0}")
-                        l.emitLoadCore(proc)
-                        proc.emit("mov r1, r0")
-                        proc.emit("ldr r0, [sp, #0]")
-                        proc.emitCallRaw("bitvm::stloc" + l.refSuff()); // unref internal
-                        proc.emit("pop {r0}")
-                        l.emitStoreCore(proc)
+                        let tmp = proc.emitTmp(ir.rtcall("bitvm::mkloc" + l.refSuff(), []))
+                        proc.emitExpr(ir.rtcall("bitvm::stloc" + l.refSuff(), [tmp, l.loadCore()]))
+                        proc.emitExpr(l.storeDirect(tmp))
                     }
                 })
 
                 emit(node.body);
 
-                proc.emitLbl(getLabels(node).ret)
-                proc.stackEmpty();
+                proc.emitLblDirect(getLabels(node).ret)
 
-                if (proc.hasReturn()) {
-                    proc.emit("push {r0}");
+                //proc.stackEmpty();
+
+                if (procHasReturn(proc)) {
+                    let v = proc.emitTmp(ir.op(EK.RetVal, []))
                     proc.emitClrs();
-                    proc.emit("pop {r0}");
+                    proc.storeRetVal(v)
                 } else {
                     proc.emitClrs();
                 }
 
+                /*
                 proc.popLocals();
 
                 proc.emit("pop {pc}");
@@ -1075,6 +1084,7 @@ namespace ts.yelm {
 
                 if (proc.args.length <= 2)
                     emitLambdaWrapper(node)
+                    */
 
                 assert(!bin.finalPass || usedWorkList.length == 0)
                 while (usedWorkList.length > 0) {
@@ -1083,7 +1093,7 @@ namespace ts.yelm {
                 }
 
             })
-            
+
             return lit
         }
 
@@ -1091,13 +1101,11 @@ namespace ts.yelm {
         function emitTypeOfExpression(node: TypeOfExpression) { }
         function emitVoidExpression(node: VoidExpression) { }
         function emitAwaitExpression(node: AwaitExpression) { }
-        function emitPrefixUnaryExpression(node: PrefixUnaryExpression) {
+        function emitPrefixUnaryExpression(node: PrefixUnaryExpression): ir.Expr {
             let tp = typeOf(node.operand)
             if (tp.flags & TypeFlags.Boolean) {
                 if (node.operator == SyntaxKind.ExclamationToken) {
-                    emit(node.operand)
-                    proc.emitCall("boolean::not_", 0)
-                    return
+                    return rtcallMask("boolean::not_", [node.operand])
                 }
             }
 
@@ -1108,35 +1116,26 @@ namespace ts.yelm {
                     case SyntaxKind.MinusMinusToken:
                         return emitIncrement(node, "number::subtract", false)
                     case SyntaxKind.MinusToken:
-                        emit(node.operand)
-                        proc.emit("pop {r0}")
-                        proc.emit("negs r0, r0")
-                        proc.emit("push {r0}")
-                        return
+                        return ir.rtcall("number::subtract", [ir.numlit(0), emitExpr(node.operand)])
                     case SyntaxKind.PlusToken:
-                        emit(node.operand)
-                        return // no-op
+                        return emitExpr(node.operand) // no-op
                     default: unhandled(node, "postfix unary number")
                 }
             }
 
-            unhandled(node, "prefix unary");
+            throw unhandled(node, "prefix unary");
         }
 
-        function emitIncrement(expr: PrefixUnaryExpression | PostfixUnaryExpression, meth: string, post: boolean) {
+        function emitIncrement(expr: PrefixUnaryExpression | PostfixUnaryExpression, meth: string, isPost: boolean) {
             // TODO expr evaluated twice
             let bogus = isBogusReturn(expr)
-            emit(expr.operand)
-            if (!post && !bogus)
-                proc.emit("push {r0}")
-            proc.emitInt(1)
-            proc.emitCall(meth, 0)
-            if (post && !bogus)
-                proc.emit("push {r0}")
-            emitStore(expr.operand)
+            let pre = proc.emitTmp(emitExpr(expr.operand))
+            let post = ir.rtcall(meth, [pre, ir.numlit(1)])
+            emitStore(expr.operand, post)
+            return isPost ? post : pre
         }
 
-        function emitPostfixUnaryExpression(node: PostfixUnaryExpression) {
+        function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
             let tp = typeOf(node.operand)
 
             if (tp.flags & TypeFlags.Number) {
@@ -1148,7 +1147,7 @@ namespace ts.yelm {
                     default: unhandled(node, "postfix unary number")
                 }
             }
-            unhandled(node)
+            throw unhandled(node)
         }
 
         function isBogusReturn(node: Expression) {
@@ -1199,7 +1198,7 @@ namespace ts.yelm {
                 if (decl && (decl.kind == SyntaxKind.VariableDeclaration || decl.kind == SyntaxKind.Parameter)) {
                     let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
-                    l.emitStoreByRef(proc)
+                    proc.emitExpr(l.storeByRef(src))
                 } else {
                     unhandled(trg, "target identifier")
                 }
@@ -1237,18 +1236,20 @@ namespace ts.yelm {
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let lbl = proc.mkLabel("lazy")
-            emit(node.left);
+            proc.storeRetVal(emitExpr(node.left))
+            // TODO what if the value is of ref type?
             if (node.operatorToken.kind == SyntaxKind.BarBarToken) {
-                proc.emitJmp(lbl, "JMPNZ")
+                proc.emitJmp(lbl, ir.op(EK.RetVal, []), true)
             } else if (node.operatorToken.kind == SyntaxKind.AmpersandAmpersandToken) {
-                proc.emitJmp(lbl, "JMPZ")
+                proc.emitJmp(lbl, ir.op(EK.RetVal, []))
             } else {
                 oops()
             }
-            emit(node.right)
-            proc.emit("pop {r0}")
+
+            proc.storeRetVal(emitExpr(node.right))
             proc.emitLbl(lbl)
-            proc.emit("push {r0}")
+
+            return ir.op(EK.RetVal, [])
         }
 
         function emitBinaryExpression(node: BinaryExpression): ir.Expr {
@@ -1292,10 +1293,9 @@ namespace ts.yelm {
 
             if (node.operatorToken.kind == SyntaxKind.PlusToken) {
                 if ((lt.flags & TypeFlags.String) || (rt.flags & TypeFlags.String)) {
-                    emitAsString(node.left)
-                    emitAsString(node.right)
-                    proc.emitCall("string::concat_op", 3)
-                    return
+                    return ir.rtcallMask("string::concat_op", 3, false, [
+                        emitAsString(node.left),
+                        emitAsString(node.right)])
                 }
             }
 
@@ -1331,22 +1331,23 @@ namespace ts.yelm {
                 case SyntaxKind.AmpersandAmpersandToken:
                     return emitLazyBinaryExpression(node);
                 default:
-                    unhandled(node.operatorToken, "generic operator")
+                    throw unhandled(node.operatorToken, "generic operator")
             }
         }
 
-        function emitAsString(e: Expression) {
-            emit(e)
+        function emitAsString(e: Expression): ir.Expr {
+            let r = emitExpr(e)
             let tp = typeOf(e)
             if (tp.flags & TypeFlags.Number)
-                proc.emitCall("number::to_string", 0)
+                return ir.rtcall("number::to_string", [r])
             else if (tp.flags & TypeFlags.Boolean)
-                proc.emitCall("boolean::to_string", 0)
-            else if (tp.flags & TypeFlags.String) {
-                // OK
-            } else
-                userError(lf("don't know how to convert to string"))
+                return ir.rtcall("boolean::to_string", [r])
+            else if (tp.flags & TypeFlags.String)
+                return r // OK
+            else
+                throw userError(lf("don't know how to convert to string"))
         }
+
         function emitConditionalExpression(node: ConditionalExpression) { }
         function emitSpreadElementExpression(node: SpreadElementExpression) { }
         function emitYieldExpression(node: YieldExpression) { }
@@ -1362,9 +1363,8 @@ namespace ts.yelm {
             emitExprAsStmt(node.expression)
         }
         function emitIfStatement(node: IfStatement) {
-            emit(node.expression)
             let elseLbl = proc.mkLabel("else")
-            proc.emitJmp(elseLbl, "JMPZ")
+            proc.emitJmp(elseLbl, emitExpr(node.expression))
             emit(node.thenStatement)
             let afterAll = proc.mkLabel("afterif")
             proc.emitJmp(afterAll)
@@ -1386,37 +1386,34 @@ namespace ts.yelm {
 
         function emitDoStatement(node: DoStatement) {
             let l = getLabels(node)
-            proc.emitLbl(l.cont);
+            proc.emitLblDirect(l.cont);
             emit(node.statement)
-            emit(node.expression)
-            proc.emitJmp(l.brk, "JMPZ");
+            proc.emitJmp(l.brk, emitExpr(node.expression));
             proc.emitJmp(l.cont);
-            proc.emitLbl(l.brk);
+            proc.emitLblDirect(l.brk);
         }
 
         function emitWhileStatement(node: WhileStatement) {
             let l = getLabels(node)
-            proc.emitLbl(l.cont);
-            emit(node.expression)
-            proc.emitJmp(l.brk, "JMPZ");
+            proc.emitLblDirect(l.cont);
+            proc.emitJmp(l.brk, emitExpr(node.expression));
             emit(node.statement)
             proc.emitJmp(l.cont);
-            proc.emitLbl(l.brk);
+            proc.emitLblDirect(l.brk);
         }
 
         function emitExprAsStmt(node: Expression) {
             if (!node) return;
-            emit(node);
+            let v = emitExpr(node);
             let a = typeOf(node)
             if (!(a.flags & TypeFlags.Void) && !isBogusReturn(node)) {
                 if (isRefType(a)) {
                     // will pop
-                    proc.emitCall("bitvm::decr", 0);
-                } else {
-                    proc.emit("pop {r0}")
+                    v = ir.op(EK.Decr, [v])
                 }
             }
-            proc.stackEmpty();
+            proc.emitExpr(v)
+            //proc.stackEmpty();
         }
 
         function emitForStatement(node: ForStatement) {
@@ -1425,16 +1422,14 @@ namespace ts.yelm {
             else
                 emitExprAsStmt(<Expression>node.initializer);
             let l = getLabels(node)
-            proc.emitLbl(l.fortop);
-            if (node.condition) {
-                emit(node.condition);
-                proc.emitJmp(l.brk, "JMPZ");
-            }
+            proc.emitLblDirect(l.fortop);
+            if (node.condition)
+                proc.emitJmp(l.brk, emitExpr(node.condition));
             emit(node.statement)
-            proc.emitLbl(l.cont);
+            proc.emitLblDirect(l.cont);
             emitExprAsStmt(node.incrementor);
             proc.emitJmp(l.fortop);
-            proc.emitLbl(l.brk);
+            proc.emitLblDirect(l.brk);
         }
 
         function emitForInOrForOfStatement(node: ForInStatement) { }
@@ -1468,12 +1463,14 @@ namespace ts.yelm {
         }
 
         function emitReturnStatement(node: ReturnStatement) {
+            let v: ir.Expr = null
             if (node.expression) {
-                emit(node.expression)
-                proc.emit("pop {r0}")
-            } else if (proc.hasReturn()) {
-                proc.emit("mov r0, #0 ; return undefined")
+                v = emitExpr(node.expression)
+            } else if (procHasReturn(proc)) {
+                v = ir.numlit(null) // == return undefined
             }
+            if (v)
+                proc.storeRetVal(v)
             proc.emitJmp(getLabels(proc.action).ret)
         }
 
@@ -1483,7 +1480,7 @@ namespace ts.yelm {
         function emitLabeledStatement(node: LabeledStatement) {
             let l = getLabels(node.statement)
             emit(node.statement)
-            proc.emitLbl(l.brk)
+            proc.emitLblDirect(l.brk)
         }
         function emitThrowStatement(node: ThrowStatement) { }
         function emitTryStatement(node: TryStatement) { }
@@ -1496,15 +1493,13 @@ namespace ts.yelm {
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
-                loc.emitClrIfRef(proc) // we might be in a loop
-                proc.emitCallRaw("bitvm::mkloc" + loc.refSuff())
-                loc.emitStoreCore(proc)
+                proc.emitClrIfRef(loc) // we might be in a loop
+                proc.emitExpr(loc.storeDirect(ir.rtcall("bitvm::mkloc" + loc.refSuff(), [])))
             }
             // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {
-                emit(node.initializer)
-                loc.emitStoreByRef(proc)
-                proc.stackEmpty();
+                proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
+                //proc.stackEmpty();
             }
         }
         function emitClassExpression(node: ClassExpression) { }
@@ -1575,15 +1570,12 @@ namespace ts.yelm {
                     return emitEnumDeclaration(<EnumDeclaration>node);
                 //case SyntaxKind.MethodSignature:
                 case SyntaxKind.FunctionDeclaration:
-                case SyntaxKind.FunctionExpression:
-                case SyntaxKind.ArrowFunction:
                 case SyntaxKind.Constructor:
                 case SyntaxKind.MethodDeclaration:
-                    return emitFunctionDeclaration(<FunctionLikeDeclaration>node);
+                    emitFunctionDeclaration(<FunctionLikeDeclaration>node);
+                    return
                 case SyntaxKind.ExpressionStatement:
                     return emitExpressionStatement(<ExpressionStatement>node);
-                case SyntaxKind.CallExpression:
-                    return emitCallExpression(<CallExpression>node);
                 case SyntaxKind.Block:
                 case SyntaxKind.ModuleBlock:
                     return emitBlock(<Block>node);
@@ -1609,8 +1601,6 @@ namespace ts.yelm {
                 case SyntaxKind.PropertyDeclaration:
                 case SyntaxKind.PropertyAssignment:
                     return emitPropertyAssignment(<PropertyDeclaration>node);
-                case SyntaxKind.Identifier:
-                    return emitIdentifier(<Identifier>node);
                 case SyntaxKind.TypeAliasDeclaration:
                     // skip
                     return
@@ -1655,6 +1645,13 @@ namespace ts.yelm {
                     return emitNewExpression(<NewExpression>node);
                 case SyntaxKind.ThisKeyword:
                     return emitThis(node);
+                case SyntaxKind.CallExpression:
+                    return emitCallExpression(<CallExpression>node);
+                case SyntaxKind.FunctionExpression:
+                case SyntaxKind.ArrowFunction:
+                    return emitFunctionDeclaration(<FunctionLikeDeclaration>node);
+                case SyntaxKind.Identifier:
+                    return emitIdentifier(<Identifier>node);
 
                 default:
                     unhandled(node);
@@ -2384,7 +2381,7 @@ namespace ts.yelm {
         addProc(proc: ir.Procedure) {
             this.procs.push(proc)
             proc.seqNo = this.procs.length
-            proc.binary = this
+            //proc.binary = this
         }
 
 

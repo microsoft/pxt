@@ -12,9 +12,10 @@ namespace ts.yelm.ir {
         TmpRef,
         FieldAccess,
         Store,
-        CellRef,        
+        CellRef,
         Incr,
         Decr,
+        RetVal,
     }
 
     export class Node {
@@ -40,15 +41,17 @@ namespace ts.yelm.ir {
         None,
         Expr,
         Label,
-        JmpZ,
-        JmpNZ,
+        Jmp,
     }
 
     export class Stmt extends Node {
+        public lblName: string;
+        public lbl: Stmt;
+        public negatedJump: boolean;
+
         constructor(
             public stmtKind: SK,
-            public expr: Expr,
-            public data: any
+            public expr: Expr
         ) {
             super()
         }
@@ -141,6 +144,10 @@ namespace ts.yelm.ir {
             this.emit(stmt(SK.Expr, expr))
         }
 
+        storeRetVal(v: Expr) {
+            this.emitExpr(ir.op(EK.Store, [ir.op(EK.RetVal, []), v]))
+        }
+
         emitTmp(expr: Expr) {
             switch (expr.exprKind) {
                 case EK.NumberLiteral:
@@ -153,10 +160,16 @@ namespace ts.yelm.ir {
         }
 
         mkLabel(name: string) {
-            return stmt(SK.Label, null, "." + name + "." + this.lblNo++)
+            let lbl = stmt(SK.Label, null)
+            lbl.lblName = "." + name + "." + this.lblNo++
+            lbl.lbl = lbl
+            return lbl
         }
         emitLbl(lbl: Stmt) {
             this.emit(lbl)
+        }
+        emitLblDirect(lbl: string) {
+            this.emit(this.mkLabel(lbl))
         }
 
         getName() {
@@ -176,20 +189,37 @@ namespace ts.yelm.ir {
                 (noargs ? null : this.args.filter(n => n.def == l)[0])
         }
 
+        emitClrIfRef(p: Cell) {
+            assert(!p.isGlobal() && !p.iscap)
+            if (p.isRef() || p.isByRefLocal()) {
+                this.emitExpr(op(EK.Decr, [p.loadCore()]))
+            }
+        }
+
         emitClrs() {
             if (this.isRoot) return;
             var lst = this.locals.concat(this.args)
-            lst.forEach(p => {
-                assert(!p.isGlobal() && !p.iscap)
-                if (p.isRef() || p.isByRefLocal()) {
-                    this.emitExpr(op(EK.Decr, [p.loadCore()]))
-                }
-            })
+            lst.forEach(p => this.emitClrIfRef(p))
+        }
+
+        emitJmp(trg: string | Stmt, expr?: Expr, isNZ = false) {
+            let jmp = stmt(SK.Jmp, expr)
+
+            if (isNZ) jmp.negatedJump = true
+
+            if (typeof trg == "string")
+                jmp.lblName = trg as any
+            else {
+                jmp.lbl = trg as Stmt
+                jmp.lblName = jmp.lbl.lblName
+            }
+
+            this.emit(jmp)
         }
     }
 
-    export function stmt(kind: SK, expr: Expr, data?: any): Stmt {
-        return new Stmt(kind, expr, data)
+    export function stmt(kind: SK, expr: Expr): Stmt {
+        return new Stmt(kind, expr)
     }
 
     export function op(kind: EK, args: Expr[], data?: any): Expr {
