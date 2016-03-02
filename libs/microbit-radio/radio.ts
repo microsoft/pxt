@@ -20,7 +20,7 @@ namespace radio {
     //% help=/functions/on-message-received
     //% shim=micro_bit::onBroadcastMessageReceived
     //% weight=69
-    //% blockId=radio_broadcast_received_event block="on message received|%message" icon="\uf1d8"
+    //% blockId=radio_broadcast_received_event block="on message received|%MESSAGE=value" icon="\uf1d8"
     export function onMessageReceived(message: number, body:Action) : void {
     }
 

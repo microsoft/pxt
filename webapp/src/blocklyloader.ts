@@ -28,6 +28,12 @@ var cachedToolbox: string = "";
 function createShadowValue(name: string, type: string, v?: string, shadowType?: string): Element {
     if (v && v.slice(0, 1) == "\"")
         v = JSON.parse(v);
+    if (type == "number" && shadowType && shadowType == "value") {
+        let field = document.createElement("field");
+        field.setAttribute("name", name);
+        return field;
+    }
+        
     let value = document.createElement("value");
     value.setAttribute("name", name);
     if (shadowType) {
@@ -236,7 +242,12 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
                 i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);
             }
             else if (pr.type == "number") {
-                i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
+                if (pr.shadowType && pr.shadowType == "value") {
+                    i = block.appendDummyInput();
+                    if (pre) i.appendField(pre)
+                    i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
+                }
+                else i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
             }
             else if (pr.type == "boolean") {
                 i = initField(block.appendValueInput(p), ni, fn, pre, true, "Boolean");
