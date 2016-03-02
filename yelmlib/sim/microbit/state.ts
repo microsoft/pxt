@@ -18,7 +18,7 @@ namespace yelm.rt.micro_bit {
         image = createImage(5);
         brigthness = 255;
         displayMode = DisplayMode.bw;
-        font: Image;
+        font: Image = createFont();
 
         // buttons    
         usesButtonAB: boolean = false;
