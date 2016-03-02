@@ -279,17 +279,18 @@ namespace yelm {
             this.config = {
                 name: name,
                 description: "",
+                target: "microbit",
                 installedVersion: "",
                 files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
                 testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),
                 dependencies: {
-                    "core": "*",
-                    "game": "*",
-                    "led": "*",
-                    "music": "*",
-                    "radio": "*",
-                    "pins": "*",
-                    "serial": "*"
+                    "microbit": "*",
+                    "microbit-game": "*",
+                    "microbit-led": "*",
+                    "microbit-music": "*",
+                    "microbit-radio": "*",
+                    "microbit-pins": "*",
+                    "microbit-serial": "*"
                 }
             }
             this.validateConfig();
