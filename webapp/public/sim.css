@@ -12,7 +12,11 @@ svg.sim {
 
 .sim-pin-touch:hover {
     stroke:#D4AF37;
-    stroke-width:3px;
+    stroke-width:2px;
+}
+
+.sim-pin-touch.touched:hover {
+    stroke:darkorange;
 }
 
 .sim-led-back:hover {

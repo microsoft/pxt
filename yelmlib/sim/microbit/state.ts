@@ -5,6 +5,7 @@ namespace yelm.rt.micro_bit {
     }
     
     export class Pin {
+        constructor(public id: string) {}
         touched = false;
         value = 0;
         input = false;
@@ -52,7 +53,7 @@ namespace yelm.rt.micro_bit {
         buttons : Button[];
 
         // pins
-        pins = Util.repeatMap(21, i => new Pin())
+        pins = Util.repeatMap(21, i => new Pin("MICROBIT_ID_IO_P" + i))
 
         // sensors    
         usesAcceleration = false;

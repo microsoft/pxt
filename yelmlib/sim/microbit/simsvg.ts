@@ -247,11 +247,28 @@ namespace yelm.rt.micro_bit {
                     this.updateTilt();
             }, false);
             
+            this.pins.forEach((pin, index) => {
+                pin.addEventListener("mousedown", ev => {
+                    let state = this.board;
+                    state.pins[index].touched = true;
+                    Svg.fill(this.pins[index], this.props.theme.pinTouched);                
+                    this.pins[index].classList.add('touched');
+                })
+                pin.addEventListener("mouseup", ev => {
+                    let state = this.board;
+                    state.pins[index].touched = false;
+                    Svg.fill(this.pins[index], this.props.theme.pin);
+                    
+                    let ens = this.props.runtime.enums;
+                    this.board.bus.queue(ens[state.pins[index].id], ens["MICROBIT_BUTTON_EVT_CLICK"]);
+                    this.pins[index].classList.remove('touched');
+                })                
+            })
             this.buttonsOuter.slice(0,2).forEach((btn, index) => {
                 btn.addEventListener("mousedown", ev => {
                     let state = this.board;
                     state.buttons[index].pressed = true;
-                    Svg.fill(this.buttons[index], this.props.theme.buttonDown);                
+                    Svg.fill(this.buttons[index], this.props.theme.buttonDown);          
                 })
                 btn.addEventListener("mouseup", ev => {
                     let state = this.board;
