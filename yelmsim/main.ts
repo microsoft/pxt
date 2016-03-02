@@ -15,7 +15,7 @@ namespace yelm.rt {
     export interface SimulatorStateMessage extends SimulatorMessage {
         state:string;
     }
-
+    
     export module Embed {
         export function start() {
             console.log('listening for simulator commands')
@@ -30,17 +30,18 @@ namespace yelm.rt {
 
             let data: SimulatorMessage = event.data || {};
             let kind = data.kind || '';
+            if (!kind) return;
             switch (kind || '') {
                 case 'run': run(<SimulatorRunMessage>data);break;
                 case 'stop': stop(); break;
-                default: console.error('unknown message');
+                default: queue(data); break;
             }
         }
         
         function postMessage(data: any) {
             // TODO: origins
             console.log('sending ' + JSON.stringify(data, null, 2))
-            window.postMessage(data, "*");
+            window.parent.postMessage(data, "*");
         }
         
         var runtime : yelm.rt.Runtime;        
@@ -68,6 +69,15 @@ namespace yelm.rt {
                 console.log("DONE")
                 yelm.rt.dumpLivePointers();
             })
+        }
+        
+        function queue(msg : SimulatorMessage) {
+            if (!runtime || runtime.dead) {
+                console.log('runtime not started or dead');
+                return;
+            }
+            
+            runtime.board.receiveMessage(msg);
         }
                 
         function initMicrobit() {

@@ -26,13 +26,6 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
             code: js
         }
         Simulator.postMessage(msg)
-        /*
-        r.errorHandler = (e: any) => {
-            core.errorNotification(e.message)
-            console.error("Simulator error", e.stack)
-        } 
-        r.stateChanged = () => { this.forceUpdate() }
-        */
     }
 
     render() {

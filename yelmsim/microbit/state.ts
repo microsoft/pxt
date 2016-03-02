@@ -36,6 +36,12 @@ namespace yelm.rt.micro_bit {
         }
     }
     
+    export interface SimulatorEventBusMessage extends SimulatorMessage {
+        id: number;
+        eventid: number;
+        value?: number;
+    }
+    
     export class Board extends BaseBoard {
         id: string;
         
@@ -75,6 +81,18 @@ namespace yelm.rt.micro_bit {
             this.buttons = ["MICROBIT_ID_BUTTON_A", 
                "MICROBIT_ID_BUTTON_B", 
                 "MICROBIT_ID_BUTTON_AB"].map(id => new Button(id));
+        }
+        
+        receiveMessage(msg: SimulatorMessage) {
+            if (!runtime || runtime.dead) return;
+            
+            console.log('received ' + JSON.stringify(msg, null, 2))
+            switch(msg.kind || "") {
+                case 'eventbus': 
+                    let ev = <SimulatorEventBusMessage>msg;
+                    this.bus.queue(ev.id, ev.eventid, ev.value);
+                    break;
+            }
         }
     }
 
