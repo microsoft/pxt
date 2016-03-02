@@ -77,6 +77,7 @@ compileDir("yelmsim", ["built/yelmlib.js"])
 compileDir("cli", ["built/yelmlib.js"])
 
 ju.catFiles('built/sim.js', [
+    "built/yelmlib.js",
     "built/yelmsim.js"
     ],`
 "use strict";
