@@ -19,7 +19,8 @@ namespace yelm.rt {
     export module Embed {
         export function start() {
             console.log('listening for simulator commands')
-            window.addEventListener("message", receiveMessage, false);            
+            window.addEventListener("message", receiveMessage, false);       
+            Runtime.postMessage({ kind:'status', state: 'ready'});     
         }
 
         function receiveMessage(event: MessageEvent) {

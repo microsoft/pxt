@@ -2,36 +2,83 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 
-export interface ISimulatorProps {}
+export interface ISimulatorProps { }
 
 export class Simulator extends React.Component<ISimulatorProps, {}> {
     componentDidMount() {
-        let frame = ReactDOM.findDOMNode(this);
-        frame.addEventListener('message', (ev : MessageEvent) => {
-            console.log('simulator: ' + JSON.stringify(ev.data));
+        window.addEventListener('message', (ev: MessageEvent) => {
+            console.log('simulator: ' + JSON.stringify(ev.data));            
+            let msg = ev.data;
+            switch(msg.kind || '') {
+                case 'status':
+                     switch(msg.state || '') {
+                         case 'ready':
+                            Simulator.startFrame(ev.source.frameElement as HTMLIFrameElement);
+                            break;                           
+                     }
+                     break;
+                default:
+                    Simulator.postMessage(ev.data, ev.source);
+                    break;
+            }
         }, false);
+        
+    }
+     
+    static postMessage(msg: any, source?: Window) {
+        // dispatch to all iframe besides self
+        let frames = $('#simulators iframe');
+        if (source && msg.kind === 'eventbus' && frames.length < 2) {
+            let frame = Simulator.createFrame()
+            $('#simulators').append(frame);
+            frames = $('#simulators iframe');
+        }
+        frames.each((index, el) => {
+            let frame = el as HTMLIFrameElement
+            if (source && frame.contentWindow == source) return;
+
+            frame.contentWindow.postMessage(msg, "*");
+        })
+    }
+
+    static createFrame(): HTMLIFrameElement {
+        let frame = document.createElement('iframe') as HTMLIFrameElement;
+        frame.className = 'simframe';
+        frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+        frame.src = './simulator.html';
+        frame.frameBorder = "0";
+        return frame;
     }
     
-    static postMessage(msg : any) {
-        let frame = document.getElementById('simframe') as HTMLIFrameElement;
-        // TODO target.
-        if (frame) frame.contentWindow.postMessage(msg, "*");
+    static startFrame(frame : HTMLIFrameElement) {
+        frame.contentWindow.postMessage(Simulator.currentRuntime, "*");        
     }
-    
-    static run(target:string, js:string, enums: any) {
-        let msg = {
-            kind:'run',
+
+    static currentRuntime : any;
+    static run(target: string, js: string, enums: any) {
+        // store information
+        Simulator.currentRuntime = {
+            kind: 'run',
             target: target,
             enums: enums,
             code: js
         }
-        Simulator.postMessage(msg)
-
+        
+        let simulators = $('#simulators');
+        // drop extras frames
+        simulators.find('iframe:gt(0)').remove();
+        let frame = simulators.find('iframe')[0] as HTMLIFrameElement;
+        // lazy allocate iframe
+        if (!frame) {
+            frame = Simulator.createFrame();
+            simulators.append(frame);
+            // delay started
+        } else
+            Simulator.startFrame(frame);
     }
 
     render() {
-        return <div className='simulator'> 
-            <iframe id="simframe" sandbox="allow-same-origin allow-scripts" src="./simulator.html" />
-            </div>
+        return <div id="simulators" className='simulator'>
+        </div>
     }
 }

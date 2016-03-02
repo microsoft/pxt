@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "outDir": "../built",
+        "out": "../built/yelmsim.js",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": true

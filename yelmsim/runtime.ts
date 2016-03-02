@@ -129,8 +129,9 @@ namespace yelm.rt {
         }
         
         // communication
-        postMessage(data: any) {
+        static postMessage(data: any) {
             // TODO: origins
+            console.log(typeof window)
             if (typeof window !== 'undefined' && window.parent) {
                 console.log('sending ' + JSON.stringify(data, null, 2))
                 window.parent.postMessage(data, "*");
@@ -176,9 +177,9 @@ namespace yelm.rt {
                 this.running = r;
                 if (this.running) {
                     this.startTime = U.now();
-                    this.postMessage({ kind: 'status', state: 'running' });
+                    Runtime.postMessage({ kind: 'status', state: 'running' });
                 } else {
-                    this.postMessage({ kind: 'status', state: 'killed' });                    
+                    Runtime.postMessage({ kind: 'status', state: 'killed' });                    
                 }
                 if (this.stateChanged) this.stateChanged();
             }

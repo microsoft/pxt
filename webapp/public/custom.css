@@ -5,7 +5,7 @@
   bottom: 0;
 }
 
-#simframe {
+.simframe {
     border: none;
     width: 242px;
     height:210px;

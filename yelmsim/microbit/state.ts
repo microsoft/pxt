@@ -41,7 +41,7 @@ namespace yelm.rt.micro_bit {
         
         broadcast(msg: number) {
             let ens = enums();
-            this.runtime.postMessage({
+            Runtime.postMessage({
                 kind:'eventbus',
                 id: ens.MES_BROADCAST_GENERAL_ID,
                 eventid: msg
