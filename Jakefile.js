@@ -21,7 +21,7 @@ function loadText(filename)
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'runprj', 'embed', 'testfmt'])
+task('default', ['updatestrings', 'runprj', 'embed', 'testfmt', 'sim'])
 
 task('clean', function() {
   // jake.rmRf("built") - doesn't work?
@@ -73,7 +73,18 @@ file('built/yelm.d.ts', ['built/cli.js'], function() {
 })
 
 compileDir("yelmlib")
+compileDir("yelmsim", ["built/yelmlib.js"])
 compileDir("cli", ["built/yelmlib.js"])
+
+ju.catFiles('built/sim.js', [
+    "built/yelmsim.js"
+    ],`
+"use strict";
+// make sure TypeScript doesn't overwrite our module.exports
+global.savedModuleExports = module.exports;
+module.exports = null;
+`);
+task('sim', ['built/sim.js'], function() {})
 
 task('publish', function() {
   jake.exec([

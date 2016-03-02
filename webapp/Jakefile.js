@@ -6,7 +6,7 @@ var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 
 
-task('default', ['built/main.js', 'built/worker.js', 'built/themes', 'built/style.css', "built/semantic.js", 'built/yelmembed.js'])
+task('default', ['built/main.js', 'built/sim.js', 'built/worker.js', 'built/themes', 'built/style.css', "built/semantic.js", 'built/yelmembed.js'])
 
 task('precopy', function () {
     jake.mkdirP("built")
@@ -20,6 +20,7 @@ task('upper', ["precopy"], { async: true }, function () {
 
 task('postcopy', ["upper"], function () {
     jake.cpR("../built/yelmlib.js", "built/yelmlib.js")
+    jake.cpR("../built/sim.js", "built/sim.js")
 
     let additionalExports = [
       "getCompletionData"
@@ -37,6 +38,10 @@ task('lower', ["postcopy"], { async: true }, function () {
 
 file('built/main.js', ["lower"], { async: true }, function () {
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/src/app.js -o built/main.js')
+})
+
+file('built/sim.js', ["lower"], { async: true }, function () {
+    cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/sim.js -o built/simmain.js')
 })
 
 file('built/worker.js', ["lower"], function () {
