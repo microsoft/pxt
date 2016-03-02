@@ -34,6 +34,20 @@ namespace ts.yelm.ir {
         }
 
         isExpr() { return true }
+
+        isStateless() {
+            switch (this.exprKind) {
+                case EK.NumberLiteral:
+                case EK.PointerLiteral:
+                case EK.TmpRef:
+                    return true;
+                default: return false;
+            }
+        }
+        
+        isFlat() {
+            return this.isStateless() || this.exprKind == EK.CellRef;
+        }
     }
 
     export enum SK {
@@ -208,7 +222,7 @@ namespace ts.yelm.ir {
             var lst = this.locals.concat(this.args)
             lst.forEach(p => this.emitClrIfRef(p))
         }
-        
+
         emitJmpZ(trg: string | Stmt, expr: Expr) {
             this.emitJmp(trg, expr, JmpMode.IfZero)
         }

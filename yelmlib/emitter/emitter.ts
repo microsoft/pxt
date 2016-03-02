@@ -2531,17 +2531,6 @@ ${getFunctionLabel(proc.action)}:
             return name + (isRef ? "Ref" : "")
         }
 
-        function canEmitInto(e: ir.Expr) {
-            switch (e.exprKind) {
-                case EK.NumberLiteral:
-                case EK.PointerLiteral:
-                case EK.TmpRef:
-                case EK.CellRef:
-                    return true;
-                default: return false;
-            }
-        }
-
         function emitExprInto(e: ir.Expr, reg: string) {
             switch (e.exprKind) {
                 case EK.NumberLiteral:
