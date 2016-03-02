@@ -32,13 +32,14 @@ namespace yelm.rt {
     }
 
     export class EventQueue<T> {
+        max: number = 5;
         events: T[] = [];
         handler: RefAction;
         
         constructor(public runtime: Runtime) {}
         
         public push(e: T) {
-            if (!this.handler) return;
+            if (!this.handler || this.events.length > this.max) return;
             
             this.events.push(e)
             
