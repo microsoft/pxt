@@ -2484,7 +2484,7 @@ ${getFunctionLabel(proc.action)}:
                 case ir.SK.Expr:
                     emitExpr(s.expr)
                     if (s.numUses) {
-                        exprStack.push(s)
+                        exprStack.unshift(s)
                         write("push {r0}")
                     }
                     break;
@@ -2537,9 +2537,25 @@ ${getFunctionLabel(proc.action)}:
                     emitLdPtr(e.data);
                     write("@js r0 = " + e.jsInfo)
                     break;
+                case EK.TmpRef:
+                    let idx = exprStack.indexOf(e.data)
+                    U.assert(idx >= 0)
+                    let st = exprStack[idx]
+                    U.assert(st.numUses > 0)
+                    if (idx == 0 && st.numUses == 1) {
+                        write("pop {r0}")
+                        exprStack.shift()
+                        while (exprStack[0] && exprStack[0].numUses == 0) {
+                            write("pop {r1} ; clear stack")
+                            exprStack.shift()
+                        }
+                    } else {
+                        write("ldr r0, [sp, #4*" + idx + "]")
+                    }
+                    st.numUses--
+                    break;
                 case EK.RuntimeCall:
                 case EK.ProcCall:
-                case EK.TmpRef:
                 case EK.FieldAccess:
                 case EK.Store:
                 case EK.CellRef:
