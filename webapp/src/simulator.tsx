@@ -26,6 +26,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
             code: js
         }
         Simulator.postMessage(msg)
+
     }
 
     render() {

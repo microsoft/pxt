@@ -292,5 +292,15 @@ namespace yelm.rt.micro_bit {
     export function getCurrentTime(): number {
         return runtime.runningTime();
     }
+    
+    /* radio */
+    export function broadcastMessage(msg: number) : void {
+        board().radio.broadcast(msg);
+    }
+    
+    export function onBroadcastMessageReceived(msg: number, handler: RefAction) : void {
+        let ens = enums()
+        board().bus.listen(ens.MES_BROADCAST_GENERAL_ID, msg, handler);
+    }
 }
 

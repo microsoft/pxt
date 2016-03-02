@@ -37,13 +37,7 @@ namespace yelm.rt {
                 default: queue(data); break;
             }
         }
-        
-        function postMessage(data: any) {
-            // TODO: origins
-            console.log('sending ' + JSON.stringify(data, null, 2))
-            window.parent.postMessage(data, "*");
-        }
-        
+                
         var runtime : yelm.rt.Runtime;        
         export function stop() {
             if (runtime) {
@@ -63,7 +57,6 @@ namespace yelm.rt {
                 default: console.error('unknown target');
             }
             
-            postMessage({ kind: 'status', state: 'running' });
             runtime.run((v) => {
                 console.log("DONE")
                 yelm.rt.dumpLivePointers();

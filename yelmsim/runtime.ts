@@ -127,6 +127,15 @@ namespace yelm.rt {
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
+        
+        // communication
+        postMessage(data: any) {
+            // TODO: origins
+            if (typeof window !== 'undefined' && window.parent) {
+                console.log('sending ' + JSON.stringify(data, null, 2))
+                window.parent.postMessage(data, "*");
+            }
+        }
 
         // 2k block
         malloc() {
@@ -165,7 +174,12 @@ namespace yelm.rt {
         setRunning(r: boolean) {
             if (this.running != r) {
                 this.running = r;
-                if (this.running) this.startTime = U.now();
+                if (this.running) {
+                    this.startTime = U.now();
+                    this.postMessage({ kind: 'status', state: 'running' });
+                } else {
+                    this.postMessage({ kind: 'status', state: 'killed' });                    
+                }
                 if (this.stateChanged) this.stateChanged();
             }
         }

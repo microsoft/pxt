@@ -36,6 +36,19 @@ namespace yelm.rt.micro_bit {
         }
     }
     
+    export class RadioBus {
+        constructor(private runtime : Runtime) { }
+        
+        broadcast(msg: number) {
+            let ens = enums();
+            this.runtime.postMessage({
+                kind:'eventbus',
+                id: ens.MES_BROADCAST_GENERAL_ID,
+                eventid: msg
+            })
+        }
+    }
+    
     export interface SimulatorEventBusMessage extends SimulatorMessage {
         id: number;
         eventid: number;
@@ -47,6 +60,7 @@ namespace yelm.rt.micro_bit {
         
         // the bus
         bus : EventBus;
+        radio: RadioBus;
 
         // display
         image = createImage(5);
@@ -78,6 +92,7 @@ namespace yelm.rt.micro_bit {
             this.id = "b" + Math.random();
             this.animationQ = new AnimationQueue(runtime);
             this.bus = new EventBus(runtime);
+            this.radio = new RadioBus(runtime);
             let ens = enums();
             this.buttons = [
                 new Button(ens.MICROBIT_ID_BUTTON_A),
