@@ -25,7 +25,7 @@ namespace yelm.rt.micro_bit {
         buttonsPressed = [false, false, false];
 
         // pins
-        pins = Util.repeatMap(20, i => new Pin())
+        pins = Util.repeatMap(21, i => new Pin())
 
         // sensors    
         usesAcceleration = false;

@@ -196,15 +196,15 @@ namespace yelm.rt.micro_bit {
     
     /* input */
     export function isButtonPressed(button : number) : boolean {
-        if (button == 2 && !board().usesButtonAB) {
+        var ens = enums();
+        if (button == ens.MICROBIT_ID_BUTTON_AB && !board().usesButtonAB) {
             board().usesButtonAB = true;
             runtime.queueDisplayUpdate();
         }
         var bts = board().buttonsPressed;
-        if (button <= 1)
-            return bts[button];
-        else // A+B 
-            return bts[2] || (bts[0] && bts[0]);
+        if (button == ens.MICROBIT_ID_BUTTON_A) return bts[0];
+        if (button == ens.MICROBIT_ID_BUTTON_B) return bts[1];
+        return bts[2] || (bts[0] && bts[1]);
     }
     
     export function ioP0() { return board().pins[0]; }
