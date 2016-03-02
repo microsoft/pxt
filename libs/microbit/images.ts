@@ -32,7 +32,7 @@ namespace images {
          * @param frameOffset x offset moved on each animation step, eg: 5, 1, -1
          * @param interval time between each animation step in milli seconds, eg: 200
          */
-        //% help=functions/show-image weight=79 shim=micro_bit::showImage
+        //% help=functions/show-image weight=79 shim=micro_bit::showImage async
         //% blockId=device_scroll_image block="scroll image %sprite|with offset %frameoffset|and interval (ms) %delay" blockGap=8
         public scrollImage(frameOffset: number, interval : number = 200) {            
         }

@@ -7,7 +7,6 @@ export interface ISimulatorProps { }
 export class Simulator extends React.Component<ISimulatorProps, {}> {
     componentDidMount() {
         window.addEventListener('message', (ev: MessageEvent) => {
-            console.log('simulator: ' + JSON.stringify(ev.data));            
             let msg = ev.data;
             switch(msg.kind || '') {
                 case 'status':

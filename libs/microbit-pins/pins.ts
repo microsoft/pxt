@@ -149,6 +149,6 @@ namespace pins {
      * @param frequency TODO
      * @param ms TODO
      */
-    //% shim=micro_bit::pitch help=functions/analog-pitch weight=14
+    //% shim=micro_bit::pitch help=functions/analog-pitch weight=14 async
     export function analogPitch(frequency: number, ms: number): void { }
 }

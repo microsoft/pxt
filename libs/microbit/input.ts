@@ -56,7 +56,7 @@ namespace input {
      * @param body TODO
      */
     //% help=functions/on-button-pressed weight=85
-    //% shim=micro_bit::onButtonPressed async
+    //% shim=micro_bit::onButtonPressed
     //% blockId=device_button_event 
     //% block="on button|%NAME|pressed" 
     //% icon="\uf192"

@@ -56,7 +56,7 @@ namespace led {
     /**
      * Cancels the current animation and clears other pending animations.
      */
-    //% weight=50 shim=uBit.display.stopAnimation async help=functions/stop-animation
+    //% weight=50 shim=uBit.display.stopAnimation help=functions/stop-animation
     //% blockId=device_stop_animation block="stop animation" icon="\uf04d"
     export function stopAnimation(): void { }
 
@@ -112,7 +112,7 @@ namespace led {
      * Sets the display mode between black and white and greyscale for rendering LEDs.
      * @param mode TODO
      */
-    //% shim=micro_bit::setDisplayMode async weight=1 help=/functions/set-display-mode
+    //% shim=micro_bit::setDisplayMode weight=1 help=/functions/set-display-mode
     export function setDisplayMode(mode: DisplayMode): void { }
 
     /**
@@ -200,7 +200,7 @@ namespace led {
     /**
      * Takes a screenshot of the LED screen and returns an image.
      */
-    //% shim=uBit.display.screenShot async help=functions/screenshot
+    //% shim=uBit.display.screenShot help=functions/screenshot
     export function screenshot(): images.Image {
         /*
         let img: Image;
