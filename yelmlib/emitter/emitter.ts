@@ -917,38 +917,6 @@ namespace ts.yelm {
             return res
         }
 
-        function emitLambdaWrapper(node: FunctionLikeDeclaration) {
-            let r = ""
-            let write = (s: string) => r += s;
-            write("")
-            write(".section code");
-            write(".balign 4");
-            write(getFunctionLabel(node) + "_Lit");
-            write(".short 0xffff, 0x0000   ; action literal");
-            write("@stackmark litfunc");
-            write("push {r5, lr}");
-            write("mov r5, r1");
-
-            let parms = getParameters(node)
-
-            parms.forEach((p, i) => {
-                if (i >= 2)
-                    userError(lf("only up to two parameters supported in lambdas"))
-                write(`push {r${i + 2}}`)
-            })
-            write("@stackmark args");
-
-            write("bl " + getFunctionLabel(node))
-
-            write("@stackempty args")
-            if (parms.length)
-                write("add sp, #4*" + parms.length + " ; pop args")
-            write("pop {r5, pc}");
-            write("@stackempty litfunc");
-
-            return r
-        }
-
         function emitFunLit(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node) + "_Lit"
             let r = ir.ptrlit(lbl, lbl)
@@ -1029,23 +997,6 @@ namespace ts.yelm {
                 proc.captured = locals;
                 bin.addProc(proc);
 
-                /*
-
-                proc.emit("")
-                proc.emit(";")
-                proc.emit("; Function " + proc.getName())
-                proc.emit(";")
-                proc.emit(".section code");
-                proc.emitLbl(getFunctionLabel(node));
-
-
-                proc.emit("@stackmark func");
-                proc.emit("@stackmark args");
-                proc.emit("push {lr}");
-
-                proc.pushLocals();
-                */
-
                 proc.args = getParameters(node).map((p, i) => {
                     let l = new ir.Cell(i, p, getVarInfo(p))
                     l.isarg = true
@@ -1074,17 +1025,6 @@ namespace ts.yelm {
                 } else {
                     proc.emitClrs();
                 }
-
-                /*
-                proc.popLocals();
-
-                proc.emit("pop {pc}");
-                proc.emit("@stackempty func");
-                proc.emit("@stackempty args")
-
-                if (proc.args.length <= 2)
-                    emitLambdaWrapper(node)
-                    */
 
                 assert(!bin.finalPass || usedWorkList.length == 0)
                 while (usedWorkList.length > 0) {
@@ -2493,6 +2433,89 @@ namespace ts.yelm {
                 this.buf = b.buf;
             }
         }
+    }
+
+
+    function irToAssembly(proc: ir.Procedure) {
+        let resText = ""
+        let write = (s: string) => resText += asmline(s);
+
+        write(`
+;
+; Function ${proc.getName()}
+;
+.section code
+${getFunctionLabel(proc.action)}:
+    @stackmark func
+    @stackmark args
+    push {lr}
+`)
+
+        let numlocals = proc.locals.length
+        if (numlocals > 0) write("movs r0, #0")
+        proc.locals.forEach(l => {
+            write("push {r0} ; loc")
+        })
+        write("@stackmark locals")
+
+        proc.resolve()
+
+        for (let i = 0; i < proc.body.length; ++i) {
+            emitStmt(proc.body[i])
+        }
+
+        assert(0 <= numlocals && numlocals < 127);
+        if (numlocals > 0)
+            write("add sp, #4*" + numlocals + " ; pop locals " + numlocals)
+        write("pop {pc}");
+        write("@stackempty func");
+        write("@stackempty args")
+
+        if (proc.args.length <= 2)
+            emitLambdaWrapper()
+
+        return resText
+
+        function emitStmt(s: ir.Stmt) {
+            switch (s.stmtKind) {
+                case ir.SK.Expr:                
+                    break;
+                case ir.SK.Jmp:
+                    break;
+                case ir.SK.Label:
+                    break;
+                default: oops();
+            }
+        }
+
+        function emitLambdaWrapper() {
+            let node = proc.action
+            write("")
+            write(".section code");
+            write(".balign 4");
+            write(getFunctionLabel(node) + "_Lit");
+            write(".short 0xffff, 0x0000   ; action literal");
+            write("@stackmark litfunc");
+            write("push {r5, lr}");
+            write("mov r5, r1");
+
+            let parms = proc.args.map(a => a.def)
+            parms.forEach((p, i) => {
+                if (i >= 2)
+                    userError(lf("only up to two parameters supported in lambdas"))
+                write(`push {r${i + 2}}`)
+            })
+            write("@stackmark args");
+
+            write("bl " + getFunctionLabel(node))
+
+            write("@stackempty args")
+            if (parms.length)
+                write("add sp, #4*" + parms.length + " ; pop args")
+            write("pop {r5, pc}");
+            write("@stackempty litfunc");
+        }
+
     }
 
 

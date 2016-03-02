@@ -48,6 +48,7 @@ namespace ts.yelm.ir {
         public lblName: string;
         public lbl: Stmt;
         public negatedJump: boolean;
+        public numUses = 0;
 
         constructor(
             public stmtKind: SK,
@@ -216,6 +217,36 @@ namespace ts.yelm.ir {
 
             this.emit(jmp)
         }
+
+        resolve() {
+            let lbls = U.toDictionary(this.body.filter(s => s.stmtKind == ir.SK.Label), s => s.lblName)
+            for (let s of this.body) {
+                if (s.expr)
+                    iterExpr(s.expr, e => {
+                        if (e.exprKind == EK.TmpRef)
+                            (e.data as Stmt).numUses++;
+                    })
+                    
+                switch (s.stmtKind) {
+                    case ir.SK.Expr:
+                        break;
+                    case ir.SK.Jmp:
+                        s.lbl = U.lookup(lbls, s.lblName)
+                        s.lbl.numUses++
+                        break;
+                    case ir.SK.Label:
+                        break;
+                    default: oops();
+                }
+            }
+        }
+    }
+
+    export function iterExpr(e: Expr, f: (v: Expr) => void) {
+        f(e)
+        if (e.args)
+            for (let a of e.args)
+                iterExpr(e, f)
     }
 
     export function stmt(kind: SK, expr: Expr): Stmt {
