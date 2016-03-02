@@ -253,6 +253,11 @@ namespace ts.yelm {
         return "_" + text.replace(/[^\w]+/g, "_") + "_" + getNodeId(node)
     }
 
+    export interface FieldAccessInfo {
+        idx: number;
+        name: string;
+        isRef: boolean;
+    }
 
     export type VarOrParam = VariableDeclaration | ParameterDeclaration;
 
@@ -741,18 +746,6 @@ namespace ts.yelm {
 
         function emitPlainCall(decl: Declaration, args: Expression[], hasRet = false) {
             return ir.op(EK.ProcCall, args.map(emitExpr), decl)
-
-            /*
-            args.forEach(emit)
-            let mode = hasRet ? "F0" : "P0"
-            let lbl = proc.mkLabel("call")
-            proc.emit("bl " + getFunctionLabel(<FunctionLikeDeclaration>decl) + " ; *R " + lbl)
-            proc.emitLbl(lbl)
-            if (args.length > 0)
-                proc.emit("add sp, #4*" + args.length)
-            if (hasRet)
-                proc.emit("push {r0}");
-                */
         }
 
         function addDefaultParameters(sig: Signature, args: Expression[], attrs: CommentAttrs) {
@@ -1019,9 +1012,11 @@ namespace ts.yelm {
                 proc.stackEmpty();
 
                 if (procHasReturn(proc)) {
-                    let v = proc.emitTmp(ir.op(EK.RetVal, []))
+                    let v = proc.emitTmp(ir.op(EK.JmpValue, []))
                     proc.emitClrs();
-                    proc.storeRetVal(v)
+                    let lbl = proc.mkLabel("final")
+                    proc.emitJmp(lbl, v, ir.JmpMode.Always)
+                    proc.emitLbl(lbl)
                 } else {
                     proc.emitClrs();
                 }
@@ -1110,7 +1105,7 @@ namespace ts.yelm {
             return false
         }
 
-        function fieldIndex(pacc: PropertyAccessExpression) {
+        function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
             let tp = typeOf(pacc.expression)
             if (isClassType(tp)) {
                 let info = getClassInfo(tp)
@@ -1176,20 +1171,19 @@ namespace ts.yelm {
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let lbl = proc.mkLabel("lazy")
-            proc.storeRetVal(emitExpr(node.left))
             // TODO what if the value is of ref type?
             if (node.operatorToken.kind == SyntaxKind.BarBarToken) {
-                proc.emitJmp(lbl, ir.op(EK.RetVal, []), true)
+                proc.emitJmp(lbl, emitExpr(node.left), ir.JmpMode.IfNotZero)
             } else if (node.operatorToken.kind == SyntaxKind.AmpersandAmpersandToken) {
-                proc.emitJmp(lbl, ir.op(EK.RetVal, []))
+                proc.emitJmpZ(lbl, emitExpr(node.left))
             } else {
                 oops()
             }
 
-            proc.storeRetVal(emitExpr(node.right))
+            proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
 
-            return ir.op(EK.RetVal, [])
+            return ir.op(EK.JmpValue, [])
         }
 
         function emitBinaryExpression(node: BinaryExpression): ir.Expr {
@@ -1304,7 +1298,7 @@ namespace ts.yelm {
         }
         function emitIfStatement(node: IfStatement) {
             let elseLbl = proc.mkLabel("else")
-            proc.emitJmp(elseLbl, emitExpr(node.expression))
+            proc.emitJmpZ(elseLbl, emitExpr(node.expression))
             emit(node.thenStatement)
             let afterAll = proc.mkLabel("afterif")
             proc.emitJmp(afterAll)
@@ -1328,7 +1322,7 @@ namespace ts.yelm {
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
             emit(node.statement)
-            proc.emitJmp(l.brk, emitExpr(node.expression));
+            proc.emitJmpZ(l.brk, emitExpr(node.expression));
             proc.emitJmp(l.cont);
             proc.emitLblDirect(l.brk);
         }
@@ -1336,7 +1330,7 @@ namespace ts.yelm {
         function emitWhileStatement(node: WhileStatement) {
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
-            proc.emitJmp(l.brk, emitExpr(node.expression));
+            proc.emitJmpZ(l.brk, emitExpr(node.expression));
             emit(node.statement)
             proc.emitJmp(l.cont);
             proc.emitLblDirect(l.brk);
@@ -1364,7 +1358,7 @@ namespace ts.yelm {
             let l = getLabels(node)
             proc.emitLblDirect(l.fortop);
             if (node.condition)
-                proc.emitJmp(l.brk, emitExpr(node.condition));
+                proc.emitJmpZ(l.brk, emitExpr(node.condition));
             emit(node.statement)
             proc.emitLblDirect(l.cont);
             emitExprAsStmt(node.incrementor);
@@ -1409,9 +1403,7 @@ namespace ts.yelm {
             } else if (procHasReturn(proc)) {
                 v = ir.numlit(null) // == return undefined
             }
-            if (v)
-                proc.storeRetVal(v)
-            proc.emitJmp(getLabels(proc.action).ret)
+            proc.emitJmp(getLabels(proc.action).ret, v, ir.JmpMode.Always)
         }
 
         function emitWithStatement(node: WithStatement) { }
@@ -2436,10 +2428,10 @@ namespace ts.yelm {
     }
 
 
-    function irToAssembly(proc: ir.Procedure) {
+    function irToAssembly(bin: Binary, proc: ir.Procedure) {
         let jmpLblNo = 0
         let resText = ""
-        let write = (s: string) => resText += asmline(s);
+        let write = (s: string) => { resText += asmline(s); }
 
         write(`
 ;
@@ -2490,6 +2482,7 @@ ${getFunctionLabel(proc.action)}:
                     break;
                 case ir.SK.StackEmpty:
                     U.assert(exprStack.length == 0)
+                    write("@stackempty locals")
                     break;
                 case ir.SK.Jmp:
                     emitJmp(s);
@@ -2502,13 +2495,16 @@ ${getFunctionLabel(proc.action)}:
         }
 
         function emitJmp(jmp: ir.Stmt) {
-            if (jmp.expr) {
+            if (jmp.jmpMode == ir.JmpMode.Always) {
+                if (jmp.expr)
+                    emitExpr(jmp.expr)
+                write("bb " + jmp.lblName + " ; with expression")
+            } else {
                 let lbl = ".jmpz." + jmpLblNo++
                 emitExpr(jmp.expr)
 
                 write("*cmp r0, #0")
-
-                if (jmp.jmpNZ) {
+                if (jmp.jmpMode == ir.JmpMode.IfZero) {
                     write("*beq " + lbl) // this is to *skip* the following 'b' instruction; beq itself has a very short range
                     write("@js if (r0)")
                 } else {
@@ -2518,24 +2514,46 @@ ${getFunctionLabel(proc.action)}:
 
                 write("bb " + jmp.lblName)
                 write(lbl + ":")
-            } else {
-                write("bb " + jmp.lblName)
             }
         }
 
-        // result in R0
-        function emitExpr(e: ir.Expr) {
+        function clearStack() {
+            let numEntries = 0
+            while (exprStack.length > 0 && exprStack[0].numUses == 0) {
+                numEntries++;
+                exprStack.shift()
+            }
+            if (numEntries)
+                write("add sp, #4*" + numEntries + " ; clear stack")
+        }
+
+        function withRef(name: string, isRef: boolean) {
+            return name + (isRef ? "Ref" : "")
+        }
+
+        function canEmitInto(e: ir.Expr) {
             switch (e.exprKind) {
                 case EK.NumberLiteral:
-                    if (e.data === true) emitInt(1);
-                    else if (e.data === false) emitInt(0);
-                    else if (e.data === null) emitInt(0);
-                    else if (typeof e.data == "number") emitInt(e.data)
+                case EK.PointerLiteral:
+                case EK.TmpRef:
+                case EK.CellRef:
+                    return true;
+                default: return false;
+            }
+        }
+
+        function emitExprInto(e: ir.Expr, reg: string) {
+            switch (e.exprKind) {
+                case EK.NumberLiteral:
+                    if (e.data === true) emitInt(1, reg);
+                    else if (e.data === false) emitInt(0, reg);
+                    else if (e.data === null) emitInt(0, reg);
+                    else if (typeof e.data == "number") emitInt(e.data, reg)
                     else oops();
                     break;
                 case EK.PointerLiteral:
-                    emitLdPtr(e.data);
-                    write("@js r0 = " + e.jsInfo)
+                    emitLdPtr(e.data, reg);
+                    write(`@js ${reg} = ${e.jsInfo}`)
                     break;
                 case EK.TmpRef:
                     let idx = exprStack.indexOf(e.data)
@@ -2543,26 +2561,99 @@ ${getFunctionLabel(proc.action)}:
                     let st = exprStack[idx]
                     U.assert(st.numUses > 0)
                     if (idx == 0 && st.numUses == 1) {
-                        write("pop {r0}")
+                        write(`pop {${reg}}  ; tmpref`)
                         exprStack.shift()
-                        while (exprStack[0] && exprStack[0].numUses == 0) {
-                            write("pop {r1} ; clear stack")
-                            exprStack.shift()
-                        }
+                        clearStack()
                     } else {
-                        write("ldr r0, [sp, #4*" + idx + "]")
+                        write(`ldr ${reg}, [sp, #4*${idx}]   ; tmpref`)
                     }
                     st.numUses--
                     break;
-                case EK.RuntimeCall:
-                case EK.ProcCall:
-                case EK.FieldAccess:
-                case EK.Store:
                 case EK.CellRef:
-                case EK.Incr:
-                case EK.Decr:
-                case EK.RetVal:
+                    write(`ldr ${reg}, ${cellref(e.data)}`)
+                    break;
                 default: oops();
+            }
+        }
+
+        // result in R0
+        function emitExpr(e: ir.Expr): void {
+            switch (e.exprKind) {
+                case EK.JmpValue:
+                    write("; jmp value (already in r0)")
+                    break;
+                case EK.Incr:
+                    emitExpr(e.args[0])
+                    emitCallRaw("bitvm::incr")
+                    break;
+                case EK.Decr:
+                    emitExpr(e.args[0])
+                    emitCallRaw("bitvm::decr")
+                    break;
+                case EK.FieldAccess:
+                    let info = e.data as FieldAccessInfo
+                    // it does the decr itself, no mask
+                    return emitExpr(ir.rtcall(withRef("bitvm::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
+                case EK.Store:
+                    return emitStore(e.args[0], e.args[1])
+                case EK.RuntimeCall:
+                    return emitRtCall(e);
+                case EK.ProcCall:
+                    return emitProcCall(e)
+                default:
+                    return emitExprInto(e, "r0")
+            }
+        }
+
+        function emitRtCall(e: ir.Expr) {
+            let didStateUpdate = false
+            
+            //XTODO
+        }
+
+        function emitProcCall(e: ir.Expr) {
+            let argStmts = e.args.map(a => {
+                emitExpr(e)
+                write("push {r0} ; proc-arg")
+                let s = ir.stmt(ir.SK.None, null)
+                exprStack.push(s)
+                s.numUses = 1
+                return s
+            })
+
+            let proc = bin.procs.filter(p => p.action == e.data)[0]
+
+            let lbl = ".call." + jmpLblNo++
+            write("bl " + getFunctionLabel(proc.action) + " ; *R " + lbl)
+            write(lbl + ":")
+
+            for (let a of argStmts) a.numUses--
+            clearStack()
+        }
+
+        function emitStore(trg: ir.Expr, src: ir.Expr) {
+            switch (trg.exprKind) {
+                case EK.CellRef:
+                    emitExpr(src)
+                    write("str r0, " + cellref(trg.data))
+                    break;
+                case EK.FieldAccess:
+                    let info = trg.data as FieldAccessInfo
+                    // it does the decr itself, no mask
+                    emitExpr(ir.rtcall(withRef("bitvm::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    break;
+            }
+        }
+
+        function cellref(cell: ir.Cell) {
+            if (cell.iscap) {
+                assert(0 <= cell.index && cell.index < 32)
+                return "[r5, #4*" + cell.index + "]"
+            } else if (cell.isarg) {
+                let idx = proc.args.length - cell.index - 1
+                return "[sp, args@" + idx + "] ; " + cell.toString()
+            } else {
+                return "[sp, locals@" + cell.index + "] ; " + cell.toString()
             }
         }
 
@@ -2660,24 +2751,28 @@ ${getFunctionLabel(proc.action)}:
             }
         }
 
-        function writeMov(v: number) {
-            assert(0 <= v && v <= 255)
-            write("movs r0, #" + v)
-        }
-
-        function writeAdd(v: number) {
-            assert(0 <= v && v <= 255)
-            write("adds r0, #" + v)
-        }
-
-        function emitLdPtr(lbl: string) {
+        function emitLdPtr(lbl: string, reg: string) {
             assert(!!lbl)
-            write("*movs r0, " + lbl + "@hi  ; ldptr " + lbl)
-            write("*lsls r0, r0, #8")
-            write("*adds r0, " + lbl + "@lo  ; endldptr");
+            write(`*movs ${reg}, ${lbl}@hi  ; ldptr`)
+            write(`*lsls ${reg}, ${reg}, #8`)
+            write(`*adds ${reg}, ${lbl}@lo`);
         }
 
-        function emitInt(v: number) {
+        function emitInt(v: number, reg: string) {
+            function writeMov(v: number) {
+                assert(0 <= v && v <= 255)
+                write(`movs ${reg}, #${v}`)
+            }
+
+            function writeAdd(v: number) {
+                assert(0 <= v && v <= 255)
+                write(`adds ${reg}, #${v}`)
+            }
+
+            function shift() {
+                write(`lsls ${reg}, ${reg}, #8`)
+            }
+
             assert(v != null);
 
             var n = Math.floor(v)
@@ -2691,19 +2786,25 @@ ${getFunctionLabel(proc.action)}:
                 writeMov(n)
             } else if (n <= 0xffff) {
                 writeMov((n >> 8) & 0xff)
-                write("lsls r0, r0, #8")
+                shift()
+                writeAdd(n & 0xff)
+            } else if (n <= 0xffffff) {
+                writeMov((n >> 16) & 0xff)
+                shift()
+                writeAdd((n >> 8) & 0xff)
+                shift()
                 writeAdd(n & 0xff)
             } else {
                 writeMov((n >> 24) & 0xff)
-                write("lsls r0, r0, #8")
+                shift()
                 writeAdd((n >> 16) & 0xff)
-                write("lsls r0, r0, #8")
+                shift()
                 writeAdd((n >> 8) & 0xff)
-                write("lsls r0, r0, #8")
+                shift()
                 writeAdd((n >> 0) & 0xff)
             }
             if (isNeg) {
-                write("negs r0, r0")
+                write(`negs ${reg}, ${reg}`)
             }
         }
 

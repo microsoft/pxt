@@ -14,7 +14,7 @@ namespace ts.yelm.ir {
         CellRef,
         Incr,
         Decr,
-        RetVal,
+        JmpValue,
     }
 
     export class Node {
@@ -44,10 +44,16 @@ namespace ts.yelm.ir {
         StackEmpty,
     }
 
+    export enum JmpMode {
+        Always = 1,
+        IfZero,
+        IfNotZero,
+    }
+
     export class Stmt extends Node {
         public lblName: string;
         public lbl: Stmt;
-        public jmpNZ: boolean;
+        public jmpMode: JmpMode;
         public numUses = 0;
 
         constructor(
@@ -145,10 +151,6 @@ namespace ts.yelm.ir {
             this.emit(stmt(SK.Expr, expr))
         }
 
-        storeRetVal(v: Expr) {
-            this.emitExpr(ir.op(EK.Store, [ir.op(EK.RetVal, []), v]))
-        }
-
         emitTmp(expr: Expr) {
             switch (expr.exprKind) {
                 case EK.NumberLiteral:
@@ -189,7 +191,7 @@ namespace ts.yelm.ir {
                 this.locals.filter(n => n.def == l)[0] ||
                 (noargs ? null : this.args.filter(n => n.def == l)[0])
         }
-        
+
         stackEmpty() {
             this.emit(stmt(SK.StackEmpty, null))
         }
@@ -206,11 +208,15 @@ namespace ts.yelm.ir {
             var lst = this.locals.concat(this.args)
             lst.forEach(p => this.emitClrIfRef(p))
         }
+        
+        emitJmpZ(trg: string | Stmt, expr: Expr) {
+            this.emitJmp(trg, expr, JmpMode.IfZero)
+        }
 
-        emitJmp(trg: string | Stmt, expr?: Expr, isNZ = false) {
+        emitJmp(trg: string | Stmt, expr?: Expr, mode = JmpMode.Always) {
             let jmp = stmt(SK.Jmp, expr)
 
-            if (isNZ) jmp.jmpNZ = true
+            jmp.jmpMode = mode;
 
             if (typeof trg == "string")
                 jmp.lblName = trg as any
@@ -230,7 +236,7 @@ namespace ts.yelm.ir {
                         if (e.exprKind == EK.TmpRef)
                             (e.data as Stmt).numUses++;
                     })
-                    
+
                 switch (s.stmtKind) {
                     case ir.SK.Expr:
                         break;
@@ -276,7 +282,7 @@ namespace ts.yelm.ir {
     }
 
     export function rtcallMask(name: string, mask: number, isAsync: boolean, args: Expr[]) {
-        //TODO
+        //XTODO
         return op(EK.RuntimeCall, args, name)
     }
 }
