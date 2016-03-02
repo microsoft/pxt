@@ -538,8 +538,7 @@ function deployCoreAsync(res: ts.yelm.CompileResult) {
 function runCoreAsync(res: ts.yelm.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
-        let r = new yelm.rt.Runtime(f, mainPkg.getTarget())
-        r.enums = res.enums
+        let r = new yelm.rt.Runtime(f, mainPkg.getTarget(), res.enums)
         r.run(() => {
             console.log("DONE")
             yelm.rt.dumpLivePointers();

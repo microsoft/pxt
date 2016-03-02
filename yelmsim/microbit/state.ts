@@ -5,7 +5,7 @@ namespace yelm.rt.micro_bit {
     }
     
     export class Pin {
-        constructor(public id: string) {}
+        constructor(public id: number) {}
         touched = false;
         value = 0;
         input = false;
@@ -13,7 +13,7 @@ namespace yelm.rt.micro_bit {
     }
     
     export class Button {
-        constructor(public id : string) {}
+        constructor(public id : number) {}
         pressed: boolean;
     }
     
@@ -59,7 +59,7 @@ namespace yelm.rt.micro_bit {
         buttons : Button[];
 
         // pins
-        pins = U.repeatMap(21, i => new Pin("MICROBIT_ID_IO_P" + i))
+        pins : Pin[];
 
         // sensors    
         usesAcceleration = false;
@@ -78,9 +78,35 @@ namespace yelm.rt.micro_bit {
             this.id = "b" + Math.random();
             this.animationQ = new AnimationQueue(runtime);
             this.bus = new EventBus(runtime);
-            this.buttons = ["MICROBIT_ID_BUTTON_A", 
-               "MICROBIT_ID_BUTTON_B", 
-                "MICROBIT_ID_BUTTON_AB"].map(id => new Button(id));
+            let ens = enums();
+            this.buttons = [
+                new Button(ens.MICROBIT_ID_BUTTON_A),
+                new Button(ens.MICROBIT_ID_BUTTON_B),
+                new Button(ens.MICROBIT_ID_BUTTON_AB)
+            ];
+            this.pins = [
+                new Pin(ens.MICROBIT_ID_IO_P0),
+                new Pin(ens.MICROBIT_ID_IO_P1),
+                new Pin(ens.MICROBIT_ID_IO_P2),
+                new Pin(ens.MICROBIT_ID_IO_P3),
+                new Pin(ens.MICROBIT_ID_IO_P4),
+                new Pin(ens.MICROBIT_ID_IO_P5),
+                new Pin(ens.MICROBIT_ID_IO_P6),
+                new Pin(ens.MICROBIT_ID_IO_P7),
+                new Pin(ens.MICROBIT_ID_IO_P8),
+                new Pin(ens.MICROBIT_ID_IO_P9),
+                new Pin(ens.MICROBIT_ID_IO_P10),
+                new Pin(ens.MICROBIT_ID_IO_P11),
+                new Pin(ens.MICROBIT_ID_IO_P12),
+                new Pin(ens.MICROBIT_ID_IO_P13),
+                new Pin(ens.MICROBIT_ID_IO_P14),
+                new Pin(ens.MICROBIT_ID_IO_P15),
+                new Pin(ens.MICROBIT_ID_IO_P16),
+                null, 
+                null,                
+                new Pin(ens.MICROBIT_ID_IO_P19),
+                new Pin(ens.MICROBIT_ID_IO_P20)
+            ];
         }
         
         receiveMessage(msg: SimulatorMessage) {

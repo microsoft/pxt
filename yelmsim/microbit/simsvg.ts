@@ -259,8 +259,8 @@ namespace yelm.rt.micro_bit {
                     state.pins[index].touched = false;
                     Svg.fill(this.pins[index], this.props.theme.pin);
                     
-                    let ens = this.props.runtime.enums;
-                    this.board.bus.queue(ens[state.pins[index].id], ens["MICROBIT_BUTTON_EVT_CLICK"]);
+                    let ens = enums();
+                    this.board.bus.queue(state.pins[index].id, ens.MICROBIT_BUTTON_EVT_CLICK);
                     this.pins[index].classList.remove('touched');
                 })                
             })
@@ -275,8 +275,8 @@ namespace yelm.rt.micro_bit {
                     state.buttons[index].pressed = false;
                     Svg.fill(this.buttons[index], this.props.theme.buttonUp);
                     
-                    let ens = this.props.runtime.enums;
-                    this.board.bus.queue(ens[state.buttons[index].id], ens["MICROBIT_BUTTON_EVT_CLICK"]);
+                    let ens = enums();
+                    this.board.bus.queue(state.buttons[index].id, ens.MICROBIT_BUTTON_EVT_CLICK);
                 })
             })
             this.buttonsOuter[2].addEventListener("mousedown", ev => {
@@ -297,8 +297,8 @@ namespace yelm.rt.micro_bit {
                     Svg.fill(this.buttons[1], this.props.theme.buttonUp);                
                     Svg.fill(this.buttons[2], this.props.theme.buttonUp);                
                     
-                    let ens = this.props.runtime.enums;
-                    this.board.bus.queue(ens[state.buttons[2].id], ens["MICROBIT_BUTTON_EVT_CLICK"]);
+                    let ens = enums();
+                    this.board.bus.queue(state.buttons[2].id, ens.MICROBIT_BUTTON_EVT_CLICK);
             })        
         }
     }

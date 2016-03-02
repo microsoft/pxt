@@ -56,8 +56,7 @@ namespace yelm.rt {
             stop();
             // TODO test data
             console.log('starting ' + msg.target);
-            runtime = new Runtime(msg.code, msg.target);
-            runtime.enums = msg.enums;
+            runtime = new Runtime(msg.code, msg.target, msg.enums);
             switch(msg.target) {
                 case 'microbit': initMicrobit(); break;
                 case 'minecraft': initMinecraft(); break;

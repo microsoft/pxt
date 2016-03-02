@@ -55,5 +55,24 @@ namespace yelm.rt.micro_bit {
         MICROBIT_ID_BUTTON_B: number;
         MICROBIT_ID_BUTTON_AB: number;
         MICROBIT_BUTTON_EVT_CLICK: number;
+        MICROBIT_ID_IO_P0: number;
+        MICROBIT_ID_IO_P1: number;
+        MICROBIT_ID_IO_P2: number;
+        MICROBIT_ID_IO_P3: number;
+        MICROBIT_ID_IO_P4: number;
+        MICROBIT_ID_IO_P5: number;
+        MICROBIT_ID_IO_P6: number;
+        MICROBIT_ID_IO_P7: number;
+        MICROBIT_ID_IO_P8: number;
+        MICROBIT_ID_IO_P9: number;
+        MICROBIT_ID_IO_P10: number;
+        MICROBIT_ID_IO_P11: number;
+        MICROBIT_ID_IO_P12: number;
+        MICROBIT_ID_IO_P13: number;
+        MICROBIT_ID_IO_P14: number;
+        MICROBIT_ID_IO_P15: number;
+        MICROBIT_ID_IO_P16: number;
+        MICROBIT_ID_IO_P19: number;
+        MICROBIT_ID_IO_P20: number;
     }
 }

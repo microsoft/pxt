@@ -170,7 +170,8 @@ namespace yelm.rt {
             }
         }
 
-        constructor(code: string, targetName: string) {
+        constructor(code: string, targetName: string, enums: Map<number>) {            
+            this.enums = enums;
             // These variables are used by the generated code as well
             // ---
             var sp: number, lr: LR;
