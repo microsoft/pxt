@@ -23,6 +23,12 @@ namespace ts.yelm.Util {
         debugger
         throw new Error(msg)
     }
+    
+    export function reversed<T>(arr:T[]) {
+        arr = arr.slice(0)
+        arr.reverse()
+        return arr
+    }
 
     export function flatClone<T>(obj: T): T {
         if (obj == null) return null

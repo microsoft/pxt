@@ -8,12 +8,13 @@ namespace ts.yelm.ir {
         PointerLiteral,
         RuntimeCall,
         ProcCall,
-        TmpRef,
+        Shared,
         FieldAccess,
         Store,
         CellRef,
         Incr,
         Decr,
+        Sequence,
         JmpValue,
     }
 
@@ -24,6 +25,9 @@ namespace ts.yelm.ir {
 
     export class Expr extends Node {
         public jsInfo: string;
+        public totalUses: number; // how many references this expression has; only for the only child of Shared
+        public currUses: number;
+        public isAsync: boolean;
 
         constructor(
             public exprKind: EK,
@@ -39,16 +43,43 @@ namespace ts.yelm.ir {
             switch (this.exprKind) {
                 case EK.NumberLiteral:
                 case EK.PointerLiteral:
-                case EK.TmpRef:
                     return true;
+                case EK.Shared:
+                    return !!this.args[0].currUses
                 default: return false;
             }
         }
-        
-        isFlat() {
-            return this.isStateless() || this.exprKind == EK.CellRef;
+
+        canUpdateCells(): boolean {
+            switch (this.exprKind) {
+                case EK.NumberLiteral:
+                case EK.PointerLiteral:
+                case EK.CellRef:
+                case EK.JmpValue:
+                    return false;
+
+                case EK.Shared:
+                    if (this.isStateless()) return false;
+                    return this.args[0].canUpdateCells()
+                    
+                case EK.Incr:
+                case EK.Decr:
+                case EK.FieldAccess:
+                    return this.args[0].canUpdateCells()
+
+                case EK.RuntimeCall:
+                case EK.ProcCall:
+                case EK.Sequence:
+                    return true;
+
+                case EK.Store:
+                    return true;
+                
+                default: throw oops();
+            }
         }
     }
+
 
     export enum SK {
         None,
@@ -67,8 +98,8 @@ namespace ts.yelm.ir {
     export class Stmt extends Node {
         public lblName: string;
         public lbl: Stmt;
+        public lblNumUses: number;
         public jmpMode: JmpMode;
-        public numUses = 0;
 
         constructor(
             public stmtKind: SK,
@@ -142,7 +173,6 @@ namespace ts.yelm.ir {
         }
     }
 
-
     export class Procedure extends Node {
         numArgs = 0;
         info: FunctionAddInfo;
@@ -163,17 +193,6 @@ namespace ts.yelm.ir {
 
         emitExpr(expr: Expr) {
             this.emit(stmt(SK.Expr, expr))
-        }
-
-        emitTmp(expr: Expr) {
-            switch (expr.exprKind) {
-                case EK.NumberLiteral:
-                case EK.TmpRef:
-                    return expr;
-            }
-            let s = stmt(SK.Expr, expr)
-            this.emit(s)
-            return op(EK.TmpRef, null, s)
         }
 
         mkLabel(name: string) {
@@ -247,8 +266,14 @@ namespace ts.yelm.ir {
             for (let s of this.body) {
                 if (s.expr)
                     iterExpr(s.expr, e => {
-                        if (e.exprKind == EK.TmpRef)
-                            (e.data as Stmt).numUses++;
+                        if (e.exprKind == EK.Shared) {
+                            let arg = e.args[0]
+                            if (!arg.totalUses) {
+                                arg.totalUses = 0
+                                arg.currUses = 0
+                            }
+                            arg.totalUses++;
+                        }
                     })
 
                 switch (s.stmtKind) {
@@ -256,7 +281,7 @@ namespace ts.yelm.ir {
                         break;
                     case ir.SK.Jmp:
                         s.lbl = U.lookup(lbls, s.lblName)
-                        s.lbl.numUses++
+                        s.lbl.lblNumUses++
                         break;
                     case ir.SK.Label:
                         break;
@@ -285,6 +310,15 @@ namespace ts.yelm.ir {
         return op(EK.NumberLiteral, null, v)
     }
 
+    export function shared(expr: Expr) {
+        switch (expr.exprKind) {
+            case EK.NumberLiteral:
+            case EK.Shared:
+                return expr;
+        }
+        return op(EK.Shared, [expr])
+    }
+
     export function ptrlit(lbl: string, jsInfo: string): Expr {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
@@ -296,7 +330,24 @@ namespace ts.yelm.ir {
     }
 
     export function rtcallMask(name: string, mask: number, isAsync: boolean, args: Expr[]) {
-        //XTODO
-        return op(EK.RuntimeCall, args, name)
+        let decrs:ir.Expr[] = []
+        args = args.map((a, i) => {
+            if (mask & (1 << i)) {
+                a = shared(a)
+                decrs.push(op(EK.Decr, [a]))
+                return a;
+            } else return a;
+        })
+        let r = op(EK.RuntimeCall, args, name)
+        r.isAsync = isAsync
+        
+        if (decrs.length > 0) {
+            r = shared(r)
+            decrs.unshift(r)
+            decrs.push(r)
+            r = op(EK.Sequence, decrs) 
+        }
+        
+        return r
     }
 }

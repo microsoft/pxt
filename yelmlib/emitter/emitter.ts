@@ -590,9 +590,9 @@ namespace ts.yelm {
                 flag = 3;
             else if (isRef)
                 flag = 1;
-            let coll = proc.emitTmp(ir.rtcall("collection::mk", [ir.numlit(flag)]))
+            let coll = ir.shared(ir.rtcall("collection::mk", [ir.numlit(flag)]))
             for (let elt of node.elements) {
-                let e = proc.emitTmp(emitExpr(elt))
+                let e = ir.shared(emitExpr(elt))
                 proc.emitExpr(ir.rtcall("collection::add", [coll, e]))
                 if (isRef) {
                     proc.emitExpr(ir.op(EK.Decr, [e]))
@@ -865,7 +865,7 @@ namespace ts.yelm {
                 let ctor = classDecl.members.filter(n => n.kind == SyntaxKind.Constructor)[0]
                 let info = getClassInfo(t)
 
-                let obj = proc.emitTmp(ir.rtcall("record::mk", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
+                let obj = ir.shared(ir.rtcall("record::mk", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
 
                 if (ctor) {
                     markUsed(ctor)
@@ -958,7 +958,7 @@ namespace ts.yelm {
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null)
-                lit = proc.emitTmp(ir.rtcall("action::mk", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
+                lit = ir.shared(ir.rtcall("action::mk", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
@@ -999,7 +999,7 @@ namespace ts.yelm {
                 proc.args.forEach(l => {
                     if (l.isByRefLocal()) {
                         // TODO add C++ support function to do this
-                        let tmp = proc.emitTmp(ir.rtcall("bitvm::mkloc" + l.refSuff(), []))
+                        let tmp = ir.shared(ir.rtcall("bitvm::mkloc" + l.refSuff(), []))
                         proc.emitExpr(ir.rtcall("bitvm::stloc" + l.refSuff(), [tmp, l.loadCore()]))
                         proc.emitExpr(l.storeDirect(tmp))
                     }
@@ -1012,7 +1012,8 @@ namespace ts.yelm {
                 proc.stackEmpty();
 
                 if (procHasReturn(proc)) {
-                    let v = proc.emitTmp(ir.op(EK.JmpValue, []))
+                    let v = ir.shared(ir.op(EK.JmpValue, []))
+                    proc.emitExpr(v) // make sure we save it
                     proc.emitClrs();
                     let lbl = proc.mkLabel("final")
                     proc.emitJmp(lbl, v, ir.JmpMode.Always)
@@ -1064,7 +1065,7 @@ namespace ts.yelm {
         function emitIncrement(expr: PrefixUnaryExpression | PostfixUnaryExpression, meth: string, isPost: boolean) {
             // TODO expr evaluated twice
             let bogus = isBogusReturn(expr)
-            let pre = proc.emitTmp(emitExpr(expr.operand))
+            let pre = ir.shared(emitExpr(expr.operand))
             let post = ir.rtcall(meth, [pre, ir.numlit(1)])
             emitStore(expr.operand, post)
             return isPost ? post : pre
@@ -1158,7 +1159,7 @@ namespace ts.yelm {
         }
 
         function handleAssignment(node: BinaryExpression) {
-            let src = proc.emitTmp(emitExpr(node.right))
+            let src = ir.shared(emitExpr(node.right))
             emitStore(node.left, src)
             if (isRefType(typeOf(node.right)))
                 src = ir.op(EK.Incr, [src])
@@ -2453,7 +2454,7 @@ ${getFunctionLabel(proc.action)}:
 
         proc.resolve()
 
-        let exprStack: ir.Stmt[] = []
+        let exprStack: ir.Expr[] = []
 
         for (let i = 0; i < proc.body.length; ++i) {
             emitStmt(proc.body[i])
@@ -2475,10 +2476,6 @@ ${getFunctionLabel(proc.action)}:
             switch (s.stmtKind) {
                 case ir.SK.Expr:
                     emitExpr(s.expr)
-                    if (s.numUses) {
-                        exprStack.unshift(s)
-                        write("push {r0}")
-                    }
                     break;
                 case ir.SK.StackEmpty:
                     U.assert(exprStack.length == 0)
@@ -2519,7 +2516,7 @@ ${getFunctionLabel(proc.action)}:
 
         function clearStack() {
             let numEntries = 0
-            while (exprStack.length > 0 && exprStack[0].numUses == 0) {
+            while (exprStack.length > 0 && exprStack[0].currUses == exprStack[0].totalUses) {
                 numEntries++;
                 exprStack.shift()
             }
@@ -2544,19 +2541,20 @@ ${getFunctionLabel(proc.action)}:
                     emitLdPtr(e.data, reg);
                     write(`@js ${reg} = ${e.jsInfo}`)
                     break;
-                case EK.TmpRef:
-                    let idx = exprStack.indexOf(e.data)
+                case EK.Shared:
+                    let arg = e.args[0]
+                    U.assert(!!arg.currUses) // not first use
+                    U.assert(arg.currUses < arg.totalUses)
+                    arg.currUses++
+                    let idx = exprStack.indexOf(arg)
                     U.assert(idx >= 0)
-                    let st = exprStack[idx]
-                    U.assert(st.numUses > 0)
-                    if (idx == 0 && st.numUses == 1) {
+                    if (idx == 0 && arg.totalUses == arg.currUses) {
                         write(`pop {${reg}}  ; tmpref`)
                         exprStack.shift()
                         clearStack()
                     } else {
                         write(`ldr ${reg}, [sp, #4*${idx}]   ; tmpref`)
                     }
-                    st.numUses--
                     break;
                 case EK.CellRef:
                     write(`ldr ${reg}, ${cellref(e.data)}`)
@@ -2589,25 +2587,80 @@ ${getFunctionLabel(proc.action)}:
                     return emitRtCall(e);
                 case EK.ProcCall:
                     return emitProcCall(e)
+                case EK.Shared:
+                    return emitSharedDef(e)
+                case EK.Sequence:
+                    return e.args.forEach(emitExpr)
                 default:
                     return emitExprInto(e, "r0")
             }
         }
 
+        function emitSharedDef(e: ir.Expr) {
+            let arg = e.args[0]
+            U.assert(!!arg.totalUses)
+            if (arg.currUses > 0)
+                return emitExprInto(e, "r0") // cached use
+            arg.currUses = 1
+            if (arg.totalUses == 1)
+                return emitExpr(arg)
+            else {
+                exprStack.unshift(arg)
+                write("push {r0}")
+            }
+        }
+
         function emitRtCall(e: ir.Expr) {
             let didStateUpdate = false
-            
-            //XTODO
+            let complexArgs: ir.Expr[] = []
+            for (let a of U.reversed(e.args)) {
+                if (a.isStateless()) continue
+                if (a.exprKind == EK.CellRef && !didStateUpdate) continue
+                if (a.canUpdateCells()) didStateUpdate = true
+                complexArgs.push(a)
+            }
+            complexArgs.reverse()
+            let precomp: ir.Expr[] = []
+            let flattened = e.args.map(a => {
+                let idx = complexArgs.indexOf(a)
+                if (idx >= 0) {
+                    let shared = a
+                    if (a.exprKind == EK.Shared) {
+                        a.args[0].totalUses++
+                    } else if (a.exprKind != EK.Shared) {
+                        shared = ir.shared(a)
+                        a.totalUses = 2
+                    }
+                    precomp.push(shared)
+                    return shared
+                } else return a
+            })
+
+            precomp.forEach(emitExpr)
+
+            flattened.forEach((a, i) => {
+                U.assert(i <= 3)
+                emitExprInto(a, "r" + i)
+            })
+
+            let name: string = e.data
+            let lbl = e.isAsync ? ".rtcall." + jmpLblNo++ : ""
+            write(`bl ${name}  ; *F${e.args.length} ${lbl}`)
+            if (lbl)
+                write(lbl + ":")
         }
 
         function emitProcCall(e: ir.Expr) {
-            let argStmts = e.args.map(a => {
+            let stackBottom = 0
+            let argStmts = e.args.map((a, i) => {
                 emitExpr(e)
+                if (i == 0) stackBottom = exprStack.length
                 write("push {r0} ; proc-arg")
-                let s = ir.stmt(ir.SK.None, null)
-                exprStack.push(s)
-                s.numUses = 1
-                return s
+                a.totalUses = 1
+                a.currUses = 0
+                exprStack.push(a)
+                U.assert(exprStack.length - stackBottom == i)
+                return a
             })
 
             let proc = bin.procs.filter(p => p.action == e.data)[0]
@@ -2616,7 +2669,9 @@ ${getFunctionLabel(proc.action)}:
             write("bl " + getFunctionLabel(proc.action) + " ; *R " + lbl)
             write(lbl + ":")
 
-            for (let a of argStmts) a.numUses--
+            for (let a of argStmts) {
+                a.currUses = 1
+            }
             clearStack()
         }
 
