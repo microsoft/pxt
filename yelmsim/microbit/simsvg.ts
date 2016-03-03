@@ -173,7 +173,7 @@ namespace yelm.rt.micro_bit {
                     return true;
                 })
                 this.head.addEventListener('mouseup', (ev) => captured = false);
-               // this.head.addEventListener('mouseleave', (ev) => captured = false);
+                this.head.addEventListener('mouseleave', (ev) => captured = false);
                 this.headInitialized = true;
             }
             
