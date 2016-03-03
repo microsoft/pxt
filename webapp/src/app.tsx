@@ -15,6 +15,7 @@ import * as ace from "./ace"
 import * as yelmjson from "./yelmjson"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
+import * as logview from "./logview"
 
 import Cloud = yelm.Cloud;
 import Util = yelm.Util;
@@ -776,9 +777,12 @@ Ctrl+Shift+B
                         </div>
                     </div>
                 </div>
-                <div id="filelist">
+                <div id="filelist" className="ui items">
                     <div id="mbitboardview" className="ui vertical">
                         <simulator.Simulator ref="simulator" />
+                    </div>
+                    <div className="ui landscape only">
+                        <logview.LogView />
                     </div>
                     <div className="ui item landscape only">
                         <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } />

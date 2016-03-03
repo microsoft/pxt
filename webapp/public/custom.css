@@ -7,8 +7,8 @@
 
 .simframe {
     border: none;
-    width: 242px;
-    height:210px;
+    width: 249px;
+    height:200px;
     margin: 0;
     padding: 0;
     background:transparent;    
@@ -220,12 +220,35 @@
     opacity: 0.7;
 }
 
+.ui.logs {
+    font-family: monospace;
+    font-size:0.8em;
+    max-height: 240px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    margin-bottom: 1em;
+}
+
+.ui.log.counter {
+    background:grey;
+    color:white;
+    border-radius: 4px;
+    margin-right:0.2em;
+    padding-left:0.25em;
+    padding-right:0.25em;
+}
+
 .highlight {
     border-bottom: 2px solid #FFC107;     
 }
 
 .ui.portrait.only {
     display:none;    
+}
+
+.ui.hideempty:empty {
+    display:none !important;
 }
 
 /* protrait mode */

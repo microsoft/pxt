@@ -16,8 +16,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
                             break;                           
                      }
                      break;
-                case 'serial':
-                    console.log('serial: ' + (msg.value || '')); break;
+                case 'serial': break; //handled elsewhere
                 default:
                     Simulator.postMessage(ev.data, ev.source);
                     break;
