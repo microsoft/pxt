@@ -114,6 +114,13 @@ namespace yelm.rt.micro_bit {
                     if (stop) stop(ev);
                 });
         }
+        
+        static animate(el: SVGElement, cls: string) {
+            el.classList.add(cls);
+            let p = el.parentElement;
+            p.removeChild(el);
+            p.appendChild(el)
+        }
     }
 
     export class MicrobitBoardSvg
@@ -130,12 +137,13 @@ namespace yelm.rt.micro_bit {
         private pins: SVGElement[];
         private ledsOuter: SVGElement[];
         private leds: SVGElement[];
-        public board: rt.micro_bit.Board;
+        private systemLed: SVGCircleElement;
+        public board: rt.micro_bit.Board;        
         
         constructor(public props: IBoardProps) {
             this.board = this.props.runtime.board as rt.micro_bit.Board;
             this.board.updateView = () => this.updateState();
-            this.buildDom();               
+            this.buildDom();              
             this.updateTheme();
             this.updateState();
             this.attachEvents();
@@ -175,7 +183,6 @@ namespace yelm.rt.micro_bit {
             (<any>this.buttons[2]).style.visibility = state.usesButtonAB ? 'visible' : 'hidden';   
         }
         
-        
         private updateHeading() {
             let xc = 258;
             let yc = 75;
@@ -202,6 +209,17 @@ namespace yelm.rt.micro_bit {
                 Svg.rotateElement(this.head, xc, yc, state.heading+180);
                 this.headText.textContent = txt;
             }            
+        }
+        
+       private lastFlashTime : number = 0;
+        public flashSystemLed() {
+            if (!this.systemLed)
+                this.systemLed = <SVGCircleElement>Svg.child(this.g, "circle", {class:"sim-systemled", cx:300, cy:20, r:5})
+            let now = Date.now();
+            if (now - this.lastFlashTime > 150) {
+                this.lastFlashTime = now;
+                Svg.animate(this.systemLed, 'sim-flash')
+            }
         }
         
         private updateTilt() {
@@ -243,7 +261,7 @@ namespace yelm.rt.micro_bit {
             this.logos.push(Svg.child(this.g, "polygon", {class:"sim-theme", points:"173,27.9 202.5,0 173,0"}));      
             this.logos.push(Svg.child(this.g, "polygon", {class:"sim-theme", points:"54.1,242.4 54.1,274.1 22.4,274.1"}));      
             this.logos.push(Svg.child(this.g, "polygon", {class:"sim-theme", points:"446.2,164.6 446.2,132.8 477.9,132.8"}));      
-            
+                        
             // leds
             this.leds = [];
             this.ledsOuter = [];
@@ -309,6 +327,11 @@ namespace yelm.rt.micro_bit {
         }
         
         private attachEvents() {
+            Runtime.messagePosted = (msg) => {
+                switch(msg.kind || '') {
+                    case 'serial': this.flashSystemLed(); break;
+                }
+            }
             this.element.addEventListener("mousemove", (ev: MouseEvent) => {
                 let state = this.board;
                 if (!state.acceleration) return;            

@@ -27,3 +27,20 @@ svg.sim {
     stroke:#ff7f7f;
     stroke-width:3px;
 }
+
+.sim-systemled {
+    fill:#333;
+    stroke:#555;
+    stroke-width: 1px;
+}
+
+/* animations */
+.sim-flash {
+    animation-name: sim-flash-animation;
+    animation-duration: 0.1s;
+}
+
+@keyframes sim-flash-animation {  
+    from { fill: yellow; }
+    to   { fill: default; }
+}

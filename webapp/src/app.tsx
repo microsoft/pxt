@@ -61,7 +61,8 @@ var appTargets: yelm.U.Map<IAppTarget> = {
                     "microbit-music": "*",
                     "microbit-radio": "*",
                     "microbit-game": "*",
-                    "microbit-pins": "*"
+                    "microbit-pins": "*",
+                    "microbit-serial": "*"
                 },
                 description: "",
                 files: ["main.blocks", "main.blocks.ts", "README.md"]
@@ -82,7 +83,8 @@ var appTargets: yelm.U.Map<IAppTarget> = {
                     "microbit-music": "*",
                     "microbit-radio": "*",
                     "microbit-game": "*",
-                    "microbit-pins": "*"
+                    "microbit-pins": "*",
+                    "microbit-serial": "*"
                 },
                 description: "",
                 files: ["main.ts", "README.md"]

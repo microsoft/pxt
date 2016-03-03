@@ -20,7 +20,7 @@ namespace yelm.rt {
         export function start() {
             console.log('listening for simulator commands')
             window.addEventListener("message", receiveMessage, false);       
-            Runtime.postMessage({ kind:'status', state: 'ready'});     
+            Runtime.postMessage(<SimulatorStateMessage>{ kind:'status', state: 'ready'});     
         }
 
         function receiveMessage(event: MessageEvent) {

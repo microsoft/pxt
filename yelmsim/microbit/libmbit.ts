@@ -209,8 +209,11 @@ namespace yelm.rt.micro_bit {
 
     /* serial */
     export function serialSendString(s: string) {
-        if (s.trim() && !quiet)
-            console.log("SERIAL:", s)
+        board().writeSerial(s);
+    }
+    
+    export function serialReadString() : string {
+        return board().readSerial();
     }
 
     /* input */

@@ -53,7 +53,7 @@ namespace yelm.rt.micro_bit {
         
         broadcast(msg: number) {
             let ens = enums();
-            Runtime.postMessage({
+            Runtime.postMessage(<SimulatorEventBusMessage>{
                 kind:'eventbus',
                 id: ens.MES_BROADCAST_GENERAL_ID,
                 eventid: msg
@@ -65,6 +65,10 @@ namespace yelm.rt.micro_bit {
         id: number;
         eventid: number;
         value?: number;
+    }
+    
+    export interface SimulatorSerialMessage extends SimulatorMessage {
+        value: string;
     }
     
     export class Board extends BaseBoard {
@@ -86,6 +90,9 @@ namespace yelm.rt.micro_bit {
 
         // pins
         pins : Pin[];
+        
+        // serial
+        serialIn: string[] = [];
 
         // sensors    
         usesAcceleration = false;
@@ -144,6 +151,32 @@ namespace yelm.rt.micro_bit {
                     let ev = <SimulatorEventBusMessage>msg;
                     this.bus.queue(ev.id, ev.eventid, ev.value);
                     break;
+                case 'serial':
+                    this.serialIn.push((<SimulatorSerialMessage>msg).value || '');
+                    break;
+            }
+        }
+        
+        readSerial() {
+            let v = this.serialIn.shift() || '';
+            return v;
+        }
+        
+        serialOutBuffer: string = '';
+        writeSerial(s : string) {
+            for(let i = 0; i < s.length;++i) {
+                let c = s[i];
+                switch(c) {
+                    case '\n': 
+                        Runtime.postMessage(<SimulatorSerialMessage>{
+                            kind: 'serial',
+                            value: this.serialOutBuffer
+                        })   
+                        this.serialOutBuffer = ''
+                        break;
+                    case '\r': continue;
+                    default: this.serialOutBuffer += c;
+                }                
             }
         }
     }
