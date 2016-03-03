@@ -302,12 +302,12 @@ namespace yelm.rt.micro_bit {
     /* pins */
     export function digitalReadPin(pin : Pin) : number {
         pin.mode = PinMode.Digital | PinMode.Input;
-        return pin.value;
+        return pin.value > 100 ? 1 : 0;
     }
     
     export function digitalWritePin(pin : Pin, value: number) {
         pin.mode = PinMode.Digital | PinMode.Output;
-        pin.value = value ? 1 : 0;
+        pin.value = value > 0 ? 1023 : 0;
         board().updateView();
     }
 
