@@ -87,6 +87,33 @@ namespace yelm.rt.micro_bit {
             els.forEach(el => (<SVGStylable><any>el).style.fill = c);
         }
         
+        static buttonEvents(el : Element, 
+            move: (ev: MouseEvent) => void, 
+            start?: (ev:MouseEvent) => void, 
+            stop?: (ev:MouseEvent) => void) {
+                let captured = false;
+                el.addEventListener('mousedown', (ev: MouseEvent) => {
+                    captured = true;
+                    start(ev)
+                    return true;
+                });
+                el.addEventListener('mousemove', (ev:MouseEvent) => {
+                    if (captured) {
+                        move(ev);
+                        ev.preventDefault();
+                        return false;
+                    }
+                    return true;
+                });
+                el.addEventListener('mouseup', (ev:MouseEvent) => {
+                    captured = false;
+                    if (stop) stop(ev);
+                });
+                el.addEventListener('mouseleave', (ev:MouseEvent) => {
+                    captured = false;
+                    if (stop) stop(ev);
+                });
+        }
     }
 
     export class MicrobitBoardSvg
@@ -157,23 +184,16 @@ namespace yelm.rt.micro_bit {
             if (!this.headInitialized) {
                 let p = this.head.firstChild.nextSibling as SVGPathElement;
                 p.setAttribute("d", "m269.9,50.134647l0,0l-39.5,0l0,0c-14.1,0.1 -24.6,10.7 -24.6,24.8c0,13.9 10.4,24.4 24.3,24.7l0,0l39.6,0c14.2,0 40.36034,-22.97069 40.36034,-24.85394c0,-1.88326 -26.06034,-24.54606 -40.16034,-24.64606m-0.2,39l0,0l-39.3,0c-7.7,-0.1 -14,-6.4 -14,-14.2c0,-7.8 6.4,-14.2 14.2,-14.2l39.1,0c7.8,0 14.2,6.4 14.2,14.2c0,7.9 -6.4,14.2 -14.2,14.2l0,0l0,0z");
-                let captured = false;
                 let pt = this.element.createSVGPoint();
-                this.head.addEventListener('mousedown', (ev : MouseEvent) => captured = true);
-                this.head.addEventListener('mousemove', (ev : MouseEvent) => {
-                    if (captured) {
-                        ev.preventDefault();
-                        let cur = Svg.cursorPoint(pt, this.element, ev);
-                        state.heading = Math.floor(Math.atan2(cur.y - yc, cur.x - xc) * 180 / Math.PI+90);
-                        if (state.heading < 0) state.heading += 360;
-                        console.log('heading: ' + state.heading)
-                        this.updateHeading();
-                        return false;
-                    }
-                    return true;
-                })
-                this.head.addEventListener('mouseup', (ev) => captured = false);
-                this.head.addEventListener('mouseleave', (ev) => captured = false);
+                Svg.buttonEvents(
+                    this.head,
+                    (ev : MouseEvent) => {
+                            let cur = Svg.cursorPoint(pt, this.element, ev);
+                            state.heading = Math.floor(Math.atan2(cur.y - yc, cur.x - xc) * 180 / Math.PI+90);
+                            if (state.heading < 0) state.heading += 360;
+                            console.log('heading: ' + state.heading)
+                            this.updateHeading();
+                    });
                 this.headInitialized = true;
             }
             
@@ -308,21 +328,51 @@ namespace yelm.rt.micro_bit {
             }, false);
             
             this.pins.forEach((pin, index) => {
-                pin.addEventListener("mousedown", ev => {
-                    let state = this.board;
-                    state.pins[index].touched = true;
-                    Svg.fill(this.pins[index], this.props.theme.pinTouched);                
-                    this.pins[index].classList.add('touched');
-                })
-                pin.addEventListener("mouseup", ev => {
-                    let state = this.board;
-                    state.pins[index].touched = false;
-                    Svg.fill(this.pins[index], this.props.theme.pin);
-                    
-                    let ens = enums();
-                    this.board.bus.queue(state.pins[index].id, ens.MICROBIT_BUTTON_EVT_CLICK);
-                    this.pins[index].classList.remove('touched');
-                })                
+                if (!this.board.pins[index]) return;
+                let pt = this.element.createSVGPoint();
+                Svg.buttonEvents(pin,
+                    // move
+                    ev => {
+                        let state = this.board;
+                        let pin = state.pins[index];
+                        let svgpin = this.pins[index];
+                        if (pin.mode & PinMode.Input) {
+                            let cursor = Svg.cursorPoint(pt, this.element, ev);
+                            console.log(cursor.x + ' - ' + cursor.y)
+                            let v = (400 - cursor.y) / 40 * 1023
+                            pin.value = Math.max(0, Math.min(1023, Math.floor(v)));
+                        }
+                    },
+                    // start
+                    ev => {
+                        let state = this.board;
+                        let pin = state.pins[index];
+                        let svgpin = this.pins[index];
+                        Svg.fill(svgpin, this.props.theme.pinTouched);                
+                        svgpin.classList.add('touched');                            
+                        if (pin.mode == PinMode.Touch) {
+                            pin.touched = true;
+                        } else if (pin.mode & PinMode.Input) {
+                            let cursor = Svg.cursorPoint(pt, this.element, ev);
+                            console.log(cursor.x + ' - ' + cursor.y)
+                            let v = (400 - cursor.y) / 40 * 1023
+                            pin.value = Math.max(0, Math.min(1023, Math.floor(v)));
+                        }
+                    },
+                    // stop
+                    (ev: MouseEvent) => {
+                        let state = this.board;
+                        let pin = state.pins[index];
+                        let svgpin = this.pins[index];
+                        Svg.fill(svgpin, this.props.theme.pin);                            
+                        svgpin.classList.remove('touched');
+                        if (pin.mode == PinMode.Touch) {                        
+                            pin.touched = false;
+                            let ens = enums();
+                            this.board.bus.queue(pin.id, ens.MICROBIT_BUTTON_EVT_CLICK);
+                        }
+                        return false;
+                });
             })
             this.buttonsOuter.slice(0,2).forEach((btn, index) => {
                 btn.addEventListener("mousedown", ev => {

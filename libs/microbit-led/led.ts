@@ -68,7 +68,7 @@ namespace led {
     //% help=/functions/plot-bar-graph weight=20
     //% blockId=device_plot_bar_graph block="plot bar graph of %value |up to %high" icon="\uf080" blockExternalInputs=true
     export function plotBarGraph(value: number, high: number = 1023): void {
-        let v = (value * 4) / high;
+        let v = (value * 5) / high;
         if (v <= 0) {
             basic.plotLeds(`0 0 0 0 0
 0 0 0 0 0

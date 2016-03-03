@@ -230,6 +230,12 @@ namespace yelm.rt.micro_bit {
         if (button == ens.MICROBIT_ID_BUTTON_B) return bts[1].pressed;
         return bts[2].pressed || (bts[0].pressed && bts[1].pressed);
     }
+    
+    export function onPinPressed(pin: number, handler: RefAction) {
+        let b = board();
+        b.pins.filter(p => p.id == pin).forEach(p => p.isTouched());
+        onButtonPressed(pin, handler);
+    }
 
     export function ioP0() { return board().pins[0]; }
     export function ioP1() { return board().pins[1]; }
@@ -292,6 +298,51 @@ namespace yelm.rt.micro_bit {
     export function getCurrentTime(): number {
         return runtime.runningTime();
     }
+    
+    /* pins */
+    export function digitalReadPin(pin : Pin) : number {
+        pin.mode = PinMode.Digital | PinMode.Input;
+        return pin.value;
+    }
+    
+    export function digitalWritePin(pin : Pin, value: number) {
+        pin.mode = PinMode.Digital | PinMode.Output;
+        pin.value = value ? 1 : 0;
+        board().updateView();
+    }
+
+    export function analogReadPin(pin : Pin) : number {
+        pin.mode = PinMode.Digital | PinMode.Input;
+        return pin.value;
+    }
+    
+    export function analogWritePin(pin : Pin, value: number) {
+        pin.mode = PinMode.Digital | PinMode.Output;
+        pin.value = value ? 1 : 0;
+        board().updateView();
+    }
+    
+    export function setAnalogPeriodUs(pin: Pin, micros:number) {
+        pin.mode = PinMode.Analog | PinMode.Output;
+    }
+    
+    export function servoWritePin(pin: Pin, value: number) {
+        setAnalogPeriodUs(pin, 20000);
+        // TODO
+    }
+    
+    export function servoSetPulse(pin: Pin, micros:number) {        
+    }
+    
+    export function enablePitch(pin: Pin) {
+        pin.mode = PinMode.Analog | PinMode.Output;
+    }
+    
+    export function pitch(frequency: number, ms: number) {
+        let cb = getResume();
+        setTimeout(() => { cb() }, ms);
+    }
+    
     
     /* radio */
     export function broadcastMessage(msg: number) : void {

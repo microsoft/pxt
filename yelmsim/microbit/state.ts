@@ -4,12 +4,24 @@ namespace yelm.rt.micro_bit {
         greyscale
     }
     
+    export enum PinMode {
+        Digital = 0x0001,
+        Analog  = 0x0002,
+        Input   = 0x0004,
+        Output  = 0x0008,
+        Touch   = 0x0010
+    }
+    
     export class Pin {
         constructor(public id: number) {}
         touched = false;
         value = 0;
-        input = false;
-        analog = false;
+        mode = PinMode.Digital | PinMode.Output;
+          
+        isTouched() : boolean {
+            this.mode = PinMode.Touch;
+            return this.touched;
+        }
     }
     
     export class Button {
