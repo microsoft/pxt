@@ -8,7 +8,8 @@ namespace ts.yelm.ir {
         PointerLiteral,
         RuntimeCall,
         ProcCall,
-        Shared,
+        SharedRef,
+        SharedDef,
         FieldAccess,
         Store,
         CellRef,
@@ -37,22 +38,38 @@ namespace ts.yelm.ir {
             super();
         }
 
+        static clone(e: Expr) {
+            let copy = new Expr(e.exprKind, e.args.slice(0), e.data)
+            if (e.jsInfo)
+                copy.jsInfo = e.jsInfo
+            if (e.totalUses) {
+                copy.totalUses = e.totalUses
+                copy.currUses = e.currUses
+            }
+            if (e.isAsync)
+                copy.isAsync = e.isAsync
+            return copy
+        }
+
         isExpr() { return true }
+
+        isPure() {
+            return this.isStateless() || this.exprKind == EK.CellRef;
+        }
 
         isStateless() {
             switch (this.exprKind) {
                 case EK.NumberLiteral:
                 case EK.PointerLiteral:
+                case EK.SharedRef:
                     return true;
-                case EK.Shared:
-                    return !!this.args[0].currUses
                 default: return false;
             }
         }
 
         sharingInfo(): string {
             let arg0: ir.Expr = this
-            if (this.exprKind == EK.Shared) {
+            if (this.exprKind == EK.SharedRef || this.exprKind == EK.SharedDef) {
                 arg0 = this.args[0]
                 if (!arg0) arg0 = { currUses: "", totalUses: "" } as any
             }
@@ -70,8 +87,11 @@ namespace ts.yelm.ir {
                 case EK.JmpValue:
                     return "JMPVALUE"
 
-                case EK.Shared:
-                    return `SHARED(${this.args[0].toString()})`
+                case EK.SharedRef:
+                    return `SHARED_REF(${this.args[0].toString()})`
+
+                case EK.SharedDef:
+                    return `SHARED_DEF(${this.args[0].toString()})`
 
                 case EK.Incr:
                     return `INCR(${this.args[0].toString()})`
@@ -104,12 +124,10 @@ namespace ts.yelm.ir {
                 case EK.PointerLiteral:
                 case EK.CellRef:
                 case EK.JmpValue:
+                case EK.SharedRef:
                     return false;
 
-                case EK.Shared:
-                    if (this.isStateless()) return false;
-                    return this.args[0].canUpdateCells()
-
+                case EK.SharedDef:
                 case EK.Incr:
                 case EK.Decr:
                 case EK.FieldAccess:
@@ -356,28 +374,91 @@ namespace ts.yelm.ir {
         }
 
         resolve() {
-            let lbls = U.toDictionary(this.body.filter(s => s.stmtKind == ir.SK.Label), s => s.lblName)
-            let loop = (e: ir.Expr) => {
-                if (e.exprKind == EK.Shared) {
-                    let arg = e.args[0]
-                    if (!arg.totalUses) {
-                        arg.totalUses = 1
-                        arg.currUses = 0
-                        loop(arg)
-                    } else {
-                        arg.totalUses++;
-                    }
-                } else if (e.args) {
-                    for (let i = 0; i < e.args.length; ++i)
-                        loop(e.args[i])
-                }
-            }
-            for (let s of this.body) {
-                if (s.expr) loop(s.expr)
+            // TODO remove decr(stringData)
 
-                // TODO remove top-level useless stuff
-                // TODO remove decr(incr(x))
-                // TODO remove decr(stringData)
+            let iterargs = (e: Expr, f: (v: Expr) => Expr) => {
+                if (e.args)
+                    for (let i = 0; i < e.args.length; ++i)
+                        e.args[i] = f(e.args[i])
+            }
+
+            let refdef = (e: Expr): Expr => {
+                switch (e.exprKind) {
+                    case EK.SharedDef: throw U.oops();
+                    case EK.SharedRef:
+                        let arg = e.args[0]
+                        if (!arg.totalUses) {
+                            arg.totalUses = -1
+                            arg.currUses = 0
+                            let e2 = Expr.clone(e)
+                            e2.exprKind = EK.SharedDef
+                            e2.args[0] = refdef(e2.args[0])
+                            return e2
+                        } else {
+                            arg.totalUses--;
+                            return e
+                        }
+                }
+
+                iterargs(e, refdef)
+
+                return e
+            }
+
+            let opt = (e: ir.Expr): ir.Expr => {
+                iterargs(e, opt)
+
+                switch (e.exprKind) {
+                    case EK.Decr:
+                        if (e.args[0].exprKind == EK.Incr)
+                            return opt(e.args[0].args[0])
+                        break;
+                    case EK.Sequence:
+                        e.args = e.args.filter((a, i) => i == e.args.length - 1 || !a.isPure())
+                        break;
+                }
+
+                return e
+            }
+
+            let cntuses = (e: Expr): Expr => {
+                switch (e.exprKind) {
+                    case EK.SharedDef:
+                        let arg = e.args[0]
+                        //console.log(arg)
+                        U.assert(arg.totalUses < 0)
+                        U.assert(arg.currUses === 0)
+                        if (arg.totalUses == -1)
+                            return cntuses(arg)
+                        else
+                            arg.totalUses = 1;
+                        break;
+                    case EK.SharedRef:
+                        U.assert(e.args[0].totalUses > 0)
+                        e.args[0].totalUses++;
+                        return e;
+                }
+                iterargs(e, cntuses)
+                return e
+            }
+
+            this.body = this.body.filter(s => {
+                if (s.expr) {
+                    //console.log("OPT", s.expr.toString())
+                    s.expr = opt(refdef(s.expr))
+                    if (s.stmtKind == ir.SK.Expr && s.expr.isPure())
+                        return false;
+                }
+                return true
+            })
+
+            let lbls = U.toDictionary(this.body.filter(s => s.stmtKind == ir.SK.Label), s => s.lblName)
+
+            for (let s of this.body) {
+                if (s.expr) {
+                    //console.log("CNT", s.expr.toString())
+                    s.expr = cntuses(s.expr)
+                }
 
                 switch (s.stmtKind) {
                     case ir.SK.Expr:
@@ -418,10 +499,10 @@ namespace ts.yelm.ir {
     export function shared(expr: Expr) {
         switch (expr.exprKind) {
             case EK.NumberLiteral:
-            case EK.Shared:
+            case EK.SharedRef:
                 return expr;
         }
-        return op(EK.Shared, [expr])
+        return op(EK.SharedRef, [expr])
     }
 
     export function ptrlit(lbl: string, jsInfo: string): Expr {

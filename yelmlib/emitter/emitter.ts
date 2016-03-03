@@ -1068,7 +1068,7 @@ namespace ts.yelm {
         function emitIncrement(expr: PrefixUnaryExpression | PostfixUnaryExpression, meth: string, isPost: boolean) {
             // TODO expr evaluated twice
             let pre = ir.shared(emitExpr(expr.operand))
-            let post = ir.rtcall(meth, [pre, ir.numlit(1)])
+            let post = ir.shared(ir.rtcall(meth, [pre, ir.numlit(1)]))
             emitStore(expr.operand, post)
             return isPost ? post : pre
         }

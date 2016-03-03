@@ -4,7 +4,6 @@ namespace ts.yelm {
         let write = (s: string) => { resText += asmline(s); }
         let EK = ir.EK;
 
-        //console.log(proc.toString())
 
         write(`
 ;
@@ -24,7 +23,9 @@ ${getFunctionLabel(proc.action)}:
         })
         write("@stackmark locals")
 
+        //console.log(proc.toString())
         proc.resolve()
+        //console.log("OPT", proc.toString())
 
         let exprStack: ir.Expr[] = []
 
@@ -124,7 +125,7 @@ ${getFunctionLabel(proc.action)}:
                     emitLdPtr(e.data, reg);
                     write(`@js ${reg} = ${e.jsInfo}`)
                     break;
-                case EK.Shared:
+                case EK.SharedRef:
                     let arg = e.args[0]
                     U.assert(!!arg.currUses) // not first use
                     U.assert(arg.currUses < arg.totalUses)
@@ -178,7 +179,7 @@ ${getFunctionLabel(proc.action)}:
                     return emitRtCall(e);
                 case EK.ProcCall:
                     return emitProcCall(e)
-                case EK.Shared:
+                case EK.SharedDef:
                     return emitSharedDef(e)
                 case EK.Sequence:
                     return e.args.forEach(emitExpr)
@@ -189,9 +190,8 @@ ${getFunctionLabel(proc.action)}:
 
         function emitSharedDef(e: ir.Expr) {
             let arg = e.args[0]
-            U.assert(!!arg.totalUses)
-            if (arg.currUses > 0)
-                return emitExprInto(e, "r0") // cached use
+            U.assert(arg.totalUses >= 1)
+            U.assert(arg.currUses === 0)
             arg.currUses = 1
             if (arg.totalUses == 1)
                 return emitExpr(arg)
@@ -216,15 +216,19 @@ ${getFunctionLabel(proc.action)}:
             let flattened = topExpr.args.map(a => {
                 let idx = complexArgs.indexOf(a)
                 if (idx >= 0) {
-                    let shared = a
-                    if (a.exprKind == EK.Shared) {
+                    let sharedRef = a
+                    let sharedDef = a
+                    if (a.exprKind == EK.SharedDef) {
                         a.args[0].totalUses++
-                    } else if (a.exprKind != EK.Shared) {
-                        shared = ir.shared(a)
+                        sharedRef = ir.op(EK.SharedRef, [a.args[0]])
+                    } else {
+                        sharedRef = ir.op(EK.SharedRef, [a])
+                        sharedDef = ir.op(EK.SharedDef, [a])
                         a.totalUses = 2
+                        a.currUses = 0
                     }
-                    precomp.push(shared)
-                    return shared
+                    precomp.push(sharedDef)
+                    return sharedRef
                 } else return a
             })
 
