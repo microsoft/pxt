@@ -220,14 +220,18 @@ namespace ts.yelm.ir {
 
         load() {
             let r = this.loadCore()
-            if (this.isByRefLocal()) {
-                r = rtcall("bitvm::ldloc" + this.refSuff(), [r])
-            }
+            
+            if (this.isByRefLocal())
+                return rtcall("bitvm::ldloc" + this.refSuff(), [r])
 
-            if (this.isRef() && this.isLocal())
-                r = op(EK.Incr, [r])
+            if (this.refCountingHandledHere())
+                return op(EK.Incr, [r])
 
             return r
+        }
+        
+        refCountingHandledHere() {
+            return this.isRef() && !this.isGlobal() && !this.isByRefLocal()
         }
 
         isByRefLocal() {
@@ -243,7 +247,7 @@ namespace ts.yelm.ir {
                 return rtcall("bitvm::stloc" + this.refSuff(), [this.loadCore(), src])
             } else {
                 let st = this.storeDirect(src)
-                if (this.isRef() && this.isLocal())
+                if (this.refCountingHandledHere())
                     st = op(EK.Sequence, [op(EK.Decr, [this.loadCore()]), st])
                 return st
             }
