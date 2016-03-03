@@ -106,18 +106,18 @@ function testDefaultArgs() {
     assert(optstring2(3, "7") == 10, "os1")
 }
 
-function optargs(x: number, y?: number, z?:number) {
+function optargs(x: number, y?: number, z?: number) {
     return x + y;
 }
 
-function optstring(x:number, s?:string) {
+function optstring(x: number, s?: string) {
     if (s != null) {
         return parseInt(s) + x;
     }
     return x * 2;
 }
 
-function optstring2(x:number, s:string = null) {
+function optstring2(x: number, s: string = null) {
     if (s != null) {
         return parseInt(s) + x;
     }
@@ -520,16 +520,14 @@ function refparamWrite3(testrecX: Testrec): void {
     assert(testrecX.str == "foox", "ff2");
 }
 
-function testMemoryFree() : void
-    {
+function testMemoryFree(): void {
     msg("testMemoryFree");
     for (let i = 0; i < 1000; i++) {
         allocImage();
     }
 }
 
-function runOnce(fn:Action) : void
-    {
+function runOnce(fn: Action): void {
     fn();
 }
 
@@ -537,8 +535,7 @@ function createObj() {
     return new Testrec();
 }
 
-function testMemoryFreeHOF() : void
-    {
+function testMemoryFreeHOF(): void {
     msg("testMemoryFreeHOF");
     for (let i = 0; i < 1000; i++) {
         runOnce(() => {
@@ -547,8 +544,7 @@ function testMemoryFreeHOF() : void
     }
 }
 
-function allocImage() : void
-    {
+function allocImage(): void {
     let tmp = createObj();
 }
 
@@ -556,11 +552,11 @@ class Foo {
     pin: number;
     buf: number[];
 
-    constructor(k:number, l:number) {
+    constructor(k: number, l: number) {
         this.pin = k - l
     }
 
-    setPin(p:number) {
+    setPin(p: number) {
         this.pin = p
     }
 
@@ -573,8 +569,7 @@ class Foo {
     }
 }
 
-function testClass()
-    {
+function testClass() {
     let f = new Foo(272, 100);
     assert(f.getPin() == 172, "ctor")
     f.setPin(42)
