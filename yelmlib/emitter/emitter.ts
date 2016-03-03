@@ -847,7 +847,7 @@ namespace ts.yelm {
 
                 args.unshift(node.expression)
 
-                return rtcallMask("action::run" + suff, args)
+                return rtcallMask("action::run" + suff, args, true)
             }
 
             throw unhandled(node, stringKind(decl))
@@ -2561,11 +2561,11 @@ ${getFunctionLabel(proc.action)}:
                     let idx = exprStack.indexOf(arg)
                     U.assert(idx >= 0)
                     if (idx == 0 && arg.totalUses == arg.currUses) {
-                        write(`pop {${reg}}  ; tmpref`)
+                        write(`pop {${reg}}  ; tmpref @${exprStack.length}`)
                         exprStack.shift()
                         clearStack()
                     } else {
-                        write(`ldr ${reg}, [sp, #4*${idx}]   ; tmpref`)
+                        write(`ldr ${reg}, [sp, #4*${idx}]   ; tmpref @${exprStack.length - idx}`)
                     }
                     break;
                 case EK.CellRef:
@@ -2624,7 +2624,7 @@ ${getFunctionLabel(proc.action)}:
             else {
                 emitExpr(arg)
                 exprStack.unshift(arg)
-                write("push {r0} ; shared store")
+                write("push {r0} ; tmpstore @" + exprStack.length)
             }
         }
 
@@ -2633,7 +2633,7 @@ ${getFunctionLabel(proc.action)}:
             let complexArgs: ir.Expr[] = []
             for (let a of U.reversed(topExpr.args)) {
                 if (a.isStateless()) continue
-                if (a.exprKind == EK.CellRef && !didStateUpdate) continue
+                if (a.exprKind == EK.CellRef && !(a.data as ir.Cell).isGlobal() && !didStateUpdate) continue
                 if (a.canUpdateCells()) didStateUpdate = true
                 complexArgs.push(a)
             }
@@ -2660,8 +2660,9 @@ ${getFunctionLabel(proc.action)}:
                 U.assert(i <= 3)
                 emitExprInto(a, "r" + i)
             })
-
+            
             let name: string = topExpr.data
+            //console.log("RT",name,topExpr.isAsync)
             let lbl = topExpr.isAsync ? mkLbl("rtcall") : ""
             write(`bl ${name}  ; *F${topExpr.args.length} ${lbl}`)
             if (lbl)
