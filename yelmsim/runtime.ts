@@ -109,6 +109,7 @@ namespace yelm.rt {
         startTime = 0;
         target: Target;
         enums: Map<number>;
+        id: string;
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -178,9 +179,9 @@ namespace yelm.rt {
                 this.running = r;
                 if (this.running) {
                     this.startTime = U.now();
-                    Runtime.postMessage(<SimulatorStateMessage>{ kind: 'status', state: 'running' });
+                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', state: 'running' });
                 } else {
-                    Runtime.postMessage(<SimulatorStateMessage>{ kind: 'status', state: 'killed' });
+                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', state: 'killed' });
                 }
                 if (this.stateChanged) this.stateChanged();
             }

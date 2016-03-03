@@ -5,10 +5,12 @@ import * as sui from "./sui"
 export interface ISimulatorProps { }
 
 export class Simulator extends React.Component<ISimulatorProps, {}> {
+    static nextFrameId : number = 0;
+    
     componentDidMount() {
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data;
-            switch(msg.kind || '') {
+            switch(msg.type || '') {
                 case 'status':
                      switch(msg.state || '') {
                          case 'ready':
@@ -28,7 +30,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
     static postMessage(msg: any, source?: Window) {
         // dispatch to all iframe besides self
         let frames = $('#simulators iframe');
-        if (source && msg.kind === 'eventbus' && frames.length < 2) {
+        if (source && msg.type === 'eventbus' && frames.length < 2) {
             let frame = Simulator.createFrame()
             $('#simulators').append(frame);
             frames = $('#simulators iframe');
@@ -51,14 +53,16 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
     }
     
     static startFrame(frame : HTMLIFrameElement) {
-        frame.contentWindow.postMessage(Simulator.currentRuntime, "*");        
+        let msg = yelm.U.clone(Simulator.currentRuntime);
+        msg.id = Simulator.nextFrameId++;
+        frame.contentWindow.postMessage(msg, "*");        
     }
 
     static currentRuntime : any;
     static run(target: string, js: string, enums: any) {
         // store information
         Simulator.currentRuntime = {
-            kind: 'run',
+            type: 'run',
             target: target,
             enums: enums,
             code: js

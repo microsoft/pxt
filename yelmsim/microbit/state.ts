@@ -54,7 +54,7 @@ namespace yelm.rt.micro_bit {
         broadcast(msg: number) {
             let ens = enums();
             Runtime.postMessage(<SimulatorEventBusMessage>{
-                kind:'eventbus',
+                type:'eventbus',
                 id: ens.MES_BROADCAST_GENERAL_ID,
                 eventid: msg
             })
@@ -68,7 +68,8 @@ namespace yelm.rt.micro_bit {
     }
     
     export interface SimulatorSerialMessage extends SimulatorMessage {
-        value: string;
+        id:string;
+        data: string;
     }
     
     export class Board extends BaseBoard {
@@ -146,13 +147,13 @@ namespace yelm.rt.micro_bit {
         receiveMessage(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) return;
             
-            switch(msg.kind || "") {
+            switch(msg.type || "") {
                 case 'eventbus': 
                     let ev = <SimulatorEventBusMessage>msg;
                     this.bus.queue(ev.id, ev.eventid, ev.value);
                     break;
                 case 'serial':
-                    this.serialIn.push((<SimulatorSerialMessage>msg).value || '');
+                    this.serialIn.push((<SimulatorSerialMessage>msg).data || '');
                     break;
             }
         }
@@ -169,8 +170,9 @@ namespace yelm.rt.micro_bit {
                 switch(c) {
                     case '\n': 
                         Runtime.postMessage(<SimulatorSerialMessage>{
-                            kind: 'serial',
-                            value: this.serialOutBuffer
+                            type: 'serial',
+                            data: this.serialOutBuffer,
+                            id: runtime.id
                         })   
                         this.serialOutBuffer = ''
                         break;

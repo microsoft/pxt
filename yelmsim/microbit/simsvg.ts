@@ -328,7 +328,7 @@ namespace yelm.rt.micro_bit {
         
         private attachEvents() {
             Runtime.messagePosted = (msg) => {
-                switch(msg.kind || '') {
+                switch(msg.type || '') {
                     case 'serial': this.flashSystemLed(); break;
                 }
             }

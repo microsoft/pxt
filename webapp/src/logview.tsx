@@ -27,11 +27,11 @@ export class LogView extends React.Component<ILogProps, ILogState> {
 
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data;
-            switch(msg.kind || '') {
+            switch(msg.type || '') {
                 case 'run': this.setState({ entries: []}); break;
                 case 'serial':
-                    let value = msg.value || '';
-                    let source = msg.source || (ev.source.frameElement ? ev.source.frameElement.id : '') || '?';
+                    let value = msg.data || '';
+                    let source = msg.id || (ev.source.frameElement ? ev.source.frameElement.id : '') || '?';
                     this.setState(prev => {
                         let last = prev.entries[prev.entries.length - 1];
                         let ens = prev.entries.slice(0, this.props.maxEntries);

@@ -1,10 +1,11 @@
 
 namespace yelm.rt {
     export interface SimulatorMessage {
-        kind: string;
+        type: string;
     }
 
     export interface SimulatorRunMessage extends SimulatorMessage {
+        id: string;
         code: string;
         target: string;
         enums: {
@@ -20,7 +21,7 @@ namespace yelm.rt {
         export function start() {
             console.log('listening for simulator commands')
             window.addEventListener("message", receiveMessage, false);       
-            Runtime.postMessage(<SimulatorStateMessage>{ kind:'status', state: 'ready'});     
+            Runtime.postMessage(<SimulatorStateMessage>{ type:'status', state: 'ready'});     
         }
 
         function receiveMessage(event: MessageEvent) {
@@ -30,7 +31,7 @@ namespace yelm.rt {
             // TODO: test origins
 
             let data: SimulatorMessage = event.data || {};
-            let kind = data.kind || '';
+            let kind = data.type || '';
             if (!kind) return;
             switch (kind || '') {
                 case 'run': run(<SimulatorRunMessage>data);break;
@@ -42,7 +43,7 @@ namespace yelm.rt {
         var runtime : yelm.rt.Runtime;        
         export function stop() {
             if (runtime) {
-                console.log('stopping preview runtime...')
+                console.log('stopping simulator...')
                 runtime.kill();
             }            
         }
@@ -50,8 +51,9 @@ namespace yelm.rt {
         export function run(msg: SimulatorRunMessage) {
             stop();
             // TODO test data
-            console.log('starting ' + msg.target);
+            console.log(`starting ${msg.target} ${msg.id}`);
             runtime = new Runtime(msg.code, msg.target, msg.enums);
+            runtime.id = msg.id;
             switch(msg.target) {
                 case 'microbit': initMicrobit(); break;
                 case 'minecraft': initMinecraft(); break;
