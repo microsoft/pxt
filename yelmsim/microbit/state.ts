@@ -127,7 +127,6 @@ namespace yelm.rt.micro_bit {
         receiveMessage(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) return;
             
-            console.log('received ' + JSON.stringify(msg, null, 2))
             switch(msg.kind || "") {
                 case 'eventbus': 
                     let ev = <SimulatorEventBusMessage>msg;
