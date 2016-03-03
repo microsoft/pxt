@@ -79,7 +79,7 @@ namespace yelm.rt.micro_bit {
         usesAcceleration = false;
         acceleration = [0, 0, -1023];
         
-        usesHeading = false;
+        usesHeading = false;        
         heading = 90;
         
         temperature = 21;

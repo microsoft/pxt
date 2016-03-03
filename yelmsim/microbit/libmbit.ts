@@ -257,8 +257,8 @@ namespace yelm.rt.micro_bit {
 
     export function compassHeading(): number {
         var b = board();
-        if (!b.usesAcceleration) {
-            b.usesAcceleration = true;
+        if (!b.usesHeading) {
+            b.usesHeading = true;
             runtime.queueDisplayUpdate();
         }
         return b.heading;
