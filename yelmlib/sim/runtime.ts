@@ -197,7 +197,11 @@ namespace yelm.rt {
                 let topLr = lr
                 lr = lr.caller
                 let popped = pop()
-                if (popped != topLr) oops("lrpop")
+                if (popped != topLr) {
+                    console.log("POPPED", popped)
+                    console.log("TOP", topLr)
+                    oops("lrpop")
+                }
                 rr0 = v;
                 if (topLr.finalCallback)
                     topLr.finalCallback(v);

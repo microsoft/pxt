@@ -200,7 +200,7 @@ namespace ts.yelm.ir {
             var n = ""
             if (this.def) n += (<any>this.def.name).text || "?"
             if (this.isarg) n = "ARG " + n
-            if (this.isRef) n = "REF " + n
+            if (this.isRef()) n = "REF " + n
             //if (this.isByRefLocal()) n = "BYREF " + n
             return "[" + n + "]"
         }

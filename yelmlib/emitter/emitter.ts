@@ -2433,7 +2433,7 @@ namespace ts.yelm {
         let resText = ""
         let write = (s: string) => { resText += asmline(s); }
 
-        console.log(proc.toString())
+        //console.log(proc.toString())
 
         write(`
 ;
@@ -2513,7 +2513,7 @@ ${getFunctionLabel(proc.action)}:
                 emitExpr(jmp.expr)
 
                 write("*cmp r0, #0")
-                if (jmp.jmpMode == ir.JmpMode.IfZero) {
+                if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
                     write("*beq " + lbl) // this is to *skip* the following 'b' instruction; beq itself has a very short range
                     write("@js if (r0)")
                 } else {
@@ -2569,7 +2569,10 @@ ${getFunctionLabel(proc.action)}:
                     }
                     break;
                 case EK.CellRef:
-                    write(`ldr ${reg}, ${cellref(e.data)}`)
+                    let cell = e.data as ir.Cell;
+                    if (cell.isGlobal())
+                        return emitExpr(ir.rtcall(withRef("bitvm::ldglb", cell.isRef()), [ir.numlit(cell.index)]))
+                    write(`ldr ${reg}, ${cellref(cell)}`)
                     break;
                 default: oops();
             }
@@ -2621,7 +2624,7 @@ ${getFunctionLabel(proc.action)}:
             else {
                 emitExpr(arg)
                 exprStack.unshift(arg)
-                write("push {r0}")
+                write("push {r0} ; shared store")
             }
         }
 
@@ -2673,7 +2676,7 @@ ${getFunctionLabel(proc.action)}:
                 write("push {r0} ; proc-arg")
                 a.totalUses = 1
                 a.currUses = 0
-                exprStack.push(a)
+                exprStack.unshift(a)
                 if (i == 0) stackBottom = exprStack.length
                 U.assert(exprStack.length - stackBottom == i)
                 return a
@@ -2694,8 +2697,13 @@ ${getFunctionLabel(proc.action)}:
         function emitStore(trg: ir.Expr, src: ir.Expr) {
             switch (trg.exprKind) {
                 case EK.CellRef:
-                    emitExpr(src)
-                    write("str r0, " + cellref(trg.data))
+                    let cell = trg.data as ir.Cell
+                    if (cell.isGlobal()) {
+                        emitExpr(ir.rtcall(withRef("bitvm::stglb", cell.isRef()), [src, ir.numlit(cell.index)]))
+                    } else {
+                        emitExpr(src)
+                        write("str r0, " + cellref(cell))
+                    }
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
@@ -2706,6 +2714,7 @@ ${getFunctionLabel(proc.action)}:
         }
 
         function cellref(cell: ir.Cell) {
+            U.assert(!cell.isGlobal())
             if (cell.iscap) {
                 assert(0 <= cell.index && cell.index < 32)
                 return "[r5, #4*" + cell.index + "]"
