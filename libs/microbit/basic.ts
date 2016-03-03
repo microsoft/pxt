@@ -5,7 +5,7 @@
 namespace basic {
 
     /**
-     * Scroll a number on the screen and shift by one column every ``interval`` milliseconds. If the number fits on the screen (i.e. is a single digit), does not scroll.
+     * Scroll a number on the screen. If the number fits on the screen (i.e. is a single digit), do not scroll.
      * @param interval speed of scroll; eg: 150, 100, 200, -100
      */
     //% help=functions/show-number
