@@ -875,7 +875,7 @@ namespace ts.yelm {
                     addDefaultParameters(checker.getResolvedSignature(node), args, parseComments(ctor))
                     let compiled = args.map(emitExpr)
                     compiled.unshift(ir.op(EK.Incr, [obj]))
-                    proc.emitExpr(ir.op(EK.ProcCall, args.map(emitExpr), ctor))
+                    proc.emitExpr(ir.op(EK.ProcCall, compiled, ctor))
                     return obj
                 } else {
                     if (node.arguments && node.arguments.length)
