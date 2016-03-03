@@ -517,7 +517,7 @@ function refparamWrite3(testrec: Testrec): void {
     testrec = new Testrec();
     testrec.str = "foo";
     basic.pause(30);
-    assert(testrec.str == "foox", "ff");
+    assert(testrec.str == "foox", "ff2");
 }
 
 function testMemoryFree() : void

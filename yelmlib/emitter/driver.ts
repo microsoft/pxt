@@ -6,6 +6,7 @@
 /// <reference path="thumb.ts"/>
 /// <reference path="ir.ts"/>
 /// <reference path="emitter.ts"/>
+/// <reference path="backthumb.ts"/>
 
 namespace ts.yelm {
     export interface CompileOptions {
