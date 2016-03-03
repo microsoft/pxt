@@ -50,7 +50,17 @@ function catFiles(out, files, pref) {
 
 function cmdIn(task, dir, cmd) {
     console.log(`[${task.name}] cd ${dir}; ${cmd}`)
-    child_process.exec(cmd, { cwd: dir }, execCallback(task))
+    let args = cmd.split(/\s+/)
+    let ch = child_process.spawn(args[0], args.slice(1), { 
+        cwd: dir, 
+        env: process.env,
+        stdio: "inherit" 
+    })
+    ch.on('close', (code) => {
+      if (code != 0)
+         task.fail();
+      else task.complete();
+    });
 }
 
 exports.execCallback = execCallback;
