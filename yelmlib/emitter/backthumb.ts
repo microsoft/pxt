@@ -159,7 +159,10 @@ ${getFunctionLabel(proc.action)}:
                     break;
                 case EK.Incr:
                     emitExpr(e.args[0])
+                    // TODO make bitvm::incr return the value!
+                    write("push {r0}")
                     emitCallRaw("bitvm::incr")
+                    write("pop {r0}")
                     break;
                 case EK.Decr:
                     emitExpr(e.args[0])
