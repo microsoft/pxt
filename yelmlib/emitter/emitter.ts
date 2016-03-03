@@ -35,7 +35,7 @@ namespace ts.yelm {
         return isRefType(tp)
     }
 
-    function setCellProps(l: ir.Cell) {
+    export function setCellProps(l: ir.Cell) {
         l._isRef = isRefDecl(l.def)
         l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
@@ -424,7 +424,6 @@ namespace ts.yelm {
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
                     ex = new ir.Cell(bin.globals.length, decl, getVarInfo(decl))
-                    setCellProps(ex)
                     bin.globals.push(ex)
                 }
                 return ex
@@ -518,7 +517,9 @@ namespace ts.yelm {
         function emitLocalLoad(decl: VarOrParam) {
             let l = lookupCell(decl)
             recordUse(decl)
-            return l.load()
+            let r = l.load()
+            //console.log("LOADLOC", l.toString(), r.toString())
+            return r
         }
 
         function emitIdentifier(node: Identifier): ir.Expr {
@@ -950,7 +951,6 @@ namespace ts.yelm {
             let caps = refs.concat(prim)
             let locals = caps.map((v, i) => {
                 let l = new ir.Cell(i, v, getVarInfo(v))
-                setCellProps(l)
                 l.iscap = true
                 return l;
             })
@@ -994,7 +994,6 @@ namespace ts.yelm {
 
                 proc.args = getParameters(node).map((p, i) => {
                     let l = new ir.Cell(i, p, getVarInfo(p))
-                    setCellProps(l)
                     l.isarg = true
                     return l
                 })
