@@ -567,7 +567,7 @@ namespace ts.yelm {
                     return ir.rtcall("string::mkEmpty", [])
                 } else {
                     let lbl = bin.emitString(node.text)
-                    let ptr = ir.ptrlit(lbl, JSON.stringify(node.text))
+                    let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(node.text))
                     return ir.rtcall("bitvm::stringData", [ptr])
                 }
             } else {
