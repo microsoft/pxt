@@ -35,9 +35,9 @@ namespace ts.yelm {
         return isRefType(tp)
     }
 
-    export function setLocationProps(l: ir.Cell) {
+    function setCellProps(l: ir.Cell) {
         l._isRef = isRefDecl(l.def)
-        l._isLocal = isLocalVar(l.def)
+        l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
         if (!l.isRef() && typeOf(l.def).flags & TypeFlags.Void) {
             oops("void-typed variable, " + l.toString())
@@ -424,6 +424,7 @@ namespace ts.yelm {
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
                     ex = new ir.Cell(bin.globals.length, decl, getVarInfo(decl))
+                    setCellProps(ex)
                     bin.globals.push(ex)
                 }
                 return ex
@@ -949,6 +950,7 @@ namespace ts.yelm {
             let caps = refs.concat(prim)
             let locals = caps.map((v, i) => {
                 let l = new ir.Cell(i, v, getVarInfo(v))
+                setCellProps(l)
                 l.iscap = true
                 return l;
             })
@@ -992,11 +994,13 @@ namespace ts.yelm {
 
                 proc.args = getParameters(node).map((p, i) => {
                     let l = new ir.Cell(i, p, getVarInfo(p))
+                    setCellProps(l)
                     l.isarg = true
                     return l
                 })
 
                 proc.args.forEach(l => {
+                    //console.log(l.toString(), l.info)
                     if (l.isByRefLocal()) {
                         // TODO add C++ support function to do this
                         let tmp = ir.shared(ir.rtcall("bitvm::mkloc" + l.refSuff(), []))

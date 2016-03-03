@@ -193,7 +193,6 @@ namespace ts.yelm.ir {
         _isGlobal = false;
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
-            setLocationProps(this)
         }
 
         toString() {

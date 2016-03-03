@@ -211,26 +211,26 @@ function testStrings(): void {
 
 
 function testNumCollection(): void {
-    let coll: number[] = [];
-    assert(coll.length == 0, "");
-    coll.push(42);
-    assert(coll.length == 1, "");
-    coll.push(22);
-    assert(coll[1] == 22, "");
-    coll.splice(0, 1);
-    assert(coll[0] == 22, "");
-    coll.removeElement(22);
-    assert(coll.length == 0, "");
+    let collXYZ: number[] = [];
+    assert(collXYZ.length == 0, "");
+    collXYZ.push(42);
+    assert(collXYZ.length == 1, "");
+    collXYZ.push(22);
+    assert(collXYZ[1] == 22, "");
+    collXYZ.splice(0, 1);
+    assert(collXYZ[0] == 22, "");
+    collXYZ.removeElement(22);
+    assert(collXYZ.length == 0, "");
     for (let i = 0; i < 100; i++) {
-        coll.push(i);
+        collXYZ.push(i);
     }
-    assert(coll.length == 100, "");
+    assert(collXYZ.length == 100, "");
 
-    coll = [1, 2, 3];
-    assert(coll.length == 3, "cons");
-    assert(coll[0] == 1, "cons0");
-    assert(coll[1] == 2, "cons1");
-    assert(coll[2] == 3, "cons2");
+    collXYZ = [1, 2, 3];
+    assert(collXYZ.length == 3, "cons");
+    assert(collXYZ[0] == 1, "cons0");
+    assert(collXYZ[1] == 2, "cons1");
+    assert(collXYZ[2] == 3, "cons2");
 }
 
 function testStringCollection(): void {
@@ -508,16 +508,16 @@ function refparamWrite2(testrec: Testrec): void {
     assert(testrec.bool == false, "");
 }
 
-function refparamWrite3(testrec: Testrec): void {
+function refparamWrite3(testrecX: Testrec): void {
     control.inBackground(() => {
         basic.pause(1);
-        assert(testrec.str == "foo", "ff");
-        testrec.str = testrec.str + "x";
+        assert(testrecX.str == "foo", "ff");
+        testrecX.str = testrecX.str + "x";
     });
-    testrec = new Testrec();
-    testrec.str = "foo";
+    testrecX = new Testrec();
+    testrecX.str = "foo";
     basic.pause(30);
-    assert(testrec.str == "foox", "ff2");
+    assert(testrecX.str == "foox", "ff2");
 }
 
 function testMemoryFree() : void
