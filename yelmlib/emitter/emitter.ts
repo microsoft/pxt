@@ -654,7 +654,7 @@ namespace ts.yelm {
                 if (typeOf(node.argumentExpression).flags & TypeFlags.Number) {
                     let arr = emitExpr(node.expression)
                     let idx = emitExpr(node.argumentExpression)
-                    return ir.rtcall(collType + "::at", [arr, idx])
+                    return rtcallMask(collType + "::at", [node.expression, node.argumentExpression])
                 } else {
                     throw unhandled(node, lf("non-numeric indexer on {0}", collType))
                 }
@@ -1067,7 +1067,6 @@ namespace ts.yelm {
 
         function emitIncrement(expr: PrefixUnaryExpression | PostfixUnaryExpression, meth: string, isPost: boolean) {
             // TODO expr evaluated twice
-            let bogus = isBogusReturn(expr)
             let pre = ir.shared(emitExpr(expr.operand))
             let post = ir.rtcall(meth, [pre, ir.numlit(1)])
             emitStore(expr.operand, post)
@@ -1087,26 +1086,6 @@ namespace ts.yelm {
                 }
             }
             throw unhandled(node)
-        }
-
-        function isBogusReturn(node: Expression) {
-            let par = node.parent
-            if (!(par.kind == SyntaxKind.ExpressionStatement ||
-                (par.kind == SyntaxKind.ForStatement &&
-                    (<ForStatement>par).incrementor == node || (<ForStatement>par).initializer == node)))
-                return false
-
-            if (node.kind == SyntaxKind.PrefixUnaryExpression || node.kind == SyntaxKind.PostfixUnaryExpression) {
-                let iexpr = <PrefixUnaryExpression | PostfixUnaryExpression>node
-                return iexpr.operator == SyntaxKind.PlusPlusToken || iexpr.operator == SyntaxKind.MinusMinusToken
-            }
-
-            if (node.kind == SyntaxKind.BinaryExpression) {
-                let bexpr = <BinaryExpression>node
-                return (bexpr.operatorToken.kind == SyntaxKind.EqualsToken)
-            }
-
-            return false
         }
 
         function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
@@ -1344,7 +1323,7 @@ namespace ts.yelm {
             if (!node) return;
             let v = emitExpr(node);
             let a = typeOf(node)
-            if (!(a.flags & TypeFlags.Void) && !isBogusReturn(node)) {
+            if (!(a.flags & TypeFlags.Void)) {
                 if (isRefType(a)) {
                     // will pop
                     v = ir.op(EK.Decr, [v])

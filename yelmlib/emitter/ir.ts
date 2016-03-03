@@ -51,7 +51,7 @@ namespace ts.yelm.ir {
         }
 
         sharingInfo(): string {
-            let arg0:ir.Expr = this
+            let arg0: ir.Expr = this
             if (this.exprKind == EK.Shared) {
                 arg0 = this.args[0]
                 if (!arg0) arg0 = { currUses: "", totalUses: "" } as any
@@ -224,7 +224,7 @@ namespace ts.yelm.ir {
                 r = rtcall("bitvm::ldloc" + this.refSuff(), [r])
             }
 
-            if (this.isRef())
+            if (this.isRef() && this.isLocal())
                 r = op(EK.Incr, [r])
 
             return r
@@ -242,7 +242,10 @@ namespace ts.yelm.ir {
             if (this.isByRefLocal()) {
                 return rtcall("bitvm::stloc" + this.refSuff(), [this.loadCore(), src])
             } else {
-                return this.storeDirect(src)
+                let st = this.storeDirect(src)
+                if (this.isRef() && this.isLocal())
+                    st = op(EK.Sequence, [op(EK.Decr, [this.loadCore()]), st])
+                return st
             }
         }
     }
@@ -363,7 +366,7 @@ namespace ts.yelm.ir {
                 if (s.expr) loop(s.expr)
 
                 // TODO remove top-level useless stuff
-
+                // TODO remove decr(incr(x))
                 // TODO remove decr(stringData)
 
                 switch (s.stmtKind) {

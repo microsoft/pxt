@@ -4,7 +4,7 @@ namespace ts.yelm {
         let write = (s: string) => { resText += asmline(s); }
         let EK = ir.EK;
 
-        //console.log(proc.toString())
+        console.log(proc.toString())
 
         write(`
 ;
