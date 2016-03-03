@@ -50,6 +50,15 @@ namespace ts.yelm.ir {
             }
         }
 
+        sharingInfo(): string {
+            let arg0:ir.Expr = this
+            if (this.exprKind == EK.Shared) {
+                arg0 = this.args[0]
+                if (!arg0) arg0 = { currUses: "", totalUses: "" } as any
+            }
+            return `${arg0.currUses}/${arg0.totalUses}`
+        }
+
         toString(): string {
             switch (this.exprKind) {
                 case EK.NumberLiteral:
@@ -168,7 +177,7 @@ namespace ts.yelm.ir {
                         default: throw oops();
                     }
                 case ir.SK.StackEmpty:
-                    return "@stackempty\n"
+                    return "    ;\n"
                 case ir.SK.Label:
                     return this.lblName + ":\n"
                 default: throw oops();
@@ -251,8 +260,8 @@ namespace ts.yelm.ir {
         body: Stmt[] = [];
         lblNo = 0;
         action: ts.FunctionLikeDeclaration;
-        
-        toString():string {
+
+        toString(): string {
             return `\nPROC ${getDeclName(this.action)}\n${this.body.map(s => s.toString()).join("")}\n`
         }
 
@@ -266,15 +275,18 @@ namespace ts.yelm.ir {
 
         mkLabel(name: string) {
             let lbl = stmt(SK.Label, null)
-            lbl.lblName = "." + name + "." + this.lblNo++
+            lbl.lblName = "." + name + "_" + this.lblNo++ + "_" + this.seqNo
             lbl.lbl = lbl
             return lbl
         }
         emitLbl(lbl: Stmt) {
             this.emit(lbl)
         }
-        emitLblDirect(lbl: string) {
-            this.emit(this.mkLabel(lbl))
+        emitLblDirect(lblName: string) {
+            let lbl = stmt(SK.Label, null)
+            lbl.lblName = lblName
+            lbl.lbl = lbl
+            this.emit(lbl)
         }
 
         getName() {
@@ -332,18 +344,27 @@ namespace ts.yelm.ir {
 
         resolve() {
             let lbls = U.toDictionary(this.body.filter(s => s.stmtKind == ir.SK.Label), s => s.lblName)
+            let loop = (e: ir.Expr) => {
+                if (e.exprKind == EK.Shared) {
+                    let arg = e.args[0]
+                    if (!arg.totalUses) {
+                        arg.totalUses = 1
+                        arg.currUses = 0
+                        loop(arg)
+                    } else {
+                        arg.totalUses++;
+                    }
+                } else if (e.args) {
+                    for (let i = 0; i < e.args.length; ++i)
+                        loop(e.args[i])
+                }
+            }
             for (let s of this.body) {
-                if (s.expr)
-                    iterExpr(s.expr, e => {
-                        if (e.exprKind == EK.Shared) {
-                            let arg = e.args[0]
-                            if (!arg.totalUses) {
-                                arg.totalUses = 0
-                                arg.currUses = 0
-                            }
-                            arg.totalUses++;
-                        }
-                    })
+                if (s.expr) loop(s.expr)
+
+                // TODO remove top-level useless stuff
+
+                // TODO remove decr(stringData)
 
                 switch (s.stmtKind) {
                     case ir.SK.Expr:

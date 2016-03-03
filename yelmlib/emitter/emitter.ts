@@ -2430,10 +2430,9 @@ namespace ts.yelm {
 
 
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
-        let jmpLblNo = 0
         let resText = ""
         let write = (s: string) => { resText += asmline(s); }
-        
+
         console.log(proc.toString())
 
         write(`
@@ -2459,7 +2458,30 @@ ${getFunctionLabel(proc.action)}:
         let exprStack: ir.Expr[] = []
 
         for (let i = 0; i < proc.body.length; ++i) {
-            emitStmt(proc.body[i])
+            let s = proc.body[i]
+            // console.log("STMT", s.toString())
+            switch (s.stmtKind) {
+                case ir.SK.Expr:
+                    emitExpr(s.expr)
+                    break;
+                case ir.SK.StackEmpty:
+                    if (exprStack.length > 0) {
+                        for (let stmt of proc.body.slice(i - 4, i + 1))
+                            console.log(`PREVSTMT ${stmt.toString().trim()}`)
+                        for (let e of exprStack)
+                            console.log(`EXPRSTACK ${e.currUses}/${e.totalUses} E: ${e.toString()}`)
+                        oops("stack should be empty")
+                    }
+                    write("@stackempty locals")
+                    break;
+                case ir.SK.Jmp:
+                    emitJmp(s);
+                    break;
+                case ir.SK.Label:
+                    write(s.lblName + ":")
+                    break;
+                default: oops();
+            }
         }
 
         assert(0 <= numlocals && numlocals < 127);
@@ -2474,23 +2496,11 @@ ${getFunctionLabel(proc.action)}:
 
         return resText
 
+        function mkLbl(root: string) {
+            return "." + root + bin.lblNo++
+        }
+
         function emitStmt(s: ir.Stmt) {
-            switch (s.stmtKind) {
-                case ir.SK.Expr:
-                    emitExpr(s.expr)
-                    break;
-                case ir.SK.StackEmpty:
-                    U.assert(exprStack.length == 0)
-                    write("@stackempty locals")
-                    break;
-                case ir.SK.Jmp:
-                    emitJmp(s);
-                    break;
-                case ir.SK.Label:
-                    write(s.lblName + ":")
-                    break;
-                default: oops();
-            }
         }
 
         function emitJmp(jmp: ir.Stmt) {
@@ -2499,7 +2509,7 @@ ${getFunctionLabel(proc.action)}:
                     emitExpr(jmp.expr)
                 write("bb " + jmp.lblName + " ; with expression")
             } else {
-                let lbl = ".jmpz." + jmpLblNo++
+                let lbl = mkLbl("jmpz")
                 emitExpr(jmp.expr)
 
                 write("*cmp r0, #0")
@@ -2567,6 +2577,8 @@ ${getFunctionLabel(proc.action)}:
 
         // result in R0
         function emitExpr(e: ir.Expr): void {
+            //console.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
+
             switch (e.exprKind) {
                 case EK.JmpValue:
                     write("; jmp value (already in r0)")
@@ -2607,15 +2619,16 @@ ${getFunctionLabel(proc.action)}:
             if (arg.totalUses == 1)
                 return emitExpr(arg)
             else {
+                emitExpr(arg)
                 exprStack.unshift(arg)
                 write("push {r0}")
             }
         }
 
-        function emitRtCall(e: ir.Expr) {
+        function emitRtCall(topExpr: ir.Expr) {
             let didStateUpdate = false
             let complexArgs: ir.Expr[] = []
-            for (let a of U.reversed(e.args)) {
+            for (let a of U.reversed(topExpr.args)) {
                 if (a.isStateless()) continue
                 if (a.exprKind == EK.CellRef && !didStateUpdate) continue
                 if (a.canUpdateCells()) didStateUpdate = true
@@ -2623,7 +2636,7 @@ ${getFunctionLabel(proc.action)}:
             }
             complexArgs.reverse()
             let precomp: ir.Expr[] = []
-            let flattened = e.args.map(a => {
+            let flattened = topExpr.args.map(a => {
                 let idx = complexArgs.indexOf(a)
                 if (idx >= 0) {
                     let shared = a
@@ -2645,29 +2658,30 @@ ${getFunctionLabel(proc.action)}:
                 emitExprInto(a, "r" + i)
             })
 
-            let name: string = e.data
-            let lbl = e.isAsync ? ".rtcall." + jmpLblNo++ : ""
-            write(`bl ${name}  ; *F${e.args.length} ${lbl}`)
+            let name: string = topExpr.data
+            let lbl = topExpr.isAsync ? mkLbl("rtcall") : ""
+            write(`bl ${name}  ; *F${topExpr.args.length} ${lbl}`)
             if (lbl)
                 write(lbl + ":")
         }
 
-        function emitProcCall(e: ir.Expr) {
+        function emitProcCall(topExpr: ir.Expr) {
             let stackBottom = 0
-            let argStmts = e.args.map((a, i) => {
-                emitExpr(e)
-                if (i == 0) stackBottom = exprStack.length
+            //console.log("PROCCALL", topExpr.toString())
+            let argStmts = topExpr.args.map((a, i) => {
+                emitExpr(a)
                 write("push {r0} ; proc-arg")
                 a.totalUses = 1
                 a.currUses = 0
                 exprStack.push(a)
+                if (i == 0) stackBottom = exprStack.length
                 U.assert(exprStack.length - stackBottom == i)
                 return a
             })
 
-            let proc = bin.procs.filter(p => p.action == e.data)[0]
+            let proc = bin.procs.filter(p => p.action == topExpr.data)[0]
 
-            let lbl = ".call." + jmpLblNo++
+            let lbl = mkLbl("call")
             write("bl " + getFunctionLabel(proc.action) + " ; *R " + lbl)
             write(lbl + ":")
 
@@ -2708,7 +2722,7 @@ ${getFunctionLabel(proc.action)}:
             write("")
             write(".section code");
             write(".balign 4");
-            write(getFunctionLabel(node) + "_Lit");
+            write(getFunctionLabel(node) + "_Lit:");
             write(".short 0xffff, 0x0000   ; action literal");
             write("@stackmark litfunc");
             write("push {r5, lr}");
@@ -2722,7 +2736,9 @@ ${getFunctionLabel(proc.action)}:
             })
             write("@stackmark args");
 
-            write("bl " + getFunctionLabel(node))
+            let nxt = mkLbl("nxt")
+            write(`bl ${getFunctionLabel(node)}   ; *R ${nxt}`)
+            write(nxt + ":")
 
             write("@stackempty args")
             if (parms.length)
@@ -2774,7 +2790,7 @@ ${getFunctionLabel(proc.action)}:
 
             let lbl = ""
             if (isAsync)
-                lbl = ".async." + jmpLblNo++
+                lbl = mkLbl("async")
 
             write("bl " + name + " ; *" + inf.type + inf.args + " " + lbl)
 
