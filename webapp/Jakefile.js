@@ -11,6 +11,7 @@ task('default', ['built/main.js', 'built/worker.js', 'built/themes', 'built/styl
 task('precopy', function () {
     jake.mkdirP("built")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/jquery.js")
+    jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/bluebird.min.js")
     jake.cpR("ace/mode/assembly_armthumb.js", "node_modules/brace/mode/")
 })
 
@@ -20,6 +21,7 @@ task('upper', ["precopy"], { async: true }, function () {
 
 task('postcopy', ["upper"], function () {
     jake.cpR("../built/yelmlib.js", "built/yelmlib.js")
+    jake.cpR("../built/yelmsim.js", "built/yelmsim.js")
 
     let additionalExports = [
       "getCompletionData"

@@ -1,7 +1,10 @@
+//% weight=1
 namespace serial {
     /**
      * Prints a line of text to the serial
+     * @param value to send over serial
      */
+    //% blockId=serial_writeline block="serial|write %text"    
     export function writeLine(text: string): void {
         writeString(text);
         writeString("\r\n");
@@ -42,8 +45,11 @@ namespace serial {
 
     /**
      * Writes a ``name: value`` pair line to the serial.
+     * @param name name of the value stream, eg: x
+     * @param value to write
      */
     //% weight=80
+    //% blockId=serial_writevalue block="serial|write %name|= %value"
     export function writeValue(name: string, value: number): void {
         writeString(name);
         writeString(": ");

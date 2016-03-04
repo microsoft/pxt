@@ -5,8 +5,7 @@ import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
-import * as microbitView from "./microbit/view";
-import * as minecraftView from "./minecraft/view";
+import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as blocklyloader from "./blocklyloader"
@@ -16,6 +15,7 @@ import * as ace from "./ace"
 import * as yelmjson from "./yelmjson"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
+import * as logview from "./logview"
 
 import Cloud = yelm.Cloud;
 import Util = yelm.Util;
@@ -32,6 +32,109 @@ export interface EditorSettings {
     showFiles?: boolean;
     fileHistory: FileHistoryEntry[];
 }
+
+interface IProjectTemplate {
+    id:string;
+    config: yelm.PackageConfig;
+    files: workspace.ScriptText;
+}
+
+interface IAppTarget {
+    id: string;
+    name: string;
+    blocksprj: IProjectTemplate;
+    tsprj: IProjectTemplate;
+    compile?: boolean;
+    koduvscode?: boolean;
+}
+
+var appTargets: yelm.U.Map<IAppTarget> = {
+    microbit: {
+        id: "microbit",
+        name: lf("BBC micro:bit"),
+        blocksprj: {
+            id:"blocksprj",
+            config: {
+                name: lf("{0} block"),
+                dependencies: {
+                    "microbit": "*",
+                    "microbit-led": "*",
+                    "microbit-music": "*",
+                    "microbit-radio": "*",
+                    "microbit-game": "*",
+                    "microbit-pins": "*",
+                    "microbit-serial": "*"
+                },
+                description: "",
+                files: ["main.blocks", "main.blocks.ts", "README.md"]
+            },
+            files: {
+                "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
+                "main.blocks.ts": "\n",
+                "README.md": lf("Describe your project here!")
+            }
+        },
+        tsprj: {
+            id:"tsprj",
+            config: {
+                name: lf("{0} bit"),
+                dependencies: {
+                    "microbit": "*",
+                    "microbit-led": "*",
+                    "microbit-music": "*",
+                    "microbit-radio": "*",
+                    "microbit-game": "*",
+                    "microbit-pins": "*",
+                    "microbit-serial": "*"
+                },
+                description: "",
+                files: ["main.ts", "README.md"]
+            }, files: {
+                "main.ts": `basic.showString("Hi!")\n`,
+                "README.md": lf("Describe your project here!")
+            }
+        },
+        koduvscode: true,
+        compile: true
+    },
+
+    minecraft: {
+        id: "minecraft",
+        name: lf("Minecraft"),
+        blocksprj: {
+            id:"blocksprj",
+            config: {
+                name: lf("{0} craft"),
+                dependencies: {
+                    "minecraft": "*",
+                },
+                description: "",
+                files: ["main.blocks", "main.blocks.ts", "README.md"]
+            },
+            files: {
+                "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
+                "main.blocks.ts": "\n",
+                "README.md": lf("Describe your project here!")
+            }
+        },
+        tsprj: {
+            id:"tsprj",
+            config: {
+                name: lf("{0} craft"),
+                dependencies: {
+                    "minecraft": "*",
+                },
+                description: "",
+                files: ["main.ts", "README.md"]
+            }, files: {
+                "main.ts": `\n`,
+                "README.md": lf("Describe your project here!")
+            }
+        },
+        koduvscode: false,
+        compile: false
+    }    
+};
 
 interface IAppProps { }
 interface IAppState {
@@ -235,9 +338,15 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: ScriptSearch;
+    appTarget: IAppTarget;
 
     constructor(props: IAppProps) {
         super(props);
+
+        let target = '';
+        let m = /target=([a-z0-9]+)/i.exec(window.document.location.href);
+        if (m) target = m[1];
+        this.appTarget = appTargets[target] || appTargets['microbit'];
 
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
@@ -388,7 +497,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let file = main.getMainFile()
                 if (e)
                     file = main.lookupFile(e.name) || file
-                this.setupRuntime(null) // setup for empty program
                 this.setState({
                     header: h,
                     currFile: file
@@ -413,7 +521,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     newProject(hideCancel = false) {
         core.confirmAsync({
-            header: lf("Create new project"),
+            header: lf("Create new {0} project", this.appTarget.name),
             hideCancel: hideCancel,
             hideAgree: true,
             onLoaded: (_) => {
@@ -452,8 +560,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         </div>
     </div>
   </div>
-</div>
-<div class="ui two column grid">
+</div>`
++ (this.appTarget.koduvscode ? `<div class="ui two column grid">
   <div class="column">
     <div id="newkodu" class="ui fluid card link">
         <div class="image">
@@ -481,7 +589,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     </div>
   </div>
 </div>
-`
+` : "")
         }).done();
     }
 
@@ -502,66 +610,31 @@ code .
 Ctrl+Shift+B
 </pre>
 `,
-            agreeLbl: lf("Got it!")
+            agreeLbl: lf("Got it!"),
+            hideCancel: true
         }).done();
     }
 
     newTypeScriptProject() {
-        let cfg: yelm.PackageConfig = {
-            name: lf("{0} bit", Util.getAwesomeAdj()),
-            dependencies: {
-                "microbit": "*",
-                "microbit-led": "*",
-                "microbit-music": "*",
-                "microbit-radio": "*",
-                "microbit-game": "*",
-                "microbit-pins": "*"
-            },
-            description: "",
-            files: ["main.ts", "README.md"]
-        }
-        let files: workspace.ScriptText = {
-            "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
-            "main.ts": `basic.showString("Hi!")\n`,
-            "README.md": lf("Describe your project here!")
-        }
-        workspace.installAsync({
-            name: cfg.name,
-            meta: {},
-            editor: "tsprj",
-            pubId: "",
-            pubCurrent: false,
-        }, files)
-            .then(hd => {
-                this.loadHeader(hd)
-            })
-            .done()
+        this.newProjectFromId(this.appTarget.tsprj);
     }
 
     newBlocksProject() {
-        let cfg: yelm.PackageConfig = {
-            name: lf("{0} block", Util.getAwesomeAdj()),
-            dependencies: {
-                "microbit": "*",
-                "microbit-led": "*",
-                "microbit-music": "*",
-                "microbit-radio": "*",
-                "microbit-game": "*",
-                "microbit-pins": "*"
-            },
-            description: "",
-            files: ["main.blocks", "main.blocks.ts", "README.md"]
-        }
+        this.newProjectFromId(this.appTarget.blocksprj);
+    }
+
+    newProjectFromId(prj: IProjectTemplate) {
+        let cfg = yelm.U.clone(prj.config);
+        cfg.name = yelm.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {
             "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
-            "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
-            "main.blocks.ts": "\n",
-            "README.md": lf("Describe your project here!")
         }
+        for (let f in prj.files)
+            files[f] = prj.files[f];
         workspace.installAsync({
             name: cfg.name,
             meta: {},
-            editor: "blocksprj",
+            editor: prj.id,
             pubId: "",
             pubCurrent: false,
         }, files)
@@ -610,25 +683,6 @@ Ctrl+Shift+B
             .done()
     }
 
-    simRuntime: yelm.rt.Runtime;
-    setupRuntime(resp:ts.yelm.CompileResult) {
-        if (this.simRuntime)
-            this.simRuntime.kill();
-        let js = (resp && resp.outfiles["microbit.js"]) || ";"
-        let r = new yelm.rt.Runtime(js, pkg.mainPkg.getTarget())
-        if (resp) r.enums = resp.enums
-        this.simRuntime = r
-        r.errorHandler = (e: any) => {
-            core.errorNotification(e.message)
-            console.error("Simulator error", e.stack)
-        }
-        r.stateChanged = () => { this.forceUpdate() }
-    }
-
-    stopSimulator() {
-        if (this.simRuntime) this.simRuntime.kill();
-    }
-
     runSimulator() {
         let state = this.editor.snapshotState()
         compiler.compileAsync()
@@ -636,12 +690,10 @@ Ctrl+Shift+B
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
-                    this.setupRuntime(resp)
-                    this.simRuntime.run(() => {
-                        console.log("DONE")
-                        yelm.rt.dumpLivePointers();
-                        core.infoNotification("Done, check console")
-                    })
+                    simulator.Simulator.run(
+                        pkg.mainPkg.getTarget(),
+                        js,
+                        resp.enums)
                 }
             })
             .done()
@@ -716,10 +768,8 @@ Ctrl+Shift+B
                             <SlotSelector parent={this} />
                         </div>
                         <div id="actionbar" className="ui item">
-                            {this.simRuntime && this.simRuntime.running
-                                ? <sui.Button key='stopbtn' class='icon primary portrait only' icon='stop' onClick={() => this.stopSimulator() } />
-                                : <sui.Button key='runbtn' class='icon primary portrait only' icon='play' onClick={() => this.runSimulator() } /> }
-                            <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } />
+                            <sui.Button key='runbtn' class='icon primary portrait only' icon='play' onClick={() => this.runSimulator() } />
+                            {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
                             {this.editor.menu() }
                         </div>
                         <div className="ui item right">
@@ -727,16 +777,16 @@ Ctrl+Shift+B
                         </div>
                     </div>
                 </div>
-                <div id="filelist">
+                <div id="filelist" className="ui items">
                     <div id="mbitboardview" className="ui vertical">
-                        <microbitView.BoardView ref="microbitsimulator" runtime={this.simRuntime} />
-                        <minecraftView.BoardView ref="minecraftsimulator" runtime={this.simRuntime} />
+                        <simulator.Simulator ref="simulator" />
+                    </div>
+                    <div className="ui landscape only">
+                        <logview.LogView />
                     </div>
                     <div className="ui item landscape only">
-                        {this.simRuntime && this.simRuntime.running
-                            ? <sui.Button key='stopbtn' class='primary' icon='stop' text={lf("Stop") } onClick={() => this.stopSimulator() } />
-                            : <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } /> }
-                        <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } />
+                        <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } />
+                        {this.appTarget.compile ? <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                         <sui.Button icon='folder' onClick={() => {
                             this.setState({ showFiles: !this.state.showFiles });
                             this.saveSettings();

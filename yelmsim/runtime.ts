@@ -1,4 +1,40 @@
+/// <reference path="../typings/bluebird/bluebird.d.ts"/>
+
 namespace yelm.rt {
+    export module U {
+        export function assert(cond: boolean, msg = "Assertion failed") {
+            if (!cond) {
+                debugger
+                throw new Error(msg)
+            }
+        }
+
+        export function repeatMap<T>(n: number, fn: (index: number) => T): T[] {
+            n = n || 0;
+            let r: T[] = [];
+            for (let i = 0; i < n; ++i) r.push(fn(i));
+            return r;
+        }
+
+        export function userError(msg: string): Error {
+            let e = new Error(msg);
+            (<any>e).isUserError = true;
+            throw e
+        }
+
+        export function now(): number {
+            return Date.now();
+        }
+
+        export function nextTick(f: () => void) {
+            (<any>Promise)._async._schedule(f)
+        }
+    }
+
+    export interface Map<T> {
+        [index: string]: T;
+    }
+
     export type LabelFn = (n: number) => CodePtr;
     export type ResumeFn = (v?: any) => void;
 
@@ -29,23 +65,26 @@ namespace yelm.rt {
 
     export class BaseBoard {
         public updateView() { }
+        public receiveMessage(msg: SimulatorMessage) { }
     }
 
     export class EventQueue<T> {
+        max: number = 5;
         events: T[] = [];
         handler: RefAction;
-        runtime: Runtime;
-        
+
+        constructor(public runtime: Runtime) { }
+
         public push(e: T) {
-            if (!this.handler) return;
-            
+            if (!this.handler || this.events.length > this.max) return;
+
             this.events.push(e)
-            
+
             // if this is the first event pushed - start processing
             if (this.events.length == 1)
                 this.poke();
         }
-        
+
         private poke() {
             let top = this.events.shift()
             this.runtime.runFiberAsync(this.handler, top)
@@ -69,17 +108,18 @@ namespace yelm.rt {
         running = false;
         startTime = 0;
         target: Target;
-        enums: U.Map<number>;
+        enums: Map<number>;
+        id: string;
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => void;
 
         runningTime(): number {
-            return Util.now() - this.startTime;
+            return U.now() - this.startTime;
         }
 
-        runFiberAsync(a: RefAction, arg0?:any, arg1?:any) {
+        runFiberAsync(a: RefAction, arg0?: any, arg1?: any) {
             incr(a)
             return new Promise<any>((resolve, reject) =>
                 U.nextTick(() => {
@@ -88,6 +128,17 @@ namespace yelm.rt {
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
+
+        // communication
+        static messagePosted: (data: SimulatorMessage) => void;
+        static postMessage(data: SimulatorMessage) {
+            // TODO: origins
+            if (typeof window !== 'undefined' && window.parent) {
+                window.parent.postMessage(data, "*");
+            }
+            if (Runtime.messagePosted) Runtime.messagePosted(data);
+        }
+
 
         // 2k block
         malloc() {
@@ -126,12 +177,18 @@ namespace yelm.rt {
         setRunning(r: boolean) {
             if (this.running != r) {
                 this.running = r;
-                if (this.running) this.startTime = Util.now();
+                if (this.running) {
+                    this.startTime = U.now();
+                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', state: 'running' });
+                } else {
+                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', state: 'killed' });
+                }
                 if (this.stateChanged) this.stateChanged();
             }
         }
 
-        constructor(code: string, targetName: string) {
+        constructor(code: string, targetName: string, enums: Map<number>) {
+            this.enums = enums;
             // These variables are used by the generated code as well
             // ---
             var sp: number, lr: LR;
@@ -288,7 +345,7 @@ namespace yelm.rt {
 
             let trg = yelm.rt.getTargets().filter(t => t.name == targetName)[0]
             if (!trg) {
-                U.userError(U.lf("target {0} not supported", targetName))
+                U.userError("target " + targetName + " not supported")
             }
 
             this.target = trg;

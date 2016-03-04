@@ -56,7 +56,7 @@ namespace led {
     /**
      * Cancels the current animation and clears other pending animations.
      */
-    //% weight=50 shim=uBit.display.stopAnimation async help=functions/stop-animation
+    //% weight=50 shim=uBit.display.stopAnimation help=functions/stop-animation
     //% blockId=device_stop_animation block="stop animation" icon="\uf04d"
     export function stopAnimation(): void { }
 
@@ -68,7 +68,7 @@ namespace led {
     //% help=/functions/plot-bar-graph weight=20
     //% blockId=device_plot_bar_graph block="plot bar graph of %value |up to %high" icon="\uf080" blockExternalInputs=true
     export function plotBarGraph(value: number, high: number = 1023): void {
-        let v = (value * 4) / high;
+        let v = (value * 5) / high;
         if (v <= 0) {
             basic.plotLeds(`0 0 0 0 0
 0 0 0 0 0
@@ -112,7 +112,7 @@ namespace led {
      * Sets the display mode between black and white and greyscale for rendering LEDs.
      * @param mode TODO
      */
-    //% shim=micro_bit::setDisplayMode async weight=1 help=/functions/set-display-mode
+    //% shim=micro_bit::setDisplayMode weight=1 help=/functions/set-display-mode
     export function setDisplayMode(mode: DisplayMode): void { }
 
     /**
@@ -200,7 +200,7 @@ namespace led {
     /**
      * Takes a screenshot of the LED screen and returns an image.
      */
-    //% shim=uBit.display.screenShot async help=functions/screenshot
+    //% shim=uBit.display.screenShot help=functions/screenshot
     export function screenshot(): images.Image {
         /*
         let img: Image;

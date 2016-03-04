@@ -64,6 +64,7 @@ namespace pins {
     //% help=functions/digital-read-pin weight=30 shim=micro_bit::digitalReadPin
     //% blockId=device_get_digital_pin block="digital read|pin %name" blockGap=8
     export function digitalReadPin(name: DigitalPins): number {
+        
         return 0;
     }
 
@@ -149,6 +150,6 @@ namespace pins {
      * @param frequency TODO
      * @param ms TODO
      */
-    //% shim=micro_bit::pitch help=functions/analog-pitch weight=14
+    //% shim=micro_bit::pitch help=functions/analog-pitch weight=14 async
     export function analogPitch(frequency: number, ms: number): void { }
 }

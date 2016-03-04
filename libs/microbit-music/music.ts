@@ -119,7 +119,7 @@ namespace music {
      * @param frequency TODO
      * @param ms TODO
      */
-    //% help=functions/play-tone weight=90 async
+    //% help=functions/play-tone weight=90
     //% blockId=device_play_note block="play|tone (Hz) %note=device_note|for (ms) %duration=device_beat" icon="\uf025" blockGap=8
     export function playTone(frequency: number, ms: number): void {
         pins.analogSetPitchPin(AnalogPins.P0);
@@ -152,7 +152,7 @@ namespace music {
      * Gets the frequency of a note.
      * @param name TODO
      */
-    //% shim=TD_ID async weight=50 help=functions/note-frequency
+    //% shim=TD_ID weight=50 help=functions/note-frequency
     //% blockId=device_note block="%note"
     export function noteFrequency(name: Notes): number {
         return name;

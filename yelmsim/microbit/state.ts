@@ -3,27 +3,105 @@ namespace yelm.rt.micro_bit {
         bw,
         greyscale
     }
-
+    
+    export enum PinMode {
+        Digital = 0x0001,
+        Analog  = 0x0002,
+        Input   = 0x0004,
+        Output  = 0x0008,
+        Touch   = 0x0010
+    }
+    
+    export class Pin {
+        constructor(public id: number) {}
+        touched = false;
+        value = 0;
+        mode = PinMode.Digital | PinMode.Output;
+          
+        isTouched() : boolean {
+            this.mode = PinMode.Touch;
+            return this.touched;
+        }
+    }
+    
+    export class Button {
+        constructor(public id : number) {}
+        pressed: boolean;
+    }
+    
+    export class EventBus {
+        private queues : Map<EventQueue<number>> = {};
+        
+        constructor(private runtime : Runtime) { }
+        
+        listen(id:number, evid:number, handler: RefAction) {
+            let k = id + ':' + evid;           
+            let queue = this.queues[k];
+            if (!queue) queue = this.queues[k] = new EventQueue<number>(this.runtime);
+            queue.handler = handler;
+        }
+        
+        queue(id: number, evid: number, value: number = 0) {
+            let k = id + ':' + evid;           
+            let queue = this.queues[k];
+            if (queue) queue.push(value);
+        }
+    }
+    
+    export class RadioBus {
+        constructor(private runtime : Runtime) { }
+        
+        broadcast(msg: number) {
+            let ens = enums();
+            Runtime.postMessage(<SimulatorEventBusMessage>{
+                type:'eventbus',
+                id: ens.MES_BROADCAST_GENERAL_ID,
+                eventid: msg
+            })
+        }
+    }
+    
+    export interface SimulatorEventBusMessage extends SimulatorMessage {
+        id: number;
+        eventid: number;
+        value?: number;
+    }
+    
+    export interface SimulatorSerialMessage extends SimulatorMessage {
+        id:string;
+        data: string;
+    }
+    
     export class Board extends BaseBoard {
         id: string;
+        
+        // the bus
+        bus : EventBus;
+        radio: RadioBus;
 
         // display
         image = createImage(5);
         brigthness = 255;
         displayMode = DisplayMode.bw;
-        font: Image;
+        font: Image = createFont();
 
         // buttons    
         usesButtonAB: boolean = false;
-        buttonsPressed = [false, false, false];
+        buttons : Button[];
 
         // pins
-        pinsTouched = [false, false, false];
+        pins : Pin[];
+        
+        // serial
+        serialIn: string[] = [];
 
         // sensors    
         usesAcceleration = false;
         acceleration = [0, 0, -1023];
+        
+        usesHeading = false;        
         heading = 90;
+        
         temperature = 21;
         lightLevel = 128;
         
@@ -33,12 +111,81 @@ namespace yelm.rt.micro_bit {
             super()
             this.id = "b" + Math.random();
             this.animationQ = new AnimationQueue(runtime);
+            this.bus = new EventBus(runtime);
+            this.radio = new RadioBus(runtime);
+            let ens = enums();
+            this.buttons = [
+                new Button(ens.MICROBIT_ID_BUTTON_A),
+                new Button(ens.MICROBIT_ID_BUTTON_B),
+                new Button(ens.MICROBIT_ID_BUTTON_AB)
+            ];
+            this.pins = [
+                new Pin(ens.MICROBIT_ID_IO_P0),
+                new Pin(ens.MICROBIT_ID_IO_P1),
+                new Pin(ens.MICROBIT_ID_IO_P2),
+                new Pin(ens.MICROBIT_ID_IO_P3),
+                new Pin(ens.MICROBIT_ID_IO_P4),
+                new Pin(ens.MICROBIT_ID_IO_P5),
+                new Pin(ens.MICROBIT_ID_IO_P6),
+                new Pin(ens.MICROBIT_ID_IO_P7),
+                new Pin(ens.MICROBIT_ID_IO_P8),
+                new Pin(ens.MICROBIT_ID_IO_P9),
+                new Pin(ens.MICROBIT_ID_IO_P10),
+                new Pin(ens.MICROBIT_ID_IO_P11),
+                new Pin(ens.MICROBIT_ID_IO_P12),
+                new Pin(ens.MICROBIT_ID_IO_P13),
+                new Pin(ens.MICROBIT_ID_IO_P14),
+                new Pin(ens.MICROBIT_ID_IO_P15),
+                new Pin(ens.MICROBIT_ID_IO_P16),
+                null, 
+                null,                
+                new Pin(ens.MICROBIT_ID_IO_P19),
+                new Pin(ens.MICROBIT_ID_IO_P20)
+            ];
+        }
+        
+        receiveMessage(msg: SimulatorMessage) {
+            if (!runtime || runtime.dead) return;
+            
+            switch(msg.type || "") {
+                case 'eventbus': 
+                    let ev = <SimulatorEventBusMessage>msg;
+                    this.bus.queue(ev.id, ev.eventid, ev.value);
+                    break;
+                case 'serial':
+                    this.serialIn.push((<SimulatorSerialMessage>msg).data || '');
+                    break;
+            }
+        }
+        
+        readSerial() {
+            let v = this.serialIn.shift() || '';
+            return v;
+        }
+        
+        serialOutBuffer: string = '';
+        writeSerial(s : string) {
+            for(let i = 0; i < s.length;++i) {
+                let c = s[i];
+                switch(c) {
+                    case '\n': 
+                        Runtime.postMessage(<SimulatorSerialMessage>{
+                            type: 'serial',
+                            data: this.serialOutBuffer,
+                            id: runtime.id
+                        })   
+                        this.serialOutBuffer = ''
+                        break;
+                    case '\r': continue;
+                    default: this.serialOutBuffer += c;
+                }                
+            }
         }
     }
 
     export class Image {
         public width: number;
-        public data: number[];
+    public data: number[];
         constructor(width: number, data: number[]) {
             this.width = width;
             this.data = data;

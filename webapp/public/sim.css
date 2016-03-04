@@ -12,7 +12,11 @@ svg.sim {
 
 .sim-pin-touch:hover {
     stroke:#D4AF37;
-    stroke-width:3px;
+    stroke-width:2px;
+}
+
+.sim-pin-touch.touched:hover {
+    stroke:darkorange;
 }
 
 .sim-led-back:hover {
@@ -22,4 +26,21 @@ svg.sim {
 .sim-led:hover {
     stroke:#ff7f7f;
     stroke-width:3px;
+}
+
+.sim-systemled {
+    fill:#333;
+    stroke:#555;
+    stroke-width: 1px;
+}
+
+/* animations */
+.sim-flash {
+    animation-name: sim-flash-animation;
+    animation-duration: 0.1s;
+}
+
+@keyframes sim-flash-animation {  
+    from { fill: yellow; }
+    to   { fill: default; }
 }

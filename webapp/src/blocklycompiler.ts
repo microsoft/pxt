@@ -177,6 +177,7 @@ module Helpers {
     // Generates a local definition for [x] at type [t]; this is not enough to
     // properly define a variable, though (see [mkDefAndAssign]).
     export function mkDef(x: string, t: J.JTypeRef): J.JLocalDef {
+        assert(!!x)
         return {
             nodeType: "localDef",
             id: null,
@@ -188,6 +189,7 @@ module Helpers {
 
     // Generates a reference to bound variable [x]
     export function mkLocalRef(x: string): J.JLocalRef {
+        assert(!!x);
         return {
             nodeType: "localRef",
             id: null,
@@ -1085,6 +1087,7 @@ function mkCallWithCallback(e: Environment, n: string, f: string, args: J.JExpr[
 function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
     var bBody = b.getInputTargetBlock("HANDLER");
     var compiledArgs = args.map((arg: string) => {
+        // b.getFieldValue may be string, numbers
         return H.mkLocalRef(b.getFieldValue(arg))
     });
     var body = compileStatements(e, bBody);
