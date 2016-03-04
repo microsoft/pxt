@@ -75,5 +75,7 @@ namespace yelm.rt.micro_bit {
         MICROBIT_ID_IO_P19: number;
         MICROBIT_ID_IO_P20: number;
         MES_BROADCAST_GENERAL_ID: number;
-    }
+        MICROBIT_ID_RADIO: number;
+        MICROBIT_RADIO_EVT_DATAGRAM: number;
+    }    
 }

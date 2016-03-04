@@ -48,8 +48,58 @@ namespace yelm.rt.micro_bit {
         }
     }
     
+    export interface PacketBuffer {
+        data:number[];
+        rssi?:number;
+    }
+    
+    export class RadioDatagram {
+        datagram: PacketBuffer[] = [];
+        lastReceived: PacketBuffer = { 
+            data:[0,0,0,0], 
+            rssi: -1 
+        };
+        
+        constructor(private runtime : Runtime) { 
+        }
+        
+        queue(packet : PacketBuffer) {
+            if (this.datagram.length < 5) {
+                this.datagram.push(packet);
+                let ens = enums();
+                (<Board>runtime.board).bus.queue(ens.MICROBIT_ID_RADIO, ens.MICROBIT_RADIO_EVT_DATAGRAM);
+            }
+        }
+        
+        send(buffer : number[]) {
+            Runtime.postMessage(<SimulatorRadioPacketMessage>{
+                type:'radiopacket',
+                data: buffer.slice(0, 8)
+            })
+        }
+        
+        recv() : PacketBuffer {
+            var r = this.datagram.shift();
+            if (!r) r = { 
+                data:[0,0,0,0], 
+                rssi: -1 
+            };
+            return this.lastReceived = r;
+        }
+    }
+    
     export class RadioBus {
-        constructor(private runtime : Runtime) { }
+        // uint8_t radioDefaultGroup = MICROBIT_RADIO_DEFAULT_GROUP;
+        groupId = 0; // todo
+        datagram : RadioDatagram;
+            
+        constructor(private runtime : Runtime) { 
+            this.datagram = new RadioDatagram(runtime);
+        }
+        
+        setGroup(id: number) {
+            this.groupId = id & 0xff; // byte only
+        }
         
         broadcast(msg: number) {
             let ens = enums();
@@ -70,6 +120,11 @@ namespace yelm.rt.micro_bit {
     export interface SimulatorSerialMessage extends SimulatorMessage {
         id:string;
         data: string;
+    }
+    
+    export interface SimulatorRadioPacketMessage extends SimulatorMessage {
+        data: number[];
+        rssi?: number;
     }
     
     export class Board extends BaseBoard {
@@ -152,8 +207,12 @@ namespace yelm.rt.micro_bit {
                     let ev = <SimulatorEventBusMessage>msg;
                     this.bus.queue(ev.id, ev.eventid, ev.value);
                     break;
-                case 'serial':
+            case 'serial':
                     this.serialIn.push((<SimulatorSerialMessage>msg).data || '');
+                    break;
+                case 'radiopacket':
+                    let packet = <SimulatorRadioPacketMessage>msg;
+                    this.radio.datagram.queue({ data: packet.data || [], rssi: packet.rssi || 0})
                     break;
             }
         }

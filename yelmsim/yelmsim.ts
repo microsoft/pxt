@@ -19,6 +19,20 @@ namespace yelm.rt {
         state:string;
     }
     
+    export interface SimulatorEventBusMessage extends SimulatorMessage {
+        id: number;
+        eventid: number;
+        value?: number;
+    }
+    export interface SimulatorSerialMessage extends SimulatorMessage {
+        id: string;
+        data: string;
+    }
+    export interface SimulatorRadioPacketMessage extends SimulatorMessage {
+        data: number[];
+        rssi?: number;
+    }
+    
     export module Embed {
         export function start() {
             console.log('listening for simulator commands')

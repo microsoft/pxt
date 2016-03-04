@@ -22,6 +22,10 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
                      break;
                 case 'serial': break; //handled elsewhere
                 default:
+                    if (msg.type == 'radiopacket') {
+                        // assign rssi noisy?
+                        (msg as yelm.rt.SimulatorRadioPacketMessage).rssi = 10;
+                    }
                     Simulator.postMessage(ev.data, ev.source);
                     break;
             }
@@ -32,7 +36,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
     static postMessage(msg: yelm.rt.SimulatorMessage, source?: Window) {
         // dispatch to all iframe besides self
         let frames = $('#simulators iframe');
-        if (source && msg.type === 'eventbus' && frames.length < 2) {
+        if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket') && frames.length < 2) {
             let frame = Simulator.createFrame()
             $('#simulators').append(frame);
             frames = $('#simulators iframe');
