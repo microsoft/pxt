@@ -1,8 +1,28 @@
 #filelist,
 #maineditor {
   position: absolute;
-  top: 74px;
-  bottom: 0;
+  top:64px;
+  bottom: 2em;
+}
+#logo {
+    font-weight: bold;
+    font-size: 3em;
+    margin: 0;
+    padding: 0 0.5em 0 0.5em;
+    color: #2185D0;
+}
+#footer {
+    position: absolute;
+    bottom: 0;
+    height: 2em;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.05);
+}
+#footer div {
+    font-size:0.8em;
+    text-align: center;
+    margin-top:0.4em;
 }
 
 .simframe {
@@ -20,6 +40,7 @@
   padding: 0em 1em 0em 0.5em;
   overflow-x: hidden;
   overflow-y: auto;
+  margin-top: 0;  
 }
 
 #menubar {
@@ -132,7 +153,11 @@
 }
 
 .blocklyToolboxDiv {
-    background:#ebebeb;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.blocklyMainBackground {
+    stroke:none !important;
 }
 
 .blocklyTreeLabel, .blocklyText {
@@ -280,6 +305,9 @@
 
 /* smaller screen */
 @media screen and (max-width: 968px) {
+    #logo {
+        font-size:1.5em;
+    }
     .ui.desktop.only {
         display:none !important;
     }
@@ -292,11 +320,14 @@
 }
 
 /* thin portrait mode */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 786px) {
+    #logo {
+        font-size:1em;
+    }    
     #helpcard {
         left: 2.1rem;
         top: initial;
-        bottom: 245px;
+        bottom: 220px;
         margin: 0;
     }
     #maineditor {
