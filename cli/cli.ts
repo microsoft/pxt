@@ -62,17 +62,22 @@ function saveConfig() {
 }
 
 function initConfig() {
+    let atok: string = process.env["CLOUD_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>JSON.parse(fs.readFileSync(configPath(), "utf8"))
         globalConfig = config
-        if (config.accessToken) {
-            let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(config.accessToken)
-            if (!mm) {
-                fatal("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
-            }
-            Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
-            Cloud.accessToken = mm[2]
+        if (!atok && config.accessToken) {
+            atok = config.accessToken
         }
+    }
+
+    if (atok) {
+        let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(atok)
+        if (!mm) {
+            fatal("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+        }
+        Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
+        Cloud.accessToken = mm[2]
     }
 }
 
@@ -80,6 +85,8 @@ export function loginAsync(access_token: string) {
     if (/^http/.test(access_token)) {
         globalConfig.accessToken = access_token
         saveConfig()
+        if (process.env["CLOUD_ACCESS_TOKEN"])
+            console.log("You have $CLOUD_ACCESS_TOKEN set; this overrides what you've specified here.")
     } else {
         let root = Cloud.apiRoot.replace(/api\/$/, "")
         console.log("USAGE:")
@@ -151,9 +158,9 @@ export function uploadrelAsync(label?: string) {
 
     let fileList =
         allFiles("webapp/public")
-        .concat(onlyExts(allFiles("webapp/built", 1), [".js", ".css"]))
-        .concat(allFiles("webapp/built/themes/default/assets/fonts", 1))
-    
+            .concat(onlyExts(allFiles("webapp/built", 1), [".js", ".css"]))
+            .concat(allFiles("webapp/built/themes/default/assets/fonts", 1))
+
     let liteId = "<none>"
 
     let uploadFileAsync = (p: string) => {
@@ -171,9 +178,9 @@ export function uploadrelAsync(label?: string) {
                     contentType: mime,
                     content: isText ? data.toString("utf8") : data.toString("base64"),
                 })
-                .then(resp => {
-                    console.log(fileName, mime)
-                })
+                    .then(resp => {
+                        console.log(fileName, mime)
+                    })
             })
     }
 

@@ -77,6 +77,14 @@ compileDir("yelmlib")
 compileDir("yelmsim", ["built/yelmlib.js"])
 compileDir("cli", ["built/yelmlib.js", "built/yelmsim.js"])
 
+task("wapp", {async:true}, function() {
+  cmdIn(this, "webapp", 'jake')
+})
+
+task('upload', ["wapp"], {async:true}, function() {
+  cmdIn(this, ".", 'node built/yelm.js uploadrel latest')
+})
+
 task('publish', function() {
   jake.exec([
         "npm version patch",
