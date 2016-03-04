@@ -277,8 +277,28 @@
     display:none !important;
 }
 
-/* protrait mode */
+/* smaller screen */
+@media screen and (max-width: 968px) {
+    .ui.desktop.only {
+        display:none !important;
+    }
+    #helpcard {
+        right: 2rem;
+        top: initial;
+        bottom: 2rem;
+        margin: 0;
+    }
+}
+
+/* thin portrait mode */
 @media screen and (max-width: 768px) {
+    #helpcard {
+        left: 2.1rem;
+        top: initial;
+        bottom: 245px;
+        z-index: 5;
+        margin: 0;
+    }
     #maineditor {
         left: 0;
     }
@@ -293,8 +313,13 @@
         z-index:5;
         bottom:1rem;
         left:1rem;
-        top:initial;           
+        top:initial;      
+        width:initial;     
     }
+    .simframe {
+        display:inline-block;
+    }
+    
     .blocklyTreeLabel {
         font-size:14px;
     }    
