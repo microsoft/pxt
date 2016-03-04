@@ -56,6 +56,7 @@
     right: 2rem;
     top: 0.5rem;
     margin: 0;
+    z-index: 5;
 }
 
 #settings .popup {
@@ -296,7 +297,6 @@
         left: 2.1rem;
         top: initial;
         bottom: 245px;
-        z-index: 5;
         margin: 0;
     }
     #maineditor {
