@@ -13,7 +13,7 @@ var workspace = Blockly.inject(blocklyDiv, {
     scrollbars: false,
     readOnly: true,
     zoom: false,
-    media: "./blockly/media/"
+    media: (window as any).appCdnRoot + "blockly/media/"
 });
 
 export function render(blocksXml: string): JQuery {
