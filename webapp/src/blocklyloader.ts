@@ -31,6 +31,7 @@ function createShadowValue(name: string, type: string, v?: string, shadowType?: 
     if (type == "number" && shadowType && shadowType == "value") {
         let field = document.createElement("field");
         field.setAttribute("name", name);
+        field.innerText = "0"
         return field;
     }
         
