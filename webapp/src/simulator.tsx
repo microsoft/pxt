@@ -53,7 +53,8 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
         let frame = document.createElement('iframe') as HTMLIFrameElement;
         frame.className = 'simframe';
         frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-        frame.src = './simulator.html';
+        let cdn = (window as any).appCdnRoot
+        frame.src = cdn + 'simulator.html';
         frame.frameBorder = "0";
         return frame;
     }
