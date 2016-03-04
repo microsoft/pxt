@@ -764,7 +764,8 @@ Ctrl+Shift+B
         return (
             <div id='root' className={"full-abs " + inv}>
                 <div id="menubar">
-                    <div className={"ui menu" + inv}>
+                    <div className={"ui small menu" + inv}>
+                        <span id="logo" className="item">yelm</span>
                         <div className="ui item">
                             <div className="ui buttons">
                                 <sui.Button text={lf("New Project") } onClick={() => this.newProject() } />
