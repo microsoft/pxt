@@ -523,6 +523,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     newProject(hideCancel = false) {
+        let cdn = (window as any).appCdnRoot
+        let images = cdn + "images"
         core.confirmAsync({
             header: lf("Create new {0} project", this.appTarget.name),
             hideCancel: hideCancel,
@@ -538,8 +540,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newblockproject" class="ui fluid card link">
         <div class="ui slide masked reveal image">
-            <img class="visible content" src="/images/newblock.png">
-            <img class="hidden content" src="/images/newblock2.png">
+            <img class="visible content" src="${images}/newblock.png">
+            <img class="hidden content" src="${images}/newblock2.png">
         </div>
         <div class="content">
         <div class="header">Block Editor</div>
@@ -552,8 +554,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newtypescript" class="ui fluid card link">
         <div class="ui slide masked reveal image">
-            <img class="visible content" src="/images/newtypescript.png">
-            <img class="hidden content" src="/images/newtypescript2.png">
+            <img class="visible content" src="${images}/newtypescript.png">
+            <img class="hidden content" src="${images}/newtypescript2.png">
         </div>
         <div class="content">
         <div class="header">JavaScript</div>
@@ -568,7 +570,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newkodu" class="ui fluid card link">
         <div class="image">
-        <img src="/images/newkodu.png">
+        <img src="${images}/newkodu.png">
         </div>
         <div class="content">
         <div class="header">Kodu</div>
@@ -581,7 +583,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newvisualstudiocode" class="ui fluid card link">
         <div class="image">
-        <img src="/images/newvisualstudiocode.png">
+        <img src="${images}/newvisualstudiocode.png">
         </div>
         <div class="content">
         <div class="header">Visual Studio Code</div>
