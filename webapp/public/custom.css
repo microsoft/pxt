@@ -223,13 +223,36 @@
 .ui.logs {
     font-family: monospace;
     font-size:0.8em;
-    max-height: 240px;
+    max-height: 13em;
     overflow-y: auto;
     overflow-x: hidden;
     width: 100%;
     margin-bottom: 1em;
 }
 
+.ui.log {
+    border-left-width: 2px;
+    border-left-style: solid;
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+}
+
+.ui.log {
+    border-left-color:#ccc;
+}
+.ui.log.blue {
+    border-left-color:#3ADCFE;
+}
+.ui.log.yellow {
+    border-left-color:#FFD43A;
+}
+.ui.log.green {
+    border-left-color:#3AFFB3;
+}
+.ui.log.red {
+    border-left-color:#FF3A54;
+}
+    
 .ui.log.counter {
     background:grey;
     color:white;

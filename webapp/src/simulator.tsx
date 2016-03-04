@@ -1,3 +1,4 @@
+/// <reference path="../../built/yelmsim.d.ts" />
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
@@ -6,6 +7,7 @@ export interface ISimulatorProps { }
 
 export class Simulator extends React.Component<ISimulatorProps, {}> {
     static nextFrameId : number = 0;
+    static themes = ["blue", "red", "green", "yellow"];
     
     componentDidMount() {
         window.addEventListener('message', (ev: MessageEvent) => {
@@ -27,7 +29,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
         
     }
      
-    static postMessage(msg: any, source?: Window) {
+    static postMessage(msg: yelm.rt.SimulatorMessage, source?: Window) {
         // dispatch to all iframe besides self
         let frames = $('#simulators iframe');
         if (source && msg.type === 'eventbus' && frames.length < 2) {
@@ -53,12 +55,16 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
     }
     
     static startFrame(frame : HTMLIFrameElement) {
-        let msg = yelm.U.clone(Simulator.currentRuntime);
-        msg.id = Simulator.nextFrameId++;
+        let msg = yelm.U.clone(Simulator.currentRuntime) as yelm.rt.SimulatorRunMessage;
+        msg.id = 'sim' + Simulator.nextFrameId++;
+        msg.theme = Simulator.themes[Simulator.nextFrameId % Simulator.themes.length];
+        
+        frame.dataset["simid"] = msg.id;
+        frame.dataset["simtheme"] = msg.theme;
         frame.contentWindow.postMessage(msg, "*");        
     }
 
-    static currentRuntime : any;
+    static currentRuntime : yelm.rt.SimulatorRunMessage;
     static run(target: string, js: string, enums: any) {
         // store information
         Simulator.currentRuntime = {

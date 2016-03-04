@@ -7,6 +7,9 @@ export interface ILogProps {
 }
 export interface ILogEntry {
     id: number;
+    theme: string;
+    variable?: string;
+    nvalue?:number;
     value: string;
     source: string;
     count: number;
@@ -32,17 +35,38 @@ export class LogView extends React.Component<ILogProps, ILogState> {
                 case 'serial':
                     let value = msg.data || '';
                     let source = msg.id || (ev.source.frameElement ? ev.source.frameElement.id : '') || '?';
+                    let theme = (ev.source.frameElement ? (ev.source.frameElement as HTMLElement).dataset["simtheme"] : "") || "";
                     this.setState(prev => {
-                        let last = prev.entries[prev.entries.length - 1];
-                        let ens = prev.entries.slice(0, this.props.maxEntries);
-                        if (last && last.value == value && last.source && source) {
-                            ens[ens.length - 1].count++;
-                        } else {
+                        let ens = prev.entries;
+                        if (ens.length > this.props.maxEntries)
+                            ens = ens.slice(-this.props.maxEntries);
+                        // find the entry with same source
+                        let last : ILogEntry = undefined;
+                        let m = /([^:]+):\s*(\d+)/i.exec(value);
+                        let variable = m ? m[1] : undefined;
+                        let nvalue = m ? parseInt(m[2]) : undefined;
+                        for(let i = ens.length - 1; i >= 0; --i) {
+                            if (ens[i].source == source && 
+                                 (ens[i].value == value || 
+                                 (variable && ens[i].variable == variable))) {
+                                last = ens[i];
+                                break;
+                            }
+                        }
+                        
+                        if (last) {
+                            last.value = value;
+                            last.count++;
+                        }
+                        else {
                             ens.push({
                                 id: LogView.counter++,
+                                theme: theme,
                                 value: value,
                                 source: source,
-                                count: 1
+                                count: 1,
+                                variable: variable,
+                                nvalue: nvalue
                             });
                         }
                         return { entries: ens };
@@ -70,7 +94,7 @@ export class LogView extends React.Component<ILogProps, ILogState> {
 
     render() {
         let msgs = this.state.entries.map(entry =>
-            <div className="ui log" key={entry.id}>
+            <div className={"ui log " + entry.theme} key={entry.id}>
                 {entry.count > 1 ? <span className="ui log counter">{entry.count}</span> : ""}
                 {entry.value}
             </div>);

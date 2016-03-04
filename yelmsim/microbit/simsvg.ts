@@ -15,12 +15,6 @@ namespace yelm.rt.micro_bit {
         pinOff?: string;
     }
 
-    /*
-    "#3ADCFE",
-    "#FFD43A",
-    "#3AFFB3",
-    "#FF3A54"
-    */
     export var themes: IBoardTheme[] = ["#3ADCFE", "#FFD43A", "#3AFFB3", "#FF3A54"].map(accent => {
         return {
             accent: accent,
@@ -94,7 +88,7 @@ namespace yelm.rt.micro_bit {
                 let captured = false;
                 el.addEventListener('mousedown', (ev: MouseEvent) => {
                     captured = true;
-                    start(ev)
+                    if (start) start(ev)
                     return true;
                 });
                 el.addEventListener('mousemove', (ev:MouseEvent) => {

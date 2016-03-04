@@ -5,7 +5,9 @@ namespace yelm.rt {
     }
 
     export interface SimulatorRunMessage extends SimulatorMessage {
-        id: string;
+        id?: string;
+        theme?: string;
+        
         code: string;
         target: string;
         enums: {
@@ -25,15 +27,13 @@ namespace yelm.rt {
         }
 
         function receiveMessage(event: MessageEvent) {
-            console.log('received ' + JSON.stringify(event.data, null, 2))
-            
             let origin = event.origin; // || (<any>event).originalEvent.origin;
             // TODO: test origins
 
             let data: SimulatorMessage = event.data || {};
-            let kind = data.type || '';
-            if (!kind) return;
-            switch (kind || '') {
+            let type = data.type || '';
+            if (!type) return;
+            switch (type || '') {
                 case 'run': run(<SimulatorRunMessage>data);break;
                 case 'stop': stop(); break;
                 default: queue(data); break;
@@ -55,7 +55,7 @@ namespace yelm.rt {
             runtime = new Runtime(msg.code, msg.target, msg.enums);
             runtime.id = msg.id;
             switch(msg.target) {
-                case 'microbit': initMicrobit(); break;
+                case 'microbit': initMicrobit(msg.theme); break;
                 case 'minecraft': initMinecraft(); break;
                 default: console.error('unknown target');
             }
@@ -75,10 +75,19 @@ namespace yelm.rt {
             runtime.board.receiveMessage(msg);
         }
                 
-        function initMicrobit() {
+        function initMicrobit(th: string) {
+            let theme : micro_bit.IBoardTheme;
+            switch(th) {
+                case 'blue': theme = micro_bit.themes[0]; break;
+                case 'yellow': theme = micro_bit.themes[1]; break;
+                case 'green': theme = micro_bit.themes[2]; break;
+                case 'red': theme = micro_bit.themes[3]; break;
+                default: theme  = yelm.rt.micro_bit.randomTheme();
+            }
+            
             console.log('setting up microbit simulator')
             let view = new yelm.rt.micro_bit.MicrobitBoardSvg({
-                theme: yelm.rt.micro_bit.randomTheme(),
+                theme: theme,
                 runtime: runtime
             })
             document.body.innerHTML = ''; // clear children
@@ -96,5 +105,4 @@ if (typeof window !== 'undefined') {
             window.addEventListener('load', function(ev) {
             yelm.rt.Embed.start();
         });
-
 }
