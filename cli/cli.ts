@@ -144,7 +144,7 @@ function onlyExts(files: string[], exts: string[]) {
     return files.filter(f => exts.indexOf(path.extname(f)) >= 0)
 }
 
-export function uploadrelAsync() {
+export function uploadrelAsync(label?: string) {
     let lbl: string = process.env["USERNAME"] || "local"
     lbl = ((253402300799999 - Date.now()) + "0000" + "-" + U.guidGen().replace(/-/g, ".") + "-" + lbl).toLowerCase()
     console.log("releaseid:" + lbl)
@@ -189,6 +189,10 @@ export function uploadrelAsync() {
             console.log(resp)
             liteId = resp.id
             return Promise.map(fileList, uploadFileAsync, { concurrency: 15 })
+        })
+        .then(() => {
+            if (!label) return Promise.resolve()
+            else return Cloud.privatePostAsync(liteId + "/label", { name: label })
         })
         .then(() => {
             console.log("All done.")
@@ -707,7 +711,7 @@ cmd("help                     - display this message", helpAsync)
 
 cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
 cmd("genembed                 - generate built/yelmembed.js from current package", genembedAsync, 1)
-cmd("uploadrel                - upload web app release", uploadrelAsync, 1)
+cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
 cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)
 cmd("compile  FILE...         - hex-compile given set of files", compileAsync, 2)
 cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)
