@@ -77,7 +77,7 @@ export class LogView extends React.Component<ILogProps, ILogState> {
     }
 
     static defaultProps: ILogProps = {
-        maxEntries: 200
+        maxEntries: 100
     }
 
     componentWillUpdate() {
@@ -90,6 +90,10 @@ export class LogView extends React.Component<ILogProps, ILogState> {
             let node = ReactDOM.findDOMNode(this);
             node.scrollTop = node.scrollHeight
         }
+    }
+    
+    clear() {
+        this.setState({ entries: []})
     }
 
     render() {

@@ -144,6 +144,7 @@ interface IAppState {
     fileState?: string;
     showFiles?: boolean;
     helpCard?: codecard.CodeCardProps;
+    running?: boolean;
 }
 
 
@@ -489,6 +490,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     loadHeader(h: workspace.Header) {
         if (!h)
             return
+            
+        this.stopSimulator();
         pkg.loadPkgAsync(h.id)
             .then(() => {
                 compiler.newProject();
@@ -682,8 +685,16 @@ Ctrl+Shift+B
             })
             .done()
     }
+    
+    stopSimulator() {
+        simulator.Simulator.stop()
+        
+        this.setState({ running: false})
+    }
 
     runSimulator() {
+        let logs = this.refs["logs"] as logview.LogView;
+        logs.clear();   
         let state = this.editor.snapshotState()
         compiler.compileAsync()
             .then(resp => {
@@ -694,6 +705,7 @@ Ctrl+Shift+B
                         pkg.mainPkg.getTarget(),
                         js,
                         resp.enums)
+                    this.setState({ running: true })
                 }
             })
             .done()
@@ -768,7 +780,7 @@ Ctrl+Shift+B
                             <SlotSelector parent={this} />
                         </div>
                         <div id="actionbar" className="ui item">
-                            <sui.Button key='runbtn' class='icon primary portrait only' icon='play' onClick={() => this.runSimulator() } />
+                            <sui.Button key='runbtn' class='icon primary portrait only' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                             {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
                             {this.editor.menu() }
                         </div>
@@ -782,10 +794,10 @@ Ctrl+Shift+B
                         <simulator.Simulator ref="simulator" />
                     </div>
                     <div className="ui landscape only">
-                        <logview.LogView />
+                        <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
-                        <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } />
+                        <sui.Button key='runbtn' class='primary' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {this.appTarget.compile ? <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                         <sui.Button icon='folder' onClick={() => {
                             this.setState({ showFiles: !this.state.showFiles });
