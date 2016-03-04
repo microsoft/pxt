@@ -252,6 +252,9 @@
 .ui.log.red {
     border-left-color:#FF3A54;
 }
+.ui.log.black {
+    border-left-color:#202020;
+}
     
 .ui.log.counter {
     background:grey;
