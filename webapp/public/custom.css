@@ -305,6 +305,9 @@
 
 /* smaller screen */
 @media screen and (max-width: 968px) {
+    #logo {
+        font-size:1.5em;
+    }
     .ui.desktop.only {
         display:none !important;
     }
@@ -317,11 +320,14 @@
 }
 
 /* thin portrait mode */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 786px) {
+    #logo {
+        font-size:1em;
+    }    
     #helpcard {
         left: 2.1rem;
         top: initial;
-        bottom: 245px;
+        bottom: 220px;
         margin: 0;
     }
     #maineditor {
