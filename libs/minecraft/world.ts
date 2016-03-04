@@ -9,6 +9,5 @@ namespace world {
     //% weight=60
     //% blockId=mcpiWorldSetBlock block="set block|x: %x|y: %y|z: %z|block: %blockid|state: %state"
     export function setBlock(x : number, y : number, z: number, blockid:number, state : number = 0)  {
-                
     }
 }

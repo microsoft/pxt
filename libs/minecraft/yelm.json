@@ -8,7 +8,7 @@
         "basic.ts",
         "control.ts",
         "world.ts",
-        "player.ts"
+        "commands.ts"
     ],
     "target": "minecraft",
     "public": true,

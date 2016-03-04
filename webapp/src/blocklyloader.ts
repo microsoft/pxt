@@ -34,7 +34,7 @@ function createShadowValue(name: string, type: string, v?: string, shadowType?: 
         field.innerText = "0"
         return field;
     }
-        
+
     let value = document.createElement("value");
     value.setAttribute("name", name);
     if (shadowType) {
@@ -79,6 +79,7 @@ export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockPara
         while (m = rx.exec(fn.attributes.block)) {
             if (i == 0 && instance) {
                 attrNames["this"].name = m[1];
+                if (m[3]) attrNames["this"].shadowType = m[3];
                 m = rx.exec(fn.attributes.block); if (!m) break;
             }
 
@@ -98,6 +99,11 @@ function createToolboxBlock(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInf
     block.setAttribute("type", fn.attributes.blockId);
     if (fn.attributes.blockGap)
         block.setAttribute("gap", fn.attributes.blockGap);
+    if ((fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property)
+        && attrNames["this"] && attrNames["this"].shadowType) {
+        let attr = attrNames["this"];
+        block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
+    }
     fn.parameters.filter(pr => !!attrNames[pr.name].name &&
         (/string|number/.test(attrNames[pr.name].type)
             || !!attrNames[pr.name].shadowType
@@ -370,7 +376,7 @@ export function init() {
     goog.provide('Blockly.Blocks.device');
     goog.require('Blockly.Blocks');
 
-    Blockly.FieldCheckbox.prototype.init = function(block : Blockly.Block) {
+    Blockly.FieldCheckbox.prototype.init = function(block: Blockly.Block) {
         if (this.sourceBlock_) {
             // Checkbox has already been initialized once.
             return;
@@ -399,7 +405,7 @@ export function init() {
         goog.array.remove(variableList, Blockly.Msg.VARIABLES_DEFAULT_NAME);
         variableList.unshift(Blockly.Msg.VARIABLES_DEFAULT_NAME);
 
-        var xmlList : HTMLElement[] = [];
+        var xmlList: HTMLElement[] = [];
         // variables getters first
         for (var i = 0; i < variableList.length; i++) {
             // <block type="variables_get" gap="24">
@@ -543,7 +549,7 @@ export function init() {
          * @return {!Array.<string>} List of variable names.
          * @this Blockly.Block
          */
-        getVars: function() : any[] {
+        getVars: function(): any[] {
             return [this.getFieldValue('VAR')];
         },
         /**
@@ -553,7 +559,7 @@ export function init() {
          * @param {string} newName Renamed variable.
          * @this Blockly.Block
          */
-        renameVar: function(oldName:string, newName:string) {
+        renameVar: function(oldName: string, newName: string) {
             if (Blockly.Names.equals(oldName, this.getFieldValue('VAR'))) {
                 this.setFieldValue(newName, 'VAR');
             }
@@ -563,9 +569,9 @@ export function init() {
          * @param {!Array} options List of menu options to add to.
          * @this Blockly.Block
          */
-        customContextMenu: function(options : any[]) {
+        customContextMenu: function(options: any[]) {
             if (!this.isCollapsed()) {
-                var option : any = { enabled: true };
+                var option: any = { enabled: true };
                 var name = this.getFieldValue('VAR');
                 option.text = Blockly.Msg.VARIABLES_SET_CREATE_GET.replace('%1', name);
                 var xmlField = goog.dom.createDom('field', null, name);
@@ -601,7 +607,7 @@ export function init() {
     // Here's a helper to override the help URL for a block that's *already defined
     // by Blockly*. For blocks that we define ourselves, just change the call to
     // setHelpUrl in the corresponding definition above.
-    function monkeyPatchBlock(id : string, name : string, url : string) {
+    function monkeyPatchBlock(id: string, name: string, url: string) {
         var old = Blockly.Blocks[id].init;
         // fix sethelpurl
         Blockly.Blocks[id].init = function() {
@@ -610,7 +616,7 @@ export function init() {
             this.setHelpUrl(url);
             if (!this.codeCard) {
                 let tb = document.getElementById('blocklyToolboxDefinition');
-                let xml : HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
+                let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
                 this.codeCard = <codecard.CodeCardProps>{
                     header: name,
                     name: name,
