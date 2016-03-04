@@ -1,8 +1,22 @@
 #filelist,
 #maineditor {
   position: absolute;
-  top: 74px;
-  bottom: 0;
+  top:68px;
+  bottom: 2em;
+}
+#footer {
+    position: absolute;
+    bottom: 0;
+    height: 2em;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+#footer div {
+    font-size:0.8em;
+    text-align: center;
+    margin-top:0.4em;
 }
 
 .simframe {
@@ -20,6 +34,7 @@
   padding: 0em 1em 0em 0.5em;
   overflow-x: hidden;
   overflow-y: auto;
+  margin-top: 0;  
 }
 
 #menubar {
@@ -132,7 +147,11 @@
 }
 
 .blocklyToolboxDiv {
-    background:#ebebeb;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.blocklyMainBackground {
+    stroke:none !important;
 }
 
 .blocklyTreeLabel, .blocklyText {
