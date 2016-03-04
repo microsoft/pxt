@@ -9,8 +9,15 @@
 /// <reference path="backthumb.ts"/>
 
 namespace ts.yelm {
+    export enum CompileTarget {
+        None,
+        Thumb,
+        JavaScript,
+    }
+    
     export interface CompileOptions {
         fileSystem: StringMap<string>;
+        target: CompileTarget;
         sourceFiles?: string[];
         hexinfo: any;
         extinfo?: ExtensionInfo;

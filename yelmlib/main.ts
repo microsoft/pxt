@@ -221,10 +221,11 @@ namespace yelm {
             return ids.map(id => this.resolveDep(id))
         }
 
-        getCompileOptionsAsync() {
+        getCompileOptionsAsync(target = ts.yelm.CompileTarget.Thumb) {
             let opts: ts.yelm.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
+                target: target,
                 hexinfo: {}
             }
 
@@ -257,8 +258,8 @@ namespace yelm {
                 })
         }
 
-        buildAsync() {
-            return this.getCompileOptionsAsync()
+        buildAsync(target = ts.yelm.CompileTarget.Thumb) {
+            return this.getCompileOptionsAsync(target)
                 .then(opts => ts.yelm.compile(opts))
         }
 

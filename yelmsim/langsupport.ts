@@ -27,7 +27,7 @@ namespace yelm.rt {
     }
 
     export class FnWrapper {
-        constructor(public func: LabelFn, public a0: any, public a1: any, public a2: any, public a3: any, public cb: ResumeFn = null) { }
+        constructor(public func: LabelFn, public caps: any[], public a0: any, public a1: any, public cb: ResumeFn) { }
     }
 
     export class RefRecord extends RefObject {
@@ -79,12 +79,12 @@ namespace yelm.rt {
 
             if (a instanceof RefAction) {
                 bitvm.incr(a)
-                cb(new FnWrapper(a.func, a, a, a0, a1, () => {
+                cb(new FnWrapper(a.func, a.fields, a0, a1, () => {
                     bitvm.decr(a)
                 }))
             } else {
                 // no-closure case
-                cb(new FnWrapper(<any>a, null, null, a0, a1))
+                cb(new FnWrapper(<any>a, null, a0, a1, null))
             }
         }
 
@@ -184,28 +184,26 @@ namespace yelm.rt {
             decr(r)
         }
 
-        var globalBase = 9000000;
-
         export function ldglb(idx: number) {
             check(0 <= idx && idx < runtime.numGlobals);
-            return num(runtime.mem[globalBase + idx])
+            return num(runtime.globals[idx])
         }
 
         export function ldglbRef(idx: number) {
             check(0 <= idx && idx < runtime.numGlobals);
-            return incr(ref(runtime.mem[globalBase + idx]))
+            return incr(ref(runtime.globals[idx]))
         }
 
         // note the idx comes last - it's more convenient that way in the emitter
         export function stglb(v: any, idx: number) {
             check(0 <= idx && idx < runtime.numGlobals);
-            runtime.mem[globalBase + idx] = v;
+            runtime.globals[idx] = v;
         }
 
         export function stglbRef(v: any, idx: number) {
             check(0 <= idx && idx < runtime.numGlobals);
-            decr(runtime.mem[globalBase + idx])
-            runtime.mem[globalBase + idx] = v;
+            decr(runtime.globals[idx])
+            runtime.globals[idx] = v;
         }
 
         export function ldloc(r: RefLocal) {

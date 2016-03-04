@@ -166,6 +166,7 @@ namespace ts.yelm.ir {
         public lbl: Stmt;
         public lblNumUses: number;
         public jmpMode: JmpMode;
+        public lblId: number;
 
         constructor(
             public stmtKind: SK,
@@ -221,6 +222,10 @@ namespace ts.yelm.ir {
             if (this.isRef()) n = "REF " + n
             //if (this.isByRefLocal()) n = "BYREF " + n
             return "[" + n + "]"
+        }
+
+        uniqueName() {
+            return getDeclName(this.def) + "___" + getNodeId(this.def)
         }
 
         refSuff() {
@@ -536,4 +541,39 @@ namespace ts.yelm.ir {
 
         return r
     }
+
+    export function flattenArgs(topExpr: ir.Expr) {
+        let didStateUpdate = false
+        let complexArgs: ir.Expr[] = []
+        for (let a of U.reversed(topExpr.args)) {
+            if (a.isStateless()) continue
+            if (a.exprKind == EK.CellRef && !(a.data as ir.Cell).isGlobal() && !didStateUpdate) continue
+            if (a.canUpdateCells()) didStateUpdate = true
+            complexArgs.push(a)
+        }
+        complexArgs.reverse()
+        let precomp: ir.Expr[] = []
+        let flattened = topExpr.args.map(a => {
+            let idx = complexArgs.indexOf(a)
+            if (idx >= 0) {
+                let sharedRef = a
+                let sharedDef = a
+                if (a.exprKind == EK.SharedDef) {
+                    a.args[0].totalUses++
+                    sharedRef = ir.op(EK.SharedRef, [a.args[0]])
+                } else {
+                    sharedRef = ir.op(EK.SharedRef, [a])
+                    sharedDef = ir.op(EK.SharedDef, [a])
+                    a.totalUses = 2
+                    a.currUses = 0
+                }
+                precomp.push(sharedDef)
+                return sharedRef
+            } else return a
+        })
+
+        return { precomp, flattened }
+    }
+
+
 }

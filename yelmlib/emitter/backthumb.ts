@@ -142,8 +142,7 @@ ${getFunctionLabel(proc.action)}:
                     break;
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
-                    if (cell.isGlobal())
-                        return emitExpr(ir.rtcall(withRef("bitvm::ldglb", cell.isRef()), [ir.numlit(cell.index)]))
+                    U.assert(!cell.isGlobal())
                     write(`ldr ${reg}, ${cellref(cell)}`)
                     break;
                 default: oops();
@@ -183,6 +182,12 @@ ${getFunctionLabel(proc.action)}:
                     return emitSharedDef(e)
                 case EK.Sequence:
                     return e.args.forEach(emitExpr)
+                case EK.CellRef:
+                    let cell = e.data as ir.Cell;
+                    if (cell.isGlobal())
+                        return emitExpr(ir.rtcall(withRef("bitvm::ldglb", cell.isRef()), [ir.numlit(cell.index)]))
+                    else
+                        return emitExprInto(e, "r0")
                 default:
                     return emitExprInto(e, "r0")
             }
@@ -203,42 +208,14 @@ ${getFunctionLabel(proc.action)}:
         }
 
         function emitRtCall(topExpr: ir.Expr) {
-            let didStateUpdate = false
-            let complexArgs: ir.Expr[] = []
-            for (let a of U.reversed(topExpr.args)) {
-                if (a.isStateless()) continue
-                if (a.exprKind == EK.CellRef && !(a.data as ir.Cell).isGlobal() && !didStateUpdate) continue
-                if (a.canUpdateCells()) didStateUpdate = true
-                complexArgs.push(a)
-            }
-            complexArgs.reverse()
-            let precomp: ir.Expr[] = []
-            let flattened = topExpr.args.map(a => {
-                let idx = complexArgs.indexOf(a)
-                if (idx >= 0) {
-                    let sharedRef = a
-                    let sharedDef = a
-                    if (a.exprKind == EK.SharedDef) {
-                        a.args[0].totalUses++
-                        sharedRef = ir.op(EK.SharedRef, [a.args[0]])
-                    } else {
-                        sharedRef = ir.op(EK.SharedRef, [a])
-                        sharedDef = ir.op(EK.SharedDef, [a])
-                        a.totalUses = 2
-                        a.currUses = 0
-                    }
-                    precomp.push(sharedDef)
-                    return sharedRef
-                } else return a
-            })
-
-            precomp.forEach(emitExpr)
-
-            flattened.forEach((a, i) => {
+            let info = ir.flattenArgs(topExpr)
+            
+            info.precomp.forEach(emitExpr)
+            info.flattened.forEach((a, i) => {
                 U.assert(i <= 3)
                 emitExprInto(a, "r" + i)
             })
-            
+
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
             let lbl = topExpr.isAsync ? mkLbl("rtcall") : ""
@@ -339,66 +316,6 @@ ${getFunctionLabel(proc.action)}:
             var inf = hex.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
             write("bl " + name + " ; *" + inf.type + inf.args + " (raw)")
-        }
-
-        function writeCall(name: string, mask: number, isAsync = false) {
-            var inf = hex.lookupFunc(name)
-            assert(!!inf, "unimplemented function: " + name)
-
-            assert(inf.args <= 4)
-
-            if (inf.args >= 4)
-                write("pop {r3}");
-            if (inf.args >= 3)
-                write("pop {r2}");
-            if (inf.args >= 2)
-                write("pop {r1}");
-            if (inf.args >= 1)
-                write("pop {r0}");
-
-            var reglist: string[] = []
-
-            for (var i = 0; i < 4; ++i) {
-                if (mask & (1 << i))
-                    reglist.push("r" + i)
-            }
-
-            var numMask = reglist.length
-
-            if (inf.type == "F" && mask != 0) {
-                // reserve space for return val
-                reglist.push("r7")
-                write("@stackmark retval")
-            }
-
-            assert((mask & ~0xf) == 0)
-
-            if (reglist.length > 0)
-                write("push {" + reglist.join(",") + "}")
-
-            let lbl = ""
-            if (isAsync)
-                lbl = mkLbl("async")
-
-            write("bl " + name + " ; *" + inf.type + inf.args + " " + lbl)
-
-            if (lbl) write(lbl + ":")
-
-            if (inf.type == "F") {
-                if (mask == 0)
-                    write("push {r0}");
-                else {
-                    write("str r0, [sp, retval@-1]")
-                }
-            }
-            else if (inf.type == "P") {
-                // ok
-            }
-            else oops("invalid call type " + inf.type)
-
-            while (numMask-- > 0) {
-                writeCall("bitvm::decr", 0);
-            }
         }
 
         function emitLdPtr(lbl: string, reg: string) {

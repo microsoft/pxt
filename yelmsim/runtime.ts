@@ -35,7 +35,7 @@ namespace yelm.rt {
         [index: string]: T;
     }
 
-    export type LabelFn = (n: number) => CodePtr;
+    export type LabelFn = (s: StackFrame) => StackFrame;
     export type ResumeFn = (v?: any) => void;
 
     export interface Target {
@@ -47,9 +47,15 @@ namespace yelm.rt {
         return [micro_bit.target, minecraft.target]
     }
 
-    export interface CodePtr {
+    export interface StackFrame {
         fn: LabelFn;
         pc: number;
+        parent: StackFrame;
+        retval?: any;
+        lambdaArgs?: any[];
+        caps?: any[];
+        finalCallback?: ResumeFn;
+        // ... plus locals etc, added dynamically
     }
 
     interface LR {
@@ -97,11 +103,8 @@ namespace yelm.rt {
     }
 
     export class Runtime {
-        private baseStack = 1000000;
-        private freeStacks: number[] = [];
         public board: BaseBoard;
         numGlobals = 1000;
-        mem: any;
         errorHandler: (e: any) => void;
         stateChanged: () => void;
         dead = false;
@@ -110,10 +113,11 @@ namespace yelm.rt {
         target: Target;
         enums: Map<number>;
         id: string;
+        globals:any[] = [];
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
-        setupTop: (cb: ResumeFn) => void;
+        setupTop: (cb: ResumeFn) => StackFrame;
 
         runningTime(): number {
             return U.now() - this.startTime;
@@ -123,6 +127,7 @@ namespace yelm.rt {
             incr(a)
             return new Promise<any>((resolve, reject) =>
                 U.nextTick(() => {
+                    runtime = this;
                     this.setupTop(resolve)
                     action.run2(a, arg0, arg1)
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
@@ -139,18 +144,6 @@ namespace yelm.rt {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
-
-        // 2k block
-        malloc() {
-            if (this.freeStacks.length > 0)
-                return this.freeStacks.pop();
-            this.baseStack += 2000;
-            return this.baseStack;
-        }
-
-        free(p: number) {
-            this.freeStacks.push(p)
-        }
 
         kill() {
             this.dead = true
@@ -191,36 +184,18 @@ namespace yelm.rt {
             this.enums = enums;
             // These variables are used by the generated code as well
             // ---
-            var sp: number, lr: LR;
-            var rr0: any, rr1: any, rr2: any, rr3: any;
-            var r4: any, r5: any, r6: any, r7: any;
-            var mem: any = {}
             var entryPoint: LabelFn;
+            var bitvm = rt.bitvm
             // ---
 
             var currResume: ResumeFn;
-            this.mem = mem
             var _this = this
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
             }
 
-            function push(v: any) {
-                sp -= 4;
-                if (sp % 1000 == 0)
-                    oops("stack overflow")
-                mem[sp] = v;
-                //console.log(`PUSH ${sp} ${v}`)
-            }
-
-            function pop() {
-                //console.log(`POP ${sp} ${mem[sp]}`)
-                sp += 4;
-                return mem[sp - 4]
-            }
-
-            function loop(p: CodePtr) {
+            function loop(p: StackFrame) {
                 if (_this.dead) {
                     console.log("Runtime terminated")
                     return
@@ -228,7 +203,7 @@ namespace yelm.rt {
                 try {
                     runtime = _this
                     while (!!p) {
-                        p = p.fn(p.pc)
+                        p = p.fn(p)
                         _this.maybeUpdateDisplay()
                     }
                 } catch (e) {
@@ -239,51 +214,36 @@ namespace yelm.rt {
                 }
             }
 
-            function actionCall(fn: LabelFn, retPC: number, cb?: ResumeFn): CodePtr {
-                lr = {
-                    caller: lr,
-                    retPC: retPC,
-                    currFn: fn,
-                    baseSP: sp,
-                    finalCallback: cb
-                }
-                return { fn, pc: 0 }
+            function actionCall(s: StackFrame, cb?: ResumeFn): StackFrame {
+                if (cb)
+                    s.finalCallback = cb;
+                s.pc = 0
+                return s;
             }
 
-            function leave(v: any): CodePtr {
-                let topLr = lr
-                lr = lr.caller
-                let popped = pop()
-                if (popped != topLr) {
-                    console.log("POPPED", popped)
-                    console.log("TOP", topLr)
-                    oops("lrpop")
-                }
-                rr0 = v;
-                if (topLr.finalCallback)
-                    topLr.finalCallback(v);
-                return { fn: lr.currFn, pc: topLr.retPC }
+            function leave(s: StackFrame, v: any): StackFrame {
+                s.parent.retval = v;
+                if (s.finalCallback)
+                    s.finalCallback(v);
+                return s.parent
             }
 
             function setupTop(cb: ResumeFn) {
-                setupTopCore(cb)
-                setupResume(0)
+                let s = setupTopCore(cb)
+                setupResume(s, 0)
+                return s
             }
 
             function setupTopCore(cb: ResumeFn) {
-                let stackTop = _this.malloc();
-                sp = stackTop;
-                lr = {
-                    caller: null,
-                    retPC: 0,
-                    baseSP: sp,
-                    currFn: () => {
-                        _this.free(stackTop)
-                        if (cb)
-                            cb(rr0)
+                let frame: StackFrame = {
+                    parent: null,
+                    pc: 0,
+                    fn: () => {
+                        if (cb) cb(frame.retval)
                         return null
                     }
                 }
+                return frame
             }
 
             function topCall(fn: LabelFn, cb: ResumeFn) {
@@ -291,42 +251,40 @@ namespace yelm.rt {
                 U.assert(!!_this.enums)
                 U.assert(!_this.running)
                 _this.setRunning(true);
-                setupTopCore(cb)
-                loop(actionCall(fn, 0))
-            }
-
-            function storeRegs() {
-                let _lr = lr
-                let _sp = sp
-                let _r4 = r4
-                let _r5 = r5
-                let _r6 = r6
-                let _r7 = r7
-                return () => {
-                    lr = _lr
-                    sp = _sp
-                    r4 = _r4
-                    r5 = _r5
-                    r6 = _r6
-                    r7 = _r7
+                let topFrame = setupTopCore(cb)
+                let frame: StackFrame = {
+                    parent: topFrame,
+                    fn: fn,
+                    pc: 0
                 }
+                loop(actionCall(frame))
+            }
+            
+            function checkResumeConsumed() {
+                if (currResume) oops("getResume() not called")                
             }
 
-            function setupResume(retPC: number) {
+            function setupResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
-                let restore = storeRegs()
+                s.pc = retPC;
                 currResume = (v) => {
-                    restore();
+                    if (_this.dead) return;
+                    runtime = _this;
+                    U.assert(s.pc == retPC);
                     if (v instanceof FnWrapper) {
                         let w = <FnWrapper>v
-                        rr0 = w.a0
-                        rr1 = w.a1
-                        rr2 = w.a2
-                        rr3 = w.a3
-                        return loop(actionCall(w.func, retPC, w.cb))
+                        let frame: StackFrame = {
+                            parent: s,
+                            fn: w.func,
+                            lambdaArgs: [w.a0, w.a1],
+                            pc: 0,
+                            caps: w.caps,
+                            finalCallback: w.cb,
+                        }
+                        return loop(actionCall(frame))
                     }
-                    rr0 = v;
-                    return loop({ fn: lr.currFn, pc: retPC })
+                    s.retval = v;
+                    return loop(s)
                 }
             }
 

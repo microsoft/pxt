@@ -135,6 +135,7 @@ export function compileAsync(...fileNames: string[]) {
     let res = ts.yelm.compile({
         fileSystem: fileText,
         sourceFiles: fileNames,
+        target: ts.yelm.CompileTarget.Thumb,
         hexinfo: hexinfo
     })
 
@@ -556,7 +557,10 @@ function runCoreAsync(res: ts.yelm.CompileResult) {
 
 function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
-    return mainPkg.buildAsync()
+    let target = ts.yelm.CompileTarget.Thumb
+    if (mode == BuildOption.Run)
+        target = ts.yelm.CompileTarget.JavaScript
+    return mainPkg.buildAsync(target)
         .then(res => {
             U.iterStringMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))

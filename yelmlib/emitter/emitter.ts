@@ -288,6 +288,7 @@ namespace ts.yelm {
 
         function reset() {
             bin = new Binary();
+            bin.target = opts.target;
             proc = null
         }
 
@@ -403,13 +404,17 @@ namespace ts.yelm {
 
             let writeFileSync = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null);
-            // this doesn't actully write file, it just stores it for the cli.ts to write it
-            writeFileSync("microbit.asm", bin.csource)
-            bin.assemble();
-            const myhex = hex.patchHex(bin, false).join("\r\n") + "\r\n"
-            writeFileSync("microbit.asm", bin.csource) // optimized
-            writeFileSync("microbit.hex", myhex)
-            writeFileSync("microbit.js", bin.jssource)
+
+            if (opts.target == CompileTarget.JavaScript) {
+                writeFileSync("microbit.js", bin.jssource)
+            } else if (opts.target == CompileTarget.Thumb) {
+                // this doesn't actully write file, it just stores it for the cli.ts to write it
+                writeFileSync("microbit.asm", bin.csource)
+                bin.assemble();
+                const myhex = hex.patchHex(bin, false).join("\r\n") + "\r\n"
+                writeFileSync("microbit.asm", bin.csource) // optimized
+                writeFileSync("microbit.hex", myhex)
+            } else oops();
         }
 
         function typeCheckVar(decl: Declaration) {
@@ -913,8 +918,8 @@ namespace ts.yelm {
         }
 
         function emitFunLit(node: FunctionLikeDeclaration, raw = false) {
-            let lbl = getFunctionLabel(node) + "_Lit"
-            let r = ir.ptrlit(lbl, lbl)
+            let lbl = getFunctionLabel(node)
+            let r = ir.ptrlit(lbl + "_Lit", lbl)
             if (!raw) {
                 // TODO rename this to functionData or something
                 r = ir.rtcall("bitvm::stringData", [r])
@@ -2078,6 +2083,7 @@ namespace ts.yelm {
         csource = "";
         jssource = "";
         finalPass = false;
+        target: CompileTarget;
 
         strings: StringMap<string> = {};
         stringsBody = "";
@@ -2139,22 +2145,30 @@ namespace ts.yelm {
 
         serialize() {
             assert(this.csource == "");
+            assert(this.jssource == "");
 
-            this.emit("; start")
-            this.emit(".hex 708E3B92C615A841C49866C975EE5197")
-            this.emit(".hex " + hex.hexTemplateHash() + " ; hex template hash")
-            this.emit(".hex 0000000000000000 ; @SRCHASH@")
-            this.emit(".space 16 ; reserved")
+            if (this.target == CompileTarget.JavaScript) {
+                this.procs.forEach(p => {
+                    this.jssource += "\n" + irToJS(this, p)
+                })
+            } else if (this.target == CompileTarget.Thumb) {
+                this.emit("; start")
+                this.emit(".hex 708E3B92C615A841C49866C975EE5197")
+                this.emit(".hex " + hex.hexTemplateHash() + " ; hex template hash")
+                this.emit(".hex 0000000000000000 ; @SRCHASH@")
+                this.emit(".space 16 ; reserved")
 
-            this.procs.forEach(p => {
-                this.csource += "\n" + irToAssembly(this, p)
-            })
+                this.procs.forEach(p => {
+                    this.csource += "\n" + irToAssembly(this, p)
+                })
 
-            this.csource += "_end_js:\n"
+                this.csource += "_end_js:\n"
 
-            this.csource += this.stringsBody
+                this.csource += this.stringsBody
 
-            this.emit("_program_end:");
+                this.emit("_program_end:");
+
+            } else oops();
         }
 
         patchSrcHash() {
@@ -2176,7 +2190,6 @@ namespace ts.yelm {
             // b.throwOnError = true;
             b.emit(this.csource);
             this.csource = b.getSource(!peepDbg);
-            this.jssource = b.savedJs || b.js;
             if (b.errors.length > 0) {
                 var userErrors = ""
                 b.errors.forEach(e => {

@@ -59,7 +59,7 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.length
 }
 
-export function compileAsync() {
+export function compileAsync(target: ts.yelm.CompileTarget) {
     return pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => compileCoreAsync(opts))
         .then(resp => {
