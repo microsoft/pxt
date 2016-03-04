@@ -539,6 +539,10 @@ function runCoreAsync(res: ts.yelm.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
         let r = new yelm.rt.Runtime(f, mainPkg.getTarget(), res.enums)
+        yelm.rt.Runtime.messagePosted = (msg) => {
+            if (msg.type == "serial")
+                console.log("SERIAL:", (msg as yelm.rt.micro_bit.SimulatorSerialMessage).data)
+        }
         r.errorHandler = (e) => {
             throw e;
         }
