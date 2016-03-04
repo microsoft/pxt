@@ -84,13 +84,11 @@ ${getFunctionLabel(proc.action)}:
                 let lbl = mkLbl("jmpz")
                 emitExpr(jmp.expr)
 
-                write("*cmp r0, #0")
+                write("cmp r0, #0")
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
-                    write("*beq " + lbl) // this is to *skip* the following 'b' instruction; beq itself has a very short range
-                    write("@js if (r0)")
+                    write("beq " + lbl) // this is to *skip* the following 'b' instruction; beq itself has a very short range
                 } else {
-                    write("*bne " + lbl)
-                    write("@js if (!r0)")
+                    write("bne " + lbl)
                 }
 
                 write("bb " + jmp.lblName)
@@ -123,7 +121,6 @@ ${getFunctionLabel(proc.action)}:
                     break;
                 case EK.PointerLiteral:
                     emitLdPtr(e.data, reg);
-                    write(`@js ${reg} = ${e.jsInfo}`)
                     break;
                 case EK.SharedRef:
                     let arg = e.args[0]
@@ -218,10 +215,7 @@ ${getFunctionLabel(proc.action)}:
 
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
-            let lbl = topExpr.isAsync ? mkLbl("rtcall") : ""
-            write(`bl ${name}  ; *F${topExpr.args.length} ${lbl}`)
-            if (lbl)
-                write(lbl + ":")
+            write(`bl ${name}`)
         }
 
         function emitProcCall(topExpr: ir.Expr) {
@@ -240,9 +234,7 @@ ${getFunctionLabel(proc.action)}:
 
             let proc = bin.procs.filter(p => p.action == topExpr.data)[0]
 
-            let lbl = mkLbl("call")
-            write("bl " + getFunctionLabel(proc.action) + " ; *R " + lbl)
-            write(lbl + ":")
+            write("bl " + getFunctionLabel(proc.action))
 
             for (let a of argStmts) {
                 a.currUses = 1
@@ -301,9 +293,7 @@ ${getFunctionLabel(proc.action)}:
             })
             write("@stackmark args");
 
-            let nxt = mkLbl("nxt")
-            write(`bl ${getFunctionLabel(node)}   ; *R ${nxt}`)
-            write(nxt + ":")
+            write(`bl ${getFunctionLabel(node)}`)
 
             write("@stackempty args")
             if (parms.length)
@@ -320,9 +310,9 @@ ${getFunctionLabel(proc.action)}:
 
         function emitLdPtr(lbl: string, reg: string) {
             assert(!!lbl)
-            write(`*movs ${reg}, ${lbl}@hi  ; ldptr`)
-            write(`*lsls ${reg}, ${reg}, #8`)
-            write(`*adds ${reg}, ${lbl}@lo`);
+            write(`movs ${reg}, ${lbl}@hi  ; ldptr`)
+            write(`lsls ${reg}, ${reg}, #8`)
+            write(`adds ${reg}, ${lbl}@lo`);
         }
 
         function emitInt(v: number, reg: string) {
