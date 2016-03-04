@@ -1,15 +1,18 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
+import * as core from "./core";
 
 export interface ILogProps {
     maxEntries?: number;
+    maxAccValues?: number;
 }
 export interface ILogEntry {
     id: number;
     theme: string;
     variable?: string;
-    nvalue?: number;
+    accvalues?: {t: number; v:number}[];
+    time:number;
     value: string;
     source: string;
     count: number;
@@ -44,9 +47,9 @@ export class LogView extends React.Component<ILogProps, ILogState> {
                     let i = buf.lastIndexOf("\n");
                     if (i >= 0) {
                         let msgb = buf.substring(0, i + 1);
-                        
+
                         this.appendEntry('mbit' + msg.id, msgb, 'black');
-                        
+
                         buf = buf.slice(i + 1);
                     }
 
@@ -92,17 +95,26 @@ export class LogView extends React.Component<ILogProps, ILogState> {
 
             if (last) {
                 last.value = value;
+                if (last.accvalues) {
+                     last.accvalues.push({ 
+                        t: Date.now() - last.time, 
+                        v:nvalue
+                    });
+                    if (last.accvalues.length > this.props.maxAccValues)
+                        last.accvalues.shift();
+                }
                 last.count++;
             }
             else {
                 ens.push({
                     id: LogView.counter++,
                     theme: theme,
+                    time: Date.now(),
                     value: value,
                     source: source,
                     count: 1,
                     variable: variable,
-                    nvalue: nvalue
+                    accvalues: nvalue ? [{t:0, v:nvalue}] : undefined
                 });
             }
             return { entries: ens };
@@ -110,34 +122,41 @@ export class LogView extends React.Component<ILogProps, ILogState> {
     }
 
     static defaultProps: ILogProps = {
-    maxEntries: 100
-}
-
-componentWillUpdate() {
-    let node = ReactDOM.findDOMNode(this) as HTMLElement;
-    this.shouldScroll = node.scrollTop + node.offsetHeight === node.scrollHeight;
-}
-
-componentDidUpdate() {
-    if (this.shouldScroll) {
-        let node = ReactDOM.findDOMNode(this);
-        node.scrollTop = node.scrollHeight
+        maxEntries: 100,
+        maxAccValues: 1000
     }
-}
 
-clear() {
-    this.setState({ entries: [] })
-}
+    componentWillUpdate() {
+        let node = ReactDOM.findDOMNode(this) as HTMLElement;
+        this.shouldScroll = node.scrollTop + node.offsetHeight === node.scrollHeight;
+    }
 
-render() {
-    let msgs = this.state.entries.map(entry =>
-        <div className={"ui log " + entry.theme} key={entry.id}>
-            {entry.count > 1 ? <span className="ui log counter">{entry.count}</span> : ""}
-            {entry.value}
-        </div>);
+    componentDidUpdate() {
+        if (this.shouldScroll) {
+            let node = ReactDOM.findDOMNode(this);
+            node.scrollTop = node.scrollHeight
+        }
+    }
 
-    return <div className='ui segment hideempty logs'>
-        {msgs}
-    </div>;
-}
+    clear() {
+        this.setState({ entries: [] })
+    }
+
+    render() {
+        let msgs = this.state.entries.map(entry =>
+            <div className={"ui log " + entry.theme + (entry.accvalues ? " link" : "")} key={entry.id} onClick={entry.accvalues ? () => this.tableToCSV(entry) : undefined}>
+                {entry.count > 1 ? <span className="ui log counter">{entry.count}</span> : ""}
+                {entry.value}
+            </div>);
+
+        return <div className='ui segment hideempty logs'>
+            {msgs}
+        </div>;
+    }
+
+    tableToCSV(entry: ILogEntry) {
+        let csv = "t, " + entry.variable + "\n" 
+            + entry.accvalues.map(v => v.t + ", " + v.v).join('\n');
+        core.browserDownloadText(csv, 'data.csv', 'text/csv')
+    }
 }
