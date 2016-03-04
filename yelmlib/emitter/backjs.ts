@@ -1,4 +1,12 @@
 namespace ts.yelm {
+    export function jsEmit(bin: Binary) {
+        let jssource = ""
+        bin.procs.forEach(p => {
+            jssource += "\n" + irToJS(bin, p) + "\n"
+        })
+        bin.writeFile("microbit.js", jssource)
+    }
+
     export function irToJS(bin: Binary, proc: ir.Procedure) {
         let resText = ""
         let writeRaw = (s: string) => { resText += s + "\n"; }
@@ -240,4 +248,7 @@ while (true) { switch (step) {
         }
 
     }
+
+
+
 }

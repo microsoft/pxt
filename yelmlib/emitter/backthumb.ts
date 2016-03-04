@@ -206,7 +206,7 @@ ${getFunctionLabel(proc.action)}:
 
         function emitRtCall(topExpr: ir.Expr) {
             let info = ir.flattenArgs(topExpr)
-            
+
             info.precomp.forEach(emitExpr)
             info.flattened.forEach((a, i) => {
                 U.assert(i <= 3)
@@ -519,10 +519,10 @@ ${getFunctionLabel(proc.action)}:
             return r.toUpperCase();
         }
 
-        export function patchHex(bin: Binary, shortForm: boolean) {
+        export function patchHex(bin: Binary, buf: number[], shortForm: boolean) {
             var myhex = hex.slice(0, bytecodeStartIdx)
 
-            assert(bin.buf.length < 32000)
+            assert(buf.length < 32000)
 
             var ptr = 0
 
@@ -549,13 +549,13 @@ ${getFunctionLabel(proc.action)}:
 
             var addr = bytecodeStartAddr;
             var upper = (addr - 16) >> 16
-            while (ptr < bin.buf.length) {
+            while (ptr < buf.length) {
                 if ((addr >> 16) != upper) {
                     upper = addr >> 16
                     myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
                 }
 
-                myhex.push(hexBytes(nextLine(bin.buf, addr)))
+                myhex.push(hexBytes(nextLine(buf, addr)))
                 addr += 16
             }
 
@@ -574,5 +574,129 @@ ${getFunctionLabel(proc.action)}:
         return s + "\n"
     }
 
+    function isDataRecord(s: string) {
+        if (!s) return false
+        var m = /^:......(..)/.exec(s)
+        assert(!!m)
+        return m[1] == "00"
+    }
 
+    function stringLiteral(s: string) {
+        var r = "\""
+        for (var i = 0; i < s.length; ++i) {
+            // TODO generate warning when seeing high character ?
+            var c = s.charCodeAt(i) & 0xff
+            var cc = String.fromCharCode(c)
+            if (cc == "\\" || cc == "\"")
+                r += "\\" + cc
+            else if (cc == "\n")
+                r += "\\n"
+            else if (c <= 0xf)
+                r += "\\x0" + c.toString(16)
+            else if (c < 32 || c > 127)
+                r += "\\x" + c.toString(16)
+            else
+                r += cc;
+        }
+        return r + "\""
+    }
+
+    function emitStrings(bin: Binary) {
+        for (let s of Object.keys(bin.strings)) {
+            let lbl = bin.strings[s]
+            bin.otherLiterals.push(`
+.balign 4
+${lbl}meta: .short 0xffff, ${s.length}
+${lbl}: .string ${stringLiteral(s)}
+`)
+        }
+    }
+
+
+    function serialize(bin: Binary) {
+        let asmsource = `; start
+    .hex 708E3B92C615A841C49866C975EE5197
+    .hex ${hex.hexTemplateHash()} ; hex template hash
+    .hex 0000000000000000 ; @SRCHASH@
+    .space 16 ; reserved
+`
+        bin.procs.forEach(p => {
+            asmsource += "\n" + irToAssembly(bin, p) + "\n"
+        })
+
+        asmsource += "_js_end:\n"
+        emitStrings(bin)
+        asmsource += bin.otherLiterals.join("")
+        asmsource += "_program_end:\n"
+
+        return asmsource
+    }
+
+    function patchSrcHash() {
+        //TODO
+        //var srcSha = Random.sha256buffer(Util.stringToUint8Array(Util.toUTF8(bin.csource)))
+        //bin.csource = bin.csource.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + srcSha.slice(0, 16).toUpperCase() + " ; program hash\n")
+    }
+
+    let peepDbg = false
+    function assemble(bin: Binary, src: string) {
+        thumb.test(); // just in case
+
+        var b = new thumb.File();
+        b.lookupExternalLabel = hex.lookupFunctionAddr;
+        b.normalizeExternalLabel = s => {
+            let inf = hex.lookupFunc(s)
+            if (inf) return inf.name;
+            return s
+        }
+
+        // b.throwOnError = true;
+        b.emit(src);
+        src = b.getSource(!peepDbg);
+
+        if (b.errors.length > 0) {
+            var userErrors = ""
+            b.errors.forEach(e => {
+                var m = /^user(\d+)/.exec(e.scope)
+                if (m) {
+                    // This generally shouldn't happen, but it may for certin kind of global 
+                    // errors - jump range and label redefinitions
+                    var no = parseInt(m[1])
+                    var proc = bin.procs.filter(p => p.seqNo == no)[0]
+                    if (proc && proc.action)
+                        userErrors += U.lf("At function {0}:\n", proc.getName())
+                    else
+                        userErrors += U.lf("At inline assembly:\n")
+                    userErrors += e.message
+                }
+            })
+
+            if (userErrors) {
+                //TODO
+                console.log(U.lf("errors in inline assembly"))
+                console.log(userErrors)
+                throw new Error(b.errors[0].message)
+            } else {
+                throw new Error(b.errors[0].message)
+            }
+        }
+
+        return {
+            src: src,
+            buf: b.buf
+        }
+    }
+
+    export function thumbEmit(bin: Binary) {
+        let src = serialize(bin)
+        patchSrcHash()
+        bin.writeFile("microbit.asm", src)
+        let res = assemble(bin, src)
+        if (res.src)
+            bin.writeFile("microbit.asm", res.src)
+        if (res.buf) {
+            const myhex = hex.patchHex(bin, res.buf, false).join("\r\n") + "\r\n"
+            bin.writeFile("microbit.hex", myhex)
+        }
+    }
 }

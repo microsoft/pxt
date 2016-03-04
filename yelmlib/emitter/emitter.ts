@@ -399,21 +399,14 @@ namespace ts.yelm {
         function finalEmit() {
             if (diagnostics.getModificationCount() || opts.noEmit)
                 return;
-            bin.serialize();
-            bin.patchSrcHash();
-
-            let writeFileSync = (fn: string, data: string) =>
+            
+            bin.writeFile = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null);
 
             if (opts.target == CompileTarget.JavaScript) {
-                writeFileSync("microbit.js", bin.jssource)
+                jsEmit(bin)
             } else if (opts.target == CompileTarget.Thumb) {
-                // this doesn't actully write file, it just stores it for the cli.ts to write it
-                writeFileSync("microbit.asm", bin.csource)
-                bin.assemble();
-                const myhex = hex.patchHex(bin, false).join("\r\n") + "\r\n"
-                writeFileSync("microbit.asm", bin.csource) // optimized
-                writeFileSync("microbit.hex", myhex)
+                thumbEmit(bin)
             } else oops();
         }
 
@@ -503,14 +496,16 @@ namespace ts.yelm {
             }
 
             var lbl = "_img" + bin.lblNo++
-
-            bin.emitLiteral(".balign 4");
-            bin.emitLiteral(lbl + ": .short 0xffff")
-            bin.emitLiteral("        .short " + w + ", " + h)
-            let jsLit = "new rt.micro_bit.Image(" + w + ", [" + lit + "])"
             if (lit.length % 4 != 0)
                 lit += "42" // pad
-            bin.emitLiteral("        .byte " + lit)
+            
+            bin.otherLiterals.push(`
+.balign 4
+${lbl}: .short 0xffff
+        .short ${w}, ${h}
+        .byte ${lit}
+`)
+            let jsLit = "new rt.micro_bit.Image(" + w + ", [" + lit + "])"
 
             return <any>{
                 kind: SyntaxKind.NumericLiteral,
@@ -1710,19 +1705,15 @@ namespace ts.yelm {
     }
 
 
-    export var peepDbg = false;
-
     export class Binary {
         procs: ir.Procedure[] = [];
         globals: ir.Cell[] = [];
-        buf: number[];
-        csource = "";
-        jssource = "";
         finalPass = false;
         target: CompileTarget;
+        writeFile = (fn:string, cont:string) => {};
 
         strings: StringMap<string> = {};
-        stringsBody = "";
+        otherLiterals: string[] = [];
         lblNo = 0;
 
         isDataRecord(s: string) {
@@ -1739,120 +1730,12 @@ namespace ts.yelm {
         }
 
 
-        stringLiteral(s: string) {
-            var r = "\""
-            for (var i = 0; i < s.length; ++i) {
-                // TODO generate warning when seeing high character ?
-                var c = s.charCodeAt(i) & 0xff
-                var cc = String.fromCharCode(c)
-                if (cc == "\\" || cc == "\"")
-                    r += "\\" + cc
-                else if (cc == "\n")
-                    r += "\\n"
-                else if (c <= 0xf)
-                    r += "\\x0" + c.toString(16)
-                else if (c < 32 || c > 127)
-                    r += "\\x" + c.toString(16)
-                else
-                    r += cc;
-            }
-            return r + "\""
-        }
-
-        emitLiteral(s: string) {
-            this.stringsBody += s + "\n"
-        }
-
         emitString(s: string): string {
             if (this.strings.hasOwnProperty(s))
                 return this.strings[s]
-
             var lbl = "_str" + this.lblNo++
             this.strings[s] = lbl;
-            this.emitLiteral(".balign 4");
-            this.emitLiteral(lbl + "meta: .short 0xffff, " + s.length)
-            this.emitLiteral(lbl + ": .string " + this.stringLiteral(s))
             return lbl
-        }
-
-        emit(s: string) {
-            this.csource += asmline(s)
-        }
-
-        serialize() {
-            assert(this.csource == "");
-            assert(this.jssource == "");
-
-            if (this.target == CompileTarget.JavaScript) {
-                this.procs.forEach(p => {
-                    this.jssource += "\n" + irToJS(this, p)
-                })
-            } else if (this.target == CompileTarget.Thumb) {
-                this.emit("; start")
-                this.emit(".hex 708E3B92C615A841C49866C975EE5197")
-                this.emit(".hex " + hex.hexTemplateHash() + " ; hex template hash")
-                this.emit(".hex 0000000000000000 ; @SRCHASH@")
-                this.emit(".space 16 ; reserved")
-
-                this.procs.forEach(p => {
-                    this.csource += "\n" + irToAssembly(this, p)
-                })
-
-                this.csource += "_end_js:\n"
-
-                this.csource += this.stringsBody
-
-                this.emit("_program_end:");
-
-            } else oops();
-        }
-
-        patchSrcHash() {
-            //TODO
-            //var srcSha = Random.sha256buffer(Util.stringToUint8Array(Util.toUTF8(this.csource)))
-            //this.csource = this.csource.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + srcSha.slice(0, 16).toUpperCase() + " ; program hash\n")
-        }
-
-        assemble() {
-            thumb.test(); // just in case
-
-            var b = new thumb.File();
-            b.lookupExternalLabel = hex.lookupFunctionAddr;
-            b.normalizeExternalLabel = s => {
-                let inf = hex.lookupFunc(s)
-                if (inf) return inf.name;
-                return s
-            }
-            // b.throwOnError = true;
-            b.emit(this.csource);
-            this.csource = b.getSource(!peepDbg);
-            if (b.errors.length > 0) {
-                var userErrors = ""
-                b.errors.forEach(e => {
-                    var m = /^user(\d+)/.exec(e.scope)
-                    if (m) {
-                        // This generally shouldn't happen, but it may for certin kind of global 
-                        // errors - jump range and label redefinitions
-                        var no = parseInt(m[1])
-                        var proc = this.procs.filter(p => p.seqNo == no)[0]
-                        if (proc && proc.action)
-                            userErrors += lf("At function {0}:\n", proc.getName())
-                        else
-                            userErrors += lf("At inline assembly:\n")
-                        userErrors += e.message
-                    }
-                })
-
-                if (userErrors) {
-                    //TODO
-                    console.log(lf("errors in inline assembly"))
-                    console.log(userErrors)
-                } else {
-                    throw new Error(b.errors[0].message)
-                }
-            } else {
-                this.buf = b.buf;
-            }
         }
     }
 }
