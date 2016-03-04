@@ -29,5 +29,8 @@
   },
   "devDependencies": {
     "tsd": "^0.6.5"
+  },
+  "scripts": {
+    "test": "jake --trace"
   }
 }
