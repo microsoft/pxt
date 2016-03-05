@@ -14,3 +14,6 @@ cache:
   directories:
     - node_modules
     - typings
+    - webapp/node_modules
+    - webapp/typings
+
