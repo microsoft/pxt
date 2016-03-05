@@ -88,10 +88,9 @@ compileDir("yelmlib")
 compileDir("yelmsim", ["built/yelmlib.js"])
 compileDir("cli", ["built/yelmlib.js", "built/yelmsim.js"])
 
-task("travis", ["update", "wapp", "upload"], {async:true}, function() {
-})
+task("travis", ["test", "upload"])
 
-task('upload', ["wapp"], {async:true}, function() {
+task('upload', ["wapp", "built/yelm.js"], {async:true}, function() {
   cmdIn(this, ".", 'node built/yelm.js uploadrel latest')
 })
 
@@ -184,7 +183,7 @@ task('wapp', [
         'built/web/yelmembed.js'
         ])
 
-file("built/web/yelmlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/yelmlib.js", "built/yelmlib.js"], function () {
+file("built/web/yelmlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/yelmlib.js", "built/yelmsim.js"], function () {
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
@@ -203,7 +202,7 @@ file("built/web/yelmlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/yel
 })
 
 file('built/webapp/src/app.js', expand([
-        "webapp", "built/yelmlib.js", "built/yelmlib.js"]), { async: true }, function () {
+        "webapp", "built/web/yelmlib.js"]), { async: true }, function () {
     tscIn(this, "webapp")
 })
 

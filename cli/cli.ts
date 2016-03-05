@@ -158,8 +158,8 @@ export function uploadrelAsync(label?: string) {
 
     let fileList =
         allFiles("webapp/public")
-            .concat(onlyExts(allFiles("webapp/built", 1), [".js", ".css"]))
-            .concat(allFiles("webapp/built/themes/default/assets/fonts", 1))
+            .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
+            .concat(allFiles("built/web/themes/default/assets/fonts", 1))
 
     let liteId = "<none>"
 
