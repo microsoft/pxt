@@ -85,7 +85,7 @@ task("wappupdate", {async:true}, function() {
   cmdIn(this, "webapp", 'jake update')
 })
 
-task("travis", ["update", "wappupdate", "wapp"], {async:true}, function() {
+task("travis", ["update", "wappupdate", "wapp", "upload"], {async:true}, function() {
 })
 
 task('upload', ["wapp"], {async:true}, function() {

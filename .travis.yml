@@ -4,8 +4,6 @@ node_js:
 before_script:
   - "npm install"
   - "tsd reinstall"
-after_success:
-  - "jake upload"
 sudo: false
 notifications:
   email:
