@@ -81,6 +81,13 @@ task("wapp", {async:true}, function() {
   cmdIn(this, "webapp", 'jake')
 })
 
+task("wappupdate", {async:true}, function() {
+  cmdIn(this, "webapp", 'jake update')
+})
+
+task("travis", ["update", "wappupdate", "wapp", "upload"], {async:true}, function() {
+})
+
 task('upload', ["wapp"], {async:true}, function() {
   cmdIn(this, ".", 'node built/yelm.js uploadrel latest')
 })

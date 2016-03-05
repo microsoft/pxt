@@ -72,6 +72,12 @@ ju.catFiles("built/semantic.js",
         "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
     "")
 
+task('update', function() {
+  jake.exec([
+        "npm install",
+        "tsd reinstall"
+  ], {printStdout: true});
+})
 
 task('clean', function () {
     jake.rmRf("built")
