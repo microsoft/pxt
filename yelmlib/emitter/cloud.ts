@@ -1,7 +1,7 @@
 namespace yelm.Cloud {
     import Util = ts.yelm.Util;
     
-    export var apiRoot = "https://mbit.touchdevelop.com/api/";
+    export var apiRoot = "https://yelm.tdev.ly/api/";
     export var accessToken = "";
     export var _isOnline = true;
     export var onOffline = () => { };
