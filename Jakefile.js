@@ -21,7 +21,9 @@ function loadText(filename)
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'runprj', 'embed', 'testfmt'])
+task('default', ['updatestrings', 'built/yelm.js', 'built/yelm.d.ts', 'wapp'], { parallelLimit: 10 })
+
+task('test', ['default', 'runprj', 'testfmt'])
 
 task('clean', function() {
   // jake.rmRf("built") - doesn't work?
@@ -34,7 +36,7 @@ task('clean', function() {
   })
 })
 
-task('runprj', ['built/yelm.js', 'built/yelm.d.ts'], {async:true, parallelLimit: 10}, function() {
+task('runprj', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
   cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
 })
 
@@ -42,17 +44,26 @@ task('testfmt', ['built/yelm.js'], {async:true}, function() {
   cmdIn(this, "libs/format-test", 'node ../../built/yelm.js format -t')
 })
 
-task('embed', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
-  cmdIn(this, "libs/microbit", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/microbit-music", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/microbit-radio", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/microbit-serial", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/microbit-led", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/microbit-game", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/microbit-pins", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/microbit-devices", 'node ../../built/yelm.js genembed')
-  cmdIn(this, "libs/minecraft", 'node ../../built/yelm.js genembed')
+let embedFiles = [
+  "libs/microbit",
+  "libs/microbit-music",
+  "libs/microbit-radio",
+  "libs/microbit-serial",
+  "libs/microbit-led",
+  "libs/microbit-game",
+  "libs/microbit-pins",
+  "libs/microbit-devices",
+  "libs/minecraft",
+]
+
+embedFiles.forEach(f => {
+  file(f + "/built/yelmembed.js", expand([f]).filter(f => !/\/built\//.test(f)), {async:true}, function() {
+    cmdIn(this, f, 'node ../../built/yelm.js genembed')
+  })
 })
+
+ju.catFiles('built/web/yelmembed.js', embedFiles.map(f => f + "/built/yelmembed.js"))
+
 
 ju.catFiles('built/yelm.js', [
     "node_modules/typescript/lib/typescript.js", 
@@ -77,15 +88,7 @@ compileDir("yelmlib")
 compileDir("yelmsim", ["built/yelmlib.js"])
 compileDir("cli", ["built/yelmlib.js", "built/yelmsim.js"])
 
-task("wapp", {async:true}, function() {
-  cmdIn(this, "webapp", 'jake')
-})
-
-task("wappupdate", {async:true}, function() {
-  cmdIn(this, "webapp", 'jake update')
-})
-
-task("travis", ["update", "wappupdate", "wapp", "upload"], {async:true}, function() {
+task("travis", ["update", "wapp", "upload"], {async:true}, function() {
 })
 
 task('upload', ["wapp"], {async:true}, function() {
@@ -107,7 +110,11 @@ task('update', function() {
   ], {printStdout: true});
 })
 
-task('updatestrings', function() {
+task('updatestrings', ['built/localization.json'])
+
+
+
+file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), function() {
     var errCnt = 0;
     var translationStrings = {}
     var translationHelpStrings = {}
@@ -147,36 +154,79 @@ task('updatestrings', function() {
     }    
     
     var fileCnt = 0;
-    var srcPaths = [
-        "libs/microbit", 
-        "libs/microbit-devices", 
-        "libs/microbit-pins",
-        "libs/microbit-led", 
-        "libs/microbit-game", 
-        "libs/microbit-radio", 
-        "libs/microbit-serial", 
-        "libs/microbit-music", 
-        "libs/minecraft", 
-        "webapp/src"]
-    srcPaths.forEach(pth => {
-        fs.readdirSync(pth).forEach((fn) => {
-            fileCnt++;
-            processLf(path.join(pth, fn));
-        })
+    this.prereqs.forEach(pth => {
+        fileCnt++;
+        processLf(pth);
     });
 
     Object.keys(translationHelpStrings).forEach(k => translationStrings[k] = k)
     var tr = Object.keys(translationStrings)
     tr.sort()
 
-    console.log('strings: ' + tr.length);
     if (!fs.existsSync("built")) fs.mkdirSync("built");
     fs.writeFileSync("built/localization.json", JSON.stringify({ strings: tr }, null, 1))
     var strings = {};
     tr.forEach(function(k) { strings[k] = k; });
     fs.writeFileSync("built/strings.json", JSON.stringify(strings, null, 2));
 
-    console.log("*** Stop; " + fileCnt + " files");
+    console.log("*** Stop; " + fileCnt + " files; " + tr.length + " strings");
     if (errCnt > 0)
         console.log("%d errors", errCnt);
 })
+
+task('wapp', [
+        "built/web/yelmlib.js",
+        'built/web/main.js', 
+        'built/web/worker.js', 
+        'built/web/themes', 
+        'built/web/style.css', 
+        "built/web/semantic.js", 
+        'built/web/yelmembed.js'
+        ])
+
+file("built/web/yelmlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/yelmlib.js", "built/yelmlib.js"], function () {
+    jake.mkdirP("built/web")
+    jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
+    jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
+    jake.cpR("webapp/ace/mode/assembly_armthumb.js", "node_modules/brace/mode/")
+    jake.cpR("built/yelmlib.js", "built/web/yelmlib.js")
+    jake.cpR("built/yelmsim.js", "built/web/yelmsim.js")
+
+    let additionalExports = [
+      "getCompletionData"
+    ]
+
+    let ts = fs.readFileSync("node_modules/typescript/lib/typescript.js", "utf8")
+    ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/, 
+        f => f + " " + additionalExports.map(s => s + ": " + s + ",").join(" "))
+    fs.writeFileSync("built/web/typescript.js", ts)
+})
+
+file('built/webapp/src/app.js', expand([
+        "webapp", "built/yelmlib.js", "built/yelmlib.js"]), { async: true }, function () {
+    tscIn(this, "webapp")
+})
+
+file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {
+    cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
+})
+
+file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
+    jake.cpR("built/webapp/src/worker.js", "built/web/")
+})
+
+
+file('built/web/themes', [], function () {
+    jake.cpR("node_modules/semantic-ui-less/themes", "built/web/")
+})
+
+file('built/web/style.css', ["webapp/theme.config"], { async: true }, function () {
+    cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/web/style.css --include-path=node_modules/semantic-ui-less:webapp/foo/bar')
+})
+
+ju.catFiles("built/web/semantic.js",
+    expand(["node_modules/semantic-ui-less/definitions/globals",
+        "node_modules/semantic-ui-less/definitions/modules",
+        "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
+    "")
+

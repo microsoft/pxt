@@ -10,6 +10,18 @@
     },
     "bluebird/bluebird.d.ts": {
       "commit": "7b3d5a6ea5acda4a81f71309f1cc62354e63b681"
+    },
+    "react/react.d.ts": {
+      "commit": "717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf"
+    },
+    "jquery/jquery.d.ts": {
+      "commit": "717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf"
+    },
+    "react/react-dom.d.ts": {
+      "commit": "717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf"
+    },
+    "ace/ace.d.ts": {
+      "commit": "717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf"
     }
   }
 }

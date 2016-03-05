@@ -1,5 +1,5 @@
 /// <reference path="./blockly.d.ts" />
-/// <reference path="../typings/jquery/jquery.d.ts" />
+/// <reference path="../../typings/jquery/jquery.d.ts" />
 
 var blocklyDiv = document.createElement("div");
 blocklyDiv.style.position = "absolute";

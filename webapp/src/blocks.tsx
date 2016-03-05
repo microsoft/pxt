@@ -1,5 +1,5 @@
 /// <reference path="./blockly.d.ts" />
-/// <reference path="../typings/jquery/jquery.d.ts" />
+/// <reference path="../../typings/jquery/jquery.d.ts" />
 /// <reference path='touchdevelop.d.ts'/>
 
 import * as React from "react";

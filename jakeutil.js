@@ -17,6 +17,15 @@ function execCallback(task) {
     }
 }
 
+function expand1(dirs) {
+    if (!Array.isArray(dirs))
+        dirs = [dirs]
+    let r = []
+    dirs.forEach(dir =>
+      fs.readdirSync(dir).forEach(f => r.push(dir + "/" + f)))
+    return r
+}
+
 function expand(dir, ext) {
     function expandCore(dir) {
         if (Array.isArray(dir)) {
@@ -55,6 +64,7 @@ function cmdIn(task, dir, cmd) {
 
 exports.execCallback = execCallback;
 exports.expand = expand;
+exports.expand1 = expand1;
 exports.catFiles = catFiles;
 exports.cmdIn = cmdIn;
 
