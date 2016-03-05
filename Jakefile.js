@@ -77,7 +77,7 @@ compileDir("yelmlib")
 compileDir("yelmsim", ["built/yelmlib.js"])
 compileDir("cli", ["built/yelmlib.js", "built/yelmsim.js"])
 
-task("wapp", ["update"] {async:true}, function() {
+task("wapp", ["update"], {async:true}, function() {
   cmdIn(this, "webapp", 'jake')
 })
 
@@ -101,7 +101,7 @@ task('update', function() {
   jake.exec([
         "npm install",
         "tsd reinstall"
-  ], { cwd: "./webapp", printStdout: true});
+  ], { cwd: "webapp", printStdout: true});
 })
 
 task('updatestrings', function() {
