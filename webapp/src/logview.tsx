@@ -66,8 +66,8 @@ export class LogView extends React.Component<ILogProps, ILogState> {
                 case 'run': this.setState({ entries: [] }); break;
                 case 'serial':
                     let value = msg.data || '';
-                    let source = msg.id || (ev.source.frameElement ? ev.source.frameElement.id : '') || '?';
-                    let theme = (ev.source.frameElement ? (ev.source.frameElement as HTMLElement).dataset["simtheme"] : "") || "";
+                    let source = msg.id || '?';
+                    let theme = source.split('-')[0] || '';
                     this.appendEntry(source, value, theme);
                     break;
             }

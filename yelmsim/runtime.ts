@@ -179,9 +179,9 @@ namespace yelm.rt {
                 this.running = r;
                 if (this.running) {
                     this.startTime = U.now();
-                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', state: 'running' });
+                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
                 } else {
-                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', state: 'killed' });
+                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
                 }
                 if (this.stateChanged) this.stateChanged();
             }
