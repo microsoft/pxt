@@ -14,8 +14,14 @@ namespace yelm.rt {
             [index:string] : number;
         }
     }
+
+    export interface SimulatorReadyMessage extends SimulatorMessage {
+        frameid: string;
+    }
     
     export interface SimulatorStateMessage extends SimulatorMessage {
+        frameid?: string;
+        runtimeid?:string;
         state:string;
     }
     
@@ -36,8 +42,9 @@ namespace yelm.rt {
     export module Embed {
         export function start() {
             console.log('listening for simulator commands')
-            window.addEventListener("message", receiveMessage, false);       
-            Runtime.postMessage(<SimulatorStateMessage>{ type:'status', state: 'ready'});     
+            window.addEventListener("message", receiveMessage, false);
+            let frameid = window.location.hash.slice(1)
+            Runtime.postMessage(<SimulatorReadyMessage>{ type:'ready', frameid: frameid});     
         }
 
         function receiveMessage(event: MessageEvent) {
