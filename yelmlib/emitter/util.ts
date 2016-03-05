@@ -11,11 +11,11 @@ namespace ts.yelm.Util {
             throw new Error(msg)
         }
     }
-    
-    export function repeatMap<T>(n : number, fn : (index:number) => T) : T[] {
+
+    export function repeatMap<T>(n: number, fn: (index: number) => T): T[] {
         n = n || 0;
-        let r : T[] = [];
-        for(let i = 0;i<n;++i) r.push(fn(i));
+        let r: T[] = [];
+        for (let i = 0; i < n; ++i) r.push(fn(i));
         return r;
     }
 
@@ -23,8 +23,8 @@ namespace ts.yelm.Util {
         debugger
         throw new Error(msg)
     }
-    
-    export function reversed<T>(arr:T[]) {
+
+    export function reversed<T>(arr: T[]) {
         arr = arr.slice(0)
         arr.reverse()
         return arr
@@ -361,9 +361,34 @@ namespace ts.yelm.Util {
         }
         return res;
     }
-    
-    export function now() : number {
+
+    export function now(): number {
         return Date.now();
+    }
+
+    export function getMime(filename: string) {
+        let m = /\.([a-zA-Z0-9]+)$/.exec(filename)
+        if (m)
+            switch (m[1]) {
+                case "txt": return "text/plain";
+                case "html":
+                case "htm": return "text/html";
+                case "css": return "text/css";
+                case "js": return "application/javascript";
+                case "jpg":
+                case "jpeg": return "image/jpeg";
+                case "png": return "image/png";
+                case "ico": return "image/x-icon";
+                case "manifest": return "text/cache-manifest";
+                case "json": return "application/json";
+                case "svg": return "image/svg+xml";
+                case "eot": return "application/vnd.ms-fontobject";
+                case "ttf": return "font/ttf";
+                case "woff": return "application/font-woff";
+                case "woff2": return "application/font-woff2";
+                default: return "application/octet-stream";
+            }
+        else return "application/octet-stream";
     }
 
     export function randomUint32() {

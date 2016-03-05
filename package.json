@@ -19,6 +19,8 @@
     "built/yelm.d.ts",
     "built/yelmlib.js",
     "built/yelmlib.d.ts",
+    "built/nodeutil.js",
+    "built/server.js",
     "generated/hexinfo.js"
   ],
   "preferGlobal": true,
