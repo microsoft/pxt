@@ -835,6 +835,7 @@ function getEditor() {
     return theEditor
 }
 
+// This is for usage from JS console
 let myexports: any = {
     workspace,
     require,
@@ -842,7 +843,8 @@ let myexports: any = {
     getEditor,
     ace,
     compiler,
-    pkg
+    pkg,
+    apiAsync: core.apiAsync
 };
 (window as any).E = myexports;
 

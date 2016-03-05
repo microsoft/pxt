@@ -10,9 +10,9 @@ let headers = new db.Table("header")
 let texts = new db.Table("text")
 let scripts = new db.Table("script")
 
-import Util = yelm.Util;
+import U = yelm.Util;
 import Cloud = yelm.Cloud;
-let lf = Util.lf
+let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 
 
@@ -35,7 +35,7 @@ export interface Header extends InstallHeader {
     saveId?: any;
 }
 
-export type ScriptText = Util.StringMap<string>;
+export type ScriptText = U.StringMap<string>;
 
 interface HeaderWithScript {
     id: string;
@@ -76,27 +76,6 @@ export function initAsync() {
     })
 }
 
-export class PromiseQueue {
-    promises: Util.StringMap<Promise<any>> = {};
-
-    enqueue<T>(id: string, f: () => Promise<T>): Promise<T> {
-        if (!this.promises.hasOwnProperty(id)) {
-            this.promises[id] = Promise.resolve()
-        }
-        let newOne = this.promises[id]
-            .catch(e => {
-                Util.nextTick(() => { throw e })
-            })
-            .then(() => f().then(v => {
-                if (this.promises[id] === newOne)
-                    delete this.promises[id];
-                return v;
-            }))
-        this.promises[id] = newOne;
-        return newOne;
-    }
-}
-
 export function resetAsync() {
     return db.db.destroy()
         .then(() => {
@@ -116,7 +95,7 @@ function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
         })
 }
 
-let headerQ = new PromiseQueue();
+let headerQ = new U.PromiseQueue();
 
 export function getTextAsync(id: string): Promise<ScriptText> {
     let e = lookup(id)
@@ -125,10 +104,6 @@ export function getTextAsync(id: string): Promise<ScriptText> {
     if (e.text)
         return Promise.resolve(e.text)
     return headerQ.enqueue(id, () => fetchTextAsync(e))
-}
-
-export function nowSeconds() {
-    return Math.round(Date.now() / 1000)
 }
 
 function fetchTextRevAsync(e: HeaderWithScript) {
@@ -140,7 +115,7 @@ function fetchTextRevAsync(e: HeaderWithScript) {
 function saveCoreAsync(h: Header, text?: ScriptText) {
     let e = lookup(h.id)
 
-    Util.assert(e.header === h)
+    U.assert(e.header === h)
 
     if (text) {
         h.saveId = null
@@ -209,16 +184,16 @@ export function saveAsync(h: Header, text?: ScriptText) {
     if (text || h.isDeleted) {
         h.pubCurrent = false
         h.blobCurrent = false
-        h.modificationTime = nowSeconds();
+        h.modificationTime = U.nowSeconds();
     }
-    h.recentUse = nowSeconds();
+    h.recentUse = U.nowSeconds();
     return saveCoreAsync(h, text)
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
     let h = <Header>h0
-    h.id = Util.guidGen();
-    h.recentUse = nowSeconds()
+    h.id = U.guidGen();
+    h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
     let e: HeaderWithScript = {
         id: h.id,
@@ -230,7 +205,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
         .then(() => h)
 }
 
-let scriptDlQ = new PromiseQueue();
+let scriptDlQ = new U.PromiseQueue();
 //let scriptCache:any = {}
 export function getScriptFilesAsync(id: string) {
     //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])   
@@ -255,22 +230,6 @@ export function installByIdAsync(id: string) {
                         meta: scr.meta,
                         editor: scr.editor
                     }, files)))
-}
-
-export function apiAsync(path: string, data?: any) {
-    return (data ?
-        Cloud.privatePostAsync(path, data) :
-        Cloud.privateGetAsync(path))
-        .then(resp => {
-            console.log("*")
-            console.log("*******", path, "--->")
-            console.log("*")
-            console.log(resp)
-            console.log("*")
-            return resp
-        }, err => {
-            console.log(err.message)
-        })
 }
 
 interface CloudHeader {
@@ -337,13 +296,13 @@ export function syncAsync() {
     var numUp = 0
     var numDown = 0
     var blobConatiner = ""
-    var updated: Util.StringMap<number> = {}
+    var updated: U.StringMap<number> = {}
 
     function uninstallAsync(h: Header) {
         console.log(`uninstall local ${h.id}`)
         let e = lookup(h.id)
         let idx = allScripts.indexOf(e)
-        Util.assert(idx >= 0)
+        U.assert(idx >= 0)
         allScripts.splice(idx, 1)
         h.isDeleted = true;
         return headerQ.enqueue(h.id, () =>
@@ -368,18 +327,18 @@ export function syncAsync() {
         }
 
         numDown++
-        Util.assert(header.id == cloudHeader.guid)
+        U.assert(header.id == cloudHeader.guid)
         let blobId = cloudHeader.scriptVersion.baseSnapshot
         console.log(`sync down ${header.id} - ${blobId}`)
-        return Util.httpGetJsonAsync(blobConatiner + blobId)
+        return U.httpGetJsonAsync(blobConatiner + blobId)
             .then(resp => {
-                Util.assert(resp.guid == header.id)
+                U.assert(resp.guid == header.id)
                 header.blobCurrent = true
                 header.blobId = blobId
                 header.modificationTime = cloudHeader.scriptVersion.time
                 header.editor = resp.editor
                 header.name = resp.name
-                var files: Util.StringMap<string> = { "_default_": resp.script }
+                var files: U.StringMap<string> = { "_default_": resp.script }
                 if (isProject(header))
                     files = JSON.parse(resp.script)
                 header.recentUse = cloudHeader.recentUse
@@ -426,7 +385,7 @@ export function syncAsync() {
         let body = {
             guid: h.id,
             status: "deleted",
-            scriptVersion: { time: nowSeconds(), baseSnapshot: "*" }
+            scriptVersion: { time: U.nowSeconds(), baseSnapshot: "*" }
         }
         return Cloud.privatePostAsync("me/installed", { bodies: [body] })
             .then(() => uninstallAsync(h))
@@ -435,8 +394,8 @@ export function syncAsync() {
     return Cloud.privateGetAsync("me/installed?format=short")
         .then((resp: InstalledHeaders) => {
             blobConatiner = resp.blobcontainer
-            let cloudHeaders = Util.toDictionary(resp.headers, h => h.guid)
-            let existingHeaders = Util.toDictionary(allScripts, h => h.id)
+            let cloudHeaders = U.toDictionary(resp.headers, h => h.guid)
+            let existingHeaders = U.toDictionary(allScripts, h => h.id)
             let waitFor = allScripts.map(e => {
                 let hd = e.header
                 if (cloudHeaders.hasOwnProperty(hd.id)) {

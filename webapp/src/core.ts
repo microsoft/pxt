@@ -296,3 +296,19 @@ export function scrollIntoView(item: JQuery, margin = 0) {
     }
 }
 
+// for JavaScript console
+export function apiAsync(path: string, data?: any) {
+    return (data ?
+        Cloud.privatePostAsync(path, data) :
+        Cloud.privateGetAsync(path))
+        .then(resp => {
+            console.log("*")
+            console.log("*******", path, "--->")
+            console.log("*")
+            console.log(resp)
+            console.log("*")
+            return resp
+        }, err => {
+            console.log(err.message)
+        })
+}

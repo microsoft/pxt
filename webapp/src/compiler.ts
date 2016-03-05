@@ -5,15 +5,15 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 
 import Cloud = yelm.Cloud;
-import Util = yelm.Util;
+import U = yelm.Util;
 
 let tsWorker: Worker;
-let pendingMsgs: Util.StringMap<(v: any) => void> = {}
+let pendingMsgs: U.StringMap<(v: any) => void> = {}
 let msgId = 0;
-let q: workspace.PromiseQueue;
+let q: U.PromiseQueue;
 
 export function init() {
-    q = new workspace.PromiseQueue();
+    q = new U.PromiseQueue();
     let initPromise = new Promise<void>((resolve, reject) => {
         pendingMsgs["ready"] = resolve;
     })
@@ -55,7 +55,7 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     }
 
     if (!output)
-        output = Util.lf("Everything seems fine!\n")
+        output = U.lf("Everything seems fine!\n")
 
 
     let f = mainPkg.outputPkg.setFile("output.txt", output)

@@ -362,8 +362,33 @@ namespace ts.yelm.Util {
         return res;
     }
 
+    export class PromiseQueue {
+        promises: Util.StringMap<Promise<any>> = {};
+
+        enqueue<T>(id: string, f: () => Promise<T>): Promise<T> {
+            if (!this.promises.hasOwnProperty(id)) {
+                this.promises[id] = Promise.resolve()
+            }
+            let newOne = this.promises[id]
+                .catch(e => {
+                    Util.nextTick(() => { throw e })
+                })
+                .then(() => f().then(v => {
+                    if (this.promises[id] === newOne)
+                        delete this.promises[id];
+                    return v;
+                }))
+            this.promises[id] = newOne;
+            return newOne;
+        }
+    }
+
     export function now(): number {
         return Date.now();
+    }
+
+    export function nowSeconds(): number {
+        return Math.round(nowSeconds() / 1000)
     }
 
     export function getMime(filename: string) {
