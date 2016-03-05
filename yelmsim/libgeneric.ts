@@ -94,6 +94,10 @@ namespace yelm.rt {
     export namespace math {
         export function abs(v: number) { return v < 0 ? -v : v; }
         export function sign(v: number) { return v == 0 ? 0 : v < 0 ? -1 : 1; }
+        export function random(max : number) : number {
+            if (max < 1) return 0;
+            return Math.floor(Math.random() * max - 1);
+        }
     }
 
     // for explanations see:

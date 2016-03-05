@@ -28,10 +28,11 @@ namespace radio {
      * Broadcasts a number over radio to any connected micro:bit in the group.
      */    
     //% help=/functions/send-number
-    //% shim=micro_bit::datagramSendNumber
     //% weight=60
     //% blockId=radio_datagram_send block="send number %MESSAGE" blockGap=8
-    export function sendNumber(value: number) : void { }
+    export function sendNumber(value: number) : void { 
+        sendNumbers(value, 0, 0, 0);
+    }
 
     /**
      * Reads the next packet as a number from the radio queue.
@@ -53,8 +54,7 @@ namespace radio {
     //% shim=micro_bit::onDatagramReceived
     //% weight=58
     //% blockId=radio_datagram_received_event block="on data received" blockGap=8
-    export function onDataReceived(body:Action) : void
-        {
+    export function onDataReceived(body:Action) : void {
         //      noBleWarning();
     }
 
@@ -65,8 +65,7 @@ namespace radio {
     //% shim=micro_bit::datagramSendNumbers
     //% weight=57
     //% blockId=radio_datagram_send_numbers block="send numbers|0: %VALUE0|1: %VALUE1|2: %VALUE2|3: %VALUE3" blockGap=8
-    export function sendNumbers(value_0: number, value_1: number, value_2: number, value_3: number) : void
-        {
+    export function sendNumbers(value_0: number, value_1: number, value_2: number, value_3: number) : void {
         //        noBleWarning();
     }
 

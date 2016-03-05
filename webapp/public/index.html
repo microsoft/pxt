@@ -22,10 +22,15 @@
     </div>
 
     <style type="text/css">
-        @import './style.css';
-        @import './custom.css';
-        @import './sim.css';
+        @import "./style.css";
+        @import "./custom.css";
+        @import "./sim.css";
     </style>
+    <script>
+        // This line gets patched up by the cloud
+        var rootUrl = "dummy";
+        var appCdnRoot = "./"; 
+    </script>
 
     <script type="text/javascript" src="./jquery.js"></script>
     <script type="text/javascript" src="./typescript.js"></script>
@@ -109,7 +114,7 @@
             </block>
         </category>
         <category name="Variables" colour="330" custom="VARIABLE"  category="48"></category>
-        <category name="Maths" colour="230"  category="47">
+        <category name="Math" colour="230"  category="47">
             <block type="math_arithmetic" gap="8">
                 <value name="A">
                     <shadow type="math_number">

@@ -1,3 +1,6 @@
+/// <reference path="../../typings/react/react.d.ts" />
+/// <reference path="../../typings/react/react-dom.d.ts" />
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
@@ -78,7 +81,7 @@ export function browserDownloadText(text: string, name: string, contentType: str
     var buf = Util.stringToUint8Array(Util.toUTF8(text))
     var uri = browserDownloadUInt8Array(buf, name, contentType);
     $('#compilemsg').finish()
-        .html("Compilation done. <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>Use this link to save to another location.</a>")
+        .html(`${lf("Download ready.")} <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>${lf("Use this link to save to another location.")}</a>`)
         .fadeIn('fast').delay(7000).fadeOut('slow');
 }
 

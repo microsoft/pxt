@@ -62,17 +62,22 @@ function saveConfig() {
 }
 
 function initConfig() {
+    let atok: string = process.env["CLOUD_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>JSON.parse(fs.readFileSync(configPath(), "utf8"))
         globalConfig = config
-        if (config.accessToken) {
-            let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(config.accessToken)
-            if (!mm) {
-                fatal("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
-            }
-            Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
-            Cloud.accessToken = mm[2]
+        if (!atok && config.accessToken) {
+            atok = config.accessToken
         }
+    }
+
+    if (atok) {
+        let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(atok)
+        if (!mm) {
+            fatal("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+        }
+        Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
+        Cloud.accessToken = mm[2]
     }
 }
 
@@ -80,6 +85,8 @@ export function loginAsync(access_token: string) {
     if (/^http/.test(access_token)) {
         globalConfig.accessToken = access_token
         saveConfig()
+        if (process.env["CLOUD_ACCESS_TOKEN"])
+            console.log("You have $CLOUD_ACCESS_TOKEN set; this overrides what you've specified here.")
     } else {
         let root = Cloud.apiRoot.replace(/api\/$/, "")
         console.log("USAGE:")
@@ -99,6 +106,103 @@ export function apiAsync(path: string, postArguments?: string) {
     })
         .then(resp => {
             console.log(resp.json)
+        })
+}
+
+function getMime(filename: string) {
+    var ext = path.extname(filename).slice(1)
+    switch (ext) {
+        case "txt": return "text/plain";
+        case "html":
+        case "htm": return "text/html";
+        case "css": return "text/css";
+        case "js": return "application/javascript";
+        case "jpg":
+        case "jpeg": return "image/jpeg";
+        case "png": return "image/png";
+        case "ico": return "image/x-icon";
+        case "manifest": return "text/cache-manifest";
+        case "json": return "application/json";
+        case "svg": return "image/svg+xml";
+        case "eot": return "application/vnd.ms-fontobject";
+        case "ttf": return "font/ttf";
+        case "woff": return "application/font-woff";
+        case "woff2": return "application/font-woff2";
+        default: return "application/octet-stream";
+    }
+}
+
+function allFiles(top: string, maxDepth = 4): string[] {
+    let res: string[] = []
+    for (let p of fs.readdirSync(top)) {
+        let inner = top + "/" + p
+        let st = fs.statSync(inner)
+        if (st.isDirectory()) {
+            if (maxDepth > 1)
+                U.pushRange(res, allFiles(inner, maxDepth - 1))
+        } else {
+            res.push(inner)
+        }
+    }
+    return res
+}
+
+function onlyExts(files: string[], exts: string[]) {
+    return files.filter(f => exts.indexOf(path.extname(f)) >= 0)
+}
+
+export function uploadrelAsync(label?: string) {
+    let lbl: string = process.env["USERNAME"] || "local"
+    lbl = ((253402300799999 - Date.now()) + "0000" + "-" + U.guidGen().replace(/-/g, ".") + "-" + lbl).toLowerCase()
+    console.log("releaseid:" + lbl)
+
+    let fileList =
+        allFiles("webapp/public")
+            .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
+            .concat(allFiles("built/web/themes/default/assets/fonts", 1))
+
+    let liteId = "<none>"
+
+    let uploadFileAsync = (p: string) => {
+        if (!fs.existsSync(p))
+            return;
+        return readFileAsync(p)
+            .then((data: Buffer) => {
+                // Strip the leading directory name, unless we are uploading a single file.
+                let fileName = p.split("/").slice(2).join("/")
+                let mime = getMime(p)
+                let isText = /^(text\/.*|application\/(javascript|json))$/.test(mime)
+                return Cloud.privatePostAsync(liteId + "/files", {
+                    encoding: isText ? "utf8" : "base64",
+                    filename: fileName,
+                    contentType: mime,
+                    content: isText ? data.toString("utf8") : data.toString("base64"),
+                })
+                    .then(resp => {
+                        console.log(fileName, mime)
+                    })
+            })
+    }
+
+
+
+    return Cloud.privatePostAsync("releases", {
+        releaseid: lbl,
+        commit: process.env['TRAVIS_COMMIT'],
+        branch: process.env['TRAVIS_BRANCH'],
+        buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
+    })
+        .then(resp => {
+            console.log(resp)
+            liteId = resp.id
+            return Promise.map(fileList, uploadFileAsync, { concurrency: 15 })
+        })
+        .then(() => {
+            if (!label) return Promise.resolve()
+            else return Cloud.privatePostAsync(liteId + "/label", { name: label })
+        })
+        .then(() => {
+            console.log("All done.")
         })
 }
 
@@ -625,6 +729,7 @@ cmd("help                     - display this message", helpAsync)
 
 cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
 cmd("genembed                 - generate built/yelmembed.js from current package", genembedAsync, 1)
+cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
 cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)
 cmd("compile  FILE...         - hex-compile given set of files", compileAsync, 2)
 cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)

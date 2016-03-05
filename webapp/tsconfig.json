@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "module": "commonjs",
-        "outDir": "built",
+        "outDir": "../built/webapp",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": true,

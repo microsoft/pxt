@@ -356,5 +356,31 @@ namespace yelm.rt.micro_bit {
         let ens = enums()
         board().bus.listen(ens.MES_BROADCAST_GENERAL_ID, msg, handler);
     }
+    
+    export function setGroup(id : number) : void {
+        board().radio.setGroup(id);
+    }
+    
+
+    export function datagramSendNumbers(value0 : number, value1: number, value2: number, value3: number) : void {
+        board().radio.datagram.send([value0, value1, value2, value3]);
+    }
+    
+    export function datagramReceiveNumber() : number {
+        return board().radio.datagram.recv().data[0];
+    }
+    
+    export function datagramGetNumber(index : number) : number {
+        return board().radio.datagram.lastReceived.data[index] || 0;
+    }
+    
+    export function datagramGetRSSI() : number {
+        return board().radio.datagram.lastReceived.rssi;
+    }
+        
+    export function onDatagramReceived(handler: RefAction) : void {
+        let ens = enums();
+        board().bus.listen(ens.MICROBIT_ID_RADIO, ens.MICROBIT_RADIO_EVT_DATAGRAM, handler);
+    }
 }
 

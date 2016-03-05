@@ -44,7 +44,7 @@ export interface CodeCardProps {
     time?: number;
     card?: yelm.PackageCard;
     url?: string;
-    
+    responsive?: boolean;
     onClick?: (e: React.MouseEvent) => boolean;
 }
 export interface CodeCardState { }
@@ -73,7 +73,7 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
         return (
             <div className={"ui card " + color + (this.props.onClick ? " link" : "")} onClick={this.props.onClick}>
                 {this.props.header ?
-                <div key="header" className="content">
+                <div key="header" className={"ui content " + (this.props.responsive ? " desktop only" : "")}>
                     <div className="right floated meta">
                         {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
                         {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
@@ -81,7 +81,7 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
                     </div>
                     {this.props.header}
                 </div> : "" }
-                <div className="image">
+                <div className={"ui image" + (this.props.responsive ? " landscape only": "")}>
                     {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div>
                         : this.props.blocksXml 
                         ? <blockspreview.BlocksPreview key="promoblocks" xml={this.props.blocksXml} />
@@ -96,7 +96,7 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
                     <div className="description">{this.props.description || lf("No description.") }</div>
                 </div>
                 {this.props.url || card.power || card.toughness ?
-                <div key="extra" className="extra content">
+                <div key="extra" className={"ui extra content" + (this.props.responsive ? " desktop only" : "")}>
                     {card.power || card.toughness ? (<div key="powertough" className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
                     {this.props.url ?
                     <a target="_blank" href={this.props.url}>

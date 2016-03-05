@@ -54,7 +54,7 @@ module Helpers {
         "post to wall": "String",
         "=": "Unknown",
     };
-    ["=", "≠", "<", "≤", ">", "≥", "+", "-", "/", "*"].forEach(x => knownPropertyRefs[x] = "Number");
+    ["==", "!=", "<", "<=", ">", ">=", "+", "-", "/", "*"].forEach(x => knownPropertyRefs[x] = "Number");
     ["and", "or", "not"].forEach(x => knownPropertyRefs[x] = "Boolean");
 
     export function mkPropertyRef(x: string, p: string): J.JPropertyRef {
@@ -84,7 +84,7 @@ module Helpers {
         return {
             nodeType: "singletonRef",
             id: null,
-            name: name.toLowerCase(),
+            name: name,
             type: mkTypeRef(name)
         };
     }
@@ -722,13 +722,13 @@ var opToTok: { [index: string]: string } = {
     "MULTIPLY": "*",
     "DIVIDE": "/",
     "LT": "<",
-    "LTE": "≤",
+    "LTE": "<=",
     "GT": ">",
-    "GTE": "≥",
+    "GTE": ">=",
     "AND": "and",
     "OR": "or",
-    "EQ": "=",
-    "NEQ": "≠",
+    "EQ": "==",
+    "NEQ": "!=",
 };
 
 function compileArithmetic(e: Environment, b: B.Block): J.JExpr {

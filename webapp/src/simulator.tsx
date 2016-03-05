@@ -1,3 +1,4 @@
+/// <reference path="../../built/yelmsim.d.ts" />
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
@@ -5,32 +6,35 @@ import * as sui from "./sui"
 export interface ISimulatorProps { }
 
 export class Simulator extends React.Component<ISimulatorProps, {}> {
-    static nextFrameId : number = 0;
-    
+    static nextFrameId: number = 0;
+    static themes = ["blue", "red", "green", "yellow"];
+
     componentDidMount() {
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data;
-            switch(msg.type || '') {
-                case 'status':
-                     switch(msg.state || '') {
-                         case 'ready':
-                            Simulator.startFrame(ev.source.frameElement as HTMLIFrameElement);
-                            break;                           
-                     }
-                     break;
+            switch (msg.type || '') {
+                case 'ready':
+                    let frameid = (msg as yelm.rt.SimulatorReadyMessage).frameid;
+                    let frame = $('#' + frameid)[0] as HTMLIFrameElement;
+                    if (frame) Simulator.startFrame(frame);
+                    break;
                 case 'serial': break; //handled elsewhere
                 default:
+                    if (msg.type == 'radiopacket') {
+                        // assign rssi noisy?
+                        (msg as yelm.rt.SimulatorRadioPacketMessage).rssi = 10;
+                    }
                     Simulator.postMessage(ev.data, ev.source);
                     break;
             }
         }, false);
-        
+
     }
-     
-    static postMessage(msg: any, source?: Window) {
+
+    static postMessage(msg: yelm.rt.SimulatorMessage, source?: Window) {
         // dispatch to all iframe besides self
         let frames = $('#simulators iframe');
-        if (source && msg.type === 'eventbus' && frames.length < 2) {
+        if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket') && frames.length < 2) {
             let frame = Simulator.createFrame()
             $('#simulators').append(frame);
             frames = $('#simulators iframe');
@@ -45,20 +49,26 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
 
     static createFrame(): HTMLIFrameElement {
         let frame = document.createElement('iframe') as HTMLIFrameElement;
+        frame.id = yelm.Util.guidGen()
         frame.className = 'simframe';
         frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-        frame.src = './simulator.html';
+        let cdn = (window as any).appCdnRoot
+        frame.src = cdn + 'simulator.html#' + frame.id;
         frame.frameBorder = "0";
         return frame;
     }
-    
-    static startFrame(frame : HTMLIFrameElement) {
-        let msg = yelm.U.clone(Simulator.currentRuntime);
-        msg.id = Simulator.nextFrameId++;
-        frame.contentWindow.postMessage(msg, "*");        
+
+    static startFrame(frame: HTMLIFrameElement) {
+        let msg = yelm.U.clone(Simulator.currentRuntime) as yelm.rt.SimulatorRunMessage;
+        msg.theme = Simulator.themes[Simulator.nextFrameId++ % Simulator.themes.length];
+        msg.id = `${msg.theme}-${yelm.Util.guidGen()}`;
+        frame.contentWindow.postMessage(msg, "*");
     }
 
-    static currentRuntime : any;
+    static currentRuntime: yelm.rt.SimulatorRunMessage;
+    static stop() {
+        Simulator.postMessage({ type: 'stop' });
+    }
     static run(target: string, js: string, enums: any) {
         // store information
         Simulator.currentRuntime = {
@@ -67,7 +77,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
             enums: enums,
             code: js
         }
-        
+
         let simulators = $('#simulators');
         // drop extras frames
         simulators.find('iframe:gt(0)').remove();

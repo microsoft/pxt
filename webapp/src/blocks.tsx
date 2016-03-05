@@ -1,5 +1,5 @@
 /// <reference path="./blockly.d.ts" />
-/// <reference path="../typings/jquery/jquery.d.ts" />
+/// <reference path="../../typings/jquery/jquery.d.ts" />
 /// <reference path='touchdevelop.d.ts'/>
 
 import * as React from "react";
@@ -104,7 +104,7 @@ export class Editor extends srceditor.Editor {
         this.editor = Blockly.inject(blocklyDiv, {
             toolbox: document.getElementById('blocklyToolboxDefinition'),
             scrollbars: true,
-            media: "./blockly/media/",
+            media: (window as any).appCdnRoot + "blockly/media/",
             sound: true,
             trashcan:false,
             zoom: {

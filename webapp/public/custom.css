@@ -1,8 +1,28 @@
 #filelist,
 #maineditor {
   position: absolute;
-  top: 74px;
-  bottom: 0;
+  top:64px;
+  bottom: 2em;
+}
+#logo {
+    font-weight: bold;
+    font-size: 3em;
+    margin: 0;
+    padding: 0 0.5em 0 0.5em;
+    color: #2185D0;
+}
+#footer {
+    position: absolute;
+    bottom: 0;
+    height: 2em;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.05);
+}
+#footer div {
+    font-size:0.8em;
+    text-align: center;
+    margin-top:0.4em;
 }
 
 .simframe {
@@ -20,6 +40,7 @@
   padding: 0em 1em 0em 0.5em;
   overflow-x: hidden;
   overflow-y: auto;
+  margin-top: 0;  
 }
 
 #menubar {
@@ -56,6 +77,7 @@
     right: 2rem;
     top: 0.5rem;
     margin: 0;
+    z-index: 5;
 }
 
 #settings .popup {
@@ -131,7 +153,11 @@
 }
 
 .blocklyToolboxDiv {
-    background:#ebebeb;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.blocklyMainBackground {
+    stroke:none !important;
 }
 
 .blocklyTreeLabel, .blocklyText {
@@ -223,13 +249,39 @@
 .ui.logs {
     font-family: monospace;
     font-size:0.8em;
-    max-height: 240px;
+    max-height: 13em;
     overflow-y: auto;
     overflow-x: hidden;
     width: 100%;
     margin-bottom: 1em;
 }
 
+.ui.log {
+    border-left-width: 2px;
+    border-left-style: solid;
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+}
+
+.ui.log {
+    border-left-color:#ccc;
+}
+.ui.log.blue {
+    border-left-color:#3ADCFE;
+}
+.ui.log.yellow {
+    border-left-color:#FFD43A;
+}
+.ui.log.green {
+    border-left-color:#3AFFB3;
+}
+.ui.log.red {
+    border-left-color:#FF3A54;
+}
+.ui.log.black {
+    border-left-color:#202020;
+}
+    
 .ui.log.counter {
     background:grey;
     color:white;
@@ -251,8 +303,33 @@
     display:none !important;
 }
 
-/* protrait mode */
-@media screen and (max-width: 768px) {
+/* smaller screen */
+@media screen and (max-width: 968px) {
+    #logo {
+        font-size:1.5em;
+    }
+    .ui.desktop.only {
+        display:none !important;
+    }
+    #helpcard {
+        right: 2rem;
+        top: initial;
+        bottom: 2rem;
+        margin: 0;
+    }
+}
+
+/* thin portrait mode */
+@media screen and (max-width: 786px) {
+    #logo {
+        font-size:1em;
+    }    
+    #helpcard {
+        left: 2.1rem;
+        top: initial;
+        bottom: 220px;
+        margin: 0;
+    }
     #maineditor {
         left: 0;
     }
@@ -267,8 +344,13 @@
         z-index:5;
         bottom:1rem;
         left:1rem;
-        top:initial;           
+        top:initial;      
+        width:initial;     
     }
+    .simframe {
+        display:inline-block;
+    }
+    
     .blocklyTreeLabel {
         font-size:14px;
     }    

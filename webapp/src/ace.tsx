@@ -1,3 +1,5 @@
+/// <reference path="../../typings/ace/ace.d.ts" />
+
 import * as React from "react";
 import * as pkg from "./package";
 import * as core from "./core";

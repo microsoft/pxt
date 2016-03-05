@@ -144,6 +144,7 @@ interface IAppState {
     fileState?: string;
     showFiles?: boolean;
     helpCard?: codecard.CodeCardProps;
+    running?: boolean;
 }
 
 
@@ -489,6 +490,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     loadHeader(h: workspace.Header) {
         if (!h)
             return
+            
+        this.stopSimulator();
         pkg.loadPkgAsync(h.id)
             .then(() => {
                 compiler.newProject();
@@ -520,6 +523,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     newProject(hideCancel = false) {
+        let cdn = (window as any).appCdnRoot
+        let images = cdn + "images"
         core.confirmAsync({
             header: lf("Create new {0} project", this.appTarget.name),
             hideCancel: hideCancel,
@@ -535,8 +540,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newblockproject" class="ui fluid card link">
         <div class="ui slide masked reveal image">
-            <img class="visible content" src="/images/newblock.png">
-            <img class="hidden content" src="/images/newblock2.png">
+            <img class="visible content" src="${images}/newblock.png">
+            <img class="hidden content" src="${images}/newblock2.png">
         </div>
         <div class="content">
         <div class="header">Block Editor</div>
@@ -549,8 +554,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newtypescript" class="ui fluid card link">
         <div class="ui slide masked reveal image">
-            <img class="visible content" src="/images/newtypescript.png">
-            <img class="hidden content" src="/images/newtypescript2.png">
+            <img class="visible content" src="${images}/newtypescript.png">
+            <img class="hidden content" src="${images}/newtypescript2.png">
         </div>
         <div class="content">
         <div class="header">JavaScript</div>
@@ -565,7 +570,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newkodu" class="ui fluid card link">
         <div class="image">
-        <img src="/images/newkodu.png">
+        <img src="${images}/newkodu.png">
         </div>
         <div class="content">
         <div class="header">Kodu</div>
@@ -578,7 +583,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="column">
     <div id="newvisualstudiocode" class="ui fluid card link">
         <div class="image">
-        <img src="/images/newvisualstudiocode.png">
+        <img src="${images}/newvisualstudiocode.png">
         </div>
         <div class="content">
         <div class="header">Visual Studio Code</div>
@@ -682,8 +687,16 @@ Ctrl+Shift+B
             })
             .done()
     }
+    
+    stopSimulator() {
+        simulator.Simulator.stop()
+        
+        this.setState({ running: false})
+    }
 
     runSimulator() {
+        let logs = this.refs["logs"] as logview.LogView;
+        logs.clear();   
         let state = this.editor.snapshotState()
         compiler.compileAsync(ts.yelm.CompileTarget.JavaScript)
             .then(resp => {
@@ -694,6 +707,7 @@ Ctrl+Shift+B
                         pkg.mainPkg.getTarget(),
                         js,
                         resp.enums)
+                    this.setState({ running: true })
                 }
             })
             .done()
@@ -752,7 +766,8 @@ Ctrl+Shift+B
         return (
             <div id='root' className={"full-abs " + inv}>
                 <div id="menubar">
-                    <div className={"ui menu" + inv}>
+                    <div className={"ui small menu" + inv}>
+                        <span id="logo" className="item">yelm</span>
                         <div className="ui item">
                             <div className="ui buttons">
                                 <sui.Button text={lf("New Project") } onClick={() => this.newProject() } />
@@ -768,7 +783,7 @@ Ctrl+Shift+B
                             <SlotSelector parent={this} />
                         </div>
                         <div id="actionbar" className="ui item">
-                            <sui.Button key='runbtn' class='icon primary portrait only' icon='play' onClick={() => this.runSimulator() } />
+                            <sui.Button key='runbtn' class='icon primary portrait only' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                             {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
                             {this.editor.menu() }
                         </div>
@@ -782,10 +797,10 @@ Ctrl+Shift+B
                         <simulator.Simulator ref="simulator" />
                     </div>
                     <div className="ui landscape only">
-                        <logview.LogView />
+                        <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
-                        <sui.Button key='runbtn' class='primary' icon='play' text={lf("Run") } onClick={() => this.runSimulator() } />
+                        <sui.Button key='runbtn' class='primary' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {this.appTarget.compile ? <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                         <sui.Button icon='folder' onClick={() => {
                             this.setState({ showFiles: !this.state.showFiles });
@@ -796,9 +811,16 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div className="ui large screen only grid" id="helpcard"><codecard.CodeCard {...this.state.helpCard} /></div> : null }
+                    {this.state.helpCard ? <div id="helpcard"><codecard.CodeCard responsive={true} {...this.state.helpCard} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
+                <div id="footer">
+                    <div>                    
+                        <a href="https://github.com/Microsoft/yelm">yelm</a> - (c) Microsoft Corporation - 2016 - EXPERIMENTAL
+                        | <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">terms of use</a>
+                        | <a href="https://privacy.microsoft.com/en-us/privacystatement">privacy</a>
+                    </div>
+                </div>
             </div>
         );
     }
