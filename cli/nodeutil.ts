@@ -10,7 +10,7 @@ Promise = require("bluebird");
 
 import Util = yelm.Util;
 
-function readResAsync(g: events.EventEmitter) {
+export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
         var bufs: Buffer[] = []
         g.on('data', (c: any) => {
