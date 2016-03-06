@@ -5,6 +5,7 @@ import * as core from "./core";
 import * as pkg from "./package";
 import * as data from "./data";
 import * as cloudworkspace from "./cloudworkspace"
+import * as fileworkspace from "./fileworkspace"
 
 let scripts = new db.Table("script")
 
@@ -34,17 +35,30 @@ export interface Header extends InstallHeader {
 export type ScriptText = U.StringMap<string>;
 
 export interface WorkspaceProvider {
-    getHeaders():Header[];
-    getHeader(id:string):Header;
+    getHeaders(): Header[];
+    getHeader(id: string): Header;
     getTextAsync(id: string): Promise<ScriptText>;
-    initAsync():Promise<void>;
-    saveAsync(h: Header, text?: ScriptText):Promise<void>;
-    installAsync(h0: InstallHeader, text: ScriptText):Promise<Header>;    
-    saveToCloudAsync(h: Header):Promise<void>;
-    syncAsync():Promise<void>;
+    initAsync(): Promise<void>;
+    saveAsync(h: Header, text?: ScriptText): Promise<void>;
+    installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
+    saveToCloudAsync(h: Header): Promise<void>;
+    syncAsync(): Promise<void>;
 }
 
-var impl:WorkspaceProvider;
+var impl: WorkspaceProvider;
+
+export function setupWorkspace(id: string) {
+    switch (id) {
+        case "fs":
+        case "file":
+            impl = fileworkspace.provider;
+            break;
+        case "cloud":
+        default:
+            impl = cloudworkspace.provider
+            break;
+    }
+}
 
 export function getHeaders(withDeleted = false) {
     let r = impl.getHeaders()
@@ -75,10 +89,10 @@ export interface ScriptMeta {
     islibrary: boolean;
 }
 
-export function publishAsync(h: Header, text: ScriptText, meta:ScriptMeta) {
+export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
     let saveId = {}
     h.saveId = saveId
-    let stext = JSON.stringify(text, null, 2) + "\n" 
+    let stext = JSON.stringify(text, null, 2) + "\n"
     let scrReq = {
         baseid: h.pubId,
         name: h.name,
@@ -91,9 +105,9 @@ export function publishAsync(h: Header, text: ScriptText, meta:ScriptMeta) {
     }
     console.log(`publishing script; ${stext.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq)
-        .then((inf:Cloud.JsonScript) => {
+        .then((inf: Cloud.JsonScript) => {
             h.pubId = inf.id
-            h.pubCurrent = h.saveId === saveId            
+            h.pubCurrent = h.saveId === saveId
             console.log(`published; id /${inf.id}`)
             return saveAsync(h)
                 .then(() => inf)

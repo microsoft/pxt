@@ -852,6 +852,9 @@ let myexports: any = {
 $(document).ready(() => {
     $("#loading").remove();
     var lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    var ws = /ws=(\w+)/.exec(window.location.href)
+    if (ws) workspace.setupWorkspace(ws[1])
+        
     Util.updateLocalizationAsync(lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => {
             blocklyloader.init();

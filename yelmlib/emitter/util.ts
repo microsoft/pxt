@@ -388,7 +388,7 @@ namespace ts.yelm.Util {
     }
 
     export function nowSeconds(): number {
-        return Math.round(nowSeconds() / 1000)
+        return Math.round(now() / 1000)
     }
 
     export function getMime(filename: string) {

@@ -35,6 +35,24 @@ namespace yelm {
         card?: PackageCard;
     }
 
+    // this is for remote file interface to packages
+    export interface FsFile {
+        name: string;  // eg "main.ts"
+        mtime: number; // ms since epoch
+        content?: string; // not returned in FsPkgs
+        prevContent?: string; // only used in write reqs
+    }
+
+    export interface FsPkg {
+        path: string; // eg "foo/bar"
+        config: yelm.PackageConfig; // yelm.json
+        files: FsFile[]; // this includes yelm.json
+    }
+
+    export interface FsPkgs {
+        pkgs: FsPkg[];
+    }
+
     export class Package {
         public config: PackageConfig;
         public level = -1;
