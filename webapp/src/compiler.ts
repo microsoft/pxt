@@ -18,7 +18,7 @@ export function init() {
         pendingMsgs["ready"] = resolve;
     })
     q.enqueue("main", () => initPromise)
-    
+
     let add = ""
     let cfg = (window as any).tdConfig
     if (cfg && cfg.relid) add = "?r=" + cfg.relid
@@ -63,8 +63,10 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.length
 }
 
-export function compileAsync(target: ts.yelm.CompileTarget) {
-    return pkg.mainPkg.getCompileOptionsAsync()
+export function compileAsync(native = false) {
+    let trg = pkg.mainPkg.getTargetOptions()
+    trg.isNative = native
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => compileCoreAsync(opts))
         .then(resp => {
             // TODO remove this

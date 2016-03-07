@@ -403,11 +403,14 @@ namespace ts.yelm {
             bin.writeFile = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null);
 
-            if (opts.target == CompileTarget.JavaScript) {
+            if (opts.target.isNative) {
+                if (opts.target.nativeType == "thumb")
+                    thumbEmit(bin)
+                else
+                    oops();
+            } else {
                 jsEmit(bin)
-            } else if (opts.target == CompileTarget.Thumb) {
-                thumbEmit(bin)
-            } else oops();
+            }
         }
 
         function typeCheckVar(decl: Declaration) {

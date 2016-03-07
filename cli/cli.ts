@@ -212,33 +212,6 @@ function extensionAsync(add: string) {
         })
 }
 
-export function compileAsync(...fileNames: string[]) {
-    let fileText: any = {}
-
-    fileNames.forEach(fn => {
-        fileText[fn] = fs.readFileSync(fn, "utf8")
-    })
-
-    let hexinfo = require("../generated/hexinfo.js");
-
-    let res = ts.yelm.compile({
-        fileSystem: fileText,
-        sourceFiles: fileNames,
-        target: ts.yelm.CompileTarget.Thumb,
-        hexinfo: hexinfo
-    })
-
-    Object.keys(res.outfiles).forEach(fn =>
-        fs.writeFileSync("../built/" + fn, res.outfiles[fn], "utf8"))
-
-    reportDiagnostics(res.diagnostics);
-
-    if (!res.success)
-        return Promise.reject(new Error("Errors compiling"))
-
-    return Promise.resolve()
-}
-
 let readFileAsync: any = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
 let execAsync = Promise.promisify(child_process.exec)
@@ -392,7 +365,7 @@ export function timeAsync() {
     ensurePkgDir();
     let min: U.Map<number> = null;
     let loop = () =>
-        mainPkg.buildAsync()
+        mainPkg.buildAsync(mainPkg.getTargetOptions())
             .then(res => {
                 if (!min) {
                     min = res.times
@@ -646,9 +619,9 @@ function runCoreAsync(res: ts.yelm.CompileResult) {
 
 function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
-    let target = ts.yelm.CompileTarget.Thumb
-    if (mode == BuildOption.Run)
-        target = ts.yelm.CompileTarget.JavaScript
+    let target = mainPkg.getTargetOptions()
+    if (target.nativeType && mode != BuildOption.Run)
+        target.isNative = true
     return mainPkg.buildAsync(target)
         .then(res => {
             U.iterStringMap(res.outfiles, (fn, c) =>
@@ -717,7 +690,6 @@ cmd("serve                    - start local web server", server.serveAsync, 1)
 cmd("genembed                 - generate built/yelmembed.js from current package", genembedAsync, 1)
 cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
 cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)
-cmd("compile  FILE...         - hex-compile given set of files", compileAsync, 2)
 cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)
 
 cmd("extension ADD_TEXT       - try compile extension", extensionAsync, 10)

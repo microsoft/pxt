@@ -5,6 +5,8 @@ namespace yelm {
     export import U = ts.yelm.Util;
     export import Util = ts.yelm.Util;
 
+    export type CompileTarget = ts.yelm.CompileTarget;
+
     export interface Host {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string): void;
@@ -239,7 +241,22 @@ namespace yelm {
             return ids.map(id => this.resolveDep(id))
         }
 
-        getCompileOptionsAsync(target = ts.yelm.CompileTarget.Thumb) {
+        getTargetOptions(): CompileTarget {
+            let trg = this.getTarget()
+            // TODO make this more dynamic
+            if (trg == "microbit")
+                return {
+                    isNative: false,
+                    hasHex: true
+                }
+            else
+                return {
+                    isNative: false,
+                    hasHex: false
+                }
+        }
+
+        getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
             let opts: ts.yelm.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
@@ -276,7 +293,7 @@ namespace yelm {
                 })
         }
 
-        buildAsync(target = ts.yelm.CompileTarget.Thumb) {
+        buildAsync(target: ts.yelm.CompileTarget) {
             return this.getCompileOptionsAsync(target)
                 .then(opts => ts.yelm.compile(opts))
         }

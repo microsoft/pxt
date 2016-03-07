@@ -672,7 +672,7 @@ Ctrl+Shift+B
     compile() {
         console.log('compiling...')
         let state = this.editor.snapshotState()
-        compiler.compileAsync(ts.yelm.CompileTarget.Thumb)
+        compiler.compileAsync(true)
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
@@ -696,9 +696,9 @@ Ctrl+Shift+B
 
     runSimulator() {
         let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();   
+        logs.clear(); 
         let state = this.editor.snapshotState()
-        compiler.compileAsync(ts.yelm.CompileTarget.JavaScript)
+        compiler.compileAsync()
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
