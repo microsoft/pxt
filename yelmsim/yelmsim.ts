@@ -117,7 +117,8 @@ namespace yelm.rt {
         
         function initMinecraft() {
             console.log('setting up minecraft simulator');
-            document.body.innerHTML = '<p>running...</p>';
+            document.body.innerHTML = ''; // clear children
+            document.body.appendChild((runtime.board as minecraft.Board).element);           
         }
     }
 }
