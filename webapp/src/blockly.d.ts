@@ -68,6 +68,7 @@ declare module Blockly {
         // Returns null if the field does not exist on the specified block.
         getFieldValue(field: string): string;
         setFieldValue(newValue: string, field: string): void;
+        setWarningText(text: string) : void;
         // Returns null if the input does not exist on the specified block, or
         // is disconnected.
         getInputTargetBlock(field: string): Block;

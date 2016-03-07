@@ -79,8 +79,8 @@ export class Editor extends srceditor.Editor {
         if (this.delayLoadXml) return this.delayLoadXml;
         return this.serializeBlocks();
     }
-    
-    serializeBlocks() : string {
+
+    serializeBlocks(): string {
         let xml = Blockly.Xml.workspaceToDom(this.editor);
         let text = Blockly.Xml.domToPrettyText(xml);
         return text;
@@ -91,7 +91,7 @@ export class Editor extends srceditor.Editor {
             console.log('blocks already loaded...');
             return;
         }
-        
+
         this.editor.clear();
         try {
             let text = s || "<xml></xml>";
@@ -115,7 +115,7 @@ export class Editor extends srceditor.Editor {
             scrollbars: true,
             media: (window as any).appCdnRoot + "blockly/media/",
             sound: true,
-            trashcan:false,
+            trashcan: false,
             zoom: {
                 enabled: true,
                 controls: true,
@@ -165,6 +165,31 @@ export class Editor extends srceditor.Editor {
     }
 
     setDiagnostics(file: pkg.File) {
+        if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
+            return;
+
+        let tsfile = file.epkg.lookupFile(file.getName() + ".ts");
+        let diags = tsfile ? tsfile.diagnostics : [];
+        // only show errors
+        diags = diags.filter(d => d.category == ts.DiagnosticCategory.Error);
+        let sourceMap = this.compilationResult.sourceMap;
+
+        // clear previous warnings
+        this.editor.getAllBlocks().forEach(b => b.setWarningText(null));
+
+        diags.forEach(diag => {
+            for (let i = 0; i < sourceMap.length; ++i) {
+                let chunk = sourceMap[i];
+                if (chunk.start <= diag.start && chunk.end >= diag.start + diag.length) {
+                    let b = this.editor.getBlockById(chunk.id)
+                    if (b) {
+                        let txt = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+                        b.setWarningText(txt);
+                    }
+                    break;
+                }
+            }
+        })
     }
 
     menu() {
