@@ -330,7 +330,7 @@ namespace yelm.rt.micro_bit {
                 let state = this.board;
                 if (!state.acceleration) return;            
                 let ax = (ev.clientX - this.element.clientWidth / 2) / (this.element.clientWidth / 3);
-                let yy = (ev.clientY - this.element.clientHeight / 2) / (this.element.clientHeight / 3);
+                let ay = (ev.clientY - this.element.clientHeight / 2) / (this.element.clientHeight / 3);
                 state.acceleration[0] = Math.max(-1023, Math.min(1023, Math.floor(ax * 1023)));
                 state.acceleration[1] = Math.max(-1023, Math.min(1023, Math.floor(ay * 1023)));
                 state.acceleration[2] = Math.floor(Math.sqrt(1023*1023

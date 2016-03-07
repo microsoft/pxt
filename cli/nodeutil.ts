@@ -10,7 +10,7 @@ Promise = require("bluebird");
 
 import Util = yelm.Util;
 
-function readResAsync(g: events.EventEmitter) {
+export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
         var bufs: Buffer[] = []
         g.on('data', (c: any) => {
@@ -100,7 +100,7 @@ function sha256(hashData: string): string {
 }
 
 
-function init() {
+export function init() {
     // no, please, I want to handle my errors myself
     let async = (<any>Promise)._async
     async.fatalError = (e: any) => async.throwLater(e);
@@ -118,4 +118,3 @@ function init() {
     (global as any).atob = (str:string) => new Buffer(str, "base64").toString("binary");
 }
 
-init();

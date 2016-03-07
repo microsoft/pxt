@@ -237,7 +237,7 @@ class Host
 
         if (proto == "pub") {
             // make sure it sits in cache
-            return workspace.getScriptFilesAsync(pkg.verArgument())
+            return workspace.getPublishedScriptAsync(pkg.verArgument())
                 .then(files => epkg.setFiles(files))
         } else if (proto == "workspace") {
             return workspace.getTextAsync(pkg.verArgument())

@@ -672,7 +672,7 @@ Ctrl+Shift+B
     compile() {
         console.log('compiling...')
         let state = this.editor.snapshotState()
-        compiler.compileAsync()
+        compiler.compileAsync(ts.yelm.CompileTarget.Thumb)
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
@@ -698,7 +698,7 @@ Ctrl+Shift+B
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();   
         let state = this.editor.snapshotState()
-        compiler.compileAsync()
+        compiler.compileAsync(ts.yelm.CompileTarget.JavaScript)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
@@ -835,6 +835,7 @@ function getEditor() {
     return theEditor
 }
 
+// This is for usage from JS console
 let myexports: any = {
     workspace,
     require,
@@ -842,7 +843,8 @@ let myexports: any = {
     getEditor,
     ace,
     compiler,
-    pkg
+    pkg,
+    apiAsync: core.apiAsync
 };
 (window as any).E = myexports;
 
@@ -850,6 +852,9 @@ let myexports: any = {
 $(document).ready(() => {
     $("#loading").remove();
     var lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    var ws = /ws=(\w+)/.exec(window.location.href)
+    if (ws) workspace.setupWorkspace(ws[1])
+        
     Util.updateLocalizationAsync(lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => {
             blocklyloader.init();
