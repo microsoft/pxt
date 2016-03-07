@@ -176,7 +176,7 @@ task('wapp', [
         "built/web/yelmlib.js",
         'built/web/main.js', 
         'built/web/worker.js', 
-        'built/web/themes', 
+        'built/web/themes/default/assets/fonts/icons.woff2', 
         'built/web/style.css', 
         "built/web/semantic.js", 
         'built/web/yelmembed.js'
@@ -214,7 +214,7 @@ file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
 })
 
 
-file('built/web/themes', [], function () {
+file('built/web/themes/default/assets/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes", "built/web/")
 })
 
