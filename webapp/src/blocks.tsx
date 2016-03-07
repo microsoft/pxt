@@ -74,15 +74,22 @@ export class Editor extends srceditor.Editor {
     saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble
-        if (this.delayLoadXml)
-            return this.delayLoadXml;
-
+        if (this.delayLoadXml) return this.delayLoadXml;
+        return this.serializeBlocks();
+    }
+    
+    serializeBlocks() : string {
         let xml = Blockly.Xml.workspaceToDom(this.editor);
         let text = Blockly.Xml.domToPrettyText(xml);
         return text;
     }
 
     loadBlockly(s: string) {
+        if (this.serializeBlocks() == s) {
+            console.log('blocks already loaded...');
+            return;
+        }
+        
         this.editor.clear();
         try {
             let text = s || "<xml></xml>";

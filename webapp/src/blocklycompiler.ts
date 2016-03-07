@@ -1013,7 +1013,7 @@ function compileWhile(e: Environment, b: B.Block): J.JStmt {
     var body = compileStatements(e, b.getInputTargetBlock("DO"));
     return H.mkWhile(H.mkExprHolder([], cond), body.concat([
         // Insert a pause instruction after the body of the while loop.
-        H.mkExprStmt(H.mkExprHolder([], H.stdCall("pause", [H.mkNumberLiteral(20)])))
+        H.mkExprStmt(H.mkExprHolder([], H.namespaceCall("basic", "pause", [H.mkNumberLiteral(20)])))
     ]));
 }
 

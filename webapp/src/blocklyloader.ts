@@ -37,14 +37,9 @@ function createShadowValue(name: string, type: string, v?: string, shadowType?: 
 
     let value = document.createElement("value");
     value.setAttribute("name", name);
-    if (shadowType) {
-        let b = document.createElement("block"); value.appendChild(b);
-        b.setAttribute("type", shadowType);
-        return value;
-    }
 
     let shadow = document.createElement("shadow"); value.appendChild(shadow);
-    shadow.setAttribute("type", type == "number" ? "math_number" : type == "string" ? "text" : type);
+    shadow.setAttribute("type", shadowType ? shadowType : type == "number" ? "math_number" : type == "string" ? "text" : type);
     if (type == "number" || type == "string") {
         let field = document.createElement("field"); shadow.appendChild(field);
         field.setAttribute("name", type == "number" ? "NUM" : "TEXT");
@@ -330,7 +325,7 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
     // create new toolbox and update block definitions
     let tb = <Element>toolbox.cloneNode(true);
     blockInfo.blocks
-        .filter(fn => !tb.querySelector("block[type='" + fn.attributes.blockId + "']"))
+        .filter(fn => !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
         .forEach(fn => {
             let pnames = parameterNames(fn);
             let block = createToolboxBlock(tb, blockInfo, fn, pnames);
@@ -344,6 +339,13 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
     Object
         .keys(cachedBlocks).filter(k => !currentBlocks[k])
         .forEach(k => removeBlock(cachedBlocks[k].fn));
+        
+    // update shadow types
+    $(tb).find('shadow:empty').each((i, shadow) => {
+        let type = shadow.getAttribute('type');
+        let b = $(tb).find(`block[type="${type}"]`)[0];
+        if (b) shadow.innerHTML = b.innerHTML;
+    })
 
     // update toolbox   
     if (tb.innerHTML != cachedToolbox) {
