@@ -97,11 +97,11 @@ namespace basic {
      */
     //% blockId=minecraftPlayerPosition block="player position"
     export function playerPosition(): Position {
-        let v = commands.postCommand("getposition", "me")
+        let v = commands.postCommand("getposition", "...")
         let p = new Position();
-        p.x = parseInt(v[0]);
-        p.y = parseInt(v[1]);
-        p.z = parseInt(v[2]);
+        p.x = parseInt(v[1]);
+        p.y = parseInt(v[2]);
+        p.z = parseInt(v[3]);
         return p;
     }
 

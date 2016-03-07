@@ -199,6 +199,28 @@ namespace yelm.rt.micro_bit {
             ];
         }
         
+        
+        initAsync(msg : SimulatorRunMessage) : Promise<void> {
+            let theme : micro_bit.IBoardTheme;
+            switch(msg.theme) {
+                case 'blue': theme = micro_bit.themes[0]; break;
+                case 'yellow': theme = micro_bit.themes[1]; break;
+                case 'green': theme = micro_bit.themes[2]; break;
+                case 'red': theme = micro_bit.themes[3]; break;
+                default: theme  = yelm.rt.micro_bit.randomTheme();
+            }
+            
+            console.log('setting up microbit simulator')
+            let view = new yelm.rt.micro_bit.MicrobitBoardSvg({
+                theme: theme,
+                runtime: runtime
+            })
+            document.body.innerHTML = ''; // clear children
+            document.body.appendChild(view.element);
+            
+            return Promise.resolve();          
+        }
+                
         receiveMessage(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) return;
             

@@ -75,16 +75,13 @@ namespace yelm.rt {
             console.log(`starting ${msg.target} ${msg.id}`);
             runtime = new Runtime(msg.code, msg.target, msg.enums);
             runtime.id = msg.id;
-            switch(msg.target) {
-                case 'microbit': initMicrobit(msg.theme); break;
-                case 'minecraft': initMinecraft(); break;
-                default: console.error('unknown target');
-            }
-            
-            runtime.run((v) => {
-                console.log("DONE")
-                yelm.rt.dumpLivePointers();
-            })
+            runtime.board.initAsync(msg)
+                .done(() => {
+                    runtime.run((v) => {
+                        console.log("DONE")
+                        yelm.rt.dumpLivePointers();
+                    })                   
+                })            
         }
         
         function queue(msg : SimulatorMessage) {
@@ -95,31 +92,7 @@ namespace yelm.rt {
             
             runtime.board.receiveMessage(msg);
         }
-                
-        function initMicrobit(th: string) {
-            let theme : micro_bit.IBoardTheme;
-            switch(th) {
-                case 'blue': theme = micro_bit.themes[0]; break;
-                case 'yellow': theme = micro_bit.themes[1]; break;
-                case 'green': theme = micro_bit.themes[2]; break;
-                case 'red': theme = micro_bit.themes[3]; break;
-                default: theme  = yelm.rt.micro_bit.randomTheme();
-            }
-            
-            console.log('setting up microbit simulator')
-            let view = new yelm.rt.micro_bit.MicrobitBoardSvg({
-                theme: theme,
-                runtime: runtime
-            })
-            document.body.innerHTML = ''; // clear children
-            document.body.appendChild(view.element);            
-        }
-        
-        function initMinecraft() {
-            console.log('setting up minecraft simulator');
-            document.body.innerHTML = ''; // clear children
-            document.body.appendChild((runtime.board as minecraft.Board).element);           
-        }
+                           
     }
 }
 

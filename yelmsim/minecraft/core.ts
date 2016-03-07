@@ -24,6 +24,14 @@ namespace yelm.rt.minecraft {
                 this.pendingCmds[cmd]([]);
             this.pendingCmds = undefined;
         }
+        
+        initAsync(msg : SimulatorRunMessage) : Promise<void> {            
+            console.log('setting up minecraft simulator');
+            document.body.innerHTML = ''; // clear children
+            document.body.appendChild(this.element);  
+            
+            return this.initSocketAsync().then(() => {});
+        }
 
         initSocketAsync() {
             if (this.ws) return Promise.resolve<WebSocket>(this.ws);
@@ -37,9 +45,12 @@ namespace yelm.rt.minecraft {
                     resolve(this.ws);
                 }, false);
                 this.ws.addEventListener('message', ev => {
-                    let parts = ev.data.split(':');
-                    let cb = this.pendingCmds[parts[0]];
-                    if (cb) cb(parts.slice(1));
+                    let msg = ev.data as string;
+                    let del = msg.indexOf(':'); if (del < 0) return; // ignore junk message
+                    let msgid = msg.slice(0, del);
+                    let parts = msg.slice(del+1).trim().split(' ');
+                    let cb = this.pendingCmds[msgid];
+                    if (cb) cb(parts);
                 }, false)
                 this.ws.addEventListener('close', ev => this.closeSocket(), false);
                 this.ws.addEventListener('error', ev => this.closeSocket(), false);
