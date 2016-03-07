@@ -601,15 +601,19 @@ namespace ts.yelm {
                 let ev = attrs.enumval
                 if (!ev)
                     userError(lf("{enumval:...} missing"))
-                var inf = hex.lookupFunc(ev)
-                if (!inf)
-                    userError(lf("unhandled enum value: {0}", ev))
-                if (inf.type == "E")
-                    proc.emitInt(inf.value)
-                else if (inf.type == "F" && inf.args == 0)
-                    proc.emitCall(ev, 0)
-                else
-                    userError(lf("not valid enum: {0}; is it procedure name?", ev))
+                if (/\d+/.test(ev))
+                    proc.emitInt(parseInt(ev));
+                else {
+                    var inf = hex.lookupFunc(ev)
+                    if (!inf)
+                        userError(lf("unhandled enum value: {0}", ev))
+                    if (inf.type == "E")
+                        proc.emitInt(inf.value)
+                    else if (inf.type == "F" && inf.args == 0)
+                        proc.emitCall(ev, 0)
+                    else
+                        userError(lf("not valid enum: {0}; is it procedure name?", ev))
+                }
             } else if (decl.kind == SyntaxKind.PropertySignature) {
                 if (attrs.shim) {
                     emitShim(decl, node, [node.expression])
