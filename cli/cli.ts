@@ -619,10 +619,13 @@ function runCoreAsync(res: ts.yelm.CompileResult) {
 
 function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
-    let target = mainPkg.getTargetOptions()
-    if (target.nativeType && mode != BuildOption.Run)
-        target.isNative = true
-    return mainPkg.buildAsync(target)
+    return mainPkg.loadAsync()
+        .then(() => {
+            let target = mainPkg.getTargetOptions()
+            if (target.nativeType && mode != BuildOption.Run)
+                target.isNative = true
+            return mainPkg.buildAsync(target)
+        })
         .then(res => {
             U.iterStringMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
