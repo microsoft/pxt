@@ -329,19 +329,23 @@ namespace yelm.rt.micro_bit {
             this.element.addEventListener("mousemove", (ev: MouseEvent) => {
                 let state = this.board;
                 if (!state.acceleration) return;            
-                    state.acceleration[0] = Math.floor(((ev.clientX / this.element.clientWidth) - 0.5) * 1023);
-                    state.acceleration[1]  =Math.floor(((ev.clientY / this.element.clientHeight) - 0.5) * 1023);
-                    state.acceleration[2] = Math.floor(Math.sqrt(Math.max(1023*1023 - state.acceleration[0] *state.acceleration[0] -state.acceleration[1] *state.acceleration[1])));
-                    this.updateTilt();
+                let ax = (ev.clientX - this.element.clientWidth / 2) / (this.element.clientWidth / 3);
+                let ay = (ev.clientY - this.element.clientHeight / 2) / (this.element.clientHeight / 3);
+                state.acceleration[0] = Math.max(-1023, Math.min(1023, Math.floor(ax * 1023)));
+                state.acceleration[1] = Math.max(-1023, Math.min(1023, Math.floor(ay * 1023)));
+                state.acceleration[2] = Math.floor(Math.sqrt(1023*1023
+                    - state.acceleration[0] *state.acceleration[0] 
+                    - state.acceleration[1] *state.acceleration[1]));
+                this.updateTilt();
             }, false);
             this.element.addEventListener("mouseleave", (ev: MouseEvent) => {
                 let state = this.board;
                 if (!state.acceleration) return;
                 
-                    state.acceleration[0] = 0;
-                    state.acceleration[1] = 0;
-                    state.acceleration[2] = -1023;
-                    this.updateTilt();
+                state.acceleration[0] = 0;
+                state.acceleration[1] = 0;
+                state.acceleration[2] = -1023;
+                this.updateTilt();
             }, false);
             
             this.pins.forEach((pin, index) => {

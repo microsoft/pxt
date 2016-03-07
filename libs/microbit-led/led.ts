@@ -68,43 +68,55 @@ namespace led {
     //% help=/functions/plot-bar-graph weight=20
     //% blockId=device_plot_bar_graph block="plot bar graph of %value |up to %high" icon="\uf080" blockExternalInputs=true
     export function plotBarGraph(value: number, high: number = 1023): void {
-        let v = (value * 5) / high;
+        let v = Math.abs((value * 5) / high);
         if (v <= 0) {
-            basic.plotLeds(`0 0 0 0 0
+            basic.plotLeds(`
 0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
-0 0 1 0 0`);
+0 0 0 0 0
+0 0 1 0 0
+`);
         } else if (v == 1) {
-            basic.plotLeds(`0 0 0 0 0
+            basic.plotLeds(`
 0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
-1 1 1 1 1`);
+0 0 0 0 0
+1 1 1 1 1
+`);
         } else if (v == 2) {
-            basic.plotLeds(`0 0 0 0 0
+            basic.plotLeds(`
+0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
 1 1 1 1 1
-1 1 1 1 1`);
+1 1 1 1 1
+`);
         } else if (v == 3) {
-            basic.plotLeds(`0 0 0 0 0
+            basic.plotLeds(`
+0 0 0 0 0
 0 0 0 0 0
 1 1 1 1 1
 1 1 1 1 1
-1 1 1 1 1`);
+1 1 1 1 1
+`);
         } else if (v == 4) {
-            basic.plotLeds(`0 0 0 0 0
+            basic.plotLeds(`
+0 0 0 0 0
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
-1 1 1 1 1`);
+1 1 1 1 1
+`);
         } else {
-            basic.plotLeds(`1 1 1 1 1
+            basic.plotLeds(`
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
-1 1 1 1 1`);
+1 1 1 1 1
+1 1 1 1 1
+`);
         }
     }
 

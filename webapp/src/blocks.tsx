@@ -168,14 +168,15 @@ export class Editor extends srceditor.Editor {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
 
-        let tsfile = file.epkg.lookupFile(file.getName() + ".ts");
-        let diags = tsfile ? tsfile.diagnostics : [];
-        // only show errors
-        diags = diags.filter(d => d.category == ts.DiagnosticCategory.Error);
-        let sourceMap = this.compilationResult.sourceMap;
-
         // clear previous warnings
         this.editor.getAllBlocks().forEach(b => b.setWarningText(null));
+        
+        let tsfile = file.epkg.lookupFile(file.getName() + ".ts");
+        if (!tsfile || !tsfile.diagnostics) return;
+        
+        // only show errors
+        let diags = tsfile.diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error);
+        let sourceMap = this.compilationResult.sourceMap;
 
         diags.forEach(diag => {
             for (let i = 0; i < sourceMap.length; ++i) {
