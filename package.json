@@ -27,13 +27,13 @@
   "main": "built/yelm.js",
   "dependencies": {
     "bluebird": "^3.1.4",
+    "faye-websocket": "^0.11.0",
     "typescript": "1.8.7"
   },
   "devDependencies": {
     "brace": "^0.7.0",
     "browserify": "^13.0.0",
     "express": "^4.13.4",
-    "faye-websocket": "^0.11.0",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",
     "less": "^2.6.0",
