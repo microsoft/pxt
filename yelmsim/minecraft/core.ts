@@ -8,27 +8,49 @@ namespace yelm.rt.minecraft {
             [index: string]: (v?: any) => void;
         }
         private ws: WebSocket;
-
+        public element: HTMLDivElement;
+        
+        constructor() {
+            super();
+            
+            this.element = document.createElement("div") as HTMLDivElement;
+            this.element.className = 'sim-log';
+        }
+               
         closeSocket() {
             console.log('socket closed...')
             this.ws = undefined;
             for (let cmd in this.pendingCmds)
                 this.pendingCmds[cmd]([]);
-            this.pendingCmds = {};
+            this.pendingCmds = undefined;
+        }
+        
+        initAsync(msg : SimulatorRunMessage) : Promise<void> {            
+            console.log('setting up minecraft simulator');
+            document.body.innerHTML = ''; // clear children
+            document.body.appendChild(this.element);  
+            
+            return this.initSocketAsync().then(() => {});
         }
 
         initSocketAsync() {
             if (this.ws) return Promise.resolve<WebSocket>(this.ws);
-            this.ws = new WebSocket("ws://localhost:3000/client");
+            
+            this.ws = new WebSocket("ws://127.0.0.1:3000/client");
+            this.pendingCmds = {};
+            
             return new Promise<WebSocket>((resolve, reject) => {
                 this.ws.addEventListener('open', () => {
                     console.log('socket opened...')
                     resolve(this.ws);
                 }, false);
                 this.ws.addEventListener('message', ev => {
-                    let parts = ev.data.split(' ');
-                    let cb = this.pendingCmds[parts[0]];
-                    if (cb) cb(parts.slice(1));
+                    let msg = ev.data as string;
+                    let del = msg.indexOf(':'); if (del < 0) return; // ignore junk message
+                    let msgid = msg.slice(0, del);
+                    let parts = msg.slice(del+1).trim().split(' ');
+                    let cb = this.pendingCmds[msgid];
+                    if (cb) cb(parts);
                 }, false)
                 this.ws.addEventListener('close', ev => this.closeSocket(), false);
                 this.ws.addEventListener('error', ev => this.closeSocket(), false);
@@ -37,18 +59,28 @@ namespace yelm.rt.minecraft {
 
         private nextId: number = 0;
         queueCmd(cmd: string, args: string, cb: (v?: any) => void) {
-            let id = `${this.id}-${this.nextId++}`;
-            let slash = `${id} /${cmd} ${args}`;
-            this.pendingCmds[id] = cb;
-
+            let id = `${runtime.id}-${this.nextId++}`;
+            let slash = `/${cmd} ${args}`;
+            let slashws = `/${cmd} ${id} ${args}`;
+            
+            this.appendChat(slash);
+            
             this.initSocketAsync()
                 .done(ws => {
-                    if (ws) ws.send(slash);
-                    else {
-                        this.pendingCmds[id]([]);
-                        delete this.pendingCmds[id];
+                    if (ws) {
+                        this.pendingCmds[id] = cb;
+                        ws.send(slashws);
+                    } else {
+                        cb([]);
                     }
                 })
+        }
+        
+        private appendChat(txt : string) {
+            let msg = document.createElement('div') as HTMLDivElement;
+            msg.innerText = txt;
+            while(this.element.childElementCount > 10) this.element.removeChild(this.element.firstElementChild);            
+            this.element.appendChild(msg);
         }
     }
 
@@ -95,7 +127,6 @@ namespace yelm.rt.minecraft {
     export function postCommand(cmd: string, args: string): void {
         let cb = getResume();
         board().queueCmd(cmd, args, cb);
-
     }
 }
 

@@ -72,6 +72,7 @@ namespace yelm.rt {
     export class BaseBoard {
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) { }
+        public initAsync(msg: SimulatorRunMessage) : Promise<void> { return Promise.resolve(); }
     }
 
     export class EventQueue<T> {

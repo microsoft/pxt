@@ -60,9 +60,18 @@ namespace basic {
      */
     //% blockId=minecraftGround block="ground at %position"
     export function ground(position: Position): Position {
-        let args = commands.postCommand('getGround', `${position.x} ${position.z}`);
+        let args = commands.postCommand('getheight', '0' + position.x + ' ' +position.z);
         let y = parseInt(args[0]) || 0;
         return createPos(position.x, y, position.z);
+    }
+    
+    /**
+     * Posts a message on the chat
+     * @param message: the message to post on the chat, eg: Hi!
+     */
+    //% blockId=minecraftChat block="say %message"
+    export function chat(message : string) {
+        commands.postCommand('postchat', 'me "' + message + '"');
     }
 
     /**
@@ -79,7 +88,7 @@ namespace basic {
     //% blockId=minecraftFill block="fill %block=minecraftBlock|around %center=minecraftPlayerPosition|from %from=minecraftCreatePosition|to %to=minecraftCreatePosition" blockExternalInputs=1
     export function fill(block: number, center: Position, from: Position, to: Position) {
         commands.postCommand('fill',
-            (center.x + from.x) + " " + (center.y + from.y) + " " + (center.z + from.z) + " " + (center.x + to.x)
+            '0 ' + (center.x + from.x) + " " + (center.y + from.y) + " " + (center.z + from.z) + " " + (center.x + to.x)
             + " " + (center.y + to.y) + " " + (center.z + to.z) + " " + block + " 1")
     }
 
@@ -88,11 +97,11 @@ namespace basic {
      */
     //% blockId=minecraftPlayerPosition block="player position"
     export function playerPosition(): Position {
-        let v = commands.postCommand("getposition")
+        let v = commands.postCommand("getposition", "...")
         let p = new Position();
-        p.x = parseInt(v[0]);
-        p.y = parseInt(v[1]);
-        p.z = parseInt(v[2]);
+        p.x = parseInt(v[1]);
+        p.y = parseInt(v[2]);
+        p.z = parseInt(v[3]);
         return p;
     }
 
