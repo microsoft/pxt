@@ -74,6 +74,8 @@ open http://localhost:3232
 * [ ] after uninstall pouch db throws 404 after reload
 * [ ] `ptr-<username>-*` as the main way publishing packages
 * [ ] in simulator currResume start loop() in nextTick
+* [ ] `foo${bar}baz`
+* [ ] x ? a : b
 
 ### web app
 

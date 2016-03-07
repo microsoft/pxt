@@ -24,68 +24,70 @@ namespace basic {
         public y: number;
         public z: number;
     }
-    
+
     /**
      * A 3D coordinate
      */
     //% blockId=minecraftCreatePosition block="x: %x|y: %y|z: %z"
-    export function createPos(x:number, y:number, z:number) : Position {
+    export function createPos(x: number, y: number, z: number): Position {
         let p = new Position();
         p.x = x;
         p.y = y;
         p.z = z;
         return p;
     }
-    
+
     /**
      * Changes the position
      */
     //% blockId=minecraftChangePosition block="change %position|by %delta=minecraftCreatePosition"
-    export function change(position: Position, delta : Position) {
+    export function change(position: Position, delta: Position) {
         position.x = position.x + delta.x;
         position.y = position.y + delta.y;
         position.z = position.z + delta.z;
     }
-    
+
     /**
      * Gets a known block id
      */
     //% blockId=minecraftBlock block="%block"
-    export function block(block : Blocks) : number {
+    export function block(block: Blocks): number {
         return block;
     }
-    
+
     /**
      * Gets the ground position
      */
     //% blockId=minecraftGround block="ground at %position"
     export function ground(position: Position): Position {
-        let args =commands.postCommand('getGround', `${position.x} ${position.z}`);
+        let args = commands.postCommand('getGround', `${position.x} ${position.z}`);
         let y = parseInt(args[0]) || 0;
         return createPos(position.x, y, position.z);
     }
-    
+
     /**
      * Places a block in the world
      */
     //% blockId=minecraftPlace block="place %block=minecraftBlock|at %position=minecraftPlayerPosition"
     export function place(block: number, position: Position) {
-        fill(block, position, createPos(0,0,0), createPos(0,0,0));   
+        fill(block, position, createPos(0, 0, 0), createPos(0, 0, 0));
     }
-    
+
     /**
      * Fills a volume with a given block
      */
     //% blockId=minecraftFill block="fill %block=minecraftBlock|around %center=minecraftPlayerPosition|from %from=minecraftCreatePosition|to %to=minecraftCreatePosition" blockExternalInputs=1
     export function fill(block: number, center: Position, from: Position, to: Position) {
-        commands.postCommand('fill', `${center.x+from.x} ${center.y+from.y} ${center.z+from.z} ${center.x+to.x} ${center.y+to.y} ${center.z+to.z} ${block} ${block == 46 ? 1 : 0}`)
+        commands.postCommand('fill',
+            (center.x + from.x) + " " + (center.y + from.y) + " " + (center.z + from.z) + " " + (center.x + to.x)
+            + " " + (center.y + to.y) + " " + (center.z + to.z) + " " + block + " 1")
     }
-    
+
     /**
      * Gets the current player position
      */
     //% blockId=minecraftPlayerPosition block="player position"
-    export function playerPosition() : Position {
+    export function playerPosition(): Position {
         let v = commands.postCommand("getposition")
         let p = new Position();
         p.x = parseInt(v[0]);
