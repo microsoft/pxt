@@ -116,7 +116,7 @@ namespace yelm.cpp {
                     cfginc += "#define " + k + " " + json.config[k] + "\n"
                 })
         }
-        
+
         res.microbitConfig.dependencies["yelm-microbit-core"] = "microsoft/yelm-microbit-core#master";
 
         if (mainPkg) {
@@ -155,9 +155,16 @@ namespace yelm.cpp {
             "targetDependencies": {},
             "bin": "./source"
         }
-        
+
+        let configJson = {
+            "microbit": {
+                "configfile": "inc/MicroBitCustomConfig.h"
+            }
+        }
+
         res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
-        res.generatedFiles["/source/main.cpp"] = `#include "BitVM.h"\nvoid app_main() { bitvm::start(); }\n`        
+        res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
+        res.generatedFiles["/source/main.cpp"] = `#include "BitVM.h"\nvoid app_main() { bitvm::start(); }\n`
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)

@@ -477,16 +477,6 @@ function buildHexAsync(extInfo: ts.yelm.ExtensionInfo) {
             fs.writeFileSync(fn, v)
     })
 
-    let glbConfig = ytPath + "/yotta_modules/microbit-dal/inc/MicroBitConfig.h"
-    if (fs.existsSync(glbConfig)) {
-        // yotta doesn't seem to pick this dependency up
-        let stConfig = fs.statSync(ytPath + "/ext/config.h")
-        let stGlbConfig = fs.statSync(glbConfig)
-        if (stConfig.mtime.getTime() > stGlbConfig.mtime.getTime()) {
-            fs.appendFileSync(glbConfig, "\n")
-        }
-    }
-
     let saveCache = () => fs.writeFileSync(buildCachePath, JSON.stringify(buildCache, null, 4) + "\n")
 
     let modSha = U.sha256(extInfo.generatedFiles["/module.json"])
