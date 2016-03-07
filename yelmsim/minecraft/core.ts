@@ -37,7 +37,7 @@ namespace yelm.rt.minecraft {
                     resolve(this.ws);
                 }, false);
                 this.ws.addEventListener('message', ev => {
-                    let parts = ev.data.split(' ');
+                    let parts = ev.data.split(':');
                     let cb = this.pendingCmds[parts[0]];
                     if (cb) cb(parts.slice(1));
                 }, false)
@@ -50,7 +50,7 @@ namespace yelm.rt.minecraft {
         queueCmd(cmd: string, args: string, cb: (v?: any) => void) {
             let id = `${runtime.id}-${this.nextId++}`;
             let slash = `/${cmd} ${args}`;
-            let slashws = `${id} ${slash}`;
+            let slashws = `/${cmd} ${id} ${args}`;
             
             this.appendChat(slash);
             

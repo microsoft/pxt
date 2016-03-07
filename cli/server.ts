@@ -224,6 +224,7 @@ export function socketProxy() {
         let ws = new WebSocket(request, socket, body);
         sources.push(ws);
         ws.on('message', function (event : any) {
+            console.log('sending ' + event.data);
             targets.forEach(function (tws) { tws.send(event.data); });
         });
         ws.on('close', function (event : Event) {
@@ -247,7 +248,7 @@ export function socketProxy() {
         }
     });
 
-    wsserver.listen(3000, "127.0.0.1");    
+    wsserver.listen(3000);    
 
     console.log("Web socket server from http://127.0.0.1:3000/");
 }
