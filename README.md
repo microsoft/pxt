@@ -73,6 +73,7 @@ open http://localhost:3232
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload
 * [ ] `ptr-<username>-*` as the main way publishing packages
+* [ ] in simulator currResume start loop() in nextTick
 
 ### web app
 

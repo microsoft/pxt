@@ -3,12 +3,20 @@
 /// <reference path="../built/yelmsim.d.ts"/>
 
 
+(global as any).yelm = yelm;
+
+import * as nodeutil from './nodeutil';
+nodeutil.init();
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
 import U = yelm.Util;
 import Cloud = yelm.Cloud;
+
+import * as server from './server';
+
 
 let prevExports = (global as any).savedModuleExports
 if (prevExports) {
@@ -109,29 +117,6 @@ export function apiAsync(path: string, postArguments?: string) {
         })
 }
 
-function getMime(filename: string) {
-    var ext = path.extname(filename).slice(1)
-    switch (ext) {
-        case "txt": return "text/plain";
-        case "html":
-        case "htm": return "text/html";
-        case "css": return "text/css";
-        case "js": return "application/javascript";
-        case "jpg":
-        case "jpeg": return "image/jpeg";
-        case "png": return "image/png";
-        case "ico": return "image/x-icon";
-        case "manifest": return "text/cache-manifest";
-        case "json": return "application/json";
-        case "svg": return "image/svg+xml";
-        case "eot": return "application/vnd.ms-fontobject";
-        case "ttf": return "font/ttf";
-        case "woff": return "application/font-woff";
-        case "woff2": return "application/font-woff2";
-        default: return "application/octet-stream";
-    }
-}
-
 function allFiles(top: string, maxDepth = 4): string[] {
     let res: string[] = []
     for (let p of fs.readdirSync(top)) {
@@ -170,7 +155,7 @@ export function uploadrelAsync(label?: string) {
             .then((data: Buffer) => {
                 // Strip the leading directory name, unless we are uploading a single file.
                 let fileName = p.split("/").slice(2).join("/")
-                let mime = getMime(p)
+                let mime = U.getMime(p)
                 let isText = /^(text\/.*|application\/(javascript|json))$/.test(mime)
                 return Cloud.privatePostAsync(liteId + "/files", {
                     encoding: isText ? "utf8" : "base64",
@@ -239,6 +224,7 @@ export function compileAsync(...fileNames: string[]) {
     let res = ts.yelm.compile({
         fileSystem: fileText,
         sourceFiles: fileNames,
+        target: ts.yelm.CompileTarget.Thumb,
         hexinfo: hexinfo
     })
 
@@ -643,6 +629,13 @@ function runCoreAsync(res: ts.yelm.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
         let r = new yelm.rt.Runtime(f, mainPkg.getTarget(), res.enums)
+        yelm.rt.Runtime.messagePosted = (msg) => {
+            if (msg.type == "serial")
+                console.log("SERIAL:", (msg as yelm.rt.micro_bit.SimulatorSerialMessage).data)
+        }
+        r.errorHandler = (e) => {
+            throw e;
+        }
         r.run(() => {
             console.log("DONE")
             yelm.rt.dumpLivePointers();
@@ -653,7 +646,10 @@ function runCoreAsync(res: ts.yelm.CompileResult) {
 
 function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
-    return mainPkg.buildAsync()
+    let target = ts.yelm.CompileTarget.Thumb
+    if (mode == BuildOption.Run)
+        target = ts.yelm.CompileTarget.JavaScript
+    return mainPkg.buildAsync(target)
         .then(res => {
             U.iterStringMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
@@ -717,6 +713,7 @@ cmd("format   [-i] file.ts... - pretty-print TS files; -i = in-place", formatAsy
 cmd("help                     - display this message", helpAsync)
 
 cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
+cmd("serve                    - start local web server", server.serveAsync, 1)
 cmd("genembed                 - generate built/yelmembed.js from current package", genembedAsync, 1)
 cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
 cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)

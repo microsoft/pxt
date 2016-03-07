@@ -4,11 +4,20 @@
 /// <reference path="util.ts"/>
 /// <reference path="cloud.ts"/>
 /// <reference path="thumb.ts"/>
+/// <reference path="ir.ts"/>
 /// <reference path="emitter.ts"/>
+/// <reference path="backthumb.ts"/>
 
 namespace ts.yelm {
+    export enum CompileTarget {
+        None,
+        Thumb,
+        JavaScript,
+    }
+    
     export interface CompileOptions {
         fileSystem: StringMap<string>;
+        target: CompileTarget;
         sourceFiles?: string[];
         hexinfo: any;
         extinfo?: ExtensionInfo;

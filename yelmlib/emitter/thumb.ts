@@ -61,97 +61,6 @@ module ts.yelm.thumb {
             this.args = words.slice(1)
         }
 
-        emitJs(ln: Line, asm: EmitResult) {
-            if (ln.noJs) return ""
-            if (asm.error) return "** // asm error: " + ln.text
-            if (!this.jsFormat) return "** // no JS: " + ln.text
-
-            if (this.jsFormat == "BL") {
-                let mm = /; \*R ([\.\w]+)/.exec(ln.text)
-                if (mm) {
-                    let loc = ln.bin.lookupLabel(mm[1])
-                    return `return actionCall(${asm.labelName}, ${loc})`
-                }
-
-                mm = /; \*([PF])(\d+)(\s+([\.\w]+))?/.exec(ln.text)
-                if (!mm) {
-                    oops("missing P/F in " + ln.text)
-                }
-                let text = "rt." + asm.labelName.replace(/::/g, ".") + "("
-                for (let i = 0; i < parseInt(mm[2]); ++i) {
-                    if (i > 0) text += ", "
-                    text += "r" + i
-                }
-                text += ")"
-                if (mm[4]) {
-                    let loc = ln.bin.lookupLabel(mm[4])
-                    return `setupResume(${loc})\nreturn ${text}`
-                }
-                if (mm[1] == "F")
-                    text = "r0 = " + text
-                return text
-            }
-
-            if (this.jsFormat == "B") {
-                let loc = ln.bin.lookupLabel(asm.labelName)
-                return `{ step = ${loc}; continue; } // ${asm.labelName}`
-            }
-
-            let s = this.jsFormat
-            let regs: string[] = null
-            let na = 0
-
-            for (let i = 0; i < this.args.length; ++i) {
-                let formal = this.args[i]
-                if (formal[0] == "$") {
-                    let repl: string = null
-                    let numArg = asm.numArgs[na++]
-                    let enc = encoders[formal]
-                    if (enc.isRegister)
-                        repl = "r" + numArg
-                    else if (enc.isImmediate)
-                        repl = numArg + ""
-                    else if (enc.isRegList) {
-                        repl = "$reglist"
-                        regs = []
-                        for (let j = 0; j < 16; ++j) {
-                            if (numArg & (1 << j)) {
-                                if (j == 15) regs.push("pc")
-                                else if (j == 14) regs.push("lr")
-                                else if (j == 13) regs.push("sp")
-                                else
-                                    regs.push("r" + j)
-                            }
-                        }
-                        assert(regs.length > 0)
-                        if (formal == "$rl1") {
-                            regs.reverse() // pop
-                        } else if (formal == "$rl2") {
-                            // push
-                        } else {
-                            oops()
-                        }
-                    } else if (enc.isLabel) {
-                        repl = asm.labelName
-                    } else {
-                        oops()
-                    }
-                    s = s.replace(formal, repl)
-                }
-            }
-
-            if (regs) {
-                s = regs.map(x => s.replace("$reglist", x)).join("\n")
-                s = s.replace("pc = pop()", "return leave(r0)")
-            }
-
-            if (s.indexOf('"') < 0 && s.indexOf("mem[r5") >= 0) {
-                s = s.replace(/mem\[r5 \+ (\d+)\]/, (t: string, n: string) => "r5.ldclo(" + n + ")")
-            }
-
-            return s
-        }
-
         emit(ln: Line): EmitResult {
             var tokens = ln.words;
             if (tokens[0] != this.name) return badNameError;
@@ -363,9 +272,6 @@ module ts.yelm.thumb {
         private scope = "";
         public errors: InlineError[] = [];
         public buf: number[];
-        public js: string;
-        private numJsLabels = 0;
-        public savedJs: string;
         private labels: StringMap<number> = {};
         private stackpointers: StringMap<number> = {};
         private stack = 0;
@@ -692,7 +598,6 @@ module ts.yelm.thumb {
                     break;
 
                 case "@js":
-                    this.js += "    " + l.text.replace(/^\s*@js\s*/, "") + "\n"
                     break;
 
                 // The usage for this is as follows:
@@ -760,16 +665,7 @@ module ts.yelm.thumb {
                     this.emitShort(op.opcode2);
                 ln.instruction = instr;
                 ln.numArgs = op.numArgs;
-
-                if (this.reallyFinalEmit) {
-                    let js = instr.emitJs(ln, op)
-                    if (js) {
-                        if (js.indexOf("\n") >= 0)
-                            this.js += js.replace(/^/gm, "    ") + "\n"
-                        else
-                            this.js += "    " + js + "\n"
-                    }
-                }
+                
                 return true;
             }
             return false;
@@ -868,35 +764,9 @@ module ts.yelm.thumb {
             })
         }
 
-        private handleJsLabel(lblname: string) {
-            if (lblname == "_end_js") {
-                this.js += "} } }\n// The End.\n"
-                this.savedJs = this.js
-            }
-
-            if (lblname.charAt(0) == ".") {
-                this.js += "  case " + this.location() + ":  // " + lblname + "\n"
-            } else {
-                let suff = ""
-                if (this.numJsLabels)
-                    this.js += "} } }\n\n"
-                else
-                    suff = " = entryPoint "
-                this.numJsLabels++;
-                this.js += "var " + lblname + suff + " = function (step) {\n" +
-                    "var r0 = rr0, r1 = rr1, r2 = rr2, r3 = rr3\n" +
-                    "while (true) { switch (step) {\n"
-                this.js += "  case 0: // start\n"
-            }
-        }
-
         private iterLines() {
             this.stack = 0;
             this.buf = [];
-
-            this.js = "";
-            this.numJsLabels = 0;
-            this.savedJs = null;
 
             this.lines.forEach(l => {
                 if (this.errors.length > 10)
@@ -908,7 +778,6 @@ module ts.yelm.thumb {
 
                 if (l.type == "label") {
                     var lblname = this.scopedName(l.words[0])
-                    this.handleJsLabel(lblname)
                     if (this.finalEmit) {
                         var curr = this.labels[lblname]
                         if (curr == null)
@@ -1246,7 +1115,7 @@ module ts.yelm.thumb {
         add("add   $r2, $r3", 0x4400, 0xff00, "$r2 += $r3");
         add("add   $r5, pc, $i1", 0xa000, 0xf800);
         add("add   $r5, sp, $i1", 0xa800, 0xf800);
-        add("add   sp, $i2", 0xb000, 0xff80, "sp += $i2");
+        add("add   sp, $i2", 0xb000, 0xff80);
         add("adds  $r0, $r1, $i3", 0x1c00, 0xfe00);
         add("adds  $r0, $r1, $r4", 0x1800, 0xfe00);
         add("adds  $r5, $i0", 0x3000, 0xf800, "$r5 += $i0");
@@ -1265,11 +1134,11 @@ module ts.yelm.thumb {
         add("eors  $r0, $r1", 0x4040, 0xffc0);
         add("ldmia $r5!, $rl0", 0xc800, 0xf800);
         add("ldmia $r5, $rl0", 0xc800, 0xf800);
-        add("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800, "$r0 = mem[$r1 + $i5]");
-        add("ldr   $r0, [$r1, $r4]", 0x5800, 0xfe00, "$r0 = mem[$r1 + $r4]");
+        add("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800);
+        add("ldr   $r0, [$r1, $r4]", 0x5800, 0xfe00);
         add("ldr   $r5, [pc, $i1]", 0x4800, 0xf800);
         //add("ldr   $r5, $la",        0x4800, 0xf800);
-        add("ldr   $r5, [sp, $i1]", 0x9800, 0xf800, "$r5 = mem[sp + $i1]");
+        add("ldr   $r5, [sp, $i1]", 0x9800, 0xf800);
         add("ldrb  $r0, [$r1, $i4]", 0x7800, 0xf800);
         add("ldrb  $r0, [$r1, $r4]", 0x5c00, 0xfe00);
         add("ldrh  $r0, [$r1, $i7]", 0x8800, 0xf800);
@@ -1287,10 +1156,10 @@ module ts.yelm.thumb {
         add("muls  $r0, $r1", 0x4340, 0xffc0);
         add("mvns  $r0, $r1", 0x43c0, 0xffc0);
         add("negs  $r0, $r1", 0x4240, 0xffc0, "$r0 = -$r1");
-        add("nop", 0x46c0, 0xffff, "$r8 = $r8"); // mov r8, r8
+        add("nop", 0x46c0, 0xffff); // mov r8, r8
         add("orrs  $r0, $r1", 0x4300, 0xffc0);
-        add("pop   $rl2", 0xbc00, 0xfe00, "$rl2 = pop()");
-        add("push  $rl1", 0xb400, 0xfe00, "push($rl1)");
+        add("pop   $rl2", 0xbc00, 0xfe00);
+        add("push  $rl1", 0xb400, 0xfe00);
         add("rev   $r0, $r1", 0xba00, 0xffc0);
         add("rev16 $r0, $r1", 0xba40, 0xffc0);
         add("revsh $r0, $r1", 0xbac0, 0xffc0);
@@ -1298,9 +1167,9 @@ module ts.yelm.thumb {
         add("sbcs  $r0, $r1", 0x4180, 0xffc0);
         add("sev", 0xbf40, 0xffff);
         add("stmia $r5!, $rl0", 0xc000, 0xf800);
-        add("str   $r0, [$r1, $i5]", 0x6000, 0xf800, "mem[$r1 + $i5] = $r0");
-        add("str   $r0, [$r1, $r4]", 0x5000, 0xfe00, "mem[$r1 + $r4] = $r0");
-        add("str   $r5, [sp, $i1]", 0x9000, 0xf800, "mem[sp + $i1] = $r5");
+        add("str   $r0, [$r1, $i5]", 0x6000, 0xf800);
+        add("str   $r0, [$r1, $r4]", 0x5000, 0xfe00);
+        add("str   $r5, [sp, $i1]", 0x9000, 0xf800);
         add("strb  $r0, [$r1, $i4]", 0x7000, 0xf800);
         add("strb  $r0, [$r1, $r4]", 0x5400, 0xfe00);
         add("strh  $r0, [$r1, $i7]", 0x8000, 0xf800);
