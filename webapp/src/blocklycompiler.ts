@@ -1357,12 +1357,25 @@ function compileWorkspace(w: B.Workspace, blockInfo: blockyloader.BlocksInfo, op
     return H.mkApp(options.name, options.description, decls);
 }
 
-export function compile(b: B.Workspace, blockInfo: blockyloader.BlocksInfo, options: CompileOptions): string {
+export interface SourceInterval {
+    id: string;
+    start: number;
+    end: number;
+}
+
+export interface BlockCompilationResult {
+    source: string;
+    sourceMap: SourceInterval[];
+}
+
+export function compile(b: B.Workspace, blockInfo: blockyloader.BlocksInfo, options: CompileOptions): BlockCompilationResult {
     Errors.clear();
     return tdASTtoTS(compileWorkspace(b, blockInfo, options));
 }
 
-function tdASTtoTS(app: J.JApp) {
+function tdASTtoTS(app: J.JApp) : BlockCompilationResult 
+{
+    let sourceMap : SourceInterval[] = [];
     let output = ""
     let indent = ""
     let currInlineAction: J.JInlineAction = null
@@ -1487,6 +1500,14 @@ function tdASTtoTS(app: J.JApp) {
             return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
         else return JSON.stringify(s)
     }
+    
+    function emitAndMap(id: string, f : () => void) {
+        let start = output.length;
+        f();
+        let end = output.length;
+        if (id)
+            sourceMap.push({ id: id, start: start, end: end })
+    }
 
     let byNodeType: Util.StringMap<(n: J.JNode) => void> = {
         app: (n: J.JApp) => {
@@ -1495,10 +1516,10 @@ function tdASTtoTS(app: J.JApp) {
             (n.decls[0] as J.JAction).body.forEach(emit)
         },
 
-        exprStmt: (n: J.JExprStmt) => {
+        exprStmt: (n: J.JExprStmt) => emitAndMap(n.id, () => {
             emit(n.expr)
             write(";\n")
-        },
+        }),
 
         inlineAction: (n: J.JInlineAction) => {
             Util.assert(n.inParameters.length == 0)
@@ -1598,7 +1619,10 @@ function tdASTtoTS(app: J.JApp) {
     // never return empty string - TS compiler service thinks it's an error
     output += "\n"
 
-    return output;
+    return {
+        source: output,
+        sourceMap: sourceMap 
+    };
 
     function localRef(n: string) {
         write(jsName(n))

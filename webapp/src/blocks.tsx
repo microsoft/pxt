@@ -19,6 +19,7 @@ export class Editor extends srceditor.Editor {
     delayLoadXml: string;
     loadingXml: boolean;
     blockInfo: blocklyloader.BlocksInfo;
+    compilationResult: blocklycompiler.BlockCompilationResult;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -34,10 +35,11 @@ export class Editor extends srceditor.Editor {
 
     saveToTypeScript(): string {
         let cfg = pkg.mainPkg.config
-        return blocklycompiler.compile(this.editor, this.blockInfo, {
+        this.compilationResult = blocklycompiler.compile(this.editor, this.blockInfo, {
             name: cfg.name,
             description: cfg.description
         })
+        return this.compilationResult.source;
     }
 
     domUpdate() {
