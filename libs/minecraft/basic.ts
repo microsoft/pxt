@@ -2,15 +2,15 @@
  * Provides access to basic minecraft functionality.
  */
 enum Blocks {
-    //@ enumval=46
+    //% enumval=46
     Tnt,
-    //@ enumval=0
+    //% enumval=0
     Air,
-    //@ enumval=2
+    //% enumval=2
     Stone,
-    //@ enumval=10
+    //% enumval=10
     Lava,
-    //@ enumval=8
+    //% enumval=8
     Water
 }
 
@@ -40,7 +40,7 @@ namespace basic {
     /**
      * Gets a known block id
      */
-    //% shim=TD_ID blockId=minecraftBlock block="%block"
+    //% blockId=minecraftBlock block="%block"
     export function block(block : Blocks) : number {
         return block;
     }
@@ -48,9 +48,17 @@ namespace basic {
     /**
      * Places a block in the world
      */
-    //% blockId=minecreatePlace block="place %block=minecraftBlock|at %position=minecraftPlayerPosition"
+    //% blockId=minecraftPlace block="place %block=minecraftBlock|at %position=minecraftPlayerPosition"
     export function place(block: number, position: Position) {
-        
+        fill(block, position, position);   
+    }
+    
+    /**
+     * Fills a volume with a given block
+     */
+    //% blockId=minecraftFill block="fill %block=minecraftBlock|from %from=minecraftPlayerPosition|to %to=minecraftCreatePosition" blockExternalInputs=1
+    export function fill(block: number, from: Position, to: Position) {
+        commands.postCommand('fill', `${from.x} ${from.y} ${from.z} ${to.x} ${to.y} ${to.z} ${block} ${block == 46 ? 1 : 0}`)
     }
     
     /**

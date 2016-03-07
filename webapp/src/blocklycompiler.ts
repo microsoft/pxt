@@ -825,25 +825,25 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
         expr = defaultValueForType(returnType(e, b));
     else switch (b.type) {
         case "math_number":
-            expr = compileNumber(e, b);
+            expr = compileNumber(e, b);break;
         case "math_op2":
-            expr = compileMathOp2(e, b);
+            expr = compileMathOp2(e, b);break;
         case "math_op3":
-            expr = compileMathOp3(e, b);
+            expr = compileMathOp3(e, b);break;
         case "device_random":
-            expr = compileRandom(e, b);
+            expr = compileRandom(e, b);break;
         case "math_arithmetic":
         case "logic_compare":
         case "logic_operation":
-            expr = compileArithmetic(e, b);
+            expr = compileArithmetic(e, b);break;
         case "logic_boolean":
-            expr = compileBoolean(e, b);
+            expr = compileBoolean(e, b);break;
         case "logic_negate":
-            expr = compileNot(e, b);
+            expr = compileNot(e, b);break;
         case "variables_get":
-            expr = compileVariableGet(e, b);
+            expr = compileVariableGet(e, b);break;
         case "text":
-            expr = compileText(e, b);
+            expr = compileText(e, b);break;
         default:
             var call = e.stdCallTable[b.type];
             if (call) {
@@ -854,6 +854,7 @@ function compileExpression(e: Environment, b: B.Block): J.JExpr {
                 console.error("Unable to compile expression: " + b.type);
                 expr = defaultValueForType(returnType(e, b));
             }
+            break;
     }
 
     expr.id = b.id;
