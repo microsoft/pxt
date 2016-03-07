@@ -7,7 +7,6 @@
         "helpers.ts",
         "basic.ts",
         "control.ts",
-        "world.ts",
         "commands.ts"
     ],
     "target": "minecraft",
