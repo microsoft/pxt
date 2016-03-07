@@ -719,19 +719,21 @@ ${lbl}: .short 0xffff
                 return emitExpr(args[0])
             }
 
-            let inf = hex.lookupFunc(attrs.shim)
-            if (inf) {
-                if (!hasRet) {
-                    if (inf.type != "P")
-                        userError("expecting procedure for " + nm);
+            if (opts.target.hasHex) {
+                let inf = hex.lookupFunc(attrs.shim)
+                if (inf) {
+                    if (!hasRet) {
+                        if (inf.type != "P")
+                            userError("expecting procedure for " + nm);
+                    } else {
+                        if (inf.type != "F")
+                            userError("expecting function for " + nm);
+                    }
+                    if (args.length != inf.args)
+                        userError("argument number mismatch: " + args.length + " vs " + inf.args)
                 } else {
-                    if (inf.type != "F")
-                        userError("expecting function for " + nm);
+                    userError("function not found: " + nm)
                 }
-                if (args.length != inf.args)
-                    userError("argument number mismatch: " + args.length + " vs " + inf.args)
-            } else {
-                userError("function not found: " + nm)
             }
 
             return rtcallMask(attrs.shim, args, attrs.async)
