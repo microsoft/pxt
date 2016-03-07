@@ -14,60 +14,23 @@ enum Blocks {
     Water
 }
 
-enum MoveDirection {
-    Up,
-    Down,
-    West,
-    East,
-    North,
-    South
-}
-
 //% color=190 weight=100
 namespace basic {
     /**
      * A 3D coordinate
      */
-    export class Point {
+    export class Position {
         public x: number;
         public y: number;
         public z: number;
-
-        /**
-         * Fill the current position with a block
-         */
-        //% blockId=minecraftPointFill block="fill %this=minecraftCreatePoint|with %block"
-        public fill(block : Blocks) {
-            commands.fill(this, this, block);
-        }
-        
-        /**
-         * Returns a new coordinate one block higher
-         */
-        //% blockId=minecraftPointMove block="move %this=minecraftCreatePoint|%direction|by %blocks"
-        public move(dir: MoveDirection, blocks: number) : Point {
-            let p = new Point();
-            p.x = this.x;
-            p.y = this.y;
-            p.z = this.z;
-            switch(dir) {
-                case MoveDirection.Up: p.y+=blocks; break;
-                case MoveDirection.Down: p.y-=blocks; break;
-                case MoveDirection.West: p.x+=blocks; break;
-                case MoveDirection.East: p.x-=blocks; break;
-                case MoveDirection.North: p.z+=blocks; break;
-                case MoveDirection.South: p.z-=blocks; break;
-            }
-            return p;
-        }
     }
     
     /**
      * A 3D coordinate
      */
-    //% blockId=minecraftCreatePoint block="x: %x|y: %y|z: %z"
-    export function createPoint(x:number, y:number, z:number) : Point {
-        let p = new Point();
+    //% blockId=minecraftCreatePosition block="x: %x|y: %y|z: %z"
+    export function createPos(x:number, y:number, z:number) : Position {
+        let p = new Position();
         p.x = x;
         p.y = y;
         p.z = z;
@@ -75,12 +38,28 @@ namespace basic {
     }
     
     /**
+     * Gets a known block id
+     */
+    //% shim=TD_ID blockId=minecraftBlock block="%block"
+    export function block(block : Blocks) : number {
+        return block;
+    }
+    
+    /**
+     * Places a block in the world
+     */
+    //% blockId=minecreatePlace block="place %block=minecraftBlock|at %position=minecraftPlayerPosition"
+    export function place(block: number, position: Position) {
+        
+    }
+    
+    /**
      * Gets the current player position
      */
-    //% blockId=minecractPlayerGetPos block="player position"
-    export function playerGetPos() : Point {
-        let v = commands.sendCommand("getposition", "")
-        let p = new Point();
+    //% blockId=minecraftPlayerPosition block="player position"
+    export function playerPosition() : Position {
+        let v = commands.postCommand("getposition")
+        let p = new Position();
         p.x = parseInt(v[0]);
         p.y = parseInt(v[1]);
         p.z = parseInt(v[2]);

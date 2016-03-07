@@ -116,6 +116,7 @@ declare module Blockly {
         clear(): void;
         dispose(): void;
         getTopBlocks(ordered: boolean): Block[];
+        getBlockById(id:string): Block;
         getAllBlocks(): Block[];
         addChangeListener(f: (e : BlocklyEvent) => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;

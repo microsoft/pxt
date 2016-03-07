@@ -546,7 +546,7 @@ function mkPlaceholderBlock(e: Environment): B.Block {
     };
 }
 
-function attachPlaceholderIf(e : Environment, b: B.Block, n: string) {
+function attachPlaceholderIf(e: Environment, b: B.Block, n: string) {
     // Ugly hack to keep track of the type we want there.
     if (!b.getInputTargetBlock(n)) {
         var i = b.inputList.filter(x => x.name == n)[0];
@@ -820,41 +820,44 @@ function defaultValueForType(t: Point): J.JExpr {
 // whenever a block was actually missing).
 function compileExpression(e: Environment, b: B.Block): J.JExpr {
     assert(b != null);
+    let expr: J.JExpr;
     if (b.disabled || b.type == "placeholder")
-        return defaultValueForType(returnType(e, b));
-
-    switch (b.type) {
+        expr = defaultValueForType(returnType(e, b));
+    else switch (b.type) {
         case "math_number":
-            return compileNumber(e, b);
+            expr = compileNumber(e, b);
         case "math_op2":
-            return compileMathOp2(e, b);
+            expr = compileMathOp2(e, b);
         case "math_op3":
-            return compileMathOp3(e, b);
+            expr = compileMathOp3(e, b);
         case "device_random":
-            return compileRandom(e, b);
+            expr = compileRandom(e, b);
         case "math_arithmetic":
         case "logic_compare":
         case "logic_operation":
-            return compileArithmetic(e, b);
+            expr = compileArithmetic(e, b);
         case "logic_boolean":
-            return compileBoolean(e, b);
+            expr = compileBoolean(e, b);
         case "logic_negate":
-            return compileNot(e, b);
+            expr = compileNot(e, b);
         case "variables_get":
-            return compileVariableGet(e, b);
+            expr = compileVariableGet(e, b);
         case "text":
-            return compileText(e, b);
+            expr = compileText(e, b);
         default:
             var call = e.stdCallTable[b.type];
             if (call) {
-                if (call.imageLiteral) return compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e,b,ar)))
-                else return compileStdCall(e, b, call);
+                if (call.imageLiteral) expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))
+                else expr = compileStdCall(e, b, call);
             }
             else {
                 console.error("Unable to compile expression: " + b.type);
-                return defaultValueForType(returnType(e, b));
+                expr = defaultValueForType(returnType(e, b));
             }
     }
+
+    expr.id = b.id;
+    return expr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -904,7 +907,7 @@ function fresh(e: Environment, s: string): string {
     return unique;
 }
 
-function emptyEnv(w : Blockly.Workspace): Environment {
+function emptyEnv(w: Blockly.Workspace): Environment {
     return {
         workspace: w,
         bindings: [],
@@ -1044,9 +1047,9 @@ function compileChange(e: Environment, b: B.Block): J.JStmt {
 function compileCall(e: Environment, b: B.Block): J.JStmt {
     var call = e.stdCallTable[b.type];
     return call.imageLiteral
-        ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e,b,ar)))))
+        ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))))
         : call.hasHandler ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
-        : H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, e.stdCallTable[b.type])));
+            : H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, e.stdCallTable[b.type])));
 }
 
 function compileArgument(e: Environment, b: B.Block, p: StdArg): J.JExpr {
@@ -1061,7 +1064,7 @@ function compileArgument(e: Environment, b: B.Block, p: StdArg): J.JExpr {
 }
 
 function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
-    var args = func.args.map((p: StdArg) => compileArgument(e,b,p));
+    var args = func.args.map((p: StdArg) => compileArgument(e, b, p));
     if (func.isExtensionMethod) {
         return H.extensionCall(func.f, args);
     } else if (func.namespace) {
@@ -1140,46 +1143,54 @@ interface StdFunc {
     namespace?: string;
 }
 
+function compileStatementBlock(e: Environment, b: B.Block): J.JStmt[] {
+    let r: J.JStmt[];
+    switch (b.type) {
+        case 'controls_if':
+            r = compileControlsIf(e, <B.IfBlock>b);
+            break;
+        case 'controls_for':
+        case 'controls_simple_for':
+            r = compileControlsFor(e, b);
+            break;
+        case 'variables_set':
+            r = [compileSet(e, b)];
+            break;
+
+        case 'variables_change':
+            r = [compileChange(e, b)];
+            break;
+
+        case 'device_forever':
+            r = [compileForever(e, b)];
+            break;
+
+        case 'controls_repeat_ext':
+            r = [compileControlsRepeat(e, b)];
+            break;
+
+        case 'device_while':
+            r = [compileWhile(e, b)];
+            break;
+        default:
+            let call = e.stdCallTable[b.type];
+            if (call) r = [compileCall(e, b)];
+            else {
+                console.error("Not generating code for (not a statement / not supported): " + b.type);
+                r = [];
+            }
+    }
+    let l = r[r.length - 1]; if (l) l.id = b.id;
+    return r;
+}
+
 function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
     if (b == null)
         return [];
 
     var stmts: J.JStmt[] = [];
     while (b) {
-        if (!b.disabled) {
-            switch (b.type) {
-                case 'controls_if':
-                    append(stmts, compileControlsIf(e, <B.IfBlock>b));
-                    break;
-                case 'controls_for':
-                case 'controls_simple_for':
-                    append(stmts, compileControlsFor(e, b));
-                    break;
-                case 'variables_set':
-                    stmts.push(compileSet(e, b));
-                    break;
-
-                case 'variables_change':
-                    stmts.push(compileChange(e, b));
-                    break;
-
-                case 'device_forever':
-                    stmts.push(compileForever(e, b));
-                    break;
-
-                case 'controls_repeat_ext':
-                    stmts.push(compileControlsRepeat(e, b));
-                    break;
-
-                case 'device_while':
-                    stmts.push(compileWhile(e, b));
-                    break;
-                default:
-                    let call = e.stdCallTable[b.type];
-                    if (call) stmts.push(compileCall(e, b));
-                    else console.error("Not generating code for (not a statement / not supported): " + b.type);
-            }
-        }
+        if (!b.disabled) append(stmts, compileStatementBlock(e, b));
         b = b.getNextBlock();
     }
     return stmts;
@@ -1354,7 +1365,6 @@ function tdASTtoTS(app: J.JApp) {
     let output = ""
     let indent = ""
     let currInlineAction: J.JInlineAction = null
-
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
     let infixPriTable: Util.StringMap<number> = {
         "=": 3,

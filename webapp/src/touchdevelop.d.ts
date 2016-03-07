@@ -41,8 +41,6 @@ declare module TDev.AST.Json
     {
         nodeType:string; // name of interface without leading J and with lower-case first letter
         id:string; // do not depend on the particular format of these strings
-        
-        block?: any; // blockly block if any
     }
 
     /*abstract*/ export interface JDecl extends JNode
