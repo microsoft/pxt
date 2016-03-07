@@ -399,15 +399,18 @@ namespace ts.yelm {
         function finalEmit() {
             if (diagnostics.getModificationCount() || opts.noEmit)
                 return;
-            
+
             bin.writeFile = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null);
 
-            if (opts.target == CompileTarget.JavaScript) {
+            if (opts.target.isNative) {
+                if (opts.target.nativeType == "thumb")
+                    thumbEmit(bin)
+                else
+                    oops();
+            } else {
                 jsEmit(bin)
-            } else if (opts.target == CompileTarget.Thumb) {
-                thumbEmit(bin)
-            } else oops();
+            }
         }
 
         function typeCheckVar(decl: Declaration) {
@@ -498,7 +501,7 @@ namespace ts.yelm {
             var lbl = "_img" + bin.lblNo++
             if (lit.length % 4 != 0)
                 lit += "42" // pad
-            
+
             bin.otherLiterals.push(`
 .balign 4
 ${lbl}: .short 0xffff
@@ -1710,7 +1713,7 @@ ${lbl}: .short 0xffff
         globals: ir.Cell[] = [];
         finalPass = false;
         target: CompileTarget;
-        writeFile = (fn:string, cont:string) => {};
+        writeFile = (fn: string, cont: string) => { };
 
         strings: StringMap<string> = {};
         otherLiterals: string[] = [];

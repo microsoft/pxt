@@ -243,7 +243,7 @@ namespace ts.yelm.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],
-        target: ts.yelm.CompileTarget.Thumb,
+        target: { isNative: false, hasHex: false },
         hexinfo: null
     }
 

@@ -9,10 +9,10 @@
 /// <reference path="backthumb.ts"/>
 
 namespace ts.yelm {
-    export enum CompileTarget {
-        None,
-        Thumb,
-        JavaScript,
+    export interface CompileTarget {
+        isNative:boolean; // false -> JavaScript for simulator
+        nativeType?:string; // currently only "thumb"
+        hasHex:boolean;
     }
     
     export interface CompileOptions {
