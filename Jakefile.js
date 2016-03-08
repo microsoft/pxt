@@ -7,17 +7,16 @@ var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 
 function tscIn(task, dir) {
-  cmdIn(task, dir, 'node ../node_modules/typescript/bin/tsc')
+    cmdIn(task, dir, 'node ../node_modules/typescript/bin/tsc')
 }
 
 function compileDir(name, deps) {
-  if (!deps) deps = []
-  let dd = expand([name].concat(deps))
-  file('built/' + name + '.js', dd, {async : true}, function () { tscIn(this, name) })
+    if (!deps) deps = []
+    let dd = expand([name].concat(deps))
+    file('built/' + name + '.js', dd, { async: true }, function () { tscIn(this, name) })
 }
 
-function loadText(filename)
-{
+function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
@@ -25,53 +24,53 @@ task('default', ['updatestrings', 'built/yelm.js', 'built/yelm.d.ts', 'wapp'], {
 
 task('test', ['default', 'runprj', 'testfmt'])
 
-task('clean', function() {
-  // jake.rmRf("built") - doesn't work?
-  expand(["built", "libs/lang-test0/built"]).forEach(f => {
-      try {
-        fs.unlinkSync(f)
-      } catch (e) {
-          console.log("cannot unlink:", f, e.message)
-      }
-  })
+task('clean', function () {
+    expand(["built", "libs/lang-test0/built"]).forEach(f => {
+        try {
+            fs.unlinkSync(f)
+        } catch (e) {
+            console.log("cannot unlink:", f, e.message)
+        }
+    })
+    jake.rmRf("built")
 })
 
-task('runprj', ['built/yelm.js'], {async:true, parallelLimit: 10}, function() {
-  cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
+task('runprj', ['built/yelm.js'], { async: true, parallelLimit: 10 }, function () {
+    cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
 })
 
-task('testfmt', ['built/yelm.js'], {async:true}, function() {
-  cmdIn(this, "libs/format-test", 'node ../../built/yelm.js format -t')
+task('testfmt', ['built/yelm.js'], { async: true }, function () {
+    cmdIn(this, "libs/format-test", 'node ../../built/yelm.js format -t')
 })
 
 let embedFiles = [
-  "libs/microbit",
-  "libs/microbit-music",
-  "libs/microbit-radio",
-  "libs/microbit-serial",
-  "libs/microbit-led",
-  "libs/microbit-game",
-  "libs/microbit-pins",
-  "libs/microbit-devices",
-  "libs/minecraft",
+    "libs/microbit",
+    "libs/microbit-music",
+    "libs/microbit-radio",
+    "libs/microbit-serial",
+    "libs/microbit-led",
+    "libs/microbit-game",
+    "libs/microbit-pins",
+    "libs/microbit-devices",
+    "libs/minecraft",
 ]
 
 embedFiles.forEach(f => {
-  file(f + "/built/yelmembed.js", expand([f]).filter(f => !/\/built\//.test(f)), {async:true}, function() {
-    cmdIn(this, f, 'node ../../built/yelm.js genembed')
-  })
+    file(f + "/built/yelmembed.js", expand([f]).filter(f => !/\/built\//.test(f)), { async: true }, function () {
+        cmdIn(this, f, 'node ../../built/yelm.js genembed')
+    })
 })
 
 ju.catFiles('built/web/yelmembed.js', embedFiles.map(f => f + "/built/yelmembed.js"))
 
 
 ju.catFiles('built/yelm.js', [
-    "node_modules/typescript/lib/typescript.js", 
+    "node_modules/typescript/lib/typescript.js",
     "built/yelmlib.js",
     "built/yelmsim.js",
     "built/cli.js"
-    ],
-`
+],
+    `
 "use strict";
 // make sure TypeScript doesn't overwrite our module.exports
 global.savedModuleExports = module.exports;
@@ -79,8 +78,8 @@ module.exports = null;
 `)
 
 file('built/nodeutil.js', ['built/cli.js'])
-file('built/yelm.d.ts', ['built/cli.js'], function() {
-  jake.cpR("built/cli.d.ts", "built/yelm.d.ts")
+file('built/yelm.d.ts', ['built/cli.js'], function () {
+    jake.cpR("built/cli.d.ts", "built/yelm.d.ts")
 })
 
 compileDir("yelmlib")
@@ -89,36 +88,46 @@ compileDir("cli", ["built/yelmlib.js", "built/yelmsim.js"])
 
 task("travis", ["test", "upload"])
 
-task('upload', ["wapp", "built/yelm.js"], {async:true}, function() {
-  cmdIn(this, ".", 'node built/yelm.js uploadrel latest')
+task('upload', ["wapp", "built/yelm.js"], { async: true }, function () {
+    cmdIn(this, ".", 'node built/yelm.js uploadrel latest')
 })
 
-task('publish', function() {
-  jake.exec([
+task('publish', function () {
+    jake.exec([
         "npm version patch",
         "npm publish",
-  ], {printStdout: true});
+    ], { printStdout: true });
 })
 
-task('update', function() {
-  jake.exec([
+task('yelmpub', { async: true }, function () {
+    let cmds = embedFiles.map(f => {
+        return {
+            cmd: "node",
+            args: ["../../built/yelm.js", "publish"],
+            dir: f
+        }
+    })
+    ju.cmdsIn(this, cmds)
+})
+
+task('update', function () {
+    jake.exec([
         "git pull",
         "npm install",
         "tsd reinstall"
-  ], {printStdout: true});
+    ], { printStdout: true });
 })
 
 task('updatestrings', ['built/localization.json'])
 
 
 
-file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), function() {
+file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), function () {
     var errCnt = 0;
     var translationStrings = {}
     var translationHelpStrings = {}
 
-    function processLf(filename)
-    {
+    function processLf(filename) {
         if (!/\.(ts|tsx|html)$/.test(filename)) return
         if (/\.d\.ts$/.test(filename)) return
 
@@ -149,8 +158,8 @@ file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), f
                 line = newLine
             }
         })
-    }    
-    
+    }
+
     var fileCnt = 0;
     this.prereqs.forEach(pth => {
         fileCnt++;
@@ -164,7 +173,7 @@ file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), f
     if (!fs.existsSync("built")) fs.mkdirSync("built");
     fs.writeFileSync("built/localization.json", JSON.stringify({ strings: tr }, null, 1))
     var strings = {};
-    tr.forEach(function(k) { strings[k] = k; });
+    tr.forEach(function (k) { strings[k] = k; });
     fs.writeFileSync("built/strings.json", JSON.stringify(strings, null, 2));
 
     console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings");
@@ -173,14 +182,14 @@ file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), f
 })
 
 task('wapp', [
-        "built/web/yelmlib.js",
-        'built/web/main.js', 
-        'built/web/worker.js', 
-        'built/web/themes/default/assets/fonts/icons.woff2', 
-        'built/web/style.css', 
-        "built/web/semantic.js", 
-        'built/web/yelmembed.js'
-        ])
+    "built/web/yelmlib.js",
+    'built/web/main.js',
+    'built/web/worker.js',
+    'built/web/themes/default/assets/fonts/icons.woff2',
+    'built/web/style.css',
+    "built/web/semantic.js",
+    'built/web/yelmembed.js'
+])
 
 file("built/web/yelmlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/yelmlib.js", "built/yelmsim.js"], function () {
     jake.mkdirP("built/web")
@@ -191,19 +200,19 @@ file("built/web/yelmlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/yel
     jake.cpR("built/yelmsim.js", "built/web/yelmsim.js")
 
     let additionalExports = [
-      "getCompletionData"
+        "getCompletionData"
     ]
 
     let ts = fs.readFileSync("node_modules/typescript/lib/typescript.js", "utf8")
-    ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/, 
+    ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/,
         f => f + " " + additionalExports.map(s => s + ": " + s + ",").join(" "))
     fs.writeFileSync("built/web/typescript.js", ts)
 })
 
 file('built/webapp/src/app.js', expand([
-        "webapp", "built/web/yelmlib.js"]), { async: true }, function () {
-    tscIn(this, "webapp")
-})
+    "webapp", "built/web/yelmlib.js"]), { async: true }, function () {
+        tscIn(this, "webapp")
+    })
 
 file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')

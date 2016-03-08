@@ -7,6 +7,7 @@
     ],
     "public": true,
     "dependencies": {
-        "microbit": "file:../microbit"        
-    }
+        "microbit": "file:../microbit"
+    },
+    "installedVersion": "bornqs"
 }

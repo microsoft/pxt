@@ -8,6 +8,7 @@
     "public": true,
     "dependencies": {
         "microbit": "file:../microbit",
-        "microbit-led": "file:../microbit-led"      
-    }
+        "microbit-led": "file:../microbit-led"
+    },
+    "installedVersion": "zxxhqa"
 }

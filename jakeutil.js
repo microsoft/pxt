@@ -22,7 +22,7 @@ function expand1(dirs) {
         dirs = [dirs]
     let r = []
     dirs.forEach(dir =>
-      fs.readdirSync(dir).forEach(f => r.push(dir + "/" + f)))
+        fs.readdirSync(dir).forEach(f => r.push(dir + "/" + f)))
     return r
 }
 
@@ -41,10 +41,10 @@ function expand(dir, ext) {
             return [dir]
         }
     }
-    
+
     var res = expandCore(dir) 
     //console.log("expand:", dir, res)
-    return res 
+    return res
 }
 
 function catFiles(out, files, pref) {
@@ -57,18 +57,38 @@ function catFiles(out, files, pref) {
     })
 }
 
+function cmdsIn(task, cmds) {
+    let num = cmds.length
+    cmds.forEach(obj => {
+        console.log(`[${task.name}] cd ${obj.dir}; ${obj.cmd} ${obj.args.join(" ")}`)
+        let ch = child_process.spawn(obj.cmd, obj.args, {
+            cwd: obj.dir,
+            env: process.env,
+            stdio: "inherit"
+        })
+        ch.on('close', (code) => {
+            if (code != 0)
+                task.fail();
+            else {
+                if (--num == 0)
+                    task.complete();
+            }
+        });
+    })
+}
+
 function cmdIn(task, dir, cmd) {
     console.log(`[${task.name}] cd ${dir}; ${cmd}`)
     let args = cmd.split(/\s+/)
-    let ch = child_process.spawn(args[0], args.slice(1), { 
-        cwd: dir, 
+    let ch = child_process.spawn(args[0], args.slice(1), {
+        cwd: dir,
         env: process.env,
-        stdio: "inherit" 
+        stdio: "inherit"
     })
     ch.on('close', (code) => {
-      if (code != 0)
-         task.fail();
-      else task.complete();
+        if (code != 0)
+            task.fail();
+        else task.complete();
     });
 }
 
@@ -77,4 +97,5 @@ exports.expand = expand;
 exports.expand1 = expand1;
 exports.catFiles = catFiles;
 exports.cmdIn = cmdIn;
+exports.cmdsIn = cmdsIn;
 
