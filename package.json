@@ -33,7 +33,6 @@
   "devDependencies": {
     "brace": "^0.7.0",
     "browserify": "^13.0.0",
-    "express": "^4.13.4",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",
     "less": "^2.6.0",
