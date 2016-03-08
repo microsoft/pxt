@@ -92,7 +92,7 @@ task('upload', ["wapp", "built/yelm.js"], { async: true }, function () {
     cmdIn(this, ".", 'node built/yelm.js uploadrel latest')
 })
 
-task('publish', function () {
+task('npmpub', function () {
     jake.exec([
         "npm version patch",
         "npm publish",
