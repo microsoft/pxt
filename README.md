@@ -31,15 +31,16 @@ npm install
 jake
 ```
 
-Building webapp:
+Then install the `yelm` command line tool (only need to do it once):
+
 ```
-cd webapp
-tsd reinstall
-npm install
-jake
-node server.js &
-open http://localhost:3232
+npm install -g yelm-cli
 ```
+
+After this you can run `yelm` from anywhere within the build tree.
+
+To start the local web app server do `yelm serve` within the root directory
+of build tree (where this file sits) and then browse to http://localhost:3232 
 
 ## TODOs
 

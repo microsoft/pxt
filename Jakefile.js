@@ -167,7 +167,7 @@ file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), f
     tr.forEach(function(k) { strings[k] = k; });
     fs.writeFileSync("built/strings.json", JSON.stringify(strings, null, 2));
 
-    console.log("*** Stop; " + fileCnt + " files; " + tr.length + " strings");
+    console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings");
     if (errCnt > 0)
         console.log("%d errors", errCnt);
 })
