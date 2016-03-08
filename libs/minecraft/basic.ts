@@ -48,7 +48,7 @@ namespace basic {
     
     /**
      * Posts a message on the chat
-     * @param message the message to post on the chat, eg: "Hi!""
+     * @param message the message to post on the chat, eg: "Hi!"
      */
     //% blockId=minecraftChat block="say %message" weight=10
     export function chat(message : string) {
