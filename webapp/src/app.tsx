@@ -716,7 +716,7 @@ Ctrl+Shift+B
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <div id="footer">
                     <div>
-                        <a href="https://github.com/Microsoft/yelm">yelm</a> - (c) Microsoft Corporation - 2016 - EXPERIMENTAL
+                        <a href="https://github.com/Microsoft/kindscript">KindScript</a> - (c) Microsoft Corporation - 2016 - EXPERIMENTAL
                         | <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">terms of use</a>
                         | <a href="https://privacy.microsoft.com/en-us/privacystatement">privacy</a>
                     </div>
