@@ -1,6 +1,6 @@
 {
   "name": "yelm",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "Experimental programming environment for micro:bit",
   "keywords": [
     "TypeScript",
