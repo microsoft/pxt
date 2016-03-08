@@ -81,9 +81,9 @@ export class LogView extends React.Component<ILogProps, ILogState> {
                 ens = ens.slice(-this.props.maxEntries);
             // find the entry with same source
             let last: ILogEntry = undefined;
-            let m = /([^:]+):\s*(\d+)/i.exec(value);
+            let m = /([^:]+):\s*(-?\d+)/i.exec(value);
             let variable = m ? m[1] : undefined;
-            let nvalue = m ? parseInt(m[2]) : undefined;
+            let nvalue = m ? parseInt(m[2]) : null;
             for (let i = ens.length - 1; i >= 0; --i) {
                 if (ens[i].source == source &&
                     (ens[i].value == value ||
@@ -114,7 +114,7 @@ export class LogView extends React.Component<ILogProps, ILogState> {
                     source: source,
                     count: 1,
                     variable: variable,
-                    accvalues: nvalue ? [{t:0, v:nvalue}] : undefined
+                    accvalues: nvalue != null ? [{t:0, v:nvalue}] : undefined
                 });
             }
             return { entries: ens };
@@ -145,8 +145,9 @@ export class LogView extends React.Component<ILogProps, ILogState> {
     render() {
         let msgs = this.state.entries.map(entry =>
             <div className={"ui log " + entry.theme + (entry.accvalues ? " link" : "")} key={entry.id} onClick={entry.accvalues ? () => this.tableToCSV(entry) : undefined}>
-                {entry.count > 1 ? <span className="ui log counter">{entry.count}</span> : ""}
-                {entry.value}
+                {entry.accvalues ? <span className={"ui log " + entry.theme + " gauge"}>{entry.value}</span>
+                : entry.count > 1 ? <span className="ui log counter">{entry.count}</span> : ""}
+                {entry.accvalues ? "" : entry.value}
             </div>);
 
         return <div className='ui segment hideempty logs'>

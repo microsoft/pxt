@@ -293,14 +293,35 @@
     border-left-color:#202020;
 }
     
-.ui.log.counter {
-    background:grey;
+.ui.log.gauge, .ui.log.counter {
     color:white;
     border-radius: 4px;
+    margin-left:0.1em;
     margin-right:0.2em;
     padding-left:0.25em;
     padding-right:0.25em;
 }
+
+.ui.log.counter {
+    background:grey;    
+}
+
+.ui.log.gauge.blue {
+    background:#3ADCFE;
+}
+.ui.log.gauge.yellow {
+    background:#FFD43A;
+}
+.ui.log.gauge.green {
+    background:#3AFFB3;
+}
+.ui.log.gauge.red {
+    background:#FF3A54;
+}
+.ui.log.gauge.black {
+    background:#202020;
+}
+
 
 .highlight {
     border-bottom: 2px solid #FFC107;     
