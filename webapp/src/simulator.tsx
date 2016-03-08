@@ -60,8 +60,13 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
 
     static startFrame(frame: HTMLIFrameElement) {
         let msg = yelm.U.clone(Simulator.currentRuntime) as yelm.rt.SimulatorRunMessage;
-        msg.theme = Simulator.themes[Simulator.nextFrameId++ % Simulator.themes.length];
-        msg.id = `${msg.theme}-${yelm.Util.guidGen()}`;
+        let mc = '';
+        let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
+        msg.options = {
+            theme : Simulator.themes[Simulator.nextFrameId++ % Simulator.themes.length],
+            player: mc
+        };
+        msg.id = `${msg.options.theme}-${yelm.Util.guidGen()}`;
         frame.contentWindow.postMessage(msg, "*");
     }
 
