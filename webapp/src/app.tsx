@@ -1,3 +1,5 @@
+/// <reference path="../../built/yelmlib.d.ts"/>
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
@@ -32,109 +34,6 @@ export interface EditorSettings {
     showFiles?: boolean;
     fileHistory: FileHistoryEntry[];
 }
-
-interface IProjectTemplate {
-    id:string;
-    config: yelm.PackageConfig;
-    files: workspace.ScriptText;
-}
-
-interface IAppTarget {
-    id: string;
-    name: string;
-    blocksprj: IProjectTemplate;
-    tsprj: IProjectTemplate;
-    compile?: boolean;
-    koduvscode?: boolean;
-}
-
-var appTargets: yelm.U.Map<IAppTarget> = {
-    microbit: {
-        id: "microbit",
-        name: lf("BBC micro:bit"),
-        blocksprj: {
-            id:"blocksprj",
-            config: {
-                name: lf("{0} block"),
-                dependencies: {
-                    "microbit": "*",
-                    "microbit-led": "*",
-                    "microbit-music": "*",
-                    "microbit-radio": "*",
-                    "microbit-game": "*",
-                    "microbit-pins": "*",
-                    "microbit-serial": "*"
-                },
-                description: "",
-                files: ["main.blocks", "main.blocks.ts", "README.md"]
-            },
-            files: {
-                "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
-                "main.blocks.ts": "\n",
-                "README.md": lf("Describe your project here!")
-            }
-        },
-        tsprj: {
-            id:"tsprj",
-            config: {
-                name: lf("{0} bit"),
-                dependencies: {
-                    "microbit": "*",
-                    "microbit-led": "*",
-                    "microbit-music": "*",
-                    "microbit-radio": "*",
-                    "microbit-game": "*",
-                    "microbit-pins": "*",
-                    "microbit-serial": "*"
-                },
-                description: "",
-                files: ["main.ts", "README.md"]
-            }, files: {
-                "main.ts": `basic.showString("Hi!")\n`,
-                "README.md": lf("Describe your project here!")
-            }
-        },
-        koduvscode: true,
-        compile: true
-    },
-
-    minecraft: {
-        id: "minecraft",
-        name: lf("Minecraft"),
-        blocksprj: {
-            id:"blocksprj",
-            config: {
-                name: lf("{0} craft"),
-                dependencies: {
-                    "minecraft": "*",
-                },
-                description: "",
-                files: ["main.blocks", "main.blocks.ts", "README.md"]
-            },
-            files: {
-                "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
-                "main.blocks.ts": "\n",
-                "README.md": lf("Describe your project here!")
-            }
-        },
-        tsprj: {
-            id:"tsprj",
-            config: {
-                name: lf("{0} craft"),
-                dependencies: {
-                    "minecraft": "*",
-                },
-                description: "",
-                files: ["main.ts", "README.md"]
-            }, files: {
-                "main.ts": `\n`,
-                "README.md": lf("Describe your project here!")
-            }
-        },
-        koduvscode: false,
-        compile: false
-    }    
-};
 
 interface IAppProps { }
 interface IAppState {
@@ -339,7 +238,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: ScriptSearch;
-    appTarget: IAppTarget;
+    appTarget: yelm.AppTarget;
 
     constructor(props: IAppProps) {
         super(props);
@@ -347,7 +246,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let target = '';
         let m = /target=([a-z0-9]+)/i.exec(window.document.location.href);
         if (m) target = m[1];
-        this.appTarget = appTargets[target] || appTargets['microbit'];
+        this.appTarget = yelm.appTargets[target] || yelm.appTargets['microbit'];
 
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
@@ -628,7 +527,7 @@ Ctrl+Shift+B
         this.newProjectFromId(this.appTarget.blocksprj);
     }
 
-    newProjectFromId(prj: IProjectTemplate) {
+    newProjectFromId(prj: yelm.ProjectTemplate) {
         let cfg = yelm.U.clone(prj.config);
         cfg.name = yelm.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {

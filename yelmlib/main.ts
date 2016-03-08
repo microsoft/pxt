@@ -4,6 +4,7 @@
 namespace yelm {
     export import U = ts.yelm.Util;
     export import Util = ts.yelm.Util;
+    let lf = U.lf;
 
     export type CompileTarget = ts.yelm.CompileTarget;
 
@@ -54,6 +55,120 @@ namespace yelm {
     export interface FsPkgs {
         pkgs: FsPkg[];
     }
+
+    export interface ProjectTemplate {
+        id: string;
+        config: yelm.PackageConfig;
+        files: U.Map<string>;
+    }
+
+    export interface AppTarget {
+        id: string;
+        name: string;
+        blocksprj: ProjectTemplate;
+        tsprj: ProjectTemplate;
+        compile: CompileTarget;
+        koduvscode?: boolean;
+    }
+
+    export interface ICompilationOptions {
+
+    }
+
+    export var appTargets: yelm.U.Map<AppTarget> = {
+        microbit: {
+            id: "microbit",
+            name: lf("BBC micro:bit"),
+            blocksprj: {
+                id: "blocksprj",
+                config: {
+                    name: lf("{0} block"),
+                    dependencies: {
+                        "microbit": "*",
+                        "microbit-led": "*",
+                        "microbit-music": "*",
+                        "microbit-radio": "*",
+                        "microbit-game": "*",
+                        "microbit-pins": "*",
+                        "microbit-serial": "*"
+                    },
+                    description: "",
+                    files: ["main.blocks", "main.blocks.ts", "README.md"]
+                },
+                files: {
+                    "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
+                    "main.blocks.ts": "\n",
+                    "README.md": lf("Describe your project here!")
+                }
+            },
+            tsprj: {
+                id: "tsprj",
+                config: {
+                    name: lf("{0} bit"),
+                    dependencies: {
+                        "microbit": "*",
+                        "microbit-led": "*",
+                        "microbit-music": "*",
+                        "microbit-radio": "*",
+                        "microbit-game": "*",
+                        "microbit-pins": "*",
+                        "microbit-serial": "*"
+                    },
+                    description: "",
+                    files: ["main.ts", "README.md"]
+                }, files: {
+                    "main.ts": `basic.showString("Hi!")\n`,
+                    "README.md": lf("Describe your project here!")
+                }
+            },
+            koduvscode: true,
+            compile: {
+                isNative: false,
+                hasHex: true
+            }
+        },
+
+        minecraft: {
+            id: "minecraft",
+            name: lf("Minecraft"),
+            blocksprj: {
+                id: "blocksprj",
+                config: {
+                    name: lf("{0} craft"),
+                    dependencies: {
+                        "minecraft": "*",
+                    },
+                    description: "",
+                    files: ["main.blocks", "main.blocks.ts", "README.md"]
+                },
+                files: {
+                    "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
+                    "main.blocks.ts": "\n",
+                    "README.md": lf("Describe your project here!")
+                }
+            },
+            tsprj: {
+                id: "tsprj",
+                config: {
+                    name: lf("{0} craft"),
+                    dependencies: {
+                        "minecraft": "*",
+                    },
+                    description: "",
+                    files: ["main.ts", "README.md"]
+                }, files: {
+                    "main.ts": `\n`,
+                    "README.md": lf("Describe your project here!")
+                }
+            },
+            koduvscode: false,
+            compile: {
+                isNative: false,
+                hasHex: false
+            }
+        }
+    };
+
 
     export class Package {
         public config: PackageConfig;
@@ -243,17 +358,8 @@ namespace yelm {
 
         getTargetOptions(): CompileTarget {
             let trg = this.getTarget()
-            // TODO make this more dynamic
-            if (trg == "microbit")
-                return {
-                    isNative: false,
-                    hasHex: true
-                }
-            else
-                return {
-                    isNative: false,
-                    hasHex: false
-                }
+            let target = appTargets[trg];
+            return target.compile;
         }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
