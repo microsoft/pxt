@@ -2,6 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as core from "./core";
+import * as trendchart from "./trendchart";
 
 export interface ILogProps {
     maxEntries?: number;
@@ -147,7 +148,7 @@ export class LogView extends React.Component<ILogProps, ILogState> {
             <div className={"ui log " + entry.theme + (entry.accvalues ? " link" : "")} key={entry.id} onClick={entry.accvalues ? () => this.tableToCSV(entry) : undefined}>
                 {entry.accvalues ? <span className={"ui log " + entry.theme + " gauge"}>{entry.value}</span>
                 : entry.count > 1 ? <span className="ui log counter">{entry.count}</span> : ""}
-                {entry.accvalues ? "" : entry.value}
+                {entry.accvalues ? <trendchart.TrendChart className={"ui trend " + entry.theme} log={entry} width={80} height={15} /> : entry.value}
             </div>);
 
         return <div className='ui segment hideempty logs'>

@@ -278,13 +278,13 @@
     border-left-color:#ccc;
 }
 .ui.log.blue {
-    border-left-color:#3ADCFE;
+    border-left-color:#0AaCbE;
 }
 .ui.log.yellow {
-    border-left-color:#FFD43A;
+    border-left-color:#cFb41A;
 }
 .ui.log.green {
-    border-left-color:#3AFFB3;
+    border-left-color:#AACF83;
 }
 .ui.log.red {
     border-left-color:#FF3A54;
@@ -307,21 +307,51 @@
 }
 
 .ui.log.gauge.blue {
-    background:#3ADCFE;
+    background:#0AaCbE;
 }
 .ui.log.gauge.yellow {
-    background:#FFD43A;
+    background:#cFb41A;
 }
 .ui.log.gauge.green {
-    background:#3AFFB3;
+    background:#AACF83;
 }
 .ui.log.gauge.red {
     background:#FF3A54;
 }
 .ui.log.gauge.black {
-    background:#202020;
+    background:#000;
 }
 
+svg.ui.trend {
+    width: 8em;
+    height: 1.5em;
+    margin-top: 0.1em;
+    float: right;
+    vertical-align: middle;
+}
+
+svg.ui.trend polyline {
+    stroke: #000;
+    stroke-width: 1px;
+    stroke-linejoin: round;
+    fill:none;
+}
+
+svg.ui.trend.blue polyline {
+    stroke:#0AaCbE;
+}
+svg.ui.trend.yellow polyline {
+    stroke:#cFb41A;
+}
+svg.ui.trend.green polyline {
+    stroke:#AACF83;
+}
+svg.ui.trend.red polyline {
+    stroke:#FF3A54;
+}
+svg.ui.trend.black polyline {
+    stroke:#000;
+}
 
 .highlight {
     border-bottom: 2px solid #FFC107;     
