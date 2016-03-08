@@ -50,7 +50,11 @@ namespace yelm.rt.minecraft {
                     let msgid = msg.slice(0, del);
                     let parts = msg.slice(del+1).trim().split(' ');
                     let cb = this.pendingCmds[msgid];
-                    if (cb) cb(parts);
+                    if (cb) {
+                        let c = new RefCollection(3);
+                        c.data = parts;
+                        cb(c);
+                    }
                 }, false)
                 this.ws.addEventListener('close', ev => this.closeSocket(), false);
                 this.ws.addEventListener('error', ev => this.closeSocket(), false);
