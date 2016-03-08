@@ -104,7 +104,10 @@ let snippets = [
     mkSnippet("if else", "Do something or something else depending on condition", `if (${cursorMarker}) ${block} else ${block}`),
     mkSnippet("while", "Loop while condition is true", `while (true) {\n ${cursorMarker}\nbasic.pause(20)\n}`),
     mkSnippet("for", "Repeat a given number of times", `for (let i = 0; i < 5; i++) ${block}`),
-    // for each not support at the moment in the compiler
+    mkSnippet("function", "Define a new procedure", `function doSomething() ${block}`),
+    mkSnippet("class", "Define a new object type", `class Thing ${block}`),
+    mkSnippet("let", "Define a new variable", `let x = ${cursorMarker}`),
+    // for each not supported at the moment in the compiler
     //mkSnippet("for each", "Do something for all elements of an array", `for (let e of ${placeholderChar}) ${block}`),
     // switch also not supported
 ]
