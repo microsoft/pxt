@@ -438,9 +438,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 <div class="ui two column grid">
   <div class="column">
     <div id="newblockproject" class="ui fluid card link">
-        <div class="ui slide masked reveal image">
-            <img class="visible content" src="${images}/newblock.png">
-            <img class="hidden content" src="${images}/newblock2.png">
+        <div class="ui image">
+            <img src="${images}/newblock.png">
         </div>
         <div class="content">
         <div class="header">Block Editor</div>
@@ -452,9 +451,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   </div>
   <div class="column">
     <div id="newtypescript" class="ui fluid card link">
-        <div class="ui slide masked reveal image">
+        <div class="ui image">
             <img class="visible content" src="${images}/newtypescript.png">
-            <img class="hidden content" src="${images}/newtypescript2.png">
         </div>
         <div class="content">
         <div class="header">JavaScript</div>
