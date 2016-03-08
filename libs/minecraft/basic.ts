@@ -71,7 +71,15 @@ namespace basic {
      */
     //% blockId=minecraftChat block="say %message"
     export function chat(message : string) {
-        commands.postCommand('postchat', 'me "' + message + '"');
+        commands.postCommand('postchat', playerName() + ' "' + message + '"');
+    }
+    
+    /**
+     * Gets the current player name
+     */
+    //% shim=minecraft::playerName
+    export function playerName() : string {
+        return null;
     }
 
     /**
@@ -97,7 +105,8 @@ namespace basic {
      */
     //% blockId=minecraftPlayerPosition block="player position"
     export function playerPosition(): Position {
-        let v = commands.postCommand("getposition", "...")
+        let name = basic.playerName();
+        let v = commands.postCommand("getposition", name)
         let p = new Position();
         p.x = parseInt(v[1]);
         p.y = parseInt(v[2]);

@@ -1,8 +1,8 @@
 // Display/button/etc related stuff
-
 namespace yelm.rt.minecraft {
     export class Board extends BaseBoard {
         id: string;
+        playerName:string;
 
         private pendingCmds: {
             [index: string]: (v?: any) => void;
@@ -19,6 +19,7 @@ namespace yelm.rt.minecraft {
                
         closeSocket() {
             console.log('socket closed...')
+            this.appendChat('disconnected...');
             this.ws = undefined;
             for (let cmd in this.pendingCmds)
                 this.pendingCmds[cmd]([]);
@@ -26,16 +27,19 @@ namespace yelm.rt.minecraft {
         }
         
         initAsync(msg : SimulatorRunMessage) : Promise<void> {            
+            this.playerName = msg.options.player || '?';
+            
             console.log('setting up minecraft simulator');
             document.body.innerHTML = ''; // clear children
             document.body.appendChild(this.element);  
-            
+                        
             return this.initSocketAsync().then(() => {});
         }
 
         initSocketAsync() {
             if (this.ws) return Promise.resolve<WebSocket>(this.ws);
             
+            this.appendChat('connecting to Minecraft...');
             this.ws = new WebSocket("ws://127.0.0.1:3000/client");
             this.pendingCmds = {};
             
@@ -131,6 +135,10 @@ namespace yelm.rt.minecraft {
     export function postCommand(cmd: string, args: string): void {
         let cb = getResume();
         board().queueCmd(cmd, args, cb);
+    }
+    
+    export function playerName() : string {
+        return board().playerName;
     }
 }
 

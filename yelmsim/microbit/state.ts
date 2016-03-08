@@ -1,4 +1,8 @@
 namespace yelm.rt.micro_bit {
+    export interface RuntimeOptions {
+        theme: string;
+    }
+    
     export enum DisplayMode {
         bw,
         greyscale
@@ -201,8 +205,9 @@ namespace yelm.rt.micro_bit {
         
         
         initAsync(msg : SimulatorRunMessage) : Promise<void> {
+            let options = (msg.options || {}) as RuntimeOptions;
             let theme : micro_bit.IBoardTheme;
-            switch(msg.theme) {
+            switch(options.theme) {
                 case 'blue': theme = micro_bit.themes[0]; break;
                 case 'yellow': theme = micro_bit.themes[1]; break;
                 case 'green': theme = micro_bit.themes[2]; break;

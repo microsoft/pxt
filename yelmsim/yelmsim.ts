@@ -6,7 +6,7 @@ namespace yelm.rt {
 
     export interface SimulatorRunMessage extends SimulatorMessage {
         id?: string;
-        theme?: string;
+        options?: any;
         
         code: string;
         target: string;
