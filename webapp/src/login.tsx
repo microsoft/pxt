@@ -101,7 +101,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
                         {isOffline ?
                             <sui.Item icon='plane' text={lf("Go online") } onClick={goOnline} />
                             : <sui.Item onClick={() => data.setOnline(false) } icon='plane' text={lf("Go offline") } /> }                        
-                        <sui.Item onClick={() => { window.location.href = "https://crowdin.com/project/yelm" } } icon='translate' text={lf("Help translate yelm!") } />
+                        <sui.Item onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate KindScript!") } />
                     </sui.DropdownMenu>
                 </div>
             </div>)

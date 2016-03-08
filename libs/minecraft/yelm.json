@@ -7,7 +7,6 @@
         "helpers.ts",
         "basic.ts",
         "control.ts",
-        "position.ts",
         "commands.ts",
         "world.ts"
     ],

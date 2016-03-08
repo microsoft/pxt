@@ -1,26 +1,19 @@
 /**
- * Provides access to basic minecraft functionality.
+ * A 3D coordinate
  */
-enum Blocks {
-    //% enumval=46
-    Tnt,
-    //% enumval=0
-    Air,
-    //% enumval=2
-    Stone,
-    //% enumval=10
-    Lava,
-    //% enumval=8
-    Water
+class Position {
+    public x: number;
+    public y: number;
+    public z: number;
 }
 
 //% color=190 weight=100
-namespace basic {    
+namespace basic {
     /**
      * Gets the current player name
      */
     //% shim=minecraft::playerName
-    export function playerName() : string {
+    export function playerName(): string {
         return null;
     }
 
@@ -29,29 +22,27 @@ namespace basic {
      */
     //% blockId=minecraftPlace block="place %block=minecraftBlock|at %pos=minecraftPlayerPosition" weight=80
     export function place(block: number, pos: Position) {
-        world.fill(block, pos, position.createPos(0, 0, 0), position.createPos(0, 0, 0));
+        world.fill(block, pos, basic.createPos(0, 0, 0), basic.createPos(0, 0, 0));
     }
-
     /**
-     * Gets the current player position
+     * Returns the sum of the two vectors
      */
-    //% blockId=minecraftPlayerPosition block="player position"
-    export function playerPosition(): Position {
-        let name = basic.playerName();
-        let v = commands.postCommand("getposition", name)
+    //% weight=62
+    //% blockId=minecraftAddPosition block="%p1=minecraftPlayerPosition|+ %p2=minecraftCreatePosition" blockExternalInputs=1
+    export function add(p1: Position, p2: Position): Position {
         let p = new Position();
-        p.x = parseInt(v[1]);
-        p.y = parseInt(v[2]);
-        p.z = parseInt(v[3]);
+        p.x = p1.x + p2.x;
+        p.y = p1.y + p2.y;
+        p.z = p1.z + p2.z;
         return p;
     }
-    
+
     /**
      * Posts a message on the chat
      * @param message the message to post on the chat, eg: "Hi!"
      */
-    //% blockId=minecraftChat block="say %message" weight=10
-    export function chat(message : string) {
+    //% blockId=minecraftChat block="say %message" weight=60
+    export function chat(message: string) {
         commands.postCommand('postchat', playerName() + ' "' + message + '"');
     }
 
@@ -71,4 +62,33 @@ namespace basic {
     //% shim=minecraft::pause async block="pause (ms) %pause"
     //% blockId=device_pause icon="\uf110"
     export function pause(ms: number): void { }
+
+
+    /**
+     * Gets the current player position
+     */
+    //% blockId=minecraftPlayerPosition block="player position" weight=40
+    export function playerPosition(): Position {
+        let name = basic.playerName();
+        let v = commands.postCommand("getposition", name)
+        let p = new Position();
+        p.x = parseInt(v[1]);
+        p.y = parseInt(v[2]);
+        p.z = parseInt(v[3]);
+        return p;
+    }
+
+    /**
+     * A 3D coordinate
+     */
+    //% weight=39
+    //% blockId=minecraftCreatePosition block="x: %x|y: %y|z: %z"
+    export function createPos(x: number, y: number, z: number): Position {
+        let p = new Position();
+        p.x = x;
+        p.y = y;
+        p.z = z;
+        return p;
+    }
+
 }
