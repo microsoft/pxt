@@ -316,9 +316,9 @@
 
 /* smaller screen */
 @media screen and (max-width: 968px) {
-    #logo {
-        font-size:1.5em;
-    }
+    #logo .name {
+        display: none;
+    }    
     .ui.desktop.only {
         display:none !important;
     }
@@ -332,9 +332,6 @@
 
 /* thin portrait mode */
 @media screen and (max-width: 786px) {
-    #logo {
-        font-size:1em;
-    }    
     #helpcard {
         left: 2.1rem;
         top: initial;
