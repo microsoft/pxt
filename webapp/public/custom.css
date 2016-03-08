@@ -5,11 +5,21 @@
   bottom: 2em;
 }
 #logo {
-    font-weight: bold;
-    font-size: 3em;
+    font-size: 2.8em;
     margin: 0;
+    padding: 0 0.3em;
+    /*font-weight: bold;
     padding: 0 0.5em 0 0.5em;
     color: #2185D0;
+    */
+}
+#logo .name {
+    color: #666666;
+    padding: 0 0.3em;
+}
+#logo svg {
+    width: 1.2em;
+    height: 1.2em;
 }
 #footer {
     position: absolute;
