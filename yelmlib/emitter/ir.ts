@@ -411,12 +411,15 @@ namespace ts.yelm.ir {
             }
 
             let opt = (e: ir.Expr): ir.Expr => {
+                if (e.exprKind == EK.SharedRef)
+                    return e;
+                    
                 iterargs(e, opt)
 
                 switch (e.exprKind) {
                     case EK.Decr:
                         if (e.args[0].exprKind == EK.Incr)
-                            return opt(e.args[0].args[0])
+                            return e.args[0].args[0]
                         break;
                     case EK.Sequence:
                         e.args = e.args.filter((a, i) => i == e.args.length - 1 || !a.isPure())
