@@ -19,6 +19,7 @@ namespace yelm.rt.minecraft {
                
         closeSocket() {
             console.log('socket closed...')
+            this.appendChat('disconnected...');
             this.ws = undefined;
             for (let cmd in this.pendingCmds)
                 this.pendingCmds[cmd]([]);
@@ -29,13 +30,14 @@ namespace yelm.rt.minecraft {
             console.log('setting up minecraft simulator');
             document.body.innerHTML = ''; // clear children
             document.body.appendChild(this.element);  
-            
+                        
             return this.initSocketAsync().then(() => {});
         }
 
         initSocketAsync() {
             if (this.ws) return Promise.resolve<WebSocket>(this.ws);
             
+            this.appendChat('connecting to Minecraft...');
             this.ws = new WebSocket("ws://127.0.0.1:3000/client");
             this.pendingCmds = {};
             
