@@ -845,7 +845,7 @@ namespace ts.yelm {
     export function format(input: string, pos: number) {
         let r = tokenize(input)
 
-        if (r.braceBalance != 0) return null
+        //if (r.braceBalance != 0) return null
 
         let topTokens = r.tokens
         topTokens = emptyLinesToComments(topTokens, pos)
