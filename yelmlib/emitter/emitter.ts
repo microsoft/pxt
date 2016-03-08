@@ -404,10 +404,7 @@ namespace ts.yelm {
                 host.writeFile(fn, data, false, null);
 
             if (opts.target.isNative) {
-                if (opts.target.nativeType == "thumb")
-                    thumbEmit(bin)
-                else
-                    oops();
+                thumbEmit(bin)
             } else {
                 jsEmit(bin)
             }
