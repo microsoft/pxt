@@ -236,7 +236,7 @@ namespace yelm.rt.micro_bit {
     
     export function onPinPressed(pin: number, handler: RefAction) {
         let b = board();
-        b.pins.filter(p => p.id == pin).forEach(p => p.isTouched());
+        b.pins.filter(p => p && p.id == pin).forEach(p => p.isTouched());
         onButtonPressed(pin, handler);
     }
 

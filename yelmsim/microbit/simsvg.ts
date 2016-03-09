@@ -5,14 +5,12 @@ namespace yelm.rt.micro_bit {
         display?: string;
         pin?: string;
         pinTouched?: string;
+        pinActive?: string;
         ledOn?: string;
         ledOff?: string;
         buttonOuter?: string;
         buttonUp?: string;
         buttonDown?: string;
-
-        pinOn?: string;
-        pinOff?: string;
     }
 
     export var themes: IBoardTheme[] = ["#3ADCFE", "#FFD43A", "#3AFFB3", "#FF3A54"].map(accent => {
@@ -21,6 +19,7 @@ namespace yelm.rt.micro_bit {
             display: "#000",
             pin: "#D4AF37",
             pinTouched: "#FFA500",
+            pinActive:"#FF5500",
             ledOn: "#ff7f7f",
             ledOff: "#202020",
             buttonOuter: "#979797",
@@ -109,6 +108,15 @@ namespace yelm.rt.micro_bit {
                 });
         }
         
+        static linearGradient(defs: SVGDefsElement, id : string) : SVGLinearGradientElement {
+            let gradient = <SVGLinearGradientElement>Svg.child(defs, "linearGradient", { id: id, x1:"0%", y1:"0%", x2:"0%", y2:"100%" });
+            let stop1 = Svg.child(gradient, "stop", {offset:"0%"})
+            let stop2 = Svg.child(gradient, "stop", {offset:"100%"})
+            let stop3 = Svg.child(gradient, "stop", {offset:"100%"})
+            let stop4 = Svg.child(gradient, "stop", {offset:"100%"})
+            return gradient;
+        }
+        
         static animate(el: SVGElement, cls: string) {
             el.classList.add(cls);
             let p = el.parentElement;
@@ -120,6 +128,7 @@ namespace yelm.rt.micro_bit {
     export class MicrobitBoardSvg
     {
         public element : SVGSVGElement;
+        private defs : SVGDefsElement;
         private g: SVGElement;
         
         private logos: SVGElement[];
@@ -129,6 +138,7 @@ namespace yelm.rt.micro_bit {
         private buttons: SVGElement[];
         private buttonsOuter: SVGElement[];
         private pins: SVGElement[];
+        private pinGradients: SVGLinearGradientElement[];
         private ledsOuter: SVGElement[];
         private leds: SVGElement[];
         private systemLed: SVGCircleElement;
@@ -149,10 +159,16 @@ namespace yelm.rt.micro_bit {
             Svg.fill(this.display, theme.display);
             Svg.fills(this.leds, theme.ledOn);
             Svg.fills(this.ledsOuter, theme.ledOff);
-            Svg.fills(this.pins, theme.pin);
             Svg.fills(this.buttonsOuter, theme.buttonOuter);
             Svg.fills(this.buttons, theme.buttonUp);
             Svg.fills(this.logos, theme.accent);
+            
+            this.pinGradients.forEach(lg => {
+                (<SVGStopElement>lg.childNodes[0]).style.stopColor = theme.pin;
+                (<SVGStopElement>lg.childNodes[1]).style.stopColor = theme.pin;
+                (<SVGStopElement>lg.childNodes[2]).style.stopColor = theme.pinActive;
+                (<SVGStopElement>lg.childNodes[3]).style.stopColor = theme.pinActive;
+            })
         }
         
         public updateState() {
@@ -170,11 +186,27 @@ namespace yelm.rt.micro_bit {
                 var sel = (<SVGStylable><any>led)
                 sel.style.opacity = ((bw ? img.data[i] > 0 ? 255 : 0 : img.data[i]) / 255.0) + "";
             })
-            
+            this.updatePins();
             this.updateTilt();
             this.updateHeading();     
             (<any>this.buttonsOuter[2]).style.visibility = state.usesButtonAB ? 'visible' : 'hidden';   
             (<any>this.buttons[2]).style.visibility = state.usesButtonAB ? 'visible' : 'hidden';   
+        }
+        
+        private updatePin(pin : Pin, index: number) {
+            if (!pin) return;
+            let v = '';
+            if (pin.mode & PinMode.Analog)
+                v = Math.floor(100 - (pin.value || 0) / 1023 * 100) + '%';
+            else if (pin.mode & PinMode.Digital)
+                v = pin.value > 0 ? '0%' : '100%';
+            else if (pin.mode & PinMode.Touch)
+                v = pin.touched ? '0%' : '100%';
+            if (v) {
+                let lg = this.pinGradients[index];
+                (<SVGStopElement>lg.childNodes[1]).setAttribute("offset", v);
+                (<SVGStopElement>lg.childNodes[2]).setAttribute("offset", v);                
+            }
         }
         
         private updateHeading() {
@@ -216,6 +248,13 @@ namespace yelm.rt.micro_bit {
             }
         }
         
+        private updatePins() {
+            let state = this.board;
+            if (!state) return;
+            
+            state.pins.forEach((pin,i) => this.updatePin(pin,i));            
+        }        
+        
         private updateTilt() {
             if (this.props.disableTilt) return;
             let state = this.board;
@@ -239,7 +278,7 @@ namespace yelm.rt.micro_bit {
                 "class":"sim",
                 "x": "0px",
                 "y": "0px"});
-            
+            this.defs = <SVGDefsElement>Svg.child(this.element, "defs", {});
             this.g = Svg.elt("g");
             this.element.appendChild(this.g);
     
@@ -294,7 +333,14 @@ namespace yelm.rt.micro_bit {
             })
             
             this.pins.push(Svg.path(this.g, "sim-pin", "M359.9,317.3c-12.8,0-22.1,10.3-23.1,23.1V406H383v-65.6C383,327.7,372.7,317.3,359.9,317.3z M360,360.1c-10.7,0-19.3-8.6-19.3-19.3c0-10.7,8.6-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3C379.3,351.5,370.7,360.1,360,360.1z"));
-            this.pins.push(Svg.path(this.g, "sim-ping", "M458,317.6c-13,0-23.6,10.6-23.6,23.6c0,0,0,0.1,0,0.1h0V406H469c4.3,0,8.4-1,12.6-2.7v-60.7c0-0.4,0-0.9,0-1.3C481.6,328.1,471,317.6,458,317.6z M457.8,360.9c-10.7,0-19.3-8.6-19.3-19.3c0-10.7,8.6-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3C477.1,352.2,468.4,360.9,457.8,360.9z"));
+            this.pins.push(Svg.path(this.g, "sim-pin", "M458,317.6c-13,0-23.6,10.6-23.6,23.6c0,0,0,0.1,0,0.1h0V406H469c4.3,0,8.4-1,12.6-2.7v-60.7c0-0.4,0-0.9,0-1.3C481.6,328.1,471,317.6,458,317.6z M457.8,360.9c-10.7,0-19.3-8.6-19.3-19.3c0-10.7,8.6-19.3,19.3-19.3c10.7,0,19.3,8.7,19.3,19.3C477.1,352.2,468.4,360.9,457.8,360.9z"));
+            
+            this.pinGradients = this.pins.map((pin,i) => {
+                let gid= "gradient-pin-" + i
+                let lg = Svg.linearGradient(this.defs, gid) 
+                pin.setAttribute("fill", `url(#${gid})`);
+                return lg;
+            })
 
             this.buttonsOuter = []; this.buttons = [];
             this.buttonsOuter.push(Svg.path(this.g, "sim-button-outer", "M82.1,232.6H25.9c-0.5,0-1-0.4-1-1v-56.2c0-0.5,0.4-1,1-1h56.2c0.5,0,1,0.4,1,1v56.2C83,232.2,82.6,232.6,82.1,232.6"));
@@ -363,13 +409,13 @@ namespace yelm.rt.micro_bit {
                             let v = (400 - cursor.y) / 40 * 1023
                             pin.value = Math.max(0, Math.min(1023, Math.floor(v)));
                         }
+                        this.updatePin(pin,index);
                     },
                     // start
                     ev => {
                         let state = this.board;
                         let pin = state.pins[index];
                         let svgpin = this.pins[index];
-                        Svg.fill(svgpin, this.props.theme.pinTouched);                
                         svgpin.classList.add('touched');                            
                         if (pin.mode == PinMode.Touch) {
                             pin.touched = true;
@@ -379,19 +425,20 @@ namespace yelm.rt.micro_bit {
                             let v = (400 - cursor.y) / 40 * 1023
                             pin.value = Math.max(0, Math.min(1023, Math.floor(v)));
                         }
+                        this.updatePin(pin,index);
                     },
                     // stop
                     (ev: MouseEvent) => {
                         let state = this.board;
                         let pin = state.pins[index];
                         let svgpin = this.pins[index];
-                        Svg.fill(svgpin, this.props.theme.pin);                            
                         svgpin.classList.remove('touched');
                         if (pin.mode == PinMode.Touch) {                        
                             pin.touched = false;
                             let ens = enums();
                             this.board.bus.queue(pin.id, ens.MICROBIT_BUTTON_EVT_CLICK);
                         }
+                        this.updatePin(pin, index);
                         return false;
                 });
             })
