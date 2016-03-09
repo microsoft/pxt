@@ -71,8 +71,12 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
     }
 
     static currentRuntime: yelm.rt.SimulatorRunMessage;
-    static stop() {
+    static stop(unload = false) {
         Simulator.postMessage({ type: 'stop' });
+        if (unload) Simulator.unload();
+    }
+    static unload() {
+        $('#simulators').html('');        
     }
     static run(target: string, js: string, enums: any) {
         // store information

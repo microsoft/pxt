@@ -390,7 +390,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (!h)
             return
 
-        this.stopSimulator();
+        this.stopSimulator(true);
         pkg.loadPkgAsync(h.id)
             .then(() => {
                 compiler.newProject();
@@ -585,8 +585,8 @@ Ctrl+Shift+B
             .done()
     }
 
-    stopSimulator() {
-        simulator.Simulator.stop()
+    stopSimulator(unload = false) {
+        simulator.Simulator.stop(unload)
 
         this.setState({ running: false })
     }
