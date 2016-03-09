@@ -36,15 +36,15 @@ enum TouchPins {
 }
 
 enum Gestures {
-    //% blockId=shake
+    //% blockId=shake enumval=MICROBIT_ACCELEROMETER_EVT_SHAKE
     Shake,
-    //% blockId="logo up"
+    //% blockId="logo up" enumval=MICROBIT_ACCELEROMETER_EVT_TILT_UP
     LogoUp,
-    //% blockId="logo down"
+    //% blockId="logo down" enumval=MICROBIT_ACCELEROMETER_EVT_TILT_DOWN
     LogoDown,
-    //% blockId="screen up"
+    //% blockId="screen up" enumval=MICROBIT_ACCELEROMETER_EVT_FACE_UP
     ScreenUp,
-    //% blockId="screen down"
+    //% blockId="screen down" enumval=MICROBIT_ACCELEROMETER_EVT_FACE_DOWN
     ScreenDown
 }
 
@@ -66,7 +66,7 @@ namespace input {
      * Attaches code to run when the screen is facing up.
      * @param body TODO
      */
-    //% help=functions/on-gesture shim=micro_bit::onGesture weight=84
+    //% help=functions/on-gesture shim=micro_bit::on_event weight=84
     //% blockId=device_gesture_event block="on |%NAME" icon="\uf135"
     export function onGesture(gesture: Gestures, body: Action): void { }
 
