@@ -34,6 +34,11 @@ svg.sim {
     stroke-width: 1px;
 }
 
+.sim-antenna {
+    stroke:#555;
+    stroke-width: 2px;
+}
+
 .sim-log {
     background: white;
     font: 0.9em monospace;
@@ -57,4 +62,15 @@ svg.sim {
 @keyframes sim-flash-animation {  
     from { fill: yellow; }
     to   { fill: default; }
+}
+
+.sim-flash-stroke {
+    animation-name: sim-flash-stroke-animation;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-in;
+}
+
+@keyframes sim-flash-stroke-animation {  
+    from { stroke: yellow; }
+    to   { stroke: default; }
 }

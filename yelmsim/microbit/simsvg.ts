@@ -142,6 +142,7 @@ namespace yelm.rt.micro_bit {
         private ledsOuter: SVGElement[];
         private leds: SVGElement[];
         private systemLed: SVGCircleElement;
+        private antenna: SVGPolylineElement;
         public board: rt.micro_bit.Board;        
         
         constructor(public props: IBoardProps) {
@@ -237,7 +238,7 @@ namespace yelm.rt.micro_bit {
             }            
         }
         
-       private lastFlashTime : number = 0;
+        private lastFlashTime : number = 0;
         public flashSystemLed() {
             if (!this.systemLed)
                 this.systemLed = <SVGCircleElement>Svg.child(this.g, "circle", {class:"sim-systemled", cx:300, cy:20, r:5})
@@ -245,6 +246,22 @@ namespace yelm.rt.micro_bit {
             if (now - this.lastFlashTime > 150) {
                 this.lastFlashTime = now;
                 Svg.animate(this.systemLed, 'sim-flash')
+            }
+        }
+        
+        private lastAntennaFlash : number = 0;
+        public flashAntenna() {
+            if (!this.antenna) {            
+                let ax = 380;
+                let dax = 18;
+                let ayt = 10;
+                let ayb = 40;
+                this.antenna = <SVGPolylineElement>Svg.child(this.g, "polyline", { class:"sim-antenna", points: `${ax},${ayb} ${ax},${ayt} ${ax+=dax},${ayt} ${ax},${ayb} ${ax+=dax},${ayb} ${ax},${ayt} ${ax+=dax},${ayt} ${ax},${ayb} ${ax+=dax},${ayb} ${ax},${ayt} ${ax+=dax},${ayt}`})                
+            }
+            let now = Date.now();
+            if (now - this.lastAntennaFlash > 200) {
+                this.lastAntennaFlash = now;
+                Svg.animate(this.antenna, 'sim-flash-stroke')
             }
         }
         
@@ -370,6 +387,7 @@ namespace yelm.rt.micro_bit {
             Runtime.messagePosted = (msg) => {
                 switch(msg.type || '') {
                     case 'serial': this.flashSystemLed(); break;
+                    case 'radiopacket': this.flashAntenna(); break;
                 }
             }
             this.element.addEventListener("mousemove", (ev: MouseEvent) => {
