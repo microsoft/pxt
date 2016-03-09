@@ -368,14 +368,14 @@ svg.ui.trend.black polyline {
 /* extra-large desktop screen */
 @media only screen and (min-width: 1600px) and (min-height:700px) {
     #filelist {
-        width:320px;
+        width:300px;
     }
     #maineditor {
-        left:320px;
+        left:300px;
     }
     .simframe {
         width: 100%;
-        height: 244px;        
+        height: 224px;        
     }    
 }
 
@@ -427,9 +427,4 @@ svg.ui.trend.black polyline {
     .blocklyTreeLabel {
         font-size:14px;
     }    
-}
-
-/* large screen */
-@media screen and (max-width: 1280px) {
-    
 }
