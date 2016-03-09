@@ -617,7 +617,7 @@ ${lbl}: .short 0xffff
                 let ev = attrs.enumval
                 if (!ev)
                     userError(lf("{enumval:...} missing"))
-                if (/\d+/.test(ev))
+                if (/^\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
                 var inf = hex.lookupFunc(ev)
                 if (!inf)
