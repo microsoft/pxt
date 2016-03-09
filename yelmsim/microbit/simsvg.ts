@@ -423,7 +423,6 @@ namespace yelm.rt.micro_bit {
                         let svgpin = this.pins[index];
                         if (pin.mode & PinMode.Input) {
                             let cursor = Svg.cursorPoint(pt, this.element, ev);
-                            console.log(cursor.x + ' - ' + cursor.y)
                             let v = (400 - cursor.y) / 40 * 1023
                             pin.value = Math.max(0, Math.min(1023, Math.floor(v)));
                         }
@@ -439,7 +438,6 @@ namespace yelm.rt.micro_bit {
                             pin.touched = true;
                         } else if (pin.mode & PinMode.Input) {
                             let cursor = Svg.cursorPoint(pt, this.element, ev);
-                            console.log(cursor.x + ' - ' + cursor.y)
                             let v = (400 - cursor.y) / 40 * 1023
                             pin.value = Math.max(0, Math.min(1023, Math.floor(v)));
                         }

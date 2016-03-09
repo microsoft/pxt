@@ -365,8 +365,22 @@ svg.ui.trend.black polyline {
     display:none !important;
 }
 
-/* smaller screen */
-@media screen and (max-width: 968px) {
+/* extra-large desktop screen */
+@media only screen and (min-width: 1600px) and (min-height:700px) {
+    #filelist {
+        width:320px;
+    }
+    #maineditor {
+        left:320px;
+    }
+    .simframe {
+        width: 100%;
+        height: 244px;        
+    }    
+}
+
+/* smaller desktop screen */
+@media only screen and (max-width: 968px) {
     #logo .name {
         display: none;
     }    
@@ -381,8 +395,8 @@ svg.ui.trend.black polyline {
     }
 }
 
-/* thin portrait mode */
-@media screen and (max-width: 786px) {
+/* thin desktop portrait mode */
+@media only screen and (max-width: 786px) {
     #helpcard {
         left: 2.1rem;
         top: initial;
@@ -413,4 +427,9 @@ svg.ui.trend.black polyline {
     .blocklyTreeLabel {
         font-size:14px;
     }    
+}
+
+/* large screen */
+@media screen and (max-width: 1280px) {
+    
 }
