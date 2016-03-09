@@ -77,6 +77,8 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] in simulator currResume start loop() in nextTick
 * [ ] `foo${bar}baz`
 * [ ] x ? a : b
+* [ ] error for 'shim:foo' (ie. shim=true)
+* [ ] x as T support
 
 ### web app
 
