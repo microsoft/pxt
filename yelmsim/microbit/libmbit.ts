@@ -260,7 +260,7 @@ namespace yelm.rt.micro_bit {
     export function ioP20() { return board().pins[20]; }
 
     export function isPinTouched(pin: Pin): boolean {
-        return pin.touched;
+        return pin.isTouched();
     }
 
     export function compassHeading(): number {
