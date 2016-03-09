@@ -619,13 +619,13 @@ ${lbl}: .short 0xffff
                     userError(lf("{enumval:...} missing"))
                 if (/^\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
-                var inf = hex.lookupFunc(ev)
+                let inf = hex.lookupFunc(ev)
                 if (!inf)
                     userError(lf("unhandled enum value: {0}", ev))
                 if (inf.type == "E")
                     return ir.numlit(inf.value)
                 else if (inf.type == "F" && inf.args == 0)
-                    return ir.rtcall(ev, [])
+                    return ir.rtcall(inf.name, [])
                 else
                     throw userError(lf("not valid enum: {0}; is it procedure name?", ev))
             } else if (decl.kind == SyntaxKind.PropertySignature) {
