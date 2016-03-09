@@ -417,7 +417,7 @@ namespace yelm.rt.micro_bit {
                         let pin = state.pins[index];
                         let svgpin = this.pins[index];
                         svgpin.classList.add('touched');                            
-                        if (pin.mode == PinMode.Touch) {
+                        if (pin.mode & PinMode.Touch) {
                             pin.touched = true;
                         } else if (pin.mode & PinMode.Input) {
                             let cursor = Svg.cursorPoint(pt, this.element, ev);
@@ -433,7 +433,7 @@ namespace yelm.rt.micro_bit {
                         let pin = state.pins[index];
                         let svgpin = this.pins[index];
                         svgpin.classList.remove('touched');
-                        if (pin.mode == PinMode.Touch) {                        
+                        if (pin.mode & PinMode.Touch) {                        
                             pin.touched = false;
                             let ens = enums();
                             this.board.bus.queue(pin.id, ens.MICROBIT_BUTTON_EVT_CLICK);
