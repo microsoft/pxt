@@ -354,6 +354,12 @@ export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blo
     }
 }
 
+export function cleanBlocks() {
+    console.log('removing all custom blocks')
+    for(let b in cachedBlocks)
+        removeBlock(cachedBlocks[b].fn);
+}
+
 function removeBlock(fn: ts.yelm.SymbolInfo) {
     delete Blockly.Blocks[fn.attributes.blockId];
     delete cachedBlocks[fn.attributes.blockId];

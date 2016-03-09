@@ -391,6 +391,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return
 
         this.stopSimulator(true);
+        blocklyloader.cleanBlocks();
         pkg.loadPkgAsync(h.id)
             .then(() => {
                 compiler.newProject();
