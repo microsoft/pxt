@@ -315,12 +315,12 @@ namespace yelm.rt.micro_bit {
     }
 
     export function analogReadPin(pin : Pin) : number {
-        pin.mode = PinMode.Digital | PinMode.Input;
-        return pin.value;
+        pin.mode = PinMode.Analog | PinMode.Input;
+        return pin.value || 0;
     }
     
     export function analogWritePin(pin : Pin, value: number) {
-        pin.mode = PinMode.Digital | PinMode.Output;
+        pin.mode = PinMode.Analog | PinMode.Output;
         pin.value = value ? 1 : 0;
         board().updateView();
     }
