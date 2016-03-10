@@ -17,10 +17,10 @@
   "homepage": "https://github.com/Microsoft/kindscript#readme",
   "files": [
     "README.md",
-    "built/yelm.js",
-    "built/yelm.d.ts",
-    "built/yelmlib.js",
-    "built/yelmlib.d.ts",
+    "built/kind.js",
+    "built/kind.d.ts",
+    "built/kindlib.js",
+    "built/kindlib.d.ts",
     "built/nodeutil.js",
     "built/server.js",
     "generated/hexinfo.js"

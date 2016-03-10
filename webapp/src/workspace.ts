@@ -1,4 +1,4 @@
-/// <reference path="../../built/yelmlib.d.ts" />
+/// <reference path="../../built/kindlib.d.ts" />
 
 import * as db from "./db";
 import * as core from "./core";

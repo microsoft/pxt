@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../built/yelmsim.js",
+        "out": "../built/kindsim.js",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": true

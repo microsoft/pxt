@@ -20,7 +20,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'built/yelm.js', 'built/yelm.d.ts', 'wapp'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/kind.js', 'built/kind.d.ts', 'wapp'], { parallelLimit: 10 })
 
 task('test', ['default', 'runprj', 'testfmt'])
 
@@ -35,38 +35,18 @@ task('clean', function () {
     jake.rmRf("built")
 })
 
-task('runprj', ['built/yelm.js'], { async: true, parallelLimit: 10 }, function () {
-    cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/yelm.js run')
+task('runprj', ['built/kind.js'], { async: true, parallelLimit: 10 }, function () {
+    cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/kind.js run')
 })
 
-task('testfmt', ['built/yelm.js'], { async: true }, function () {
-    cmdIn(this, "libs/format-test", 'node ../../built/yelm.js format -t')
+task('testfmt', ['built/kind.js'], { async: true }, function () {
+    cmdIn(this, "libs/format-test", 'node ../../built/kind.js format -t')
 })
 
-let embedFiles = [
-    "libs/microbit",
-    "libs/microbit-music",
-    "libs/microbit-radio",
-    "libs/microbit-serial",
-    "libs/microbit-led",
-    "libs/microbit-game",
-    "libs/microbit-pins",
-    "libs/microbit-devices",
-]
-
-embedFiles.forEach(f => {
-    file(f + "/built/yelmembed.js", expand([f]).filter(f => !/\/built\//.test(f)), { async: true }, function () {
-        cmdIn(this, f, 'node ../../built/yelm.js genembed')
-    })
-})
-
-ju.catFiles('built/web/yelmembed.js', embedFiles.map(f => f + "/built/yelmembed.js"))
-
-
-ju.catFiles('built/yelm.js', [
+ju.catFiles('built/kind.js', [
     "node_modules/typescript/lib/typescript.js",
-    "built/yelmlib.js",
-    "built/yelmsim.js",
+    "built/kindlib.js",
+    "built/kindsim.js",
     "built/cli.js"
 ],
     `
@@ -77,18 +57,18 @@ module.exports = null;
 `)
 
 file('built/nodeutil.js', ['built/cli.js'])
-file('built/yelm.d.ts', ['built/cli.js'], function () {
-    jake.cpR("built/cli.d.ts", "built/yelm.d.ts")
+file('built/kind.d.ts', ['built/cli.js'], function () {
+    jake.cpR("built/cli.d.ts", "built/kind.d.ts")
 })
 
-compileDir("yelmlib")
-compileDir("yelmsim", ["built/yelmlib.js"])
-compileDir("cli", ["built/yelmlib.js", "built/yelmsim.js"])
+compileDir("kindlib")
+compileDir("kindsim", ["built/kindlib.js"])
+compileDir("cli", ["built/kindlib.js", "built/kindsim.js"])
 
 task("travis", ["test", "upload"])
 
-task('upload', ["wapp", "built/yelm.js"], { async: true }, function () {
-    cmdIn(this, ".", 'node built/yelm.js uploadrel latest')
+task('upload', ["wapp", "built/kind.js"], { async: true }, function () {
+    cmdIn(this, ".", 'node built/kind.js uploadrel latest')
 })
 
 task('npmpub', function () {
@@ -98,11 +78,11 @@ task('npmpub', function () {
     ], { printStdout: true });
 })
 
-task('yelmpub', { async: true }, function () {
+task('kindpub', { async: true }, function () {
     let cmds = embedFiles.map(f => {
         return {
             cmd: "node",
-            args: ["../../built/yelm.js", "publish"],
+            args: ["../../built/kind.js", "publish"],
             dir: f
         }
     })
@@ -121,7 +101,7 @@ task('updatestrings', ['built/localization.json'])
 
 
 
-file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), function () {
+file('built/localization.json', ju.expand1(["webapp/src"]), function () {
     var errCnt = 0;
     var translationStrings = {}
     var translationHelpStrings = {}
@@ -181,22 +161,21 @@ file('built/localization.json', ju.expand1(embedFiles.concat(["webapp/src"])), f
 })
 
 task('wapp', [
-    "built/web/yelmlib.js",
+    "built/web/kindlib.js",
     'built/web/main.js',
     'built/web/worker.js',
     'built/web/themes/default/assets/fonts/icons.woff2',
     'built/web/style.css',
-    "built/web/semantic.js",
-    'built/web/yelmembed.js'
+    "built/web/semantic.js"
 ])
 
-file("built/web/yelmlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/yelmlib.js", "built/yelmsim.js"], function () {
+file("built/web/kindlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/kindlib.js", "built/kindsim.js"], function () {
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
     jake.cpR("webapp/ace/mode/assembly_armthumb.js", "node_modules/brace/mode/")
-    jake.cpR("built/yelmlib.js", "built/web/yelmlib.js")
-    jake.cpR("built/yelmsim.js", "built/web/yelmsim.js")
+    jake.cpR("built/kindlib.js", "built/web/")
+    jake.cpR("built/kindsim.js", "built/web/")
 
     let additionalExports = [
         "getCompletionData"
@@ -209,7 +188,7 @@ file("built/web/yelmlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/yel
 })
 
 file('built/webapp/src/app.js', expand([
-    "webapp", "built/web/yelmlib.js"]), { async: true }, function () {
+    "webapp", "built/web/kindlib.js"]), { async: true }, function () {
         tscIn(this, "webapp")
     })
 

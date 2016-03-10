@@ -1,6 +1,6 @@
 /// <reference path="../typings/node/node.d.ts"/>
-/// <reference path="../built/yelmlib.d.ts"/>
-/// <reference path="../built/yelmsim.d.ts"/>
+/// <reference path="../built/kindlib.d.ts"/>
+/// <reference path="../built/kindsim.d.ts"/>
 
 
 (global as any).yelm = yelm;

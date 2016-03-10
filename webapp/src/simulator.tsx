@@ -1,4 +1,4 @@
-/// <reference path="../../built/yelmsim.d.ts" />
+/// <reference path="../../built/kindsim.d.ts" />
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui"

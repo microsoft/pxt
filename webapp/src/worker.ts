@@ -1,6 +1,6 @@
 importScripts(
     "./typescript.js",
-    "./yelmlib.js"
+    "./kindlib.js"
 )
 
 onmessage = ev => {

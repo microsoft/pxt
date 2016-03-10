@@ -1,4 +1,4 @@
-/// <reference path="../../built/yelmlib.d.ts"/>
+/// <reference path="../../built/kindlib.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
