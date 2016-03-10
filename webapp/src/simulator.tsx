@@ -78,18 +78,17 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
     static unload() {
         $('#simulators').html('');        
     }
-    static run(target: string, js: string, enums: any) {
+    static run(js: string, enums: any) {
         // store information
         Simulator.currentRuntime = {
             type: 'run',
-            target: target,
             enums: enums,
             code: js
         }
 
         let simulators = $('#simulators');
         // drop extras frames
-        simulators.find('iframe:gt(0)').remove();
+        simulators.find('iframe').slice(1).remove();
         let frame = simulators.find('iframe')[0] as HTMLIFrameElement;
         // lazy allocate iframe
         if (!frame) {

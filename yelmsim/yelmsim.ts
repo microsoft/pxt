@@ -9,7 +9,6 @@ namespace yelm.rt {
         options?: any;
         
         code: string;
-        target: string;
         enums: {
             [index:string] : number;
         }
@@ -71,9 +70,10 @@ namespace yelm.rt {
         
         export function run(msg: SimulatorRunMessage) {
             stop();
-            // TODO test data
-            console.log(`starting ${msg.target} ${msg.id}`);
-            runtime = new Runtime(msg.code, msg.target, msg.enums);
+            console.log(`starting ${msg.id}`);
+            // TODO: load from target
+            initCurrentRuntime = micro_bit.initCurrentRuntime;
+            runtime = new Runtime(msg.code, msg.enums);
             runtime.id = msg.id;
             runtime.board.initAsync(msg)
                 .done(() => {

@@ -13,8 +13,55 @@
     "simFiles": [
         "core.ts"
     ],
-    "target": "minecraft",
     "public": true,
     "dependencies": {},
-    "installedVersion": "homzeg"
+    "installedVersion": "homzeg",
+    "target": {
+        "id": "minecraft",
+        "name": "Minecraft",
+        "blocksprj": {
+            "id": "blocksprj",
+            "config": {
+                "name": "{0} craft",
+                "dependencies": {
+                    "minecraft": "*"
+                },
+                "description": "",
+                "files": [
+                    "main.blocks",
+                    "main.blocks.ts",
+                    "README.md"
+                ]
+            },
+            "files": {
+                "main.blocks": "<xml xmlns='http://www.w3.org/1999/xhtml'>\n</xml>\n",
+                "main.blocks.ts": "\n",
+                "README.md": "Describe your project here!"
+            }
+        },
+        "tsprj": {
+            "id": "tsprj",
+            "config": {
+                "name": "{0} craft",
+                "dependencies": {
+                    "minecraft": "*",
+                },
+                "description": "",
+                "files": [
+                    "main.ts",
+                    "README.md"
+                ]
+            },
+            "files": {
+                "main.ts": "\n",
+                "README.md": "Describe your project here!"
+            }
+        },
+        "koduvscode": false,
+        "compile": {
+            "isNative": false,
+            "hasHex": false
+        }
+    }
+}
 }

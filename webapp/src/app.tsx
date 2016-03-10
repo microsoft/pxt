@@ -23,6 +23,8 @@ import Cloud = yelm.Cloud;
 import Util = yelm.Util;
 var lf = Util.lf
 
+var yelmEmbed : any;
+
 export interface FileHistoryEntry {
     id: string;
     name: string;
@@ -243,11 +245,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     constructor(props: IAppProps) {
         super(props);
 
-        let target = '';
-        let m = /target=([a-z0-9]+)/i.exec(window.document.location.href);
-        if (m) target = m[1];
-        this.appTarget = yelm.appTargets[target] || yelm.appTargets['microbit'];
-
+        this.appTarget = JSON.parse((window as any).yelmEmbed["microbit"]["yelm.json"]).target;
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
             this.settings.theme = {}
@@ -602,7 +600,6 @@ Ctrl+Shift+B
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
                     simulator.Simulator.run(
-                        pkg.mainPkg.getTarget(),
                         js,
                         resp.enums)
                     this.setState({ running: true })

@@ -1,15 +1,11 @@
-// Display/button/etc related stuff
-
 namespace yelm.rt.micro_bit {
+    export function initCurrentRuntime() {
+        initBoard();
+    }
 
     function initBoard() {
         U.assert(!runtime.board)
         runtime.board = new Board()
-    }
-
-    export var target: Target = {
-        name: "microbit",
-        initCurrentRuntime: initBoard
     }
 
     export function board() {

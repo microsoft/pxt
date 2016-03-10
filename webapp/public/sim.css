@@ -51,20 +51,6 @@ svg.sim {
   fill:#fff;
 }
 
-.sim-log {
-    background: white;
-    font: 0.9em monospace;
-    bottom: 0;
-    position: absolute;
-    left: 0;
-    right: 0;
-    border: 1px solid gray;
-    padding: 0.5em;
-    border-radius: 3px;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
 /* animations */
 .sim-flash {
     animation-name: sim-flash-animation;

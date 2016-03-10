@@ -34,9 +34,9 @@ namespace yelm {
         simFiles?: string[];
         testFiles?: string[];
         public?: boolean;
-        target?: string;
+        target?: AppTarget;
         microbit?: ts.yelm.MicrobitConfig;
-        card?: PackageCard;
+        card?: PackageCard;        
     }
 
     // this is for remote file interface to packages
@@ -75,100 +75,6 @@ namespace yelm {
     export interface ICompilationOptions {
 
     }
-
-    export var appTargets: yelm.U.Map<AppTarget> = {
-        microbit: {
-            id: "microbit",
-            name: lf("BBC micro:bit"),
-            blocksprj: {
-                id: "blocksprj",
-                config: {
-                    name: lf("{0} block"),
-                    dependencies: {
-                        "microbit": "*",
-                        "microbit-led": "*",
-                        "microbit-music": "*",
-                        "microbit-radio": "*",
-                        "microbit-game": "*",
-                        "microbit-pins": "*",
-                        "microbit-serial": "*"
-                    },
-                    description: "",
-                    files: ["main.blocks", "main.blocks.ts", "README.md"]
-                },
-                files: {
-                    "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
-                    "main.blocks.ts": "\n",
-                    "README.md": lf("Describe your project here!")
-                }
-            },
-            tsprj: {
-                id: "tsprj",
-                config: {
-                    name: lf("{0} bit"),
-                    dependencies: {
-                        "microbit": "*",
-                        "microbit-led": "*",
-                        "microbit-music": "*",
-                        "microbit-radio": "*",
-                        "microbit-game": "*",
-                        "microbit-pins": "*",
-                        "microbit-serial": "*"
-                    },
-                    description: "",
-                    files: ["main.ts", "README.md"]
-                }, files: {
-                    "main.ts": `basic.showString("Hi!")\n`,
-                    "README.md": lf("Describe your project here!")
-                }
-            },
-            koduvscode: true,
-            compile: {
-                isNative: false,
-                hasHex: true
-            }
-        },
-
-        minecraft: {
-            id: "minecraft",
-            name: lf("Minecraft"),
-            blocksprj: {
-                id: "blocksprj",
-                config: {
-                    name: lf("{0} craft"),
-                    dependencies: {
-                        "minecraft": "*",
-                    },
-                    description: "",
-                    files: ["main.blocks", "main.blocks.ts", "README.md"]
-                },
-                files: {
-                    "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml">\n</xml>\n`,
-                    "main.blocks.ts": "\n",
-                    "README.md": lf("Describe your project here!")
-                }
-            },
-            tsprj: {
-                id: "tsprj",
-                config: {
-                    name: lf("{0} craft"),
-                    dependencies: {
-                        "minecraft": "*",
-                    },
-                    description: "",
-                    files: ["main.ts", "README.md"]
-                }, files: {
-                    "main.ts": `\n`,
-                    "README.md": lf("Describe your project here!")
-                }
-            },
-            koduvscode: false,
-            compile: {
-                isNative: false,
-                hasHex: false
-            }
-        }
-    };
 
 
     export class Package {
@@ -314,12 +220,12 @@ namespace yelm {
             this.deps[this.id] = this;
         }
 
-        getTarget() {
-            let trg = ""
+        getTarget() : AppTarget {
+            let trg : AppTarget = undefined
             let prevId = ""
             U.iterStringMap(this.deps, (id, pkg) => {
                 if (pkg.config.target) {
-                    if (trg && trg != pkg.config.target) {
+                    if (trg && trg.id != pkg.config.target.id) {
                         U.userError(U.lf("package target mismatch, {0} -> {1} and {2} -> {3}", prevId, trg, id, pkg.config.target))
                     } else {
                         trg = pkg.config.target
@@ -357,11 +263,7 @@ namespace yelm {
             return ids.map(id => this.resolveDep(id))
         }
 
-        getTargetOptions(): CompileTarget {
-            let trg = this.getTarget()
-            let target = appTargets[trg];
-            return target.compile;
-        }
+        getTargetOptions(): CompileTarget { return this.getTarget().compile; }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
             let opts: ts.yelm.CompileOptions = {
@@ -417,12 +319,10 @@ namespace yelm {
         initAsync(name: string) {
             let str = this.readFile(configName)
             if (str)
-                U.userError("config already present")
-
+                U.userError("config already present")            
             this.config = {
                 name: name,
                 description: "",
-                target: "microbit",
                 installedVersion: "",
                 files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
                 testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),

@@ -38,15 +38,6 @@ namespace yelm.rt {
     export type LabelFn = (s: StackFrame) => StackFrame;
     export type ResumeFn = (v?: any) => void;
 
-    export interface Target {
-        name: string;
-        initCurrentRuntime: () => void;
-    }
-
-    export function getTargets(): Target[] {
-        return [micro_bit.target]
-    }
-
     export interface StackFrame {
         fn: LabelFn;
         pc: number;
@@ -102,6 +93,9 @@ namespace yelm.rt {
                 })
         }
     }
+    
+    // overriden at loadtime by specific implementation
+    export var initCurrentRuntime: () => void = undefined;
 
     export class Runtime {
         public board: BaseBoard;
@@ -111,7 +105,6 @@ namespace yelm.rt {
         dead = false;
         running = false;
         startTime = 0;
-        target: Target;
         enums: Map<number>;
         id: string;
         globals:any[] = [];
@@ -181,7 +174,9 @@ namespace yelm.rt {
             }
         }
 
-        constructor(code: string, targetName: string, enums: Map<number>) {
+        constructor(code: string, enums: Map<number>) {
+            U.assert(!!initCurrentRuntime);
+            
             this.enums = enums;
             // These variables are used by the generated code as well
             // ---
@@ -301,14 +296,8 @@ namespace yelm.rt {
             this.setupTop = setupTop
 
             runtime = this;
-
-            let trg = yelm.rt.getTargets().filter(t => t.name == targetName)[0]
-            if (!trg) {
-                U.userError("target " + targetName + " not supported")
-            }
-
-            this.target = trg;
-            trg.initCurrentRuntime();
+            
+            initCurrentRuntime();
         }
     }
 }

@@ -11,7 +11,65 @@
         "input.ts",
         "control.ts"
     ],
-    "target": "microbit",
     "public": true,
-    "dependencies": {}
+    "dependencies": {},
+    "target": {
+        "id": "microbit",
+        "name": "BBC micro:bit",
+        "blocksprj": {
+            "id": "blocksprj",
+            "config": {
+                "name": "{0} block",
+                "dependencies": {
+                    "microbit": "*",
+                    "microbit-led": "*",
+                    "microbit-music": "*",
+                    "microbit-radio": "*",
+                    "microbit-game": "*",
+                    "microbit-pins": "*",
+                    "microbit-serial": "*"
+                },
+                "description": "",
+                "files": [
+                    "main.blocks",
+                    "main.blocks.ts",
+                    "README.md"
+                ]
+            },
+            "files": {
+                "main.blocks": "<xml xmlns='http://www.w3.org/1999/xhtml'>\n</xml>\n",
+                "main.blocks.ts": "\n",
+                "README.md": "Describe your project here!"
+            }
+        },
+        "tsprj": {
+            "id": "tsprj",
+            "config": {
+                "name": "{0} bit",
+                "dependencies": {
+                    "microbit": "*",
+                    "microbit-led": "*",
+                    "microbit-music": "*",
+                    "microbit-radio": "*",
+                    "microbit-game": "*",
+                    "microbit-pins": "*",
+                    "microbit-serial": "*"
+                },
+                "description": "",
+                "files": [
+                    "main.ts",
+                    "README.md"
+                ]
+            },
+            "files": {
+                "main.ts": "basic.showString('Hi!')\n",
+                "README.md": "Describe your project here!"
+            }
+        },
+        "koduvscode": true,
+        "compile": {
+            "isNative": false,
+            "hasHex": true
+        }
+    }
 }
