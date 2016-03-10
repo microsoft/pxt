@@ -208,10 +208,7 @@ export class EditorPackage {
 }
 
 function getEmbeddedScript(id: string): Util.StringMap<string> {
-    let e = (window as any).yelmEmbed
-    if (e && e.hasOwnProperty(id))
-        return e[id]
-    return null
+    return Util.lookup(appTarget.bundledpkgs, id)
 }
 
 class Host
