@@ -192,30 +192,28 @@ export function uploadrelAsync(label?: string) {
 }
 
 export function buildTargetAsync() {
-    let cfg = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
-    let dirs: string[] = cfg["bundleddirs"]
+    let cfg: yelm.TargetBundle = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
     let parentdir = process.cwd()
-    let embed: any = {}
 
-    return Promise.mapSeries(dirs, (dirname) => {
+    cfg.bundledpkgs = {}
+    return Promise.mapSeries(cfg.bundleddirs, (dirname) => {
         process.chdir(parentdir)
         process.chdir(dirname)
         mainPkg = new yelm.MainPackage(new Host())
         return mainPkg.filesToBePublishedAsync()
             .then(res => {
-                embed[mainPkg.config.name] = res
+                cfg.bundledpkgs[mainPkg.config.name] = res
             })
     })
         .then(() => {
             process.chdir(parentdir)
             if (!fs.existsSync("built"))
                 fs.mkdirSync("built")
-            cfg.bundledpkgs = embed
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
         })
 }
 
-export function serveAsync(ws?:string) {
+export function serveAsync(ws?: string) {
     return buildTargetAsync()
         .then(() => server.serveAsync(ws))
 }

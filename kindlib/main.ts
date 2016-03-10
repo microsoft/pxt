@@ -24,6 +24,12 @@ namespace yelm {
         power?: number;
         toughness?: number;
     }
+    
+    export interface TargetBundle {
+        bundledpkgs: U.Map<U.Map<string>>;
+        bundleddirs: string[];
+        corepkg: string;
+    }
 
     export interface PackageConfig {
         name: string;
@@ -71,7 +77,7 @@ namespace yelm {
         tsprj: ProjectTemplate;
         compile: CompileTarget;
         koduvscode?: boolean;
-        bundledpkgs: U.Map<U.Map<string>>;
+        bundledpkgs?: U.Map<U.Map<string>>;
     }
 
     export interface ICompilationOptions {

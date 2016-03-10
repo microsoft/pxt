@@ -778,8 +778,10 @@ $(document).ready(() => {
 
     Util.updateLocalizationAsync(baseUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => Util.httpGetJsonAsync("/target.json"))
-        .then(apptrg => {
-            pkg.appTarget = apptrg;
+        .then((trgbundle:yelm.TargetBundle) => {
+            let cfg:yelm.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][yelm.configName])
+            pkg.appTarget = cfg.target
+            pkg.appTarget.bundledpkgs = trgbundle.bundledpkgs
             if (!pkg.appTarget.cloud) Cloud.apiRoot = undefined;
         })
         .then(() => {
