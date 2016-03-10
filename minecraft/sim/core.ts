@@ -1,3 +1,4 @@
+/// <reference path="../../built/yelmsim.d.ts"/>
 // Display/button/etc related stuff
 namespace yelm.rt.minecraft {
     export class Board extends BaseBoard {

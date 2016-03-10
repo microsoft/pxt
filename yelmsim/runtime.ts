@@ -44,7 +44,7 @@ namespace yelm.rt {
     }
 
     export function getTargets(): Target[] {
-        return [micro_bit.target, minecraft.target]
+        return [micro_bit.target]
     }
 
     export interface StackFrame {

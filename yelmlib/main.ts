@@ -31,6 +31,7 @@ namespace yelm {
         description?: string;
         dependencies: U.Map<string>;
         files: string[];
+        simFiles?: string[];
         testFiles?: string[];
         public?: boolean;
         target?: string;

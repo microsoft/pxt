@@ -10,6 +10,9 @@
         "commands.ts",
         "world.ts"
     ],
+    "simFiles": [
+        "core.ts"
+    ],
     "target": "minecraft",
     "public": true,
     "dependencies": {},

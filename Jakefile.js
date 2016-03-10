@@ -52,7 +52,6 @@ let embedFiles = [
     "libs/microbit-game",
     "libs/microbit-pins",
     "libs/microbit-devices",
-    "libs/minecraft",
 ]
 
 embedFiles.forEach(f => {
