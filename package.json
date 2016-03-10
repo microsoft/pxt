@@ -23,14 +23,17 @@
     "built/kindlib.d.ts",
     "built/nodeutil.js",
     "built/server.js",
+    "built/web/themes/default/assets/fonts",
+    "built/web/*.js",
+    "built/web/*.css",
+    "webapp/public",
     "generated/hexinfo.js"
   ],
   "preferGlobal": true,
   "main": "built/kind.js",
   "dependencies": {
     "bluebird": "^3.1.4",
-    "faye-websocket": "^0.11.0",
-    "typescript": "1.8.7"
+    "faye-websocket": "^0.11.0"
   },
   "devDependencies": {
     "brace": "^0.7.0",
@@ -43,6 +46,7 @@
     "react-dom": "^0.14.7",
     "semantic-ui-card": "^2.1.7",
     "semantic-ui-less": "^2.1.8",
+    "typescript": "1.8.7",
     "tsd": "^0.6.5"
   },
   "scripts": {
