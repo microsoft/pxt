@@ -66,6 +66,7 @@ namespace yelm {
     export interface AppTarget {
         id: string;
         name: string;
+        cloud?: boolean;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
         compile: CompileTarget;

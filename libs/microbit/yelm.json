@@ -16,6 +16,7 @@
     "target": {
         "id": "microbit",
         "name": "microbit",
+        "cloud": true,
         "blocksprj": {
             "id": "blocksprj",
             "config": {
