@@ -6,6 +6,8 @@ import Cloud = yelm.Cloud;
 import Util = yelm.Util;
 var lf = Util.lf
 
+export var appTarget: yelm.AppTarget;
+
 let extWeight: Util.StringMap<number> = {
     "ts": 10,
     "blocks": 20,

@@ -23,8 +23,6 @@ import Cloud = yelm.Cloud;
 import Util = yelm.Util;
 var lf = Util.lf
 
-var yelmEmbed : any;
-
 export interface FileHistoryEntry {
     id: string;
     name: string;
@@ -133,7 +131,7 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
                         icon={"cloud " + (needsUpload ? "upload" : "") }
                         popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
                         />
-                        : ""}
+                    : ""}
             </div>
         );
     }
@@ -145,7 +143,7 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
 
     renderCore() {
         Util.assert(this.props.parent.appTarget.cloud);
-        
+
         let res = this.state.searchFor ?
             this.getData("cloud:scripts?q=" + encodeURIComponent(this.state.searchFor)) : null
         if (res)
@@ -247,9 +245,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     constructor(props: IAppProps) {
         super(props);
+        
+        this.appTarget = pkg.appTarget;
 
-        this.appTarget = JSON.parse((window as any).yelmEmbed["microbit"]["yelm.json"]).target;
-        if (!this.appTarget) Cloud.apiRoot = undefined;        
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
             this.settings.theme = {}
@@ -690,9 +688,9 @@ Ctrl+Shift+B
                             {this.editor.menu() }
                         </div>
                         { this.appTarget.cloud ?
-                        <div className="ui item right">
-                            <LoginBox />
-                        </div> : "" }
+                            <div className="ui item right">
+                                <LoginBox />
+                            </div> : "" }
                     </div>
                 </div>
                 <div id="filelist" className="ui items">
@@ -762,8 +760,6 @@ export var baseUrl: string;
 export var currentReleaseId: string;
 
 $(document).ready(() => {
-    $("#loading").remove();
-
     let ms = document.getElementById("mainscript");
     if (ms && (ms as HTMLScriptElement).src) {
         let mainJsName = (ms as HTMLScriptElement).src;
@@ -781,12 +777,18 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1])
 
     Util.updateLocalizationAsync(baseUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
+        .then(() => Util.httpGetJsonAsync("/target.json"))
+        .then(apptrg => {
+            pkg.appTarget = apptrg;
+            if (!pkg.appTarget.cloud) Cloud.apiRoot = undefined;
+        })
         .then(() => {
             blocklyloader.init();
             return compiler.init();
         })
         .then(() => workspace.initAsync())
         .then(() => {
+            $("#loading").remove();
             render()
             workspace.syncAsync().done()
         })

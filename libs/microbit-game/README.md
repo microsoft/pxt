@@ -1,4 +1,0 @@
-# game
-
-The game library.
-

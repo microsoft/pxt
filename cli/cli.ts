@@ -191,6 +191,30 @@ export function uploadrelAsync(label?: string) {
         })
 }
 
+export function buildTargetAsync() {
+    let cfg = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
+    let dirs: string[] = cfg["bundleddirs"]
+    let parentdir = process.cwd()
+    let embed: any = {}
+
+    return Promise.mapSeries(dirs, (dirname) => {
+        process.chdir(parentdir)
+        process.chdir(dirname)
+        mainPkg = new yelm.MainPackage(new Host())
+        return mainPkg.filesToBePublishedAsync()
+            .then(res => {
+                embed[mainPkg.config.name] = res
+            })
+    })
+        .then(() => {
+            process.chdir(parentdir)
+            if (!fs.existsSync("built"))
+                fs.mkdirSync("built")
+            cfg.bundledpkgs = embed
+            fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
+        })
+}
+
 function extensionAsync(add: string) {
     let dat = {
         "config": "ws",
@@ -346,18 +370,6 @@ export function serviceAsync(cmd: string) {
                 mainPkg.host().writeFile(mainPkg, fn, JSON.stringify(res, null, 1))
                 console.log("wrote results to " + fn)
             }
-        })
-}
-
-export function genembedAsync() {
-    let fn = "built/yelmembed.js"
-    return mainPkg.filesToBePublishedAsync()
-        .then(res => {
-            mainPkg.host().writeFile(mainPkg, fn,
-                "window.yelmEmbed = window.yelmEmbed || {};\n" +
-                "window.yelmEmbed[" + JSON.stringify(mainPkg.config.name) + "] = " +
-                JSON.stringify(res, null, 2) + "\n")
-            console.log("wrote results to " + fn)
         })
 }
 
@@ -682,7 +694,7 @@ cmd("help                     - display this message", helpAsync)
 
 cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
 cmd("serve                    - start local web server", server.serveAsync, 1)
-cmd("genembed                 - generate built/yelmembed.js from current package", genembedAsync, 1)
+cmd("buildtarget              - ", buildTargetAsync, 1)
 cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
 cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)
 cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)

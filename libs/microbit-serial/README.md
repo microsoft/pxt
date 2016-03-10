@@ -1,4 +1,0 @@
-# serial
-
-The serial library.
-

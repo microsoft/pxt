@@ -71,6 +71,7 @@ namespace yelm {
         tsprj: ProjectTemplate;
         compile: CompileTarget;
         koduvscode?: boolean;
+        bundledpkgs: U.Map<U.Map<string>>;
     }
 
     export interface ICompilationOptions {

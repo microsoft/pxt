@@ -1,4 +1,0 @@
-# led
-
-The led library.
-
