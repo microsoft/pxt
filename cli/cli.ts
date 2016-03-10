@@ -58,7 +58,7 @@ let globalConfig: UserConfig = {}
 
 function configPath() {
     let home = process.env["HOME"] || process.env["UserProfile"]
-    return home + "/.yelm/config.json"
+    return home + "/.kind/config.json"
 }
 
 function saveConfig() {
@@ -98,7 +98,7 @@ export function loginAsync(access_token: string) {
     } else {
         let root = Cloud.apiRoot.replace(/api\/$/, "")
         console.log("USAGE:")
-        console.log(`  yelm login https://example.com/?access_token=...`)
+        console.log(`  kind login https://example.com/?access_token=...`)
         console.log(`Go to ${root}oauth/gettoken to obtain the token.`)
         return fatal("Bad usage")
     }
@@ -472,9 +472,9 @@ function runYottaAsync(args: string[]) {
 }
 
 function patchHexInfo(extInfo: ts.ks.ExtensionInfo) {
-    let infopath = ytPath + "/yotta_modules/yelm-microbit-core/generated/metainfo.json"
+    let infopath = ytPath + "/yotta_modules/kindscript-microbit-core/generated/metainfo.json"
 
-    let hexPath = ytPath + "/build/" + ytTarget + "/source/yelm-microbit-app-combined.hex"
+    let hexPath = ytPath + "/build/" + ytTarget + "/source/kindscript-microbit-app-combined.hex"
 
     let hexinfo = JSON.parse(fs.readFileSync(infopath, "utf8"))
     hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
@@ -731,11 +731,11 @@ export function helpAsync(all?: string) {
         return s
     }
     let showAll = all == "all"
-    console.log("USAGE: yelm command args...")
+    console.log("USAGE: kind command args...")
     if (showAll) {
         console.log("All commands:")
     } else {
-        console.log("Common commands (use 'yelm help all' to show all):")
+        console.log("Common commands (use 'kind help all' to show all):")
     }
     cmds.forEach(cmd => {
         if (cmd.priority >= 10) return;
@@ -794,7 +794,7 @@ export function mainCli() {
 
     let cmd = args[0]
     if (!cmd) {
-        console.log("running 'yelm deploy' (run 'yelm help' for usage)")
+        console.log("running 'kind deploy' (run 'kind help' for usage)")
         cmd = "deploy"
     }
 
@@ -809,7 +809,7 @@ export function mainCli() {
 
 function initGlobals() {
     let g = global as any
-    g.yelm = ks;
+    g.ks = ks;
     g.ts = ts;
 }
 

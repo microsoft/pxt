@@ -92,9 +92,9 @@ export class EditorPackage {
     id: string;
     outputPkg: EditorPackage;
 
-    constructor(private yelmPkg: ks.Package, private topPkg: EditorPackage) {
-        if (yelmPkg && yelmPkg.verProtocol() == "workspace")
-            this.header = workspace.getHeader(yelmPkg.verArgument())
+    constructor(private ksPkg: ks.Package, private topPkg: EditorPackage) {
+        if (ksPkg && ksPkg.verProtocol() == "workspace")
+            this.header = workspace.getHeader(ksPkg.verArgument())
     }
 
     getTopHeader() {
@@ -107,16 +107,16 @@ export class EditorPackage {
         this.outputPkg.id = "built"
     }
 
-    getYelmPkg() {
-        return this.yelmPkg;
+    getKsPkg() {
+        return this.ksPkg;
     }
 
     getPkgId() {
-        return this.yelmPkg ? this.yelmPkg.id : this.id;
+        return this.ksPkg ? this.ksPkg.id : this.id;
     }
 
     isTopLevel() {
-        return this.yelmPkg && this.yelmPkg.level == 0;
+        return this.ksPkg && this.ksPkg.level == 0;
     }
 
     setFile(n: string, v: string) {
@@ -195,7 +195,7 @@ export class EditorPackage {
     pkgAndDeps(): EditorPackage[] {
         if (this.topPkg != this)
             return this.topPkg.pkgAndDeps();
-        return Util.values((this.yelmPkg as ks.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
+        return Util.values((this.ksPkg as ks.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
     }
     
     filterFiles(cond:(f:File)=>boolean) {

@@ -14,7 +14,7 @@ import * as blocklyloader from "./blocklyloader"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
-import * as yelmjson from "./yelmjson"
+import * as kindjson from "./kindjson"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
@@ -236,7 +236,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
     aceEditor: ace.Editor;
-    yelmjsonEditor: yelmjson.Editor;
+    kindJsonEditor: kindjson.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
@@ -324,7 +324,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     private initEditors() {
         this.aceEditor = new ace.Editor(this);
-        this.yelmjsonEditor = new yelmjson.Editor(this);
+        this.kindJsonEditor = new kindjson.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
         let hasChangeTimer = false
@@ -341,7 +341,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }
         }
 
-        this.allEditors = [this.yelmjsonEditor, this.blocksEditor, this.aceEditor]
+        this.allEditors = [this.kindJsonEditor, this.blocksEditor, this.aceEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -500,12 +500,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         core.confirmAsync({
             header: lf("New Visual Studio Code project"),
             htmlBody:
-            `<p>${lf("<b>yelm</b> comes with command line tools to integrate into existing editors.")}
-${lf("To create an new yelm project, <a href='{0}' target='_blank'>install Node.js</a>, open a console and run:", "https://nodejs.org/en/download/")}</p>
+            `<p>${lf("<b>KindScript</b> comes with command line tools to integrate into existing editors.")}
+${lf("To create an new KindScript project, <a href='{0}' target='_blank'>install Node.js</a>, open a console and run:", "https://nodejs.org/en/download/")}</p>
 <pre>
-[sudo] npm install -g yelm-cli
+[sudo] npm install -g kindscript-cli
 mkdir myproject && cd myproject
-yelm init myproject
+kind init myproject
 </pre>
 <p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
 <pre>

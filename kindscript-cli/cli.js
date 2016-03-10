@@ -4,7 +4,7 @@ let fs = require("fs")
 let path = require("path")
 let child_process = require("child_process")
 
-function findYelmJs() {
+function findKindJs() {
     let goUp = (s) => {
         let f = s + "/node_modules/kindscript/built/kind.js"
         if (fs.existsSync(f)) return f
@@ -29,7 +29,7 @@ function selfInstall() {
 }
 
 function main() {
-    let path = findYelmJs();
+    let path = findKindJs();
 
     let args = process.argv.slice(2)
     if (args[0] == "selfinstall") {
@@ -39,7 +39,7 @@ function main() {
 
     if (!path && /^(install|init)$/.test(args[0])) {
         selfInstall()
-        path = findYelmJs()
+        path = findKindJs()
     }
     
     if (!path) {

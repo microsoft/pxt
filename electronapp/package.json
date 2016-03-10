@@ -1,7 +1,7 @@
 {
-  "name": "yelm-app",
+  "name": "kindscript-app",
   "version": "0.1.0",
-  "description": "A yelm electron app",
+  "description": "A KindScript electron app",
   "main": "main.js",
   "scripts": {
     "start": "electron main.js"

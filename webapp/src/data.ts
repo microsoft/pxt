@@ -80,7 +80,7 @@ function expired(ce: CacheEntry) {
 
 function shouldCache(ce: CacheEntry) {
     if (!ce.data) return false
-    return /^cloud:(me\/settings|ptr-yelm-)/.test(ce.path)
+    return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path)
 }
 
 function loadCache() {

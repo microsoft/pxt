@@ -142,7 +142,7 @@ namespace ks {
         }
 
         private downloadAsync() {
-            let yelmCfg = ""
+            let kindCfg = ""
             return this.resolveVersionAsync()
                 .then(verNo => {
                     if (this.config && this.config.installedVersion == verNo)
@@ -495,12 +495,12 @@ kind_modules
 }`,
         ".vscode/tasks.json":
         `
-// A task runner that calls the Yelm compiler (yelm) and
+// A task runner that calls the KindScript compiler (kind) and
 {
 	"version": "0.1.0",
 
-	// The command is yelm. Assumes that yelm has been installed using npm install -g yelm-cli
-	"command": "yelm",
+	// The command is kind. Assumes that KindScript has been installed using npm install -g kindscript-cli
+	"command": "kind",
 
 	// The command is a shell script
 	"isShellCommand": true,

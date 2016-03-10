@@ -99,7 +99,7 @@ export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
         description: meta.description,
         islibrary: meta.islibrary,
         ishidden: false,
-        userplatform: ["yelm-web"],
+        userplatform: ["ks-web"],
         editor: h.editor,
         text: stext
     }

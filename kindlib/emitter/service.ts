@@ -99,7 +99,7 @@ namespace ts.ks {
             return false;
     }
 
-    function isInYelmModule(decl: Node): boolean {
+    function isInKsModule(decl: Node): boolean {
         while (decl) {
             if (decl.kind == SyntaxKind.SourceFile) {
                 let src = decl as SourceFile

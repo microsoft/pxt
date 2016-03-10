@@ -117,7 +117,7 @@ namespace ks.cpp {
                 })
         }
 
-        res.microbitConfig.dependencies["yelm-microbit-core"] = "microsoft/yelm-microbit-core#master";
+        res.microbitConfig.dependencies["kindscript-microbit-core"] = "microsoft/kindscript-microbit-core#master";
 
         if (mainPkg) {
             // TODO computeReachableNodes(pkg, true)
@@ -147,7 +147,7 @@ namespace ks.cpp {
         res.generatedFiles["/ext/refs.inc"] = includesInc
 
         let moduleJson = {
-            "name": "yelm-microbit-app",
+            "name": "kindscript-microbit-app",
             "version": "0.0.0",
             "description": "Auto-generated. Do not edit.",
             "license": "n/a",

@@ -1,7 +1,7 @@
-site_name: yelm
-site_description: Typescript compiler for micro:bit.
+site_name: KindScript
+site_description: A Kinder JavaScript Experience.
 pages:
 - Home: index.md
 theme: readthedocs
-repo_url: https://github.com/microsoft/yelm/
+repo_url: https://github.com/microsoft/kindscript/
 copyright: Copyright &copy; 2016 Microsoft
