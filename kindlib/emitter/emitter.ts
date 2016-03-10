@@ -1,8 +1,8 @@
-namespace ts.yelm {
+namespace ts.ks {
     export var assert = Util.assert;
     export var oops = Util.oops;
     export type StringMap<T> = Util.Map<T>;
-    export import U = ts.yelm.Util;
+    export import U = ts.ks.Util;
 
     let EK = ir.EK;
 

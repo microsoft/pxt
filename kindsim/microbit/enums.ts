@@ -1,4 +1,4 @@
-namespace yelm.rt.micro_bit {
+namespace ks.rt.micro_bit {
     export interface Enums {
         MES_ALERT_EVT_ALARM1: number;
         MES_ALERT_EVT_ALARM2: number;

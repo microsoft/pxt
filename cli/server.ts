@@ -6,8 +6,8 @@ import * as querystring from 'querystring';
 
 import * as nodeutil from './nodeutil';
 
-import U = yelm.Util;
-import Cloud = yelm.Cloud;
+import U = ks.Util;
+import Cloud = ks.Cloud;
 
 let root = process.cwd()
 let dirs = ["built", "node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
@@ -36,15 +36,15 @@ function throwError(code: number, msg: string = null) {
     throw err
 }
 
-type FsFile = yelm.FsFile;
-type FsPkg = yelm.FsPkg;
+type FsFile = ks.FsFile;
+type FsPkg = ks.FsPkg;
 
 function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(fileDir, logicalDirname)
-    return readFileAsync(path.join(dirname, yelm.configName))
+    return readFileAsync(path.join(dirname, ks.configName))
         .then(buf => {
-            let cfg: yelm.PackageConfig = JSON.parse(buf.toString("utf8"))
-            let files = [yelm.configName].concat(cfg.files || []).concat(cfg.testFiles || [])
+            let cfg: ks.PackageConfig = JSON.parse(buf.toString("utf8"))
+            let files = [ks.configName].concat(cfg.files || []).concat(cfg.testFiles || [])
             return Promise.map(files, fn =>
                 statOptAsync(path.join(dirname, fn))
                     .then<FsFile>(st => {
@@ -92,7 +92,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]> {
     logicalDirname = logicalDirname.replace(/^\//, "")
     let dirname = path.join(fileDir, logicalDirname)
-    return existsAsync(path.join(dirname, yelm.configName))
+    return existsAsync(path.join(dirname, ks.configName))
         .then(ispkg =>
             ispkg ? readPkgAsync(logicalDirname).then(r => [r], err => []) :
                 depth <= 1 ? [] :
@@ -121,7 +121,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
 
     if (cmd == "GET list")
         return returnDirAsync(innerPath, 3)
-            .then<yelm.FsPkgs>(lst => {
+            .then<ks.FsPkgs>(lst => {
                 return {
                     pkgs: lst
                 }

@@ -9,8 +9,8 @@ import * as fileworkspace from "./fileworkspace"
 
 let scripts = new db.Table("script")
 
-import U = yelm.Util;
-import Cloud = yelm.Cloud;
+import U = ks.Util;
+import Cloud = ks.Cloud;
 let lf = U.lf
 
 export interface InstallHeader {
@@ -130,8 +130,8 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 
 export function fixupFileNames(txt: ScriptText) {
     if (!txt) return txt
-    if (!txt[yelm.configName] && txt["yelm.json"]) {
-        txt[yelm.configName] = txt["yelm.json"]
+    if (!txt[ks.configName] && txt["yelm.json"]) {
+        txt[ks.configName] = txt["yelm.json"]
         delete txt["yelm.json"]
     }
     return txt

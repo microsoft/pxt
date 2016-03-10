@@ -1,4 +1,4 @@
-namespace ts.yelm {
+namespace ts.ks {
     export function jsEmit(bin: Binary) {
         let jssource = ""
         bin.procs.forEach(p => {

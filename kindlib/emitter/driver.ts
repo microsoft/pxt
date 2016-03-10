@@ -8,7 +8,7 @@
 /// <reference path="emitter.ts"/>
 /// <reference path="backthumb.ts"/>
 
-namespace ts.yelm {
+namespace ts.ks {
     export interface CompileTarget {
         isNative:boolean; // false -> JavaScript for simulator
         nativeType?:string; // currently only "thumb"

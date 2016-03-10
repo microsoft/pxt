@@ -1,4 +1,4 @@
-namespace yelm.rt.micro_bit {
+namespace ks.rt.micro_bit {
     export function initCurrentRuntime() {
         initBoard();
     }

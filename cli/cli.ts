@@ -3,7 +3,7 @@
 /// <reference path="../built/kindsim.d.ts"/>
 
 
-(global as any).yelm = yelm;
+(global as any).ks = ks;
 
 import * as nodeutil from './nodeutil';
 nodeutil.init();
@@ -12,8 +12,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
-import U = yelm.Util;
-import Cloud = yelm.Cloud;
+import U = ks.Util;
+import Cloud = ks.Cloud;
 
 import * as server from './server';
 
@@ -192,18 +192,18 @@ export function uploadrelAsync(label?: string) {
 }
 
 function readKindTarget() {
-    let cfg: yelm.TargetBundle = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
+    let cfg: ks.TargetBundle = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
     return cfg
 }
 
-function forEachBundledPkgAsync(f: (pkg: yelm.MainPackage) => Promise<void>) {
+function forEachBundledPkgAsync(f: (pkg: ks.MainPackage) => Promise<void>) {
     let cfg = readKindTarget()
     let parentdir = process.cwd()
 
     return Promise.mapSeries(cfg.bundleddirs, (dirname) => {
         process.chdir(parentdir)
         process.chdir(dirname)
-        mainPkg = new yelm.MainPackage(new Host())
+        mainPkg = new ks.MainPackage(new Host())
         return f(mainPkg);
     })
         .then(() => {
@@ -281,8 +281,8 @@ function getBitDrivesAsync(): Promise<string[]> {
 }
 
 class Host
-    implements yelm.Host {
-    resolve(module: yelm.Package, filename: string) {
+    implements ks.Host {
+    resolve(module: ks.Package, filename: string) {
         if (module.level == 0) {
             return "./" + filename
         } else if (module.verProtocol() == "file") {
@@ -292,7 +292,7 @@ class Host
         }
     }
 
-    readFile(module: yelm.Package, filename: string): string {
+    readFile(module: ks.Package, filename: string): string {
         let resolved = this.resolve(module, filename)
         try {
             return fs.readFileSync(resolved, "utf8")
@@ -301,7 +301,7 @@ class Host
         }
     }
 
-    writeFile(module: yelm.Package, filename: string, contents: string): void {
+    writeFile(module: ks.Package, filename: string, contents: string): void {
         let p = this.resolve(module, filename)
         let check = (p: string) => {
             let dir = p.replace(/\/[^\/]+$/, "")
@@ -324,7 +324,7 @@ class Host
             .then(() => patchHexInfo(extInfo))
     }
 
-    downloadPackageAsync(pkg: yelm.Package) {
+    downloadPackageAsync(pkg: ks.Package) {
         let proto = pkg.verProtocol()
 
         if (proto == "pub") {
@@ -341,8 +341,8 @@ class Host
         }
     }
 
-    resolveVersionAsync(pkg: yelm.Package) {
-        return Cloud.privateGetAsync(yelm.pkgPrefix + pkg.id).then(r => {
+    resolveVersionAsync(pkg: ks.Package) {
+        return Cloud.privateGetAsync(ks.pkgPrefix + pkg.id).then(r => {
             let id = r["scriptid"]
             if (!id) {
                 U.userError("scriptid no set on ptr for pkg " + pkg.id)
@@ -353,8 +353,8 @@ class Host
 
 }
 
-let mainPkg = new yelm.MainPackage(new Host())
-let baseExtInfo = yelm.cpp.getExtensionInfo(null);
+let mainPkg = new ks.MainPackage(new Host())
+let baseExtInfo = ks.cpp.getExtensionInfo(null);
 
 export function installAsync(packageName?: string) {
     ensurePkgDir();
@@ -626,18 +626,18 @@ function runCoreAsync(res: ts.yelm.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
         // TODO: non-microbit specific load
-        yelm.rt.initCurrentRuntime = yelm.rt.micro_bit.initCurrentRuntime
-        let r = new yelm.rt.Runtime(f, res.enums)
-        yelm.rt.Runtime.messagePosted = (msg) => {
+        ks.rt.initCurrentRuntime = ks.rt.micro_bit.initCurrentRuntime
+        let r = new ks.rt.Runtime(f, res.enums)
+        ks.rt.Runtime.messagePosted = (msg) => {
             if (msg.type == "serial")
-                console.log("SERIAL:", (msg as yelm.rt.micro_bit.SimulatorSerialMessage).data)
+                console.log("SERIAL:", (msg as ks.rt.micro_bit.SimulatorSerialMessage).data)
         }
         r.errorHandler = (e) => {
             throw e;
         }
         r.run(() => {
             console.log("DONE")
-            yelm.rt.dumpLivePointers();
+            ks.rt.dumpLivePointers();
         })
     }
     return Promise.resolve()
@@ -749,7 +749,7 @@ export function helpAsync(all?: string) {
 
 function goToPkgDir() {
     let goUp = (s: string): string => {
-        if (fs.existsSync(s + "/" + yelm.configName)) {
+        if (fs.existsSync(s + "/" + ks.configName)) {
             return s
         }
         let s2 = path.resolve(path.join(s, ".."))
@@ -760,11 +760,11 @@ function goToPkgDir() {
     }
     let dir = goUp(process.cwd())
     if (!dir) {
-        console.error(`Cannot find ${yelm.configName} in any of the parent directories.`)
+        console.error(`Cannot find ${ks.configName} in any of the parent directories.`)
         process.exit(1)
     } else {
         if (dir != process.cwd()) {
-            console.log(`Going up to ${dir} which has ${yelm.configName}`)
+            console.log(`Going up to ${dir} which has ${ks.configName}`)
             process.chdir(dir)
         }
     }
@@ -810,7 +810,7 @@ export function mainCli() {
 
 function initGlobals() {
     let g = global as any
-    g.yelm = yelm;
+    g.yelm = ks;
     g.ts = ts;
 }
 

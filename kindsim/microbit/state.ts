@@ -1,4 +1,4 @@
-namespace yelm.rt.micro_bit {
+namespace ks.rt.micro_bit {
     export interface RuntimeOptions {
         theme: string;
     }
@@ -212,11 +212,11 @@ namespace yelm.rt.micro_bit {
                 case 'yellow': theme = micro_bit.themes[1]; break;
                 case 'green': theme = micro_bit.themes[2]; break;
                 case 'red': theme = micro_bit.themes[3]; break;
-                default: theme  = yelm.rt.micro_bit.randomTheme();
+                default: theme  = ks.rt.micro_bit.randomTheme();
             }
             
             console.log('setting up microbit simulator')
-            let view = new yelm.rt.micro_bit.MicrobitBoardSvg({
+            let view = new ks.rt.micro_bit.MicrobitBoardSvg({
                 theme: theme,
                 runtime: runtime
             })

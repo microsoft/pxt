@@ -4,8 +4,8 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 
-import Cloud = yelm.Cloud;
-import U = yelm.Util;
+import Cloud = ks.Cloud;
+import U = ks.Util;
 
 let tsWorker: Worker;
 let pendingMsgs: U.StringMap<(v: any) => void> = {}
@@ -76,11 +76,11 @@ export function compileAsync(native = false) {
         })
 }
 
-function compileCoreAsync(opts: ts.yelm.CompileOptions): Promise<ts.yelm.CompileResult> {
+function compileCoreAsync(opts: ts.ks.CompileOptions): Promise<ts.ks.CompileResult> {
     return workerOpAsync("compile", { options: opts })
 }
 
-export function workerOpAsync(op: string, arg: ts.yelm.service.OpArg) {
+export function workerOpAsync(op: string, arg: ts.ks.service.OpArg) {
     return q.enqueue("main", () => new Promise<any>((resolve, reject) => {
         let id = "" + msgId++
         pendingMsgs[id] = v => {
@@ -99,7 +99,7 @@ export function workerOpAsync(op: string, arg: ts.yelm.service.OpArg) {
 }
 
 var firstTypecheck: Promise<void>;
-var cachedApis: ts.yelm.ApisInfo;
+var cachedApis: ts.ks.ApisInfo;
 var refreshApis = false;
 
 function waitForFirstTypecheckAsync() {

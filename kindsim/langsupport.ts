@@ -1,6 +1,6 @@
 // APIs for language/runtime support (records, locals, function values)
 
-namespace yelm.rt {
+namespace ks.rt {
     export var quiet = false;
 
     export function check(cond: boolean) {

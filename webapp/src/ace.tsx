@@ -12,9 +12,9 @@ import * as codecard from "./codecard";
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
 
-let SK = ts.yelm.SymbolKind;
+let SK = ts.ks.SymbolKind;
 
-import Util = yelm.Util;
+import Util = ks.Util;
 var lf = Util.lf
 
 require('brace/mode/typescript');
@@ -52,7 +52,7 @@ var maxCompleteItems = 20;
 
 export interface CompletionEntry {
     name: string;
-    symbolInfo: ts.yelm.SymbolInfo;
+    symbolInfo: ts.ks.SymbolInfo;
     lastScore: number;
     searchName: string;
     searchDesc: string;
@@ -60,8 +60,8 @@ export interface CompletionEntry {
 }
 
 export interface CompletionCache {
-    apisInfo: ts.yelm.ApisInfo;
-    completionInfo: ts.yelm.CompletionInfo;
+    apisInfo: ts.ks.ApisInfo;
+    completionInfo: ts.ks.CompletionInfo;
     entries: CompletionEntry[];
     posTxt: string;
 }
@@ -170,7 +170,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     return
                 }
                 // console.log(compl)
-                let mkEntry = (q: string, si: ts.yelm.SymbolInfo) => fixupSearch({
+                let mkEntry = (q: string, si: ts.ks.SymbolInfo) => fixupSearch({
                     name: si.isContextual ? si.name : q,
                     symbolInfo: si,
                     lastScore: 0,
@@ -316,7 +316,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         let imgLit = !!si.attributes.imageLiteral
 
-        let defaultVal = (p: ts.yelm.ParameterDesc) => {
+        let defaultVal = (p: ts.ks.ParameterDesc) => {
             if (p.initializer) return p.initializer
             if (p.defaults) return p.defaults[0]
             if (p.type == "number") return "0"
@@ -528,7 +528,7 @@ export class Editor extends srceditor.Editor {
             data.programText = Util.replaceAll(data.programText, cursorMarker, "")
             data.charNo = cursorOverride
         }
-        let tmp = ts.yelm.format(data.programText, data.charNo)
+        let tmp = ts.ks.format(data.programText, data.charNo)
         if (isAutomatic && tmp.formatted == data.programText)
             return;
         let formatted = tmp.formatted

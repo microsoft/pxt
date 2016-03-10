@@ -34,7 +34,7 @@ declare module Blockly {
         customContextMenu?: any;        
     }
     
-    var Blocks : yelm.Util.StringMap<BlockDefinition>;    
+    var Blocks : ks.Util.StringMap<BlockDefinition>;    
     
     class Field {
         init(block:Block): void;        

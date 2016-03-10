@@ -2,7 +2,7 @@
 
 import * as compiler from "./compiler"
 import * as codecard from "./codecard"
-import Util = yelm.Util;
+import Util = ks.Util;
 
 let lf = Util.lf;
 
@@ -19,7 +19,7 @@ Object.keys(Blockly.Blocks).forEach(k => builtinBlocks[k] = Blockly.Blocks[k]);
 // blocks cached
 interface CachedBlock {
     hash: string;
-    fn: ts.yelm.SymbolInfo;
+    fn: ts.ks.SymbolInfo;
     block: Blockly.BlockDefinition;
 }
 var cachedBlocks: Util.StringMap<CachedBlock> = {};
@@ -55,9 +55,9 @@ export interface BlockParameter {
     shadowValue?: string;
 }
 
-export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockParameter> {
+export function parameterNames(fn: ts.ks.SymbolInfo): Util.StringMap<BlockParameter> {
     // collect blockly parameter name mapping
-    const instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
+    const instance = fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property;
     let attrNames: Util.StringMap<BlockParameter> = {};
 
     if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
@@ -86,7 +86,7 @@ export function parameterNames(fn: ts.yelm.SymbolInfo): Util.StringMap<BlockPara
     return attrNames;
 }
 
-function createToolboxBlock(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
+function createToolboxBlock(tb: Element, info: BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
     //
     // toolbox update
     //
@@ -94,7 +94,7 @@ function createToolboxBlock(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInf
     block.setAttribute("type", fn.attributes.blockId);
     if (fn.attributes.blockGap)
         block.setAttribute("gap", fn.attributes.blockGap);
-    if ((fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property)
+    if ((fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property)
         && attrNames["this"] && attrNames["this"].shadowType) {
         let attr = attrNames["this"];
         block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
@@ -110,7 +110,7 @@ function createToolboxBlock(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInf
     return block;
 }
 
-function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.yelm.SymbolInfo, block: HTMLElement) {
+function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.ks.SymbolInfo, block: HTMLElement) {
     let ns = fn.namespace.split('.')[0];
     let catName = ns[0].toUpperCase() + ns.slice(1);
     let category = tb.querySelector("category[name~='" + catName + "']");
@@ -153,7 +153,7 @@ function iconToFieldImage(c: string): Blockly.FieldImage {
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
+function injectBlockDefinition(info: BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
     let id = fn.attributes.blockId;
 
     if (builtinBlocks[id]) {
@@ -187,7 +187,7 @@ function injectBlockDefinition(info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
     return true;
 }
 
-function initField(i: any, ni: number, fn: ts.yelm.SymbolInfo, pre: string, right?: boolean, type?: string): any {
+function initField(i: any, ni: number, fn: ts.ks.SymbolInfo, pre: string, right?: boolean, type?: string): any {
     if (ni == 0 && fn.attributes.icon)
         i.appendField(iconToFieldImage(fn.attributes.icon))
     if (pre)
@@ -199,7 +199,7 @@ function initField(i: any, ni: number, fn: ts.yelm.SymbolInfo, pre: string, righ
     return i;
 }
 
-function mkCard(fn: ts.yelm.SymbolInfo, blockXml: HTMLElement): codecard.CodeCardProps {
+function mkCard(fn: ts.ks.SymbolInfo, blockXml: HTMLElement): codecard.CodeCardProps {
     return {
         header: fn.name,
         name: fn.namespace + '.' + fn.name,
@@ -214,11 +214,11 @@ function mkCard(fn: ts.yelm.SymbolInfo, blockXml: HTMLElement): codecard.CodeCar
     }
 }
 
-function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+function initBlock(block: any, info: BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     var help = "./" + fn.attributes.help;
     block.setHelpUrl(help);
     const ns = fn.namespace.split('.')[0];
-    const instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
+    const instance = fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property;
     block.setTooltip(fn.attributes.jsDoc);
     block.setColour(
         info.apis.byQName[ns].attributes.color
@@ -257,7 +257,7 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.yelm.SymbolInfo, attrNam
                 i = initField(block.appendValueInput(p), ni, fn, pre, true, "String");
             } else {
                 let prtype = Util.lookup(info.apis.byQName, pr.type);
-                if (prtype && prtype.kind == ts.yelm.SymbolKind.Enum) {
+                if (prtype && prtype.kind == ts.ks.SymbolKind.Enum) {
                     let dd = Util.values(info.apis.byQName)
                         .filter(e => e.namespace == pr.type)
                         .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);
@@ -360,14 +360,14 @@ export function cleanBlocks() {
         removeBlock(cachedBlocks[b].fn);
 }
 
-function removeBlock(fn: ts.yelm.SymbolInfo) {
+function removeBlock(fn: ts.ks.SymbolInfo) {
     delete Blockly.Blocks[fn.attributes.blockId];
     delete cachedBlocks[fn.attributes.blockId];
 }
 
 export interface BlocksInfo {
-    apis: ts.yelm.ApisInfo;
-    blocks: ts.yelm.SymbolInfo[];
+    apis: ts.ks.ApisInfo;
+    blocks: ts.ks.SymbolInfo[];
 }
 
 export function getBlocksAsync(): Promise<BlocksInfo> {

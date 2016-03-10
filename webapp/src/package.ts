@@ -2,11 +2,11 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
 
-import Cloud = yelm.Cloud;
-import Util = yelm.Util;
+import Cloud = ks.Cloud;
+import Util = ks.Util;
 var lf = Util.lf
 
-export var appTarget: yelm.AppTarget;
+export var appTarget: ks.AppTarget;
 
 let extWeight: Util.StringMap<number> = {
     "ts": 10,
@@ -92,7 +92,7 @@ export class EditorPackage {
     id: string;
     outputPkg: EditorPackage;
 
-    constructor(private yelmPkg: yelm.Package, private topPkg: EditorPackage) {
+    constructor(private yelmPkg: ks.Package, private topPkg: EditorPackage) {
         if (yelmPkg && yelmPkg.verProtocol() == "workspace")
             this.header = workspace.getHeader(yelmPkg.verArgument())
     }
@@ -164,10 +164,10 @@ export class EditorPackage {
     saveFilesAsync() {
         if (!this.header) return Promise.resolve();
 
-        let cfgFile = this.files[yelm.configName]
+        let cfgFile = this.files[ks.configName]
         if (cfgFile) {
             try {
-                let cfg = <yelm.PackageConfig>JSON.parse(cfgFile.content)
+                let cfg = <ks.PackageConfig>JSON.parse(cfgFile.content)
                 this.header.name = cfg.name
             } catch (e) {
             }
@@ -195,7 +195,7 @@ export class EditorPackage {
     pkgAndDeps(): EditorPackage[] {
         if (this.topPkg != this)
             return this.topPkg.pkgAndDeps();
-        return Util.values((this.yelmPkg as yelm.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
+        return Util.values((this.yelmPkg as ks.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
     }
     
     filterFiles(cond:(f:File)=>boolean) {
@@ -212,16 +212,16 @@ function getEmbeddedScript(id: string): Util.StringMap<string> {
 }
 
 class Host
-    implements yelm.Host {
+    implements ks.Host {
 
-    readFile(module: yelm.Package, filename: string): string {
+    readFile(module: ks.Package, filename: string): string {
         let epkg = getEditorPkg(module)
         let file = epkg.files[filename]
         return file ? file.content : null
     }
 
-    writeFile(module: yelm.Package, filename: string, contents: string): void {
-        if (filename == yelm.configName)
+    writeFile(module: ks.Package, filename: string, contents: string): void {
+        if (filename == ks.configName)
             return; // ignore config writes
         throw Util.oops("trying to write " + module + " / " + filename)
     }
@@ -230,7 +230,7 @@ class Host
         return Promise.resolve(require("../../../generated/hexinfo.js"))
     }
 
-    downloadPackageAsync(pkg: yelm.Package) {
+    downloadPackageAsync(pkg: ks.Package) {
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
@@ -249,10 +249,10 @@ class Host
         }
     }
 
-    resolveVersionAsync(pkg: yelm.Package) {
+    resolveVersionAsync(pkg: ks.Package) {
         if (getEmbeddedScript(pkg.id))
             return Promise.resolve("embed:" + pkg.id)
-        return data.getAsync("cloud:" + yelm.pkgPrefix + pkg.id).then(r => {
+        return data.getAsync("cloud:" + ks.pkgPrefix + pkg.id).then(r => {
             let id = (r || {})["scriptid"]
             if (!id)
                 Util.userError(lf("cannot resolve package {0}", pkg.id))
@@ -262,9 +262,9 @@ class Host
 }
 
 var theHost = new Host();
-export var mainPkg = new yelm.MainPackage(theHost);
+export var mainPkg = new ks.MainPackage(theHost);
 
-export function getEditorPkg(p: yelm.Package) {
+export function getEditorPkg(p: ks.Package) {
     let r: EditorPackage = (p as any)._editorPkg
     if (r) return r
 
@@ -295,11 +295,11 @@ export function notifySyncDone(updated: Util.StringMap<number>) {
 }
 
 export function loadPkgAsync(id: string) {
-    mainPkg = new yelm.MainPackage(theHost)
+    mainPkg = new ks.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id
 
     return theHost.downloadPackageAsync(mainPkg)
-        .then(() => theHost.readFile(mainPkg, yelm.configName))
+        .then(() => theHost.readFile(mainPkg, ks.configName))
         .then(str => {
             data.invalidate("open:")
             if (!str) return Promise.resolve()

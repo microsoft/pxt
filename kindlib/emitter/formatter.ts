@@ -1,4 +1,4 @@
-namespace ts.yelm {
+namespace ts.ks {
 
     enum TokenKind {
         None,

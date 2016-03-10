@@ -7,8 +7,8 @@ import * as ws from "./workspace"
 let headers = new db.Table("header")
 let texts = new db.Table("text")
 
-import U = yelm.Util;
-import Cloud = yelm.Cloud;
+import U = ks.Util;
+import Cloud = ks.Cloud;
 let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 

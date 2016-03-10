@@ -19,8 +19,8 @@ import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
 
-import Cloud = yelm.Cloud;
-import Util = yelm.Util;
+import Cloud = ks.Cloud;
+import Util = ks.Util;
 var lf = Util.lf
 
 export interface FileHistoryEntry {
@@ -241,7 +241,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: ScriptSearch;
-    appTarget: yelm.AppTarget;
+    appTarget: ks.AppTarget;
 
     constructor(props: IAppProps) {
         super(props);
@@ -526,9 +526,9 @@ Ctrl+Shift+B
         this.newProjectFromId(this.appTarget.blocksprj);
     }
 
-    newProjectFromId(prj: yelm.ProjectTemplate) {
-        let cfg = yelm.U.clone(prj.config);
-        cfg.name = yelm.U.fmt(cfg.name, Util.getAwesomeAdj());
+    newProjectFromId(prj: ks.ProjectTemplate) {
+        let cfg = ks.U.clone(prj.config);
+        cfg.name = ks.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {
             "kind.json": JSON.stringify(cfg, null, 4) + "\n",
         }
@@ -778,8 +778,8 @@ $(document).ready(() => {
 
     Util.updateLocalizationAsync(baseUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => Util.httpGetJsonAsync("/target.json"))
-        .then((trgbundle:yelm.TargetBundle) => {
-            let cfg:yelm.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][yelm.configName])
+        .then((trgbundle:ks.TargetBundle) => {
+            let cfg:ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
             pkg.appTarget = cfg.target
             pkg.appTarget.bundledpkgs = trgbundle.bundledpkgs
             if (!pkg.appTarget.cloud) Cloud.apiRoot = undefined;

@@ -1,5 +1,5 @@
 
-namespace yelm.rt {
+namespace ks.rt {
     export interface SimulatorMessage {
         type: string;
     }
@@ -60,7 +60,7 @@ namespace yelm.rt {
             }
         }
                 
-        var runtime : yelm.rt.Runtime;        
+        var runtime : ks.rt.Runtime;        
         export function stop() {
             if (runtime) {
                 console.log('stopping simulator...')
@@ -79,7 +79,7 @@ namespace yelm.rt {
                 .done(() => {
                     runtime.run((v) => {
                         console.log("DONE")
-                        yelm.rt.dumpLivePointers();
+                        ks.rt.dumpLivePointers();
                     })                   
                 })            
         }
@@ -98,6 +98,6 @@ namespace yelm.rt {
 
 if (typeof window !== 'undefined') {
             window.addEventListener('load', function(ev) {
-            yelm.rt.Embed.start();
+            ks.rt.Embed.start();
         });
 }

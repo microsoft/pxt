@@ -7,8 +7,8 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";
 
-import Cloud = yelm.Cloud;
-import Util = yelm.Util;
+import Cloud = ks.Cloud;
+import Util = ks.Util;
 
 var lf = Util.lf;
 

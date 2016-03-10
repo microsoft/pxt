@@ -1,4 +1,4 @@
-module ts.yelm.thumb {
+module ts.ks.thumb {
     /* Docs:
      *
      * Thumb 16-bit Instruction Set Quick Reference Card

@@ -1,8 +1,8 @@
 /// <reference path="emitter/util.ts"/>
 
-namespace yelm.cpp {
-    import U = ts.yelm.Util;
-    import Y = ts.yelm;
+namespace ks.cpp {
+    import U = ts.ks.Util;
+    import Y = ts.ks;
     let lf = U.lf;
 
     function parseExpr(e: string): number {

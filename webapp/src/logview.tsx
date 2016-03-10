@@ -37,7 +37,7 @@ export class LogView extends React.Component<ILogProps, ILogState> {
     }
 
     registerChromeSerial() {
-        let buffers: yelm.Util.StringMap<string> = {};
+        let buffers: ks.Util.StringMap<string> = {};
         let chrome = (window as any).chrome;
         if (chrome && chrome.runtime) {
             let port = chrome.runtime.connect("hccbjdgogdkdomojppdljbijomobfdap", { name: "micro:bit" });

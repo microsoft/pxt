@@ -1,4 +1,4 @@
-namespace yelm.rt {
+namespace ks.rt {
     // A ref-counted collection of either primitive or ref-counted objects (String, Image,
     // user-defined record, another collection)
     export class RefCollection extends RefObject {

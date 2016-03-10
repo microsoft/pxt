@@ -1,5 +1,5 @@
-namespace ts.yelm.ir {
-    let U = ts.yelm.Util;
+namespace ts.ks.ir {
+    let U = ts.ks.Util;
     let assert = U.assert;
 
     export enum EK {

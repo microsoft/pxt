@@ -1,6 +1,6 @@
 /// <reference path="../../typings/bluebird/bluebird.d.ts"/>
 
-namespace ts.yelm.Util {
+namespace ts.ks.Util {
     export interface Map<T> {
         [index: string]: T;
     }
@@ -538,7 +538,7 @@ namespace ts.yelm.Util {
     export var getRandomBuf: (buf: Uint8Array) => void;
 }
 
-namespace ts.yelm.BrowserImpl {
+namespace ts.ks.BrowserImpl {
     Util.httpRequestCoreAsync = httpRequestCoreAsync;
     Util.sha256 = sha256string;
     Util.getRandomBuf = buf => {

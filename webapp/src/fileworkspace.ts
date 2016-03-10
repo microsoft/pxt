@@ -4,8 +4,8 @@ import * as pkg from "./package";
 import * as data from "./data";
 import * as ws from "./workspace"
 
-import U = yelm.Util;
-import Cloud = yelm.Cloud;
+import U = ks.Util;
+import Cloud = ks.Cloud;
 let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 
@@ -44,7 +44,7 @@ function apiAsync(path: string, data?: any) {
     }).then(r => r.json)
 }
 
-function mergeFsPkg(pkg: yelm.FsPkg) {
+function mergeFsPkg(pkg: ks.FsPkg) {
     let e = lookup(pkg.path)
     if (!e) {
         e = {
@@ -92,7 +92,7 @@ function initAsync() {
 
 function fetchTextAsync(e: HeaderWithScript): Promise<ws.ScriptText> {
     return apiAsync("pkg/" + e.id)
-        .then((resp: yelm.FsPkg) => {
+        .then((resp: ks.FsPkg) => {
             if (!e.text) {
                 // otherwise we were beaten to it
                 e.text = {};
@@ -132,7 +132,7 @@ function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
 
     return headerQ.enqueue<void>(h.id, () => {
         U.assert(!!e.fsText)
-        let pkg: yelm.FsPkg = {
+        let pkg: ks.FsPkg = {
             files: [],
             config: null,
             path: h.id,
@@ -149,7 +149,7 @@ function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
         let savedText = U.flatClone(e.text)
         if (pkg.files.length == 0) return Promise.resolve()
         return apiAsync("pkg/" + h.id, pkg)
-            .then((pkg: yelm.FsPkg) => {
+            .then((pkg: ks.FsPkg) => {
                 e.fsText = savedText                
                 mergeFsPkg(pkg)
                 data.invalidate("header:" + h.id)
@@ -196,7 +196,7 @@ function saveToCloudAsync(h: ws.Header) {
 }
 
 function syncAsync() {
-    return apiAsync("list").then((h: yelm.FsPkgs) => {
+    return apiAsync("list").then((h: ks.FsPkgs) => {
         h.pkgs.forEach(mergeFsPkg)
     })
         .then(() => {

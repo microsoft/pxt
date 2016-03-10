@@ -1,5 +1,5 @@
-namespace yelm.Cloud {
-    import Util = ts.yelm.Util;
+namespace ks.Cloud {
+    import Util = ts.ks.Util;
     
     export var apiRoot = "https://yelm.tdev.ly/api/";
     export var accessToken = "";

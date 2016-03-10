@@ -11,7 +11,7 @@ import * as compiler from "./compiler"
 import * as blocklyloader from "./blocklyloader"
 import * as sui from "./sui";
 
-import Util = yelm.Util;
+import Util = ks.Util;
 var lf = Util.lf
 
 export class Editor extends srceditor.Editor {

@@ -1,18 +1,18 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
-namespace yelm {
-    export import U = ts.yelm.Util;
-    export import Util = ts.yelm.Util;
+namespace ks {
+    export import U = ts.ks.Util;
+    export import Util = ts.ks.Util;
     let lf = U.lf;
 
-    export type CompileTarget = ts.yelm.CompileTarget;
+    export type CompileTarget = ts.ks.CompileTarget;
 
     export interface Host {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
-        getHexInfoAsync(extInfo: ts.yelm.ExtensionInfo): Promise<any>;
+        getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any>;
         resolveVersionAsync(pkg: Package): Promise<string>;
     }
 
@@ -41,7 +41,7 @@ namespace yelm {
         testFiles?: string[];
         public?: boolean;
         target?: AppTarget;
-        microbit?: ts.yelm.MicrobitConfig;
+        microbit?: ts.ks.MicrobitConfig;
         card?: PackageCard;        
     }
 
@@ -55,7 +55,7 @@ namespace yelm {
 
     export interface FsPkg {
         path: string; // eg "foo/bar"
-        config: yelm.PackageConfig; // kind.json
+        config: ks.PackageConfig; // kind.json
         files: FsFile[]; // this includes kind.json
     }
 
@@ -65,7 +65,7 @@ namespace yelm {
 
     export interface ProjectTemplate {
         id: string;
-        config: yelm.PackageConfig;
+        config: ks.PackageConfig;
         files: U.Map<string>;
     }
 
@@ -274,7 +274,7 @@ namespace yelm {
         getTargetOptions(): CompileTarget { return this.getTarget().compile; }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
-            let opts: ts.yelm.CompileOptions = {
+            let opts: ts.ks.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
                 target: target,
@@ -310,17 +310,17 @@ namespace yelm {
                 })
         }
 
-        buildAsync(target: ts.yelm.CompileTarget) {
+        buildAsync(target: ts.ks.CompileTarget) {
             return this.getCompileOptionsAsync(target)
-                .then(opts => ts.yelm.compile(opts))
+                .then(opts => ts.ks.compile(opts))
         }
 
         serviceAsync(op: string) {
             return this.getCompileOptionsAsync()
                 .then(opts => {
-                    ts.yelm.service.performOperation("reset", {})
-                    ts.yelm.service.performOperation("setOpts", { options: opts })
-                    return ts.yelm.service.performOperation(op, {})
+                    ts.ks.service.performOperation("reset", {})
+                    ts.ks.service.performOperation("setOpts", { options: opts })
+                    return ts.ks.service.performOperation(op, {})
                 })
         }
 
@@ -411,7 +411,7 @@ namespace yelm {
                         description: this.config.description || "",
                         islibrary: true,
                         ishidden: false,
-                        userplatform: ["yelm"],
+                        userplatform: ["ks"],
                         editor: "tsprj",
                         text: text
                     }

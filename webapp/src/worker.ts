@@ -4,7 +4,7 @@ importScripts(
 )
 
 onmessage = ev => {
-    let res = ts.yelm.service.performOperation(ev.data.op, ev.data.arg)
+    let res = ts.ks.service.performOperation(ev.data.op, ev.data.arg)
     postMessage({
         op: ev.data.op,
         id: ev.data.id,

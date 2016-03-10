@@ -14,7 +14,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
             let msg = ev.data;
             switch (msg.type || '') {
                 case 'ready':
-                    let frameid = (msg as yelm.rt.SimulatorReadyMessage).frameid;
+                    let frameid = (msg as ks.rt.SimulatorReadyMessage).frameid;
                     let frame = $('#' + frameid)[0] as HTMLIFrameElement;
                     if (frame) Simulator.startFrame(frame);
                     break;
@@ -22,7 +22,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
                 default:
                     if (msg.type == 'radiopacket') {
                         // assign rssi noisy?
-                        (msg as yelm.rt.SimulatorRadioPacketMessage).rssi = 10;
+                        (msg as ks.rt.SimulatorRadioPacketMessage).rssi = 10;
                     }
                     Simulator.postMessage(ev.data, ev.source);
                     break;
@@ -31,7 +31,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
 
     }
 
-    static postMessage(msg: yelm.rt.SimulatorMessage, source?: Window) {
+    static postMessage(msg: ks.rt.SimulatorMessage, source?: Window) {
         // dispatch to all iframe besides self
         let frames = $('#simulators iframe');
         if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket') && frames.length < 2) {
@@ -49,7 +49,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
 
     static createFrame(): HTMLIFrameElement {
         let frame = document.createElement('iframe') as HTMLIFrameElement;
-        frame.id = yelm.Util.guidGen()
+        frame.id = ks.Util.guidGen()
         frame.className = 'simframe';
         frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
         let cdn = (window as any).appCdnRoot
@@ -59,18 +59,18 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
     }
 
     static startFrame(frame: HTMLIFrameElement) {
-        let msg = yelm.U.clone(Simulator.currentRuntime) as yelm.rt.SimulatorRunMessage;
+        let msg = ks.U.clone(Simulator.currentRuntime) as ks.rt.SimulatorRunMessage;
         let mc = '';
         let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
         msg.options = {
             theme : Simulator.themes[Simulator.nextFrameId++ % Simulator.themes.length],
             player: mc
         };
-        msg.id = `${msg.options.theme}-${yelm.Util.guidGen()}`;
+        msg.id = `${msg.options.theme}-${ks.Util.guidGen()}`;
         frame.contentWindow.postMessage(msg, "*");
     }
 
-    static currentRuntime: yelm.rt.SimulatorRunMessage;
+    static currentRuntime: ks.rt.SimulatorRunMessage;
     static stop(unload = false) {
         Simulator.postMessage({ type: 'stop' });
         if (unload) Simulator.unload();

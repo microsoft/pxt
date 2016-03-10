@@ -5,13 +5,13 @@ import * as srceditor from "./srceditor"
 import * as sui from "./sui";
 import * as codecard from "./codecard"
 
-import Cloud = yelm.Cloud;
-import Util = yelm.Util;
+import Cloud = ks.Cloud;
+import Util = ks.Util;
 
 var lf = Util.lf
 
 export class Editor extends srceditor.Editor {
-    config: yelm.PackageConfig = {} as any;
+    config: ks.PackageConfig = {} as any;
 
     prepare() {
         this.isReady = true
@@ -101,7 +101,7 @@ export class Editor extends srceditor.Editor {
     }
 
     acceptsFile(file: pkg.File) {
-        if (file.name != yelm.configName) return false
+        if (file.name != ks.configName) return false
         
         if (file.isReadonly()) {
             // TODO add read-only support

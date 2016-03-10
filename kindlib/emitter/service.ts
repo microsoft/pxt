@@ -1,4 +1,4 @@
-namespace ts.yelm {
+namespace ts.ks {
     export interface ParameterDesc {
         name: string;
         description: string;
@@ -239,7 +239,7 @@ namespace ts.yelm {
 }
 
 
-namespace ts.yelm.service {
+namespace ts.ks.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],

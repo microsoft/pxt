@@ -1,4 +1,4 @@
-namespace yelm.rt.micro_bit {
+namespace ks.rt.micro_bit {
 
     export interface IBoardTheme {
         accent?: string;
@@ -32,7 +32,7 @@ namespace yelm.rt.micro_bit {
     }
 
     export interface IBoardProps {
-        runtime: yelm.rt.Runtime;
+        runtime: ks.rt.Runtime;
         theme?: IBoardTheme;
         disableTilt?:boolean;
     }

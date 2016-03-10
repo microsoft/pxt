@@ -8,7 +8,7 @@ import * as blockyloader from "./blocklyloader"
 
 import J = TDev.AST.Json;
 import B = Blockly;
-import Util = yelm.Util;
+import Util = ks.Util;
 
 // A series of utility functions for constructing various J* AST nodes.
 module Helpers {
@@ -1243,7 +1243,7 @@ function mkEnv(w: B.Workspace, blockInfo: blockyloader.BlocksInfo): Environment 
                     return;
                 }
                 let fieldMap = blockyloader.parameterNames(fn);
-                let instance = fn.kind == ts.yelm.SymbolKind.Method || fn.kind == ts.yelm.SymbolKind.Property;
+                let instance = fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property;
                 let args = fn.parameters.map(p => {
                     if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
                     else return null;

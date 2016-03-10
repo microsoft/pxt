@@ -3,8 +3,8 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as blockspreview from "./blockspreview"
 
-let lf = yelm.Util.lf;
-let repeat = yelm.Util.repeatMap;
+let lf = ks.Util.lf;
+let repeat = ks.Util.repeatMap;
 
 interface SocialNetwork {
     parse: (text: string) => { source: string; id: string }
@@ -42,7 +42,7 @@ export interface CodeCardProps {
     blocksXml?: string;
     header?: string;
     time?: number;
-    card?: yelm.PackageCard;
+    card?: ks.PackageCard;
     url?: string;
     responsive?: boolean;
     onClick?: (e: React.MouseEvent) => boolean;
@@ -91,7 +91,7 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
                 <div className="content">
                     <a className="header">{this.props.name}</a>
                     <div className="meta">
-                        {this.props.time ? <span key="date" className="date">{yelm.Util.timeSince(this.props.time) }</span> : ""}
+                        {this.props.time ? <span key="date" className="date">{ks.Util.timeSince(this.props.time) }</span> : ""}
                     </div>
                     <div className="description">{this.props.description || lf("No description.") }</div>
                 </div>
