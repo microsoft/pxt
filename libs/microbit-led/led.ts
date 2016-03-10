@@ -8,7 +8,7 @@ enum DisplayMode {
 //% color=3 weight=35
 namespace led {
     /**
-     * Turn on the specified LED using ``x``, ``y`` coordinates (``x`` is horizontal, ``y`` is vertical)
+     * Turn on the specified LED using x, y coordinates (x is horizontal, y is vertical). (0,0) is upper left.
      * @param x TODO
      * @param y TODO
      */
@@ -17,7 +17,7 @@ namespace led {
     export function plot(x: number, y: number): void { }
 
     /**
-     * Turn off the specified LED using x, y coordinates (x is horizontal, y is vertical)
+     * Turn off the specified LED using x, y coordinates (x is horizontal, y is vertical). (0,0) is upper left.
      * @param x TODO
      * @param y TODO
      */
@@ -26,7 +26,7 @@ namespace led {
     export function unplot(x: number, y: number): void { }
 
     /**
-     * Get the on/off state of the specified LED using ``x, y`` coordinates.
+     * Get the on/off state of the specified LED using x, y coordinates. (0,0) is upper left.
      * @param x TODO
      * @param y TODO
      */
