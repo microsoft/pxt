@@ -316,10 +316,9 @@ class Host
         fs.writeFileSync(p, contents, "utf8")
     }
 
-    getHexInfoAsync(extInfo: ts.yelm.ExtensionInfo) {
+    getHexInfoAsync(extInfo: ts.ks.ExtensionInfo) {
         if (extInfo.sha === baseExtInfo.sha)
             return Promise.resolve(require(__dirname + "/../generated/hexinfo.js"))
-
         return buildHexAsync(extInfo)
             .then(() => patchHexInfo(extInfo))
     }
@@ -472,7 +471,7 @@ function runYottaAsync(args: string[]) {
     })
 }
 
-function patchHexInfo(extInfo: ts.yelm.ExtensionInfo) {
+function patchHexInfo(extInfo: ts.ks.ExtensionInfo) {
     let infopath = ytPath + "/yotta_modules/yelm-microbit-core/generated/metainfo.json"
 
     let hexPath = ytPath + "/build/" + ytTarget + "/source/yelm-microbit-app-combined.hex"
@@ -483,7 +482,7 @@ function patchHexInfo(extInfo: ts.yelm.ExtensionInfo) {
     return hexinfo
 }
 
-function buildHexAsync(extInfo: ts.yelm.ExtensionInfo) {
+function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
     let yottaTasks = Promise.resolve()
     let buildCachePath = ytPath + "/buildcache.json"
     let buildCache: BuildCache = {}
@@ -566,7 +565,7 @@ export function formatAsync(...fileNames: string[]) {
             let numErr = 0
             for (let f of fileNames) {
                 let input = fs.readFileSync(f, "utf8")
-                let tmp = ts.yelm.format(input, 0)
+                let tmp = ts.ks.format(input, 0)
                 let formatted = tmp.formatted
                 let expected = testMode && fs.existsSync(f + ".exp") ? fs.readFileSync(f + ".exp", "utf8") : null
                 let fn = f + ".new"
@@ -605,7 +604,7 @@ export function formatAsync(...fileNames: string[]) {
         })
 }
 
-function deployCoreAsync(res: ts.yelm.CompileResult) {
+function deployCoreAsync(res: ts.ks.CompileResult) {
     return getBitDrivesAsync()
         .then(drives => {
             if (drives.length == 0) {
@@ -622,7 +621,7 @@ function deployCoreAsync(res: ts.yelm.CompileResult) {
         .then(() => { })
 }
 
-function runCoreAsync(res: ts.yelm.CompileResult) {
+function runCoreAsync(res: ts.ks.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
         // TODO: non-microbit specific load
