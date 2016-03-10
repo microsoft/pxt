@@ -1,29 +1,23 @@
-# yelm - Experimental Programming Environment for micro:bit
+# KindScript - A kinder JavaScript experience
 
 [![Build Status](https://travis-ci.org/Microsoft/yelm.svg?branch=master)](https://travis-ci.org/Microsoft/yelm)
 
-Yelm is a platform for creating special-purpose programming experiences for
-beginners, especially focused on computer science education. Yelm underlaying
+KindScript is a platform for creating special-purpose programming experiences for
+beginners, especially focused on computer science education. KindScript's underlaying
 programming language is a subset of TypeScript (leaving out JavaScript dynamic
 features).
 
-The main features of Yelm are:
+The main features of KindScript are:
 * a Blockly-based code editor along with converter to the text format
 * an ACE-based text editor with enhanced, robust auto-completion and auto-correction
 * a TypeScript library defining APIs available on microbit devices
 * an ARM Thumb machine code emitter
 * a command-line package manager
 
-## Name
-
-Yelm is a city near Mt Rainier in Washington State with a name short enough for
-command line tool. It also stands for Your Experimental programming Language
-environment for microbit-compatible devices.
-
 
 ## Build
 
-Building yelm command line tools:
+Building KindScript command line tools:
 
 ```
 tsd reinstall
@@ -31,15 +25,15 @@ npm install
 jake
 ```
 
-Then install the `yelm` command line tool (only need to do it once):
+Then install the `kind` command line tool (only need to do it once):
 
 ```
-npm install -g yelm-cli
+npm install -g kindscript-cli
 ```
 
-After this you can run `yelm` from anywhere within the build tree.
+After this you can run `kind` from anywhere within the build tree.
 
-To start the local web app server do `yelm serve` within the root directory
+To start the local web app server do `kind serve` within the root directory
 of build tree (where this file sits) and then browse to http://localhost:3232 
 
 ## TODOs
