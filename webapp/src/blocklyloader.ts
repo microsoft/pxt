@@ -479,7 +479,7 @@ export function init() {
                 .appendField("and");
             this.setInputsInline(true);
             this.setOutput(true, "Number");
-            this.setTooltip('Math operators.');
+            this.setTooltip(lf("Math operators."));
         }
     };
 
@@ -493,7 +493,7 @@ export function init() {
                 .setCheck("Number")
             this.setInputsInline(true);
             this.setOutput(true, "Number");
-            this.setTooltip('Math operators.');
+            this.setTooltip(lf("Math operators."));
         }
     };
 
@@ -508,7 +508,7 @@ export function init() {
                 .appendField("do");
             this.setPreviousStatement(true);
             this.setNextStatement(true);
-            this.setTooltip('Run the same sequence of actions while the condition is met. Don\'t forget to pause!');
+            this.setTooltip(lf("Run the same sequence of actions while the condition is met. Don't forget to pause!"));
         }
     };
 
@@ -521,7 +521,7 @@ export function init() {
                 .appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), "limit");
             this.setInputsInline(true);
             this.setOutput(true, "Number");
-            this.setTooltip('Returns a random integer between 0 and the specified bound (inclusive).');
+            this.setTooltip(lf("Returns a random integer between 0 and the specified bound (inclusive)."));
         }
     };
 
@@ -604,7 +604,7 @@ export function init() {
             this.setInputsInline(true);
             this.setPreviousStatement(true);
             this.setNextStatement(true);
-            this.setTooltip('Changes the value of the variable by this amount');
+            this.setTooltip(lf("Changes the value of the variable by this amount"));
             this.setHelpUrl('./blocks/assign');
             this.setColour(blockColors.variables);
         }
