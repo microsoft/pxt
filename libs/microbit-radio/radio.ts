@@ -1,30 +1,6 @@
 //% color=270 weight=34
 namespace radio {
     /**
-     * Sends a message id to other micro:bit in the group using radio.
-     */
-    //% weight=70 shim="micro_bit::broadcastMessage" help="/functions/broadcast-message"
-    //% blockId=radio_broadcast block="broadcast message %MESSAGE" icon="\uf1d8" blockGap=12
-    export function broadcastMessage(message: number) : void {
-        /*
-        if (message < 0 || message > 65325) {
-            simulator.warning("message should be between 0 and 65535.");
-        }
-        noBleWarning();
-        */
-    }
-
-    /**
-     * Registers code to run when a particular message is received from another micro:bit.
-     */
-    //% help=/functions/on-message-received
-    //% shim=micro_bit::onBroadcastMessageReceived
-    //% weight=69
-    //% blockId=radio_broadcast_received_event block="on message received|%MESSAGE=value" icon="\uf1d8"
-    export function onMessageReceived(message: number, body:Action) : void {
-    }
-
-    /**
      * Broadcasts a number over radio to any connected micro:bit in the group.
      */    
     //% help=/functions/send-number
@@ -35,16 +11,14 @@ namespace radio {
     }
 
     /**
-     * Reads the next packet as a number from the radio queue.
+     * Broadcasts 4 numbers over radio to any connected micro:bit in the group.
      */
-    //% help=/functions/receive-number
-    //% shim=micro_bit::datagramReceiveNumber
+    //% help=/functions/send-numbers
+    //% shim=micro_bit::datagramSendNumbers
     //% weight=59
-    //% blockId=radio_datagram_receive block="receive number" blockGap=12
-    export function receiveNumber() : number
-        {
-        //noBleWarning();
-        return 0;
+    //% blockId=radio_datagram_send_numbers block="send numbers|0: %VALUE0|1: %VALUE1|2: %VALUE2|3: %VALUE3"
+    export function sendNumbers(value_0: number, value_1: number, value_2: number, value_3: number) : void {
+        //        noBleWarning();
     }
 
     /**
@@ -52,30 +26,32 @@ namespace radio {
      */
     //% help=/functions/on-data-received
     //% shim=micro_bit::onDatagramReceived
-    //% weight=58
+    //% weight=50
     //% blockId=radio_datagram_received_event block="on data received" blockGap=8
     export function onDataReceived(body:Action) : void {
         //      noBleWarning();
     }
 
     /**
-     * Broadcasts 4 numbers over radio to any connected micro:bit in the group.
+     * Reads the next packet as a number from the radio queue.
      */
-    //% help=/functions/send-numbers
-    //% shim=micro_bit::datagramSendNumbers
-    //% weight=57
-    //% blockId=radio_datagram_send_numbers block="send numbers|0: %VALUE0|1: %VALUE1|2: %VALUE2|3: %VALUE3" blockGap=8
-    export function sendNumbers(value_0: number, value_1: number, value_2: number, value_3: number) : void {
-        //        noBleWarning();
+    //% help=/functions/receive-number
+    //% shim=micro_bit::datagramReceiveNumber
+    //% weight=46
+    //% blockId=radio_datagram_receive block="receive number" blockGap=8
+    export function receiveNumber() : number
+        {
+        //noBleWarning();
+        return 0;
     }
 
     /**
      * Reads a number at a given index, between ``0`` and ``3``, from the packet received by ``receive number``. Not supported in simulator.
+     * @param index index of the number to read from 0 to 3. eg: 1
      */
     //% help=/functions/received-number-at
     //% shim=micro_bit::datagramGetNumber
-    //% hints=index:0,1,2,3
-    //% weight=56
+    //% weight=45
     //% blockId=radio_datagram_received_number_at block="receive number|at %VALUE" blockGap=8
     export function receivedNumberAt(index: number) : number {
         /*      if (index < 0 || index >= 4) {
@@ -90,7 +66,7 @@ namespace radio {
      */
     //% help=/functions/received-signal-strength
     //% shim=micro_bit::datagramGetRSSI
-    //% weight=55
+    //% weight=40
     //% blockId=radio_datagram_rssi block="received signal strength"
     export function receivedSignalStrength() : number {
         return 0;
