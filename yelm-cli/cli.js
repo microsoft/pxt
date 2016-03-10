@@ -6,9 +6,9 @@ let child_process = require("child_process")
 
 function findYelmJs() {
     let goUp = (s) => {
-        let f = s + "/node_modules/yelm/built/yelm.js"
+        let f = s + "/node_modules/kindscript/built/kind.js"
         if (fs.existsSync(f)) return f
-        f = s + "/built/yelm.js" // local build
+        f = s + "/built/kind.js" // local build
         if (fs.existsSync(f)) return f
         let s2 = path.resolve(path.join(s, ".."))
         if (s != s2)
@@ -21,11 +21,11 @@ function findYelmJs() {
 function selfInstall() {
     if (!fs.existsSync("node_modules"))
         fs.mkdirSync("node_modules")
-    console.log("Installing yelm locally; don't worry about package.json warnings.")
-    child_process.execSync("npm install yelm", {
+    console.log("Installing KindScript locally; don't worry about package.json warnings.")
+    child_process.execSync("npm install kindscript", {
         stdio: "inherit"
     })
-    console.log("Installed yelm.")
+    console.log("Installed KindScript.")
 }
 
 function main() {
@@ -43,7 +43,7 @@ function main() {
     }
     
     if (!path) {
-        console.error("cannot find built/yelm.js; maybe try 'yelm selfinstall'")
+        console.error("cannot find built/kind.js; maybe try 'kind selfinstall'")
         process.exit(1)
     }
 

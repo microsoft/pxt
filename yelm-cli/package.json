@@ -1,26 +1,28 @@
 {
-  "name": "yelm-cli",
-  "version": "0.0.4",
-  "description": "yelm - command line interface",
+  "name": "kindscript-cli",
+  "version": "0.0.0",
+  "description": "KindScript - command line interface",
   "keywords": [
     "TypeScript",
+    "JavaScript",
+    "education",
     "microbit"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/yelm.git"
+    "url": "git+https://github.com/Microsoft/kindscript.git"
   },
   "author": "",
   "license": "MIT",
-  "homepage": "https://github.com/Microsoft/yelm#readme",
+  "homepage": "https://github.com/Microsoft/kindscript#readme",
   "files": [
     "README.md",
     "cli.js",
-    "yelm"
+    "kind"
   ],
   "preferGlobal": true,
   "bin": {
-    "yelm": "./yelm"
+    "kind": "./kind"
   },
   "dependencies": {}
 }

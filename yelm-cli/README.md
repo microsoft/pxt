@@ -1,16 +1,14 @@
-# yelm CLI
+# KindScript CLI
 
-Yelm is a package manager. 
-
-This NPM packages provides a command line interface to yelm.
+This package provides `kind` command line tool.
 
 ### Package setup 
 
-    yelm init my-package
+    kind init my-package
 
-`my-package` is package name. It has to be all lowercase, only letters, digits and dashed are allowed. You can then tweak `yelm.json` file.
+`my-package` is package name. It has to be all lowercase, only letters, digits and dashed are allowed. You can then tweak `kind.json` file.
 
-`yelm init` creates appropriate `.gitignore` file, so to setup git (optional) you can just run:
+`kind init` creates appropriate `.gitignore` file, so to setup git (optional) you can just run:
 
     git init
     git add .
@@ -20,15 +18,11 @@ After setting up the packge, you can edit `main.ts` file. We recommend using VS 
 
 ### Building your package
 
-`yelm build` will build the package. `yelm deploy` will build and try to copy the results to the device. `yelm` is an alias for `yelm deploy`.
-
-### Name
-
-Yelm is a city in Washington state, with a name short enough for a command line tool.
+`kind build` will build the package. `kind deploy` will build and try to copy the results to the device. `kind` is an alias for `kind deploy`.
 
 ### More info
 
-https://www.npmjs.com/package/yelm 
+https://www.npmjs.com/package/kindscript
 
 ## License
 
