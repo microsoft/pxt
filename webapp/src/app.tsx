@@ -772,7 +772,7 @@ $(document).ready(() => {
             console.log(`releaseid: ${currentReleaseId}`)
         }
     }
-    baseUrl = baseUrl || '.';
+    baseUrl = baseUrl || './';
 
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
     let ws = /ws=(\w+)/.exec(window.location.href)

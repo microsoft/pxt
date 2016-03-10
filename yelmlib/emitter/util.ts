@@ -440,7 +440,7 @@ namespace ts.yelm.Util {
             code = code.split('-')[0]
 
         if (_localizeLang != code) {
-            return Util.httpGetJsonAsync(baseUrl + '/locales/' + code + '/strings.json')
+            return Util.httpGetJsonAsync(baseUrl + 'locales/' + code + '/strings.json')
                 .then(tr => {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
