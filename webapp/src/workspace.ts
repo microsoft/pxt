@@ -128,6 +128,15 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     return impl.installAsync(h0, text)
 }
 
+export function fixupFileNames(txt: ScriptText) {
+    if (!txt) return txt
+    if (!txt[yelm.configName] && txt["yelm.json"]) {
+        txt[yelm.configName] = txt["yelm.json"]
+    }
+    return txt
+}
+
+
 let scriptDlQ = new U.PromiseQueue();
 //let scriptCache:any = {}
 export function getPublishedScriptAsync(id: string) {
@@ -138,7 +147,8 @@ export function getPublishedScriptAsync(id: string) {
                 .then(() => {
                     //return (scriptCache[id] = files)
                     return files
-                }))))
+                })))
+        .then(fixupFileNames))
 }
 
 export function installByIdAsync(id: string) {

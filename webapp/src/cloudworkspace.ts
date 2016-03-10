@@ -54,7 +54,7 @@ function fetchTextAsync(e: HeaderWithScript): Promise<ws.ScriptText> {
         .then(resp => {
             if (!e.text) {
                 // otherwise we were beaten to it
-                e.text = resp.files;
+                e.text = ws.fixupFileNames(resp.files);
             }
             e.textRev = resp._rev;
             return e.text

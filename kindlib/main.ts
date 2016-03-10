@@ -55,8 +55,8 @@ namespace yelm {
 
     export interface FsPkg {
         path: string; // eg "foo/bar"
-        config: yelm.PackageConfig; // yelm.json
-        files: FsFile[]; // this includes yelm.json
+        config: yelm.PackageConfig; // kind.json
+        files: FsFile[]; // this includes kind.json
     }
 
     export interface FsPkgs {
@@ -445,8 +445,8 @@ namespace yelm {
         }
     }
 
-    export var pkgPrefix = "ptr-yelm-"
-    export var configName = "yelm.json"
+    export var pkgPrefix = "ptr-pkg-"
+    export var configName = "kind.json"
     var info = function info(msg: string) {
         console.log(msg)
     }

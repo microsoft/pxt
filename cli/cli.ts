@@ -191,22 +191,41 @@ export function uploadrelAsync(label?: string) {
         })
 }
 
-export function buildTargetAsync() {
+function readKindTarget() {
     let cfg: yelm.TargetBundle = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
+    return cfg
+}
+
+function forEachBundledPkgAsync(f: (pkg: yelm.MainPackage) => Promise<void>) {
+    let cfg = readKindTarget()
     let parentdir = process.cwd()
 
-    cfg.bundledpkgs = {}
     return Promise.mapSeries(cfg.bundleddirs, (dirname) => {
         process.chdir(parentdir)
         process.chdir(dirname)
         mainPkg = new yelm.MainPackage(new Host())
-        return mainPkg.filesToBePublishedAsync()
-            .then(res => {
-                cfg.bundledpkgs[mainPkg.config.name] = res
-            })
+        return f(mainPkg);
     })
         .then(() => {
             process.chdir(parentdir)
+        })
+}
+
+export function publishTargetAsync() {
+    return forEachBundledPkgAsync((pkg) => {
+        return pkg.publishAsync()
+    })
+}
+
+export function buildTargetAsync() {
+    let cfg = readKindTarget()
+    cfg.bundledpkgs = {}
+    return forEachBundledPkgAsync(pkg =>
+        pkg.filesToBePublishedAsync()
+            .then(res => {
+                cfg.bundledpkgs[pkg.config.name] = res
+            }))
+        .then(() => {
             if (!fs.existsSync("built"))
                 fs.mkdirSync("built")
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
@@ -698,6 +717,7 @@ cmd("serve    [ws]            - start web server for your local target", serveAs
 
 cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
 cmd("buildtarget              - build kindtarget.json", buildTargetAsync, 1)
+cmd("pubtarget                - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
 cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)
 cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)

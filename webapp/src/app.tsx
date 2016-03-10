@@ -530,7 +530,7 @@ Ctrl+Shift+B
         let cfg = yelm.U.clone(prj.config);
         cfg.name = yelm.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {
-            "yelm.json": JSON.stringify(cfg, null, 4) + "\n",
+            "kind.json": JSON.stringify(cfg, null, 4) + "\n",
         }
         for (let f in prj.files)
             files[f] = prj.files[f];
