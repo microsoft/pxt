@@ -215,6 +215,11 @@ export function buildTargetAsync() {
         })
 }
 
+export function serveAsync(ws?:string) {
+    return buildTargetAsync()
+        .then(() => server.serveAsync(ws))
+}
+
 function extensionAsync(add: string) {
     let dat = {
         "config": "ws",
@@ -691,10 +696,10 @@ cmd("deploy                   - build and deploy current package", deployAsync)
 cmd("run                      - build and run current package in the simulator", runAsync)
 cmd("format   [-i] file.ts... - pretty-print TS files; -i = in-place", formatAsync)
 cmd("help                     - display this message", helpAsync)
+cmd("serve    [ws]            - start web server for your local target", serveAsync, 0)
 
 cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
-cmd("serve                    - start local web server", server.serveAsync, 1)
-cmd("buildtarget              - ", buildTargetAsync, 1)
+cmd("buildtarget              - build kindtarget.json", buildTargetAsync, 1)
 cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
 cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)
 cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)
