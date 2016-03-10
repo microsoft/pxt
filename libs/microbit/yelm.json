@@ -15,7 +15,7 @@
     "dependencies": {},
     "target": {
         "id": "microbit",
-        "name": "BBC micro:bit",
+        "name": "microbit",
         "blocksprj": {
             "id": "blocksprj",
             "config": {
