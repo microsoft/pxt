@@ -16,7 +16,7 @@ namespace basic {
     export function showNumber(value: number, interval: number = 150): void { }
 
     /**
-     * Draws an image on the LED screen and pauses for the given milliseconds.
+     * Draws an image on the LED screen.
      * @param leds TODO
      * @param interval TODO
      */
@@ -29,7 +29,7 @@ namespace basic {
     export function showLeds(leds: string, interval: number = 400): void { }
 
     /**
-     * Display text on the display, one character at a time, and shift by one column each ``interval`` milliseconds. If the string fits on the screen (i.e. is one letter), does not scroll.
+     * Display text on the display, one character at a time. If the string fits on the screen (i.e. is one letter), does not scroll.
      * @param text the text to scroll on the screen, eg: "Hello!"
      * @param interval how fast to shift characters; eg: 150, 100, 200, -100
      */
@@ -50,7 +50,7 @@ namespace basic {
     export function clearScreen(): void { }
 
     /**
-     * Shows a sequence of LED screens as an animation with an ``interval`` delay between each frame
+     * Shows a sequence of LED screens as an animation.
      * @param leds TODO
      * @param interval TODO
      */
