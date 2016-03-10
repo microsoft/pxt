@@ -39,6 +39,18 @@ svg.sim {
     stroke-width: 2px;
 }
 
+.sim-text {
+  font-family:monospace;
+  font-size:25px;
+  fill:#fff;
+}
+
+.sim-text-pin {
+  font-family:monospace;
+  font-size:20px;
+  fill:#fff;
+}
+
 .sim-log {
     background: white;
     font: 0.9em monospace;

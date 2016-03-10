@@ -139,6 +139,7 @@ namespace yelm.rt.micro_bit {
         private buttonsOuter: SVGElement[];
         private pins: SVGElement[];
         private pinGradients: SVGLinearGradientElement[];
+        private pinTexts: SVGTextElement[];
         private ledsOuter: SVGElement[];
         private leds: SVGElement[];
         private systemLed: SVGCircleElement;
@@ -196,13 +197,20 @@ namespace yelm.rt.micro_bit {
         
         private updatePin(pin : Pin, index: number) {
             if (!pin) return;
+            let text = this.pinTexts[index];
             let v = '';
-            if (pin.mode & PinMode.Analog)
+            if (pin.mode & PinMode.Analog) {
                 v = Math.floor(100 - (pin.value || 0) / 1023 * 100) + '%';
-            else if (pin.mode & PinMode.Digital)
+                if(text) text.textContent = (pin.value || 0) + "";
+            }
+            else if (pin.mode & PinMode.Digital) {
                 v = pin.value > 0 ? '0%' : '100%';
-            else if (pin.mode & PinMode.Touch)
+                if (text) text.textContent = pin.value > 0 ? "1" : "0";
+            }
+            else if (pin.mode & PinMode.Touch) {
                 v = pin.touched ? '0%' : '100%';
+                if (text) text.textContent = "";
+            }
             if (v) {
                 let lg = this.pinGradients[index];
                 (<SVGStopElement>lg.childNodes[1]).setAttribute("offset", v);
@@ -332,7 +340,7 @@ namespace yelm.rt.micro_bit {
             this.logos.push(Svg.path(this.head, "sim-theme","M269.9,50.2L269.9,50.2l-39.5,0v0c-14.1,0.1-24.6,10.7-24.6,24.8c0,13.9,10.4,24.4,24.3,24.7v0h39.6c14.2,0,24.8-10.6,24.8-24.7C294.5,61,284,50.3,269.9,50.2 M269.7,89.2L269.7,89.2l-39.3,0c-7.7-0.1-14-6.4-14-14.2c0-7.8,6.4-14.2,14.2-14.2h39.1c7.8,0,14.2,6.4,14.2,14.2C283.9,82.9,277.5,89.2,269.7,89.2"));
             this.logos.push(Svg.path(this.head, "sim-theme","M230.6,69.7c-2.9,0-5.3,2.4-5.3,5.3c0,2.9,2.4,5.3,5.3,5.3c2.9,0,5.3-2.4,5.3-5.3C235.9,72.1,233.5,69.7,230.6,69.7"));
             this.logos.push(Svg.path(this.head, "sim-theme","M269.7,80.3c2.9,0,5.3-2.4,5.3-5.3c0-2.9-2.4-5.3-5.3-5.3c-2.9,0-5.3,2.4-5.3,5.3C264.4,77.9,266.8,80.3,269.7,80.3"));
-            this.headText = <SVGTextElement>Svg.child(this.g, "text", { x: 310, y: 100, "font-family":'monospace', "font-size":"25", fill:"#fff" })
+            this.headText = <SVGTextElement>Svg.child(this.g, "text", { x: 310, y: 100, class:'sim-text' })
             
             // P0, P1, P2
             this.pins = [
@@ -358,6 +366,8 @@ namespace yelm.rt.micro_bit {
                 pin.setAttribute("fill", `url(#${gid})`);
                 return lg;
             })
+            
+            this.pinTexts = [67,165,275].map(x => <SVGTextElement>Svg.child(this.g, "text", { class:'sim-text-pin', x:x, y:345 }));
 
             this.buttonsOuter = []; this.buttons = [];
             this.buttonsOuter.push(Svg.path(this.g, "sim-button-outer", "M82.1,232.6H25.9c-0.5,0-1-0.4-1-1v-56.2c0-0.5,0.4-1,1-1h56.2c0.5,0,1,0.4,1,1v56.2C83,232.2,82.6,232.6,82.1,232.6"));
