@@ -541,7 +541,14 @@ namespace ts.yelm.Util {
 namespace ts.yelm.BrowserImpl {
     Util.httpRequestCoreAsync = httpRequestCoreAsync;
     Util.sha256 = sha256string;
-    Util.getRandomBuf = buf => window.crypto.getRandomValues(buf);
+    Util.getRandomBuf = buf => {
+        if(window.crypto)
+            window.crypto.getRandomValues(buf);
+        else {
+            for(let i = 0; i < buf.length;++i)
+                buf[i] = Math.floor(Math.random() * 255);
+        }
+    }
 
     function httpRequestCoreAsync(options: Util.HttpRequestOptions) {
         return new Promise<Util.HttpResponse>((resolve, reject) => {
