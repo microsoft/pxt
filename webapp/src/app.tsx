@@ -756,25 +756,26 @@ let myexports: any = {
 };
 (window as any).E = myexports;
 
-var mainJsName: string;
 export var baseUrl: string;
 export var currentReleaseId: string;
 
 $(document).ready(() => {
     $("#loading").remove();
 
-    var ms = document.getElementById("mainScript");
+    let ms = document.getElementById("mainscript");
     if (ms && (ms as HTMLScriptElement).src) {
-        mainJsName = (ms as HTMLScriptElement).src;
+        let mainJsName = (ms as HTMLScriptElement).src;
         baseUrl = mainJsName.replace(/[^\/]*$/, "");
-        var mm = /\/([0-9]{18}[^\/]*)/.exec(mainJsName);
-        if (mm)
+        let mm = /\/([0-9]{18}[^\/]*)/.exec(mainJsName);
+        if (mm) {
             currentReleaseId = mm[1];
+            console.log(`releaseid: ${currentReleaseId}`)
+        }
     }
     baseUrl = baseUrl || '.';
 
-    var lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-    var ws = /ws=(\w+)/.exec(window.location.href)
+    let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
 
     Util.updateLocalizationAsync(baseUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
