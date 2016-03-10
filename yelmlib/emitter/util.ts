@@ -434,19 +434,20 @@ namespace ts.yelm.Util {
         return _localizeStrings[s] || s;
     }
 
-    export function updateLocalizationAsync(code: string): Promise<any> {
+    export function updateLocalizationAsync(baseUrl: string, code: string): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|zh)/i.test(code))
             code = code.split('-')[0]
 
-        if (_localizeLang != code)
-            return Util.httpGetJsonAsync('./locales/' + code + '/strings.json')
+        if (_localizeLang != code) {
+            return Util.httpGetJsonAsync(baseUrl + '/locales/' + code + '/strings.json')
                 .then(tr => {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
                 }, e => {
                     console.error('failed to load localizations')
                 })
+        }
         //                    
         return Promise.resolve(undefined);
     }
