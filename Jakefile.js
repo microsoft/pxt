@@ -78,17 +78,6 @@ task('npmpub', function () {
     ], { printStdout: true });
 })
 
-task('kindpub', { async: true }, function () {
-    let cmds = embedFiles.map(f => {
-        return {
-            cmd: "node",
-            args: ["../../built/kind.js", "publish"],
-            dir: f
-        }
-    })
-    ju.cmdsIn(this, cmds)
-})
-
 task('update', function () {
     jake.exec([
         "git pull",
