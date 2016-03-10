@@ -128,11 +128,12 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
                     onChange={chgHeader}>
                     {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || lf("no name") } />) }
                 </sui.DropdownList>
-
-                <sui.Button class={btnClass} onClick={save}
-                    icon={"cloud " + (needsUpload ? "upload" : "") }
-                    popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
-                    />
+                {this.props.parent.appTarget.cloud ?
+                    <sui.Button class={btnClass} onClick={save}
+                        icon={"cloud " + (needsUpload ? "upload" : "") }
+                        popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
+                        />
+                        : ""}
             </div>
         );
     }
@@ -143,6 +144,8 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
     modal: sui.Modal;
 
     renderCore() {
+        Util.assert(this.props.parent.appTarget.cloud);
+        
         let res = this.state.searchFor ?
             this.getData("cloud:scripts?q=" + encodeURIComponent(this.state.searchFor)) : null
         if (res)
@@ -246,6 +249,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         super(props);
 
         this.appTarget = JSON.parse((window as any).yelmEmbed["microbit"]["yelm.json"]).target;
+        if (!this.appTarget) Cloud.apiRoot = undefined;        
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
             this.settings.theme = {}
@@ -670,8 +674,8 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.Button text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
-                                    <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } />
-                                    <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } />
+                                    {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } /> : ""}
+                                    {this.appTarget.cloud ? <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
                                     <div className="divider"></div>
                                     <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                                 </sui.DropdownMenu>
@@ -685,9 +689,10 @@ Ctrl+Shift+B
                             {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
                             {this.editor.menu() }
                         </div>
+                        { this.appTarget.cloud ?
                         <div className="ui item right">
                             <LoginBox />
-                        </div>
+                        </div> : "" }
                     </div>
                 </div>
                 <div id="filelist" className="ui items">
@@ -711,7 +716,7 @@ Ctrl+Shift+B
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard"><codecard.CodeCard responsive={true} {...this.state.helpCard} /></div> : null }
                 </div>
-                <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
+                {this.appTarget.cloud ? <ScriptSearch parent={this} ref={v => this.scriptSearch = v} /> : ""}
                 <div id="footer">
                     <div>
                         <a href="https://github.com/Microsoft/kindscript">KindScript</a> - (c) Microsoft Corporation - 2016 - <span>{currentReleaseId}</span>
