@@ -300,7 +300,7 @@ namespace yelm {
                             if (/\.ts$/.test(f)) {
                                 let sn = f
                                 if (pkg.level > 0)
-                                    sn = "yelm_modules/" + pkg.id + "/" + f
+                                    sn = "kind_modules/" + pkg.id + "/" + f
                                 opts.sourceFiles.push(sn)
                                 opts.fileSystem[sn] = pkg.readFile(f)
                             }
@@ -479,7 +479,7 @@ Put some info here.
 node_modules
 yotta_modules
 yotta_targets
-yelm_modules
+kind_modules
 `,
         ".vscode/settings.json":
         `{
@@ -490,7 +490,7 @@ yelm_modules
 		"**/node_modules": true,
 		"**/yotta_modules": true,
 		"**/yotta_targets": true,
-		"**/yelm_modules": true
+		"**/kind_modules": true
 	}
 }`,
         ".vscode/tasks.json":

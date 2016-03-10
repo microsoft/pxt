@@ -103,7 +103,7 @@ namespace ts.yelm {
         while (decl) {
             if (decl.kind == SyntaxKind.SourceFile) {
                 let src = decl as SourceFile
-                return src.fileName.indexOf("yelm_modules") >= 0
+                return src.fileName.indexOf("kind_modules") >= 0
             }
             decl = decl.parent
         }

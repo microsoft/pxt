@@ -35,7 +35,7 @@ export class File {
 
     getTypeScriptName() {
         if (this.epkg.isTopLevel()) return this.name
-        else return "yelm_modules/" + this.epkg.getPkgId() + "/" + this.name
+        else return "kind_modules/" + this.epkg.getPkgId() + "/" + this.name
     }
 
     getExtension() {

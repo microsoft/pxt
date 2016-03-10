@@ -4,7 +4,7 @@ node_modules
 *.sw?
 built
 typings/
-yelm_modules
+kind_modules
 tmp/
 *.ts.new
 temp/

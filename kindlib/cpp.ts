@@ -128,7 +128,7 @@ namespace yelm.cpp {
                     if (U.endsWith(fn, ".cpp")) {
                         let src = pkg.readFile(fn)
                         parseCpp(src)
-                        let fullName = pkg.level == 0 ? fn : "yelm_modules/" + pkg.id + "/" + fn
+                        let fullName = pkg.level == 0 ? fn : "kind_modules/" + pkg.id + "/" + fn
                         res.extensionFiles["/ext/" + fullName] = src
                         includesInc += `#include "${fullName}"\n`
                     }

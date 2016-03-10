@@ -132,6 +132,7 @@ export function fixupFileNames(txt: ScriptText) {
     if (!txt) return txt
     if (!txt[yelm.configName] && txt["yelm.json"]) {
         txt[yelm.configName] = txt["yelm.json"]
+        delete txt["yelm.json"]
     }
     return txt
 }
