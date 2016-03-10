@@ -1,0 +1,23 @@
+{
+    "name": "bare",
+    "description": "Bare target",
+    "installedVersion": "fahhcl",
+    "files": [
+        "README.md",
+        "core.d.ts",
+        "helper.ts",
+        "basic.ts",
+        "control.ts"
+    ],
+    "public": true,
+    "dependencies": {},
+    "target": {
+        "id": "bare",
+        "name": "bare",
+        "cloud": true,
+        "compile": {
+            "isNative": false,
+            "hasHex": true
+        }
+    }
+}

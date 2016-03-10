@@ -1,13 +1,13 @@
 {
     "name": "lang-test0",
     "description": "Test for the TypeScript -> HEX compiler",
-    "installedVersion": "hpmapc",
+    "installedVersion": "file:.",
     "files": [
         "README.md",
         "lang-test0.ts"
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../microbit"
+        "bare": "file:../bare"
     }
 }

@@ -1,6 +1,6 @@
 {
     "name": "format-test",
-    "description": "Test for 'yelm format' command",
+    "description": "Test for 'kind format' command",
     "files": [
         "simple.ts",
         "images.ts",
@@ -8,6 +8,6 @@
     ],
     "public": true,
     "dependencies": {
-        "core": "file:../microbit"
+        "bare": "file:../bare"
     }
 }
