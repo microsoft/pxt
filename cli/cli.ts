@@ -319,9 +319,9 @@ export function buildTargetAsync() {
         })
 }
 
-export function serveAsync(ws?: string) {
+export function serveAsync() {
     return buildTargetAsync()
-        .then(() => server.serveAsync(ws))
+        .then(() => server.serveAsync())
 }
 
 function extensionAsync(add: string) {
@@ -799,7 +799,7 @@ cmd("deploy                   - build and deploy current package", deployAsync)
 cmd("run                      - build and run current package in the simulator", runAsync)
 cmd("format   [-i] file.ts... - pretty-print TS files; -i = in-place", formatAsync)
 cmd("help                     - display this message", helpAsync)
-cmd("serve    [ws]            - start web server for your local target", serveAsync, 0)
+cmd("serve                    - start web server for your local target", serveAsync, 0)
 
 cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
 cmd("buildtarget              - build kindtarget.json", buildTargetAsync, 1)

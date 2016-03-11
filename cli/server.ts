@@ -142,7 +142,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else throw throwError(400)
 }
 
-export function serveAsync(ws?: string) {
+export function serveAsync() {
     let server = http.createServer((req, res) => {
         let error = (code: number, msg: string = null) => {
             res.writeHead(code, { "Content-Type": "text/plain" })
@@ -203,52 +203,16 @@ export function serveAsync(ws?: string) {
         return error(404, "Not found :(\n")
     });
 
+    // if user has a server.js file, require it
+    let serverjs = path.resolve(path.join(root, 'server.js'))
+    if (fs.existsSync(serverjs)) {
+        console.log('loading ' + serverjs)        
+        require(serverjs);
+    }
+
     server.listen(3232, "127.0.0.1");
 
     console.log("Serving from http://127.0.0.1:3232/");
-    
-    if (ws == 'ws')
-        socketProxy();
 
     return new Promise<void>((resolve, reject) => { })
-}
-
-export function socketProxy() {
-    // web socket server acting as a proxy for dev purposes
-    var WebSocket = require('faye-websocket');
-
-    var clients : WebSocket[] = [];
-    var servers : WebSocket[] = [];
-    function startws(request : any, socket: any, body:any, sources : WebSocket[], targets: WebSocket[]) {
-        console.log('connection at ' + request.url);
-        let ws = new WebSocket(request, socket, body);
-        sources.push(ws);
-        ws.on('message', function (event : any) {
-            console.log('sending ' + event.data);
-            targets.forEach(function (tws) { tws.send(event.data); });
-        });
-        ws.on('close', function (event : Event) {
-            console.log('connection closed')
-            sources.splice(sources.indexOf(ws), 1)
-            ws = null;
-        });
-        ws.on('error', function () {
-            console.log('connection closed')
-            sources.splice(sources.indexOf(ws), 1)
-            ws = null;
-        })
-    }
-
-    var wsserver = http.createServer();
-    wsserver.on('upgrade', function (request: any, socket: any, body: any) {
-        if (WebSocket.isWebSocket(request)) {
-            /^\/client/i.test(request.url)
-                ? startws(request, socket, body, clients, servers)
-                : startws(request, socket, body, servers, clients);
-        }
-    });
-
-    wsserver.listen(3000);    
-
-    console.log("Web socket server from http://127.0.0.1:3000/");
 }
