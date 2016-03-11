@@ -217,6 +217,25 @@ export function publishTargetAsync() {
     })
 }
 
+export function spawnAsync(opts: {
+    cmd: string,
+    args: string[],
+    cwd: string
+}) {
+    return new Promise<void>((resolve, reject) => {
+        let ch = child_process.spawn(opts.cmd, opts.args, {
+            cwd: opts.cwd,
+            env: process.env,
+            stdio: "inherit"
+        })
+        ch.on('close', (code:number) => {
+            if (code != 0)
+                reject(new Error("Exit code: " + code + " from " + opts.cmd + " " + opts.args.join(" ")))
+            resolve()
+        });
+    })
+}
+
 export function buildTargetAsync() {
     let cfg = readKindTarget()
     cfg.bundledpkgs = {}
@@ -229,6 +248,16 @@ export function buildTargetAsync() {
             if (!fs.existsSync("built"))
                 fs.mkdirSync("built")
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
+        })
+        .then(() => {
+            if (!fs.existsSync("sim/tsconfig.json"))
+                return Promise.resolve()
+            console.log("building simulator...")
+            return spawnAsync({
+                cmd: "node",
+                args: ["../node_modules/typescript/bin/tsc"],
+                cwd: "sim"
+            })
         })
 }
 
@@ -625,11 +654,11 @@ function runCoreAsync(res: ts.ks.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
         // TODO: non-microbit specific load
-        ks.rt.initCurrentRuntime = ks.rt.micro_bit.initCurrentRuntime
+        ks.rt.initCurrentRuntime = ks.rt.initBareRuntime
         let r = new ks.rt.Runtime(f, res.enums)
         ks.rt.Runtime.messagePosted = (msg) => {
             if (msg.type == "serial")
-                console.log("SERIAL:", (msg as ks.rt.micro_bit.SimulatorSerialMessage).data)
+                console.log("SERIAL:", (msg as any).data)
         }
         r.errorHandler = (e) => {
             throw e;

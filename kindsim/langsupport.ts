@@ -259,5 +259,16 @@ namespace ks.rt {
         }
     }
 
+    export namespace thread {
+        export function pause(ms: number) {
+            let cb = getResume();
+            setTimeout(() => { cb() }, ms)
+        }
+        
+        export function runInBackground(a: RefAction) {
+            runtime.runFiberAsync(a).done()
+        }
+    }
+
 
 }

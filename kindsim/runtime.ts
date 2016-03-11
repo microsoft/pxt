@@ -63,7 +63,39 @@ namespace ks.rt {
     export class BaseBoard {
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) { }
-        public initAsync(msg: SimulatorRunMessage) : Promise<void> { return Promise.resolve(); }
+        public initAsync(msg: SimulatorRunMessage): Promise<void> { return Promise.resolve(); }
+
+        protected serialOutBuffer: string = '';
+        public writeSerial(s: string) {
+            for (let i = 0; i < s.length; ++i) {
+                let c = s[i];
+                switch (c) {
+                    case '\n':
+                        Runtime.postMessage(<SimulatorSerialMessage>{
+                            type: 'serial',
+                            data: this.serialOutBuffer,
+                            id: runtime.id
+                        })
+                        this.serialOutBuffer = ''
+                        break;
+                    case '\r': continue;
+                    default: this.serialOutBuffer += c;
+                }
+            }
+        }
+    }
+
+    class BareBoard extends BaseBoard {
+    }
+
+    export function initBareRuntime() {
+        runtime.board = new BareBoard();
+        (rt as any).micro_bit = {
+            runInBackground: thread.runInBackground,
+            pause: thread.pause,
+            serialSendString: (s:string) => runtime.board.writeSerial(s),
+            showDigit: (n:number) => console.log("DIGIT:", n)
+        }
     }
 
     export class EventQueue<T> {
@@ -93,7 +125,7 @@ namespace ks.rt {
                 })
         }
     }
-    
+
     // overriden at loadtime by specific implementation
     export var initCurrentRuntime: () => void = undefined;
 
@@ -107,7 +139,7 @@ namespace ks.rt {
         startTime = 0;
         enums: Map<number>;
         id: string;
-        globals:any[] = [];
+        globals: any[] = [];
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -176,7 +208,7 @@ namespace ks.rt {
 
         constructor(code: string, enums: Map<number>) {
             U.assert(!!initCurrentRuntime);
-            
+
             this.enums = enums;
             // These variables are used by the generated code as well
             // ---
@@ -255,9 +287,9 @@ namespace ks.rt {
                 }
                 loop(actionCall(frame))
             }
-            
+
             function checkResumeConsumed() {
-                if (currResume) oops("getResume() not called")                
+                if (currResume) oops("getResume() not called")
             }
 
             function setupResume(s: StackFrame, retPC: number) {
@@ -296,7 +328,7 @@ namespace ks.rt {
             this.setupTop = setupTop
 
             runtime = this;
-            
+
             initCurrentRuntime();
         }
     }

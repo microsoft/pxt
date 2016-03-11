@@ -71,8 +71,6 @@ namespace ks.rt {
         export function run(msg: SimulatorRunMessage) {
             stop();
             console.log(`starting ${msg.id}`);
-            // TODO: load from target
-            initCurrentRuntime = micro_bit.initCurrentRuntime;
             runtime = new Runtime(msg.code, msg.enums);
             runtime.id = msg.id;
             runtime.board.initAsync(msg)

@@ -10,7 +10,7 @@ import U = ks.Util;
 import Cloud = ks.Cloud;
 
 let root = process.cwd()
-let dirs = ["built", "node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
+let dirs = ["built", "sim/public", "node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
 let fileDir = path.join(root, "libs")
 
 let statAsync = Promise.promisify(fs.stat)
