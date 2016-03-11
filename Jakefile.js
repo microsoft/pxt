@@ -68,7 +68,7 @@ compileDir("cli", ["built/kindlib.js", "built/kindsim.js"])
 task("travis", ["test", "upload"])
 
 task('upload', ["wapp", "built/kind.js"], { async: true }, function () {
-    cmdIn(this, ".", 'node built/kind.js uploadrel latest')
+    cmdIn(this, ".", 'node built/kind.js uploadrel release/latest')
 })
 
 task('npmpub', function () {

@@ -18,12 +18,15 @@ export function init() {
         pendingMsgs["ready"] = resolve;
     })
     q.enqueue("main", () => initPromise)
+    
+    let workerJs = "./worker.js"
 
-    let add = ""
     let cfg = (window as any).tdConfig
-    if (cfg && cfg.relid) add = "?r=" + cfg.relid
+    if (cfg && cfg.relid) {
+        workerJs = "/app/worker.js?r=" + cfg.relid
+    }
 
-    tsWorker = new Worker("./worker.js" + add)
+    tsWorker = new Worker(workerJs)
     tsWorker.onmessage = ev => {
         if (pendingMsgs.hasOwnProperty(ev.data.id)) {
             let cb = pendingMsgs[ev.data.id]

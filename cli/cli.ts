@@ -147,7 +147,7 @@ export function uploadrelAsync(label?: string) {
     })
 }
 
-export function uploadtrgAsync(apprel?: string, label?: string) {
+export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) apprel = "release/latest"
     apprel = apprel.replace(/[^\w@]/g, "-")
     return Cloud.privateGetAsync(apprel)
