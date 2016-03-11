@@ -21,6 +21,7 @@
     "built/kind.d.ts",
     "built/kindlib.js",
     "built/kindlib.d.ts",
+    "built/kindsim.d.ts",
     "built/nodeutil.js",
     "built/server.js",
     "built/web/themes/default/assets/fonts",
