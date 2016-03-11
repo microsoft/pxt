@@ -72,6 +72,8 @@ namespace ks {
     export interface AppTarget {
         id: string;
         name: string;
+        logo?: string;
+        title?: string;     
         cloud?: boolean;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;

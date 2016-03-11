@@ -247,6 +247,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         super(props);
         
         this.appTarget = pkg.appTarget;
+        
+        document.title = lf("{0} powered by KindScript", this.appTarget.title || this.appTarget.name)
 
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
@@ -665,8 +667,8 @@ Ctrl+Shift+B
                 <div id="menubar">
                     <div className={"ui small menu" + inv}>
                         <span id="logo" className="item">
-                            {logoSvg}
-                            <span className='name landscape only'>KindScript</span>
+                            {this.appTarget.logo ? <img className='ui logo' src={this.appTarget.logo} /> :  logoSvg}
+                            {this.appTarget.title ? <span className='name landscape only'>{this.appTarget.title}</span> : ""}
                         </span>
                         <div className="ui item">
                             <div className="ui buttons">
@@ -717,9 +719,10 @@ Ctrl+Shift+B
                 {this.appTarget.cloud ? <ScriptSearch parent={this} ref={v => this.scriptSearch = v} /> : ""}
                 <div id="footer">
                     <div>
-                        <a href="https://github.com/Microsoft/kindscript">KindScript</a> - (c) Microsoft Corporation - 2016 - <span>{currentReleaseId}</span>
-                        | <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">terms of use</a>
-                        | <a href="https://privacy.microsoft.com/en-us/privacystatement">privacy</a>
+                        {this.appTarget.title || this.appTarget.name} {lf("powered by")}
+                        <a href="https://github.com/Microsoft/kindscript">KindScript</a> - (c) Microsoft Corporation - 2016
+                        - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use")}</a>
+                        - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy")}</a>
                     </div>
                 </div>
             </div>
