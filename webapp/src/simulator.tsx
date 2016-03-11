@@ -52,7 +52,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
         frame.id = ks.Util.guidGen()
         frame.className = 'simframe';
         frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-        let cdn = (window as any).appCdnRoot
+        let cdn = (window as any).simCdnRoot
         frame.src = cdn + 'simulator.html#' + frame.id;
         frame.frameBorder = "0";
         return frame;

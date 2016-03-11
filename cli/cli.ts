@@ -120,6 +120,7 @@ export function apiAsync(path: string, postArguments?: string) {
 function allFiles(top: string, maxDepth = 4): string[] {
     let res: string[] = []
     for (let p of fs.readdirSync(top)) {
+        if (p[0] == ".") continue;
         let inner = top + "/" + p
         let st = fs.statSync(inner)
         if (st.isDirectory()) {
@@ -137,24 +138,79 @@ function onlyExts(files: string[], exts: string[]) {
 }
 
 export function uploadrelAsync(label?: string) {
+    return uploadCoreAsync({
+        label: label,
+        fileList:
+        allFiles("webapp/public")
+            .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
+            .concat(allFiles("built/web/themes/default/assets/fonts", 1))
+    })
+}
+
+export function uploadtrgAsync(apprel?: string, label?: string) {
+    if (!apprel) apprel = "release/latest"
+    apprel = apprel.replace(/[^\w@]/g, "-")
+    return Cloud.privateGetAsync(apprel)
+        .then(r => r.kind == "release" ? r : null, e => null)
+        .then(r => r || Cloud.privateGetAsync("ptr-" + apprel.replace(/[^\w@]/g, "-"))
+            .then(ptr => Cloud.privateGetAsync(ptr.releaseid)))
+        .then(r => r.kind == "release" ? r : null)
+        .then<ks.Cloud.JsonRelease>(r => r, e => {
+            console.log("Cannot find release: " + apprel)
+            process.exit(1)
+        })
+        .then(r => {
+            console.log("Uploading target against:", r.id);
+            let opts: UploadOptions = {
+                label: label,
+                fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json"])
+                    .concat(allFiles("sim/public")),
+                fileContent: {}
+            }
+            for (let fn of ["webapp/public/index.html", "built/web/worker.js"]) {
+                let idx = fs.readFileSync("node_modules/kindscript/" + fn, "utf8")
+                idx = idx.replace(/"\.\//g, "\"" + r.cdnUrl)
+                // revert change to simCdnRoot
+                idx = idx.replace(/var simCdnRoot =.*/, "var simCdnRoot = \"./\";\n")
+                //console.log(idx)
+                opts.fileContent[fn] = idx
+                opts.fileList.push(fn)
+            }
+            return uploadCoreAsync(opts)
+        })
+}
+
+interface UploadOptions {
+    fileList: string[];
+    fileContent?: U.Map<string>;
+    label?: string
+    legacyLabel?: boolean;
+}
+
+function uploadCoreAsync(opts: UploadOptions) {
     let lbl: string = process.env["USERNAME"] || "local"
     lbl = ((253402300799999 - Date.now()) + "0000" + "-" + U.guidGen().replace(/-/g, ".") + "-" + lbl).toLowerCase()
     console.log("releaseid:" + lbl)
 
-    let fileList =
-        allFiles("webapp/public")
-            .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
-            .concat(allFiles("built/web/themes/default/assets/fonts", 1))
-
     let liteId = "<none>"
 
     let uploadFileAsync = (p: string) => {
-        if (!fs.existsSync(p))
-            return;
-        return readFileAsync(p)
+        let rdf: Promise<Buffer> = null
+        if (opts.fileContent) {
+            let s = U.lookup(opts.fileContent, p)
+            if (s != null)
+                rdf = Promise.resolve(new Buffer(s, "utf8"))
+        }
+        if (!rdf) {
+            if (!fs.existsSync(p))
+                return;
+            rdf = readFileAsync(p)
+        }
+        
+        return rdf
             .then((data: Buffer) => {
                 // Strip the leading directory name, unless we are uploading a single file.
-                let fileName = p.split("/").slice(2).join("/")
+                let fileName = p.replace(/^(built\/web\/|\w+\/public\/|built\/)/, "")
                 let mime = U.getMime(p)
                 let isText = /^(text\/.*|application\/(javascript|json))$/.test(mime)
                 return Cloud.privatePostAsync(liteId + "/files", {
@@ -169,8 +225,6 @@ export function uploadrelAsync(label?: string) {
             })
     }
 
-
-
     return Cloud.privatePostAsync("releases", {
         releaseid: lbl,
         commit: process.env['TRAVIS_COMMIT'],
@@ -180,11 +234,15 @@ export function uploadrelAsync(label?: string) {
         .then(resp => {
             console.log(resp)
             liteId = resp.id
-            return Promise.map(fileList, uploadFileAsync, { concurrency: 15 })
+            return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
         })
         .then(() => {
-            if (!label) return Promise.resolve()
-            else return Cloud.privatePostAsync(liteId + "/label", { name: label })
+            if (!opts.label) return Promise.resolve()
+            else if (opts.legacyLabel) return Cloud.privatePostAsync(liteId + "/label", { name: opts.label })
+            else return Cloud.privatePostAsync("pointers", {
+                path: opts.label,
+                releaseid: liteId
+            })
         })
         .then(() => {
             console.log("All done.")
@@ -228,7 +286,7 @@ export function spawnAsync(opts: {
             env: process.env,
             stdio: "inherit"
         })
-        ch.on('close', (code:number) => {
+        ch.on('close', (code: number) => {
             if (code != 0)
                 reject(new Error("Exit code: " + code + " from " + opts.cmd + " " + opts.args.join(" ")))
             resolve()
@@ -747,6 +805,7 @@ cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
 cmd("buildtarget              - build kindtarget.json", buildTargetAsync, 1)
 cmd("pubtarget                - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
+cmd("uploadtrg [LABEL]        - upload target release", uploadtrgAsync, 1)
 cmd("service  OPERATION       - simulate a query to web worker", serviceAsync, 2)
 cmd("time                     - measure performance of the compiler on the current package", timeAsync, 2)
 

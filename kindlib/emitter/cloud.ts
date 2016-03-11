@@ -285,8 +285,9 @@ namespace ks.Cloud {
         path: string; // "td/contents"
         scriptid: string; // where is it pointing to
         artid: string; // where is it pointing to
+        releaseid: string;
         redirect: string; // full URL or /something/on/the/same/host
-        description: string; // set to script title from the client
+        description: string; // set to script title from the client        
         htmlartid: string;
 
         scriptname: string;
@@ -337,6 +338,7 @@ namespace ks.Cloud {
         version: string;
         commit: string;
         branch: string;
+        cdnUrl: string;
     }
 
     export interface JsonReleaseLabel {

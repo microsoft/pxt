@@ -777,7 +777,7 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1])
 
     Util.updateLocalizationAsync(baseUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
-        .then(() => Util.httpGetJsonAsync("/target.json"))
+        .then(() => Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json"))
         .then((trgbundle:ks.TargetBundle) => {
             let cfg:ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
             pkg.appTarget = cfg.target
