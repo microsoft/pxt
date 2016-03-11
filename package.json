@@ -27,6 +27,7 @@
     "built/web/*.js",
     "built/web/*.css",
     "webapp/public",
+    "typings/bluebird",
     "generated/hexinfo.js"
   ],
   "preferGlobal": true,
