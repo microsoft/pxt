@@ -40,7 +40,7 @@ export class LogView extends React.Component<ILogProps, ILogState> {
         let buffers: ks.Util.StringMap<string> = {};
         let chrome = (window as any).chrome;
         if (chrome && chrome.runtime) {
-            let port = chrome.runtime.connect("hccbjdgogdkdomojppdljbijomobfdap", { name: "micro:bit" });
+            let port = chrome.runtime.connect("cihhkhnngbjlhahcfmhekmbnnjcjdbge", { name: "micro:bit" });
             port.onMessage.addListener((msg: { type: string; id: string; data: string; }) => {
                 if (msg.type == "serial") {
 
