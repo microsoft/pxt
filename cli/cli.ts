@@ -206,7 +206,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 return;
             rdf = readFileAsync(p)
         }
-        
+
         return rdf
             .then((data: Buffer) => {
                 // Strip the leading directory name, unless we are uploading a single file.
@@ -294,9 +294,47 @@ export function spawnAsync(opts: {
     })
 }
 
+function maxMTimeAsync(dirs: string[]) {
+    let max = 0
+    return Promise.map(dirs, dn => readDirAsync(dn)
+        .then(files => Promise.map(files, fn => statAsync(path.join(dn, fn))
+            .then(st => {
+                max = Math.max(st.mtime.getTime(), max)
+            }))))
+        .then(() => max)
+}
+
 export function buildTargetAsync() {
+    return buildTargetCoreAsync()
+        .then(buildSimulatorAsync)
+        .then(() => { })
+}
+
+function buildSimulatorAsync() {
+    if (!fs.existsSync("sim/tsconfig.json"))
+        return Promise.resolve(-1)
+    console.log("building simulator...")
+    return spawnAsync({
+        cmd: "node",
+        args: ["../node_modules/typescript/bin/tsc"],
+        cwd: "sim"
+    })
+        .then(() => {
+            console.log("simulator built.")
+            return 0
+        })
+        .catch(e => {
+            console.log("TSC build failed.")
+            return 1
+        })
+}
+
+function buildTargetCoreAsync() {
     let cfg = readKindTarget()
     cfg.bundledpkgs = {}
+    let statFiles: U.Map<number> = {}
+    let dirsToWatch: string[] = cfg.bundleddirs.slice()
+    console.log("building target.json...")
     return forEachBundledPkgAsync(pkg =>
         pkg.filesToBePublishedAsync()
             .then(res => {
@@ -308,19 +346,45 @@ export function buildTargetAsync() {
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
         })
         .then(() => {
-            if (!fs.existsSync("sim/tsconfig.json"))
-                return Promise.resolve()
-            console.log("building simulator...")
-            return spawnAsync({
-                cmd: "node",
-                args: ["../node_modules/typescript/bin/tsc"],
-                cwd: "sim"
-            })
+            console.log("target.json built.")
+            return dirsToWatch
         })
 }
 
+function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
+    let currMtime = Date.now()
+    return f()
+        .then(dirs => {
+            let loop = () => {
+                Promise.delay(1000)
+                    .then(() => maxMTimeAsync(dirs))
+                    .then(num => {
+                        if (num > currMtime) {
+                            currMtime = num
+                            f()
+                                .then(d => {
+                                    dirs = d
+                                    U.nextTick(loop)
+                                })
+                        } else {
+                            U.nextTick(loop)
+                        }
+                    })
+            }
+            U.nextTick(loop)
+        })
+
+}
+
+function buildAndWatchTargetAsync() {
+    return buildAndWatchAsync(buildTargetCoreAsync)
+        .then(() =>
+            buildAndWatchAsync(() => buildSimulatorAsync()
+                .then(num => num >= 0 ? ["sim", "node_modules/kindscript/built"] : [])))
+}
+
 export function serveAsync() {
-    return buildTargetAsync()
+    return buildAndWatchTargetAsync()
         .then(() => server.serveAsync())
 }
 
@@ -348,6 +412,8 @@ function extensionAsync(add: string) {
 let readFileAsync: any = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
 let execAsync = Promise.promisify(child_process.exec)
+let readDirAsync = Promise.promisify(fs.readdir)
+let statAsync = Promise.promisify(fs.stat)
 
 function getBitDrivesAsync(): Promise<string[]> {
     if (process.platform == "win32") {
