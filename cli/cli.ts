@@ -117,6 +117,41 @@ export function apiAsync(path: string, postArguments?: string) {
         })
 }
 
+export function ptrAsync(path: string, target: string) {
+    let ptr = {
+        path: path,
+        releaseid: "",
+        redirect: "",
+        scriptid: "",
+        artid: "",
+        htmlartid: "",
+    }
+
+    return (/^[a-z]+$/.test(target) ? Cloud.privateGetAsync(target) : Promise.reject(""))
+        .then(r => {
+            if (r.kind == "script")
+                ptr.scriptid = target
+            else if (r.kind == "art")
+                ptr.artid = target
+            else if (r.kind == "release")
+                ptr.releaseid = target
+            else {
+                U.userError("Don't know how to set pointer to this publication type: " + r.kind)
+            }
+        }, e => {
+            if (/^(\/|http)/.test(target)) {
+                console.log("Assuming redirect for: " + target)
+                ptr.redirect = target
+            } else {
+                U.userError("Don't know how to set pointer to: " + target)
+            }
+        })
+        .then(() => Cloud.privatePostAsync("pointers", ptr))
+        .then(r => {
+            console.log(r)
+        })
+}
+
 function allFiles(top: string, maxDepth = 4): string[] {
     let res: string[] = []
     for (let p of fs.readdirSync(top)) {
@@ -176,6 +211,9 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
                 opts.fileContent[fn] = idx
                 opts.fileList.push(fn)
             }
+            let simHtmlPath = "sim/public/simulator.html"
+            let simHtml = fs.readFileSync(simHtmlPath, "utf8")
+            opts.fileContent[simHtmlPath] = simHtml.replace(/\.\/((bluebird|kindsim)[\w\.]*\.js)/g, (x, y) => r.cdnUrl + y)
             return uploadCoreAsync(opts)
         })
 }
@@ -868,6 +906,7 @@ cmd("help                     - display this message", helpAsync)
 cmd("serve                    - start web server for your local target", serveAsync, 0)
 
 cmd("api      PATH [DATA]     - do authenticated API call", apiAsync, 1)
+cmd("ptr      PATH TARGET     - set ptr-PATH to TARGET (publication id or redirect)", ptrAsync, 1)
 cmd("buildtarget              - build kindtarget.json", buildTargetAsync, 1)
 cmd("pubtarget                - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]        - upload web app release", uploadrelAsync, 1)
