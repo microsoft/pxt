@@ -24,7 +24,21 @@ namespace ks {
         power?: number;
         toughness?: number;
     }
-    
+
+    export interface CodeCard {
+        name: string;
+
+        color?: string; // one of semantic ui colors
+        description?: string;
+        promoUrl?: string;
+        blocksXml?: string;
+        header?: string;
+        time?: number;
+        card?: ks.PackageCard;
+        url?: string;
+        responsive?: boolean;
+    }
+
     export interface TargetBundle {
         bundledpkgs: U.Map<U.Map<string>>;
         bundleddirs: string[];
@@ -42,7 +56,7 @@ namespace ks {
         public?: boolean;
         target?: AppTarget;
         microbit?: ts.ks.MicrobitConfig;
-        card?: PackageCard;        
+        card?: PackageCard;
     }
 
     // this is for remote file interface to packages
@@ -73,7 +87,7 @@ namespace ks {
         id: string;
         name: string;
         logo?: string;
-        title?: string;     
+        title?: string;
         cloud?: boolean;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
@@ -230,8 +244,8 @@ namespace ks {
             this.deps[this.id] = this;
         }
 
-        getTarget() : AppTarget {
-            let trg : AppTarget = undefined
+        getTarget(): AppTarget {
+            let trg: AppTarget = undefined
             let prevId = ""
             U.iterStringMap(this.deps, (id, pkg) => {
                 if (pkg.config.target) {
@@ -329,7 +343,7 @@ namespace ks {
         initAsync(name: string) {
             let str = this.readFile(configName)
             if (str)
-                U.userError("config already present")            
+                U.userError("config already present")
             this.config = {
                 name: name,
                 description: "",

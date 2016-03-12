@@ -42,7 +42,8 @@ interface IAppState {
     theme?: srceditor.Theme;
     fileState?: string;
     showFiles?: boolean;
-    helpCard?: codecard.CodeCardProps;
+    helpCard?: ks.CodeCard;
+    helpCardClick?: (e : React.MouseEvent) => boolean;
     running?: boolean;
 }
 
@@ -648,8 +649,8 @@ Ctrl+Shift+B
             .done()
     }
 
-    setHelp(helpCard: codecard.CodeCardProps) {
-        this.setState({ helpCard: helpCard })
+    setHelp(helpCard: ks.CodeCard, onClick? : (e: React.MouseEvent) => boolean) {
+        this.setState({ helpCard: helpCard, helpCardClick: onClick })
     }
 
     renderCore() {
@@ -714,7 +715,7 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div id="helpcard"><codecard.CodeCard responsive={true} {...this.state.helpCard} /></div> : null }
+                    {this.state.helpCard ? <div id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} /></div> : null }
                 </div>
                 {this.appTarget.cloud ? <ScriptSearch parent={this} ref={v => this.scriptSearch = v} /> : ""}
                 <div id="footer">

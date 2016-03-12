@@ -37,7 +37,7 @@ export class Editor extends srceditor.Editor {
             <div className="ui four column grid">
                 <div className="ui column">
                     <div className="ui segment">                    
-                        <codecard.CodeCard 
+                        <codecard.CodeCardView 
                             url="kind.sc/abc" 
                             header="me" 
                             name={c.name}

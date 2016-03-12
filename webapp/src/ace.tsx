@@ -714,7 +714,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private diagSnapshot: string[];
-    private annotationLines:number[];
+    private annotationLines: number[];
 
     updateDiagnostics() {
         if (this.needsDiagUpdate())
@@ -768,22 +768,22 @@ export class Editor extends srceditor.Editor {
                 }
             }
         sess.setAnnotations(ann)
-        this.parent.setHelp(this.annotationToCodeCard(ann[0]))
+        this.setAnnotationHelpCard(ann[0]);
     }
-    
-    private annotationToCodeCard(annotation : AceAjax.Annotation) : codecard.CodeCardProps {
-           if (!annotation) return undefined;
-           return {
-               header: lf("line {0}", annotation.row+1),
-               name: lf("error"),
-               description: annotation.text,
-               color: 'red',
-               onClick: (e) => {
-                this.setViewState(annotation);
-                e.preventDefault();
-                return false;
-               }
-           }
+
+    private setAnnotationHelpCard(annotation: AceAjax.Annotation) : void {
+        if (!annotation) return undefined;
+
+        this.parent.setHelp({
+            header: lf("line {0}", annotation.row + 1),
+            name: lf("error"),
+            description: annotation.text,
+            color: 'red'
+        }, (e) => {
+            this.setViewState(annotation);
+            e.preventDefault();
+            return false;
+        })
     }
 
     setDiagnostics(file: pkg.File, snapshot: string[]) {

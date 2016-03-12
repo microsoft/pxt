@@ -199,7 +199,7 @@ function initField(i: any, ni: number, fn: ts.ks.SymbolInfo, pre: string, right?
     return i;
 }
 
-function mkCard(fn: ts.ks.SymbolInfo, blockXml: HTMLElement): codecard.CodeCardProps {
+function mkCard(fn: ts.ks.SymbolInfo, blockXml: HTMLElement): ks.CodeCard {
     return {
         header: fn.name,
         name: fn.namespace + '.' + fn.name,
@@ -625,7 +625,7 @@ export function init() {
             if (!this.codeCard) {
                 let tb = document.getElementById('blocklyToolboxDefinition');
                 let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
-                this.codeCard = <codecard.CodeCardProps>{
+                this.codeCard = <ks.CodeCard>{
                     header: name,
                     name: name,
                     card: {

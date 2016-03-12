@@ -32,26 +32,11 @@ let socialNetworks: SocialNetwork[] = [{
 ];
 
 
-
-export interface CodeCardProps {
-    name: string;
-    
-    color?: string; // one of semantic ui colors
-    description?: string;
-    promoUrl?: string;
-    blocksXml?: string;
-    header?: string;
-    time?: number;
-    card?: ks.PackageCard;
-    url?: string;
-    responsive?: boolean;
-    onClick?: (e: React.MouseEvent) => boolean;
-}
 export interface CodeCardState { }
 
-export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
+export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
 
-    constructor(props: CodeCardProps) {
+    constructor(props: ks.CodeCard) {
         super(props);
 
         this.state = {};
@@ -71,7 +56,7 @@ export class CodeCard extends React.Component<CodeCardProps, CodeCardState> {
         }
 
         return (
-            <div className={"ui card " + color + (this.props.onClick ? " link" : "")} onClick={this.props.onClick}>
+            <div className={"ui card " + color} >
                 {this.props.header ?
                 <div key="header" className={"ui content " + (this.props.responsive ? " desktop only" : "")}>
                     <div className="right floated meta">
