@@ -176,6 +176,9 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
                 opts.fileContent[fn] = idx
                 opts.fileList.push(fn)
             }
+            let simHtmlPath = "sim/public/simulator.html"
+            let simHtml = fs.readFileSync(simHtmlPath, "utf8")
+            opts.fileContent[simHtmlPath] = simHtml.replace(/\.\/((bluebird|kindsim)[\w\.]*\.js)/g, (x, y) => r.cdnUrl + y)
             return uploadCoreAsync(opts)
         })
 }
