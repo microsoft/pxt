@@ -18,7 +18,7 @@ export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
     loadingXml: boolean;
-    blockInfo: blocklyloader.BlocksInfo;
+    blockInfo: ts.ks.BlocksInfo;
     compilationResult: blocklycompiler.BlockCompilationResult;
 
     setVisible(v: boolean) {
@@ -52,7 +52,7 @@ export class Editor extends srceditor.Editor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
-            blocklyloader.getBlocksAsync()
+            compiler.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;

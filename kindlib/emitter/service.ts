@@ -36,6 +36,11 @@ namespace ts.ks {
     export interface ApisInfo {
         byQName: Util.Map<SymbolInfo>;
     }
+        
+    export interface BlocksInfo {
+        apis: ApisInfo;
+        blocks: SymbolInfo[];
+    }
 
     export interface CompletionEntry {
         name: string;

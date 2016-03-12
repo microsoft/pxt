@@ -1,7 +1,4 @@
 /// <reference path="./blockly.d.ts" />
-
-import * as compiler from "./compiler"
-import * as codecard from "./codecard"
 import Util = ks.Util;
 
 let lf = Util.lf;
@@ -86,7 +83,7 @@ export function parameterNames(fn: ts.ks.SymbolInfo): Util.StringMap<BlockParame
     return attrNames;
 }
 
-function createToolboxBlock(tb: Element, info: BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
+function createToolboxBlock(tb: Element, info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
     //
     // toolbox update
     //
@@ -110,7 +107,7 @@ function createToolboxBlock(tb: Element, info: BlocksInfo, fn: ts.ks.SymbolInfo,
     return block;
 }
 
-function injectToolbox(tb: Element, info: BlocksInfo, fn: ts.ks.SymbolInfo, block: HTMLElement) {
+function injectToolbox(tb: Element, info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, block: HTMLElement) {
     let ns = fn.namespace.split('.')[0];
     let catName = ns[0].toUpperCase() + ns.slice(1);
     let category = tb.querySelector("category[name~='" + catName + "']");
@@ -153,7 +150,7 @@ function iconToFieldImage(c: string): Blockly.FieldImage {
     return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
 }
 
-function injectBlockDefinition(info: BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
+function injectBlockDefinition(info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
     let id = fn.attributes.blockId;
 
     if (builtinBlocks[id]) {
@@ -214,7 +211,7 @@ function mkCard(fn: ts.ks.SymbolInfo, blockXml: HTMLElement): ks.CodeCard {
     }
 }
 
-function initBlock(block: any, info: BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+function initBlock(block: any, info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
     var help = "./" + fn.attributes.help;
     block.setHelpUrl(help);
     const ns = fn.namespace.split('.')[0];
@@ -305,7 +302,7 @@ function initBlock(block: any, info: BlocksInfo, fn: ts.ks.SymbolInfo, attrNames
     block.setTooltip(fn.attributes.jsDoc);
 }
 
-export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: BlocksInfo): void {
+export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: ts.ks.BlocksInfo): void {
 
     blockInfo.blocks.sort((f1, f2) => {
         let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
@@ -363,21 +360,6 @@ export function cleanBlocks() {
 function removeBlock(fn: ts.ks.SymbolInfo) {
     delete Blockly.Blocks[fn.attributes.blockId];
     delete cachedBlocks[fn.attributes.blockId];
-}
-
-export interface BlocksInfo {
-    apis: ts.ks.ApisInfo;
-    blocks: ts.ks.SymbolInfo[];
-}
-
-export function getBlocksAsync(): Promise<BlocksInfo> {
-    return compiler.getApisInfoAsync()
-        .then(info => {
-            return {
-                apis: info,
-                blocks: Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId)
-            }
-        })
 }
 
 export function init() {

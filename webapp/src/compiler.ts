@@ -133,6 +133,16 @@ export function getApisInfoAsync() {
         .then(() => cachedApis)
 }
 
+export function getBlocksAsync(): Promise<ts.ks.BlocksInfo> {
+    return getApisInfoAsync()
+        .then(info => {
+            return {
+                apis: info,
+                blocks: ks.Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId)
+            }
+        })
+}
+
 export function newProject() {
     firstTypecheck = null;
     cachedApis = null;
