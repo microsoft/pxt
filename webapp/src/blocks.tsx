@@ -1,14 +1,11 @@
-/// <reference path="./blockly.d.ts" />
+/// <reference path="../../kindblocks/blockly.d.ts" />
 /// <reference path="../../typings/jquery/jquery.d.ts" />
-/// <reference path='touchdevelop.d.ts'/>
 
 import * as React from "react";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
-import * as blocklycompiler from "./blocklycompiler"
 import * as compiler from "./compiler"
-import * as blocklyloader from "./blocklyloader"
 import * as sui from "./sui";
 
 import Util = ks.Util;
@@ -19,7 +16,7 @@ export class Editor extends srceditor.Editor {
     delayLoadXml: string;
     loadingXml: boolean;
     blockInfo: ts.ks.BlocksInfo;
-    compilationResult: blocklycompiler.BlockCompilationResult;
+    compilationResult: ks.blocks.BlockCompilationResult;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -35,7 +32,7 @@ export class Editor extends srceditor.Editor {
 
     saveToTypeScript(): string {
         let cfg = pkg.mainPkg.config
-        this.compilationResult = blocklycompiler.compile(this.editor, this.blockInfo, {
+        this.compilationResult = ks.blocks.compile(this.editor, this.blockInfo, {
             name: cfg.name,
             description: cfg.description
         })
@@ -58,7 +55,7 @@ export class Editor extends srceditor.Editor {
                     this.blockInfo = bi;
 
                     let toolbox = document.getElementById('blocklyToolboxDefinition');
-                    blocklyloader.injectBlocks(this.editor, toolbox, this.blockInfo)
+                    ks.blocks.injectBlocks(this.editor, toolbox, this.blockInfo)
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;

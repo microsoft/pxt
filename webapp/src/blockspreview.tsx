@@ -4,7 +4,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom"
 import * as pkg from "./package";
 import * as core from "./core";
-import * as blocklyrenderer from "./blocklyrenderer"
 
 export interface BlocksPreviewProps {
     xml: string;
@@ -24,7 +23,7 @@ export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPre
     
     renderSvg() {
         let el = $(ReactDOM.findDOMNode(this));
-        let svg = blocklyrenderer.render(this.props.xml);
+        let svg = ks.blocks.render(this.props.xml);
         
         el.children().remove();
         el.append(svg);        

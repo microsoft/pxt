@@ -25,7 +25,7 @@ task('default', ['updatestrings', 'built/kind.js', 'built/kind.d.ts', 'wapp'], {
 task('test', ['default', 'runprj', 'testfmt'])
 
 task('clean', function () {
-    expand(["built", "libs/lang-test0/built"]).forEach(f => {
+    expand(["built"]).forEach(f => {
         try {
             fs.unlinkSync(f)
         } catch (e) {
@@ -62,7 +62,8 @@ file('built/kind.d.ts', ['built/cli.js'], function () {
 })
 
 compileDir("kindlib")
-compileDir("kindsim", ["built/kindlib.js"])
+compileDir("kindblocks", ["built/kindlib.js"])
+compileDir("kindsim", ["built/kindlib.js", "built/kindblocks.js"])
 compileDir("cli", ["built/kindlib.js", "built/kindsim.js"])
 
 task("travis", ["test", "upload"])
@@ -158,12 +159,13 @@ task('wapp', [
     "built/web/semantic.js"
 ])
 
-file("built/web/kindlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/kindlib.js", "built/kindsim.js"], function () {
+file("built/web/kindlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/kindlib.js", "built/kindblocks.js", "built/kindsim.js"], function () {
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
     jake.cpR("webapp/ace/mode/assembly_armthumb.js", "node_modules/brace/mode/")
     jake.cpR("built/kindlib.js", "built/web/")
+    jake.cpR("built/kindblocks.js", "built/web/")
     jake.cpR("built/kindsim.js", "built/web/")
 
     let additionalExports = [

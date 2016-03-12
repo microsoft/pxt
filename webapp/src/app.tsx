@@ -1,4 +1,5 @@
 /// <reference path="../../built/kindlib.d.ts"/>
+/// <reference path="../../built/kindblocks.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -10,7 +11,6 @@ import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
-import * as blocklyloader from "./blocklyloader"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
@@ -394,7 +394,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return
 
         this.stopSimulator(true);
-        blocklyloader.cleanBlocks();
+        ks.blocks.cleanBlocks();
         pkg.loadPkgAsync(h.id)
             .then(() => {
                 compiler.newProject();
@@ -789,7 +789,7 @@ $(document).ready(() => {
             if (!pkg.appTarget.cloud) Cloud.apiRoot = undefined;
         })
         .then(() => {
-            blocklyloader.init();
+            ks.blocks.init();
             return compiler.init();
         })
         .then(() => workspace.initAsync())
