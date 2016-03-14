@@ -616,7 +616,7 @@ ${lbl}: .short 0xffff
             if (decl.kind == SyntaxKind.EnumMember) {
                 let ev = attrs.enumval
                 if (!ev)
-                    userError(lf("{enumval:...} missing"))
+                    userError(lf("enumval=... missing"))
                 if (/^\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
                 let inf = hex.lookupFunc(ev)
