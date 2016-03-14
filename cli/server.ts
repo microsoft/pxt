@@ -192,11 +192,13 @@ export function serveAsync() {
                 })
         }
 
-        for (let dir of dirs) {
-            let filename = path.resolve(path.join(dir, pathname))
-            if (fs.existsSync(filename)) {
-                sendFile(filename)
-                return;
+        if (!/\.js\.map$/.test(pathname)) {            
+            for (let dir of dirs) {
+                let filename = path.resolve(path.join(dir, pathname))
+                if (fs.existsSync(filename)) {
+                    sendFile(filename)
+                    return;
+                }
             }
         }
 
