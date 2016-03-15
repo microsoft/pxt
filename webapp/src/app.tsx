@@ -395,13 +395,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         this.stopSimulator(true);
         ks.blocks.cleanBlocks();
+        let logs = this.refs["logs"] as logview.LogView;
+        logs.clear();        
+                
         pkg.loadPkgAsync(h.id)
             .then(() => {
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
                 let file = main.getMainFile()
-                if (e)
+                if (e && main.header.editor != "blocksprj")
                     file = main.lookupFile(e.name) || file
                 this.setState({
                     header: h,
