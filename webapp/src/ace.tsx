@@ -668,8 +668,7 @@ export class Editor extends srceditor.Editor {
     private lastSet: string;
     private setValue(v: string) {
         this.lastSet = v;
-        this.editor.setValue(v, -1)
-        this.editor.session.getUndoManager().reset();
+        this.editor.session.setValue(v);
     }
 
     loadFile(file: pkg.File) {
