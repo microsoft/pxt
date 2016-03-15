@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/Microsoft/yelm.svg?branch=master)](https://travis-ci.org/Microsoft/yelm)
 
 KindScript is a platform for creating special-purpose programming experiences for
-beginners, especially focused on computer science education. KindScript's underlaying
+beginners, especially focused on computer science education. KindScript's underlying
 programming language is a subset of TypeScript (leaving out JavaScript dynamic
 features).
 
