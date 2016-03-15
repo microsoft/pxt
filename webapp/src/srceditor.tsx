@@ -75,4 +75,5 @@ export class Editor {
     snapshotState():any {
         return null
     }
+    undo() {}
 }

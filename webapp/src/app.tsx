@@ -691,6 +691,8 @@ Ctrl+Shift+B
                         <div id="actionbar" className="ui item">
                             <sui.Button key='runbtn' class='icon primary portrait only' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                             {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
+                            <sui.Button class="icon portrait only" icon="undo" onClick={() => this.editor.undo()} />
+                            <sui.Button class="landscape only" text={lf("Undo")} icon="undo" onClick={() => this.editor.undo()} />
                             {this.editor.menu() }
                         </div>
                         { this.appTarget.cloud ?

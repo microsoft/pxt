@@ -137,7 +137,7 @@ export class Editor extends srceditor.Editor {
         this.isReady = true
     }
     
-    pushUndo() {
+    private pushUndo() {
         let xml = this.serializeBlocks();
         this.undos.push(xml);
     }
@@ -208,10 +208,7 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <div>
                 <sui.Button text={lf("Show Code") } icon="keyboard" onClick={() => this.parent.saveTypeScript(true) } />
-                <sui.Button text={lf("Undo") } icon="undo" onClick={() => this.undo() } />
-            </div>
         )
     }
 }
