@@ -340,25 +340,30 @@ namespace ks {
                 })
         }
 
-        initAsync(name: string) {
+        initAsync(target:string, name: string) {
+            if (!target)
+                U.userError("missing target")                                
+            if (!name)
+                U.userError("missing project name")
+            
             let str = this.readFile(configName)
             if (str)
                 U.userError("config already present")
+                
+            console.log(`initializing ${name} for target ${target}`);
+          
+            let deps : U.Map<string> = {};
+            deps[target] = "*";
+            if (target == "microbit") 
+                deps["microbit-radio"] = "*";
+                
             this.config = {
                 name: name,
                 description: "",
                 installedVersion: "",
                 files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
                 testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),
-                dependencies: {
-                    "microbit": "*",
-                    "microbit-game": "*",
-                    "microbit-led": "*",
-                    "microbit-music": "*",
-                    "microbit-radio": "*",
-                    "microbit-pins": "*",
-                    "microbit-serial": "*"
-                }
+                dependencies: deps
             }
             this.validateConfig();
             this.saveConfig()
@@ -484,7 +489,7 @@ Put some info here.
 }
 `,
         "main.ts":
-        `basic.showString("Hello world!")
+        `
 `,
         "tests.ts":
         `// Put your testing code in this file. 

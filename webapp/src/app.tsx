@@ -511,7 +511,7 @@ ${lf("To create an new KindScript project, <a href='{0}' target='_blank'>install
 <pre>
 [sudo] npm install -g kindscript-cli
 mkdir myproject && cd myproject
-kind init myproject
+kind init ${this.appTarget.id} myproject
 </pre>
 <p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
 <pre>
