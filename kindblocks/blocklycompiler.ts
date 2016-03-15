@@ -880,6 +880,7 @@ namespace ks.blocks {
         type: Point;
         usedAsForIndex: number;
         incompatibleWithFor?: boolean;
+        setInMain?:boolean;
     }
 
     function isCompiledAsForIndex(b: Binding) {
@@ -1291,6 +1292,12 @@ namespace ks.blocks {
             else
                 return variableIsScoped(findParent(b), name);
         };
+        
+        function isTopBlock(b: B.Block) : boolean {
+            if (isHandlerRegistration(b)) return false;
+            if (!b.parentBlock_) return true;
+            return isTopBlock(b.parentBlock_);
+        }
 
         // Last series of checks to determine for-loop compatibility: for each get or
         // set block, 1) make sure that the variable is bound, then 2) mark the
@@ -1306,6 +1313,8 @@ namespace ks.blocks {
                     // Second reason why we can't compile as a TouchDevelop for-loop: loop
                     // index is assigned to
                     binding.incompatibleWithFor = true;
+                if (b.type == "variables_set" && isTopBlock(b))
+                    binding.setInMain = true;                    
             } else if (b.type == "variables_get") {
                 let x = b.getFieldValue("VAR");
                 if (lookup(e, x) == null)
@@ -1332,7 +1341,7 @@ namespace ks.blocks {
             var stmtsVariables: J.JStmt[] = [];
             e.bindings.forEach((b: Binding) => {
                 var btype = find(b.type);
-                if (!isCompiledAsForIndex(b))
+                if (!isCompiledAsForIndex(b) && !b.setInMain)
                     stmtsVariables.push(H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type))));
             });
 

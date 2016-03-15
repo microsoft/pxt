@@ -425,6 +425,18 @@ namespace ks.blocks {
                     var field = goog.dom.createDom('field', null, variableList[i]);
                     field.setAttribute('name', 'VAR');
                     block.appendChild(field);
+                    
+                    var value = goog.dom.createDom('value');
+                    value.setAttribute('name', 'VALUE');
+                    var shadow = goog.dom.createDom('shadow');
+                    shadow.setAttribute("type", "math_number");
+                    value.appendChild(shadow);
+                    var field = goog.dom.createDom('field');
+                    field.setAttribute('name', 'NUM');
+                    field.innerText = '0';
+                    shadow.appendChild(field);
+                    block.appendChild(value);
+                    
                     xmlList.push(block);
                 }
                 {
