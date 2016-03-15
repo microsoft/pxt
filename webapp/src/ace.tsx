@@ -482,6 +482,7 @@ export class Editor extends srceditor.Editor {
                 {this.currFile && this.currFile.isVirtual
                     ? <sui.Button class="ui button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
                     : '' }
+                <sui.Button class="ui button floating" text={lf("Undo")} icon="undo" onClick={() => this.editor.undo()} />
                 <sui.DropdownMenu class="ui button floating" text={lf("Edit") } icon="edit">
                     <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
                     <sui.Item icon="wizard" text={lf("Replace") } onClick={() => this.editor.execCommand("replace") } />
@@ -668,6 +669,7 @@ export class Editor extends srceditor.Editor {
     private setValue(v: string) {
         this.lastSet = v;
         this.editor.setValue(v, -1)
+        this.editor.session.getUndoManager().reset();
     }
 
     loadFile(file: pkg.File) {

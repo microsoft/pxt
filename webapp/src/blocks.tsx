@@ -17,6 +17,7 @@ export class Editor extends srceditor.Editor {
     loadingXml: boolean;
     blockInfo: ts.ks.BlocksInfo;
     compilationResult: ks.blocks.BlockCompilationResult;
+    undos: string[] = [];
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -83,10 +84,10 @@ export class Editor extends srceditor.Editor {
         return text;
     }
 
-    loadBlockly(s: string) {
+    loadBlockly(s: string) : boolean {
         if (this.serializeBlocks() == s) {
             console.log('blocks already loaded...');
-            return;
+            return false;
         }
 
         this.editor.clear();
@@ -97,6 +98,8 @@ export class Editor extends srceditor.Editor {
         } catch (e) {
             console.log(e);
         }
+        
+        return true;
     }
 
     updateHelpCard() {
@@ -123,6 +126,7 @@ export class Editor extends srceditor.Editor {
             },
         });
         this.editor.addChangeListener((ev) => {
+            this.pushUndo();
             this.changeCallback();
             this.updateHelpCard();
         })
@@ -132,6 +136,17 @@ export class Editor extends srceditor.Editor {
 
         this.isReady = true
     }
+    
+    pushUndo() {
+        let xml = this.serializeBlocks();
+        this.undos.push(xml);
+    }
+    
+    undo() {
+        // drop current change
+        let xml: string; 
+        while((xml = this.undos.pop()) && !this.loadBlockly(xml));
+    }    
 
     getId() {
         return "blocksEditor"
@@ -159,6 +174,7 @@ export class Editor extends srceditor.Editor {
     loadFile(file: pkg.File) {
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
+        this.undos = [];
     }
 
     setDiagnostics(file: pkg.File) {
@@ -192,7 +208,10 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <sui.Button text={lf("Show Code") } icon="keyboard" onClick={() => this.parent.saveTypeScript(true) } />
+            <div>
+                <sui.Button text={lf("Show Code") } icon="keyboard" onClick={() => this.parent.saveTypeScript(true) } />
+                <sui.Button text={lf("Undo") } icon="undo" onClick={() => this.undo() } />
+            </div>
         )
     }
 }
