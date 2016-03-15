@@ -10,7 +10,7 @@ features).
 The main features of KindScript are:
 * a Blockly-based code editor along with converter to the text format
 * an ACE-based text editor with enhanced, robust auto-completion and auto-correction
-* a TypeScript library defining APIs available on microbit devices
+* extensibility support to define new blocks in TypeScript
 * an ARM Thumb machine code emitter
 * a command-line package manager
 
