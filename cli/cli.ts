@@ -178,7 +178,7 @@ export function uploadrelAsync(label?: string) {
         fileList:
         allFiles("webapp/public")
             .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
-            .concat(allFiles("built/web/themes/default/assets/fonts", 1))
+            .concat(allFiles("built/web/fonts", 1))
     })
 }
 

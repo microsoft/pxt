@@ -24,7 +24,7 @@
     "built/kindsim.d.ts",
     "built/nodeutil.js",
     "built/server.js",
-    "built/web/themes/default/assets/fonts",
+    "built/web/fonts",
     "built/web/*.js",
     "built/web/*.css",
     "webapp/public",

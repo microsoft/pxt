@@ -154,8 +154,8 @@ task('wapp', [
     "built/web/kindlib.js",
     'built/web/main.js',
     'built/web/worker.js',
-    'built/web/themes/default/assets/fonts/icons.woff2',
-    'built/web/style.css',
+    'built/web/fonts/icons.woff2',
+    'built/web/semantic.css',
     "built/web/semantic.js"
 ])
 
@@ -192,12 +192,12 @@ file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
 })
 
 
-file('built/web/themes/default/assets/fonts/icons.woff2', [], function () {
-    jake.cpR("node_modules/semantic-ui-less/themes", "built/web/")
+file('built/web/fonts/icons.woff2', [], function () {
+    jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
 })
 
-file('built/web/style.css', ["webapp/theme.config"], { async: true }, function () {
-    cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/web/style.css --include-path=node_modules/semantic-ui-less:webapp/foo/bar')
+file('built/web/semantic.css', ["webapp/theme.config"], { async: true }, function () {
+    cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/web/semantic.css --include-path=node_modules/semantic-ui-less:webapp/foo/bar')
 })
 
 ju.catFiles("built/web/semantic.js",
