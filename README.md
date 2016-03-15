@@ -14,10 +14,15 @@ The main features of KindScript are:
 * an ARM Thumb machine code emitter
 * a command-line package manager
 
-
 ## Build
 
-Building KindScript command line tools:
+First, install Node (http://nodejs.org/). Then install the following:
+```
+npm install -g jake
+npm install -g tsd
+```
+
+To build the KindScript command line tools:
 
 ```
 tsd reinstall
