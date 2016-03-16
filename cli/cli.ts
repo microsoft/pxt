@@ -394,8 +394,8 @@ function buildSimulatorAsync() {
 }
 
 function buildKindScriptAsync() : Promise<string[]> {
-    let ksd = "../kindscript"
-    if (!fs.existsSync(ksd)) return Promise.resolve([]);
+    let ksd = "node_modules/kindscript"
+    if (!fs.existsSync(ksd + "/kindlib/main.ts")) return Promise.resolve([]);
     
     console.log(`building ${ksd}...`);    
     return execAsync("jake", { cwd: ksd }).then(() => Promise.resolve([ksd]));
