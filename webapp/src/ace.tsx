@@ -776,7 +776,10 @@ export class Editor extends srceditor.Editor {
     }
 
     private setAnnotationHelpCard(annotation: AceAjax.Annotation) : void {
-        if (!annotation) return undefined;
+        if (!annotation) {
+            this.parent.setHelp(undefined);
+            return undefined;
+        }
 
         this.parent.setHelp({
             header: lf("line {0}", annotation.row + 1),
