@@ -69,13 +69,33 @@ compileDir("cli", ["built/kindlib.js", "built/kindsim.js"])
 task("travis", ["test", "upload"])
 
 task('upload', ["wapp", "built/kind.js"], { async: true }, function () {
-    cmdIn(this, ".", 'node built/kind.js uploadrel release/latest')
+    let rel = process.env.TRAVIS_TAG || ""
+    let atok = process.env.NPM_ACCESS_TOKEN
+
+    if (/^v\d/.test(rel) && atok) {
+      console.log("Setting up ~/.npmrc")
+      let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
+      fs.writeFileSync(path.join(process.env.HOME, ".npmrc"), cfg)
+      console.log("TAG:", rel)
+      jake.exec([
+          "node built/kind.js uploadrel release/" + rel,
+          "npm publish",
+      ], { printStdout: true });
+    } else {
+      console.log("Standard release/latest upload")
+      jake.exec([
+          "node built/kind.js uploadrel release/latest",
+      ], { printStdout: true });
+    }
 })
 
-task('npmpub', function () {
+
+task('bump', function () {
     jake.exec([
+        "git pull",
         "npm version patch",
-        "npm publish",
+        "git push --tags",
+        "git push",
     ], { printStdout: true });
 })
 
