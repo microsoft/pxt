@@ -1388,6 +1388,7 @@ namespace ks.blocks {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
+        let variables : U.Map<string>[] = [{}];
         let currInlineAction: J.JInlineAction = null
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
         let infixPriTable: Util.StringMap<number> = {
@@ -1449,6 +1450,13 @@ namespace ks.blocks {
                         rec(e.args[0], infixPri)
                     } else {
                         var bindLeft = infixPri != 3 && e.name != "**"
+                        if (e.name == "=" && e.args[0].nodeType == 'localRef') {
+                            let varname = (<TDev.AST.Json.JLocalRef>e.args[0]).name;
+                            if (!variables[variables.length - 1][varname]) {
+                                variables[variables.length - 1][varname] = "1";
+                                pushOp("let")
+                            }
+                        }
                         rec(e.args[0], bindLeft ? infixPri : infixPri + 0.1)
                         pushOp(e.name)
                         rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)
@@ -1658,12 +1666,18 @@ namespace ks.blocks {
             output += s.replace(/\n/g, "\n" + indent)
         }
 
+        
         function block(f: () => void) {
+            let vars = U.clone<U.Map<string>>(variables[variables.length-1] || {});
+            variables.push(vars);
+            
             indent += "    "
             write("{\n")
             f()
             indent = indent.slice(4)
             write("\n}\n")
+            
+            variables.pop();
         }
     }
 
