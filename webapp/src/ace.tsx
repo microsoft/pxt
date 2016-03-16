@@ -1,5 +1,5 @@
 /// <reference path="../../typings/ace/ace.d.ts" />
-/// <reference path="../public/fuse/fuse.d.ts" />
+/// <reference path="fuse.d.ts" />
 
 import * as React from "react";
 import * as pkg from "./package";

@@ -1,4 +1,4 @@
-// Type definitions for Fuse.js 1.1.5
+// Type definitions for Fuse.js 2.2.0
 // Project: https://github.com/krisk/Fuse
 // Definitions by: Greg Smith <https://github.com/smrq/>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
