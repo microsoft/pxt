@@ -407,6 +407,9 @@ function buildKindScriptAsync(): Promise<string[]> {
     }).then(() => {
         console.log("local kindscript built.")
         return [ksd]
+    }, e => {
+        console.log("local kindscript build FAILED")
+        return [ksd]        
     });
 }
 
