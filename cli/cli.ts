@@ -194,10 +194,10 @@ export function uploadrelAsync(label?: string) {
     })
 }
 
-export function sanitizePath(path:string) {
+export function sanitizePath(path: string) {
     return path.replace(/[^\w@\/]/g, "-").replace(/^\/+/, "")
 }
-    
+
 export function pathToPtr(path: string) {
     return "ptr-" + sanitizePath(path.replace(/^ptr-/, "")).replace(/[^\w@]/g, "-")
 }
@@ -206,7 +206,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
         let pkg = JSON.parse(fs.readFileSync("node_modules/kindscript/package.json", "utf8"))
         apprel = "release/v" + pkg.version
-    }    
+    }
     return Cloud.privateGetAsync(apprel)
         .then(r => r.kind == "release" ? r : null, e => null)
         .then(r => r || Cloud.privateGetAsync(pathToPtr(apprel))
@@ -284,9 +284,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                     })
             })
     }
-    
+
     let branch = process.env['TRAVIS_BRANCH']
-    let tag = process.env['TRAVIS_TAG']    
+    let tag = process.env['TRAVIS_TAG']
     if (tag) branch += " " + tag
 
     return Cloud.privatePostAsync("releases", {
@@ -342,14 +342,16 @@ export function publishTargetAsync() {
 export function spawnAsync(opts: {
     cmd: string,
     args: string[],
-    cwd: string
+    cwd: string,
+    shell?: boolean
 }) {
     return new Promise<void>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
             env: process.env,
-            stdio: "inherit"
-        })
+            stdio: "inherit",
+            shell: opts.shell || false
+        } as any)
         ch.on('close', (code: number) => {
             if (code != 0)
                 reject(new Error("Exit code: " + code + " from " + opts.cmd + " " + opts.args.join(" ")))
@@ -393,12 +395,19 @@ function buildSimulatorAsync() {
         })
 }
 
-function buildKindScriptAsync() : Promise<string[]> {
+function buildKindScriptAsync(): Promise<string[]> {
     let ksd = "node_modules/kindscript"
     if (!fs.existsSync(ksd + "/kindlib/main.ts")) return Promise.resolve([]);
-    
-    console.log(`building ${ksd}...`);    
-    return execAsync("jake", { cwd: ksd }).then(() => Promise.resolve([ksd]));
+
+    console.log(`building ${ksd}...`);
+    return spawnAsync({
+        cmd: /win/.test(process.platform) ? "jake.cmd" : "jake",
+        args: [],
+        cwd: ksd
+    }).then(() => {
+        console.log("local kindscript built.")
+        return [ksd]
+    });
 }
 
 function buildTargetCoreAsync() {
@@ -488,7 +497,7 @@ function extensionAsync(add: string) {
 
 let readFileAsync: any = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
-let execAsync : (cmd: string, options?: {cwd?:string}) => Promise<Buffer> = Promise.promisify(child_process.exec)
+let execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
 let readDirAsync = Promise.promisify(fs.readdir)
 let statAsync = Promise.promisify(fs.stat)
 
