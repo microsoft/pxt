@@ -780,6 +780,10 @@ export var baseUrl: string;
 export var currentReleaseId: string;
 
 $(document).ready(() => {
+    // TODO use one of these instead: 
+    // var appCdnRoot = "https://az851932.vo.msecnd.net/app/pydrb/c/";
+    // var simCdnRoot = "https://az851932.vo.msecnd.net/app/xkvnp/c/";
+    // can also use window.tdConfig.releaseid
     let ms = document.getElementById("mainscript");
     if (ms && (ms as HTMLScriptElement).src) {
         let mainJsName = (ms as HTMLScriptElement).src;
@@ -793,6 +797,7 @@ $(document).ready(() => {
     baseUrl = baseUrl || './';
 
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
 
