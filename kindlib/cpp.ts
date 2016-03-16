@@ -182,4 +182,154 @@ namespace ks.cpp {
 
         return res;
     }
+
+    function fileReadAsArrayBufferAsync(f: File): Promise<ArrayBuffer> { // ArrayBuffer
+        if (!f)
+            return Promise.resolve<ArrayBuffer>(null);
+        else {
+            return new Promise<ArrayBuffer>((resolve, reject) => {
+                var reader = new FileReader();
+                reader.onerror = (ev) => resolve(null);
+                reader.onload = (ev) => resolve(reader.result);
+                reader.readAsArrayBuffer(f);
+            });
+        }
+    }
+
+    function fromUTF8Bytes(binstr: Uint8Array) : string {
+        if (!binstr) return ""
+
+        // escape function is deprecated
+        var escaped = ""
+        for (var i = 0; i < binstr.length; ++i) {
+            var k = binstr[i] & 0xff
+            if (k == 37 || k > 0x7f) {
+                escaped += "%" + k.toString(16);
+            } else {
+                escaped += String.fromCharCode(k)
+            }
+        }
+
+        // decodeURIComponent does the actual UTF8 decoding
+        return decodeURIComponent(escaped)
+    }
+
+    function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
+        var lzma = (<any>window).LZMA;
+        if (!lzma) return Promise.resolve<string>(undefined);
+        return new Promise<string>((resolve, reject) => {
+            try {
+                lzma.decompress(buf, (res: string, error: any) => {
+                    resolve(error ? undefined : res);
+                })
+            }
+            catch (e) {
+                resolve(undefined);
+            }
+        })
+    }
+
+    function lzmaCompressAsync(text: string): Promise<Uint8Array> { // UInt8Array
+        var lzma = (<any>window).LZMA;
+        if (!lzma) return Promise.resolve<Uint8Array>(undefined);
+        return new Promise<Uint8Array>((resolve, reject) => {
+            try {
+                lzma.compress(text, 7, (res: any, error: any) => {
+                    resolve(error ? undefined : new Uint8Array(res));
+                })
+            }
+            catch (e) {
+                resolve(undefined);
+            }
+        })
+    }    
+    
+    function swapBytes(str:string) : string
+    {
+        var r = ""
+        for (var i = 0; i < str.length; i += 2)
+            r = str[i] + str[i + 1] + r
+        Util.assert(i == str.length)
+        return r
+    }
+        
+    function extractSource(hexfile: string): { meta: string; text: Uint8Array; }
+    {
+        if (!hexfile) return undefined;
+
+        var metaLen = 0
+        var textLen = 0
+        var toGo = 0
+        var buf: number[];
+        var ptr = 0;
+        hexfile.split(/\r?\n/).forEach(ln => {
+            var m = /^:10....0041140E2FB82FA2BB(....)(....)(....)(....)(..)/.exec(ln)
+            if (m) {
+                metaLen = parseInt(swapBytes(m[1]), 16)
+                textLen = parseInt(swapBytes(m[2]), 16)
+                toGo = metaLen + textLen
+                buf = <any>new Uint8Array(toGo)
+            } else if (toGo > 0) {
+                m = /^:10....00(.*)(..)$/.exec(ln)
+                if (!m) return
+                var k = m[1]
+                while (toGo > 0 && k.length > 0) {
+                    buf[ptr++] = parseInt(k[0] + k[1], 16)
+                    k = k.slice(2)
+                    toGo--
+                }
+            }
+        })
+        if (!buf || !(toGo == 0 && ptr == buf.length)) {
+            return undefined;
+        }
+        var bufmeta = new Uint8Array(metaLen)
+        var buftext = new Uint8Array(textLen)
+        for (var i = 0; i < metaLen; ++i)
+            bufmeta[i] = buf[i];
+        for (var i = 0; i < textLen; ++i)
+            buftext[i] = buf[metaLen + i];
+        // iOS Safari doesn't seem to have slice() on Uint8Array
+        return {
+            meta: fromUTF8Bytes(bufmeta),
+            text: buftext
+        }
+    }
+
+    export function unpackSourceFromHexFileAsync(file: File): Promise<{ meta?: { cloudId: string; editor:string; }; source: string; }> { // string[] (guid)
+        if (!file) return undefined;
+
+        return fileReadAsArrayBufferAsync(file)
+            .then((dat : ArrayBuffer) => {
+                let str = fromUTF8Bytes(new Uint8Array(dat));
+                let tmp = extractSource(str || "")
+                if (!tmp) return undefined
+
+                if (!tmp.meta || !tmp.text) {
+                    console.log("This .hex file doesn't contain source.")
+                    return undefined;
+                }
+                
+                var hd: { compression:string; headerSize: number; metaSize: number; editor: string; target?:string; } = JSON.parse(tmp.meta)
+                if (!hd) {
+                    console.log("This .hex file is not valid.")
+                    return undefined;
+                }
+                else if (hd.compression == "LZMA") {
+                    return lzmaDecompressAsync(tmp.text)
+                        .then(res => {
+                            if (!res) return null;
+                            let meta = res.slice(0, hd.headerSize || hd.metaSize);
+                            let text = res.slice(meta.length);
+                            let metajs = JSON.parse(meta);
+                            return {  meta: metajs, source: text }
+                        })
+                } else if (hd.compression) {
+                    console.log("Compression type {0} not supported.", hd.compression)
+                    return undefined
+                } else {
+                    return { meta:undefined, source: fromUTF8Bytes(tmp.text) };
+                }
+            })
+    }
 }

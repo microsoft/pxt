@@ -18,6 +18,7 @@ import * as kindjson from "./kindjson"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
+import * as draganddrop from "./draganddrop";
 
 import Cloud = ks.Cloud;
 import Util = ks.Util;
@@ -436,8 +437,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             hideCancel: hideCancel,
             hideAgree: true,
             onLoaded: (_) => {
-                _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProject() })
-                _.find('#newtypescript').click(() => { _.modal('hide'); this.newTypeScriptProject() })
+                _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProjectAsync().done() })
+                _.find('#newtypescript').click(() => { _.modal('hide'); this.newTypeScriptProjectAsync().done() })
                 _.find('#newkodu').click(() => { window.location.href = 'https://www.kodugamelab.com/bbc-microbit/' })
                 _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject() })
             },
@@ -524,15 +525,15 @@ Ctrl+Shift+B
         }).done();
     }
 
-    newTypeScriptProject() {
-        this.newProjectFromId(this.appTarget.tsprj);
+    newTypeScriptProjectAsync(fileOverrides?: Util.Map<string>) {
+        return this.newProjectFromIdAsync(this.appTarget.tsprj, fileOverrides);
     }
 
-    newBlocksProject() {
-        this.newProjectFromId(this.appTarget.blocksprj);
+    newBlocksProjectAsync(fileOverrides?: Util.Map<string>) {
+        return this.newProjectFromIdAsync(this.appTarget.blocksprj, fileOverrides);
     }
 
-    newProjectFromId(prj: ks.ProjectTemplate) {
+    newProjectFromIdAsync(prj: ks.ProjectTemplate, fileOverrides?: Util.Map<string>) : Promise<void> {
         let cfg = ks.U.clone(prj.config);
         cfg.name = ks.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {
@@ -540,7 +541,11 @@ Ctrl+Shift+B
         }
         for (let f in prj.files)
             files[f] = prj.files[f];
-        workspace.installAsync({
+        if (fileOverrides)         
+            for (let f in fileOverrides)
+                files[f] = fileOverrides[f];
+      
+        return workspace.installAsync({
             name: cfg.name,
             meta: {},
             editor: prj.id,
@@ -550,7 +555,6 @@ Ctrl+Shift+B
             .then(hd => {
                 this.loadHeader(hd)
             })
-            .done()
     }
 
     saveTypeScript(open?: boolean) {
@@ -828,10 +832,27 @@ $(document).ready(() => {
             if (ent)
                 hd = workspace.getHeader(ent.id)
             theEditor.loadHeader(hd)
+            
+            draganddrop.setupDragAndDrop(document.body, file => file.size < 1000000 && /^\.hex$/i.test(file.name), files => {
+                ks.cpp.unpackSourceFromHexFileAsync(files[0])
+                    .then(data => {
+                        console.log('decoded hex file')
+                        if (data 
+                            && data.meta 
+                            && data.meta.cloudId == "microbit.co.uk" 
+                            && data.meta.editor == "blockly") {
+                                console.log('importing blocks project')
+                                theEditor.newBlocksProjectAsync({
+                                    "main.blocks": data.source
+                                }).done();
+                            }
+                    })
+            })
         })
 
     window.addEventListener("unload", ev => {
         if (theEditor && !LoginBox.signingOut)
             theEditor.saveSettings()
     })
+       
 })
