@@ -82,9 +82,9 @@ export class LogView extends React.Component<ILogProps, ILogState> {
                 ens = ens.slice(-this.props.maxEntries);
             // find the entry with same source
             let last: ILogEntry = undefined;
-            let m = /([^:]+):\s*(-?\d+)/i.exec(value);
-            let variable = m ? m[1] : undefined;
-            let nvalue = m ? parseInt(m[2]) : null;
+            let m = /(([^:]+):)?\s*(-?\d+)/i.exec(value);
+            let variable = m ? (m[2] || ' ') : undefined;
+            let nvalue = m ? parseInt(m[3]) : null;
             for (let i = ens.length - 1; i >= 0; --i) {
                 if (ens[i].source == source &&
                     (ens[i].value == value ||
