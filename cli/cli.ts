@@ -203,7 +203,10 @@ export function pathToPtr(path: string) {
 }
 
 export function uploadtrgAsync(label?: string, apprel?: string) {
-    if (!apprel) apprel = "release/latest"    
+    if (!apprel) {
+        let pkg = JSON.parse(fs.readFileSync("node_modules/kindscript/package.json", "utf8"))
+        apprel = "release/v" + pkg.version
+    }    
     return Cloud.privateGetAsync(apprel)
         .then(r => r.kind == "release" ? r : null, e => null)
         .then(r => r || Cloud.privateGetAsync(pathToPtr(apprel))
@@ -214,7 +217,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             process.exit(1)
         })
         .then(r => {
-            console.log("Uploading target against:", r.id);
+            console.log(`Uploading target against: ${apprel} /${r.id}`);
             let opts: UploadOptions = {
                 label: label,
                 fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json"])
