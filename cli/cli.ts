@@ -393,6 +393,14 @@ function buildSimulatorAsync() {
         })
 }
 
+function buildKindScriptAsync() : Promise<string[]> {
+    let ksd = "../kindscript"
+    if (!fs.existsSync(ksd)) return Promise.resolve([]);
+    
+    console.log(`building ${ksd}...`);    
+    return execAsync("jake", { cwd: ksd }).then(() => Promise.resolve([ksd]));
+}
+
 function buildTargetCoreAsync() {
     let cfg = readKindTarget()
     cfg.bundledpkgs = {}
@@ -445,7 +453,8 @@ function buildAndWatchTargetAsync() {
         console.log("No kindtarget.json, but found web/. Assuming docs serving.")
         return Promise.resolve()
     }
-    return buildAndWatchAsync(buildTargetCoreAsync)
+    return buildAndWatchAsync(buildKindScriptAsync)
+        .then(() => buildAndWatchAsync(buildTargetCoreAsync))
         .then(() =>
             buildAndWatchAsync(() => buildSimulatorAsync()
                 .then(num => num >= 0 ? ["sim", "node_modules/kindscript/built"] : [])))
@@ -479,7 +488,7 @@ function extensionAsync(add: string) {
 
 let readFileAsync: any = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
-let execAsync = Promise.promisify(child_process.exec)
+let execAsync : (cmd: string, options?: {cwd?:string}) => Promise<Buffer> = Promise.promisify(child_process.exec)
 let readDirAsync = Promise.promisify(fs.readdir)
 let statAsync = Promise.promisify(fs.stat)
 
