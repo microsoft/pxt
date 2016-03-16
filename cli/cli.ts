@@ -117,7 +117,17 @@ export function apiAsync(path: string, postArguments?: string) {
         })
 }
 
-export function ptrAsync(path: string, target: string) {
+export function ptrAsync(path: string, target?: string) {
+    path = sanitizePath(path)
+
+    if (!target) {
+        return Cloud.privateGetAsync(pathToPtr(path))
+            .then(r => {
+                console.log(r)
+                return r
+            })
+    }
+
     let ptr = {
         path: path,
         releaseid: "",
@@ -125,6 +135,7 @@ export function ptrAsync(path: string, target: string) {
         scriptid: "",
         artid: "",
         htmlartid: "",
+        userplatform: ["kind-cli"],
     }
 
     return (/^[a-z]+$/.test(target) ? Cloud.privateGetAsync(target) : Promise.reject(""))
@@ -149,6 +160,7 @@ export function ptrAsync(path: string, target: string) {
         .then(() => Cloud.privatePostAsync("pointers", ptr))
         .then(r => {
             console.log(r)
+            return r
         })
 }
 
@@ -182,12 +194,19 @@ export function uploadrelAsync(label?: string) {
     })
 }
 
+export function sanitizePath(path:string) {
+    return path.replace(/[^\w@\/]/g, "-").replace(/^\/+/, "")
+}
+    
+export function pathToPtr(path: string) {
+    return "ptr-" + sanitizePath(path.replace(/^ptr-/, "")).replace(/[^\w@]/g, "-")
+}
+
 export function uploadtrgAsync(label?: string, apprel?: string) {
-    if (!apprel) apprel = "release/latest"
-    apprel = apprel.replace(/[^\w@]/g, "-")
+    if (!apprel) apprel = "release/latest"    
     return Cloud.privateGetAsync(apprel)
         .then(r => r.kind == "release" ? r : null, e => null)
-        .then(r => r || Cloud.privateGetAsync("ptr-" + apprel.replace(/[^\w@]/g, "-"))
+        .then(r => r || Cloud.privateGetAsync(pathToPtr(apprel))
             .then(ptr => Cloud.privateGetAsync(ptr.releaseid)))
         .then(r => r.kind == "release" ? r : null)
         .then<ks.Cloud.JsonRelease>(r => r, e => {
@@ -262,11 +281,15 @@ function uploadCoreAsync(opts: UploadOptions) {
                     })
             })
     }
+    
+    let branch = process.env['TRAVIS_BRANCH']
+    let tag = process.env['TRAVIS_TAG']    
+    if (tag) branch += " " + tag
 
     return Cloud.privatePostAsync("releases", {
         releaseid: lbl,
         commit: process.env['TRAVIS_COMMIT'],
-        branch: process.env['TRAVIS_BRANCH'],
+        branch: branch,
         buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
     })
         .then(resp => {
@@ -278,7 +301,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             if (!opts.label) return Promise.resolve()
             else if (opts.legacyLabel) return Cloud.privatePostAsync(liteId + "/label", { name: opts.label })
             else return Cloud.privatePostAsync("pointers", {
-                path: opts.label,
+                path: sanitizePath(opts.label),
                 releaseid: liteId
             })
         })
@@ -910,7 +933,7 @@ cmd("help                         - display this message", helpAsync)
 cmd("serve                        - start web server for your local target", serveAsync, 0)
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
-cmd("ptr      PATH TARGET         - set ptr-PATH to TARGET (publication id or redirect)", ptrAsync, 1)
+cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id or redirect)", ptrAsync, 1)
 cmd("buildtarget                  - build kindtarget.json", buildTargetAsync, 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
