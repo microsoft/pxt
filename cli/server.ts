@@ -12,6 +12,8 @@ import Cloud = ks.Cloud;
 let root = process.cwd()
 let dirs = ["built", "sim/public", "node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
 let fileDir = path.join(root, "libs")
+let webDir = path.join(root, "web")
+let nunjucks: any = null
 
 let statAsync = Promise.promisify(fs.stat)
 let readdirAsync = Promise.promisify(fs.readdir)
@@ -154,6 +156,11 @@ export function serveAsync() {
             res.end(JSON.stringify(v))
         }
 
+        let sendHtml = (s: string) => {
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf8' })
+            res.end(s)
+        }
+
         let sendFile = (filename: string) => {
             let stat = fs.statSync(filename);
 
@@ -192,7 +199,7 @@ export function serveAsync() {
                 })
         }
 
-        if (!/\.js\.map$/.test(pathname)) {            
+        if (!/\.js\.map$/.test(pathname)) {
             for (let dir of dirs) {
                 let filename = path.resolve(path.join(dir, pathname))
                 if (fs.existsSync(filename)) {
@@ -202,15 +209,46 @@ export function serveAsync() {
             }
         }
 
+        let webFile = path.join(webDir, pathname)
+
+        if (!fs.existsSync(webFile)) {
+            if (fs.existsSync(webFile + ".html")) {
+                webFile += ".html"
+                pathname += ".html"
+            } else if (fs.existsSync(webFile + ".md")) {
+                webFile += ".md"
+                pathname += ".md"
+            }
+        }
+
+        if (fs.existsSync(webFile)) {
+            if (/\.md$/.test(webFile)) {
+                let vars = ks.docs.renderMarkdown(fs.readFileSync(webFile, "utf8"))
+                let templ = nunjucks.render("templates/docs.html", { somevar: 1 })
+                sendHtml(ks.docs.injectHtml(templ, vars))
+            } else if (/\.html$/.test(webFile)) {
+                sendHtml(nunjucks.render(pathname.replace(/^\/+/, ""), { somevar: 1 }))
+            } else {
+                sendFile(webFile)
+            }
+            return
+        }
+
         return error(404, "Not found :(\n")
     });
 
     // if user has a server.js file, require it
     let serverjs = path.resolve(path.join(root, 'server.js'))
     if (fs.existsSync(serverjs)) {
-        console.log('loading ' + serverjs)        
+        console.log('loading ' + serverjs)
         require(serverjs);
     }
+
+    nunjucks = require("nunjucks")
+    nunjucks.configure(webDir, {
+        autoescape: true,
+        noCache: true
+    })
 
     server.listen(3232, "127.0.0.1");
 

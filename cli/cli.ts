@@ -415,6 +415,10 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 }
 
 function buildAndWatchTargetAsync() {
+    if (!fs.existsSync("kindtarget.json") && fs.existsSync("web")) {
+        console.log("No kindtarget.json, but found web/. Assuming docs serving.")
+        return Promise.resolve()
+    }
     return buildAndWatchAsync(buildTargetCoreAsync)
         .then(() =>
             buildAndWatchAsync(() => buildSimulatorAsync()
