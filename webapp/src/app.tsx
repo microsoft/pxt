@@ -726,7 +726,7 @@ Ctrl+Shift+B
                 <div id="footer">
                     <div>
                         {this.appTarget.title || this.appTarget.name} {lf("powered by")}
-                        <a href="https://github.com/Microsoft/kindscript">KindScript</a> - (c) Microsoft Corporation - 2016
+                        &nbsp;<a href="https://github.com/Microsoft/kindscript">KindScript</a> - (c) Microsoft Corporation - 2016
                         - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use")}</a>
                         - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy")}</a>
                     </div>

@@ -248,7 +248,7 @@ namespace ks {
             let trg: AppTarget = undefined
             let prevId = ""
             U.iterStringMap(this.deps, (id, pkg) => {
-                if (pkg.config.target) {
+                if (pkg.config && pkg.config.target) {
                     if (trg && trg.id != pkg.config.target.id) {
                         U.userError(U.lf("package target mismatch, {0} -> {1} and {2} -> {3}", prevId, trg, id, pkg.config.target))
                     } else {
