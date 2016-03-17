@@ -1,4 +1,5 @@
 /// <reference path="../../typings/ace/ace.d.ts" />
+/// <reference path="fuse.d.ts" />
 
 import * as React from "react";
 import * as pkg from "./package";
@@ -63,6 +64,7 @@ export interface CompletionCache {
     apisInfo: ts.ks.ApisInfo;
     completionInfo: ts.ks.CompletionInfo;
     entries: CompletionEntry[];
+    fuseEntries: Fuse;
     posTxt: string;
 }
 
@@ -150,7 +152,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             apisInfo: null,
             completionInfo: null,
             posTxt: posTxt,
-            entries: null
+            entries: null,
+            fuseEntries: null
         }
 
         return compiler.getApisInfoAsync()
@@ -178,6 +181,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     searchName: si.name
                 })
                 cache.entries = []
+                cache.fuseEntries = undefined;
                 if (!cache.completionInfo.isMemberCompletion) {
                     Util.iterStringMap(cache.apisInfo.byQName, (k, v) => {
                         if (v.kind == SK.Method || v.kind == SK.Property) {
@@ -205,20 +209,28 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         }
 
         if (cache.entries) {
-            pref = pref.toLowerCase()
-            let spcPref = " " + pref;
-            for (let e of cache.entries) {
-                e.lastScore = 0
-                let idx = e.searchName.indexOf(pref)
-                if (idx == 0)
-                    e.lastScore += 100
-                else if (idx > 0)
-                    e.lastScore += 50
-                else {
-                    idx = e.searchDesc.indexOf(spcPref)
-                    if (idx >= 0)
-                        e.lastScore += 10;
-                }
+            let fu = cache.fuseEntries;
+            if (!fu) fu = cache.fuseEntries = new Fuse(cache.entries, {
+                include: ["score", "matches"],
+                shouldSort: false,
+                keys: [{
+                    name: "name",
+                    weight: 0.5
+                }, {
+                    name: "searchName",
+                    weight: 0.5
+                }, {
+                    name: "searchDesc",
+                    weight: 0.1
+                }],
+                threshold : 0.4
+            })
+            let fures = fu.search(pref);
+            cache.entries.forEach(ce => ce.lastScore = 0);
+            for (let fue of fures) {
+                let e = fue.item as CompletionEntry;                
+                e.lastScore = (1-fue.score) * 100;
+
                 let k = e.symbolInfo.kind
                 if (isTopLevel) {
                     if (k == SK.Enum || k == SK.EnumMember)
