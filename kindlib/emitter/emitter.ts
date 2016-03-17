@@ -619,6 +619,12 @@ ${lbl}: .short 0xffff
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
             let attrs = parseComments(decl);
+            let callInfo:CallInfo = {
+                decl,
+                attrs,
+                args: []
+            };
+            (node as any).callInfo = callInfo;
             if (decl.kind == SyntaxKind.EnumMember) {
                 let ev = attrs.enumval
                 if (!ev)
@@ -636,14 +642,15 @@ ${lbl}: .short 0xffff
                     throw userError(lf("not valid enum: {0}; is it procedure name?", ev))
             } else if (decl.kind == SyntaxKind.PropertySignature) {
                 if (attrs.shim) {
+                    callInfo.args.push(node.expression)
                     return emitShim(decl, node, [node.expression])
                 } else {
                     throw unhandled(node, "no {shim:...}");
                 }
             } else if (decl.kind == SyntaxKind.PropertyDeclaration) {
                 let idx = fieldIndex(node)
+                callInfo.args.push(node.expression)
                 return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
-                //OLD proc.emitCall("bitvm::ldfld" + refSuff(node), 0) // internal unref
             } else {
                 throw unhandled(node, stringKind(decl));
             }

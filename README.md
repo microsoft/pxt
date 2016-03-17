@@ -72,12 +72,26 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [x] skip unreferenced globals when initilized with literal
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload
-* [ ] `ptr-<username>-*` as the main way publishing packages
 * [ ] in simulator currResume start loop() in nextTick
 * [ ] `foo${bar}baz`
 * [ ] x ? a : b
 * [ ] error for 'shim:foo' (ie. shim=true)
 * [ ] x as T support
+* [ ] simulator at sim-microbit.kindscript.net
+* [ ] `ptr-<username>-*` as the main way publishing packages
+
+#### Bigger items
+* [ ] generate .d.ts from .cpp
+* [ ] generate .d.ts from simulator code
+* [ ] debugger hooks
+* [ ] auto-fix of parenthesis
+* [ ] integrate TD converter
+* [ ] think about package versioning (semver?)
+
+
+#### Maybe
+* [ ] virtual methods
+* [ ] 3-way merge upon sync
 
 ### web app
 
@@ -95,13 +109,14 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] stepping debugger
 * [ ] attaching runtime warning to specific lines of code or block
 
+
 ### converter from TD to TS (different repo)
 
 * [x] multi-line strings into backtick literals
 * [ ] use bit operators for bits.XYZ
 * [x] fish out {shim:...} and friends
 * [x] {hints:...} -> @param x Blah, eg: 100, 200 (?)
-* [ ] async is flipped
+* [x] async is flipped
 * [ ] use `expr as Type` not `<Type> expr`
 
 ## Docs
