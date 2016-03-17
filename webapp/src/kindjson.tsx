@@ -42,7 +42,8 @@ export class Editor extends srceditor.Editor {
                             header="me" 
                             name={c.name}
                             description={c.description} 
-                            card={c.card} 
+                            card={c.card}
+                            target={this.parent.appTarget.id}
                             />
                     </div>
                 </div>

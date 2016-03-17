@@ -37,6 +37,8 @@ namespace ks {
         card?: ks.PackageCard;
         url?: string;
         responsive?: boolean;
+        
+        target?: string;
     }
 
     export interface TargetBundle {

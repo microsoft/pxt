@@ -84,7 +84,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                 <div key="extra" className={"ui extra content" + (this.props.responsive ? " desktop only" : "")}>
                     {card.power || card.toughness ? (<div key="powertough" className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
                     {this.props.url ?
-                    <a target="_blank" href={this.props.url}>
+                    <a target="_blank" href={/^[^:]+:\/\//.test(this.props.url) ? this.props.url : ((this.props.target || '') + '/' + this.props.url.replace(/^\.?\/?/,''))}>
                         {this.props.url}
                     </a> : ""}
                 </div> : ""}
