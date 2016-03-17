@@ -29,9 +29,22 @@ ${output}</xml>`;
                 case SK.TrueKeyword:
                 case SK.FalseKeyword:                
                     emitBooleanExpression(n as ts.LiteralExpression); break;
+                case SK.WhileStatement:
+                    emitWhileStatement(n as ts.WhileStatement) break;
                 default:
                     console.warn("Unhandled emit:", ts.ks.stringKind(n))
             }
+        }
+        
+        function emitWhileStatement(n : ts.WhileStatement) : void {
+            write(`<block type="device_while">`);
+            write(`<value name="COND">`)
+            emit(n.expression)
+            write(`</value>`)
+            write(`<statement name="DO">`)
+            emit(n.statement)
+            write(`</statement>`)
+            write(`</block>`)
         }
 
         function emitStringLiteral(n: ts.StringLiteral) {
