@@ -37,9 +37,20 @@ ${output}</xml>`;
                     emitIfStatement(n as ts.IfStatement); break;
                 case SK.ArrowFunction:
                     emitArrowFunction(n as ts.ArrowFunction); break;
+                case SK.PropertyAccessExpression:
+                    emitPropertyAccessExpression(n as ts.PropertyAccessExpression); break;
                 default:
                     console.warn("Unhandled emit:", ts.ks.stringKind(n))
             }
+        }
+        
+        function emitPropertyAccessExpression(n : ts.PropertyAccessExpression) : void {
+            let callInfo = (n as any).callInfo as ts.ks.CallInfo;
+            if (callInfo && callInfo.attrs.blockId) {
+                write(callInfo.attrs.blockId);
+                return;
+            }
+            console.error("unhandled property access");
         }
 
         function emitArrowFunction(n: ts.ArrowFunction) {
@@ -140,10 +151,15 @@ ${output}</xml>`;
                         emit(e);
                         write('</statement>');
                         break;
-                    default:
-                        write(`  <value name="${argNames[i]}">`)
+                    case SK.PropertyAccessExpression:
+                        write(`<field name="${argNames[i]}">`);
                         emit(e);
-                        write(`  </value>`)
+                        write(`</field>`);
+                        break;
+                    default:
+                        write(`<value name="${argNames[i]}">`)
+                        emit(e);
+                        write(`</value>`)
                         break;
                 }
             })

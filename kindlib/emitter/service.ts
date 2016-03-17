@@ -162,7 +162,7 @@ namespace ts.ks {
     export function getBlocksInfo(info: ApisInfo) {
         return {
             apis: info,
-            blocks: ks.Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId)
+            blocks: ks.Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != ts.ks.SymbolKind.EnumMember))
         }
     }
 
