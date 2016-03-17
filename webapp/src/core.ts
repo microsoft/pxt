@@ -146,17 +146,17 @@ export function confirmAsync(options: ConfirmOptions) {
     if (!options.hideCancel || !options.hideAgree) {
         html += `<div class="actions">`
         if (!options.hideCancel) {
-            html += `<div class="ui right labeled icon button">
+            html += `<button class="ui cancel right labeled icon button">
         ${Util.htmlEscape(options.disagreeLbl || lf("Cancel"))}
         <i class="cancel icon"></i>
-      </div>`
+      </button>`
         }
         if (!options.hideAgree) {
             html += `
-      <div class="ui approve right labeled icon button ${options.agreeClass || "positive"}">
+      <button class="ui approve right labeled icon button ${options.agreeClass || "positive"}">
         ${Util.htmlEscape(options.agreeLbl || lf("Go ahead!"))}
         <i class="${options.agreeIcon || "checkmark"} icon"></i>
-      </div>`
+      </button>`
         }
         
         html += `</div>`
