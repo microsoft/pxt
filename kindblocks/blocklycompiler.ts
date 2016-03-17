@@ -1112,7 +1112,7 @@ namespace ks.blocks {
             for (var j = 0; j < columns; ++j) {
                 if (j > 0)
                     state += ' ';
-                state += /TRUE/.test(b.getFieldValue("LED" + i + j)) ? "#" : ".";
+                state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "#" : ".";
             }
         }
         return H.namespaceCall(n, f, [<J.JExpr>H.mkStringLiteral(state)].concat(args));

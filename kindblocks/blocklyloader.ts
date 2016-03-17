@@ -282,7 +282,7 @@ namespace ks.blocks {
                 for (let c = 0; c < fn.attributes.imageLiteral * 5; ++c) {
                     if (c > 0 && c % 5 == 0) ri.appendField("  ");
                     else if (c > 0) ri.appendField(" ");
-                    ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + r + c);
+                    ri.appendField(new Blockly.FieldCheckbox("FALSE"), "LED" + c + r);
                 }
             }
         }
