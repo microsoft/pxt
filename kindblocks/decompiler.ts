@@ -34,10 +34,18 @@ ${output}</xml>`;
                 case SK.WhileStatement:
                     emitWhileStatement(n as ts.WhileStatement); break;
                 case SK.IfStatement:
-                    emitIfStatement(n as ts.IfStatement); break;                
+                    emitIfStatement(n as ts.IfStatement); break;    
+                case SK.ArrowFunction:
+                    emitArrowFunction(n as ts.ArrowFunction); break;            
                 default:
                     console.warn("Unhandled emit:", ts.ks.stringKind(n))
             }
+        }
+        
+        function emitArrowFunction(n : ts.ArrowFunction) {
+            if (n.parameters.length > 0) console.error('arguments not supported in lambdas')
+            
+            emit(n.body)
         }
         
         function emitBlock(n : ts.Block) {
@@ -118,9 +126,18 @@ ${output}</xml>`;
 
             write(`<block type="${info.attrs.blockId}">`)
             info.args.forEach((e, i) => {
-                write(`  <value name="${argNames[i]}">`)
-                emit(e)
-                write(`  </value>`)
+                switch(e.kind) {
+                    case SK.ArrowFunction:
+                        write('<statement name="HANDLER">');
+                        emit(e);
+                        write('</statement>');
+                        break;
+                    default:
+                        write(`  <value name="${argNames[i]}">`)
+                        emit(e);
+                        write(`  </value>`)
+                        break;
+                }
             })
             write(`</block>`)
         }

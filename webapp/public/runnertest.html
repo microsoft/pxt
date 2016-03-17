@@ -26,23 +26,27 @@
     <script type="text/javascript">
         var ps = [ 
             "0"
-            /*
-            ,"true"
-            ,"false"
-            ,"'hello'"
-            ,"basic.showNumber(2)"
-            ,"basic.showString('Hello!')"
-            ,"basic.showNumber(2, 150)"
-            ,"basic.showLeds(`. . . . .\n. # . # .\n. . . . .\n# . . . #\n. # # # .`);" */
+            //,"true"
+            //,"false"
+            //,"'hello'"
+            //,"basic.showNumber(2)"
+            //,"basic.showString('Hello!')"
+            //,"basic.showNumber(2, 150)"
             //,"while(true) {}"
-            //,"for(let i = 0;i<5;++i) {}"
             // ,"if (false) { }",
             // ,"if (false) { basic.showNumber(0) } else { basic.clearScreen() }"
-            ,"if (false) { basic.showNumber(0) } else if (false) { basic.showNumber(1) } else { basic.clearScreen() }",
+            //,"if (false) { basic.showNumber(0) } else if (false) { basic.showNumber(1) } else { basic.clearScreen() }"            
+            , "basic.forever(() => { basic.clearScreen(); })"
+            // TODO
+            //,"basic.showLeds(`. . . . .\n. # . # .\n. . . . .\n# . . . #\n. # # # .`);"
+            //,"for(let i = 0;i<5;++i) {}"
+            //,"input.onShake(() => { basic.clearScreen(); })"
            ];
         function next() {
             var p = ps.pop();
             if (!p) return;
+            console.log('rendering:')
+            console.log(p)
             ks.runner.toBlocksAsync(p).done(function(svg) {
                 $('#loading').remove();
                 if (svg) {
