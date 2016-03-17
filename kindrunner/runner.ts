@@ -190,7 +190,7 @@ namespace ks.runner {
                 let blocksInfo = ts.ks.getBlocksInfo(apis);
                 ks.blocks.initBlocks(blocksInfo);
                 console.log(resp)
-                let blcks = ks.blocks.toBlocks(resp.ast.getSourceFile("main.ts").statements)
+                let blcks = ks.blocks.toBlocks(blocksInfo, resp.ast.getSourceFile("main.ts").statements)
                 console.log(blcks)
                 return ks.blocks.render(blcks);
             })
