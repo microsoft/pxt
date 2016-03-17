@@ -196,7 +196,7 @@ export function confirmAsync(options: ConfirmOptions) {
 
 export function confirmDelete(what: string, cb: () => Promise<void>) {
     confirmAsync({
-        header: lf("Are you sure to delete '{0}'?", what),
+        header: lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
         agreeClass: "red",
