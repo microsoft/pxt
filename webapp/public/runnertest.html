@@ -24,7 +24,13 @@
 
     <script type="text/javascript" src="./embed.js"></script>
     <script type="text/javascript">
-        var ps = [ "basic.showNumber(2)", "basic.showString(`Hello!`)"];
+        var ps = [ 
+            "10",
+            "true",
+            "false",
+            "'hello'",
+            "basic.showNumber(2)", 
+            "basic.showString('Hello!')"];
         function next() {
             var p = ps.pop();
             if (!p) return;
