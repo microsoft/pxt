@@ -1065,6 +1065,8 @@ module ts.ks.thumb {
         addEnc("$r3", "R0-15", v => inrange(15, v, v << 3))
         addEnc("$r4", "R0-7", v => inrange(7, v, v << 6))
         addEnc("$r5", "R0-7", v => inrange(7, v, v << 8))
+        // this for setting both $r0 and $r1 (two argument adds and subs)
+        addEnc("$r01", "R0-7", v => inrange(7, v, (v | v << 3)))
 
         // Immdiates:
         // $i0 - bits 7-0
@@ -1118,6 +1120,7 @@ module ts.ks.thumb {
         add("add   sp, $i2", 0xb000, 0xff80);
         add("adds  $r0, $r1, $i3", 0x1c00, 0xfe00);
         add("adds  $r0, $r1, $r4", 0x1800, 0xfe00);
+        add("adds  $r01, $r4", 0x1800, 0xfe00);
         add("adds  $r5, $i0", 0x3000, 0xf800, "$r5 += $i0");
         add("adr   $r5, $la", 0xa000, 0xf800);
         add("ands  $r0, $r1", 0x4000, 0xffc0);
@@ -1177,6 +1180,7 @@ module ts.ks.thumb {
         add("sub   sp, $i2", 0xb080, 0xff80);
         add("subs  $r0, $r1, $i3", 0x1e00, 0xfe00);
         add("subs  $r0, $r1, $r4", 0x1a00, 0xfe00);
+        add("subs  $r01, $r4", 0x1a00, 0xfe00);
         add("subs  $r5, $i0", 0x3800, 0xf800);
         add("svc   $i0", 0xdf00, 0xff00);
         add("sxtb  $r0, $r1", 0xb240, 0xffc0);

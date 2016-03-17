@@ -143,6 +143,16 @@ function testNums(): void {
     assert(Math.abs(42) == 42, "abs");
     assert(Math.sign(42) == 1, "abs");
     testIf();
+    
+    assert((3 & 6) == 2, "&")
+    assert((3 | 6) == 7, "|")
+    assert((3 ^ 6) == 5, "^")
+    assert((-10 >> 2) == -3, ">>")
+    assert((-10 >>> 20) == 4095, ">>>")
+    assert((-10 << 2) == -40, "<<")
+    assert((10 << 2) == 40, "<<+")
+    assert((10 >> 2) == 2, ">>+")
+    assert((10 >>> 2) == 2, ">>>+")
 }
 
 

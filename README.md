@@ -63,9 +63,11 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [x] function f() {...}; control.inBackground(f) in local scope
 * [x] function f() {...}; control.inBackground(f) in global scope
 * [x] //% shim=... weight=... help=... etc insteaf of {shim:...}
-* [ ] bit operators (&, |, etc)
+* [x] bit operators (&, |, etc)
 * [ ] inline assembly
-* [ ] use "(x + y) | 0" etc instead of "x + y" in simulator
+* [x] use "(x + y) | 0" etc instead of "x + y" in simulator
+* [ ] allow use of floating point for non-native targets
+* [ ] use proper int mulitplication in simulator (overflows)
 * [x] do not generate empty action bodies for shim
 * [x] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues

@@ -72,9 +72,6 @@ ${getFunctionLabel(proc.action)}:
             return "." + root + bin.lblNo++
         }
 
-        function emitStmt(s: ir.Stmt) {
-        }
-
         function emitJmp(jmp: ir.Stmt) {
             if (jmp.jmpMode == ir.JmpMode.Always) {
                 if (jmp.expr)
@@ -215,7 +212,12 @@ ${getFunctionLabel(proc.action)}:
 
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
-            write(`bl ${name}`)
+
+            if (U.startsWith(name, "thumb::")) {
+                write(`${name.slice(7)} r0, r1`)
+            } else {
+                write(`bl ${name}`)
+            }
         }
 
         function emitProcCall(topExpr: ir.Expr) {

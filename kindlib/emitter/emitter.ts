@@ -1081,11 +1081,11 @@ ${lbl}: .short 0xffff
             if (tp.flags & TypeFlags.Number) {
                 switch (node.operator) {
                     case SK.PlusPlusToken:
-                        return emitIncrement(node, "number::add", false)
+                        return emitIncrement(node, "thumb::adds", false)
                     case SK.MinusMinusToken:
-                        return emitIncrement(node, "number::subtract", false)
+                        return emitIncrement(node, "thumb::subs", false)
                     case SK.MinusToken:
-                        return ir.rtcall("number::subtract", [ir.numlit(0), emitExpr(node.operand)])
+                        return ir.rtcall("thumb::subs", [ir.numlit(0), emitExpr(node.operand)])
                     case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
                     default: unhandled(node, "postfix unary number")
@@ -1109,9 +1109,9 @@ ${lbl}: .short 0xffff
             if (tp.flags & TypeFlags.Number) {
                 switch (node.operator) {
                     case SK.PlusPlusToken:
-                        return emitIncrement(node, "number::add", true)
+                        return emitIncrement(node, "thumb::adds", true)
                     case SK.MinusMinusToken:
-                        return emitIncrement(node, "number::subtract", true)
+                        return emitIncrement(node, "thumb::subs", true)
                     default: unhandled(node, "postfix unary number")
                 }
             }

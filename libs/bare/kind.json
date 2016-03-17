@@ -16,7 +16,7 @@
         "name": "bare",
         "cloud": true,
         "compile": {
-            "isNative": false,
+            "isNative": true,
             "hasHex": true
         }
     }

@@ -114,13 +114,31 @@ namespace ks.rt {
         export function eq(x: number, y: number) { return x == y; }
         export function gt(x: number, y: number) { return x > y; }
         export function ge(x: number, y: number) { return x >= y; }
-        export function add(x: number, y: number) { return (x + y) | 0; }
-        export function subtract(x: number, y: number) { return (x - y) | 0; }
         export function divide(x: number, y: number) { return Math.floor(x / y) | 0; }
-        export function multiply(x: number, y: number) { return intMult(x, y); }
         export function to_string(x: number) { return x + ""; }
         export function to_character(x: number) { return String.fromCharCode(x); }
         export function post_to_wall(s: number) { console.log(s); }
+    }
+    
+    export namespace thumb {
+        export function adds(x: number, y: number) { return (x + y) | 0; }
+        export function subs(x: number, y: number) { return (x - y) | 0; }
+        export function divs(x: number, y: number) { return Math.floor(x / y) | 0; }
+        export function muls(x: number, y: number) { return intMult(x, y); }
+        export function ands(x: number, y: number) { return x & y; }
+        export function orrs(x: number, y: number) { return x | y; }
+        export function eors(x: number, y: number) { return x ^ y; }
+        export function lsls(x: number, y: number) { return x << y; }
+        export function lsrs(x: number, y: number) { return x >>> y; }
+        export function asrs(x: number, y: number) { return x >> y; }
+
+        export function cmp_lt(x: number, y: number) { return x < y; }
+        export function cmp_le(x: number, y: number) { return x <= y; }
+        export function cmp_ne(x: number, y: number) { return x != y; }
+        export function cmp_eq(x: number, y: number) { return x == y; }
+        export function cmp_gt(x: number, y: number) { return x > y; }
+        export function cmp_ge(x: number, y: number) { return x >= y; }
+
     }
 
     export namespace string {
