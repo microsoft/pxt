@@ -86,7 +86,7 @@ namespace ks.blocks {
         return attrNames;
     }
 
-    function createToolboxBlock(tb: Element, info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
+    function createToolboxBlock(info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
         //
         // toolbox update
         //
@@ -305,8 +305,9 @@ namespace ks.blocks {
         block.setTooltip(fn.attributes.jsDoc);
     }
 
-    export function injectBlocks(workspace: Blockly.Workspace, toolbox: Element, blockInfo: ts.ks.BlocksInfo): void {
-
+    export function initBlocks(blockInfo: ts.ks.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
+        init();
+        
         blockInfo.blocks.sort((f1, f2) => {
             let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
             let ns2 = blockInfo.apis.byQName[f2.namespace.split('.')[0]];
@@ -323,14 +324,15 @@ namespace ks.blocks {
         let currentBlocks: Util.StringMap<number> = {};
 
         // create new toolbox and update block definitions
-        let tb = <Element>toolbox.cloneNode(true);
+        let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
         blockInfo.blocks
-            .filter(fn => !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
+            .filter(fn => !tb || !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
             .forEach(fn => {
                 let pnames = parameterNames(fn);
-                let block = createToolboxBlock(tb, blockInfo, fn, pnames);
+                let block = createToolboxBlock(blockInfo, fn, pnames);
                 if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
-                    injectToolbox(tb, blockInfo, fn, block);
+                    if (tb)
+                        injectToolbox(tb, blockInfo, fn, block);
                     currentBlocks[fn.attributes.blockId] = 1;
                 }
             })
@@ -341,16 +343,18 @@ namespace ks.blocks {
             .forEach(k => removeBlock(cachedBlocks[k].fn));
 
         // update shadow types
-        $(tb).find('shadow:empty').each((i, shadow) => {
-            let type = shadow.getAttribute('type');
-            let b = $(tb).find(`block[type="${type}"]`)[0];
-            if (b) shadow.innerHTML = b.innerHTML;
-        })
+        if (tb) {
+            $(tb).find('shadow:empty').each((i, shadow) => {
+                let type = shadow.getAttribute('type');
+                let b = $(tb).find(`block[type="${type}"]`)[0];
+                if (b) shadow.innerHTML = b.innerHTML;
+            })
 
-        // update toolbox   
-        if (tb.innerHTML != cachedToolbox) {
-            cachedToolbox = tb.innerHTML;
-            workspace.updateToolbox(tb)
+            // update toolbox   
+            if (tb.innerHTML != cachedToolbox && workspace) {
+                cachedToolbox = tb.innerHTML;
+                workspace.updateToolbox(tb)
+            }
         }
     }
 
@@ -365,7 +369,9 @@ namespace ks.blocks {
         delete cachedBlocks[fn.attributes.blockId];
     }
 
-    export function init() {
+    var blocklyInitialized = false;
+    function init() {
+        if (blocklyInitialized) blocklyInitialized = true;
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
 

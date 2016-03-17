@@ -56,7 +56,7 @@ export class Editor extends srceditor.Editor {
                     this.blockInfo = bi;
 
                     let toolbox = document.getElementById('blocklyToolboxDefinition');
-                    ks.blocks.injectBlocks(this.editor, toolbox, this.blockInfo)
+                    ks.blocks.initBlocks(this.blockInfo,this.editor, toolbox)
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -81,6 +81,7 @@ export class Editor extends srceditor.Editor {
     serializeBlocks(): string {
         let xml = Blockly.Xml.workspaceToDom(this.editor);
         let text = Blockly.Xml.domToPrettyText(xml);
+        console.log(text)
         return text;
     }
 

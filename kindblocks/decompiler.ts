@@ -1,12 +1,13 @@
 namespace ks.blocks {
     let SK = ts.SyntaxKind;
 
-    export function toBlocks(stmts: ts.Statement[]) {
+    export function toBlocks(stmts: ts.Statement[]) : string {
         let output = ""
 
         stmts.forEach(emit)
 
-        return output
+        return `<xml xmlns="http://www.w3.org/1999/xhtml">
+${output}</xml>`;
         
         function write(s:string) {
             output += s + "\n"

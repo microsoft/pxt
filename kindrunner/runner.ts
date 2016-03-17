@@ -124,7 +124,6 @@ namespace ks.runner {
                 if (!appTarget.cloud) Cloud.apiRoot = undefined;
             })
             .then(() => {
-                ks.blocks.init();
                 mainPkg = new ks.MainPackage(new Host());
             })
             .then(() => {
@@ -177,7 +176,7 @@ namespace ks.runner {
             })
     }
 
-    export function toBlocksAsync(code: string) {
+    export function toBlocksAsync(code: string) : Promise<JQuery> {        
         return loadPackageAsync(null)
             .then(getCompileOptionsAsync)
             .then(opts => {
@@ -190,7 +189,10 @@ namespace ks.runner {
                 console.log(resp)
                 let blcks = ks.blocks.toBlocks(resp.ast.getSourceFile("main.ts").statements)
                 console.log(blcks)
-                return resp
+                let apis = ts.ks.getApiInfo(resp.ast);
+                let blocksInfo = ts.ks.getBlocksInfo(apis);
+                ks.blocks.initBlocks(blocksInfo);
+                return ks.blocks.render(blcks);
             })
     }
 

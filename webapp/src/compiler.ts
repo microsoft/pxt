@@ -135,12 +135,7 @@ export function getApisInfoAsync() {
 
 export function getBlocksAsync(): Promise<ts.ks.BlocksInfo> {
     return getApisInfoAsync()
-        .then(info => {
-            return {
-                apis: info,
-                blocks: ks.Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId)
-            }
-        })
+        .then(info => ts.ks.getBlocksInfo(info));
 }
 
 export function newProject() {

@@ -823,7 +823,6 @@ $(document).ready(() => {
             if (!pkg.appTarget.cloud) Cloud.apiRoot = undefined;
         })
         .then(() => {
-            ks.blocks.init();
             return compiler.init();
         })
         .then(() => workspace.initAsync())

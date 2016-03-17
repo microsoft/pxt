@@ -36,7 +36,7 @@ namespace ts.ks {
     export interface ApisInfo {
         byQName: Util.Map<SymbolInfo>;
     }
-        
+
     export interface BlocksInfo {
         apis: ApisInfo;
         blocks: SymbolInfo[];
@@ -83,7 +83,7 @@ namespace ts.ks {
             return false;
 
         let symbol = decl.symbol
-        
+
         if (!symbol)
             return false;
 
@@ -94,7 +94,7 @@ namespace ts.ks {
         }
 
         let topDecl = symbol.valueDeclaration || symbol.declarations[0]
-        
+
         if (topDecl.kind == SyntaxKind.VariableDeclaration)
             topDecl = topDecl.parent.parent as Declaration
 
@@ -159,7 +159,14 @@ namespace ts.ks {
         return null;
     }
 
-    export function getApiInfo(program: Program) {
+    export function getBlocksInfo(info: ApisInfo) {
+        return {
+            apis: info,
+            blocks: ks.Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId)
+        }
+    }
+
+    export function getApiInfo(program: Program): ApisInfo {
         let res: ApisInfo = {
             byQName: {}
         }
@@ -356,10 +363,10 @@ namespace ts.ks.service {
 
             let program = service.getProgram() // this synchornizes host data as well
             let data: InternalCompletionData = (service as any).getCompletionData(v.fileName, v.position);
-            
+
             if (!data) return {}
-            
-            let typechecker = program.getTypeChecker()                        
+
+            let typechecker = program.getTypeChecker()
 
             let r: CompletionInfo = {
                 entries: {},

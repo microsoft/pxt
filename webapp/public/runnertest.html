@@ -1,18 +1,37 @@
 <!doctype html>
 <html lang="en" data-framework="typescript">
-
 <head>
     <meta charset="utf-8">
     <title>KindScript Runner Test</title>
 </head>
-
-<body>
-    <script type="text/javascript" src="./embed.js"></script>
+<body>    
+    <div id='loading' style='font-size: 30px; margin: 100px auto; width: 200px;'>
+        loading...
+    </div>
+    
+    <style type="text/css">
+        @import "./semantic.css";
+        @import "./custom.css";
+    </style>
     <script>
+        // This line gets patched up by the cloud
+        var rootUrl = "dummy";
+        var appCdnRoot = "./";
+        var simCdnRoot = "./"; 
+    </script>
+    
+    <script type="text/javascript" src="./jquery.js"></script>
+    <script type="text/javascript" src="./embed.js"></script>
+    <script type="text/javascript">
         ksRunnerReady(function() {
             ks.runner.toBlocksAsync("basic.showString('Hello')")
+              .done(function(svg) {
+                $('#loading').remove();
+                $(document.body).append(svg)                  
+              })
             //ks.runner.simulateAsync("ljhhqw")
         })
     </script>
+    
 </body>
 </html>
