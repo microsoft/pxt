@@ -118,6 +118,7 @@ ${output}</xml>`;
 
         function emitCallExpression(node: ts.CallExpression) {
             let info: ts.ks.CallInfo = (node as any).callInfo
+            console.log(info)
 
             if (!info.attrs.blockId || !info.attrs.block) {
                 console.error(`trying to convert ${info.decl.name} which is not supported in blocks`)
