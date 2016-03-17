@@ -203,23 +203,19 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(() => this.setState({ cache: cache }))
     }
 
-    fetchCompletionInfo(textPos: AceAjax.Position, pref: string, isTopLevel: boolean) {
-        let posTxt = this.props.parent.currFile.getName() + ":" + textPos.row + ":" + textPos.column
+    computeMatch(pref: string): { item: CompletionEntry; score: number; }[] {
         let cache = this.state.cache
-        if (!cache || cache.posTxt != posTxt) {
-            this.queryCompletionAsync(textPos, posTxt).done();
-            return null;
-        }
-
-        if (cache.entries) {
-            let fu = cache.fuseEntries;
-            if (!fu) fu = cache.fuseEntries = new Fuse(cache.entries, {
-                include: ["score", "matches"],
-                shouldSort: false,
-                keys: [{
-                    name: "name",
-                    weight: 0.4
-                }, {
+        
+        if (!pref) return cache.entries.map(entry => { return { item:entry, score: 0 } });
+        
+        let fu = cache.fuseEntries;
+        if (!fu) fu = cache.fuseEntries = new Fuse(cache.entries, {
+            include: ["score", "matches"],
+            shouldSort: false,
+            keys: [{
+                name: "name",
+                weight: 0.4
+            }, {
                     name: "searchName",
                     weight: 0.3
                 }, {
@@ -229,13 +225,26 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     name: "searchDesc",
                     weight: 0.1
                 }],
-                threshold : 0.4
-            })
-            let fures = fu.search(pref);
+            threshold: 0.4
+        })
+        let fures: { item: CompletionEntry; score: number; matches: any; }[] = fu.search(pref);
+        return fures;
+    }
+
+    fetchCompletionInfo(textPos: AceAjax.Position, pref: string, isTopLevel: boolean) {
+        let posTxt = this.props.parent.currFile.getName() + ":" + textPos.row + ":" + textPos.column
+        let cache = this.state.cache
+        if (!cache || cache.posTxt != posTxt) {
+            this.queryCompletionAsync(textPos, posTxt).done();
+            return null;
+        }
+
+        if (cache.entries) {
+            let fures = this.computeMatch(pref);
             cache.entries.forEach(ce => ce.lastScore = 0);
             for (let fue of fures) {
-                let e = fue.item as CompletionEntry;                
-                e.lastScore = (1-fue.score) * 100;
+                let e = fue.item as CompletionEntry;
+                e.lastScore = (1 - fue.score) * 100;
 
                 let k = e.symbolInfo.kind
                 if (isTopLevel) {
@@ -398,7 +407,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let line = editor.session.getLine(textPos.row);
         let linepref = line.slice(0, textPos.column)
         let m = /((\w+\s*)*)$/.exec(linepref)
-        let pref = m ? m[1] : ""
+        let pref = (m ? m[1] : "")
         let before = linepref.slice(0, linepref.length - pref.length).trim()
         let isTopLevel = !before || Util.endsWith(before, "{")  // }
 
@@ -516,9 +525,9 @@ export class Editor extends srceditor.Editor {
             </div>
         )
     }
-    
+
     undo() {
-        this.editor.undo()        
+        this.editor.undo()
     }
 
     display() {
@@ -801,7 +810,7 @@ export class Editor extends srceditor.Editor {
         this.setAnnotationHelpCard(ann[0]);
     }
 
-    private setAnnotationHelpCard(annotation: AceAjax.Annotation) : void {
+    private setAnnotationHelpCard(annotation: AceAjax.Annotation): void {
         if (!annotation) {
             this.parent.setHelp(undefined);
             return undefined;
