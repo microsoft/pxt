@@ -130,6 +130,7 @@ namespace ts.ks {
 
     export interface CallInfo {
         decl: Declaration;
+        qName: string;
         attrs: CommentAttrs;
         args: Expression[];
     }
@@ -621,6 +622,7 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(decl);
             let callInfo:CallInfo = {
                 decl,
+                qName: getFullName(checker, decl.symbol),
                 attrs,
                 args: []
             };
@@ -807,6 +809,7 @@ ${lbl}: .short 0xffff
             let args = node.arguments.slice(0)
             let callInfo:CallInfo = { 
                 decl,
+                qName: getFullName(checker, decl.symbol),
                 attrs,
                 args: args.slice(0)
             };

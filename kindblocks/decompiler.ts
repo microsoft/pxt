@@ -110,6 +110,7 @@ ${output}</xml>`;
 
         function emitCallExpression(node: ts.CallExpression) {
             let info: ts.ks.CallInfo = (node as any).callInfo
+            console.log(info)
             let argNames: string[] = []
             info.attrs.block.replace(/%(\w+)/g, (f, n) => {
                 argNames.push(n)
