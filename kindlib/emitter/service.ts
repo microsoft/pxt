@@ -57,21 +57,21 @@ namespace ts.ks {
 
     function getSymbolKind(node: Node) {
         switch (node.kind) {
-            case SyntaxKind.MethodDeclaration:
-            case SyntaxKind.MethodSignature:
+            case SK.MethodDeclaration:
+            case SK.MethodSignature:
                 return SymbolKind.Method;
-            case SyntaxKind.PropertyDeclaration:
-            case SyntaxKind.PropertySignature:
+            case SK.PropertyDeclaration:
+            case SK.PropertySignature:
                 return SymbolKind.Property;
-            case SyntaxKind.FunctionDeclaration:
+            case SK.FunctionDeclaration:
                 return SymbolKind.Function;
-            case SyntaxKind.VariableDeclaration:
+            case SK.VariableDeclaration:
                 return SymbolKind.Variable;
-            case SyntaxKind.ModuleDeclaration:
+            case SK.ModuleDeclaration:
                 return SymbolKind.Module;
-            case SyntaxKind.EnumDeclaration:
+            case SK.EnumDeclaration:
                 return SymbolKind.Enum;
-            case SyntaxKind.EnumMember:
+            case SK.EnumMember:
                 return SymbolKind.EnumMember;
             default:
                 return SymbolKind.None
@@ -79,7 +79,7 @@ namespace ts.ks {
     }
 
     function isExported(decl: Declaration) {
-        if (decl.modifiers && decl.modifiers.some(m => m.kind == SyntaxKind.PrivateKeyword || m.kind == SyntaxKind.ProtectedKeyword))
+        if (decl.modifiers && decl.modifiers.some(m => m.kind == SK.PrivateKeyword || m.kind == SK.ProtectedKeyword))
             return false;
 
         let symbol = decl.symbol
@@ -95,10 +95,10 @@ namespace ts.ks {
 
         let topDecl = symbol.valueDeclaration || symbol.declarations[0]
 
-        if (topDecl.kind == SyntaxKind.VariableDeclaration)
+        if (topDecl.kind == SK.VariableDeclaration)
             topDecl = topDecl.parent.parent as Declaration
 
-        if (topDecl.parent && topDecl.parent.kind == SyntaxKind.SourceFile)
+        if (topDecl.parent && topDecl.parent.kind == SK.SourceFile)
             return true;
         else
             return false;
@@ -106,7 +106,7 @@ namespace ts.ks {
 
     function isInKsModule(decl: Node): boolean {
         while (decl) {
-            if (decl.kind == SyntaxKind.SourceFile) {
+            if (decl.kind == SK.SourceFile) {
                 let src = decl as SourceFile
                 return src.fileName.indexOf("kind_modules") >= 0
             }
@@ -174,7 +174,7 @@ namespace ts.ks {
         let typechecker = program.getTypeChecker()
 
         let collectDecls = (stmt: Node) => {
-            if (stmt.kind == SyntaxKind.VariableStatement) {
+            if (stmt.kind == SK.VariableStatement) {
                 let vs = stmt as VariableStatement
                 vs.declarationList.declarations.forEach(collectDecls)
                 return
@@ -193,19 +193,19 @@ namespace ts.ks {
                     res.byQName[qName] = si
             }
 
-            if (stmt.kind == SyntaxKind.ModuleDeclaration) {
+            if (stmt.kind == SK.ModuleDeclaration) {
                 let mod = <ModuleDeclaration>stmt
-                if (mod.body.kind == SyntaxKind.ModuleBlock) {
+                if (mod.body.kind == SK.ModuleBlock) {
                     let blk = <ModuleBlock>mod.body
                     blk.statements.forEach(collectDecls)
                 }
-            } else if (stmt.kind == SyntaxKind.InterfaceDeclaration) {
+            } else if (stmt.kind == SK.InterfaceDeclaration) {
                 let iface = stmt as InterfaceDeclaration
                 iface.members.forEach(collectDecls)
-            } else if (stmt.kind == SyntaxKind.ClassDeclaration) {
+            } else if (stmt.kind == SK.ClassDeclaration) {
                 let iface = stmt as ClassDeclaration
                 iface.members.forEach(collectDecls)
-            } else if (stmt.kind == SyntaxKind.EnumDeclaration) {
+            } else if (stmt.kind == SK.EnumDeclaration) {
                 let e = stmt as EnumDeclaration
                 e.members.forEach(collectDecls)
             }

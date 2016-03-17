@@ -5,6 +5,7 @@ namespace ts.ks {
     export import U = ts.ks.Util;
 
     let EK = ir.EK;
+    export var SK = SyntaxKind;
 
     export function stringKind(n: Node) {
         if (!n) return "<null>"
@@ -45,12 +46,12 @@ namespace ts.ks {
     }
 
     function isStringLiteral(node: Node) {
-        return (node.kind == SyntaxKind.StringLiteral || node.kind == SyntaxKind.NoSubstitutionTemplateLiteral)
+        return (node.kind == SK.StringLiteral || node.kind == SK.NoSubstitutionTemplateLiteral)
     }
 
     function getEnclosingMethod(node: Node): MethodDeclaration {
         if (!node) return null;
-        if (node.kind == SyntaxKind.MethodDeclaration || node.kind == SyntaxKind.Constructor)
+        if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor)
             return <MethodDeclaration>node;
         return getEnclosingMethod(node.parent)
     }
@@ -61,42 +62,42 @@ namespace ts.ks {
             node = node.parent
             if (!node)
                 userError(lf("cannot determine parent of {0}", stringKind(node0)))
-            if (node.kind == SyntaxKind.FunctionDeclaration ||
-                node.kind == SyntaxKind.ArrowFunction ||
-                node.kind == SyntaxKind.FunctionExpression ||
-                node.kind == SyntaxKind.MethodDeclaration ||
-                node.kind == SyntaxKind.Constructor)
+            if (node.kind == SK.FunctionDeclaration ||
+                node.kind == SK.ArrowFunction ||
+                node.kind == SK.FunctionExpression ||
+                node.kind == SK.MethodDeclaration ||
+                node.kind == SK.Constructor)
                 return <FunctionLikeDeclaration>node
-            if (node.kind == SyntaxKind.SourceFile) return null
+            if (node.kind == SK.SourceFile) return null
         }
     }
 
     function isGlobalVar(d: Declaration) {
-        return d.kind == SyntaxKind.VariableDeclaration && !getEnclosingFunction(d)
+        return d.kind == SK.VariableDeclaration && !getEnclosingFunction(d)
     }
 
     function isLocalVar(d: Declaration) {
-        return d.kind == SyntaxKind.VariableDeclaration && !isGlobalVar(d);
+        return d.kind == SK.VariableDeclaration && !isGlobalVar(d);
     }
 
     function isParameter(d: Declaration) {
-        return d.kind == SyntaxKind.Parameter
+        return d.kind == SK.Parameter
     }
 
     function isTopLevelFunctionDecl(decl: Declaration) {
-        return (decl.kind == SyntaxKind.FunctionDeclaration && !getEnclosingFunction(decl)) ||
-            decl.kind == SyntaxKind.MethodDeclaration ||
-            decl.kind == SyntaxKind.Constructor
+        return (decl.kind == SK.FunctionDeclaration && !getEnclosingFunction(decl)) ||
+            decl.kind == SK.MethodDeclaration ||
+            decl.kind == SK.Constructor
     }
 
     function isSideEffectfulInitializer(init: Expression) {
         if (!init) return false;
         switch (init.kind) {
-            case SyntaxKind.NullKeyword:
-            case SyntaxKind.NumericLiteral:
-            case SyntaxKind.StringLiteral:
-            case SyntaxKind.TrueKeyword:
-            case SyntaxKind.FalseKeyword:
+            case SK.NullKeyword:
+            case SK.NumericLiteral:
+            case SK.StringLiteral:
+            case SK.TrueKeyword:
+            case SK.FalseKeyword:
                 return false;
             default:
                 return true;
@@ -192,7 +193,7 @@ namespace ts.ks {
 
 
     export function getName(node: Node & { name?: any; }) {
-        if (!node.name || node.name.kind != SyntaxKind.Identifier)
+        if (!node.name || node.name.kind != SK.Identifier)
             return "???"
         return (node.name as Identifier).text
     }
@@ -247,9 +248,9 @@ namespace ts.ks {
 
     export function getDeclName(node: Declaration) {
         let text = node && node.name ? (<Identifier>node.name).text : null
-        if (!text && node.kind == SyntaxKind.Constructor)
+        if (!text && node.kind == SK.Constructor)
             text = "constructor"
-        if (node.parent && node.parent.kind == SyntaxKind.ClassDeclaration)
+        if (node.parent && node.parent.kind == SK.ClassDeclaration)
             text = (<ClassDeclaration>node.parent).name.text + "." + text
         text = text || "inline"
         return text;
@@ -303,7 +304,7 @@ namespace ts.ks {
 
         let src = program.getSourceFiles()[0]
         let rootFunction = <any>{
-            kind: SyntaxKind.FunctionDeclaration,
+            kind: SK.FunctionDeclaration,
             parameters: [],
             name: {
                 text: "<main>",
@@ -311,7 +312,7 @@ namespace ts.ks {
                 end: 0
             },
             body: {
-                kind: SyntaxKind.Block,
+                kind: SK.Block,
                 statements: allStmts
             },
             parent: src,
@@ -456,7 +457,7 @@ namespace ts.ks {
                 }
                 classInfos[id + ""] = info;
                 for (let mem of decl.members) {
-                    if (mem.kind == SyntaxKind.PropertyDeclaration) {
+                    if (mem.kind == SK.PropertyDeclaration) {
                         let pdecl = <PropertyDeclaration>mem
                         if (isRefType(typeOf(pdecl)))
                             info.reffields.push(pdecl)
@@ -515,7 +516,7 @@ ${lbl}: .short 0xffff
             let jsLit = "new rt.micro_bit.Image(" + w + ", [" + lit + "])"
 
             return <any>{
-                kind: SyntaxKind.NumericLiteral,
+                kind: SK.NumericLiteral,
                 imageLiteral: lbl,
                 jsLit
             }
@@ -531,9 +532,9 @@ ${lbl}: .short 0xffff
 
         function emitIdentifier(node: Identifier): ir.Expr {
             let decl = getDecl(node)
-            if (decl && (decl.kind == SyntaxKind.VariableDeclaration || decl.kind == SyntaxKind.Parameter)) {
+            if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
                 return emitLocalLoad(<VarOrParam>decl)
-            } else if (decl && decl.kind == SyntaxKind.FunctionDeclaration) {
+            } else if (decl && decl.kind == SK.FunctionDeclaration) {
                 let f = <FunctionDeclaration>decl
                 let info = getFunctionInfo(f)
                 if (info.location) {
@@ -563,7 +564,7 @@ ${lbl}: .short 0xffff
         }
         function emitSuper(node: Node) { }
         function emitLiteral(node: LiteralExpression) {
-            if (node.kind == SyntaxKind.NumericLiteral) {
+            if (node.kind == SK.NumericLiteral) {
                 if ((<any>node).imageLiteral) {
                     return ir.ptrlit((<any>node).imageLiteral, (<any>node).jsLit)
                 } else {
@@ -620,14 +621,14 @@ ${lbl}: .short 0xffff
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
             let attrs = parseComments(decl);
-            let callInfo:CallInfo = {
+            let callInfo: CallInfo = {
                 decl,
                 qName: getFullName(checker, decl.symbol),
                 attrs,
                 args: []
             };
             (node as any).callInfo = callInfo;
-            if (decl.kind == SyntaxKind.EnumMember) {
+            if (decl.kind == SK.EnumMember) {
                 let ev = attrs.enumval
                 if (!ev)
                     userError(lf("enumval=... missing"))
@@ -642,14 +643,14 @@ ${lbl}: .short 0xffff
                     return ir.rtcall(inf.name, [])
                 else
                     throw userError(lf("not valid enum: {0}; is it procedure name?", ev))
-            } else if (decl.kind == SyntaxKind.PropertySignature) {
+            } else if (decl.kind == SK.PropertySignature) {
                 if (attrs.shim) {
                     callInfo.args.push(node.expression)
                     return emitShim(decl, node, [node.expression])
                 } else {
                     throw unhandled(node, "no {shim:...}");
                 }
-            } else if (decl.kind == SyntaxKind.PropertyDeclaration) {
+            } else if (decl.kind == SK.PropertyDeclaration) {
                 let idx = fieldIndex(node)
                 callInfo.args.push(node.expression)
                 return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
@@ -701,7 +702,7 @@ ${lbl}: .short 0xffff
         function isRefCountedExpr(e: Expression) {
             // we generate a fake NULL expression for default arguments
             // we also generate a fake numeric literal for image literals
-            if (e.kind == SyntaxKind.NullKeyword || e.kind == SyntaxKind.NumericLiteral)
+            if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
                 return false
             // no point doing the incr/decr for these - they are statically allocated anyways
             if (isStringLiteral(e))
@@ -755,10 +756,10 @@ ${lbl}: .short 0xffff
 
         function isNumericLiteral(node: Expression) {
             switch (node.kind) {
-                case SyntaxKind.NullKeyword:
-                case SyntaxKind.TrueKeyword:
-                case SyntaxKind.FalseKeyword:
-                case SyntaxKind.NumericLiteral:
+                case SK.NullKeyword:
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                case SK.NumericLiteral:
                     return true;
                 default:
                     return false;
@@ -775,11 +776,11 @@ ${lbl}: .short 0xffff
             if (parms.length > args.length) {
                 parms.slice(args.length).forEach(p => {
                     if (p.valueDeclaration &&
-                        p.valueDeclaration.kind == SyntaxKind.Parameter) {
+                        p.valueDeclaration.kind == SK.Parameter) {
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
                             args.push(<any>{
-                                kind: SyntaxKind.NullKeyword
+                                kind: SK.NullKeyword
                             })
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
@@ -807,14 +808,14 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = node.arguments.slice(0)
-            let callInfo:CallInfo = { 
+            let callInfo: CallInfo = {
                 decl,
                 qName: getFullName(checker, decl.symbol),
                 attrs,
                 args: args.slice(0)
             };
             (node as any).callInfo = callInfo
-            
+
             if (!decl)
                 unhandled(node, "no declaration")
 
@@ -824,7 +825,7 @@ ${lbl}: .short 0xffff
 
             addDefaultParameters(checker.getResolvedSignature(node), args, attrs);
 
-            if (decl.kind == SyntaxKind.FunctionDeclaration) {
+            if (decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
                 if (!info.location) {
@@ -836,9 +837,9 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            if (decl.kind == SyntaxKind.MethodSignature ||
-                decl.kind == SyntaxKind.MethodDeclaration) {
-                if (node.expression.kind == SyntaxKind.PropertyAccessExpression) {
+            if (decl.kind == SK.MethodSignature ||
+                decl.kind == SK.MethodDeclaration) {
+                if (node.expression.kind == SK.PropertyAccessExpression) {
                     let recv = (<PropertyAccessExpression>node.expression).expression
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
@@ -852,7 +853,7 @@ ${lbl}: .short 0xffff
                     let helperStmt = (<ModuleBlock>helpersModule.body).statements.filter(s => s.symbol.name == attrs.helper)[0]
                     if (!helperStmt)
                         userError(lf("helpers.{0} not found", attrs.helper))
-                    if (helperStmt.kind != SyntaxKind.FunctionDeclaration)
+                    if (helperStmt.kind != SK.FunctionDeclaration)
                         userError(lf("helpers.{0} isn't a function", attrs.helper))
                     decl = <FunctionDeclaration>helperStmt;
                     markUsed(decl)
@@ -863,9 +864,9 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            if (decl.kind == SyntaxKind.VariableDeclaration ||
-                decl.kind == SyntaxKind.FunctionDeclaration || // this is lambda
-                decl.kind == SyntaxKind.Parameter) {
+            if (decl.kind == SK.VariableDeclaration ||
+                decl.kind == SK.FunctionDeclaration || // this is lambda
+                decl.kind == SK.Parameter) {
                 if (args.length > 1)
                     userError("lambda functions with more than 1 argument not supported")
 
@@ -890,10 +891,10 @@ ${lbl}: .short 0xffff
                 throw oops();
             } else if (isClassType(t)) {
                 let classDecl = <ClassDeclaration>getDecl(node.expression)
-                if (classDecl.kind != SyntaxKind.ClassDeclaration) {
+                if (classDecl.kind != SK.ClassDeclaration) {
                     userError("new expression only supported on class types")
                 }
-                let ctor = classDecl.members.filter(n => n.kind == SyntaxKind.Constructor)[0]
+                let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
                 let info = getClassInfo(t)
 
                 let obj = ir.shared(ir.rtcall("record::mk", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
@@ -926,11 +927,11 @@ ${lbl}: .short 0xffff
 
         function getParameters(node: FunctionLikeDeclaration) {
             let res = node.parameters.slice(0)
-            if (node.kind == SyntaxKind.MethodDeclaration || node.kind == SyntaxKind.Constructor) {
+            if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor) {
                 let info = getFunctionInfo(node)
                 if (!info.thisParameter) {
                     info.thisParameter = <any>{
-                        kind: SyntaxKind.Parameter,
+                        kind: SK.Parameter,
                         name: { text: "this" },
                         isThisParameter: true,
                         parent: node
@@ -967,7 +968,7 @@ ${lbl}: .short 0xffff
 
             let info = getFunctionInfo(node)
 
-            let isExpression = node.kind == SyntaxKind.ArrowFunction || node.kind == SyntaxKind.FunctionExpression
+            let isExpression = node.kind == SK.ArrowFunction || node.kind == SK.FunctionExpression
 
             let isRef = (d: Declaration) => {
                 if (isRefDecl(d)) return true
@@ -999,7 +1000,7 @@ ${lbl}: .short 0xffff
                         v = ir.op(EK.Incr, [v])
                     proc.emitExpr(ir.rtcall("bitvm::stclo", [lit, ir.numlit(i), v]))
                 })
-                if (node.kind == SyntaxKind.FunctionDeclaration) {
+                if (node.kind == SK.FunctionDeclaration) {
                     info.location = proc.mkLocal(node, getVarInfo(node))
                     proc.emitExpr(info.location.storeDirect(lit))
                     lit = null
@@ -1072,20 +1073,20 @@ ${lbl}: .short 0xffff
         function emitPrefixUnaryExpression(node: PrefixUnaryExpression): ir.Expr {
             let tp = typeOf(node.operand)
             if (tp.flags & TypeFlags.Boolean) {
-                if (node.operator == SyntaxKind.ExclamationToken) {
+                if (node.operator == SK.ExclamationToken) {
                     return rtcallMask("boolean::not_", [node.operand])
                 }
             }
 
             if (tp.flags & TypeFlags.Number) {
                 switch (node.operator) {
-                    case SyntaxKind.PlusPlusToken:
+                    case SK.PlusPlusToken:
                         return emitIncrement(node, "number::add", false)
-                    case SyntaxKind.MinusMinusToken:
+                    case SK.MinusMinusToken:
                         return emitIncrement(node, "number::subtract", false)
-                    case SyntaxKind.MinusToken:
+                    case SK.MinusToken:
                         return ir.rtcall("number::subtract", [ir.numlit(0), emitExpr(node.operand)])
-                    case SyntaxKind.PlusToken:
+                    case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
                     default: unhandled(node, "postfix unary number")
                 }
@@ -1107,9 +1108,9 @@ ${lbl}: .short 0xffff
 
             if (tp.flags & TypeFlags.Number) {
                 switch (node.operator) {
-                    case SyntaxKind.PlusPlusToken:
+                    case SK.PlusPlusToken:
                         return emitIncrement(node, "number::add", true)
-                    case SyntaxKind.MinusMinusToken:
+                    case SK.MinusMinusToken:
                         return emitIncrement(node, "number::subtract", true)
                     default: unhandled(node, "postfix unary number")
                 }
@@ -1140,16 +1141,16 @@ ${lbl}: .short 0xffff
         }
 
         function emitStore(trg: Expression, src: ir.Expr) {
-            if (trg.kind == SyntaxKind.Identifier) {
+            if (trg.kind == SK.Identifier) {
                 let decl = getDecl(trg)
-                if (decl && (decl.kind == SyntaxKind.VariableDeclaration || decl.kind == SyntaxKind.Parameter)) {
+                if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
                     let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
                     proc.emitExpr(l.storeByRef(src))
                 } else {
                     unhandled(trg, "target identifier")
                 }
-            } else if (trg.kind == SyntaxKind.PropertyAccessExpression) {
+            } else if (trg.kind == SK.PropertyAccessExpression) {
                 /*
                 // TODO add C++ support function to simplify this
                 let pacc = <PropertyAccessExpression>trg
@@ -1184,9 +1185,9 @@ ${lbl}: .short 0xffff
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let lbl = proc.mkLabel("lazy")
             // TODO what if the value is of ref type?
-            if (node.operatorToken.kind == SyntaxKind.BarBarToken) {
+            if (node.operatorToken.kind == SK.BarBarToken) {
                 proc.emitJmp(lbl, emitExpr(node.left), ir.JmpMode.IfNotZero)
-            } else if (node.operatorToken.kind == SyntaxKind.AmpersandAmpersandToken) {
+            } else if (node.operatorToken.kind == SK.AmpersandAmpersandToken) {
                 proc.emitJmpZ(lbl, emitExpr(node.left))
             } else {
                 oops()
@@ -1198,8 +1199,56 @@ ${lbl}: .short 0xffff
             return ir.op(EK.JmpValue, [])
         }
 
+        function stripEquals(k: SyntaxKind) {
+            switch (k) {
+                case SK.PlusEqualsToken: return SK.PlusToken;
+                case SK.MinusEqualsToken: return SK.MinusToken;
+                case SK.AsteriskEqualsToken: return SK.AsteriskToken;
+                case SK.AsteriskAsteriskEqualsToken: return SK.AsteriskAsteriskToken;
+                case SK.SlashEqualsToken: return SK.SlashToken;
+                case SK.PercentEqualsToken: return SK.PercentToken;
+                case SK.LessThanLessThanEqualsToken: return SK.LessThanLessThanToken;
+                case SK.GreaterThanGreaterThanEqualsToken: return SK.GreaterThanGreaterThanToken;
+                case SK.GreaterThanGreaterThanGreaterThanEqualsToken: return SK.GreaterThanGreaterThanGreaterThanToken;
+                case SK.AmpersandEqualsToken: return SK.AmpersandToken;
+                case SK.BarEqualsToken: return SK.BarToken;
+                case SK.CaretEqualsToken: return SK.CaretToken;
+                default: return SK.Unknown;
+            }
+        }
+
+        function simpleInstruction(k: SyntaxKind) {
+            switch (k) {
+                case SK.PlusToken: return "thumb::adds";
+                case SK.MinusToken: return "thumb::subs";
+                // TODO expose __aeabi_idiv directly
+                case SK.SlashToken: return "number::divide";
+                case SK.AsteriskToken: return "thumb::muls";
+                case SK.AmpersandToken: return "thumb::ands";
+                case SK.BarToken: return "thumb::orrs";
+                case SK.CaretToken: return "thumb::eors";
+                case SK.LessThanLessThanToken: return "thumb::lsls";
+                case SK.GreaterThanGreaterThanToken: return "thumb::asrs"
+                case SK.GreaterThanGreaterThanGreaterThanToken: return "thumb::lsrs"
+                // TODO compile to branches etc
+                case SK.LessThanEqualsToken: return "number::le";
+                case SK.LessThanToken: return "number::lt";
+                case SK.GreaterThanEqualsToken: return "number::ge";
+                case SK.GreaterThanToken: return "number::gt";
+                case SK.EqualsEqualsToken:
+                case SK.EqualsEqualsEqualsToken:
+                    return "number::eq";
+                case SK.ExclamationEqualsEqualsToken:
+                case SK.ExclamationEqualsToken:
+                    return "number::neq";
+
+                default: return null;
+            }
+
+        }
+
         function emitBinaryExpression(node: BinaryExpression): ir.Expr {
-            if (node.operatorToken.kind == SyntaxKind.EqualsToken) {
+            if (node.operatorToken.kind == SK.EqualsToken) {
                 return handleAssignment(node);
             }
 
@@ -1209,35 +1258,13 @@ ${lbl}: .short 0xffff
             let shim = (n: string) => rtcallMask(n, [node.left, node.right]);
 
             if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
-                switch (node.operatorToken.kind) {
-                    case SyntaxKind.PlusToken:
-                        return shim("number::add");
-                    case SyntaxKind.MinusToken:
-                        return shim("number::subtract");
-                    case SyntaxKind.SlashToken:
-                        return shim("number::divide");
-                    case SyntaxKind.AsteriskToken:
-                        return shim("number::multiply");
-                    case SyntaxKind.LessThanEqualsToken:
-                        return shim("number::le");
-                    case SyntaxKind.LessThanToken:
-                        return shim("number::lt");
-                    case SyntaxKind.GreaterThanEqualsToken:
-                        return shim("number::ge");
-                    case SyntaxKind.GreaterThanToken:
-                        return shim("number::gt");
-                    case SyntaxKind.EqualsEqualsToken:
-                    case SyntaxKind.EqualsEqualsEqualsToken:
-                        return shim("number::eq");
-                    case SyntaxKind.ExclamationEqualsEqualsToken:
-                    case SyntaxKind.ExclamationEqualsToken:
-                        return shim("number::neq");
-                    default:
-                        unhandled(node.operatorToken, "numeric operator")
-                }
+                let shimName = simpleInstruction(node.operatorToken.kind)
+                if (!shimName)
+                    unhandled(node.operatorToken, "numeric operator")
+                return shim(shimName)
             }
 
-            if (node.operatorToken.kind == SyntaxKind.PlusToken) {
+            if (node.operatorToken.kind == SK.PlusToken) {
                 if ((lt.flags & TypeFlags.String) || (rt.flags & TypeFlags.String)) {
                     return ir.rtcallMask("string::concat_op", 3, false, [
                         emitAsString(node.left),
@@ -1247,19 +1274,19 @@ ${lbl}: .short 0xffff
 
             if ((lt.flags & TypeFlags.String) && (rt.flags & TypeFlags.String)) {
                 switch (node.operatorToken.kind) {
-                    case SyntaxKind.LessThanEqualsToken:
+                    case SK.LessThanEqualsToken:
                         return shim("string::le");
-                    case SyntaxKind.LessThanToken:
+                    case SK.LessThanToken:
                         return shim("string::lt");
-                    case SyntaxKind.GreaterThanEqualsToken:
+                    case SK.GreaterThanEqualsToken:
                         return shim("string::ge");
-                    case SyntaxKind.GreaterThanToken:
+                    case SK.GreaterThanToken:
                         return shim("string::gt");
-                    case SyntaxKind.EqualsEqualsToken:
-                    case SyntaxKind.EqualsEqualsEqualsToken:
+                    case SK.EqualsEqualsToken:
+                    case SK.EqualsEqualsEqualsToken:
                         return shim("string::equals");
-                    case SyntaxKind.ExclamationEqualsEqualsToken:
-                    case SyntaxKind.ExclamationEqualsToken:
+                    case SK.ExclamationEqualsEqualsToken:
+                    case SK.ExclamationEqualsToken:
                         return shim("string::neq");
                     default:
                         unhandled(node.operatorToken, "numeric operator")
@@ -1267,14 +1294,14 @@ ${lbl}: .short 0xffff
             }
 
             switch (node.operatorToken.kind) {
-                case SyntaxKind.EqualsEqualsToken:
-                case SyntaxKind.EqualsEqualsEqualsToken:
+                case SK.EqualsEqualsToken:
+                case SK.EqualsEqualsEqualsToken:
                     return shim("number::eq");
-                case SyntaxKind.ExclamationEqualsEqualsToken:
-                case SyntaxKind.ExclamationEqualsToken:
+                case SK.ExclamationEqualsEqualsToken:
+                case SK.ExclamationEqualsToken:
                     return shim("number::neq");
-                case SyntaxKind.BarBarToken:
-                case SyntaxKind.AmpersandAmpersandToken:
+                case SK.BarBarToken:
+                case SK.AmpersandAmpersandToken:
                     return emitLazyBinaryExpression(node);
                 default:
                     throw unhandled(node.operatorToken, "generic operator")
@@ -1363,7 +1390,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitForStatement(node: ForStatement) {
-            if (node.initializer && node.initializer.kind == SyntaxKind.VariableDeclarationList)
+            if (node.initializer && node.initializer.kind == SK.VariableDeclarationList)
                 (<VariableDeclarationList>node.initializer).declarations.forEach(emit);
             else
                 emitExprAsStmt(<Expression>node.initializer);
@@ -1384,7 +1411,7 @@ ${lbl}: .short 0xffff
             let label = node.label ? node.label.text : null
             function findOuter(node: Node): Statement {
                 if (!node) return null;
-                if (label && node.kind == SyntaxKind.LabeledStatement &&
+                if (label && node.kind == SK.LabeledStatement &&
                     (<LabeledStatement>node).label.text == label)
                     return (<LabeledStatement>node).statement;
                 if (!label && isIterationStatement(node, false))
@@ -1396,11 +1423,11 @@ ${lbl}: .short 0xffff
                 error(node, lf("cannot find outer loop"))
             else {
                 let l = getLabels(stmt)
-                if (node.kind == SyntaxKind.ContinueStatement) {
+                if (node.kind == SK.ContinueStatement) {
                     if (!isIterationStatement(stmt, false))
                         error(node, lf("continue on non-loop"));
                     else proc.emitJmp(l.cont)
-                } else if (node.kind == SyntaxKind.BreakStatement) {
+                } else if (node.kind == SK.BreakStatement) {
                     proc.emitJmp(l.brk)
                 } else {
                     oops();
@@ -1502,50 +1529,50 @@ ${lbl}: .short 0xffff
             switch (node.kind) {
 
 
-                case SyntaxKind.SourceFile:
+                case SK.SourceFile:
                     return emitSourceFileNode(<SourceFile>node);
-                case SyntaxKind.InterfaceDeclaration:
+                case SK.InterfaceDeclaration:
                     return emitInterfaceDeclaration(<InterfaceDeclaration>node);
-                case SyntaxKind.VariableStatement:
+                case SK.VariableStatement:
                     return emitVariableStatement(<VariableStatement>node);
-                case SyntaxKind.ModuleDeclaration:
+                case SK.ModuleDeclaration:
                     return emitModuleDeclaration(<ModuleDeclaration>node);
-                case SyntaxKind.EnumDeclaration:
+                case SK.EnumDeclaration:
                     return emitEnumDeclaration(<EnumDeclaration>node);
                 //case SyntaxKind.MethodSignature:
-                case SyntaxKind.FunctionDeclaration:
-                case SyntaxKind.Constructor:
-                case SyntaxKind.MethodDeclaration:
+                case SK.FunctionDeclaration:
+                case SK.Constructor:
+                case SK.MethodDeclaration:
                     emitFunctionDeclaration(<FunctionLikeDeclaration>node);
                     return
-                case SyntaxKind.ExpressionStatement:
+                case SK.ExpressionStatement:
                     return emitExpressionStatement(<ExpressionStatement>node);
-                case SyntaxKind.Block:
-                case SyntaxKind.ModuleBlock:
+                case SK.Block:
+                case SK.ModuleBlock:
                     return emitBlock(<Block>node);
-                case SyntaxKind.VariableDeclaration:
+                case SK.VariableDeclaration:
                     return emitVariableDeclaration(<VariableDeclaration>node);
-                case SyntaxKind.IfStatement:
+                case SK.IfStatement:
                     return emitIfStatement(<IfStatement>node);
-                case SyntaxKind.WhileStatement:
+                case SK.WhileStatement:
                     return emitWhileStatement(<WhileStatement>node);
-                case SyntaxKind.DoStatement:
+                case SK.DoStatement:
                     return emitDoStatement(<DoStatement>node);
-                case SyntaxKind.ForStatement:
+                case SK.ForStatement:
                     return emitForStatement(<ForStatement>node);
-                case SyntaxKind.ContinueStatement:
-                case SyntaxKind.BreakStatement:
+                case SK.ContinueStatement:
+                case SK.BreakStatement:
                     return emitBreakOrContinueStatement(<BreakOrContinueStatement>node);
-                case SyntaxKind.LabeledStatement:
+                case SK.LabeledStatement:
                     return emitLabeledStatement(<LabeledStatement>node);
-                case SyntaxKind.ReturnStatement:
+                case SK.ReturnStatement:
                     return emitReturnStatement(<ReturnStatement>node);
-                case SyntaxKind.ClassDeclaration:
+                case SK.ClassDeclaration:
                     return emitClassDeclaration(<ClassDeclaration>node);
-                case SyntaxKind.PropertyDeclaration:
-                case SyntaxKind.PropertyAssignment:
+                case SK.PropertyDeclaration:
+                case SK.PropertyAssignment:
                     return emitPropertyAssignment(<PropertyDeclaration>node);
-                case SyntaxKind.TypeAliasDeclaration:
+                case SK.TypeAliasDeclaration:
                     // skip
                     return
                 default:
@@ -1555,46 +1582,46 @@ ${lbl}: .short 0xffff
 
         function emitExprCore(node: Node): ir.Expr {
             switch (node.kind) {
-                case SyntaxKind.NullKeyword:
+                case SK.NullKeyword:
                     return ir.numlit(null);
-                case SyntaxKind.TrueKeyword:
+                case SK.TrueKeyword:
                     return ir.numlit(true);
-                case SyntaxKind.FalseKeyword:
+                case SK.FalseKeyword:
                     return ir.numlit(false);
-                case SyntaxKind.NumericLiteral:
-                case SyntaxKind.StringLiteral:
-                case SyntaxKind.NoSubstitutionTemplateLiteral:
+                case SK.NumericLiteral:
+                case SK.StringLiteral:
+                case SK.NoSubstitutionTemplateLiteral:
                     //case SyntaxKind.RegularExpressionLiteral:                    
                     //case SyntaxKind.TemplateHead:
                     //case SyntaxKind.TemplateMiddle:
                     //case SyntaxKind.TemplateTail:
                     return emitLiteral(<LiteralExpression>node);
-                case SyntaxKind.PropertyAccessExpression:
+                case SK.PropertyAccessExpression:
                     return emitPropertyAccess(<PropertyAccessExpression>node);
-                case SyntaxKind.BinaryExpression:
+                case SK.BinaryExpression:
                     return emitBinaryExpression(<BinaryExpression>node);
-                case SyntaxKind.PrefixUnaryExpression:
+                case SK.PrefixUnaryExpression:
                     return emitPrefixUnaryExpression(<PrefixUnaryExpression>node);
-                case SyntaxKind.PostfixUnaryExpression:
+                case SK.PostfixUnaryExpression:
                     return emitPostfixUnaryExpression(<PostfixUnaryExpression>node);
-                case SyntaxKind.ElementAccessExpression:
+                case SK.ElementAccessExpression:
                     return emitIndexedAccess(<ElementAccessExpression>node);
-                case SyntaxKind.ParenthesizedExpression:
+                case SK.ParenthesizedExpression:
                     return emitParenExpression(<ParenthesizedExpression>node);
-                case SyntaxKind.TypeAssertionExpression:
+                case SK.TypeAssertionExpression:
                     return emitTypeAssertion(<TypeAssertion>node);
-                case SyntaxKind.ArrayLiteralExpression:
+                case SK.ArrayLiteralExpression:
                     return emitArrayLiteral(<ArrayLiteralExpression>node);
-                case SyntaxKind.NewExpression:
+                case SK.NewExpression:
                     return emitNewExpression(<NewExpression>node);
-                case SyntaxKind.ThisKeyword:
+                case SK.ThisKeyword:
                     return emitThis(node);
-                case SyntaxKind.CallExpression:
+                case SK.CallExpression:
                     return emitCallExpression(<CallExpression>node);
-                case SyntaxKind.FunctionExpression:
-                case SyntaxKind.ArrowFunction:
+                case SK.FunctionExpression:
+                case SK.ArrowFunction:
                     return emitFunctionDeclaration(<FunctionLikeDeclaration>node);
-                case SyntaxKind.Identifier:
+                case SK.Identifier:
                     return emitIdentifier(<Identifier>node);
 
                 default:
