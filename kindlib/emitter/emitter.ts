@@ -6,7 +6,7 @@ namespace ts.ks {
 
     let EK = ir.EK;
 
-    function stringKind(n: Node) {
+    export function stringKind(n: Node) {
         if (!n) return "<null>"
         return (<any>ts).SyntaxKind[n.kind]
     }
@@ -126,6 +126,12 @@ namespace ts.ks {
         _name?: string;
         jsDoc?: string;
         paramHelp?: Util.Map<string>;
+    }
+
+    export interface CallInfo {
+        decl: Declaration;
+        attrs: CommentAttrs;
+        args: Expression[];
     }
 
     interface ClassInfo {
@@ -792,7 +798,13 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = node.arguments.slice(0)
-
+            let callInfo:CallInfo = { 
+                decl,
+                attrs,
+                args: args.slice(0)
+            };
+            (node as any).callInfo = callInfo
+            
             if (!decl)
                 unhandled(node, "no declaration")
 
@@ -816,9 +828,11 @@ ${lbl}: .short 0xffff
 
             if (decl.kind == SyntaxKind.MethodSignature ||
                 decl.kind == SyntaxKind.MethodDeclaration) {
-                if (node.expression.kind == SyntaxKind.PropertyAccessExpression)
-                    args.unshift((<PropertyAccessExpression>node.expression).expression)
-                else
+                if (node.expression.kind == SyntaxKind.PropertyAccessExpression) {
+                    let recv = (<PropertyAccessExpression>node.expression).expression
+                    args.unshift(recv)
+                    callInfo.args.unshift(recv)
+                } else
                     unhandled(node, "strange method call")
                 if (attrs.shim) {
                     return emitShim(decl, node, args);
@@ -852,6 +866,7 @@ ${lbl}: .short 0xffff
                 if (suff == "0") suff = ""
 
                 args.unshift(node.expression)
+                callInfo.args.unshift(node.expression)
 
                 return rtcallMask("action::run" + suff, args, true)
             }

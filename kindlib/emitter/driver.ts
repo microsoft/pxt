@@ -22,6 +22,7 @@ namespace ts.ks {
         hexinfo: any;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
+        ast?: boolean;
     }
 
     export interface CompileResult {
@@ -30,6 +31,7 @@ namespace ts.ks {
         success: boolean;
         times:U.Map<number>;
         enums:U.Map<number>;
+        ast?: Program;
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {
@@ -109,9 +111,13 @@ namespace ts.ks {
         }
         
         let emitStart = Date.now()
-        res.times["typescript"] = emitStart - startTime 
-
-        if (res.diagnostics.length == 0) {
+        res.times["typescript"] = emitStart - startTime
+        
+        if (opts.ast) {
+            res.ast = program
+        }
+        
+        if (opts.ast || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, host, opts);
             res.times["compilebinary"] = Date.now() - emitStart
             res.diagnostics = binOutput.diagnostics

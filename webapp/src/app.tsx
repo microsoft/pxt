@@ -262,7 +262,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 fontSize: this.settings.theme.fontSize || "20px"
             }
         };
-        if (!this.settings.fileHistory) this.settings.fileHistory = []
+        if (!this.settings.fileHistory) this.settings.fileHistory = [];
     }
 
     swapTheme() {
@@ -309,7 +309,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (!this.editorFile)
             return Promise.resolve()
         this.saveTypeScript()
-        return this.editorFile.setContentAsync(this.editor.getCurrentSource())
+        let txt = this.editor.getCurrentSource()
+        return this.editorFile.setContentAsync(txt)
     }
 
     public typecheckNow() {
@@ -770,6 +771,10 @@ var logoOrange = (
     </svg>
 )
 
+function getsrc() {
+    console.log(theEditor.editor.getCurrentSource())
+}
+
 // This is for usage from JS console
 let myexports: any = {
     workspace,
@@ -779,6 +784,7 @@ let myexports: any = {
     ace,
     compiler,
     pkg,
+    getsrc,
     apiAsync: core.apiAsync
 };
 (window as any).E = myexports;

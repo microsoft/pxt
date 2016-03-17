@@ -69,6 +69,9 @@ namespace ks.runner {
             } else if (proto == "embed") {
                 epkg.setFiles(getEmbeddedScript(pkg.verArgument()))
                 return Promise.resolve()
+            } else if (proto == "empty") {
+                epkg.setFiles(emptyPrjFiles())
+                return Promise.resolve()
             } else {
                 return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
             }
@@ -102,6 +105,12 @@ namespace ks.runner {
         return newOne
     }
 
+    function emptyPrjFiles() {
+        let p = appTarget.tsprj
+        let files = U.clone(p.files)
+        files[ks.configName] = JSON.stringify(p.config, null, 4) + "\n"
+        return files
+    }
 
     function initInnerAsync() {
         let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -111,6 +120,7 @@ namespace ks.runner {
                 let cfg: ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
                 appTarget = cfg.target
                 appTarget.bundledpkgs = trgbundle.bundledpkgs
+
                 if (!appTarget.cloud) Cloud.apiRoot = undefined;
             })
             .then(() => {
@@ -128,7 +138,7 @@ namespace ks.runner {
     function loadPackageAsync(id: string) {
         let host = mainPkg.host();
         mainPkg = new ks.MainPackage(host)
-        mainPkg._verspec = "pub:" + id
+        mainPkg._verspec = id ? "pub:" + id : "empty:tsprj"
 
         return host.downloadPackageAsync(mainPkg)
             .then(() => host.readFile(mainPkg, ks.configName))
@@ -141,11 +151,15 @@ namespace ks.runner {
             })
     }
 
-    function compileAsync() {
+    function getCompileOptionsAsync() {
         let trg = mainPkg.getTargetOptions()
         trg.isNative = false
         trg.hasHex = false
         return mainPkg.getCompileOptionsAsync(trg)
+    }
+
+    function compileAsync() {
+        return getCompileOptionsAsync()
             .then(opts => {
                 let resp = ts.ks.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
@@ -163,12 +177,29 @@ namespace ks.runner {
             })
     }
 
+    export function toBlocksAsync(code: string) {
+        return loadPackageAsync(null)
+            .then(getCompileOptionsAsync)
+            .then(opts => {
+                opts.fileSystem["main.ts"] = code
+                opts.ast = true
+                let resp = ts.ks.compile(opts)
+                if (resp.diagnostics && resp.diagnostics.length > 0) {
+                    console.error("Diagnostics", resp.diagnostics)
+                }
+                console.log(resp)
+                let blcks = ks.blocks.toBlocks(resp.ast.getSourceFile("main.ts").statements)
+                console.log(blcks)
+                return resp
+            })
+    }
+
     export var initCallbacks: (() => void)[] = [];
     export var options: RunnerOptions;
     export function init(opts: RunnerOptions) {
         options = opts;
         initInnerAsync()
-            .done(() => {                
+            .done(() => {
                 for (let i = 0; i < initCallbacks.length; ++i) {
                     initCallbacks[i]();
                 }
