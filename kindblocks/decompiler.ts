@@ -17,6 +17,8 @@ ${output}</xml>`;
             switch (n.kind) {
                 case SK.ExpressionStatement:
                     emit((n as ts.ExpressionStatement).expression); break;
+                case SK.VariableStatement:
+                    emitVariableStatement(n as ts.VariableStatement); break;
                 case SK.Block:
                     emitBlock(n as ts.Block); break;
                 case SK.CallExpression:
@@ -42,6 +44,18 @@ ${output}</xml>`;
                 default:
                     console.warn("Unhandled emit:", ts.ks.stringKind(n))
             }
+        }
+        
+        function emitVariableStatement(n : ts.VariableStatement) {
+            n.declarationList.declarations.forEach(decl => {
+                write('<block type="variables_set">')
+                write(`<field name="VAR">${(decl.name as ts.Identifier).text}</field>`)
+                write('<value name="VALUE">')
+                emit(decl.initializer);
+                write('</value>')
+                write('</field>')
+                write('</block')                
+            })
         }
         
         function emitPropertyAccessExpression(n : ts.PropertyAccessExpression) : void {
