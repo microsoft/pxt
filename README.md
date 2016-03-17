@@ -67,7 +67,6 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] inline assembly
 * [x] use "(x + y) | 0" etc instead of "x + y" in simulator
 * [ ] allow use of floating point for non-native targets
-* [ ] use proper int mulitplication in simulator (overflows)
 * [x] do not generate empty action bodies for shim
 * [x] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues

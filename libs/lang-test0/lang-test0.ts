@@ -143,7 +143,7 @@ function testNums(): void {
     assert(Math.abs(42) == 42, "abs");
     assert(Math.sign(42) == 1, "abs");
     testIf();
-    
+
     assert((3 & 6) == 2, "&")
     assert((3 | 6) == 7, "|")
     assert((3 ^ 6) == 5, "^")
@@ -153,6 +153,8 @@ function testNums(): void {
     assert((10 << 2) == 40, "<<+")
     assert((10 >> 2) == 2, ">>+")
     assert((10 >>> 2) == 2, ">>>+")
+    assert(1000000 * 1000000 == -727379968, "*")
+    assert(100000001 * 100000001 == 2074919425, "*2")
 }
 
 

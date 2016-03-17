@@ -103,6 +103,7 @@ namespace ks.rt {
     // for explanations see:
     // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
     // (but the code below doesn't come from there; I wrote it myself)
+    // TODO use Math.imul if available
     function intMult(a: number, b: number) {
         return (((a & 0xffff) * (b >>> 16) + (b & 0xffff) * (a >>> 16)) << 16) + ((a & 0xffff) * (b & 0xffff));
     }
