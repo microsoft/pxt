@@ -391,7 +391,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let textPos = editor.getCursorPosition();
         let line = editor.session.getLine(textPos.row);
         let linepref = line.slice(0, textPos.column)
-        let m = /(\w*)$/.exec(linepref)
+        let m = /((\w+\s*)*)$/.exec(linepref)
         let pref = m ? m[1] : ""
         let before = linepref.slice(0, linepref.length - pref.length).trim()
         let isTopLevel = !before || Util.endsWith(before, "{")  // }
