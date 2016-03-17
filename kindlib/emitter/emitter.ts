@@ -920,7 +920,9 @@ ${lbl}: .short 0xffff
         function emitTypeAssertion(node: TypeAssertion) {
             return emitExpr(node.expression)
         }
-        function emitAsExpression(node: AsExpression) { }
+        function emitAsExpression(node: AsExpression) { 
+            return emitExpr(node.expression)
+        }
         function emitParenExpression(node: ParenthesizedExpression) {
             return emitExpr(node.expression)
         }
@@ -1538,8 +1540,6 @@ ${lbl}: .short 0xffff
 
         function emitNodeCore(node: Node): void {
             switch (node.kind) {
-
-
                 case SK.SourceFile:
                     return emitSourceFileNode(<SourceFile>node);
                 case SK.InterfaceDeclaration:
@@ -1636,6 +1636,8 @@ ${lbl}: .short 0xffff
                     return emitIdentifier(<Identifier>node);
                 case SK.ConditionalExpression:
                     return emitConditionalExpression(<ConditionalExpression>node);
+                case SK.AsExpression:
+                    return emitAsExpression(<AsExpression>node);
 
                 default:
                     unhandled(node);
@@ -1677,8 +1679,6 @@ ${lbl}: .short 0xffff
                     return emitComputedPropertyName(<ComputedPropertyName>node);
                 case SyntaxKind.TaggedTemplateExpression:
                     return emitTaggedTemplateExpression(<TaggedTemplateExpression>node);
-                case SyntaxKind.AsExpression:
-                    return emitAsExpression(<AsExpression>node);
                 case SyntaxKind.DeleteExpression:
                     return emitDeleteExpression(<DeleteExpression>node);
                 case SyntaxKind.TypeOfExpression:

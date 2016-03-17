@@ -77,9 +77,10 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] `foo${bar}baz`
 * [x] x ? a : b
 * [ ] error for 'shim:foo' (ie. shim=true)
-* [ ] x as T support
+* [x] x as T support
 * [ ] simulator at sim-microbit.kindscript.net
 * [ ] `ptr-<username>-*` as the main way publishing packages
+* [ ] lib compile mode - no reachability, test shims
 
 #### Bigger items
 * [ ] generate .d.ts from .cpp

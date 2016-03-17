@@ -339,7 +339,7 @@ function testIter() {
 
 function testAction(p: number): void {
     let s = "hello" + "1";
-    let coll = (<number[]>[]);
+    let coll = [] as number[];
     let p2 = p * 2;
     x = 42;
     runTwice(() => {
@@ -396,7 +396,7 @@ function testActionSave(): void {
     msg(tot);
     assert(tot == "foo42foo42", "");
     tot = "";
-    action = (<Action>null);
+    action = null;
 }
 
 function testLazyOps(): void {
