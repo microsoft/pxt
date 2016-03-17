@@ -889,7 +889,7 @@ function buildCoreAsync(mode: BuildOption) {
     return mainPkg.loadAsync()
         .then(() => {
             let target = mainPkg.getTargetOptions()
-            if (target.nativeType && mode != BuildOption.Run)
+            if (target.hasHex && mode != BuildOption.Run)
                 target.isNative = true
             return mainPkg.buildAsync(target)
         })

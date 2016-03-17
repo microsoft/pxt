@@ -1321,7 +1321,18 @@ ${lbl}: .short 0xffff
                 throw userError(lf("don't know how to convert to string"))
         }
 
-        function emitConditionalExpression(node: ConditionalExpression) { }
+        function emitConditionalExpression(node: ConditionalExpression) {
+            let els = proc.mkLabel("condexprz")
+            let fin = proc.mkLabel("condexprfin")
+            // TODO what if the value is of ref type?
+            proc.emitJmp(els, emitExpr(node.condition), ir.JmpMode.IfZero)
+            proc.emitJmp(fin, emitExpr(node.whenTrue), ir.JmpMode.Always)
+            proc.emitLbl(els)
+            proc.emitJmp(fin, emitExpr(node.whenFalse), ir.JmpMode.Always)
+            proc.emitLbl(fin)
+            return ir.op(EK.JmpValue, [])
+        }
+        
         function emitSpreadElementExpression(node: SpreadElementExpression) { }
         function emitYieldExpression(node: YieldExpression) { }
         function emitBlock(node: Block) {
@@ -1623,6 +1634,8 @@ ${lbl}: .short 0xffff
                     return emitFunctionDeclaration(<FunctionLikeDeclaration>node);
                 case SK.Identifier:
                     return emitIdentifier(<Identifier>node);
+                case SK.ConditionalExpression:
+                    return emitConditionalExpression(<ConditionalExpression>node);
 
                 default:
                     unhandled(node);
@@ -1674,8 +1687,6 @@ ${lbl}: .short 0xffff
                     return emitVoidExpression(<VoidExpression>node);
                 case SyntaxKind.AwaitExpression:
                     return emitAwaitExpression(<AwaitExpression>node);
-                case SyntaxKind.ConditionalExpression:
-                    return emitConditionalExpression(<ConditionalExpression>node);
                 case SyntaxKind.SpreadElementExpression:
                     return emitSpreadElementExpression(<SpreadElementExpression>node);
                 case SyntaxKind.YieldExpression:

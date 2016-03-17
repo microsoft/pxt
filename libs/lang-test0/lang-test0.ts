@@ -448,9 +448,20 @@ function testLazyOps(): void {
     } else {
         assert(false, "");
     }
+    
+    lazyAcc = 0;
+    assert((true ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 42, "?:")
+    assert(lazyAcc == 1, "?:0");
+    assert((false ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 36, "?:1")
+    assert(lazyAcc == 11, "?:2");
 }
 
 function incrLazyAcc(delta: number, res: boolean): boolean {
+    lazyAcc = lazyAcc + delta;
+    return res;
+}
+
+function incrLazyNum(delta: number, res: number) {
     lazyAcc = lazyAcc + delta;
     return res;
 }
