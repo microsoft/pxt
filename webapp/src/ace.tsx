@@ -57,6 +57,7 @@ export interface CompletionEntry {
     lastScore: number;
     searchName: string;
     searchDesc: string;
+    block?: string;
     snippet?: string;
 }
 
@@ -71,6 +72,7 @@ export interface CompletionCache {
 function fixupSearch(e: CompletionEntry) {
     e.searchName = (e.searchName || "").replace(/\s+/g, "").toLowerCase() + " ";
     e.searchDesc = " " + (e.searchDesc || "").toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+    e.block = e.block ? e.block.replace(/\s/g, '').toLowerCase() : '';
     return e
 }
 
@@ -89,7 +91,7 @@ function mkSyntheticEntry(name: string, desc: string) {
         },
         lastScore: 0,
         searchName: name,
-        searchDesc: desc,
+        searchDesc: desc
     })
 }
 
@@ -178,7 +180,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     symbolInfo: si,
                     lastScore: 0,
                     searchDesc: q + " " + (si.attributes.jsDoc || ""),
-                    searchName: si.name
+                    searchName: si.name,
+                    block: si.attributes.block
                 })
                 cache.entries = []
                 cache.fuseEntries = undefined;
@@ -215,10 +218,13 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 shouldSort: false,
                 keys: [{
                     name: "name",
-                    weight: 0.5
+                    weight: 0.4
                 }, {
                     name: "searchName",
-                    weight: 0.5
+                    weight: 0.3
+                }, {
+                    name: "block",
+                    weight: 0.2
                 }, {
                     name: "searchDesc",
                     weight: 0.1
