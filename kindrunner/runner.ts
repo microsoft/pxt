@@ -185,13 +185,13 @@ namespace ks.runner {
                 let resp = ts.ks.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
-                }
-                console.log(resp)
-                let blcks = ks.blocks.toBlocks(resp.ast.getSourceFile("main.ts").statements)
-                console.log(blcks)
+                }                
                 let apis = ts.ks.getApiInfo(resp.ast);
                 let blocksInfo = ts.ks.getBlocksInfo(apis);
                 ks.blocks.initBlocks(blocksInfo);
+                console.log(resp)
+                let blcks = ks.blocks.toBlocks(resp.ast.getSourceFile("main.ts").statements)
+                console.log(blcks)
                 return ks.blocks.render(blcks);
             })
     }

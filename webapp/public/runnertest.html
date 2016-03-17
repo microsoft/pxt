@@ -25,12 +25,21 @@
     <script type="text/javascript" src="./embed.js"></script>
     <script type="text/javascript">
         var ps = [ 
-            "10",
-            "true",
-            "false",
-            "'hello'",
-            "basic.showNumber(2)", 
-            "basic.showString('Hello!')"];
+            "0"
+            /*
+            ,"true"
+            ,"false"
+            ,"'hello'"
+            ,"basic.showNumber(2)"
+            ,"basic.showString('Hello!')"
+            ,"basic.showNumber(2, 150)"
+            ,"basic.showLeds(`. . . . .\n. # . # .\n. . . . .\n# . . . #\n. # # # .`);" */
+            //,"while(true) {}"
+            //,"for(let i = 0;i<5;++i) {}"
+            // ,"if (false) { }",
+            // ,"if (false) { basic.showNumber(0) } else { basic.clearScreen() }"
+            ,"if (false) { basic.showNumber(0) } else if (false) { basic.showNumber(1) } else { basic.clearScreen() }",
+           ];
         function next() {
             var p = ps.pop();
             if (!p) return;

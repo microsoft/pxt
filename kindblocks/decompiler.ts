@@ -17,6 +17,8 @@ ${output}</xml>`;
             switch (n.kind) {
                 case SK.ExpressionStatement:
                     emit((n as ts.ExpressionStatement).expression); break;
+                case SK.Block:
+                    emitBlock(n as ts.Block); break;
                 case SK.CallExpression:
                     emitCallExpression(n as ts.CallExpression); break;
                 case SK.StringLiteral:
@@ -28,10 +30,70 @@ ${output}</xml>`;
                     emitNumberExpression(n as ts.LiteralExpression); break;
                 case SK.TrueKeyword:
                 case SK.FalseKeyword:                
-                    emitBooleanExpression(n as ts.LiteralExpression); break;
+                    emitBooleanExpression(n as ts.LiteralExpression); break;                
+                case SK.WhileStatement:
+                    emitWhileStatement(n as ts.WhileStatement); break;
+                case SK.IfStatement:
+                    emitIfStatement(n as ts.IfStatement); break;                
                 default:
                     console.warn("Unhandled emit:", ts.ks.stringKind(n))
             }
+        }
+        
+        function emitBlock(n : ts.Block) {
+            n.statements.forEach(statement => emit(statement));
+        }
+        
+        function flattenIfStatement(n : ts.IfStatement) : {
+            ifStatements: { 
+                expression: ts.Expression; 
+                thenStatement: ts.Statement;
+                }[];
+            elseStatement: ts.Statement;
+        } {
+           let r = {
+               ifStatements: [{ 
+                   expression: n.expression, 
+                   thenStatement: n.thenStatement
+                }],
+               elseStatement: n.elseStatement
+           }
+           if (n.elseStatement && n.elseStatement.kind == SK.IfStatement) {
+               let flat = flattenIfStatement(n.elseStatement as ts.IfStatement);
+               r.ifStatements = r.ifStatements.concat(flat.ifStatements);
+               r.elseStatement = flat.elseStatement;
+           }           
+           return r;
+        }
+        
+        function emitIfStatement(n : ts.IfStatement) {
+            let flatif = flattenIfStatement(n);
+            write('<block type="controls_if">')
+            write(`<mutation elseif="${flatif.ifStatements.length - 1}" else="${flatif.elseStatement ? 1 : 0}"></mutation>`)
+            flatif.ifStatements.forEach((stmt, i) => {
+                write(`<value name="IF${i}">` )
+                emit(stmt.expression)
+                write('</value>')
+                write(`<statement name="DO${i}">`)
+                emit(stmt.thenStatement)
+                write('</statement>')                
+            })
+            if (n.elseStatement) {
+                write('<statement name="ELSE">')
+                emit(flatif.elseStatement)
+                write('</statement>')
+            }
+        }
+        
+        function emitWhileStatement(n : ts.WhileStatement) : void {
+            write('<block type="device_while">');
+            write('<value name="COND">')
+            emit(n.expression)
+            write('</value>')
+            write('<statement name="DO">')
+            emit(n.statement)
+            write('</statement>')
+            write('</block>')
         }
 
         function emitStringLiteral(n: ts.StringLiteral) {
