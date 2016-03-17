@@ -20,7 +20,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'built/kind.js', 'built/kind.d.ts', 'wapp'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/kind.js', 'built/kind.d.ts', 'built/kindrunner.js', 'wapp'], { parallelLimit: 10 })
 
 task('test', ['default', 'runprj', 'testfmt'])
 
@@ -63,6 +63,7 @@ file('built/kind.d.ts', ['built/cli.js'], function () {
 
 compileDir("kindlib")
 compileDir("kindblocks", ["built/kindlib.js"])
+compileDir("kindrunner", ["built/kindlib.js", "built/kindblocks.js"])
 compileDir("kindsim", ["built/kindlib.js", "built/kindblocks.js"])
 compileDir("cli", ["built/kindlib.js", "built/kindsim.js"])
 
@@ -175,11 +176,18 @@ task('wapp', [
     'built/web/main.js',
     'built/web/worker.js',
     'built/web/fonts/icons.woff2',
+    'built/web/hexinfo.js',
     'built/web/semantic.css',
     "built/web/semantic.js"
 ])
 
-file("built/web/kindlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/kindlib.js", "built/kindblocks.js", "built/kindsim.js"], function () {
+file("built/web/hexinfo.js", ["generated/hexinfo.js"], function() {
+    let hi = fs.readFileSync("generated/hexinfo.js", "utf8")
+    hi = hi.replace(/module.exports =/, "var ksHexInfo =")
+    fs.writeFileSync("built/web/hexinfo.js", hi)
+})
+
+file("built/web/kindlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/kindlib.js", "built/kindblocks.js", "built/kindsim.js", "built/kindrunner.js"], function () {
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
@@ -187,6 +195,7 @@ file("built/web/kindlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/kin
     jake.cpR("built/kindlib.js", "built/web/")
     jake.cpR("built/kindblocks.js", "built/web/")
     jake.cpR("built/kindsim.js", "built/web/")
+    jake.cpR("built/kindrunner.js", "built/web/")
 
     let additionalExports = [
         "getCompletionData"

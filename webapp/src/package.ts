@@ -227,7 +227,7 @@ class Host
     }
 
     getHexInfoAsync() {
-        return Promise.resolve(require("../../../generated/hexinfo.js"))
+        return Promise.resolve((window as any).ksHexInfo)
     }
 
     downloadPackageAsync(pkg: ks.Package) {
