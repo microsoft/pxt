@@ -1,14 +1,16 @@
 <!doctype html>
 <html lang="en" data-framework="typescript">
+
 <head>
     <meta charset="utf-8">
     <title>KindScript Runner Test</title>
 </head>
-<body>    
+
+<body>
     <div id='loading' style='font-size: 30px; margin: 100px auto; width: 200px;'>
         loading...
     </div>
-    
+
     <style type="text/css">
         @import "./semantic.css";
         @import "./custom.css";
@@ -17,20 +19,31 @@
         // This line gets patched up by the cloud
         var rootUrl = "dummy";
         var appCdnRoot = "./";
-        var simCdnRoot = "./"; 
+        var simCdnRoot = "./";
     </script>
-    
+
     <script type="text/javascript" src="./embed.js"></script>
     <script type="text/javascript">
-        ksRunnerReady(function() {
-            ks.runner.toBlocksAsync("basic.showString('Hello')")
-              .done(function(svg) {
+        var ps = [ "basic.showNumber(2)", "basic.showString(`Hello!`)"];
+        function next() {
+            var p = ps.pop();
+            if (!p) return;
+            ks.runner.toBlocksAsync(p).done(function(svg) {
                 $('#loading').remove();
-                $(document.body).append(svg)                  
-              })
-            //ks.runner.simulateAsync("ljhhqw")
+                if (svg) {
+                    $(svg).removeClass('blocklyPreview')
+                    var div = $("<div/>").append(svg)                
+                    $(document.body).append(div)                                      
+                } 
+                next();
+            })
+        }
+            
+        ksRunnerReady(function() {
+            next()
         })
     </script>
-    
+
 </body>
+
 </html>
