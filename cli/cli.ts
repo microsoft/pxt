@@ -423,7 +423,8 @@ function buildTargetCoreAsync() {
         pkg.filesToBePublishedAsync()
             .then(res => {
                 cfg.bundledpkgs[pkg.config.name] = res
-            }))
+            })
+            .then(testMainPkgAsync))
         .then(() => {
             if (!fs.existsSync("built"))
                 fs.mkdirSync("built")
@@ -883,6 +884,24 @@ function runCoreAsync(res: ts.ks.CompileResult) {
         })
     }
     return Promise.resolve()
+}
+
+function testMainPkgAsync() {
+    return mainPkg.loadAsync()
+        .then(() => {
+            let target = mainPkg.getTargetOptions()
+            if (target.hasHex)
+                target.isNative = true
+            return mainPkg.getCompileOptionsAsync(target)
+        })
+        .then(opts => {
+            opts.testMode = true
+            return ts.ks.compile(opts)
+        })
+        .then(res => {
+            reportDiagnostics(res.diagnostics);
+            if (!res.success) U.userError("Test failed")
+        })
 }
 
 function buildCoreAsync(mode: BuildOption) {
