@@ -134,6 +134,7 @@ export class Button extends UiElement<ButtonProps> {
     renderCore() {
         return (
             <button className={genericClassName("ui button", this.props) }
+                title={this.props.text}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}

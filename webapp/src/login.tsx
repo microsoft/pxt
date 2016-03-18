@@ -78,6 +78,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
     renderCore() {
         let settings: Cloud.UserSettings = this.getData("cloud:me/settings?format=nonsensitive") || {}
         let name = Cloud.isLoggedIn() ? (settings.nickname || lf("Loading...")) : lf("Sign in")
+        let icon = Cloud.isLoggedIn() ? "user" : "sign in";
         let buttonAction = () => {
             if (Cloud.isLoggedIn())
                 this.child(".ui.dropdown").dropdown("show");
@@ -93,7 +94,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
         return (
             <div id='loginbox'>
                 <div className="ui buttons">
-                    <sui.Button text={name} onClick={buttonAction} />
+                    <sui.Button textClass="ui landscape only" text={name} icon={icon} onClick={buttonAction} />
                     <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                         {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.options() } icon='settings' text={lf("Account options") } /> : null}
                         {!Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signin() } icon='sign in' text={lf("Sign in") } /> : null}
