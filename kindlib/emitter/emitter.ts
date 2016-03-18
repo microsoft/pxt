@@ -1523,7 +1523,7 @@ ${lbl}: .short 0xffff
 
             let l = getLabels(node)
             let hasDefault = false
-            let expr = ir.shared(emitExpr(node.expression))
+            let expr = emitExpr(node.expression)
             let lbls = node.caseBlock.clauses.map(cl => {
                 let lbl = proc.mkLabel("switch")
                 if (cl.kind == SK.CaseClause) {
