@@ -116,11 +116,6 @@ namespace ts.ks {
         }
     }
 
-    function isOnDemandDecl(decl: Declaration) {
-        return (isGlobalVar(decl) && !isSideEffectfulInitializer((<VariableDeclaration>decl).initializer)) ||
-            isTopLevelFunctionDecl(decl)
-    }
-
     export interface CommentAttrs {
         shim?: string;
         enumval?: string;
@@ -709,6 +704,16 @@ ${lbl}: .short 0xffff
             } else {
                 throw unhandled(node, "unsupported indexer")
             }
+        }
+
+        function isOnDemandDecl(decl: Declaration) {
+            let res = (isGlobalVar(decl) && !isSideEffectfulInitializer((<VariableDeclaration>decl).initializer)) ||
+                isTopLevelFunctionDecl(decl)
+            if (opts.testMode && res) {
+                if (!U.startsWith(getSourceFileOfNode(decl).fileName, "kind_modules"))
+                    return false
+            }
+            return res
         }
 
         function isUsed(decl: Declaration) {

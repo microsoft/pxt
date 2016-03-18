@@ -409,7 +409,7 @@ function buildKindScriptAsync(): Promise<string[]> {
         return [ksd]
     }, e => {
         console.log("local kindscript build FAILED")
-        return [ksd]        
+        return [ksd]
     });
 }
 
@@ -619,7 +619,8 @@ export function publishAsync() {
 enum BuildOption {
     JustBuild,
     Run,
-    Deploy
+    Deploy,
+    Test
 }
 
 export function serviceAsync(cmd: string) {
@@ -891,7 +892,12 @@ function buildCoreAsync(mode: BuildOption) {
             let target = mainPkg.getTargetOptions()
             if (target.hasHex && mode != BuildOption.Run)
                 target.isNative = true
-            return mainPkg.buildAsync(target)
+            return mainPkg.getCompileOptionsAsync(target)
+        })
+        .then(opts => {
+            if (mode == BuildOption.Test)
+                opts.testMode = true
+            return ts.ks.compile(opts)
         })
         .then(res => {
             U.iterStringMap(res.outfiles, (fn, c) =>
@@ -924,6 +930,10 @@ export function runAsync() {
     return buildCoreAsync(BuildOption.Run)
 }
 
+export function testAsync() {
+    return buildCoreAsync(BuildOption.Test)
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -952,6 +962,7 @@ cmd("publish                      - publish current package", publishAsync)
 cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
+cmd("test                         - run tests on current package", testAsync)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync)
 cmd("help                         - display this message", helpAsync)
 cmd("serve                        - start web server for your local target", serveAsync, 0)

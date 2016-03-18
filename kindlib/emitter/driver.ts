@@ -18,6 +18,7 @@ namespace ts.ks {
     export interface CompileOptions {
         fileSystem: StringMap<string>;
         target: CompileTarget;
+        testMode?: boolean;
         sourceFiles?: string[];
         hexinfo: any;
         extinfo?: ExtensionInfo;
