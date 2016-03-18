@@ -1264,6 +1264,7 @@ ${lbl}: .short 0xffff
                 case SK.MinusToken: return "thumb::subs";
                 // TODO expose __aeabi_idiv directly
                 case SK.SlashToken: return "number::divide";
+                case SK.PercentToken: return "math::mod";
                 case SK.AsteriskToken: return "thumb::muls";
                 case SK.AmpersandToken: return "thumb::ands";
                 case SK.BarToken: return "thumb::orrs";

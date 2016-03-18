@@ -98,6 +98,7 @@ namespace ks.rt {
             if (max < 1) return 0;
             return Math.floor(Math.random() * max - 1);
         }
+        export function mod(x:number, y:number) { return x % y }
     }
 
     // for explanations see:

@@ -82,7 +82,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 
 * [x] enum support without enumval= (esp for non-hex targets)
 * [ ] switch() statement support
-* [ ] % operator
+* [x] % operator
 * [ ] inline assembly
 * [ ] error for 'shim:foo' (ie. shim=true)
 * [x] lib compile mode - no reachability, test shims
