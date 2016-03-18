@@ -164,7 +164,7 @@ namespace ks.runner {
                 let resp = ts.ks.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     resp.diagnostics.forEach(diag => {
-                        console.error(diag.messageText)                        
+                        console.error(diag.messageText)
                     })
                 }
                 return resp
@@ -181,12 +181,12 @@ namespace ks.runner {
                 let js = resp.outfiles["microbit.js"];
                 if (js) {
                     let driver = new ks.rt.SimulatorDriver(container);
-                    driver.run(js, resp.enums);                    
+                    driver.run(js, resp.enums);
                 }
             })
     }
-    
-    export function toBlocksAsync(code: string) : Promise<JQuery> {        
+
+    export function toBlocksAsync(code: string): Promise<JQuery> {
         return loadPackageAsync(null)
             .then(getCompileOptionsAsync)
             .then(opts => {
@@ -195,14 +195,14 @@ namespace ks.runner {
                 let resp = ts.ks.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
-                }                
+                }
                 let apis = ts.ks.getApiInfo(resp.ast);
                 let blocksInfo = ts.ks.getBlocksInfo(apis);
                 ks.blocks.initBlocks(blocksInfo);
                 console.log(resp)
                 let blcks = ks.blocks.toBlocks(blocksInfo, resp.ast.getSourceFile("main.ts").statements)
                 console.log(blcks)
-                return ks.blocks.render(blcks, { emPixels: 14 });
+                return ks.blocks.render(blcks, { emPixels: 14, align: true });
             })
     }
 

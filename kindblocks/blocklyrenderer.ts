@@ -25,7 +25,7 @@ namespace ks.blocks {
         blocks.forEach(block => {
             block.moveBy(0, y)
             y += block.getHeightWidth().height
-            y += 10 //buffer            
+            y += 14; //buffer            
         })
     }
     

@@ -7,9 +7,9 @@ namespace ks.blocks {
 
     export function toBlocks(blocksInfo: ts.ks.BlocksInfo, stmts: ts.Statement[]): string {
         let output = ""
-        let nexts: BlockSequence[] = [{ top: 0, current: 0 }];
+        let nexts: BlockSequence[] = [];
 
-        emitStatements(stmts);
+        emitTopStatements(stmts);
 
         return `<xml xmlns="http://www.w3.org/1999/xhtml">
 ${output}</xml>`;
@@ -66,15 +66,20 @@ ${output}</xml>`;
             let next = nexts[nexts.length - 1];
             next.current--;
         }
-        
+
+        function pushBlocks() {
+            nexts.push({ current: 0, top: 0 });
+        }
+
         function flushBlocks() {
             let next = nexts.pop();
             Util.assert(next && next.current == 0)
             for (let i = 0; i < next.top - 1; ++i) {
-                write('</next>');
                 write('</block>')
+                write('</next>');
             }
-            write('</block>')            
+            if (next.top > 0)
+                write('</block>')
         }
 
         // TODO handle special for loops
@@ -174,11 +179,35 @@ ${output}</xml>`;
             emit(n.body)
         }
 
+        function emitTopStatements(stmts: ts.Statement[]) {
+            // chunk statements
+            let chunks: ts.Statement[][] = [[]];
+            stmts.forEach(stmt => {
+                if (isHat(stmt)) chunks.push([]);
+                chunks[chunks.length - 1].push(stmt);
+            })
+
+            chunks.forEach(chunk => {
+                pushBlocks();
+                chunk.forEach(statement => emit(statement));
+                flushBlocks();
+            })
+        }
+
         function emitStatements(stmts: ts.Statement[]) {
-            let next = { current: 0, top: 0 }
-            nexts.push(next);
+            pushBlocks();
             stmts.forEach(statement => emit(statement));
             flushBlocks();
+        }
+
+        function isHat(stmt: ts.Statement): boolean {
+            let expr: ts.Expression;
+            let call: ts.ks.CallInfo;
+            return stmt.kind == ts.SyntaxKind.ExpressionStatement
+                && !!(expr = (stmt as ts.ExpressionStatement).expression)
+                && expr.kind == ts.SyntaxKind.CallExpression
+                && !!(call = (expr as any).callInfo)
+                && /^on /.test(call.attrs.block)
         }
 
         function emitBlock(n: ts.Block) {
