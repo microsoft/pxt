@@ -28,19 +28,25 @@ namespace ks.blocks {
             y += 10 //buffer            
         })
     }
-
-    export function render(blocksXml: string, clean?: boolean): JQuery {
+    
+    export interface BlocksRenderOptions {
+        emPixels?: number;
+        align?: boolean;
+        clean?: boolean;
+    }
+    
+    export function render(blocksXml: string, options: BlocksRenderOptions = {}): JQuery {
         workspace.clear();
         try {
             let text = blocksXml || "<xml></xml>";
             let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(workspace, xml);
 
-            if (clean && false) {
+            if (options.align)
                 align(workspace);
-                if ((<any>workspace).cleanUp_)
-                    (<any>workspace).cleanUp_();                
-            }
+                
+            if (options.clean && (<any>workspace).cleanUp_)
+                (<any>workspace).cleanUp_();                
 
             let metrics = workspace.getMetrics();
 
@@ -52,6 +58,9 @@ namespace ks.blocks {
             svg[0].setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
             svg.removeAttr('width');
             svg.removeAttr('height');
+            
+            if (options.emPixels)
+                svg[0].style.width =  (metrics.contentWidth / options.emPixels) + 'em';
 
             return svg;
 

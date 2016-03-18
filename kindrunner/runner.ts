@@ -202,7 +202,7 @@ namespace ks.runner {
                 console.log(resp)
                 let blcks = ks.blocks.toBlocks(blocksInfo, resp.ast.getSourceFile("main.ts").statements)
                 console.log(blcks)
-                return ks.blocks.render(blcks, true);
+                return ks.blocks.render(blcks, { emPixels: 14 });
             })
     }
 
