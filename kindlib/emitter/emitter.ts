@@ -46,7 +46,19 @@ namespace ts.ks {
     }
 
     function isStringLiteral(node: Node) {
-        return (node.kind == SK.StringLiteral || node.kind == SK.NoSubstitutionTemplateLiteral)
+        switch (node.kind) {
+            case SK.TemplateHead:
+            case SK.TemplateMiddle:
+            case SK.TemplateTail:
+            case SK.StringLiteral:
+            case SK.NoSubstitutionTemplateLiteral:
+                return true;
+            default: return false;
+        }
+    }
+
+    function isEmptyStringLiteral(e: Expression | TemplateLiteralFragment) {
+        return isStringLiteral(e) && (e as LiteralExpression).text == ""
     }
 
     function getEnclosingMethod(node: Node): MethodDeclaration {
@@ -582,7 +594,23 @@ ${lbl}: .short 0xffff
                 throw oops();
             }
         }
-        function emitTemplateExpression(node: TemplateExpression) { }
+
+        function emitTemplateExpression(node: TemplateExpression) {
+            let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) =>
+                isEmptyStringLiteral(b) ? a :
+                    ir.rtcallMask("string::concat_op", 3, false, [
+                        a,
+                        emitAsString(b)
+                    ])
+            // TODO could optimize for the case where node.head is empty
+            let expr = emitAsString(node.head)
+            for (let span of node.templateSpans) {
+                expr = concat(expr, span.expression)
+                expr = concat(expr, span.literal)
+            }
+            return expr
+        }
+
         function emitTemplateSpan(node: TemplateSpan) { }
         function emitJsxElement(node: JsxElement) { }
         function emitJsxSelfClosingElement(node: JsxSelfClosingElement) { }
@@ -920,7 +948,7 @@ ${lbl}: .short 0xffff
         function emitTypeAssertion(node: TypeAssertion) {
             return emitExpr(node.expression)
         }
-        function emitAsExpression(node: AsExpression) { 
+        function emitAsExpression(node: AsExpression) {
             return emitExpr(node.expression)
         }
         function emitParenExpression(node: ParenthesizedExpression) {
@@ -1310,8 +1338,11 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitAsString(e: Expression): ir.Expr {
+        function emitAsString(e: Expression | TemplateLiteralFragment): ir.Expr {
             let r = emitExpr(e)
+            // TS returns 'any' as type of template elements
+            if (isStringLiteral(e))
+                return r;
             let tp = typeOf(e)
             if (tp.flags & TypeFlags.Number)
                 return ir.rtcall("number::to_string", [r])
@@ -1334,7 +1365,7 @@ ${lbl}: .short 0xffff
             proc.emitLbl(fin)
             return ir.op(EK.JmpValue, [])
         }
-        
+
         function emitSpreadElementExpression(node: SpreadElementExpression) { }
         function emitYieldExpression(node: YieldExpression) { }
         function emitBlock(node: Block) {
@@ -1525,7 +1556,7 @@ ${lbl}: .short 0xffff
                 throw new Error("expecting expression")
             } catch (e) {
                 handleError(node, e);
-                return null
+                return ir.numlit(0)
             }
         }
 
@@ -1599,13 +1630,13 @@ ${lbl}: .short 0xffff
                     return ir.numlit(true);
                 case SK.FalseKeyword:
                     return ir.numlit(false);
+                case SK.TemplateHead:
+                case SK.TemplateMiddle:
+                case SK.TemplateTail:
                 case SK.NumericLiteral:
                 case SK.StringLiteral:
                 case SK.NoSubstitutionTemplateLiteral:
                     //case SyntaxKind.RegularExpressionLiteral:                    
-                    //case SyntaxKind.TemplateHead:
-                    //case SyntaxKind.TemplateMiddle:
-                    //case SyntaxKind.TemplateTail:
                     return emitLiteral(<LiteralExpression>node);
                 case SK.PropertyAccessExpression:
                     return emitPropertyAccess(<PropertyAccessExpression>node);
@@ -1638,12 +1669,16 @@ ${lbl}: .short 0xffff
                     return emitConditionalExpression(<ConditionalExpression>node);
                 case SK.AsExpression:
                     return emitAsExpression(<AsExpression>node);
+                case SyntaxKind.TemplateExpression:
+                    return emitTemplateExpression(<TemplateExpression>node);
 
                 default:
                     unhandled(node);
                     return null
 
                 /*    
+                case SyntaxKind.TemplateSpan:
+                    return emitTemplateSpan(<TemplateSpan>node);
                 case SyntaxKind.Parameter:
                     return emitParameter(<ParameterDeclaration>node);
                 case SyntaxKind.GetAccessor:
@@ -1651,10 +1686,6 @@ ${lbl}: .short 0xffff
                     return emitAccessor(<AccessorDeclaration>node);
                 case SyntaxKind.SuperKeyword:
                     return emitSuper(node);
-                case SyntaxKind.TemplateExpression:
-                    return emitTemplateExpression(<TemplateExpression>node);
-                case SyntaxKind.TemplateSpan:
-                    return emitTemplateSpan(<TemplateSpan>node);
                 case SyntaxKind.JsxElement:
                     return emitJsxElement(<JsxElement>node);
                 case SyntaxKind.JsxSelfClosingElement:

@@ -74,7 +74,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload
 * [ ] in simulator currResume start loop() in nextTick
-* [ ] `foo${bar}baz`
+* [x] `foo${bar}baz`
 * [x] x ? a : b
 * [ ] error for 'shim:foo' (ie. shim=true)
 * [x] x as T support

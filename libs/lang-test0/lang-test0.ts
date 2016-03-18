@@ -219,6 +219,11 @@ function testStrings(): void {
     assert(s == "109876543210", "while");
     msg(s);
     msg(s2);
+
+    x = 21
+    s = "foo"
+    s = `a${x * 2}X${s}X${s}Z`
+    assert(s == "a42XfooXfooZ", "`")
 }
 
 
@@ -448,7 +453,7 @@ function testLazyOps(): void {
     } else {
         assert(false, "");
     }
-    
+
     lazyAcc = 0;
     assert((true ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 42, "?:")
     assert(lazyAcc == 1, "?:0");
