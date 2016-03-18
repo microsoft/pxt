@@ -1217,6 +1217,12 @@ ${lbl}: .short 0xffff
         function rtcallMask(name: string, args: Expression[], isAsync = false) {
             return ir.rtcallMask(name, getMask(args), isAsync, args.map(emitExpr))
         }
+        
+        function emitInJmpValue(expr:ir.Expr) {
+            let lbl = proc.mkLabel("ldjmp")
+            proc.emitJmp(lbl, expr, ir.JmpMode.Always)
+            proc.emitLbl(lbl)
+        }
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let lbl = proc.mkLabel("lazy")
@@ -1228,7 +1234,7 @@ ${lbl}: .short 0xffff
             } else {
                 oops()
             }
-
+            
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
 
@@ -1524,12 +1530,12 @@ ${lbl}: .short 0xffff
             let l = getLabels(node)
             let hasDefault = false
             let expr = emitExpr(node.expression)
+            emitInJmpValue(expr)
             let lbls = node.caseBlock.clauses.map(cl => {
                 let lbl = proc.mkLabel("switch")
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
-                    let cmp = ir.rtcall("thumb::subs", [expr, emitExpr(cc.expression)])
-                    proc.emitJmp(lbl, cmp, ir.JmpMode.IfZero)
+                    proc.emitJmp(lbl, emitExpr(cc.expression), ir.JmpMode.IfJmpValEq)
                 } else {
                     hasDefault = true
                     proc.emitJmp(lbl)

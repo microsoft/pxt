@@ -159,6 +159,7 @@ namespace ts.ks.ir {
         Always = 1,
         IfZero,
         IfNotZero,
+        IfJmpValEq,
     }
 
     export class Stmt extends Node {
@@ -193,6 +194,8 @@ namespace ts.ks.ir {
                             return `    if (! ${inner}) ${fin}`
                         case JmpMode.IfNotZero:
                             return `    if (${inner}) ${fin}`
+                        case JmpMode.IfJmpValEq:
+                            return `    if (r0 == ${inner}) ${fin}`
                         default: throw oops();
                     }
                 case ir.SK.StackEmpty:

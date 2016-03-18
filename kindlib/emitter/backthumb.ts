@@ -79,16 +79,24 @@ ${getFunctionLabel(proc.action)}:
                 write("bb " + jmp.lblName + " ; with expression")
             } else {
                 let lbl = mkLbl("jmpz")
-                emitExpr(jmp.expr)
 
-                if (jmp.expr.exprKind == EK.RuntimeCall && jmp.expr.data === "thumb::subs") {
-                    // no cmp required
+                if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
+                    emitExprInto(jmp.expr, "r1")
+                    write("cmp r0, r1")
                 } else {
-                    write("cmp r0, #0")
+                    emitExpr(jmp.expr)
+
+                    if (jmp.expr.exprKind == EK.RuntimeCall && jmp.expr.data === "thumb::subs") {
+                        // no cmp required
+                    } else {
+                        write("cmp r0, #0")
+                    }
                 }
+
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
                     write("beq " + lbl) // this is to *skip* the following 'b' instruction; beq itself has a very short range
                 } else {
+                    // IfZero or IfJmpValEq
                     write("bne " + lbl)
                 }
 
@@ -675,7 +683,7 @@ ${lbl}: .string ${stringLiteral(s)}
         bin.procs.forEach(p => {
             asmsource += "\n" + irToAssembly(bin, p) + "\n"
         })
-        
+
         asmsource += hex.asmTotalSource
 
         asmsource += "_js_end:\n"

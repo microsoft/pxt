@@ -91,9 +91,10 @@ while (true) { switch (step) {
                 if (jmp.expr)
                     emitExpr(jmp.expr)
                 write(trg)
+            } else if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
+                write(`if (r0 == (${emitExprInto(jmp.expr)})) ${trg}`)
             } else {
                 emitExpr(jmp.expr)
-
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
                     write(`if (r0) ${trg}`)
                 } else {
