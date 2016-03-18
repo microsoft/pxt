@@ -1126,11 +1126,18 @@ ${lbl}: .short 0xffff
         }
 
         function emitIncrement(expr: PrefixUnaryExpression | PostfixUnaryExpression, meth: string, isPost: boolean) {
-            // TODO expr evaluated twice
-            let pre = ir.shared(emitExpr(expr.operand))
+            let pre = emitExpr(expr.operand)
+            let cached: ir.Expr = null
+            if (pre.exprKind == EK.FieldAccess) {
+                pre.args[0] = ir.shared(pre.args[0])
+                cached = emitExpr(expr.operand) // clone
+                cached.args[0] = ir.op(EK.Incr, [pre.args[0]])
+                proc.emitExpr(pre.args[0])
+            }
+            pre = ir.shared(pre)
             let post = ir.shared(ir.rtcall(meth, [pre, ir.numlit(1)]))
-            emitStore(expr.operand, post)
-            return isPost ? post : pre
+            emitStore(expr.operand, post, cached)
+            return isPost ? pre : post
         }
 
         function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
@@ -1170,7 +1177,7 @@ ${lbl}: .short 0xffff
             else return ""
         }
 
-        function emitStore(trg: Expression, src: ir.Expr) {
+        function emitStore(trg: Expression, src: ir.Expr, cachedTrg: ir.Expr = null) {
             if (trg.kind == SK.Identifier) {
                 let decl = getDecl(trg)
                 if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
@@ -1181,20 +1188,7 @@ ${lbl}: .short 0xffff
                     unhandled(trg, "target identifier")
                 }
             } else if (trg.kind == SK.PropertyAccessExpression) {
-                /*
-                // TODO add C++ support function to simplify this
-                let pacc = <PropertyAccessExpression>trg
-                let tp = typeOf(pacc.expression)
-                let idx = fieldIndex(pacc)
-                emit(pacc.expression)
-                proc.emit("pop {r0}")
-                proc.emit("pop {r1}")
-                proc.emit("push {r0}")
-                proc.emitInt(idx)
-                proc.emit("push {r1}")
-                proc.emitCall("bitvm::stfld" + refSuff(trg), 0); // it does the decr itself, no mask
-                */
-                proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), src]))
+                proc.emitExpr(ir.op(EK.Store, [cachedTrg || emitExpr(trg), src]))
             } else {
                 unhandled(trg, "assignment target")
             }

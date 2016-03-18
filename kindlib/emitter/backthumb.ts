@@ -260,6 +260,7 @@ ${getFunctionLabel(proc.action)}:
                     // it does the decr itself, no mask
                     emitExpr(ir.rtcall(withRef("bitvm::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
                     break;
+                default: oops();
             }
         }
 
