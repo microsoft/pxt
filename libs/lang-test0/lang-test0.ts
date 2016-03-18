@@ -228,6 +228,8 @@ function testStrings(): void {
     s = "foo"
     s = `a${x * 2}X${s}X${s}Z`
     assert(s == "a42XfooXfoo" + "Z", "`")
+    
+    assert("X" + true == "Xt" + "rue", "boolStr")
 }
 
 

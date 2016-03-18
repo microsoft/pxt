@@ -196,6 +196,10 @@ namespace ks.rt {
         export function not_(v: boolean) {
             return !v;
         }
+        
+        export function to_string(v:boolean) {
+            return v ? "true" : "false"
+        }
     }
 
 }
