@@ -265,6 +265,10 @@ namespace ks.rt {
             setTimeout(() => { cb() }, ms)
         }
         
+        export function panic(code:number) {
+            U.userError("PANIC! Code " + code)
+        }
+        
         export function runInBackground(a: RefAction) {
             runtime.runFiberAsync(a).done()
         }
