@@ -88,6 +88,31 @@ class Settings extends data.Component<ISettingsProps, {}> {
     }
 }
 
+class CloudSyncButton extends data.Component<ISettingsProps, {}> {
+    renderCore() {
+        Util.assert(this.props.parent.appTarget.cloud);
+        
+        let par = this.props.parent
+        let hd = par.state.header
+        let hdId = hd ? hd.id : ""
+        let btnClass = !hd || this.getData("pkg-status:" + hdId) == "saving" ? " disabled" : ""
+        let save = () => {
+            par.saveFileAsync()
+                .then(() => par.state.currFile.epkg.savePkgAsync())
+                .then(() => {
+                    data.setOnline(true)
+                    return workspace.syncAsync()
+                })
+                .done()
+        }
+        let needsUpload = hd && !hd.blobCurrent
+        return <sui.Button class={btnClass} onClick={save}
+                        icon={"cloud " + (needsUpload ? "upload" : "") }
+                        popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
+                        />
+    }
+}
+
 class SlotSelector extends data.Component<ISettingsProps, {}> {
 
     componentDidMount() {
@@ -105,15 +130,6 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
         let hd = par.state.header
         let hdId = hd ? hd.id : ""
         let btnClass = !hd || this.getData("pkg-status:" + hdId) == "saving" ? " disabled" : ""
-        let save = () => {
-            par.saveFileAsync()
-                .then(() => par.state.currFile.epkg.savePkgAsync())
-                .then(() => {
-                    data.setOnline(true)
-                    return workspace.syncAsync()
-                })
-                .done()
-        }
         if (!hd && headers[0]) {
             setTimeout(() => {
                 if (!par.state.header && headers[0]) {
@@ -121,19 +137,12 @@ class SlotSelector extends data.Component<ISettingsProps, {}> {
                 }
             }, 1000)
         }
-        let needsUpload = hd && !hd.blobCurrent
         return (
             <div id='slotselector'>
                 <sui.DropdownList class='selection search' value={hdId}
                     onChange={chgHeader}>
                     {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || lf("no name") } />) }
                 </sui.DropdownList>
-                {this.props.parent.appTarget.cloud ?
-                    <sui.Button class={btnClass} onClick={save}
-                        icon={"cloud " + (needsUpload ? "upload" : "") }
-                        popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
-                        />
-                    : ""}
             </div>
         );
     }
@@ -722,6 +731,7 @@ Ctrl+Shift+B
                             this.setState({ showFiles: !this.state.showFiles });
                             this.saveSettings();
                         } } />
+                        { this.appTarget.cloud ? <CloudSyncButton parent={this} /> : '' }
                     </div>
                     <FileList parent={this} />
                 </div>

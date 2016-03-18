@@ -61,7 +61,7 @@
 
 #filelist {
   left: 0;
-  width: 280px;
+  width: 300px;
   padding: 0em 1em 0em 0.5em;
   overflow-x: hidden;
   overflow-y: auto;
@@ -94,13 +94,13 @@
 
 #maineditor {
   right: 0;
-  left: 280px;
+  left: 300px;
 }
 
 #helpcard {
     position: absolute;
     right: 2rem;
-    top: 0.5rem;
+    bottom: 2.2rem;
     margin: 0;
     z-index: 5;
 }
@@ -404,7 +404,7 @@ svg.ui.trend.black polyline {
     #helpcard {
         right: 2rem;
         top: initial;
-        bottom: 2rem;
+        bottom: 2.2rem;
         margin: 0;
     }
 }

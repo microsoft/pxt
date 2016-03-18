@@ -209,7 +209,7 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-                <sui.Button text={lf("Show Code") } icon="keyboard" onClick={() => this.parent.saveTypeScript(true) } />
+                <sui.Button text={lf("Show Code") } textClass="ui landscape only" icon="keyboard" onClick={() => this.parent.saveTypeScript(true) } />
         )
     }
 }

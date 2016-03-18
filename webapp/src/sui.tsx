@@ -4,7 +4,9 @@ import * as data from "./data";
 
 export interface UiProps {
     icon?: string;
+    iconClass?:string;
     text?: string;
+    textClass?:string;
     children?: any;
     class?: string;
 }
@@ -24,8 +26,8 @@ function genericClassName(cls: string, props: UiProps) {
 
 function genericContent(props: UiProps) {
     return [
-        props.icon ? (<i key='iconkey' className={props.icon + " icon " + (props.text ? " icon-and-text " : "")}></i>) : null,
-        props.text ? (<span key='textkey' className='text'>{props.text}</span>) : null
+        props.icon ? (<i key='iconkey' className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')}></i>) : null,
+        props.text ? (<span key='textkey' className={'text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null
     ]
 }
 
