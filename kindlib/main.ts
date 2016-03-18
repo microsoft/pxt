@@ -101,7 +101,8 @@ namespace ks {
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
         compile: CompileTarget;
-        koduvscode?: boolean;
+        koduUrl?: string;
+        visualStudioCode?: boolean;
         bundledpkgs?: U.Map<U.Map<string>>;
     }
 

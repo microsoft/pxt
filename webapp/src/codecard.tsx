@@ -54,6 +54,8 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
             if (card.hardware && !card.software) color = 'black';
             else if (card.software && !card.hardware) color = 'teal';
         }
+        let url = this.props.url ? /^[^:]+:\/\//.test(this.props.url) ? this.props.url : ((this.props.target || '') + '/' + this.props.url.replace(/^\.?\/?/,''))
+            : undefined;
 
         return (
             <div className={"ui card " + color} >
@@ -74,7 +76,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                     }
                 </div>
                 <div className="content">
-                    <a className="header">{this.props.name}</a>
+                    <a href={url} target="docs" className="header">{this.props.name}</a>
                     <div className="meta">
                         {this.props.time ? <span key="date" className="date">{ks.Util.timeSince(this.props.time) }</span> : ""}
                     </div>
@@ -83,10 +85,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                 {this.props.url || card.power || card.toughness ?
                 <div key="extra" className={"ui extra content" + (this.props.responsive ? " desktop only" : "")}>
                     {card.power || card.toughness ? (<div key="powertough" className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
-                    {this.props.url ?
-                    <a target="_blank" href={/^[^:]+:\/\//.test(this.props.url) ? this.props.url : ((this.props.target || '') + '/' + this.props.url.replace(/^\.?\/?/,''))}>
-                        {this.props.url}
-                    </a> : ""}
+                    {this.props.url ? <a target="docs" href={url}>{this.props.url}</a> : ""}
                 </div> : ""}
             </div>
         )

@@ -445,13 +445,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let targetTheme = this.appTarget.theme || {};
         core.confirmAsync({
             logos: [targetTheme.logo, logoSvgXml],
-            header: lf("Create Code"),
+            header: this.appTarget.title + ' - ' + lf("Create Code"),
             hideCancel: hideCancel,
             hideAgree: true,
             onLoaded: (_) => {
                 _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProjectAsync().done() })
                 _.find('#newtypescript').click(() => { _.modal('hide'); this.newTypeScriptProjectAsync().done() })
-                _.find('#newkodu').click(() => { window.location.href = 'https://www.kodugamelab.com/bbc-microbit/' })
+                if (this.appTarget.koduUrl)
+                    _.find('#newkodu').click(() => { window.location.href = this.appTarget.koduUrl })
                 _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject() })
             },
             htmlBody: `
@@ -462,7 +463,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             <img src="${images}/newblock.png">
         </div>
         <div class="content">
-        <div class="header">Block Editor</div>
+        <div class="header">${lf("Block Editor for {0}", this.appTarget.name)}</div>
         <div class="description">
             ${lf("Drag and Drop Coding")}
         </div>
@@ -475,7 +476,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             <img class="visible content" src="${images}/newtypescript.png">
         </div>
         <div class="content">
-        <div class="header">JavaScript</div>
+        <div class="header">${lf("JavaScript for {0}", this.appTarget.name)}</div>
         <div class="description">
             ${lf("Text based Coding")}
         </div>
@@ -483,21 +484,23 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     </div>
   </div>
 </div>`
-            + (this.appTarget.koduvscode ? `<div class="ui two column grid">
+            + (this.appTarget.koduUrl || this.appTarget.visualStudioCode ? `<div class="ui two column grid">
   <div class="column">
+    ${this.appTarget.koduUrl ? `
     <div id="newkodu" class="ui fluid card link">
         <div class="image">
         <img src="${images}/newkodu.png">
         </div>
         <div class="content">
-        <div class="header">Kodu</div>
+        <div class="header">${lf("Kodu for {0}", this.appTarget.name)}</div>
         <div class="description">
             ${lf("Tile based Coding")}
         </div>
         </div>
-    </div>
+    </div>` : ''}
   </div>
   <div class="column">
+    ${this.appTarget.visualStudioCode  ? `
     <div id="newvisualstudiocode" class="ui fluid card link">
         <div class="image">
         <img src="${images}/newvisualstudiocode.png">
@@ -508,7 +511,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             ${lf("For Professional Developers")}
         </div>
         </div>
-    </div>
+    </div>` : ''}
   </div>
 </div>
 ` : "")
@@ -693,7 +696,7 @@ Ctrl+Shift+B
                         </span>
                         <div className="ui item">
                             <div className="ui buttons">
-                                <sui.Button text={lf("Create Code") } onClick={() => this.newProject() } />
+                                <sui.Button icon="file outline" textClass="ui landscape only" text={lf("Create Code") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } /> : ""}
                                     {this.appTarget.cloud ? <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } /> : ""}

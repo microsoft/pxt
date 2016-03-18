@@ -520,7 +520,7 @@ export class Editor extends srceditor.Editor {
         return (
             <div>
                 {this.currFile && this.currFile.isVirtual
-                    ? <sui.Button class="ui button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
+                    ? <sui.Button class="ui button floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
                     : '' }
             </div>
         )
