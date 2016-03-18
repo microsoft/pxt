@@ -1,5 +1,6 @@
 /// <reference path="../built/kindlib.d.ts" />
 /// <reference path="../built/kindblocks.d.ts" />
+/// <reference path="../built/kindsim.d.ts" />
 
 namespace ks.runner {
     export interface RunnerOptions {
@@ -168,14 +169,21 @@ namespace ks.runner {
             })
     }
 
-    export function simulateAsync(id: string) {
+    export function simulateAsync(id: string, container: HTMLElement) {
         return loadPackageAsync(id)
             .then(compileAsync)
-            .then(r => {
-                console.log(r)
+            .then(resp => {
+                if (resp.diagnostics && resp.diagnostics.length > 0) {
+                    console.error("Diagnostics", resp.diagnostics)
+                }
+                let js = resp.outfiles["microbit.js"];
+                if (js) {
+                    let driver = new ks.rt.SimulatorDriver(container);
+                    driver.run(js, resp.enums);                    
+                }
             })
     }
-
+    
     export function toBlocksAsync(code: string) : Promise<JQuery> {        
         return loadPackageAsync(null)
             .then(getCompileOptionsAsync)

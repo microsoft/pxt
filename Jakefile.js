@@ -63,7 +63,7 @@ file('built/kind.d.ts', ['built/cli.js'], function () {
 
 compileDir("kindlib")
 compileDir("kindblocks", ["built/kindlib.js"])
-compileDir("kindrunner", ["built/kindlib.js", "built/kindblocks.js"])
+compileDir("kindrunner", ["built/kindlib.js", "built/kindsim.js", "built/kindblocks.js"])
 compileDir("kindsim", ["built/kindlib.js", "built/kindblocks.js"])
 compileDir("cli", ["built/kindlib.js", "built/kindsim.js"])
 

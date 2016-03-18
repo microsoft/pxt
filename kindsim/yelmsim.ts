@@ -6,6 +6,7 @@ namespace ks.rt {
 
     export interface SimulatorRunMessage extends SimulatorMessage {
         id?: string;
+        frameCounter?: number;
         options?: any;
         
         code: string;

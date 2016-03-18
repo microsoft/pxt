@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" data-framework="typescript">
+
+<head>
+    <meta charset="utf-8">
+    <title>KindScript Simulator</title>
+</head>
+
+<body>
+    <div id='loading' style='font-size: 30px; margin: 100px auto; width: 200px;'>
+        loading...
+    </div>
+    <div id='simulators'>
+    </div>
+    <script>
+        // This line gets patched up by the cloud
+        var rootUrl = "dummy";
+        var appCdnRoot = "./";
+        var simCdnRoot = "./";
+    </script>
+
+    <script type="text/javascript" src="./embed.js"></script>
+    <script type="text/javascript">
+    var m = /id=([A-Za-z0-9]+)/i.exec(window.location.href); 
+    if (!m) {
+        console.error('missing id query argument');
+    } else {
+        var id = m[1];
+        ksRunnerReady(function() {
+            console.log('loading simulator for script ' + id)
+            ks.runner.simulateAsync(id, document.getElementById('simulators')).done(function() {
+                document.getElementById('loading').remove();
+                console.log('simulator started...')
+            })
+        })
+    }
+    </script>
+</body>
+
+</html>
