@@ -1,5 +1,5 @@
 namespace ts.ks {
-    export function irToAssembly(bin: Binary, proc: ir.Procedure) {
+    function irToAssembly(bin: Binary, proc: ir.Procedure) {
         let resText = ""
         let write = (s: string) => { resText += asmline(s); }
         let EK = ir.EK;
@@ -375,7 +375,6 @@ ${getFunctionLabel(proc.action)}:
 
     }
 
-
     // TODO should be internal
     export module hex {
         var funcInfo: StringMap<FuncInfo>;
@@ -384,6 +383,8 @@ ${getFunctionLabel(proc.action)}:
         var jmpStartIdx: number;
         var bytecodeStartAddr: number;
         var bytecodeStartIdx: number;
+        var asmLabels: StringMap<boolean> = {};
+        export var asmTotalSource: string = "";
 
         function swapBytes(str: string) {
             var r = ""
@@ -391,6 +392,29 @@ ${getFunctionLabel(proc.action)}:
                 r = str[i] + str[i + 1] + r
             assert(i == str.length)
             return r
+        }
+
+        export function setupInlineAssembly(opts: CompileOptions) {
+            asmLabels = {}
+            let asmSources = opts.sourceFiles.filter(f => U.endsWith(f, ".asm"))
+            asmTotalSource = ""
+            let asmIdx = 0
+
+            for (let f of asmSources) {
+                let src = opts.fileSystem[f]
+                src.replace(/^\s*(\w+):/mg, (f, lbl) => {
+                    asmLabels[lbl] = true
+                    return ""
+                })
+                let code =
+                    ".section code\n" +
+                    "@stackmark func\n" +
+                    "@scope user" + asmIdx++ + "\n" +
+                    src + "\n" +
+                    "@stackempty func\n" +
+                    "@scope\n"
+                asmTotalSource += code
+            }
         }
 
 
@@ -497,6 +521,27 @@ ${getFunctionLabel(proc.action)}:
             oops();
         }
 
+        export function validateShim(funname: string, attrs: CommentAttrs, hasRet: boolean, numArgs: number) {
+            if (attrs.shim == "TD_ID" || attrs.shim == "TD_NOOP")
+                return
+            if (U.lookup(asmLabels, attrs.shim))
+                return
+            let nm = `${funname}(...) (shim=${attrs.shim})`
+            let inf = lookupFunc(attrs.shim)
+            if (inf) {
+                if (!hasRet) {
+                    if (inf.type != "P")
+                        U.userError("expecting procedure for " + nm);
+                } else {
+                    if (inf.type != "F")
+                        U.userError("expecting function for " + nm);
+                }
+                if (numArgs != inf.args)
+                    U.userError("argument number mismatch: " + numArgs + " vs " + inf.args + " in C++")
+            } else {
+                U.userError("function not found: " + nm)
+            }
+        }
         export function lookupFunc(name: string) {
             if (/^uBit\./.test(name))
                 name = name.replace(/^uBit\./, "micro_bit::").replace(/\.(.)/g, (x, y) => y.toUpperCase())
@@ -630,6 +675,8 @@ ${lbl}: .string ${stringLiteral(s)}
         bin.procs.forEach(p => {
             asmsource += "\n" + irToAssembly(bin, p) + "\n"
         })
+        
+        asmsource += hex.asmTotalSource
 
         asmsource += "_js_end:\n"
         emitStrings(bin)
@@ -706,4 +753,6 @@ ${lbl}: .string ${stringLiteral(s)}
             bin.writeFile("microbit.hex", myhex)
         }
     }
+
+    export var validateShim = hex.validateShim;
 }

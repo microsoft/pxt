@@ -10,11 +10,11 @@
 
 namespace ts.ks {
     export interface CompileTarget {
-        isNative:boolean; // false -> JavaScript for simulator
-        nativeType?:string; // currently only "thumb"
-        hasHex:boolean;
+        isNative: boolean; // false -> JavaScript for simulator
+        nativeType?: string; // currently only "thumb"
+        hasHex: boolean;
     }
-    
+
     export interface CompileOptions {
         fileSystem: StringMap<string>;
         target: CompileTarget;
@@ -30,8 +30,8 @@ namespace ts.ks {
         outfiles: StringMap<string>;
         diagnostics: Diagnostic[];
         success: boolean;
-        times:U.Map<number>;
-        enums:U.Map<number>;
+        times: U.Map<number>;
+        enums: U.Map<number>;
         ast?: Program;
     }
 
@@ -67,7 +67,7 @@ namespace ts.ks {
             times: {},
             enums: U.clone(opts.hexinfo.enums || {})
         }
-        
+
         U.jsonCopyFrom(res.enums, opts.extinfo.enums)
 
         let fileText = opts.fileSystem
@@ -97,7 +97,11 @@ namespace ts.ks {
             directoryExists: dn => true,
         }
 
-        let program = createProgram(opts.sourceFiles || Object.keys(opts.fileSystem), options, host);
+        if (!opts.sourceFiles)
+            opts.sourceFiles = Object.keys(opts.fileSystem)
+        
+        let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
+        let program = createProgram(tsFiles, options, host);
 
         // First get and report any syntactic errors.
         res.diagnostics = program.getSyntacticDiagnostics();
@@ -110,14 +114,14 @@ namespace ts.ks {
         if (res.diagnostics.length == 0) {
             res.diagnostics = program.getSemanticDiagnostics();
         }
-        
+
         let emitStart = Date.now()
         res.times["typescript"] = emitStart - startTime
-        
+
         if (opts.ast) {
             res.ast = program
         }
-        
+
         if (opts.ast || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, host, opts, res);
             res.times["compilebinary"] = Date.now() - emitStart

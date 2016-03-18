@@ -84,7 +84,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [x] % operator
 * [x] error for 'shim:foo' (ie. shim=true)
 * [x] lib compile mode - no reachability, test shims
-* [ ] inline assembly
+* [x] inline assembly
 
 #### Bigger items
 * [ ] generate .d.ts from .cpp

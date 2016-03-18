@@ -295,8 +295,9 @@ namespace ts.ks {
         let usedWorkList: Declaration[] = []
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
-
+    
         hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
+        hex.setupInlineAssembly(opts);
 
         let bin: Binary;
         let proc: ir.Procedure;
@@ -774,20 +775,7 @@ ${lbl}: .short 0xffff
             }
 
             if (opts.target.hasHex) {
-                let inf = hex.lookupFunc(attrs.shim)
-                if (inf) {
-                    if (!hasRet) {
-                        if (inf.type != "P")
-                            userError("expecting procedure for " + nm);
-                    } else {
-                        if (inf.type != "F")
-                            userError("expecting function for " + nm);
-                    }
-                    if (args.length != inf.args)
-                        userError("argument number mismatch: " + args.length + " vs " + inf.args)
-                } else {
-                    userError("function not found: " + nm)
-                }
+                hex.validateShim(getDeclName(decl), attrs, hasRet, args.length);
             }
 
             return rtcallMask(attrs.shim, args, attrs.async)
@@ -1000,24 +988,10 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(node)
             if (attrs.shim != null) {
                 if (opts.target.hasHex) {
-                    if (attrs.shim == "TD_ID" || attrs.shim == "TD_NOOP") return
-                    let nm = `${getDeclName(node)}(...) (shim=${attrs.shim})` 
-                    let inf = hex.lookupFunc(attrs.shim)
-                    let hasRet = funcHasReturn(node)
-                    if (inf) {
-                        if (!hasRet) {
-                            if (inf.type != "P")
-                                userError("expecting procedure for " + nm);
-                        } else {
-                            if (inf.type != "F")
-                                userError("expecting function for " + nm);
-                        }
-                        let args = getParameters(node)
-                        if (args.length != inf.args)
-                            userError("argument number mismatch: " + args.length + " vs " + inf.args)
-                    } else {
-                        userError("function not found: " + nm)
-                    }
+                    hex.validateShim(getDeclName(node),
+                        attrs,
+                        funcHasReturn(node),
+                        getParameters(node).length);
                 }
                 return
             }

@@ -3,6 +3,7 @@
     "description": "Test for the TypeScript -> HEX compiler",
     "installedVersion": "file:.",
     "files": [
+        "add.asm",
         "hello.ts"
     ],
     "public": false,
