@@ -1,10 +1,15 @@
 namespace ks.blocks {
     let SK = ts.SyntaxKind;
 
-    export function toBlocks(blocksInfo : ts.ks.BlocksInfo, stmts: ts.Statement[]): string {
-        let output = ""
+    interface BlockSequence {
+        top: number; current: number;
+    }
 
-        stmts.forEach(emit)
+    export function toBlocks(blocksInfo: ts.ks.BlocksInfo, stmts: ts.Statement[]): string {
+        let output = ""
+        let nexts: BlockSequence[] = [{ top: 0, current: 0 }];
+
+        emitStatements(stmts);
 
         return `<xml xmlns="http://www.w3.org/1999/xhtml">
 ${output}</xml>`;
@@ -44,13 +49,37 @@ ${output}</xml>`;
                 case SK.PropertyAccessExpression:
                     emitPropertyAccessExpression(n as ts.PropertyAccessExpression); break;
                 default:
-                    console.warn("Unhandled emit:", ts.ks.stringKind(n))
+                    console.error("Unhandled emit:", ts.ks.stringKind(n))
+                    break;
             }
         }
+
+        function writeBeginBlock(type: string) {
+            let next = nexts[nexts.length - 1];
+            if (next.top > 0) write('<next>')
+            write(`<block type="${Util.htmlEscape(type)}">`);
+            next.top++;
+            next.current++;
+        }
+
+        function writeEndBlock() {
+            let next = nexts[nexts.length - 1];
+            next.current--;
+        }
         
+        function flushBlocks() {
+            let next = nexts.pop();
+            Util.assert(next && next.current == 0)
+            for (let i = 0; i < next.top - 1; ++i) {
+                write('</next>');
+                write('</block>')
+            }
+            write('</block>')            
+        }
+
         // TODO handle special for loops
-        function emitForStatement(n : ts.ForStatement) {
-            write('<block type="controls_simple_for">');
+        function emitForStatement(n: ts.ForStatement) {
+            writeBeginBlock("controls_simple_for");
             let vd = n.initializer as ts.VariableDeclarationList;
             if (vd.declarations.length != 1) console.error('for loop with multiple variables not supported');
             let id = vd.declarations[0].name as ts.Identifier;
@@ -86,14 +115,14 @@ ${output}</xml>`;
         </value>
       </block>`)
                     }
-                    write('</block>')                        
+                    write('</block>')
                 }
             }
             write('</value>');
             write('<statement name="DO">')
             emit(n.statement)
             write('</statement>')
-            write('</block>')
+            writeEndBlock();
             /*
       <shadow type="math_number">
         <field name="NUM">4</field>
@@ -118,20 +147,19 @@ ${output}</xml>`;
   </block>            
   */
         }
-        
-        function emitVariableStatement(n : ts.VariableStatement) {
+
+        function emitVariableStatement(n: ts.VariableStatement) {
             n.declarationList.declarations.forEach(decl => {
-                write('<block type="variables_set">')
+                writeBeginBlock("variables_set")
                 write(`<field name="VAR">${(decl.name as ts.Identifier).text}</field>`)
                 write('<value name="VALUE">')
                 emit(decl.initializer);
                 write('</value>')
-                write('</field>')
-                write('</block')                
+                writeEndBlock()
             })
         }
-        
-        function emitPropertyAccessExpression(n : ts.PropertyAccessExpression) : void {
+
+        function emitPropertyAccessExpression(n: ts.PropertyAccessExpression): void {
             let callInfo = (n as any).callInfo as ts.ks.CallInfo;
             if (callInfo && callInfo.attrs.blockId) {
                 write(callInfo.attrs.blockId);
@@ -146,8 +174,15 @@ ${output}</xml>`;
             emit(n.body)
         }
 
+        function emitStatements(stmts: ts.Statement[]) {
+            let next = { current: 0, top: 0 }
+            nexts.push(next);
+            stmts.forEach(statement => emit(statement));
+            flushBlocks();
+        }
+
         function emitBlock(n: ts.Block) {
-            n.statements.forEach(statement => emit(statement));
+            emitStatements(n.statements);
         }
 
         function flattenIfStatement(n: ts.IfStatement): {
@@ -174,7 +209,7 @@ ${output}</xml>`;
 
         function emitIfStatement(n: ts.IfStatement) {
             let flatif = flattenIfStatement(n);
-            write('<block type="controls_if">')
+            writeBeginBlock("controls_if");
             write(`<mutation elseif="${flatif.ifStatements.length - 1}" else="${flatif.elseStatement ? 1 : 0}"></mutation>`)
             flatif.ifStatements.forEach((stmt, i) => {
                 write(`<value name="IF${i}">`)
@@ -189,9 +224,11 @@ ${output}</xml>`;
                 emit(flatif.elseStatement)
                 write('</statement>')
             }
+            writeEndBlock();
         }
 
         function emitWhileStatement(n: ts.WhileStatement): void {
+            writeBeginBlock("device_while");
             write('<block type="device_while">');
             write('<value name="COND">')
             emit(n.expression)
@@ -199,7 +236,7 @@ ${output}</xml>`;
             write('<statement name="DO">')
             emit(n.statement)
             write('</statement>')
-            write('</block>')
+            writeEndBlock()
         }
 
         function emitStringLiteral(n: ts.StringLiteral) {
@@ -230,7 +267,7 @@ ${output}</xml>`;
                 return ""
             })
 
-            write(`<block type="${info.attrs.blockId}">`)
+            writeBeginBlock(info.attrs.blockId);
             info.args.forEach((e, i) => {
                 switch (e.kind) {
                     case SK.ArrowFunction:
@@ -250,7 +287,7 @@ ${output}</xml>`;
                         break;
                 }
             })
-            write(`</block>`)
+            writeEndBlock()
         }
     }
 }

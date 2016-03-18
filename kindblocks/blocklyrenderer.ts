@@ -36,7 +36,7 @@ namespace ks.blocks {
             let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(workspace, xml);
 
-            if (clean) {
+            if (clean && false) {
                 align(workspace);
                 if ((<any>workspace).cleanUp_)
                     (<any>workspace).cleanUp_();                
