@@ -1,0 +1,12 @@
+{
+    "name": "bare-hello",
+    "description": "Test for the TypeScript -> HEX compiler",
+    "installedVersion": "file:.",
+    "files": [
+        "hello.ts"
+    ],
+    "public": false,
+    "dependencies": {
+        "bare": "file:../bare"
+    }
+}

@@ -119,7 +119,7 @@ namespace ts.ks {
         }
         
         if (opts.ast || res.diagnostics.length == 0) {
-            const binOutput = compileBinary(program, host, opts);
+            const binOutput = compileBinary(program, host, opts, res);
             res.times["compilebinary"] = Date.now() - emitStart
             res.diagnostics = binOutput.diagnostics
         }

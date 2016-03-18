@@ -287,7 +287,7 @@ namespace ts.ks {
         thisParameter?: ParameterDeclaration; // a bit bogus
     }
 
-    export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions): EmitResult {
+    export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: StringMap<ClassInfo> = {}
@@ -653,8 +653,12 @@ ${lbl}: .short 0xffff
             (node as any).callInfo = callInfo;
             if (decl.kind == SK.EnumMember) {
                 let ev = attrs.enumval
-                if (!ev)
-                    userError(lf("enumval=... missing"))
+                if (!ev) {
+                    let val = checker.getConstantValue(decl as EnumMember)
+                    if (val == null)
+                        userError(lf("Cannot compute enum value"))
+                    ev = val + ""
+                }
                 if (/^\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
                 let inf = hex.lookupFunc(ev)
@@ -1550,7 +1554,14 @@ ${lbl}: .short 0xffff
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
             // nothing
         }
-        function emitEnumDeclaration(node: EnumDeclaration) { }
+        function emitEnumDeclaration(node: EnumDeclaration) {
+            for (let mem of node.members) {
+                let cmts = parseComments(mem)
+                if (!cmts.enumval)
+                    res.enums[getDeclName(node) + "_" + mem.name.getText()] = 
+                        checker.getConstantValue(mem)
+            }
+        }
         function emitEnumMember(node: EnumMember) { }
         function emitModuleDeclaration(node: ModuleDeclaration) {
             if (node.flags & NodeFlags.Ambient)

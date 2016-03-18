@@ -56,7 +56,7 @@ testMemoryFree();
 testMemoryFreeHOF();
 postPreFix()
 eqOp()
-
+testEnums()
 
 // test some top-level code
 let xsum = 0;
@@ -221,14 +221,14 @@ function testStrings(): void {
     assert(s == "109876543210", "while");
     msg(s);
     msg(s2);
-    
+
     s2 = ""; // don't leak ref
 
     x = 21
     s = "foo"
     s = `a${x * 2}X${s}X${s}Z`
     assert(s == "a42XfooXfoo" + "Z", "`")
-    
+
     assert("X" + true == "Xt" + "rue", "boolStr")
 }
 
@@ -315,7 +315,7 @@ function eqOp() {
     assert(x == 22, "Y1")
     x /= 2
     assert(x == 11, "Y2")
-    
+
     let s = ("fo" + 1)
     let t = ("ba" + 2)
     s += t
@@ -644,4 +644,19 @@ function testClass() {
     assert(f.getPin() == 42, "getpin")
 }
 
+enum En {
+    A,
+    B,
+    C,
+    D = 42,
+    E,
+}
 
+function testEnums() {
+    let k = En.C as number
+    assert(k == 2, "e0")
+    k = En.D as number
+    assert(k == 42, "e1")
+    k = En.E as number
+    assert(k == 43, "e43")
+}

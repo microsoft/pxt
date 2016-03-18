@@ -78,13 +78,14 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] simulator at sim-microbit.kindscript.net
 * [ ] `ptr-<username>-*` as the main way publishing packages
 * [x] check on ("foo" + true)
+* [ ] support Enum.X + 0 etc ?
 
-* [ ] enum support without enumval= (esp for non-hex targets)
+* [x] enum support without enumval= (esp for non-hex targets)
 * [ ] switch() statement support
 * [ ] % operator
 * [ ] inline assembly
 * [ ] error for 'shim:foo' (ie. shim=true)
-* [ ] lib compile mode - no reachability, test shims
+* [x] lib compile mode - no reachability, test shims
 
 #### Bigger items
 * [ ] generate .d.ts from .cpp
