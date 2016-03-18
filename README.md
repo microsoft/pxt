@@ -84,7 +84,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [x] switch() statement support
 * [x] % operator
 * [ ] inline assembly
-* [ ] error for 'shim:foo' (ie. shim=true)
+* [x] error for 'shim:foo' (ie. shim=true)
 * [x] lib compile mode - no reachability, test shims
 
 #### Bigger items

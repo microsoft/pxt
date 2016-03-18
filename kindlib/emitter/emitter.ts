@@ -247,8 +247,8 @@ namespace ts.ks {
         return checkType(r)
     }
 
-    function procHasReturn(proc: ir.Procedure) {
-        let sig = checker.getSignatureFromDeclaration(proc.action)
+    function funcHasReturn(fun: FunctionLikeDeclaration) {
+        let sig = checker.getSignatureFromDeclaration(fun)
         let rettp = checker.getReturnTypeOfSignature(sig)
         return !(rettp.flags & TypeFlags.Void)
     }
@@ -994,18 +994,39 @@ ${lbl}: .short 0xffff
         }
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
+            if (!isUsed(node))
+                return;
+
+            let attrs = parseComments(node)
+            if (attrs.shim != null) {
+                if (opts.target.hasHex) {
+                    if (attrs.shim == "TD_ID" || attrs.shim == "TD_NOOP") return
+                    let nm = `${getDeclName(node)}(...) (shim=${attrs.shim})` 
+                    let inf = hex.lookupFunc(attrs.shim)
+                    let hasRet = funcHasReturn(node)
+                    if (inf) {
+                        if (!hasRet) {
+                            if (inf.type != "P")
+                                userError("expecting procedure for " + nm);
+                        } else {
+                            if (inf.type != "F")
+                                userError("expecting function for " + nm);
+                        }
+                        let args = getParameters(node)
+                        if (args.length != inf.args)
+                            userError("argument number mismatch: " + args.length + " vs " + inf.args)
+                    } else {
+                        userError("function not found: " + nm)
+                    }
+                }
+                return
+            }
+
             if (node.flags & NodeFlags.Ambient)
                 return;
 
             if (!node.body)
                 return;
-
-            if (!isUsed(node))
-                return;
-
-            let attrs = parseComments(node)
-            if (attrs.shim != null)
-                return
 
             let info = getFunctionInfo(node)
 
@@ -1085,7 +1106,7 @@ ${lbl}: .short 0xffff
 
                 proc.stackEmpty();
 
-                if (procHasReturn(proc)) {
+                if (funcHasReturn(proc.action)) {
                     let v = ir.shared(ir.op(EK.JmpValue, []))
                     proc.emitExpr(v) // make sure we save it
                     proc.emitClrs();
@@ -1513,7 +1534,7 @@ ${lbl}: .short 0xffff
             let v: ir.Expr = null
             if (node.expression) {
                 v = emitExpr(node.expression)
-            } else if (procHasReturn(proc)) {
+            } else if (funcHasReturn(proc.action)) {
                 v = ir.numlit(null) // == return undefined
             }
             proc.emitJmp(getLabels(proc.action).ret, v, ir.JmpMode.Always)
