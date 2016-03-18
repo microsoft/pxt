@@ -57,35 +57,34 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [x] +=, -= etc
 * [x] += on strings
 * [x] proper caching for x.f++, x.f += ... etc
-* [ ] lambdas returning values (maybe just works?)
-* [ ] clear variables when they get out of scope to limit memory usage
 * [x] function f() {...}; control.inBackground(f) in local scope
 * [x] function f() {...}; control.inBackground(f) in global scope
 * [x] //% shim=... weight=... help=... etc insteaf of {shim:...}
 * [x] bit operators (&, |, etc)
 * [x] use "(x + y) | 0" etc instead of "x + y" in simulator
-* [ ] allow use of floating point for non-native targets
 * [x] do not generate empty action bodies for shim
 * [x] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues
 * [x] skip unreferenced globals when initilized with literal
-* [ ] do not DECR no-closure functions
-* [ ] after uninstall pouch db throws 404 after reload
-* [ ] in simulator currResume start loop() in nextTick
 * [x] `foo${bar}baz`
 * [x] x ? a : b
 * [x] x as T support
+* [x] check on ("foo" + true)
 * [ ] simulator at sim-microbit.kindscript.net
 * [ ] `ptr-<username>-*` as the main way publishing packages
-* [x] check on ("foo" + true)
-* [ ] support Enum.X + 0 etc ?
+* [ ] lambdas returning values (maybe just works?)
+* [ ] clear variables when they get out of scope to limit memory usage
+* [ ] allow use of floating point for non-native targets
+* [ ] do not DECR no-closure functions
+* [ ] after uninstall pouch db throws 404 after reload
+* [ ] in simulator currResume start loop() in nextTick
 
 * [x] enum support without enumval= (esp for non-hex targets)
 * [x] switch() statement support
 * [x] % operator
-* [ ] inline assembly
 * [x] error for 'shim:foo' (ie. shim=true)
 * [x] lib compile mode - no reachability, test shims
+* [ ] inline assembly
 
 #### Bigger items
 * [ ] generate .d.ts from .cpp
@@ -99,6 +98,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] virtual methods
 * [ ] 3-way merge upon sync
 * [ ] class field initializers (?)
+* [ ] support Enum.X + 0 etc ?
 
 ### web app
 
