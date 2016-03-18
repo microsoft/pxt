@@ -75,6 +75,9 @@ declare module Blockly {
         // Returns null if no next block or is disconnected.
         getNextBlock(): Block;
 
+        moveBy(x : number, y: number) : void;
+        getHeightWidth() : { width: number; height: number;};
+
         outputConnection: Connection;
 
         svgGroup_: SVGElement;

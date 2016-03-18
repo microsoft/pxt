@@ -19,12 +19,28 @@ namespace ks.blocks {
         media: (window as any).appCdnRoot + "blockly/media/"
     });
 
-    export function render(blocksXml: string): JQuery {
+    function align(ws: B.Workspace) {
+        let blocks = ws.getTopBlocks(true);
+        let y = 0
+        blocks.forEach(block => {
+            block.moveBy(0, y)
+            y += block.getHeightWidth().height
+            y += 10 //buffer            
+        })
+    }
+
+    export function render(blocksXml: string, clean?: boolean): JQuery {
         workspace.clear();
         try {
             let text = blocksXml || "<xml></xml>";
             let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(workspace, xml);
+
+            if (clean) {
+                align(workspace);
+                if ((<any>workspace).cleanUp_)
+                    (<any>workspace).cleanUp_();                
+            }
 
             let metrics = workspace.getMetrics();
 

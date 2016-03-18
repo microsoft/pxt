@@ -15,29 +15,29 @@ export interface BlocksPreviewState {
 
 
 export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPreviewState> {
-    workspace : Blockly.Workspace;
+    workspace: Blockly.Workspace;
     constructor(props: BlocksPreviewProps) {
         super(props);
         this.state = {};
     }
-    
+
     renderSvg() {
         let el = $(ReactDOM.findDOMNode(this));
         let svg = ks.blocks.render(this.props.xml);
-        
+
         el.children().remove();
-        el.append(svg);        
+        el.append(svg);
     }
-    
+
     componentDidMount() {
         this.renderSvg();
     }
-    
+
     componentDidUpdate() {
         this.renderSvg();
     }
 
     render() {
-        return (<div style={ { width: '100%', minHeight: '10em'} }></div>)
+        return (<div style={ { width: '100%', minHeight: '10em' } }></div>)
     }
 }

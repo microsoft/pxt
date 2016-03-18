@@ -163,7 +163,6 @@ namespace ks.blocks {
 
         let hash = JSON.stringify(fn);
         if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
-            console.log('block already in toolbox: ' + id);
             return true;
         }
 

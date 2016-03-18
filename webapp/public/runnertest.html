@@ -36,12 +36,13 @@
             // ,"if (false) { }",
             // ,"if (false) { basic.showNumber(0) } else { basic.clearScreen() }"
             //,"if (false) { basic.showNumber(0) } else if (false) { basic.showNumber(1) } else { basic.clearScreen() }"            
-            //, "basic.forever(() => { basic.clearScreen(); })"
-            //, "let x = 0;"            
+            , "basic.forever(() => { basic.clearScreen(); basic.showNumber(1); })"
+            //, "let x = 0;"         
+            //, "var x = 42\nvar y = 'hello'"   
             // TODO
             //, "input.onButtonPressed(Button.AB, () => {})"
             //,"basic.showLeds(`. . . . .\n. # . # .\n. . . . .\n# . . . #\n. # # # .`);"
-            ,"for(let i = 0;i<5;++i) { basic.clearScreen() }"
+            //,"for(let i = 0;i<5;++i) { basic.clearScreen() }"
             //,"input.onShake(() => { basic.clearScreen(); })"
            ];
         function next() {
