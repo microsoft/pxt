@@ -271,6 +271,16 @@
     opacity: 0.7;
 }
 
+.menu img.ui.logo:first-of-type {
+    margin-right:0.5em;
+}
+
+.modal img.ui.logo {    
+    max-width: 5em;
+    max-height: 3em;
+    vertical-align: middle;    
+}
+
 .ui.logs {
     font-family: monospace;
     font-size:0.8em;

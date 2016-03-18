@@ -121,6 +121,7 @@ export function handleNetworkError(e: any) {
 }
 
 export interface ConfirmOptions {
+    logos?: string[];
     header: string;
     body?: string;
     htmlBody?: string;
@@ -134,6 +135,10 @@ export interface ConfirmOptions {
 }
 
 export function confirmAsync(options: ConfirmOptions) {
+    let logos = (options.logos || [])
+        .filter(logo => !!logo)
+        .map(logo => `<img class="ui logo" src="${Util.svgToDataUri(logo)}" />`)
+        .join(' ');
     let html = `
   <div class="ui small modal">
     <div class="header">
@@ -143,33 +148,33 @@ export function confirmAsync(options: ConfirmOptions) {
       ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
       ${options.htmlBody || ""}
     </div>`
-    if (!options.hideCancel || !options.hideAgree) {
-        html += `<div class="actions">`
-        if (!options.hideCancel) {
-            html += `<button class="ui cancel right labeled icon button">
+    html += `<div class="actions">`
+    html += logos
+    
+    if (!options.hideCancel) {
+        html += `<button class="ui cancel right labeled icon button">
         ${Util.htmlEscape(options.disagreeLbl || lf("Cancel"))}
         <i class="cancel icon"></i>
       </button>`
-        }
-        if (!options.hideAgree) {
-            html += `
+    }
+    if (!options.hideAgree) {
+        html += `
       <button class="ui approve right labeled icon button ${options.agreeClass || "positive"}">
         ${Util.htmlEscape(options.agreeLbl || lf("Go ahead!"))}
         <i class="${options.agreeIcon || "checkmark"} icon"></i>
       </button>`
-        }
-        
-        html += `</div>`
     }
+
     html += `</div>`
-    
+    html += `</div>`
+
     let modal = $(html)
     let done = false
     $('#root').append(modal)
     if (options.onLoaded) options.onLoaded(modal)
 
     modal.find('img').on('load', () => {
-        modal.modal('refresh')                
+        modal.modal('refresh')
     })
 
     return new Promise((resolve, reject) =>

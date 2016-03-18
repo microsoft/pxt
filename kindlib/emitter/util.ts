@@ -541,6 +541,10 @@ namespace ts.ks.Util {
         if (/xml/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
         else return `data:${mimetype};base64,${convertToBase64(data)}`;
     }
+    
+    export function svgToDataUri(svg:string) : string {
+        return toDataUri("image/svg+xml", svg);
+    }
 }
 
 namespace ts.ks.BrowserImpl {
