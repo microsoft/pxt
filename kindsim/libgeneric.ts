@@ -94,15 +94,17 @@ namespace ks.rt {
     export namespace math {
         export function abs(v: number) { return v < 0 ? -v : v; }
         export function sign(v: number) { return v == 0 ? 0 : v < 0 ? -1 : 1; }
-        export function random(max : number) : number {
+        export function random(max: number): number {
             if (max < 1) return 0;
             return Math.floor(Math.random() * max - 1);
         }
+        export function mod(x:number, y:number) { return x % y }
     }
 
     // for explanations see:
     // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
     // (but the code below doesn't come from there; I wrote it myself)
+    // TODO use Math.imul if available
     function intMult(a: number, b: number) {
         return (((a & 0xffff) * (b >>> 16) + (b & 0xffff) * (a >>> 16)) << 16) + ((a & 0xffff) * (b & 0xffff));
     }
@@ -114,13 +116,31 @@ namespace ks.rt {
         export function eq(x: number, y: number) { return x == y; }
         export function gt(x: number, y: number) { return x > y; }
         export function ge(x: number, y: number) { return x >= y; }
-        export function add(x: number, y: number) { return (x + y) | 0; }
-        export function subtract(x: number, y: number) { return (x - y) | 0; }
         export function divide(x: number, y: number) { return Math.floor(x / y) | 0; }
-        export function multiply(x: number, y: number) { return intMult(x, y); }
-        export function to_string(x: number) { return x + ""; }
-        export function to_character(x: number) { return String.fromCharCode(x); }
+        export function to_string(x: number) { return initString(x + ""); }
+        export function to_character(x: number) { return initString(String.fromCharCode(x)); }
         export function post_to_wall(s: number) { console.log(s); }
+    }
+
+    export namespace thumb {
+        export function adds(x: number, y: number) { return (x + y) | 0; }
+        export function subs(x: number, y: number) { return (x - y) | 0; }
+        export function divs(x: number, y: number) { return Math.floor(x / y) | 0; }
+        export function muls(x: number, y: number) { return intMult(x, y); }
+        export function ands(x: number, y: number) { return x & y; }
+        export function orrs(x: number, y: number) { return x | y; }
+        export function eors(x: number, y: number) { return x ^ y; }
+        export function lsls(x: number, y: number) { return x << y; }
+        export function lsrs(x: number, y: number) { return x >>> y; }
+        export function asrs(x: number, y: number) { return x >> y; }
+
+        export function cmp_lt(x: number, y: number) { return x < y; }
+        export function cmp_le(x: number, y: number) { return x <= y; }
+        export function cmp_ne(x: number, y: number) { return x != y; }
+        export function cmp_eq(x: number, y: number) { return x == y; }
+        export function cmp_gt(x: number, y: number) { return x > y; }
+        export function cmp_ge(x: number, y: number) { return x >= y; }
+
     }
 
     export namespace string {
@@ -131,7 +151,7 @@ namespace ks.rt {
         }
 
         export function concat(a: string, b: string) {
-            return (a + b);
+            return initString(a + b);
         }
 
         export function concat_op(s1: string, s2: string) {
@@ -139,7 +159,7 @@ namespace ks.rt {
         }
 
         export function substring(s: string, i: number, j: number) {
-            return s.slice(i, i + j);
+            return initString(s.slice(i, i + j));
         }
 
         export function equals(s1: string, s2: string) {
@@ -153,7 +173,7 @@ namespace ks.rt {
         function inRange(s: string, i: number) { return 0 <= i && i < s.length }
 
         export function at(s: string, i: number) {
-            return inRange(s, i) ? s.charAt(i) : null;
+            return inRange(s, i) ? initString(s.charAt(i)) : null;
         }
 
         export function to_character_code(s: string) {
@@ -176,6 +196,10 @@ namespace ks.rt {
     export namespace boolean {
         export function not_(v: boolean) {
             return !v;
+        }
+        
+        export function to_string(v:boolean) {
+            return v ? "true" : "false"
         }
     }
 

@@ -4,6 +4,9 @@ namespace ts.ks {
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })
+        jssource += "\nrt.setupStringLiterals(" +
+            JSON.stringify(U.mapStringMap(bin.strings, (k, v) => 1), null, 1) +
+            ")\n"
         bin.writeFile("microbit.js", jssource)
     }
 
@@ -88,9 +91,10 @@ while (true) { switch (step) {
                 if (jmp.expr)
                     emitExpr(jmp.expr)
                 write(trg)
+            } else if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
+                write(`if (r0 == (${emitExprInto(jmp.expr)})) ${trg}`)
             } else {
                 emitExpr(jmp.expr)
-
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
                     write(`if (r0) ${trg}`)
                 } else {
@@ -244,6 +248,7 @@ while (true) { switch (step) {
                     // it does the decr itself, no mask
                     emitExpr(ir.rtcall(withRef("bitvm::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
                     break;
+                default: oops();
             }
         }
 

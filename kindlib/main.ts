@@ -323,7 +323,7 @@ namespace ks {
                 .then(() => {
                     for (let pkg of this.sortedDeps()) {
                         for (let f of pkg.getFiles()) {
-                            if (/\.ts$/.test(f)) {
+                            if (/\.(ts|asm)$/.test(f)) {
                                 let sn = f
                                 if (pkg.level > 0)
                                     sn = "kind_modules/" + pkg.id + "/" + f

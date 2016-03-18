@@ -44,41 +44,47 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 ## TODOs
 
 ### package mgr + compiler
-
 * [x] image literals
 * [x] code in top-level scope
 * [x] only compile what's needed
 * [x] don't emit unused global vars
 * [x] testFiles: [ ... ] in yelm.json
 * [x] class methods
-* [ ] class field initializers (?)
 * [x] constructors
-* [ ] disallow direct references to class members (cannot copy JS semantics)
+* [x] disallow direct references to class members (cannot copy JS semantics)
 * [x] optional arguments
 * [x] default arguments
-* [ ] +=, -= etc
-* [ ] proper caching for x.f++, x.f += ... etc
-* [ ] lambdas returning values (maybe just works?)
-* [ ] clear variables when they get out of scope to limit memory usage
+* [x] +=, -= etc
+* [x] += on strings
+* [x] proper caching for x.f++, x.f += ... etc
 * [x] function f() {...}; control.inBackground(f) in local scope
 * [x] function f() {...}; control.inBackground(f) in global scope
 * [x] //% shim=... weight=... help=... etc insteaf of {shim:...}
-* [ ] bit operators (&, |, etc)
-* [ ] inline assembly
-* [ ] use "(x + y) | 0" etc instead of "x + y" in simulator
+* [x] bit operators (&, |, etc)
+* [x] use "(x + y) | 0" etc instead of "x + y" in simulator
 * [x] do not generate empty action bodies for shim
 * [x] check on compiler performance (1000ms on lang-test0)
 * [x] forever() seems to have issues
 * [x] skip unreferenced globals when initilized with literal
+* [x] `foo${bar}baz`
+* [x] x ? a : b
+* [x] x as T support
+* [x] check on ("foo" + true)
+* [ ] simulator at sim-microbit.kindscript.net
+* [ ] `ptr-<username>-*` as the main way publishing packages
+* [ ] lambdas returning values (maybe just works?)
+* [ ] clear variables when they get out of scope to limit memory usage
+* [ ] allow use of floating point for non-native targets
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload
 * [ ] in simulator currResume start loop() in nextTick
-* [ ] `foo${bar}baz`
-* [ ] x ? a : b
-* [ ] error for 'shim:foo' (ie. shim=true)
-* [ ] x as T support
-* [ ] simulator at sim-microbit.kindscript.net
-* [ ] `ptr-<username>-*` as the main way publishing packages
+
+* [x] enum support without enumval= (esp for non-hex targets)
+* [x] switch() statement support
+* [x] % operator
+* [x] error for 'shim:foo' (ie. shim=true)
+* [x] lib compile mode - no reachability, test shims
+* [x] inline assembly
 
 #### Bigger items
 * [ ] generate .d.ts from .cpp
@@ -88,10 +94,11 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] integrate TD converter
 * [ ] think about package versioning (semver?)
 
-
 #### Maybe
 * [ ] virtual methods
 * [ ] 3-way merge upon sync
+* [ ] class field initializers (?)
+* [ ] support Enum.X + 0 etc ?
 
 ### web app
 

@@ -10,6 +10,8 @@ namespace ks.rt {
 
     var refObjId = 1;
     var liveRefObjs: any = {};
+    var stringLiterals: any;
+    var stringRefCounts: any = {};
 
     export class RefObject {
         id: number = refObjId++;
@@ -135,7 +137,35 @@ namespace ks.rt {
                 delete liveRefObjs[o.id + ""]
                 o.destroy()
             }
+        } else if (stringLiterals && typeof v == "string" && !stringLiterals.hasOwnProperty(v)) {
+            stringRefDelta(v, -1)
         }
+    }
+
+    export function setupStringLiterals(strings: any) {
+        strings[""] = 1
+        strings["true"] = 1
+        strings["false"] = 1
+        // comment out next line to disable string ref counting
+        stringLiterals = strings
+    }
+
+    function stringRefDelta(s: string, n: number) {
+        if (!stringRefCounts.hasOwnProperty(s))
+            stringRefCounts[s] = 0
+        let r = (stringRefCounts[s] += n)
+        if (r == 0)
+            delete stringRefCounts[s]
+        else
+            check(r > 0)
+        return r
+    }
+
+    export function initString(v: string) {
+        if (!v || !stringLiterals) return v
+        if (typeof v == "string" && !stringLiterals.hasOwnProperty(v))
+            stringRefDelta(v, 1)
+        return v
     }
 
     export function incr(v: any) {
@@ -143,6 +173,9 @@ namespace ks.rt {
             let o = <RefObject>v
             check(o.refcnt > 0)
             o.refcnt++
+        } else if (stringLiterals && typeof v == "string" && !stringLiterals.hasOwnProperty(v)) {
+            let k = stringRefDelta(v, 1)
+            check(k > 1)
         }
         return v;
     }
@@ -150,6 +183,10 @@ namespace ks.rt {
     export function dumpLivePointers() {
         Object.keys(liveRefObjs).forEach(k => {
             (<RefObject>liveRefObjs[k]).print()
+        })
+        Object.keys(stringRefCounts).forEach(k => {
+            let n = stringRefCounts[k]
+            console.log("Live String:", JSON.stringify(k), "refcnt=", n)
         })
     }
 
@@ -264,7 +301,11 @@ namespace ks.rt {
             let cb = getResume();
             setTimeout(() => { cb() }, ms)
         }
-        
+
+        export function panic(code: number) {
+            U.userError("PANIC! Code " + code)
+        }
+
         export function runInBackground(a: RefAction) {
             runtime.runFiberAsync(a).done()
         }

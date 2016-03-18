@@ -1,4 +1,4 @@
-//%  shim=uBit.panic
+//%  shim=micro_bit::panic
 function panic(code2: number): void { }
 
 //%  shim=micro_bit::showDigit
@@ -35,6 +35,7 @@ console.log("Starting...")
 //lib.print_17(3);
 showDigit(0);
 //assert(lib3.getX() == 17 * 3, "");
+
 testNums();
 testStrings();
 testNumCollection();
@@ -53,8 +54,9 @@ testFunDecl();
 testDefaultArgs();
 testMemoryFree();
 testMemoryFreeHOF();
-
-
+postPreFix()
+eqOp()
+testEnums()
 
 // test some top-level code
 let xsum = 0;
@@ -143,6 +145,20 @@ function testNums(): void {
     assert(Math.abs(42) == 42, "abs");
     assert(Math.sign(42) == 1, "abs");
     testIf();
+
+    assert((3 & 6) == 2, "&")
+    assert((3 | 6) == 7, "|")
+    assert((3 ^ 6) == 5, "^")
+    assert((-10 >> 2) == -3, ">>")
+    assert((-10 >>> 20) == 4095, ">>>")
+    assert((-10 << 2) == -40, "<<")
+    assert((10 << 2) == 40, "<<+")
+    assert((10 >> 2) == 2, ">>+")
+    assert((10 >>> 2) == 2, ">>>+")
+    assert(1000000 * 1000000 == -727379968, "*")
+    assert(100000001 * 100000001 == 2074919425, "*2")
+
+    assert(105 % 100 == 5, "perc")
 }
 
 
@@ -207,6 +223,15 @@ function testStrings(): void {
     assert(s == "109876543210", "while");
     msg(s);
     msg(s2);
+
+    s2 = ""; // don't leak ref
+
+    x = 21
+    s = "foo"
+    s = `a${x * 2}X${s}X${s}Z`
+    assert(s == "a42XfooXfoo" + "Z", "`")
+
+    assert("X" + true == "Xt" + "rue", "boolStr")
 }
 
 
@@ -244,7 +269,7 @@ function testStringCollection(): void {
         coll[2],
     ]
     assert(coll[0] == "ab", "")
-    assert(coll[1] == "foobarxx", "")
+    assert(coll[1] == "foob" + "arxx", "")
     assert(coll.length == 2, "")
 }
 
@@ -263,6 +288,42 @@ class Testrec {
     num: number;
     bool: boolean;
     str2: string;
+}
+
+function recordId(x: Testrec) {
+    lazyAcc++
+    return x
+}
+
+function postPreFix() {
+    msg("postPref")
+    let x = new Testrec()
+    lazyAcc = 0
+    recordId(x).num = 12
+    assert(x.num == 12 && lazyAcc == 1, "X0")
+    let y = recordId(x).num++
+    assert(x.num == 13 && lazyAcc == 2, "X1")
+    assert(y == 12, "X2")
+    y = ++recordId(x).num
+    assert(y == 14 && x.num == 14 && lazyAcc == 3, "X2")
+
+    recordId(x).num >>= 1
+    assert(x.num == 7, "X3")
+    assert(lazyAcc == 4, "X4")
+}
+
+function eqOp() {
+    msg("eqOp")
+    let x = 12
+    assert((x += 10) == 22, "Y0")
+    assert(x == 22, "Y1")
+    x /= 2
+    assert(x == 11, "Y2")
+
+    let s = ("fo" + 1)
+    let t = ("ba" + 2)
+    s += t
+    assert(s == "fo1b" + "a2", "fb")
 }
 
 function testRec0(): Testrec {
@@ -327,7 +388,7 @@ function testIter() {
 
 function testAction(p: number): void {
     let s = "hello" + "1";
-    let coll = (<number[]>[]);
+    let coll = [] as number[];
     let p2 = p * 2;
     x = 42;
     runTwice(() => {
@@ -384,7 +445,7 @@ function testActionSave(): void {
     msg(tot);
     assert(tot == "foo42foo42", "");
     tot = "";
-    action = (<Action>null);
+    action = null;
 }
 
 function testLazyOps(): void {
@@ -436,9 +497,20 @@ function testLazyOps(): void {
     } else {
         assert(false, "");
     }
+
+    lazyAcc = 0;
+    assert((true ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 42, "?:")
+    assert(lazyAcc == 1, "?:0");
+    assert((false ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 36, "?:1")
+    assert(lazyAcc == 11, "?:2");
 }
 
 function incrLazyAcc(delta: number, res: boolean): boolean {
+    lazyAcc = lazyAcc + delta;
+    return res;
+}
+
+function incrLazyNum(delta: number, res: number) {
     lazyAcc = lazyAcc + delta;
     return res;
 }
@@ -576,4 +648,59 @@ function testClass() {
     assert(f.getPin() == 42, "getpin")
 }
 
+enum En {
+    A,
+    B,
+    C,
+    D = 4200,
+    E,
+}
 
+function testEnums() {
+    msg("enums")
+    
+    let k = En.C as number
+    assert(k == 2, "e0")
+    k = En.D as number
+    assert(k == 4200, "e1")
+    k = En.E as number
+    assert(k == 4201, "e43")
+
+    msg("enums0")
+    assert(switchA(En.A) == 7, "s1")
+    assert(switchA(En.B) == 7, "s2")
+    assert(switchA(En.C) == 12, "s3")
+    assert(switchA(En.D) == 13, "s4")
+    assert(switchA(En.E) == 12, "s5")
+    assert(switchA(-3 as En) == 12, "s6")
+
+    msg("enums1")
+    assert(switchB(En.A) == 7, "x1")
+    assert(switchB(En.B) == 7, "x2")
+    assert(switchB(En.C) == 17, "x3")
+    assert(switchB(En.D) == 13, "x4")
+    assert(switchB(En.E) == 14, "x5")
+}
+
+
+function switchA(e: En) {
+    let r = 12;
+    switch (e) {
+        case En.A:
+        case En.B: return 7;
+        case En.D: r = 13; break;
+    }
+    return r
+}
+
+function switchB(e: En) {
+    let r = 33;
+    switch (e) {
+        case En.A:
+        case En.B: return 7;
+        case En.D: r = 13; break;
+        case En.E: r = 14; break;
+        default: return 17;
+    }
+    return r;
+}

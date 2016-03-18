@@ -93,6 +93,7 @@ namespace ks.rt {
         (rt as any).micro_bit = {
             runInBackground: thread.runInBackground,
             pause: thread.pause,
+            panic: thread.panic,
             serialSendString: (s:string) => runtime.board.writeSerial(s),
             showDigit: (n:number) => console.log("DIGIT:", n)
         }
