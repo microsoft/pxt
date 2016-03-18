@@ -96,9 +96,13 @@ namespace ks.rt {
         export function sign(v: number) { return v == 0 ? 0 : v < 0 ? -1 : 1; }
         export function random(max: number): number {
             if (max < 1) return 0;
-            return Math.floor(Math.random() * max - 1);
+            var r = 0;
+            do {
+                r = Math.floor(Math.random() * max);
+            } while (r == max);
+            return r;
         }
-        export function mod(x:number, y:number) { return x % y }
+        export function mod(x: number, y: number) { return x % y }
     }
 
     // for explanations see:
@@ -197,8 +201,8 @@ namespace ks.rt {
         export function not_(v: boolean) {
             return !v;
         }
-        
-        export function to_string(v:boolean) {
+
+        export function to_string(v: boolean) {
             return v ? "true" : "false"
         }
     }
