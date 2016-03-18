@@ -682,6 +682,8 @@ ${lbl}: .short 0xffff
                 let idx = fieldIndex(node)
                 callInfo.args.push(node.expression)
                 return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
+            } else if (decl.kind == SK.MethodDeclaration || decl.kind == SK.MethodSignature) {
+                throw userError(lf("cannot use method as lambda; did you forget '()' ?"))
             } else {
                 throw unhandled(node, stringKind(decl));
             }
@@ -1307,7 +1309,7 @@ ${lbl}: .short 0xffff
 
             if (node.operatorToken.kind == SK.PlusEqualsToken &&
                 (lt.flags & TypeFlags.String)) {
-            
+
                 let tmp = prepForAssignment(node.left)
                 let post = ir.shared(ir.rtcallMask("string::concat_op", 3, false, [
                     tmp.left,

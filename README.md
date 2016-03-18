@@ -53,7 +53,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [x] class methods
 * [ ] class field initializers (?)
 * [x] constructors
-* [ ] disallow direct references to class members (cannot copy JS semantics)
+* [x] disallow direct references to class members (cannot copy JS semantics)
 * [x] optional arguments
 * [x] default arguments
 * [x] +=, -= etc
