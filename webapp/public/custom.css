@@ -381,10 +381,6 @@ svg.ui.trend.black polyline {
     border-bottom: 2px solid #FFC107;     
 }
 
-.ui.portrait.only {
-    display:none;    
-}
-
 .ui.hideempty:empty {
     display:none !important;
 }
@@ -406,7 +402,7 @@ svg.ui.trend.black polyline {
 /* smaller desktop screen */
 @media only screen and (max-width: 968px) {
     #logo .name {
-        display: none;
+        display: none !important;
     }    
     .ui.desktop.only {
         display:none !important;
@@ -433,9 +429,6 @@ svg.ui.trend.black polyline {
     .ui.landscape.only {
         display:none !important;
     }
-    .ui.portrait.only {
-        display:inherit !important;
-    }
     #filelist {
         position:absolute;
         z-index:5;
@@ -451,4 +444,10 @@ svg.ui.trend.black polyline {
     .blocklyTreeLabel {
         font-size:14px;
     }    
+}
+
+@media only screen and (min-width: 786px) {
+    .ui.portrait.only {
+        display:none !important;    
+    }
 }
