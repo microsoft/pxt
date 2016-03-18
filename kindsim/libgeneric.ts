@@ -92,6 +92,8 @@ namespace ks.rt {
     }
 
     export namespace math {
+        export function min(x:number, y:number) { return  x < y ? x : y;}
+        export function max(x:number, y:number) { return  x > y ? x : y;}
         export function abs(v: number) { return v < 0 ? -v : v; }
         export function sign(v: number) { return v == 0 ? 0 : v < 0 ? -1 : 1; }
         export function random(max: number): number {
