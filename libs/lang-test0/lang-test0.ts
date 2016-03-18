@@ -221,11 +221,13 @@ function testStrings(): void {
     assert(s == "109876543210", "while");
     msg(s);
     msg(s2);
+    
+    s2 = ""; // don't leak ref
 
     x = 21
     s = "foo"
     s = `a${x * 2}X${s}X${s}Z`
-    assert(s == "a42XfooXfooZ", "`")
+    assert(s == "a42XfooXfoo" + "Z", "`")
 }
 
 
@@ -263,7 +265,7 @@ function testStringCollection(): void {
         coll[2],
     ]
     assert(coll[0] == "ab", "")
-    assert(coll[1] == "foobarxx", "")
+    assert(coll[1] == "foob" + "arxx", "")
     assert(coll.length == 2, "")
 }
 
@@ -315,7 +317,7 @@ function eqOp() {
     let s = ("fo" + 1)
     let t = ("ba" + 2)
     s += t
-    assert(s == "fo1ba2", "fb")
+    assert(s == "fo1b" + "a2", "fb")
 }
 
 function testRec0(): Testrec {

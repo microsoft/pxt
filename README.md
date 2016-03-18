@@ -82,6 +82,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] simulator at sim-microbit.kindscript.net
 * [ ] `ptr-<username>-*` as the main way publishing packages
 * [ ] lib compile mode - no reachability, test shims
+* [ ] check on ("foo" + true)
 
 #### Bigger items
 * [ ] generate .d.ts from .cpp

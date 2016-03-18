@@ -4,6 +4,9 @@ namespace ts.ks {
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })
+        jssource += "\nrt.setupStringLiterals(" +
+            JSON.stringify(U.mapStringMap(bin.strings, (k, v) => 1), null, 1) +
+            ")\n"
         bin.writeFile("microbit.js", jssource)
     }
 
