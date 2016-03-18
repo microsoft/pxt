@@ -22,6 +22,20 @@
     width: 1.2em;
     height: 1.2em;
 }
+
+#logo img, #rightlogo img {
+    height: 1.2em;    
+}
+
+#footerlogo {
+    vertical-align: middle;
+    margin-right: 0.5em;    
+}
+
+#footerlogo img {
+    height: 1.2em;    
+}
+
 #footer {
     position: absolute;
     bottom: 0;

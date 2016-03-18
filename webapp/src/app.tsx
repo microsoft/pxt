@@ -668,7 +668,8 @@ Ctrl+Shift+B
             this.setTheme()
             this.updateEditorFile();
         }
-
+            
+        let targetTheme = this.appTarget.theme || {};
         let inv = this.state.theme.inverted ? " inverted " : " "
 
         return (
@@ -676,8 +677,8 @@ Ctrl+Shift+B
                 <div id="menubar">
                     <div className={"ui small menu" + inv}>
                         <span id="logo" className="item">
-                            {this.appTarget.logo ? <img className='ui logo' src={this.appTarget.logo} /> :  logoSvg}
-                            {this.appTarget.title ? <span className='name landscape only'>{this.appTarget.title}</span> : ""}
+                            {targetTheme.logo ? (<a href={targetTheme.logoUrl}><img className='ui logo' src={Util.toDataUri("image/svg+xml", targetTheme.logo)} /></a>) : ""}
+                            {logoSvg}
                         </span>
                         <div className="ui item">
                             <div className="ui buttons">
@@ -700,9 +701,10 @@ Ctrl+Shift+B
                             <sui.Button class="landscape only" text={lf("Undo")} icon="undo" onClick={() => this.editor.undo()} />
                             {this.editor.menu() }
                         </div>
-                        { this.appTarget.cloud ?
+                        { this.appTarget.cloud || targetTheme.rightLogo ?
                             <div className="ui item right">
-                                <LoginBox />
+                                { this.appTarget.cloud ? <LoginBox /> : "" }
+                                { targetTheme.rightLogo ? <a id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri("image/svg+xml", targetTheme.rightLogo)} /></a> : "" }
                             </div> : "" }
                     </div>
                 </div>
@@ -730,7 +732,8 @@ Ctrl+Shift+B
                 {this.appTarget.cloud ? <ScriptSearch parent={this} ref={v => this.scriptSearch = v} /> : ""}
                 <div id="footer">
                     <div>
-                        {this.appTarget.title || this.appTarget.name} {lf("powered by")}
+                        { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri("image/svg+xml", targetTheme.footerLogo)} /></a> : (this.appTarget.title || this.appTarget.name) }                    
+                        {lf("powered by")}
                         &nbsp;<a href="https://github.com/Microsoft/kindscript">KindScript</a> - (c) Microsoft Corporation - 2016
                         - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use")}</a>
                         - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy")}</a>

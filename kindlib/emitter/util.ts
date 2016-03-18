@@ -536,6 +536,11 @@ namespace ts.ks.Util {
     export var httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;
     export var sha256: (hashData: string) => string;
     export var getRandomBuf: (buf: Uint8Array) => void;
+    
+    export function toDataUri(mimetype : string, data: string) : string {
+        if (/xml/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
+        else return `data:${mimetype};base64,${convertToBase64(data)}`;
+    }
 }
 
 namespace ts.ks.BrowserImpl {

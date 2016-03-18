@@ -84,12 +84,19 @@ namespace ks {
         config: ks.PackageConfig;
         files: U.Map<string>;
     }
+    
+    export interface AppTheme {
+        logoUrl?:string;
+        logo?: string;
+        rightLogo?: string;
+        footerLogo?:string;
+    }
 
     export interface AppTarget {
         id: string;
         name: string;
-        logo?: string;
         title?: string;
+        theme?: AppTheme;
         cloud?: boolean;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
