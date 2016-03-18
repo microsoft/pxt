@@ -1125,20 +1125,25 @@ ${lbl}: .short 0xffff
             throw unhandled(node, "prefix unary");
         }
 
-        function emitIncrement(trg: Expression, meth: string, isPost: boolean, one: Expression = null) {
-            let pre = emitExpr(trg)
-            let cached: ir.Expr = null
-            if (pre.exprKind == EK.FieldAccess) {
-                pre.args[0] = ir.shared(pre.args[0])
-                cached = emitExpr(trg) // clone
-                cached.args[0] = ir.op(EK.Incr, [pre.args[0]])
-                proc.emitExpr(pre.args[0])
+        function prepForAssignment(trg: Expression) {
+            let left = emitExpr(trg)
+            let storeCache: ir.Expr = null
+            if (left.exprKind == EK.FieldAccess) {
+                left.args[0] = ir.shared(left.args[0])
+                storeCache = emitExpr(trg) // clone
+                storeCache.args[0] = ir.op(EK.Incr, [left.args[0]])
+                proc.emitExpr(left.args[0])
             }
-            pre = ir.shared(pre)
+            left = ir.shared(left)
+            return { left, storeCache }
+        }
+
+        function emitIncrement(trg: Expression, meth: string, isPost: boolean, one: Expression = null) {
+            let tmp = prepForAssignment(trg)
             let oneExpr = one ? emitExpr(one) : ir.numlit(1)
-            let post = ir.shared(ir.rtcall(meth, [pre, oneExpr]))
-            emitStore(trg, post, cached)
-            return isPost ? pre : post
+            let result = ir.shared(ir.rtcall(meth, [tmp.left, oneExpr]))
+            emitStore(trg, result, tmp.storeCache)
+            return isPost ? tmp.left : result
         }
 
         function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
@@ -1299,6 +1304,18 @@ ${lbl}: .short 0xffff
                         emitAsString(node.right)])
                 }
             }
+
+            if (node.operatorToken.kind == SK.PlusEqualsToken &&
+                (lt.flags & TypeFlags.String)) {
+            
+                let tmp = prepForAssignment(node.left)
+                let post = ir.shared(ir.rtcallMask("string::concat_op", 3, false, [
+                    tmp.left,
+                    emitAsString(node.right)]))
+                emitStore(node.left, post, tmp.storeCache)
+                return ir.op(EK.Incr, [post])
+            }
+
 
             if ((lt.flags & TypeFlags.String) && (rt.flags & TypeFlags.String)) {
                 switch (node.operatorToken.kind) {

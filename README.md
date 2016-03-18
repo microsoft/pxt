@@ -57,7 +57,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [x] optional arguments
 * [x] default arguments
 * [x] +=, -= etc
-* [ ] += on strings
+* [x] += on strings
 * [x] proper caching for x.f++, x.f += ... etc
 * [ ] lambdas returning values (maybe just works?)
 * [ ] clear variables when they get out of scope to limit memory usage
