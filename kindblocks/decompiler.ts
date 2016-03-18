@@ -37,6 +37,8 @@ ${output}</xml>`;
                     emitWhileStatement(n as ts.WhileStatement); break;
                 case SK.IfStatement:
                     emitIfStatement(n as ts.IfStatement); break;
+                case SK.ForStatement:
+                    emitForStatement(n as ts.ForStatement); break;
                 case SK.ArrowFunction:
                     emitArrowFunction(n as ts.ArrowFunction); break;
                 case SK.PropertyAccessExpression:
@@ -44,6 +46,77 @@ ${output}</xml>`;
                 default:
                     console.warn("Unhandled emit:", ts.ks.stringKind(n))
             }
+        }
+        
+        // TODO handle special for loops
+        function emitForStatement(n : ts.ForStatement) {
+            write('<block type="controls_simple_for">');
+            let vd = n.initializer as ts.VariableDeclarationList;
+            if (vd.declarations.length != 1) console.error('for loop with multiple variables not supported');
+            let id = vd.declarations[0].name as ts.Identifier;
+            write(`<field name="VAR">${Util.htmlEscape(id.text)}</field>`)
+            write('<value name="TO">');
+            let c = n.condition;
+            if (c.kind == ts.SyntaxKind.BinaryExpression) {
+                let bs = c as ts.BinaryExpression;
+                if (bs.left.kind == ts.SyntaxKind.Identifier &&
+                    (bs.left as ts.Identifier).text == id.text &&
+                    bs.operatorToken.getText() == "<") {
+                    write('<block type="math_number">')
+                    if (bs.right.kind == ts.SyntaxKind.NumericLiteral)
+                        write(`<field name="NUM">${parseInt((bs.right as ts.LiteralExpression).text) - 1}</field>`)
+                    else {
+                        write(`
+      <block type="math_arithmetic">
+        <field name="OP">MINUS</field>
+        <value name="A">
+          <shadow type="math_number">
+            <field name="NUM">`)
+                        emit(bs.right)
+                        write(`</field>
+          </shadow>
+        </value>
+        <value name="B">
+          <shadow type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+          <block type="math_number">
+            <field name="NUM">1</field>
+          </block>
+        </value>
+      </block>`)
+                    }
+                    write('</block>')                        
+                }
+            }
+            write('</value>');
+            write('<statement name="DO">')
+            emit(n.statement)
+            write('</statement>')
+            write('</block>')
+            /*
+      <shadow type="math_number">
+        <field name="NUM">4</field>
+      </shadow>
+      <block type="math_arithmetic">
+        <field name="OP">MINUS</field>
+        <value name="A">
+          <shadow type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+        </value>
+        <value name="B">
+          <shadow type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+          <block type="math_number">
+            <field name="NUM">1</field>
+          </block>
+        </value>
+      </block>
+    </value>
+  </block>            
+  */
         }
         
         function emitVariableStatement(n : ts.VariableStatement) {
