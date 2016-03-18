@@ -1111,9 +1111,9 @@ ${lbl}: .short 0xffff
             if (tp.flags & TypeFlags.Number) {
                 switch (node.operator) {
                     case SK.PlusPlusToken:
-                        return emitIncrement(node, "thumb::adds", false)
+                        return emitIncrement(node.operand, "thumb::adds", false)
                     case SK.MinusMinusToken:
-                        return emitIncrement(node, "thumb::subs", false)
+                        return emitIncrement(node.operand, "thumb::subs", false)
                     case SK.MinusToken:
                         return ir.rtcall("thumb::subs", [ir.numlit(0), emitExpr(node.operand)])
                     case SK.PlusToken:
@@ -1125,18 +1125,19 @@ ${lbl}: .short 0xffff
             throw unhandled(node, "prefix unary");
         }
 
-        function emitIncrement(expr: PrefixUnaryExpression | PostfixUnaryExpression, meth: string, isPost: boolean) {
-            let pre = emitExpr(expr.operand)
+        function emitIncrement(trg: Expression, meth: string, isPost: boolean, one: Expression = null) {
+            let pre = emitExpr(trg)
             let cached: ir.Expr = null
             if (pre.exprKind == EK.FieldAccess) {
                 pre.args[0] = ir.shared(pre.args[0])
-                cached = emitExpr(expr.operand) // clone
+                cached = emitExpr(trg) // clone
                 cached.args[0] = ir.op(EK.Incr, [pre.args[0]])
                 proc.emitExpr(pre.args[0])
             }
             pre = ir.shared(pre)
-            let post = ir.shared(ir.rtcall(meth, [pre, ir.numlit(1)]))
-            emitStore(expr.operand, post, cached)
+            let oneExpr = one ? emitExpr(one) : ir.numlit(1)
+            let post = ir.shared(ir.rtcall(meth, [pre, oneExpr]))
+            emitStore(trg, post, cached)
             return isPost ? pre : post
         }
 
@@ -1146,9 +1147,9 @@ ${lbl}: .short 0xffff
             if (tp.flags & TypeFlags.Number) {
                 switch (node.operator) {
                     case SK.PlusPlusToken:
-                        return emitIncrement(node, "thumb::adds", true)
+                        return emitIncrement(node.operand, "thumb::adds", true)
                     case SK.MinusMinusToken:
-                        return emitIncrement(node, "thumb::subs", true)
+                        return emitIncrement(node.operand, "thumb::subs", true)
                     default: unhandled(node, "postfix unary number")
                 }
             }
@@ -1282,9 +1283,12 @@ ${lbl}: .short 0xffff
             let shim = (n: string) => rtcallMask(n, [node.left, node.right]);
 
             if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
-                let shimName = simpleInstruction(node.operatorToken.kind)
+                let noEq = stripEquals(node.operatorToken.kind)
+                let shimName = simpleInstruction(noEq || node.operatorToken.kind)
                 if (!shimName)
                     unhandled(node.operatorToken, "numeric operator")
+                if (noEq)
+                    return emitIncrement(node.left, shimName, false, node.right)
                 return shim(shimName)
             }
 

@@ -55,7 +55,7 @@ testDefaultArgs();
 testMemoryFree();
 testMemoryFreeHOF();
 postPreFix()
-
+eqOp()
 
 
 // test some top-level code
@@ -299,6 +299,18 @@ function postPreFix() {
     assert(y == 12, "X2")
     y = ++recordId(x).num
     assert(y == 14 && x.num == 14 && lazyAcc == 3, "X2")
+
+    recordId(x).num >>= 1
+    assert(x.num == 7, "X3")
+    assert(lazyAcc == 4, "X4")
+}
+
+function eqOp() {
+    let x = 12
+    assert((x += 10) == 22, "Y0")
+    assert(x == 22, "Y1")
+    x /= 2
+    assert(x == 11, "Y2")
 }
 
 function testRec0(): Testrec {

@@ -56,7 +56,8 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] disallow direct references to class members (cannot copy JS semantics)
 * [x] optional arguments
 * [x] default arguments
-* [ ] +=, -= etc
+* [x] +=, -= etc
+* [ ] += on strings
 * [x] proper caching for x.f++, x.f += ... etc
 * [ ] lambdas returning values (maybe just works?)
 * [ ] clear variables when they get out of scope to limit memory usage
