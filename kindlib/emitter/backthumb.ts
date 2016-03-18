@@ -81,7 +81,11 @@ ${getFunctionLabel(proc.action)}:
                 let lbl = mkLbl("jmpz")
                 emitExpr(jmp.expr)
 
-                write("cmp r0, #0")
+                if (jmp.expr.exprKind == EK.RuntimeCall && jmp.expr.data === "thumb::subs") {
+                    // no cmp required
+                } else {
+                    write("cmp r0, #0")
+                }
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
                     write("beq " + lbl) // this is to *skip* the following 'b' instruction; beq itself has a very short range
                 } else {

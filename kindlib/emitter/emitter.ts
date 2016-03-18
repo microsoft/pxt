@@ -1480,14 +1480,17 @@ ${lbl}: .short 0xffff
 
         function emitBreakOrContinueStatement(node: BreakOrContinueStatement) {
             let label = node.label ? node.label.text : null
-            function findOuter(node: Node): Statement {
-                if (!node) return null;
-                if (label && node.kind == SK.LabeledStatement &&
-                    (<LabeledStatement>node).label.text == label)
-                    return (<LabeledStatement>node).statement;
-                if (!label && isIterationStatement(node, false))
-                    return <Statement>node;
-                return findOuter(node.parent);
+            let isBreak = node.kind == SK.BreakStatement
+            function findOuter(parent: Node): Statement {
+                if (!parent) return null;
+                if (label && parent.kind == SK.LabeledStatement &&
+                    (<LabeledStatement>parent).label.text == label)
+                    return (<LabeledStatement>parent).statement;
+                if (parent.kind == SK.SwitchStatement && !label && isBreak)
+                    return parent as Statement
+                if (!label && isIterationStatement(parent, false))
+                    return parent as Statement
+                return findOuter(parent.parent);
             }
             let stmt = findOuter(node)
             if (!stmt)
@@ -1517,7 +1520,38 @@ ${lbl}: .short 0xffff
         }
 
         function emitWithStatement(node: WithStatement) { }
-        function emitSwitchStatement(node: SwitchStatement) { }
+
+        function emitSwitchStatement(node: SwitchStatement) {
+            if (!(typeOf(node.expression).flags & (TypeFlags.Number | TypeFlags.Enum))) {
+                userError(lf("switch() only supported over numbers or enums"))
+            }
+
+            let l = getLabels(node)
+            let hasDefault = false
+            let expr = ir.shared(emitExpr(node.expression))
+            let lbls = node.caseBlock.clauses.map(cl => {
+                let lbl = proc.mkLabel("switch")
+                if (cl.kind == SK.CaseClause) {
+                    let cc = cl as CaseClause
+                    let cmp = ir.rtcall("thumb::subs", [expr, emitExpr(cc.expression)])
+                    proc.emitJmp(lbl, cmp, ir.JmpMode.IfZero)
+                } else {
+                    hasDefault = true
+                    proc.emitJmp(lbl)
+                }
+                return lbl
+            })
+            if (!hasDefault)
+                proc.emitJmp(l.brk);
+
+            node.caseBlock.clauses.forEach((cl, i) => {
+                proc.emitLbl(lbls[i])
+                cl.statements.forEach(emit)
+            })
+
+            proc.emitLblDirect(l.brk);
+        }
+
         function emitCaseOrDefaultClause(node: CaseOrDefaultClause) { }
         function emitLabeledStatement(node: LabeledStatement) {
             let l = getLabels(node.statement)
@@ -1559,7 +1593,7 @@ ${lbl}: .short 0xffff
             for (let mem of node.members) {
                 let cmts = parseComments(mem)
                 if (!cmts.enumval)
-                    res.enums[getDeclName(node) + "_" + mem.name.getText()] = 
+                    res.enums[getDeclName(node) + "_" + mem.name.getText()] =
                         checker.getConstantValue(mem)
             }
         }
@@ -1648,6 +1682,8 @@ ${lbl}: .short 0xffff
                 case SK.PropertyDeclaration:
                 case SK.PropertyAssignment:
                     return emitPropertyAssignment(<PropertyDeclaration>node);
+                case SK.SwitchStatement:
+                    return emitSwitchStatement(<SwitchStatement>node);
                 case SK.TypeAliasDeclaration:
                     // skip
                     return
@@ -1765,8 +1801,6 @@ ${lbl}: .short 0xffff
                     return emitForInOrForOfStatement(<ForInStatement>node);
                 case SyntaxKind.WithStatement:
                     return emitWithStatement(<WithStatement>node);
-                case SyntaxKind.SwitchStatement:
-                    return emitSwitchStatement(<SwitchStatement>node);
                 case SyntaxKind.CaseClause:
                 case SyntaxKind.DefaultClause:
                     return emitCaseOrDefaultClause(<CaseOrDefaultClause>node);

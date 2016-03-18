@@ -81,7 +81,7 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] support Enum.X + 0 etc ?
 
 * [x] enum support without enumval= (esp for non-hex targets)
-* [ ] switch() statement support
+* [x] switch() statement support
 * [x] % operator
 * [ ] inline assembly
 * [ ] error for 'shim:foo' (ie. shim=true)
