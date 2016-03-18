@@ -52,8 +52,8 @@
 
 .simframe {
     border: none;
-    width: 249px;
-    height:200px;
+    width: 285px;
+    height: 230px;
     margin: 0;
     padding: 0;
     background:transparent;    
@@ -393,10 +393,6 @@ svg.ui.trend.black polyline {
     #maineditor {
         left:300px;
     }
-    .simframe {
-        width: 100%;
-        height: 224px;        
-    }    
 }
 
 /* smaller desktop screen */
@@ -420,7 +416,7 @@ svg.ui.trend.black polyline {
     #helpcard {
         left: 2.1rem;
         top: initial;
-        bottom: 220px;
+        bottom: 180px;
         margin: 0;
     }
     #maineditor {
@@ -432,13 +428,16 @@ svg.ui.trend.black polyline {
     #filelist {
         position:absolute;
         z-index:5;
-        bottom:1rem;
+        bottom:2rem;
         left:1rem;
         top:initial;      
         width:initial;     
     }
     .simframe {
         display:inline-block;
+        width: 240px;
+        height: inherit;   
+        max-width:40%;     
     }
     
     .blocklyTreeLabel {
