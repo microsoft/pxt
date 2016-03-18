@@ -296,6 +296,7 @@ function recordId(x: Testrec) {
 }
 
 function postPreFix() {
+    msg("postPref")
     let x = new Testrec()
     lazyAcc = 0
     recordId(x).num = 12
@@ -312,6 +313,7 @@ function postPreFix() {
 }
 
 function eqOp() {
+    msg("eqOp")
     let x = 12
     assert((x += 10) == 22, "Y0")
     assert(x == 22, "Y1")
@@ -655,6 +657,8 @@ enum En {
 }
 
 function testEnums() {
+    msg("enums")
+    
     let k = En.C as number
     assert(k == 2, "e0")
     k = En.D as number
@@ -662,6 +666,7 @@ function testEnums() {
     k = En.E as number
     assert(k == 4201, "e43")
 
+    msg("enums0")
     assert(switchA(En.A) == 7, "s1")
     assert(switchA(En.B) == 7, "s2")
     assert(switchA(En.C) == 12, "s3")
@@ -669,6 +674,7 @@ function testEnums() {
     assert(switchA(En.E) == 12, "s5")
     assert(switchA(-3 as En) == 12, "s6")
 
+    msg("enums1")
     assert(switchB(En.A) == 7, "x1")
     assert(switchB(En.B) == 7, "x2")
     assert(switchB(En.C) == 17, "x3")
