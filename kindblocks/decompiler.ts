@@ -24,6 +24,8 @@ ${output}</xml>`;
                     emit((n as ts.ExpressionStatement).expression); break;
                 case SK.VariableStatement:
                     emitVariableStatement(n as ts.VariableStatement); break;
+                case SK.Identifier:
+                    emitIdentifier(n as ts.Identifier)break;
                 case SK.Block:
                     emitBlock(n as ts.Block); break;
                 case SK.CallExpression:
@@ -80,6 +82,10 @@ ${output}</xml>`;
             }
             if (next.top > 0)
                 write('</block>')
+        }
+        
+        function emitIdentifier(n : ts.Identifier) {
+            write(`<block type="variables_get"><field name="VAR">${Util.htmlEscape(n.text)}</field></block>`)
         }
 
         // TODO handle special for loops
