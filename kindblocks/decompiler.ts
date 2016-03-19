@@ -173,8 +173,8 @@ ${output}</xml>`;
 
         function emitPropertyAccessExpression(n: ts.PropertyAccessExpression): void {
             let callInfo = (n as any).callInfo as ts.ks.CallInfo;
-            if (callInfo && callInfo.attrs.blockId) {
-                write(callInfo.attrs.blockId);
+            if (callInfo) {
+                output += (callInfo.attrs.blockId || callInfo.qName);
                 return;
             }
             console.error("unhandled property access");
@@ -312,9 +312,9 @@ ${output}</xml>`;
                         write('</statement>');
                         break;
                     case SK.PropertyAccessExpression:
-                        write(`<field name="${argNames[i]}">`);
+                        output += `<field name="${argNames[i]}">`;
                         emit(e);
-                        write(`</field>`);
+                        output += `</field>`;
                         break;
                     default:
                         write(`<value name="${argNames[i]}">`)
