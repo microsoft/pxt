@@ -25,7 +25,7 @@ ${output}</xml>`;
                 case SK.VariableStatement:
                     emitVariableStatement(n as ts.VariableStatement); break;
                 case SK.Identifier:
-                    emitIdentifier(n as ts.Identifier)break;
+                    emitIdentifier(n as ts.Identifier); break;
                 case SK.Block:
                     emitBlock(n as ts.Block); break;
                 case SK.CallExpression:
@@ -55,6 +55,7 @@ ${output}</xml>`;
                     break;
             }
         }
+
 
         function writeBeginBlock(type: string) {
             let next = nexts[nexts.length - 1];
