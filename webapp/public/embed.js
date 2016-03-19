@@ -13,6 +13,7 @@
         "hexinfo.js",
         "kindlib.js",
         "kindblocks.js",
+        "kindsim.js",
         "kindrunner.js",
     ].map(s => appCdnRoot + s)
 

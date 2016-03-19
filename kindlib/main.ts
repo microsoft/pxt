@@ -173,6 +173,7 @@ namespace ks {
                 .then(verNo => {
                     if (this.config && this.config.installedVersion == verNo)
                         return
+                    console.log('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
                             let confStr = this.readFile(configName)
@@ -202,6 +203,9 @@ namespace ks {
         private parseConfig(str: string) {
             let cfg = <PackageConfig>JSON.parse(str)
             this.config = cfg;
+            // temp patch for cloud corrupted configs
+            for(let dep in this.config.dependencies)
+                if (/^microbit-(led|music|game|pins|serial)$/.test(dep)) delete this.config.dependencies[dep];
             this.validateConfig();
         }
 

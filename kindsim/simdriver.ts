@@ -29,6 +29,7 @@ namespace ks.rt {
             let frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
             frame.className = 'simframe';
+            frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             let cdn = (window as any).simCdnRoot
             frame.src = cdn + 'simulator.html#' + frame.id;
@@ -59,7 +60,7 @@ namespace ks.rt {
             while(this.container.childElementCount > 1)
                 this.container.removeChild(this.container.lastElementChild);
             // first frame            
-            let frame = this.container.querySelector("iframe:first") as HTMLIFrameElement;
+            let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
                 frame = this.createFrame();
