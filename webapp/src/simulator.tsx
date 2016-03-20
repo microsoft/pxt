@@ -68,12 +68,15 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
         };
         msg.id = `${msg.options.theme}-${ks.Util.guidGen()}`;
         frame.contentWindow.postMessage(msg, "*");
+        frame.classList.remove("grayscale")
     }
 
     static currentRuntime: ks.rt.SimulatorRunMessage;
     static stop(unload = false) {
         Simulator.postMessage({ type: 'stop' });
         if (unload) Simulator.unload();
+        let simulators = $('#simulators');
+        simulators.find('iframe').addClass("grayscale")
     }
     static unload() {
         $('#simulators').html('');        

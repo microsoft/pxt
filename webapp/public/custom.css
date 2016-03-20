@@ -378,6 +378,12 @@ svg.ui.trend.black polyline {
     stroke:#000;
 }
 
+.grayscale {    
+    -moz-filter: grayscale(1);
+    -webkit-filter: grayscale(1);
+    filter: grayscale(1);
+}
+    
 .highlight {
     border-bottom: 2px solid #FFC107;     
 }
