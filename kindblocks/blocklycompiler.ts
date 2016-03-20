@@ -53,11 +53,10 @@ namespace ks.blocks {
 
         // A map from "classic" [JPropertyRef]s to their proper [parent].
         var knownPropertyRefs: { [index: string]: string } = {
-            "post to wall": "String",
             "=": "Unknown",
         };
         ["==", "!=", "<", "<=", ">", ">=", "+", "-", "/", "*"].forEach(x => knownPropertyRefs[x] = "Number");
-        ["and", "or", "not"].forEach(x => knownPropertyRefs[x] = "Boolean");
+        ["&&", "||", "!"].forEach(x => knownPropertyRefs[x] = "Boolean");
 
         export function mkPropertyRef(x: string, p: string): J.JPropertyRef {
             return {
@@ -727,8 +726,8 @@ namespace ks.blocks {
         "LTE": "<=",
         "GT": ">",
         "GTE": ">=",
-        "AND": "and",
-        "OR": "or",
+        "AND": "&&",
+        "OR": "||",
         "EQ": "==",
         "NEQ": "!=",
     };
@@ -741,23 +740,14 @@ namespace ks.blocks {
         var t = returnType(e, left).type;
 
         if (t == pString.type) {
-            if (bOp == "EQ")
-                return H.stringCall("equals", args);
-            else if (bOp == "NEQ")
-                return H.booleanCall("not", [H.stringCall("equals", args)]);
-        } else if (t == pBoolean.type) {
-            if (bOp == "EQ")
-                return H.booleanCall("equals", args);
-            else if (bOp == "NEQ")
-                return H.booleanCall("not", [H.booleanCall("equals", args)]);
-            else if (bOp == "AND" || bOp == "OR")
-                return H.mkSimpleCall(opToTok[bOp], args);
-        }
+            if (bOp == "EQ") return H.stringCall("==", args);
+            else if (bOp == "NEQ") return H.stringCall("!=", args);
+        } else if (t == pBoolean.type)
+            return H.mkSimpleCall(opToTok[bOp], args);
 
         // Compilation of math operators.
-        if (bOp == "POWER") {
-            return H.mathCall("pow", args);
-        } else {
+        if (bOp == "POWER") return H.mathCall("pow", args);
+        else {
             assert(bOp in opToTok);
             return H.mkSimpleCall(opToTok[bOp], args);
         }
@@ -792,7 +782,7 @@ namespace ks.blocks {
 
     function compileNot(e: Environment, b: B.Block): J.JExpr {
         var expr = compileExpression(e, b.getInputTargetBlock("BOOL"));
-        return H.mkSimpleCall("not", [expr]);
+        return H.mkSimpleCall("!", [expr]);
     }
 
     function compileRandom(e: Environment, b: B.Block): J.JExpr {
@@ -1414,6 +1404,7 @@ namespace ks.blocks {
             "*": 14,
             "/": 14,
             "%": 14,
+            "!": 15,
         }
 
 
