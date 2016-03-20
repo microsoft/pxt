@@ -352,6 +352,7 @@ svg.ui.trend {
     margin-top: 0.1em;
     float: right;
     vertical-align: middle;
+    cursor:pointer;
 }
 
 svg.ui.trend polyline {
