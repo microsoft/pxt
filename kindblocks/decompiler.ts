@@ -364,25 +364,29 @@ ${output}</xml>`;
 
             writeBeginBlock(info.attrs.blockId);
             info.args.forEach((e, i) => {
-                pushBlocks();
                 switch (e.kind) {
                     case SK.ArrowFunction:
                         write('<statement name="HANDLER">');
+                        pushBlocks();
                         emit(e);
+                        flushBlocks();
                         write('</statement>');
                         break;
                     case SK.PropertyAccessExpression:
                         output += `<field name="${argNames[i]}">`;
+                        pushBlocks();
                         emit(e);
+                        flushBlocks();
                         output += `</field>`;
                         break;
                     default:
                         write(`<value name="${argNames[i]}">`)
+                        pushBlocks();
                         emit(e);
+                        flushBlocks();
                         write(`</value>`)
                         break;
                 }
-                flushBlocks();
             })
             writeEndBlock()
         }

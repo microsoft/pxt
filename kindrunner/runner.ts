@@ -194,7 +194,8 @@ namespace ks.runner {
                 opts.ast = true
                 let resp = ts.ks.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
-                    console.error("Diagnostics", resp.diagnostics)
+                    resp.diagnostics.forEach(diag => console.error(diag.messageText));
+                    return $('');
                 }
                 let apis = ts.ks.getApiInfo(resp.ast);
                 let blocksInfo = ts.ks.getBlocksInfo(apis);
