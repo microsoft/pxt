@@ -1167,12 +1167,8 @@ namespace ks.blocks {
                 r = [compileWhile(e, b)];
                 break;
             default:
-                let call = e.stdCallTable[b.type];
-                if (call) r = [compileCall(e, b)];
-                else {
-                    console.error("Not generating code for (not a statement / not supported): " + b.type);
-                    r = [];
-                }
+                r = [H.mkExprStmt(H.mkExprHolder([], compileExpression(e,b)))];
+                break;
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
         return r;
