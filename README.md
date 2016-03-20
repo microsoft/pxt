@@ -126,15 +126,6 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [x] async is flipped
 * [ ] use `expr as Type` not `<Type> expr`
 
-## Docs
-
-We use mkdocs to generate the docs under the ``/docs`` folder. To setup mkdocs, 
-````
-pip install mkdocs
-mkdocs serve
-open http://127.0.0.1:8000
-````
-
 ## License
 
 MIT
