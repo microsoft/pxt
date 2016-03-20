@@ -48,6 +48,8 @@ ${output}</xml>`;
                 case SK.CallExpression:
                     emitCallExpression(n as ts.CallExpression); break;
                 case SK.StringLiteral:
+                case SK.FirstTemplateToken:
+                case SK.NoSubstitutionTemplateLiteral:
                     emitStringLiteral(n as ts.StringLiteral); break;
                 case SK.PrefixUnaryExpression:
                     emitPrefixUnaryExpression(n as ts.PrefixUnaryExpression); break;
@@ -345,14 +347,34 @@ ${output}</xml>`;
         function emitBooleanExpression(n: ts.LiteralExpression) {
             write(`<block type="logic_boolean"><field name="BOOL">${U.htmlEscape(n.kind == ts.SyntaxKind.TrueKeyword ? 'TRUE' : 'FALSE')}</field></block>`)
         }
+        
+        function emitCallImageLiteralExpression(node: ts.CallExpression, info: ts.ks.CallInfo) {
+            let arg = node.arguments[0];
+            if (arg.kind != ts.SyntaxKind.StringLiteral && arg.kind != ts.SyntaxKind.NoSubstitutionTemplateLiteral) {
+                console.error("must be string literal")
+                return;    
+            }
+            writeBeginBlock(info.attrs.blockId);            
+            let leds = ((arg as ts.StringLiteral).text || '').replace(/\s/g,'');           
+            let nc = info.attrs.imageLiteral * 5;
+            for (let r = 0; r < 5; ++r) {
+                for (let c = 0; c < nc; ++c) {
+                    write(`<field name="LED${c}${r}">${ /[#*1]/.test(leds[r*nc+c]) ? "TRUE" : "FALSE" }</field>`)
+                }
+            }            
+            writeEndBlock();            
+        }
 
         function emitCallExpression(node: ts.CallExpression) {
             let info: ts.ks.CallInfo = (node as any).callInfo
-            console.log(info)
-
             if (!info.attrs.blockId || !info.attrs.block) {
                 console.error(`trying to convert ${info.decl.name} which is not supported in blocks`)
                 // TODO show error in editor
+                return;
+            }
+            
+            if (info.attrs.imageLiteral) {
+                emitCallImageLiteralExpression(node, info);
                 return;
             }
 
