@@ -5,6 +5,21 @@ namespace ks.blocks {
         top: number; current: number;
     }
 
+    var ops : U.Map<{ type:string; op: string;}> = {
+        "+" : { type:"math_arithmetic", op:"ADD"},
+        "-" : { type:"math_arithmetic", op:"MINUS"},
+        "/" : { type:"math_arithmetic", op:"DIVIDE"},
+        "*" : { type:"math_arithmetic", op:"MULTIPLY"},
+        "<" : { type:"logic_compare", op:"LT"},
+        "<=" : { type:"logic_compare", op:"LTE"},
+        ">" : { type:"logic_compare", op:"GT"},
+        ">=" : { type:"logic_compare", op:"GTE"},
+        "==" : { type:"logic_compare", op:"EQ"},
+        "!=" : { type:"logic_compare", op:"NEQ"},
+        "&&" : { type:"logic_operation", op:"AND"},
+        "||" : { type:"logic_operation", op:"OR"},        
+    }
+
     export function toBlocks(blocksInfo: ts.ks.BlocksInfo, stmts: ts.Statement[]): string {
         let output = ""
         let nexts: BlockSequence[] = [];
@@ -22,6 +37,8 @@ ${output}</xml>`;
             switch (n.kind) {
                 case SK.ExpressionStatement:
                     emit((n as ts.ExpressionStatement).expression); break;
+                case SK.ParenthesizedExpression:
+                    emit((n as ts.ParenthesizedExpression).expression); break;
                 case SK.VariableStatement:
                     emitVariableStatement(n as ts.VariableStatement); break;
                 case SK.Identifier:
@@ -32,6 +49,10 @@ ${output}</xml>`;
                     emitCallExpression(n as ts.CallExpression); break;
                 case SK.StringLiteral:
                     emitStringLiteral(n as ts.StringLiteral); break;
+                case SK.PrefixUnaryExpression:
+                    emitPrefixUnaryExpression(n as ts.PrefixUnaryExpression); break;
+                case SK.BinaryExpression:
+                    emitBinaryExpression(n as ts.BinaryExpression); break;
                 case SK.NullKeyword:
                     // don't emit anything
                     break;
@@ -83,6 +104,44 @@ ${output}</xml>`;
             }
             if (next.top > 0)
                 write('</block>')
+        }
+        
+        function emitPrefixUnaryExpression(n: ts.PrefixUnaryExpression) {
+            switch(n.operator) {
+                case ts.SyntaxKind.ExclamationToken:
+                    writeBeginBlock("logic_negate");
+                    write('<value name="BOOL">');
+                    pushBlocks();
+                    emit(n.operand);
+                    flushBlocks();
+                    write('</value>')
+                    writeEndBlock();
+                    break;
+                default:
+                    console.error("unknown operator " + n.operator);
+            }
+        }
+        
+        function emitBinaryExpression(n : ts.BinaryExpression) : void {
+            let op = n.operatorToken.getText();
+            let npp = ops[op];
+            if (!npp) {
+                console.error("unknown op " + op);
+                return;
+            }
+            writeBeginBlock(npp.type)     
+            write(`<field name="OP">${npp.op}</field>`)           
+            write('<value name="A">')
+            pushBlocks();
+            emit(n.left);
+            flushBlocks();
+            write('</value>')
+            write('<value name="B">')
+            pushBlocks();
+            emit(n.right)
+            flushBlocks();
+            write('</value>')
+            writeEndBlock();
         }
         
         function emitIdentifier(n : ts.Identifier) {
