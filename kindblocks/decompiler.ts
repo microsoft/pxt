@@ -23,7 +23,7 @@ namespace ks.blocks {
     export function toBlocks(blocksInfo: ts.ks.BlocksInfo, stmts: ts.Statement[]): string {
         let output = ""
         let nexts: BlockSequence[] = [];
-
+        
         emitTopStatements(stmts);
 
         return `<xml xmlns="http://www.w3.org/1999/xhtml">
@@ -103,7 +103,7 @@ ${output}</xml>`;
                 write('</next>');
             }
             if (next.top > 0)
-                write('</block>')
+                write('</block>')       
         }
         
         function emitPrefixUnaryExpression(n: ts.PrefixUnaryExpression) {
@@ -364,6 +364,7 @@ ${output}</xml>`;
 
             writeBeginBlock(info.attrs.blockId);
             info.args.forEach((e, i) => {
+                pushBlocks();
                 switch (e.kind) {
                     case SK.ArrowFunction:
                         write('<statement name="HANDLER">');
@@ -381,6 +382,7 @@ ${output}</xml>`;
                         write(`</value>`)
                         break;
                 }
+                flushBlocks();
             })
             writeEndBlock()
         }
