@@ -250,7 +250,10 @@ ${output}</xml>`;
             // chunk statements
             let chunks: ts.Statement[][] = [[]];
             stmts.forEach(stmt => {
-                if (isHat(stmt)) chunks.push([]);
+                if (isHat(stmt) || 
+                    (stmt.kind == ts.SyntaxKind.ExpressionStatement &&  isOutputExpression((stmt as ts.ExpressionStatement).expression))
+                    ) 
+                    chunks.push([]);
                 chunks[chunks.length - 1].push(stmt);
             })
 
@@ -265,6 +268,15 @@ ${output}</xml>`;
             pushBlocks();
             stmts.forEach(statement => emit(statement));
             flushBlocks();
+        }
+        
+        function isOutputExpression(expr: ts.Expression) : boolean {
+            switch(expr.kind) {
+                case ts.SyntaxKind.BinaryExpression:
+                case ts.SyntaxKind.PrefixUnaryExpression:
+                    return true;
+                default: return false;
+            }
         }
 
         function isHat(stmt: ts.Statement): boolean {
