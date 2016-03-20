@@ -24,6 +24,8 @@ import Cloud = ks.Cloud;
 import Util = ks.Util;
 var lf = Util.lf
 
+declare function rg4js(s:string, v:any) : void;
+
 export interface FileHistoryEntry {
     id: string;
     name: string;
@@ -794,6 +796,17 @@ function getsrc() {
     console.log(theEditor.editor.getCurrentSource())
 }
 
+function enableCrashReporting() {    
+    if (/localhost/.test(document.location.href)) return; // don't report local crashes
+    try {
+        rg4js('apiKey', '/wIRcLktINPpixxiUnyjPQ==');
+        rg4js('enableCrashReporting', true);
+    }
+    catch(e) {
+        console.error('raygun loader failed')
+    }
+}
+
 // This is for usage from JS console
 let myexports: any = {
     workspace,
@@ -829,7 +842,9 @@ $(document).ready(() => {
     baseUrl = baseUrl || './';
 
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-    
+   
+    enableCrashReporting()       
+   
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
 
