@@ -186,24 +186,30 @@ namespace ks.runner {
             })
     }
 
-    export function toBlocksAsync(code: string): Promise<JQuery> {
+    export function decompileToBlocksAsync(code: string): Promise<JQuery> {
         return loadPackageAsync(null)
             .then(getCompileOptionsAsync)
             .then(opts => {
+                // compile
                 opts.fileSystem["main.ts"] = code
                 opts.ast = true
                 let resp = ts.ks.compile(opts)
-                if (resp.diagnostics && resp.diagnostics.length > 0) {
+                if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
+                if (!resp.success)
                     return $('');
-                }
+                    
+                // decompile to blocks
                 let apis = ts.ks.getApiInfo(resp.ast);
                 let blocksInfo = ts.ks.getBlocksInfo(apis);
                 ks.blocks.initBlocks(blocksInfo);
-                console.log(resp)
-                let blcks = ks.blocks.toBlocks(blocksInfo, resp.ast.getSourceFile("main.ts").statements)
-                console.log(blcks)
-                return ks.blocks.render(blcks, { emPixels: 14, align: true });
+                let bresp = ks.blocks.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                if (bresp.diagnostics && bresp.diagnostics.length > 0)
+                    bresp.diagnostics.forEach(diag => console.error(diag.messageText));
+                if (!bresp.success)
+                    return $('');
+                console.log(bresp.outfiles["main.blocks"])
+                return ks.blocks.render(bresp.outfiles["main.blocks"], { emPixels: 14, align: true });
             })
     }
 
