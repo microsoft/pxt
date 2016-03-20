@@ -1167,7 +1167,9 @@ namespace ks.blocks {
                 r = [compileWhile(e, b)];
                 break;
             default:
-                r = [H.mkExprStmt(H.mkExprHolder([], compileExpression(e,b)))];
+                let call = e.stdCallTable[b.type];
+                if (call) r = [compileCall(e, b)];
+                else r = [H.mkExprStmt(H.mkExprHolder([], compileExpression(e,b)))];
                 break;
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
