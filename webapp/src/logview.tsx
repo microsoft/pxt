@@ -48,9 +48,7 @@ export class LogView extends React.Component<ILogProps, ILogState> {
                     let i = buf.lastIndexOf("\n");
                     if (i >= 0) {
                         let msgb = buf.substring(0, i + 1);
-
-                        this.appendEntry('mbit' + msg.id, msgb, 'black');
-
+                        msgb.split('\n').filter(line => !!line).forEach(line => this.appendEntry('microbit' + msg.id, line, 'black'));
                         buf = buf.slice(i + 1);
                     }
 
