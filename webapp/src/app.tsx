@@ -796,11 +796,13 @@ function getsrc() {
     console.log(theEditor.editor.getCurrentSource())
 }
 
-function enableCrashReporting() {    
+function enableCrashReporting(releaseid : string) {    
     if (/localhost/.test(document.location.href)) return; // don't report local crashes
     try {
         rg4js('apiKey', '/wIRcLktINPpixxiUnyjPQ==');
         rg4js('enableCrashReporting', true);
+        rg4js('setVersion', releaseid);
+        rg4js('saveIfOffline', true);
     }
     catch(e) {
         console.error('raygun loader failed')
@@ -843,7 +845,7 @@ $(document).ready(() => {
 
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
    
-    enableCrashReporting()       
+    enableCrashReporting(currentReleaseId)       
    
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
