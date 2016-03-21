@@ -54,7 +54,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
             if (card.hardware && !card.software) color = 'black';
             else if (card.software && !card.hardware) color = 'teal';
         }
-        let url = this.props.url ? /^[^:]+:\/\//.test(this.props.url) ? this.props.url : ('/' + this.props.url.replace(/^\.?\/?/,''))
+        let url = this.props.url ? /^[^:]+:\/\//.test(this.props.url) ? this.props.url : this.props.url.replace(/^\.?\/?/,'')
             : undefined;
 
         return (
