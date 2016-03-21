@@ -60,7 +60,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
         return (
             <div className={"ui card " + color} >
                 {this.props.header ?
-                <div key="header" className={"ui content " + (this.props.responsive ? " desktop only" : "")}>
+                <div key="header" className={"ui content " + (this.props.responsive ? " tall desktop only" : "")}>
                     <div className="right floated meta">
                         {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
                         {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
@@ -68,7 +68,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                     </div>
                     {this.props.header}
                 </div> : "" }
-                <div className={"ui image" + (this.props.responsive ? " landscape only": "")}>
+                <div className={"ui image" + (this.props.responsive ? " tall landscape only": "")}>
                     {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div>
                         : this.props.blocksXml 
                         ? <blockspreview.BlocksPreview key="promoblocks" xml={this.props.blocksXml} />
@@ -83,7 +83,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                     <div className="description">{this.props.description || lf("No description.") }</div>
                 </div>
                 {this.props.url || card.power || card.toughness ?
-                <div key="extra" className={"ui extra content" + (this.props.responsive ? " desktop only" : "")}>
+                <div key="extra" className={"ui extra content" + (this.props.responsive ? " tall desktop only" : "")}>
                     {card.power || card.toughness ? (<div key="powertough" className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
                     {this.props.url ? <a target="docs" href={url}>{this.props.url}</a> : ""}
                 </div> : ""}

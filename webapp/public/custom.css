@@ -457,3 +457,9 @@ svg.ui.trend.black polyline {
         display:none !important;    
     }
 }
+
+@media only screen and (max-height:680px) {
+    .ui.tall.only {
+        display:none !important;
+    }
+}
