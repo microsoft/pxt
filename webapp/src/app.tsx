@@ -620,6 +620,8 @@ Ctrl+Shift+B
     }
 
     runSimulator() {
+        this.stopSimulator();
+        
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         let state = this.editor.snapshotState()

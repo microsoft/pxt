@@ -660,6 +660,26 @@ export class Editor extends srceditor.Editor {
             bindKey: { win: "Alt-Shift-f", mac: "Alt-Shift-f" },
             exec: () => this.formatCode()
         })
+        
+        this.editor.commands.addCommand({
+            name: "save",
+            bindKey: {win: "Ctrl-S", mac: "Command-S"},
+            exec: () => this.parent.saveFile()
+        })
+        
+        this.editor.commands.addCommand({
+            name: "runSimulator",
+            bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
+            exec: () => this.parent.runSimulator()
+        })
+        
+        if (this.parent.appTarget.compile.hasHex) {
+            this.editor.commands.addCommand({
+                name: "compileHex",
+                bindKey: {win: "Ctrl-Alt-Enter", mac: "Command-Alt-Enter"},
+                exec: () => this.parent.compile()
+            })
+        }
 
         let sess = this.editor.getSession()
         sess.setNewLineMode("unix");
