@@ -423,7 +423,7 @@ svg.ui.trend.black polyline {
     #helpcard {
         left: 2.1rem;
         top: initial;
-        bottom: 180px;
+        bottom: 220px;
         margin: 0;
     }
     #maineditor {
@@ -443,8 +443,7 @@ svg.ui.trend.black polyline {
     .simframe {
         display:inline-block;
         width: 240px;
-        height: inherit;   
-        max-width:40%;     
+        height:194px;
     }
     
     .blocklyTreeLabel {
