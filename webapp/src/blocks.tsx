@@ -111,8 +111,9 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         let blocklyDiv = document.getElementById('blocksEditor');
+        let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
         this.editor = Blockly.inject(blocklyDiv, {
-            toolbox: document.getElementById('blocklyToolboxDefinition'),
+            toolbox: toolboxDiv,
             scrollbars: true,
             media: (window as any).appCdnRoot + "blockly/media/",
             sound: true,

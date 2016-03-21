@@ -1,5 +1,8 @@
 templater.sh
 web/_temp
+webapp/public/closure-library
+webapp/public/blockly/core
+webapp/public/blockly/blockly_uncompressed.js
 node_modules
 *.sw?
 built
