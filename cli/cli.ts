@@ -531,7 +531,7 @@ class Host
         } else if (module.verProtocol() == "file") {
             return module.verArgument() + "/" + filename
         } else {
-            return "kind_modules/" + module + "/" + filename
+            return "kind_modules/" + module.id + "/" + filename
         }
     }
 
