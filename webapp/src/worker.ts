@@ -3,15 +3,17 @@ importScripts(
     "./kindlib.js"
 )
 
+let pm : any = postMessage;
+
 onmessage = ev => {
     let res = ts.ks.service.performOperation(ev.data.op, ev.data.arg)
-    postMessage({
+    pm({
         op: ev.data.op,
         id: ev.data.id,
         result: res
-    }, null)
+    })
 }
 
-postMessage({
+pm({
     id: "ready"
-}, null)
+})
