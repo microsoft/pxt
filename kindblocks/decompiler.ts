@@ -23,7 +23,7 @@ namespace ks.blocks {
     }
 
     export function decompileToBlocks(blocksInfo: ts.ks.BlocksInfo, file: ts.SourceFile): ts.ks.CompileResult {
-        let stmts : ts.Statement[] = file.statements;
+        let stmts: ts.Statement[] = file.statements;
         let result: ts.ks.CompileResult = {
             outfiles: {}, diagnostics: undefined, success: true, times: {}, enums: {}
         }
@@ -61,6 +61,8 @@ ${output}</xml>`;
                     emitStringLiteral(n as ts.StringLiteral); break;
                 case SK.PrefixUnaryExpression:
                     emitPrefixUnaryExpression(n as ts.PrefixUnaryExpression); break;
+                case SK.PostfixUnaryExpression:
+                    emitPostfixUnaryExpression(n as ts.PostfixUnaryExpression); break;
                 case SK.BinaryExpression:
                     emitBinaryExpression(n as ts.BinaryExpression); break;
                 case SK.NullKeyword:
@@ -128,6 +130,27 @@ ${output}</xml>`;
                 write('</block>')
         }
 
+        function emitPostfixUnaryExpression(n: ts.PostfixUnaryExpression) {
+            let parent = n.parent;
+            if (parent.kind != ts.SyntaxKind.ExpressionStatement ||
+                n.operand.kind != ts.SyntaxKind.Identifier) {
+                error(n);
+                return;
+            }
+            let left = (n.operand as ts.Identifier).text;
+            switch (n.operator) {
+                case ts.SyntaxKind.PlusPlusToken:
+                    emitVariableSetOrChange(left, 1, true);
+                    break;
+                case ts.SyntaxKind.MinusMinusToken:
+                    emitVariableSetOrChange(left, -1, true);
+                    break;
+                default:
+                    error(n);
+                    break;
+            }
+        }
+
         function emitPrefixUnaryExpression(n: ts.PrefixUnaryExpression) {
             switch (n.operator) {
                 case ts.SyntaxKind.ExclamationToken:
@@ -139,6 +162,16 @@ ${output}</xml>`;
                     write('</value>')
                     writeEndBlock();
                     break;
+                case ts.SyntaxKind.PlusPlusToken:
+                case ts.SyntaxKind.MinusMinusToken:
+                    let parent = n.parent;
+                    if (parent.kind != ts.SyntaxKind.ExpressionStatement ||
+                        n.operand.kind != ts.SyntaxKind.Identifier) {
+                        error(n);
+                        return;
+                    }
+                    emitVariableSetOrChange((n.operand as ts.Identifier).text, n.operator == ts.SyntaxKind.PlusPlusToken ? 1 : -1, true);
+                    break;                    
                 default:
                     error(n);
                     break;
@@ -147,6 +180,17 @@ ${output}</xml>`;
 
         function emitBinaryExpression(n: ts.BinaryExpression): void {
             let op = n.operatorToken.getText();
+            if (n.left.kind == ts.SyntaxKind.Identifier) {
+                switch (op) {
+                    case '=':
+                        emitVariableSetOrChange((n.left as ts.Identifier).text, n.right);
+                        return;
+                    case '+=':
+                        emitVariableSetOrChange((n.left as ts.Identifier).text, n.right, true);
+                        return;
+                }
+            }
+
             let npp = ops[op];
             if (!npp) return error(n);
             writeBeginBlock(npp.type)
@@ -220,13 +264,23 @@ ${output}</xml>`;
 
         function emitVariableStatement(n: ts.VariableStatement) {
             n.declarationList.declarations.forEach(decl => {
-                writeBeginBlock("variables_set")
-                write(`<field name="VAR">${(decl.name as ts.Identifier).text}</field>`)
-                write('<value name="VALUE">')
-                emit(decl.initializer);
-                write('</value>')
-                writeEndBlock()
+                emitVariableSetOrChange((decl.name as ts.Identifier).text, decl.initializer)
             })
+        }
+
+        function emitVariableSetOrChange(name: string, value: ts.Expression | number, changed = false) {
+            writeBeginBlock(changed ? "variables_change" : "variables_set")
+            write(`<field name="VAR">${Util.htmlEscape(name)}</field>`)
+            if (typeof value == 'number')
+                write(`<value name="VALUE"><block type="math_number"><field name="NUM">${value}</field></block></value>`);
+            else {
+                write('<value name="VALUE">')
+                pushBlocks();
+                emit(value as ts.Expression);
+                flushBlocks();
+                write('</value>')
+            }
+            writeEndBlock()
         }
 
         function emitPropertyAccessExpression(n: ts.PropertyAccessExpression): void {
@@ -250,9 +304,9 @@ ${output}</xml>`;
             // chunk statements
             let chunks: ts.Statement[][] = [[]];
             stmts.forEach(stmt => {
-                if (isHat(stmt) || 
-                    (stmt.kind == ts.SyntaxKind.ExpressionStatement &&  isOutputExpression((stmt as ts.ExpressionStatement).expression))
-                    ) 
+                if (isHat(stmt) ||
+                    (stmt.kind == ts.SyntaxKind.ExpressionStatement && isOutputExpression((stmt as ts.ExpressionStatement).expression))
+                )
                     chunks.push([]);
                 chunks[chunks.length - 1].push(stmt);
             })
@@ -269,12 +323,19 @@ ${output}</xml>`;
             stmts.forEach(statement => emit(statement));
             flushBlocks();
         }
-        
-        function isOutputExpression(expr: ts.Expression) : boolean {
-            switch(expr.kind) {
+
+        function isOutputExpression(expr: ts.Expression): boolean {
+            switch (expr.kind) {
                 case ts.SyntaxKind.BinaryExpression:
-                case ts.SyntaxKind.PrefixUnaryExpression:
-                    return true;
+                    return !/^=$/.test((expr as ts.BinaryExpression).operatorToken.getText());
+                case ts.SyntaxKind.PrefixUnaryExpression: {              
+                    let op = (expr as ts.PrefixUnaryExpression).operator;
+                    return op != ts.SyntaxKind.PlusPlusToken && op != ts.SyntaxKind.MinusMinusToken;
+                }
+                case ts.SyntaxKind.PostfixUnaryExpression: {
+                    let op = (expr as ts.PostfixUnaryExpression).operator;
+                    return op != ts.SyntaxKind.PlusPlusToken && op != ts.SyntaxKind.MinusMinusToken;
+                }
                 default: return false;
             }
         }
