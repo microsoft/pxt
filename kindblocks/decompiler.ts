@@ -162,6 +162,27 @@ ${output}</xml>`;
                     write('</value>')
                     writeEndBlock();
                     break;
+                case ts.SyntaxKind.PlusToken:
+                    emit(n.operand); break;
+                case ts.SyntaxKind.MinusToken:
+write(`<block type="math_arithmetic">
+        <field name="OP">MINUS</field>
+        <value name="A">
+          <block type="math_number">
+            <field name="NUM">0</field>
+          </block>
+        </value>
+        <value name="B">
+          <block type="math_number">
+            <field name="NUM">`); 
+            pushBlocks();
+            emit(n.operand) 
+            flushBlocks();
+            write(`</field>
+          </block>
+        </value>
+      </block>`)              
+                    break; // TODO add negation block
                 case ts.SyntaxKind.PlusPlusToken:
                 case ts.SyntaxKind.MinusMinusToken:
                     let parent = n.parent;
@@ -232,20 +253,16 @@ ${output}</xml>`;
                     if (bs.right.kind == ts.SyntaxKind.NumericLiteral)
                         write(`<field name="NUM">${parseInt((bs.right as ts.LiteralExpression).text) - 1}</field>`)
                     else {
-                        write(`
-      <block type="math_arithmetic">
+                        write(`<block type="math_arithmetic">
         <field name="OP">MINUS</field>
         <value name="A">
-          <shadow type="math_number">
+          <block type="math_number">
             <field name="NUM">`)
                         emit(bs.right)
                         write(`</field>
-          </shadow>
+          </block>
         </value>
         <value name="B">
-          <shadow type="math_number">
-            <field name="NUM">0</field>
-          </shadow>
           <block type="math_number">
             <field name="NUM">1</field>
           </block>
