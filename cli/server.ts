@@ -76,7 +76,7 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
 function writePkgAsync(logicalDirname: string, data: FsPkg) {
     let dirname = path.join(fileDir, logicalDirname)
 
-    if (!fs.existsSync(dirname))
+    if (!directoryExistsSync(dirname))
         fs.mkdirSync(dirname)
 
     return Promise.map(data.files, f =>
@@ -144,6 +144,26 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else throw throwError(400)
 }
 
+function directoryExistsSync(p: string): boolean {
+    try {
+        let stats = fs.lstatSync(p);
+        return stats && stats.isDirectory();
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+function fileExistsSync(p: string): boolean {
+    try {
+        let stats = fs.lstatSync(p);
+        return stats && stats.isFile();
+    }
+    catch (e) {
+        return false;
+    }
+}
+
 export function serveAsync() {
     let server = http.createServer((req, res) => {
         let error = (code: number, msg: string = null) => {
@@ -173,7 +193,7 @@ export function serveAsync() {
         }
 
         let pathname = decodeURI(url.parse(req.url).pathname);
-
+ 
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
             res.end()
@@ -202,7 +222,7 @@ export function serveAsync() {
         if (!/\.js\.map$/.test(pathname)) {
             for (let dir of dirs) {
                 let filename = path.resolve(path.join(dir, pathname))
-                if (fs.existsSync(filename)) {
+                if (fileExistsSync(filename)) {
                     sendFile(filename)
                     return;
                 }
@@ -210,18 +230,17 @@ export function serveAsync() {
         }
 
         let webFile = path.join(webDir, pathname)
-
-        if (!fs.existsSync(webFile)) {
-            if (fs.existsSync(webFile + ".html")) {
+        if (!fileExistsSync(webFile)) {
+            if (fileExistsSync(webFile + ".html")) {
                 webFile += ".html"
                 pathname += ".html"
-            } else if (fs.existsSync(webFile + ".md")) {
+            } else if (fileExistsSync(webFile + ".md")) {
                 webFile += ".md"
                 pathname += ".md"
             }
         }
 
-        if (fs.existsSync(webFile)) {
+        if (fileExistsSync(webFile)) {
             if (/\.md$/.test(webFile)) {
                 let vars = ks.docs.renderMarkdown(fs.readFileSync(webFile, "utf8"))
                 let templ = nunjucks.render("templates/docs.html", { somevar: 1 })
@@ -239,7 +258,7 @@ export function serveAsync() {
 
     // if user has a server.js file, require it
     let serverjs = path.resolve(path.join(root, 'server.js'))
-    if (fs.existsSync(serverjs)) {
+    if (fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
         require(serverjs);
     }
