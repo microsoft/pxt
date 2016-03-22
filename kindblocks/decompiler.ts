@@ -403,15 +403,21 @@ write(`<block type="math_arithmetic">
             write(`<mutation elseif="${flatif.ifStatements.length - 1}" else="${flatif.elseStatement ? 1 : 0}"></mutation>`)
             flatif.ifStatements.forEach((stmt, i) => {
                 write(`<value name="IF${i}">`)
+                pushBlocks();
                 emit(stmt.expression)
+                flushBlocks();
                 write('</value>')
                 write(`<statement name="DO${i}">`)
+                pushBlocks();
                 emit(stmt.thenStatement)
+                flushBlocks();
                 write('</statement>')
             })
             if (n.elseStatement) {
                 write('<statement name="ELSE">')
+                pushBlocks();
                 emit(flatif.elseStatement)
+                flushBlocks();
                 write('</statement>')
             }
             writeEndBlock();

@@ -3,6 +3,7 @@ namespace ks.runner {
     export interface ClientRenderOptions {
         snippetClass?: string;
         signatureClass?: string;
+        blocksClass?: string;
         snippetReplaceParent?: boolean;
     }
     
@@ -45,10 +46,7 @@ namespace ks.runner {
     }
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
-        if (!options) options = {
-            snippetClass: 'lang-blocks',
-            signatureClass: 'lang-sig'
-        }
+        if (!options) options = {}
 
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             let s = r.blocksSvg;
@@ -71,6 +69,10 @@ namespace ks.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 fillWithWidget(c, js, s);
             }
-        }))
+        })).then(() => renderNextSnippetAsync(options.blocksClass, (c, r) => {
+            let s = r.blocksSvg;
+            if (options.snippetReplaceParent) c = c.parent();
+            c.replaceWith(s);
+        }));
     }
 }
