@@ -1,4 +1,4 @@
-/// <reference path="../built/kindlib.d.ts" />
+ /// <reference path="../built/kindlib.d.ts" />
 
 namespace ks.blocks {
     let SK = ts.SyntaxKind;
@@ -20,6 +20,10 @@ namespace ks.blocks {
         "!=": { type: "logic_compare", op: "NEQ" },
         "&&": { type: "logic_operation", op: "AND" },
         "||": { type: "logic_operation", op: "OR" },
+    }
+    
+    var builtinBlocks: U.Map<{ block: string; blockId: string; }> = {
+        "Math.random" : { blockId:"device_random", block: "pick random 0 to %limit" }
     }
 
     export function decompileToBlocks(blocksInfo: ts.ks.BlocksInfo, file: ts.SourceFile): ts.ks.CompileResult {
@@ -456,9 +460,18 @@ write(`<block type="math_arithmetic">
 
         function emitCallExpression(node: ts.CallExpression) {
             let info: ts.ks.CallInfo = (node as any).callInfo
-            if (!info.attrs.blockId || !info.attrs.block) {
-                error(node)
+            if (!info) {
+                error(node);
                 return;
+            }
+            if (!info.attrs.blockId || !info.attrs.block) {
+                let builtin = builtinBlocks[info.qName];
+                if (!builtin) {
+                    error(node)
+                    return;
+                }
+                info.attrs.block = builtin.block;
+                info.attrs.blockId = builtin.blockId;
             }
 
             if (info.attrs.imageLiteral) {
