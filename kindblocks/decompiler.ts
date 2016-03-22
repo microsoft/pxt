@@ -348,7 +348,7 @@ write(`<block type="math_arithmetic">
         function isOutputExpression(expr: ts.Expression): boolean {
             switch (expr.kind) {
                 case ts.SyntaxKind.BinaryExpression:
-                    return !/^=$/.test((expr as ts.BinaryExpression).operatorToken.getText());
+                    return !/[=<>]/.test((expr as ts.BinaryExpression).operatorToken.getText());
                 case ts.SyntaxKind.PrefixUnaryExpression: {              
                     let op = (expr as ts.PrefixUnaryExpression).operator;
                     return op != ts.SyntaxKind.PlusPlusToken && op != ts.SyntaxKind.MinusMinusToken;
