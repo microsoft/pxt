@@ -821,7 +821,7 @@ function enableCrashReporting(releaseid : string) {
         }
         let re = ks.reportError;        
         ks.reportError = function(msg:string, data: any) : void {
-            if (rexp) rexp(msg,data);
+            if (re) re(msg,data);
             try {
                 throw msg
             }
