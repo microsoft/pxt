@@ -756,7 +756,7 @@ Ctrl+Shift+B
                     <div>
                         { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri("image/svg+xml", targetTheme.footerLogo)} /></a> : (this.appTarget.title || this.appTarget.name) }                    
                         {lf("powered by")}
-                        &nbsp;<a href="https://github.com/Microsoft/kindscript">KindScript</a> - (c) Microsoft Corporation - 2016
+                        &nbsp;<a href="https://github.com/Microsoft/kindscript">KindScript</a> - <span>{version}</span> - (c) Microsoft Corporation - 2016
                         - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use")}</a>
                         - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy")}</a>
                     </div>
@@ -852,6 +852,7 @@ let myexports: any = {
 
 export var baseUrl: string;
 export var currentReleaseId: string;
+export var version: string;
 
 $(document).ready(() => {
     // TODO use one of these instead: 
@@ -869,10 +870,11 @@ $(document).ready(() => {
         }
     }
     baseUrl = baseUrl || './';
-
+    let config = (window as any).tdConfig || {};
+    version = config.tdVersion || "";
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
    
-    enableCrashReporting(currentReleaseId)       
+    enableCrashReporting(version)       
    
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
