@@ -1493,7 +1493,8 @@ namespace ks.blocks {
                             rec(ee, prio)
                         break
                     default:
-                        Util.oops("invalid nodeType when flattning: " + e.nodeType)
+                        ks.reportError("invalid nodeType when flattening: " + e.nodeType, null);
+                        Util.oops("invalid nodeType when flattening: " + e.nodeType)
                 }
             }
 
