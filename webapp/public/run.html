@@ -32,20 +32,25 @@ iframe {
     e:g})}}(window,document,"script","//cdn.raygun.io/raygun4js/raygun.min.js","rg4js");
     </script>    
     <script type="text/javascript" src="./embed.js"></script>
-    <script type="text/javascript">
-    var m = /id=([A-Za-z0-9]+)/i.exec(window.location.href); 
-    if (!m) {
-        console.error('missing id query argument');
-    } else {
-        var id = m[1];
-        ksRunnerReady(function() {
+    <script type="text/javascript">    
+    ksRunnerReady(function() {
             console.log('loading simulator for script ' + id)
-            ks.runner.simulateAsync(id, document.getElementById('simulators')).done(function() {
+            var sims = document.getElementById('simulators');
+            var id = /id=([^&]+)/i.exec(window.location.href); 
+            var code = /code=([^&]+)/.exec(window.location.href);
+            if (!id && !code) {
+                console.error("missing id or code");
+                return;
+            }
+                
+            let options = { id: id ? id[1] : undefined, code: code ? decodeURIComponent(code[1]) : undefined };
+            console.log('simulating script')
+            console.log(JSON.stringify(options, null, 2))
+            ks.runner.simulateAsync(sims, options).done(function() {
                 console.log('simulator started...')
                 document.getElementById('loading').remove();
             })
-        })
-    }
+    })
     </script>
 </body>
 
