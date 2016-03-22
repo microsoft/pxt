@@ -804,7 +804,7 @@ function getsrc() {
 function enableCrashReporting(releaseid : string) {    
     if (typeof rg4js === "undefined" || /localhost/.test(document.location.href)) return; // don't report local crashes    
     try {
-        rg4js('init', '/wIRcLktINPpixxiUnyjPQ==')
+        rg4js('apiKey', '/wIRcLktINPpixxiUnyjPQ==')
         rg4js('options', {
             ignoreAjaxAbort: true,
             ignoreAjaxError : true,
