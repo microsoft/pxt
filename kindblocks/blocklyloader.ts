@@ -203,7 +203,7 @@ namespace ks.blocks {
             header: fn.name,
             name: fn.namespace + '.' + fn.name,
             description: fn.attributes.jsDoc,
-            url: fn.attributes.help,
+            url: 'reference/' + fn.attributes.help,
             blocksXml: `<xml xmlns="http://www.w3.org/1999/xhtml">
         ${blockXml.outerHTML}
 </xml>`,
@@ -213,17 +213,12 @@ namespace ks.blocks {
         }
     }
     
-    function dashify(s : string) : string {
-        return s[0].toLowerCase() + s.slice(1).replace(/[A-Z]/, (s) => '-' + s.toUpperCase());
-    }
-
     function initBlock(block: any, info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
         const ns = fn.namespace.split('.')[0];
         const instance = fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property;
 
-        var help = fn.attributes.help || (`${ns}/${dashify(fn.name)}`)
-        var help = "./reference/" + help;
-        block.setHelpUrl(help);
+        if (fn.attributes.help)
+            block.setHelpUrl("./reference/" + fn.attributes.help);
         
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(
