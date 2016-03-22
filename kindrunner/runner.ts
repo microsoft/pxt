@@ -185,8 +185,14 @@ namespace ks.runner {
                 }
             })
     }
+    
+    export interface DecompileResult {
+        compileJS?: ts.ks.CompileResult;
+        compileBlocks?: ts.ks.CompileResult;
+        blocksSvg: JQuery;
+    }
 
-    export function decompileToBlocksAsync(code: string): Promise<JQuery> {
+    export function decompileToBlocksAsync(code: string): Promise<DecompileResult> {
         return loadPackageAsync(null)
             .then(getCompileOptionsAsync)
             .then(opts => {
@@ -197,7 +203,7 @@ namespace ks.runner {
                 if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
-                    return $('');
+                    return { compileJS: resp, blocksSvg: $('') };
                     
                 // decompile to blocks
                 let apis = ts.ks.getApiInfo(resp.ast);
@@ -207,9 +213,13 @@ namespace ks.runner {
                 if (bresp.diagnostics && bresp.diagnostics.length > 0)
                     bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!bresp.success)
-                    return $('');
+                    return { compileJS: resp, compileBlocks: bresp, blocksSvg: $('') };
                 console.log(bresp.outfiles["main.blocks"])
-                return ks.blocks.render(bresp.outfiles["main.blocks"], { emPixels: 14, align: true });
+                return {
+                    compileJS: resp,
+                    compileBlocks: bresp,
+                    blocksSvg: ks.blocks.render(bresp.outfiles["main.blocks"], { emPixels: 14, align: true })
+                };
             })
     }
 

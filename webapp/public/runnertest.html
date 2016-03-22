@@ -80,7 +80,8 @@
             if (!p) return;
             console.log('rendering:')
             console.log(p)
-            ks.runner.decompileToBlocksAsync(p).done(function(svg) {
+            ks.runner.decompileToBlocksAsync(p).done(function(r) {
+                let svg = r.blocksSvg;
                 $('#loading').remove();
                 if (svg) {
                     $(svg).removeClass('blocklyPreview')
@@ -102,6 +103,9 @@
         basic.showString("hello")
     </pre>
     <pre class='lang-blocks'>
+        basic.showNumber(2)
+    </pre>
+    <pre class='lang-sig'>
         basic.showNumber(2)
     </pre>
 
