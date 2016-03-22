@@ -212,12 +212,19 @@ namespace ks.blocks {
             }
         }
     }
+    
+    function dashify(s : string) : string {
+        return s[0].toLowerCase() + s.slice(1).replace(/[A-Z]/, (s) => '-' + s.toUpperCase());
+    }
 
     function initBlock(block: any, info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
-        var help = "./" + fn.attributes.help;
-        block.setHelpUrl(help);
         const ns = fn.namespace.split('.')[0];
         const instance = fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property;
+
+        var help = fn.attributes.help || (`${ns}/${dashify(fn.name)}`)
+        var help = "./reference/" + help;
+        block.setHelpUrl(help);
+        
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(
             info.apis.byQName[ns].attributes.color
@@ -470,7 +477,7 @@ namespace ks.blocks {
 
         Blockly.Blocks['math_op2'] = {
             init: function() {
-                this.setHelpUrl('./blocks/contents');
+                this.setHelpUrl('./reference/math');
                 this.setColour(230);
                 this.appendValueInput("x")
                     .setCheck("Number")
@@ -501,7 +508,7 @@ namespace ks.blocks {
 
         Blockly.Blocks['device_while'] = {
             init: function() {
-                this.setHelpUrl('./blocks/while');
+                this.setHelpUrl('./reference/loops/while');
                 this.setColour(blockColors.loops);
                 this.appendValueInput("COND")
                     .setCheck("Boolean")
@@ -516,7 +523,7 @@ namespace ks.blocks {
 
         Blockly.Blocks['device_random'] = {
             init: function() {
-                this.setHelpUrl('./functions/random');
+                this.setHelpUrl('./reference/math/random');
                 this.setColour(230);
                 this.appendDummyInput()
                     .appendField("pick random 0 to")
@@ -533,7 +540,7 @@ namespace ks.blocks {
              * @this Blockly.Block
              */
             init: function() {
-                this.setHelpUrl("./blocks/for");
+                this.setHelpUrl("./reference/loops/for");
                 this.setColour((<any>Blockly.Blocks).loops.HUE);
                 this.appendDummyInput()
                     .appendField("for")
@@ -607,7 +614,7 @@ namespace ks.blocks {
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
                 this.setTooltip(lf("Changes the value of the variable by this amount"));
-                this.setHelpUrl('./blocks/assign');
+                this.setHelpUrl('./reference/assign');
                 this.setColour(blockColors.variables);
             }
         };
@@ -623,7 +630,7 @@ namespace ks.blocks {
             Blockly.Blocks[id].init = function() {
                 // The magic of dynamic this-binding.
                 old.call(this);
-                this.setHelpUrl(url);
+                this.setHelpUrl("./reference/" + url);
                 if (!this.codeCard) {
                     let tb = document.getElementById('blocklyToolboxDefinition');
                     let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
@@ -641,14 +648,14 @@ namespace ks.blocks {
             };
         }
 
-        monkeyPatchBlock("controls_if", "if", "blocks/if");
-        monkeyPatchBlock("controls_repeat_ext", "for loop", "blocks/repeat");
-        monkeyPatchBlock("variables_set", "variable assignment", "blocks/assign");
-        monkeyPatchBlock("math_number", "number", "blocks/number");
-        monkeyPatchBlock("logic_compare", "boolean operator", "blocks/boolean");
-        monkeyPatchBlock("logic_operation", "boolean operation", "blocks/boolean");
-        monkeyPatchBlock("logic_negate", "not operator", "blocks/boolean");
-        monkeyPatchBlock("logic_boolean", "boolean value", "blocks/boolean");
-        monkeyPatchBlock("math_arithmetic", "arithmetic operation", "blocks/boolean");
+        monkeyPatchBlock("controls_if", "if", "logic/if");
+        monkeyPatchBlock("controls_repeat_ext", "for loop", "loops/repeat");
+        monkeyPatchBlock("variables_set", "variable assignment", "assign");
+        monkeyPatchBlock("math_number", "number", "number");
+        monkeyPatchBlock("logic_compare", "boolean operator", "math/math");
+        monkeyPatchBlock("logic_operation", "boolean operation", "boolean");
+        monkeyPatchBlock("logic_negate", "not operator", "boolean");
+        monkeyPatchBlock("logic_boolean", "boolean value", "boolean");
+        monkeyPatchBlock("math_arithmetic", "arithmetic operation", "math/math");
     }
 }
