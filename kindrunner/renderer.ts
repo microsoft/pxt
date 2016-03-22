@@ -44,7 +44,7 @@ namespace ks.runner {
             })
     }
 
-    export function renderAsync(container: HTMLElement, options?: ClientRenderOptions): Promise<void> {
+    export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig'
@@ -52,7 +52,7 @@ namespace ks.runner {
 
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             let s = r.blocksSvg;
-            let js = $('<pre></pre>').text(c.text().trim());
+            let js = $('<code/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(c, js, s);
         }).then(() => renderNextSnippetAsync(options.signatureClass, (c, r) => {
@@ -67,7 +67,7 @@ namespace ks.runner {
             let call = stmt.expression as ts.CallExpression;
             let info = (<any>call).callInfo as ts.ks.CallInfo
             if (info) {
-                let js = $('<pre/>').text(info.decl.getText().replace(/^export/, '').replace(/\s*\{.*$/,';'))
+                let js = $('<code/>').text(info.decl.getText().replace(/^export/, '').replace(/\s*\{.*$/,';'))
                 if (options.snippetReplaceParent) c = c.parent();
                 fillWithWidget(c, js, s);
             }
