@@ -92,9 +92,18 @@
         }
             
         ksRunnerReady(function() {
-            next()
+            ks.runner.renderAsync().done(function() {
+                next()                
+            });                        
         })
     </script>
+    
+    <pre class='lang-blocks'>
+        basic.showString("hello")
+    </pre>
+    <pre class='lang-blocks'>
+        basic.showNumber(2)
+    </pre>
 
 </body>
 
