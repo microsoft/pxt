@@ -843,7 +843,7 @@ namespace ks.blocks {
                     else expr = compileStdCall(e, b, call);
                 }
                 else {
-                    console.error("Unable to compile expression: " + b.type);
+                    ks.reportError("Unable to compile expression: " + b.type, null);
                     expr = defaultValueForType(returnType(e, b));
                 }
                 break;
@@ -1230,7 +1230,7 @@ namespace ks.blocks {
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
-                        console.error("compiler: function " + fn.attributes.blockId + " already defined");
+                        ks.reportError("compiler: function " + fn.attributes.blockId + " already defined", null);
                         return;
                     }
                     let fieldMap = ks.blocks.parameterNames(fn);

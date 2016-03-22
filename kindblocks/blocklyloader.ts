@@ -157,7 +157,7 @@ namespace ks.blocks {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
-            console.error('trying to override builtin block ' + id);
+            ks.reportError('trying to override builtin block ' + id, null);
             return false;
         }
 

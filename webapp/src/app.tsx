@@ -25,6 +25,9 @@ import Util = ks.Util;
 var lf = Util.lf
 
 declare function rg4js(s:string, v:any) : void;
+declare module Raygun {
+    function send(err:any, data:any) : void;
+}
 
 export interface FileHistoryEntry {
     id: string;
@@ -799,12 +802,34 @@ function getsrc() {
 }
 
 function enableCrashReporting(releaseid : string) {    
-    if (/localhost/.test(document.location.href)) return; // don't report local crashes
+    if (typeof rg4js === "undefined" || /localhost/.test(document.location.href)) return; // don't report local crashes    
     try {
-        rg4js('apiKey', '/wIRcLktINPpixxiUnyjPQ==');
-        rg4js('enableCrashReporting', true);
-        rg4js('setVersion', releaseid);
-        rg4js('saveIfOffline', true);
+        rg4js('init', '/wIRcLktINPpixxiUnyjPQ==')
+        rg4js('options', {
+            ignoreAjaxAbort: true,
+            ignoreAjaxError : true,
+            ignore3rdPartyErrors : true,
+            enableCrashReporting: true,
+            setVersion: releaseid,
+            saveIfOffline: true }
+        );
+
+        let rexp = ks.reportException;        
+        ks.reportException = function(err:any, data: any) : void {
+            if (rexp) rexp(err,data);
+            Raygun.send(err, data)            
+        }
+        let re = ks.reportError;        
+        ks.reportError = function(msg:string, data: any) : void {
+            if (rexp) rexp(msg,data);
+            try {
+                throw msg
+            }
+            catch(err) {
+                Raygun.send(err, data)            
+            }
+        }
+        console.log('raygun initialized...');
     }
     catch(e) {
         console.error('raygun loader failed')

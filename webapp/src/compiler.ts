@@ -88,10 +88,10 @@ export function workerOpAsync(op: string, arg: ts.ks.service.OpArg) {
         let id = "" + msgId++
         pendingMsgs[id] = v => {
             if (!v) {
-                console.error("No worker response")
+                ks.reportError("no worker response", null)
                 reject(new Error("no response"))
             } else if (v.errorMessage) {
-                console.error("Worker response", v.errorMessage)
+                ks.reportError("worker response: " + v.errorMessage, null)
                 reject(new Error(v.errorMessage))
             } else {
                 resolve(v)

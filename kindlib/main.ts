@@ -5,6 +5,28 @@ namespace ks {
     export import U = ts.ks.Util;
     export import Util = ts.ks.Util;
     let lf = U.lf;
+    
+    // general error reported
+    export var reportException : (err: any, data:any) => void = function(e,d) {
+        if (console) {
+            console.error(e);
+            if (d) {
+                try {
+                    console.log(JSON.stringify(d, null, 2))
+                }catch(e) {}
+            }
+        }
+    }
+    export var reportError : (msg: string, data: any) => void = function(m,d) {
+        if (console) {
+            console.error(m);
+            if (d) {
+                try {
+                    console.log(JSON.stringify(d, null, 2))
+                }catch(e) {}
+            }
+        }
+    }
 
     export type CompileTarget = ts.ks.CompileTarget;
 

@@ -94,7 +94,7 @@ ${output}</xml>`;
         }
 
         function error(n: ts.Node, msg?: string) {
-            console.error(`unsupported node ${ts.ks.stringKind(n)}`);
+            ks.reportError(`unsupported node ${ts.ks.stringKind(n)}`, { msg: msg, node: n });
             if (!result.diagnostics) result.diagnostics = [];
             result.diagnostics.push({
                 file: file,
