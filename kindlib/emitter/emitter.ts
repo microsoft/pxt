@@ -1276,6 +1276,8 @@ ${lbl}: .short 0xffff
             let brk = U.lookup(brkMap, nodeKey(node))
             if (!brk) {
                 let src = getSourceFileOfNode(node)
+                if (opts.justMyCode && U.startsWith(src.fileName, "kind_modules"))
+                    return;
                 let pos = node.pos
                 while (/^\s$/.exec(src.text[pos]))
                     pos++;

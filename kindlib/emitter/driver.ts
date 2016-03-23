@@ -25,6 +25,7 @@ namespace ts.ks {
         noEmit?: boolean;
         ast?: boolean;
         breakpoints?: boolean;
+        justMyCode?: boolean;
     }
 
     export interface Breakpoint extends LocationInfo {

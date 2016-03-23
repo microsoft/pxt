@@ -74,8 +74,10 @@ export function compileAsync(options: CompileOptions = {}) {
     trg.isNative = options.native
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
-            if (options.debug)
+            if (options.debug) {
                 opts.breakpoints = true
+                opts.justMyCode = true
+            }
             return opts
         })
         .then(compileCoreAsync)
