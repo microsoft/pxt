@@ -97,7 +97,7 @@ function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
         return frameView
     }
 
-    let dbgView = $(`<div class="ui segment"></div>`)
+    let dbgView = $(`<div class="ui segment debuggerview"></div>`)
     dbgView.append(vars(U.lf("globals"), brk.globals))
     brk.stackframes.forEach(sf => {
         let info = sf.funcInfo as ts.ks.FunctionLocationInfo
