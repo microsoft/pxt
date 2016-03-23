@@ -94,7 +94,9 @@ ${output}</xml>`;
         }
 
         function error(n: ts.Node, msg?: string) {
-            ks.reportError(`unsupported node ${ts.ks.stringKind(n)}`, { msg: msg, node: n });
+            if (n.kind != ts.SyntaxKind.CallExpression)
+                ks.reportError(`unsupported node ${ts.ks.stringKind(n)}`, { msg: msg, node: n });
+            
             if (!result.diagnostics) result.diagnostics = [];
             result.diagnostics.push({
                 file: file,
@@ -104,6 +106,7 @@ ${output}</xml>`;
                 category: ts.DiagnosticCategory.Error,
                 code: 1001
             })
+            result.success = false;
         }
 
         function writeBeginBlock(type: string) {

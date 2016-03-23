@@ -6,14 +6,15 @@ namespace ks.runner {
         blocksClass?: string;
         snippetReplaceParent?: boolean;
     }
-    
+
     function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery) {
-        if (!$svg[0]) {
+        if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
             $c.append($js);
-            return;            
+            $container.replaceWith($c);
+            return;
         }
-        
+
         let $c = $('<div class="ui top attached segment"></div>');
         $c.append($svg);
         let $blockBtn = $('<a class="active item"><i class="puzzle icon"></i></a>').click(() => {
@@ -32,19 +33,18 @@ namespace ks.runner {
         $container.replaceWith([$c, $h]);
     }
 
-    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r : ks.runner.DecompileResult) => void): Promise<void> {
+    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: ks.runner.DecompileResult) => void): Promise<void> {
         if (!cls) return Promise.resolve();
-        
+
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
         $el.removeClass(cls);
         return ks.runner.decompileToBlocksAsync($el.text())
             .then((r) => {
-                if (r.blocksSvg && r.blocksSvg[0]) 
                 try {
                     render($el, r);
-                } catch(e) {
+                } catch (e) {
                     console.error('error while rendering ' + $el.html())
                 }
                 return renderNextSnippetAsync(cls, render);
@@ -55,7 +55,7 @@ namespace ks.runner {
         if (!options) options = {}
 
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
-            let s = r.blocksSvg;
+            let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
             let js = $('<code/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(c, js, s);
@@ -69,12 +69,14 @@ namespace ks.runner {
                 console.error('missing statement')
                 return;
             }
-            
-            let s = r.blocksSvg;
+
+            let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
             let call = stmt.expression as ts.CallExpression;
             let info = (<any>call).callInfo as ts.ks.CallInfo
             if (info) {
-                let js = $('<code/>').text(info.decl.getText().replace(/^export/, '').replace(/\s*\{.*$/m,';'))
+                let sig = info.decl.getText().replace(/^export/, '');
+                sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
+                let js = $('<code/>').text(sig)
                 if (options.snippetReplaceParent) c = c.parent();
                 fillWithWidget(c, js, s);
             }
