@@ -96,14 +96,15 @@ ${output}</xml>`;
         function error(n: ts.Node, msg?: string) {
             ks.reportError(`unsupported node ${ts.ks.stringKind(n)}`, { msg: msg, node: n });
             if (!result.diagnostics) result.diagnostics = [];
-            result.diagnostics.push({
+            let diags = ts.ks.patchUpDiagnostics([{
                 file: file,
                 start: n.getFullStart(),
                 length: n.getFullWidth(),
                 messageText: lf(`Language feature cannot be converted in blocks.`) || msg,
                 category: ts.DiagnosticCategory.Error,
                 code: 1001
-            })
+            }])
+            U.pushRange(result.diagnostics, diags)
         }
 
         function writeBeginBlock(type: string) {
