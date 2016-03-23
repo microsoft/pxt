@@ -5,6 +5,12 @@ import Util = ks.Util;
 let lf = Util.lf;
 
 namespace ks.blocks {
+    
+    module Xml {
+        export function createElement(qualifiedName: string) : Element {
+            return document.createElementNS("http://www.w3.org/1999/xhtml", qualifiedName);
+        }
+    }
 
     var blockColors: Util.StringMap<number> = {
         loops: 120,
@@ -29,21 +35,21 @@ namespace ks.blocks {
         if (v && v.slice(0, 1) == "\"")
             v = JSON.parse(v);
         if (type == "number" && shadowType && shadowType == "value") {
-            let field = document.createElement("field");
+            let field = Xml.createElement("field");
             field.setAttribute("name", name);
-            field.innerText = "0"
+            field.appendChild(document.createTextNode("0"));
             return field;
         }
 
-        let value = document.createElement("value");
+        let value = Xml.createElement("value");
         value.setAttribute("name", name);
 
-        let shadow = document.createElement("shadow"); value.appendChild(shadow);
+        let shadow = Xml.createElement("shadow"); value.appendChild(shadow);
         shadow.setAttribute("type", shadowType ? shadowType : type == "number" ? "math_number" : type == "string" ? "text" : type);
         if (type == "number" || type == "string") {
-            let field = document.createElement("field"); shadow.appendChild(field);
+            let field = Xml.createElement("field"); shadow.appendChild(field);
             field.setAttribute("name", type == "number" ? "NUM" : "TEXT");
-            field.innerText = v || (type == "number" ? "0" : "");
+            field.appendChild(document.createTextNode(v || (type == "number" ? "0" : "")));
         }
         return value;
     }
@@ -90,7 +96,7 @@ namespace ks.blocks {
         //
         // toolbox update
         //
-        let block = document.createElement("block");
+        let block = Xml.createElement("block");
         block.setAttribute("type", fn.attributes.blockId);
         if (fn.attributes.blockGap)
             block.setAttribute("gap", fn.attributes.blockGap);
@@ -116,7 +122,7 @@ namespace ks.blocks {
         let category = tb.querySelector("category[name~='" + catName + "']");
         if (!category) {
             console.log('toolbox: adding category ' + ns)
-            category = document.createElement("category");
+            category = Xml.createElement("category");
             category.setAttribute("name", catName)
             let nsn = info.apis.byQName[ns];
             category.setAttribute("weight", nsn.attributes.weight.toString())
@@ -141,7 +147,7 @@ namespace ks.blocks {
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let canvas = iconCanvasCache[c];
         if (!canvas) {
-            canvas = iconCanvasCache[c] = document.createElement('canvas');
+            canvas = iconCanvasCache[c] = Xml.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
             var ctx = canvas.getContext('2d');
@@ -440,7 +446,7 @@ namespace ks.blocks {
                     value.appendChild(shadow);
                     var field = goog.dom.createDom('field');
                     field.setAttribute('name', 'NUM');
-                    field.innerText = '0';
+                    field.appendChild(document.createTextNode("0"));
                     shadow.appendChild(field);
                     block.appendChild(value);
                     
@@ -460,7 +466,7 @@ namespace ks.blocks {
                     value.appendChild(shadow);
                     var field = goog.dom.createDom('field');
                     field.setAttribute('name', 'NUM');
-                    field.innerText = '1';
+                    field.appendChild(document.createTextNode("1"));
                     shadow.appendChild(field);
                     block.appendChild(value);
 
