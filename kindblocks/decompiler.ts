@@ -432,12 +432,15 @@ write(`<block type="math_arithmetic">
 
         function emitWhileStatement(n: ts.WhileStatement): void {
             writeBeginBlock("device_while");
-            write('<block type="device_while">');
             write('<value name="COND">')
+            pushBlocks();
             emit(n.expression)
+            flushBlocks();
             write('</value>')
             write('<statement name="DO">')
+            pushBlocks();
             emit(n.statement)
+            flushBlocks();
             write('</statement>')
             writeEndBlock()
         }
