@@ -303,9 +303,11 @@ namespace ts.ks {
         if (opts.breakpoints)
             res.breakpoints = [{
                 id: 0,
-                filename: "bogus",
-                pos: 0,
-                end: 0
+                fileName: "bogus",
+                start: 0,
+                length: 0,
+                line: 0,
+                character: 0
             }]
 
         let bin: Binary;
@@ -1274,13 +1276,20 @@ ${lbl}: .short 0xffff
             let brk = U.lookup(brkMap, nodeKey(node))
             if (!brk) {
                 let src = getSourceFileOfNode(node)
+                let pos = node.pos
+                while (/^\s$/.exec(src.text[pos]))
+                    pos++;
+                let p = ts.getLineAndCharacterOfPosition(src, pos)
                 brk = {
                     id: res.breakpoints.length,
-                    filename: src.fileName,
-                    pos: node.pos,
-                    end: node.end
+                    fileName: src.fileName,
+                    start: pos,
+                    length: node.end - pos,
+                    line: p.line,
+                    character: p.character
                 }
                 brkMap[nodeKey(node)] = brk
+                res.breakpoints.push(brk)
             }
             let st = ir.stmt(ir.SK.Breakpoint, null)
             st.breakpointInfo = brk

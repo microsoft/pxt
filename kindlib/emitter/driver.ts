@@ -27,18 +27,15 @@ namespace ts.ks {
         breakpoints?: boolean;
     }
 
-    export interface Breakpoint {
+    export interface Breakpoint extends SourceAnnotation {
         id: number;
-        filename: string;
-        pos: number;
-        end: number;
         // TODO: this would be useful for step-over support
         // prevBrkId?:number;
     }
 
     export interface CompileResult {
         outfiles: StringMap<string>;
-        diagnostics: Diagnostic[];
+        diagnostics: KsDiagnostic[];
         success: boolean;
         times: U.Map<number>;
         enums: U.Map<number>;
@@ -56,16 +53,42 @@ namespace ts.ks {
 
         return options
     }
+    
+    export interface SourceAnnotation {
+        fileName: string;
+        start: number;
+        length: number;
+
+        //derived
+        line: number;
+        character: number;
+    }
+
+    export interface KsDiagnostic extends SourceAnnotation {
+        code: number;
+        category: DiagnosticCategory;
+        messageText: string | DiagnosticMessageChain;
+    }
 
     export function patchUpDiagnostics(diags: Diagnostic[]) {
         let highPri = diags.filter(d => d.code == 1148)
         if (highPri.length > 0)
             diags = highPri;
         return diags.map(d => {
-            d = Util.flatClone(d)
-            if (d.code == 1148)
-                d.messageText = Util.lf("all symbols in top-level scope are always exported; please use a namespace if you want to export only some")
-            return d
+            const { line, character } = ts.getLineAndCharacterOfPosition(d.file, d.start);
+            let r: KsDiagnostic = {
+                code: d.code,
+                start: d.start,
+                length: d.length,
+                line: line,
+                character: character,
+                messageText: d.messageText,
+                category: d.category,
+                fileName: d.file.fileName,
+            }
+            if (r.code == 1148)
+                r.messageText = Util.lf("all symbols in top-level scope are always exported; please use a namespace if you want to export only some")
+            return r
         })
     }
 
@@ -115,15 +138,15 @@ namespace ts.ks {
         let program = createProgram(tsFiles, options, host);
 
         // First get and report any syntactic errors.
-        res.diagnostics = program.getSyntacticDiagnostics();
+        res.diagnostics = patchUpDiagnostics(program.getSyntacticDiagnostics());
         if (res.diagnostics.length > 0) return res;
 
         // If we didn't have any syntactic errors, then also try getting the global and
         // semantic errors.
-        res.diagnostics = program.getOptionsDiagnostics().concat(program.getGlobalDiagnostics());
+        res.diagnostics = patchUpDiagnostics(program.getOptionsDiagnostics().concat(program.getGlobalDiagnostics()));
 
         if (res.diagnostics.length == 0) {
-            res.diagnostics = program.getSemanticDiagnostics();
+            res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics());
         }
 
         let emitStart = Date.now()
@@ -136,10 +159,8 @@ namespace ts.ks {
         if (opts.ast || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, host, opts, res);
             res.times["compilebinary"] = Date.now() - emitStart
-            res.diagnostics = binOutput.diagnostics
+            res.diagnostics = patchUpDiagnostics(binOutput.diagnostics)
         }
-
-        res.diagnostics = patchUpDiagnostics(res.diagnostics)
 
         if (res.diagnostics.length == 0)
             res.success = true

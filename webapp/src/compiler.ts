@@ -36,7 +36,7 @@ export function init() {
     }
 }
 
-function setDiagnostics(diagnostics: ts.Diagnostic[]) {
+function setDiagnostics(diagnostics: ts.ks.KsDiagnostic[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -44,11 +44,9 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     let output = "";
 
     for (let diagnostic of diagnostics) {
-        if (diagnostic.file) {
-            const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-            const relativeFileName = diagnostic.file.fileName;
-            output += `${relativeFileName}(${line + 1},${character + 1}): `;
-            let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.file.fileName)[0]
+        if (diagnostic.fileName) {
+            output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.character + 1}): `;
+            let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
             if (f)
                 f.diagnostics.push(diagnostic)
         }

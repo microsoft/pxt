@@ -3,6 +3,7 @@
 
 interface SimulatorConfig {
     startDebug(): void;
+    highlightStatement(stmt: ts.ks.SourceAnnotation): void;
 }
 
 var nextFrameId: number = 0;
@@ -10,6 +11,7 @@ var themes = ["blue", "red", "green", "yellow"];
 var currentRuntime: ks.rt.SimulatorRunMessage;
 var isPaused = false;
 var config: SimulatorConfig;
+var lastCompileResult:ts.ks.CompileResult;
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
     config = cfg
@@ -49,6 +51,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
 
 function resume(c: string) {
     isPaused = false
+    config.highlightStatement(null)
     updateDebuggerButtons()
     postDebuggerMessage(c)
 }
@@ -79,6 +82,8 @@ function handleDebuggerMessage(msg: ks.rt.DebuggerMessage) {
             let brk = msg as ks.rt.DebuggerBreakpointMessage
             isPaused = true
             updateDebuggerButtons()
+            let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
+            config.highlightStatement(brkInfo)
             break;
     }
 }
@@ -141,11 +146,14 @@ function unload() {
     $('#simulators').html('');
 }
 
-export function run(js: string, enums: any) {
+export function run(res:ts.ks.CompileResult) {
+    let js = res.outfiles["microbit.js"]
+    lastCompileResult = res
+    
     // store information
     currentRuntime = {
         type: 'run',
-        enums: enums,
+        enums: res.enums,
         code: js
     }
 

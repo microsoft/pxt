@@ -18,7 +18,7 @@ let extWeight: Util.StringMap<number> = {
 export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
-    diagnostics: ts.Diagnostic[];
+    diagnostics: ts.ks.KsDiagnostic[];
     numDiagnosticsOverride: number;
     isVirtual = false;
 

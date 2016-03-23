@@ -371,7 +371,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#mbitboardview")[0], {
-          startDebug: () => this.runSimulator({ debug: true })  
+          startDebug: () => this.runSimulator({ debug: true }),
+          highlightStatement: stmt => {
+              if (this.editor) this.editor.highlightStatement(stmt)
+          } 
         })
         this.forceUpdate(); // we now have editors prepared
     }
@@ -633,11 +636,8 @@ Ctrl+Shift+B
         compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                let js = resp.outfiles["microbit.js"]
-                if (js) {
-                    simulator.run(
-                        js,
-                        resp.enums)
+                if (resp.outfiles["microbit.js"]) {
+                    simulator.run(resp)
                     this.setState({ running: true })
                 }
             })
