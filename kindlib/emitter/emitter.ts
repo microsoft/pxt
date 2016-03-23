@@ -303,6 +303,7 @@ namespace ts.ks {
         if (opts.breakpoints)
             res.breakpoints = [{
                 id: 0,
+                isDebuggerStmt: false,
                 fileName: "bogus",
                 start: 0,
                 length: 0,
@@ -1284,6 +1285,7 @@ ${lbl}: .short 0xffff
                 let p = ts.getLineAndCharacterOfPosition(src, pos)
                 brk = {
                     id: res.breakpoints.length,
+                    isDebuggerStmt: node.kind == SK.DebuggerStatement,
                     fileName: src.fileName,
                     start: pos,
                     length: node.end - pos,
@@ -1609,7 +1611,9 @@ ${lbl}: .short 0xffff
         function emitThrowStatement(node: ThrowStatement) { }
         function emitTryStatement(node: TryStatement) { }
         function emitCatchClause(node: CatchClause) { }
-        function emitDebuggerStatement(node: Node) { }
+        function emitDebuggerStatement(node: Node) {
+            emitBrk(node)
+        }
         function emitVariableDeclaration(node: VariableDeclaration) {
             if (!isUsed(node))
                 return;
@@ -1736,6 +1740,8 @@ ${lbl}: .short 0xffff
                 case SK.TypeAliasDeclaration:
                     // skip
                     return
+                case SK.DebuggerStatement:
+                    return emitDebuggerStatement(node);
                 default:
                     unhandled(node);
             }
@@ -1859,8 +1865,6 @@ ${lbl}: .short 0xffff
                     return emitTryStatement(<TryStatement>node);
                 case SyntaxKind.CatchClause:
                     return emitCatchClause(<CatchClause>node);
-                case SyntaxKind.DebuggerStatement:
-                    return emitDebuggerStatement(node);
                 case SyntaxKind.ClassExpression:
                     return emitClassExpression(<ClassExpression>node);
                 case SyntaxKind.EnumMember:

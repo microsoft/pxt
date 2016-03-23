@@ -89,7 +89,9 @@ while (true) { switch (step) {
         function emitBreakpoint(s: ir.Stmt) {
             let lbl = ++lblIdx
             let id = s.breakpointInfo.id
-            write(`if (breakAlways || breakpoints[${id}]) return breakpoint(s, ${lbl}, ${id})`)
+            let cond = s.breakpointInfo.isDebuggerStmt ? "" : 
+                `if (breakAlways || breakpoints[${id}]) `
+            write(`${cond}return breakpoint(s, ${lbl}, ${id})`)
             writeRaw(`  case ${lbl}:`)
         }
 

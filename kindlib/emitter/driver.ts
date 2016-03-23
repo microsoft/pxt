@@ -30,6 +30,7 @@ namespace ts.ks {
 
     export interface Breakpoint extends LocationInfo {
         id: number;
+        isDebuggerStmt: boolean;
         // TODO: this would be useful for step-over support
         // prevBrkId?:number;
     }
