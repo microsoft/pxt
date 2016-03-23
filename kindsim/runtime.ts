@@ -235,12 +235,21 @@ namespace ks.rt {
                 breakAlways = true
             }
 
+            function isBreakFrame(s: StackFrame) {
+                if (!breakFrame) return true; // nothing specified
+                for (let p = breakFrame; p; p = p.parent) {
+                    if (p == s) return true
+                }
+                return false
+            }
+
             function breakpoint(s: StackFrame, retPC: number, brkId: number): StackFrame {
                 U.assert(!dbgResume)
 
                 s.pc = retPC;
+
                 // check for step-over
-                if (!breakpoints[brkId] && breakFrame && breakFrame != s) {
+                if (!breakpoints[brkId] && !isBreakFrame(s)) {
                     return s; // cancel breakpoint
                 }
 
