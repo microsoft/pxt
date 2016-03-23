@@ -1202,7 +1202,8 @@ namespace ks.blocks {
     }
 
     function isHandlerRegistration(b: B.Block) {
-        return /(forever|_event)$/.test(b.type);
+        return !(b as any).previousConnection && !(b as any).outputConnection;
+        //return /(forever|_event)$/.test(b.type);
     }
 
     // Find the parent (as in "scope" parent) of a Block. The [parentNode_] property
