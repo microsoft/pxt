@@ -786,7 +786,11 @@ namespace ks.blocks {
     }
 
     function compileRandom(e: Environment, b: B.Block): J.JExpr {
-        return H.mathCall("random", [H.mkNumberLiteral(parseInt(b.getFieldValue("limit")) + 1)]);
+        let expr = compileExpression(e, b.getInputTargetBlock("limit"));
+        if (expr.nodeType == "numberLiteral")
+            return H.mathCall("random", [ H.mkNumberLiteral((expr as J.JNumberLiteral).value + 1)]);
+        else
+            return H.mathCall("random", [ H.mkSimpleCall(opToTok["+"], [expr, H.mkNumberLiteral(1)])])
     }
 
     function defaultValueForType(t: Point): J.JExpr {

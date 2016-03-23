@@ -147,7 +147,7 @@ namespace ks.blocks {
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let canvas = iconCanvasCache[c];
         if (!canvas) {
-            canvas = iconCanvasCache[c] = Xml.createElement('canvas');
+            canvas = iconCanvasCache[c] = document.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
             var ctx = canvas.getContext('2d');
@@ -527,8 +527,10 @@ namespace ks.blocks {
                 this.setHelpUrl('./reference/math/random');
                 this.setColour(230);
                 this.appendDummyInput()
-                    .appendField("pick random 0 to")
-                    .appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), "limit");
+                    .appendField("pick random 0 to");
+                this.appendValueInput("limit")
+                    .setCheck("Number")
+                    .setAlign(Blockly.ALIGN_RIGHT);
                 this.setInputsInline(true);
                 this.setOutput(true, "Number");
                 this.setTooltip(lf("Returns a random integer between 0 and the specified bound (inclusive)."));
