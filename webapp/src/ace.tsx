@@ -226,7 +226,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     name: "searchDesc",
                     weight: 0.1
                 }],
-            threshold: 0.4
+            threshold: 0.65
         })
         let fures: { item: CompletionEntry; score: number; matches: any; }[] = fu.search(pref);
         return fures;

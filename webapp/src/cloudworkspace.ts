@@ -10,6 +10,7 @@ let texts = new db.Table("text")
 import U = ks.Util;
 import Cloud = ks.Cloud;
 let lf = U.lf
+let currentTarget: string;
 let allScripts: HeaderWithScript[] = [];
 
 type Header = ws.Header;
@@ -37,9 +38,13 @@ function getHeader(id: string) {
     return null
 }
 
-function initAsync() {
+function initAsync(target: string) {
+    currentTarget = target;    
+    // TODO getAllAsync aware of target?
     return headers.getAllAsync().then(h => {
-        allScripts = h.map((hh: Header) => {
+        allScripts = h
+            .filter((hh: Header) => !hh.target || hh.target == currentTarget)
+            .map((hh: Header) => {
             return {
                 id: hh.id,
                 header: hh,
@@ -124,6 +129,7 @@ function installAsync(h0: ws.InstallHeader, text: ws.ScriptText) {
     h.id = U.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
+    h.target = currentTarget;
     let e: HeaderWithScript = {
         id: h.id,
         header: h,
@@ -179,7 +185,8 @@ function syncOneUpAsync(h: ws.Header) {
                 status: h.pubCurrent ? "published" : "unpublished",
                 recentUse: h.recentUse,
                 editor: h.editor,
-                script: scr
+                script: scr,
+                target: currentTarget
             }
             console.log(`sync up ${h.id}; ${body.script.length} chars`)
             h.saveId = saveId;
@@ -248,6 +255,7 @@ function syncAsync() {
                 header.pubId = resp.scriptId
                 header.pubCurrent = (resp.status == "published")
                 header.saveId = null
+                header.target = resp.target
                 if (!header0)
                     allScripts.push({
                         header: header,

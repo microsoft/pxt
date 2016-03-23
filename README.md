@@ -1,6 +1,6 @@
 # KindScript - A kinder JavaScript experience
 
-[![Build Status](https://travis-ci.org/Microsoft/yelm.svg?branch=master)](https://travis-ci.org/Microsoft/yelm)
+[![Build Status](https://travis-ci.org/Microsoft/kindscript.svg?branch=master)](https://travis-ci.org/Microsoft/kindscript)
 
 KindScript is a platform for creating special-purpose programming experiences for
 beginners, especially focused on computer science education. KindScript's underlying

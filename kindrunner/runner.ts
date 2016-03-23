@@ -7,6 +7,11 @@ namespace ks.runner {
         appCdnRoot: string;
         simCdnRoot: string;
     }
+    
+    export interface SimulateOptions {
+        id?: string;
+        code?: string;
+    }
 
     export var appTarget: ks.AppTarget;
 
@@ -158,9 +163,10 @@ namespace ks.runner {
         return mainPkg.getCompileOptionsAsync(trg)
     }
 
-    function compileAsync() {
+    function compileAsync(updateOptions?: (ops: ts.ks.CompileOptions) => void) {
         return getCompileOptionsAsync()
             .then(opts => {
+                if (updateOptions) updateOptions(opts);
                 let resp = ts.ks.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     resp.diagnostics.forEach(diag => {
@@ -171,9 +177,12 @@ namespace ks.runner {
             })
     }
 
-    export function simulateAsync(id: string, container: HTMLElement) {
-        return loadPackageAsync(id)
-            .then(compileAsync)
+    export function simulateAsync(container: HTMLElement, options: SimulateOptions) {
+        return loadPackageAsync(options.id)
+            .then(() => compileAsync(opts => {
+                if (options.code)
+                    opts.fileSystem["main.ts"] = options.code;
+            }))
             .then(resp => {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
@@ -189,7 +198,7 @@ namespace ks.runner {
     export interface DecompileResult {
         compileJS?: ts.ks.CompileResult;
         compileBlocks?: ts.ks.CompileResult;
-        blocksSvg: JQuery;
+        blocksSvg?: JQuery;
     }
 
     export function decompileToBlocksAsync(code: string): Promise<DecompileResult> {
@@ -203,7 +212,7 @@ namespace ks.runner {
                 if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
-                    return { compileJS: resp, blocksSvg: $('') };
+                    return { compileJS: resp };
                     
                 // decompile to blocks
                 let apis = ts.ks.getApiInfo(resp.ast);
@@ -213,7 +222,7 @@ namespace ks.runner {
                 if (bresp.diagnostics && bresp.diagnostics.length > 0)
                     bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!bresp.success)
-                    return { compileJS: resp, compileBlocks: bresp, blocksSvg: $('') };
+                    return { compileJS: resp, compileBlocks: bresp };
                 console.log(bresp.outfiles["main.blocks"])
                 return {
                     compileJS: resp,

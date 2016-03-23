@@ -700,7 +700,7 @@ Ctrl+Shift+B
                 <div id="menubar">
                     <div className={"ui small menu" + inv}>
                         <span id="logo" className="item">
-                            {targetTheme.logo ? (<a href={targetTheme.logoUrl}><img className='ui logo' src={Util.toDataUri("image/svg+xml", targetTheme.logo)} /></a>) : ""}
+                            {targetTheme.logo ? (<a href={targetTheme.logoUrl}><img className='ui logo' src={Util.toDataUri(targetTheme.logo)} /></a>) : ""}
                             {logoSvg}
                         </span>
                         <div className="ui item">
@@ -727,7 +727,7 @@ Ctrl+Shift+B
                         { this.appTarget.cloud || targetTheme.rightLogo ?
                             <div className="ui item right">
                                 { this.appTarget.cloud ? <LoginBox /> : "" }
-                                { targetTheme.rightLogo ? <a id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri("image/svg+xml", targetTheme.rightLogo)} /></a> : "" }
+                                { targetTheme.rightLogo ? <a id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo)} /></a> : "" }
                             </div> : "" }
                     </div>
                 </div>
@@ -755,8 +755,8 @@ Ctrl+Shift+B
                 {this.appTarget.cloud ? <ScriptSearch parent={this} ref={v => this.scriptSearch = v} /> : ""}
                 <div id="footer">
                     <div>
-                        { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri("image/svg+xml", targetTheme.footerLogo)} /></a> : (this.appTarget.title || this.appTarget.name) }                    
-                        {lf("powered by")}
+                        { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo)} /></a> : (this.appTarget.title || this.appTarget.name) }                    
+                        <span>&nbsp;{lf("powered by")}</span>
                         &nbsp;<a href="https://github.com/Microsoft/kindscript">KindScript</a> - <span>{version}</span> - (c) Microsoft Corporation - 2016
                         - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use")}</a>
                         - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy")}</a>
@@ -892,7 +892,7 @@ $(document).ready(() => {
         .then(() => {
             return compiler.init();
         })
-        .then(() => workspace.initAsync())
+        .then(() => workspace.initAsync(pkg.appTarget.id))
         .then(() => {
             $("#loading").remove();
             render()

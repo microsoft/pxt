@@ -537,13 +537,18 @@ namespace ts.ks.Util {
     export var sha256: (hashData: string) => string;
     export var getRandomBuf: (buf: Uint8Array) => void;
     
-    export function toDataUri(mimetype : string, data: string) : string {
-        if (/xml/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
+    export function toDataUri(data: string, mimetype? : string) : string {
+        // already a data uri?       
+        if (/^data:/i.test(data)) return data;
+        
+        // infer mimetype
+        if (!mimetype) {
+            if (/^<svg/i.test(data)) mimetype = "image/svg+xml";
+        }
+        
+        // encode
+        if (/xml|svg/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
         else return `data:${mimetype};base64,${convertToBase64(data)}`;
-    }
-    
-    export function svgToDataUri(svg:string) : string {
-        return toDataUri("image/svg+xml", svg);
     }
 }
 
