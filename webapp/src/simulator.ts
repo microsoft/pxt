@@ -1,9 +1,10 @@
 /// <reference path="../../built/kindsim.d.ts" />
 
+import U = ks.U
 
 interface SimulatorConfig {
     startDebug(): void;
-    highlightStatement(stmt: ts.ks.SourceAnnotation): void;
+    highlightStatement(stmt: ts.ks.LocationInfo): void;
 }
 
 var nextFrameId: number = 0;
@@ -11,7 +12,7 @@ var themes = ["blue", "red", "green", "yellow"];
 var currentRuntime: ks.rt.SimulatorRunMessage;
 var isPaused = false;
 var config: SimulatorConfig;
-var lastCompileResult:ts.ks.CompileResult;
+var lastCompileResult: ts.ks.CompileResult;
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
     config = cfg
@@ -56,7 +57,7 @@ function resume(c: string) {
     postDebuggerMessage(c)
 }
 
-function updateDebuggerButtons() {
+function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, click: () => void) {
         let b = $(`<button class="ui button green">${name}</button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
@@ -71,9 +72,39 @@ function updateDebuggerButtons() {
             .append(btn("right arrow", "", () => resume("stepover")))
             .append(btn("down arrow", "", () => resume("stepinto")))
             .append(btn("play", "", () => resume("resume")))
+
+    if (!brk) return
+
+    function vars(hd: string, frame: ks.rt.Variables) {
+        let frameView = $(`<div><h4>${U.htmlEscape(hd)}</h4></div>`)
+        for (let k of Object.keys(frame)) {
+            let v = frame[k]
+            let sv = ""
+            switch (typeof (v)) {
+                case "number": sv = v + ""; break;
+                case "string": sv = JSON.stringify(v); break;
+                case "object":
+                    if (v == null) sv = "null";
+                    else if (v.id !== undefined) sv = "(object)"
+                    else if (v.text) sv = v.text;
+                    else sv = "(unknown)"
+                    break;
+                default: U.oops()
+            }
+            let n = k.replace(/___\d+$/, "")
+            frameView.append(`<div>${U.htmlEscape(n)}: ${U.htmlEscape(sv)}</div>`)
+        }
+        return frameView
+    }
+
+    let dbgView = $(`<div class="ui segment"></div>`)
+    dbgView.append(vars(U.lf("globals"), brk.globals))
+    brk.stackframes.forEach(sf => {
+        let info = sf.funcInfo as ts.ks.FunctionLocationInfo
+        dbgView.append(vars(info.functionName, sf.locals))
+    })
+    $('#debugger').append(dbgView)
 }
-
-
 
 function handleDebuggerMessage(msg: ks.rt.DebuggerMessage) {
     console.log("DBG-MSG", msg.subtype, msg)
@@ -81,7 +112,7 @@ function handleDebuggerMessage(msg: ks.rt.DebuggerMessage) {
         case "breakpoint":
             let brk = msg as ks.rt.DebuggerBreakpointMessage
             isPaused = true
-            updateDebuggerButtons()
+            updateDebuggerButtons(brk)
             let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
             config.highlightStatement(brkInfo)
             break;
@@ -146,10 +177,10 @@ function unload() {
     $('#simulators').html('');
 }
 
-export function run(res:ts.ks.CompileResult) {
+export function run(res: ts.ks.CompileResult) {
     let js = res.outfiles["microbit.js"]
     lastCompileResult = res
-    
+
     // store information
     currentRuntime = {
         type: 'run',

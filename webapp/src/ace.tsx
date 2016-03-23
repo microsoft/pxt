@@ -791,7 +791,7 @@ export class Editor extends srceditor.Editor {
         return false;
     }
 
-    highlightStatement(brk: ts.ks.SourceAnnotation) {
+    highlightStatement(brk: ts.ks.LocationInfo) {
         this.forceDiagnosticsUpdate()
         if (!brk) return
         let sess = this.editor.getSession();

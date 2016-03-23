@@ -27,7 +27,7 @@ namespace ts.ks {
         breakpoints?: boolean;
     }
 
-    export interface Breakpoint extends SourceAnnotation {
+    export interface Breakpoint extends LocationInfo {
         id: number;
         // TODO: this would be useful for step-over support
         // prevBrkId?:number;
@@ -53,8 +53,8 @@ namespace ts.ks {
 
         return options
     }
-    
-    export interface SourceAnnotation {
+
+    export interface LocationInfo {
         fileName: string;
         start: number;
         length: number;
@@ -64,10 +64,27 @@ namespace ts.ks {
         character: number;
     }
 
-    export interface KsDiagnostic extends SourceAnnotation {
+    export interface KsDiagnostic extends LocationInfo {
         code: number;
         category: DiagnosticCategory;
         messageText: string | DiagnosticMessageChain;
+    }
+
+    export function nodeLocationInfo(node: ts.Node) {
+        let file = getSourceFileOfNode(node)
+        const { line, character } = ts.getLineAndCharacterOfPosition(file, node.pos);
+        let r: LocationInfo = {
+            start: node.pos,
+            length: node.end - node.pos,
+            line: line,
+            character: character,
+            fileName: file.fileName,
+        }
+        return r
+    }
+    
+    export interface FunctionLocationInfo extends LocationInfo {
+        functionName: string;
     }
 
     export function patchUpDiagnostics(diags: Diagnostic[]) {

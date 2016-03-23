@@ -77,6 +77,6 @@ export class Editor {
     }
     undo() { }
 
-    highlightStatement(brk: ts.ks.SourceAnnotation) {}
+    highlightStatement(brk: ts.ks.LocationInfo) {}
 
 }

@@ -235,21 +235,16 @@ namespace ks.rt {
                 breakAlways = true
             }
 
-            function breakpoint(s: StackFrame, retPC: number, brkId: number): ResumeFn {
+            function breakpoint(s: StackFrame, retPC: number, brkId: number): StackFrame {
                 U.assert(!dbgResume)
-                
+
                 s.pc = retPC;
                 // check for step-over
                 if (!breakpoints[brkId] && breakFrame && breakFrame != s) {
-                    return s.fn; // cancel breakpoint
+                    return s; // cancel breakpoint
                 }
-                
-                let msg: DebuggerBreakpointMessage = {
-                    type: "debugger",
-                    subtype: "breakpoint",
-                    breakpointId: brkId
-                }
-                Runtime.postMessage(msg)
+
+                Runtime.postMessage(getBreakpointMsg(s, brkId))
                 dbgResume = (m: DebuggerMessage) => {
                     dbgResume = null;
                     if (_this.dead) return;

@@ -80,7 +80,9 @@ while (true) { switch (step) {
 
         writeRaw(`  default: oops()`)
         writeRaw(`} } }`)
-        writeRaw(``)
+        let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
+        info.functionName = proc.getName()
+        writeRaw(`${getFunctionLabel(proc.action)}.info = ${JSON.stringify(info)}`)
 
         return resText
 
