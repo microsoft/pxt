@@ -172,6 +172,9 @@ ${output}</xml>`;
                 case ts.SyntaxKind.PlusToken:
                     emit(n.operand); break;
                 case ts.SyntaxKind.MinusToken:
+                    if (n.operand.kind == ts.SyntaxKind.NumericLiteral) {                        
+                        write(`<block type="math_number"><field name="NUM">-${U.htmlEscape((n.operand as ts.LiteralExpression).text)}</field></block>`)                        
+                    } else {
 write(`<block type="math_arithmetic">
         <field name="OP">MINUS</field>
         <value name="A">
@@ -188,7 +191,8 @@ write(`<block type="math_arithmetic">
             write(`</field>
           </block>
         </value>
-      </block>`)              
+      </block>`)  
+                    }             
                     break; // TODO add negation block
                 case ts.SyntaxKind.PlusPlusToken:
                 case ts.SyntaxKind.MinusMinusToken:
