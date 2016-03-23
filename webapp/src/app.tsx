@@ -890,7 +890,7 @@ $(document).ready(() => {
         .then(() => {
             return compiler.init();
         })
-        .then(() => workspace.initAsync())
+        .then(() => workspace.initAsync(pkg.appTarget.id))
         .then(() => {
             $("#loading").remove();
             render()

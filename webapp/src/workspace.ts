@@ -30,6 +30,9 @@ export interface Header extends InstallHeader {
     blobCurrent: boolean;      // has the current version of the script been pushed to cloud
     isDeleted: boolean;
     saveId?: any;
+    
+    // older script might miss this
+    target: string;
 }
 
 export type ScriptText = U.StringMap<string>;
@@ -38,7 +41,7 @@ export interface WorkspaceProvider {
     getHeaders(): Header[];
     getHeader(id: string): Header;
     getTextAsync(id: string): Promise<ScriptText>;
-    initAsync(): Promise<void>;
+    initAsync(target: string): Promise<void>;
     saveAsync(h: Header, text?: ScriptText): Promise<void>;
     installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
     saveToCloudAsync(h: Header): Promise<void>;
@@ -75,9 +78,9 @@ export function getHeader(id: string) {
     return null
 }
 
-export function initAsync() {
+export function initAsync(target: string) {
     if (!impl) impl = cloudworkspace.provider;
-    return impl.initAsync()
+    return impl.initAsync(target)
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {

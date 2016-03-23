@@ -8,6 +8,7 @@ import U = ks.Util;
 import Cloud = ks.Cloud;
 let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
+let currentTarget : string;
 
 type Header = ws.Header;
 type ScriptText = ws.ScriptText;
@@ -60,6 +61,7 @@ function mergeFsPkg(pkg: ks.FsPkg) {
     time.sort((a, b) => b - a)
     let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
     let hd: Header = {
+        target: currentTarget,
         name: pkg.config.name,
         meta: {},
         editor: "tsprj",
@@ -85,8 +87,10 @@ function mergeFsPkg(pkg: ks.FsPkg) {
     }
 }
 
-function initAsync() {
+function initAsync(target: string) {   
     U.assert(allScripts.length == 0)
+    currentTarget = target;
+    // TODO check that target is correct.
     return syncAsync();
 }
 
@@ -180,6 +184,7 @@ function installAsync(h0: ws.InstallHeader, text: ws.ScriptText) {
     h.id = path;
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
+    h.target = currentTarget;
     let e: HeaderWithScript = {
         id: h.id,
         header: h,
