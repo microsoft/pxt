@@ -79,6 +79,7 @@
             ,'basic.forever(() => { let degrees = input.compassHeading(); if (degrees < 45) basic.showString("N"); else if (degrees < 135) basic.showString("E"); else if (degrees < 225) basic.showString("S"); else basic.showString("W"); })'
             ,"let x = 3; x += 3; ++x;"
             ,"-5"
+            ,"let roll = 0; if (roll==5) { basic.showNumber(0) } else if (roll==4) { basic.showNumber(1) }"            
             // TODO
             //,"input.onShake(() => { basic.clearScreen(); })"
            ];
@@ -124,10 +125,10 @@
     </pre>
     <pre class='lang-sig'>
         basic.showNumber(2)
-    </pre>-->
+    </pre>
     <pre class='lang-sig'>
         led.plotAll()
-    </pre>
+    </pre>-->
 </body>
 
 </html>

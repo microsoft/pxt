@@ -420,7 +420,7 @@ write(`<block type="math_arithmetic">
                 flushBlocks();
                 write('</statement>')
             })
-            if (n.elseStatement) {
+            if (flatif.elseStatement) {
                 write('<statement name="ELSE">')
                 pushBlocks();
                 emit(flatif.elseStatement)
