@@ -137,7 +137,7 @@ export interface ConfirmOptions {
 export function confirmAsync(options: ConfirmOptions) {
     let logos = (options.logos || [])
         .filter(logo => !!logo)
-        .map(logo => `<img class="ui logo" src="${Util.svgToDataUri(logo)}" />`)
+        .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
         .join(' ');
     let html = `
   <div class="ui small modal">
