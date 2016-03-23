@@ -295,15 +295,25 @@ namespace ts.ks {
         let usedWorkList: Declaration[] = []
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
-    
+        let brkMap: U.Map<Breakpoint> = {}
+
         hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
         hex.setupInlineAssembly(opts);
+
+        if (opts.breakpoints)
+            res.breakpoints = [{
+                id: 0,
+                filename: "bogus",
+                pos: 0,
+                end: 0
+            }]
 
         let bin: Binary;
         let proc: ir.Procedure;
 
         function reset() {
             bin = new Binary();
+            bin.res = res;
             bin.target = opts.target;
             proc = null
         }
@@ -1217,8 +1227,8 @@ ${lbl}: .short 0xffff
         function rtcallMask(name: string, args: Expression[], isAsync = false) {
             return ir.rtcallMask(name, getMask(args), isAsync, args.map(emitExpr))
         }
-        
-        function emitInJmpValue(expr:ir.Expr) {
+
+        function emitInJmpValue(expr: ir.Expr) {
             let lbl = proc.mkLabel("ldjmp")
             proc.emitJmp(lbl, expr, ir.JmpMode.Always)
             proc.emitLbl(lbl)
@@ -1234,7 +1244,7 @@ ${lbl}: .short 0xffff
             } else {
                 oops()
             }
-            
+
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
 
@@ -1259,6 +1269,24 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function emitBrk(node: Node) {
+            if (!opts.breakpoints) return
+            let brk = U.lookup(brkMap, nodeKey(node))
+            if (!brk) {
+                let src = getSourceFileOfNode(node)
+                brk = {
+                    id: res.breakpoints.length,
+                    filename: src.fileName,
+                    pos: node.pos,
+                    end: node.end
+                }
+                brkMap[nodeKey(node)] = brk
+            }
+            let st = ir.stmt(ir.SK.Breakpoint, null)
+            st.breakpointInfo = brk
+            proc.emit(st)
+        }
+
         function simpleInstruction(k: SyntaxKind) {
             switch (k) {
                 case SK.PlusToken: return "thumb::adds";
@@ -1273,7 +1301,7 @@ ${lbl}: .short 0xffff
                 case SK.LessThanLessThanToken: return "thumb::lsls";
                 case SK.GreaterThanGreaterThanToken: return "thumb::asrs"
                 case SK.GreaterThanGreaterThanGreaterThanToken: return "thumb::lsrs"
-                // TODO compile to branches etc
+                // TODO compile to branches etc? this is more code-size efficient
                 case SK.LessThanEqualsToken: return "number::le";
                 case SK.LessThanToken: return "number::lt";
                 case SK.GreaterThanEqualsToken: return "number::ge";
@@ -1408,6 +1436,7 @@ ${lbl}: .short 0xffff
             emitExprAsStmt(node.expression)
         }
         function emitIfStatement(node: IfStatement) {
+            emitBrk(node)
             let elseLbl = proc.mkLabel("else")
             proc.emitJmpZ(elseLbl, emitExpr(node.expression))
             emit(node.thenStatement)
@@ -1430,6 +1459,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitDoStatement(node: DoStatement) {
+            emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
             emit(node.statement)
@@ -1439,6 +1469,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitWhileStatement(node: WhileStatement) {
+            emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
             proc.emitJmpZ(l.brk, emitExpr(node.expression));
@@ -1449,6 +1480,7 @@ ${lbl}: .short 0xffff
 
         function emitExprAsStmt(node: Expression) {
             if (!node) return;
+            emitBrk(node)
             let v = emitExpr(node);
             let a = typeOf(node)
             if (!(a.flags & TypeFlags.Void)) {
@@ -1466,6 +1498,7 @@ ${lbl}: .short 0xffff
                 (<VariableDeclarationList>node.initializer).declarations.forEach(emit);
             else
                 emitExprAsStmt(<Expression>node.initializer);
+            emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.fortop);
             if (node.condition)
@@ -1480,6 +1513,7 @@ ${lbl}: .short 0xffff
         function emitForInOrForOfStatement(node: ForInStatement) { }
 
         function emitBreakOrContinueStatement(node: BreakOrContinueStatement) {
+            emitBrk(node)
             let label = node.label ? node.label.text : null
             let isBreak = node.kind == SK.BreakStatement
             function findOuter(parent: Node): Statement {
@@ -1511,6 +1545,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitReturnStatement(node: ReturnStatement) {
+            emitBrk(node)
             let v: ir.Expr = null
             if (node.expression) {
                 v = emitExpr(node.expression)
@@ -1523,6 +1558,7 @@ ${lbl}: .short 0xffff
         function emitWithStatement(node: WithStatement) { }
 
         function emitSwitchStatement(node: SwitchStatement) {
+            emitBrk(node)
             if (!(typeOf(node.expression).flags & (TypeFlags.Number | TypeFlags.Enum))) {
                 userError(lf("switch() only supported over numbers or enums"))
             }
@@ -1575,6 +1611,7 @@ ${lbl}: .short 0xffff
             }
             // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {
+                emitBrk(node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
@@ -1878,6 +1915,7 @@ ${lbl}: .short 0xffff
         finalPass = false;
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
+        res: CompileResult;
 
         strings: StringMap<string> = {};
         otherLiterals: string[] = [];

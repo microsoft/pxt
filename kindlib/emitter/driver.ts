@@ -24,6 +24,16 @@ namespace ts.ks {
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
         ast?: boolean;
+        breakpoints?: boolean;
+    }
+
+    export interface Breakpoint {
+        id: number;
+        filename: string;
+        pos: number;
+        end: number;
+        // TODO: this would be useful for step-over support
+        // prevBrkId?:number;
     }
 
     export interface CompileResult {
@@ -33,6 +43,7 @@ namespace ts.ks {
         times: U.Map<number>;
         enums: U.Map<number>;
         ast?: Program;
+        breakpoints?: Breakpoint[];
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {
@@ -99,7 +110,7 @@ namespace ts.ks {
 
         if (!opts.sourceFiles)
             opts.sourceFiles = Object.keys(opts.fileSystem)
-        
+
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
         let program = createProgram(tsFiles, options, host);
 

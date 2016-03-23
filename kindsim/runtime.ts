@@ -94,8 +94,8 @@ namespace ks.rt {
             runInBackground: thread.runInBackground,
             pause: thread.pause,
             panic: thread.panic,
-            serialSendString: (s:string) => runtime.board.writeSerial(s),
-            showDigit: (n:number) => console.log("DIGIT:", n)
+            serialSendString: (s: string) => runtime.board.writeSerial(s),
+            showDigit: (n: number) => console.log("DIGIT:", n)
         }
     }
 
@@ -145,6 +145,7 @@ namespace ks.rt {
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => StackFrame;
+        handleDebuggerMsg: (msg: DebuggerMessage) => void;
 
         runningTime(): number {
             return U.now() - this.startTime;
@@ -215,13 +216,82 @@ namespace ks.rt {
             // ---
             var entryPoint: LabelFn;
             var bitvm = rt.bitvm
+            var breakpoints: Uint8Array = null
+            var breakAlways = false
             // ---
 
             var currResume: ResumeFn;
+            var dbgResume: ResumeFn;
+            var breakFrame: StackFrame = null // for step-over
             var _this = this
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
+            }
+
+            function setupDebugger(numBreakpoints: number) {
+                breakpoints = new Uint8Array(numBreakpoints)
+                breakAlways = true
+            }
+
+            function breakpoint(s: StackFrame, retPC: number, brkId: number): ResumeFn {
+                U.assert(!dbgResume)
+                
+                s.pc = retPC;
+                // check for step-over
+                if (!breakpoints[brkId] && breakFrame && breakFrame != s) {
+                    return s.fn; // cancel breakpoint
+                }
+                
+                let msg: DebuggerBreakpointMessage = {
+                    type: "debugger",
+                    subtype: "breakpoint",
+                    breakpointId: brkId
+                }
+                Runtime.postMessage(msg)
+                dbgResume = (m: DebuggerMessage) => {
+                    dbgResume = null;
+                    if (_this.dead) return;
+                    runtime = _this;
+                    U.assert(s.pc == retPC);
+
+                    breakAlways = false
+                    breakFrame = null
+
+                    switch (m.subtype) {
+                        case "resume":
+                            break
+                        case "stepover":
+                            breakAlways = true
+                            breakFrame = s
+                            break
+                        case "stepinto":
+                            breakAlways = true
+                            break
+                    }
+
+                    return loop(s)
+                }
+                return null;
+            }
+
+            function handleDebuggerMsg(msg: DebuggerMessage) {
+                switch (msg.subtype) {
+                    case "config":
+                        let cfg = msg as DebuggerConfigMessage
+                        if (cfg.setBreakpoints) {
+                            breakpoints.fill(0)
+                            for (let n of cfg.setBreakpoints)
+                                breakpoints[n] = 1
+                        }
+                        break;
+                    case "resume":
+                    case "stepover":
+                    case "stepinto":
+                        if (dbgResume)
+                            dbgResume(msg);
+                        break;
+                }
             }
 
             function loop(p: StackFrame) {
@@ -327,6 +397,7 @@ namespace ks.rt {
                 return r
             }
             this.setupTop = setupTop
+            this.handleDebuggerMsg = handleDebuggerMsg
 
             runtime = this;
 

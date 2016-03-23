@@ -9,6 +9,15 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
     static nextFrameId: number = 0;
     static themes = ["blue", "red", "green", "yellow"];
 
+    private handleDebuggerMessage(msg: ks.rt.DebuggerMessage) {
+        console.log("DBG-MSG", msg.subtype, msg)
+        switch (msg.subtype) {
+            case "breakpoint":
+                let brk = msg as ks.rt.DebuggerBreakpointMessage
+                break;
+        }
+    }
+    
     componentDidMount() {
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data;
@@ -19,6 +28,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
                     if (frame) Simulator.startFrame(frame);
                     break;
                 case 'serial': break; //handled elsewhere
+                case 'debugger': this.handleDebuggerMessage(msg); break;
                 default:
                     if (msg.type == 'radiopacket') {
                         // assign rssi noisy?
@@ -29,6 +39,13 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
             }
         }, false);
 
+    }
+
+    static postDebuggerMessage(subtype: string, data: any = {}) {
+        let msg: ks.rt.DebuggerMessage = JSON.parse(JSON.stringify(data))
+        msg.type = "debugger"
+        msg.subtype = subtype
+        Simulator.postMessage(msg)
     }
 
     static postMessage(msg: ks.rt.SimulatorMessage, source?: Window) {
@@ -63,7 +80,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
         let mc = '';
         let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
         msg.options = {
-            theme : Simulator.themes[Simulator.nextFrameId++ % Simulator.themes.length],
+            theme: Simulator.themes[Simulator.nextFrameId++ % Simulator.themes.length],
             player: mc
         };
         msg.id = `${msg.options.theme}-${ks.Util.guidGen()}`;
@@ -79,7 +96,7 @@ export class Simulator extends React.Component<ISimulatorProps, {}> {
         simulators.find('iframe').addClass("grayscale")
     }
     static unload() {
-        $('#simulators').html('');        
+        $('#simulators').html('');
     }
     static run(js: string, enums: any) {
         // store information

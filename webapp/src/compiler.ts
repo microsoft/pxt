@@ -70,7 +70,11 @@ export function compileAsync(native = false) {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = native
     return pkg.mainPkg.getCompileOptionsAsync(trg)
-        .then(opts => compileCoreAsync(opts))
+        .then(opts => {
+            opts.breakpoints = true
+            return opts
+        })
+        .then(compileCoreAsync)
         .then(resp => {
             // TODO remove this
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)

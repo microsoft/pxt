@@ -4,6 +4,8 @@ namespace ts.ks {
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })
+        if (bin.res.breakpoints)
+            jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n` 
         jssource += "\nrt.setupStringLiterals(" +
             JSON.stringify(U.mapStringMap(bin.strings, (k, v) => 1), null, 1) +
             ")\n"
@@ -67,6 +69,9 @@ while (true) { switch (step) {
                 case ir.SK.Label:
                     writeRaw(`  case ${s.lblId}:`)
                     break;
+                case ir.SK.Breakpoint:
+                    emitBreakpoint(s)
+                    break;
                 default: oops();
             }
         }
@@ -78,6 +83,13 @@ while (true) { switch (step) {
         writeRaw(``)
 
         return resText
+
+        function emitBreakpoint(s: ir.Stmt) {
+            let lbl = ++lblIdx
+            let id = s.breakpointInfo.id
+            write(`if (breakAlways || breakpoints[${id}]) return breakpoint(s, ${lbl}, ${id})`)
+            writeRaw(`  case ${lbl}:`)
+        }
 
         function locref(cell: ir.Cell) {
             if (cell.iscap)

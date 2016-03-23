@@ -846,6 +846,7 @@ let myexports: any = {
     compiler,
     pkg,
     getsrc,
+    sim: simulator.Simulator,
     apiAsync: core.apiAsync
 };
 (window as any).E = myexports;
