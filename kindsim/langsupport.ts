@@ -221,28 +221,6 @@ namespace ks.rt {
             decr(r)
         }
 
-        export function ldglb(idx: number) {
-            check(0 <= idx && idx < runtime.numGlobals);
-            return num(runtime.globals[idx])
-        }
-
-        export function ldglbRef(idx: number) {
-            check(0 <= idx && idx < runtime.numGlobals);
-            return incr(ref(runtime.globals[idx]))
-        }
-
-        // note the idx comes last - it's more convenient that way in the emitter
-        export function stglb(v: any, idx: number) {
-            check(0 <= idx && idx < runtime.numGlobals);
-            runtime.globals[idx] = v;
-        }
-
-        export function stglbRef(v: any, idx: number) {
-            check(0 <= idx && idx < runtime.numGlobals);
-            decr(runtime.globals[idx])
-            runtime.globals[idx] = v;
-        }
-
         export function ldloc(r: RefLocal) {
             return r.v
         }

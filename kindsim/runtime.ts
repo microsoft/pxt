@@ -140,7 +140,7 @@ namespace ks.rt {
         startTime = 0;
         enums: Map<number>;
         id: string;
-        globals: any[] = [];
+        globals: any = {};
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -218,6 +218,7 @@ namespace ks.rt {
             var bitvm = rt.bitvm
             var breakpoints: Uint8Array = null
             var breakAlways = false
+            var globals = this.globals
             // ---
 
             var currResume: ResumeFn;
