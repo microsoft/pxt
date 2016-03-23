@@ -247,32 +247,6 @@ class FileList extends data.Component<ISettingsProps, {}> {
     }
 }
 
-class Debugger extends data.Component<ISettingsProps, {}> {
-    renderCore() {
-        let parent = this.props.parent
-        return (
-            <div className="ui item landscape only">
-                <sui.Button class='green'
-                    text={lf("Debug") }
-                    onClick={() => parent.runSimulator({ debug: true }) } />
-                <sui.Button class='green'
-                    icon="right arrow"
-                    onClick={() => this.cmd("stepover") } />
-                <sui.Button class='green'
-                    icon="down arrow"
-                    onClick={() => this.cmd("stepinto") } />
-                <sui.Button class='green'
-                    icon="play"
-                    onClick={() => this.cmd("resume") } />
-            </div>
-        )
-    }
-
-    cmd(c: string) {
-        simulator.Simulator.postDebuggerMessage(c)
-    }
-}
-
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
@@ -396,6 +370,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
+        simulator.init($("#mbitboardview")[0], {
+          startDebug: () => this.runSimulator({ debug: true })  
+        })
         this.forceUpdate(); // we now have editors prepared
     }
 
@@ -642,7 +619,7 @@ Ctrl+Shift+B
     }
 
     stopSimulator(unload = false) {
-        simulator.Simulator.stop(unload)
+        simulator.stop(unload)
 
         this.setState({ running: false })
     }
@@ -658,7 +635,7 @@ Ctrl+Shift+B
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
-                    simulator.Simulator.run(
+                    simulator.run(
                         js,
                         resp.enums)
                     this.setState({ running: true })
@@ -756,12 +733,10 @@ Ctrl+Shift+B
                 </div>
                 <div id="filelist" className="ui items">
                     <div id="mbitboardview" className="ui vertical">
-                        <simulator.Simulator ref="simulator" />
                     </div>
                     <div className="ui landscape only">
                         <logview.LogView ref="logs" />
                     </div>
-                    <Debugger parent={this} />
                     <div className="ui item landscape only">
                         <sui.Button key='runbtn' class='primary' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {this.appTarget.compile ? <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
@@ -872,7 +847,7 @@ let myexports: any = {
     compiler,
     pkg,
     getsrc,
-    sim: simulator.Simulator,
+    sim: simulator,
     apiAsync: core.apiAsync
 };
 (window as any).E = myexports;
