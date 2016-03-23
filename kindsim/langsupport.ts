@@ -137,8 +137,16 @@ namespace ks.rt {
                 delete liveRefObjs[o.id + ""]
                 o.destroy()
             }
-        } else if (stringLiterals && typeof v == "string" && !stringLiterals.hasOwnProperty(v)) {
-            stringRefDelta(v, -1)
+        } else if (typeof v == "string") {
+            if (stringLiterals && !stringLiterals.hasOwnProperty(v)) {
+                stringRefDelta(v, -1)
+            }
+        } else if (!v) {
+            // OK (null)
+        } else if (typeof v == "function") {
+            // OK (function literal)
+        } else {
+            throw new Error("bad decr")
         }
     }
 

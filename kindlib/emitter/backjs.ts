@@ -259,7 +259,8 @@ while (true) { switch (step) {
                     let cell = trg.data as ir.Cell
                     emitExpr(src)
                     if (cell.isGlobal()) {
-                        write(`bitvm.decr(${glbref(cell)});`)
+                        if (cell.isRef())
+                            write(`bitvm.decr(${glbref(cell)});`)
                         write(`${glbref(cell)} = r0;`)
                     } else {
                         write(`${locref(cell)} = r0;`)
