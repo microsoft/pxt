@@ -495,7 +495,7 @@ namespace ks.blocks {
 
         Blockly.Blocks['math_op3'] = {
             init: function() {
-                this.setHelpUrl('./blocks/contents');
+                this.setHelpUrl('./reference/math/abs');
                 this.setColour(230);
                 this.appendDummyInput()
                     .appendField("absolute of");

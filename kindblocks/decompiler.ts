@@ -23,7 +23,8 @@ namespace ks.blocks {
     }
     
     var builtinBlocks: U.Map<{ block: string; blockId: string; }> = {
-        "Math.random" : { blockId:"device_random", block: "pick random 0 to %limit" }
+        "Math.random" : { blockId:"device_random", block: "pick random 0 to %limit" },
+        "Math.abs": {blockId: "math_op3", block:"absolute of %x" }
     }
 
     export function decompileToBlocks(blocksInfo: ts.ks.BlocksInfo, file: ts.SourceFile): ts.ks.CompileResult {
