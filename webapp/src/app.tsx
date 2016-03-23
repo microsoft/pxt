@@ -633,6 +633,7 @@ Ctrl+Shift+B
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
                 if (js) {
+                    this.setHelp(null);
                     simulator.Simulator.run(
                         js,
                         resp.enums)
@@ -730,7 +731,7 @@ Ctrl+Shift+B
                     </div>
                 </div>
                 <div id="filelist" className="ui items">
-                    <div id="mbitboardview" className="ui vertical">
+                    <div id="mbitboardview" className={"ui vertical " + (this.state.helpCard ? "landscape only" : "")}>
                         <simulator.Simulator ref="simulator" />
                     </div>
                     <div className="ui landscape only">

@@ -421,9 +421,9 @@ svg.ui.trend.black polyline {
 /* thin desktop portrait mode */
 @media only screen and (max-width: 796px) {
     #helpcard {
-        left: 2.1rem;
+        right: 2rem;
         top: initial;
-        bottom: 220px;
+        bottom: 2rem;
         margin: 0;
     }
     #maineditor {
