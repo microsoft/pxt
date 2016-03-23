@@ -15,6 +15,10 @@
     <style type="text/css">
         @import "./semantic.css";
         @import "./custom.css";
+        
+        pre {
+            white-space: pre-wrap;
+        }
     </style>
     <script>
         // This line gets patched up by the cloud
@@ -90,7 +94,14 @@
                     $(svg).removeClass('blocklyPreview')
                     var div = $("<div/>").append(svg)                
                     $(document.body).append(div)                                      
-                } 
+                } else {
+                    $(document.body).append($('<pre/>').text('failed to render ' + p))
+                    if (r.compileBlocks && r.compileBlocks.diagnostics) {
+                        r.compileBlocks.diagnostics.forEach(function(an) {                            
+                            $(document.body).append($('<div/>').text(an.messageText))                        
+                        })
+                    }
+                }
                 next();
             })
         }
