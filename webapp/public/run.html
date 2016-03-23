@@ -5,9 +5,27 @@
     <meta charset="utf-8">
     <title>KindScript Simulator</title>
     <style>
+body {
+    height:100%;
+}
 iframe {
     position:absolute;
     left:0; top:0; width:100%;height:100%;
+}
+footer {
+    position:absolute;
+    bottom:1em;
+    right:1em;
+    z-index: 1;
+    font-size: 0.8em;
+    font-family: monospace;
+    color:#fff;
+    mix-blend-mode: difference;
+    border-radius: 0.2em;
+    padding:0.5em;
+}
+footer a {
+    color:#fff;
 }
  </style>
 </head>
@@ -18,6 +36,9 @@ iframe {
     </div>
     <div id='simulators'>
     </div>
+    <footer>
+        <span>powered by <a href="https://kindscript.com">KindScript</a></span>
+    </footer>
     <script>
         // This line gets patched up by the cloud
         var rootUrl = "dummy";
