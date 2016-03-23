@@ -419,7 +419,7 @@ svg.ui.trend.black polyline {
 }
 
 /* thin desktop portrait mode */
-@media only screen and (max-width: 796px) {
+@media only screen and (max-width: 796px), only screen and (max-aspect-ratio:5/5) {
     #helpcard {
         left: 2.1rem;
         top: initial;
@@ -451,7 +451,7 @@ svg.ui.trend.black polyline {
     }    
 }
 
-@media only screen and (min-width: 796px) {
+@media only screen and (min-width: 796px), only screen and (min-aspect-ratio:5/5) {
     .ui.portrait.only {
         display:none !important;    
     }
