@@ -8,6 +8,12 @@ namespace ks.runner {
     }
     
     function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery) {
+        if (!$svg[0]) {
+            let $c = $('<div class="ui segment"></div>');
+            $c.append($js);
+            return;            
+        }
+        
         let $c = $('<div class="ui top attached segment"></div>');
         $c.append($svg);
         let $blockBtn = $('<a class="active item"><i class="puzzle icon"></i></a>').click(() => {
@@ -54,7 +60,8 @@ namespace ks.runner {
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(c, js, s);
         }).then(() => renderNextSnippetAsync(options.signatureClass, (c, r) => {
-            let s = r.blocksSvg;
+            let cjs = r.compileJS;
+            if (!cjs) return;
             let file = r.compileJS.ast.getSourceFile("main.ts");
             let stmts = file.statements;
             let stmt = stmts[0] as ts.ExpressionStatement;
@@ -62,10 +69,12 @@ namespace ks.runner {
                 console.error('missing statement')
                 return;
             }
+            
+            let s = r.blocksSvg;
             let call = stmt.expression as ts.CallExpression;
             let info = (<any>call).callInfo as ts.ks.CallInfo
             if (info) {
-                let js = $('<code/>').text(info.decl.getText().replace(/^export/, '').replace(/\s*\{.*$/,';'))
+                let js = $('<code/>').text(info.decl.getText().replace(/^export/, '').replace(/\s*\{.*$/m,';'))
                 if (options.snippetReplaceParent) c = c.parent();
                 fillWithWidget(c, js, s);
             }
