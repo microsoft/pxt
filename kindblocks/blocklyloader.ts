@@ -6,12 +6,6 @@ let lf = Util.lf;
 
 namespace ks.blocks {
     
-    module Xml {
-        export function createElement(qualifiedName: string) : Element {
-            return document.createElementNS("http://www.w3.org/1999/xhtml", qualifiedName);
-        }
-    }
-
     var blockColors: Util.StringMap<number> = {
         loops: 120,
         images: 45,
@@ -35,19 +29,19 @@ namespace ks.blocks {
         if (v && v.slice(0, 1) == "\"")
             v = JSON.parse(v);
         if (type == "number" && shadowType && shadowType == "value") {
-            let field = Xml.createElement("field");
+            let field = document.createElement("field");
             field.setAttribute("name", name);
             field.appendChild(document.createTextNode("0"));
             return field;
         }
 
-        let value = Xml.createElement("value");
+        let value = document.createElement("value");
         value.setAttribute("name", name);
 
-        let shadow = Xml.createElement("shadow"); value.appendChild(shadow);
+        let shadow = document.createElement("shadow"); value.appendChild(shadow);
         shadow.setAttribute("type", shadowType ? shadowType : type == "number" ? "math_number" : type == "string" ? "text" : type);
         if (type == "number" || type == "string") {
-            let field = Xml.createElement("field"); shadow.appendChild(field);
+            let field = document.createElement("field"); shadow.appendChild(field);
             field.setAttribute("name", type == "number" ? "NUM" : "TEXT");
             field.appendChild(document.createTextNode(v || (type == "number" ? "0" : "")));
         }
@@ -96,7 +90,7 @@ namespace ks.blocks {
         //
         // toolbox update
         //
-        let block = Xml.createElement("block");
+        let block = document.createElement("block");
         block.setAttribute("type", fn.attributes.blockId);
         if (fn.attributes.blockGap)
             block.setAttribute("gap", fn.attributes.blockGap);
@@ -122,7 +116,7 @@ namespace ks.blocks {
         let category = tb.querySelector("category[name~='" + catName + "']");
         if (!category) {
             console.log('toolbox: adding category ' + ns)
-            category = Xml.createElement("category");
+            category = document.createElement("category");
             category.setAttribute("name", catName)
             let nsn = info.apis.byQName[ns];
             category.setAttribute("weight", nsn.attributes.weight.toString())
