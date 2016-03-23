@@ -18,7 +18,7 @@ export function init() {
         pendingMsgs["ready"] = resolve;
     })
     q.enqueue("main", () => initPromise)
-    
+
     let workerJs = "./worker.js"
 
     let cfg = (window as any).tdConfig
@@ -66,12 +66,18 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.length
 }
 
-export function compileAsync(native = false) {
+export interface CompileOptions {
+    native?: boolean;
+    debug?: boolean;
+}
+
+export function compileAsync(options: CompileOptions = {}) {
     let trg = pkg.mainPkg.getTargetOptions()
-    trg.isNative = native
+    trg.isNative = options.native
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
-            opts.breakpoints = true
+            if (options.debug)
+                opts.breakpoints = true
             return opts
         })
         .then(compileCoreAsync)

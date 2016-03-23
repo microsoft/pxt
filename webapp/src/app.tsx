@@ -24,9 +24,9 @@ import Cloud = ks.Cloud;
 import Util = ks.Util;
 var lf = Util.lf
 
-declare function rg4js(s:string, v:any) : void;
+declare function rg4js(s: string, v: any): void;
 declare module Raygun {
-    function send(err:any, data:any) : void;
+    function send(err: any, data: any): void;
 }
 
 export interface FileHistoryEntry {
@@ -49,7 +49,7 @@ interface IAppState {
     fileState?: string;
     showFiles?: boolean;
     helpCard?: ks.CodeCard;
-    helpCardClick?: (e : React.MouseEvent) => boolean;
+    helpCardClick?: (e: React.MouseEvent) => boolean;
     running?: boolean;
 }
 
@@ -96,7 +96,7 @@ class Settings extends data.Component<ISettingsProps, {}> {
 class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     renderCore() {
         Util.assert(this.props.parent.appTarget.cloud);
-        
+
         let par = this.props.parent
         let hd = par.state.header
         let hdId = hd ? hd.id : ""
@@ -112,9 +112,9 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
         }
         let needsUpload = hd && !hd.blobCurrent
         return <sui.Button class={btnClass} onClick={save}
-                        icon={"cloud " + (needsUpload ? "upload" : "") }
-                        popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
-                        />
+            icon={"cloud " + (needsUpload ? "upload" : "") }
+            popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
+            />
     }
 }
 
@@ -247,6 +247,31 @@ class FileList extends data.Component<ISettingsProps, {}> {
     }
 }
 
+class Debugger extends data.Component<ISettingsProps, {}> {
+    renderCore() {
+        let parent = this.props.parent
+        return (
+            <div className="ui item landscape only">
+                <sui.Button class='green'
+                    text={lf("Debug") }
+                    onClick={() => parent.runSimulator({ debug: true }) } />
+                <sui.Button class='green'
+                    icon="right arrow"
+                    onClick={() => this.cmd("stepover") } />
+                <sui.Button class='green'
+                    icon="down arrow"
+                    onClick={() => this.cmd("stepinto") } />
+                <sui.Button class='green'
+                    icon="play"
+                    onClick={() => this.cmd("resume") } />
+            </div>
+        )
+    }
+
+    cmd(c: string) {
+        simulator.Simulator.postDebuggerMessage(c)
+    }
+}
 
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
@@ -600,7 +625,7 @@ Ctrl+Shift+B
     compile() {
         console.log('compiling...')
         let state = this.editor.snapshotState()
-        compiler.compileAsync(true)
+        compiler.compileAsync({native: true})
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
@@ -622,13 +647,13 @@ Ctrl+Shift+B
         this.setState({ running: false })
     }
 
-    runSimulator() {
+    runSimulator(opts:compiler.CompileOptions = {}) {
         this.stopSimulator();
         
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         let state = this.editor.snapshotState()
-        compiler.compileAsync()
+        compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 let js = resp.outfiles["microbit.js"]
@@ -736,6 +761,7 @@ Ctrl+Shift+B
                     <div className="ui landscape only">
                         <logview.LogView ref="logs" />
                     </div>
+                    <Debugger parent={this} />
                     <div className="ui item landscape only">
                         <sui.Button key='runbtn' class='primary' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {this.appTarget.compile ? <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
