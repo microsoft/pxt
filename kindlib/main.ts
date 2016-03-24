@@ -470,6 +470,7 @@ namespace ks {
                         ishidden: false,
                         userplatform: ["ks"],
                         editor: "tsprj",
+                        target: this.getTarget().name,
                         text: text
                     }
                     info(`publishing script; ${text.length} bytes`)

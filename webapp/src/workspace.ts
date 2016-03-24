@@ -17,6 +17,8 @@ export interface InstallHeader {
     name: string;
     meta: any;
     editor: string;
+    // older script might miss this
+    target: string;
     pubId: string; // for published scripts
     pubCurrent: boolean; // is this exactly pubId, or just based on it
 }
@@ -30,9 +32,6 @@ export interface Header extends InstallHeader {
     blobCurrent: boolean;      // has the current version of the script been pushed to cloud
     isDeleted: boolean;
     saveId?: any;
-    
-    // older script might miss this
-    target: string;
 }
 
 export type ScriptText = U.StringMap<string>;
@@ -103,6 +102,7 @@ export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
         islibrary: meta.islibrary,
         ishidden: false,
         userplatform: ["ks-web"],
+        target: h.target,
         editor: h.editor,
         text: stext
     }
@@ -165,7 +165,8 @@ export function installByIdAsync(id: string) {
                         pubId: id,
                         pubCurrent: true,
                         meta: scr.meta,
-                        editor: scr.editor
+                        editor: scr.editor,
+                        target: scr.target,
                     }, files)))
 }
 

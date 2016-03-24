@@ -42,8 +42,11 @@ function initAsync(target: string) {
     currentTarget = target;    
     // TODO getAllAsync aware of target?
     return headers.getAllAsync().then(h => {
-        allScripts = h
-            .filter((hh: Header) => !hh.target || hh.target == currentTarget)
+        allScripts = h            
+            .filter((hh: Header) => {
+                if (!hh.target) hh.target = "microbit"
+                return hh.target == currentTarget
+            })
             .map((hh: Header) => {
             return {
                 id: hh.id,
