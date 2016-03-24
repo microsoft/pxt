@@ -6,9 +6,10 @@ namespace ks.runner {
         blocksClass?: string;
         snippetReplaceParent?: boolean;
         simulator?: boolean;
+        hex?: boolean;
     }
 
-    function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run : boolean) {
+    function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run : boolean, compile : boolean) {
         if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
             $c.append($js);
@@ -24,7 +25,7 @@ namespace ks.runner {
         // blocks menu
         if ($svg && $svg[0]) {
             $c.append($svg);
-            let $blockBtn = $('<a class="active item"><i class="puzzle icon"></i></a>').click(() => {
+            let $blockBtn = $('<a class="active item"><i aria-label="Blocks" class="puzzle icon"></i></a>').click(() => {
                 $h.find('.active').removeClass('active')
                 $blockBtn.addClass('active')
                 $c.empty().append($svg);
@@ -34,7 +35,7 @@ namespace ks.runner {
 
         // js menu
         {
-            let $jsBtn = $('<a class="item"><i class="keyboard icon"></i></a>').click(() => {
+            let $jsBtn = $('<a class="item"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
                 $h.find('.active').removeClass('active')
                 $jsBtn.addClass('active')
                 $c.empty().append($js);
@@ -44,7 +45,7 @@ namespace ks.runner {
         
         // runner menu
         if (run) {
-            let $runBtn = $('<a class="item"><i class="play icon"></i></a>').click(() => {
+            let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
                 $h.find('.active').removeClass('active')
                 $runBtn.addClass('active')
                 let $frame = $('<iframe frameborder="0"/>');
@@ -52,6 +53,17 @@ namespace ks.runner {
                 $c.empty().append($frame);
             })
             $menu.append($runBtn);
+        }
+        
+        if (compile) {
+            let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {
+                $h.find('.active').removeClass('active')
+                $hexBtn.addClass('active')
+                let $frame = $('<iframe frameborder="0"/>');
+                ($frame[0] as HTMLIFrameElement).src = 'https://yelm.tdev.ly/microbit---run?hex=1&code=' + encodeURIComponent($js.text());
+                $c.empty().append($frame);
+            })
+            $menu.append($hexBtn);            
         }
 
         // inject container
@@ -72,7 +84,7 @@ namespace ks.runner {
                 } catch (e) {
                     console.error('error while rendering ' + $el.html())
                 }
-                return renderNextSnippetAsync(cls, render);
+                return Promise.delay(1, renderNextSnippetAsync(cls, render));
             })
     }
 
@@ -83,7 +95,8 @@ namespace ks.runner {
             let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
             let js = $('<code/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
-            fillWithWidget(c, js, s, options.simulator && r.compileJS && r.compileJS.success);
+            let compiled = r.compileJS && r.compileJS.success;
+            fillWithWidget(c, js, s, options.simulator &&compiled, options.hex && compiled);
         }).then(() => renderNextSnippetAsync(options.signatureClass, (c, r) => {
             let cjs = r.compileJS;
             if (!cjs) return;
@@ -103,7 +116,7 @@ namespace ks.runner {
                 sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
                 let js = $('<code/>').text(sig)
                 if (options.snippetReplaceParent) c = c.parent();
-                fillWithWidget(c, js, s, false);
+                fillWithWidget(c, js, s, false, false);
             }
         })).then(() => renderNextSnippetAsync(options.blocksClass, (c, r) => {
             let s = r.blocksSvg;

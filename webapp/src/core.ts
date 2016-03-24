@@ -1,5 +1,6 @@
 /// <reference path="../../typings/react/react.d.ts" />
 /// <reference path="../../typings/react/react-dom.d.ts" />
+/// <reference path="../../built/kindlib.d.ts" />
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -77,38 +78,16 @@ export function infoNotification(msg: string) {
 }
 
 export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream") {
-    console.log('trigger download')
-    var buf = Util.stringToUint8Array(Util.toUTF8(text))
-    var uri = browserDownloadUInt8Array(buf, name, contentType);
+    ks.BrowserUtils.browserDownloadText(
+        text, 
+        name, 
+        contentType, 
+        e => errorNotification(lf("saving file failed..."))
+    );
+    
     $('#compilemsg').finish()
         .html(`${lf("Download ready.")} <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>${lf("Use this link to save to another location.")}</a>`)
         .fadeIn('fast').delay(7000).fadeOut('slow');
-}
-
-export var isMobileBrowser = /mobile/.test(navigator.userAgent);
-
-function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream"): string {
-    var dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf))
-    try {
-        if ((<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser) {
-            var b = new Blob([buf], { type: contentType })
-            var result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
-        } else {
-            var link = <any>window.document.createElement('a');
-            if (typeof link.download == "string") {
-                link.href = dataurl;
-                link.download = name;
-                document.body.appendChild(link); // for FF
-                link.click();
-                document.body.removeChild(link);
-            } else {
-                document.location.href = dataurl;
-            }
-        }
-    } catch (e) {
-        errorNotification(lf("saving file failed..."))
-    }
-    return dataurl;
 }
 
 export function handleNetworkError(e: any) {

@@ -156,14 +156,14 @@ namespace ks.runner {
             })
     }
 
-    function getCompileOptionsAsync() {
+    function getCompileOptionsAsync(hex? : boolean) {
         let trg = mainPkg.getTargetOptions()
-        trg.isNative = false
-        trg.hasHex = false
+        trg.isNative = !!hex
+        trg.hasHex = !!hex
         return mainPkg.getCompileOptionsAsync(trg)
     }
 
-    function compileAsync(updateOptions?: (ops: ts.ks.CompileOptions) => void) {
+    function compileAsync(hex: boolean, updateOptions?: (ops: ts.ks.CompileOptions) => void) {
         return getCompileOptionsAsync()
             .then(opts => {
                 if (updateOptions) updateOptions(opts);
@@ -176,12 +176,24 @@ namespace ks.runner {
                 return resp
             })
     }
+    
+    export function generateHexFileAsync(options: SimulateOptions) : Promise<string> {
+        return loadPackageAsync(options.id)
+            .then(() => compileAsync(true, opts => {
+                if (options.code) opts.fileSystem["main.ts"] = options.code;
+            }))        
+            .then(resp => {
+                if (resp.diagnostics && resp.diagnostics.length > 0) {
+                    console.error("Diagnostics", resp.diagnostics)
+                }
+                return resp.outfiles["microbit.hex"];
+            });
+    }
 
     export function simulateAsync(container: HTMLElement, options: SimulateOptions) {
         return loadPackageAsync(options.id)
-            .then(() => compileAsync(opts => {
-                if (options.code)
-                    opts.fileSystem["main.ts"] = options.code;
+            .then(() => compileAsync(false, opts => {
+                if (options.code) opts.fileSystem["main.ts"] = options.code;
             }))
             .then(resp => {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
@@ -203,7 +215,7 @@ namespace ks.runner {
 
     export function decompileToBlocksAsync(code: string): Promise<DecompileResult> {
         return loadPackageAsync(null)
-            .then(getCompileOptionsAsync)
+            .then(() => getCompileOptionsAsync(false))
             .then(opts => {
                 // compile
                 opts.fileSystem["main.ts"] = code
