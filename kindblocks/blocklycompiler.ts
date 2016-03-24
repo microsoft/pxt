@@ -1334,7 +1334,7 @@ namespace ks.blocks {
             var stmtsVariables: J.JStmt[] = [];
             e.bindings.forEach((b: Binding) => {
                 var btype = find(b.type);
-                if (!isCompiledAsForIndex(b) && !b.setInMain)
+                if (!isCompiledAsForIndex(b) && true) // !b.setInMain)
                     stmtsVariables.push(H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type))));
             });
 
