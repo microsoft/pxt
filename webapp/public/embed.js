@@ -39,7 +39,7 @@
     }
 
     scripts.forEach(function(src) {
-        let script = document.createElement('script');
+        var script = document.createElement('script');
         script.src = src;
         script.async = false;
         document.head.appendChild(script);
