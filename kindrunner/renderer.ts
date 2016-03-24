@@ -36,6 +36,7 @@ namespace ks.runner {
         {
             let $jsBtn = $('<a class="item"><i class="keyboard icon"></i></a>').click(() => {
                 $h.find('.active').removeClass('active')
+                $jsBtn.addClass('active')
                 $c.empty().append($js);
             })
             $menu.append($jsBtn);
@@ -45,6 +46,7 @@ namespace ks.runner {
         if (run) {
             let $runBtn = $('<a class="item"><i class="play icon"></i></a>').click(() => {
                 $h.find('.active').removeClass('active')
+                $runBtn.addClass('active')
                 let $frame = $('<iframe frameborder="0"/>');
                 ($frame[0] as HTMLIFrameElement).src = 'https://yelm.tdev.ly/microbit---run?code=' + encodeURIComponent($js.text());
                 $c.empty().append($frame);
