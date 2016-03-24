@@ -70,7 +70,7 @@ footer a {
             
             if (hex) {
                 console.log('compiling script to hex')
-                ks.runner.generateHexFileAsync(sims, options).done(function(hex) {
+                ks.runner.generateHexFileAsync(options).done(function(hex) {
                     document.getElementById('loading').remove();
                     var a = document.createElement("a");
                     a.href = hex;

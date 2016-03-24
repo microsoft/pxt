@@ -17,6 +17,8 @@ namespace ks.runner {
             return;
         }
 
+        let cdn = (window as any).appCdnRoot
+        let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu">'
             + ' <div class="right icon menu"></div></div>');
         let $c = $('<div class="ui top attached segment"></div>');
@@ -48,9 +50,10 @@ namespace ks.runner {
             let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
                 $h.find('.active').removeClass('active')
                 $runBtn.addClass('active')
-                let $frame = $('<iframe frameborder="0"/>');
-                ($frame[0] as HTMLIFrameElement).src = 'https://yelm.tdev.ly/microbit---run?code=' + encodeURIComponent($js.text());
-                $c.empty().append($frame);
+                
+                let $embed = $(`<div class="ui 4:3 embed" data-icon="play" data-url="https://yelm.tdev.ly/microbit-latest---run?code=${encodeURIComponent($js.text())}" data-placeholder="${images}/microbit.bw.svg"></div>`);
+                $c.empty().append($embed);
+                ($embed as any).embed('show')
             })
             $menu.append($runBtn);
         }
@@ -60,7 +63,7 @@ namespace ks.runner {
                 $h.find('.active').removeClass('active')
                 $hexBtn.addClass('active')
                 let $frame = $('<iframe frameborder="0"/>');
-                ($frame[0] as HTMLIFrameElement).src = 'https://yelm.tdev.ly/microbit---run?hex=1&code=' + encodeURIComponent($js.text());
+                ($frame[0] as HTMLIFrameElement).src = 'https://yelm.tdev.ly/microbit-latest---run?hex=1&code=' + encodeURIComponent($js.text());
                 $c.empty().append($frame);
             })
             $menu.append($hexBtn);            
