@@ -14,8 +14,8 @@
         "kindlib.js",
         "kindblocks.js",
         "kindsim.js",
-        "kindrunner.js",
-    ].map(s => appCdnRoot + s)
+        "kindrunner.js"
+    ].map(function(s) { return appCdnRoot + s; })
 
     if (typeof jQuery == "undefined")
         scripts.unshift(appCdnRoot + "jquery.js")
@@ -27,7 +27,7 @@
         else ksCallbacks.push(f)
     }
 
-    window.ksRunnerWhenLoaded = () => {
+    window.ksRunnerWhenLoaded = function() {
         ks.runner.initCallbacks = ksCallbacks
         ksCallbacks.push(function() {
             ksCallbacks = null
