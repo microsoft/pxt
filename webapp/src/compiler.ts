@@ -18,7 +18,7 @@ export function init() {
         pendingMsgs["ready"] = resolve;
     })
     q.enqueue("main", () => initPromise)
-    
+
     let workerJs = "./worker.js"
 
     let cfg = (window as any).tdConfig
@@ -36,7 +36,7 @@ export function init() {
     }
 }
 
-function setDiagnostics(diagnostics: ts.Diagnostic[]) {
+function setDiagnostics(diagnostics: ts.ks.KsDiagnostic[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -44,11 +44,9 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     let output = "";
 
     for (let diagnostic of diagnostics) {
-        if (diagnostic.file) {
-            const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-            const relativeFileName = diagnostic.file.fileName;
-            output += `${relativeFileName}(${line + 1},${character + 1}): `;
-            let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.file.fileName)[0]
+        if (diagnostic.fileName) {
+            output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.character + 1}): `;
+            let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
             if (f)
                 f.diagnostics.push(diagnostic)
         }
@@ -66,11 +64,23 @@ function setDiagnostics(diagnostics: ts.Diagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.length
 }
 
-export function compileAsync(native = false) {
+export interface CompileOptions {
+    native?: boolean;
+    debug?: boolean;
+}
+
+export function compileAsync(options: CompileOptions = {}) {
     let trg = pkg.mainPkg.getTargetOptions()
-    trg.isNative = native
+    trg.isNative = options.native
     return pkg.mainPkg.getCompileOptionsAsync(trg)
-        .then(opts => compileCoreAsync(opts))
+        .then(opts => {
+            if (options.debug) {
+                opts.breakpoints = true
+                opts.justMyCode = true
+            }
+            return opts
+        })
+        .then(compileCoreAsync)
         .then(resp => {
             // TODO remove this
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)

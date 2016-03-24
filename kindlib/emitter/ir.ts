@@ -153,6 +153,7 @@ namespace ts.ks.ir {
         Label,
         Jmp,
         StackEmpty,
+        Breakpoint,
     }
 
     export enum JmpMode {
@@ -168,6 +169,7 @@ namespace ts.ks.ir {
         public lblNumUses: number;
         public jmpMode: JmpMode;
         public lblId: number;
+        public breakpointInfo: Breakpoint;
 
         constructor(
             public stmtKind: SK,
@@ -200,6 +202,8 @@ namespace ts.ks.ir {
                     }
                 case ir.SK.StackEmpty:
                     return "    ;\n"
+                case ir.SK.Breakpoint:
+                    return "    // brk " + (this.breakpointInfo.id) + "\n"
                 case ir.SK.Label:
                     return this.lblName + ":\n"
                 default: throw oops();
@@ -481,6 +485,7 @@ namespace ts.ks.ir {
                         break;
                     case ir.SK.StackEmpty:
                     case ir.SK.Label:
+                    case ir.SK.Breakpoint:
                         break;
                     default: oops();
                 }

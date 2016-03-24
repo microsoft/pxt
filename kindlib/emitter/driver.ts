@@ -24,15 +24,25 @@ namespace ts.ks {
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
         ast?: boolean;
+        breakpoints?: boolean;
+        justMyCode?: boolean;
+    }
+
+    export interface Breakpoint extends LocationInfo {
+        id: number;
+        isDebuggerStmt: boolean;
+        // TODO: this would be useful for step-over support
+        // prevBrkId?:number;
     }
 
     export interface CompileResult {
         outfiles: StringMap<string>;
-        diagnostics: Diagnostic[];
+        diagnostics: KsDiagnostic[];
         success: boolean;
         times: U.Map<number>;
         enums: U.Map<number>;
         ast?: Program;
+        breakpoints?: Breakpoint[];
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {
@@ -46,15 +56,58 @@ namespace ts.ks {
         return options
     }
 
+    export interface LocationInfo {
+        fileName: string;
+        start: number;
+        length: number;
+
+        //derived
+        line: number;
+        character: number;
+    }
+
+    export interface KsDiagnostic extends LocationInfo {
+        code: number;
+        category: DiagnosticCategory;
+        messageText: string | DiagnosticMessageChain;
+    }
+
+    export function nodeLocationInfo(node: ts.Node) {
+        let file = getSourceFileOfNode(node)
+        const { line, character } = ts.getLineAndCharacterOfPosition(file, node.pos);
+        let r: LocationInfo = {
+            start: node.pos,
+            length: node.end - node.pos,
+            line: line,
+            character: character,
+            fileName: file.fileName,
+        }
+        return r
+    }
+    
+    export interface FunctionLocationInfo extends LocationInfo {
+        functionName: string;
+    }
+
     export function patchUpDiagnostics(diags: Diagnostic[]) {
         let highPri = diags.filter(d => d.code == 1148)
         if (highPri.length > 0)
             diags = highPri;
         return diags.map(d => {
-            d = Util.flatClone(d)
-            if (d.code == 1148)
-                d.messageText = Util.lf("all symbols in top-level scope are always exported; please use a namespace if you want to export only some")
-            return d
+            const { line, character } = ts.getLineAndCharacterOfPosition(d.file, d.start);
+            let r: KsDiagnostic = {
+                code: d.code,
+                start: d.start,
+                length: d.length,
+                line: line,
+                character: character,
+                messageText: d.messageText,
+                category: d.category,
+                fileName: d.file.fileName,
+            }
+            if (r.code == 1148)
+                r.messageText = Util.lf("all symbols in top-level scope are always exported; please use a namespace if you want to export only some")
+            return r
         })
     }
 
@@ -99,20 +152,20 @@ namespace ts.ks {
 
         if (!opts.sourceFiles)
             opts.sourceFiles = Object.keys(opts.fileSystem)
-        
+
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
         let program = createProgram(tsFiles, options, host);
 
         // First get and report any syntactic errors.
-        res.diagnostics = program.getSyntacticDiagnostics();
+        res.diagnostics = patchUpDiagnostics(program.getSyntacticDiagnostics());
         if (res.diagnostics.length > 0) return res;
 
         // If we didn't have any syntactic errors, then also try getting the global and
         // semantic errors.
-        res.diagnostics = program.getOptionsDiagnostics().concat(program.getGlobalDiagnostics());
+        res.diagnostics = patchUpDiagnostics(program.getOptionsDiagnostics().concat(program.getGlobalDiagnostics()));
 
         if (res.diagnostics.length == 0) {
-            res.diagnostics = program.getSemanticDiagnostics();
+            res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics());
         }
 
         let emitStart = Date.now()
@@ -125,10 +178,8 @@ namespace ts.ks {
         if (opts.ast || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, host, opts, res);
             res.times["compilebinary"] = Date.now() - emitStart
-            res.diagnostics = binOutput.diagnostics
+            res.diagnostics = patchUpDiagnostics(binOutput.diagnostics)
         }
-
-        res.diagnostics = patchUpDiagnostics(res.diagnostics)
 
         if (res.diagnostics.length == 0)
             res.success = true

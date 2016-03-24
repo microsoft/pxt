@@ -52,6 +52,8 @@ ${getFunctionLabel(proc.action)}:
                 case ir.SK.Label:
                     write(s.lblName + ":")
                     break;
+                case ir.SK.Breakpoint:
+                    break;
                 default: oops();
             }
         }

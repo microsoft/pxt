@@ -57,11 +57,19 @@ namespace ks.rt {
             switch (type || '') {
                 case 'run': run(<SimulatorRunMessage>data);break;
                 case 'stop': stop(); break;
+                case 'debugger': 
+                    if (runtime) {
+                        runtime.handleDebuggerMsg(data as DebuggerMessage); 
+                    }
+                    break;
                 default: queue(data); break;
             }
         }
+        
+        // TODO remove this; this should be using Runtime.runtime which gets
+        // set correctly depending on which runtime is currently running
+        var runtime : ks.rt.Runtime;
                 
-        var runtime : ks.rt.Runtime;        
         export function stop() {
             if (runtime) {
                 console.log('stopping simulator...')

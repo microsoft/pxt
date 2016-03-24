@@ -251,7 +251,6 @@ class FileList extends data.Component<ISettingsProps, {}> {
     }
 }
 
-
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
@@ -375,6 +374,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
+        simulator.init($("#mbitboardview")[0], {
+          startDebug: () => this.runSimulator({ debug: true }),
+          highlightStatement: stmt => {
+              if (this.editor) this.editor.highlightStatement(stmt)
+          } 
+        })
         this.forceUpdate(); // we now have editors prepared
     }
 
@@ -605,7 +610,7 @@ Ctrl+Shift+B
     compile() {
         console.log('compiling...')
         let state = this.editor.snapshotState()
-        compiler.compileAsync(true)
+        compiler.compileAsync({native: true})
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
@@ -622,26 +627,23 @@ Ctrl+Shift+B
     }
 
     stopSimulator(unload = false) {
-        simulator.Simulator.stop(unload)
+        simulator.stop(unload)
 
         this.setState({ running: false })
     }
 
-    runSimulator() {
+    runSimulator(opts:compiler.CompileOptions = {}) {
         this.stopSimulator();
 
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         let state = this.editor.snapshotState()
-        compiler.compileAsync()
+        compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                let js = resp.outfiles["microbit.js"]
-                if (js) {
+                if (resp.outfiles["microbit.js"]) {
                     this.setHelp(null);
-                    simulator.Simulator.run(
-                        js,
-                        resp.enums)
+                    simulator.run(resp)
                     this.setState({ running: true })
                 }
             })
@@ -737,7 +739,6 @@ Ctrl+Shift+B
                 </div>
                 <div id="filelist" className="ui items">
                     <div id="mbitboardview" className={"ui vertical " + (this.state.helpCard ? "landscape only" : "") }>
-                        <simulator.Simulator ref="simulator" />
                     </div>
                     <div className="ui landscape only">
                         <logview.LogView ref="logs" />
@@ -851,6 +852,7 @@ let myexports: any = {
     compiler,
     pkg,
     getsrc,
+    sim: simulator,
     apiAsync: core.apiAsync
 };
 (window as any).E = myexports;

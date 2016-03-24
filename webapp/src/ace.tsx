@@ -111,9 +111,10 @@ let snippets = [
     mkSnippet("function", "Define a new procedure", `function doSomething() ${block}`),
     mkSnippet("class", "Define a new object type", `class Thing ${block}`),
     mkSnippet("let", "Define a new variable", `let x = ${cursorMarker}`),
+    // TODO proper text formatting for switch missing
+    mkSnippet("switch", "Branch on a number or enum", `switch (${cursorMarker}) {\ncase 0:\nbreak\n}`),
     // for each not supported at the moment in the compiler
     //mkSnippet("for each", "Do something for all elements of an array", `for (let e of ${placeholderChar}) ${block}`),
-    // switch also not supported
 ]
 
 export class AceCompleter extends data.Component<{ parent: Editor; }, {
@@ -205,9 +206,9 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
     computeMatch(pref: string): { item: CompletionEntry; score: number; }[] {
         let cache = this.state.cache
-        
-        if (!pref) return cache.entries.map(entry => { return { item:entry, score: 0 } });
-        
+
+        if (!pref) return cache.entries.map(entry => { return { item: entry, score: 0 } });
+
         let fu = cache.fuseEntries;
         if (!fu) fu = cache.fuseEntries = new Fuse(cache.entries, {
             include: ["score", "matches"],
@@ -660,23 +661,23 @@ export class Editor extends srceditor.Editor {
             bindKey: { win: "Alt-Shift-f", mac: "Alt-Shift-f" },
             exec: () => this.formatCode()
         })
-        
+
         this.editor.commands.addCommand({
             name: "save",
-            bindKey: {win: "Ctrl-S", mac: "Command-S"},
+            bindKey: { win: "Ctrl-S", mac: "Command-S" },
             exec: () => this.parent.saveFile()
         })
-        
+
         this.editor.commands.addCommand({
             name: "runSimulator",
-            bindKey: {win: "Ctrl-Enter", mac: "Command-Enter"},
+            bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
             exec: () => this.parent.runSimulator()
         })
-        
+
         if (this.parent.appTarget.compile.hasHex) {
             this.editor.commands.addCommand({
                 name: "compileHex",
-                bindKey: {win: "Ctrl-Alt-Enter", mac: "Command-Alt-Enter"},
+                bindKey: { win: "Ctrl-Alt-Enter", mac: "Command-Alt-Enter" },
                 exec: () => this.parent.compile()
             })
         }
@@ -777,7 +778,7 @@ export class Editor extends srceditor.Editor {
 
     updateDiagnostics() {
         if (this.needsDiagUpdate())
-            this.updateDiagnosticsCore();
+            this.forceDiagnosticsUpdate();
     }
 
     private needsDiagUpdate() {
@@ -790,7 +791,15 @@ export class Editor extends srceditor.Editor {
         return false;
     }
 
-    private updateDiagnosticsCore() {
+    highlightStatement(brk: ts.ks.LocationInfo) {
+        this.forceDiagnosticsUpdate()
+        if (!brk) return
+        let sess = this.editor.getSession();
+        sess.addMarker(new Range(brk.line, brk.character, brk.line, brk.character + brk.length),
+            "ace_highlight-marker", "ts-highlight", true)
+    }
+
+    forceDiagnosticsUpdate() {
         let sess = this.editor.getSession();
         Object.keys(sess.getMarkers(true) || {}).forEach(m => sess.removeMarker(parseInt(m)))
         sess.clearAnnotations()
@@ -801,28 +810,17 @@ export class Editor extends srceditor.Editor {
         this.annotationLines = []
 
         if (file.diagnostics)
-            for (let diagnostic of file.diagnostics) {
-                const p0 = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-                const p1 = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start + diagnostic.length)
+            for (let d of file.diagnostics) {
                 ann.push({
-                    row: p0.line,
-                    column: p0.character,
-                    text: ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+                    row: d.line,
+                    column: d.character,
+                    text: ts.flattenDiagnosticMessageText(d.messageText, "\n"),
                     type: "error"
                 })
 
-                p1.line = Math.min(p1.line, p0.line + 1) // don't show errors longer than 2 lines
-
-                let outdated = false
-                for (let line = p0.line; line <= p1.line; line++) {
-                    if (lines[line] !== this.diagSnapshot[line])
-                        outdated = true
-                }
-                if (!outdated) {
-                    for (let line = p0.line; line <= p1.line; line++) {
-                        this.annotationLines.push(line)
-                    }
-                    sess.addMarker(new Range(p0.line, p0.character, p1.line, p1.character),
+                if (lines[d.line] === this.diagSnapshot[d.line]) {
+                    this.annotationLines.push(d.line)
+                    sess.addMarker(new Range(d.line, d.character, d.line, d.character + d.length),
                         "ace_error-marker", "ts-error", true)
                 }
             }
@@ -851,7 +849,7 @@ export class Editor extends srceditor.Editor {
     setDiagnostics(file: pkg.File, snapshot: string[]) {
         Util.assert(this.currFile == file)
         this.diagSnapshot = snapshot
-        this.updateDiagnosticsCore()
+        this.forceDiagnosticsUpdate()
     }
 
     setViewState(pos: AceAjax.Position) {

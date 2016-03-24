@@ -392,6 +392,10 @@ svg.ui.trend.black polyline {
     display:none !important;
 }
 
+#root .debuggerview h4 {
+    margin: 0.9em 0 0 0;
+}
+
 /* extra-large desktop screen */
 @media only screen and (min-width: 1600px) and (min-height:700px) {
     #filelist {

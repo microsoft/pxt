@@ -4,6 +4,8 @@ namespace ts.ks {
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })
+        if (bin.res.breakpoints)
+            jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
         jssource += "\nrt.setupStringLiterals(" +
             JSON.stringify(U.mapStringMap(bin.strings, (k, v) => 1), null, 1) +
             ")\n"
@@ -67,6 +69,9 @@ while (true) { switch (step) {
                 case ir.SK.Label:
                     writeRaw(`  case ${s.lblId}:`)
                     break;
+                case ir.SK.Breakpoint:
+                    emitBreakpoint(s)
+                    break;
                 default: oops();
             }
         }
@@ -75,14 +80,29 @@ while (true) { switch (step) {
 
         writeRaw(`  default: oops()`)
         writeRaw(`} } }`)
-        writeRaw(``)
+        let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
+        info.functionName = proc.getName()
+        writeRaw(`${getFunctionLabel(proc.action)}.info = ${JSON.stringify(info)}`)
 
         return resText
+
+        function emitBreakpoint(s: ir.Stmt) {
+            let lbl = ++lblIdx
+            let id = s.breakpointInfo.id
+            let cond = s.breakpointInfo.isDebuggerStmt ? "" : 
+                `if (breakAlways || breakpoints[${id}]) `
+            write(`${cond}return breakpoint(s, ${lbl}, ${id})`)
+            writeRaw(`  case ${lbl}:`)
+        }
 
         function locref(cell: ir.Cell) {
             if (cell.iscap)
                 return `s.caps[${cell.index}]`
             return "s." + cell.uniqueName()
+        }
+
+        function glbref(cell: ir.Cell) {
+            return "globals." + cell.uniqueName()
         }
 
         function emitJmp(jmp: ir.Stmt) {
@@ -127,9 +147,14 @@ while (true) { switch (step) {
                     return "s.tmp_" + idx
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
-                    if (cell.isGlobal())
-                        return `${withRef("bitvm.ldglb", cell.isRef())}(${cell.index})`
-                    return locref(cell)
+                    if (cell.isGlobal()) {
+                        if (cell.isRef())
+                            return `bitvm.incr(${glbref(cell)})`
+                        else
+                            return glbref(cell)
+                    } else {
+                        return locref(cell)
+                    }
                 default: throw oops();
             }
         }
@@ -236,10 +261,12 @@ while (true) { switch (step) {
             switch (trg.exprKind) {
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
+                    emitExpr(src)
                     if (cell.isGlobal()) {
-                        emitExpr(ir.rtcall(withRef("bitvm::stglb", cell.isRef()), [src, ir.numlit(cell.index)]))
+                        if (cell.isRef())
+                            write(`bitvm.decr(${glbref(cell)});`)
+                        write(`${glbref(cell)} = r0;`)
                     } else {
-                        emitExpr(src)
                         write(`${locref(cell)} = r0;`)
                     }
                     break;

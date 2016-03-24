@@ -29,19 +29,17 @@ export interface UserConfig {
 
 let reportDiagnostic = reportDiagnosticSimply;
 
-function reportDiagnostics(diagnostics: ts.Diagnostic[]): void {
+function reportDiagnostics(diagnostics: ts.ks.KsDiagnostic[]): void {
     for (const diagnostic of diagnostics) {
         reportDiagnostic(diagnostic);
     }
 }
 
-function reportDiagnosticSimply(diagnostic: ts.Diagnostic): void {
+function reportDiagnosticSimply(diagnostic: ts.ks.KsDiagnostic): void {
     let output = "";
 
-    if (diagnostic.file) {
-        const { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-        const relativeFileName = diagnostic.file.fileName;
-        output += `${relativeFileName}(${line + 1},${character + 1}): `;
+    if (diagnostic.fileName) {
+        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.character + 1}): `;
     }
 
     const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();

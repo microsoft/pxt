@@ -40,7 +40,7 @@ export class Editor {
         this.currSource = file.content
         this.setDiagnostics(file, this.snapshotState())
     }
-    setDiagnostics(file: pkg.File, snapshot:any): void { }
+    setDiagnostics(file: pkg.File, snapshot: any): void { }
     setViewState(view: ViewState): void { }
     acceptsFile(file: pkg.File) {
         return false
@@ -72,8 +72,11 @@ export class Editor {
     isIncomplete() {
         return false
     }
-    snapshotState():any {
+    snapshotState(): any {
         return null
     }
-    undo() {}
+    undo() { }
+
+    highlightStatement(brk: ts.ks.LocationInfo) {}
+
 }
