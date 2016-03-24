@@ -10,7 +10,6 @@ let texts = new db.Table("text")
 import U = ks.Util;
 import Cloud = ks.Cloud;
 let lf = U.lf
-let currentTarget: string;
 let allScripts: HeaderWithScript[] = [];
 
 type Header = ws.Header;
@@ -39,13 +38,12 @@ function getHeader(id: string) {
 }
 
 function initAsync(target: string) {
-    currentTarget = target;    
     // TODO getAllAsync aware of target?
     return headers.getAllAsync().then(h => {
         allScripts = h            
             .filter((hh: Header) => {
                 if (!hh.target) hh.target = "microbit"
-                return hh.target == currentTarget
+                return hh.target == ws.getCurrentTarget()
             })
             .map((hh: Header) => {
             return {
@@ -132,7 +130,7 @@ function installAsync(h0: ws.InstallHeader, text: ws.ScriptText) {
     h.id = U.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = currentTarget;
+    h.target = ws.getCurrentTarget();
     let e: HeaderWithScript = {
         id: h.id,
         header: h,
@@ -189,7 +187,7 @@ function syncOneUpAsync(h: ws.Header) {
                 recentUse: h.recentUse,
                 editor: h.editor,
                 script: scr,
-                target: currentTarget
+                target: ws.getCurrentTarget()
             }
             console.log(`sync up ${h.id}; ${body.script.length} chars`)
             h.saveId = saveId;

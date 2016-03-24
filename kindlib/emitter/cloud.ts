@@ -251,6 +251,7 @@ namespace ks.Cloud {
         screenshoturl: string;
         mergeids: string[];
         editor?: string; // convention where empty means touchdevelop, for backwards compatibility
+        target?: string;
         meta?: JsonScriptMeta; // only in lite, bag of metadata
         updateroot: string; // lite-only
         unmoderated?: boolean;

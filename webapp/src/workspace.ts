@@ -77,8 +77,15 @@ export function getHeader(id: string) {
     return null
 }
 
+var currentTarget = "";
+
+export function getCurrentTarget() {
+    return currentTarget
+}
+
 export function initAsync(target: string) {
     if (!impl) impl = cloudworkspace.provider;
+    currentTarget = target
     return impl.initAsync(target)
 }
 

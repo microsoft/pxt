@@ -571,6 +571,7 @@ Ctrl+Shift+B
             editor: prj.id,
             pubId: "",
             pubCurrent: false,
+            target: workspace.getCurrentTarget()
         }, files)
             .then(hd => {
                 this.loadHeader(hd)
