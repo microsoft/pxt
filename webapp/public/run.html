@@ -57,8 +57,8 @@ footer a {
     ksRunnerReady(function() {
             console.log('loading simulator for script ' + id)
             var sims = document.getElementById('simulators');
-            var id = /id=([^&]+)/i.exec(window.location.href); 
-            var code = /code=([^&]+)/i.exec(window.location.href);
+            var id = /id=([^&?]+)/i.exec(window.location.href); 
+            var code = /code=([^&?]+)/i.exec(window.location.href);
             var hex = !!/hex=1/i.exec(window.location.href);
             if (!id && !code) {
                 console.error("missing id or code");
