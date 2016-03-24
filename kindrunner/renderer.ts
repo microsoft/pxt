@@ -16,7 +16,7 @@ namespace ks.runner {
             $container.replaceWith($c);
             return;
         }
-        let runUrl = /localhost/.test(window.location.href) ? './run.html' : 'https://yelm.tdev.ly/microbit---run';
+        let runUrl = /localhost/.test(window.location.href) ? './run.html' : 'https://kindscript.com/microbit---run';
 
         let cdn = (window as any).appCdnRoot
         let images = cdn + "images"

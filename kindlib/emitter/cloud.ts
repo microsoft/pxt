@@ -1,7 +1,7 @@
 namespace ks.Cloud {
     import Util = ts.ks.Util;
     
-    export var apiRoot = "https://yelm.tdev.ly/api/";
+    export var apiRoot = "https://kindscript.com/api/";
     export var accessToken = "";
     export var _isOnline = true;
     export var onOffline = () => { };

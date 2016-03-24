@@ -106,6 +106,8 @@ let block = `{\n ${cursorMarker}\n}`
 let snippets = [
     mkSnippet("if", "Do something depending on condition", `if (${cursorMarker}) ${block}`),
     mkSnippet("if else", "Do something or something else depending on condition", `if (${cursorMarker}) ${block} else ${block}`),
+    mkSnippet("else", "What to do if the condition is not satisfied", `else ${block}`),
+    mkSnippet("else if", "Check the alternative condition", `else if (${cursorMarker}) ${block}`),
     mkSnippet("while", "Loop while condition is true", `while (true) {\n ${cursorMarker}\nbasic.pause(20)\n}`),
     mkSnippet("for", "Repeat a given number of times", `for (let i = 0; i < 5; i++) ${block}`),
     mkSnippet("function", "Define a new procedure", `function doSomething() ${block}`),
