@@ -5,10 +5,10 @@
 			"name": "Launch",
 			"type": "node",
 			"request": "launch",
-			"program": "built/kind.js",
+			"program": "${workspaceRoot}/built/kind.js",
 			"stopOnEntry": false,
-			"args": ["build"],
-			"cwd": "./libs/lang-test0",
+			"args": ["buildtarget"],
+			"cwd": "${workspaceRoot}/../kindscript-microbit",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
