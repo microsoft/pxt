@@ -52,9 +52,15 @@ namespace ks.runner {
                 $h.find('.active').removeClass('active')
                 $runBtn.addClass('active')
                 
-                let $embed = $(`<div class="ui 5:3 embed" data-icon="play" data-url="${runUrl}?code=${encodeURIComponent($js.text())}" data-placeholder="https://az851932.vo.msecnd.net/pub/frvgykgt/microbit.bw.svg"></div>`);
+                let $embed = $(`
+<div style='max-width:50%;margin:auto;'>
+    <div class="ui 5:3 embed active">
+        <div class="embed">
+            <iframe src="${runUrl}?code=${encodeURIComponent($js.text())}" width="100%" height="100%" frameborder="0" scrolling="no" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""></iframe>
+         </div>
+     </div>
+</div>`);
                 $c.empty().append($embed);
-                ($embed as any).embed()
             })
             $menu.append($runBtn);
         }
@@ -64,9 +70,15 @@ namespace ks.runner {
                 $h.find('.active').removeClass('active')
                 $hexBtn.addClass('active')
 
-                let $embed = $(`<div class="ui 5:3 embed" data-icon="download" data-url="${runUrl}?hex=1&code=${encodeURIComponent($js.text())}" data-placeholder="https://az851932.vo.msecnd.net/pub/frvgykgt/microbit.bw.svg"></div>`);
+                let $embed = $(`
+<div style='max-width:50%;margin:auto;'>
+    <div class="ui 5:3 embed active">
+        <div class="embed">
+            <iframe src="${runUrl}?hex=1&code=${encodeURIComponent($js.text())}" width="100%" height="100%" frameborder="0" scrolling="no" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""></iframe>
+         </div>
+     </div>
+</div>`);
                 $c.empty().append($embed);
-                ($embed as any).embed()
             })
             $menu.append($hexBtn);            
         }
