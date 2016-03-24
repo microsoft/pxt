@@ -16,6 +16,7 @@ namespace ks.runner {
             $container.replaceWith($c);
             return;
         }
+        let runUrl = /localhost/.test(window.location.href) ? './run.html' : 'https://yelm.tdev.ly/microbit---run';
 
         let cdn = (window as any).appCdnRoot
         let images = cdn + "images"
@@ -51,7 +52,7 @@ namespace ks.runner {
                 $h.find('.active').removeClass('active')
                 $runBtn.addClass('active')
                 
-                let $embed = $(`<div class="ui 5:3 embed" data-icon="play" data-url="https://yelm.tdev.ly/microbit-latest---run?code=${encodeURIComponent($js.text())}" data-placeholder="${images}/microbit.bw.svg"></div>`);
+                let $embed = $(`<div class="ui 5:3 embed" data-icon="play" data-url="${runUrl}?code=${encodeURIComponent($js.text())}" data-placeholder="${images}/microbit.bw.svg"></div>`);
                 $c.empty().append($embed);
                 ($embed as any).embed()
             })
@@ -63,7 +64,7 @@ namespace ks.runner {
                 $h.find('.active').removeClass('active')
                 $hexBtn.addClass('active')
 
-                let $embed = $(`<div class="ui 5:3 embed" data-icon="download" data-url="https://yelm.tdev.ly/microbit-latest---run?hex=1&code=${encodeURIComponent($js.text())}" data-placeholder="${images}/microbit.bw.svg"></div>`);
+                let $embed = $(`<div class="ui 5:3 embed" data-icon="download" data-url="${runUrl}?hex=1&code=${encodeURIComponent($js.text())}" data-placeholder="${images}/microbit.bw.svg"></div>`);
                 $c.empty().append($embed);
                 ($embed as any).embed()
             })

@@ -1,9 +1,10 @@
 namespace ks {
     export module BrowserUtils {
-        export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError? : (err:any) => void) {
+        export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError? : (err:any) => void) : string {
             console.log('trigger download')
             let buf = Util.stringToUint8Array(Util.toUTF8(text))
             let uri = browserDownloadUInt8Array(buf, name, contentType, onError);
+            return uri;
         }
 
         function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", onError? : (err:any) => void): string {
