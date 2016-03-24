@@ -81,9 +81,8 @@
             ,"let roll = 0; if (roll==5) { basic.showNumber(0) } else if (roll==4) { basic.showNumber(1) }"       
             ,"let count = 0; while (count < 10) { basic.pause(100); basic.showNumber(count) }"     
             ,"Math.abs(1)"
-            ,"Math.random(4)"
-            // TODO
-            //,"input.onShake(() => { basic.clearScreen(); })"
+            ,"Math.random(4)"            
+            ,"input.onGesture(Gestures.Shake, () => { basic.clearScreen(); })"
            ];
         function next() {
             var p = ps.pop();
@@ -113,12 +112,22 @@
             ks.runner.renderAsync({
                 snippetClass: 'lang-blocks',
                 signatureClass: 'lang-sig',
-                blocksClass:'lang-block'
+                blocksClass:'lang-block',
+                simulator: true
             }).done(function() {
                 next()                
             });                        
         })
     </script>
+    <pre class='lang-sig'>
+images.createImage(`
+. . # . .
+. # # # .
+# # # # #
+. # # # .
+. . # . .
+`)
+</pre>        
     <pre class='lang-blocks'>
         basic.showString("hello")
     </pre>
