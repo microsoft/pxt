@@ -224,8 +224,9 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
                     .concat(allFiles("sim/public")),
                 fileContent: {}
             }
-            for (let fn of ["webapp/public/index.html", "built/web/worker.js", "webapp/public/embed.js"]) {
+            for (let fn of ["webapp/public/index.html", "built/web/worker.js", "webapp/public/embed.js", "webapp/public/run.html"]) {
                 let idx = fs.readFileSync("node_modules/kindscript/" + fn, "utf8")
+                idx = idx.replace('"./embed.js"', '"embed.js"')
                 idx = idx.replace(/"\.\//g, "\"" + r.cdnUrl)
                 // revert change to simCdnRoot
                 idx = idx.replace(/var simCdnRoot =.*/, "var simCdnRoot = \"./\";\n")
