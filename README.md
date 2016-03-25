@@ -78,6 +78,9 @@ of build tree (where this file sits) and then browse to http://localhost:3232
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload
 * [ ] in simulator currResume start loop() in nextTick
+* [ ] in JS emitter - limit stack height
+* [ ] in JS emitter - generate pause every 1000 loop iterations or so
+* [ ] `>=` in formatter becomes `> =`
 
 * [x] enum support without enumval= (esp for non-hex targets)
 * [x] switch() statement support
