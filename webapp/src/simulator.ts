@@ -15,10 +15,6 @@ var config: SimulatorConfig;
 var lastCompileResult: ts.ks.CompileResult;
 
 var $debugger: JQuery;
-var $start: JQuery;
-var $stepOver: JQuery;
-var $stepInto: JQuery;
-var $resume: JQuery;
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
     $(root).html(
@@ -64,6 +60,7 @@ export function run(res: ts.ks.CompileResult) {
 
 export function stop(unload?: boolean) {
     driver.stop(unload);
+    $debugger.empty();
 }
 
 function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
@@ -74,15 +71,18 @@ function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
         if (name) b.append(Util.htmlEscape(name));
         return b.click(click)
     }
-    $stepOver = btn("right arrow", lf("Step over"), lf("Step over next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepOver));
-    $stepInto = btn("down arrow", lf("Step into"), lf("Step into next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepInto));
-    $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Resume));
 
     $debugger.empty();
     if (driver.state == ks.rt.SimulatorState.Paused) {
+        let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Resume));
+        let $stepOver = btn("right arrow", lf("Step over"), lf("Step over next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepOver));
+        let $stepInto = btn("down arrow", lf("Step into"), lf("Step into next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepInto));
         $debugger.append($resume).append($stepOver)
         if (advanced)
             $debugger.append($stepInto);
+    } else if (driver.state == ks.rt.SimulatorState.Running) {
+        let $pause = btn("pause", lf("Pause"), lf("Pause execution on the next instruction"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Pause));
+        $debugger.append($pause);        
     }
 
     if (!brk || !advanced) return

@@ -1,23 +1,24 @@
 namespace ks.rt {
     export interface SimulatorDriverOptions {
-        onDebuggerBreakpoint?: (brk : DebuggerBreakpointMessage) => void;
+        onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
     }
-    
+
     export enum SimulatorState {
         Unloaded,
         Stopped,
         Running,
         Paused
     }
-    
+
     export enum SimulatorDebuggerCommand {
         StepInto,
         StepOver,
-        Resume
+        Resume,
+        Pause
     }
-    
+
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
         private nextFrameId = 0;
@@ -26,15 +27,15 @@ namespace ks.rt {
         private listener: (ev: MessageEvent) => void;
         public state = SimulatorState.Unloaded;
 
-        constructor(public container: HTMLElement, public options : SimulatorDriverOptions = {}) {
+        constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
         }
-        
+
         public setThemes(themes: string[]) {
             U.assert(themes && themes.length > 0)
             this.themes = themes;
         }
-        
-        private setState(state : SimulatorState) {
+
+        private setState(state: SimulatorState) {
             if (this.state != state) {
                 console.log(`simulator: ${this.state} -> ${state}`);
                 this.state = state;
@@ -46,8 +47,8 @@ namespace ks.rt {
         private postMessage(msg: ks.rt.SimulatorMessage, source?: Window) {
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
-            if (source 
-                && (msg.type === 'eventbus' || msg.type == 'radiopacket') 
+            if (source
+                && (msg.type === 'eventbus' || msg.type == 'radiopacket')
                 && frames.length < 2) {
                 let frame = this.createFrame()
                 this.container.appendChild(frame);
@@ -107,7 +108,7 @@ namespace ks.rt {
                 // delay started
             } else
                 this.startFrame(frame);
-                  
+
             this.setState(SimulatorState.Running);
         }
 
@@ -154,24 +155,31 @@ namespace ks.rt {
             }
             window.addEventListener('message', this.listener, false);
         }
-               
+
         public resume(c: SimulatorDebuggerCommand) {
-            let msg:string;
-            switch(c) {
-                case SimulatorDebuggerCommand.Resume: msg = 'resume';break;
-                case SimulatorDebuggerCommand.StepInto: msg = 'stepinto';break;
-                case SimulatorDebuggerCommand.StepOver: msg = 'stepover';break;
+            let msg: string;
+            switch (c) {
+                case SimulatorDebuggerCommand.Resume:
+                    msg = 'resume';
+                    this.setState(SimulatorState.Running);
+                    break;
+                case SimulatorDebuggerCommand.StepInto: 
+                    msg = 'stepinto'; 
+                    this.setState(SimulatorState.Running);
+                    break;
+                case SimulatorDebuggerCommand.StepOver: 
+                    msg = 'stepover'; 
+                    this.setState(SimulatorState.Running);
+                    break;
+                case SimulatorDebuggerCommand.Pause: 
+                    msg = 'pause'; 
+                    break;
                 default:
                     console.log('unknown command')
                     return;
             }
-            
-            if (this.state == SimulatorState.Paused) {
-                this.setState(SimulatorState.Running);
-                this.postDebuggerMessage(msg)
-            } else {
-                console.error("debugger: trying to resume from state " + this.state)
-            }
+
+            this.postDebuggerMessage(msg)
         }
 
         private handleDebuggerMessage(msg: ks.rt.DebuggerMessage) {
