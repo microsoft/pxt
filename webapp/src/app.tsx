@@ -30,7 +30,7 @@ declare module Raygun {
     }
     function send(err: any, data: any): void;
     function setVersion(v: string): void;
-    function saveIfOffline(b : boolean) : void;
+    function saveIfOffline(b: boolean): void;
 }
 
 export interface FileHistoryEntry {
@@ -375,10 +375,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#mbitboardview")[0], {
-          startDebug: () => this.runSimulator({ debug: true }),
-          highlightStatement: stmt => {
-              if (this.editor) this.editor.highlightStatement(stmt)
-          } 
+            startDebug: () => this.runSimulator({ debug: true }),
+            highlightStatement: stmt => {
+                if (this.editor) this.editor.highlightStatement(stmt)
+            }
         })
         this.forceUpdate(); // we now have editors prepared
     }
@@ -610,7 +610,7 @@ Ctrl+Shift+B
     compile() {
         console.log('compiling...')
         let state = this.editor.snapshotState()
-        compiler.compileAsync({native: true})
+        compiler.compileAsync({ native: true })
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
@@ -632,7 +632,7 @@ Ctrl+Shift+B
         this.setState({ running: false })
     }
 
-    runSimulator(opts:compiler.CompileOptions = {}) {
+    runSimulator(opts: compiler.CompileOptions = {}) {
         this.stopSimulator();
 
         let logs = this.refs["logs"] as logview.LogView;
@@ -732,8 +732,11 @@ Ctrl+Shift+B
                         </div>
                         { this.appTarget.cloud || targetTheme.rightLogo ?
                             <div className="ui item right">
-                                { this.appTarget.cloud ? <LoginBox /> : "" }
-                                { targetTheme.rightLogo ? <a id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a> : "" }
+                                <div>
+                                    { this.appTarget.cloud ? <CloudSyncButton parent={this} /> : '' }
+                                    { this.appTarget.cloud ? <LoginBox /> : "" }
+                                    { targetTheme.rightLogo ? <a id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a> : "" }
+                                </div>
                             </div> : "" }
                     </div>
                 </div>
@@ -750,7 +753,6 @@ Ctrl+Shift+B
                             this.setState({ showFiles: !this.state.showFiles });
                             this.saveSettings();
                         } } />
-                        { this.appTarget.cloud ? <CloudSyncButton parent={this} /> : '' }
                     </div>
                     <FileList parent={this} />
                 </div>
@@ -815,7 +817,7 @@ function enableCrashReporting(releaseid: string) {
             ignoreAjaxAbort: true,
             ignoreAjaxError: true,
             ignore3rdPartyErrors: true
-        //    excludedHostnames: ['localhost'],
+            //    excludedHostnames: ['localhost'],
         }).attach();
         Raygun.setVersion(releaseid);
         Raygun.saveIfOffline(true);

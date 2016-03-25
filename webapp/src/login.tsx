@@ -92,18 +92,16 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
         }
 
         return (
-            <div id='loginbox'>
-                <div className="ui buttons">
-                    <sui.Button textClass="ui landscape only" text={name} icon={icon} onClick={buttonAction} />
-                    <sui.DropdownMenu class='floating icon button' icon='dropdown'>
-                        {!Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signin() } icon='sign in' text={lf("Sign in") } /> : null}
-                        {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signout() } icon='sign out' text={lf("Sign out") } /> : null}
-                        {isOffline ?
-                            <sui.Item icon='plane' text={lf("Go online") } onClick={goOnline} />
-                            : <sui.Item onClick={() => data.setOnline(false) } icon='plane' text={lf("Go offline") } /> }                        
-                        <sui.Item onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate KindScript!") } />
-                    </sui.DropdownMenu>
-                </div>
+            <div id='loginbox' className="ui buttons">
+                <sui.Button textClass="ui landscape only" text={name} icon={icon} onClick={buttonAction} />
+                <sui.DropdownMenu class='floating icon button' icon='dropdown'>
+                    {!Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signin() } icon='sign in' text={lf("Sign in") } /> : null}
+                    {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signout() } icon='sign out' text={lf("Sign out") } /> : null}
+                    {isOffline ?
+                        <sui.Item icon='plane' text={lf("Go online") } onClick={goOnline} />
+                        : <sui.Item onClick={() => data.setOnline(false) } icon='plane' text={lf("Go offline") } /> }
+                    <sui.Item onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate KindScript!") } />
+                </sui.DropdownMenu>
             </div>)
     }
 }
