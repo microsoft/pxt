@@ -116,6 +116,10 @@ export function apiAsync(path: string, postArguments?: string) {
 }
 
 export function ptrAsync(path: string, target?: string) {
+    // in MinGW when you say 'kind ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
+    let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
+    
+    path = path.replace(mingwRx, "/")
     path = sanitizePath(path)
 
     if (!target) {
@@ -135,6 +139,8 @@ export function ptrAsync(path: string, target?: string) {
         htmlartid: "",
         userplatform: ["kind-cli"],
     }
+    
+    target = target.replace(mingwRx, "/")
 
     return (/^[a-z]+$/.test(target) ? Cloud.privateGetAsync(target) : Promise.reject(""))
         .then(r => {
