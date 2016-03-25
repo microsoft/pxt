@@ -58,20 +58,20 @@ function resume(c: string) {
 }
 
 function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
-    function btn(icon: string, name: string, click: () => void) {
-        let b = $(`<button class="ui button green">${name}</button>`)
+    function btn(icon: string, name: string, label: string, click: () => void) {
+        let b = $(`<button class="ui button green" title='${Util.htmlEscape(label)}'>${name}</button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
         return b.click(click)
     }
 
     $('#debugger').empty()
-        .append(btn("", lf("Debug"), () => { config.startDebug() }))
+        .append(btn("", lf("Debug"), lf("Start debugging"), () => { config.startDebug() }))
 
     if (isPaused)
         $('#debugger')
-            .append(btn("right arrow", "", () => resume("stepover")))
-            .append(btn("down arrow", "", () => resume("stepinto")))
-            .append(btn("play", "", () => resume("resume")))
+            .append(btn("right arrow", "", lf("Step over next function call"), () => resume("stepover")))
+            .append(btn("down arrow", "", lf("Step into next function call"), () => resume("stepinto")))
+            .append(btn("play", "", lf("Resume execution"), () => resume("resume")))
 
     if (!brk) return
 
