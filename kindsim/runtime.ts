@@ -41,6 +41,8 @@ namespace ks.rt {
     export interface StackFrame {
         fn: LabelFn;
         pc: number;
+        depth: number;
+        r0?: any;
         parent: StackFrame;
         retval?: any;
         lambdaArgs?: any[];
@@ -212,6 +214,8 @@ namespace ks.rt {
             U.assert(!!initCurrentRuntime);
 
             this.enums = enums;
+            var yieldMaxSteps = 100
+
             // These variables are used by the generated code as well
             // ---
             var entryPoint: LabelFn;
@@ -219,15 +223,36 @@ namespace ks.rt {
             var breakpoints: Uint8Array = null
             var breakAlways = false
             var globals = this.globals
+            var yieldSteps = yieldMaxSteps
             // ---
 
             var currResume: ResumeFn;
             var dbgResume: ResumeFn;
             var breakFrame: StackFrame = null // for step-over
+            var lastYield = Date.now()
             var _this = this
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
+            }
+
+            function maybeYield(s: StackFrame, pc: number, r0:any): boolean {
+                yieldSteps = yieldMaxSteps;
+                let now = Date.now()
+                if (now - lastYield >= 20) {
+                    lastYield = now
+                    s.pc = pc;
+                    s.r0 = r0;
+                    let cont = () => {
+                        if (_this.dead) return;
+                        U.assert(s.pc == pc);
+                        return loop(s)
+                    }
+                    //U.nextTick(cont)
+                    setTimeout(cont, 5)
+                    return true
+                }
+                return false
             }
 
             function setupDebugger(numBreakpoints: number) {
@@ -242,16 +267,12 @@ namespace ks.rt {
                 }
                 return false
             }
-
-            function breakpoint(s: StackFrame, retPC: number, brkId: number): StackFrame {
+            
+            function breakpoint(s: StackFrame, retPC: number, brkId: number, r0: any): StackFrame {
                 U.assert(!dbgResume)
 
                 s.pc = retPC;
-
-                // check for step-over
-                if (!breakpoints[brkId] && !isBreakFrame(s)) {
-                    return s; // cancel breakpoint
-                }
+                s.r0 = r0;
 
                 Runtime.postMessage(getBreakpointMsg(s, brkId))
                 dbgResume = (m: DebuggerMessage) => {
@@ -277,6 +298,7 @@ namespace ks.rt {
 
                     return loop(s)
                 }
+                
                 return null;
             }
 
@@ -321,6 +343,10 @@ namespace ks.rt {
             function actionCall(s: StackFrame, cb?: ResumeFn): StackFrame {
                 if (cb)
                     s.finalCallback = cb;
+                s.depth = s.parent.depth + 1
+                if (s.depth > 1000) {
+                    U.userError("Stack overflow")
+                }
                 s.pc = 0
                 return s;
             }
@@ -342,6 +368,7 @@ namespace ks.rt {
                 let frame: StackFrame = {
                     parent: null,
                     pc: 0,
+                    depth: 0,
                     fn: () => {
                         if (cb) cb(frame.retval)
                         return null
@@ -359,6 +386,7 @@ namespace ks.rt {
                 let frame: StackFrame = {
                     parent: topFrame,
                     fn: fn,
+                    depth: 0,
                     pc: 0
                 }
                 loop(actionCall(frame))
@@ -383,6 +411,7 @@ namespace ks.rt {
                             lambdaArgs: [w.a0, w.a1],
                             pc: 0,
                             caps: w.caps,
+                            depth: s.depth + 1,
                             finalCallback: w.cb,
                         }
                         return loop(actionCall(frame))

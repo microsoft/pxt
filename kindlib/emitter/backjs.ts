@@ -20,9 +20,11 @@ namespace ts.ks {
 
         writeRaw(`
 var ${getFunctionLabel(proc.action)} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
-var r0, step = s.pc;
+var r0 = s.r0, step = s.pc;
 s.pc = -1;
-while (true) { switch (step) {
+while (true) { 
+if (yieldSteps-- < 0 && maybeYield(s, step, r0)) return null;
+switch (step) {
   case 0:
 `)
 
@@ -89,9 +91,11 @@ while (true) { switch (step) {
         function emitBreakpoint(s: ir.Stmt) {
             let lbl = ++lblIdx
             let id = s.breakpointInfo.id
-            let cond = s.breakpointInfo.isDebuggerStmt ? "" : 
-                `if (breakAlways || breakpoints[${id}]) `
-            write(`${cond}return breakpoint(s, ${lbl}, ${id})`)
+            let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
+            if (s.breakpointInfo.isDebuggerStmt)
+                write(brkCall)
+            else
+                write(`if ((breakAlways && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
             writeRaw(`  case ${lbl}:`)
         }
 

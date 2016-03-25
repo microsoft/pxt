@@ -13,6 +13,12 @@ function foo() {
     } else if (y > 0) {
         basic.showString("hello",
             120)
+    } else if (y >= 0) {
+
+    } else if (y <= 0) {
+
+    } else {
+
     }
 
     while (x > 10) {

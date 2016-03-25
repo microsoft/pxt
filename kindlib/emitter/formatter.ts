@@ -191,6 +191,10 @@ namespace ts.ks {
                     kind = tmp;
             }
 
+            if (kind == SK.GreaterThanToken) {
+                kind = scanner.reScanGreaterToken()
+            }
+
             let tok: Token = {
                 kind: getTokKind(kind),
                 synKind: kind,
