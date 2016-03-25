@@ -215,7 +215,7 @@ namespace ks.runner {
 
     export function decompileToBlocksAsync(code: string): Promise<DecompileResult> {
         return loadPackageAsync(null)
-            .then(() => getCompileOptionsAsync(false))
+            .then(() => getCompileOptionsAsync(appTarget.compile.hasHex))
             .then(opts => {
                 // compile
                 opts.fileSystem["main.ts"] = code

@@ -9,7 +9,7 @@ namespace ks.runner {
         hex?: boolean;
     }
 
-    function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run : boolean, compile : boolean) {
+    function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
         if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
             $c.append($js);
@@ -65,20 +65,9 @@ namespace ks.runner {
             $menu.append($runBtn);
         }
         
-        if (compile) {
-            let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {
-                $h.find('.active').removeClass('active')
-                $hexBtn.addClass('active')
-
-                let $embed = $(`
-<div style='max-width:50%;margin:auto;'>
-    <div class="ui 5:3 embed active">
-        <div class="embed">
-            <iframe src="${runUrl}?hex=1&code=${encodeURIComponent($js.text())}" width="100%" height="100%" frameborder="0" scrolling="no" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""></iframe>
-         </div>
-     </div>
-</div>`);
-                $c.empty().append($embed);
+        if (hexname && hex) {
+            let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {                
+                BrowserUtils.browserDownloadText(hex, hexname, "application/x-microbit-hex");
             })
             $menu.append($hexBtn);            
         }
@@ -107,13 +96,20 @@ namespace ks.runner {
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
-
+        
+        let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
             let js = $('<code/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             let compiled = r.compileJS && r.compileJS.success;
-            fillWithWidget(c, js, s, options.simulator &&compiled, options.hex && compiled);
+            let hex = options.hex && compiled && r.compileJS.outfiles["microbit.hex"] 
+                ? r.compileJS.outfiles["microbit.hex"] : undefined;
+            let hexname = `${appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
+            fillWithWidget(c, js, s, 
+                options.simulator && compiled, 
+                hexname, 
+                hex);            
         }).then(() => renderNextSnippetAsync(options.signatureClass, (c, r) => {
             let cjs = r.compileJS;
             if (!cjs) return;
@@ -133,7 +129,7 @@ namespace ks.runner {
                 sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
                 let js = $('<code/>').text(sig)
                 if (options.snippetReplaceParent) c = c.parent();
-                fillWithWidget(c, js, s, false, false);
+                fillWithWidget(c, js, s, false);
             }
         })).then(() => renderNextSnippetAsync(options.blocksClass, (c, r) => {
             let s = r.blocksSvg;
