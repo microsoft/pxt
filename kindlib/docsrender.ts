@@ -4,7 +4,7 @@
 namespace ks.docs {
     declare var require: any;
     var marked: MarkedStatic;
-
+    import U = ts.ks.Util;
 
     var stdboxes: U.Map<string> = {
     }
