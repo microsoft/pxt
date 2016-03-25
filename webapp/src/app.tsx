@@ -885,6 +885,10 @@ $(document).ready(() => {
 
     enableCrashReporting(version)
 
+    let hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
+    if (hm)
+        Cloud.apiRoot = hm[1] + "/api/"
+
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
 
