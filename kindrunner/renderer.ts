@@ -7,6 +7,7 @@ namespace ks.runner {
         snippetReplaceParent?: boolean;
         simulator?: boolean;
         hex?: boolean;
+        hexName?: string;
     }
 
     function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
