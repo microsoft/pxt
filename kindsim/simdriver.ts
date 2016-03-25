@@ -1,17 +1,54 @@
 namespace ks.rt {
+    export interface SimulatorDriverOptions {
+        onDebuggerBreakpoint?: (brk : DebuggerBreakpointMessage) => void;
+        onDebuggerResume?: () => void;
+        onStateChanged?: (state: SimulatorState) => void;
+    }
+    
+    export enum SimulatorState {
+        Unloaded,
+        Stopped,
+        Running,
+        Paused
+    }
+    
+    export enum SimulatorDebuggerCommand {
+        StepInto,
+        StepOver,
+        Resume
+    }
+    
     export class SimulatorDriver {
+        private themes = ["blue", "red", "green", "yellow"];
+        private nextFrameId = 0;
         private frameCounter = 0;
         private currentRuntime: ks.rt.SimulatorRunMessage;
-        private listener : (ev : MessageEvent) => void;
+        private listener: (ev: MessageEvent) => void;
+        public state = SimulatorState.Unloaded;
 
-        constructor(public container: HTMLElement) {
-
+        constructor(public container: HTMLElement, public options : SimulatorDriverOptions = {}) {
+        }
+        
+        public setThemes(themes: string[]) {
+            U.assert(themes && themes.length > 0)
+            this.themes = themes;
+        }
+        
+        private setState(state : SimulatorState) {
+            if (this.state != state) {
+                console.log(`simulator: ${this.state} -> ${state}`);
+                this.state = state;
+                if (this.options.onStateChanged)
+                    this.options.onStateChanged(this.state);
+            }
         }
 
         private postMessage(msg: ks.rt.SimulatorMessage, source?: Window) {
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
-            if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket') && frames.length < 2) {
+            if (source 
+                && (msg.type === 'eventbus' || msg.type == 'radiopacket') 
+                && frames.length < 2) {
                 let frame = this.createFrame()
                 this.container.appendChild(frame);
                 frames = this.container.getElementsByTagName("iframe");
@@ -19,7 +56,7 @@ namespace ks.rt {
 
             for (let i = 0; i < frames.length; ++i) {
                 let frame = frames[i] as HTMLIFrameElement
-                if (source && frame.contentWindow == source) return;
+                if (source && frame.contentWindow == source) continue;
 
                 frame.contentWindow.postMessage(msg, "*");
             }
@@ -39,16 +76,18 @@ namespace ks.rt {
 
         public stop(unload = false) {
             this.postMessage({ type: 'stop' });
+            this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
         }
-        
+
         private unload() {
             this.container.innerHTML = '';
+            this.setState(SimulatorState.Unloaded);
         }
-        
+
         public run(js: string, enums: any) {
             this.addEventListeners();
-            
+
             // store information
             this.currentRuntime = {
                 type: 'run',
@@ -57,7 +96,7 @@ namespace ks.rt {
             }
 
             // drop extras frames
-            while(this.container.childElementCount > 1)
+            while (this.container.childElementCount > 1)
                 this.container.removeChild(this.container.lastElementChild);
             // first frame            
             let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
@@ -68,6 +107,8 @@ namespace ks.rt {
                 // delay started
             } else
                 this.startFrame(frame);
+                  
+            this.setState(SimulatorState.Running);
         }
 
         private startFrame(frame: HTMLIFrameElement) {
@@ -76,12 +117,14 @@ namespace ks.rt {
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
             msg.frameCounter = ++this.frameCounter;
             msg.options = {
+                theme: this.themes[this.nextFrameId++ % this.themes.length],
                 player: mc
             };
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.contentWindow.postMessage(msg, "*");
+            frame.classList.remove("grayscale");
         }
-        
+
         private removeEventListeners() {
             if (this.listener) {
                 window.removeEventListener('message', this.listener, false);
@@ -99,6 +142,7 @@ namespace ks.rt {
                         if (frame) this.startFrame(frame);
                         break;
                     case 'serial': break; //handled elsewhere
+                    case 'debugger': this.handleDebuggerMessage(msg); break;
                     default:
                         if (msg.type == 'radiopacket') {
                             // assign rssi noisy?
@@ -110,9 +154,51 @@ namespace ks.rt {
             }
             window.addEventListener('message', this.listener, false);
         }
+               
+        public resume(c: SimulatorDebuggerCommand) {
+            let msg:string;
+            switch(c) {
+                case SimulatorDebuggerCommand.Resume: msg = 'resume';break;
+                case SimulatorDebuggerCommand.StepInto: msg = 'stepinto';break;
+                case SimulatorDebuggerCommand.StepOver: msg = 'stepover';break;
+                default:
+                    console.log('unknown command')
+                    return;
+            }
+            
+            if (this.state == SimulatorState.Paused) {
+                this.setState(SimulatorState.Running);
+                this.postDebuggerMessage(msg)
+            } else {
+                console.error("debugger: trying to resume from state " + this.state)
+            }
+        }
+
+        private handleDebuggerMessage(msg: ks.rt.DebuggerMessage) {
+            console.log("DBG-MSG", msg.subtype, msg)
+            switch (msg.subtype) {
+                case "breakpoint":
+                    let brk = msg as ks.rt.DebuggerBreakpointMessage
+                    if (this.state == SimulatorState.Running) {
+                        this.setState(SimulatorState.Paused);
+                        if (this.options.onDebuggerBreakpoint)
+                            this.options.onDebuggerBreakpoint(brk);
+                    } else {
+                        console.error("debugger: trying to pause from " + this.state);
+                    }
+                    break;
+            }
+        }
+
+        private postDebuggerMessage(subtype: string, data: any = {}) {
+            let msg: ks.rt.DebuggerMessage = JSON.parse(JSON.stringify(data))
+            msg.type = "debugger"
+            msg.subtype = subtype
+            this.postMessage(msg)
+        }
 
         private nextId(): string {
-            return (Math.random() + '' + Math.random()).replace(/[^\d]/, '')
+            return this.nextFrameId++ + (Math.random() + '' + Math.random()).replace(/[^\d]/, '')
         }
     }
 }
