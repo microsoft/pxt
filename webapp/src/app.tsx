@@ -376,7 +376,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#mbitboardview")[0], {
-            startDebug: () => this.runSimulator({ debug: true }),
             highlightStatement: stmt => {
                 if (this.editor) this.editor.highlightStatement(stmt)
             },
@@ -717,6 +716,10 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } /> : ""}
                                     {this.appTarget.cloud ? <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
+                                    <sui.Item icon='folder' text={lf("Show/Hide files")} onClick={() => {
+                                        this.setState({ showFiles: !this.state.showFiles });
+                                        this.saveSettings();
+                                    } } />
                                     <div className="divider"></div>
                                     <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                                 </sui.DropdownMenu>
@@ -749,12 +752,9 @@ Ctrl+Shift+B
                         <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
-                        <sui.Button key='runbtn' class='primary' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                        {this.appTarget.compile ? <sui.Button class='primary' icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
-                        <sui.Button icon='folder' onClick={() => {
-                            this.setState({ showFiles: !this.state.showFiles });
-                            this.saveSettings();
-                        } } />
+                        <sui.Button key='runbtn' class={"green"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        {!this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug")} onClick={() => this.runSimulator({debug:true}) } /> : ''}
+                        {this.appTarget.compile ? <sui.Button icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}                        
                     </div>
                     <FileList parent={this} />
                 </div>

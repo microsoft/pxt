@@ -3,7 +3,6 @@
 import U = ks.U
 
 interface SimulatorConfig {
-    startDebug(): void;
     highlightStatement(stmt: ts.ks.LocationInfo): void;
     editor: string;
 }
@@ -40,6 +39,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onDebuggerResume: function() {
             config.highlightStatement(null)
             updateDebuggerButtons()
+        },
+        onStateChanged: function(state) {
+            updateDebuggerButtons()
         }
     });
     config = cfg
@@ -65,26 +67,25 @@ export function stop(unload?: boolean) {
 }
 
 function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
+    let advanced = config.editor == 'tsprj';
     function btn(icon: string, name: string, label: string, click: () => void) {
-        let b = $(`<button class="ui button green" title="${Util.htmlEscape(label)}">${name}</button>`)
+        let b = $(`<button class="ui mini button teal" title="${Util.htmlEscape(label)}"></button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
+        if (name) b.append(Util.htmlEscape(name));
         return b.click(click)
     }
-    $start = btn("", lf("Debug"), lf("Start debugging"), () => { config.startDebug() });
-    $stepOver = btn("right arrow", "", lf("Step over next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepOver));
-    $stepInto = btn("down arrow", "", lf("Step into next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepInto));
-    $resume = btn("play", "", lf("Resume execution"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Resume));
+    $stepOver = btn("right arrow", lf("Step over"), lf("Step over next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepOver));
+    $stepInto = btn("down arrow", lf("Step into"), lf("Step into next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepInto));
+    $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Resume));
 
     $debugger.empty();
     if (driver.state == ks.rt.SimulatorState.Paused) {
         $debugger.append($resume).append($stepOver)
-        if (config.editor == 'tsprj')
+        if (advanced)
             $debugger.append($stepInto);
-    } else {
-        $debugger.append($start);
     }
 
-    if (!brk) return
+    if (!brk || !advanced) return
 
     function vars(hd: string, frame: ks.rt.Variables) {
         let frameView = $(`<div><h4>${U.htmlEscape(hd)}</h4></div>`)
