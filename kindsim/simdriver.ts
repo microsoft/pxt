@@ -25,6 +25,7 @@ namespace ks.rt {
         private frameCounter = 0;
         private currentRuntime: ks.rt.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
+        public debug = false;
         public state = SimulatorState.Unloaded;
 
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
@@ -79,7 +80,7 @@ namespace ks.rt {
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
-            
+
             let frames = this.container.getElementsByTagName("iframe");
             for (let i = 0; i < frames.length; ++i) {
                 let frame = frames[i] as HTMLIFrameElement
@@ -92,7 +93,9 @@ namespace ks.rt {
             this.setState(SimulatorState.Unloaded);
         }
 
-        public run(js: string, enums: any) {
+        public run(js: string, enums: any, debug?: boolean) {
+            this.debug = debug;
+
             this.addEventListeners();
 
             // store information
@@ -169,16 +172,16 @@ namespace ks.rt {
                     msg = 'resume';
                     this.setState(SimulatorState.Running);
                     break;
-                case SimulatorDebuggerCommand.StepInto: 
-                    msg = 'stepinto'; 
+                case SimulatorDebuggerCommand.StepInto:
+                    msg = 'stepinto';
                     this.setState(SimulatorState.Running);
                     break;
-                case SimulatorDebuggerCommand.StepOver: 
-                    msg = 'stepover'; 
+                case SimulatorDebuggerCommand.StepOver:
+                    msg = 'stepover';
                     this.setState(SimulatorState.Running);
                     break;
-                case SimulatorDebuggerCommand.Pause: 
-                    msg = 'pause'; 
+                case SimulatorDebuggerCommand.Pause:
+                    msg = 'pause';
                     break;
                 default:
                     console.log('unknown command')

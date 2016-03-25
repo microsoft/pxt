@@ -52,10 +52,10 @@ export function setState(editor: string) {
     }
 }
 
-export function run(res: ts.ks.CompileResult) {
+export function run(debug: boolean, res: ts.ks.CompileResult) {
     let js = res.outfiles["microbit.js"]
     lastCompileResult = res
-    driver.run(js, res.enums)
+    driver.run(js, res.enums, debug)
 }
 
 export function stop(unload?: boolean) {
@@ -64,7 +64,6 @@ export function stop(unload?: boolean) {
 }
 
 function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
-    let advanced = config.editor == 'tsprj';
     function btn(icon: string, name: string, label: string, click: () => void) {
         let b = $(`<button class="ui mini button teal" title="${Util.htmlEscape(label)}"></button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
@@ -73,6 +72,9 @@ function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
     }
 
     $debugger.empty();
+    if (!driver.debug) return;    
+    let advanced = config.editor == 'tsprj';
+    
     if (driver.state == ks.rt.SimulatorState.Paused) {
         let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Resume));
         let $stepOver = btn("right arrow", lf("Step over"), lf("Step over next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepOver));
