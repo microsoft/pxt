@@ -12,7 +12,6 @@ var driver: ks.rt.SimulatorDriver;
 var nextFrameId: number = 0;
 var themes = ["blue", "red", "green", "yellow"];
 var currentRuntime: ks.rt.SimulatorRunMessage;
-var isPaused = false;
 var config: SimulatorConfig;
 var lastCompileResult: ts.ks.CompileResult;
 
@@ -50,7 +49,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
 export function setState(editor: string) {
     if (config.editor != editor) {
         config.editor = editor;
-        isPaused = false
         config.highlightStatement(null)
         updateDebuggerButtons();
     }
@@ -78,7 +76,7 @@ function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
     $resume = btn("play", "", lf("Resume execution"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Resume));
 
     $debugger.empty();
-    if (isPaused) {
+    if (driver.state == ks.rt.SimulatorState.Paused) {
         $debugger.append($resume).append($stepOver)
         if (config.editor == 'tsprj')
             $debugger.append($stepInto);
