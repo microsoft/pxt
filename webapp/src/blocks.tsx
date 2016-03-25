@@ -56,7 +56,7 @@ export class Editor extends srceditor.Editor {
                     this.blockInfo = bi;
 
                     let toolbox = document.getElementById('blocklyToolboxDefinition');
-                    ks.blocks.initBlocks(this.blockInfo,this.editor, toolbox)
+                    ks.blocks.initBlocks(this.blockInfo, this.editor, toolbox)
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -85,7 +85,7 @@ export class Editor extends srceditor.Editor {
         return text;
     }
 
-    loadBlockly(s: string) : boolean {
+    loadBlockly(s: string): boolean {
         if (this.serializeBlocks() == s) {
             console.log('blocks already loaded...');
             return false;
@@ -99,7 +99,7 @@ export class Editor extends srceditor.Editor {
         } catch (e) {
             console.log(e);
         }
-        
+
         return true;
     }
 
@@ -138,17 +138,17 @@ export class Editor extends srceditor.Editor {
 
         this.isReady = true
     }
-    
+
     private pushUndo() {
         let xml = this.serializeBlocks();
         this.undos.push(xml);
     }
-    
+
     undo() {
         // drop current change
-        let xml: string; 
-        while((xml = this.undos.pop()) && !this.loadBlockly(xml));
-    }    
+        let xml: string;
+        while ((xml = this.undos.pop()) && !this.loadBlockly(xml));
+    }
 
     getId() {
         return "blocksEditor"
@@ -185,32 +185,36 @@ export class Editor extends srceditor.Editor {
 
         // clear previous warnings
         this.editor.getAllBlocks().forEach(b => b.setWarningText(null));
-        
+
         let tsfile = file.epkg.lookupFile(file.getName() + ".ts");
         if (!tsfile || !tsfile.diagnostics) return;
-        
+
         // only show errors
         let diags = tsfile.diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.forEach(diag => {
-            for (let i = 0; i < sourceMap.length; ++i) {
-                let chunk = sourceMap[i];
-                if (chunk.start <= diag.start && chunk.end >= diag.start + diag.length) {
-                    let b = this.editor.getBlockById(chunk.id)
-                    if (b) {
-                        let txt = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
-                        b.setWarningText(txt);
-                    }
-                    break;
+            let bid = ks.blocks.findBlockId(sourceMap, diag);
+            if (bid) {
+                let b = this.editor.getBlockById(bid)
+                if (b) {
+                    let txt = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+                    b.setWarningText(txt);
                 }
             }
         })
     }
 
+    highlightStatement(brk: ts.ks.LocationInfo) {
+        if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
+            return;
+        let bid = ks.blocks.findBlockId(this.compilationResult.sourceMap, brk);
+        this.editor.highlightBlock(bid);
+    }
+
     menu() {
         return (
-                <sui.Button text={lf("Show Code") } textClass="ui landscape only" icon="keyboard" onClick={() => this.parent.saveTypeScript(true) } />
+            <sui.Button text={lf("Show Code") } textClass="ui landscape only" icon="keyboard" onClick={() => this.parent.saveTypeScript(true) } />
         )
     }
 }

@@ -311,6 +311,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     componentDidUpdate() {
         this.saveSettings()
         this.editor.domUpdate();
+        simulator.setState(this.state.header ? this.state.header.editor : '')
     }
 
     private setTheme() {
@@ -378,7 +379,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             startDebug: () => this.runSimulator({ debug: true }),
             highlightStatement: stmt => {
                 if (this.editor) this.editor.highlightStatement(stmt)
-            }
+            },
+            editor: this.state.header ? this.state.header.editor : ''
         })
         this.forceUpdate(); // we now have editors prepared
     }

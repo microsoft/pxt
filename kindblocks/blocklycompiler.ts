@@ -788,9 +788,9 @@ namespace ks.blocks {
     function compileRandom(e: Environment, b: B.Block): J.JExpr {
         let expr = compileExpression(e, b.getInputTargetBlock("limit"));
         if (expr.nodeType == "numberLiteral")
-            return H.mathCall("random", [ H.mkNumberLiteral((expr as J.JNumberLiteral).value + 1)]);
+            return H.mathCall("random", [H.mkNumberLiteral((expr as J.JNumberLiteral).value + 1)]);
         else
-            return H.mathCall("random", [ H.mkSimpleCall(opToTok["+"], [expr, H.mkNumberLiteral(1)])])
+            return H.mathCall("random", [H.mkSimpleCall(opToTok["+"], [expr, H.mkNumberLiteral(1)])])
     }
 
     function defaultValueForType(t: Point): J.JExpr {
@@ -874,7 +874,7 @@ namespace ks.blocks {
         type: Point;
         usedAsForIndex: number;
         incompatibleWithFor?: boolean;
-        setInMain?:boolean;
+        setInMain?: boolean;
     }
 
     function isCompiledAsForIndex(b: Binding) {
@@ -1173,7 +1173,7 @@ namespace ks.blocks {
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b)];
-                else r = [H.mkExprStmt(H.mkExprHolder([], compileExpression(e,b)))];
+                else r = [H.mkExprStmt(H.mkExprHolder([], compileExpression(e, b)))];
                 break;
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
@@ -1285,8 +1285,8 @@ namespace ks.blocks {
             else
                 return variableIsScoped(findParent(b), name);
         };
-        
-        function isTopBlock(b: B.Block) : boolean {
+
+        function isTopBlock(b: B.Block): boolean {
             if (isHandlerRegistration(b)) return false;
             if (!b.parentBlock_) return true;
             return isTopBlock(b.parentBlock_);
@@ -1307,7 +1307,7 @@ namespace ks.blocks {
                     // index is assigned to
                     binding.incompatibleWithFor = true;
                 if (b.type == "variables_set" && isTopBlock(b))
-                    binding.setInMain = true;                    
+                    binding.setInMain = true;
             } else if (b.type == "variables_get") {
                 let x = b.getFieldValue("VAR");
                 if (lookup(e, x) == null)
@@ -1372,6 +1372,16 @@ namespace ks.blocks {
         sourceMap: SourceInterval[];
     }
 
+    export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
+        if (!loc) return undefined;
+        for (let i = 0; i < sourceMap.length; ++i) {
+            let chunk = sourceMap[i];
+            if (chunk.start <= loc.start && chunk.end >= loc.start + loc.length)
+                return chunk.id;
+        }
+        return undefined;
+    }
+
     export function compile(b: B.Workspace, blockInfo: ts.ks.BlocksInfo, options: CompileOptions): BlockCompilationResult {
         Errors.clear();
         return tdASTtoTS(compileWorkspace(b, blockInfo, options));
@@ -1381,7 +1391,7 @@ namespace ks.blocks {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
-        let variables : U.Map<string>[] = [{}];
+        let variables: U.Map<string>[] = [{}];
         let currInlineAction: J.JInlineAction = null
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
         let infixPriTable: Util.StringMap<number> = {
@@ -1476,7 +1486,7 @@ namespace ks.blocks {
             function rec(e: J.JExpr, prio: number) {
                 switch (e.nodeType) {
                     case "call":
-                        call(<J.JCall>e, prio)
+                        emitAndMap(e.id, () => call(<J.JCall>e, prio))
                         break;
                     case "numberLiteral":
                         pushOp((<J.JNumberLiteral>e).value.toString())
@@ -1595,7 +1605,7 @@ namespace ks.blocks {
             "if": (n: J.JIf) => {
                 if (n.isElseIf) write("else ")
                 write("if (")
-                emit(n.condition)
+                emitAndMap(n.id, () => emit(n.condition))
                 write(") ")
                 emitBlock(n.thenBody)
                 if (n.elseBody) {
@@ -1610,7 +1620,7 @@ namespace ks.blocks {
                 write(" = 0; ")
                 localRef(n.index.name)
                 write(" < ")
-                emit(n.bound)
+                emitAndMap(n.id, () => emit(n.bound));
                 write("; ")
                 localRef(n.index.name)
                 write("++) ")
@@ -1619,7 +1629,7 @@ namespace ks.blocks {
 
             "while": (n: J.JWhile) => {
                 write("while (")
-                emit(n.condition)
+                emitAndMap(n.id, () => emit(n.condition))
                 write(") ")
                 emitBlock(n.body)
             },
@@ -1661,17 +1671,17 @@ namespace ks.blocks {
             output += s.replace(/\n/g, "\n" + indent)
         }
 
-        
+
         function block(f: () => void) {
-            let vars = U.clone<U.Map<string>>(variables[variables.length-1] || {});
+            let vars = U.clone<U.Map<string>>(variables[variables.length - 1] || {});
             variables.push(vars);
-            
+
             indent += "    "
             write("{\n")
             f()
             indent = indent.slice(4)
             write("\n}\n")
-            
+
             variables.pop();
         }
     }

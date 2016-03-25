@@ -5,6 +5,7 @@ import U = ks.U
 interface SimulatorConfig {
     startDebug(): void;
     highlightStatement(stmt: ts.ks.LocationInfo): void;
+    editor: string;
 }
 
 var nextFrameId: number = 0;
@@ -14,17 +15,15 @@ var isPaused = false;
 var config: SimulatorConfig;
 var lastCompileResult: ts.ks.CompileResult;
 
+var $debugger: JQuery;
+var $start: JQuery;
+var $stepOver: JQuery;
+var $stepInto: JQuery;
+var $resume: JQuery;
+
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
     config = cfg
-    $(root).html(
-        `
-        <div id="simulators" class='simulator'>
-        </div>
-        <div id="debugger" class="ui item landscape only">
-        </div>
-        `
-    )
-
+    initDebuggerButtons(root);
     updateDebuggerButtons();
 
     window.addEventListener('message', (ev: MessageEvent) => {
@@ -49,7 +48,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
 
 }
 
-
 function resume(c: string) {
     isPaused = false
     config.highlightStatement(null)
@@ -57,21 +55,46 @@ function resume(c: string) {
     postDebuggerMessage(c)
 }
 
+export function setState(editor: string) {
+    if (config.editor != editor) {
+        config.editor = editor;
+        isPaused = false
+        config.highlightStatement(null)
+        updateDebuggerButtons();
+    }
+}
+
+function initDebuggerButtons(root: HTMLElement) {
+    $(root).html(
+        `
+        <div id="simulators" class='simulator'>
+        </div>
+        <div id="debugger" class="ui item landscape only">
+        </div>
+        `
+    )
+    $debugger = $('#debugger')
+}
+
 function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
-        let b = $(`<button class="ui button green" title='${Util.htmlEscape(label)}'>${name}</button>`)
+        let b = $(`<button class="ui button green" title="${Util.htmlEscape(label)}">${name}</button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
         return b.click(click)
     }
+    $start = btn("", lf("Debug"), lf("Start debugging"), () => { config.startDebug() });
+    $stepOver = btn("right arrow", "", lf("Step over next function call"), () => resume("stepover"));
+    $stepInto = btn("down arrow", "", lf("Step into next function call"), () => resume("stepinto"));
+    $resume = btn("play", "", lf("Resume execution"), () => resume("resume"));
 
-    $('#debugger').empty()
-        .append(btn("", lf("Debug"), lf("Start debugging"), () => { config.startDebug() }))
-
-    if (isPaused)
-        $('#debugger')
-            .append(btn("right arrow", "", lf("Step over next function call"), () => resume("stepover")))
-            .append(btn("down arrow", "", lf("Step into next function call"), () => resume("stepinto")))
-            .append(btn("play", "", lf("Resume execution"), () => resume("resume")))
+    $debugger.empty();
+    if (isPaused) {
+        $debugger.append($resume).append($stepOver)
+        if (config.editor == 'tsprj')
+            $debugger.append($stepInto);
+    } else {
+        $debugger.append($start);
+    }
 
     if (!brk) return
 

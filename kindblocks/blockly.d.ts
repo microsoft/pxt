@@ -126,6 +126,7 @@ declare module Blockly {
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string) : void;
         getCanvas() : any;
+        highlightBlock(id:string):void;
         getMetrics(): {            
             absoluteLeft: number;
             absoluteTop: number;
