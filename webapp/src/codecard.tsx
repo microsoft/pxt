@@ -58,11 +58,13 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
             : undefined;
 
         return (
-            <div className={"ui card " + color} >
+            <div className={"ui card " + color + (this.props.onClick ? " link" : '')} onClick={e => this.props.onClick ? this.props.onClick(e) : undefined } >
                 {this.props.header ?
                 <div key="header" className={"ui content " + (this.props.responsive ? " tall desktop only" : "")}>
                     <div className="right floated meta">
                         {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
+                        {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle oragne icon" ></i>) }
+                        {repeat(card.javascript, (k) => <i key={"costjs" + k} className="keyboard blue icon" ></i>) }
                         {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
                         {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
                     </div>
@@ -80,7 +82,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                     <div className="meta">
                         {this.props.time ? <span key="date" className="date">{ks.Util.timeSince(this.props.time) }</span> : ""}
                     </div>
-                    <div className="description">{this.props.description || lf("No description.") }</div>
+                    {this.props.description ? <div className="description">{this.props.description}</div> : ''}
                 </div>
                 {this.props.url || card.power || card.toughness ?
                 <div key="extra" className={"ui extra content" + (this.props.responsive ? " tall desktop only" : "")}>

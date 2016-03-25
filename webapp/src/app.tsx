@@ -122,56 +122,40 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     }
 }
 
-class SlotSelector extends data.Component<ISettingsProps, {}> {
-
-    componentDidMount() {
-        let headers: workspace.Header[] = this.getData("header:*")
-        if (!headers.length)
-            this.props.parent.newProject(true);
-    }
-
-    renderCore() {
-        let par = this.props.parent
-        let headers: workspace.Header[] = this.getData("header:*")
-        let chgHeader = (id: string) => {
-            par.loadHeader(workspace.getHeader(id))
-        }
-        let hd = par.state.header
-        let hdId = hd ? hd.id : ""
-        let btnClass = !hd || this.getData("pkg-status:" + hdId) == "saving" ? " disabled" : ""
-        if (!hd && headers[0]) {
-            setTimeout(() => {
-                if (!par.state.header && headers[0]) {
-                    par.loadHeader(headers[0])
-                }
-            }, 1000)
-        }
-        return (
-            <div id='slotselector'>
-                <sui.DropdownList class='selection search' value={hdId}
-                    onChange={chgHeader}>
-                    {headers.map(h => <sui.Item key={h.id} value={h.id} text={h.name || lf("no name") } />) }
-                </sui.DropdownList>
-            </div>
-        );
-    }
-}
-
 class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }> {
     prevData: Cloud.JsonScript[] = [];
     modal: sui.Modal;
-
-    renderCore() {
-        Util.assert(this.props.parent.appTarget.cloud);
-
+    
+    fetchCloudData() : Cloud.JsonScript[] {
+        if(!this.props.parent.appTarget.cloud) return [];
+        
         let res = this.state.searchFor ?
-            this.getData("cloud:scripts?q=" + encodeURIComponent(this.state.searchFor)) : null
+            this.getData("cloud:scripts?q=" + encodeURIComponent(this.state.searchFor)) 
+            : null
         if (res)
             this.prevData = res.items
         let data = this.prevData
+        return data;
+    }
+    
+    fetchLocalData() : workspace.Header[] {
+        let headers: workspace.Header[] = this.getData("header:*")                
+        if (this.state.searchFor)
+            headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
+        return headers;
+    }
+
+    renderCore() { 
+        let headers = this.fetchLocalData();              
+        let data = this.fetchCloudData();
+
+        let chgHeader = (hdr: workspace.Header) => {
+            if (this.modal) this.modal.hide();
+            this.props.parent.loadHeader(hdr)
+        }        
         let upd = (v: any) => {
             this.setState({ searchFor: (v.target as any).value })
-        };
+        };        
         let install = (scr: Cloud.JsonScript) => {
             if (this.modal) this.modal.hide();
             workspace.installByIdAsync(scr.id)
@@ -180,30 +164,47 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
                 })
                 .done()
         }
+        /*
+    interface CodeCard {
+        name: string;
+        color?: string;
+        description?: string;
+        promoUrl?: string;
+        blocksXml?: string;
+        header?: string;
+        time?: number;
+        card?: ks.PackageCard;
+        url?: string;
+        responsive?: boolean;
+        target?: string;
+    }        
+        */
         return (
-            <sui.Modal ref={v => this.modal = v} header={lf("Search for scripts...") } addClass="large searchdialog" >
+            <sui.Modal ref={v => this.modal = v} header={lf("Open script...") } addClass="large searchdialog" >
 
-                <div className="ui content form">
-                    <div className="ui fluid icon input">
+                <div className="ui segment items">
+                    <div className="ui item fluid icon input">
                         <input type="text" placeholder="Search..." onChange={upd} />
                         <i className="search icon"/>
                     </div>
-                    <div className="ui three stackable cards">
+                    <div className="ui item cards">
+                        {headers.map(scr => 
+                            <codecard.CodeCardView 
+                                    key={'local' + scr.id}
+                                    name={scr.name} 
+                                    time={scr.recentUse}
+                                    description={lf("local script")}
+                                    onClick={() => chgHeader(scr)}
+                            />
+                         )}
                         {data.map(scr =>
-                            <div className="card" key={scr.id} onClick={() => install(scr) }>
-                                <div className="content">
-                                    <div className="header">{scr.name}</div>
-                                    <div className="meta">
-                                        <span className="date">by {scr.username} {Util.timeSince(scr.time) }</span>
-                                    </div>
-                                </div>
-                                <div className="extra content">
-                                    <span className="right floated">/{scr.id}</span>
-                                    <a>
-                                        {Util.timeSince(scr.time) }
-                                    </a>
-                                </div>
-                            </div>
+                            <codecard.CodeCardView                            
+                                name={scr.name}
+                                time={scr.time}
+                                description={scr.username}
+                                key={'cloud' + scr.id} 
+                                onClick={() => install(scr) }
+                                url={'/' + scr.id} />
                         ) }
                     </div>
                 </div>
@@ -382,6 +383,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             editor: this.state.header ? this.state.header.editor : ''
         })
         this.forceUpdate(); // we now have editors prepared
+        
+        // load first header or popup new project
+        setTimeout(() => {
+            let header = this.getData("header:*")[0];
+                if (!this.state.header && header) {
+                    this.loadHeader(header)
+                }
+        }, 1000)        
     }
 
     private pickEditorFor(f: pkg.File): srceditor.Editor {
@@ -714,19 +723,16 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.Button icon="file outline" textClass="ui landscape only" text={lf("Create Code") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
+                                    {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open script...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
+                                    <div className="divider"></div>
                                     {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } /> : ""}
-                                    {this.appTarget.cloud ? <sui.Item icon="search" text={lf("Search for scripts") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
                                     <sui.Item icon='folder' text={lf("Show/Hide files")} onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
                                     } } />
-                                    <div className="divider"></div>
                                     <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                                 </sui.DropdownMenu>
                             </div>
-                        </div>
-                        <div className="ui item landscape only">
-                            <SlotSelector parent={this} />
                         </div>
                         <div id="actionbar" className="ui item">
                             <sui.Button key='runbtn' class='icon primary portrait only' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />

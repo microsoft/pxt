@@ -43,6 +43,8 @@ namespace ks {
         any?: number;
         hardware?: number;
         software?: number;
+        blocks?: number;
+        javascript?: number;
         power?: number;
         toughness?: number;
     }
@@ -59,6 +61,7 @@ namespace ks {
         card?: ks.PackageCard;
         url?: string;
         responsive?: boolean;
+        onClick?: (e: any) => void; // React event
         
         target?: string;
     }
