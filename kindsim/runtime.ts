@@ -41,6 +41,7 @@ namespace ks.rt {
     export interface StackFrame {
         fn: LabelFn;
         pc: number;
+        depth: number;
         r0?: any;
         parent: StackFrame;
         retval?: any;
@@ -342,6 +343,10 @@ namespace ks.rt {
             function actionCall(s: StackFrame, cb?: ResumeFn): StackFrame {
                 if (cb)
                     s.finalCallback = cb;
+                s.depth = s.parent.depth + 1
+                if (s.depth > 1000) {
+                    U.userError("Stack overflow")
+                }
                 s.pc = 0
                 return s;
             }
@@ -363,6 +368,7 @@ namespace ks.rt {
                 let frame: StackFrame = {
                     parent: null,
                     pc: 0,
+                    depth: 0,
                     fn: () => {
                         if (cb) cb(frame.retval)
                         return null
@@ -380,6 +386,7 @@ namespace ks.rt {
                 let frame: StackFrame = {
                     parent: topFrame,
                     fn: fn,
+                    depth: 0,
                     pc: 0
                 }
                 loop(actionCall(frame))
@@ -404,6 +411,7 @@ namespace ks.rt {
                             lambdaArgs: [w.a0, w.a1],
                             pc: 0,
                             caps: w.caps,
+                            depth: s.depth + 1,
                             finalCallback: w.cb,
                         }
                         return loop(actionCall(frame))
