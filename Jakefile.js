@@ -20,7 +20,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'built/kind.js', 'built/kind.d.ts', 'built/kindrunner.js', 'wapp'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/kind.js', 'built/kind.d.ts', 'built/kindrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
 
 task('test', ['default', 'runprj', 'testfmt'])
 
@@ -66,6 +66,7 @@ compileDir("kindblocks", ["built/kindlib.js"])
 compileDir("kindrunner", ["built/kindlib.js", "built/kindsim.js", "built/kindblocks.js"])
 compileDir("kindsim", ["built/kindlib.js", "built/kindblocks.js"])
 compileDir("cli", ["built/kindlib.js", "built/kindsim.js"])
+compileDir("backendutils", ['kindlib/emitter/util.ts', 'kindlib/docsrender.ts'])
 
 task("travis", ["test", "upload"])
 

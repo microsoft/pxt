@@ -12,8 +12,8 @@ import Cloud = ks.Cloud;
 let root = process.cwd()
 let dirs = ["built", "sim/public", "node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
 let fileDir = path.join(root, "libs")
-let webDir = path.join(root, "web")
-let nunjucks: any = null
+let docsDir = path.join(root, "docs")
+let tempDir = path.join(root, "built/docstmp")
 
 let statAsync = Promise.promisify(fs.stat)
 let readdirAsync = Promise.promisify(fs.readdir)
@@ -164,7 +164,39 @@ function fileExistsSync(p: string): boolean {
     }
 }
 
+var docsTemplate: string = "@body@"
+var appTarget: ks.AppTarget;
+
+function setupTemplate() {
+    let templatePath = path.join(tempDir, "template.html")
+    if (fs.existsSync(templatePath)) {
+        docsTemplate = fs.readFileSync(templatePath, "utf8")
+    }
+
+    let url = "https://www.kindscript.com/templates/docs"
+    U.requestAsync({ url })
+        .then(resp => {
+            if (resp.text != docsTemplate) {
+                console.log(`${url} updated`)
+                docsTemplate = resp.text
+                fs.writeFileSync(templatePath, docsTemplate)
+            } else {
+                console.log(`${url} unchanged`)
+            }
+        }, err => {
+            console.log(`error downloading ${url}: ${err.message}`)
+        })
+        .done()
+        
+    appTarget = JSON.parse(fs.readFileSync("built/webtarget.json", "utf8"))
+}
+
 export function serveAsync() {
+    if (!fs.existsSync(tempDir))
+        fs.mkdirSync(tempDir)
+
+    setupTemplate()
+
     let server = http.createServer((req, res) => {
         let error = (code: number, msg: string = null) => {
             res.writeHead(code, { "Content-Type": "text/plain" })
@@ -193,11 +225,17 @@ export function serveAsync() {
         }
 
         let pathname = decodeURI(url.parse(req.url).pathname);
- 
+
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
             res.end()
             return
+        }
+        
+        if (pathname.slice(0, appTarget.id.length + 2) == "/" + appTarget.id + "/") {
+            res.writeHead(301, { location: req.url.slice(appTarget.id.length + 1) })
+            res.end()
+            return            
         }
 
         let elts = pathname.split("/").filter(s => !!s)
@@ -218,7 +256,7 @@ export function serveAsync() {
                     }
                 })
         }
-        
+
         if (pathname == "/--embed") {
             // use microbit for now
             res.writeHead(302, { location: 'https://codemicrobit.com/--embed' })
@@ -236,7 +274,7 @@ export function serveAsync() {
             }
         }
 
-        let webFile = path.join(webDir, pathname)
+        let webFile = path.join(docsDir, pathname)
         if (!fileExistsSync(webFile)) {
             if (fileExistsSync(webFile + ".html")) {
                 webFile += ".html"
@@ -249,11 +287,8 @@ export function serveAsync() {
 
         if (fileExistsSync(webFile)) {
             if (/\.md$/.test(webFile)) {
-                let templ = nunjucks.render("templates/docs.html", { somevar: 1 })
-                let html = ks.docs.renderMarkdown(templ, fs.readFileSync(webFile, "utf8"))
+                let html = ks.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"))
                 sendHtml(html)
-            } else if (/\.html$/.test(webFile)) {
-                sendHtml(nunjucks.render(pathname.replace(/^\/+/, ""), { somevar: 1 }))
             } else {
                 sendFile(webFile)
             }
@@ -269,12 +304,6 @@ export function serveAsync() {
         console.log('loading ' + serverjs)
         require(serverjs);
     }
-
-    nunjucks = require("nunjucks")
-    nunjucks.configure(webDir, {
-        autoescape: true,
-        noCache: true
-    })
 
     server.listen(3232, "127.0.0.1");
 

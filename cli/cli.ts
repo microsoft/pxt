@@ -118,7 +118,7 @@ export function apiAsync(path: string, postArguments?: string) {
 export function ptrAsync(path: string, target?: string) {
     // in MinGW when you say 'kind ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
     let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
-    
+
     path = path.replace(mingwRx, "/")
     path = sanitizePath(path)
 
@@ -139,7 +139,7 @@ export function ptrAsync(path: string, target?: string) {
         htmlartid: "",
         userplatform: ["kind-cli"],
     }
-    
+
     target = target.replace(mingwRx, "/")
 
     return (/^[a-z]+$/.test(target) ? Cloud.privateGetAsync(target) : Promise.reject(""))
@@ -420,6 +420,7 @@ function buildKindScriptAsync(): Promise<string[]> {
 
 function buildTargetCoreAsync() {
     let cfg = readKindTarget()
+    let currentTarget: ks.AppTarget
     cfg.bundledpkgs = {}
     let statFiles: U.Map<number> = {}
     let dirsToWatch: string[] = cfg.bundleddirs.slice()
@@ -429,11 +430,17 @@ function buildTargetCoreAsync() {
             .then(res => {
                 cfg.bundledpkgs[pkg.config.name] = res
             })
-            .then(testMainPkgAsync))
+            .then(testMainPkgAsync)
+            .then(() => {
+                if (pkg.config.target)
+                    currentTarget = pkg.config.target;
+            }))
         .then(() => {
             if (!fs.existsSync("built"))
                 fs.mkdirSync("built")
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
+            U.assert(!!currentTarget)
+            fs.writeFileSync("built/webtarget.json", JSON.stringify(currentTarget, null, 2))
         })
         .then(() => {
             console.log("target.json built.")
@@ -467,10 +474,6 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 }
 
 function buildAndWatchTargetAsync() {
-    if (!fs.existsSync("kindtarget.json") && fs.existsSync("web")) {
-        console.log("No kindtarget.json, but found web/. Assuming docs serving.")
-        return Promise.resolve()
-    }
     return buildAndWatchAsync(buildKindScriptAsync)
         .then(() => buildAndWatchAsync(buildTargetCoreAsync))
         .then(() =>
