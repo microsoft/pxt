@@ -41,7 +41,7 @@ namespace ks.rt {
     export interface StackFrame {
         fn: LabelFn;
         pc: number;
-        r0: any;
+        r0?: any;
         parent: StackFrame;
         retval?: any;
         lambdaArgs?: any[];
