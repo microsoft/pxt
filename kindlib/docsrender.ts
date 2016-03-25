@@ -1,35 +1,22 @@
 /// <reference path='../typings/marked/marked.d.ts' />
 /// <reference path="emitter/util.ts"/>
 
-namespace ks.docs {    
-    declare var require:any;
-    var marked:MarkedStatic;
-    
+namespace ks.docs {
+    declare var require: any;
+    var marked: MarkedStatic;
 
-    var boxes: U.Map<string> = {
-        hide: "<div style='display:none'>@BODY@</div>",
-        avatar: `
-<div class='avatar @ARGS@'>
-  <div class='avatar-image'></div>
-  <div class='ui message'>
-    @BODY@
-  </div>
-</div>`,
-        hint: `
-<div class="ui icon green message">
-  <i class="help checkmark icon"></i>
-  <div class="content">
-    <div class="header">Hint</div>
-    @BODY@
-  </div>
-</div>`,
-        column: `
-<!-- COLUMN -->
-<div class='column'>
-  @BODY@
-</div>
-<!-- ENDCOLUMN -->
-`,
+
+    var stdboxes: U.Map<string> = {
+    }
+
+    var stdmacros: U.Map<string> = {
+    }
+    
+    var stdSetting = "<!-- @CMD@ @ARGS@ -->"
+
+    var stdsettings: U.Map<string> = {
+        "parent": stdSetting,
+        "short": stdSetting,
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -45,9 +32,49 @@ namespace ks.docs {
         return s;
     }
 
-    export function renderMarkdown(src: string): U.Map<string> {
-        let res: U.Map<string> = {}
-        
+    export function renderMarkdown(template: string, src: string): string {
+        let vars: U.Map<string> = {}
+
+        let boxes = U.clone(stdboxes)
+        let macros = U.clone(stdmacros)
+        let settings = U.clone(stdsettings)
+
+        function parseHtmlAttrs(s: string) {
+            let attrs: U.Map<string> = {};
+            while (s.trim()) {
+                let m = /^\s*([^=\s]+)=("([^"]*)"|'([^']*)'|(\S*))/.exec(s)
+                if (m) {
+                    let v = m[3] || m[4] || m[5] || ""
+                    attrs[m[1].toLowerCase()] = v
+                } else {
+                    m = /^\s*(\S+)/.exec(s)
+                    attrs[m[1]] = "true"
+                }
+                s = s.slice(m[0].length)
+            }
+            return attrs
+        }
+
+        let error = (s: string) =>
+            `<div class='ui negative message'>${s}</div>`
+
+        template = template.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
+            let attrs = parseHtmlAttrs(attrsStr)
+            let name = attrs["data-name"] || attrs["id"]
+            if (!name)
+                return error("id or data-name missing on macro")
+            if (/box/.test(attrs["class"])) {
+                boxes[name] = body
+            } else if (/aside/.test(attrs["class"])) {
+                boxes[name] = `<!-- BEGIN-ASIDE ${name} -->${body}<!-- END-ASIDE -->`
+            } else if (/setting/.test(attrs["class"])) {
+                settings[name] = body
+            } else {
+                macros[name] = body
+            }
+            return `<!-- macro ${name} -->`
+        })
+
         if (!marked)
             marked = require("marked");
 
@@ -58,8 +85,6 @@ namespace ks.docs {
 
         let endBox = ""
 
-        let error = (s: string) =>
-            `<div class='ui negative message'>${s}</div>`
         html = html.replace(/<h\d[^>]+>\s*([~@])\s*(.*?)<\/h\d>/g, (f, tp, body) => {
             let m = /^(\w+)\s+(.*)/.exec(body)
             let cmd = m ? m[1] : body
@@ -68,20 +93,21 @@ namespace ks.docs {
             args = htmlQuote(args)
             cmd = htmlQuote(cmd)
             if (tp == "@") {
-                if (cmd == "parent" || cmd == "short") {
-                    res[cmd] = args
-                    return ""
-                } else if (cmd == "video") {
-                    return `<div class="ui embed" 
-                            data-url="https://www.microbit.co.uk/embed/${args}" 
-                            data-placeholder="https://www.microbit.co.uk/${args}/thumb" 
-                            data-icon="video play">
-                        </div>`
-                } else if (cmd == "section") {
-                    return `<!-- section ${args} -->`
+                let expansion = U.lookup(settings, cmd)
+                if (expansion != null) {
+                    vars[cmd] = args
                 } else {
-                    return error(`Unknown command: @${cmd}`)
+                    expansion = U.lookup(macros, cmd)
+                    if (expansion == null)
+                        return error(`Unknown command: @${cmd}`)
                 }
+
+                let ivars: U.Map<string> = {
+                    ARGS: args,
+                    CMD: cmd
+                }
+
+                return injectHtml(expansion, ivars, ["ARGS", "CMD"])
             } else {
                 if (!cmd) {
                     let r = endBox
@@ -100,31 +126,38 @@ namespace ks.docs {
             }
         })
 
-        let columns = ""
-        html = html.replace(/<!-- COLUMN -->[^]*?<!-- ENDCOLUMN -->/g, f => {
-            columns += f
-            return "<!-- col -->"
+        let registers: U.Map<string> = {}
+        registers["main"] = "" // first
+        
+        html = html.replace(/<!-- BEGIN-ASIDE (\S+) -->([^]*?)<!-- END-ASIDE -->/g, (f, nam, cont) => {
+            let s = U.lookup(registers, nam)
+            registers[nam] = (s || "") + cont
+            return "<!-- aside -->"
         })
+        
+        registers["main"] = html
 
-        html = `<div class="ui text container">${html}</div>\n`
+        let injectBody = (tmpl: string, body: string) =>
+            injectHtml(boxes[tmpl] || "@BODY@", { BODY: body }, ["BODY"])
 
-        if (columns)
-            html += `
-            <div class="ui three column stackable grid text container">
-                ${columns}
-            </div>`
+        html = ""
 
-        res["body"] = html
-        return res
+        for (let k of Object.keys(registers)) {
+            html += injectBody(k + "-container", registers[k])
+        }
+
+        vars["body"] = html
+
+        return injectHtml(template, vars, ["body"])
     }
 
-    export function injectHtml(template: string, vars: U.Map<string>) {
+    function injectHtml(template: string, vars: U.Map<string>, quoted: string[] = []) {
         return template.replace(/@(\w+)@/g, (f, key) => {
-            let result1 = U.lookup(vars, key) || "";
-            if (! /^(body)$/.test(key)) {
-                result1 = htmlQuote(result1);
+            let res = U.lookup(vars, key) || "";
+            if (quoted.indexOf(key) < 0) {
+                res = htmlQuote(res);
             }
-            return result1;
+            return res;
         });
     }
 }

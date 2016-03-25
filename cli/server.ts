@@ -218,6 +218,13 @@ export function serveAsync() {
                     }
                 })
         }
+        
+        if (pathname == "/--embed") {
+            // use microbit for now
+            res.writeHead(302, { location: 'https://codemicrobit.com/--embed' })
+            res.end()
+            return
+        }
 
         if (!/\.js\.map$/.test(pathname)) {
             for (let dir of dirs) {
@@ -242,9 +249,9 @@ export function serveAsync() {
 
         if (fileExistsSync(webFile)) {
             if (/\.md$/.test(webFile)) {
-                let vars = ks.docs.renderMarkdown(fs.readFileSync(webFile, "utf8"))
                 let templ = nunjucks.render("templates/docs.html", { somevar: 1 })
-                sendHtml(ks.docs.injectHtml(templ, vars))
+                let html = ks.docs.renderMarkdown(templ, fs.readFileSync(webFile, "utf8"))
+                sendHtml(html)
             } else if (/\.html$/.test(webFile)) {
                 sendHtml(nunjucks.render(pathname.replace(/^\/+/, ""), { somevar: 1 }))
             } else {
