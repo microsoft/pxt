@@ -236,7 +236,7 @@ namespace ks.rt {
                 throw new Error("sim error: " + msg)
             }
 
-            function maybeYield(s: StackFrame, pc: number, r0:any): boolean {
+            function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
                 yieldSteps = yieldMaxSteps;
                 let now = Date.now()
                 if (now - lastYield >= 20) {
@@ -267,7 +267,7 @@ namespace ks.rt {
                 }
                 return false
             }
-            
+
             function breakpoint(s: StackFrame, retPC: number, brkId: number, r0: any): StackFrame {
                 U.assert(!dbgResume)
 
@@ -298,7 +298,7 @@ namespace ks.rt {
 
                     return loop(s)
                 }
-                
+
                 return null;
             }
 
@@ -312,6 +312,10 @@ namespace ks.rt {
                                 breakpoints[n] = 1
                         }
                         break;
+                    case "pause":
+                        breakAlways = true
+                        breakFrame = null
+                        break
                     case "resume":
                     case "stepover":
                     case "stepinto":
