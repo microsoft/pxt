@@ -209,6 +209,7 @@ export class Editor extends srceditor.Editor {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
         let bid = ks.blocks.findBlockId(this.compilationResult.sourceMap, brk);
+        this.editor.traceOn(true);
         this.editor.highlightBlock(bid);
     }
 

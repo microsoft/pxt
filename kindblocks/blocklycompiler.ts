@@ -1525,10 +1525,15 @@ namespace ks.blocks {
         }
 
         function emitAndMap(id: string, f: () => void) {
+            if (!id) {
+                f();
+                return;
+            }
+            
             let start = output.length;
             f();
             let end = output.length;
-            if (id)
+            if (start != end)
                 sourceMap.push({ id: id, start: start, end: end })
         }
 

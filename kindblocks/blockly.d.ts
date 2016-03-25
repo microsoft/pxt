@@ -77,7 +77,6 @@ declare module Blockly {
 
         moveBy(x : number, y: number) : void;
         getHeightWidth() : { width: number; height: number;};
-
         outputConnection: Connection;
 
         svgGroup_: SVGElement;
@@ -122,6 +121,7 @@ declare module Blockly {
         getTopBlocks(ordered: boolean): Block[];
         getBlockById(id:string): Block;
         getAllBlocks(): Block[];
+        traceOn(armed:boolean):void;
         addChangeListener(f: (e : BlocklyEvent) => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string) : void;
