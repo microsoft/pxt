@@ -79,6 +79,12 @@ namespace ks.rt {
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
+            
+            let frames = this.container.getElementsByTagName("iframe");
+            for (let i = 0; i < frames.length; ++i) {
+                let frame = frames[i] as HTMLIFrameElement
+                frame.classList.add("grayscale");
+            }
         }
 
         private unload() {
