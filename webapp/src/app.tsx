@@ -644,7 +644,7 @@ Ctrl+Shift+B
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles["microbit.js"]) {
                     this.setHelp(null);
-                    simulator.run(resp)
+                    simulator.run(opts.debug, resp)
                     this.setState({ running: true })
                 }
             })
