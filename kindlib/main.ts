@@ -118,7 +118,7 @@ namespace ks {
     }
 
     export interface AppTarget {
-        id: string;
+        id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
         title?: string;
         theme?: AppTheme;

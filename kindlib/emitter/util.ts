@@ -548,7 +548,7 @@ namespace ts.ks.Util {
         
         // encode
         if (/xml|svg/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
-        else return `data:${mimetype};base64,${convertToBase64(data)}`;
+        else return `data:${mimetype};base64,${btoa(toUTF8(data))}`;
     }
 }
 
