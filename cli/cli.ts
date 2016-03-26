@@ -16,6 +16,7 @@ import U = ks.Util;
 import Cloud = ks.Cloud;
 
 import * as server from './server';
+import * as uploader from './uploader';
 
 
 let prevExports = (global as any).savedModuleExports
@@ -120,10 +121,10 @@ export function ptrAsync(path: string, target?: string) {
     let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
 
     path = path.replace(mingwRx, "/")
-    path = sanitizePath(path)
+    path = nodeutil.sanitizePath(path)
 
     if (!target) {
-        return Cloud.privateGetAsync(pathToPtr(path))
+        return Cloud.privateGetAsync(nodeutil.pathToPtr(path))
             .then(r => {
                 console.log(r)
                 return r
@@ -198,14 +199,6 @@ export function uploadrelAsync(label?: string) {
     })
 }
 
-export function sanitizePath(path: string) {
-    return path.replace(/[^\w@\/]/g, "-").replace(/^\/+/, "")
-}
-
-export function pathToPtr(path: string) {
-    return "ptr-" + sanitizePath(path.replace(/^ptr-/, "")).replace(/[^\w@]/g, "-")
-}
-
 export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
         let pkg = JSON.parse(fs.readFileSync("node_modules/kindscript/package.json", "utf8"))
@@ -213,7 +206,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
     }
     return Cloud.privateGetAsync(apprel)
         .then(r => r.kind == "release" ? r : null, e => null)
-        .then(r => r || Cloud.privateGetAsync(pathToPtr(apprel))
+        .then(r => r || Cloud.privateGetAsync(nodeutil.pathToPtr(apprel))
             .then(ptr => Cloud.privateGetAsync(ptr.releaseid)))
         .then(r => r.kind == "release" ? r : null)
         .then<ks.Cloud.JsonRelease>(r => r, e => {
@@ -309,7 +302,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             if (!opts.label) return Promise.resolve()
             else if (opts.legacyLabel) return Cloud.privatePostAsync(liteId + "/label", { name: opts.label })
             else return Cloud.privatePostAsync("pointers", {
-                path: sanitizePath(opts.label),
+                path: nodeutil.sanitizePath(opts.label),
                 releaseid: liteId
             })
         })
@@ -1000,6 +993,7 @@ cmd("buildtarget                  - build kindtarget.json", buildTargetAsync, 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
+cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 

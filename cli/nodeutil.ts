@@ -118,3 +118,15 @@ export function init() {
     (global as any).atob = (str:string) => new Buffer(str, "base64").toString("binary");
 }
 
+export function sanitizePath(path: string) {
+    return path.replace(/[^\w@\/]/g, "-").replace(/^\/+/, "")
+}
+
+export function getWebTarget(): ks.AppTarget {
+    return JSON.parse(fs.readFileSync("built/webtarget.json", "utf8"))
+}
+
+export function pathToPtr(path: string) {
+    return "ptr-" + sanitizePath(path.replace(/^ptr-/, "")).replace(/[^\w@]/g, "-")
+}
+

@@ -188,7 +188,7 @@ function setupTemplate() {
         })
         .done()
         
-    appTarget = JSON.parse(fs.readFileSync("built/webtarget.json", "utf8"))
+    appTarget = nodeutil.getWebTarget()
 }
 
 export function serveAsync() {

@@ -411,6 +411,7 @@ namespace ts.ks.Util {
                 case "ttf": return "font/ttf";
                 case "woff": return "application/font-woff";
                 case "woff2": return "application/font-woff2";
+                case "md": return "text/markdown";
                 default: return "application/octet-stream";
             }
         else return "application/octet-stream";
