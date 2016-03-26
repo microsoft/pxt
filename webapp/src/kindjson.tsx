@@ -31,7 +31,6 @@ export class Editor extends srceditor.Editor {
             if (!c.card) c.card = {}
         }
         let card = c.card || {};
-        let mainFile = pkg.mainEditorPkg().getMainFile();
 
         /*
                                 <div className="two fields">

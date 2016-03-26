@@ -699,6 +699,20 @@ Ctrl+Shift+B
     setHelp(helpCard: ks.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
         this.setState({ helpCard: helpCard, helpCardClick: onClick })
     }
+    
+    updateHeaderName(name: string) {
+        try {            
+            let f = pkg.mainEditorPkg().lookupFile("this/" + ks.configName);
+            let config = JSON.parse(f.content) as ks.PackageConfig;
+            config.name = name;
+            f.setContentAsync(JSON.stringify(config, null, 2)).done(() => {
+                this.forceUpdate();
+            });
+        }
+        catch(e) {
+            console.error('failed to read kind.json')   
+        }
+    }
 
     renderCore() {
         theEditor = this;
@@ -733,13 +747,20 @@ Ctrl+Shift+B
                                     <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                                 </sui.DropdownMenu>
                             </div>
-                        </div>
-                        <div id="actionbar" className="ui item">
-                            <sui.Button key='runbtn' class='icon primary portrait only' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                            <sui.Button key='runbtn' class='primary portrait only' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                             {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
-                            <sui.Button class="icon portrait only" icon="undo" onClick={() => this.editor.undo() } />
+                            <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                             <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                             {this.editor.menu() }
+                        </div>
+                        <div className="ui item">
+                            <div className="ui massive transparent input">
+                                <input 
+                                    type="text" 
+                                    placeholder={lf("Pick a name...")} 
+                                    value={this.state.header ? this.state.header.name : ''} 
+                                    onChange={(e) => this.updateHeaderName((e.target as any).value)}></input>
+                            </div>
                         </div>
                         { this.appTarget.cloud || targetTheme.rightLogo ?
                             <div className="ui item right">
