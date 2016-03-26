@@ -811,7 +811,7 @@ export class Editor extends srceditor.Editor {
         let lines: string[] = (sess.doc as any).$lines
         this.annotationLines = []
 
-        if (file.diagnostics)
+        if (file && file.diagnostics)
             for (let d of file.diagnostics) {
                 ann.push({
                     row: d.line,

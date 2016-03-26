@@ -239,7 +239,7 @@ export class Modal extends data.Component<{
                     this.hide()
             } }>
                 <div className={"ui modal transition visible active " + (this.props.addClass || "") }>
-                    <div className={"ui top attached label " + (this.props.headerClass || "teal") }>
+                    <div className={"ui top attached label " + (this.props.headerClass || "") }>
                         {this.props.header}
                         <i className='cancel link icon' onClick={() => this.hide() }/>
                     </div>
