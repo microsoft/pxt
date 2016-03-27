@@ -253,6 +253,7 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
       let data = res["woff"].toString("base64")
       css = css.replace(/^\s*src:[^;]+;/m, 
         "    src: url(data:application/x-font-woff;charset=utf-8;base64," + data + ") format(\"woff\");")
+      css = css.replace(/line-height:\s*1;/, "")
       console.log("Generated icons.css -", css.length, "bytes")
       let html = "<!doctype html>\n<html><body style='font-size: 30px'><style>@import './icons.css';</style>\n"
       css.replace(/\.(\w+):before /g, (f, n) => {
