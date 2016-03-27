@@ -77,8 +77,8 @@ function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
     
     if (driver.state == ks.rt.SimulatorState.Paused) {
         let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Resume));
-        let $stepOver = btn("right arrow", lf("Step over"), lf("Step over next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepOver));
-        let $stepInto = btn("down arrow", lf("Step into"), lf("Step into next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepInto));
+        let $stepOver = btn("xicon stepover", lf("Step over"), lf("Step over next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepOver));
+        let $stepInto = btn("xicon stepinto", lf("Step into"), lf("Step into next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepInto));
         $debugger.append($resume).append($stepOver)
         if (advanced)
             $debugger.append($stepInto);

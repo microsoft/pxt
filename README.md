@@ -41,6 +41,20 @@ After this you can run `kind` from anywhere within the build tree.
 To start the local web app server do `kind serve` within the root directory
 of build tree (where this file sits) and then browse to http://localhost:3232 
 
+### Icons
+
+There is a number of custom icons (to use in addition
+to http://semantic-ui.com/elements/icon.html) in the `svgicons/` directory.
+These need to be `1000x1000px`. Best start with an existing one. To see available icons go to
+http://localhost:3232/icons.html (this file, along with `icons.css` containing
+the generated WOFF icon font, is created during build).
+
+If you're having trouble with display of the icon you created, try:
+```
+npm install -g svgo
+svgo svgicons/myicon.svg
+```
+
 ## TODOs
 
 ### package mgr + compiler

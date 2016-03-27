@@ -178,6 +178,7 @@ task('wapp', [
     'built/web/worker.js',
     'built/web/fonts/icons.woff2',
     'built/web/hexinfo.js',
+    'built/web/icons.css',
     'built/web/semantic.css',
     "built/web/semantic.js"
 ])
@@ -228,6 +229,40 @@ file('built/web/fonts/icons.woff2', [], function () {
 
 file('built/web/semantic.css', ["webapp/theme.config"], { async: true }, function () {
     cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/web/semantic.css --include-path=node_modules/semantic-ui-less:webapp/foo/bar')
+})
+
+file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
+  let webfontsGenerator = require('webfonts-generator')
+  let name = "xicon"
+  let task = this
+ 
+  webfontsGenerator({
+    fontName: name,
+    files: expand(["svgicons"], ".svg"),
+    dest: "built/fonts/", // fake
+    templateOptions: {
+      classPrefix: name + ".",
+      baseClass: name
+    },
+    writeFiles: false,
+  }, function(error, res) {
+    if (error) {
+      task.fail(error)
+    } else {
+      let css = res.generateCss()
+      let data = res["woff"].toString("base64")
+      css = css.replace(/^\s*src:[^;]+;/m, 
+        "    src: url(data:application/x-font-woff;charset=utf-8;base64," + data + ") format(\"woff\");")
+      console.log("Generated icons.css -", css.length, "bytes")
+      let html = "<!doctype html>\n<html><body style='font-size: 30px'><style>@import './icons.css';</style>\n"
+      css.replace(/\.(\w+):before /g, (f, n) => {
+        html += `<div style="margin:20px;"> <i class="${name} ${n}"></i> <span style='padding-left:1em; font-size:0.8em; opacity:0.5;'>${n}</span> </div>\n`
+      })
+      html += "</body></html>\n"
+      fs.writeFileSync("built/web/icons.html", html)
+      fs.writeFileSync("built/web/icons.css", css)
+    }
+  })
 })
 
 ju.catFiles("built/web/semantic.js",
