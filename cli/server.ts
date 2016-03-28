@@ -446,7 +446,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (pathname == "/--run") {
             // TODO use microbit for now
-            res.writeHead(302, { location: 'https://codemicrobit.com/--run' })
+            res.writeHead(302, { location: 'https://codemicrobit.com/--run' + url.parse(req.url).search })
             res.end()
             return
         }
