@@ -53,14 +53,7 @@ namespace ks.runner {
                 $h.find('.active').removeClass('active')
                 $runBtn.addClass('active')
                 
-                let $embed = $(`
-<div style='max-width:50%;margin:auto;'>
-    <div class="ui 5:3 embed active">
-        <div class="embed">
-            <iframe src="${runUrl}?code=${encodeURIComponent($js.text())}" width="100%" height="100%" frameborder="0" scrolling="no" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""></iframe>
-         </div>
-     </div>
-</div>`);
+                let $embed = $(`<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`);
                 $c.empty().append($embed);
             })
             $menu.append($runBtn);
