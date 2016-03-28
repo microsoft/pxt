@@ -70,9 +70,6 @@ function loadCache() {
         let ce = lookup(e.path)
         ce.data = e.data
     })
-
-    if (window.localStorage["offline"])
-        setOnline(false)
 }
 
 function saveCache() {

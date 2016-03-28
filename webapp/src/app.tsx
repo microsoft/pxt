@@ -110,7 +110,6 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
             par.saveFileAsync()
                 .then(() => par.state.currFile.epkg.savePkgAsync())
                 .then(() => {
-                    data.setOnline(true)
                     return workspace.syncAsync()
                 })
                 .done()

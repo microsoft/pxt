@@ -85,10 +85,6 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
             else
                 this.signin();
         }
-        let goOnline = () => {
-            data.setOnline(true)
-            workspace.syncAsync().done();
-        }
 
         return (
             <div id='loginbox' className="ui buttons">
