@@ -118,7 +118,6 @@ namespace ks {
     }
     
     export interface AppSerial {
-        comNameFilter?: string;
         manufacturerFilter?: string;
         log?: boolean;
     }

@@ -314,11 +314,9 @@ function initSerialMonitor() {
         });
     }
 
-    let comNameRx = appTarget.serial.comNameFilter ? new RegExp(appTarget.serial.comNameFilter) : undefined;
     let manufacturerRx = appTarget.serial.manufacturerFilter ? new RegExp(appTarget.serial.manufacturerFilter) : undefined;
     function filterPort(info: SerialPortInfo): boolean {
-        return (comNameRx ? comNameRx.test(info.comName) : true)
-            && (manufacturerRx ? manufacturerRx.test(info.manufacturer) : true);
+        return manufacturerRx ? manufacturerRx.test(info.manufacturer) : true;
     }
 
     setInterval(() => {
@@ -327,7 +325,7 @@ function initSerialMonitor() {
                 .filter(info => !serialPorts[info.pnpId])
                 .forEach((info) => open(info));
         });
-    }, 2500);
+    }, 5000);
 }
 
 function openUrl(startUrl: string) {
