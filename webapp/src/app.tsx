@@ -476,7 +476,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             url += `code=${encodeURIComponent(code)}`;
         }
 
-        let embed = `<iframe width="100%" height="300" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe>`
+        let embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
         core.confirmAsync({
             logos: [this.appTarget.theme.logo, logoSvgXml],
             header: lf("Embed in other pages!"),
