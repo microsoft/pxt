@@ -85,11 +85,6 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
             else
                 this.signin();
         }
-        let isOffline = !this.getData("cloud-online:api")
-        let goOnline = () => {
-            data.setOnline(true)
-            workspace.syncAsync().done();
-        }
 
         return (
             <div id='loginbox' className="ui buttons">
@@ -97,9 +92,6 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                     {!Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signin() } icon='sign in' text={lf("Sign in") } /> : null}
                     {Cloud.isLoggedIn() ? <sui.Item onClick={() => this.signout() } icon='sign out' text={lf("Sign out") } /> : null}
-                    {isOffline ?
-                        <sui.Item icon='plane' text={lf("Go online") } onClick={goOnline} />
-                        : <sui.Item onClick={() => data.setOnline(false) } icon='plane' text={lf("Go offline") } /> }
                     <sui.Item onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate KindScript!") } />
                 </sui.DropdownMenu>
             </div>)

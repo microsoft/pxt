@@ -3,7 +3,7 @@ namespace ks.Cloud {
     
     export var apiRoot = "https://kindscript.com/api/";
     export var accessToken = "";
-    export var _isOnline = true;
+    var _isOnline = true;
     export var onOffline = () => { };
 
     function offlineError(url: string) {

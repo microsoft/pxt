@@ -56,7 +56,6 @@ export class Editor extends srceditor.Editor {
                         <label>{lf("Public package (library)") }</label>
                     </div>
                 </sui.Field>
-                <sui.Input label={lf("Name") } value={c.name} onChange={v => update(c.name = v) } />
                 <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
                 <sui.Input label={lf("Picture or video (YouTube, Vimeo, Instagram)") } value={card.promoUrl || ""} onChange={v => {
                     initCard();
