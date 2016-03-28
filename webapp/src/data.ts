@@ -33,24 +33,6 @@ mountVirtualApi("td-cloud", {
     expirationTime: p => 60 * 1000,
 })
 
-mountVirtualApi("cloud-online", {
-    getSync: p => Cloud.isOnline(),
-})
-
-export function setOnline(st: boolean) {
-    Cloud._isOnline = st
-    invalidate("cloud-online:")
-    if (!st)
-        window.localStorage["offline"] = "1"
-    else
-        window.localStorage.removeItem("offline")
-}
-
-Cloud.onOffline = () => {
-    setOnline(Cloud.isOnline())
-    core.warningNotification(Util.lf("Going offline."))
-}
-
 var cachedData: Util.StringMap<CacheEntry> = {};
 
 function subscribe(component: AnyComponent, path: string) {
