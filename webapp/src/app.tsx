@@ -478,7 +478,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         let embed = `<iframe width="100%" height="300" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe>`
         core.confirmAsync({
-            logos: [this.appTarget.theme.logo, logoSvgXml],
+            logos: [pkg.targetBundle.appTheme.logo, logoSvgXml],
             header: lf("Embed in other pages!"),
             hideCancel: true,
             agreeLbl: lf("Got it!"),
@@ -501,7 +501,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     newProject(hideCancel = false) {
         let cdn = (window as any).appCdnRoot
         let images = cdn + "images"
-        let targetTheme = this.appTarget.theme || {};
+        let targetTheme = pkg.targetBundle.appTheme;
         core.confirmAsync({
             logos: [targetTheme.logo, logoSvgXml],
             header: this.appTarget.title + ' - ' + lf("Create Code"),
@@ -510,8 +510,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             onLoaded: (_) => {
                 _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProjectAsync().done() })
                 _.find('#newtypescript').click(() => { _.modal('hide'); this.newTypeScriptProjectAsync().done() })
-                if (this.appTarget.koduUrl)
-                    _.find('#newkodu').click(() => { window.location.href = this.appTarget.koduUrl })
+                if (targetTheme.koduUrl)
+                    _.find('#newkodu').click(() => { window.location.href = targetTheme.koduUrl })
                 _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject() })
             },
             htmlBody: `
@@ -543,9 +543,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     </div>
   </div>
 </div>`
-            + (this.appTarget.koduUrl || this.appTarget.visualStudioCode ? `<div class="ui two column grid">
+            + (targetTheme.koduUrl || targetTheme.visualStudioCode ? `<div class="ui two column grid">
   <div class="column">
-    ${this.appTarget.koduUrl ? `
+    ${targetTheme.koduUrl ? `
     <div id="newkodu" class="ui fluid card link">
         <div class="image">
         <img src="${images}/newkodu.png">
@@ -559,7 +559,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     </div>` : ''}
   </div>
   <div class="column">
-    ${this.appTarget.visualStudioCode ? `
+    ${targetTheme.visualStudioCode ? `
     <div id="newvisualstudiocode" class="ui fluid card link">
         <div class="image">
         <img src="${images}/newvisualstudiocode.png">
@@ -765,7 +765,7 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
-        let targetTheme = this.appTarget.theme || {};
+        let targetTheme = pkg.targetBundle.appTheme;
         let inv = this.state.theme.inverted ? " inverted " : " "
 
         return (
@@ -983,12 +983,7 @@ $(document).ready(() => {
 
     Util.updateLocalizationAsync(baseUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json"))
-        .then((trgbundle: ks.TargetBundle) => {
-            let cfg: ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
-            pkg.appTarget = cfg.target
-            pkg.appTarget.bundledpkgs = trgbundle.bundledpkgs
-            if (!pkg.appTarget.cloud) Cloud.apiRoot = undefined;
-        })
+        .then(pkg.setupAppTarget)
         .then(() => {
             return compiler.init();
         })

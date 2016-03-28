@@ -327,6 +327,8 @@ function uploadCoreAsync(opts: UploadOptions) {
 
 function readKindTarget() {
     let cfg: ks.TargetBundle = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
+    if (fs.existsSync("kindtheme.json"))
+        cfg.appTheme = JSON.parse(fs.readFileSync("kindtheme.json", "utf8"))
     return cfg
 }
 
@@ -454,6 +456,7 @@ function buildTargetCoreAsync() {
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
             U.assert(!!currentTarget)
             fs.writeFileSync("built/webtarget.json", JSON.stringify(currentTarget, null, 2))
+            fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
         })
         .then(() => {
             console.log("target.json built.")
@@ -979,7 +982,7 @@ cmd("serve                        - start web server for your local target", ser
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id or redirect)", ptrAsync, 1)
-cmd("buildtarget                  - build kindtarget.json", () => buildTargetAsync().then(() => {}), 1)
+cmd("buildtarget                  - build kindtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
