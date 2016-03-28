@@ -1,9 +1,13 @@
+/// <reference path="../typings/node/node.d.ts"/>
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
 import * as url from 'url';
 import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
+import * as child_process from 'child_process';
+import * as os from 'os';
 
 import U = ks.Util;
 import Cloud = ks.Cloud;
@@ -124,9 +128,9 @@ function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]>
                         .then(U.concat))
 }
 
-function isAuthorizedLocalRequestAsync(req: http.IncomingMessage) : boolean {
+function isAuthorizedLocalRequestAsync(req: http.IncomingMessage): boolean {
     // validate token
-    return req.headers["authorization"] 
+    return req.headers["authorization"]
         && req.headers["authorization"] == serveOptions.localToken;
 }
 
@@ -256,7 +260,7 @@ function initSocketServer() {
                 if (/^\/serial/i.test(request.url))
                     startSerial(request, socket, body);
             }
-        }catch(e) {
+        } catch (e) {
             console.log('upgrade failed...')
         }
     });
@@ -266,10 +270,10 @@ function initSocketServer() {
 
 function initSerialMonitor() {
     if (!appTarget.serial || !appTarget.serial.log) return;
-    
+
     console.log('serial: monitoring ports...')
-    initSocketServer();    
-    
+    initSocketServer();
+
     const serialport = require("serialport");
 
     function close(info: SerialPortInfo) {
@@ -295,7 +299,7 @@ function initSerialMonitor() {
                     if (wsSerialClients.length == 0) return;
                     // send it to ws clients
                     let msg = JSON.stringify({
-                        type:'serial',
+                        type: 'serial',
                         id: info.pnpId,
                         data: buffer.toString('utf8')
                     })
@@ -310,27 +314,47 @@ function initSerialMonitor() {
         });
     }
 
-    let comNameRx = appTarget.serial.comNameFilter ? new RegExp(appTarget.serial.comNameFilter) : undefined;    
-    let manufacturerRx = appTarget.serial.manufacturerFilter ? new RegExp(appTarget.serial.manufacturerFilter) : undefined;    
-    function filterPort(info: SerialPortInfo) : boolean {
+    let comNameRx = appTarget.serial.comNameFilter ? new RegExp(appTarget.serial.comNameFilter) : undefined;
+    let manufacturerRx = appTarget.serial.manufacturerFilter ? new RegExp(appTarget.serial.manufacturerFilter) : undefined;
+    function filterPort(info: SerialPortInfo): boolean {
         return (comNameRx ? comNameRx.test(info.comName) : true)
-            && (manufacturerRx ? manufacturerRx.test(info.manufacturer): true);
+            && (manufacturerRx ? manufacturerRx.test(info.manufacturer) : true);
     }
 
     setInterval(() => {
         serialport.list(function(err: any, ports: SerialPortInfo[]) {
             ports.filter(filterPort)
-                .filter(info => !serialPorts[info.pnpId])                
+                .filter(info => !serialPorts[info.pnpId])
                 .forEach((info) => open(info));
         });
     }, 2500);
 }
 
-export interface ServeOptions {
-    localToken:string;
+function openUrl(startUrl: string) {
+    if (!/^[a-z0-9A-Z#=\.\-\\\/%:\?_]+$/.test(startUrl)) {
+        console.error("invalid URL to open: " + startUrl)
+        return
+    }
+    let cmds : U.Map<string> = {
+        darwin: "open",
+        win32: "start",
+        linux: "xdg-open"
+    }
+    if (/^win/.test(os.platform()) && !/^[a-z0-9]+:\/\//i.test(startUrl))
+        startUrl = startUrl.replace('/', '\\');
+    else
+        startUrl = startUrl.replace('\\', '/');
+
+    let cmd = cmds[process.platform];
+    console.log(`opening ${startUrl}`)
+    child_process.exec(`${cmd} ${startUrl}`);
 }
 
-var serveOptions : ServeOptions;
+export interface ServeOptions {
+    localToken: string;
+}
+
+var serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!fs.existsSync(tempDir))
@@ -392,7 +416,7 @@ export function serveAsync(options: ServeOptions) {
                 error(403);
                 return null;
             }
-            
+
             return handleApiAsync(req, res, elts)
                 .then(sendJson, err => {
                     if (err.statusCode) {
@@ -463,7 +487,9 @@ export function serveAsync(options: ServeOptions) {
 
     server.listen(3232, "127.0.0.1");
 
-    console.log(`Open this URL: http://localhost:3232/#local_token=${options.localToken}`);
+    let start = `http://localhost:3232/#local_token=${options.localToken}`;
+    console.log(`Open this URL: ${start}`);
+    openUrl(start);
 
     return new Promise<void>((resolve, reject) => { })
 }
