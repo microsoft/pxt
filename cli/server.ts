@@ -124,6 +124,12 @@ function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]>
                         .then(U.concat))
 }
 
+function isAuthorizedLocalRequestAsync(req: http.IncomingMessage) : boolean {
+    // validate token
+    return req.headers["authorization"] 
+        && req.headers["authorization"] == serveOptions.localToken;
+}
+
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
     let opts: U.Map<string> = querystring.parse(url.parse(req.url).query)
     let innerPath = elts.slice(2).join("/").replace(/^\//, "")
@@ -244,10 +250,14 @@ function initSocketServer() {
     }
 
     let wsserver = http.createServer();
-    wsserver.on('upgrade', function(request: any, socket: any, body: any) {
-        if (WebSocket.isWebSocket(request)) {
-            if (/^\/serial/i.test(request.url))
-                startSerial(request, socket, body);
+    wsserver.on('upgrade', function(request: http.IncomingMessage, socket: any, body: any) {
+        try {
+            if (WebSocket.isWebSocket(request) && isAuthorizedLocalRequestAsync(request)) {
+                if (/^\/serial/i.test(request.url))
+                    startSerial(request, socket, body);
+            }
+        }catch(e) {
+            console.log('upgrade failed...')
         }
     });
 
@@ -316,7 +326,13 @@ function initSerialMonitor() {
     }, 2500);
 }
 
-export function serveAsync() {
+export interface ServeOptions {
+    localToken:string;
+}
+
+var serveOptions : ServeOptions;
+export function serveAsync(options: ServeOptions) {
+    serveOptions = options;
     if (!fs.existsSync(tempDir))
         fs.mkdirSync(tempDir)
 
@@ -371,6 +387,12 @@ export function serveAsync() {
         }
 
         if (elts[0] == "api") {
+            if (!isAuthorizedLocalRequestAsync(req)) {
+                console.log(`invalid token ${JSON.stringify(Object.keys(req.headers), null, 2)}`)
+                error(403);
+                return null;
+            }
+            
             return handleApiAsync(req, res, elts)
                 .then(sendJson, err => {
                     if (err.statusCode) {
@@ -385,8 +407,15 @@ export function serveAsync() {
         }
 
         if (pathname == "/--embed") {
-            // use microbit for now
+            // TODO use microbit for now
             res.writeHead(302, { location: 'https://codemicrobit.com/--embed' })
+            res.end()
+            return
+        }
+
+        if (pathname == "/--run") {
+            // TODO use microbit for now
+            res.writeHead(302, { location: 'https://codemicrobit.com/--run' })
             res.end()
             return
         }
@@ -434,7 +463,7 @@ export function serveAsync() {
 
     server.listen(3232, "127.0.0.1");
 
-    console.log("Serving from http://127.0.0.1:3232/");
+    console.log(`Open this URL: http://localhost:3232/#local_token=${options.localToken}`);
 
     return new Promise<void>((resolve, reject) => { })
 }
