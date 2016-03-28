@@ -193,7 +193,7 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
                                 key={'local' + scr.id}
                                 name={scr.name}
                                 time={scr.recentUse}
-                                description={lf("local script") }
+                                description={lf("local project") }
                                 onClick={() => chgHeader(scr) }
                                 />
                         ) }
@@ -482,7 +482,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             hideCancel: true,
             agreeLbl: lf("Got it!"),
             htmlBody: `
-        <h4 className="ui dividing header">${lf("Copy the HTML or use the URL below to embed your scripts in other pages.")}</h4>
+        <h4 className="ui dividing header">${lf("Copy the HTML or use the URL below to embed your projects in other pages.")}</h4>
 <div class="ui form">
   <div class="field">
     <label>HTML</label>
