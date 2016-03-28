@@ -1,9 +1,13 @@
+/// <reference path="../typings/node/node.d.ts"/>
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
 import * as url from 'url';
 import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
+import * as child_process from 'child_process';
+import * as os from 'os';
 
 import U = ks.Util;
 import Cloud = ks.Cloud;
@@ -122,6 +126,12 @@ function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]>
                                         else return []
                                     })))
                         .then(U.concat))
+}
+
+function isAuthorizedLocalRequestAsync(req: http.IncomingMessage): boolean {
+    // validate token
+    return req.headers["authorization"]
+        && req.headers["authorization"] == serveOptions.localToken;
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
@@ -253,10 +263,14 @@ function initSocketServer() {
     }
 
     let wsserver = http.createServer();
-    wsserver.on('upgrade', function(request: any, socket: any, body: any) {
-        if (WebSocket.isWebSocket(request)) {
-            if (/^\/serial/i.test(request.url))
-                startSerial(request, socket, body);
+    wsserver.on('upgrade', function(request: http.IncomingMessage, socket: any, body: any) {
+        try {
+            if (WebSocket.isWebSocket(request) && isAuthorizedLocalRequestAsync(request)) {
+                if (/^\/serial/i.test(request.url))
+                    startSerial(request, socket, body);
+            }
+        } catch (e) {
+            console.log('upgrade failed...')
         }
     });
 
@@ -265,10 +279,10 @@ function initSocketServer() {
 
 function initSerialMonitor() {
     if (!appTarget.serial || !appTarget.serial.log) return;
-    
+
     console.log('serial: monitoring ports...')
-    initSocketServer();    
-    
+    initSocketServer();
+
     const serialport = require("serialport");
 
     function close(info: SerialPortInfo) {
@@ -294,7 +308,7 @@ function initSerialMonitor() {
                     if (wsSerialClients.length == 0) return;
                     // send it to ws clients
                     let msg = JSON.stringify({
-                        type:'serial',
+                        type: 'serial',
                         id: info.pnpId,
                         data: buffer.toString('utf8')
                     })
@@ -309,23 +323,47 @@ function initSerialMonitor() {
         });
     }
 
-    let comNameRx = appTarget.serial.comNameFilter ? new RegExp(appTarget.serial.comNameFilter) : undefined;    
-    let manufacturerRx = appTarget.serial.manufacturerFilter ? new RegExp(appTarget.serial.manufacturerFilter) : undefined;    
-    function filterPort(info: SerialPortInfo) : boolean {
-        return (comNameRx ? comNameRx.test(info.comName) : true)
-            && (manufacturerRx ? manufacturerRx.test(info.manufacturer): true);
+    let manufacturerRx = appTarget.serial.manufacturerFilter ? new RegExp(appTarget.serial.manufacturerFilter) : undefined;
+    function filterPort(info: SerialPortInfo): boolean {
+        return manufacturerRx ? manufacturerRx.test(info.manufacturer) : true;
     }
 
     setInterval(() => {
         serialport.list(function(err: any, ports: SerialPortInfo[]) {
             ports.filter(filterPort)
-                .filter(info => !serialPorts[info.pnpId])                
+                .filter(info => !serialPorts[info.pnpId])
                 .forEach((info) => open(info));
         });
-    }, 2500);
+    }, 5000);
 }
 
-export function serveAsync() {
+function openUrl(startUrl: string) {
+    if (!/^[a-z0-9A-Z#=\.\-\\\/%:\?_]+$/.test(startUrl)) {
+        console.error("invalid URL to open: " + startUrl)
+        return
+    }
+    let cmds : U.Map<string> = {
+        darwin: "open",
+        win32: "start",
+        linux: "xdg-open"
+    }
+    if (/^win/.test(os.platform()) && !/^[a-z0-9]+:\/\//i.test(startUrl))
+        startUrl = startUrl.replace('/', '\\');
+    else
+        startUrl = startUrl.replace('\\', '/');
+
+    let cmd = cmds[process.platform];
+    console.log(`opening ${startUrl}`)
+    child_process.exec(`${cmd} ${startUrl}`);
+}
+
+export interface ServeOptions {
+    localToken: string;
+}
+
+var serveOptions: ServeOptions;
+export function serveAsync(options: ServeOptions) {
+    serveOptions = options;
     if (!fs.existsSync(tempDir))
         fs.mkdirSync(tempDir)
 
@@ -380,6 +418,12 @@ export function serveAsync() {
         }
 
         if (elts[0] == "api") {
+            if (!isAuthorizedLocalRequestAsync(req)) {
+                console.log(`invalid token ${JSON.stringify(Object.keys(req.headers), null, 2)}`)
+                error(403);
+                return null;
+            }
+
             return handleApiAsync(req, res, elts)
                 .then(sendJson, err => {
                     if (err.statusCode) {
@@ -394,8 +438,15 @@ export function serveAsync() {
         }
 
         if (pathname == "/--embed") {
-            // use microbit for now
+            // TODO use microbit for now
             res.writeHead(302, { location: 'https://codemicrobit.com/--embed' })
+            res.end()
+            return
+        }
+
+        if (pathname == "/--run") {
+            // TODO use microbit for now
+            res.writeHead(302, { location: 'https://codemicrobit.com/--run' })
             res.end()
             return
         }
@@ -443,7 +494,9 @@ export function serveAsync() {
 
     server.listen(3232, "127.0.0.1");
 
-    console.log("Serving from http://127.0.0.1:3232/");
+    let start = `http://localhost:3232/#local_token=${options.localToken}`;
+    console.log(`Open this URL: ${start}`);
+    openUrl(start);
 
     return new Promise<void>((resolve, reject) => { })
 }

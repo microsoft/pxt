@@ -40,6 +40,7 @@ if (prevExports) {
 
 export interface UserConfig {
     accessToken?: string;
+    localToken?:string;
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
@@ -497,8 +498,13 @@ function buildAndWatchTargetAsync() {
 }
 
 export function serveAsync() {
+    if (!globalConfig.localToken) {
+        globalConfig.localToken = U.guidGen();
+        saveConfig()
+    }
+    let localToken = globalConfig.localToken;
     return buildAndWatchTargetAsync()
-        .then(() => server.serveAsync())
+        .then(() => server.serveAsync({ localToken: localToken }))
 }
 
 function extensionAsync(add: string) {
