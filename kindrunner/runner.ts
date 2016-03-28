@@ -14,9 +14,10 @@ namespace ks.runner {
     }
 
     export var appTarget: ks.AppTarget;
+    export var targetBundle: ks.TargetBundle;
 
     function getEmbeddedScript(id: string): Util.StringMap<string> {
-        return Util.lookup(appTarget.bundledpkgs, id)
+        return Util.lookup(targetBundle.bundledpkgs, id)
     }
 
     class EditorPackage {
@@ -125,8 +126,7 @@ namespace ks.runner {
             .then((trgbundle: ks.TargetBundle) => {
                 let cfg: ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
                 appTarget = cfg.target
-                appTarget.bundledpkgs = trgbundle.bundledpkgs
-
+                targetBundle = trgbundle;
                 if (!appTarget.cloud) Cloud.apiRoot = undefined;
             })
             .then(() => {

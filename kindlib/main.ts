@@ -70,6 +70,7 @@ namespace ks {
         bundledpkgs: U.Map<U.Map<string>>;
         bundleddirs: string[];
         corepkg: string;
+        appTheme: AppTheme;
     }
 
     export interface PackageConfig {
@@ -111,10 +112,15 @@ namespace ks {
     }
     
     export interface AppTheme {
+        id?: string;
+        name?: string;
+        title?: string;
         logoUrl?:string;
         logo?: string;
         rightLogo?: string;
         footerLogo?:string;
+        koduUrl?: string;
+        visualStudioCode?: boolean;
     }
     
     export interface AppSerial {
@@ -126,14 +132,10 @@ namespace ks {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
         title?: string;
-        theme?: AppTheme;
         cloud?: boolean;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
         compile: CompileTarget;
-        koduUrl?: string;
-        visualStudioCode?: boolean;
-        bundledpkgs?: U.Map<U.Map<string>>;
         serial?: AppSerial;
     }
 

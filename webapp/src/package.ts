@@ -7,12 +7,21 @@ import Util = ks.Util;
 var lf = Util.lf
 
 export var appTarget: ks.AppTarget;
+export var targetBundle: ks.TargetBundle;
 
 let extWeight: Util.StringMap<number> = {
     "ts": 10,
     "blocks": 20,
     "json": 30,
     "md": 40,
+}
+
+export function setupAppTarget(trgbundle: ks.TargetBundle) {
+    if (!trgbundle.appTheme) trgbundle.appTheme = {};
+    let cfg: ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
+    appTarget = cfg.target
+    targetBundle = trgbundle;
+    if (!appTarget.cloud) Cloud.apiRoot = undefined;
 }
 
 export class File {
@@ -197,8 +206,8 @@ export class EditorPackage {
             return this.topPkg.pkgAndDeps();
         return Util.values((this.ksPkg as ks.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
     }
-    
-    filterFiles(cond:(f:File)=>boolean) {
+
+    filterFiles(cond: (f: File) => boolean) {
         return Util.concat(this.pkgAndDeps().map(e => Util.values(e.files).filter(cond)))
     }
 
@@ -208,7 +217,7 @@ export class EditorPackage {
 }
 
 function getEmbeddedScript(id: string): Util.StringMap<string> {
-    return Util.lookup(appTarget.bundledpkgs, id)
+    return Util.lookup(targetBundle.bundledpkgs, id)
 }
 
 class Host
