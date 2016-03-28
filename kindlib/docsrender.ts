@@ -1,6 +1,29 @@
 /// <reference path='../typings/marked/marked.d.ts' />
 /// <reference path="emitter/util.ts"/>
 
+namespace ks {
+    export interface AppTheme {
+        id?: string;
+        name?: string;
+        title?: string;
+        logoUrl?: string;
+        logo?: string;
+        rightLogo?: string;
+        footerLogo?: string;
+        docsLogo?: string;
+        koduUrl?: string;
+        visualStudioCode?: boolean;
+        docMenu?: DocMenuEntry[];
+    }
+
+    export interface DocMenuEntry {
+        name: string;
+        // needs to have one of `path` or `subitems` 
+        path?: string;
+        subitems?: DocMenuEntry[];
+    }
+}
+
 namespace ks.docs {
     declare var require: any;
     var marked: MarkedStatic;
@@ -11,7 +34,7 @@ namespace ks.docs {
 
     var stdmacros: U.Map<string> = {
     }
-    
+
     var stdSetting = "<!-- @CMD@ @ARGS@ -->"
 
     var stdsettings: U.Map<string> = {
@@ -32,12 +55,13 @@ namespace ks.docs {
         return s;
     }
 
-    export function renderMarkdown(template: string, src: string): string {
-        let vars: U.Map<string> = {}
+    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}): string {
+        let params: U.Map<string> = {}
 
         let boxes = U.clone(stdboxes)
         let macros = U.clone(stdmacros)
         let settings = U.clone(stdsettings)
+        let menus: U.Map<string> = {}
 
         function parseHtmlAttrs(s: string) {
             let attrs: U.Map<string> = {};
@@ -56,7 +80,7 @@ namespace ks.docs {
         }
 
         let error = (s: string) =>
-            `<div class='ui negative message'>${s}</div>`
+            `<div class='ui negative message'>${htmlQuote(s)}</div>`
 
         template = template.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
             let attrs = parseHtmlAttrs(attrsStr)
@@ -69,6 +93,8 @@ namespace ks.docs {
                 boxes[name] = `<!-- BEGIN-ASIDE ${name} -->${body}<!-- END-ASIDE -->`
             } else if (/setting/.test(attrs["class"])) {
                 settings[name] = body
+            } else if (/menu/.test(attrs["class"])) {
+                menus[name] = body
             } else {
                 macros[name] = body
             }
@@ -95,7 +121,7 @@ namespace ks.docs {
             if (tp == "@") {
                 let expansion = U.lookup(settings, cmd)
                 if (expansion != null) {
-                    vars[cmd] = args
+                    params[cmd] = args
                 } else {
                     expansion = U.lookup(macros, cmd)
                     if (expansion == null)
@@ -128,13 +154,13 @@ namespace ks.docs {
 
         let registers: U.Map<string> = {}
         registers["main"] = "" // first
-        
+
         html = html.replace(/<!-- BEGIN-ASIDE (\S+) -->([^]*?)<!-- END-ASIDE -->/g, (f, nam, cont) => {
             let s = U.lookup(registers, nam)
             registers[nam] = (s || "") + cont
             return "<!-- aside -->"
         })
-        
+
         registers["main"] = html
 
         let injectBody = (tmpl: string, body: string) =>
@@ -146,9 +172,32 @@ namespace ks.docs {
             html += injectBody(k + "-container", registers[k])
         }
 
-        vars["body"] = html
+        let recMenu = (m: DocMenuEntry, lev: number) => {
+            let templ = menus["item"]
+            let mparams: U.Map<string> = {
+                NAME: m.name,
+            }
+            if (m.subitems) {
+                if (lev == 0) templ = menus["top-dropdown"]
+                else templ = menus["inner-dropdown"]
+                mparams["ITEMS"] = m.subitems.map(e => recMenu(e, lev + 1)).join("\n")
+            } else {
+                if (/^-+$/.test(m.name)) {
+                    templ = menus["divider"]
+                }
+                if (m.path && !/^(https?:|\/)/.test(m.path))
+                    return error("Invalid link: " + m.path)
+                mparams["LINK"] = m.path
+            }
+            return injectHtml(templ, mparams, ["ITEMS"])
+        }
 
-        return injectHtml(template, vars, ["body"])
+        params["body"] = html
+        params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
+        params["targetname"] = theme.name || "KindScript"
+        params["targetlogo"] = theme.docsLogo ? `<img src="${U.toDataUri(theme.logo)}" />` : ""
+
+        return injectHtml(template, params, ["body", "menu", "targetlogo"])
     }
 
     function injectHtml(template: string, vars: U.Map<string>, quoted: string[] = []) {

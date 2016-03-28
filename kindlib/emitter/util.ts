@@ -539,6 +539,8 @@ namespace ts.ks.Util {
     export var getRandomBuf: (buf: Uint8Array) => void;
     
     export function toDataUri(data: string, mimetype? : string) : string {
+        // TODO does this only support trusted data?
+        
         // already a data uri?       
         if (/^data:/i.test(data)) return data;
         

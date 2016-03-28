@@ -45,12 +45,14 @@ export function sha256buffer(b: Buffer): string {
     return h.digest('hex').toLowerCase()
 }
 
+let uploadDir = "docs"
+
 function uploadArtAsync(fn: string): Promise<string> {
     let contentType = U.getMime(fn)
     if (!contentType || contentType == "application/octet-stream")
         error("content type not understood: " + fn)
 
-    let buf = fs.readFileSync("docs" + fn)
+    let buf = fs.readFileSync(uploadDir + fn)
 
     return Promise.resolve()
         .then(() => {
@@ -109,6 +111,7 @@ function uploadFileAsync(fn: string) {
             let id = m[1]
 
             return Cloud.privateGetAsync(nodeutil.pathToPtr(path))
+                .then(v => v, e => { return {} })
                 .then((curr: Cloud.JsonPointer) => {
                     if (curr.artid == id) {
                         verbose(`already set: ${fn} -> ${id}`)
@@ -116,7 +119,7 @@ function uploadFileAsync(fn: string) {
                     }
 
                     return Cloud.privatePostAsync("pointers", {
-                        path: path,
+                        path: nodeutil.sanitizePath(path),
                         htmlartid: "",
                         artid: id,
                         scriptid: "",
@@ -147,22 +150,28 @@ function getFiles() {
     return res
 }
 
+function uploadJsonAsync() {
+    uploadDir = "built"
+    return uploadFileAsync("/theme.json")
+}
+
 export function uploadAsync(...args: string[]) {
     if (args[0] == "-v") {
         showVerbose = true
         args.shift()
     }
-    
+
     let appTarget = nodeutil.getWebTarget()
     ptrPrefix = "/" + appTarget.id
-    
+
     let files = args.map(a => {
         if (U.startsWith(a, "docs/")) return a.slice(4)
         else throw error("File name has to start with docs/: " + a)
     })
     if (files.length == 0)
         files = getFiles().filter(fn => !/^\/_/.test(fn))
-        
+
+    uploadDir = "docs"
     return Promise.map(files, uploadFileAsync, { concurrency: 20 })
         .then(() => {
             for (let k of Object.keys(uploadPromises)) {
@@ -171,6 +180,7 @@ export function uploadAsync(...args: string[]) {
                 }
             }
         })
+        .then(uploadJsonAsync)
         .then(() => {
             console.log("ALL DONE")
         })

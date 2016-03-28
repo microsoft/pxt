@@ -193,9 +193,20 @@ function fileExistsSync(p: string): boolean {
 
 var docsTemplate: string = "@body@"
 var appTarget: ks.AppTarget;
+var appTheme: ks.AppTheme;
 
 function setupTemplate() {
-    let templatePath = path.join(tempDir, "template.html")
+    appTarget = nodeutil.getWebTarget()
+    appTheme = nodeutil.getAppTheme()
+    
+    let templatePath = path.join(tempDir, "template-override.html")
+    if (fs.existsSync(templatePath)) {
+        docsTemplate = fs.readFileSync(templatePath, "utf8")
+        console.log("Using template override.")
+        return
+    }
+    
+    templatePath = path.join(tempDir, "template.html")
     if (fs.existsSync(templatePath)) {
         docsTemplate = fs.readFileSync(templatePath, "utf8")
     }
@@ -214,8 +225,6 @@ function setupTemplate() {
             console.log(`error downloading ${url}: ${err.message}`)
         })
         .done()
-
-    appTarget = nodeutil.getWebTarget()
 }
 
 interface SerialPortInfo {
@@ -465,7 +474,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (fileExistsSync(webFile)) {
             if (/\.md$/.test(webFile)) {
-                let html = ks.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"))
+                let html = ks.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), appTheme)
                 sendHtml(html)
             } else {
                 sendFile(webFile)

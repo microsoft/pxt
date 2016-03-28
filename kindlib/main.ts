@@ -111,18 +111,6 @@ namespace ks {
         files: U.Map<string>;
     }
     
-    export interface AppTheme {
-        id?: string;
-        name?: string;
-        title?: string;
-        logoUrl?:string;
-        logo?: string;
-        rightLogo?: string;
-        footerLogo?:string;
-        koduUrl?: string;
-        visualStudioCode?: boolean;
-    }
-    
     export interface AppSerial {
         manufacturerFilter?: string;
         log?: boolean;
