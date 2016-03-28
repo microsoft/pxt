@@ -19,7 +19,19 @@ import * as server from './server';
 import * as uploader from './uploader';
 
 // provided by target
-var deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
+let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
+
+function initTargetCommands() {
+    let cmdsjs = path.resolve('built/cmds.js');
+    if (fs.existsSync(cmdsjs)) {
+        console.log(`loading cli extensions...`)
+        let cli = require(cmdsjs)
+        if (cli.deployCoreAsync) {
+            console.log('imported deploy command')
+            deployCoreAsync = cli.deployCoreAsync
+        }
+    }
+}
 
 let prevExports = (global as any).savedModuleExports
 if (prevExports) {
@@ -1047,15 +1059,7 @@ export function mainCli() {
     let cmd = args[0]
 
     if (cmd != "buildtarget") {
-        let cmdsjs = path.resolve('built/cmds.js');        
-        if (fs.existsSync(cmdsjs)) {
-            console.log(`loading cli extensions...`)
-            let cli = require(cmdsjs)
-            if (cli.deployCoreAsync) {
-                console.log('imported deploy command')
-                deployCoreAsync = cli.deployCoreAsync
-            }
-        }
+        initTargetCommands();
     }
 
 

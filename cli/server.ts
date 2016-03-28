@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as http from 'http';
 import * as url from 'url';
 import * as querystring from 'querystring';
-
 import * as nodeutil from './nodeutil';
 
 import U = ks.Util;
@@ -19,6 +18,21 @@ let statAsync = Promise.promisify(fs.stat)
 let readdirAsync = Promise.promisify(fs.readdir)
 let readFileAsync = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
+
+// provided by target
+let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
+
+function initTargetCommands() {
+    let cmdsjs = path.resolve('built/cmds.js');
+    if (fs.existsSync(cmdsjs)) {
+        console.log(`loading cli extensions...`)
+        let cli = require(cmdsjs)
+        if (cli.deployCoreAsync) {
+            console.log('imported deploy command')
+            deployCoreAsync = cli.deployCoreAsync
+        }
+    }
+}
 
 function existsAsync(fn: string) {
     return new Promise((resolve, reject) => {
@@ -141,6 +155,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else if (cmd == "POST pkg")
         return readJsonAsync()
             .then(d => writePkgAsync(innerPath, d))
+    else if (cmd == "POST deploy" && deployCoreAsync)
+        return readJsonAsync()
+            .then(d => deployCoreAsync(d));
     else throw throwError(400)
 }
 
@@ -196,6 +213,7 @@ export function serveAsync() {
         fs.mkdirSync(tempDir)
 
     setupTemplate()
+    initTargetCommands()
 
     let server = http.createServer((req, res) => {
         let error = (code: number, msg: string = null) => {
