@@ -214,13 +214,20 @@ export function uploadrelAsync(label?: string) {
     })
 }
 
-function buildNpmAsync() {
+function buildNpmAsync(v: string) {
     console.log("Building npm package...")
+    let pkgPrev = fs.readFileSync("package.json", "utf8")
+    let pkg = JSON.parse(pkgPrev)
+    pkg["dependencies"]["kindscript"] = v
+    fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2))
     return spawnAsync({
         cmd: addCmd("npm"),
         args: ["pack"],
         cwd: "."
     })
+        .finally(() => {
+            fs.writeFileSync("package.json", pkgPrev)
+        })
         .then(() => {
             let pkg = JSON.parse(fs.readFileSync("package.json", "utf8"))
             fs.renameSync(pkg["name"] + "-" + pkg["version"] + ".tgz", "built/package.tgz")
@@ -266,7 +273,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             let simHtml = fs.readFileSync(simHtmlPath, "utf8")
             opts.fileContent[simHtmlPath] = simHtml.replace(/\.\/((bluebird|kindsim)[\w\.]*\.js)/g, (x, y) => r.cdnUrl + y)
 
-            return buildNpmAsync()
+            return buildNpmAsync(apprel.replace(/^release\/v/, ""))
                 .then(() => uploadCoreAsync(opts))
         })
 }
