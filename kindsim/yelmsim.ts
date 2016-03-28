@@ -93,10 +93,8 @@ namespace ks.rt {
         
         function queue(msg : SimulatorMessage) {
             if (!runtime || runtime.dead) {
-                console.log('runtime not started or dead');
                 return;
-            }
-            
+            }            
             runtime.board.receiveMessage(msg);
         }
                            
