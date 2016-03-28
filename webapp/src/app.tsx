@@ -213,32 +213,6 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
     }
 }
 
-class EmbedDesigner extends data.Component<ISettingsProps, {}> {
-    renderCore() {
-        let header = this.props.parent.state.header;
-        if (!header) return <div></div>;
-        
-        let url = `https://${window.location.host}/--run?`;
-        if (header.pubId) url += `id=${header.pubId}`;
-        else {
-            // read main file
-            let code = pkg.mainPkg.readFile(header.editor == 'tsprj' ? 'main.ts': 'main.blocks.ts');
-            url += `code=${encodeURIComponent(code)}`; 
-        }
-        
-        let embed = `<iframe width="100%" height="300" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe>`
-        
-        return (
-<sui.Popup text={lf("Embed")} icon='share alternate'>
-    <div className='ui form'>
-        <h4 className="ui dividing header">Copy the url and embed the simulator in your pages!</h4>
-        <sui.Field><sui.Input lines={2} value={embed} /></sui.Field>
-    </div>
-</sui.Popup>)
-        }
-}
-
-
 class FileList extends data.Component<ISettingsProps, {}> {
     renderCore() {
         let parent = this.props.parent
@@ -487,6 +461,40 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.loadHeader(workspace.getHeaders()[0])
                 })
         })
+    }
+    
+    embedDesigner() {
+        let header = this.state.header;
+        if (!header) return;
+        
+        let url = `https://${window.location.host}/--run?`;
+        if (header.pubId) url += `id=${header.pubId}`;
+        else {
+            // read main file
+            let code = pkg.mainPkg.readFile(header.editor == 'tsprj' ? 'main.ts': 'main.blocks.ts');
+            url += `code=${encodeURIComponent(code)}`; 
+        }
+        
+        let embed = `<iframe width="100%" height="300" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe>`
+        core.confirmAsync({
+            logos: [this.appTarget.theme.logo, logoSvgXml],
+            header: lf("Embed in other pages!"),
+            hideCancel: true,
+            agreeLbl: lf("Got it!"),            
+            htmlBody:`
+        <h4 className="ui dividing header">${lf("Copy the HTML or use the URL below to embed your scripts in other pages.")}</h4>
+<div class="ui form">
+  <div class="field">
+    <label>HTML</label>
+    <textarea readonly="" rows=2>${embed}</textarea>
+  </div>
+  <div class="field">
+    <label>URL</label>
+    <textarea readonly="" rows=2>${url}</textarea>
+  </div>
+</div>
+`
+        }).done();                
     }
 
     newProject(hideCancel = false) {
@@ -786,7 +794,7 @@ Ctrl+Shift+B
                             <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                             <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                             {this.editor.menu() }
-                            <EmbedDesigner parent={this} />
+                            <sui.Button class="landscape only" text={lf("Embed")} icon="share alternate" onClick={() => this.embedDesigner()} />
                         </div>
                         <div className="ui item">
                             <div className="ui massive transparent input">

@@ -382,13 +382,13 @@ function maxMTimeAsync(dirs: string[]) {
         .then(() => max)
 }
 
-export function buildTargetAsync(): Promise<void> {
+export function buildTargetAsync(): Promise<string[]> {
     let dirs: string[];
-    return buildAndWatchAsync(() => buildTargetCoreAsync()
-        .then((dr) => { dirs = [path.resolve('node_modules/kindscript')].concat(dr); return buildFolderAsync('sim'); })
+    return buildTargetCoreAsync()
+        .then((dr) => { dirs = dr; return buildFolderAsync('sim'); })
         .then((d) => { if (d > -1) dirs = dirs.concat('sim'); return buildFolderAsync('cmds', true); })
         .then((d) => { if (d > -1) dirs = dirs.concat('cmds'); return buildFolderAsync('server', true); })
-        .then((d) => { if (d > -1) dirs = dirs.concat('server'); return dirs }));
+        .then((d) => { if (d > -1) dirs = dirs.concat('server'); return dirs });
 }
 
 function buildFolderAsync(p: string, optional?: boolean): Promise<number> {
@@ -488,9 +488,9 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 }
 
 function buildAndWatchTargetAsync() {
-    return buildKindScriptAsync()
+    return buildAndWatchAsync(() => buildKindScriptAsync()
         .then(() => buildTargetAsync())
-        .then(() => ["node_module/kindscript/built", "sim", "cmds", "server"]);
+        .then((dr) => [path.resolve("node_modules/kindscript")].concat(dr)));
 }
 
 export function serveAsync() {
@@ -979,7 +979,7 @@ cmd("serve                        - start web server for your local target", ser
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id or redirect)", ptrAsync, 1)
-cmd("buildtarget                  - build kindtarget.json", buildTargetAsync, 1)
+cmd("buildtarget                  - build kindtarget.json", () => buildTargetAsync().then(() => {}), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
