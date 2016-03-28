@@ -654,6 +654,7 @@ Ctrl+Shift+B
                 if (hex) {
                     let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
                     console.log('saving ' + fn)
+                    core.browserDownloadText(hex, fn, "application/x-microbit-hex")                        
                     if (/http:\/\/localhost:3232/i.test(window.location.href)) {
                         console.log('local deployment...');
                         core.infoNotification("Uploading .hex file...");
@@ -661,11 +662,9 @@ Ctrl+Shift+B
                             .done(() => {
                                 core.infoNotification(lf(".hex file uploaded..."));   
                             });
-                    } else {
-                        core.browserDownloadText(hex, fn, "application/x-microbit-hex")                        
                     }
                 } else {
-                    console.log('no .hex file produced')
+                    console.log('no .hex file produced.')
                 }
             })
             .done()

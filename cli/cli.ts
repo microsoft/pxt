@@ -385,7 +385,7 @@ function maxMTimeAsync(dirs: string[]) {
 export function buildTargetAsync(): Promise<void> {
     let dirs: string[];
     return buildAndWatchAsync(() => buildTargetCoreAsync()
-        .then((dr) => { dirs = dr; return buildFolderAsync('sim'); })
+        .then((dr) => { dirs = [path.resolve('node_modules/kindscript')].concat(dr); return buildFolderAsync('sim'); })
         .then((d) => { if (d > -1) dirs = dirs.concat('sim'); return buildFolderAsync('cmds', true); })
         .then((d) => { if (d > -1) dirs = dirs.concat('cmds'); return buildFolderAsync('server', true); })
         .then((d) => { if (d > -1) dirs = dirs.concat('server'); return dirs }));
@@ -465,6 +465,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
     let currMtime = Date.now()
     return f()
         .then(dirs => {
+            console.log('watching ' + dirs.join(', ') + '...');
             let loop = () => {
                 Promise.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
