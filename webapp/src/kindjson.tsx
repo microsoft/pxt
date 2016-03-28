@@ -48,14 +48,16 @@ export class Editor extends srceditor.Editor {
  */
 
         return (
+            <div className="ui content">
             <div className="ui segment form text" style={{ backgroundColor: "white" }}>
+                {Cloud.isLoggedIn() ?
                 <sui.Field>
                     <div className="ui toggle checkbox ">
                         <input type="checkbox" name="public" checked={c.public}
                             onChange={() => update(c.public = !c.public) } />
                         <label>{lf("Public package (library)") }</label>
                     </div>
-                </sui.Field>
+                </sui.Field> : ""}
                 <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
                 <sui.Input label={lf("Picture or video (YouTube, Vimeo, Instagram)") } value={card.promoUrl || ""} onChange={v => {
                     initCard();
@@ -78,6 +80,7 @@ export class Editor extends srceditor.Editor {
                         update(c.card.software = vi)
                     } } />
                 </div>
+            </div>
             </div>
         )
     }
@@ -109,10 +112,6 @@ export class Editor extends srceditor.Editor {
     }
 
     menu() {
-        return (
-            <div className="item">
-                <sui.Button class="button floating" text={lf("Edit Text") } icon="keyboard" onClick={() => this.parent.editText() } />
-            </div>
-        )
+        return (<sui.Button class="button floating" text={lf("Edit Text") } icon="keyboard" onClick={() => this.parent.editText() } />)
     }
 }

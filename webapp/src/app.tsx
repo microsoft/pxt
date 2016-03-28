@@ -180,7 +180,7 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
     }        
         */
         return (
-            <sui.Modal ref={v => this.modal = v} header={lf("Open script...") } addClass="large searchdialog" >
+            <sui.Modal ref={v => this.modal = v} header={lf("Open project...") } addClass="large searchdialog" >
 
                 <div className="ui segment items">
                     <div className="ui item fluid icon input">
@@ -785,9 +785,9 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.Button icon="file outline" textClass="ui landscape only" text={lf("Create Code") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
-                                    {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open script...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
-                                    <div className="divider"></div>
+                                    {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open project...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
                                     {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } /> : ""}
+                                    <sui.Item icon="setting" text={lf("Project settings...")} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json"))   } />
                                     <sui.Item icon='folder' text={lf("Show/Hide files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
