@@ -383,17 +383,18 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export function buildTargetAsync(): Promise<void> {
-    return buildTargetCoreAsync()
-        .then(() => buildFolderAsync('sim'))
-        .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('server', true))
-        .then(() => { });
+    let dirs: string[];
+    return buildAndWatchAsync(() => buildTargetCoreAsync()
+        .then((dr) => { dirs = dr; return buildFolderAsync('sim'); })
+        .then((d) => { if (d > -1) dirs = dirs.concat('sim'); return buildFolderAsync('cmds', true); })
+        .then((d) => { if (d > -1) dirs = dirs.concat('cmds'); return buildFolderAsync('server', true); })
+        .then((d) => { if (d > -1) dirs = dirs.concat('server'); return dirs }));
 }
 
 function buildFolderAsync(p: string, optional?: boolean): Promise<number> {
     if (!fs.existsSync(p + "/tsconfig.json")) {
         if (!optional) console.log(`${p}/tsconfig.json not found`);
-        return Promise.resolve(optional ? 0 : -1)
+        return Promise.resolve(-1)
     }
 
     console.log(`building ${p}...`)
