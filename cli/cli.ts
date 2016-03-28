@@ -18,6 +18,8 @@ import Cloud = ks.Cloud;
 import * as server from './server';
 import * as uploader from './uploader';
 
+// provided by target
+var deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
 
 let prevExports = (global as any).savedModuleExports
 if (prevExports) {
@@ -368,27 +370,32 @@ function maxMTimeAsync(dirs: string[]) {
         .then(() => max)
 }
 
-export function buildTargetAsync() {
+export function buildTargetAsync(): Promise<void> {
     return buildTargetCoreAsync()
-        .then(buildSimulatorAsync)
-        .then(() => { })
+        .then(() => buildFolderAsync('sim'))
+        .then(() => buildFolderAsync('cmds', true))
+        .then(() => buildFolderAsync('server', true))
+        .then(() => { });
 }
 
-function buildSimulatorAsync() {
-    if (!fs.existsSync("sim/tsconfig.json"))
-        return Promise.resolve(-1)
-    console.log("building simulator...")
+function buildFolderAsync(p: string, optional?: boolean): Promise<number> {
+    if (!fs.existsSync(p + "/tsconfig.json")) {
+        if (!optional) console.log(`${p}/tsconfig.json not found`);
+        return Promise.resolve(optional ? 0 : -1)
+    }
+
+    console.log(`building ${p}...`)
     return spawnAsync({
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
-        cwd: "sim"
+        cwd: p
     })
         .then(() => {
-            console.log("simulator built.")
+            console.log(`${p} built.`)
             return 0
         })
         .catch(e => {
-            console.log("TSC build failed.")
+            console.log(`${p} build failed.`)
             return 1
         })
 }
@@ -467,11 +474,9 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 }
 
 function buildAndWatchTargetAsync() {
-    return buildAndWatchAsync(buildKindScriptAsync)
-        .then(() => buildAndWatchAsync(buildTargetCoreAsync))
-        .then(() =>
-            buildAndWatchAsync(() => buildSimulatorAsync()
-                .then(num => num >= 0 ? ["sim", "node_modules/kindscript/built"] : [])))
+    return buildKindScriptAsync()
+        .then(() => buildTargetAsync())
+        .then(() => ["node_module/kindscript/built", "sim", "cmds", "server"]);
 }
 
 export function serveAsync() {
@@ -505,24 +510,6 @@ let writeFileAsync: any = Promise.promisify(fs.writeFile)
 let execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
 let readDirAsync = Promise.promisify(fs.readdir)
 let statAsync = Promise.promisify(fs.stat)
-
-function getBitDrivesAsync(): Promise<string[]> {
-    if (process.platform == "win32") {
-        return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem")
-            .then(buf => {
-                let res: string[] = []
-                buf.toString("utf8").split(/\n/).forEach(ln => {
-                    let m = /^([A-Z]:).* MICROBIT/.exec(ln)
-                    if (m) {
-                        res.push(m[1] + "/")
-                    }
-                })
-                return res
-            })
-    } else {
-        return Promise.resolve([])
-    }
-}
 
 class Host
     implements ks.Host {
@@ -849,23 +836,6 @@ export function formatAsync(...fileNames: string[]) {
         })
 }
 
-function deployCoreAsync(res: ts.ks.CompileResult) {
-    return getBitDrivesAsync()
-        .then(drives => {
-            if (drives.length == 0) {
-                console.log("cannot find any drives to deploy to")
-            } else {
-                console.log("copy microbit.hex to " + drives.join(", "))
-            }
-            return Promise.map(drives, d =>
-                writeFileAsync(d + "microbit.hex", res.outfiles["microbit.hex"])
-                    .then(() => {
-                        console.log("wrote hex file to " + d)
-                    }))
-        })
-        .then(() => { })
-}
-
 function runCoreAsync(res: ts.ks.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
@@ -929,8 +899,13 @@ function buildCoreAsync(mode: BuildOption) {
 
             console.log("Package built; hexsize=" + (res.outfiles["microbit.hex"] || "").length)
 
-            if (mode == BuildOption.Deploy)
+            if (mode == BuildOption.Deploy) {
+                if (!deployCoreAsync) {
+                    console.log("no deploy functionality defined by this target")
+                    return null;
+                }
                 return deployCoreAsync(res);
+            }
             else if (mode == BuildOption.Run)
                 return runCoreAsync(res);
             else
@@ -963,6 +938,7 @@ interface Command {
 }
 
 let cmds: Command[] = []
+
 
 function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 0) {
     let m = /^(\S+)(\s+)(.*?)\s+- (.*)/.exec(desc)
@@ -1069,9 +1045,28 @@ export function mainCli() {
     initConfig();
 
     let cmd = args[0]
+
+    if (cmd != "buildtarget") {
+        let cmdsjs = path.resolve('built/cmds.js');        
+        if (fs.existsSync(cmdsjs)) {
+            console.log(`loading cli extensions...`)
+            let cli = require(cmdsjs)
+            if (cli.deployCoreAsync) {
+                console.log('imported deploy command')
+                deployCoreAsync = cli.deployCoreAsync
+            }
+        }
+    }
+
+
     if (!cmd) {
-        console.log("running 'kind deploy' (run 'kind help' for usage)")
-        cmd = "deploy"
+        if (deployCoreAsync) {
+            console.log("running 'kind deploy' (run 'kind help' for usage)")
+            cmd = "deploy"
+        } else {
+            console.log("running 'kind build' (run 'kind help' for usage)")
+            cmd = "build"
+        }
     }
 
     let cc = cmds.filter(c => c.name == cmd)[0]
