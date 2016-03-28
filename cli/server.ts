@@ -204,8 +204,116 @@ function setupTemplate() {
             console.log(`error downloading ${url}: ${err.message}`)
         })
         .done()
-        
+
     appTarget = nodeutil.getWebTarget()
+}
+
+interface SerialPortInfo {
+    comName: string;
+    pnpId: string;
+    manufacturer: string;
+
+    opened?: boolean;
+    port?: any;
+}
+
+let wsSerialClients: WebSocket[] = [];
+let serialPorts: U.Map<SerialPortInfo> = {}
+
+function initSocketServer() {
+    console.log('starting local ws server at 3233...')
+    const WebSocket = require('faye-websocket');
+
+    function startSerial(request: any, socket: any, body: any) {
+        console.log('ws connection at ' + request.url);
+        let ws = new WebSocket(request, socket, body);
+        wsSerialClients.push(ws);
+        ws.on('message', function(event: any) {
+            // ignore
+        });
+        ws.on('close', function(event: any) {
+            console.log('ws connection closed')
+            wsSerialClients.splice(wsSerialClients.indexOf(ws), 1)
+            ws = null;
+        });
+        ws.on('error', function() {
+            console.log('ws connection closed')
+            wsSerialClients.splice(wsSerialClients.indexOf(ws), 1)
+            ws = null;
+        })
+    }
+
+    let wsserver = http.createServer();
+    wsserver.on('upgrade', function(request: any, socket: any, body: any) {
+        if (WebSocket.isWebSocket(request)) {
+            if (/^\/serial/i.test(request.url))
+                startSerial(request, socket, body);
+        }
+    });
+
+    wsserver.listen(3233, "127.0.0.1");
+}
+
+function initSerialMonitor() {
+    if (!appTarget.serial || !appTarget.serial.log) return;
+    
+    console.log('serial: monitoring ports...')
+    initSocketServer();    
+    
+    const serialport = require("serialport");
+
+    function close(info: SerialPortInfo) {
+        console.log('serial: closing ' + info.pnpId);
+        delete serialPorts[info.pnpId];
+    }
+
+    function open(info: SerialPortInfo) {
+        console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
+        serialPorts[info.pnpId] = info;
+        info.port = new serialport.SerialPort(info.comName, {
+            baudrate: 115200
+        }, false); // this is the openImmediately flag [default is true]
+        info.port.open(function(error: any) {
+            if (error) {
+                console.log('failed to open: ' + error);
+                close(info);
+            } else {
+                console.log(`serial: connected to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
+                info.opened = true;
+                info.port.on('data', function(buffer: Buffer) {
+                    //console.log(`data received: ${buffer.length} bytes`);
+                    if (wsSerialClients.length == 0) return;
+                    // send it to ws clients
+                    let msg = JSON.stringify({
+                        type:'serial',
+                        id: info.pnpId,
+                        data: buffer.toString('utf8')
+                    })
+                    //console.log('sending ' + msg);
+                    wsSerialClients.forEach(function(client: any) {
+                        client.send(msg);
+                    })
+                });
+                info.port.on('error', function() { close(info); });
+                info.port.on('close', function() { close(info); });
+            }
+        });
+    }
+
+    let comNameRx = appTarget.serial.comNameFilter ? new RegExp(appTarget.serial.comNameFilter) : undefined;    
+    let manufacturerRx = appTarget.serial.manufacturerFilter ? new RegExp(appTarget.serial.manufacturerFilter) : undefined;    
+    function filterPort(info: SerialPortInfo) : boolean {
+        return (comNameRx ? comNameRx.test(info.comName) : true)
+            && (manufacturerRx ? manufacturerRx.test(info.manufacturer): true);
+    }
+
+    setInterval(() => {
+        serialport.list(function(err: any, ports: SerialPortInfo[]) {
+            ports.filter(filterPort)
+                .filter(info => !serialPorts[info.pnpId])                
+                .forEach((info) => open(info));
+        });
+    }, 2500);
 }
 
 export function serveAsync() {
@@ -214,6 +322,7 @@ export function serveAsync() {
 
     setupTemplate()
     initTargetCommands()
+    initSerialMonitor();
 
     let server = http.createServer((req, res) => {
         let error = (code: number, msg: string = null) => {
@@ -249,11 +358,11 @@ export function serveAsync() {
             res.end()
             return
         }
-        
+
         if (pathname.slice(0, appTarget.id.length + 2) == "/" + appTarget.id + "/") {
             res.writeHead(301, { location: req.url.slice(appTarget.id.length + 1) })
             res.end()
-            return            
+            return
         }
 
         let elts = pathname.split("/").filter(s => !!s)

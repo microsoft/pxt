@@ -116,6 +116,12 @@ namespace ks {
         rightLogo?: string;
         footerLogo?:string;
     }
+    
+    export interface AppSerial {
+        comNameFilter?: string;
+        manufacturerFilter?: string;
+        log?: boolean;
+    }
 
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
@@ -129,6 +135,7 @@ namespace ks {
         koduUrl?: string;
         visualStudioCode?: boolean;
         bundledpkgs?: U.Map<U.Map<string>>;
+        serial?: AppSerial;
     }
 
     export interface ICompilationOptions {
