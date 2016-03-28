@@ -262,6 +262,7 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
       html += "</body></html>\n"
       fs.writeFileSync("built/web/icons.html", html)
       fs.writeFileSync("built/web/icons.css", css)
+      task.complete()
     }
   })
 })
