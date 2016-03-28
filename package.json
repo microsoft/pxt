@@ -28,6 +28,7 @@
     "built/web/fonts",
     "built/web/*.js",
     "built/web/*.css",
+    "built/web/*.html",
     "webapp/public",
     "typings/bluebird",
     "generated/hexinfo.js"
@@ -39,6 +40,7 @@
     "marked": "^0.3.5"
   },
   "devDependencies": {
+    "webfonts-generator": "^0.3.3",
     "brace": "^0.7.0",
     "browserify": "^13.0.0",
     "jake": "^8.0.12",
