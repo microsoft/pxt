@@ -40,7 +40,7 @@ if (prevExports) {
 
 export interface UserConfig {
     accessToken?: string;
-    localToken?:string;
+    localToken?: string;
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
@@ -214,6 +214,21 @@ export function uploadrelAsync(label?: string) {
     })
 }
 
+function buildNpmAsync() {
+    console.log("Building npm package...")
+    return spawnAsync({
+        cmd: addCmd("npm"),
+        args: ["pack"],
+        cwd: "."
+    })
+        .then(() => {
+            let pkg = JSON.parse(fs.readFileSync("package.json", "utf8"))
+            fs.renameSync(pkg["name"] + "-" + pkg["version"] + ".tgz", "built/package.tgz")
+            let st = fs.statSync("built/package.tgz")
+            console.log("built/package.tgz:", st.size, "bytes")
+        })
+}
+
 export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
         let pkg = JSON.parse(fs.readFileSync("node_modules/kindscript/package.json", "utf8"))
@@ -233,7 +248,8 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             let opts: UploadOptions = {
                 label: label,
                 fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json"])
-                    .concat(allFiles("sim/public")),
+                    .concat(allFiles("sim/public"))
+                    .concat(["built/package.tgz"]),
                 fileContent: {}
             }
             for (let fn of ["webapp/public/index.html", "built/web/worker.js", "webapp/public/embed.js", "webapp/public/run.html"]) {
@@ -249,7 +265,9 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             let simHtmlPath = "sim/public/simulator.html"
             let simHtml = fs.readFileSync(simHtmlPath, "utf8")
             opts.fileContent[simHtmlPath] = simHtml.replace(/\.\/((bluebird|kindsim)[\w\.]*\.js)/g, (x, y) => r.cdnUrl + y)
-            return uploadCoreAsync(opts)
+
+            return buildNpmAsync()
+                .then(() => uploadCoreAsync(opts))
         })
 }
 
@@ -416,13 +434,17 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<number> {
         })
 }
 
+function addCmd(name: string) {
+    return name + (/win/.test(process.platform) ? ".cmd" : "")
+}
+
 function buildKindScriptAsync(): Promise<string[]> {
     let ksd = "node_modules/kindscript"
     if (!fs.existsSync(ksd + "/kindlib/main.ts")) return Promise.resolve([]);
 
     console.log(`building ${ksd}...`);
     return spawnAsync({
-        cmd: /win/.test(process.platform) ? "jake.cmd" : "jake",
+        cmd: addCmd("jake"),
         args: [],
         cwd: ksd
     }).then(() => {
