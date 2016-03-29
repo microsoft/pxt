@@ -22,6 +22,7 @@
     "built/kindlib.js",
     "built/kindlib.d.ts",
     "built/kindsim.d.ts",
+    "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
     "built/uploader.js",
@@ -31,6 +32,8 @@
     "built/web/*.html",
     "webapp/public",
     "typings/bluebird",
+    "typings/node",
+    "typings/marked",
     "generated/hexinfo.js"
   ],
   "preferGlobal": true,

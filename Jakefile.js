@@ -60,8 +60,11 @@ file('built/nodeutil.js', ['built/cli.js'])
 file('built/kind.d.ts', ['built/cli.js'], function () {
     jake.cpR("built/cli.d.ts", "built/kind.d.ts")
 })
+file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
+    jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
+})
 
-compileDir("kindlib")
+compileDir("kindlib", ["built/typescriptServices.d.ts"])
 compileDir("kindblocks", ["built/kindlib.js"])
 compileDir("kindrunner", ["built/kindlib.js", "built/kindsim.js", "built/kindblocks.js"])
 compileDir("kindsim", ["built/kindlib.js", "built/kindblocks.js"])

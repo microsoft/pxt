@@ -1,4 +1,4 @@
-/// <reference path="../../node_modules/typescript/lib/typescriptServices.d.ts"/>
+/// <reference path="../../built/typescriptServices.d.ts"/>
 
 // Enforce order:
 /// <reference path="util.ts"/>
