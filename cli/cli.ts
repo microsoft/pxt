@@ -86,7 +86,7 @@ function saveConfig() {
 function initConfig() {
     let atok: string = process.env["CLOUD_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
-        let config = <UserConfig>JSON.parse(fs.readFileSync(configPath(), "utf8"))
+        let config = <UserConfig>readJson(configPath())
         globalConfig = config
         if (!atok && config.accessToken) {
             atok = config.accessToken
@@ -214,86 +214,118 @@ export function uploadrelAsync(label?: string) {
     })
 }
 
-function buildNpmAsync(v: string) {
-    console.log("Building npm package...")
-    let pkgPrev = fs.readFileSync("package.json", "utf8")
-    let pkg = JSON.parse(pkgPrev)
-    pkg["dependencies"]["kindscript"] = v
-    let newPkg = JSON.stringify(pkg, null, 2)
-    fs.writeFileSync("package.json", newPkg)
-    return spawnAsync({
-        cmd: addCmd("npm"),
-        args: ["pack"],
-        cwd: "."
-    })
-        .finally(() => {
-            fs.writeFileSync("package.json", pkgPrev)
+function semverCmp(a: string, b: string) {
+    let parse = (s: string) => {
+        let v = s.split(/\./).map(parseInt)
+        return v[0] * 100000000 + v[1] * 10000 + v[2]
+    }
+    return parse(a) - parse(b)
+}
+
+function readJson(fn:string) {    
+    return JSON.parse(fs.readFileSync(fn, "utf8"))
+}
+
+function travisAsync() {
+    let rel = process.env.TRAVIS_TAG || ""
+    let atok = process.env.NPM_ACCESS_TOKEN
+
+    if (/^v\d/.test(rel) && atok) {
+        let npmrc = path.join(process.env.HOME, ".npmrc")
+        if (fs.existsSync(npmrc)) {
+            console.log(`${npmrc} already exists`)
+        } else {
+            console.log(`Setting up ${npmrc}`)
+            let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
+            fs.writeFileSync(npmrc, cfg)
+        }
+    }
+
+    console.log("TRAVIS_TAG:", rel)
+
+    let pkg = readJson("package.json")
+    if (pkg["name"] == "kindscript") {
+        if (rel)
+            return uploadrelAsync("release/" + rel)
+                .then(() => runNpmAsync("publish"))
+        else
+            return uploadrelAsync("release/latest")
+    } else {
+        let kthm:ks.AppTheme = readJson("kindtheme.json")
+        if (rel)
+            return uploadrelAsync(kthm.id + "/" + rel)
+                .then(() => runNpmAsync("publish"))
+        else
+            return uploadrelAsync(kthm.id + "/latest")
+    }
+}
+
+function bumpKsDepAsync() {
+    let pkg = readJson("package.json")
+    if (pkg["name"] == "kindscript") return Promise.resolve(pkg)
+
+    let gitPull = Promise.resolve()
+
+    if (fs.existsSync("node_modules/kindscript/.git")) {
+        gitPull = spawnAsync({
+            cmd: "git",
+            args: ["pull"],
+            cwd: "node_modules/kindscript"
         })
+    }
+
+    return gitPull
         .then(() => {
-            let pkg = JSON.parse(fs.readFileSync("package.json", "utf8"))
-            fs.renameSync(pkg["name"] + "-" + pkg["version"] + ".tgz", "built/package.tgz")
-            let st = fs.statSync("built/package.tgz")
-            console.log("built/package.tgz:", st.size, "bytes")
-            fs.writeFileSync("built/package.json", newPkg)
+            let kspkg = readJson("node_modules/kindscript/package.json")
+            let currVer = pkg["dependencies"]["kindscript"]
+            let newVer = kspkg["version"]
+            if (currVer == newVer) {
+                console.log(`Referenced kindscript dep up to date: ${currVer}`)
+                return pkg
+            }
+
+            console.log(`Bumping kindscript dep version: ${currVer} -> ${newVer}`)
+            if (currVer != "*" && semverCmp(currVer, newVer) > 0) {
+                U.userError("Trying to downgrade kindscript.")
+            }
+            pkg["dependencies"]["kindscript"] = newVer
+            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 4) + "\n")
+            return runGitAsync("commit", "-m", `Bump kindscript to ${newVer}`, "--", "package.json")
+                .then(() => pkg)
         })
 }
 
-function installTargetAsync(name: string) {
-    if (!name) U.userError("need target name")
-    console.log("Fetching target", name, "...")
-    let pkgCfg: any = {}
-    return Cloud.privateGetAsync(nodeutil.pathToPtr(name))
-        .then(ptr => {
-            if (!ptr["releaseid"]) return null
-            return Cloud.privateGetAsync(ptr["releaseid"])
-                .then(v => v, e => null)
-        }, e => null)
-        .then(relinfo => {
-            if (!relinfo) U.userError("No such target: " + name)
-            // don't use 'npm install URL' - it will pass access token and have azure storage fail
-            Promise.map(["package.tgz", "package.json"], f =>
-                U.requestAsync({
-                    url: relinfo.cdnUrl + f
-                }))
-                .then(resp => {
-                    pkgCfg = resp[1].json
-                    console.log("Installing target", pkgCfg["name"], pkgCfg["version"])
-                    fs.writeFileSync("package.tgz", resp[0].buffer)
-                    return spawnAsync({
-                        cmd: addCmd("npm"),
-                        args: ["install", "package.tgz"],
-                        cwd: "."
-                    })
-                })
-                .then(() => {
-                    fs.unlinkSync("package.tgz")
-                    let ren = (a: string, b: string) => {
-                        console.log("rename:", a, "->", b)
-                        fs.renameSync(a, b)
-                    }
-                    // if we installed additional copy of kindscript, move it to the outer directory, 
-                    // and rename any existing one; we do not remove the existing one, as this is particular
-                    // harmful if the package is 'npm link'ed (it will go remove your git repo)
-                    let outer = "node_modules/kindscript"
-                    let inner = "node_modules/" + pkgCfg["name"] + "/" + outer
-                    if (fs.existsSync(inner)) {
-                        let n = 0
-                        while (fs.existsSync(outer + "-old" + n))
-                            n++;
-                        ren(outer, outer + "-old" + n)
-                        ren(inner, outer)
-                    }
-                    console.log("Target installed.")
-                })
-        })
+function bumpAsync() {
+    return Promise.resolve()
+        .then(() => runGitAsync("pull"))
+        .then(() => bumpKsDepAsync())
+        .then(() => runNpmAsync("version", "patch"))
+        .then(() => runGitAsync("push", "--tags"))
+        .then(() => runGitAsync("push"))
+}
+
+function runGitAsync(...args: string[]) {
+    return spawnAsync({
+        cmd: "git",
+        args: args,
+        cwd: "."
+    })
+}
+
+function runNpmAsync(...args: string[]) {
+    return spawnAsync({
+        cmd: addCmd("npm"),
+        args: args,
+        cwd: "."
+    })
 }
 
 export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
-        let pkg = JSON.parse(fs.readFileSync("node_modules/kindscript/package.json", "utf8"))
+        let pkg = readJson("node_modules/kindscript/package.json")
         apprel = "release/v" + pkg.version
     }
-    return buildNpmAsync(apprel.replace(/^release\/v/, ""))
+    return Promise.resolve()
         .then(() => Cloud.privateGetAsync(apprel))
         .then(r => r.kind == "release" ? r : null, e => null)
         .then(r => r || Cloud.privateGetAsync(nodeutil.pathToPtr(apprel))
@@ -404,9 +436,9 @@ function uploadCoreAsync(opts: UploadOptions) {
 }
 
 function readKindTarget() {
-    let cfg: ks.TargetBundle = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
+    let cfg: ks.TargetBundle = readJson("kindtarget.json")
     if (fs.existsSync("kindtheme.json"))
-        cfg.appTheme = JSON.parse(fs.readFileSync("kindtheme.json", "utf8"))
+        cfg.appTheme = readJson("kindtheme.json")
     return cfg
 }
 
@@ -437,6 +469,9 @@ export function spawnAsync(opts: {
     cwd: string,
     shell?: boolean
 }) {
+    let info = opts.cmd + " " + opts.args.join(" ")
+    if (opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
+    console.log("[run] " + info)
     return new Promise<void>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
@@ -446,7 +481,7 @@ export function spawnAsync(opts: {
         } as any)
         ch.on('close', (code: number) => {
             if (code != 0)
-                reject(new Error("Exit code: " + code + " from " + opts.cmd + " " + opts.args.join(" ")))
+                reject(new Error("Exit code: " + code + " from " + info))
             resolve()
         });
     })
@@ -812,7 +847,7 @@ function patchHexInfo(extInfo: ts.ks.ExtensionInfo) {
 
     let hexPath = ytPath + "/build/" + ytTarget + "/source/kindscript-microbit-app-combined.hex"
 
-    let hexinfo = JSON.parse(fs.readFileSync(infopath, "utf8"))
+    let hexinfo = readJson(infopath)
     hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
 
     return hexinfo
@@ -823,7 +858,7 @@ function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
     let buildCachePath = ytPath + "/buildcache.json"
     let buildCache: BuildCache = {}
     if (fs.existsSync(buildCachePath)) {
-        buildCache = JSON.parse(fs.readFileSync(buildCachePath, "utf8"))
+        buildCache = readJson(buildCachePath)
     }
 
     if (buildCache.sha == extInfo.sha) {
@@ -1058,7 +1093,6 @@ function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
 cmd("init     TARGET PACKAGE_NAME - start new package for a given target", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
-cmd("target   TARGET_NAME         - locally install target", installTargetAsync)
 cmd("publish                      - publish current package", publishAsync)
 cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
@@ -1075,6 +1109,8 @@ cmd("pubtarget                    - publish all bundled target libraries", publi
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadAsync, 1)
+cmd("travis                       - upload release and npm package", travisAsync, 1)
+cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 
