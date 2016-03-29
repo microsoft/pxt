@@ -849,9 +849,10 @@ Ctrl+Shift+B
                 <div id="footer">
                     <div>
                         { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (this.appTarget.title || this.appTarget.name) }
+                        - <span>{targetVersion}</span>
                         <span>&nbsp; {lf("powered by") }</span> &nbsp;
                         <a href="https://github.com/Microsoft/kindscript"><i className='xicon ksempty'/> KindScript</a>
-                        - <span>{version}</span> - &copy; Microsoft Corporation - 2016
+                        - <span>{ksVersion}</span> - &copy; Microsoft Corporation - 2016
                         - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") }</a>
                         - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
                     </div>
@@ -998,15 +999,17 @@ let myexports: any = {
 };
 (window as any).E = myexports;
 
-export var version: string;
+export var ksVersion: string;
+export var targetVersion: string;
 
 $(document).ready(() => {
     let config = (window as any).tdConfig || {};
-    version = config.tdVersion || "";
+    ksVersion = config.ksVersion || config.tdVersion || "";
+    targetVersion = config.targetVersion || config.tdVersion || "";
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
-    enableCrashReporting(version);
-    enableInsights(version);
+    enableCrashReporting(ksVersion);
+    enableInsights(ksVersion);
     initLogin();
 
     let hm = /^(https:\/\/[^/]+)/.exec(window.location.href)

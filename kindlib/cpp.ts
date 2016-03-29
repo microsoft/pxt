@@ -1,5 +1,40 @@
 /// <reference path="emitter/util.ts"/>
 
+namespace ks {
+    declare var require:any;
+    
+    function getLzma() {
+        if (U.isNodeJS) return require("lzma");
+        else return (<any>window).LZMA;
+    }
+    
+    export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
+        return new Promise<string>((resolve, reject) => {
+            try {
+                getLzma().decompress(buf, (res: string, error: any) => {
+                    resolve(error ? undefined : res);
+                })
+            }
+            catch (e) {
+                resolve(undefined);
+            }
+        })
+    }
+
+    export function lzmaCompressAsync(text: string): Promise<Uint8Array> {
+        return new Promise<Uint8Array>((resolve, reject) => {
+            try {
+                getLzma().compress(text, 7, (res: any, error: any) => {
+                    resolve(error ? undefined : new Uint8Array(res));
+                })
+            }
+            catch (e) {
+                resolve(undefined);
+            }
+        })
+    }
+}
+
 namespace ks.cpp {
     import U = ts.ks.Util;
     import Y = ts.ks;
@@ -196,7 +231,7 @@ namespace ks.cpp {
         }
     }
 
-    function fromUTF8Bytes(binstr: Uint8Array) : string {
+    function fromUTF8Bytes(binstr: Uint8Array): string {
         if (!binstr) return ""
 
         // escape function is deprecated
@@ -214,47 +249,15 @@ namespace ks.cpp {
         return decodeURIComponent(escaped)
     }
 
-    function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
-        var lzma = (<any>window).LZMA;
-        if (!lzma) return Promise.resolve<string>(undefined);
-        return new Promise<string>((resolve, reject) => {
-            try {
-                lzma.decompress(buf, (res: string, error: any) => {
-                    resolve(error ? undefined : res);
-                })
-            }
-            catch (e) {
-                resolve(undefined);
-            }
-        })
-    }
-
-    function lzmaCompressAsync(text: string): Promise<Uint8Array> { // UInt8Array
-        var lzma = (<any>window).LZMA;
-        if (!lzma) return Promise.resolve<Uint8Array>(undefined);
-        return new Promise<Uint8Array>((resolve, reject) => {
-            try {
-                lzma.compress(text, 7, (res: any, error: any) => {
-                    resolve(error ? undefined : new Uint8Array(res));
-                })
-            }
-            catch (e) {
-                resolve(undefined);
-            }
-        })
-    }    
-    
-    function swapBytes(str:string) : string
-    {
+    function swapBytes(str: string): string {
         var r = ""
         for (var i = 0; i < str.length; i += 2)
             r = str[i] + str[i + 1] + r
         Util.assert(i == str.length)
         return r
     }
-        
-    function extractSource(hexfile: string): { meta: string; text: Uint8Array; }
-    {
+
+    function extractSource(hexfile: string): { meta: string; text: Uint8Array; } {
         if (!hexfile) return undefined;
 
         var metaLen = 0
@@ -296,11 +299,11 @@ namespace ks.cpp {
         }
     }
 
-    export function unpackSourceFromHexFileAsync(file: File): Promise<{ meta?: { cloudId: string; editor:string; }; source: string; }> { // string[] (guid)
+    export function unpackSourceFromHexFileAsync(file: File): Promise<{ meta?: { cloudId: string; editor: string; }; source: string; }> { // string[] (guid)
         if (!file) return undefined;
 
         return fileReadAsArrayBufferAsync(file)
-            .then((dat : ArrayBuffer) => {
+            .then((dat: ArrayBuffer) => {
                 let str = fromUTF8Bytes(new Uint8Array(dat));
                 let tmp = extractSource(str || "")
                 if (!tmp) return undefined
@@ -309,8 +312,8 @@ namespace ks.cpp {
                     console.log("This .hex file doesn't contain source.")
                     return undefined;
                 }
-                
-                var hd: { compression:string; headerSize: number; metaSize: number; editor: string; target?:string; } = JSON.parse(tmp.meta)
+
+                var hd: { compression: string; headerSize: number; metaSize: number; editor: string; target?: string; } = JSON.parse(tmp.meta)
                 if (!hd) {
                     console.log("This .hex file is not valid.")
                     return undefined;
@@ -322,13 +325,13 @@ namespace ks.cpp {
                             let meta = res.slice(0, hd.headerSize || hd.metaSize);
                             let text = res.slice(meta.length);
                             let metajs = JSON.parse(meta);
-                            return {  meta: metajs, source: text }
+                            return { meta: metajs, source: text }
                         })
                 } else if (hd.compression) {
                     console.log("Compression type {0} not supported.", hd.compression)
                     return undefined
                 } else {
-                    return { meta:undefined, source: fromUTF8Bytes(tmp.text) };
+                    return { meta: undefined, source: fromUTF8Bytes(tmp.text) };
                 }
             })
     }

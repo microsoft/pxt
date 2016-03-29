@@ -207,8 +207,8 @@ function onlyExts(files: string[], exts: string[]) {
 export function uploadrelAsync(label?: string) {
     return uploadCoreAsync({
         label: label,
-        fileList:
-        allFiles("webapp/public")
+        pkgversion: pkgVersion(),
+        fileList: allFiles("webapp/public")
             .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
             .concat(allFiles("built/web/fonts", 1))
     })
@@ -247,12 +247,15 @@ function travisAsync() {
         else
             return uploadrelAsync("release/latest")
     } else {
-        let kthm: ks.AppTheme = readJson("kindtheme.json")
-        if (rel)
-            return uploadtrgAsync(kthm.id + "/" + rel)
-                .then(() => runNpmAsync("publish"))
-        else
-            return uploadtrgAsync(kthm.id + "/latest")
+        return buildTargetAsync()
+            .then(() => {
+                let kthm: ks.AppTheme = readJson("kindtheme.json")
+                if (rel)
+                    return uploadtrgAsync(kthm.id + "/" + rel)
+                        .then(() => runNpmAsync("publish"))
+                else
+                    return uploadtrgAsync(kthm.id + "/latest", "release/latest")
+            })
     }
 }
 
@@ -316,6 +319,14 @@ function runNpmAsync(...args: string[]) {
     })
 }
 
+function pkgVersion() {
+    let ver = readJson("package.json")["version"]
+    let info = travisInfo()
+    if (!info.tag)
+        ver += "-" + (info.commit ? info.commit.slice(0, 6) : "local")
+    return ver
+}
+
 export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
         let pkg = readJson("node_modules/kindscript/package.json")
@@ -336,19 +347,15 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             let opts: UploadOptions = {
                 label: label,
                 fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json"])
-                    .concat(allFiles("sim/public"))
-                    .concat(["built/package.tgz"]),
+                    .concat(allFiles("sim/public")),
+                pkgversion: pkgVersion(),
+                baserelease: r.id,
                 fileContent: {}
             }
-            for (let fn of ["webapp/public/index.html", "built/web/worker.js", "webapp/public/embed.js", "webapp/public/run.html"]) {
-                let idx = fs.readFileSync("node_modules/kindscript/" + fn, "utf8")
-                idx = idx.replace('"./embed.js"', '"embed.js"')
-                idx = idx.replace(/"\.\//g, "\"" + r.cdnUrl)                
-                idx = idx.replace(/"sim\//, "\"./")
-                //console.log(idx)
-                opts.fileContent[fn] = idx
-                opts.fileList.push(fn)
-            }
+
+            // the cloud only accepts *.json and sim* files in targets
+            opts.fileList = opts.fileList.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
+
             let simHtmlPath = "sim/public/simulator.html"
             let simHtml = fs.readFileSync(simHtmlPath, "utf8")
             opts.fileContent[simHtmlPath] = simHtml.replace(/\/cdn\//g, r.cdnUrl).replace(/\/sim\//g, "./")
@@ -359,16 +366,14 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
 
 interface UploadOptions {
     fileList: string[];
+    pkgversion: string;
+    baserelease?: string;
     fileContent?: U.Map<string>;
     label?: string
     legacyLabel?: boolean;
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
-    let lbl: string = process.env["USERNAME"] || "local"
-    lbl = ((253402300799999 - Date.now()) + "0000" + "-" + U.guidGen().replace(/-/g, ".") + "-" + lbl).toLowerCase()
-    console.log("releaseid:" + lbl)
-
     let liteId = "<none>"
 
     let uploadFileAsync = (p: string) => {
@@ -402,14 +407,12 @@ function uploadCoreAsync(opts: UploadOptions) {
             })
     }
 
-    let branch = process.env['TRAVIS_BRANCH']
-    let tag = process.env['TRAVIS_TAG']
-    if (tag) branch += " " + tag
-
+    let info = travisInfo()
     return Cloud.privatePostAsync("releases", {
-        releaseid: lbl,
-        commit: process.env['TRAVIS_COMMIT'],
-        branch: branch,
+        baserelease: opts.baserelease,
+        pkgversion: opts.pkgversion,
+        commit: info.commitUrl,
+        branch: info.tag || info.branch,
         buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
     })
         .then(resp => {
@@ -424,6 +427,15 @@ function uploadCoreAsync(opts: UploadOptions) {
                 path: nodeutil.sanitizePath(opts.label),
                 releaseid: liteId
             })
+                .then(() => {
+                    // tag release/v0.1.2 also as release/beta
+                    let beta = opts.label.replace(/\/v\d.*/, "/beta")
+                    if (beta == opts.label) return Promise.resolve()
+                    else return Cloud.privatePostAsync("pointers", {
+                        path: nodeutil.sanitizePath(beta),
+                        releaseid: liteId
+                    })
+                })
         })
         .then(() => {
             console.log("All done.")
@@ -538,6 +550,16 @@ function buildKindScriptAsync(): Promise<string[]> {
 
 var dirsToWatch: string[] = []
 
+function travisInfo() {
+    return {
+        branch: process.env['TRAVIS_BRANCH'],
+        tag: process.env['TRAVIS_TAG'],
+        commit: process.env['TRAVIS_COMMIT'],
+        commitUrl: !process.env['TRAVIS_COMMIT'] ? undefined :
+            "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + process.env['TRAVIS_COMMIT'],
+    }
+}
+
 function buildTargetCoreAsync() {
     let cfg = readKindTarget()
     let currentTarget: ks.AppTarget
@@ -556,6 +578,14 @@ function buildTargetCoreAsync() {
                     currentTarget = pkg.config.target;
             }))
         .then(() => {
+            let info = travisInfo()
+            cfg.versions = {
+                branch: info.branch,
+                tag: info.tag,
+                commits: info.commitUrl,
+                target: readJson("package.json")["version"],
+                kindscript: readJson("node_modules/kindscript/package.json")["version"],
+            }
             if (!fs.existsSync("built"))
                 fs.mkdirSync("built")
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
@@ -599,7 +629,7 @@ function buildAndWatchTargetAsync() {
         console.log("No sim/tsconfig.json; assuming npm installed package")
         return Promise.resolve()
     }
-    
+
     return buildAndWatchAsync(() => buildKindScriptAsync()
         .then(() => buildTargetAsync().then(r => { }, e => {
             console.log("Build failed: " + e.message)
@@ -618,9 +648,9 @@ export function serveAsync() {
         if (fs.existsSync(path.join(upper, "kindtarget.json"))) {
             console.log("going to " + upper)
             process.chdir(upper)
-         } else {
-             U.userError("Cannot find kindtarget.json to serve.")
-         }
+        } else {
+            U.userError("Cannot find kindtarget.json to serve.")
+        }
     }
     return buildAndWatchTargetAsync()
         .then(() => server.serveAsync({ localToken: localToken }))
