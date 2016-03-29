@@ -937,10 +937,17 @@ function initLogin() {
 }
 
 function initSerial() {
-    if (!pkg.appTarget.serial || !/^http:\/\/localhost/i.test(window.location.href))
+    if (!pkg.appTarget.serial || !/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
         return;
 
-    let ws = new WebSocket('ws://localhost:3233/serial');
+    console.log('initializing serial pipe');
+    let ws = new WebSocket('ws://localhost:3233/' + Cloud.localToken + '/serial');
+    ws.onopen = (ev) => {
+        console.log('serial: socket opened');
+    }
+    ws.onclose = (ev) => {
+        console.log('serial: socket closed')
+    }
     ws.onmessage = (ev) => {
         try {
             let msg = JSON.parse(ev.data) as ks.rt.SimulatorMessage;

@@ -273,11 +273,12 @@ function initSocketServer() {
     }
 
     let wsserver = http.createServer();
-    wsserver.on('upgrade', function(request: http.IncomingMessage, socket: any, body: any) {
+    wsserver.on('upgrade', function(request: http.IncomingMessage, socket: WebSocket, body: any) {
         try {
-            if (WebSocket.isWebSocket(request) && isAuthorizedLocalRequestAsync(request)) {
-                if (/^\/serial/i.test(request.url))
+            if (WebSocket.isWebSocket(request)) {
+                if (request.url ==  "/" + serveOptions.localToken + "/serial")
                     startSerial(request, socket, body);
+                else console.log('refused connection at ' + request.url);
             }
         } catch (e) {
             console.log('upgrade failed...')
