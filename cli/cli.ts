@@ -222,7 +222,7 @@ function semverCmp(a: string, b: string) {
     return parse(a) - parse(b)
 }
 
-function readJson(fn:string) {    
+function readJson(fn: string) {
     return JSON.parse(fs.readFileSync(fn, "utf8"))
 }
 
@@ -232,13 +232,9 @@ function travisAsync() {
 
     if (/^v\d/.test(rel) && atok) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
-        if (fs.existsSync(npmrc)) {
-            console.log(`${npmrc} already exists`)
-        } else {
-            console.log(`Setting up ${npmrc}`)
-            let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
-            fs.writeFileSync(npmrc, cfg)
-        }
+        console.log(`Setting up ${npmrc}`)
+        let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
+        fs.writeFileSync(npmrc, cfg)
     }
 
     console.log("TRAVIS_TAG:", rel)
@@ -251,7 +247,7 @@ function travisAsync() {
         else
             return uploadrelAsync("release/latest")
     } else {
-        let kthm:ks.AppTheme = readJson("kindtheme.json")
+        let kthm: ks.AppTheme = readJson("kindtheme.json")
         if (rel)
             return uploadrelAsync(kthm.id + "/" + rel)
                 .then(() => runNpmAsync("publish"))
