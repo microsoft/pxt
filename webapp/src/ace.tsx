@@ -519,14 +519,10 @@ export class Editor extends srceditor.Editor {
     completer: AceCompleter;
     isTypescript = false;
 
-    menu() {
-        return (
-            <div>
-                {this.currFile && this.currFile.isVirtual
+    menu() : JSX.Element {
+        return this.currFile && this.currFile.isVirtual
                     ? <sui.Button class="ui button floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
-                    : '' }
-            </div>
-        )
+                    : undefined
     }
 
     undo() {
