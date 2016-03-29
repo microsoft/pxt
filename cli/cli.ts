@@ -249,10 +249,10 @@ function travisAsync() {
     } else {
         let kthm: ks.AppTheme = readJson("kindtheme.json")
         if (rel)
-            return uploadrelAsync(kthm.id + "/" + rel)
+            return uploadtrgAsync(kthm.id + "/" + rel)
                 .then(() => runNpmAsync("publish"))
         else
-            return uploadrelAsync(kthm.id + "/latest")
+            return uploadtrgAsync(kthm.id + "/latest")
     }
 }
 
