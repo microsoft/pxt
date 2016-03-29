@@ -427,6 +427,15 @@ function uploadCoreAsync(opts: UploadOptions) {
                 path: nodeutil.sanitizePath(opts.label),
                 releaseid: liteId
             })
+                .then(() => {
+                    // tag release/v0.1.2 also as release/beta
+                    let beta = opts.label.replace(/\/v\d.*/, "/beta")
+                    if (beta == opts.label) return Promise.resolve()
+                    else return Cloud.privatePostAsync("pointers", {
+                        path: nodeutil.sanitizePath(beta),
+                        releaseid: liteId
+                    })
+                })
         })
         .then(() => {
             console.log("All done.")
