@@ -464,6 +464,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     embedDesigner() {
+        tickEvent("embed");
         let header = this.state.header;
         if (!header) return;
 
@@ -652,6 +653,7 @@ Ctrl+Shift+B
     }
 
     compile() {
+        tickEvent("compile");
         console.log('compiling...')
         let state = this.editor.snapshotState()
         compiler.compileAsync({ native: true })
@@ -691,6 +693,7 @@ Ctrl+Shift+B
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
+        tickEvent(opts.debug ? "debug" : "run");
         this.stopSimulator();
 
         let logs = this.refs["logs"] as logview.LogView;
@@ -928,6 +931,19 @@ function getsrc() {
     console.log(theEditor.editor.getCurrentSource())
 }
 
+function enableInsights(version : string) {
+    let ai = (window as any).appInsights;
+    if (!ai) return;
+
+    ai.trackPageView();
+}
+
+function tickEvent(id: string) {
+    let ai = (window as any).appInsights;
+    if (!ai) return;
+    ai.trackEvent(id);    
+}
+
 function enableCrashReporting(releaseid: string) {
     if (typeof Raygun === "undefined") return; // don't report local crashes    
     try {
@@ -1001,7 +1017,8 @@ $(document).ready(() => {
     version = config.tdVersion || "";
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
-    enableCrashReporting(version)
+    enableCrashReporting(version);
+    enableInsights(version);
     initLogin();
 
     let hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
