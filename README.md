@@ -32,6 +32,8 @@ kind serve
 
 The last command will open default browser and point it to http://localhost:3232/
 
+The `kind target microbit` is essentially the same as `mkdir node_modules; npm install kindscript-microbit`
+
 In future, you just need to run `kind serve`. You can also run `npm update` to upgrade 
 the target and KindScript.
 
