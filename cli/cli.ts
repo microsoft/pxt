@@ -219,7 +219,8 @@ function buildNpmAsync(v: string) {
     let pkgPrev = fs.readFileSync("package.json", "utf8")
     let pkg = JSON.parse(pkgPrev)
     pkg["dependencies"]["kindscript"] = v
-    fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2))
+    let newPkg = JSON.stringify(pkg, null, 2)
+    fs.writeFileSync("package.json", newPkg)
     return spawnAsync({
         cmd: addCmd("npm"),
         args: ["pack"],
@@ -233,6 +234,57 @@ function buildNpmAsync(v: string) {
             fs.renameSync(pkg["name"] + "-" + pkg["version"] + ".tgz", "built/package.tgz")
             let st = fs.statSync("built/package.tgz")
             console.log("built/package.tgz:", st.size, "bytes")
+            fs.writeFileSync("built/package.json", newPkg)
+        })
+}
+
+function installTargetAsync(name: string) {
+    if (!name) U.userError("need target name")
+    console.log("Fetching target", name, "...")
+    let pkgCfg: any = {}
+    return Cloud.privateGetAsync(nodeutil.pathToPtr(name))
+        .then(ptr => {
+            if (!ptr["releaseid"]) return null
+            return Cloud.privateGetAsync(ptr["releaseid"])
+                .then(v => v, e => null)
+        }, e => null)
+        .then(relinfo => {
+            if (!relinfo) U.userError("No such target: " + name)
+            // don't use 'npm install URL' - it will pass access token and have azure storage fail
+            Promise.map(["package.tgz", "package.json"], f =>
+                U.requestAsync({
+                    url: relinfo.cdnUrl + f
+                }))
+                .then(resp => {
+                    pkgCfg = resp[1].json
+                    console.log("Installing target", pkgCfg["name"], pkgCfg["version"])
+                    fs.writeFileSync("package.tgz", resp[0].buffer)
+                    return spawnAsync({
+                        cmd: addCmd("npm"),
+                        args: ["install", "package.tgz"],
+                        cwd: "."
+                    })
+                })
+                .then(() => {
+                    fs.unlinkSync("package.tgz")
+                    let ren = (a: string, b: string) => {
+                        console.log("rename:", a, "->", b)
+                        fs.renameSync(a, b)
+                    }
+                    // if we installed additional copy of kindscript, move it to the outer directory, 
+                    // and rename any existing one; we do not remove the existing one, as this is particular
+                    // harmful if the package is 'npm link'ed (it will go remove your git repo)
+                    let outer = "node_modules/kindscript"
+                    let inner = "node_modules/" + pkgCfg["name"] + "/" + outer
+                    if (fs.existsSync(inner)) {
+                        let n = 0
+                        while (fs.existsSync(outer + "-old" + n))
+                            n++;
+                        ren(outer, outer + "-old" + n)
+                        ren(inner, outer)
+                    }
+                    console.log("Target installed.")
+                })
         })
 }
 
@@ -241,7 +293,8 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
         let pkg = JSON.parse(fs.readFileSync("node_modules/kindscript/package.json", "utf8"))
         apprel = "release/v" + pkg.version
     }
-    return Cloud.privateGetAsync(apprel)
+    return buildNpmAsync(apprel.replace(/^release\/v/, ""))
+        .then(() => Cloud.privateGetAsync(apprel))
         .then(r => r.kind == "release" ? r : null, e => null)
         .then(r => r || Cloud.privateGetAsync(nodeutil.pathToPtr(apprel))
             .then(ptr => Cloud.privateGetAsync(ptr.releaseid)))
@@ -273,8 +326,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             let simHtml = fs.readFileSync(simHtmlPath, "utf8")
             opts.fileContent[simHtmlPath] = simHtml.replace(/\.\/((bluebird|kindsim)[\w\.]*\.js)/g, (x, y) => r.cdnUrl + y)
 
-            return buildNpmAsync(apprel.replace(/^release\/v/, ""))
-                .then(() => uploadCoreAsync(opts))
+            return uploadCoreAsync(opts)
         })
 }
 
@@ -1006,6 +1058,7 @@ function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
 cmd("init     TARGET PACKAGE_NAME - start new package for a given target", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
+cmd("target   TARGET_NAME         - locally install target", installTargetAsync)
 cmd("publish                      - publish current package", publishAsync)
 cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
