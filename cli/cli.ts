@@ -343,16 +343,15 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             for (let fn of ["webapp/public/index.html", "built/web/worker.js", "webapp/public/embed.js", "webapp/public/run.html"]) {
                 let idx = fs.readFileSync("node_modules/kindscript/" + fn, "utf8")
                 idx = idx.replace('"./embed.js"', '"embed.js"')
-                idx = idx.replace(/"\.\//g, "\"" + r.cdnUrl)
-                // revert change to simCdnRoot
-                idx = idx.replace(/var simCdnRoot =.*/, "var simCdnRoot = \"./\";\n")
+                idx = idx.replace(/"\.\//g, "\"" + r.cdnUrl)                
+                idx = idx.replace(/"sim\//, "\"./")
                 //console.log(idx)
                 opts.fileContent[fn] = idx
                 opts.fileList.push(fn)
             }
             let simHtmlPath = "sim/public/simulator.html"
             let simHtml = fs.readFileSync(simHtmlPath, "utf8")
-            opts.fileContent[simHtmlPath] = simHtml.replace(/\.\/((bluebird|kindsim)[\w\.]*\.js)/g, (x, y) => r.cdnUrl + y)
+            opts.fileContent[simHtmlPath] = simHtml.replace(/\/cdn\//g, r.cdnUrl).replace(/\/sim\//g, "./")
 
             return uploadCoreAsync(opts)
         })
