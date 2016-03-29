@@ -14,6 +14,29 @@ The main features of KindScript are:
 * an ARM Thumb machine code emitter
 * a command-line package manager
 
+## Running a target from localhost
+
+Install the `kind` command line tool (only need to do it once):
+
+```
+npm install -g kindscript-cli
+```
+
+Now, let's say you want to install `microbit` target:
+```
+mkdir mymicrobit
+cd mymicrobit
+kind target microbit
+kind serve
+```
+
+The last command will open default browser and point it to http://localhost:3232/
+
+The `kind target microbit` is essentially the same as `mkdir node_modules; npm install kindscript-microbit`
+
+In future, you just need to run `kind serve`. You can also run `npm update` to upgrade 
+the target and KindScript.
+
 ## Build
 
 First, install Node (http://nodejs.org/). Then install the following:

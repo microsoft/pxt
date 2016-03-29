@@ -60,8 +60,12 @@ file('built/nodeutil.js', ['built/cli.js'])
 file('built/kind.d.ts', ['built/cli.js'], function () {
     jake.cpR("built/cli.d.ts", "built/kind.d.ts")
 })
+file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
+    if (!fs.existsSync("built")) fs.mkdirSync("built");
+    jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
+})
 
-compileDir("kindlib")
+compileDir("kindlib", ["built/typescriptServices.d.ts"])
 compileDir("kindblocks", ["built/kindlib.js"])
 compileDir("kindrunner", ["built/kindlib.js", "built/kindsim.js", "built/kindblocks.js"])
 compileDir("kindsim", ["built/kindlib.js", "built/kindblocks.js"])
@@ -71,33 +75,15 @@ compileDir("backendutils", ['kindlib/emitter/util.ts', 'kindlib/docsrender.ts'])
 task("travis", ["test", "upload"])
 
 task('upload', ["wapp", "built/kind.js"], { async: true }, function () {
-    let rel = process.env.TRAVIS_TAG || ""
-    let atok = process.env.NPM_ACCESS_TOKEN
-
-    if (/^v\d/.test(rel) && atok) {
-      console.log("Setting up ~/.npmrc")
-      let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
-      fs.writeFileSync(path.join(process.env.HOME, ".npmrc"), cfg)
-      console.log("TAG:", rel)
-      jake.exec([
-          "node built/kind.js uploadrel release/" + rel,
-          "npm publish",
-      ], { printStdout: true });
-    } else {
-      console.log("Standard release/latest upload")
-      jake.exec([
-          "node built/kind.js uploadrel release/latest",
-      ], { printStdout: true });
-    }
+    jake.exec([
+          "node built/kind.js travis",
+    ], { printStdout: true });
 })
 
 
 task('bump', function () {
     jake.exec([
-        "git pull",
-        "npm version patch",
-        "git push --tags",
-        "git push",
+        "node built/kind.js bump",
     ], { printStdout: true });
 })
 

@@ -86,7 +86,7 @@ function saveConfig() {
 function initConfig() {
     let atok: string = process.env["CLOUD_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
-        let config = <UserConfig>JSON.parse(fs.readFileSync(configPath(), "utf8"))
+        let config = <UserConfig>readJson(configPath())
         globalConfig = config
         if (!atok && config.accessToken) {
             atok = config.accessToken
@@ -214,27 +214,115 @@ export function uploadrelAsync(label?: string) {
     })
 }
 
-function buildNpmAsync() {
-    console.log("Building npm package...")
+function semverCmp(a: string, b: string) {
+    let parse = (s: string) => {
+        let v = s.split(/\./).map(parseInt)
+        return v[0] * 100000000 + v[1] * 10000 + v[2]
+    }
+    return parse(a) - parse(b)
+}
+
+function readJson(fn: string) {
+    return JSON.parse(fs.readFileSync(fn, "utf8"))
+}
+
+function travisAsync() {
+    let rel = process.env.TRAVIS_TAG || ""
+    let atok = process.env.NPM_ACCESS_TOKEN
+
+    if (/^v\d/.test(rel) && atok) {
+        let npmrc = path.join(process.env.HOME, ".npmrc")
+        console.log(`Setting up ${npmrc}`)
+        let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
+        fs.writeFileSync(npmrc, cfg)
+    }
+
+    console.log("TRAVIS_TAG:", rel)
+
+    let pkg = readJson("package.json")
+    if (pkg["name"] == "kindscript") {
+        if (rel)
+            return uploadrelAsync("release/" + rel)
+                .then(() => runNpmAsync("publish"))
+        else
+            return uploadrelAsync("release/latest")
+    } else {
+        let kthm: ks.AppTheme = readJson("kindtheme.json")
+        if (rel)
+            return uploadtrgAsync(kthm.id + "/" + rel)
+                .then(() => runNpmAsync("publish"))
+        else
+            return uploadtrgAsync(kthm.id + "/latest")
+    }
+}
+
+function bumpKsDepAsync() {
+    let pkg = readJson("package.json")
+    if (pkg["name"] == "kindscript") return Promise.resolve(pkg)
+
+    let gitPull = Promise.resolve()
+
+    if (fs.existsSync("node_modules/kindscript/.git")) {
+        gitPull = spawnAsync({
+            cmd: "git",
+            args: ["pull"],
+            cwd: "node_modules/kindscript"
+        })
+    }
+
+    return gitPull
+        .then(() => {
+            let kspkg = readJson("node_modules/kindscript/package.json")
+            let currVer = pkg["dependencies"]["kindscript"]
+            let newVer = kspkg["version"]
+            if (currVer == newVer) {
+                console.log(`Referenced kindscript dep up to date: ${currVer}`)
+                return pkg
+            }
+
+            console.log(`Bumping kindscript dep version: ${currVer} -> ${newVer}`)
+            if (currVer != "*" && semverCmp(currVer, newVer) > 0) {
+                U.userError("Trying to downgrade kindscript.")
+            }
+            pkg["dependencies"]["kindscript"] = newVer
+            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 4) + "\n")
+            return runGitAsync("commit", "-m", `Bump kindscript to ${newVer}`, "--", "package.json")
+                .then(() => pkg)
+        })
+}
+
+function bumpAsync() {
+    return Promise.resolve()
+        .then(() => runGitAsync("pull"))
+        .then(() => bumpKsDepAsync())
+        .then(() => runNpmAsync("version", "patch"))
+        .then(() => runGitAsync("push", "--tags"))
+        .then(() => runGitAsync("push"))
+}
+
+function runGitAsync(...args: string[]) {
     return spawnAsync({
-        cmd: addCmd("npm"),
-        args: ["pack"],
+        cmd: "git",
+        args: args,
         cwd: "."
     })
-        .then(() => {
-            let pkg = JSON.parse(fs.readFileSync("package.json", "utf8"))
-            fs.renameSync(pkg["name"] + "-" + pkg["version"] + ".tgz", "built/package.tgz")
-            let st = fs.statSync("built/package.tgz")
-            console.log("built/package.tgz:", st.size, "bytes")
-        })
+}
+
+function runNpmAsync(...args: string[]) {
+    return spawnAsync({
+        cmd: addCmd("npm"),
+        args: args,
+        cwd: "."
+    })
 }
 
 export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
-        let pkg = JSON.parse(fs.readFileSync("node_modules/kindscript/package.json", "utf8"))
+        let pkg = readJson("node_modules/kindscript/package.json")
         apprel = "release/v" + pkg.version
     }
-    return Cloud.privateGetAsync(apprel)
+    return Promise.resolve()
+        .then(() => Cloud.privateGetAsync(apprel))
         .then(r => r.kind == "release" ? r : null, e => null)
         .then(r => r || Cloud.privateGetAsync(nodeutil.pathToPtr(apprel))
             .then(ptr => Cloud.privateGetAsync(ptr.releaseid)))
@@ -266,8 +354,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             let simHtml = fs.readFileSync(simHtmlPath, "utf8")
             opts.fileContent[simHtmlPath] = simHtml.replace(/\.\/((bluebird|kindsim)[\w\.]*\.js)/g, (x, y) => r.cdnUrl + y)
 
-            return buildNpmAsync()
-                .then(() => uploadCoreAsync(opts))
+            return uploadCoreAsync(opts)
         })
 }
 
@@ -345,9 +432,9 @@ function uploadCoreAsync(opts: UploadOptions) {
 }
 
 function readKindTarget() {
-    let cfg: ks.TargetBundle = JSON.parse(fs.readFileSync("kindtarget.json", "utf8"))
+    let cfg: ks.TargetBundle = readJson("kindtarget.json")
     if (fs.existsSync("kindtheme.json"))
-        cfg.appTheme = JSON.parse(fs.readFileSync("kindtheme.json", "utf8"))
+        cfg.appTheme = readJson("kindtheme.json")
     return cfg
 }
 
@@ -378,6 +465,9 @@ export function spawnAsync(opts: {
     cwd: string,
     shell?: boolean
 }) {
+    let info = opts.cmd + " " + opts.args.join(" ")
+    if (opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
+    console.log("[run] " + info)
     return new Promise<void>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
@@ -387,7 +477,7 @@ export function spawnAsync(opts: {
         } as any)
         ch.on('close', (code: number) => {
             if (code != 0)
-                reject(new Error("Exit code: " + code + " from " + opts.cmd + " " + opts.args.join(" ")))
+                reject(new Error("Exit code: " + code + " from " + info))
             resolve()
         });
     })
@@ -403,35 +493,26 @@ function maxMTimeAsync(dirs: string[]) {
         .then(() => max)
 }
 
-export function buildTargetAsync(): Promise<string[]> {
-    let dirs: string[];
+export function buildTargetAsync(): Promise<void> {
     return buildTargetCoreAsync()
-        .then((dr) => { dirs = dr; return buildFolderAsync('sim'); })
-        .then((d) => { if (d > -1) dirs = dirs.concat('sim'); return buildFolderAsync('cmds', true); })
-        .then((d) => { if (d > -1) dirs = dirs.concat('cmds'); return buildFolderAsync('server', true); })
-        .then((d) => { if (d > -1) dirs = dirs.concat('server'); return dirs });
+        .then(() => buildFolderAsync('sim'))
+        .then(() => buildFolderAsync('cmds', true))
+        .then(() => buildFolderAsync('server', true))
 }
 
-function buildFolderAsync(p: string, optional?: boolean): Promise<number> {
+function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
     if (!fs.existsSync(p + "/tsconfig.json")) {
-        if (!optional) console.log(`${p}/tsconfig.json not found`);
-        return Promise.resolve(-1)
+        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+        return Promise.resolve()
     }
 
     console.log(`building ${p}...`)
+    dirsToWatch.push(p)
     return spawnAsync({
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
     })
-        .then(() => {
-            console.log(`${p} built.`)
-            return 0
-        })
-        .catch(e => {
-            console.log(`${p} build failed.`)
-            return 1
-        })
 }
 
 function addCmd(name: string) {
@@ -456,12 +537,14 @@ function buildKindScriptAsync(): Promise<string[]> {
     });
 }
 
+var dirsToWatch: string[] = []
+
 function buildTargetCoreAsync() {
     let cfg = readKindTarget()
     let currentTarget: ks.AppTarget
     cfg.bundledpkgs = {}
     let statFiles: U.Map<number> = {}
-    let dirsToWatch: string[] = cfg.bundleddirs.slice()
+    dirsToWatch = cfg.bundleddirs.slice()
     console.log("building target.json...")
     return forEachBundledPkgAsync(pkg =>
         pkg.filesToBePublishedAsync()
@@ -483,7 +566,6 @@ function buildTargetCoreAsync() {
         })
         .then(() => {
             console.log("target.json built.")
-            return dirsToWatch
         })
 }
 
@@ -514,9 +596,16 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 }
 
 function buildAndWatchTargetAsync() {
+    if (!fs.existsSync("sim/tsconfig.json")) {
+        console.log("No sim/tsconfig.json; assuming npm installed package")
+        return Promise.resolve()
+    }
+    
     return buildAndWatchAsync(() => buildKindScriptAsync()
-        .then(() => buildTargetAsync())
-        .then((dr) => [path.resolve("node_modules/kindscript")].concat(dr)));
+        .then(() => buildTargetAsync().then(r => { }, e => {
+            console.log("Build failed: " + e.message)
+        }))
+        .then(() => [path.resolve("node_modules/kindscript")].concat(dirsToWatch)));
 }
 
 export function serveAsync() {
@@ -525,6 +614,15 @@ export function serveAsync() {
         saveConfig()
     }
     let localToken = globalConfig.localToken;
+    if (!fs.existsSync("kindtarget.json")) {
+        let upper = path.join(__dirname, "../../..")
+        if (fs.existsSync(path.join(upper, "kindtarget.json"))) {
+            console.log("going to " + upper)
+            process.chdir(upper)
+         } else {
+             U.userError("Cannot find kindtarget.json to serve.")
+         }
+    }
     return buildAndWatchTargetAsync()
         .then(() => server.serveAsync({ localToken: localToken }))
 }
@@ -753,7 +851,7 @@ function patchHexInfo(extInfo: ts.ks.ExtensionInfo) {
 
     let hexPath = ytPath + "/build/" + ytTarget + "/source/kindscript-microbit-app-combined.hex"
 
-    let hexinfo = JSON.parse(fs.readFileSync(infopath, "utf8"))
+    let hexinfo = readJson(infopath)
     hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
 
     return hexinfo
@@ -764,7 +862,7 @@ function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
     let buildCachePath = ytPath + "/buildcache.json"
     let buildCache: BuildCache = {}
     if (fs.existsSync(buildCachePath)) {
-        buildCache = JSON.parse(fs.readFileSync(buildCachePath, "utf8"))
+        buildCache = readJson(buildCachePath)
     }
 
     if (buildCache.sha == extInfo.sha) {
@@ -1015,6 +1113,8 @@ cmd("pubtarget                    - publish all bundled target libraries", publi
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadAsync, 1)
+cmd("travis                       - upload release and npm package", travisAsync, 1)
+cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 

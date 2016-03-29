@@ -12,11 +12,19 @@ import * as os from 'os';
 import U = ks.Util;
 import Cloud = ks.Cloud;
 
-let root = process.cwd()
-let dirs = ["built", "sim/public", "node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
-let fileDir = path.join(root, "libs")
-let docsDir = path.join(root, "docs")
-let tempDir = path.join(root, "built/docstmp")
+let root = ""
+let dirs = [""]
+let fileDir = path.join(process.cwd(), "libs")
+let docsDir = ""
+let tempDir = ""
+
+function setupRootDir() {
+    root = process.cwd()
+    console.log("Starting server in", root)
+    dirs = ["built", "sim/public", "node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
+    docsDir = path.join(root, "docs")
+    tempDir = path.join(root, "built/docstmp")
+}
 
 let statAsync = Promise.promisify(fs.stat)
 let readdirAsync = Promise.promisify(fs.readdir)
@@ -198,14 +206,14 @@ var appTheme: ks.AppTheme;
 function setupTemplate() {
     appTarget = nodeutil.getWebTarget()
     appTheme = nodeutil.getAppTheme()
-    
+
     let templatePath = path.join(tempDir, "template-override.html")
     if (fs.existsSync(templatePath)) {
         docsTemplate = fs.readFileSync(templatePath, "utf8")
         console.log("Using template override.")
         return
     }
-    
+
     templatePath = path.join(tempDir, "template.html")
     if (fs.existsSync(templatePath)) {
         docsTemplate = fs.readFileSync(templatePath, "utf8")
@@ -342,7 +350,7 @@ function openUrl(startUrl: string) {
         console.error("invalid URL to open: " + startUrl)
         return
     }
-    let cmds : U.Map<string> = {
+    let cmds: U.Map<string> = {
         darwin: "open",
         win32: "start",
         linux: "xdg-open"
@@ -364,6 +372,9 @@ export interface ServeOptions {
 var serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
+    
+    setupRootDir()
+    
     if (!fs.existsSync(tempDir))
         fs.mkdirSync(tempDir)
 
