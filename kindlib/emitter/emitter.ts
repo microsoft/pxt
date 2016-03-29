@@ -126,6 +126,7 @@ namespace ts.ks {
         blockId?: string;
         blockGap?: string;
         blockExternalInputs?: boolean;
+        blockStatement?: boolean;
         color?: string;
         icon?: string;
         imageLiteral?: number;

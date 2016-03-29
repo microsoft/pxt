@@ -299,7 +299,7 @@ namespace ks.blocks {
             default: block.setOutput(true, fn.retType);
         }
 
-        if (!/^on /.test(fn.attributes.block)) {
+        if (!/^on /.test(fn.attributes.block) || fn.attributes.blockStatement) {
             block.setPreviousStatement(fn.retType == "void");
             block.setNextStatement(fn.retType == "void");
         }
