@@ -207,9 +207,8 @@ function onlyExts(files: string[], exts: string[]) {
 export function uploadrelAsync(label?: string) {
     return uploadCoreAsync({
         label: label,
-        pkgversion: readJson("package.json")["version"],
-        fileList:
-        allFiles("webapp/public")
+        pkgversion: pkgVersion(),
+        fileList: allFiles("webapp/public")
             .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
             .concat(allFiles("built/web/fonts", 1))
     })
@@ -248,12 +247,15 @@ function travisAsync() {
         else
             return uploadrelAsync("release/latest")
     } else {
-        let kthm: ks.AppTheme = readJson("kindtheme.json")
-        if (rel)
-            return uploadtrgAsync(kthm.id + "/" + rel)
-                .then(() => runNpmAsync("publish"))
-        else
-            return uploadtrgAsync(kthm.id + "/latest")
+        return buildTargetAsync()
+            .then(() => {
+                let kthm: ks.AppTheme = readJson("kindtheme.json")
+                if (rel)
+                    return uploadtrgAsync(kthm.id + "/" + rel)
+                        .then(() => runNpmAsync("publish"))
+                else
+                    return uploadtrgAsync(kthm.id + "/latest", "release/latest")
+            })
     }
 }
 
@@ -317,6 +319,14 @@ function runNpmAsync(...args: string[]) {
     })
 }
 
+function pkgVersion() {
+    let ver = readJson("package.json")["version"]
+    let info = travisInfo()
+    if (!info.tag)
+        ver += "-" + (info.commit ? info.commit.slice(0, 6) : "local")
+    return ver
+}
+
 export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
         let pkg = readJson("node_modules/kindscript/package.json")
@@ -338,7 +348,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
                 label: label,
                 fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json"])
                     .concat(allFiles("sim/public")),
-                pkgversion: readJson("package.json")["version"],
+                pkgversion: pkgVersion(),
                 baserelease: r.id,
                 fileContent: {}
             }
@@ -397,15 +407,12 @@ function uploadCoreAsync(opts: UploadOptions) {
             })
     }
 
-    let branch = process.env['TRAVIS_BRANCH']
-    let tag = process.env['TRAVIS_TAG']
-    if (tag) branch = tag
-
+    let info = travisInfo()
     return Cloud.privatePostAsync("releases", {
         baserelease: opts.baserelease,
         pkgversion: opts.pkgversion,
-        commit: process.env['TRAVIS_COMMIT'],
-        branch: branch,
+        commit: info.commitUrl,
+        branch: info.tag || info.branch,
         buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
     })
         .then(resp => {
@@ -534,6 +541,16 @@ function buildKindScriptAsync(): Promise<string[]> {
 
 var dirsToWatch: string[] = []
 
+function travisInfo() {
+    return {
+        branch: process.env['TRAVIS_BRANCH'],
+        tag: process.env['TRAVIS_TAG'],
+        commit: process.env['TRAVIS_COMMIT'],
+        commitUrl: !process.env['TRAVIS_COMMIT'] ? undefined :
+            "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + process.env['TRAVIS_COMMIT'],
+    }
+}
+
 function buildTargetCoreAsync() {
     let cfg = readKindTarget()
     let currentTarget: ks.AppTarget
@@ -552,11 +569,11 @@ function buildTargetCoreAsync() {
                     currentTarget = pkg.config.target;
             }))
         .then(() => {
+            let info = travisInfo()
             cfg.versions = {
-                branch: process.env['TRAVIS_BRANCH'],
-                tag: process.env['TRAVIS_TAG'],
-                commits: !process.env['TRAVIS_COMMIT'] ? undefined :
-                    "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + process.env['TRAVIS_COMMIT'],
+                branch: info.branch,
+                tag: info.tag,
+                commits: info.commitUrl,
                 target: readJson("package.json")["version"],
                 kindscript: readJson("node_modules/kindscript/package.json")["version"],
             }
