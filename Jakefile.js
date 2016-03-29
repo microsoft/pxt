@@ -61,7 +61,7 @@ file('built/kind.d.ts', ['built/cli.js'], function () {
     jake.cpR("built/cli.d.ts", "built/kind.d.ts")
 })
 file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
-    jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
+    jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/typescriptServices.d.ts")
 })
 
 compileDir("kindlib", ["built/typescriptServices.d.ts"])
