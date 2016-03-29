@@ -468,7 +468,7 @@ namespace ks {
                         islibrary: true,
                         ishidden: false,
                         userplatform: ["ks"],
-                        editor: "tsprj",
+                        editor: javaScriptProjectName,
                         target: this.getTarget().name,
                         text: text
                     }
@@ -504,6 +504,8 @@ namespace ks {
 
     export var pkgPrefix = "ptr-pkg-"
     export var configName = "kind.json"
+    export var blocksProjectName = "blocksprj";
+    export var javaScriptProjectName = "tsprj";
     var info = function info(msg: string) {
         console.log(msg)
     }

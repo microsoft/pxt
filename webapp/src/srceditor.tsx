@@ -6,7 +6,6 @@ import * as React from "react";
 
 
 export interface Theme {
-    inverted?: boolean;
     fontSize?: string;
 }
 

@@ -707,7 +707,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setTheme(theme: srceditor.Theme) {
-        let th = theme.inverted ? 'ace/theme/tomorrow_night_bright' : 'ace/theme/sqlserver'
+        let th = 'ace/theme/sqlserver'
         if (this.editor.getTheme() != th) {
             this.editor.setTheme(th)
         }

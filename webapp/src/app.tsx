@@ -81,12 +81,6 @@ class Settings extends data.Component<ISettingsProps, {}> {
         return (
             <sui.Popup icon='settings'>
                 <div className='ui form'>
-                    <sui.Field>
-                        <div className="ui toggle checkbox ">
-                            <input type="checkbox" name="public" checked={par.state.theme.inverted} onChange={() => par.swapTheme() } />
-                            <label>{lf("Dark theme") }</label>
-                        </div>
-                    </sui.Field>
                     <sui.Field label="Font size">
                         <sui.DropdownList class="selection" value={par.state.theme.fontSize} onChange={fontSize}>
                             {Object.keys(sizes).map(k => <sui.Item key={k} value={k}>{sizes[k]}</sui.Item>) }
@@ -218,6 +212,19 @@ class FileList extends data.Component<ISettingsProps, {}> {
         let parent = this.props.parent
         if (!parent.state.showFiles)
             return null;
+            
+        let removePkg = (p: pkg.EditorPackage) => {
+            core.confirmAsync({
+                header: lf("Remove {0} package", p.getPkgId()),
+                body: lf("You are about to remove a package from your project. Are you sure?", p.getPkgId()),
+                agreeClass: "red",
+                agreeIcon: "trash"                
+            }).done(res => {
+                if (res) {
+                    // TODO
+                }
+            })
+        }
 
         let filesOf = (pkg: pkg.EditorPackage) =>
             pkg.sortedFiles().map(file => {
@@ -234,18 +241,16 @@ class FileList extends data.Component<ISettingsProps, {}> {
                     </a>);
             })
 
-        let filesWithHeader = (pkg: pkg.EditorPackage) =>
-            pkg.isTopLevel() ? filesOf(pkg) : [
-                <div key={"hd-" + pkg.getPkgId() } className="header item">
-                    <i className="folder icon"></i>
-                    {pkg.getPkgId() }
+        let filesWithHeader = (p: pkg.EditorPackage) =>
+            p.isTopLevel() ? filesOf(p) : [
+                <div key={"hd-" + p.getPkgId() } className="header item">
+                    {p.getPkgId() != this.props.parent.appTarget.id ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p)} /> : ''}
+                    {p.getPkgId() }
                 </div>
-            ].concat(filesOf(pkg))
-
-        let inv = parent.state.theme.inverted ? " inverted " : " "
+            ].concat(filesOf(p))
 
         return (
-            <div className={"ui vertical menu filemenu landscape only " + inv}>
+            <div className={"ui vertical menu filemenu landscape only"}>
                 {Util.concat(pkg.allEditorPkgs().map(filesWithHeader)) }
             </div>
         )
@@ -276,16 +281,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.state = {
             showFiles: !!this.settings.showFiles,
             theme: {
-                inverted: !!this.settings.theme.inverted,
                 fontSize: this.settings.theme.fontSize || "20px"
             }
         };
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
-    }
-
-    swapTheme() {
-        this.state.theme.inverted = !this.state.theme.inverted
-        this.forceUpdate()
     }
 
     saveSettings() {
@@ -496,6 +495,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 </div>
 `
         }).done();
+    }
+    
+    addPackage() {
+        this.scriptSearch.modal.show()        
     }
 
     newProject(hideCancel = false) {
@@ -774,12 +777,11 @@ Ctrl+Shift+B
         }
 
         let targetTheme = pkg.targetBundle.appTheme;
-        let inv = this.state.theme.inverted ? " inverted " : " "
 
         return (
-            <div id='root' className={"full-abs " + inv}>
+            <div id='root' className={"full-abs"}>
                 <div id="menubar">
-                    <div className={"ui small menu" + inv}>
+                    <div className={"ui small menu"}>
                         <span id="logo" className="item">
                             {targetTheme.logo ? (<a href={targetTheme.logoUrl}><img className='ui logo' src={Util.toDataUri(targetTheme.logo) } /></a>) : ""}
                             <i className="xicon ksempty" style={{ color: "#ff7d00" }}></i>

@@ -113,7 +113,7 @@ export interface ConfirmOptions {
     onLoaded?: (_: JQuery) => void;
 }
 
-export function confirmAsync(options: ConfirmOptions) {
+export function confirmAsync(options: ConfirmOptions) : Promise<boolean> {
     let logos = (options.logos || [])
         .filter(logo => !!logo)
         .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
@@ -156,7 +156,7 @@ export function confirmAsync(options: ConfirmOptions) {
         modal.modal('refresh')
     })
 
-    return new Promise((resolve, reject) =>
+    return new Promise<boolean>((resolve, reject) =>
         modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,

@@ -80,6 +80,11 @@ export class Editor extends srceditor.Editor {
                         update(c.card.software = vi)
                     } } />
                 </div>
+                <sui.Field>
+                    <div className="ui buttons">
+                        <sui.Button text={lf("Edit Settings As Text")} onClick={() => this.parent.editText() } />
+                    </div>
+                </sui.Field>                
             </div>
             </div>
         )
@@ -112,6 +117,6 @@ export class Editor extends srceditor.Editor {
     }
 
     menu() {
-        return (<sui.Button class="button floating" text={lf("Edit Text") } icon="keyboard" onClick={() => this.parent.editText() } />)
+        return (<sui.Button class="button floating" text={lf("Back to Code") } icon={this.parent.state.header.editor == ks.blocksProjectName ? "puzzle" : "keyboard"} onClick={() => this.parent.setFile(pkg.mainEditorPkg().getMainFile()) } />)
     }
 }
