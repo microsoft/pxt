@@ -596,8 +596,13 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 }
 
 function buildAndWatchTargetAsync() {
+    if (!fs.existsSync("sim/tsconfig.json")) {
+        console.log("No sim/tsconfig.json; assuming npm installed package")
+        return Promise.resolve()
+    }
+    
     return buildAndWatchAsync(() => buildKindScriptAsync()
-        .then(() => buildTargetAsync().then(r => {}, e => {
+        .then(() => buildTargetAsync().then(r => { }, e => {
             console.log("Build failed: " + e.message)
         }))
         .then(() => [path.resolve("node_modules/kindscript")].concat(dirsToWatch)));
