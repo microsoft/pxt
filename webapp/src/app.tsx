@@ -801,7 +801,7 @@ Ctrl+Shift+B
                                 </sui.DropdownMenu>
                             </div>
                             <div className="ui">
-                            <sui.Button key='runbtn' class='primary portrait only' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                            <sui.Button key='runbtn' class='primary portrait only' icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                             {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
                             <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                             <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
