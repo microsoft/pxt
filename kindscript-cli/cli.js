@@ -36,12 +36,28 @@ function selfInstall() {
     console.log("Installed KindScript.")
 }
 
+function target(n) {
+    if (!fs.existsSync("node_modules"))
+        fs.mkdirSync("node_modules")
+    console.log(`Installing kindscript-${n} locally; don't worry about package.json warnings.`)
+    child_process.execSync(`npm install kindscript-${n}`, {
+        stdio: "inherit"
+    })
+    console.log(`Installed KindScript/${n}. To start server run:`)
+    console.log(`    kind serve`)
+}
+
 function main() {
     let path = findKindJs();
 
     let args = process.argv.slice(2)
     if (args[0] == "selfinstall") {
         selfInstall();
+        process.exit(0)
+    }
+
+    if (args[0] == "target") {
+        target(args[1])
         process.exit(0)
     }
 
