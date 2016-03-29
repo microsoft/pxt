@@ -7,8 +7,9 @@ let child_process = require("child_process")
 function findKindJs() {
     let goUp = (s) => {
         let mod = s + "/node_modules/"
+        let f = ""
         if (fs.existsSync(mod)) {
-            let f = mod + "kindscript/built/kind.js"
+            f = mod + "kindscript/built/kind.js"
             if (fs.existsSync(f)) return f
             for (let dir of fs.readdirSync(mod)) {
                 let inner = mod + dir + "/node_modules/kindscript/built/kind.js"
