@@ -4,12 +4,14 @@ namespace ks.runner {
         snippetClass?: string;
         signatureClass?: string;
         blocksClass?: string;
+        simulatorClass?: string;
         snippetReplaceParent?: boolean;
         simulator?: boolean;
         hex?: boolean;
         hexName?: string;
     }
 
+    let runUrl = './--run';
     function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
         if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
@@ -17,7 +19,6 @@ namespace ks.runner {
             $container.replaceWith($c);
             return;
         }
-        let runUrl = /localhost/.test(window.location.href) ? './run.html' : 'https://kindscript.com/microbit---run';
 
         let cdn = (window as any).appCdnRoot
         let images = cdn + "images"
@@ -90,6 +91,19 @@ namespace ks.runner {
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
+        
+        if (options.simulatorClass) {
+            $('.' + options.simulatorClass).each((i, c) => {
+                let $c = $(c);
+                let $sim = $(`<div class="ui container"><div class="ui segment">
+                    <div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;">
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
+                    </div>
+                    </div></div>`)
+                $sim.find("iframe").attr("src", runUrl + "?code=" + encodeURIComponent($c.text().trim()));
+                $c.replaceWith($sim);
+            });
+        }
         
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
