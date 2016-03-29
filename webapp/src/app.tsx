@@ -977,26 +977,9 @@ let myexports: any = {
 };
 (window as any).E = myexports;
 
-export var baseUrl: string;
-export var currentReleaseId: string;
 export var version: string;
 
 $(document).ready(() => {
-    // TODO use one of these instead: 
-    // var appCdnRoot = "https://az851932.vo.msecnd.net/app/pydrb/c/";
-    // var simCdnRoot = "https://az851932.vo.msecnd.net/app/xkvnp/c/";
-    // can also use window.tdConfig.releaseid
-    let ms = document.getElementById("mainscript");
-    if (ms && (ms as HTMLScriptElement).src) {
-        let mainJsName = (ms as HTMLScriptElement).src;
-        baseUrl = mainJsName.replace(/[^\/]*$/, "");
-        let mm = /\/([0-9]{18}[^\/]*)/.exec(mainJsName);
-        if (mm) {
-            currentReleaseId = mm[1];
-            console.log(`releaseid: ${currentReleaseId}`)
-        }
-    }
-    baseUrl = baseUrl || './';
     let config = (window as any).tdConfig || {};
     version = config.tdVersion || "";
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -1010,7 +993,7 @@ $(document).ready(() => {
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
 
-    Util.updateLocalizationAsync(baseUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
+    Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json"))
         .then(pkg.setupAppTarget)
         .then(() => {

@@ -14,6 +14,7 @@ import Cloud = ks.Cloud;
 
 let root = ""
 let dirs = [""]
+let simdirs = [""]
 let fileDir = path.join(process.cwd(), "libs")
 let docsDir = ""
 let tempDir = ""
@@ -21,7 +22,8 @@ let tempDir = ""
 function setupRootDir() {
     root = process.cwd()
     console.log("Starting server in", root)
-    dirs = ["built", "sim/public", "node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
+    dirs = ["node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
+    simdirs = ["built", "sim/public"].map(p => path.join(root, p))
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
 }
@@ -463,7 +465,15 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (!/\.js\.map$/.test(pathname)) {
-            for (let dir of dirs) {
+            let dd = dirs
+            if (U.startsWith(pathname, "/sim/")) {
+                pathname = pathname.slice(4)
+                dd = simdirs
+            } else if (U.startsWith(pathname, "/cdn/")) {
+                pathname = pathname.slice(4)
+                dd = dirs
+            }
+            for (let dir of dd) {
                 let filename = path.resolve(path.join(dir, pathname))
                 if (fileExistsSync(filename)) {
                     sendFile(filename)

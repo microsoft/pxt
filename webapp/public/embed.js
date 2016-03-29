@@ -2,7 +2,7 @@
     if (window.ksRunnerInit) return;
 
     var appCdnRoot = "./";
-    var simCdnRoot = "./";
+    var simCdnRoot = "sim/";
 
     var scripts = [
         "bluebird.min.js",
