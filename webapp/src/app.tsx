@@ -212,13 +212,13 @@ class FileList extends data.Component<ISettingsProps, {}> {
         let parent = this.props.parent
         if (!parent.state.showFiles)
             return null;
-            
+
         let removePkg = (p: pkg.EditorPackage) => {
             core.confirmAsync({
                 header: lf("Remove {0} package", p.getPkgId()),
                 body: lf("You are about to remove a package from your project. Are you sure?", p.getPkgId()),
                 agreeClass: "red",
-                agreeIcon: "trash"                
+                agreeIcon: "trash"
             }).done(res => {
                 if (res) {
                     // TODO
@@ -244,7 +244,7 @@ class FileList extends data.Component<ISettingsProps, {}> {
         let filesWithHeader = (p: pkg.EditorPackage) =>
             p.isTopLevel() ? filesOf(p) : [
                 <div key={"hd-" + p.getPkgId() } className="header item">
-                    {p.getPkgId() != this.props.parent.appTarget.id ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p)} /> : ''}
+                    {p.getPkgId() != this.props.parent.appTarget.id ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
                     {p.getPkgId() }
                 </div>
             ].concat(filesOf(p))
@@ -371,6 +371,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     public componentWillMount() {
         this.initEditors()
+        this.initDragAndDrop();
     }
 
     public componentDidMount() {
@@ -462,6 +463,44 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
+    initDragAndDrop() {
+        draganddrop.setupDragAndDrop(document.body, file => file.size < 1000000 && /^\.hex$/i.test(file.name), files => {
+            ks.cpp.unpackSourceFromHexFileAsync(files[0])
+                .then(data => {
+                    console.log('decoded hex file')
+                    if (!data || !data.meta) {
+                        core.warningNotification("Sorry, we could not recognize this file.")
+                        return;
+                    }
+                    if (data.meta.cloudId == "microbit.co.uk"
+                        && data.meta.editor == "blockly") {
+                        console.log('importing microbit.co.uk blocks project')
+                        compiler.getBlocksAsync()
+                            .then(info => this.newBlocksProjectAsync({
+                                "main.blocks": ks.blocks.importXml(info, data.source)
+                            })).done();
+                        return;
+                    } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget()) {
+                        console.log("importing project")
+                        let h : workspace.InstallHeader = {
+                            target: workspace.getCurrentTarget(),
+                            editor: data.meta.editor,
+                            name: data.meta.name,
+                            meta: {},
+                            pubId: "",
+                            pubCurrent: false
+                        };
+                        let files = JSON.parse(data.source);
+                        workspace.installAsync(h, files)
+                            .done(hd => this.loadHeader(hd));
+                        return;
+                    }
+
+                    core.warningNotification("Sorry, we could not import this project.")
+                })
+        })
+    }
+
     embedDesigner() {
         tickEvent("embed");
         let header = this.state.header;
@@ -496,9 +535,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 `
         }).done();
     }
-    
+
     addPackage() {
-        this.scriptSearch.modal.show()        
+        this.scriptSearch.modal.show()
     }
 
     newProject(hideCancel = false) {
@@ -801,12 +840,12 @@ Ctrl+Shift+B
                                 </sui.DropdownMenu>
                             </div>
                             <div className="ui">
-                            <sui.Button key='runbtn' class='primary portrait only' icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                            {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
-                            <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
-                            <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
-                            {this.editor.menu() }
-                            <sui.Button class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.embedDesigner() } />
+                                <sui.Button key='runbtn' class='primary portrait only' icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                                {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
+                                <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
+                                <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
+                                {this.editor.menu() }
+                                <sui.Button class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.embedDesigner() } />
                             </div>
                         </div>
                         <div className="ui item">
@@ -914,25 +953,6 @@ function initSerial() {
     }
 }
 
-function initDragAndDrop() {
-    draganddrop.setupDragAndDrop(document.body, file => file.size < 1000000 && /^\.hex$/i.test(file.name), files => {
-        ks.cpp.unpackSourceFromHexFileAsync(files[0])
-            .then(data => {
-                console.log('decoded hex file')
-                if (data
-                    && data.meta
-                    && data.meta.cloudId == "microbit.co.uk"
-                    && data.meta.editor == "blockly") {
-                    console.log('importing blocks project')
-                    compiler.getBlocksAsync()
-                        .then(info => theEditor.newBlocksProjectAsync({
-                            "main.blocks": ks.blocks.importXml(info, data.source)
-                        })).done();
-                }
-            })
-    })
-}
-
 function getsrc() {
     console.log(theEditor.editor.getCurrentSource())
 }
@@ -1038,7 +1058,6 @@ $(document).ready(() => {
             theEditor.loadHeader(hd)
 
             initSerial();
-            initDragAndDrop();
         })
 
     window.addEventListener("unload", ev => {
