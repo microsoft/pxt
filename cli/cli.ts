@@ -459,9 +459,8 @@ function forEachBundledPkgAsync(f: (pkg: ks.MainPackage) => Promise<void>) {
         mainPkg = new ks.MainPackage(new Host())
         return f(mainPkg);
     })
-        .then(() => {
-            process.chdir(parentdir)
-        })
+    .finally(() => process.chdir(parentdir))
+    .then(() => {}) 
 }
 
 export function publishTargetAsync() {

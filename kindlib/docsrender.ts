@@ -55,6 +55,22 @@ namespace ks.docs {
         return s;
     }
 
+    // the input already should be HTML-quoted but we want to make sure, and also quote quotes
+    export function html2Quote(s: string) {
+        return htmlQuote(s.replace(/\&([#a-z0-9A-Z]+);/g, (f, ent) => {
+            switch (ent) {
+                case "amp": return "&";
+                case "lt": return "<";
+                case "gt": return ">";
+                case "quot": return "\"";
+                default:
+                    if (ent[0] == "#")
+                        return String.fromCharCode(parseInt(ent.slice(1)));
+                    else return f
+            }
+        }))
+    }
+
     export function renderMarkdown(template: string, src: string, theme: AppTheme = {}): string {
         let params: U.Map<string> = {}
 
@@ -62,6 +78,7 @@ namespace ks.docs {
         let macros = U.clone(stdmacros)
         let settings = U.clone(stdsettings)
         let menus: U.Map<string> = {}
+
 
         function parseHtmlAttrs(s: string) {
             let attrs: U.Map<string> = {};
@@ -116,8 +133,8 @@ namespace ks.docs {
             let cmd = m ? m[1] : body
             let args = m ? m[2] : ""
             let rawArgs = args
-            args = htmlQuote(args)
-            cmd = htmlQuote(cmd)
+            args = html2Quote(args)
+            cmd = html2Quote(cmd)
             if (tp == "@") {
                 let expansion = U.lookup(settings, cmd)
                 if (expansion != null) {
@@ -151,6 +168,19 @@ namespace ks.docs {
                 }
             }
         })
+
+        if (!params["title"]) {
+            let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)
+            if (titleM)
+                params["title"] = html2Quote(titleM[1])
+        }
+
+        if (!params["description"]) {
+            let descM = /<p>(.+?)<\/p>/.exec(html)
+            if (descM)
+                params["description"] = html2Quote(descM[1])
+        }
+
 
         let registers: U.Map<string> = {}
         registers["main"] = "" // first
@@ -196,6 +226,7 @@ namespace ks.docs {
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["targetname"] = theme.name || "KindScript"
         params["targetlogo"] = theme.docsLogo ? `<img src="${U.toDataUri(theme.logo)}" />` : ""
+        params["name"] = params["title"] + " - " + params["targetname"]
 
         return injectHtml(template, params, ["body", "menu", "targetlogo"])
     }
@@ -204,7 +235,7 @@ namespace ks.docs {
         return template.replace(/@(\w+)@/g, (f, key) => {
             let res = U.lookup(vars, key) || "";
             if (quoted.indexOf(key) < 0) {
-                res = htmlQuote(res);
+                res = html2Quote(res);
             }
             return res;
         });
