@@ -40,6 +40,7 @@ namespace ks.docs {
     var stdsettings: U.Map<string> = {
         "parent": stdSetting,
         "short": stdSetting,
+        "description": "<!-- desc -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
