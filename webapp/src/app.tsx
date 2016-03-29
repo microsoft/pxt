@@ -790,22 +790,24 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.Button icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
-                                    {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open project...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
-                                    {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } /> : ""}
-                                    <sui.Item icon="setting" text={lf("Project settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
-                                    <sui.Item icon='folder' text={lf("Show/Hide files") } onClick={() => {
+                                    {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
+                                    {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
+                                    <sui.Item icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
+                                    <sui.Item icon='folder' text={lf("Show/Hide Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
                                     } } />
                                     <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                                 </sui.DropdownMenu>
                             </div>
+                            <div className="ui">
                             <sui.Button key='runbtn' class='primary portrait only' icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                             {this.appTarget.compile ? <sui.Button class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
                             <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                             <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                             {this.editor.menu() }
                             <sui.Button class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.embedDesigner() } />
+                            </div>
                         </div>
                         <div className="ui item">
                             <div className="ui massive transparent input">
