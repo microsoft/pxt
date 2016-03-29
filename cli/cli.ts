@@ -614,6 +614,15 @@ export function serveAsync() {
         saveConfig()
     }
     let localToken = globalConfig.localToken;
+    if (!fs.existsSync("kindtarget.json")) {
+        let upper = path.join(__dirname, "../../..")
+        if (fs.existsSync(path.join(upper, "kindtarget.json"))) {
+            console.log("going to " + upper)
+            process.chdir(upper)
+         } else {
+             U.userError("Cannot find kindtarget.json to serve.")
+         }
+    }
     return buildAndWatchTargetAsync()
         .then(() => server.serveAsync({ localToken: localToken }))
 }
