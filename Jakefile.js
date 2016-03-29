@@ -79,10 +79,7 @@ task('upload', ["wapp", "built/kind.js"], { async: true }, function () {
 
 task('bump', function () {
     jake.exec([
-        "git pull",
-        "npm version patch",
-        "git push --tags",
-        "git push",
+        "node built/kind.js bump",
     ], { printStdout: true });
 })
 
