@@ -493,35 +493,26 @@ function maxMTimeAsync(dirs: string[]) {
         .then(() => max)
 }
 
-export function buildTargetAsync(): Promise<string[]> {
-    let dirs: string[];
+export function buildTargetAsync(): Promise<void> {
     return buildTargetCoreAsync()
-        .then((dr) => { dirs = dr; return buildFolderAsync('sim'); })
-        .then((d) => { if (d > -1) dirs = dirs.concat('sim'); return buildFolderAsync('cmds', true); })
-        .then((d) => { if (d > -1) dirs = dirs.concat('cmds'); return buildFolderAsync('server', true); })
-        .then((d) => { if (d > -1) dirs = dirs.concat('server'); return dirs });
+        .then(() => buildFolderAsync('sim'))
+        .then(() => buildFolderAsync('cmds', true))
+        .then(() => buildFolderAsync('server', true))
 }
 
-function buildFolderAsync(p: string, optional?: boolean): Promise<number> {
+function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
     if (!fs.existsSync(p + "/tsconfig.json")) {
-        if (!optional) console.log(`${p}/tsconfig.json not found`);
-        return Promise.resolve(-1)
+        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+        return Promise.resolve()
     }
 
     console.log(`building ${p}...`)
+    dirsToWatch.push(p)
     return spawnAsync({
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
     })
-        .then(() => {
-            console.log(`${p} built.`)
-            return 0
-        })
-        .catch(e => {
-            console.log(`${p} build failed.`)
-            return 1
-        })
 }
 
 function addCmd(name: string) {
@@ -546,12 +537,14 @@ function buildKindScriptAsync(): Promise<string[]> {
     });
 }
 
+var dirsToWatch: string[] = []
+
 function buildTargetCoreAsync() {
     let cfg = readKindTarget()
     let currentTarget: ks.AppTarget
     cfg.bundledpkgs = {}
     let statFiles: U.Map<number> = {}
-    let dirsToWatch: string[] = cfg.bundleddirs.slice()
+    dirsToWatch = cfg.bundleddirs.slice()
     console.log("building target.json...")
     return forEachBundledPkgAsync(pkg =>
         pkg.filesToBePublishedAsync()
@@ -573,7 +566,6 @@ function buildTargetCoreAsync() {
         })
         .then(() => {
             console.log("target.json built.")
-            return dirsToWatch
         })
 }
 
@@ -605,8 +597,10 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 
 function buildAndWatchTargetAsync() {
     return buildAndWatchAsync(() => buildKindScriptAsync()
-        .then(() => buildTargetAsync())
-        .then((dr) => [path.resolve("node_modules/kindscript")].concat(dr)));
+        .then(() => buildTargetAsync().then(r => {}, e => {
+            console.log("Build failed: " + e.message)
+        }))
+        .then(() => [path.resolve("node_modules/kindscript")].concat(dirsToWatch)));
 }
 
 export function serveAsync() {
