@@ -11,7 +11,7 @@ namespace ks.runner {
         hexName?: string;
     }
 
-    let runUrl = './--run';
+    let runUrl = '/--run';
     function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
         if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
