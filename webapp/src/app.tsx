@@ -507,7 +507,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let targetTheme = pkg.targetBundle.appTheme;
         core.confirmAsync({
             logos: [targetTheme.logo, logoSvgXml],
-            header: this.appTarget.title + ' - ' + lf("Create Code"),
+            header: this.appTarget.title + ' - ' + lf("Create Project"),
             hideCancel: hideCancel,
             hideAgree: true,
             onLoaded: (_) => {
@@ -788,7 +788,7 @@ Ctrl+Shift+B
                         </span>
                         <div className="ui item">
                             <div className="ui buttons">
-                                <sui.Button icon="file outline" textClass="ui landscape only" text={lf("Create Code") } onClick={() => this.newProject() } />
+                                <sui.Button icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open project...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
                                     {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } /> : ""}
