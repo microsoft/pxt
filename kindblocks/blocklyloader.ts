@@ -266,7 +266,7 @@ namespace ks.blocks {
                     if (prtype && prtype.kind == ts.ks.SymbolKind.Enum) {
                         let dd = Util.values(info.apis.byQName)
                             .filter(e => e.namespace == pr.type)
-                            .map(v => [v.attributes.blockId || v.name, v.namespace + "." + v.name]);
+                            .map(v => [v.attributes.block || v.attributes.blockId || v.name, v.namespace + "." + v.name]);
                         i = initField(block.appendDummyInput(), ni, fn, pre, true);
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
                     } else {

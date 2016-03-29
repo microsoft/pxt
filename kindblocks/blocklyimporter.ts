@@ -13,7 +13,7 @@ namespace ks.blocks {
             for(let k in info.apis.byQName) {
                 let api = info.apis.byQName[k];
                 if (api.kind == ts.ks.SymbolKind.EnumMember)
-                    enums[api.namespace + '.' + (api.attributes.blockImportId || api.name)] = api.namespace + '.' + api.name;
+                    enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)] = api.namespace + '.' + api.name;
             }
           
             // walk through blocks and patch enums
