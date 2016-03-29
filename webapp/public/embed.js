@@ -7,6 +7,7 @@
     var scripts = [
         "bluebird.min.js",
         "typescript.js",
+        "lzma/lzma_worker-min.js",
         "blockly/blockly_compressed.js",
         "blockly/blocks_compressed.js",
         "blockly/msg/js/en.js",
