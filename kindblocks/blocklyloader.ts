@@ -24,6 +24,11 @@ namespace ks.blocks {
     }
     var cachedBlocks: Util.StringMap<CachedBlock> = {};
     var cachedToolbox: string = "";
+    
+    export function blockSymbol(type: string) : ts.ks.SymbolInfo {
+        let b = cachedBlocks[type];
+        return b ? b.fn : undefined;
+    }
 
     function createShadowValue(name: string, type: string, v?: string, shadowType?: string): Element {
         if (v && v.slice(0, 1) == "\"")

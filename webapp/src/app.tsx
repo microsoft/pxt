@@ -676,7 +676,7 @@ Ctrl+Shift+B
                         }).done(() => {
                             core.infoNotification(lf(".hex file uploaded..."));
                         }, () => {
-                            core.warningNotification(lf("Oops, something went wrong while deploying the .hex file..."));                            
+                            core.warningNotification(lf("Oops, something went wrong while deploying the .hex file..."));
                         })
                     }
                 } else {
@@ -790,7 +790,7 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open project...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
                                     {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/share") } onClick={() => this.publish() } /> : ""}
-                                    <sui.Item icon="setting" text={lf("Project settings...")} onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json"))   } />
+                                    <sui.Item icon="setting" text={lf("Project settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
                                     <sui.Item icon='folder' text={lf("Show/Hide files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
@@ -919,9 +919,10 @@ function initDragAndDrop() {
                     && data.meta.cloudId == "microbit.co.uk"
                     && data.meta.editor == "blockly") {
                     console.log('importing blocks project')
-                    theEditor.newBlocksProjectAsync({
-                        "main.blocks": data.source
-                    }).done();
+                    compiler.getBlocksAsync()
+                        .then(info => theEditor.newBlocksProjectAsync({
+                            "main.blocks": ks.blocks.importXml(info, data.source)
+                        })).done();
                 }
             })
     })
@@ -931,7 +932,7 @@ function getsrc() {
     console.log(theEditor.editor.getCurrentSource())
 }
 
-function enableInsights(version : string) {
+function enableInsights(version: string) {
     let ai = (window as any).appInsights;
     if (!ai) return;
 
@@ -941,7 +942,7 @@ function enableInsights(version : string) {
 function tickEvent(id: string) {
     let ai = (window as any).appInsights;
     if (!ai) return;
-    ai.trackEvent(id);    
+    ai.trackEvent(id);
 }
 
 function enableCrashReporting(releaseid: string) {
