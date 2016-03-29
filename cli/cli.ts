@@ -342,7 +342,10 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
                 baserelease: r.id,
                 fileContent: {}
             }
-            
+
+            // the cloud only accepts *.json and sim* files in targets
+            opts.fileList = opts.fileList.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
+
             let simHtmlPath = "sim/public/simulator.html"
             let simHtml = fs.readFileSync(simHtmlPath, "utf8")
             opts.fileContent[simHtmlPath] = simHtml.replace(/\/cdn\//g, r.cdnUrl).replace(/\/sim\//g, "./")
@@ -396,7 +399,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     let branch = process.env['TRAVIS_BRANCH']
     let tag = process.env['TRAVIS_TAG']
-    if (tag) branch += " " + tag
+    if (tag) branch = tag
 
     return Cloud.privatePostAsync("releases", {
         baserelease: opts.baserelease,
@@ -549,6 +552,14 @@ function buildTargetCoreAsync() {
                     currentTarget = pkg.config.target;
             }))
         .then(() => {
+            cfg.versions = {
+                branch: process.env['TRAVIS_BRANCH'],
+                tag: process.env['TRAVIS_TAG'],
+                commits: !process.env['TRAVIS_COMMIT'] ? undefined :
+                    "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + process.env['TRAVIS_COMMIT'],
+                target: readJson("package.json")["version"],
+                kindscript: readJson("node_modules/kindscript/package.json")["version"],
+            }
             if (!fs.existsSync("built"))
                 fs.mkdirSync("built")
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
@@ -592,7 +603,7 @@ function buildAndWatchTargetAsync() {
         console.log("No sim/tsconfig.json; assuming npm installed package")
         return Promise.resolve()
     }
-    
+
     return buildAndWatchAsync(() => buildKindScriptAsync()
         .then(() => buildTargetAsync().then(r => { }, e => {
             console.log("Build failed: " + e.message)
@@ -611,9 +622,9 @@ export function serveAsync() {
         if (fs.existsSync(path.join(upper, "kindtarget.json"))) {
             console.log("going to " + upper)
             process.chdir(upper)
-         } else {
-             U.userError("Cannot find kindtarget.json to serve.")
-         }
+        } else {
+            U.userError("Cannot find kindtarget.json to serve.")
+        }
     }
     return buildAndWatchTargetAsync()
         .then(() => server.serveAsync({ localToken: localToken }))

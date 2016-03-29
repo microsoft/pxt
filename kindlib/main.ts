@@ -65,12 +65,21 @@ namespace ks {
         
         target?: string;
     }
+    
+    export interface TargetVersions {
+        target: string;
+        kindscript: string;
+        tag?: string;
+        branch?: string;
+        commits?: string; // URL
+    }
 
     export interface TargetBundle {
         bundledpkgs: U.Map<U.Map<string>>;
         bundleddirs: string[];
         corepkg: string;
         appTheme: AppTheme;
+        versions: TargetVersions;
     }
 
     export interface PackageConfig {
