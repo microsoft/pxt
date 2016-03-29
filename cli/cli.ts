@@ -207,6 +207,7 @@ function onlyExts(files: string[], exts: string[]) {
 export function uploadrelAsync(label?: string) {
     return uploadCoreAsync({
         label: label,
+        pkgversion: readJson("package.json")["version"],
         fileList:
         allFiles("webapp/public")
             .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
@@ -336,19 +337,12 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             let opts: UploadOptions = {
                 label: label,
                 fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json"])
-                    .concat(allFiles("sim/public"))
-                    .concat(["built/package.tgz"]),
+                    .concat(allFiles("sim/public")),
+                pkgversion: readJson("package.json")["version"],
+                baserelease: r.id,
                 fileContent: {}
             }
-            for (let fn of ["webapp/public/index.html", "built/web/worker.js", "webapp/public/embed.js", "webapp/public/run.html"]) {
-                let idx = fs.readFileSync("node_modules/kindscript/" + fn, "utf8")
-                idx = idx.replace('"./embed.js"', '"embed.js"')
-                idx = idx.replace(/"\.\//g, "\"" + r.cdnUrl)                
-                idx = idx.replace(/"sim\//, "\"./")
-                //console.log(idx)
-                opts.fileContent[fn] = idx
-                opts.fileList.push(fn)
-            }
+            
             let simHtmlPath = "sim/public/simulator.html"
             let simHtml = fs.readFileSync(simHtmlPath, "utf8")
             opts.fileContent[simHtmlPath] = simHtml.replace(/\/cdn\//g, r.cdnUrl).replace(/\/sim\//g, "./")
@@ -359,16 +353,14 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
 
 interface UploadOptions {
     fileList: string[];
+    pkgversion: string;
+    baserelease?: string;
     fileContent?: U.Map<string>;
     label?: string
     legacyLabel?: boolean;
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
-    let lbl: string = process.env["USERNAME"] || "local"
-    lbl = ((253402300799999 - Date.now()) + "0000" + "-" + U.guidGen().replace(/-/g, ".") + "-" + lbl).toLowerCase()
-    console.log("releaseid:" + lbl)
-
     let liteId = "<none>"
 
     let uploadFileAsync = (p: string) => {
@@ -407,7 +399,8 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (tag) branch += " " + tag
 
     return Cloud.privatePostAsync("releases", {
-        releaseid: lbl,
+        baserelease: opts.baserelease,
+        pkgversion: opts.pkgversion,
         commit: process.env['TRAVIS_COMMIT'],
         branch: branch,
         buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
