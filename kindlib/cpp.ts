@@ -9,9 +9,10 @@ namespace ks {
     }
     
     export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
+        let lzma = getLzma()
         return new Promise<string>((resolve, reject) => {
             try {
-                getLzma().decompress(buf, (res: string, error: any) => {
+                lzma.decompress(buf, (res: string, error: any) => {
                     resolve(error ? undefined : res);
                 })
             }
@@ -22,9 +23,10 @@ namespace ks {
     }
 
     export function lzmaCompressAsync(text: string): Promise<Uint8Array> {
+        let lzma = getLzma()
         return new Promise<Uint8Array>((resolve, reject) => {
             try {
-                getLzma().compress(text, 7, (res: any, error: any) => {
+                lzma.compress(text, 7, (res: any, error: any) => {
                     resolve(error ? undefined : new Uint8Array(res));
                 })
             }
