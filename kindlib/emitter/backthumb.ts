@@ -696,10 +696,9 @@ ${lbl}: .string ${stringLiteral(s)}
         return asmsource
     }
 
-    function patchSrcHash() {
-        //TODO
-        //var srcSha = Random.sha256buffer(Util.stringToUint8Array(Util.toUTF8(bin.csource)))
-        //bin.csource = bin.csource.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + srcSha.slice(0, 16).toUpperCase() + " ; program hash\n")
+    function patchSrcHash(src: string) {
+        let sha = U.sha256(src)
+        return src.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + sha.slice(0, 16).toUpperCase() + " ; program hash\n")
     }
 
     let peepDbg = false
@@ -751,9 +750,46 @@ ${lbl}: .string ${stringLiteral(s)}
         }
     }
 
-    export function thumbEmit(bin: Binary) {
+    function addSource(meta: string, binstring: string) {
+        var metablob = Util.toUTF8(meta)
+        var totallen = metablob.length + binstring.length
+
+        if (totallen > 40000) {
+            return "; program too long\n";
+        }
+        
+        let str =
+`
+    .balign 16
+    .hex 41140E2FB82FA2BB
+    .short ${metablob.length}
+    .short ${binstring.length}
+    .short 0, 0   ; future use
+
+_stored_program: .string "`
+
+        let addblob = (b: string) => {
+            for (var i = 0; i < b.length; ++i) {
+                var v = b.charCodeAt(i) & 0xff
+                if (v <= 0xf)
+                    str += "\\x0" + v.toString(16)
+                else
+                    str += "\\x" + v.toString(16)
+            }
+        }
+
+        addblob(metablob)
+        addblob(binstring)
+
+        str += "\"\n"
+        return str
+    }
+
+    export function thumbEmit(bin: Binary, opts:CompileOptions) {
         let src = serialize(bin)
-        patchSrcHash()
+        src = patchSrcHash(src)
+        if (opts.embedBlob)
+            src += addSource(opts.embedMeta, atob(opts.embedBlob))
         bin.writeFile("microbit.asm", src)
         let res = assemble(bin, src)
         if (res.src)

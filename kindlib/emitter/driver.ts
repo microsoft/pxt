@@ -26,6 +26,9 @@ namespace ts.ks {
         ast?: boolean;
         breakpoints?: boolean;
         justMyCode?: boolean;
+        
+        embedMeta?: string;
+        embedBlob?: string; // base64
     }
 
     export interface Breakpoint extends LocationInfo {

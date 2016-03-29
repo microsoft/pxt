@@ -5,25 +5,25 @@ namespace ks {
     export import U = ts.ks.Util;
     export import Util = ts.ks.Util;
     let lf = U.lf;
-    
+
     // general error reported
-    export var reportException : (err: any, data:any) => void = function(e,d) {
+    export var reportException: (err: any, data: any) => void = function(e, d) {
         if (console) {
             console.error(e);
             if (d) {
                 try {
                     console.log(JSON.stringify(d, null, 2))
-                }catch(e) {}
+                } catch (e) { }
             }
         }
     }
-    export var reportError : (msg: string, data: any) => void = function(m,d) {
+    export var reportError: (msg: string, data: any) => void = function(m, d) {
         if (console) {
             console.error(m);
             if (d) {
                 try {
                     console.log(JSON.stringify(d, null, 2))
-                }catch(e) {}
+                } catch (e) { }
             }
         }
     }
@@ -62,10 +62,10 @@ namespace ks {
         url?: string;
         responsive?: boolean;
         onClick?: (e: any) => void; // React event
-        
+
         target?: string;
     }
-    
+
     export interface TargetVersions {
         target: string;
         kindscript: string;
@@ -91,6 +91,7 @@ namespace ks {
         simFiles?: string[];
         testFiles?: string[];
         public?: boolean;
+        binaryonly?: boolean;
         target?: AppTarget;
         microbit?: ts.ks.MicrobitConfig;
         card?: PackageCard;
@@ -119,7 +120,7 @@ namespace ks {
         config: ks.PackageConfig;
         files: U.Map<string>;
     }
-    
+
     export interface AppSerial {
         manufacturerFilter?: string;
         log?: boolean;
@@ -234,7 +235,7 @@ namespace ks {
             let cfg = <PackageConfig>JSON.parse(str)
             this.config = cfg;
             // temp patch for cloud corrupted configs
-            for(let dep in this.config.dependencies)
+            for (let dep in this.config.dependencies)
                 if (/^microbit-(led|music|game|pins|serial)$/.test(dep)) delete this.config.dependencies[dep];
             this.validateConfig();
         }
@@ -354,6 +355,32 @@ namespace ks {
                             opts.hexinfo = inf
                         })
                 })
+                .then(() => this.config.binaryonly ? null : this.filesToBePublishedAsync(true))
+                .then(files => {
+                    if (files) {
+                        let headerString = JSON.stringify({
+                            name: this.config.name,
+                            comment: this.config.description,
+                            status: "unpublished",
+                            scriptId: this.config.installedVersion,
+                            cloudId: "ks/" + this.getTarget().id,
+                            editor: U.lookup(files, "main.blocks") ? "blocksprj" : "tsprj"
+                        })
+                        let programText = JSON.stringify(files)
+                        return lzmaCompressAsync(headerString + programText)
+                            .then(buf => {
+                                opts.embedMeta = JSON.stringify({
+                                    compression: "LZMA",
+                                    headerSize: headerString.length,
+                                    textSize: programText.length,
+                                    name: this.config.name,
+                                })
+                                opts.embedBlob = btoa(U.uint8ArrayToString(buf))
+                            })
+                    } else {
+                        return Promise.resolve()
+                    }
+                })
                 .then(() => {
                     for (let pkg of this.sortedDeps()) {
                         for (let f of pkg.getFiles()) {
@@ -384,23 +411,23 @@ namespace ks {
                 })
         }
 
-        initAsync(target:string, name: string) {
+        initAsync(target: string, name: string) {
             if (!target)
-                U.userError("missing target")                                
+                U.userError("missing target")
             if (!name)
                 U.userError("missing project name")
-            
+
             let str = this.readFile(configName)
             if (str)
                 U.userError("config already present")
-                
+
             console.log(`initializing ${name} for target ${target}`);
-          
-            let deps : U.Map<string> = {};
+
+            let deps: U.Map<string> = {};
             deps[target] = "*";
-            if (target == "microbit") 
+            if (target == "microbit")
                 deps["microbit-radio"] = "*";
-                
+
             this.config = {
                 name: name,
                 description: "",

@@ -435,7 +435,7 @@ namespace ts.ks {
                 host.writeFile(fn, data, false, null);
 
             if (opts.target.isNative) {
-                thumbEmit(bin)
+                thumbEmit(bin, opts)
             } else {
                 jsEmit(bin)
             }
