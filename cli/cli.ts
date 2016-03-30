@@ -18,6 +18,8 @@ import Cloud = ks.Cloud;
 import * as server from './server';
 import * as uploader from './uploader';
 
+let onBuildServer = false
+
 // provided by target
 let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
 
@@ -227,6 +229,8 @@ function readJson(fn: string) {
 }
 
 function travisAsync() {
+    onBuildServer = true
+    
     let rel = process.env.TRAVIS_TAG || ""
     let atok = process.env.NPM_ACCESS_TOKEN
 
@@ -725,7 +729,7 @@ class Host
     }
 
     getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
-        if (extInfo.onlyPublic)
+        if (extInfo.onlyPublic || onBuildServer)
             return ks.hex.getHexInfoAsync(this, extInfo)
 
         return buildHexAsync(extInfo)
