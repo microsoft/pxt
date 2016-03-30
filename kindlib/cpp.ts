@@ -81,12 +81,6 @@ namespace ks.cpp {
             }
         }
     }
-    
-    let cppDefs =
-`
-typedef uint32_t ImageLiteral;
-typedef uint32_t Action;
-`    
 
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         var res = Y.emptyExtInfo();
@@ -179,8 +173,10 @@ typedef uint32_t Action;
                         s = s.trim()
                         let m = /(.*)=\s*(\d+)$/.exec(s)
                         let defl = ""
+                        let qm = ""
                         if (m) {
-                            defl = ` = ${m[2]}`
+                            defl = m[2]
+                            qm = "?"
                             s = m[1].trim()
                         }
                         m = /^(.*?)(\w+)$/.exec(s)
@@ -188,7 +184,11 @@ typedef uint32_t Action;
                             err("invalid argument: " + s)
                             return ""
                         }
-                        else return `${m[2]}: ${mapType(m[1])}${defl}`
+
+                        if (defl)
+                            currAttrs += `//% ${m[2]}.defl=${defl}`
+                            
+                        return `${m[2]}${qm}: ${mapType(m[1])}`
                     })
                     var numArgs = args.length
                     var fi: Y.FuncInfo = {
@@ -305,7 +305,7 @@ typedef uint32_t Action;
 
         res.generatedFiles["/ext/config.h"] = cfginc
         res.generatedFiles["/ext/pointers.inc"] = pointersInc
-        res.generatedFiles["/ext/refs.inc"] = cppDefs + includesInc + protos.finish()
+        res.generatedFiles["/ext/refs.inc"] = includesInc + protos.finish()
 
         let moduleJson = {
             "name": "kindscript-microbit-app",
@@ -426,7 +426,7 @@ typedef uint32_t Action;
         }
     }
 
-    export function unpackSourceFromHexFileAsync(file: File): Promise<{ meta?: { cloudId: string; editor: string; name:string; }; source: string; }> { // string[] (guid)
+    export function unpackSourceFromHexFileAsync(file: File): Promise<{ meta?: { cloudId: string; editor: string; name: string; }; source: string; }> { // string[] (guid)
         if (!file) return undefined;
 
         return fileReadAsArrayBufferAsync(file)

@@ -169,7 +169,7 @@ namespace ts.ks {
         let didSomething = true
         while (didSomething) {
             didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*(\w+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]+)))?/,
+            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]+)))?/,
                 (f: string, n: string, d0: string, d1: string,
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
@@ -821,8 +821,11 @@ ${lbl}: .short 0xffff
                         p.valueDeclaration.kind == SK.Parameter) {
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
+                            let defl = (attrs as any)[getName(prm) + ".defl"]
+                            if (defl) defl = parseInt(defl)
                             args.push(<any>{
-                                kind: SK.NullKeyword
+                                kind: SK.NullKeyword,
+                                valueOverride: defl 
                             })
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
@@ -1752,7 +1755,8 @@ ${lbl}: .short 0xffff
         function emitExprCore(node: Node): ir.Expr {
             switch (node.kind) {
                 case SK.NullKeyword:
-                    return ir.numlit(null);
+                    let v = (node as any).valueOverride;
+                    return ir.numlit(v || null);
                 case SK.TrueKeyword:
                     return ir.numlit(true);
                 case SK.FalseKeyword:
