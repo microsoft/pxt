@@ -21,7 +21,6 @@ export function setupAppTarget(trgbundle: ks.TargetBundle) {
     let cfg: ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
     appTarget = cfg.target
     targetBundle = trgbundle;
-    if (!appTarget.cloud) Cloud.apiRoot = undefined;
 }
 
 export class File {
