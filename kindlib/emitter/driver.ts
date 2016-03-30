@@ -26,7 +26,7 @@ namespace ts.ks {
         ast?: boolean;
         breakpoints?: boolean;
         justMyCode?: boolean;
-        
+
         embedMeta?: string;
         embedBlob?: string; // base64
     }
@@ -87,7 +87,7 @@ namespace ts.ks {
         }
         return r
     }
-    
+
     export interface FunctionLocationInfo extends LocationInfo {
         functionName: string;
     }
@@ -186,6 +186,12 @@ namespace ts.ks {
 
         if (res.diagnostics.length == 0)
             res.success = true
+
+        for (let f of opts.sourceFiles) {
+            if (Util.startsWith(f, "built/"))
+                res.outfiles[f.slice(6)] = opts.fileSystem[f]
+        }
+
         return res
     }
 }

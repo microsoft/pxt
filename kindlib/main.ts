@@ -346,6 +346,13 @@ namespace ks {
                 .then(() => {
                     info(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
+                    if (ext.extensionDTs) {
+                        let extFn = "built/extensions.d.ts"
+                        opts.sourceFiles.push(extFn)
+                        opts.fileSystem[extFn] = ext.extensionDTs || ""
+                    }
+                    if (ext.errors)
+                        U.userError(ext.errors)
                     return this.host().getHexInfoAsync(ext)
                         .then(inf => {
                             delete ext.compileData;

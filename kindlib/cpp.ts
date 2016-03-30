@@ -1,13 +1,13 @@
 /// <reference path="emitter/util.ts"/>
 
 namespace ks {
-    declare var require:any;
-    
+    declare var require: any;
+
     function getLzma() {
         if (U.isNodeJS) return require("lzma");
         else return (<any>window).LZMA;
     }
-    
+
     export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
         let lzma = getLzma()
         return new Promise<string>((resolve, reject) => {
@@ -60,47 +60,165 @@ namespace ks.cpp {
         return null;
     }
 
+    function nsWriter(nskw = "namespace") {
+        let text = ""
+        let currNs = ""
+        let setNs = (ns: string) => {
+            if (currNs == ns) return
+            if (currNs) text += "}\n"
+            if (ns)
+                text += nskw + " " + ns + " {\n"
+            currNs = ns
+        }
+        return {
+            setNs,
+            write: (s: string) => {
+                text += "    " + s.replace(/^\s*/mg, "") + "\n"
+            },
+            finish: () => {
+                setNs("")
+                return text
+            }
+        }
+    }
+    
+    let cppDefs =
+`
+typedef uint32_t ImageLiteral;
+typedef uint32_t Action;
+`    
+
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         var res = Y.emptyExtInfo();
         var pointersInc = ""
         var includesInc = ""
         var thisErrors = ""
-        var err = (s: string) => thisErrors += "   " + s + "\n";
+        var dTsNamespace = ""
+        var err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
+        var lineNo = 0
+        var fileName = ""
         var cfginc = ""
+        let protos = nsWriter("namespace")
+        let dTs = nsWriter("declare namespace")
 
-        function parseCpp(src: string) {
+        function parseCpp(src: string, isHeader: boolean) {
             res.hasExtension = true
-            var currNs = ""
+            let currNs = ""
+            let currDocComment = ""
+            let currAttrs = ""
+            let inDocComment = false
+
+            lineNo = 0
+
+            function mapType(tp: string) {
+                switch (tp.replace(/\s+/g, "")) {
+                    case "void": return "void";
+                    case "int32_t":
+                    case "uint32_t":
+                    case "int": return "number";
+                    case "StringData*": return "string";
+                    case "ImageLiteral": return "string";
+                    case "Action": return "() => void";
+                    default:
+                        err("Don't know how to map type: " + tp)
+                        return "any"
+                }
+            }
+
+            let outp = ""
+
             src.split(/\r?\n/).forEach(ln => {
-                var m = /^\s*namespace\s+(\w+)/.exec(ln)
+                ++lineNo
+                if (/^\s*\/\*\*/.test(ln)) {
+                    inDocComment = true
+                    currDocComment = ln + "\n"
+                    if (/\*\//.test(ln)) inDocComment = false
+                    outp += "//\n"
+                    return
+                }
+
+                if (inDocComment) {
+                    currDocComment += ln + "\n"
+                    if (/\*\//.test(ln)) {
+                        inDocComment = false
+                    }
+                    outp += "//\n"
+                    return
+                }
+
+                if (/^\s*\/\/%/.test(ln)) {
+                    currAttrs += ln + "\n"
+                    outp += "//\n"
+                    return
+                }
+
+                outp += ln + "\n"
+
+                let m = /^\s*namespace\s+(\w+)/.exec(ln)
                 if (m) {
-                    if (currNs) err("more than one namespace declaration not supported")
+                    //if (currNs) err("more than one namespace declaration not supported")
                     currNs = m[1]
+                    if (currAttrs || currDocComment) {
+                        dTs.setNs("");
+                        dTs.write(currDocComment)
+                        dTs.write(currAttrs)
+                        dTs.setNs(currNs)
+                        currAttrs = ""
+                        currDocComment = ""
+                    }
                     return;
                 }
 
-                m = /^\s*GLUE\s+(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
-                if (m) {
-                    if (!currNs) err("missing namespace declaration before GLUE");
-                    var retTp = (m[1] + m[2]).replace(/\s+/g, "")
-                    var funName = m[3]
-                    var args = m[4]
-                    var numArgs = 0
-                    if (args.trim())
-                        numArgs = args.replace(/[^,]/g, "").length + 1;
+                m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
+                if (currAttrs && m) {
+                    if (!currNs) err("missing namespace declaration");
+                    let retTp = (m[1] + m[2]).replace(/\s+/g, "")
+                    let funName = m[3]
+                    let origArgs = m[4]
+                    let args = origArgs.split(/,/).filter(s => !!s).map(s => {
+                        s = s.trim()
+                        let m = /(.*)=\s*(\d+)$/.exec(s)
+                        let defl = ""
+                        if (m) {
+                            defl = ` = ${m[2]}`
+                            s = m[1].trim()
+                        }
+                        m = /^(.*?)(\w+)$/.exec(s)
+                        if (!m) {
+                            err("invalid argument: " + s)
+                            return ""
+                        }
+                        else return `${m[2]}: ${mapType(m[1])}${defl}`
+                    })
+                    var numArgs = args.length
                     var fi: Y.FuncInfo = {
                         name: currNs + "::" + funName,
                         type: retTp == "void" ? "P" : "F",
                         args: numArgs,
                         value: null
                     }
+                    if (currDocComment) {
+                        dTs.setNs(currNs)
+                        dTs.write(currDocComment)
+                        dTs.write(currAttrs)
+                        if (/ImageLiteral/.test(m[4]))
+                            dTs.write(`//% imageLiteral=1`)
+                        dTs.write(`//% shim=${fi.name}`)
+                        dTs.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                    }
+                    currDocComment = ""
+                    currAttrs = ""
+                    if (!isHeader) {
+                        protos.setNs(currNs)
+                        protos.write(`${retTp} ${funName}(${origArgs});`)
+                    }
                     res.functions.push(fi)
                     pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
                     return;
                 }
 
-                if (/^\s*GLUE\s+/.test(ln)) {
-                    err("invalid GLUE line: " + ln)
+                if (currAttrs && ln.trim()) {
+                    err("declaration not understood: " + ln)
                     return;
                 }
 
@@ -130,6 +248,8 @@ namespace ks.cpp {
                     }
                 }
             })
+
+            return outp
         }
 
         function parseJson(pkg: Package) {
@@ -162,12 +282,16 @@ namespace ks.cpp {
                 thisErrors = ""
                 parseJson(pkg)
                 for (let fn of pkg.getFiles()) {
-                    if (U.endsWith(fn, ".cpp")) {
-                        let src = pkg.readFile(fn)
-                        parseCpp(src)
+                    let isHeader = U.endsWith(fn, ".h")
+                    if (isHeader || U.endsWith(fn, ".cpp")) {
                         let fullName = pkg.level == 0 ? fn : "kind_modules/" + pkg.id + "/" + fn
-                        res.extensionFiles["/ext/" + fullName] = src
-                        includesInc += `#include "${fullName}"\n`
+                        if (isHeader)
+                            includesInc += `#include "source/${fullName}"\n`
+                        let src = pkg.readFile(fn)
+                        fileName = fullName
+                        // parseCpp() will remove doc comments, to prevent excessive recompilation
+                        src = parseCpp(src, isHeader)
+                        res.extensionFiles["/source/" + fullName] = src
                     }
                 }
                 if (thisErrors) {
@@ -181,7 +305,7 @@ namespace ks.cpp {
 
         res.generatedFiles["/ext/config.h"] = cfginc
         res.generatedFiles["/ext/pointers.inc"] = pointersInc
-        res.generatedFiles["/ext/refs.inc"] = includesInc
+        res.generatedFiles["/ext/refs.inc"] = cppDefs + includesInc + protos.finish()
 
         let moduleJson = {
             "name": "kindscript-microbit-app",
@@ -216,6 +340,7 @@ namespace ks.cpp {
         let data = JSON.stringify(creq)
         res.sha = U.sha256(data)
         res.compileData = btoa(U.toUTF8(data))
+        res.extensionDTs = dTs.finish()
 
         return res;
     }
