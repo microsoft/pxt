@@ -12,6 +12,10 @@ namespace ks.Cloud {
         e.isOffline = true;
         return Promise.delay(1000).then(() => Promise.reject(e))
     }
+    
+    export function hasAccessToken() {
+        return !!accessToken
+    }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url

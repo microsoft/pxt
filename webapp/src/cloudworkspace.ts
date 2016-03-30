@@ -40,18 +40,18 @@ function getHeader(id: string) {
 function initAsync(target: string) {
     // TODO getAllAsync aware of target?
     return headers.getAllAsync().then(h => {
-        allScripts = h            
+        allScripts = h
             .filter((hh: Header) => {
                 if (!hh.target) hh.target = "microbit"
                 return hh.target == ws.getCurrentTarget()
             })
             .map((hh: Header) => {
-            return {
-                id: hh.id,
-                header: hh,
-                text: null
-            }
-        })
+                return {
+                    id: hh.id,
+                    header: hh,
+                    text: null
+                }
+            })
     })
 }
 
@@ -207,6 +207,9 @@ function syncAsync() {
     var numDown = 0
     var blobConatiner = ""
     var updated: U.StringMap<number> = {}
+
+    if (!Cloud.hasAccessToken())
+        return Promise.resolve()
 
     function uninstallAsync(h: Header) {
         console.log(`uninstall local ${h.id}`)
