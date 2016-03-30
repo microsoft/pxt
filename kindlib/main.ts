@@ -125,12 +125,17 @@ namespace ks {
         manufacturerFilter?: string;
         log?: boolean;
     }
+    
+    export interface AppCloud {
+        workspaces?: boolean;
+        packages?: boolean;
+    }
 
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
         title?: string;
-        cloud?: boolean;
+        cloud?: AppCloud;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
         compile: CompileTarget;

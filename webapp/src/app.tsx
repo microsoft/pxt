@@ -94,7 +94,7 @@ class Settings extends data.Component<ISettingsProps, {}> {
 
 class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     renderCore() {
-        Util.assert(this.props.parent.appTarget.cloud);
+        Util.assert(this.props.parent.appTarget.cloud && this.props.parent.appTarget.cloud.workspaces);
 
         let par = this.props.parent
         let hd = par.state.header
@@ -116,12 +116,24 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     }
 }
 
-class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }> {
+interface ScriptSearchState {
+    searchFor?: string;
+    packages?: boolean;
+}
+
+class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     prevData: Cloud.JsonScript[] = [];
     modal: sui.Modal;
+    
+    constructor(props : ISettingsProps) {
+        super(props)
+        this.state = {
+            searchFor: ''
+        }
+    }
 
     fetchCloudData(): Cloud.JsonScript[] {
-        if (!this.props.parent.appTarget.cloud) return [];
+        if (!this.props.parent.appTarget.cloud || !this.props.parent.appTarget.cloud.workspaces) return [];
 
         let res = this.state.searchFor ?
             this.getData("cloud:scripts?q=" + encodeURIComponent(this.state.searchFor))
@@ -133,6 +145,8 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
     }
 
     fetchLocalData(): workspace.Header[] {
+        if (this.state.packages) return [];
+        
         let headers: workspace.Header[] = this.getData("header:*")
         if (this.state.searchFor)
             headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
@@ -174,7 +188,7 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
     }        
         */
         return (
-            <sui.Modal ref={v => this.modal = v} header={lf("Open project...") } addClass="large searchdialog" >
+            <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
 
                 <div className="ui segment items">
                     <div className="ui item fluid icon input">
@@ -446,7 +460,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     loadHeader(h: workspace.Header) {
         if (!h)
             return
-
+        
         this.stopSimulator(true);
         ks.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
@@ -758,8 +772,8 @@ Ctrl+Shift+B
     }
 
     stopSimulator(unload = false) {
+        this.setHelp(undefined);
         simulator.stop(unload)
-
         this.setState({ running: false })
     }
 
@@ -864,7 +878,8 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
-        let targetTheme = pkg.targetBundle.appTheme;
+        const targetTheme = pkg.targetBundle.appTheme;
+        const workspaces = this.appTarget.cloud && this.appTarget.cloud.workspaces;
 
         return (
             <div id='root' className={"full-abs"}>
@@ -879,7 +894,7 @@ Ctrl+Shift+B
                                 <sui.Button icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.scriptSearch.modal.show() } />
-                                    {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
+                                    {workspaces ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
                                     <sui.Item icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     <div className="ui separator"></div>
                                     <sui.Item icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
@@ -908,11 +923,11 @@ Ctrl+Shift+B
                                     onChange={(e) => this.updateHeaderName((e.target as any).value) }></input>
                             </div>
                         </div>
-                        { this.appTarget.cloud || targetTheme.rightLogo ?
+                        { workspaces || targetTheme.rightLogo ?
                             <div className="ui item right">
                                 <div>
-                                    { this.appTarget.cloud ? <CloudSyncButton parent={this} /> : '' }
-                                    { this.appTarget.cloud ? <LoginBox /> : "" }
+                                    { workspaces ? <CloudSyncButton parent={this} /> : '' }
+                                    { workspaces ? <LoginBox /> : "" }
                                     { targetTheme.rightLogo ? <a id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a> : "" }
                                 </div>
                             </div> : "" }
