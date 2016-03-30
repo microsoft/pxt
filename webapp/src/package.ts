@@ -267,6 +267,9 @@ class Host
         } else if (proto == "workspace") {
             return workspace.getTextAsync(pkg.verArgument())
                 .then(scr => epkg.setFiles(scr))
+        } else if (proto == "file") {
+            return workspace.getTextAsync(pkg.verArgument())
+                .then(scr => epkg.setFiles(scr));
         } else if (proto == "embed") {
             epkg.setFiles(getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()

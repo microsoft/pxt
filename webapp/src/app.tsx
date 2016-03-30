@@ -1117,7 +1117,7 @@ $(document).ready(() => {
 
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
-    // else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
+    else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json"))
