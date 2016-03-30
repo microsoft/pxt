@@ -876,7 +876,7 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.Button icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
-                                    {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
+                                    <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.scriptSearch.modal.show() } />
                                     {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
                                     <sui.Item icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     <div className="ui separator"></div>
@@ -933,7 +933,7 @@ Ctrl+Shift+B
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={this.appTarget.id} /></div> : null }
                 </div>
-                {this.appTarget.cloud ? <ScriptSearch parent={this} ref={v => this.scriptSearch = v} /> : ""}
+                <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <div id="footer">
                     <div>
                         { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (this.appTarget.title || this.appTarget.name) }
