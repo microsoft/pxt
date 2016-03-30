@@ -1906,6 +1906,7 @@ ${lbl}: .short 0xffff
         sha: string;
         compileData: string;
         hasExtension: boolean;
+        extensionDTs: string;
     }
 
     export function emptyExtInfo(): ExtensionInfo {
@@ -1918,6 +1919,7 @@ ${lbl}: .short 0xffff
             sha: "",
             compileData: "",
             hasExtension: false,
+            extensionDTs: "",
             microbitConfig: {
                 dependencies: {},
                 config: {}
