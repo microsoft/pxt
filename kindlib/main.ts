@@ -587,6 +587,8 @@ node_modules
 yotta_modules
 yotta_targets
 kind_modules
+*.db
+*.tgz
 `,
         ".vscode/settings.json":
         `{
@@ -621,10 +623,10 @@ kind_modules
 	    "problemMatcher": "$tsc",
     	"args": ["deploy"]
     }, {
-        "taskName": "test",
+        "taskName": "build",
         "isTestCommand": true,
 	    "problemMatcher": "$tsc",
-    	"args": ["test"]
+    	"args": ["build"]
     }, {
         "taskName": "publish",
 	    "problemMatcher": "$tsc",
