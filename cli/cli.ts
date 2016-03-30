@@ -18,6 +18,8 @@ import Cloud = ks.Cloud;
 import * as server from './server';
 import * as uploader from './uploader';
 
+let onBuildServer = false
+
 // provided by target
 let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
 
@@ -227,6 +229,8 @@ function readJson(fn: string) {
 }
 
 function travisAsync() {
+    onBuildServer = true
+    
     let rel = process.env.TRAVIS_TAG || ""
     let atok = process.env.NPM_ACCESS_TOKEN
 
@@ -239,13 +243,16 @@ function travisAsync() {
 
     console.log("TRAVIS_TAG:", rel)
 
+    let branch = process.env.TRAVIS_BRANCH || "local"
+    let latest = branch == "master" ? "latest" : "git-" + branch
+
     let pkg = readJson("package.json")
     if (pkg["name"] == "kindscript") {
         if (rel)
             return uploadrelAsync("release/" + rel)
                 .then(() => runNpmAsync("publish"))
         else
-            return uploadrelAsync("release/latest")
+            return uploadrelAsync("release/" + latest)
     } else {
         return buildTargetAsync()
             .then(() => {
@@ -254,7 +261,7 @@ function travisAsync() {
                     return uploadtrgAsync(kthm.id + "/" + rel)
                         .then(() => runNpmAsync("publish"))
                 else
-                    return uploadtrgAsync(kthm.id + "/latest", "release/latest")
+                    return uploadtrgAsync(kthm.id + "/" + latest, "release/latest")
             })
     }
 }
@@ -431,14 +438,17 @@ function uploadCoreAsync(opts: UploadOptions) {
                     // tag release/v0.1.2 also as release/beta
                     let beta = opts.label.replace(/\/v\d.*/, "/beta")
                     if (beta == opts.label) return Promise.resolve()
-                    else return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(beta),
-                        releaseid: liteId
-                    })
+                    else {
+                        console.log("Alos tagging with " + beta)
+                        return Cloud.privatePostAsync("pointers", {
+                            path: nodeutil.sanitizePath(beta),
+                            releaseid: liteId
+                        })
+                    }
                 })
         })
         .then(() => {
-            console.log("All done.")
+            console.log("All done; tagged with " + opts.label)
         })
 }
 
@@ -459,8 +469,8 @@ function forEachBundledPkgAsync(f: (pkg: ks.MainPackage) => Promise<void>) {
         mainPkg = new ks.MainPackage(new Host())
         return f(mainPkg);
     })
-    .finally(() => process.chdir(parentdir))
-    .then(() => {}) 
+        .finally(() => process.chdir(parentdir))
+        .then(() => { })
 }
 
 export function publishTargetAsync() {
@@ -658,7 +668,7 @@ export function serveAsync() {
 function extensionAsync(add: string) {
     let dat = {
         "config": "ws",
-        "tag": "v74",
+        "tag": "v0",
         "replaceFiles": {
             "/generated/xtest.cpp": "namespace xtest {\n    GLUE void hello()\n    {\n        uBit.panic(123);\n " + add + "   }\n}\n",
             "/generated/extpointers.inc": "(uint32_t)(void*)::xtest::hello,\n",
@@ -718,11 +728,20 @@ class Host
         fs.writeFileSync(p, contents, "utf8")
     }
 
-    getHexInfoAsync(extInfo: ts.ks.ExtensionInfo) {
-        if (extInfo.sha === baseExtInfo.sha)
-            return Promise.resolve(require(__dirname + "/../generated/hexinfo.js"))
+    getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
+        if (extInfo.onlyPublic || onBuildServer)
+            return ks.hex.getHexInfoAsync(this, extInfo)
+
         return buildHexAsync(extInfo)
             .then(() => patchHexInfo(extInfo))
+    }
+
+    cacheStoreAsync(id: string, val: string): Promise<void> {
+        return Promise.resolve()
+    }
+
+    cacheGetAsync(id: string): Promise<string> {
+        return Promise.resolve(null as string)
     }
 
     downloadPackageAsync(pkg: ks.Package) {
@@ -755,7 +774,6 @@ class Host
 }
 
 let mainPkg = new ks.MainPackage(new Host())
-let baseExtInfo = ks.cpp.getExtensionInfo(null);
 
 export function installAsync(packageName?: string) {
     ensurePkgDir();

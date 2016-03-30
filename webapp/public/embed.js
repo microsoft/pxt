@@ -11,7 +11,6 @@
         "blockly/blockly_compressed.js",
         "blockly/blocks_compressed.js",
         "blockly/msg/js/en.js",
-        "hexinfo.js",
         "kindlib.js",
         "kindblocks.js",
         "kindsim.js",

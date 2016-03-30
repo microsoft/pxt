@@ -443,14 +443,13 @@ ${getFunctionLabel(proc.action)}:
         }
 
         var currentSetup: string = null;
-        export function setupFor(extInfo: ExtensionInfo, bytecodeInfo: any) {
+        export function setupFor(extInfo: ExtensionInfo, hexinfo: any) {
             if (isSetupFor(extInfo))
                 return;
 
             currentSetup = extInfo.sha;
 
-            var jsinf = bytecodeInfo
-            hex = jsinf.hex;
+            hex = hexinfo.hex;
 
             var i = 0;
             var upperAddr = "0000"
@@ -493,7 +492,7 @@ ${getFunctionLabel(proc.action)}:
                 oops("No hex start")
 
             funcInfo = {};
-            var funs: FuncInfo[] = jsinf.functions.concat(extInfo.functions);
+            var funs: FuncInfo[] = hexinfo.functions.concat(extInfo.functions);
 
             var addEnum = (enums: any) =>
                 Object.keys(enums).forEach(k => {
@@ -506,7 +505,7 @@ ${getFunctionLabel(proc.action)}:
                 })
 
             addEnum(extInfo.enums)
-            addEnum(jsinf.enums)
+            addEnum(hexinfo.enums)
 
             for (var i = jmpStartIdx + 1; i < hex.length; ++i) {
                 var m = /^:10(....)00(.{16})/.exec(hex[i])

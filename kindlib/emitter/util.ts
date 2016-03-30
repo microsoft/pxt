@@ -287,6 +287,10 @@ namespace ts.ks.Util {
             })
     }
 
+    export function httpGetTextAsync(url: string) {
+        return requestAsync({ url: url }).then(resp => resp.text)
+    }
+
     export function httpGetJsonAsync(url: string) {
         return requestAsync({ url: url }).then(resp => resp.json)
     }

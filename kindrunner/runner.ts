@@ -7,7 +7,7 @@ namespace ks.runner {
         appCdnRoot: string;
         simCdnRoot: string;
     }
-    
+
     export interface SimulateOptions {
         id?: string;
         code?: string;
@@ -62,8 +62,16 @@ namespace ks.runner {
             throw Util.oops("trying to write " + module + " / " + filename)
         }
 
-        getHexInfoAsync() {
-            return Promise.resolve((window as any).ksHexInfo)
+        getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
+            return ks.hex.getHexInfoAsync(this, extInfo)
+        }
+
+        cacheStoreAsync(id: string, val: string): Promise<void> {
+            return Promise.resolve()
+        }
+
+        cacheGetAsync(id: string): Promise<string> {
+            return Promise.resolve(null as string)
         }
 
         downloadPackageAsync(pkg: ks.Package) {
@@ -155,7 +163,7 @@ namespace ks.runner {
             })
     }
 
-    function getCompileOptionsAsync(hex? : boolean) {
+    function getCompileOptionsAsync(hex?: boolean) {
         let trg = mainPkg.getTargetOptions()
         trg.isNative = !!hex
         trg.hasHex = !!hex
@@ -175,12 +183,12 @@ namespace ks.runner {
                 return resp
             })
     }
-    
-    export function generateHexFileAsync(options: SimulateOptions) : Promise<string> {
+
+    export function generateHexFileAsync(options: SimulateOptions): Promise<string> {
         return loadPackageAsync(options.id)
             .then(() => compileAsync(true, opts => {
                 if (options.code) opts.fileSystem["main.ts"] = options.code;
-            }))        
+            }))
             .then(resp => {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
@@ -205,7 +213,7 @@ namespace ks.runner {
                 }
             })
     }
-    
+
     export interface DecompileResult {
         compileJS?: ts.ks.CompileResult;
         compileBlocks?: ts.ks.CompileResult;
@@ -224,7 +232,7 @@ namespace ks.runner {
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
                     return { compileJS: resp };
-                    
+
                 // decompile to blocks
                 let apis = ts.ks.getApiInfo(resp.ast);
                 let blocksInfo = ts.ks.getBlocksInfo(apis);
