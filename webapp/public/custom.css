@@ -404,10 +404,14 @@ html {
 /* extra-large desktop screen */
 @media only screen and (min-width: 100em) and (min-height:44em) {
     #filelist {
-        width:19rem;
+        width:23rem;
     }
     #maineditor {
-        left:19rem;
+        left:23rem;
+    }
+    .simframe {
+        width: 22rem;
+        height: 17.6rem;
     }
 }
 
