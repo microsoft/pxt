@@ -578,8 +578,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 `
         }).done();
     }
+    
+    openProject() {
+        this.scriptSearch.setState({ packages: false, searchFor: '' })
+        this.scriptSearch.modal.show()
+    }
 
     addPackage() {
+        this.scriptSearch.setState({ packages: true, searchFor: '' })
         this.scriptSearch.modal.show()
     }
 
@@ -893,7 +899,8 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.Button icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
-                                    <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.scriptSearch.modal.show() } />
+                                    <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
+                                    <sui.Item icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } />
                                     {workspaces ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
                                     <sui.Item icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     <div className="ui separator"></div>
