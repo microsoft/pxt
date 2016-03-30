@@ -479,7 +479,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             curr.isDeleted = true
             return workspace.saveAsync(curr, {})
                 .then(() => {
-                    this.loadHeader(workspace.getHeaders()[0])
+                    if (workspace.getHeaders().length > 0)
+                        this.scriptSearch.modal.show();
+                    else this.newProject(true);
                 })
         })
     }
