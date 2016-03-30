@@ -207,12 +207,25 @@ class ScriptSearch extends data.Component<ISettingsProps, { searchFor: string; }
     }
 }
 
-class FileList extends data.Component<ISettingsProps, {}> {
+interface FileListState {
+    expands: Util.Map<boolean>;
+}
+
+class FileList extends data.Component<ISettingsProps, FileListState> {
+    
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            expands: {}
+        }
+    }
+    
     renderCore() {
         let parent = this.props.parent
         if (!parent.state.showFiles)
             return null;
 
+        let expands = this.state.expands;
         let removePkg = (p: pkg.EditorPackage) => {
             core.confirmAsync({
                 header: lf("Remove {0} package", p.getPkgId()),
@@ -241,14 +254,19 @@ class FileList extends data.Component<ISettingsProps, {}> {
                         {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                     </a>);
             })
+            
+        let togglePkg = (p: pkg.EditorPackage) => {
+            expands[p.getPkgId()] = !expands[p.getPkgId()];
+            this.forceUpdate();            
+        }
 
         let filesWithHeader = (p: pkg.EditorPackage) =>
             p.isTopLevel() ? filesOf(p) : [
-                <div key={"hd-" + p.getPkgId() } className="header item">
+                <div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p)}>
                     {p.getPkgId() != this.props.parent.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
                     {p.getPkgId() }
                 </div>
-            ].concat(filesOf(p))
+            ].concat(expands[p.getPkgId()] ? filesOf(p) : [])
 
         return (
             <div className={"ui vertical menu filemenu landscape only"}>
@@ -454,6 +472,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     removeProject() {
+        if (!pkg.mainEditorPkg().header) return;
+        
         core.confirmDelete(pkg.mainEditorPkg().header.name, () => {
             let curr = pkg.mainEditorPkg().header
             curr.isDeleted = true
