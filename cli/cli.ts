@@ -239,13 +239,16 @@ function travisAsync() {
 
     console.log("TRAVIS_TAG:", rel)
 
+    let branch = process.env.TRAVIS_BRANCH || "local"
+    let latest = branch == "master" ? "latest" : "git-" + branch
+
     let pkg = readJson("package.json")
     if (pkg["name"] == "kindscript") {
         if (rel)
             return uploadrelAsync("release/" + rel)
                 .then(() => runNpmAsync("publish"))
         else
-            return uploadrelAsync("release/latest")
+            return uploadrelAsync("release/" + latest)
     } else {
         return buildTargetAsync()
             .then(() => {
@@ -254,7 +257,7 @@ function travisAsync() {
                     return uploadtrgAsync(kthm.id + "/" + rel)
                         .then(() => runNpmAsync("publish"))
                 else
-                    return uploadtrgAsync(kthm.id + "/latest", "release/latest")
+                    return uploadtrgAsync(kthm.id + "/" + latest, "release/latest")
             })
     }
 }
@@ -431,14 +434,17 @@ function uploadCoreAsync(opts: UploadOptions) {
                     // tag release/v0.1.2 also as release/beta
                     let beta = opts.label.replace(/\/v\d.*/, "/beta")
                     if (beta == opts.label) return Promise.resolve()
-                    else return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(beta),
-                        releaseid: liteId
-                    })
+                    else {
+                        console.log("Alos tagging with " + beta)
+                        return Cloud.privatePostAsync("pointers", {
+                            path: nodeutil.sanitizePath(beta),
+                            releaseid: liteId
+                        })
+                    }
                 })
         })
         .then(() => {
-            console.log("All done.")
+            console.log("All done; tagged with " + opts.label)
         })
 }
 
@@ -721,7 +727,7 @@ class Host
     getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
         if (extInfo.onlyPublic)
             return ks.hex.getHexInfoAsync(this, extInfo)
-            
+
         return buildHexAsync(extInfo)
             .then(() => patchHexInfo(extInfo))
     }
@@ -1040,8 +1046,8 @@ function testMainPkgAsync() {
     return mainPkg.loadAsync()
         .then(() => {
             let target = mainPkg.getTargetOptions()
-            //if (target.hasHex)
-            //    target.isNative = true
+            if (target.hasHex)
+                target.isNative = true
             return mainPkg.getCompileOptionsAsync(target)
         })
         .then(opts => {
