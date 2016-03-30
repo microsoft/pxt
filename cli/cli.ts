@@ -718,9 +718,10 @@ class Host
         fs.writeFileSync(p, contents, "utf8")
     }
 
-    getHexInfoAsync(extInfo: ts.ks.ExtensionInfo) {
-        if (extInfo.sha === baseExtInfo.sha)
-            return Promise.resolve(require(__dirname + "/../generated/hexinfo.js"))
+    getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
+        if (extInfo.onlyPublic)
+            return ks.hex.getHexInfoAsync(this, extInfo)
+            
         return buildHexAsync(extInfo)
             .then(() => patchHexInfo(extInfo))
     }
@@ -763,7 +764,6 @@ class Host
 }
 
 let mainPkg = new ks.MainPackage(new Host())
-let baseExtInfo = ks.cpp.getExtensionInfo(null);
 
 export function installAsync(packageName?: string) {
     ensurePkgDir();
@@ -1040,8 +1040,8 @@ function testMainPkgAsync() {
     return mainPkg.loadAsync()
         .then(() => {
             let target = mainPkg.getTargetOptions()
-            if (target.hasHex)
-                target.isNative = true
+            //if (target.hasHex)
+            //    target.isNative = true
             return mainPkg.getCompileOptionsAsync(target)
         })
         .then(opts => {

@@ -35,9 +35,9 @@ namespace ks {
         writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any>;
-        resolveVersionAsync(pkg: Package): Promise<string>;        
-        cacheStoreAsync(id:string, val:string): Promise<void>;
-        cacheGetAsync(id:string): Promise<string>; // null if not found
+        resolveVersionAsync(pkg: Package): Promise<string>;
+        cacheStoreAsync(id: string, val: string): Promise<void>;
+        cacheGetAsync(id: string): Promise<string>; // null if not found
     }
 
     export interface PackageCard {
@@ -328,10 +328,14 @@ namespace ks {
             let rec = (p: Package) => {
                 if (ids.indexOf(p.id) >= 0) return;
                 ids.push(p.id)
-                Object.keys(p.config.dependencies).forEach(id => rec(this.resolveDep(id)))
+                let deps = Object.keys(p.config.dependencies)
+                deps.sort((a, b) => U.strcmp(a, b))
+                deps.forEach(id => rec(this.resolveDep(id)))
             }
             rec(this)
-            return ids.map(id => this.resolveDep(id))
+            let res = ids.map(id => this.resolveDep(id))
+            res.reverse() 
+            return res
         }
 
         getTargetOptions(): CompileTarget { return this.getTarget().compile; }

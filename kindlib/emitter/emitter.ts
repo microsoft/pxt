@@ -1911,6 +1911,7 @@ ${lbl}: .short 0xffff
         compileData: string;
         hasExtension: boolean;
         extensionDTs: string;
+        onlyPublic: boolean;
     }
 
     export function emptyExtInfo(): ExtensionInfo {
@@ -1924,6 +1925,7 @@ ${lbl}: .short 0xffff
             compileData: "",
             hasExtension: false,
             extensionDTs: "",
+            onlyPublic: true,
             microbitConfig: {
                 dependencies: {},
                 config: {}

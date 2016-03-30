@@ -41,7 +41,8 @@ namespace ks.cpp {
     import U = ts.ks.Util;
     import Y = ts.ks;
     let lf = U.lf;
-
+    export var kindscriptMicrobitCoreTag = "v0";
+    
     function parseExpr(e: string): number {
         e = e.trim()
         e = e.replace(/^\(/, "")
@@ -274,7 +275,8 @@ namespace ks.cpp {
                 })
         }
 
-        res.microbitConfig.dependencies["kindscript-microbit-core"] = "microsoft/kindscript-microbit-core#master";
+        // This is overridden on the build server, but we need it for command line build
+        res.microbitConfig.dependencies["kindscript-microbit-core"] = "microsoft/kindscript-microbit-core#" + kindscriptMicrobitCoreTag;
 
         if (mainPkg) {
             // TODO computeReachableNodes(pkg, true)
@@ -292,6 +294,11 @@ namespace ks.cpp {
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         src = parseCpp(src, isHeader)
                         res.extensionFiles["/source/" + fullName] = src
+
+                        if (pkg.level == 0)
+                            res.onlyPublic = false
+                        if (pkg.verProtocol() != "pub" && pkg.verProtocol() != "embed")
+                            res.onlyPublic = false
                     }
                 }
                 if (thisErrors) {
@@ -332,7 +339,7 @@ namespace ks.cpp {
 
         var creq = {
             config: "ws",
-            tag: "v0",
+            tag: kindscriptMicrobitCoreTag,
             replaceFiles: tmp,
             dependencies: res.microbitConfig.dependencies,
         }
@@ -341,7 +348,7 @@ namespace ks.cpp {
         res.sha = U.sha256(data)
         res.compileData = btoa(U.toUTF8(data))
         res.extensionDTs = dTs.finish()
-
+        
         return res;
     }
 
@@ -511,7 +518,7 @@ namespace ks.hex {
     }
 
     export function storeWithLimitAsync(host: Host, idxkey: string, newkey: string, newval: string, maxLen = 5) {
-        return host.cacheStoreAsync(newkey, newval) 
+        return host.cacheStoreAsync(newkey, newval)
             .then(() => host.cacheGetAsync(idxkey))
             .then(res => {
                 let keys: string[] = JSON.parse(res || "[]")
