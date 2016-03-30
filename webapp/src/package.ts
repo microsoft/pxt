@@ -114,6 +114,24 @@ export class EditorPackage {
         this.outputPkg = new EditorPackage(null, this)
         this.outputPkg.id = "built"
     }
+    
+    updateConfigAsync(update: (cfg: ks.PackageConfig) => void) {
+        let cfgFile = this.files[ks.configName]
+        if (cfgFile) {
+            try {
+                let cfg = <ks.PackageConfig>JSON.parse(cfgFile.content)
+                update(cfg);                
+                return cfgFile.setContentAsync(JSON.stringify(cfg, null, 2))
+            } catch (e) { }
+        }
+        
+        return null;
+    }
+    
+    removeDepAsync(pkgid : string) {
+        return this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid])
+               .then(() => this.saveFilesAsync());
+    }
 
     getKsPkg() {
         return this.ksPkg;

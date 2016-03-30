@@ -221,7 +221,8 @@ class FileList extends data.Component<ISettingsProps, {}> {
                 agreeIcon: "trash"
             }).done(res => {
                 if (res) {
-                    // TODO
+                    pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
+                        .done(() => this.props.parent.loadHeader(this.props.parent.state.header));
                 }
             })
         }
@@ -244,7 +245,7 @@ class FileList extends data.Component<ISettingsProps, {}> {
         let filesWithHeader = (p: pkg.EditorPackage) =>
             p.isTopLevel() ? filesOf(p) : [
                 <div key={"hd-" + p.getPkgId() } className="header item">
-                    {p.getPkgId() != this.props.parent.appTarget.id ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
+                    {p.getPkgId() != this.props.parent.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
                     {p.getPkgId() }
                 </div>
             ].concat(filesOf(p))
