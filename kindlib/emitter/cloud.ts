@@ -16,6 +16,12 @@ namespace ks.Cloud {
     export function hasAccessToken() {
         return !!accessToken
     }
+    
+    export function isLocalHost() : boolean {
+        try {
+            return /^http:\/\/(localhost|127\.0\.0\.1):3232\//.test(window.location.href);
+        }catch(e) { return false; }
+    }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url

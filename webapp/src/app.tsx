@@ -736,7 +736,7 @@ Ctrl+Shift+B
                     let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
                     console.log('saving ' + fn)
                     core.browserDownloadText(hex, fn, "application/x-microbit-hex")
-                    if (/http:\/\/(localhost|127\.0\.0\.1):3232/i.test(window.location.href)) {
+                    if (Cloud.isLocalHost()) {
                         console.log('local deployment...');
                         core.infoNotification("Uploading .hex file...");
                         Util.requestAsync({
@@ -1095,6 +1095,7 @@ $(document).ready(() => {
 
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
+    // else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json"))
