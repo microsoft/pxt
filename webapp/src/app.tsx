@@ -463,42 +463,48 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    initDragAndDrop() {
-        draganddrop.setupDragAndDrop(document.body, file => file.size < 1000000 && /^\.hex$/i.test(file.name), files => {
-            ks.cpp.unpackSourceFromHexFileAsync(files[0])
-                .then(data => {
-                    console.log('decoded hex file')
-                    if (!data || !data.meta) {
-                        core.warningNotification("Sorry, we could not recognize this file.")
-                        return;
-                    }
-                    if (data.meta.cloudId == "microbit.co.uk"
-                        && data.meta.editor == "blockly") {
-                        console.log('importing microbit.co.uk blocks project')
-                        compiler.getBlocksAsync()
-                            .then(info => this.newBlocksProjectAsync({
-                                "main.blocks": ks.blocks.importXml(info, data.source)
-                            })).done();
-                        return;
-                    } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget()) {
-                        console.log("importing project")
-                        let h : workspace.InstallHeader = {
-                            target: workspace.getCurrentTarget(),
-                            editor: data.meta.editor,
-                            name: data.meta.name,
-                            meta: {},
-                            pubId: "",
-                            pubCurrent: false
-                        };
-                        let files = JSON.parse(data.source);
-                        workspace.installAsync(h, files)
-                            .done(hd => this.loadHeader(hd));
-                        return;
-                    }
+    importHexFile(file: File) {
+        if (!file) return;
+        ks.cpp.unpackSourceFromHexFileAsync(file)
+            .then(data => {
+                console.log('decoded hex file')
+                if (!data || !data.meta) {
+                    core.warningNotification("Sorry, we could not recognize this file.")
+                    return;
+                }
+                if (data.meta.cloudId == "microbit.co.uk"
+                    && data.meta.editor == "blockly") {
+                    console.log('importing microbit.co.uk blocks project')
+                    compiler.getBlocksAsync()
+                        .then(info => this.newBlocksProjectAsync({
+                            "main.blocks": ks.blocks.importXml(info, data.source)
+                        })).done();
+                    return;
+                } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget()) {
+                    console.log("importing project")
+                    let h: workspace.InstallHeader = {
+                        target: workspace.getCurrentTarget(),
+                        editor: data.meta.editor,
+                        name: data.meta.name,
+                        meta: {},
+                        pubId: "",
+                        pubCurrent: false
+                    };
+                    let files = JSON.parse(data.source);
+                    workspace.installAsync(h, files)
+                        .done(hd => this.loadHeader(hd));
+                    return;
+                }
 
-                    core.warningNotification("Sorry, we could not import this project.")
-                })
-        })
+                core.warningNotification("Sorry, we could not import this project.")
+            })
+    }
+
+    initDragAndDrop() {
+        draganddrop.setupDragAndDrop(document.body, 
+            file => file.size < 1000000 && /^\.hex$/i.test(file.name), 
+            files => this.importHexFile(files[0])
+            );
     }
 
     embedDesigner() {
@@ -761,6 +767,26 @@ Ctrl+Shift+B
         }
     }
 
+    importHexFileDialog() {
+        let input: HTMLInputElement;
+        core.confirmAsync({
+            header: lf("Import .hex file"),
+            onLoaded: ($el) => {
+                input = $el.find('input')[0] as HTMLInputElement;
+            },
+            htmlBody: `<div class="ui form">
+  <div class="ui field">
+    <label>Select an .hex file created with ${this.appTarget.title}</label>
+    <input type="file"></input>
+  </div>
+</div>`,
+        }).done(res => {
+            if (res) {
+                this.importHexFile(input.files[0]);
+            }
+        })
+    }
+
     publish() {
         let mpkg = pkg.mainPkg
         let epkg = pkg.getEditorPkg(mpkg)
@@ -831,6 +857,8 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     {this.appTarget.cloud ? <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.scriptSearch.modal.show() } /> : ""}
                                     {this.appTarget.cloud ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
+                                    <sui.Item icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
+                                    <div className="ui separator"></div>
                                     <sui.Item icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
                                     <sui.Item icon='folder' text={lf("Show/Hide Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
