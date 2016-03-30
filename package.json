@@ -33,8 +33,7 @@
     "webapp/public",
     "typings/bluebird",
     "typings/node",
-    "typings/marked",
-    "generated/hexinfo.js"
+    "typings/marked"
   ],
   "preferGlobal": true,
   "main": "built/kind.js",
