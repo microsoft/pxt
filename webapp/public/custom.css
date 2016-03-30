@@ -1,13 +1,13 @@
 #filelist,
 #maineditor {
   position: absolute;
-  top:64px;
-  bottom: 2em;
+  top:4.5rem;
+  bottom: 2rem;
 }
 #logo {
-    font-size: 2.8em;
+    font-size: 2.8rem;
     margin: 0;
-    padding: 0 0.3em;
+    padding: 0 0.3rem;
     /*font-weight: bold;
     padding: 0 0.5em 0 0.5em;
     color: #2185D0;
@@ -16,44 +16,44 @@
 #logo .name {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
     color: #666666;
-    padding: 0 0.3em;
+    padding: 0 0.3rem;
 }
 #logo svg {
-    width: 1.2em;
-    height: 1.2em;
+    width: 1.2rem;
+    height: 1.2rem;
 }
 
 #logo img, #rightlogo img {
-    height: 1.2em;    
+    height: 2.8rem;    
 }
 
 #footerlogo {
     vertical-align: middle;
-    margin-right: 0.5em;    
+    margin-right: 0.5rem;    
 }
 
 #footerlogo img {
-    height: 1.2em;    
+    height: 1.2rem;    
 }
 
 #footer {
     position: absolute;
     bottom: 0;
-    height: 2em;
+    height: 2rem;
     left: 0;
     right: 0;
     background: rgba(0, 0, 0, 0.05);
 }
 #footer div {
-    font-size:0.8em;
+    font-size:0.8rem;
     text-align: center;
-    margin-top:0.4em;
+    margin-top:0.4rem;
 }
 
 .simframe {
     border: none;
-    width: 285px;
-    height: 230px;
+    width: 20rem;
+    height: 16rem;
     margin: 0;
     padding: 0;
     background:transparent;    
@@ -61,7 +61,7 @@
 
 #filelist {
   left: 0;
-  width: 300px;
+  width: 21rem;
   padding: 0em 1em 0em 0.5em;
   overflow-x: hidden;
   overflow-y: auto;
@@ -73,11 +73,11 @@
   left: 0;
   top: 0;
   right: 0;
-  height: 64px;    
+  height: 4rem;    
 }
 
 #menubar .item > .button {
-    margin-right: 0.25em;
+    margin-right: 0.25rem;
 }
 
 #filelist .menu {
@@ -85,7 +85,7 @@
 }
 
 #filelist .nested.item {
-    padding-left: 4em;
+    padding-left: 4rem;
 }
 
 #filelist .header {
@@ -94,7 +94,7 @@
 
 #maineditor {
   right: 0;
-  left: 300px;
+  left: 21rem;
 }
 
 #helpcard {
@@ -106,7 +106,7 @@
 }
 
 #settings .popup {
-    width: 400px;
+    width: 25rem;
 }
 
 .full-abs {
@@ -124,7 +124,7 @@
 
 #msg {
     position: absolute;
-    bottom: 30px;
+    bottom: 2rem;
     left: 0;
     right: 0;
     text-align: center;
@@ -146,11 +146,11 @@
 
 
 .searchdialog {
-    margin-top: -15em !important;
+    margin-top: -15rem !important;
 }
 
 .searchdialog .list {
-    height: 20em;
+    height: 20rem;
     overflow-y: scroll;
     overflow-x: hidden; 
 }
@@ -191,11 +191,11 @@
 }
 
 .blocklyText {    
-    font-size:14px;
+    font-size:1rem;
 }
 
 .blocklyTreeLabel {
-    font-size:20px;
+    font-size:1.25rem;
 }
 
 .blocklyLed {
@@ -226,7 +226,7 @@
 }
 
 #aceEditor .ace_search {
-    max-width: 500px;
+    max-width: 30rem;
 }
 
 #content .completer {
@@ -398,17 +398,17 @@ svg.ui.trend.black polyline {
 }
 
 /* extra-large desktop screen */
-@media only screen and (min-width: 1600px) and (min-height:700px) {
+@media only screen and (min-width: 100em) and (min-height:44em) {
     #filelist {
-        width:300px;
+        width:19rem;
     }
     #maineditor {
-        left:300px;
+        left:19rem;
     }
 }
 
 /* smaller desktop screen */
-@media only screen and (max-width: 968px) {
+@media only screen and (max-width: 60em) {
     #logo .name {
         display: none !important;
     }    
@@ -424,7 +424,7 @@ svg.ui.trend.black polyline {
 }
 
 /* thin desktop portrait mode */
-@media only screen and (max-width: 796px) {
+@media only screen and (max-width: 55em) {
     #helpcard {
         right: 2rem;
         top: initial;
@@ -447,22 +447,22 @@ svg.ui.trend.black polyline {
     }
     .simframe {
         display:inline-block;
-        width: 240px;
-        height:194px;
+        width: 15rem;
+        height:12rem;
     }
     
     .blocklyTreeLabel {
-        font-size:14px;
+        font-size:1rem;
     }    
 }
 
-@media only screen and (min-width: 796px) {
+@media only screen and (min-width: 55em) {
     .ui.portrait.only {
         display:none !important;    
     }
 }
 
-@media only screen and (max-height:680px) {
+@media only screen and (max-height:42.5em) {
     .ui.tall.only {
         display:none !important;
     }
