@@ -187,7 +187,7 @@ namespace ks.cpp {
 
                         if (defl)
                             currAttrs += `//% ${m[2]}.defl=${defl}`
-                            
+
                         return `${m[2]}${qm}: ${mapType(m[1])}`
                     })
                     var numArgs = args.length
@@ -332,7 +332,7 @@ namespace ks.cpp {
 
         var creq = {
             config: "ws",
-            tag: "v75",
+            tag: "v0",
             replaceFiles: tmp,
             dependencies: res.microbitConfig.dependencies,
         }
@@ -462,4 +462,205 @@ namespace ks.cpp {
                 }
             })
     }
+}
+
+namespace ks.hex {
+    var downloadCache: U.Map<Promise<any>> = {};
+    var cdnUrlPromise: Promise<string>;
+
+    function downloadHexInfoAsync(extInfo: ts.ks.ExtensionInfo) {
+        if (downloadCache.hasOwnProperty(extInfo.sha))
+            return downloadCache[extInfo.sha]
+        return (downloadCache[extInfo.sha] = downloadHexInfoCoreAsync(extInfo))
+    }
+
+    function getCdnUrlAsync() {
+        if (cdnUrlPromise) return cdnUrlPromise
+        else return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig").then(r => r.primaryCdnUrl));
+    }
+
+    function downloadHexInfoCoreAsync(extInfo: ts.ks.ExtensionInfo) {
+        let hexurl = ""
+        return getCdnUrlAsync()
+            .then(url => {
+                hexurl = url + "/compile/" + extInfo.sha
+                return U.httpGetTextAsync(hexurl + ".hex")
+            })
+            .then(r => r, e =>
+                Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
+                    .then(ret => new Promise<string>((resolve, reject) => {
+                        let tryGet = () => Util.httpGetJsonAsync(ret.hex.replace(/\.hex/, ".json"))
+                            .then(json => {
+                                if (!json.success)
+                                    U.userError(JSON.stringify(json, null, 1))
+                                else
+                                    resolve(U.httpGetTextAsync(hexurl + ".hex"))
+                            },
+                            e => {
+                                setTimeout(tryGet, 1000)
+                                return null
+                            })
+                        tryGet();
+                    })))
+            .then(text =>
+                Util.httpGetJsonAsync(hexurl + "-metainfo.json")
+                    .then(meta => {
+                        meta.hex = text.split(/\r?\n/)
+                        return meta
+                    }))
+    }
+
+    export function storeWithLimitAsync(host: Host, idxkey: string, newkey: string, newval: string, maxLen = 5) {
+        return host.cacheStoreAsync(newkey, newval) 
+            .then(() => host.cacheGetAsync(idxkey))
+            .then(res => {
+                let keys: string[] = JSON.parse(res || "[]")
+                let todel = keys.slice(0, Math.max(keys.length - (maxLen - 1), 0))
+                keys = keys.slice(todel.length).concat([newkey])
+                return Promise.map(todel, e => host.cacheStoreAsync(e, null))
+                    .then(() => host.cacheStoreAsync(idxkey, JSON.stringify(keys)))
+            })
+    }
+
+    export function getHexInfoAsync(host: Host, extInfo: ts.ks.ExtensionInfo): Promise<any> {
+        if (!extInfo.sha)
+            return Promise.resolve(null)
+
+        if (ts.ks.hex.isSetupFor(extInfo))
+            return Promise.resolve(null)
+
+        console.log("get hex info: " + extInfo.sha)
+
+        let key = "hex-" + extInfo.sha
+        return host.cacheGetAsync(key)
+            .then(res => {
+                if (res) {
+                    console.log("get from world: " + res.length)
+                    var meta = JSON.parse(res)
+                    meta.hex = decompressHex(meta.hex)
+                    return meta
+                }
+                else {
+                    //if (!Cloud.isOnline()) return null;
+
+                    return downloadHexInfoAsync(extInfo)
+                        .then(meta => {
+                            var origHex = meta.hex
+                            meta.hex = compressHex(meta.hex)
+                            var store = JSON.stringify(meta)
+                            meta.hex = origHex
+                            return storeWithLimitAsync(host, "hex-keys", key, store)
+                                .then(() => meta)
+                        })
+                }
+            })
+    }
+
+    function decompressHex(hex: string[]) {
+        var outp: string[] = []
+
+        for (var i = 0; i < hex.length; i++) {
+            var m = /^([@!])(....)$/.exec(hex[i])
+            if (!m) {
+                outp.push(hex[i])
+                continue;
+            }
+
+            var addr = parseInt(m[2], 16)
+            var nxt = hex[++i]
+            var buf = ""
+
+            if (m[1] == "@") {
+                buf = ""
+                var cnt = parseInt(nxt, 16)
+                while (cnt-- > 0) {
+                    buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+                }
+            } else {
+                buf = atob(nxt)
+            }
+
+            Util.assert(buf.length > 0)
+            Util.assert(buf.length % 16 == 0)
+
+            for (var j = 0; j < buf.length;) {
+                var bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
+                addr += 16;
+                for (var k = 0; k < 16; ++k) {
+                    bytes.push(buf.charCodeAt(j++))
+                }
+
+                var chk = 0
+                for (var k = 0; k < bytes.length; ++k)
+                    chk += bytes[k]
+                bytes.push((-chk) & 0xff)
+
+                var r = ":"
+                for (var k = 0; k < bytes.length; ++k) {
+                    var b = bytes[k] & 0xff
+                    if (b <= 0xf)
+                        r += "0"
+                    r += b.toString(16)
+                }
+                outp.push(r.toUpperCase())
+            }
+        }
+
+        return outp
+    }
+
+    function compressHex(hex: string[]) {
+        var outp: string[] = []
+
+        for (var i = 0; i < hex.length; i += j) {
+            var addr = -1;
+            var outln = ""
+            var j = 0;
+            var zeroMode = false;
+
+            while (j < 500) {
+                var m = /^:10(....)00(.{32})(..)$/.exec(hex[i + j])
+                if (!m)
+                    break;
+
+                var h = m[2]
+                var isZero = /^0+$/.test(h)
+                var newaddr = parseInt(m[1], 16)
+                if (addr == -1) {
+                    zeroMode = isZero;
+                    outp.push((zeroMode ? "@" : "!") + m[1])
+                    addr = newaddr - 16;
+                } else {
+                    if (isZero != zeroMode)
+                        break;
+
+                    if (addr + 16 != newaddr)
+                        break;
+                }
+
+                if (!zeroMode)
+                    outln += h;
+
+                addr = newaddr;
+                j++;
+            }
+
+            if (j == 0) {
+                outp.push(hex[i])
+                j = 1;
+            } else {
+                if (zeroMode) {
+                    outp.push(j.toString(16))
+                } else {
+                    var bin = ""
+                    for (var k = 0; k < outln.length; k += 2)
+                        bin += String.fromCharCode(parseInt(outln.slice(k, k + 2), 16))
+                    outp.push(btoa(bin))
+                }
+            }
+        }
+
+        return outp;
+    }
+
 }

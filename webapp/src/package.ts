@@ -234,8 +234,16 @@ class Host
         throw Util.oops("trying to write " + module + " / " + filename)
     }
 
-    getHexInfoAsync() {
-        return Promise.resolve((window as any).ksHexInfo)
+    getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
+        return ks.hex.getHexInfoAsync(this, extInfo)
+    }
+
+    cacheStoreAsync(id: string, val: string): Promise<void> {
+        return Promise.resolve()
+    }
+
+    cacheGetAsync(id: string): Promise<string> {
+        return Promise.resolve(null as string)
     }
 
     downloadPackageAsync(pkg: ks.Package) {

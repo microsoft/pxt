@@ -35,7 +35,9 @@ namespace ks {
         writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any>;
-        resolveVersionAsync(pkg: Package): Promise<string>;
+        resolveVersionAsync(pkg: Package): Promise<string>;        
+        cacheStoreAsync(id:string, val:string): Promise<void>;
+        cacheGetAsync(id:string): Promise<string>; // null if not found
     }
 
     export interface PackageCard {

@@ -459,8 +459,8 @@ function forEachBundledPkgAsync(f: (pkg: ks.MainPackage) => Promise<void>) {
         mainPkg = new ks.MainPackage(new Host())
         return f(mainPkg);
     })
-    .finally(() => process.chdir(parentdir))
-    .then(() => {}) 
+        .finally(() => process.chdir(parentdir))
+        .then(() => { })
 }
 
 export function publishTargetAsync() {
@@ -658,7 +658,7 @@ export function serveAsync() {
 function extensionAsync(add: string) {
     let dat = {
         "config": "ws",
-        "tag": "v74",
+        "tag": "v0",
         "replaceFiles": {
             "/generated/xtest.cpp": "namespace xtest {\n    GLUE void hello()\n    {\n        uBit.panic(123);\n " + add + "   }\n}\n",
             "/generated/extpointers.inc": "(uint32_t)(void*)::xtest::hello,\n",
@@ -723,6 +723,14 @@ class Host
             return Promise.resolve(require(__dirname + "/../generated/hexinfo.js"))
         return buildHexAsync(extInfo)
             .then(() => patchHexInfo(extInfo))
+    }
+
+    cacheStoreAsync(id: string, val: string): Promise<void> {
+        return Promise.resolve()
+    }
+
+    cacheGetAsync(id: string): Promise<string> {
+        return Promise.resolve(null as string)
     }
 
     downloadPackageAsync(pkg: ks.Package) {
