@@ -426,7 +426,7 @@ typedef uint32_t Action;
         }
     }
 
-    export function unpackSourceFromHexFileAsync(file: File): Promise<{ meta?: { cloudId: string; editor: string; }; source: string; }> { // string[] (guid)
+    export function unpackSourceFromHexFileAsync(file: File): Promise<{ meta?: { cloudId: string; editor: string; name:string; }; source: string; }> { // string[] (guid)
         if (!file) return undefined;
 
         return fileReadAsArrayBufferAsync(file)

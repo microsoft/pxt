@@ -11,7 +11,7 @@ namespace ks.runner {
         hexName?: string;
     }
 
-    let runUrl = './--run';
+    let runUrl = '/--run';
     function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
         if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
@@ -54,7 +54,7 @@ namespace ks.runner {
                 $h.find('.active').removeClass('active')
                 $runBtn.addClass('active')
                 
-                let $embed = $(`<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`);
+                let $embed = $(`<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`);
                 $c.empty().append($embed);
             })
             $menu.append($runBtn);
