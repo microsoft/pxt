@@ -133,13 +133,13 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchCloudData(): Cloud.JsonScript[] {
-        if (!this.props.parent.appTarget.cloud || !this.props.parent.appTarget.cloud.workspaces) return [];
-
-        let res = this.state.searchFor ?
-            this.getData("cloud:scripts?q=" + encodeURIComponent(this.state.searchFor))
+        let cloud = this.props.parent.appTarget.cloud || {};
+        if (!cloud.workspaces) return [];
+        let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
+        let res = this.state.searchFor 
+            ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${this.props.parent.appTarget.id}`)
             : null
-        if (res)
-            this.prevData = res.items
+        if (res) this.prevData = res.items
         let data = this.prevData
         return data;
     }
