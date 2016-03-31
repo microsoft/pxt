@@ -36,6 +36,14 @@ export class Table {
         return db.remove(obj)
     }
     
+    forceSetAsync(obj:any):Promise<string> {
+        return this.getAsync(obj.id)
+            .then(o => {
+                obj._rev = o._rev
+                return this.setAsync(obj)
+            }, e => this.setAsync(obj))
+    }
+    
     setAsync(obj:any):Promise<string> {
         if (obj.id && !obj._id)
             obj._id = this.name + "--" + obj.id            

@@ -1,6 +1,7 @@
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
+import * as db from "./db";
 
 import Cloud = ks.Cloud;
 import Util = ks.Util;
@@ -8,6 +9,9 @@ var lf = Util.lf
 
 export var appTarget: ks.AppTarget;
 export var targetBundle: ks.TargetBundle;
+
+
+let hostCache = new db.Table("hostcache")
 
 let extWeight: Util.StringMap<number> = {
     "ts": 10,
@@ -257,11 +261,15 @@ class Host
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
-        return Promise.resolve()
+        return hostCache.forceSetAsync({
+            id: id,
+            val: val
+        }).then(() => {})
     }
 
     cacheGetAsync(id: string): Promise<string> {
-        return Promise.resolve(null as string)
+        return hostCache.getAsync(id)
+            .then(v => v.val, e => null)
     }
 
     downloadPackageAsync(pkg: ks.Package) {
