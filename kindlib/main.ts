@@ -40,19 +40,8 @@ namespace ks {
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
 
-    export interface PackageCard {
-        promoUrl?: string;
-        any?: number;
-        hardware?: number;
-        software?: number;
-        blocks?: number;
-        javascript?: number;
-        power?: number;
-        toughness?: number;
-    }
-
     export interface CodeCard {
-        name: string;
+        name?: string;
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -60,9 +49,15 @@ namespace ks {
         blocksXml?: string;
         header?: string;
         time?: number;
-        card?: ks.PackageCard;
         url?: string;
         responsive?: boolean;
+
+        any?: number;
+        hardware?: number;
+        software?: number;
+        blocks?: number;
+        javascript?: number;
+        
         onClick?: (e: any) => void; // React event
 
         target?: string;
@@ -96,7 +91,7 @@ namespace ks {
         binaryonly?: boolean;
         target?: AppTarget;
         microbit?: ts.ks.MicrobitConfig;
-        card?: PackageCard;
+        card?: CodeCard;
     }
 
     // this is for remote file interface to packages

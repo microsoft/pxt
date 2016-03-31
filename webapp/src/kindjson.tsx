@@ -32,21 +32,6 @@ export class Editor extends srceditor.Editor {
         }
         let card = c.card || {};
 
-        /*
-                                <div className="two fields">
-                         <sui.Input inputLabel={lf("Power")} type="number" value={(card.power || 0).toString()} onChange={v => {
-                             initCard();
-                             let vi = Math.max(0, parseInt(v) || 0)
-                             update(c.card.power = vi)
-                         }} /> /
-                         <sui.Input inputLabel={lf("Toughness")} type="number" value={(card.toughness || 0).toString()} onChange={v => {
-                             initCard();
-                             let vi = Math.max(0, parseInt(v) || 0)
-                             update(c.card.toughness = vi)
-                         }} />
-                         </div>
- */
-
         return (
             <div className="ui content">
             <div className="ui segment form text" style={{ backgroundColor: "white" }}>

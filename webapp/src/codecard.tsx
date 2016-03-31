@@ -47,20 +47,20 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
     }
 
     render() {
-        let card = this.props.card || {}
+        let card = this.props
         let promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];        
-        let color = this.props.color || "";
+        let color = card.color || "";
         if (!color) {
             if (card.hardware && !card.software) color = 'black';
             else if (card.software && !card.hardware) color = 'teal';
         }
-        let url = this.props.url ? /^[^:]+:\/\//.test(this.props.url) ? this.props.url : ('/' + this.props.url.replace(/^\.?\/?/,''))
+        let url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/,''))
             : undefined;
 
         return (
-            <div className={"ui card " + color + (this.props.onClick ? " link" : '')} onClick={e => this.props.onClick ? this.props.onClick(e) : undefined } >
-                {this.props.header ?
-                <div key="header" className={"ui content " + (this.props.responsive ? " tall desktop only" : "")}>
+            <div className={"ui card " + color + (card.onClick ? " link" : '')} onClick={e => card.onClick ? card.onClick(e) : undefined } >
+                {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
+                <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
                     <div className="right floated meta">
                         {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
                         {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle oragne icon" ></i>) }
@@ -68,26 +68,25 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                         {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
                         {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
                     </div>
-                    {this.props.header}
+                    {card.header}
                 </div> : "" }
-                <div className={"ui image" + (this.props.responsive ? " tall landscape only": "")}>
+                <div className={"ui image" + (card.responsive ? " tall landscape only": "")}>
                     {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div>
-                        : this.props.blocksXml 
-                        ? <blockspreview.BlocksPreview key="promoblocks" xml={this.props.blocksXml} />
+                        : card.blocksXml 
+                        ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} />
                         : null // <simview.MicrobitBoardView key="promosim" disableTilt={true} theme={simsvg.randomTheme() } />
                     }
                 </div>
                 <div className="content">
-                    <a href={url} target="docs" className="header">{this.props.name}</a>
+                    {card.name ? <a href={url} target="docs" className="header">{card.name}</a> : ''}
                     <div className="meta">
-                        {this.props.time ? <span key="date" className="date">{ks.Util.timeSince(this.props.time) }</span> : ""}
+                        {card.time ? <span key="date" className="date">{ks.Util.timeSince(card.time) }</span> : ""}
                     </div>
-                    {this.props.description ? <div className="description">{this.props.description}</div> : ''}
+                    {card.description ? <div className="description">{card.description}</div> : ''}
                 </div>
-                {this.props.url || card.power || card.toughness ?
-                <div key="extra" className={"ui extra content" + (this.props.responsive ? " tall desktop only" : "")}>
-                    {card.power || card.toughness ? (<div key="powertough" className="right floated meta">{card.power || 0}/{card.toughness || 0}</div>) : ""}
-                    {this.props.url ? <a target="docs" href={url}>{this.props.url}</a> : ""}
+                {card.url ?
+                <div key="extra" className={"ui extra content" + (card.responsive ? " tall desktop only" : "")}>
+                    {card.url ? <a target="docs" href={url}>{card.url}</a> : ""}
                 </div> : ""}
             </div>
         )

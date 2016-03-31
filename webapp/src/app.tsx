@@ -201,6 +201,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                                 key={'local' + scr.id}
                                 name={scr.name}
                                 time={scr.recentUse}
+                                blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
+                                javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
                                 description={lf("local project") }
                                 onClick={() => chgHeader(scr) }
                                 />
@@ -209,6 +211,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             <codecard.CodeCardView
                                 name={scr.name}
                                 time={scr.time}
+                                blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
+                                javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
                                 description={scr.username}
                                 key={'cloud' + scr.id}
                                 onClick={() => install(scr) }
