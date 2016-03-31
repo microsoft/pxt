@@ -72,17 +72,31 @@ function fatal(msg: string): Promise<any> {
 
 let globalConfig: UserConfig = {}
 
+function homeKindDir() {
+    return path.join(process.env["HOME"] || process.env["UserProfile"], ".kind")
+}
+
+function cacheDir() {
+    return path.join(homeKindDir(), "cache")
+}
+
 function configPath() {
-    let home = process.env["HOME"] || process.env["UserProfile"]
-    return home + "/.kind/config.json"
+    return path.join(homeKindDir(), "config.json")
+}
+
+var homeDirsMade = false
+function mkHomeDirs() {
+    if (homeDirsMade) return
+    homeDirsMade = true
+    if (!fs.existsSync(homeKindDir()))
+        fs.mkdirSync(homeKindDir())
+    if (!fs.existsSync(cacheDir()))
+        fs.mkdirSync(cacheDir())
 }
 
 function saveConfig() {
-    let path = configPath();
-    try {
-        fs.mkdirSync(path.replace(/config.json$/, ""))
-    } catch (e) { }
-    fs.writeFileSync(path, JSON.stringify(globalConfig, null, 4) + "\n")
+    mkHomeDirs()
+    fs.writeFileSync(configPath(), JSON.stringify(globalConfig, null, 4) + "\n")
 }
 
 function initConfig() {
@@ -147,7 +161,7 @@ export function ptrAsync(path: string, target?: string) {
                 return r
             })
     }
-    
+
     if (target == "delete") {
         return Cloud.privateDeleteAsync(nodeutil.pathToPtr(path))
             .then(() => {
@@ -653,7 +667,7 @@ function buildAndWatchTargetAsync() {
         .then(() => [path.resolve("node_modules/kindscript")].concat(dirsToWatch)));
 }
 
-export function serveAsync(arg?:string) {
+export function serveAsync(arg?: string) {
     forceCloudBuild = true
     if (arg == "-yt") {
         forceCloudBuild = false
@@ -748,11 +762,13 @@ class Host
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
-        return Promise.resolve()
+        mkHomeDirs()
+        return writeFileAsync(path.join(cacheDir(), id), val, "utf8")
     }
 
     cacheGetAsync(id: string): Promise<string> {
-        return Promise.resolve(null as string)
+        return readFileAsync(path.join(cacheDir(), id), "utf8")
+            .then((v:string) => v, (e:any) => null as string)
     }
 
     downloadPackageAsync(pkg: ks.Package) {

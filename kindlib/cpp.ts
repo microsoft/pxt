@@ -42,7 +42,7 @@ namespace ks.cpp {
     import Y = ts.ks;
     let lf = U.lf;
     export var kindscriptMicrobitCoreTag = "v0";
-    
+
     function parseExpr(e: string): number {
         e = e.trim()
         e = e.replace(/^\(/, "")
@@ -348,7 +348,7 @@ namespace ks.cpp {
         res.sha = U.sha256(data)
         res.compileData = btoa(U.toUTF8(data))
         res.extensionDTs = dTs.finish()
-        
+
         return res;
     }
 
@@ -517,15 +517,31 @@ namespace ks.hex {
                     }))
     }
 
-    export function storeWithLimitAsync(host: Host, idxkey: string, newkey: string, newval: string, maxLen = 5) {
+    export function storeWithLimitAsync(host: Host, idxkey: string, newkey: string, newval: string, maxLen = 10) {
         return host.cacheStoreAsync(newkey, newval)
             .then(() => host.cacheGetAsync(idxkey))
             .then(res => {
                 let keys: string[] = JSON.parse(res || "[]")
-                let todel = keys.slice(0, Math.max(keys.length - (maxLen - 1), 0))
-                keys = keys.slice(todel.length).concat([newkey])
+                keys = keys.filter(k => k != newkey)
+                keys.unshift(newkey)
+                let todel = keys.slice(maxLen)
+                keys = keys.slice(0, maxLen)
                 return Promise.map(todel, e => host.cacheStoreAsync(e, null))
                     .then(() => host.cacheStoreAsync(idxkey, JSON.stringify(keys)))
+            })
+    }
+
+    export function recordGetAsync(host: Host, idxkey: string, newkey: string) {
+        return host.cacheGetAsync(idxkey)
+            .then(res => {
+                let keys: string[] = JSON.parse(res || "[]")
+                if (keys[0] != newkey) {
+                    keys = keys.filter(k => k != newkey)
+                    keys.unshift(newkey)
+                    return host.cacheStoreAsync(idxkey, JSON.stringify(keys))
+                } else {
+                    return null
+                }
             })
     }
 
@@ -542,10 +558,11 @@ namespace ks.hex {
         return host.cacheGetAsync(key)
             .then(res => {
                 if (res) {
-                    console.log("get from world: " + res.length)
+                    console.log("cache hit, size=" + res.length)
                     var meta = JSON.parse(res)
                     meta.hex = decompressHex(meta.hex)
-                    return meta
+                    return recordGetAsync(host, "hex-keys", key)
+                        .then(() => meta)
                 }
                 else {
                     //if (!Cloud.isOnline()) return null;
