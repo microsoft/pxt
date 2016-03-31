@@ -11,3 +11,4 @@ kind_modules
 tmp/
 *.ts.new
 temp/
+*.db
