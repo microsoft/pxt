@@ -924,7 +924,7 @@ Ctrl+Shift+B
                                 <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                {pkg.targetBundle.appTheme.embedUrl ? <sui.Button class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.embedDesigner() } /> : ''}
+                                {pkg.targetBundle.appTheme.embedUrl ? <sui.Button class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.embedDesigner() } /> : ''}
                             </div>
                         </div>
                         <div className="ui item">
