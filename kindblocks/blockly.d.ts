@@ -14,6 +14,16 @@ declare module goog {
     module dom {
         function createDom(name:string, ns?: string, children?: any) : HTMLElement;
     }
+
+    module math {
+        class Coordinate {
+            x : number;
+            y : number;
+            
+            static difference(a : Coordinate, b : Coordinate): Coordinate;
+            static magnitude(a : Coordinate): number;
+        }
+    }    
 }
 declare module Blockly {
     var selected: any;
@@ -77,6 +87,10 @@ declare module Blockly {
 
         moveBy(x : number, y: number) : void;
         getHeightWidth() : { width: number; height: number;};
+        getBoundingRectangle(): {
+            topLeft: goog.math.Coordinate;
+            bottomRight: goog.math.Coordinate;
+        }
         outputConnection: Connection;
 
         svgGroup_: SVGElement;
