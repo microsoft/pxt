@@ -166,23 +166,45 @@ namespace ts.ks {
         }
     }
 
-    export function genMarkdown(apiInfo: ApisInfo) {
-        let infos = Util.values(apiInfo.byQName)
+    export function genMarkdown(apiInfo: ApisInfo) {        
+        let infos = Util.values(apiInfo.byQName);
         let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
-        namespaces.sort((a, b) => U.strcmp(a.name, b.name))
+        namespaces.sort(compareSymbol)
         let markdown = ""
         let write = (s: string) => markdown += s + "\n"
         write("# Reference")
+        write('')
         for (let ns of namespaces) {
-            write(`## ${ns.name}`)
+            let syms = infos
+                .filter(si => si.namespace == ns.name && !!si.attributes.jsDoc)
+                .sort(compareSymbol)
+            if (!syms.length) continue;
+            
+            write(`## ${capitalize(ns.name)}`)
+            write('')
             write(`${ns.attributes.jsDoc}`)
-            let syms = infos.filter(si => si.namespace == ns.name)
+            write('')
             for (let si of syms) {
-                write(`### ${si.name}`)
-                write(`${si.attributes.jsDoc}`)
+                write(`* [${si.name}](/reference/${urlify(si.namespace)}/${urlify(si.name)}): ${si.attributes.jsDoc}`)
+                write('')
             }
+            write('')
         }
-        return markdown
+        return markdown;
+        
+        function capitalize(name: string) {
+            return name[0].toUpperCase() + name.slice(1);
+        }
+        
+        function urlify(name: string) {
+            return name.replace(/[A-Z]/g, '-$0').toLowerCase();
+        }
+        
+        function compareSymbol(l : SymbolInfo, r: SymbolInfo) : number {
+            let c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
+            if (c) return c;
+            return U.strcmp(l.name, r.name);
+        }
     }
 
     export function getApiInfo(program: Program): ApisInfo {
