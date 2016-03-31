@@ -18,7 +18,7 @@ import Cloud = ks.Cloud;
 import * as server from './server';
 import * as uploader from './uploader';
 
-let onBuildServer = false
+let forceCloudBuild = false
 
 // provided by target
 let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
@@ -229,7 +229,7 @@ function readJson(fn: string) {
 }
 
 function travisAsync() {
-    onBuildServer = true
+    forceCloudBuild = true
 
     let rel = process.env.TRAVIS_TAG || ""
     let atok = process.env.NPM_ACCESS_TOKEN
@@ -646,7 +646,11 @@ function buildAndWatchTargetAsync() {
         .then(() => [path.resolve("node_modules/kindscript")].concat(dirsToWatch)));
 }
 
-export function serveAsync() {
+export function serveAsync(arg?:string) {
+    forceCloudBuild = true
+    if (arg == "-yt") {
+        forceCloudBuild = false
+    }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
         saveConfig()
@@ -729,7 +733,7 @@ class Host
     }
 
     getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
-        if (extInfo.onlyPublic || onBuildServer)
+        if (extInfo.onlyPublic || forceCloudBuild)
             return ks.hex.getHexInfoAsync(this, extInfo)
 
         return buildHexAsync(extInfo)
@@ -1095,6 +1099,7 @@ function buildCoreAsync(mode: BuildOption) {
                 let apiInfo = ts.ks.getApiInfo(res.ast)
                 let md = ts.ks.genMarkdown(apiInfo)
                 mainPkg.host().writeFile(mainPkg, "built/reference.md", md)
+                console.log(`Wrote built/reference.md; size=` + md.length)
                 return null
             } else if (mode == BuildOption.Deploy) {
                 if (!deployCoreAsync) {
@@ -1163,7 +1168,7 @@ cmd("run                          - build and run current package in the simulat
 cmd("test                         - run tests on current package", testAsync)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync)
 cmd("help                         - display this message", helpAsync)
-cmd("serve                        - start web server for your local target", serveAsync, 0)
+cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id or redirect)", ptrAsync, 1)
