@@ -225,8 +225,9 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let url: string;
         let embed: string;
         if (ready) {
-            url = `${rootUrl}--run?id=${header.pubId}`;
-            embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
+            let runurl = `${rootUrl}--run?id=${header.pubId}`;
+            url = `${rootUrl}${header.pubId}`
+            embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
         }
 
         let publish = () => {
