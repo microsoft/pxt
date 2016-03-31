@@ -616,8 +616,7 @@ function buildTargetCoreAsync() {
                 target: readJson("package.json")["version"],
                 kindscript: readJson("node_modules/kindscript/package.json")["version"],
             }
-            if (!fs.existsSync("built"))
-                fs.mkdirSync("built")
+            nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
             U.assert(!!currentTarget)
             fs.writeFileSync("built/webtarget.json", JSON.stringify(currentTarget, null, 2))
@@ -875,14 +874,6 @@ export function timeAsync() {
         .then(() => console.log("MIN", min))
 }
 
-export function mkdirP(thePath: string) {
-    if (thePath == ".") return;
-    if (!fs.existsSync(thePath)) {
-        mkdirP(path.dirname(thePath))
-        fs.mkdirSync(thePath)
-    }
-}
-
 let ytPath = "built/yt"
 let ytTarget = "bbc-microbit-classic-gcc"
 
@@ -951,7 +942,7 @@ function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
 
     U.iterStringMap(allFiles, (fn, v) => {
         fn = ytPath + fn
-        mkdirP(path.dirname(fn))
+        nodeutil.mkdirP(path.dirname(fn))
         let existing: string = null
         if (fs.existsSync(fn))
             existing = fs.readFileSync(fn, "utf8")

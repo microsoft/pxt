@@ -15,7 +15,7 @@ import Cloud = ks.Cloud;
 let root = ""
 let dirs = [""]
 let simdirs = [""]
-let fileDir = path.join(process.cwd(), "libs")
+let fileDir = process.cwd()
 let docsDir = ""
 let tempDir = ""
 
@@ -104,8 +104,7 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
 function writePkgAsync(logicalDirname: string, data: FsPkg) {
     let dirname = path.join(fileDir, logicalDirname)
 
-    if (!directoryExistsSync(dirname))
-        fs.mkdirSync(dirname)
+    nodeutil.mkdirP(dirname)
 
     return Promise.map(data.files, f =>
         readFileAsync(path.join(dirname, f.name))
@@ -378,8 +377,7 @@ export function serveAsync(options: ServeOptions) {
     
     setupRootDir()
     
-    if (!fs.existsSync(tempDir))
-        fs.mkdirSync(tempDir)
+    nodeutil.mkdirP(tempDir)
 
     setupTemplate()
     initTargetCommands()

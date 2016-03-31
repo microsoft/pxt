@@ -5,6 +5,7 @@ import * as http from 'http';
 import * as https from 'https';
 import * as events from 'events';
 import * as crypto from 'crypto';
+import * as path from 'path';
 
 Promise = require("bluebird");
 
@@ -134,3 +135,10 @@ export function pathToPtr(path: string) {
     return "ptr-" + sanitizePath(path.replace(/^ptr-/, "")).replace(/[^\w@]/g, "-")
 }
 
+export function mkdirP(thePath: string) {
+    if (thePath == ".") return;
+    if (!fs.existsSync(thePath)) {
+        mkdirP(path.dirname(thePath))
+        fs.mkdirSync(thePath)
+    }
+}
