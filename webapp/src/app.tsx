@@ -957,7 +957,7 @@ Ctrl+Shift+B
                     <div className="ui item landscape only">
                         <sui.Button key='runbtn' class={"green"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {dbgMode && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
-                        {this.appTarget.compile ? <sui.Button icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
+                        {this.appTarget.compile ? <sui.Button icon='xicon microbitdown' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                     </div>
                     <FileList parent={this} />
                 </div>
