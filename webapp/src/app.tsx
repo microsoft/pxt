@@ -894,6 +894,7 @@ Ctrl+Shift+B
 
         const targetTheme = pkg.targetBundle.appTheme;
         const workspaces = this.appTarget.cloud && this.appTarget.cloud.workspaces;
+        const publishing = this.appTarget.cloud && this.appTarget.cloud.packages;
 
         return (
             <div id='root' className={"full-abs"}>
@@ -909,7 +910,7 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     <sui.Item icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } />
-                                    {workspaces ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
+                                    {publishing ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
                                     <sui.Item icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     <div className="ui separator"></div>
                                     <sui.Item icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
