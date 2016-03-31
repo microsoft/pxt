@@ -11,6 +11,8 @@ namespace ks {
         rightLogo?: string;
         footerLogo?: string;
         docsLogo?: string;
+        homeUrl?: string;
+        embedUrl?: string;
         koduUrl?: string;
         visualStudioCode?: boolean;
         docMenu?: DocMenuEntry[];

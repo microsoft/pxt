@@ -553,7 +553,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let header = this.state.header;
         if (!header) return;
 
-        let url = `https://${window.location.host}/--run?`;
+        let rootUrl = pkg.targetBundle.appTheme.embedUrl
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+        let url = `${rootUrl}--run?`;
         if (header.pubId) url += `id=${header.pubId}`;
         else {
             // read main file
@@ -564,7 +566,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
         core.confirmAsync({
             logos: [pkg.targetBundle.appTheme.logo, logoSvgXml],
-            header: lf("Embed in other pages!"),
+            header: lf("Embed your project in other pages!"),
             hideCancel: true,
             agreeLbl: lf("Got it!"),
             htmlBody: `
@@ -617,7 +619,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             <img src="${images}/newblock.png">
         </div>
         <div class="content">
-        <div class="header">${lf("Block Editor for {0}", this.appTarget.name)}</div>
+        <div class="header">${lf("Blocks")}</div>
         <div class="description">
             ${lf("Drag and Drop Coding")}
         </div>
@@ -630,7 +632,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             <img class="visible content" src="${images}/newtypescript.png">
         </div>
         <div class="content">
-        <div class="header">${lf("JavaScript for {0}", this.appTarget.name)}</div>
+        <div class="header">${lf("JavaScript")}</div>
         <div class="description">
             ${lf("Text based Coding")}
         </div>
@@ -922,7 +924,7 @@ Ctrl+Shift+B
                                 <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                <sui.Button class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.embedDesigner() } />
+                                {pkg.targetBundle.appTheme.embedUrl ? <sui.Button class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.embedDesigner() } /> : ''}
                             </div>
                         </div>
                         <div className="ui item">
