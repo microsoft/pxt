@@ -431,7 +431,6 @@ export function serveAsync(options: ServeOptions) {
 
         if (elts[0] == "api") {
             if (!isAuthorizedLocalRequestAsync(req)) {
-                console.log(`invalid token ${JSON.stringify(Object.keys(req.headers), null, 2)}`)
                 error(403);
                 return null;
             }

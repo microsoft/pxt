@@ -427,6 +427,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             if (!this.state.header && header) {
                 this.loadHeader(header)
             }
+            if (!this.state.header)
+                this.newProject(true);
         }, 1000)
     }
 
