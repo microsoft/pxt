@@ -147,6 +147,13 @@ export function ptrAsync(path: string, target?: string) {
                 return r
             })
     }
+    
+    if (target == "delete") {
+        return Cloud.privateDeleteAsync(nodeutil.pathToPtr(path))
+            .then(() => {
+                console.log("Pointer " + path + " deleted.")
+            })
+    }
 
     let ptr = {
         path: path,
@@ -1171,7 +1178,7 @@ cmd("help                         - display this message", helpAsync)
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
-cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id or redirect)", ptrAsync, 1)
+cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
 cmd("buildtarget                  - build kindtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
