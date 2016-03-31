@@ -954,7 +954,7 @@ Ctrl+Shift+B
                     </div>
                     <div className="ui item landscape only">
                         <sui.Button key='runbtn' class={"green"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                        {!this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
+                        {dbgMode && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                         {this.appTarget.compile ? <sui.Button icon='download' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                     </div>
                     <FileList parent={this} />
@@ -1125,12 +1125,14 @@ let myexports: any = {
 
 export var ksVersion: string;
 export var targetVersion: string;
+export var dbgMode : boolean = false;
 
 $(document).ready(() => {
     let config = (window as any).tdConfig || {};
     ksVersion = config.ksVersion || config.tdVersion || "";
     targetVersion = config.targetVersion || config.tdVersion || "";
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    dbgMode = /dbg=1/i.test(window.location.href);
 
     enableCrashReporting(ksVersion);
     enableInsights(ksVersion);
