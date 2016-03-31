@@ -56,6 +56,7 @@ interface IAppState {
     helpCard?: ks.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
     running?: boolean;
+    publishing?: boolean;
 }
 
 
@@ -172,21 +173,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 })
                 .done()
         }
-        /*
-    interface CodeCard {
-        name: string;
-        color?: string;
-        description?: string;
-        promoUrl?: string;
-        blocksXml?: string;
-        header?: string;
-        time?: number;
-        card?: ks.PackageCard;
-        url?: string;
-        responsive?: boolean;
-        target?: string;
-    }        
-        */
+
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
 
@@ -225,6 +212,51 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 }
 
+class ShareEditor extends data.Component<ISettingsProps, {}> {
+    modal: sui.Modal;
+
+    renderCore() {
+        let header = this.props.parent.state.header;
+        if (!header) return <div></div>
+
+        let rootUrl = pkg.targetBundle.appTheme.embedUrl
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+        let ready = !!header.pubId;
+        let url: string;
+        let embed: string;
+        if (ready) {
+            url = `${rootUrl}--run?id=${header.pubId}`;
+            embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
+        }
+
+        let publish = () => {
+            this.props.parent.publishAsync().done();
+        }
+        let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
+
+        return <sui.Modal ref={v => this.modal = v} addClass="searchdialog" header={lf("Share Project") }>
+            <div className="ui segment">
+                    <div className={`ui ${formState} form`}>
+                        <div className="ui warning message">
+                            <div className="header">{lf("Almost there!")}</div>
+                            <p>{lf("You need to publish your script to share it.") }</p>
+                            <sui.Button icon="cloud" class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
+                        </div>
+                        <div className="ui success message">
+                            <div className="header">{lf("Your project is ready!")}</div>
+                            <p>{lf("Share this URL or copy the HTML to embed your project in web pages.") }</p>
+                        </div>
+                        <sui.Field label={lf("URL") }>
+                            <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
+                        </sui.Field>
+                        <sui.Field label={lf("HTML") }>
+                            <sui.Input class="mini" readOnly={true} lines={2} value={embed} copy={ready} disabled={!ready} />
+                        </sui.Field>
+                    </div>
+            </div>
+        </sui.Modal>
+    }
+}
 interface FileListState {
     expands: Util.Map<boolean>;
 }
@@ -303,6 +335,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: ScriptSearch;
+    shareEditor: ShareEditor;
     appTarget: ks.AppTarget;
 
     constructor(props: IAppProps) {
@@ -549,44 +582,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             files => this.importHexFile(files[0])
         );
     }
-
-    embedDesigner() {
-        tickEvent("embed");
-        let header = this.state.header;
-        if (!header) return;
-
-        let rootUrl = pkg.targetBundle.appTheme.embedUrl
-        if (!/\/$/.test(rootUrl)) rootUrl += '/';
-        let url = `${rootUrl}--run?`;
-        if (header.pubId) url += `id=${header.pubId}`;
-        else {
-            // read main file
-            let code = pkg.mainPkg.readFile(header.editor == 'tsprj' ? 'main.ts' : 'main.blocks.ts');
-            url += `code=${encodeURIComponent(code)}`;
-        }
-
-        let embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
-        core.confirmAsync({
-            logos: [pkg.targetBundle.appTheme.logo, logoSvgXml],
-            header: lf("Embed your project in other pages!"),
-            hideCancel: true,
-            agreeLbl: lf("Got it!"),
-            htmlBody: `
-        <h4 className="ui dividing header">${lf("Copy the HTML or use the URL below to embed your projects in other pages.")}</h4>
-<div class="ui form">
-  <div class="field">
-    <label>HTML</label>
-    <textarea readonly="" rows=2>${embed}</textarea>
-  </div>
-  <div class="field">
-    <label>URL</label>
-    <textarea readonly="" rows=2>${url}</textarea>
-  </div>
-</div>
-`
-        }).done();
-    }
-
     openProject() {
         this.scriptSearch.setState({ packages: false, searchFor: '' })
         this.scriptSearch.modal.show()
@@ -840,12 +835,11 @@ Ctrl+Shift+B
         })
     }
 
-    publish() {
+    publishAsync(): Promise<string> {
+        this.setState({ publishing: true })
         let mpkg = pkg.mainPkg
         let epkg = pkg.getEditorPkg(mpkg)
-        core.infoNotification(lf("Publishing..."))
-        core.showLoading(lf("Publishing..."))
-        this.saveFileAsync()
+        return this.saveFileAsync()
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
                 if (epkg.header.pubCurrent)
@@ -856,16 +850,13 @@ Ctrl+Shift+B
                 }
                 return workspace.publishAsync(epkg.header, files, meta)
                     .then(inf => inf.id)
+            }).finally(() => {
+                this.setState({ publishing: false })
             })
-            .finally(core.hideLoading)
-            .then(inf => core.shareLinkAsync({
-                header: lf("Link to your project"),
-                link: "/" + inf
-            }))
             .catch(e => {
                 core.errorNotification(e.message)
+                return undefined;
             })
-            .done()
     }
 
     setHelp(helpCard: ks.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
@@ -911,15 +902,15 @@ Ctrl+Shift+B
                                 <sui.Button icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     <sui.Item icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
-                                    <sui.Item icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } />
-                                    {publishing ? <sui.Item icon="share alternate" text={lf("Publish/Share") } onClick={() => this.publish() } /> : ""}
                                     <sui.Item icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     <div className="ui separator"></div>
-                                    <sui.Item icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
                                     <sui.Item icon='folder' text={lf("Show/Hide Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
                                     } } />
+                                    <sui.Item icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } />
+                                    <sui.Item icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
+                                    <div className="ui separator"></div>
                                     <sui.Item icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                                 </sui.DropdownMenu>
                             </div>
@@ -929,7 +920,7 @@ Ctrl+Shift+B
                                 <sui.Button class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                {pkg.targetBundle.appTheme.embedUrl ? <sui.Button class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.embedDesigner() } /> : ''}
+                                {publishing ? <sui.Button class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                             </div>
                         </div>
                         <div className="ui item">
@@ -969,6 +960,7 @@ Ctrl+Shift+B
                     {this.state.helpCard ? <div id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={this.appTarget.id} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
+                <ShareEditor parent={this} ref={v => this.shareEditor = v} />
                 <div id="footer">
                     <div>
                         { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (this.appTarget.title || this.appTarget.name) }
@@ -1099,7 +1091,7 @@ function enableCrashReporting(releaseid: string) {
 function showIcons() {
     var usedIcons = [
         "cancel", "certificate", "checkmark", "cloud", "cloud upload", "copy", "disk outline", "download",
-        "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle", 
+        "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle",
         "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
         "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
         "user", "wizard",
@@ -1107,7 +1099,7 @@ function showIcons() {
     core.confirmAsync({
         header: "Icons",
         htmlBody:
-            usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n") 
+        usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n")
     })
 }
 
@@ -1130,7 +1122,7 @@ let myexports: any = {
 
 export var ksVersion: string;
 export var targetVersion: string;
-export var dbgMode : boolean = false;
+export var dbgMode: boolean = false;
 
 $(document).ready(() => {
     let config = (window as any).tdConfig || {};

@@ -194,22 +194,59 @@ export class Input extends data.Component<{
     class?: string;
     value?: string;
     type?: string;
+    placeholder?: string;
+    disabled?: boolean;
     onChange?: (v: string) => void;
     lines?: number;
+    readOnly?: boolean;
+    copy?: boolean;
 }, {}> {
+    
+    copy() {
+        let p = this.props
+        let el = ReactDOM.findDOMNode(this);
+        
+        if (!p.lines || p.lines == 1) {
+            let inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
+            inp.setSelectionRange(0, inp.value.length);
+        } else {
+            let inp = el.getElementsByTagName("textarea")[0] as HTMLTextAreaElement;
+            inp.setSelectionRange(0, inp.value.length);            
+        }
+        
+        let btn = $(el.getElementsByTagName("button")[0]);
+        try {
+            document.execCommand("copy");
+        } catch (e) {
+        }
+    }
+    
     renderCore() {
         let p = this.props
+        let copyBtn = p.copy 
+            ? <Button class="ui right labeled icon button" text={lf("Copy")} icon="copy" onClick={() => this.copy()} /> 
+            : null;
+        
         return (
             <Field label={p.label}>
-                {!p.lines || p.lines == 1 ?
-                    <div className={"ui input" + (p.inputLabel ? " labelled" : "")}>
+                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid": "") + (p.disabled ? " disabled" : "")}>
                         {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
-                        <input type={p.type || "text"} value={p.value} onChange={v => p.onChange((v.target as any).value) }/>
+                {!p.lines || p.lines == 1 ? <input
+                            className={p.class || ""}
+                            type={p.type || "text"} 
+                            placeholder={p.placeholder} value={p.value} 
+                            readOnly={!!p.readOnly}
+                            onChange={v => p.onChange((v.target as any).value) }/>
+                    : <textarea 
+                        className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")} 
+                        rows={p.lines} 
+                        placeholder={p.placeholder} 
+                        value={p.value} 
+                        readOnly={!!p.readOnly}                        
+                        onChange={v => p.onChange((v.target as any).value) }>
+                    </textarea>}
+                    {copyBtn}
                     </div>
-                    :
-                    <textarea value={p.value} onChange={v => p.onChange((v.target as any).value) }>
-                    </textarea>
-                }
             </Field>
         );
     }
@@ -239,11 +276,19 @@ export class Modal extends data.Component<{
                     this.hide()
             } }>
                 <div className={"ui modal transition visible active " + (this.props.addClass || "") }>
-                    <div className={"ui top attached label " + (this.props.headerClass || "") }>
+                    <div className={"header " + (this.props.headerClass || "") }>
                         {this.props.header}
-                        <i className='cancel link icon' onClick={() => this.hide() }/>
                     </div>
-                    {this.props.children}
+                    <div className="content">
+                        {this.props.children}
+                    </div>
+                    <div className="actions">
+                        <Button 
+                            icon="close" 
+                            text={lf("Close")} 
+                            class="cancel right labeled"
+                            onClick={() => this.hide()} />
+                    </div>
                 </div>
             </div>
         );
