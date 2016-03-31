@@ -119,6 +119,10 @@ svgo svgicons/myicon.svg
 * [x] in JS emitter - generate pause every 1000 loop iterations or so
 * [x] `>=` in formatter becomes `> =`
 * [ ] expose simulator errors in web app
+* [ ] implement .hex file cache in browser
+* [ ] implement .hex file cache in CLI
+* [ ] deal with C++ enums
+* [ ] deal with C++ classes
 
 * [x] enum support without enumval= (esp for non-hex targets)
 * [x] switch() statement support

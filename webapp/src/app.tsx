@@ -124,8 +124,8 @@ interface ScriptSearchState {
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     prevData: Cloud.JsonScript[] = [];
     modal: sui.Modal;
-    
-    constructor(props : ISettingsProps) {
+
+    constructor(props: ISettingsProps) {
         super(props)
         this.state = {
             searchFor: ''
@@ -136,7 +136,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         let cloud = this.props.parent.appTarget.cloud || {};
         if (!cloud.workspaces) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
-        let res = this.state.searchFor 
+        let res = this.state.searchFor
             ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${this.props.parent.appTarget.id}`)
             : null
         if (res) this.prevData = res.items
@@ -146,7 +146,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
     fetchLocalData(): workspace.Header[] {
         if (this.state.packages) return [];
-        
+
         let headers: workspace.Header[] = this.getData("header:*")
         if (this.state.searchFor)
             headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
@@ -230,14 +230,14 @@ interface FileListState {
 }
 
 class FileList extends data.Component<ISettingsProps, FileListState> {
-    
+
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
             expands: {}
         }
     }
-    
+
     renderCore() {
         let parent = this.props.parent
         if (!parent.state.showFiles)
@@ -272,15 +272,15 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                         {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                     </a>);
             })
-            
+
         let togglePkg = (p: pkg.EditorPackage) => {
             expands[p.getPkgId()] = !expands[p.getPkgId()];
-            this.forceUpdate();            
+            this.forceUpdate();
         }
 
         let filesWithHeader = (p: pkg.EditorPackage) =>
             p.isTopLevel() ? filesOf(p) : [
-                <div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p)}>
+                <div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p) }>
                     {p.getPkgId() != this.props.parent.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
                     {p.getPkgId() }
                 </div>
@@ -464,7 +464,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     loadHeader(h: workspace.Header) {
         if (!h)
             return
-        
+
         this.stopSimulator(true);
         ks.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
@@ -491,7 +491,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     removeProject() {
         if (!pkg.mainEditorPkg().header) return;
-        
+
         core.confirmDelete(pkg.mainEditorPkg().header.name, () => {
             let curr = pkg.mainEditorPkg().header
             curr.isDeleted = true
@@ -542,10 +542,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     initDragAndDrop() {
-        draganddrop.setupDragAndDrop(document.body, 
-            file => file.size < 1000000 && /^\.hex$/i.test(file.name), 
+        draganddrop.setupDragAndDrop(document.body,
+            file => file.size < 1000000 && /^\.hex$/i.test(file.name),
             files => this.importHexFile(files[0])
-            );
+        );
     }
 
     embedDesigner() {
@@ -582,7 +582,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 `
         }).done();
     }
-    
+
     openProject() {
         this.scriptSearch.setState({ packages: false, searchFor: '' })
         this.scriptSearch.modal.show()
@@ -1088,6 +1088,23 @@ function enableCrashReporting(releaseid: string) {
     }
 }
 
+
+function showIcons() {
+    var usedIcons = [
+        "cancel", "certificate", "checkmark", "cloud", "cloud upload", "copy", "disk outline", "download",
+        "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle", 
+        "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
+        "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
+        "user", "wizard",
+    ]
+    core.confirmAsync({
+        header: "Icons",
+        htmlBody:
+            usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n") 
+    })
+}
+
+
 // This is for usage from JS console
 let myexports: any = {
     workspace,
@@ -1099,7 +1116,8 @@ let myexports: any = {
     pkg,
     getsrc,
     sim: simulator,
-    apiAsync: core.apiAsync
+    apiAsync: core.apiAsync,
+    showIcons
 };
 (window as any).E = myexports;
 
