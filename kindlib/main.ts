@@ -518,10 +518,10 @@ namespace ks {
                         ishidden: false,
                         userplatform: ["ks"],
                         editor: javaScriptProjectName,
-                        target: this.getTarget().name,
+                        target: this.getTarget().id,
                         text: text
                     }
-                    info(`publishing script; ${text.length} bytes`)
+                    info(`publishing script; ${text.length} bytes; target=${scrReq.target}`)
                     return Cloud.privatePostAsync("scripts", scrReq)
                         .then(inf => {
                             scrInfo = inf
