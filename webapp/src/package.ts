@@ -284,7 +284,9 @@ class Host
             return workspace.getTextAsync(pkg.verArgument())
                 .then(scr => epkg.setFiles(scr))
         } else if (proto == "file") {
-            return workspace.getTextAsync(pkg.verArgument())
+            let arg = pkg.verArgument()
+            if (arg[0] == ".") arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
+            return workspace.getTextAsync(arg)
                 .then(scr => epkg.setFiles(scr));
         } else if (proto == "embed") {
             epkg.setFiles(getEmbeddedScript(pkg.verArgument()))
@@ -304,6 +306,10 @@ class Host
             return id
         })
     }
+}
+
+function resolvePath(p:string) {
+    return p.replace(/\/+/g, "/").replace(/[^\/]+\/\.\.\//g, "").replace(/\/\.\//g, "/")
 }
 
 var theHost = new Host();
