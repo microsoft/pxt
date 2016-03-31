@@ -777,7 +777,7 @@ Ctrl+Shift+B
                         })
                     }
                 } else {
-                    console.log('no .hex file produced.')
+                    core.warningNotification(lf("Oops, we could not compile this project. Please check your code for errors."))
                 }
             })
             .done()
@@ -803,6 +803,8 @@ Ctrl+Shift+B
                     this.setHelp(null);
                     simulator.run(opts.debug, resp)
                     this.setState({ running: true })
+                } else {
+                    core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
             })
             .done()
