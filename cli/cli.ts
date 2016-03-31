@@ -230,7 +230,7 @@ function readJson(fn: string) {
 
 function travisAsync() {
     onBuildServer = true
-    
+
     let rel = process.env.TRAVIS_TAG || ""
     let atok = process.env.NPM_ACCESS_TOKEN
 
@@ -798,7 +798,8 @@ enum BuildOption {
     JustBuild,
     Run,
     Deploy,
-    Test
+    Test,
+    GenDocs,
 }
 
 export function serviceAsync(cmd: string) {
@@ -1076,6 +1077,8 @@ function buildCoreAsync(mode: BuildOption) {
         .then(opts => {
             if (mode == BuildOption.Test)
                 opts.testMode = true
+            if (mode == BuildOption.GenDocs)
+                opts.ast = true
             return ts.ks.compile(opts)
         })
         .then(res => {
@@ -1088,7 +1091,12 @@ function buildCoreAsync(mode: BuildOption) {
 
             console.log("Package built; hexsize=" + (res.outfiles["microbit.hex"] || "").length)
 
-            if (mode == BuildOption.Deploy) {
+            if (mode == BuildOption.GenDocs) {
+                let apiInfo = ts.ks.getApiInfo(res.ast)
+                let md = ts.ks.genMarkdown(apiInfo)
+                mainPkg.host().writeFile(mainPkg, "built/reference.md", md)
+                return null
+            } else if (mode == BuildOption.Deploy) {
                 if (!deployCoreAsync) {
                     console.log("no deploy functionality defined by this target")
                     return null;
@@ -1104,6 +1112,10 @@ function buildCoreAsync(mode: BuildOption) {
 
 export function buildAsync() {
     return buildCoreAsync(BuildOption.JustBuild)
+}
+
+export function gendocsAsync() {
+    return buildCoreAsync(BuildOption.GenDocs)
 }
 
 export function deployAsync() {
@@ -1145,6 +1157,7 @@ cmd("init     TARGET PACKAGE_NAME - start new package for a given target", initA
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 cmd("publish                      - publish current package", publishAsync)
 cmd("build                        - build current package", buildAsync)
+cmd("gendocs                      - build current package and its docs", gendocsAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("test                         - run tests on current package", testAsync)

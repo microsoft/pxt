@@ -166,6 +166,25 @@ namespace ts.ks {
         }
     }
 
+    export function genMarkdown(apiInfo: ApisInfo) {
+        let infos = Util.values(apiInfo.byQName)
+        let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
+        namespaces.sort((a, b) => U.strcmp(a.name, b.name))
+        let markdown = ""
+        let write = (s: string) => markdown += s + "\n"
+        write("# Reference")
+        for (let ns of namespaces) {
+            write(`## ${ns.name}`)
+            write(`${ns.attributes.jsDoc}`)
+            let syms = infos.filter(si => si.namespace == ns.name)
+            for (let si of syms) {
+                write(`### ${si.name}`)
+                write(`${si.attributes.jsDoc}`)
+            }
+        }
+        return markdown
+    }
+
     export function getApiInfo(program: Program): ApisInfo {
         let res: ApisInfo = {
             byQName: {}
