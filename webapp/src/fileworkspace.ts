@@ -174,7 +174,7 @@ function saveAsync(h: ws.Header, text: ws.ScriptText) {
 
 function installAsync(h0: ws.InstallHeader, text: ws.ScriptText) {
     let h = <ws.Header>h0
-    let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
+    let path = "projects/" + h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (lookup(path)) {
         let n = 2
         while (lookup(path + "-" + n))
