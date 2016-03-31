@@ -426,7 +426,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             let header = this.getData("header:*")[0];
             if (!this.state.header && header) {
                 this.loadHeader(header)
-            }
+            } else this.newProject(true);
         }, 1000)
     }
 
