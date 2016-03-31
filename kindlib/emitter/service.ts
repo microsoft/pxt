@@ -176,7 +176,7 @@ namespace ts.ks {
         write('')
         for (let ns of namespaces) {
             let syms = infos
-                .filter(si => si.namespace == ns.name && !!si.attributes.jsDoc)
+                .filter(si => si.namespace == ns.name && !!si.attributes.help)
                 .sort(compareSymbol)
             if (!syms.length) continue;
             
@@ -185,23 +185,30 @@ namespace ts.ks {
             write(`${ns.attributes.jsDoc}`)
             write('')
             for (let si of syms) {
-                write(`* [${si.name}](/reference/${urlify(si.namespace)}/${urlify(si.name)}): ${si.attributes.jsDoc}`)
+                let url = si.attributes.help || `/reference/${urlify(si.namespace)}/${urlify(si.name)}`; 
+                write(`* [${si.name}](${url}): ${!hasBlock(si) ? "(JavaScript only)" : ""} ${si.attributes.jsDoc}`)
                 write('')
             }
             write('')
         }
         return markdown;
         
+        function hasBlock(sym : SymbolInfo) : boolean {
+            return !!sym.attributes.block && !!sym.attributes.blockId;
+        }
+        
         function capitalize(name: string) {
             return name[0].toUpperCase() + name.slice(1);
         }
         
         function urlify(name: string) {
-            return name.replace(/[A-Z]/g, '-$0').toLowerCase();
+            return name.replace(/[A-Z]/g, '-$&').toLowerCase();
         }
         
         function compareSymbol(l : SymbolInfo, r: SymbolInfo) : number {
-            let c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
+            let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
+            if (c) return c;
+            c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
             if (c) return c;
             return U.strcmp(l.name, r.name);
         }
