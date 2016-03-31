@@ -212,9 +212,8 @@ namespace ks.blocks {
             blocksXml: `<xml xmlns="http://www.w3.org/1999/xhtml">
         ${blockXml.outerHTML}
 </xml>`,
-            card: {
-                software: 1
-            }
+            blocks: 1,
+            software: 1
         }
     }
     
