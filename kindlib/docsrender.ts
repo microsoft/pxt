@@ -150,7 +150,7 @@ namespace ks.docs {
                 if (m) {
                     return ent.cmd.replace(/\$(\d+)/g, (f, k) => {
                         return m[parseInt(k)] || ""
-                    })
+                    }) + "\n"
                 }
             }
             return f
@@ -273,6 +273,7 @@ namespace ks.docs {
     function injectHtml(template: string, vars: U.Map<string>, quoted: string[] = []) {
         return template.replace(/@(\w+)@/g, (f, key) => {
             let res = U.lookup(vars, key) || "";
+            res += ""; // make sure it's a string
             if (quoted.indexOf(key) < 0) {
                 res = html2Quote(res);
             }
