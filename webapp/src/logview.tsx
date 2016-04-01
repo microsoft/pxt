@@ -156,7 +156,7 @@ export class LogView extends React.Component<ILogProps, ILogState> {
 
     tableToCSV(entry: ILogEntry) {
         let csv = "t, " + entry.variable + "\n" 
-            + entry.accvalues.map(v => v.t + ", " + v.v).join('\n');
+            + entry.accvalues.map(v => (v.t / 1000)  + ", " + v.v).join('\n');
         let fn = `${(entry.variable.replace(/[^a-z0-9-_]/i, '') || "data")}.csv`;
         core.browserDownloadText(csv, fn, 'text/csv')
     }
