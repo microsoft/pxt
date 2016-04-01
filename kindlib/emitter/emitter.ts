@@ -671,8 +671,11 @@ ${lbl}: .short 0xffff
                 let ev = attrs.enumval
                 if (!ev) {
                     let val = checker.getConstantValue(decl as EnumMember)
-                    if (val == null)
+                    if (val == null) {
+                        if ((decl as EnumMember).initializer)
+                            return emitExpr((decl as EnumMember).initializer)
                         userError(lf("Cannot compute enum value"))
+                    }
                     ev = val + ""
                 }
                 if (/^\d+$/.test(ev))
