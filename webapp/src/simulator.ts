@@ -7,7 +7,7 @@ interface SimulatorConfig {
     editor: string;
 }
 
-var driver: ks.rt.SimulatorDriver;
+export var driver: ks.rt.SimulatorDriver;
 var nextFrameId: number = 0;
 var themes = ["blue", "red", "green", "yellow"];
 var currentRuntime: ks.rt.SimulatorRunMessage;

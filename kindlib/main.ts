@@ -57,7 +57,7 @@ namespace ks {
         software?: number;
         blocks?: number;
         javascript?: number;
-        
+
         onClick?: (e: any) => void; // React event
 
         target?: string;
@@ -122,10 +122,14 @@ namespace ks {
         manufacturerFilter?: string;
         log?: boolean;
     }
-    
+
     export interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
+    }
+
+    export interface AppSimulator {
+        autoRun?: boolean;
     }
 
     export interface AppTarget {
@@ -133,6 +137,7 @@ namespace ks {
         name: string;
         title?: string;
         cloud?: AppCloud;
+        simulator?: AppSimulator;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
         compile: CompileTarget;
@@ -334,7 +339,7 @@ namespace ks {
             }
             rec(this)
             let res = ids.map(id => this.resolveDep(id))
-            res.reverse() 
+            res.reverse()
             return res
         }
 

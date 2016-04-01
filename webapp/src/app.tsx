@@ -403,17 +403,23 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     public typecheckNow() {
-        this.saveFile();
+        this.saveFile(); // don't wait for saving to backend store to finish before typechecking
         this.typecheck()
     }
 
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
-            .then(resp => {
+            .done(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-            })
-            .done()
+                if (this.appTarget.simulator && this.appTarget.simulator.autoRun) {
+                    let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
+                    if (output && !output.numDiagnosticsOverride 
+                        && !simulator.driver.debug
+                        && (simulator.driver.state == ks.rt.SimulatorState.Running || simulator.driver.state == ks.rt.SimulatorState.Unloaded))
+                        this.runSimulator({ background: true });
+                }
+            });
     }
 
     private initEditors() {
@@ -782,7 +788,6 @@ Ctrl+Shift+B
     }
 
     stopSimulator(unload = false) {
-        this.setHelp(undefined);
         simulator.stop(unload)
         this.setState({ running: false })
     }
@@ -798,10 +803,9 @@ Ctrl+Shift+B
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles["microbit.js"]) {
-                    this.setHelp(null);
                     simulator.run(opts.debug, resp)
                     this.setState({ running: true })
-                } else {
+                } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
             })
@@ -917,7 +921,7 @@ Ctrl+Shift+B
                             </div>
                             <div className="ui">
                                 <sui.Button role="menuitem" key='runbtn' class='primary portrait only' icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                                {this.appTarget.compile ? <sui.Button role="menuitem" class='icon primary portrait only' icon='download' onClick={() => this.compile() } /> : "" }
+                                {this.appTarget.compile ? <sui.Button role="menuitem" class='icon primary portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
                                 <sui.Button role="menuitem" class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
@@ -950,9 +954,9 @@ Ctrl+Shift+B
                         <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
-                        <sui.Button key='runbtn' class={"green"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Run") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                        {dbgMode && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                         {this.appTarget.compile ? <sui.Button icon='xicon microbitdown' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
+                        <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        {dbgMode && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                     </div>
                     <FileList parent={this} />
                 </div>
