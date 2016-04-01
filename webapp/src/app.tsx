@@ -920,8 +920,8 @@ Ctrl+Shift+B
                                 </sui.DropdownMenu>
                             </div>
                             <div className="ui">
-                                <sui.Button role="menuitem" key='runbtn' class='primary portrait only' icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                                {this.appTarget.compile ? <sui.Button role="menuitem" class='icon primary portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
+                                {this.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
+                                <sui.Button role="menuitem" key='runbtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                                 <sui.Button role="menuitem" class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
@@ -954,7 +954,7 @@ Ctrl+Shift+B
                         <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
-                        {this.appTarget.compile ? <sui.Button icon='xicon microbitdown' text={lf("Compile") } onClick={() => this.compile() } /> : ""}
+                        {this.appTarget.compile ? <sui.Button icon='xicon microbitdown' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                         <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {dbgMode && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                     </div>
