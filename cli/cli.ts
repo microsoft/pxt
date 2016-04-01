@@ -982,33 +982,65 @@ function buildDalConst(force = false) {
     let vals: U.Map<string> = {}
     let done: U.Map<string> = {}
 
+    function isValidInt(v: string) {
+        return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
+    }
+
     function extractConstants(fileName: string, src: string, dogenerate = false): string {
         let lineNo = 0
         //let err = (s: string) => U.userError(`${fileName}(${lineNo}): ${s}\n`)
         let outp = ""
+        let inEnum = false
+        let enumVal = 0
+        let defineVal = (n: string, v: string) => {
+            if (isValidInt(v)) {
+                let curr = U.lookup(vals, n)
+                if (curr == null || curr == v) {
+                    vals[n] = v
+                    if (dogenerate && !done[n]) {
+                        outp += `    ${n} = ${v},\n`
+                        done[n] = v
+                    }
+                } else {
+                    vals[n] = "?"
+                    if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
+                        console.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
+                }
+            } else {
+                vals[n] = "?" // just in case there's another more valid entry
+            }
+        }
         src.split(/\r?\n/).forEach(ln => {
             ++lineNo
             ln = ln.replace(/\/\/.*/, "").replace(/\/\*.*/g, "")
             let m = /^\s*#define\s+(\w+)\s+(.*)$/.exec(ln)
             if (m) {
-                let n = m[1]
-                let v = m[2].trim()
-                if (/^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)) {
-                    let curr = U.lookup(vals, n)
-                    if (curr == null || curr == v) {
-                        vals[n] = v
-                        if (dogenerate && !done[n]) {
-                            outp += `    ${n} = ${v},\n`
-                            done[n] = v
-                        }
-                    } else {
-                        vals[n] = "?"
-                        if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
-                            console.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
+                defineVal(m[1], m[2].trim())
+            }
+
+            if (inEnum && /}/.test(ln))
+                inEnum = false
+
+            if (/^\s*enum\s+(\w+)/.test(ln)) {
+                inEnum = true;
+                enumVal = -1;
+            }
+
+            if (inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln))) {
+                let v = m[3]
+                if (v) {
+                    v = v.trim()
+                    if (!isValidInt(v)) {                        
+                        console.log(`${fileName}(${lineNo}): invalid enum initializer, ${ln}`)
+                        inEnum = false
+                        return
                     }
+                    enumVal = parseInt(v)
                 } else {
-                    vals[n] = "?" // just in case there's another more valid entry
+                    enumVal++
+                    v = enumVal + ""
                 }
+                defineVal(m[1], v)
             }
         })
         return outp
