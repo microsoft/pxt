@@ -74,6 +74,26 @@ namespace ks.docs {
         }))
     }
 
+    interface CmdLink {
+        rx: RegExp;
+        cmd: string;
+    }
+
+    let links: CmdLink[] = [
+        {
+            rx: /^vimeo\.com\/(\d+)/,
+            cmd: "### @vimeo $1"
+        },
+        {
+            rx: /^youtu\.be\/(\w+)/,
+            cmd: "### @youtube $1"
+        },
+        {
+            rx: /^www\.youtube\.com\/watch\?v=(\w+)/,
+            cmd: "### @youtube $1"
+        },
+    ]
+
     export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null): string {
         let params: U.Map<string> = pubinfo || {}
 
@@ -123,6 +143,18 @@ namespace ks.docs {
 
         if (!marked)
             marked = require("marked");
+
+        src = src.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
+            for (let ent of links) {
+                let m = ent.rx.exec(lnk)
+                if (m) {
+                    return ent.cmd.replace(/\$(\d+)/g, (f, k) => {
+                        return m[parseInt(k)] || ""
+                    })
+                }
+            }
+            return f
+        })
 
         let html = marked(src, {
             sanitize: true,
