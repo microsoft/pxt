@@ -4,9 +4,9 @@ import * as data from "./data";
 
 export interface UiProps {
     icon?: string;
-    iconClass?:string;
+    iconClass?: string;
     text?: string;
-    textClass?:string;
+    textClass?: string;
     children?: any;
     class?: string;
     role?: string;
@@ -27,8 +27,8 @@ function genericClassName(cls: string, props: UiProps) {
 
 function genericContent(props: UiProps) {
     return [
-        props.icon ? (<i key='iconkey' className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')}></i>) : null,
-        props.text ? (<span key='textkey' className={'text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null
+        props.icon ? (<i key='iconkey' className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') }></i>) : null,
+        props.text ? (<span key='textkey' className={'text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null
     ]
 }
 
@@ -80,7 +80,7 @@ export class DropdownMenu extends UiElement<DropdownProps> {
     renderCore() {
         return (
             <div className={genericClassName("ui dropdown", this.props) } role={this.props.role}>
-                {genericContent(this.props) }                
+                {genericContent(this.props) }
                 <div className="menu">
                     {this.props.children}
                 </div>
@@ -99,7 +99,7 @@ export class DropdownList extends DropdownMenu {
         return (
             <div className={genericClassName("ui dropdown", this.props) }>
                 <input type="hidden" name="mydropdown"/>
-                {this.props.icon ? null : (<i className="dropdown icon"></i>)}
+                {this.props.icon ? null : (<i className="dropdown icon"></i>) }
                 {genericContent(this.props) }
                 <div className="default text"></div>
                 <div className="menu">
@@ -135,7 +135,7 @@ export interface ButtonProps extends WithPopupProps {
 export class Button extends UiElement<ButtonProps> {
     renderCore() {
         return (
-            <button className={genericClassName("ui button", this.props)}
+            <button className={genericClassName("ui button", this.props) }
                 role={this.props.role}
                 title={this.props.text}
                 onClick={this.props.onClick}>
@@ -204,65 +204,75 @@ export class Input extends data.Component<{
     readOnly?: boolean;
     copy?: boolean;
 }, {}> {
-    
+
     copy() {
         let p = this.props
         let el = ReactDOM.findDOMNode(this);
-        
+
         if (!p.lines || p.lines == 1) {
             let inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
             inp.setSelectionRange(0, inp.value.length);
         } else {
             let inp = el.getElementsByTagName("textarea")[0] as HTMLTextAreaElement;
-            inp.setSelectionRange(0, inp.value.length);            
+            inp.setSelectionRange(0, inp.value.length);
         }
-        
+
         let btn = $(el.getElementsByTagName("button")[0]);
         try {
             document.execCommand("copy");
         } catch (e) {
         }
     }
-    
+
     renderCore() {
         let p = this.props
-        let copyBtn = p.copy 
-            ? <Button class="ui right labeled teal icon button" text={lf("Copy")} icon="copy" onClick={() => this.copy()} /> 
+        let copyBtn = p.copy
+            ? <Button class="ui right labeled teal icon button" text={lf("Copy") } icon="copy" onClick={() => this.copy() } />
             : null;
-        
+
         return (
             <Field label={p.label}>
-                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid": "") + (p.disabled ? " disabled" : "")}>
-                        {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
-                {!p.lines || p.lines == 1 ? <input
-                            className={p.class || ""}
-                            type={p.type || "text"} 
-                            placeholder={p.placeholder} value={p.value} 
+                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "") }>
+                    {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
+                    {!p.lines || p.lines == 1 ? <input
+                        className={p.class || ""}
+                        type={p.type || "text"}
+                        placeholder={p.placeholder} value={p.value}
+                        readOnly={!!p.readOnly}
+                        onChange={v => p.onChange((v.target as any).value) }/>
+                        : <textarea
+                            className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
+                            rows={p.lines}
+                            placeholder={p.placeholder}
+                            value={p.value}
                             readOnly={!!p.readOnly}
-                            onChange={v => p.onChange((v.target as any).value) }/>
-                    : <textarea 
-                        className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")} 
-                        rows={p.lines} 
-                        placeholder={p.placeholder} 
-                        value={p.value} 
-                        readOnly={!!p.readOnly}                        
-                        onChange={v => p.onChange((v.target as any).value) }>
-                    </textarea>}
+                            onChange={v => p.onChange((v.target as any).value) }>
+                        </textarea>}
                     {copyBtn}
-                    </div>
+                </div>
             </Field>
         );
     }
 }
 
-export class Modal extends data.Component<{
+export interface ModalProps {
     children?: any;
     addClass?: string;
     headerClass?: string;
     header: string;
-}, {
-        visible?: boolean;
-    }> {
+}
+
+export interface ModalState {
+    visible?: boolean;
+}
+
+export class Modal extends data.Component<ModalProps,ModalState> {
+    id : string;
+    constructor(props: ModalProps) {
+        super(props)
+        this.id = Util.guidGen();
+    }
+           
     show() {
         this.setState({ visible: true })
     }
@@ -272,25 +282,25 @@ export class Modal extends data.Component<{
     }
 
     renderCore() {
-        if (!this.state.visible) return null;        
+        if (!this.state.visible) return null;
         return (
-            <div className="ui mydimmer dimmer modals page transition visible active" onClick={ev => {
+            <div id={this.id} className="ui mydimmer dimmer modals page transition visible active" onClick={ev => {
                 if (/mydimmer/.test((ev.target as HTMLElement).className))
                     this.hide()
             } }>
-                <div className={"ui modal transition visible active " + (this.props.addClass || "") }>
-                    <div className={"header " + (this.props.headerClass || "") }>
+                <div role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} className={"ui modal transition visible active " + (this.props.addClass || "") }>
+                    <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                         {this.props.header}
                     </div>
-                    <div className="content">
+                    <div id={this.id + 'desc'} className="content">
                         {this.props.children}
                     </div>
                     <div className="actions">
-                        <Button 
-                            icon="close" 
-                            text={lf("Close")} 
+                        <Button
+                            icon="close"
+                            text={lf("Close") }
                             class="cancel right labeled"
-                            onClick={() => this.hide()} />
+                            onClick={() => this.hide() } />
                     </div>
                 </div>
             </div>
