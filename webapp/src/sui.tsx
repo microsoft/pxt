@@ -9,6 +9,7 @@ export interface UiProps {
     textClass?:string;
     children?: any;
     class?: string;
+    role?: string;
 }
 
 export interface WithPopupProps extends UiProps {
@@ -78,7 +79,7 @@ export class DropdownMenu extends UiElement<DropdownProps> {
 
     renderCore() {
         return (
-            <div className={genericClassName("ui dropdown", this.props) }>
+            <div className={genericClassName("ui dropdown", this.props) } role={this.props.role}>
                 {genericContent(this.props) }                
                 <div className="menu">
                     {this.props.children}
@@ -117,6 +118,7 @@ export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
         return (
             <div className={genericClassName("ui item", this.props) }
+                role={this.props.role}
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}>
@@ -133,7 +135,8 @@ export interface ButtonProps extends WithPopupProps {
 export class Button extends UiElement<ButtonProps> {
     renderCore() {
         return (
-            <button className={genericClassName("ui button", this.props) }
+            <button className={genericClassName("ui button", this.props)}
+                role={this.props.role}
                 title={this.props.text}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
@@ -162,7 +165,7 @@ export class Popup extends data.Component<UiProps, {}> {
 
     renderCore() {
         return (
-            <div>
+            <div role={this.props.role}>
                 <div className={genericClassName("ui button popup-button", this.props) }>
                     {genericContent(this.props) }
                 </div>
@@ -269,7 +272,7 @@ export class Modal extends data.Component<{
     }
 
     renderCore() {
-        if (!this.state.visible) return null;
+        if (!this.state.visible) return null;        
         return (
             <div className="ui mydimmer dimmer modals page transition visible active" onClick={ev => {
                 if (/mydimmer/.test((ev.target as HTMLElement).className))
