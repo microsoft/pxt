@@ -74,8 +74,8 @@ namespace ks.docs {
         }))
     }
 
-    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}): string {
-        let params: U.Map<string> = {}
+    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null): string {
+        let params: U.Map<string> = pubinfo || {}
 
         let boxes = U.clone(stdboxes)
         let macros = U.clone(stdmacros)
@@ -172,16 +172,20 @@ namespace ks.docs {
             }
         })
 
-        if (!params["title"]) {
-            let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)
-            if (titleM)
-                params["title"] = html2Quote(titleM[1])
-        }
+        if (pubinfo) {
+            params["title"] = pubinfo["name"]
+        } else {
+            if (!params["title"]) {
+                let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)
+                if (titleM)
+                    params["title"] = html2Quote(titleM[1])
+            }
 
-        if (!params["description"]) {
-            let descM = /<p>(.+?)<\/p>/.exec(html)
-            if (descM)
-                params["description"] = html2Quote(descM[1])
+            if (!params["description"]) {
+                let descM = /<p>(.+?)<\/p>/.exec(html)
+                if (descM)
+                    params["description"] = html2Quote(descM[1])
+            }
         }
 
 
