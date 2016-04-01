@@ -264,7 +264,7 @@ namespace ks.docs {
         params["body"] = html
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["targetname"] = theme.name || "KindScript"
-        params["targetlogo"] = theme.docsLogo ? `<img src="${U.toDataUri(theme.logo)}" />` : ""
+        params["targetlogo"] = theme.docsLogo ? `<img src="${U.toDataUri(theme.docsLogo)}" />` : ""
         params["name"] = params["title"] + " - " + params["targetname"]
 
         return injectHtml(template, params, ["body", "menu", "targetlogo"])

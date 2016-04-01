@@ -237,23 +237,23 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
 
         return <sui.Modal ref={v => this.modal = v} addClass="searchdialog" header={lf("Share Project") }>
             <div className="ui segment">
-                    <div className={`ui ${formState} form`}>
-                        <div className="ui warning message">
-                            <div className="header">{lf("Almost there!")}</div>
-                            <p>{lf("You need to publish your script to share it.") }</p>
-                            <sui.Button icon="cloud" class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
-                        </div>
-                        <div className="ui success message">
-                            <div className="header">{lf("Your project is ready!")}</div>
-                            <p>{lf("Share this URL or copy the HTML to embed your project in web pages.") }</p>
-                        </div>
-                        <sui.Field label={lf("URL") }>
-                            <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
-                        </sui.Field>
-                        <sui.Field label={lf("HTML") }>
-                            <sui.Input class="mini" readOnly={true} lines={2} value={embed} copy={ready} disabled={!ready} />
-                        </sui.Field>
+                <div className={`ui ${formState} form`}>
+                    <div className="ui warning message">
+                        <div className="header">{lf("Almost there!") }</div>
+                        <p>{lf("You need to publish your script to share it.") }</p>
+                        <sui.Button icon="cloud" class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
                     </div>
+                    <div className="ui success message">
+                        <div className="header">{lf("Your project is ready!") }</div>
+                        <p>{lf("Share this URL or copy the HTML to embed your project in web pages.") }</p>
+                    </div>
+                    <sui.Field label={lf("URL") }>
+                        <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
+                    </sui.Field>
+                    <sui.Field label={lf("HTML") }>
+                        <sui.Input class="mini" readOnly={true} lines={2} value={embed} copy={ready} disabled={!ready} />
+                    </sui.Field>
+                </div>
             </div>
         </sui.Modal>
     }
@@ -1136,6 +1136,15 @@ $(document).ready(() => {
     enableInsights(ksVersion);
     initLogin();
 
+    let hashCmd = ""
+    let hashArg = ""
+    let hashM = /^#(\w+):(\w+)/.exec(window.location.hash)
+    if (hashM) {
+        window.location.hash = ""
+        hashCmd = hashM[1]
+        hashArg = hashM[2]
+    }
+
     let hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
 
@@ -1156,13 +1165,29 @@ $(document).ready(() => {
             workspace.syncAsync().done()
         })
         .then(() => {
+
+            if (hashCmd == "pub" || hashCmd == "edit") {
+                let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hashArg)[0]
+                if (existing) {
+                    theEditor.loadHeader(existing)
+                    return null
+                } else {
+                    return workspace.installByIdAsync(hashArg)
+                        .then(hd => {
+                            theEditor.loadHeader(hd)
+                        })
+                }
+            }
+
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
             let hd = workspace.getHeaders()[0]
             if (ent)
                 hd = workspace.getHeader(ent.id)
             theEditor.loadHeader(hd)
-
-            initSerial();
+            return null
+        })
+        .then(() => {
+            initSerial()
         })
 
     window.addEventListener("unload", ev => {
