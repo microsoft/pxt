@@ -1064,7 +1064,7 @@ function buildDalConst(force = false) {
             extractConstants(fn, fc[fn])
         }
 
-        let consts = "// Auto-generated. Do not edit.\ndeclare enum DAL {\n"
+        let consts = "// Auto-generated. Do not edit.\ndeclare const enum DAL {\n"
         for (let fn of files) {
             consts += "    // " + fn + "\n"
             consts += extractConstants(fn, fc[fn], true)
