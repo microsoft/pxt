@@ -235,7 +235,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         }
         let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
 
-        return <sui.Modal ref={v => this.modal = v} addClass="searchdialog" header={lf("Share Project") }>
+        return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Share Project") }>
                 <div className={`ui ${formState} form`}>
                     <div className="ui warning message">
                         <sui.Button icon="cloud" class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
@@ -248,11 +248,13 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                     </div>
                     { url ? 
                     <sui.Field label={lf("URL") }>
+                        <p>{lf("Share this link to access your project.")}</p>
                         <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
                     { embed ?
-                    <sui.Field label={lf("HTML") }>
-                        <sui.Input class="mini" readOnly={true} lines={2} value={embed} copy={ready} disabled={!ready} />
+                    <sui.Field label={lf("Embed This Project") }>
+                        <p>{lf("Embed this project in your website or blog by pasting this code into your web page.")}</p>
+                        <sui.Input class="mini" readOnly={true} lines={3} value={embed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
                 </div>
         </sui.Modal>
