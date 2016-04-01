@@ -656,6 +656,13 @@ enum En {
     E,
 }
 
+enum En2 {
+    D0 = En.D,
+    D1,
+    D2 = 1,
+}
+
+
 function testEnums() {
     msg("enums")
     
@@ -665,6 +672,11 @@ function testEnums() {
     assert(k == 4200, "e1")
     k = En.E as number
     assert(k == 4201, "e43")
+    
+    k = En2.D0 as number
+    assert(k == 4200, "eX0")    
+    k = En2.D1 as number
+    assert(k == 4201, "eX1")
 
     msg("enums0")
     assert(switchA(En.A) == 7, "s1")

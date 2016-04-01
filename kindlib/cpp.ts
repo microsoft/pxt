@@ -41,7 +41,6 @@ namespace ks.cpp {
     import U = ts.ks.Util;
     import Y = ts.ks;
     let lf = U.lf;
-    export var kindscriptMicrobitCoreTag = "v0";
 
     function parseExpr(e: string): number {
         e = e.trim()
@@ -95,7 +94,10 @@ namespace ks.cpp {
         var cfginc = ""
         let protos = nsWriter("namespace")
         let dTs = nsWriter("declare namespace")
-
+        
+        let compileService = mainPkg.getTarget().compileService;
+        
+        
         function parseCpp(src: string, isHeader: boolean) {
             res.hasExtension = true
             let currNs = ""
@@ -276,7 +278,7 @@ namespace ks.cpp {
         }
 
         // This is overridden on the build server, but we need it for command line build
-        res.microbitConfig.dependencies["kindscript-microbit-core"] = "microsoft/kindscript-microbit-core#" + kindscriptMicrobitCoreTag;
+        res.microbitConfig.dependencies["kindscript-microbit-core"] = "microsoft/kindscript-microbit-core#" + compileService.gittag;
 
         if (mainPkg) {
             // TODO computeReachableNodes(pkg, true)
@@ -338,8 +340,8 @@ namespace ks.cpp {
         U.jsonCopyFrom(tmp, res.generatedFiles)
 
         var creq = {
-            config: "ws",
-            tag: kindscriptMicrobitCoreTag,
+            config: compileService.serviceId,
+            tag: compileService.gittag,
             replaceFiles: tmp,
             dependencies: res.microbitConfig.dependencies,
         }

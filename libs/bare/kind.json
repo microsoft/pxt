@@ -15,6 +15,10 @@
         "id": "bare",
         "name": "bare",
         "cloud": true,
+        "compileService": {
+            "gittag": "v0",
+            "serviceId": "ws"
+        },
         "compile": {
             "isNative": false,
             "hasHex": true
