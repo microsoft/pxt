@@ -443,11 +443,14 @@ ${getFunctionLabel(proc.action)}:
         }
 
         var currentSetup: string = null;
+        export var currentHexInfo:any;
+        
         export function setupFor(extInfo: ExtensionInfo, hexinfo: any) {
             if (isSetupFor(extInfo))
                 return;
 
             currentSetup = extInfo.sha;
+            currentHexInfo = hexinfo;
 
             hex = hexinfo.hex;
 

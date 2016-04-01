@@ -550,7 +550,7 @@ namespace ks.hex {
             return Promise.resolve(null)
 
         if (ts.ks.hex.isSetupFor(extInfo))
-            return Promise.resolve(null)
+            return Promise.resolve(ts.ks.hex.currentHexInfo)
 
         console.log("get hex info: " + extInfo.sha)
 
