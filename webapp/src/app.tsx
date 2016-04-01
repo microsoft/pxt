@@ -712,7 +712,7 @@ Ctrl+Shift+B
 
     newProjectFromIdAsync(prj: ks.ProjectTemplate, fileOverrides?: Util.Map<string>): Promise<void> {
         let cfg = ks.U.clone(prj.config);
-        cfg.name = ks.U.fmt(cfg.name, Util.getAwesomeAdj());
+        cfg.name = "Untitled" // ks.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {
             "kind.json": JSON.stringify(cfg, null, 4) + "\n",
         }
@@ -936,7 +936,9 @@ Ctrl+Shift+B
                                     type="text"
                                     placeholder={lf("Pick a name...") }
                                     value={this.state.header ? this.state.header.name : ''}
-                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }></input>
+                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }>
+                                  <i className="write icon grey"></i>
+                                </input>
                             </div>
                         </div>
                         { workspaces || targetTheme.rightLogo ?
