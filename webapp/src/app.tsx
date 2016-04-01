@@ -221,7 +221,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
 
         let rootUrl = pkg.targetBundle.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
-        let ready = !!header.pubId;
+        let ready = !!header.pubId && header.pubCurrent;
         let url: string;
         let embed: string;
         if (ready) {
