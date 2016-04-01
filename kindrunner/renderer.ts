@@ -5,6 +5,7 @@ namespace ks.runner {
         signatureClass?: string;
         blocksClass?: string;
         simulatorClass?: string;
+        linksClass?: string;
         snippetReplaceParent?: boolean;
         simulator?: boolean;
         hex?: boolean;
@@ -47,24 +48,24 @@ namespace ks.runner {
             })
             $menu.append($jsBtn);
         }
-        
+
         // runner menu
         if (run) {
             let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
                 $h.find('.active').removeClass('active')
                 $runBtn.addClass('active')
-                
+
                 let $embed = $(`<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`);
                 $c.empty().append($embed);
             })
             $menu.append($runBtn);
         }
-        
+
         if (hexname && hex) {
-            let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {                
+            let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {
                 BrowserUtils.browserDownloadText(hex, hexname, "application/x-microbit-hex");
             })
-            $menu.append($hexBtn);            
+            $menu.append($hexBtn);
         }
 
         // inject container
@@ -89,36 +90,25 @@ namespace ks.runner {
             })
     }
 
-    export function renderAsync(options?: ClientRenderOptions): Promise<void> {
-        if (!options) options = {}
-        
-        if (options.simulatorClass) {
-            $('.' + options.simulatorClass).each((i, c) => {
-                let $c = $(c);
-                let $sim = $(`<div class="ui container"><div class="ui segment">
-                    <div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
-                    </div>
-                    </div></div>`)
-                $sim.find("iframe").attr("src", runUrl + "?code=" + encodeURIComponent($c.text().trim()));
-                $c.replaceWith($sim);
-            });
-        }
-        
+    function renderSnippetsAsync(options: ClientRenderOptions): Promise<void> {
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
             let js = $('<code/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             let compiled = r.compileJS && r.compileJS.success;
-            let hex = options.hex && compiled && r.compileJS.outfiles["microbit.hex"] 
+            let hex = options.hex && compiled && r.compileJS.outfiles["microbit.hex"]
                 ? r.compileJS.outfiles["microbit.hex"] : undefined;
             let hexname = `${appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
-            fillWithWidget(c, js, s, 
-                options.simulator && compiled, 
-                hexname, 
-                hex);            
-        }).then(() => renderNextSnippetAsync(options.signatureClass, (c, r) => {
+            fillWithWidget(c, js, s,
+                options.simulator && compiled,
+                hexname,
+                hex);
+        });
+    }
+
+    function renderSignaturesAsync(options: ClientRenderOptions): Promise<void> {
+        return renderNextSnippetAsync(options.signatureClass, (c, r) => {
             let cjs = r.compileJS;
             if (!cjs) return;
             let file = r.compileJS.ast.getSourceFile("main.ts");
@@ -139,10 +129,80 @@ namespace ks.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 fillWithWidget(c, js, s, false);
             }
-        })).then(() => renderNextSnippetAsync(options.blocksClass, (c, r) => {
+        });
+    }
+
+    function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
+        return renderNextSnippetAsync(options.blocksClass, (c, r) => {
             let s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
             c.replaceWith(s);
-        }));
+        });
+    }
+
+    function renderLinksAsync(options: ClientRenderOptions): Promise<void> {
+        return renderNextSnippetAsync(options.linksClass, (c, r) => {
+            let cjs = r.compileJS;
+            if (!cjs) return;
+            let file = r.compileJS.ast.getSourceFile("main.ts");
+            let stmts = file.statements;
+            let ul = $('<ul></ul>');
+
+            let addItem = (name: string, url: string) => {
+                if (!name || !url) return;
+
+                let $li = $('<li><a></a></li>')
+                $li.find('a')
+                    .text(name)
+                    .attr("href", '/reference/' + url);
+                ul.append($li);
+            }
+
+            stmts.forEach(stmt => {
+                switch (stmt.kind) {
+                    case ts.SyntaxKind.ExpressionStatement:
+                        let estmt = stmt as ts.ExpressionStatement;
+                        let expr = estmt.expression;
+                        if (expr)
+                            switch (expr.kind) {
+                                case ts.SyntaxKind.CallExpression:
+                                    let call = expr as ts.CallExpression;
+                                    let info = (<any>call).callInfo as ts.ks.CallInfo
+                                    if (info) {
+                                        addItem(info.qName, info.attrs.help)
+                                    }
+                                    break;
+                            }
+                        break;
+                    default:
+                        console.error('unsupported statement');
+                }
+            })
+
+            c.replaceWith(ul)
+        })
+    }
+
+    export function renderAsync(options?: ClientRenderOptions): Promise<void> {
+        if (!options) options = {}
+
+        if (options.simulatorClass) {
+            // simulators
+            $('.' + options.simulatorClass).each((i, c) => {
+                let $c = $(c);
+                let $sim = $(`<div class="ui container"><div class="ui segment">
+                    <div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;">
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
+                    </div>
+                    </div></div>`)
+                $sim.find("iframe").attr("src", runUrl + "?code=" + encodeURIComponent($c.text().trim()));
+                $c.replaceWith($sim);
+            });
+        }
+
+        return renderSignaturesAsync(options)
+            .then(() => renderSnippetsAsync(options))
+            .then(() => renderBlocksAsync(options))
+            .then(() => renderLinksAsync(options))
     }
 }
