@@ -10,9 +10,6 @@ namespace ks.rt {
         options?: any;
         
         code: string;
-        enums: {
-            [index:string] : number;
-        }
     }
 
     export interface SimulatorReadyMessage extends SimulatorMessage {
@@ -80,7 +77,7 @@ namespace ks.rt {
         export function run(msg: SimulatorRunMessage) {
             stop();
             console.log(`starting ${msg.id}`);
-            runtime = new Runtime(msg.code, msg.enums);
+            runtime = new Runtime(msg.code);
             runtime.id = msg.id;
             runtime.board.initAsync(msg)
                 .done(() => {

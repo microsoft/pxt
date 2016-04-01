@@ -140,7 +140,6 @@ namespace ks.rt {
         dead = false;
         running = false;
         startTime = 0;
-        enums: Map<number>;
         id: string;
         globals: any = {};
 
@@ -210,10 +209,9 @@ namespace ks.rt {
             }
         }
 
-        constructor(code: string, enums: Map<number>) {
+        constructor(code: string) {
             U.assert(!!initCurrentRuntime);
 
-            this.enums = enums;
             var yieldMaxSteps = 100
 
             // These variables are used by the generated code as well
@@ -383,7 +381,6 @@ namespace ks.rt {
 
             function topCall(fn: LabelFn, cb: ResumeFn) {
                 U.assert(!!_this.board)
-                U.assert(!!_this.enums)
                 U.assert(!_this.running)
                 _this.setRunning(true);
                 let topFrame = setupTopCore(cb)

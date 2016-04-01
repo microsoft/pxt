@@ -1146,7 +1146,7 @@ function runCoreAsync(res: ts.ks.CompileResult) {
     if (f) {
         // TODO: non-microbit specific load
         ks.rt.initCurrentRuntime = ks.rt.initBareRuntime
-        let r = new ks.rt.Runtime(f, res.enums)
+        let r = new ks.rt.Runtime(f)
         ks.rt.Runtime.messagePosted = (msg) => {
             if (msg.type == "serial")
                 console.log("SERIAL:", (msg as any).data)

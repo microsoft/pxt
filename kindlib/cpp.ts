@@ -224,32 +224,6 @@ namespace ks.cpp {
                     err("declaration not understood: " + ln)
                     return;
                 }
-
-                ln = ln.replace(/\/\/.*/, "")
-                var isEnum = false
-                m = /^\s*#define\s+(\w+)\s+(.*)/.exec(ln)
-                if (!m) {
-                    m = /^\s*(\w+)\s*=\s*(.*)/.exec(ln)
-                    isEnum = true
-                }
-
-                if (m) {
-                    var num = m[2]
-                    num = num.replace(/\/\/.*/, "")
-                    num = num.replace(/\/\*.*/, "")
-                    num = num.trim()
-                    if (isEnum)
-                        num = num.replace(/,$/, "")
-                    var val = parseExpr(num)
-                    var nm = m[1]
-                    if (isEnum)
-                        nm = currNs + "::" + nm
-                    //console.log(nm, num, val)
-                    if (val != null) {
-                        res.enums[nm] = val
-                        return;
-                    }
-                }
             })
 
             return outp

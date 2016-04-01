@@ -679,16 +679,8 @@ ${lbl}: .short 0xffff
                     ev = val + ""
                 }
                 if (/^\d+$/.test(ev))
-                    return ir.numlit(parseInt(ev));
-                let inf = hex.lookupFunc(ev)
-                if (!inf)
-                    userError(lf("unhandled enum value: {0}", ev))
-                if (inf.type == "E")
-                    return ir.numlit(inf.value)
-                else if (inf.type == "F" && inf.args == 0)
-                    return ir.rtcall(inf.name, [])
-                else
-                    throw userError(lf("not valid enum: {0}; is it procedure name?", ev))
+                    return ir.numlit(parseInt(ev));                    
+                return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature) {
                 if (attrs.shim) {
                     callInfo.args.push(node.expression)
@@ -1651,12 +1643,6 @@ ${lbl}: .short 0xffff
             // nothing
         }
         function emitEnumDeclaration(node: EnumDeclaration) {
-            for (let mem of node.members) {
-                let cmts = parseComments(mem)
-                if (!cmts.enumval)
-                    res.enums[getDeclName(node) + "_" + mem.name.getText()] =
-                        checker.getConstantValue(mem)
-            }
         }
         function emitEnumMember(node: EnumMember) { }
         function emitModuleDeclaration(node: ModuleDeclaration) {
@@ -1904,7 +1890,6 @@ ${lbl}: .short 0xffff
     }
 
     export interface ExtensionInfo {
-        enums: U.Map<number>;
         functions: FuncInfo[];
         generatedFiles: U.Map<string>;
         extensionFiles: U.Map<string>;
@@ -1919,7 +1904,6 @@ ${lbl}: .short 0xffff
 
     export function emptyExtInfo(): ExtensionInfo {
         return {
-            enums: {},
             functions: [],
             generatedFiles: {},
             extensionFiles: {},
