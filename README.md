@@ -131,6 +131,8 @@ svgo svgicons/myicon.svg
 * [x] lib compile mode - no reachability, test shims
 * [x] inline assembly
 
+* [ ] move target definition from kind.json to kindtarget.json
+
 #### Bigger items
 * [ ] generate .d.ts from .cpp
 * [ ] generate .d.ts from simulator code
