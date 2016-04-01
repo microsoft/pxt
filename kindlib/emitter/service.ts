@@ -150,7 +150,7 @@ namespace ts.ks {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
-                        initializer: p.initializer ? p.initializer.getText() : undefined,
+                        initializer: p.initializer ? p.initializer.getText() : (attributes as any)[n + ".defl"],
                         defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined
                     }
                 })
