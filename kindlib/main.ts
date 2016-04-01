@@ -363,7 +363,7 @@ namespace ks {
                     }
                     if (ext.errors)
                         U.userError(ext.errors)
-                    return this.host().getHexInfoAsync(ext)
+                    return (target.isNative ? this.host().getHexInfoAsync(ext) : Promise.resolve(null))
                         .then(inf => {
                             delete ext.compileData;
                             delete ext.generatedFiles;

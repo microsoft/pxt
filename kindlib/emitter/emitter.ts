@@ -299,8 +299,10 @@ namespace ts.ks {
         let functionInfo: StringMap<FunctionAddInfo> = {};
         let brkMap: U.Map<Breakpoint> = {}
 
-        hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
-        hex.setupInlineAssembly(opts);
+        if (opts.target.isNative) {
+            hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
+            hex.setupInlineAssembly(opts);
+        }
 
         if (opts.breakpoints)
             res.breakpoints = [{
@@ -679,7 +681,7 @@ ${lbl}: .short 0xffff
                     ev = val + ""
                 }
                 if (/^\d+$/.test(ev))
-                    return ir.numlit(parseInt(ev));                    
+                    return ir.numlit(parseInt(ev));
                 return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature) {
                 if (attrs.shim) {
@@ -784,7 +786,7 @@ ${lbl}: .short 0xffff
                 return emitExpr(args[0])
             }
 
-            if (opts.target.hasHex) {
+            if (opts.target.isNative) {
                 hex.validateShim(getDeclName(decl), attrs, hasRet, args.length);
             }
 
@@ -820,7 +822,7 @@ ${lbl}: .short 0xffff
                             if (defl) defl = parseInt(defl)
                             args.push(<any>{
                                 kind: SK.NullKeyword,
-                                valueOverride: defl 
+                                valueOverride: defl
                             })
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
@@ -1000,7 +1002,7 @@ ${lbl}: .short 0xffff
 
             let attrs = parseComments(node)
             if (attrs.shim != null) {
-                if (opts.target.hasHex) {
+                if (opts.target.isNative) {
                     hex.validateShim(getDeclName(node),
                         attrs,
                         funcHasReturn(node),
