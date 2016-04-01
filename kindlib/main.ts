@@ -142,6 +142,10 @@ namespace ks {
         tsprj: ProjectTemplate;
         compile: CompileTarget;
         serial?: AppSerial;
+        compileService?: {
+            gittag: string;
+            serviceId: string;
+        }
     }
 
     export interface ICompilationOptions {
@@ -343,7 +347,7 @@ namespace ks {
             return res
         }
 
-        getTargetOptions(): CompileTarget { return this.getTarget().compile; }
+        getTargetOptions(): CompileTarget { return U.clone(this.getTarget().compile); }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
             let opts: ts.ks.CompileOptions = {

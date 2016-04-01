@@ -64,17 +64,14 @@ Enum are supported and will automatically be represented by a dropdown in blocks
 
 ```
 enum Button {
-    //% enumval=MICROBIT_ID_BUTTON_A
-    A,
-    //% enumval=MICROBIT_ID_BUTTON_B
-    B,
-    //% enumval=MICROBIT_ID_BUTTON_AB
+    A = 1,
+    B = 2,
     //% blockId="A+B"
-    AB,
+    AB = 3,
 }
 ```
 
-* the `enumval` attribute can be used to map the value
+* the initializer can be used to map the value
 * the `blockId` attribute can be used to override the block id
 
 ## Docs and default values
