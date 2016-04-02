@@ -169,7 +169,7 @@ namespace ts.ks {
         let didSomething = true
         while (didSomething) {
             didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]+)))?/,
+            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]*)))?/,
                 (f: string, n: string, d0: string, d1: string,
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
@@ -211,6 +211,10 @@ namespace ts.ks {
         return (t.flags & TypeFlags.Reference) && t.symbol.name == "Array"
     }
 
+    function isInterfaceType(t: Type) {
+        return t.flags & TypeFlags.Interface;
+    }
+
     function isClassType(t: Type) {
         // check if we like the class?
         return (t.flags & TypeFlags.Class) || (t.flags & TypeFlags.ThisType)
@@ -235,6 +239,7 @@ namespace ts.ks {
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
+            if (isInterfaceType(t)) return t;
             if (deconstructFunctionType(t)) return t;
             userError(lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)))
         }
