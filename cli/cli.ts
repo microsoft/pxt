@@ -977,6 +977,8 @@ function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
     return yottaTasks
 }
 
+var parseCppInt = ks.cpp.parseCppInt;
+
 function buildDalConst(force = false) {
     let constName = "dal.d.ts"
     let vals: U.Map<string> = {}
@@ -993,7 +995,8 @@ function buildDalConst(force = false) {
         let inEnum = false
         let enumVal = 0
         let defineVal = (n: string, v: string) => {
-            if (isValidInt(v)) {
+            v = v.trim()
+            if (parseCppInt(v) != null) {
                 let curr = U.lookup(vals, n)
                 if (curr == null || curr == v) {
                     vals[n] = v
@@ -1015,7 +1018,7 @@ function buildDalConst(force = false) {
             ln = ln.replace(/\/\/.*/, "").replace(/\/\*.*/g, "")
             let m = /^\s*#define\s+(\w+)\s+(.*)$/.exec(ln)
             if (m) {
-                defineVal(m[1], m[2].trim())
+                defineVal(m[1], m[2])
             }
 
             if (inEnum && /}/.test(ln))
@@ -1029,13 +1032,12 @@ function buildDalConst(force = false) {
             if (inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln))) {
                 let v = m[3]
                 if (v) {
-                    v = v.trim()
-                    if (!isValidInt(v)) {                        
+                    enumVal = parseCppInt(v)                    
+                    if (enumVal == null) {
                         console.log(`${fileName}(${lineNo}): invalid enum initializer, ${ln}`)
                         inEnum = false
                         return
                     }
-                    enumVal = parseInt(v)
                 } else {
                     enumVal++
                     v = enumVal + ""

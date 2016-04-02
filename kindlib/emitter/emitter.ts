@@ -1900,7 +1900,8 @@ ${lbl}: .short 0xffff
         sha: string;
         compileData: string;
         hasExtension: boolean;
-        extensionDTs: string;
+        shimsDTS: string;
+        enumsDTS: string;
         onlyPublic: boolean;
     }
 
@@ -1913,7 +1914,8 @@ ${lbl}: .short 0xffff
             sha: "",
             compileData: "",
             hasExtension: false,
-            extensionDTs: "",
+            shimsDTS: "",
+            enumsDTS: "",
             onlyPublic: true,
             microbitConfig: {
                 dependencies: {},

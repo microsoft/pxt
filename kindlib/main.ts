@@ -57,7 +57,7 @@ namespace ks {
         software?: number;
         blocks?: number;
         javascript?: number;
-        
+
         onClick?: (e: any) => void; // React event
 
         target?: string;
@@ -122,7 +122,7 @@ namespace ks {
         manufacturerFilter?: string;
         log?: boolean;
     }
-    
+
     export interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
@@ -338,7 +338,7 @@ namespace ks {
             }
             rec(this)
             let res = ids.map(id => this.resolveDep(id))
-            res.reverse() 
+            res.reverse()
             return res
         }
 
@@ -352,17 +352,24 @@ namespace ks {
                 hexinfo: {}
             }
 
+            let generateFile = (fn: string, cont: string) => {
+                if (this.config.files.indexOf(fn) < 0)
+                    U.userError(lf("please add '{0}' to \"files\" in {1}", fn, configName))
+                cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
+                if (this.host().readFile(this, fn) !== cont) {
+                    console.log(lf("updating {0} (size={1})...", fn, cont.length))
+                    this.host().writeFile(this, fn, cont)
+                }
+            }
+
             return this.loadAsync()
                 .then(() => {
                     info(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
-                    if (ext.extensionDTs) {
-                        let extFn = "built/extensions.d.ts"
-                        opts.sourceFiles.push(extFn)
-                        opts.fileSystem[extFn] = ext.extensionDTs || ""
-                    }
                     if (ext.errors)
                         U.userError(ext.errors)
+                    if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
+                    if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
                     return (target.isNative ? this.host().getHexInfoAsync(ext) : Promise.resolve(null))
                         .then(inf => {
                             delete ext.compileData;

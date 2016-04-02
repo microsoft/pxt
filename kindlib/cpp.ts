@@ -72,8 +72,16 @@ namespace ks.cpp {
         }
         return {
             setNs,
+            clear: () => {
+                text = ""
+                currNs = ""
+            },
             write: (s: string) => {
-                text += "    " + s.replace(/^\s*/mg, "") + "\n"
+                if (!s.trim()) text += "\n"
+                else {
+                    s = s.trim().replace(/^\s*/mg, "    ").replace(/^    \*/mg, "     *")
+                    text += s + "\n"
+                }
             },
             finish: () => {
                 setNs("")
@@ -81,6 +89,15 @@ namespace ks.cpp {
             }
         }
     }
+
+    export function parseCppInt(v: string): number {
+        if (!v) return null
+        v = v.trim()
+        if (/^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v))
+            return parseInt(v)
+        return null
+    }
+
 
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         var res = Y.emptyExtInfo();
@@ -93,11 +110,26 @@ namespace ks.cpp {
         var fileName = ""
         var cfginc = ""
         let protos = nsWriter("namespace")
-        let dTs = nsWriter("declare namespace")
-        
+        let shimsDTS = nsWriter("declare namespace")
+        let enumsDTS = nsWriter("declare namespace")
+
         let compileService = mainPkg.getTarget().compileService;
-        
-        
+
+        let enumVals: U.Map<string> = {}
+
+        for (let pkg of mainPkg.sortedDeps()) {
+            let constName = "dal.d.ts"
+            if (pkg.getFiles().indexOf(constName) >= 0) {
+                let src = pkg.host().readFile(pkg, constName)
+                src.split(/\r?\n/).forEach(ln => {
+                    let m = /^\s*(\w+) = (.*),/.exec(ln)
+                    if (m) {
+                        enumVals[m[1]] = m[2]
+                    }
+                })
+            }
+        }
+
         function parseCpp(src: string, isHeader: boolean) {
             res.hasExtension = true
             let currNs = ""
@@ -117,15 +149,80 @@ namespace ks.cpp {
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
                     default:
-                        err("Don't know how to map type: " + tp)
-                        return "any"
+                        return tp;
+                    //err("Don't know how to map type: " + tp)
+                    //return "any"
                 }
             }
 
             let outp = ""
+            let inEnum = false
+            let enumVal = 0
+
+            enumsDTS.setNs("")
+            shimsDTS.setNs("")
 
             src.split(/\r?\n/).forEach(ln => {
                 ++lineNo
+
+                let lnNC = ln.replace(/\/\/.*/, "").replace(/\/\*/, "")
+
+                if (inEnum && lnNC.indexOf("}") >= 0) {
+                    inEnum = false
+                    enumsDTS.write("}")
+                }
+
+                if (inEnum) {
+                    let mm = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(lnNC)
+                    if (mm) {
+                        let nm = mm[1]
+                        let v = mm[3]
+                        let opt = ""
+                        if (v) {
+                            v = v.trim()
+                            let curr = U.lookup(enumVals, v)
+                            if (curr != null) {
+                                opt = "  // " + v
+                                v = curr
+                            }
+                            enumVal = parseCppInt(v)
+                            if (enumVal == null)
+                                err("cannot determine value of " + lnNC)
+                        } else {
+                            enumVal++
+                            v = enumVal + ""
+                        }
+                        enumsDTS.write(`    ${nm.replace(/_$/, "")} = ${v},${opt}`)
+                    } else {
+                        enumsDTS.write(ln)
+                    }
+                }
+                
+                let enM = /^\s*enum\s+(|class\s+|struct\s+)(\w+)\s*({|$)/.exec(lnNC) 
+                if (enM) {
+                    inEnum = true
+                    enumVal = -1
+                    enumsDTS.write("")
+                    enumsDTS.write("")
+                    if (currAttrs || currDocComment) {
+                        enumsDTS.write(currDocComment)
+                        enumsDTS.write(currAttrs)
+                        currAttrs = ""
+                        currDocComment = ""
+                    }
+                    enumsDTS.write(`declare enum ${enM[2]} ${enM[3]}`)
+                    
+                    if (!isHeader) {
+                        protos.setNs(currNs)
+                        protos.write(`enum ${enM[2]} : int;`)
+                    }
+                }
+
+                if (inEnum) {
+                    outp += ln + "\n"
+                    return
+                }
+
                 if (/^\s*\/\*\*/.test(ln)) {
                     inDocComment = true
                     currDocComment = ln + "\n"
@@ -156,10 +253,13 @@ namespace ks.cpp {
                     //if (currNs) err("more than one namespace declaration not supported")
                     currNs = m[1]
                     if (currAttrs || currDocComment) {
-                        dTs.setNs("");
-                        dTs.write(currDocComment)
-                        dTs.write(currAttrs)
-                        dTs.setNs(currNs)
+                        shimsDTS.setNs("");
+                        shimsDTS.write("")
+                        shimsDTS.write("")
+                        shimsDTS.write(currDocComment)
+                        shimsDTS.write(currAttrs)
+                        shimsDTS.setNs(currNs)
+                        enumsDTS.setNs(currNs)
                         currAttrs = ""
                         currDocComment = ""
                     }
@@ -201,13 +301,15 @@ namespace ks.cpp {
                         value: null
                     }
                     if (currDocComment) {
-                        dTs.setNs(currNs)
-                        dTs.write(currDocComment)
-                        dTs.write(currAttrs)
+                        shimsDTS.setNs(currNs)
+                        shimsDTS.write("")
+                        shimsDTS.write(currDocComment)
+                        currAttrs = currAttrs.trim()
                         if (/ImageLiteral/.test(m[4]))
-                            dTs.write(`//% imageLiteral=1`)
-                        dTs.write(`//% shim=${fi.name}`)
-                        dTs.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                            currAttrs += ` imageLiteral=1`
+                        currAttrs += ` shim=${fi.name}`
+                        shimsDTS.write(currAttrs)
+                        shimsDTS.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
                     }
                     currDocComment = ""
                     currAttrs = ""
@@ -255,10 +357,19 @@ namespace ks.cpp {
         res.microbitConfig.dependencies["kindscript-microbit-core"] = "microsoft/kindscript-microbit-core#" + compileService.gittag;
 
         if (mainPkg) {
+            let seenMain = false
             // TODO computeReachableNodes(pkg, true)
             for (let pkg of mainPkg.sortedDeps()) {
                 thisErrors = ""
                 parseJson(pkg)
+                if (pkg == mainPkg) {
+                    seenMain = true
+                    // we only want the main package in generated .d.ts
+                    shimsDTS.clear()
+                    enumsDTS.clear()
+                } else {
+                    U.assert(!seenMain)
+                }
                 for (let fn of pkg.getFiles()) {
                     let isHeader = U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ".cpp")) {
@@ -323,7 +434,8 @@ namespace ks.cpp {
         let data = JSON.stringify(creq)
         res.sha = U.sha256(data)
         res.compileData = btoa(U.toUTF8(data))
-        res.extensionDTs = dTs.finish()
+        res.shimsDTS = shimsDTS.finish()
+        res.enumsDTS = enumsDTS.finish()
 
         return res;
     }
