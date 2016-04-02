@@ -1899,7 +1899,6 @@ ${lbl}: .short 0xffff
         errors: string;
         sha: string;
         compileData: string;
-        hasExtension: boolean;
         shimsDTS: string;
         enumsDTS: string;
         onlyPublic: boolean;
@@ -1913,7 +1912,6 @@ ${lbl}: .short 0xffff
             errors: "",
             sha: "",
             compileData: "",
-            hasExtension: false,
             shimsDTS: "",
             enumsDTS: "",
             onlyPublic: true,

@@ -108,7 +108,6 @@ namespace ks.cpp {
         var err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
         var lineNo = 0
         var fileName = ""
-        var cfginc = ""
         let protos = nsWriter("namespace")
         let shimsDTS = nsWriter("declare namespace")
         let enumsDTS = nsWriter("declare namespace")
@@ -116,6 +115,9 @@ namespace ks.cpp {
         let compileService = mainPkg.getTarget().compileService;
 
         let enumVals: U.Map<string> = {}
+        
+        // defaults:
+        res.microbitConfig.config["MICROBIT_BLE_ENABLED"] = "0"
 
         for (let pkg of mainPkg.sortedDeps()) {
             let constName = "dal.d.ts"
@@ -131,7 +133,6 @@ namespace ks.cpp {
         }
 
         function parseCpp(src: string, isHeader: boolean) {
-            res.hasExtension = true
             let currNs = ""
             let currDocComment = ""
             let currAttrs = ""
@@ -197,8 +198,8 @@ namespace ks.cpp {
                         enumsDTS.write(ln)
                     }
                 }
-                
-                let enM = /^\s*enum\s+(|class\s+|struct\s+)(\w+)\s*({|$)/.exec(lnNC) 
+
+                let enM = /^\s*enum\s+(|class\s+|struct\s+)(\w+)\s*({|$)/.exec(lnNC)
                 if (enM) {
                     inEnum = true
                     enumVal = -1
@@ -211,7 +212,7 @@ namespace ks.cpp {
                         currDocComment = ""
                     }
                     enumsDTS.write(`declare enum ${enM[2]} ${enM[3]}`)
-                    
+
                     if (!isHeader) {
                         protos.setNs(currNs)
                         protos.write(`enum ${enM[2]} : int;`)
@@ -335,22 +336,13 @@ namespace ks.cpp {
             let json = pkg.config.microbit
             if (!json) return;
 
-            res.hasExtension = true
-
             // TODO check for conflicts
             if (json.dependencies) {
                 U.jsonCopyFrom(res.microbitConfig.dependencies, json.dependencies)
             }
 
             if (json.config)
-                Object.keys(json.config).forEach(k => {
-                    if (!/^\w+$/.test(k))
-                        err(lf("invalid config variable: {0}", k))
-                    cfginc += "#undef " + k + "\n"
-                    if (!/^\w+$/.test(json.config[k]))
-                        err(lf("invalid config value: {0}: {1}", k, json.config[k]))
-                    cfginc += "#define " + k + " " + json.config[k] + "\n"
-                })
+                U.jsonCopyFrom(res.microbitConfig.config, json.config)
         }
 
         // This is overridden on the build server, but we need it for command line build
@@ -397,6 +389,17 @@ namespace ks.cpp {
         if (res.errors)
             return res;
 
+        let cfginc = ""
+        let jsonconfig = res.microbitConfig.config
+        Object.keys(jsonconfig).forEach(k => {
+            if (!/^\w+$/.test(k))
+                err(lf("invalid config variable: {0}", k))
+            cfginc += "#undef " + k + "\n"
+            if (!/^\w+$/.test(jsonconfig[k]))
+                err(lf("invalid config value: {0}: {1}", k, jsonconfig[k]))
+            cfginc += "#define " + k + " " + jsonconfig[k] + "\n"
+        })
+
         res.generatedFiles["/ext/config.h"] = cfginc
         res.generatedFiles["/ext/pointers.inc"] = pointersInc
         res.generatedFiles["/ext/refs.inc"] = includesInc + protos.finish()
@@ -416,6 +419,7 @@ namespace ks.cpp {
                 "configfile": "inc/MicroBitCustomConfig.h"
             }
         }
+
 
         res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
