@@ -18,7 +18,7 @@ import Cloud = ks.Cloud;
 import * as server from './server';
 import * as uploader from './uploader';
 
-let forceCloudBuild = false
+let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
 // provided by target
 let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;

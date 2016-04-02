@@ -167,11 +167,11 @@ ${getFunctionLabel(proc.action)}:
                     break;
                 case EK.Incr:
                     emitExpr(e.args[0])
-                    emitCallRaw("ksrt::incr")
+                    emitCallRaw("kindscript::incr")
                     break;
                 case EK.Decr:
                     emitExpr(e.args[0])
-                    emitCallRaw("ksrt::decr")
+                    emitCallRaw("kindscript::decr")
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
@@ -584,7 +584,7 @@ ${getFunctionLabel(proc.action)}:
                 return bytes
             }
 
-            var hd = [0x4207, bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
+            var hd = [0x4208, bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
             var tmp = hexTemplateHash()
             for (var i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))

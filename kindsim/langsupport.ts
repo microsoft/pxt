@@ -197,11 +197,16 @@ namespace ks.rt {
             console.log("Live String:", JSON.stringify(k), "refcnt=", n)
         })
     }
-
+    
+    export namespace kindscript {
+        export var incr = rt.incr;
+        export var decr = rt.decr;
+    }
+    
     export namespace ksrt {
         export var incr = rt.incr;
         export var decr = rt.decr;
-
+        
         export function ldfld(r: RefRecord, idx: number) {
             check(r.reflen <= idx && idx < r.len)
             let v = num(r.fields[idx])

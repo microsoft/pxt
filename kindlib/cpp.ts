@@ -100,8 +100,8 @@ namespace ks.cpp {
 
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         var res = Y.emptyExtInfo();
-        var pointersInc = ""
-        var includesInc = ""
+        var pointersInc = "\nKS_SHIMS_BEGIN\n"
+        var includesInc = `#include "kindscript.h"\n`
         var thisErrors = ""
         var dTsNamespace = ""
         var err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
@@ -460,9 +460,8 @@ namespace ks.cpp {
             cfginc += "#define " + k + " " + jsonconfig[k] + "\n"
         })
 
-        res.generatedFiles["/ext/config.h"] = cfginc
-        res.generatedFiles["/ext/pointers.inc"] = pointersInc
-        res.generatedFiles["/ext/refs.inc"] = includesInc + protos.finish()
+        res.generatedFiles["/inc/KSConfig.h"] = cfginc
+        res.generatedFiles["/source/pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nKS_SHIMS_END\n"
 
         let moduleJson = {
             "name": "kindscript-microbit-app",
@@ -476,14 +475,14 @@ namespace ks.cpp {
 
         let configJson = {
             "microbit": {
-                "configfile": "inc/MicroBitCustomConfig.h"
+                "configfile": "inc/KSConfig.h"
             }
         }
 
 
         res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-        res.generatedFiles["/source/main.cpp"] = `#include "BitVM.h"\nvoid app_main() { bitvm::start(); }\n`
+        res.generatedFiles["/source/main.cpp"] = `#include "kindscript.h"\nvoid app_main() { kindscript::start(); }\n`
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)

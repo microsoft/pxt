@@ -19,7 +19,7 @@ namespace ts.ks {
     function userError(msg: string): Error {
         debugger;
         var e = new Error(msg);
-        (<any>e).bitvmUserError = true;
+        (<any>e).ksEmitterUserError = true;
         throw e;
     }
 
@@ -606,7 +606,7 @@ ${lbl}: .short 0xffff
                 } else {
                     let lbl = bin.emitString(node.text)
                     let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(node.text))
-                    return ir.rtcall("String::mkLiteral", [ptr])
+                    return ir.rtcall("kindscript::ptrOfLiteral", [ptr])
                 }
             } else {
                 throw oops();
@@ -922,12 +922,11 @@ ${lbl}: .short 0xffff
                     userError("lambda functions cannot yet return values")
 
                 let suff = args.length + ""
-                if (suff == "0") suff = ""
-
+                
                 args.unshift(node.expression)
                 callInfo.args.unshift(node.expression)
 
-                return rtcallMask("ActionImpl::run" + suff, args, true)
+                return rtcallMask("kindscript::runAction" + suff, args, true)
             }
 
             throw unhandled(node, stringKind(decl))
@@ -945,7 +944,7 @@ ${lbl}: .short 0xffff
                 let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
                 let info = getClassInfo(t)
 
-                let obj = ir.shared(ir.rtcall("RecordImpl::mk", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
+                let obj = ir.shared(ir.rtcall("kindscript::mkRecord", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
 
                 if (ctor) {
                     markUsed(ctor)
@@ -996,8 +995,7 @@ ${lbl}: .short 0xffff
             let lbl = getFunctionLabel(node)
             let r = ir.ptrlit(lbl + "_Lit", lbl)
             if (!raw) {
-                // TODO rename this to functionData or something
-                r = ir.rtcall("ActionImpl::mkLiteral", [r])
+                r = ir.rtcall("kindscript::ptrOfLiteral", [r])
             }
             return r
         }
@@ -1047,7 +1045,7 @@ ${lbl}: .short 0xffff
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null)
-                lit = ir.shared(ir.rtcall("ActionImpl::mk", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
+                lit = ir.shared(ir.rtcall("kindscript::mkAction", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
@@ -1664,7 +1662,7 @@ ${lbl}: .short 0xffff
         }
 
         function handleError(node: Node, e: any) {
-            if (!e.bitvmUserError)
+            if (!e.ksEmitterUserError)
                 console.log(e.stack)
             error(node, e.message)
         }
