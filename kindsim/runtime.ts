@@ -217,7 +217,7 @@ namespace ks.rt {
             // These variables are used by the generated code as well
             // ---
             var entryPoint: LabelFn;
-            var bitvm = rt.bitvm
+            var ksrt = rt.ksrt
             var breakpoints: Uint8Array = null
             var breakAlways = false
             var globals = this.globals

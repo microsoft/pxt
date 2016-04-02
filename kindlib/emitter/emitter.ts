@@ -602,11 +602,11 @@ ${lbl}: .short 0xffff
                 }
             } else if (isStringLiteral(node)) {
                 if (node.text == "") {
-                    return ir.rtcall("string::mkEmpty", [])
+                    return ir.rtcall("String::mkEmpty", [])
                 } else {
                     let lbl = bin.emitString(node.text)
                     let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(node.text))
-                    return ir.rtcall("bitvm::stringData", [ptr])
+                    return ir.rtcall("String::mkLiteral", [ptr])
                 }
             } else {
                 throw oops();
@@ -616,7 +616,7 @@ ${lbl}: .short 0xffff
         function emitTemplateExpression(node: TemplateExpression) {
             let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) =>
                 isEmptyStringLiteral(b) ? a :
-                    ir.rtcallMask("string::concat_op", 3, false, [
+                    ir.rtcallMask("StringMethods::concat", 3, false, [
                         a,
                         emitAsString(b)
                     ])
@@ -646,10 +646,10 @@ ${lbl}: .short 0xffff
                 flag = 3;
             else if (isRef)
                 flag = 1;
-            let coll = ir.shared(ir.rtcall("collection::mk", [ir.numlit(flag)]))
+            let coll = ir.shared(ir.rtcall("ArrayImpl::mk", [ir.numlit(flag)]))
             for (let elt of node.elements) {
                 let e = ir.shared(emitExpr(elt))
-                proc.emitExpr(ir.rtcall("collection::add", [coll, e]))
+                proc.emitExpr(ir.rtcall("ArrayImpl::push", [coll, e]))
                 if (isRef) {
                     proc.emitExpr(ir.op(EK.Decr, [e]))
                 }
@@ -709,19 +709,20 @@ ${lbl}: .short 0xffff
         function emitIndexedAccess(node: ElementAccessExpression): ir.Expr {
             let t = typeOf(node.expression)
 
-            let collType = ""
+            let indexer = ""
             if (t.flags & TypeFlags.String)
-                collType = "string"
+                indexer = "StringMethods::charAt"
             else if (isArrayType(t))
-                collType = "collection"
+                indexer = "ArrayImpl::getAt"
+            // TODO else look for attrs.indexer on type
 
-            if (collType) {
+            if (indexer) {
                 if (typeOf(node.argumentExpression).flags & TypeFlags.Number) {
                     let arr = emitExpr(node.expression)
                     let idx = emitExpr(node.argumentExpression)
-                    return rtcallMask(collType + "::at", [node.expression, node.argumentExpression])
+                    return rtcallMask(indexer, [node.expression, node.argumentExpression])
                 } else {
-                    throw unhandled(node, lf("non-numeric indexer on {0}", collType))
+                    throw unhandled(node, lf("non-numeric indexer on {0}", indexer))
                 }
             } else {
                 throw unhandled(node, "unsupported indexer")
@@ -926,7 +927,7 @@ ${lbl}: .short 0xffff
                 args.unshift(node.expression)
                 callInfo.args.unshift(node.expression)
 
-                return rtcallMask("action::run" + suff, args, true)
+                return rtcallMask("ActionImpl::run" + suff, args, true)
             }
 
             throw unhandled(node, stringKind(decl))
@@ -944,7 +945,7 @@ ${lbl}: .short 0xffff
                 let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
                 let info = getClassInfo(t)
 
-                let obj = ir.shared(ir.rtcall("record::mk", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
+                let obj = ir.shared(ir.rtcall("RecordImpl::mk", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
 
                 if (ctor) {
                     markUsed(ctor)
@@ -996,7 +997,7 @@ ${lbl}: .short 0xffff
             let r = ir.ptrlit(lbl + "_Lit", lbl)
             if (!raw) {
                 // TODO rename this to functionData or something
-                r = ir.rtcall("bitvm::stringData", [r])
+                r = ir.rtcall("ActionImpl::mkLiteral", [r])
             }
             return r
         }
@@ -1046,7 +1047,7 @@ ${lbl}: .short 0xffff
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null)
-                lit = ir.shared(ir.rtcall("action::mk", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
+                lit = ir.shared(ir.rtcall("ActionImpl::mk", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
@@ -1054,7 +1055,7 @@ ${lbl}: .short 0xffff
                     let v = loc.loadCore()
                     if (loc.isRef() || loc.isByRefLocal())
                         v = ir.op(EK.Incr, [v])
-                    proc.emitExpr(ir.rtcall("bitvm::stclo", [lit, ir.numlit(i), v]))
+                    proc.emitExpr(ir.rtcall("ksrt::stclo", [lit, ir.numlit(i), v]))
                 })
                 if (node.kind == SK.FunctionDeclaration) {
                     info.location = proc.mkLocal(node, getVarInfo(node))
@@ -1088,8 +1089,8 @@ ${lbl}: .short 0xffff
                     //console.log(l.toString(), l.info)
                     if (l.isByRefLocal()) {
                         // TODO add C++ support function to do this
-                        let tmp = ir.shared(ir.rtcall("bitvm::mkloc" + l.refSuff(), []))
-                        proc.emitExpr(ir.rtcall("bitvm::stloc" + l.refSuff(), [tmp, l.loadCore()]))
+                        let tmp = ir.shared(ir.rtcall("ksrt::mkloc" + l.refSuff(), []))
+                        proc.emitExpr(ir.rtcall("ksrt::stloc" + l.refSuff(), [tmp, l.loadCore()]))
                         proc.emitExpr(l.storeDirect(tmp))
                     }
                 })
@@ -1130,7 +1131,7 @@ ${lbl}: .short 0xffff
             let tp = typeOf(node.operand)
             if (tp.flags & TypeFlags.Boolean) {
                 if (node.operator == SK.ExclamationToken) {
-                    return rtcallMask("boolean::not_", [node.operand])
+                    return rtcallMask("BooleanMethods::bang", [node.operand])
                 }
             }
 
@@ -1311,9 +1312,9 @@ ${lbl}: .short 0xffff
             switch (k) {
                 case SK.PlusToken: return "thumb::adds";
                 case SK.MinusToken: return "thumb::subs";
-                // TODO expose __aeabi_idiv directly
-                case SK.SlashToken: return "number::divide";
-                case SK.PercentToken: return "math::mod";
+                // we could expose __aeabi_idiv directly...
+                case SK.SlashToken: return "NumberImpl::div";
+                case SK.PercentToken: return "NumberImpl::mod";
                 case SK.AsteriskToken: return "thumb::muls";
                 case SK.AmpersandToken: return "thumb::ands";
                 case SK.BarToken: return "thumb::orrs";
@@ -1321,17 +1322,17 @@ ${lbl}: .short 0xffff
                 case SK.LessThanLessThanToken: return "thumb::lsls";
                 case SK.GreaterThanGreaterThanToken: return "thumb::asrs"
                 case SK.GreaterThanGreaterThanGreaterThanToken: return "thumb::lsrs"
-                // TODO compile to branches etc? this is more code-size efficient
-                case SK.LessThanEqualsToken: return "number::le";
-                case SK.LessThanToken: return "number::lt";
-                case SK.GreaterThanEqualsToken: return "number::ge";
-                case SK.GreaterThanToken: return "number::gt";
+                // these could be compiled to branches butthis is more code-size efficient
+                case SK.LessThanEqualsToken: return "NumberImpl::le";
+                case SK.LessThanToken: return "NumberImpl::lt";
+                case SK.GreaterThanEqualsToken: return "NumberImpl::ge";
+                case SK.GreaterThanToken: return "NumberImpl::gt";
                 case SK.EqualsEqualsToken:
                 case SK.EqualsEqualsEqualsToken:
-                    return "number::eq";
+                    return "NumberImpl::eq";
                 case SK.ExclamationEqualsEqualsToken:
                 case SK.ExclamationEqualsToken:
-                    return "number::neq";
+                    return "NumberImpl::neq";
 
                 default: return null;
             }
@@ -1360,7 +1361,7 @@ ${lbl}: .short 0xffff
 
             if (node.operatorToken.kind == SK.PlusToken) {
                 if ((lt.flags & TypeFlags.String) || (rt.flags & TypeFlags.String)) {
-                    return ir.rtcallMask("string::concat_op", 3, false, [
+                    return ir.rtcallMask("StringMethods::concat", 3, false, [
                         emitAsString(node.left),
                         emitAsString(node.right)])
                 }
@@ -1370,7 +1371,7 @@ ${lbl}: .short 0xffff
                 (lt.flags & TypeFlags.String)) {
 
                 let tmp = prepForAssignment(node.left)
-                let post = ir.shared(ir.rtcallMask("string::concat_op", 3, false, [
+                let post = ir.shared(ir.rtcallMask("StringMethods::concat", 3, false, [
                     tmp.left,
                     emitAsString(node.right)]))
                 emitStore(node.left, post, tmp.storeCache)
@@ -1381,19 +1382,16 @@ ${lbl}: .short 0xffff
             if ((lt.flags & TypeFlags.String) && (rt.flags & TypeFlags.String)) {
                 switch (node.operatorToken.kind) {
                     case SK.LessThanEqualsToken:
-                        return shim("string::le");
                     case SK.LessThanToken:
-                        return shim("string::lt");
                     case SK.GreaterThanEqualsToken:
-                        return shim("string::ge");
                     case SK.GreaterThanToken:
-                        return shim("string::gt");
                     case SK.EqualsEqualsToken:
                     case SK.EqualsEqualsEqualsToken:
-                        return shim("string::equals");
                     case SK.ExclamationEqualsEqualsToken:
                     case SK.ExclamationEqualsToken:
-                        return shim("string::neq");
+                        return ir.rtcall(
+                            simpleInstruction(node.operatorToken.kind),
+                            [shim("StringMethods::compare"), ir.numlit(0)])
                     default:
                         unhandled(node.operatorToken, "numeric operator")
                 }
@@ -1402,10 +1400,10 @@ ${lbl}: .short 0xffff
             switch (node.operatorToken.kind) {
                 case SK.EqualsEqualsToken:
                 case SK.EqualsEqualsEqualsToken:
-                    return shim("number::eq");
+                    return shim("NumberImpl::eq");
                 case SK.ExclamationEqualsEqualsToken:
                 case SK.ExclamationEqualsToken:
-                    return shim("number::neq");
+                    return shim("NumberImpl::neq");
                 case SK.BarBarToken:
                 case SK.AmpersandAmpersandToken:
                     return emitLazyBinaryExpression(node);
@@ -1421,9 +1419,9 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
             if (tp.flags & TypeFlags.Number)
-                return ir.rtcall("number::to_string", [r])
+                return ir.rtcall("NumberMethods::toString", [r])
             else if (tp.flags & TypeFlags.Boolean)
-                return ir.rtcall("boolean::to_string", [r])
+                return ir.rtcall("BooleanMethods::toString", [r])
             else if (tp.flags & TypeFlags.String)
                 return r // OK
             else
@@ -1629,7 +1627,7 @@ ${lbl}: .short 0xffff
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 proc.emitClrIfRef(loc) // we might be in a loop
-                proc.emitExpr(loc.storeDirect(ir.rtcall("bitvm::mkloc" + loc.refSuff(), [])))
+                proc.emitExpr(loc.storeDirect(ir.rtcall("ksrt::mkloc" + loc.refSuff(), [])))
             }
             // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {

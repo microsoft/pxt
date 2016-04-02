@@ -252,7 +252,7 @@ namespace ts.ks.ir {
             let r = this.loadCore()
 
             if (this.isByRefLocal())
-                return rtcall("bitvm::ldloc" + this.refSuff(), [r])
+                return rtcall("ksrt::ldloc" + this.refSuff(), [r])
 
             if (this.refCountingHandledHere())
                 return op(EK.Incr, [r])
@@ -274,7 +274,7 @@ namespace ts.ks.ir {
 
         storeByRef(src: Expr) {
             if (this.isByRefLocal()) {
-                return rtcall("bitvm::stloc" + this.refSuff(), [this.loadCore(), src])
+                return rtcall("ksrt::stloc" + this.refSuff(), [this.loadCore(), src])
             } else {
                 if (this.refCountingHandledHere()) {
                     let tmp = shared(src)

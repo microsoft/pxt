@@ -80,9 +80,9 @@ namespace ks.rt {
             let cb = getResume();
 
             if (a instanceof RefAction) {
-                bitvm.incr(a)
+                ksrt.incr(a)
                 cb(new FnWrapper(a.func, a.fields, a0, a1, () => {
-                    bitvm.decr(a)
+                    ksrt.decr(a)
                 }))
             } else {
                 // no-closure case
@@ -198,7 +198,7 @@ namespace ks.rt {
         })
     }
 
-    export namespace bitvm {
+    export namespace ksrt {
         export var incr = rt.incr;
         export var decr = rt.decr;
 
