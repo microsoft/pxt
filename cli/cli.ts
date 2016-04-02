@@ -767,7 +767,7 @@ class Host
 
     cacheGetAsync(id: string): Promise<string> {
         return readFileAsync(path.join(cacheDir(), id), "utf8")
-            .then((v:string) => v, (e:any) => null as string)
+            .then((v: string) => v, (e: any) => null as string)
     }
 
     downloadPackageAsync(pkg: ks.Package) {
@@ -961,6 +961,7 @@ function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
                 buildCache.sha = ""
                 buildCache.modSha = modSha
                 saveCache();
+                buildDalConst(true);
             })
     } else {
         console.log("Skipping yotta update.")
@@ -974,7 +975,105 @@ function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
         })
 
     return yottaTasks
+}
 
+var parseCppInt = ks.cpp.parseCppInt;
+
+function buildDalConst(force = false) {
+    let constName = "dal.d.ts"
+    let vals: U.Map<string> = {}
+    let done: U.Map<string> = {}
+
+    function isValidInt(v: string) {
+        return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
+    }
+
+    function extractConstants(fileName: string, src: string, dogenerate = false): string {
+        let lineNo = 0
+        //let err = (s: string) => U.userError(`${fileName}(${lineNo}): ${s}\n`)
+        let outp = ""
+        let inEnum = false
+        let enumVal = 0
+        let defineVal = (n: string, v: string) => {
+            v = v.trim()
+            if (parseCppInt(v) != null) {
+                let curr = U.lookup(vals, n)
+                if (curr == null || curr == v) {
+                    vals[n] = v
+                    if (dogenerate && !done[n]) {
+                        outp += `    ${n} = ${v},\n`
+                        done[n] = v
+                    }
+                } else {
+                    vals[n] = "?"
+                    if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
+                        console.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
+                }
+            } else {
+                vals[n] = "?" // just in case there's another more valid entry
+            }
+        }
+        src.split(/\r?\n/).forEach(ln => {
+            ++lineNo
+            ln = ln.replace(/\/\/.*/, "").replace(/\/\*.*/g, "")
+            let m = /^\s*#define\s+(\w+)\s+(.*)$/.exec(ln)
+            if (m) {
+                defineVal(m[1], m[2])
+            }
+
+            if (inEnum && /}/.test(ln))
+                inEnum = false
+
+            if (/^\s*enum\s+(\w+)/.test(ln)) {
+                inEnum = true;
+                enumVal = -1;
+            }
+
+            if (inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln))) {
+                let v = m[3]
+                if (v) {
+                    enumVal = parseCppInt(v)                    
+                    if (enumVal == null) {
+                        console.log(`${fileName}(${lineNo}): invalid enum initializer, ${ln}`)
+                        inEnum = false
+                        return
+                    }
+                } else {
+                    enumVal++
+                    v = enumVal + ""
+                }
+                defineVal(m[1], v)
+            }
+        })
+        return outp
+    }
+
+    if (mainPkg && mainPkg.getFiles().indexOf(constName) >= 0 &&
+        (force || !fs.existsSync(constName))) {
+        console.log(`rebuilding ${constName}...`)
+        let incPath = ytPath + "/yotta_modules/microbit-dal/inc/"
+        let files = fs.readdirSync(incPath)
+        files.sort(U.strcmp)
+        let fc: U.Map<string> = {}
+        for (let fn of files) {
+            if (U.endsWith(fn, "Config.h")) continue
+            fc[fn] = fs.readFileSync(incPath + fn, "utf8")
+        }
+        files = Object.keys(fc)
+
+        // pre-pass - detect conflicts
+        for (let fn of files) {
+            extractConstants(fn, fc[fn])
+        }
+
+        let consts = "// Auto-generated. Do not edit.\ndeclare const enum DAL {\n"
+        for (let fn of files) {
+            consts += "    // " + fn + "\n"
+            consts += extractConstants(fn, fc[fn], true)
+        }
+        consts += "}\n"
+        fs.writeFileSync(constName, consts)
+    }
 }
 
 export function formatAsync(...fileNames: string[]) {
@@ -1049,7 +1148,7 @@ function runCoreAsync(res: ts.ks.CompileResult) {
     if (f) {
         // TODO: non-microbit specific load
         ks.rt.initCurrentRuntime = ks.rt.initBareRuntime
-        let r = new ks.rt.Runtime(f, res.enums)
+        let r = new ks.rt.Runtime(f)
         ks.rt.Runtime.messagePosted = (msg) => {
             if (msg.type == "serial")
                 console.log("SERIAL:", (msg as any).data)
@@ -1087,6 +1186,7 @@ function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
     return mainPkg.loadAsync()
         .then(() => {
+            buildDalConst();
             let target = mainPkg.getTargetOptions()
             if (target.hasHex && mode != BuildOption.Run)
                 target.isNative = true

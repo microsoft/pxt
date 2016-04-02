@@ -169,7 +169,7 @@ namespace ts.ks {
         let didSomething = true
         while (didSomething) {
             didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]+)))?/,
+            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]*)))?/,
                 (f: string, n: string, d0: string, d1: string,
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
@@ -211,6 +211,10 @@ namespace ts.ks {
         return (t.flags & TypeFlags.Reference) && t.symbol.name == "Array"
     }
 
+    function isInterfaceType(t: Type) {
+        return t.flags & TypeFlags.Interface;
+    }
+
     function isClassType(t: Type) {
         // check if we like the class?
         return (t.flags & TypeFlags.Class) || (t.flags & TypeFlags.ThisType)
@@ -235,6 +239,7 @@ namespace ts.ks {
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
+            if (isInterfaceType(t)) return t;
             if (deconstructFunctionType(t)) return t;
             userError(lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)))
         }
@@ -299,8 +304,10 @@ namespace ts.ks {
         let functionInfo: StringMap<FunctionAddInfo> = {};
         let brkMap: U.Map<Breakpoint> = {}
 
-        hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
-        hex.setupInlineAssembly(opts);
+        if (opts.target.isNative) {
+            hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
+            hex.setupInlineAssembly(opts);
+        }
 
         if (opts.breakpoints)
             res.breakpoints = [{
@@ -671,21 +678,16 @@ ${lbl}: .short 0xffff
                 let ev = attrs.enumval
                 if (!ev) {
                     let val = checker.getConstantValue(decl as EnumMember)
-                    if (val == null)
+                    if (val == null) {
+                        if ((decl as EnumMember).initializer)
+                            return emitExpr((decl as EnumMember).initializer)
                         userError(lf("Cannot compute enum value"))
+                    }
                     ev = val + ""
                 }
                 if (/^\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
-                let inf = hex.lookupFunc(ev)
-                if (!inf)
-                    userError(lf("unhandled enum value: {0}", ev))
-                if (inf.type == "E")
-                    return ir.numlit(inf.value)
-                else if (inf.type == "F" && inf.args == 0)
-                    return ir.rtcall(inf.name, [])
-                else
-                    throw userError(lf("not valid enum: {0}; is it procedure name?", ev))
+                return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature) {
                 if (attrs.shim) {
                     callInfo.args.push(node.expression)
@@ -789,7 +791,7 @@ ${lbl}: .short 0xffff
                 return emitExpr(args[0])
             }
 
-            if (opts.target.hasHex) {
+            if (opts.target.isNative) {
                 hex.validateShim(getDeclName(decl), attrs, hasRet, args.length);
             }
 
@@ -825,7 +827,7 @@ ${lbl}: .short 0xffff
                             if (defl) defl = parseInt(defl)
                             args.push(<any>{
                                 kind: SK.NullKeyword,
-                                valueOverride: defl 
+                                valueOverride: defl
                             })
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
@@ -1005,7 +1007,7 @@ ${lbl}: .short 0xffff
 
             let attrs = parseComments(node)
             if (attrs.shim != null) {
-                if (opts.target.hasHex) {
+                if (opts.target.isNative) {
                     hex.validateShim(getDeclName(node),
                         attrs,
                         funcHasReturn(node),
@@ -1648,12 +1650,6 @@ ${lbl}: .short 0xffff
             // nothing
         }
         function emitEnumDeclaration(node: EnumDeclaration) {
-            for (let mem of node.members) {
-                let cmts = parseComments(mem)
-                if (!cmts.enumval)
-                    res.enums[getDeclName(node) + "_" + mem.name.getText()] =
-                        checker.getConstantValue(mem)
-            }
         }
         function emitEnumMember(node: EnumMember) { }
         function emitModuleDeclaration(node: ModuleDeclaration) {
@@ -1901,7 +1897,6 @@ ${lbl}: .short 0xffff
     }
 
     export interface ExtensionInfo {
-        enums: U.Map<number>;
         functions: FuncInfo[];
         generatedFiles: U.Map<string>;
         extensionFiles: U.Map<string>;
@@ -1909,22 +1904,21 @@ ${lbl}: .short 0xffff
         errors: string;
         sha: string;
         compileData: string;
-        hasExtension: boolean;
-        extensionDTs: string;
+        shimsDTS: string;
+        enumsDTS: string;
         onlyPublic: boolean;
     }
 
     export function emptyExtInfo(): ExtensionInfo {
         return {
-            enums: {},
             functions: [],
             generatedFiles: {},
             extensionFiles: {},
             errors: "",
             sha: "",
             compileData: "",
-            hasExtension: false,
-            extensionDTs: "",
+            shimsDTS: "",
+            enumsDTS: "",
             onlyPublic: true,
             microbitConfig: {
                 dependencies: {},

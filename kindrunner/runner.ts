@@ -209,7 +209,7 @@ namespace ks.runner {
                 let js = resp.outfiles["microbit.js"];
                 if (js) {
                     let driver = new ks.rt.SimulatorDriver(container);
-                    driver.run(js, resp.enums);
+                    driver.run(js);
                 }
             })
     }

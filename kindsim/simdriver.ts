@@ -93,7 +93,7 @@ namespace ks.rt {
             this.setState(SimulatorState.Unloaded);
         }
 
-        public run(js: string, enums: any, debug?: boolean) {
+        public run(js: string, debug?: boolean) {
             this.debug = debug;
 
             this.addEventListeners();
@@ -101,7 +101,6 @@ namespace ks.rt {
             // store information
             this.currentRuntime = {
                 type: 'run',
-                enums: enums,
                 code: js
             }
 

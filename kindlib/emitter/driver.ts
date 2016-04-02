@@ -43,7 +43,6 @@ namespace ts.ks {
         diagnostics: KsDiagnostic[];
         success: boolean;
         times: U.Map<number>;
-        enums: U.Map<number>;
         ast?: Program;
         breakpoints?: Breakpoint[];
     }
@@ -121,10 +120,7 @@ namespace ts.ks {
             diagnostics: [],
             success: false,
             times: {},
-            enums: U.clone(opts.hexinfo.enums || {})
         }
-
-        U.jsonCopyFrom(res.enums, opts.extinfo.enums)
 
         let fileText = opts.fileSystem
         let setParentNodes = true

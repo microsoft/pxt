@@ -27,16 +27,16 @@ namespace ks.rt {
 
 
 
-    export namespace collection {
+    export namespace ArrayImpl {
         export function mk(f: number) {
             return new RefCollection(f);
         }
 
-        export function count(c: RefCollection) {
+        export function length(c: RefCollection) {
             return c.data.length;
         }
 
-        export function add(c: RefCollection, x: any) {
+        export function push(c: RefCollection, x: any) {
             if (c.flags & 1) incr(x);
             c.data.push(x);
         }
@@ -45,7 +45,7 @@ namespace ks.rt {
             return (0 <= x && x < c.data.length);
         }
 
-        export function at(c: RefCollection, x: number) {
+        export function getAt(c: RefCollection, x: number) {
             if (in_range(c, x)) {
                 let tmp = c.data[x];
                 if (c.flags & 1) incr(tmp);
@@ -56,7 +56,7 @@ namespace ks.rt {
             }
         }
 
-        export function remove_at(c: RefCollection, x: number) {
+        export function removeAt(c: RefCollection, x: number) {
             if (!in_range(c, x))
                 return;
 
@@ -64,7 +64,7 @@ namespace ks.rt {
             c.data.splice(x, 1)
         }
 
-        export function set_at(c: RefCollection, x: number, y: any) {
+        export function setAt(c: RefCollection, x: number, y: any) {
             if (!in_range(c, x))
                 return;
 
@@ -75,16 +75,16 @@ namespace ks.rt {
             c.data[x] = y;
         }
 
-        export function index_of(c: RefCollection, x: any, start: number) {
+        export function indexOf(c: RefCollection, x: any, start: number) {
             if (!in_range(c, start))
                 return -1;
             return c.data.indexOf(x, start)
         }
 
-        export function remove(c: RefCollection, x: any) {
-            let idx = index_of(c, x, 0);
+        export function removeElement(c: RefCollection, x: any) {
+            let idx = indexOf(c, x, 0);
             if (idx >= 0) {
-                remove_at(c, idx);
+                removeAt(c, idx);
                 return 1;
             }
             return 0;

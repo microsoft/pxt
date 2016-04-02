@@ -357,18 +357,25 @@ namespace ks {
                 hexinfo: {}
             }
 
+            let generateFile = (fn: string, cont: string) => {
+                if (this.config.files.indexOf(fn) < 0)
+                    U.userError(lf("please add '{0}' to \"files\" in {1}", fn, configName))
+                cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
+                if (this.host().readFile(this, fn) !== cont) {
+                    console.log(lf("updating {0} (size={1})...", fn, cont.length))
+                    this.host().writeFile(this, fn, cont)
+                }
+            }
+
             return this.loadAsync()
                 .then(() => {
                     info(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
-                    if (ext.extensionDTs) {
-                        let extFn = "built/extensions.d.ts"
-                        opts.sourceFiles.push(extFn)
-                        opts.fileSystem[extFn] = ext.extensionDTs || ""
-                    }
                     if (ext.errors)
                         U.userError(ext.errors)
-                    return this.host().getHexInfoAsync(ext)
+                    if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
+                    if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
+                    return (target.isNative ? this.host().getHexInfoAsync(ext) : Promise.resolve(null))
                         .then(inf => {
                             delete ext.compileData;
                             delete ext.generatedFiles;

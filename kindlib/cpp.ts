@@ -63,23 +63,39 @@ namespace ks.cpp {
     function nsWriter(nskw = "namespace") {
         let text = ""
         let currNs = ""
-        let setNs = (ns: string) => {
+        let setNs = (ns: string, over = "") => {
             if (currNs == ns) return
             if (currNs) text += "}\n"
             if (ns)
-                text += nskw + " " + ns + " {\n"
+                text += over || (nskw + " " + ns + " {\n")
             currNs = ns
         }
         return {
             setNs,
+            clear: () => {
+                text = ""
+                currNs = ""
+            },
             write: (s: string) => {
-                text += "    " + s.replace(/^\s*/mg, "") + "\n"
+                if (!s.trim()) text += "\n"
+                else {
+                    s = s.trim().replace(/^\s*/mg, "    ").replace(/^    \*/mg, "     *")
+                    text += s + "\n"
+                }
             },
             finish: () => {
                 setNs("")
                 return text
             }
         }
+    }
+
+    export function parseCppInt(v: string): number {
+        if (!v) return null
+        v = v.trim()
+        if (/^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v))
+            return parseInt(v)
+        return null
     }
 
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
@@ -91,19 +107,46 @@ namespace ks.cpp {
         var err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
         var lineNo = 0
         var fileName = ""
-        var cfginc = ""
         let protos = nsWriter("namespace")
-        let dTs = nsWriter("declare namespace")
-        
+        let shimsDTS = nsWriter("declare namespace")
+        let enumsDTS = nsWriter("declare namespace")
+
         let compileService = mainPkg.getTarget().compileService;
-        
-        
+
+        let enumVals: U.Map<string> = {}
+
+        // we sometimes append _ to C++ names to avoid name clashes
+        function toJs(name: string) {
+            return name.trim().replace(/_$/, "")
+        }
+
+        // defaults:
+        res.microbitConfig.config["MICROBIT_BLE_ENABLED"] = "0"
+
+        for (let pkg of mainPkg.sortedDeps()) {
+            let constName = "dal.d.ts"
+            if (pkg.getFiles().indexOf(constName) >= 0) {
+                let src = pkg.host().readFile(pkg, constName)
+                src.split(/\r?\n/).forEach(ln => {
+                    let m = /^\s*(\w+) = (.*),/.exec(ln)
+                    if (m) {
+                        enumVals[m[1]] = m[2]
+                    }
+                })
+            }
+        }
+
         function parseCpp(src: string, isHeader: boolean) {
-            res.hasExtension = true
             let currNs = ""
             let currDocComment = ""
             let currAttrs = ""
             let inDocComment = false
+
+            function interfaceName() {
+                let n = currNs.replace(/Methods$/, "")
+                if (n == currNs) return null
+                return n
+            }
 
             lineNo = 0
 
@@ -113,19 +156,85 @@ namespace ks.cpp {
                     case "int32_t":
                     case "uint32_t":
                     case "int": return "number";
+                    case "bool": return "boolean";
                     case "StringData*": return "string";
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
                     default:
-                        err("Don't know how to map type: " + tp)
-                        return "any"
+                        return toJs(tp);
+                    //err("Don't know how to map type: " + tp)
+                    //return "any"
                 }
             }
 
             let outp = ""
+            let inEnum = false
+            let enumVal = 0
+
+            enumsDTS.setNs("")
+            shimsDTS.setNs("")
 
             src.split(/\r?\n/).forEach(ln => {
                 ++lineNo
+
+                let lnNC = ln.replace(/\/\/.*/, "").replace(/\/\*/, "")
+
+                if (inEnum && lnNC.indexOf("}") >= 0) {
+                    inEnum = false
+                    enumsDTS.write("}")
+                }
+
+                if (inEnum) {
+                    let mm = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(lnNC)
+                    if (mm) {
+                        let nm = mm[1]
+                        let v = mm[3]
+                        let opt = ""
+                        if (v) {
+                            v = v.trim()
+                            let curr = U.lookup(enumVals, v)
+                            if (curr != null) {
+                                opt = "  // " + v
+                                v = curr
+                            }
+                            enumVal = parseCppInt(v)
+                            if (enumVal == null)
+                                err("cannot determine value of " + lnNC)
+                        } else {
+                            enumVal++
+                            v = enumVal + ""
+                        }
+                        enumsDTS.write(`    ${toJs(nm)} = ${v},${opt}`)
+                    } else {
+                        enumsDTS.write(ln)
+                    }
+                }
+
+                let enM = /^\s*enum\s+(|class\s+|struct\s+)(\w+)\s*({|$)/.exec(lnNC)
+                if (enM) {
+                    inEnum = true
+                    enumVal = -1
+                    enumsDTS.write("")
+                    enumsDTS.write("")
+                    if (currAttrs || currDocComment) {
+                        enumsDTS.write(currDocComment)
+                        enumsDTS.write(currAttrs)
+                        currAttrs = ""
+                        currDocComment = ""
+                    }
+                    enumsDTS.write(`declare enum ${toJs(enM[2])} ${enM[3]}`)
+
+                    if (!isHeader) {
+                        protos.setNs(currNs)
+                        protos.write(`enum ${enM[2]} : int;`)
+                    }
+                }
+
+                if (inEnum) {
+                    outp += ln + "\n"
+                    return
+                }
+
                 if (/^\s*\/\*\*/.test(ln)) {
                     inDocComment = true
                     currDocComment = ln + "\n"
@@ -151,15 +260,35 @@ namespace ks.cpp {
 
                 outp += ln + "\n"
 
+                if (/^typedef.*;\s*$/.test(ln)) {
+                    protos.setNs(currNs);
+                    protos.write(ln);
+                }
+
                 let m = /^\s*namespace\s+(\w+)/.exec(ln)
                 if (m) {
                     //if (currNs) err("more than one namespace declaration not supported")
                     currNs = m[1]
-                    if (currAttrs || currDocComment) {
-                        dTs.setNs("");
-                        dTs.write(currDocComment)
-                        dTs.write(currAttrs)
-                        dTs.setNs(currNs)
+                    if (interfaceName()) {
+                        shimsDTS.setNs("");
+                        shimsDTS.write("")
+                        shimsDTS.write("")
+                        if (currAttrs || currDocComment) {
+                            shimsDTS.write(currDocComment)
+                            shimsDTS.write(currAttrs)
+                            currAttrs = ""
+                            currDocComment = ""
+                        }
+                        let tpName = interfaceName()
+                        shimsDTS.setNs(currNs, `declare interface ${tpName} {`)
+                    } else if (currAttrs || currDocComment) {
+                        shimsDTS.setNs("");
+                        shimsDTS.write("")
+                        shimsDTS.write("")
+                        shimsDTS.write(currDocComment)
+                        shimsDTS.write(currAttrs)
+                        shimsDTS.setNs(currNs)
+                        enumsDTS.setNs(currNs)
                         currAttrs = ""
                         currDocComment = ""
                     }
@@ -172,6 +301,7 @@ namespace ks.cpp {
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
                     let funName = m[3]
                     let origArgs = m[4]
+                    currAttrs = currAttrs.trim()
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         s = s.trim()
                         let m = /(.*)=\s*(\d+)$/.exec(s)
@@ -188,10 +318,26 @@ namespace ks.cpp {
                             return ""
                         }
 
-                        if (defl)
-                            currAttrs += `//% ${m[2]}.defl=${defl}`
+                        let argName = m[2]
 
-                        return `${m[2]}${qm}: ${mapType(m[1])}`
+                        currAttrs = currAttrs.replace(/(\w+)\.defl=(\w+)/g, (f, deflName, deflVal) => {
+                            if (deflName == argName) {
+                                defl = deflVal
+                                return ""
+                            } else return f;
+                        })
+
+                        let numVal = defl ? U.lookup(enumVals, defl) : null
+                        if (numVal != null)
+                            defl = numVal
+
+                        if (defl) {
+                            if (parseCppInt(defl) == null)
+                                err("Invalid default value (non-integer): " + defl)
+                            currAttrs += ` ${argName}.defl=${defl}`
+                        }
+
+                        return `${argName}${qm}: ${mapType(m[1])}`
                     })
                     var numArgs = args.length
                     var fi: Y.FuncInfo = {
@@ -201,13 +347,28 @@ namespace ks.cpp {
                         value: null
                     }
                     if (currDocComment) {
-                        dTs.setNs(currNs)
-                        dTs.write(currDocComment)
-                        dTs.write(currAttrs)
-                        if (/ImageLiteral/.test(m[4]))
-                            dTs.write(`//% imageLiteral=1`)
-                        dTs.write(`//% shim=${fi.name}`)
-                        dTs.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                        shimsDTS.setNs(currNs)
+                        shimsDTS.write("")
+                        shimsDTS.write(currDocComment)
+                        if (/ImageLiteral/.test(m[4]) && !/imageLiteral=/.test(currAttrs))
+                            currAttrs += ` imageLiteral=1`
+                        currAttrs += ` shim=${fi.name}`
+                        shimsDTS.write(currAttrs)
+                        funName = toJs(funName)
+                        if (interfaceName()) {
+                            let tp0 = args[0].replace(/^.*:\s*/, "").trim()
+                            if (tp0.toLowerCase() != interfaceName().toLowerCase()) {
+                                err(lf("Invalid first argument; should be of type '{0}', but is '{1}'", interfaceName(), tp0))
+                            }
+                            args.shift()
+                            if (args.length == 0 && /\bproperty\b/.test(currAttrs))
+                                shimsDTS.write(`${funName}: ${mapType(retTp)};`)
+                            else
+                                shimsDTS.write(`${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                        } else {
+                            shimsDTS.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                        }
+
                     }
                     currDocComment = ""
                     currAttrs = ""
@@ -222,33 +383,9 @@ namespace ks.cpp {
 
                 if (currAttrs && ln.trim()) {
                     err("declaration not understood: " + ln)
+                    currAttrs = ""
+                    currDocComment = ""
                     return;
-                }
-
-                ln = ln.replace(/\/\/.*/, "")
-                var isEnum = false
-                m = /^\s*#define\s+(\w+)\s+(.*)/.exec(ln)
-                if (!m) {
-                    m = /^\s*(\w+)\s*=\s*(.*)/.exec(ln)
-                    isEnum = true
-                }
-
-                if (m) {
-                    var num = m[2]
-                    num = num.replace(/\/\/.*/, "")
-                    num = num.replace(/\/\*.*/, "")
-                    num = num.trim()
-                    if (isEnum)
-                        num = num.replace(/,$/, "")
-                    var val = parseExpr(num)
-                    var nm = m[1]
-                    if (isEnum)
-                        nm = currNs + "::" + nm
-                    //console.log(nm, num, val)
-                    if (val != null) {
-                        res.enums[nm] = val
-                        return;
-                    }
                 }
             })
 
@@ -259,32 +396,32 @@ namespace ks.cpp {
             let json = pkg.config.microbit
             if (!json) return;
 
-            res.hasExtension = true
-
             // TODO check for conflicts
             if (json.dependencies) {
                 U.jsonCopyFrom(res.microbitConfig.dependencies, json.dependencies)
             }
 
             if (json.config)
-                Object.keys(json.config).forEach(k => {
-                    if (!/^\w+$/.test(k))
-                        err(lf("invalid config variable: {0}", k))
-                    cfginc += "#undef " + k + "\n"
-                    if (!/^\w+$/.test(json.config[k]))
-                        err(lf("invalid config value: {0}: {1}", k, json.config[k]))
-                    cfginc += "#define " + k + " " + json.config[k] + "\n"
-                })
+                U.jsonCopyFrom(res.microbitConfig.config, json.config)
         }
 
         // This is overridden on the build server, but we need it for command line build
         res.microbitConfig.dependencies["kindscript-microbit-core"] = "microsoft/kindscript-microbit-core#" + compileService.gittag;
 
         if (mainPkg) {
+            let seenMain = false
             // TODO computeReachableNodes(pkg, true)
             for (let pkg of mainPkg.sortedDeps()) {
                 thisErrors = ""
                 parseJson(pkg)
+                if (pkg == mainPkg) {
+                    seenMain = true
+                    // we only want the main package in generated .d.ts
+                    shimsDTS.clear()
+                    enumsDTS.clear()
+                } else {
+                    U.assert(!seenMain)
+                }
                 for (let fn of pkg.getFiles()) {
                     let isHeader = U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ".cpp")) {
@@ -312,6 +449,17 @@ namespace ks.cpp {
         if (res.errors)
             return res;
 
+        let cfginc = ""
+        let jsonconfig = res.microbitConfig.config
+        Object.keys(jsonconfig).forEach(k => {
+            if (!/^\w+$/.test(k))
+                err(lf("invalid config variable: {0}", k))
+            cfginc += "#undef " + k + "\n"
+            if (!/^\w+$/.test(jsonconfig[k]))
+                err(lf("invalid config value: {0}: {1}", k, jsonconfig[k]))
+            cfginc += "#define " + k + " " + jsonconfig[k] + "\n"
+        })
+
         res.generatedFiles["/ext/config.h"] = cfginc
         res.generatedFiles["/ext/pointers.inc"] = pointersInc
         res.generatedFiles["/ext/refs.inc"] = includesInc + protos.finish()
@@ -332,6 +480,7 @@ namespace ks.cpp {
             }
         }
 
+
         res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
         res.generatedFiles["/source/main.cpp"] = `#include "BitVM.h"\nvoid app_main() { bitvm::start(); }\n`
@@ -349,7 +498,8 @@ namespace ks.cpp {
         let data = JSON.stringify(creq)
         res.sha = U.sha256(data)
         res.compileData = btoa(U.toUTF8(data))
-        res.extensionDTs = dTs.finish()
+        res.shimsDTS = shimsDTS.finish()
+        res.enumsDTS = enumsDTS.finish()
 
         return res;
     }

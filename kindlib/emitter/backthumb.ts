@@ -497,19 +497,6 @@ ${getFunctionLabel(proc.action)}:
             funcInfo = {};
             var funs: FuncInfo[] = hexinfo.functions.concat(extInfo.functions);
 
-            var addEnum = (enums: any) =>
-                Object.keys(enums).forEach(k => {
-                    funcInfo[k] = {
-                        name: k,
-                        type: "E",
-                        args: 0,
-                        value: enums[k]
-                    }
-                })
-
-            addEnum(extInfo.enums)
-            addEnum(hexinfo.enums)
-
             for (var i = jmpStartIdx + 1; i < hex.length; ++i) {
                 var m = /^:10(....)00(.{16})/.exec(hex[i])
 

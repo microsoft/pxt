@@ -55,7 +55,7 @@ export function setState(editor: string) {
 export function run(debug: boolean, res: ts.ks.CompileResult) {
     let js = res.outfiles["microbit.js"]
     lastCompileResult = res
-    driver.run(js, res.enums, debug)
+    driver.run(js, debug)
 }
 
 export function stop(unload?: boolean) {
