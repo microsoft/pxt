@@ -98,7 +98,6 @@ namespace ks.cpp {
         return null
     }
 
-
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         var res = Y.emptyExtInfo();
         var pointersInc = ""
@@ -115,6 +114,11 @@ namespace ks.cpp {
         let compileService = mainPkg.getTarget().compileService;
 
         let enumVals: U.Map<string> = {}
+
+        // we sometimes append _ to C++ names to avoid name clashes
+        function toJs(name: string) {
+            return name.trim().replace(/_$/, "")
+        }
 
         // defaults:
         res.microbitConfig.config["MICROBIT_BLE_ENABLED"] = "0"
@@ -157,7 +161,7 @@ namespace ks.cpp {
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
                     default:
-                        return tp;
+                        return toJs(tp);
                     //err("Don't know how to map type: " + tp)
                     //return "any"
                 }
@@ -200,7 +204,7 @@ namespace ks.cpp {
                             enumVal++
                             v = enumVal + ""
                         }
-                        enumsDTS.write(`    ${nm.replace(/_$/, "")} = ${v},${opt}`)
+                        enumsDTS.write(`    ${toJs(nm)} = ${v},${opt}`)
                     } else {
                         enumsDTS.write(ln)
                     }
@@ -218,7 +222,7 @@ namespace ks.cpp {
                         currAttrs = ""
                         currDocComment = ""
                     }
-                    enumsDTS.write(`declare enum ${enM[2]} ${enM[3]}`)
+                    enumsDTS.write(`declare enum ${toJs(enM[2])} ${enM[3]}`)
 
                     if (!isHeader) {
                         protos.setNs(currNs)
@@ -350,13 +354,17 @@ namespace ks.cpp {
                             currAttrs += ` imageLiteral=1`
                         currAttrs += ` shim=${fi.name}`
                         shimsDTS.write(currAttrs)
+                        funName = toJs(funName)
                         if (interfaceName()) {
                             let tp0 = args[0].replace(/^.*:\s*/, "").trim()
-                            if (tp0 != interfaceName()) {
+                            if (tp0.toLowerCase() != interfaceName().toLowerCase()) {
                                 err(lf("Invalid first argument; should be of type '{0}', but is '{1}'", interfaceName(), tp0))
                             }
                             args.shift()
-                            shimsDTS.write(`${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                            if (args.length == 0 && /\bproperty\b/.test(currAttrs))
+                                shimsDTS.write(`${funName}: ${mapType(retTp)};`)
+                            else
+                                shimsDTS.write(`${funName}(${args.join(", ")}): ${mapType(retTp)};`)
                         } else {
                             shimsDTS.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
                         }
