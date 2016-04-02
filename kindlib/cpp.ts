@@ -152,6 +152,7 @@ namespace ks.cpp {
                     case "int32_t":
                     case "uint32_t":
                     case "int": return "number";
+                    case "bool": return "boolean";
                     case "StringData*": return "string";
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
@@ -374,6 +375,8 @@ namespace ks.cpp {
 
                 if (currAttrs && ln.trim()) {
                     err("declaration not understood: " + ln)
+                    currAttrs = ""
+                    currDocComment = ""
                     return;
                 }
             })
