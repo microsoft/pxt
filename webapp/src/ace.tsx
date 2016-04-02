@@ -457,7 +457,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         }
 
         return (
-            <div className='ui vertical menu completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
+            <div className='ui vertical menu inverted completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
                 {info.map((e, i) =>
                     <sui.Item class={'link ' + (i == idx ? "active" : "") }
                         key={e.name}

@@ -12,7 +12,7 @@ export interface ITrendChartProps {
 
 export class TrendChart extends React.Component<ITrendChartProps, {}> {
     render() {
-        const data = (this.props.log.accvalues || []).slice(-25); // take last 10 entry
+        const data = (this.props.log.accvalues || []).slice(-50); // take last 10 entry
         const margin = 2;
         const times = data.map(d => d.t)
         const values = data.map(d => d.v);

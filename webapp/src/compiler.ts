@@ -65,8 +65,9 @@ function setDiagnostics(diagnostics: ts.ks.KsDiagnostic[]) {
 }
 
 export interface CompileOptions {
-    native?: boolean;
+    native?: boolean;    
     debug?: boolean;
+    background?: boolean; // not explicitely requested by user (hint for simulator)
 }
 
 export function compileAsync(options: CompileOptions = {}) {

@@ -128,11 +128,16 @@ namespace ks {
         packages?: boolean;
     }
 
+    export interface AppSimulator {
+        autoRun?: boolean;
+    }
+
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
         title?: string;
         cloud?: AppCloud;
+        simulator?: AppSimulator;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
         compile: CompileTarget;
