@@ -63,11 +63,11 @@ namespace ks.cpp {
     function nsWriter(nskw = "namespace") {
         let text = ""
         let currNs = ""
-        let setNs = (ns: string) => {
+        let setNs = (ns: string, over = "") => {
             if (currNs == ns) return
             if (currNs) text += "}\n"
             if (ns)
-                text += nskw + " " + ns + " {\n"
+                text += over || (nskw + " " + ns + " {\n")
             currNs = ns
         }
         return {
@@ -115,7 +115,7 @@ namespace ks.cpp {
         let compileService = mainPkg.getTarget().compileService;
 
         let enumVals: U.Map<string> = {}
-        
+
         // defaults:
         res.microbitConfig.config["MICROBIT_BLE_ENABLED"] = "0"
 
@@ -137,6 +137,12 @@ namespace ks.cpp {
             let currDocComment = ""
             let currAttrs = ""
             let inDocComment = false
+
+            function interfaceName() {
+                let n = currNs.replace(/Methods$/, "")
+                if (n == currNs) return null
+                return n
+            }
 
             lineNo = 0
 
@@ -249,11 +255,28 @@ namespace ks.cpp {
 
                 outp += ln + "\n"
 
+                if (/^typedef.*;\s*$/.test(ln)) {
+                    protos.setNs(currNs);
+                    protos.write(ln);
+                }
+
                 let m = /^\s*namespace\s+(\w+)/.exec(ln)
                 if (m) {
                     //if (currNs) err("more than one namespace declaration not supported")
                     currNs = m[1]
-                    if (currAttrs || currDocComment) {
+                    if (interfaceName()) {
+                        shimsDTS.setNs("");
+                        shimsDTS.write("")
+                        shimsDTS.write("")
+                        if (currAttrs || currDocComment) {
+                            shimsDTS.write(currDocComment)
+                            shimsDTS.write(currAttrs)
+                            currAttrs = ""
+                            currDocComment = ""
+                        }
+                        let tpName = interfaceName()
+                        shimsDTS.setNs(currNs, `declare interface ${tpName} {`)
+                    } else if (currAttrs || currDocComment) {
                         shimsDTS.setNs("");
                         shimsDTS.write("")
                         shimsDTS.write("")
@@ -273,6 +296,7 @@ namespace ks.cpp {
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
                     let funName = m[3]
                     let origArgs = m[4]
+                    currAttrs = currAttrs.trim()
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         s = s.trim()
                         let m = /(.*)=\s*(\d+)$/.exec(s)
@@ -289,10 +313,26 @@ namespace ks.cpp {
                             return ""
                         }
 
-                        if (defl)
-                            currAttrs += `//% ${m[2]}.defl=${defl}`
+                        let argName = m[2]
 
-                        return `${m[2]}${qm}: ${mapType(m[1])}`
+                        currAttrs = currAttrs.replace(/(\w+)\.defl=(\w+)/g, (f, deflName, deflVal) => {
+                            if (deflName == argName) {
+                                defl = deflVal
+                                return ""
+                            } else return f;
+                        })
+
+                        let numVal = defl ? U.lookup(enumVals, defl) : null
+                        if (numVal != null)
+                            defl = numVal
+
+                        if (defl) {
+                            if (parseCppInt(defl) == null)
+                                err("Invalid default value (non-integer): " + defl)
+                            currAttrs += ` ${argName}.defl=${defl}`
+                        }
+
+                        return `${argName}${qm}: ${mapType(m[1])}`
                     })
                     var numArgs = args.length
                     var fi: Y.FuncInfo = {
@@ -305,12 +345,21 @@ namespace ks.cpp {
                         shimsDTS.setNs(currNs)
                         shimsDTS.write("")
                         shimsDTS.write(currDocComment)
-                        currAttrs = currAttrs.trim()
-                        if (/ImageLiteral/.test(m[4]))
+                        if (/ImageLiteral/.test(m[4]) && !/imageLiteral=/.test(currAttrs))
                             currAttrs += ` imageLiteral=1`
                         currAttrs += ` shim=${fi.name}`
                         shimsDTS.write(currAttrs)
-                        shimsDTS.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                        if (interfaceName()) {
+                            let tp0 = args[0].replace(/^.*:\s*/, "").trim()
+                            if (tp0 != interfaceName()) {
+                                err(lf("Invalid first argument; should be of type '{0}', but is '{1}'", interfaceName(), tp0))
+                            }
+                            args.shift()
+                            shimsDTS.write(`${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                        } else {
+                            shimsDTS.write(`function ${funName}(${args.join(", ")}): ${mapType(retTp)};`)
+                        }
+
                     }
                     currDocComment = ""
                     currAttrs = ""
