@@ -425,7 +425,7 @@ namespace ks.cpp {
                 for (let fn of pkg.getFiles()) {
                     let isHeader = U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ".cpp")) {
-                        let fullName = pkg.level == 0 ? fn : "kind_modules/" + pkg.id + "/" + fn
+                        let fullName = pkg.id + "/" + fn
                         if (isHeader)
                             includesInc += `#include "source/${fullName}"\n`
                         let src = pkg.readFile(fn)
