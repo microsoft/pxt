@@ -209,12 +209,18 @@ namespace ks.rt {
         export function debugMemLeaks() {
             dumpLivePointers();
         }
-
-        // these are never used in simulator; silence the warnings
-        export var ldglb: any;
-        export var ldglbRef: any;
-        export var stglb: any;
-        export var stglbRef: any;
+        
+        export function allocate() {
+            U.userError("allocate() called in simulator")
+        }
+        
+        export function templateHash() {
+            return 0;
+        }
+        
+        export function programHash() {
+            return 0;
+        }
     }
 
     export namespace ksrt {
@@ -285,6 +291,12 @@ namespace ks.rt {
             a.fields[idx] = v;
             return a;
         }
+
+        // these are never used in simulator; silence the warnings
+        export var ldglb: any;
+        export var ldglbRef: any;
+        export var stglb: any;
+        export var stglbRef: any;
     }
 
 
