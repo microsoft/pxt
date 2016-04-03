@@ -537,8 +537,8 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export function buildTargetAsync(): Promise<void> {
-    return buildTargetCoreAsync()
-        .then(() => buildFolderAsync('sim'))
+    return buildFolderAsync('sim')
+        .then(buildTargetCoreAsync)
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildFolderAsync('server', true))
 }
