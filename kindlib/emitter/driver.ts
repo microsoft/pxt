@@ -96,13 +96,27 @@ namespace ts.ks {
         if (highPri.length > 0)
             diags = highPri;
         return diags.map(d => {
-            const { line, character } = ts.getLineAndCharacterOfPosition(d.file, d.start);
+            if (!d.file) {
+                let rr: KsDiagnostic = {
+                    code: d.code,
+                    start: d.start,
+                    length: d.length,
+                    line: 0,
+                    character: 0,
+                    messageText: d.messageText,
+                    category: d.category,
+                    fileName: "?",
+                }
+                return rr
+            }
+
+            const pos = ts.getLineAndCharacterOfPosition(d.file, d.start);
             let r: KsDiagnostic = {
                 code: d.code,
                 start: d.start,
                 length: d.length,
-                line: line,
-                character: character,
+                line: pos.line,
+                character: pos.character,
                 messageText: d.messageText,
                 category: d.category,
                 fileName: d.file.fileName,

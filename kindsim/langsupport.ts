@@ -201,6 +201,10 @@ namespace ks.rt {
     export namespace kindscript {
         export var incr = rt.incr;
         export var decr = rt.decr;
+        
+        export function ptrOfLiteral(v: any) {
+            return v;
+        }
     }
     
     export namespace ksrt {
@@ -266,10 +270,6 @@ namespace ks.rt {
             //console.log(`STCLO [${idx}] = ${v}`)
             a.fields[idx] = v;
             return a;
-        }
-
-        export function stringData(s: string) {
-            return s;
         }
     }
 

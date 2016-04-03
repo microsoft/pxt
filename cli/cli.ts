@@ -480,17 +480,19 @@ function readKindTarget() {
     return cfg
 }
 
+var targetDir: string;
+
 function forEachBundledPkgAsync(f: (pkg: ks.MainPackage) => Promise<void>) {
     let cfg = readKindTarget()
-    let parentdir = process.cwd()
+    targetDir = process.cwd()
 
     return Promise.mapSeries(cfg.bundleddirs, (dirname) => {
-        process.chdir(parentdir)
+        process.chdir(targetDir)
         process.chdir(dirname)
         mainPkg = new ks.MainPackage(new Host())
         return f(mainPkg);
     })
-        .finally(() => process.chdir(parentdir))
+        .finally(() => process.chdir(targetDir))
         .then(() => { })
 }
 
@@ -602,7 +604,7 @@ function buildTargetCoreAsync() {
             .then(res => {
                 cfg.bundledpkgs[pkg.config.name] = res
             })
-            .then(testMainPkgAsync)
+            .then(testForBuildTargetAsync)
             .then(() => {
                 if (pkg.config.target)
                     currentTarget = pkg.config.target;
@@ -1032,7 +1034,7 @@ function buildDalConst(force = false) {
             if (inEnum && (m = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(ln))) {
                 let v = m[3]
                 if (v) {
-                    enumVal = parseCppInt(v)                    
+                    enumVal = parseCppInt(v)
                     if (enumVal == null) {
                         console.log(`${fileName}(${lineNo}): invalid enum initializer, ${ln}`)
                         inEnum = false
@@ -1164,7 +1166,57 @@ function runCoreAsync(res: ts.ks.CompileResult) {
     return Promise.resolve()
 }
 
-function testMainPkgAsync() {
+function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult) {
+    let decls: U.Map<ts.Symbol> = {}
+
+    let opts: ts.ks.CompileOptions = {
+        fileSystem: {},
+        sourceFiles: ["built/sim.d.ts", "node_modules/kindscript/built/kindsim.d.ts"],
+        target: mainPkg.getTargetOptions(),
+        ast: true,
+        noEmit: true,
+        hexinfo: null
+    }
+
+    for (let fn of opts.sourceFiles) {
+        opts.fileSystem[fn] = fs.readFileSync(path.join(targetDir, fn), "utf8")
+    }
+
+    let simDeclRes = ts.ks.compile(opts)
+    reportDiagnostics(simDeclRes.diagnostics);
+    let typechecker = simDeclRes.ast.getTypeChecker()
+    let doSymbol = (sym: ts.Symbol) => {
+        if (sym.getFlags() & ts.SymbolFlags.HasExports) {
+            typechecker.getExportsOfModule(sym).forEach(doSymbol)
+        }
+        decls[ts.ks.getFullName(typechecker, sym)] = sym
+    }
+    let doStmt = (stmt: ts.Statement) => {
+        let mod = stmt as ts.ModuleDeclaration
+        if (mod.name) {
+            let sym = typechecker.getSymbolAtLocation(mod.name)
+            if (sym) doSymbol(sym)
+        }
+    }
+    for (let sf of simDeclRes.ast.getSourceFiles()) {
+        sf.statements.forEach(doStmt)
+    }
+
+    let apiInfo = ts.ks.getApiInfo(pkgCompileRes.ast)
+
+    for (let ent of U.values(apiInfo.byQName)) {
+        let shim = ent.attributes.shimgi
+        if (shim) {
+            let simName = "ks.rt." + shim.replace(/::/g, ".")
+            let sym = U.lookup(decls, simName)
+            if (!sym) {
+                console.log("missing in sim:", simName)
+            }
+        }
+    }
+}
+
+function testForBuildTargetAsync() {
     return mainPkg.loadAsync()
         .then(() => {
             let target = mainPkg.getTargetOptions()
@@ -1174,11 +1226,13 @@ function testMainPkgAsync() {
         })
         .then(opts => {
             opts.testMode = true
+            opts.ast = true
             return ts.ks.compile(opts)
         })
         .then(res => {
             reportDiagnostics(res.diagnostics);
             if (!res.success) U.userError("Test failed")
+            simulatorCoverage(res)
         })
 }
 
