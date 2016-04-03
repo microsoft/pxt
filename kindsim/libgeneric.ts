@@ -91,11 +91,13 @@ namespace ks.rt {
         }
     }
 
-    export namespace math {
-        export function min(x:number, y:number) { return  x < y ? x : y;}
-        export function max(x:number, y:number) { return  x > y ? x : y;}
-        export function abs(v: number) { return v < 0 ? -v : v; }
-        export function sign(v: number) { return v == 0 ? 0 : v < 0 ? -1 : 1; }
+    export namespace Math_ {
+        export function sqrt(n:number) {
+            return Math.sqrt(n) >>> 0;
+        }
+        export function pow(x:number,y:number) {
+            return Math.pow(x, y) >>> 0;
+        }
         export function random(max: number): number {
             if (max < 1) return 0;
             var r = 0;
@@ -104,7 +106,6 @@ namespace ks.rt {
             } while (r == max);
             return r;
         }
-        export function mod(x: number, y: number) { return x % y }
     }
 
     // for explanations see:
@@ -115,17 +116,19 @@ namespace ks.rt {
         return (((a & 0xffff) * (b >>> 16) + (b & 0xffff) * (a >>> 16)) << 16) + ((a & 0xffff) * (b & 0xffff));
     }
 
-    export namespace number {
+    export namespace NumberImpl {
         export function lt(x: number, y: number) { return x < y; }
         export function le(x: number, y: number) { return x <= y; }
         export function neq(x: number, y: number) { return x != y; }
         export function eq(x: number, y: number) { return x == y; }
         export function gt(x: number, y: number) { return x > y; }
         export function ge(x: number, y: number) { return x >= y; }
-        export function divide(x: number, y: number) { return Math.floor(x / y) | 0; }
-        export function to_string(x: number) { return initString(x + ""); }
-        export function to_character(x: number) { return initString(String.fromCharCode(x)); }
-        export function post_to_wall(s: number) { console.log(s); }
+        export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
+        export function mod(x: number, y: number) { return x % y; }
+    }
+    
+    export namespace NumberMethods {                
+        export function toString(x: number) { return initString(x + ""); }
     }
 
     export namespace thumb {
@@ -146,22 +149,27 @@ namespace ks.rt {
         export function cmp_eq(x: number, y: number) { return x == y; }
         export function cmp_gt(x: number, y: number) { return x > y; }
         export function cmp_ge(x: number, y: number) { return x >= y; }
-
     }
 
-    export namespace string {
-        // TODO check edge-conditions
-
+    export namespace String_ {
         export function mkEmpty() {
             return ""
         }
 
+        export function fromCharCode(code:number) {
+            return String.fromCharCode(code)
+        }
+        
+        export function toNumber(s: string) {
+            return parseInt(s);
+        }
+    }
+    
+    export namespace StringMethods {
+        // TODO check edge-conditions
+
         export function concat(a: string, b: string) {
             return initString(a + b);
-        }
-
-        export function concat_op(s1: string, s2: string) {
-            return concat(s1, s2);
         }
 
         export function substring(s: string, i: number, j: number) {
@@ -172,41 +180,33 @@ namespace ks.rt {
             return s1 == s2;
         }
 
-        export function count(s: string) {
+        export function compare(s1: string, s2: string) {
+            if (s1 == s2) return 0;
+            if (s1 < s2) return -1;
+            return 1;
+        }
+
+        export function length(s: string) {
             return s.length
         }
 
         function inRange(s: string, i: number) { return 0 <= i && i < s.length }
 
-        export function at(s: string, i: number) {
+        export function charAt(s: string, i: number) {
             return inRange(s, i) ? initString(s.charAt(i)) : null;
         }
 
-        export function to_character_code(s: string) {
-            return code_at(s, 0);
-        }
-
-        export function code_at(s: string, i: number) {
+        export function charCodeAt(s: string, i: number) {
             return inRange(s, i) ? s.charCodeAt(i) : 0;
         }
-
-        export function to_number(s: string) {
-            return parseInt(s);
-        }
-
-        export function post_to_wall(s: string) {
-            console.log(s);
-        }
     }
-
-    export namespace boolean {
-        export function not_(v: boolean) {
-            return !v;
-        }
-
-        export function to_string(v: boolean) {
+    
+    export namespace BooleanMethods {
+        export function toString(v: boolean) {
             return v ? "true" : "false"
         }
+        export function bang(v: boolean) {
+            return !v;
+        }
     }
-
 }

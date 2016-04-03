@@ -158,7 +158,7 @@ namespace ks.rt {
                 U.nextTick(() => {
                     runtime = this;
                     this.setupTop(resolve)
-                    action.run2(a, arg0, arg1)
+                    kindscript.runAction2(a, arg0, arg1)
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }

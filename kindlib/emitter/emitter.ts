@@ -602,7 +602,7 @@ ${lbl}: .short 0xffff
                 }
             } else if (isStringLiteral(node)) {
                 if (node.text == "") {
-                    return ir.rtcall("String::mkEmpty", [])
+                    return ir.rtcall("String_::mkEmpty", [])
                 } else {
                     let lbl = bin.emitString(node.text)
                     let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(node.text))

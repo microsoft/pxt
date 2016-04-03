@@ -287,8 +287,8 @@ namespace ks.cpp {
                         shimsDTS.write("")
                         shimsDTS.write(currDocComment)
                         shimsDTS.write(currAttrs)
-                        shimsDTS.setNs(currNs)
-                        enumsDTS.setNs(currNs)
+                        shimsDTS.setNs(toJs(currNs))
+                        enumsDTS.setNs(toJs(currNs))
                         currAttrs = ""
                         currDocComment = ""
                     }
@@ -347,7 +347,7 @@ namespace ks.cpp {
                         value: null
                     }
                     if (currDocComment) {
-                        shimsDTS.setNs(currNs)
+                        shimsDTS.setNs(toJs(currNs))
                         shimsDTS.write("")
                         shimsDTS.write(currDocComment)
                         if (/ImageLiteral/.test(m[4]) && !/imageLiteral=/.test(currAttrs))

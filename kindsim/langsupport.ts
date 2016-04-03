@@ -67,8 +67,8 @@ namespace ks.rt {
         }
     }
 
-    export namespace action {
-        export function mk(reflen: number, len: number, fn: LabelFn) {
+    export namespace kindscript {
+        export function mkAction(reflen: number, len: number, fn: LabelFn) {
             let r = new RefAction();
             r.len = len
             r.reflen = reflen
@@ -76,7 +76,7 @@ namespace ks.rt {
             return r
         }
 
-        export function run2(a: RefAction, a0: any, a1: any) {
+        export function runAction2(a: RefAction, a0: any, a1: any) {
             let cb = getResume();
 
             if (a instanceof RefAction) {
@@ -90,12 +90,12 @@ namespace ks.rt {
             }
         }
 
-        export function run1(a: RefAction, v: any) {
-            run2(a, v, null)
+        export function runAction1(a: RefAction, v: any) {
+            runAction2(a, v, null)
         }
 
-        export function run(a: RefAction) {
-            run2(a, null, null)
+        export function runAction0(a: RefAction) {
+            runAction2(a, null, null)
         }
     }
 
@@ -197,20 +197,31 @@ namespace ks.rt {
             console.log("Live String:", JSON.stringify(k), "refcnt=", n)
         })
     }
-    
+
     export namespace kindscript {
         export var incr = rt.incr;
         export var decr = rt.decr;
-        
+
         export function ptrOfLiteral(v: any) {
             return v;
         }
+
+        export function debugMemLeaks() {
+            dumpLivePointers();
+        }
+
+        // these are never used in simulator; silence the warnings
+        export var ldglb: any;
+        export var ldglbRef: any;
+        export var stglb: any;
+        export var stglbRef: any;
     }
-    
+
     export namespace ksrt {
         export var incr = rt.incr;
         export var decr = rt.decr;
-        
+        export var panic = thread.panic;
+
         export function ldfld(r: RefRecord, idx: number) {
             check(r.reflen <= idx && idx < r.len)
             let v = num(r.fields[idx])
@@ -274,8 +285,8 @@ namespace ks.rt {
     }
 
 
-    export namespace record {
-        export function mk(reflen: number, totallen: number) {
+    export namespace kindscript {
+        export function mkRecord(reflen: number, totallen: number) {
             check(0 <= reflen && reflen <= totallen);
             check(reflen <= totallen && totallen <= 255);
             let r = new RefRecord();
