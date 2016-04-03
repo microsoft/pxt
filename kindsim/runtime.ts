@@ -92,18 +92,22 @@ namespace ks.rt {
 
     export function initBareRuntime() {
         runtime.board = new BareBoard();
-        (rt as any).basic = {
+        let myRT = rt as any
+        myRT.basic = {
             pause: thread.pause,
             showNumber: (n: number) => {
                 let cb = getResume();
                 console.log("SHOW NUMBER:", n)
                 U.nextTick(cb)
             }
-        };        
-        (rt as any).serial = {
+        }       
+        myRT.serial = {
             writeString: (s: string) => runtime.board.writeSerial(s),
-        };        
-        (rt as any).control = {
+        }        
+        myRT.pins = {
+            createBuffer: BufferMethods.createBuffer,
+        }        
+        myRT.control = {
             inBackground: thread.runInBackground
         }
     }

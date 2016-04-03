@@ -92,10 +92,10 @@ namespace ks.rt {
     }
 
     export namespace Math_ {
-        export function sqrt(n:number) {
+        export function sqrt(n: number) {
             return Math.sqrt(n) >>> 0;
         }
-        export function pow(x:number,y:number) {
+        export function pow(x: number, y: number) {
             return Math.pow(x, y) >>> 0;
         }
         export function random(max: number): number {
@@ -126,8 +126,8 @@ namespace ks.rt {
         export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
         export function mod(x: number, y: number) { return x % y; }
     }
-    
-    export namespace NumberMethods {                
+
+    export namespace NumberMethods {
         export function toString(x: number) { return initString(x + ""); }
     }
 
@@ -156,15 +156,15 @@ namespace ks.rt {
             return ""
         }
 
-        export function fromCharCode(code:number) {
+        export function fromCharCode(code: number) {
             return String.fromCharCode(code)
         }
-        
+
         export function toNumber(s: string) {
             return parseInt(s);
         }
     }
-    
+
     export namespace StringMethods {
         // TODO check edge-conditions
 
@@ -200,7 +200,7 @@ namespace ks.rt {
             return inRange(s, i) ? s.charCodeAt(i) : 0;
         }
     }
-    
+
     export namespace BooleanMethods {
         export function toString(v: boolean) {
             return v ? "true" : "false"
@@ -209,4 +209,130 @@ namespace ks.rt {
             return !v;
         }
     }
+
+
+    export class RefBuffer extends RefObject {
+        constructor(public data: Uint8Array) {
+            super();
+        }
+
+        print() {
+            console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
+        }
+    }
+    
+    export namespace BufferMethods {
+        export function createBuffer(size:number) {
+            return new RefBuffer(new Uint8Array(size));
+        }
+        
+        function inRange(buf: RefBuffer, off: number) {
+            return 0 <= off && off < buf.data.length
+        }
+
+        export function getByte(buf: RefBuffer, off: number) {
+            if (inRange(buf, off)) return buf.data[off]
+            else return 0;
+        }
+
+        export function setByte(buf: RefBuffer, off: number, v: number) {
+            if (inRange(buf, off)) buf.data[off] = v
+        }
+
+        export function length(buf: RefBuffer) {
+            return buf.data.length
+        }
+
+        export function fill(buf: RefBuffer, value: number, offset: number = 0, length: number = -1) {
+            if (offset < 0 || offset > buf.data.length)
+                return;
+            if (length < 0)
+                length = buf.data.length;
+            length = Math.min(length, buf.data.length - offset);
+
+            buf.data.fill(value, offset, offset + length)
+        }
+
+        export function slice(buf: RefBuffer, offset: number, length: number) {
+            offset = Math.min(buf.data.length, offset);
+            if (length < 0)
+                length = buf.data.length;
+            length = Math.min(length, buf.data.length - offset);
+            return new RefBuffer(buf.data.slice(offset, offset + length));
+        }
+
+        function memmove(dst: Uint8Array, dstOff: number, src: Uint8Array, srcOff: number, len: number) {
+            if (src.buffer === dst.buffer) {
+                memmove(dst, dstOff, src.slice(srcOff, srcOff + len), 0, len);
+            } else {
+                for (let i = 0; i < len; ++i)
+                    dst[dstOff + i] = src[srcOff + i];
+            }
+        }
+
+        const INT_MIN = -0x80000000;
+
+        export function shift(buf: RefBuffer, offset: number) {
+            if (buf.data.length == 0 || offset == 0 || offset == INT_MIN) return;
+            if (offset <= -buf.data.length || offset >= buf.data.length) {
+                fill(buf, 0);
+                return;
+            }
+
+            if (offset < 0) {
+                offset = -offset;
+                memmove(buf.data, offset, buf.data, 0, buf.data.length - offset);
+                buf.data.fill(0, 0, offset)
+            } else {
+                let len = buf.data.length - offset;
+                memmove(buf.data, 0, buf.data, offset, len);
+                buf.data.fill(0, len, len + offset)
+            }
+        }
+
+        export function rotate(buf: RefBuffer, offset: number) {
+            let len = buf.data.length;
+
+            if (len == 0 || offset == 0 || offset == INT_MIN) return;
+
+            if (offset < 0)
+                offset += len << 8; // try to make it positive
+            offset %= len;
+            if (offset < 0)
+                offset += len;
+
+            let data = buf.data
+            let n_first = offset
+            let first = 0
+            let next = n_first
+            let last = len
+
+            while (first != next) {
+                let tmp = data[first]
+                data[first++] = data[next]
+                data[next++] = tmp
+                if (next == last) {
+                    next = n_first;
+                } else if (first == n_first) {
+                    n_first = next;
+                }
+            }
+        }
+
+        export function write(buf: RefBuffer, dstOffset: number, src: RefBuffer, srcOffset = 0, length = -1) {
+            if (length < 0)
+                length = src.data.length;
+
+            if (srcOffset < 0 || dstOffset < 0 || dstOffset > buf.data.length)
+                return;
+
+            length = Math.min(src.data.length - srcOffset, buf.data.length - dstOffset);
+
+            if (length < 0)
+                return;
+
+            memmove(buf.data, dstOffset, src.data, srcOffset, length)
+        }
+    }
+
 }
