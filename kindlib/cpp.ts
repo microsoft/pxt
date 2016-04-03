@@ -304,7 +304,7 @@ namespace ks.cpp {
                     currAttrs = currAttrs.trim()
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         s = s.trim()
-                        let m = /(.*)=\s*(\d+)$/.exec(s)
+                        let m = /(.*)=\s*(-?\d+)$/.exec(s)
                         let defl = ""
                         let qm = ""
                         if (m) {
