@@ -220,7 +220,10 @@ namespace ks.rt {
     export namespace ksrt {
         export var incr = rt.incr;
         export var decr = rt.decr;
-        export var panic = thread.panic;
+
+        export function panic(code: number) {
+            U.userError("PANIC! Code " + code)
+        }
 
         export function ldfld(r: RefRecord, idx: number) {
             check(r.reflen <= idx && idx < r.len)
@@ -299,13 +302,11 @@ namespace ks.rt {
     }
 
     export namespace thread {
+        export var panic = ksrt.panic;
+
         export function pause(ms: number) {
             let cb = getResume();
             setTimeout(() => { cb() }, ms)
-        }
-
-        export function panic(code: number) {
-            U.userError("PANIC! Code " + code)
         }
 
         export function runInBackground(a: RefAction) {
