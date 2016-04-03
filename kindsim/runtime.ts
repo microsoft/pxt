@@ -92,12 +92,19 @@ namespace ks.rt {
 
     export function initBareRuntime() {
         runtime.board = new BareBoard();
-        (rt as any).micro_bit = {
-            runInBackground: thread.runInBackground,
+        (rt as any).basic = {
             pause: thread.pause,
-            panic: thread.panic,
-            serialSendString: (s: string) => runtime.board.writeSerial(s),
-            showDigit: (n: number) => console.log("DIGIT:", n)
+            showNumber: (n: number) => {
+                let cb = getResume();
+                console.log("SHOW NUMBER:", n)
+                U.nextTick(cb)
+            }
+        };        
+        (rt as any).serial = {
+            writeString: (s: string) => runtime.board.writeSerial(s),
+        };        
+        (rt as any).control = {
+            inBackground: thread.runInBackground
         }
     }
 
