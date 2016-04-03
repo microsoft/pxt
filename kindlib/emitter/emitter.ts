@@ -543,7 +543,7 @@ ${lbl}: .short 0xffff
         .short ${w}, ${h}
         .byte ${lit}
 `)
-            let jsLit = "new rt.micro_bit.Image(" + w + ", [" + lit + "])"
+            let jsLit = "new rt.Image(" + w + ", [" + lit + "])"
 
             return <any>{
                 kind: SK.NumericLiteral,
