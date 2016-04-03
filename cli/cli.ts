@@ -1166,8 +1166,10 @@ function runCoreAsync(res: ts.ks.CompileResult) {
     return Promise.resolve()
 }
 
-function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult) {
+function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult, pkgOpts: ts.ks.CompileOptions) {
     let decls: U.Map<ts.Symbol> = {}
+
+    if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
 
     let opts: ts.ks.CompileOptions = {
         fileSystem: {},
@@ -1202,10 +1204,19 @@ function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult) {
         sf.statements.forEach(doStmt)
     }
 
-    let apiInfo = ts.ks.getApiInfo(pkgCompileRes.ast)
+    for (let info of pkgOpts.extinfo.functions) {
+        let shim = info.name
+        let simName = "ks.rt." + shim.replace(/::/g, ".")
+        let sym = U.lookup(decls, simName)
+        if (!sym) {
+            console.log("missing in sim:", simName)
+        }
+    }
 
+    /*
+    let apiInfo = ts.ks.getApiInfo(pkgCompileRes.ast)
     for (let ent of U.values(apiInfo.byQName)) {
-        let shim = ent.attributes.shimgi
+        let shim = ent.attributes.shim
         if (shim) {
             let simName = "ks.rt." + shim.replace(/::/g, ".")
             let sym = U.lookup(decls, simName)
@@ -1214,9 +1225,11 @@ function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult) {
             }
         }
     }
+    */
 }
 
 function testForBuildTargetAsync() {
+    let opts: ts.ks.CompileOptions
     return mainPkg.loadAsync()
         .then(() => {
             let target = mainPkg.getTargetOptions()
@@ -1224,7 +1237,8 @@ function testForBuildTargetAsync() {
                 target.isNative = true
             return mainPkg.getCompileOptionsAsync(target)
         })
-        .then(opts => {
+        .then(o => {
+            opts = o
             opts.testMode = true
             opts.ast = true
             return ts.ks.compile(opts)
@@ -1232,7 +1246,7 @@ function testForBuildTargetAsync() {
         .then(res => {
             reportDiagnostics(res.diagnostics);
             if (!res.success) U.userError("Test failed")
-            simulatorCoverage(res)
+            simulatorCoverage(res, opts)
         })
 }
 
