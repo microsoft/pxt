@@ -206,9 +206,17 @@ namespace ts.ks {
 
         return res
     }
+    
+    export function parseCommentsOnSymbol(symbol: Symbol): CommentAttrs {
+        let cmts = ""
+        for (let decl of symbol.declarations) {
+            cmts += getComments(decl)
+        }
+        return parseCommentString(cmts)        
+    }
 
     export function parseComments(node: Node): CommentAttrs {
-        if (node || (node as any).isRootFunction) return parseCommentString("")
+        if (!node || (node as any).isRootFunction) return parseCommentString("")
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
         return res
@@ -719,21 +727,25 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitIndexedAccess(node: ElementAccessExpression): ir.Expr {
+        function emitIndexedAccess(node: ElementAccessExpression, assign:ir.Expr = null): ir.Expr {
             let t = typeOf(node.expression)
 
             let indexer = ""
-            if (t.flags & TypeFlags.String)
+            if (!assign && t.flags & TypeFlags.String)
                 indexer = "StringMethods::charAt"
             else if (isArrayType(t))
-                indexer = "ArrayImpl::getAt"
-            // TODO else look for attrs.indexer on type
+                indexer = assign ? "ArrayImpl::setAt" : "ArrayImpl::getAt"
+            else if (isInterfaceType(t)) {
+                let attrs = parseCommentsOnSymbol(t.symbol)
+                indexer = assign ? attrs.indexerSet : attrs.indexerGet                
+            }
 
             if (indexer) {
                 if (typeOf(node.argumentExpression).flags & TypeFlags.Number) {
                     let arr = emitExpr(node.expression)
                     let idx = emitExpr(node.argumentExpression)
-                    return rtcallMask(indexer, [node.expression, node.argumentExpression])
+                    let args = [node.expression, node.argumentExpression]
+                    return rtcallMask(indexer, args, false, assign ? [assign] : [])
                 } else {
                     throw unhandled(node, lf("non-numeric indexer on {0}", indexer))
                 }
@@ -838,10 +850,9 @@ ${lbl}: .short 0xffff
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
                             let defl = attrs.paramDefl[getName(prm)]
-                            if (defl) defl = parseInt(defl)
                             args.push(<any>{
                                 kind: SK.NullKeyword,
-                                valueOverride: defl
+                                valueOverride: defl ? parseInt(defl) : undefined
                             })
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
@@ -1233,7 +1244,9 @@ ${lbl}: .short 0xffff
                 }
             } else if (trg.kind == SK.PropertyAccessExpression) {
                 proc.emitExpr(ir.op(EK.Store, [cachedTrg || emitExpr(trg), src]))
-            } else {
+            } else if (trg.kind == SK.ElementAccessExpression) {
+                proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
+            } else { 
                 unhandled(trg, "assignment target")
             }
         }
@@ -1246,8 +1259,10 @@ ${lbl}: .short 0xffff
             return src
         }
 
-        function rtcallMask(name: string, args: Expression[], isAsync = false) {
-            return ir.rtcallMask(name, getMask(args), isAsync, args.map(emitExpr))
+        function rtcallMask(name: string, args: Expression[], isAsync = false, append:ir.Expr[] = null) {
+            let args2 = args.map(emitExpr)
+            if (append) args2 = args2.concat(append)
+            return ir.rtcallMask(name, getMask(args), isAsync, args2)
         }
 
         function emitInJmpValue(expr: ir.Expr) {
