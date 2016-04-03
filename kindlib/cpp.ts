@@ -297,11 +297,12 @@ namespace ks.cpp {
 
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
+                    let parsedAttrs = ts.ks.parseCommentString(currAttrs)
                     if (!currNs) err("missing namespace declaration");
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
                     let funName = m[3]
                     let origArgs = m[4]
-                    currAttrs = currAttrs.trim()
+                    currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         s = s.trim()
                         let m = /(.*)=\s*(-?\d+)$/.exec(s)
@@ -320,12 +321,9 @@ namespace ks.cpp {
 
                         let argName = m[2]
 
-                        currAttrs = currAttrs.replace(/(\w+)\.defl=(\w+)/g, (f, deflName, deflVal) => {
-                            if (deflName == argName) {
-                                defl = deflVal
-                                return ""
-                            } else return f;
-                        })
+                        if (parsedAttrs.paramDefl[argName]) {
+                            defl = parsedAttrs.paramDefl[argName]
+                        }
 
                         let numVal = defl ? U.lookup(enumVals, defl) : null
                         if (numVal != null)

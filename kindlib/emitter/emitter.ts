@@ -132,10 +132,16 @@ namespace ts.ks {
         icon?: string;
         imageLiteral?: number;
         weight?: number;
+        
+        // on interfaces
+        indexerGet?: string;
+        indexerSet?: string;
 
         _name?: string;
         jsDoc?: string;
         paramHelp?: Util.Map<string>;
+        // foo.defl=12 -> paramDefl: { foo: "12" }
+        paramDefl: Util.Map<string>;
     }
 
     export interface CallInfo {
@@ -162,10 +168,8 @@ namespace ts.ks {
         return cmt;
     }
 
-    export function parseComments(node: Node): CommentAttrs {
-        if (!node || (node as any).isRootFunction) return {}
-        let cmt = getComments(node)
-        let res: CommentAttrs = {}
+    export function parseCommentString(cmt: string): CommentAttrs {
+        let res: CommentAttrs = { paramDefl: {} }
         let didSomething = true
         while (didSomething) {
             didSomething = false
@@ -173,7 +177,11 @@ namespace ts.ks {
                 (f: string, n: string, d0: string, d1: string,
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
-                    (<any>res)[n] = v;
+                    if (U.endsWith(n, ".defl")) {
+                        res.paramDefl[n.slice(0, n.length - 5)] = v
+                    } else {
+                        (<any>res)[n] = v;
+                    }
                     didSomething = true
                     return "//% "
                 })
@@ -184,7 +192,6 @@ namespace ts.ks {
 
         res.paramHelp = {}
         res.jsDoc = ""
-        res._name = getName(node)
         cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
             doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
@@ -200,6 +207,12 @@ namespace ts.ks {
         return res
     }
 
+    export function parseComments(node: Node): CommentAttrs {
+        if (node || (node as any).isRootFunction) return parseCommentString("")
+        let res = parseCommentString(getComments(node))
+        res._name = getName(node)
+        return res
+    }
 
     export function getName(node: Node & { name?: any; }) {
         if (!node.name || node.name.kind != SK.Identifier)
@@ -824,7 +837,7 @@ ${lbl}: .short 0xffff
                         p.valueDeclaration.kind == SK.Parameter) {
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
-                            let defl = (attrs as any)[getName(prm) + ".defl"]
+                            let defl = attrs.paramDefl[getName(prm)]
                             if (defl) defl = parseInt(defl)
                             args.push(<any>{
                                 kind: SK.NullKeyword,
@@ -922,7 +935,7 @@ ${lbl}: .short 0xffff
                     userError("lambda functions cannot yet return values")
 
                 let suff = args.length + ""
-                
+
                 args.unshift(node.expression)
                 callInfo.args.unshift(node.expression)
 
