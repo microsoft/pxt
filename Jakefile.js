@@ -22,7 +22,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/kind.js', 'built/kind.d.ts', 'built/kindrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
 
-task('test', ['default', 'runprj', 'testfmt'])
+task('test', ['default', 'testfmt'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -33,10 +33,6 @@ task('clean', function () {
         }
     })
     jake.rmRf("built")
-})
-
-task('runprj', ['built/kind.js'], { async: true, parallelLimit: 10 }, function () {
-    cmdIn(this, "libs/lang-test0", 'node --stack_trace_limit=30 ../../built/kind.js run')
 })
 
 task('testfmt', ['built/kind.js'], { async: true }, function () {
