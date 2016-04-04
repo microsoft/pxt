@@ -112,6 +112,11 @@ namespace ks.cpp {
         let enumsDTS = nsWriter("declare namespace")
 
         let compileService = mainPkg.getTarget().compileService;
+        if (!compileService)
+            compileService = {
+                gittag: "none",
+                serviceId: "nocompile"
+            }
 
         let enumVals: U.Map<string> = {}
 
