@@ -240,7 +240,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                     <div className="ui warning message">
                         <sui.Button icon="cloud" class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
                         <div className="header">{lf("Almost there!") }</div>
-                        <p>{lf("You need to publish your script to share it.") }</p>
+                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") }</p>
                     </div>
                     <div className="ui success message">
                         <div className="header">{lf("Your project is ready!") }</div>
@@ -928,6 +928,10 @@ Ctrl+Shift+B
                                 <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
                                 {publishing ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                <a href="/docs" role="menuitem" className="ui button icon" target="_blank">
+                                    <i className="help icon"></i>
+                                    <span className="ui landscape only">{lf("Docs")}</span>
+                                </a>
                             </div>
                         </div>
                         <div className="ui item">
