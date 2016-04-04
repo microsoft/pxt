@@ -24,7 +24,7 @@ let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
 
 function initTargetCommands() {
-    let cmdsjs = path.resolve('built/cmds.js');
+    let cmdsjs = nodeutil.targetDir + '/built/cmds.js';
     if (fs.existsSync(cmdsjs)) {
         console.log(`loading cli extensions...`)
         let cli = require(cmdsjs)
@@ -245,9 +245,7 @@ function semverCmp(a: string, b: string) {
     return parse(a) - parse(b)
 }
 
-function readJson(fn: string) {
-    return JSON.parse(fs.readFileSync(fn, "utf8"))
-}
+var readJson = nodeutil.readJson;
 
 function travisAsync() {
     forceCloudBuild = true
@@ -1427,7 +1425,17 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-export function mainCli() {
+export function mainCli(targetDir:string) {
+    if (!targetDir) {
+        console.error("Please upgrade your kindscript-cli.")
+        process.exit(30)
+    }
+    
+    nodeutil.targetDir = targetDir;
+    let trg = nodeutil.getKindTarget()
+    
+    console.log(`Using KindScript/${trg.id} from ${targetDir}.`)
+    
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -1440,7 +1448,6 @@ export function mainCli() {
     if (cmd != "buildtarget") {
         initTargetCommands();
     }
-
 
     if (!cmd) {
         if (deployCoreAsync) {
@@ -1470,5 +1477,13 @@ function initGlobals() {
 initGlobals();
 
 if (require.main === module) {
-    mainCli();
+    let targetdir = path.resolve(path.join(__dirname, "../../.."))
+    if (!fs.existsSync(targetdir + "/kindtarget.json")) {
+        targetdir = path.resolve(path.join(__dirname, ".."))
+        if (!fs.existsSync(targetdir + "/kindtarget.json")) {
+            console.error("Cannot find kindtarget.json")
+            process.exit(1)
+        }
+    }
+    mainCli(targetdir);
 }

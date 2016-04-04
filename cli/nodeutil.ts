@@ -11,6 +11,8 @@ Promise = require("bluebird");
 
 import Util = ks.Util;
 
+export var targetDir:string = process.cwd();
+
 export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
         var bufs: Buffer[] = []
@@ -123,12 +125,20 @@ export function sanitizePath(path: string) {
     return path.replace(/[^\w@\/]/g, "-").replace(/^\/+/, "")
 }
 
+export function readJson(fn: string) {
+    return JSON.parse(fs.readFileSync(fn, "utf8"))
+}
+
+export function getKindTarget(): ks.AppTarget {
+    return readJson(targetDir + "/kindtarget.json")
+}
+
 export function getWebTarget(): ks.AppTarget {
-    return JSON.parse(fs.readFileSync("built/webtarget.json", "utf8"))
+    return readJson(targetDir + "/built/webtarget.json")
 }
 
 export function getAppTheme(): ks.AppTheme {
-    return JSON.parse(fs.readFileSync("built/theme.json", "utf8"))
+    return readJson(targetDir + "/built/theme.json")
 }
 
 export function pathToPtr(path: string) {
