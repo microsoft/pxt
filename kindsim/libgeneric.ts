@@ -226,6 +226,11 @@ namespace ks.rt {
             return new RefBuffer(new Uint8Array(size));
         }
         
+        export function getBytes(buf:RefBuffer) {
+            // not sure if this is any useful...
+            return buf.data;
+        }
+        
         function inRange(buf: RefBuffer, off: number) {
             return 0 <= off && off < buf.data.length
         }

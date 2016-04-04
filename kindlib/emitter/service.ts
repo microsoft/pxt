@@ -378,6 +378,9 @@ namespace ts.ks.service {
     }
 
     function fileDiags(fn: string) {
+        if (!/\.ts$/.test(fn))
+            return []
+            
         let d = service.getSyntacticDiagnostics(fn)
         if (!d || !d.length)
             d = service.getSemanticDiagnostics(fn)

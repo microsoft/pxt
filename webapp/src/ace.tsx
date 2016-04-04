@@ -82,13 +82,14 @@ function mkSyntheticEntry(name: string, desc: string) {
         symbolInfo: {
             attributes: {
                 jsDoc: desc,
+                paramDefl: {}
             },
             name: name,
             namespace: "",
             kind: SK.None,
             parameters: null,
             retType: "",
-        },
+        },        
         lastScore: 0,
         searchName: name,
         searchDesc: desc
