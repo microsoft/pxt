@@ -153,7 +153,7 @@ switch (step) {
                     let cell = e.data as ir.Cell;
                     if (cell.isGlobal()) {
                         if (cell.isRef())
-                            return `bitvm.incr(${glbref(cell)})`
+                            return `ksrt.incr(${glbref(cell)})`
                         else
                             return glbref(cell)
                     } else {
@@ -173,16 +173,16 @@ switch (step) {
                     break;
                 case EK.Incr:
                     emitExpr(e.args[0])
-                    write(`bitvm.incr(r0);`)
+                    write(`ksrt.incr(r0);`)
                     break;
                 case EK.Decr:
                     emitExpr(e.args[0])
-                    write(`bitvm.decr(r0);`)
+                    write(`ksrt.decr(r0);`)
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     // it does the decr itself, no mask
-                    return emitExpr(ir.rtcall(withRef("bitvm::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
+                    return emitExpr(ir.rtcall(withRef("ksrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
                 case EK.RuntimeCall:
@@ -268,7 +268,7 @@ switch (step) {
                     emitExpr(src)
                     if (cell.isGlobal()) {
                         if (cell.isRef())
-                            write(`bitvm.decr(${glbref(cell)});`)
+                            write(`ksrt.decr(${glbref(cell)});`)
                         write(`${glbref(cell)} = r0;`)
                     } else {
                         write(`${locref(cell)} = r0;`)
@@ -277,7 +277,7 @@ switch (step) {
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
                     // it does the decr itself, no mask
-                    emitExpr(ir.rtcall(withRef("bitvm::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    emitExpr(ir.rtcall(withRef("ksrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
                     break;
                 default: oops();
             }

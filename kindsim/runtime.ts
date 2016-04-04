@@ -92,12 +92,23 @@ namespace ks.rt {
 
     export function initBareRuntime() {
         runtime.board = new BareBoard();
-        (rt as any).micro_bit = {
-            runInBackground: thread.runInBackground,
+        let myRT = rt as any
+        myRT.basic = {
             pause: thread.pause,
-            panic: thread.panic,
-            serialSendString: (s: string) => runtime.board.writeSerial(s),
-            showDigit: (n: number) => console.log("DIGIT:", n)
+            showNumber: (n: number) => {
+                let cb = getResume();
+                console.log("SHOW NUMBER:", n)
+                U.nextTick(cb)
+            }
+        }       
+        myRT.serial = {
+            writeString: (s: string) => runtime.board.writeSerial(s),
+        }        
+        myRT.pins = {
+            createBuffer: BufferMethods.createBuffer,
+        }        
+        myRT.control = {
+            inBackground: thread.runInBackground
         }
     }
 
@@ -158,7 +169,7 @@ namespace ks.rt {
                 U.nextTick(() => {
                     runtime = this;
                     this.setupTop(resolve)
-                    action.run2(a, arg0, arg1)
+                    kindscript.runAction2(a, arg0, arg1)
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
@@ -217,7 +228,7 @@ namespace ks.rt {
             // These variables are used by the generated code as well
             // ---
             var entryPoint: LabelFn;
-            var bitvm = rt.bitvm
+            var ksrt = rt.ksrt
             var breakpoints: Uint8Array = null
             var breakAlways = false
             var globals = this.globals

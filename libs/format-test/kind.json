@@ -8,6 +8,5 @@
     ],
     "public": true,
     "dependencies": {
-        "bare": "file:../bare"
     }
 }

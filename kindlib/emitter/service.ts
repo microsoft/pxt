@@ -150,7 +150,7 @@ namespace ts.ks {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
-                        initializer: p.initializer ? p.initializer.getText() : (attributes as any)[n + ".defl"],
+                        initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined
                     }
                 })
@@ -378,6 +378,9 @@ namespace ts.ks.service {
     }
 
     function fileDiags(fn: string) {
+        if (!/\.ts$/.test(fn))
+            return []
+            
         let d = service.getSyntacticDiagnostics(fn)
         if (!d || !d.length)
             d = service.getSemanticDiagnostics(fn)

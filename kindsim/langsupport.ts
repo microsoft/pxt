@@ -67,8 +67,8 @@ namespace ks.rt {
         }
     }
 
-    export namespace action {
-        export function mk(reflen: number, len: number, fn: LabelFn) {
+    export namespace kindscript {
+        export function mkAction(reflen: number, len: number, fn: LabelFn) {
             let r = new RefAction();
             r.len = len
             r.reflen = reflen
@@ -76,13 +76,13 @@ namespace ks.rt {
             return r
         }
 
-        export function run2(a: RefAction, a0: any, a1: any) {
+        export function runAction2(a: RefAction, a0: any, a1: any) {
             let cb = getResume();
 
             if (a instanceof RefAction) {
-                bitvm.incr(a)
+                ksrt.incr(a)
                 cb(new FnWrapper(a.func, a.fields, a0, a1, () => {
-                    bitvm.decr(a)
+                    ksrt.decr(a)
                 }))
             } else {
                 // no-closure case
@@ -90,12 +90,12 @@ namespace ks.rt {
             }
         }
 
-        export function run1(a: RefAction, v: any) {
-            run2(a, v, null)
+        export function runAction1(a: RefAction, v: any) {
+            runAction2(a, v, null)
         }
 
-        export function run(a: RefAction) {
-            run2(a, null, null)
+        export function runAction0(a: RefAction) {
+            runAction2(a, null, null)
         }
     }
 
@@ -198,9 +198,38 @@ namespace ks.rt {
         })
     }
 
-    export namespace bitvm {
+    export namespace kindscript {
         export var incr = rt.incr;
         export var decr = rt.decr;
+
+        export function ptrOfLiteral(v: any) {
+            return v;
+        }
+
+        export function debugMemLeaks() {
+            dumpLivePointers();
+        }
+        
+        export function allocate() {
+            U.userError("allocate() called in simulator")
+        }
+        
+        export function templateHash() {
+            return 0;
+        }
+        
+        export function programHash() {
+            return 0;
+        }
+    }
+
+    export namespace ksrt {
+        export var incr = rt.incr;
+        export var decr = rt.decr;
+
+        export function panic(code: number) {
+            U.userError("PANIC! Code " + code)
+        }
 
         export function ldfld(r: RefRecord, idx: number) {
             check(r.reflen <= idx && idx < r.len)
@@ -263,14 +292,16 @@ namespace ks.rt {
             return a;
         }
 
-        export function stringData(s: string) {
-            return s;
-        }
+        // these are never used in simulator; silence the warnings
+        export var ldglb: any;
+        export var ldglbRef: any;
+        export var stglb: any;
+        export var stglbRef: any;
     }
 
 
-    export namespace record {
-        export function mk(reflen: number, totallen: number) {
+    export namespace kindscript {
+        export function mkRecord(reflen: number, totallen: number) {
             check(0 <= reflen && reflen <= totallen);
             check(reflen <= totallen && totallen <= 255);
             let r = new RefRecord();
@@ -283,13 +314,11 @@ namespace ks.rt {
     }
 
     export namespace thread {
+        export var panic = ksrt.panic;
+
         export function pause(ms: number) {
             let cb = getResume();
             setTimeout(() => { cb() }, ms)
-        }
-
-        export function panic(code: number) {
-            U.userError("PANIC! Code " + code)
         }
 
         export function runInBackground(a: RefAction) {

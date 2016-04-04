@@ -100,8 +100,8 @@ namespace ks.cpp {
 
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         var res = Y.emptyExtInfo();
-        var pointersInc = ""
-        var includesInc = ""
+        var pointersInc = "\nKS_SHIMS_BEGIN\n"
+        var includesInc = `#include "kindscript.h"\n`
         var thisErrors = ""
         var dTsNamespace = ""
         var err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
@@ -287,8 +287,8 @@ namespace ks.cpp {
                         shimsDTS.write("")
                         shimsDTS.write(currDocComment)
                         shimsDTS.write(currAttrs)
-                        shimsDTS.setNs(currNs)
-                        enumsDTS.setNs(currNs)
+                        shimsDTS.setNs(toJs(currNs))
+                        enumsDTS.setNs(toJs(currNs))
                         currAttrs = ""
                         currDocComment = ""
                     }
@@ -297,14 +297,15 @@ namespace ks.cpp {
 
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
+                    let parsedAttrs = ts.ks.parseCommentString(currAttrs)
                     if (!currNs) err("missing namespace declaration");
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
                     let funName = m[3]
                     let origArgs = m[4]
-                    currAttrs = currAttrs.trim()
+                    currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         s = s.trim()
-                        let m = /(.*)=\s*(\d+)$/.exec(s)
+                        let m = /(.*)=\s*(-?\d+)$/.exec(s)
                         let defl = ""
                         let qm = ""
                         if (m) {
@@ -320,12 +321,9 @@ namespace ks.cpp {
 
                         let argName = m[2]
 
-                        currAttrs = currAttrs.replace(/(\w+)\.defl=(\w+)/g, (f, deflName, deflVal) => {
-                            if (deflName == argName) {
-                                defl = deflVal
-                                return ""
-                            } else return f;
-                        })
+                        if (parsedAttrs.paramDefl[argName]) {
+                            defl = parsedAttrs.paramDefl[argName]
+                        }
 
                         let numVal = defl ? U.lookup(enumVals, defl) : null
                         if (numVal != null)
@@ -347,7 +345,7 @@ namespace ks.cpp {
                         value: null
                     }
                     if (currDocComment) {
-                        shimsDTS.setNs(currNs)
+                        shimsDTS.setNs(toJs(currNs))
                         shimsDTS.write("")
                         shimsDTS.write(currDocComment)
                         if (/ImageLiteral/.test(m[4]) && !/imageLiteral=/.test(currAttrs))
@@ -425,7 +423,7 @@ namespace ks.cpp {
                 for (let fn of pkg.getFiles()) {
                     let isHeader = U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ".cpp")) {
-                        let fullName = pkg.level == 0 ? fn : "kind_modules/" + pkg.id + "/" + fn
+                        let fullName = pkg.config.name + "/" + fn
                         if (isHeader)
                             includesInc += `#include "source/${fullName}"\n`
                         let src = pkg.readFile(fn)
@@ -460,9 +458,8 @@ namespace ks.cpp {
             cfginc += "#define " + k + " " + jsonconfig[k] + "\n"
         })
 
-        res.generatedFiles["/ext/config.h"] = cfginc
-        res.generatedFiles["/ext/pointers.inc"] = pointersInc
-        res.generatedFiles["/ext/refs.inc"] = includesInc + protos.finish()
+        res.generatedFiles["/inc/KSConfig.h"] = cfginc
+        res.generatedFiles["/source/pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nKS_SHIMS_END\n"
 
         let moduleJson = {
             "name": "kindscript-microbit-app",
@@ -476,14 +473,14 @@ namespace ks.cpp {
 
         let configJson = {
             "microbit": {
-                "configfile": "inc/MicroBitCustomConfig.h"
+                "configfile": "inc/KSConfig.h"
             }
         }
 
 
         res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-        res.generatedFiles["/source/main.cpp"] = `#include "BitVM.h"\nvoid app_main() { bitvm::start(); }\n`
+        res.generatedFiles["/source/main.cpp"] = `#include "kindscript.h"\nvoid app_main() { kindscript::start(); }\n`
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)

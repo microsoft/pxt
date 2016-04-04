@@ -333,18 +333,18 @@ namespace ks {
         }
 
         sortedDeps() {
+            let visited: U.Map<boolean> = {}
             let ids: string[] = []
             let rec = (p: Package) => {
-                if (ids.indexOf(p.id) >= 0) return;
-                ids.push(p.id)
+                if (U.lookup(visited, p.id)) return;
+                visited[p.id] = true
                 let deps = Object.keys(p.config.dependencies)
                 deps.sort((a, b) => U.strcmp(a, b))
                 deps.forEach(id => rec(this.resolveDep(id)))
+                ids.push(p.id)
             }
             rec(this)
-            let res = ids.map(id => this.resolveDep(id))
-            res.reverse()
-            return res
+            return ids.map(id => this.resolveDep(id))
         }
 
         getTargetOptions(): CompileTarget { return U.clone(this.getTarget().compile); }
