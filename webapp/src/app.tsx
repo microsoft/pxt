@@ -831,7 +831,7 @@ Ctrl+Shift+B
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>Select an .hex file created with ${this.appTarget.title}</label>
+    <label>Select an .hex file to import.</label>
     <input type="file"></input>
   </div>
 </div>`,
