@@ -235,26 +235,28 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         }
         let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
 
-        return <sui.Modal ref={v => this.modal = v} addClass="searchdialog" header={lf("Share Project") }>
-            <div className="ui segment">
+        return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Share Project") }>
                 <div className={`ui ${formState} form`}>
                     <div className="ui warning message">
+                        <sui.Button icon="cloud" class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
                         <div className="header">{lf("Almost there!") }</div>
-                        <p>{lf("You need to publish your script to share it.") }</p>
-                        <sui.Button icon="cloud" class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
+                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") }</p>
                     </div>
                     <div className="ui success message">
                         <div className="header">{lf("Your project is ready!") }</div>
                         <p>{lf("Share this URL or copy the HTML to embed your project in web pages.") }</p>
                     </div>
+                    { url ? 
                     <sui.Field label={lf("URL") }>
+                        <p>{lf("Share this link to access your project.")}</p>
                         <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
-                    </sui.Field>
-                    <sui.Field label={lf("HTML") }>
-                        <sui.Input class="mini" readOnly={true} lines={2} value={embed} copy={ready} disabled={!ready} />
-                    </sui.Field>
+                    </sui.Field> : null }
+                    { embed ?
+                    <sui.Field label={lf("Embed This Project") }>
+                        <p>{lf("Embed this project in your website or blog by pasting this code into your web page.")}</p>
+                        <sui.Input class="mini" readOnly={true} lines={3} value={embed} copy={ready} disabled={!ready} />
+                    </sui.Field> : null }
                 </div>
-            </div>
         </sui.Modal>
     }
 }
@@ -710,7 +712,7 @@ Ctrl+Shift+B
 
     newProjectFromIdAsync(prj: ks.ProjectTemplate, fileOverrides?: Util.Map<string>): Promise<void> {
         let cfg = ks.U.clone(prj.config);
-        cfg.name = ks.U.fmt(cfg.name, Util.getAwesomeAdj());
+        cfg.name = "Untitled" // ks.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {
             "kind.json": JSON.stringify(cfg, null, 4) + "\n",
         }
@@ -829,7 +831,7 @@ Ctrl+Shift+B
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>Select an .hex file created with ${this.appTarget.title}</label>
+    <label>Select an .hex file to import.</label>
     <input type="file"></input>
   </div>
 </div>`,
@@ -909,7 +911,7 @@ Ctrl+Shift+B
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     <div className="ui separator"></div>
-                                    <sui.Item role="menuitem" icon='folder' text={lf("Show/Hide Files") } onClick={() => {
+                                    <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
                                     } } />
@@ -926,6 +928,10 @@ Ctrl+Shift+B
                                 <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
                                 {publishing ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                <a href="/docs" role="menuitem" className="ui button icon" target="_blank">
+                                    <i className="help icon"></i>
+                                    <span className="ui landscape only">{lf("Docs")}</span>
+                                </a>
                             </div>
                         </div>
                         <div className="ui item">
@@ -934,7 +940,9 @@ Ctrl+Shift+B
                                     type="text"
                                     placeholder={lf("Pick a name...") }
                                     value={this.state.header ? this.state.header.name : ''}
-                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }></input>
+                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }>
+                                  <i className="write icon grey"></i>
+                                </input>
                             </div>
                         </div>
                         { workspaces || targetTheme.rightLogo ?
