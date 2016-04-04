@@ -6,6 +6,7 @@ namespace ks.runner {
         blocksClass?: string;
         simulatorClass?: string;
         linksClass?: string;
+        codeCardClass?: string;
         snippetReplaceParent?: boolean;
         simulator?: boolean;
         hex?: boolean;
@@ -85,6 +86,7 @@ namespace ks.runner {
                     render($el, r);
                 } catch (e) {
                     console.error('error while rendering ' + $el.html())
+                    $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                 }
                 return Promise.delay(1, renderNextSnippetAsync(cls, render));
             })
@@ -182,6 +184,34 @@ namespace ks.runner {
             c.replaceWith(ul)
         })
     }
+    
+    function fillCodeCardAsync(c : JQuery, card : ks.CodeCard) : Promise<void> {
+        if (!card) return Promise.resolve();
+        
+        let cc = ks.docs.codeCard.render(card)
+        c.replaceWith(cc);
+        
+        return Promise.resolve();
+    }
+
+    function renderNextCodeCardAsync(cls: string): Promise<void> {
+        if (!cls) return Promise.resolve();
+
+        let $el = $("." + cls).first();
+        if (!$el[0]) return Promise.resolve();
+
+        $el.removeClass(cls);
+        let card : ks.CodeCard;
+        try {
+            card = JSON.parse($el.text()) as ks.CodeCard;                                   
+        } catch (e) {
+            console.error('error while rendering ' + $el.html())
+            $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
+        }
+        
+        return fillCodeCardAsync($el, card)
+                .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));        
+    }
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
@@ -200,7 +230,8 @@ namespace ks.runner {
             });
         }
 
-        return renderSignaturesAsync(options)
+        return renderNextCodeCardAsync(options.codeCardClass)
+            .then(() => renderSignaturesAsync(options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
             .then(() => renderLinksAsync(options))
