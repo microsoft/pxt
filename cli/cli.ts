@@ -275,12 +275,12 @@ function travisAsync() {
     } else {
         return buildTargetAsync()
             .then(() => {
-                let kthm: ks.AppTheme = readJson("kindtheme.json")
+                let trg = readLocalKindTarget()
                 if (rel)
-                    return uploadtrgAsync(kthm.id + "/" + rel)
+                    return uploadtrgAsync(trg.id + "/" + rel)
                         .then(() => runNpmAsync("publish"))
                 else
-                    return uploadtrgAsync(kthm.id + "/" + latest, "release/latest")
+                    return uploadtrgAsync(trg.id + "/" + latest, "release/latest")
             })
     }
 }
@@ -471,26 +471,26 @@ function uploadCoreAsync(opts: UploadOptions) {
         })
 }
 
-function readKindTarget() {
+function readLocalKindTarget() {
+    if (!fs.existsSync("kindtarget.json")) {
+        console.error("This command requires kindtarget.json in current directory.")
+        process.exit(1)
+    }
+    nodeutil.targetDir = process.cwd()
     let cfg: ks.TargetBundle = readJson("kindtarget.json")
-    if (fs.existsSync("kindtheme.json"))
-        cfg.appTheme = readJson("kindtheme.json")
     return cfg
 }
 
-var targetDir: string;
-
 function forEachBundledPkgAsync(f: (pkg: ks.MainPackage) => Promise<void>) {
-    let cfg = readKindTarget()
-    targetDir = process.cwd()
+    let cfg = readLocalKindTarget()
+    let prev = process.cwd()
 
     return Promise.mapSeries(cfg.bundleddirs, (dirname) => {
-        process.chdir(targetDir)
-        process.chdir(dirname)
+        process.chdir(path.join(nodeutil.targetDir, dirname))
         mainPkg = new ks.MainPackage(new Host())
         return f(mainPkg);
     })
-        .finally(() => process.chdir(targetDir))
+        .finally(() => process.chdir(prev))
         .then(() => { })
 }
 
@@ -591,8 +591,7 @@ function travisInfo() {
 }
 
 function buildTargetCoreAsync() {
-    let cfg = readKindTarget()
-    let currentTarget: ks.AppTarget
+    let cfg = readLocalKindTarget()
     cfg.bundledpkgs = {}
     let statFiles: U.Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
@@ -602,11 +601,7 @@ function buildTargetCoreAsync() {
             .then(res => {
                 cfg.bundledpkgs[pkg.config.name] = res
             })
-            .then(testForBuildTargetAsync)
-            .then(() => {
-                if (pkg.config.target)
-                    currentTarget = pkg.config.target;
-            }))
+            .then(testForBuildTargetAsync))
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -618,8 +613,12 @@ function buildTargetCoreAsync() {
             }
             nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
-            U.assert(!!currentTarget)
-            fs.writeFileSync("built/webtarget.json", JSON.stringify(currentTarget, null, 2))
+            ks.appTarget = cfg; // make sure we're using the latest version
+            let targetlight = U.flatClone(cfg)
+            delete targetlight.bundleddirs
+            delete targetlight.bundledpkgs
+            delete targetlight.appTheme
+            fs.writeFileSync("built/targetlight.json", JSON.stringify(targetlight, null, 2))
             fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
         })
         .then(() => {
@@ -1179,7 +1178,7 @@ function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult, pkgOpts: ts.ks.Co
     }
 
     for (let fn of opts.sourceFiles) {
-        opts.fileSystem[fn] = fs.readFileSync(path.join(targetDir, fn), "utf8")
+        opts.fileSystem[fn] = fs.readFileSync(path.join(nodeutil.targetDir, fn), "utf8")
     }
 
     let simDeclRes = ts.ks.compile(opts)
@@ -1426,19 +1425,20 @@ function errorHandler(reason: any) {
 }
 
 export function mainCli(targetDir:string) {
+    process.on("unhandledRejection", errorHandler);
+    process.on('uncaughtException', errorHandler);
+
     if (!targetDir) {
         console.error("Please upgrade your kindscript-cli.")
         process.exit(30)
     }
     
     nodeutil.targetDir = targetDir;
-    let trg = nodeutil.getKindTarget()
     
+    let trg = nodeutil.getKindTarget()
+    ks.appTarget = trg;
     console.log(`Using KindScript/${trg.id} from ${targetDir}.`)
     
-    process.on("unhandledRejection", errorHandler);
-    process.on('uncaughtException', errorHandler);
-
     let args = process.argv.slice(2)
 
     initConfig();

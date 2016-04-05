@@ -201,13 +201,8 @@ function fileExistsSync(p: string): boolean {
 }
 
 var docsTemplate: string = "@body@"
-var appTarget: ks.AppTarget;
-var appTheme: ks.AppTheme;
 
 function setupTemplate() {
-    appTarget = nodeutil.getWebTarget()
-    appTheme = nodeutil.getAppTheme()
-
     let templatePath = path.join(tempDir, "template-override.html")
     if (fs.existsSync(templatePath)) {
         docsTemplate = fs.readFileSync(templatePath, "utf8")
@@ -288,7 +283,7 @@ function initSocketServer() {
 }
 
 function initSerialMonitor() {
-    if (!appTarget.serial || !appTarget.serial.log) return;
+    if (!ks.appTarget.serial || !ks.appTarget.serial.log) return;
 
     console.log('serial: monitoring ports...')
     initSocketServer();
@@ -333,7 +328,7 @@ function initSerialMonitor() {
         });
     }
 
-    let manufacturerRx = appTarget.serial.manufacturerFilter ? new RegExp(appTarget.serial.manufacturerFilter) : undefined;
+    let manufacturerRx = ks.appTarget.serial.manufacturerFilter ? new RegExp(ks.appTarget.serial.manufacturerFilter) : undefined;
     function filterPort(info: SerialPortInfo): boolean {
         return manufacturerRx ? manufacturerRx.test(info.manufacturer) : true;
     }
@@ -418,8 +413,8 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (pathname.slice(0, appTarget.id.length + 2) == "/" + appTarget.id + "/") {
-            res.writeHead(301, { location: req.url.slice(appTarget.id.length + 1) })
+        if (pathname.slice(0, ks.appTarget.id.length + 2) == "/" + ks.appTarget.id + "/") {
+            res.writeHead(301, { location: req.url.slice(ks.appTarget.id.length + 1) })
             res.end()
             return
         }
@@ -493,7 +488,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (fileExistsSync(webFile)) {
             if (/\.md$/.test(webFile)) {
-                let html = ks.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), appTheme)
+                let html = ks.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), ks.appTarget.appTheme)
                 sendHtml(html)
             } else {
                 sendFile(webFile)

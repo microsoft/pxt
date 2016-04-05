@@ -11,7 +11,7 @@ Promise = require("bluebird");
 
 import Util = ks.Util;
 
-export var targetDir:string = process.cwd();
+export var targetDir: string = process.cwd();
 
 export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
@@ -117,8 +117,8 @@ export function init() {
             buf[i] = tmp[i]
     }
 
-    (global as any).btoa = (str:string) => new Buffer(str, "binary").toString("base64");
-    (global as any).atob = (str:string) => new Buffer(str, "base64").toString("binary");
+    (global as any).btoa = (str: string) => new Buffer(str, "binary").toString("base64");
+    (global as any).atob = (str: string) => new Buffer(str, "base64").toString("binary");
 }
 
 export function sanitizePath(path: string) {
@@ -129,16 +129,15 @@ export function readJson(fn: string) {
     return JSON.parse(fs.readFileSync(fn, "utf8"))
 }
 
-export function getKindTarget(): ks.AppTarget {
-    return readJson(targetDir + "/kindtarget.json")
-}
+export function getKindTarget(): ks.TargetBundle {
 
-export function getWebTarget(): ks.AppTarget {
-    return readJson(targetDir + "/built/webtarget.json")
-}
-
-export function getAppTheme(): ks.AppTheme {
-    return readJson(targetDir + "/built/theme.json")
+    if (fs.existsSync(targetDir + "/built/target.json")) {
+        let res: ks.TargetBundle = readJson(targetDir + "/built/target.json")
+        if (res.id && res.bundledpkgs) return res;
+    }
+    let raw: ks.TargetBundle = readJson(targetDir + "/kindtarget.json")
+    raw.bundledpkgs = {}
+    return raw
 }
 
 export function pathToPtr(path: string) {

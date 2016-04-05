@@ -95,7 +95,7 @@ class Settings extends data.Component<ISettingsProps, {}> {
 
 class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     renderCore() {
-        Util.assert(this.props.parent.appTarget.cloud && this.props.parent.appTarget.cloud.workspaces);
+        Util.assert(ks.appTarget.cloud && ks.appTarget.cloud.workspaces);
 
         let par = this.props.parent
         let hd = par.state.header
@@ -134,11 +134,11 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchCloudData(): Cloud.JsonScript[] {
-        let cloud = this.props.parent.appTarget.cloud || {};
+        let cloud = ks.appTarget.cloud || {};
         if (!cloud.workspaces) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
         let res = this.state.searchFor
-            ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${this.props.parent.appTarget.id}`)
+            ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${ks.appTarget.id}`)
             : null
         if (res) this.prevData = res.items
         let data = this.prevData
@@ -219,7 +219,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let header = this.props.parent.state.header;
         if (!header) return <div></div>
 
-        let rootUrl = pkg.targetBundle.appTheme.embedUrl
+        let rootUrl = ks.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
         let ready = !!header.pubId && header.pubCurrent;
         let url: string;
@@ -316,7 +316,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
         let filesWithHeader = (p: pkg.EditorPackage) =>
             p.isTopLevel() ? filesOf(p) : [
                 <div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p) }>
-                    {p.getPkgId() != this.props.parent.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
+                    {p.getPkgId() != ks.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
                     {p.getPkgId() }
                 </div>
             ].concat(expands[p.getPkgId()] ? filesOf(p) : [])
@@ -339,14 +339,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     settings: EditorSettings;
     scriptSearch: ScriptSearch;
     shareEditor: ShareEditor;
-    appTarget: ks.AppTarget;
 
     constructor(props: IAppProps) {
         super(props);
 
-        this.appTarget = pkg.appTarget;
-
-        document.title = lf("{0} powered by KindScript", this.appTarget.title || this.appTarget.name)
+        document.title = lf("{0} powered by KindScript", ks.appTarget.title || ks.appTarget.name)
 
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
@@ -414,7 +411,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         compiler.typecheckAsync()
             .done(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (this.appTarget.simulator && this.appTarget.simulator.autoRun) {
+                if (ks.appTarget.simulator && ks.appTarget.simulator.autoRun) {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride 
                         && !simulator.driver.debug
@@ -604,10 +601,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     newProject(hideCancel = false) {
         let cdn = (window as any).appCdnRoot
         let images = cdn + "images"
-        let targetTheme = pkg.targetBundle.appTheme;
+        let targetTheme = ks.appTarget.appTheme;
         core.confirmAsync({
             logos: [targetTheme.logo, logoSvgXml],
-            header: this.appTarget.title + ' - ' + lf("Create Project"),
+            header: ks.appTarget.title + ' - ' + lf("Create Project"),
             hideCancel: hideCancel,
             hideAgree: true,
             onLoaded: (_) => {
@@ -654,7 +651,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         <img src="${images}/newkodu.png">
         </div>
         <div class="content">
-        <div class="header">${lf("Kodu for {0}", this.appTarget.name)}</div>
+        <div class="header">${lf("Kodu for {0}", ks.appTarget.name)}</div>
         <div class="description">
             ${lf("Tile based Coding")}
         </div>
@@ -689,7 +686,7 @@ ${lf("To create an new KindScript project, <a href='{0}' target='_blank'>install
 <pre>
 [sudo] npm install -g kindscript-cli
 mkdir myproject && cd myproject
-kind init ${this.appTarget.id} myproject
+kind init ${ks.appTarget.id} myproject
 </pre>
 <p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
 <pre>
@@ -703,11 +700,11 @@ Ctrl+Shift+B
     }
 
     newTypeScriptProjectAsync(fileOverrides?: Util.Map<string>) {
-        return this.newProjectFromIdAsync(this.appTarget.tsprj, fileOverrides);
+        return this.newProjectFromIdAsync(ks.appTarget.tsprj, fileOverrides);
     }
 
     newBlocksProjectAsync(fileOverrides?: Util.Map<string>) {
-        return this.newProjectFromIdAsync(this.appTarget.blocksprj, fileOverrides);
+        return this.newProjectFromIdAsync(ks.appTarget.blocksprj, fileOverrides);
     }
 
     newProjectFromIdAsync(prj: ks.ProjectTemplate, fileOverrides?: Util.Map<string>): Promise<void> {
@@ -892,9 +889,9 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
-        const targetTheme = pkg.targetBundle.appTheme;
-        const workspaces = this.appTarget.cloud && this.appTarget.cloud.workspaces;
-        const publishing = this.appTarget.cloud && this.appTarget.cloud.packages;
+        const targetTheme = ks.appTarget.appTheme;
+        const workspaces = ks.appTarget.cloud && ks.appTarget.cloud.workspaces;
+        const publishing = ks.appTarget.cloud && ks.appTarget.cloud.packages;
 
         return (
             <div id='root' className={"full-abs"}>
@@ -922,7 +919,7 @@ Ctrl+Shift+B
                                 </sui.DropdownMenu>
                             </div>
                             <div className="ui">
-                                {this.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
+                                {ks.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
                                 <sui.Button role="menuitem" key='runbtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                                 <sui.Button role="menuitem" class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
@@ -962,7 +959,7 @@ Ctrl+Shift+B
                         <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
-                        {this.appTarget.compile ? <sui.Button icon='xicon microbitdown' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
+                        {ks.appTarget.compile ? <sui.Button icon='xicon microbitdown' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                         <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {dbgMode && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                     </div>
@@ -970,13 +967,13 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor" role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={this.appTarget.id} /></div> : null }
+                    {this.state.helpCard ? <div id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={ks.appTarget.id} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
                 <div id="footer" role="footer">
                     <div>
-                        { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (this.appTarget.title || this.appTarget.name) }
+                        { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (ks.appTarget.title || ks.appTarget.name) }
                         - <span>{targetVersion}</span>
                         <span>&nbsp; {lf("powered by") }</span> &nbsp;
                         <a href="https://github.com/Microsoft/kindscript"><i className='xicon ksempty'/> KindScript</a>
@@ -1026,7 +1023,7 @@ function initLogin() {
 }
 
 function initSerial() {
-    if (!pkg.appTarget.serial || !/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
+    if (!ks.appTarget.serial || !/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
         return;
 
     console.log('initializing serial pipe');
@@ -1170,7 +1167,7 @@ $(document).ready(() => {
         .then(() => {
             return compiler.init();
         })
-        .then(() => workspace.initAsync(pkg.appTarget.id))
+        .then(() => workspace.initAsync(ks.appTarget.id))
         .then(() => {
             $("#loading").remove();
             render()

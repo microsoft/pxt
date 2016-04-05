@@ -7,10 +7,6 @@ import Cloud = ks.Cloud;
 import Util = ks.Util;
 var lf = Util.lf
 
-export var appTarget: ks.AppTarget;
-export var targetBundle: ks.TargetBundle;
-
-
 let hostCache = new db.Table("hostcache")
 
 let extWeight: Util.StringMap<number> = {
@@ -21,10 +17,8 @@ let extWeight: Util.StringMap<number> = {
 }
 
 export function setupAppTarget(trgbundle: ks.TargetBundle) {
-    if (!trgbundle.appTheme) trgbundle.appTheme = {};
-    let cfg: ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
-    appTarget = cfg.target
-    targetBundle = trgbundle;
+    //if (!trgbundle.appTheme) trgbundle.appTheme = {};
+    ks.appTarget = trgbundle
 }
 
 export class File {
@@ -237,10 +231,6 @@ export class EditorPackage {
     }
 }
 
-function getEmbeddedScript(id: string): Util.StringMap<string> {
-    return Util.lookup(targetBundle.bundledpkgs, id)
-}
-
 class Host
     implements ks.Host {
 
@@ -289,7 +279,7 @@ class Host
             return workspace.getTextAsync(arg)
                 .then(scr => epkg.setFiles(scr));
         } else if (proto == "embed") {
-            epkg.setFiles(getEmbeddedScript(pkg.verArgument()))
+            epkg.setFiles(ks.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
@@ -297,8 +287,6 @@ class Host
     }
 
     resolveVersionAsync(pkg: ks.Package) {
-        if (getEmbeddedScript(pkg.id))
-            return Promise.resolve("embed:" + pkg.id)
         return data.getAsync("cloud:" + ks.pkgPrefix + pkg.id).then(r => {
             let id = (r || {})["scriptid"]
             if (!id)

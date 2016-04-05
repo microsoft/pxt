@@ -673,7 +673,7 @@ export class Editor extends srceditor.Editor {
             exec: () => this.parent.runSimulator()
         })
 
-        if (this.parent.appTarget.compile.hasHex) {
+        if (ks.appTarget.compile.hasHex) {
             this.editor.commands.addCommand({
                 name: "compileHex",
                 bindKey: { win: "Ctrl-Alt-Enter", mac: "Command-Alt-Enter" },

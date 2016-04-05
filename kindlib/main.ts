@@ -6,6 +6,8 @@ namespace ks {
     export import Util = ts.ks.Util;
     let lf = U.lf;
 
+    export var appTarget: TargetBundle;
+
     // general error reported
     export var reportException: (err: any, data: any) => void = function(e, d) {
         if (console) {
@@ -71,11 +73,26 @@ namespace ks {
         commits?: string; // URL
     }
 
-    export interface TargetBundle {
+    export interface AppTarget {
+        id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
+        name: string;
+        title?: string;
+        cloud?: AppCloud;
+        simulator?: AppSimulator;
+        blocksprj: ProjectTemplate;
+        tsprj: ProjectTemplate;
+        compile: CompileTarget;
+        serial?: AppSerial;
+        appTheme: AppTheme;
+        compileService?: {
+            gittag: string;
+            serviceId: string;
+        }
+    }
+
+    export interface TargetBundle extends AppTarget {
         bundledpkgs: U.Map<U.Map<string>>;
         bundleddirs: string[];
-        corepkg: string;
-        appTheme: AppTheme;
         versions: TargetVersions;
     }
 
@@ -89,7 +106,6 @@ namespace ks {
         testFiles?: string[];
         public?: boolean;
         binaryonly?: boolean;
-        target?: AppTarget;
         microbit?: ts.ks.MicrobitConfig;
         card?: CodeCard;
     }
@@ -132,26 +148,13 @@ namespace ks {
         autoRun?: boolean;
     }
 
-    export interface AppTarget {
-        id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
-        name: string;
-        title?: string;
-        cloud?: AppCloud;
-        simulator?: AppSimulator;
-        blocksprj: ProjectTemplate;
-        tsprj: ProjectTemplate;
-        compile: CompileTarget;
-        serial?: AppSerial;
-        compileService?: {
-            gittag: string;
-            serviceId: string;
-        }
-    }
-
     export interface ICompilationOptions {
 
     }
 
+    export function getEmbeddedScript(id: string): Util.StringMap<string> {
+        return U.lookup(appTarget.bundledpkgs || {}, id)
+    }
 
     export class Package {
         public config: PackageConfig;
@@ -200,8 +203,10 @@ namespace ks {
 
         private resolveVersionAsync() {
             let v = this._verspec
-
-            if (!v || v == "*")
+            
+            if (getEmbeddedScript(this.id)) {
+                this.resolvedVersion = v = "embed:" + this.id
+            } else if (!v || v == "*")
                 return this.host().resolveVersionAsync(this).then(id => {
                     if (!/:/.test(id)) id = "pub:" + id
                     return (this.resolvedVersion = id);
@@ -300,25 +305,6 @@ namespace ks {
             this.deps[this.id] = this;
         }
 
-        getTarget(): AppTarget {
-            let trg: AppTarget = undefined
-            let prevId = ""
-            U.iterStringMap(this.deps, (id, pkg) => {
-                if (pkg.config && pkg.config.target) {
-                    if (trg && trg.id != pkg.config.target.id) {
-                        U.userError(U.lf("package target mismatch, {0} -> {1} and {2} -> {3}", prevId, trg, id, pkg.config.target))
-                    } else {
-                        trg = pkg.config.target
-                        prevId = id
-                    }
-                }
-            })
-
-            if (!trg)
-                U.userError(U.lf("target not specified in any dependency"))
-            return trg
-        }
-
         installAllAsync() {
             return this.loadAsync(true)
         }
@@ -347,7 +333,7 @@ namespace ks {
             return ids.map(id => this.resolveDep(id))
         }
 
-        getTargetOptions(): CompileTarget { return U.clone(this.getTarget().compile); }
+        getTargetOptions(): CompileTarget { return U.clone(appTarget.compile); }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
             let opts: ts.ks.CompileOptions = {
@@ -392,7 +378,7 @@ namespace ks {
                             comment: this.config.description,
                             status: "unpublished",
                             scriptId: this.config.installedVersion,
-                            cloudId: "ks/" + this.getTarget().id,
+                            cloudId: "ks/" + appTarget.id,
                             editor: U.lookup(files, "main.blocks") ? "blocksprj" : "tsprj"
                         })
                         let programText = JSON.stringify(files)
@@ -534,7 +520,7 @@ namespace ks {
                         ishidden: false,
                         userplatform: ["ks"],
                         editor: javaScriptProjectName,
-                        target: this.getTarget().id,
+                        target: appTarget.id,
                         text: text
                     }
                     info(`publishing script; ${text.length} bytes; target=${scrReq.target}`)

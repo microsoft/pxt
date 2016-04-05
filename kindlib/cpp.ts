@@ -111,7 +111,7 @@ namespace ks.cpp {
         let shimsDTS = nsWriter("declare namespace")
         let enumsDTS = nsWriter("declare namespace")
 
-        let compileService = mainPkg.getTarget().compileService;
+        let compileService = appTarget.compileService;
         if (!compileService)
             compileService = {
                 gittag: "none",

@@ -161,8 +161,7 @@ export function uploadAsync(...args: string[]) {
         args.shift()
     }
 
-    let appTarget = nodeutil.getWebTarget()
-    ptrPrefix = "/" + appTarget.id
+    ptrPrefix = "/" + ks.appTarget.id
 
     let files = args.map(a => {
         if (U.startsWith(a, "docs/")) return a.slice(4)

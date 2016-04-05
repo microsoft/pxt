@@ -13,13 +13,6 @@ namespace ks.runner {
         code?: string;
     }
 
-    export var appTarget: ks.AppTarget;
-    export var targetBundle: ks.TargetBundle;
-
-    function getEmbeddedScript(id: string): Util.StringMap<string> {
-        return Util.lookup(targetBundle.bundledpkgs, id)
-    }
-
     class EditorPackage {
         files: Util.StringMap<string> = {};
         id: string;
@@ -93,8 +86,6 @@ namespace ks.runner {
         }
 
         resolveVersionAsync(pkg: ks.Package) {
-            if (getEmbeddedScript(pkg.id))
-                return Promise.resolve("embed:" + pkg.id)
             return Cloud.privateGetAsync(ks.pkgPrefix + pkg.id)
                 .then(r => {
                     let id = (r || {})["scriptid"]
@@ -132,14 +123,8 @@ namespace ks.runner {
         return Util.updateLocalizationAsync(options.appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
             .then(() => Util.httpGetJsonAsync(options.simCdnRoot + "target.json"))
             .then((trgbundle: ks.TargetBundle) => {
-                let cfg: ks.PackageConfig = JSON.parse(trgbundle.bundledpkgs[trgbundle.corepkg][ks.configName])
-                appTarget = cfg.target
-                targetBundle = trgbundle;
-            })
-            .then(() => {
+                ks.appTarget = trgbundle
                 mainPkg = new ks.MainPackage(new Host());
-            })
-            .then(() => {
             })
     }
 
