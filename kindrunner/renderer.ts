@@ -175,6 +175,7 @@ namespace ks.runner {
                 // TODO support statements
             })
 
+            if (options.snippetReplaceParent) c = c.parent();
             c.replaceWith(ul)
         })
     }
