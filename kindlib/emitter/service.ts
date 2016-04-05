@@ -76,10 +76,11 @@ namespace ts.ks {
             return `"${cursorMarker}"`
         }
         let si = apis ? Util.lookup(apis.byQName, p.type) : undefined;
+        console.log(`${p.type} -> ${JSON.stringify(si)}`)
         if (si && si.kind == SymbolKind.Enum) {
             let en = Util.values(apis.byQName).filter(e => e.namespace == p.type)[0]
             if (en)
-                return si.namespace + "." + si.name;
+                return en.namespace + "." + en.name;
         }
         let m = /^\((.*)\) => (.*)$/.exec(p.type)
         if (m)
