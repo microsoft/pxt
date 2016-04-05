@@ -1446,6 +1446,7 @@ export function mainCli(targetDir: string) {
 
     if (!targetDir) {
         console.error("Please upgrade your kindscript-cli.")
+        console.error("   npm update -g kindscript-cli")
         process.exit(30)
     }
 
