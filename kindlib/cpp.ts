@@ -118,7 +118,12 @@ namespace ks.cpp {
                 serviceId: "nocompile"
             }
 
-        let enumVals: U.Map<string> = {}
+        let enumVals: U.Map<string> = {
+            "true": "1",
+            "false": "0",
+            "null": "0",
+            "NULL": "0",
+        }
 
         // we sometimes append _ to C++ names to avoid name clashes
         function toJs(name: string) {
@@ -310,7 +315,7 @@ namespace ks.cpp {
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         s = s.trim()
-                        let m = /(.*)=\s*(-?\d+)$/.exec(s)
+                        let m = /(.*)=\s*(-?\w+)$/.exec(s)
                         let defl = ""
                         let qm = ""
                         if (m) {
@@ -328,6 +333,7 @@ namespace ks.cpp {
 
                         if (parsedAttrs.paramDefl[argName]) {
                             defl = parsedAttrs.paramDefl[argName]
+                            qm = "?"
                         }
 
                         let numVal = defl ? U.lookup(enumVals, defl) : null
