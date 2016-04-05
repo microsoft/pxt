@@ -593,6 +593,7 @@ function travisInfo() {
 function buildTargetCoreAsync() {
     let cfg = readLocalKindTarget()
     cfg.bundledpkgs = {}
+    ks.appTarget = cfg;
     let statFiles: U.Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
     console.log("building target.json...")
@@ -715,6 +716,8 @@ let execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Pr
 let readDirAsync = Promise.promisify(fs.readdir)
 let statAsync = Promise.promisify(fs.stat)
 
+let commonfiles: U.Map<string> = {};
+
 class Host
     implements ks.Host {
     resolve(module: ks.Package, filename: string) {
@@ -728,6 +731,9 @@ class Host
     }
 
     readFile(module: ks.Package, filename: string): string {
+        let commonFile = U.lookup(commonfiles, filename)
+        if (commonFile != null) return commonFile;
+
         let resolved = this.resolve(module, filename)
         try {
             return fs.readFileSync(resolved, "utf8")
@@ -1229,6 +1235,7 @@ function testForBuildTargetAsync() {
     let opts: ts.ks.CompileOptions
     return mainPkg.loadAsync()
         .then(() => {
+            copyCommonFiles();
             let target = mainPkg.getTargetOptions()
             if (target.hasHex)
                 target.isNative = true
@@ -1247,11 +1254,20 @@ function testForBuildTargetAsync() {
         })
 }
 
+function copyCommonFiles() {
+    for (let f of mainPkg.getFiles()) {
+        if (U.lookup(commonfiles, f)) {
+            mainPkg.host().writeFile(mainPkg, "built/" + f, commonfiles[f])
+        }
+    }
+}
+
 function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
     return mainPkg.loadAsync()
         .then(() => {
             buildDalConst();
+            copyCommonFiles();
             let target = mainPkg.getTargetOptions()
             if (target.hasHex && mode != BuildOption.Run)
                 target.isNative = true
@@ -1424,7 +1440,7 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-export function mainCli(targetDir:string) {
+export function mainCli(targetDir: string) {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -1432,13 +1448,15 @@ export function mainCli(targetDir:string) {
         console.error("Please upgrade your kindscript-cli.")
         process.exit(30)
     }
-    
+
     nodeutil.targetDir = targetDir;
-    
+
     let trg = nodeutil.getKindTarget()
     ks.appTarget = trg;
     console.log(`Using KindScript/${trg.id} from ${targetDir}.`)
-    
+
+    commonfiles = readJson(__dirname + "/ks-common.json")
+
     let args = process.argv.slice(2)
 
     initConfig();

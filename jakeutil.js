@@ -47,9 +47,9 @@ function expand(dir, ext) {
     return res
 }
 
-function catFiles(out, files, pref) {
+function catFiles(out, files, pref, addDep) {
     if (pref == null) pref = '"use strict";'
-    file(out, files, function () {
+    file(out, files.concat(addDep || []), function () {
         console.log("[cat] " + out + " <- " + files.join(" "))
         let cont = files.map(f => fs.readFileSync(f, "utf8").replace(/\r/g, ""))
         cont.unshift(pref)
