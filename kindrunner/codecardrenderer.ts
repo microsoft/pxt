@@ -37,6 +37,7 @@ namespace ks.docs.codeCard {
         }
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/,''))
             : undefined;
+        const link = card.link && url;
         const div = (parent : HTMLElement, cls : string, tag = "div", text : string|number = '') : HTMLElement => {
             let d = document.createElement(tag);
             if (cls)
@@ -55,7 +56,8 @@ namespace ks.docs.codeCard {
             return d;
         }        
         
-        let r = div(null, 'ui card ' + (card.color || ''));
+        let r = div(null, 'ui card ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
+        if (link) (r as HTMLAnchorElement).href = url;
         if (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
             let hr = div(h, "right floated meta")
@@ -106,10 +108,10 @@ namespace ks.docs.codeCard {
             m.appendChild(document.createTextNode(ks.Util.timeSince(card.time)));
         }
         if (card.description) {
-            let descr = div(ct, 'ui description');
-            descr.appendChild(document.createTextNode(card.description));
+            let descr = div(ct, 'ui description');            
+            descr.appendChild(document.createTextNode(card.description.split('.')[0] + '.'));
         }
-        if (card.url) {
+        if (url && !link) {
             let extra = div(r, "ui extra content" + (card.responsive ? " tall desktop only" : ""));
             a(extra, url, card.url, '');            
         }

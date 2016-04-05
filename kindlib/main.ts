@@ -52,6 +52,7 @@ namespace ks {
         typeScript?: string;
         header?: string;
         time?: number;
+        link?: boolean;
         url?: string;
         responsive?: boolean;
 

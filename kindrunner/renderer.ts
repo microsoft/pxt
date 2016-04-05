@@ -173,12 +173,14 @@ namespace ks.runner {
                             name: nsi.name,
                             url: nsi.attributes.help || ("reference/" + nsi.name),
                             description: nsi.attributes.jsDoc,
-                            color: nsi.attributes.color,
-                            blocksXml: block && block.codeCard ? block.codeCard.blocksXml : undefined
+                            blocksXml: block && block.codeCard ? block.codeCard.blocksXml : undefined,
+                            link: true
                         })
                     } else {
                         if (block) {
-                            addItem(block.codeCard);
+                            let card = U.clone(block.codeCard);
+                            card.link = true;
+                            addItem(card);
                         }
                     }
                 }
@@ -235,11 +237,12 @@ namespace ks.runner {
             });
         }
 
-        return renderNextCodeCardAsync(options.codeCardClass)
-            .then(() => renderSignaturesAsync(options))
-            .then(() => renderSnippetsAsync(options))
-            .then(() => renderBlocksAsync(options))
+        return Promise.resolve()
             .then(() => renderLinksAsync(options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options.namespacesClass, options.snippetReplaceParent, true))
+            .then(() => renderSignaturesAsync(options))
+            .then(() => renderNextCodeCardAsync(options.codeCardClass))
+            .then(() => renderSnippetsAsync(options))
+            .then(() => renderBlocksAsync(options));
     }
 }
