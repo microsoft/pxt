@@ -80,8 +80,13 @@ namespace ks.docs.codeCard {
         
         if (card.blocksXml) {
             let svg = ks.blocks.render(card.blocksXml, { emPixels: 14, align: true });
-            let holder = div(img, ''); holder.setAttribute('style', 'width:100%; min-height:10em'); 
-            holder.appendChild(svg[0]);
+            if (!svg) {
+                console.error("failed to render blocks");
+                console.log(card.blocksXml);
+            } else {
+                let holder = div(img, ''); holder.setAttribute('style', 'width:100%; min-height:10em'); 
+                holder.appendChild(svg[0]);
+            }
         }
         
         if (card.typeScript) {

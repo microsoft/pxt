@@ -6,6 +6,7 @@ namespace ks.runner {
         blocksClass?: string;
         simulatorClass?: string;
         linksClass?: string;
+        namespacesClass?: string;
         codeCardClass?: string;
         snippetReplaceParent?: boolean;
         simulator?: boolean;
@@ -148,17 +149,16 @@ namespace ks.runner {
         });
     }
 
-    function renderLinksAsync(options: ClientRenderOptions): Promise<void> {
-        return renderNextSnippetAsync(options.linksClass, (c, r) => {
+    function renderLinksAsync(cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
+        return renderNextSnippetAsync(cls, (c, r) => {
             let cjs = r.compileJS;
             if (!cjs) return;
             let file = r.compileJS.ast.getSourceFile("main.ts");
             let stmts = file.statements;
             let ul = $('<div />').addClass('ui cards');
 
-            let addItem = (card : ks.CodeCard) => {
+            let addItem = (card: ks.CodeCard) => {
                 if (!card) return;
-
                 ul.append(ks.docs.codeCard.render(card));
             }
 
@@ -166,16 +166,26 @@ namespace ks.runner {
                 let info = decompileCallInfo(stmt);
                 if (info) {
                     let block = Blockly.Blocks[info.attrs.blockId];
-                    if (block) {
-                        addItem(block.codeCard);
+                    if (ns) {
+                        let ii = r.compileBlocks.blocksInfo.apis.byQName[info.qName];
+                        let nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
+                        addItem({
+                            name: nsi.name,
+                            url: nsi.attributes.help || ("reference/" + nsi.name),
+                            description: nsi.attributes.jsDoc,
+                            color: nsi.attributes.color,
+                            blocksXml: block && block.codeCard ? block.codeCard.blocksXml : undefined
+                        })
+                    } else {
+                        if (block) {
+                            addItem(block.codeCard);
+                        }
                     }
                 }
-                    
-                
                 // TODO support statements
             })
 
-            if (options.snippetReplaceParent) c = c.parent();
+            if (replaceParent) c = c.parent();
             c.replaceWith(ul)
         })
     }
@@ -229,6 +239,7 @@ namespace ks.runner {
             .then(() => renderSignaturesAsync(options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
-            .then(() => renderLinksAsync(options))
+            .then(() => renderLinksAsync(options.linksClass, options.snippetReplaceParent, false))
+            .then(() => renderLinksAsync(options.namespacesClass, options.snippetReplaceParent, true))
     }
 }
