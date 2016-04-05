@@ -56,7 +56,6 @@ namespace ts.ks {
     }
 
     export const placeholderChar = "◊";
-    export const cursorMarker = "\uE108"
     export const defaultImgLit = `
 . . . . .
 . . . . .
@@ -65,7 +64,7 @@ namespace ts.ks {
 . . . . .
 `
 
-    function renderDefaultVal(p: ts.ks.ParameterDesc, imgLit: boolean): string {
+    function renderDefaultVal(apis: ts.ks.ApisInfo, p: ts.ks.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
         if (p.defaults) return p.defaults[0]
         if (p.type == "number") return "0"
@@ -76,9 +75,9 @@ namespace ts.ks {
             }
             return `"${cursorMarker}"`
         }
-        let si = this.lookupInfo(p.type)
+        let si = apis ? Util.lookup(apis.byQName, p.type) : undefined;
         if (si && si.kind == SymbolKind.Enum) {
-            let en = Util.values(this.state.cache.apisInfo.byQName).filter(e => e.namespace == p.type)[0]
+            let en = Util.values(apis.byQName).filter(e => e.namespace == p.type)[0]
             if (en)
                 return si.namespace + "." + si.name;
         }
@@ -88,14 +87,12 @@ namespace ts.ks {
         return placeholderChar;
     }
 
-
-
-    export function renderParameters(si: SymbolInfo): string {
+    export function renderParameters(apis: ts.ks.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
         if (si.parameters) {
             let imgLit = !!si.attributes.imageLiteral
             return "(" + si.parameters
                 .filter(p => !p.initializer)
-                .map(p => renderDefaultVal(p, imgLit)).join(", ") + ")"
+                .map(p => renderDefaultVal(apis, p, imgLit, cursorMarker)).join(", ") + ")"
         }
         return '';
     }
@@ -242,12 +239,12 @@ namespace ts.ks {
             writeNs(`${ns.attributes.jsDoc}`)
             writeNs('')
 
-            writeRef('')
-            writeRef('```cards')
+            writeNs('')
+            writeNs('```cards')
             for (let si of syms) {
-                writeNs(`${ns.namespace}.${ns.name}${renderParameters(si)};`);
+                writeNs(`${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`);
             }
-            writeRef('')
+            writeNs('```')
 
             files[ns.name + '.md'] = nsmd;
         }
