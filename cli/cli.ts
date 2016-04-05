@@ -1293,8 +1293,10 @@ function buildCoreAsync(mode: BuildOption) {
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.ks.getApiInfo(res.ast)
                 let md = ts.ks.genMarkdown(apiInfo)
-                mainPkg.host().writeFile(mainPkg, "built/reference.md", md)
-                console.log(`Wrote built/reference.md; size=` + md.length)
+                for(let fn in md) {
+                    mainPkg.host().writeFile(mainPkg, "built/" + fn, md[fn])
+                    console.log(`Wrote built/${fn}; size=${md[fn].length}`)                    
+                }
                 return null
             } else if (mode == BuildOption.Deploy) {
                 if (!deployCoreAsync) {

@@ -40,15 +40,6 @@ var acequire = (ace as any).acequire;
 var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
-var cursorMarker = "\uE108"
-var placeholderChar = "◊";
-var defaultImgLit = `
-. . . . .
-. . . . .
-. . # . .
-. . . . .
-. . . . .
-`
 var maxCompleteItems = 20;
 
 export interface CompletionEntry {
@@ -102,20 +93,20 @@ function mkSnippet(name: string, desc: string, code: string) {
     return e
 }
 
-let block = `{\n ${cursorMarker}\n}`
+let block = `{\n ${ts.ks.cursorMarker}\n}`
 // TODO auto-rename of locals
 let snippets = [
-    mkSnippet("if", "Do something depending on condition", `if (${cursorMarker}) ${block}`),
-    mkSnippet("if else", "Do something or something else depending on condition", `if (${cursorMarker}) ${block} else ${block}`),
+    mkSnippet("if", "Do something depending on condition", `if (${ts.ks.cursorMarker}) ${block}`),
+    mkSnippet("if else", "Do something or something else depending on condition", `if (${ts.ks.cursorMarker}) ${block} else ${block}`),
     mkSnippet("else", "What to do if the condition is not satisfied", `else ${block}`),
-    mkSnippet("else if", "Check the alternative condition", `else if (${cursorMarker}) ${block}`),
-    mkSnippet("while", "Loop while condition is true", `while (true) {\n ${cursorMarker}\nbasic.pause(20)\n}`),
+    mkSnippet("else if", "Check the alternative condition", `else if (${ts.ks.cursorMarker}) ${block}`),
+    mkSnippet("while", "Loop while condition is true", `while (true) {\n ${ts.ks.cursorMarker}\nbasic.pause(20)\n}`),
     mkSnippet("for", "Repeat a given number of times", `for (let i = 0; i < 5; i++) ${block}`),
     mkSnippet("function", "Define a new procedure", `function doSomething() ${block}`),
     mkSnippet("class", "Define a new object type", `class Thing ${block}`),
-    mkSnippet("let", "Define a new variable", `let x = ${cursorMarker}`),
+    mkSnippet("let", "Define a new variable", `let x = ${ts.ks.cursorMarker}`),
     // TODO proper text formatting for switch missing
-    mkSnippet("switch", "Branch on a number or enum", `switch (${cursorMarker}) {\ncase 0:\nbreak\n}`),
+    mkSnippet("switch", "Branch on a number or enum", `switch (${ts.ks.cursorMarker}) {\ncase 0:\nbreak\n}`),
     // for each not supported at the moment in the compiler
     //mkSnippet("for each", "Do something for all elements of an array", `for (let e of ${placeholderChar}) ${block}`),
 ]
@@ -344,35 +335,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         } else {
             if (si.kind == SK.None) return
         }
-
-        let imgLit = !!si.attributes.imageLiteral
-
-        let defaultVal = (p: ts.ks.ParameterDesc) => {
-            if (p.initializer) return p.initializer
-            if (p.defaults) return p.defaults[0]
-            if (p.type == "number") return "0"
-            else if (p.type == "string") {
-                if (imgLit) {
-                    imgLit = false
-                    return "`" + defaultImgLit + cursorMarker + "`";
-                }
-                return `"${cursorMarker}"`
-            }
-            let si = this.lookupInfo(p.type)
-            if (si && si.kind == SK.Enum) {
-                let en = Util.values(this.state.cache.apisInfo.byQName).filter(e => e.namespace == p.type)[0]
-                if (en)
-                    return en.namespace + "." + en.name;
-            }
-            let m = /^\((.*)\) => (.*)$/.exec(p.type)
-            if (m)
-                return `(${m[1]}) => {\n    ${cursorMarker}\n}`
-            return placeholderChar;
-        }
-
-        if (si.parameters) {
-            text += "(" + si.parameters.filter(p => !p.initializer).map(defaultVal).join(", ") + ")"
-        }
+        
+        text += ts.ks.renderParameters(si);
 
         editor.session.replace(this.completionRange, text);
         this.detach()
@@ -449,7 +413,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 let snip = e.snippet
                 if (Util.startsWith(snip, e.name)) snip = snip.slice(e.name.length)
                 else snip = " " + snip
-                snip = Util.replaceAll(snip, cursorMarker, "")
+                snip = Util.replaceAll(snip, ts.ks.cursorMarker, "")
                 return snip.replace(/\s+/g, " ")
             }
             if (si.retType && si.retType != "void")
@@ -561,10 +525,10 @@ export class Editor extends srceditor.Editor {
         }
 
         let data = this.textAndPosition(this.editor.getCursorPosition())
-        let cursorOverride = data.programText.indexOf(cursorMarker)
+        let cursorOverride = data.programText.indexOf(ts.ks.cursorMarker)
         if (cursorOverride >= 0) {
             isAutomatic = false
-            data.programText = Util.replaceAll(data.programText, cursorMarker, "")
+            data.programText = Util.replaceAll(data.programText, ts.ks.cursorMarker, "")
             data.charNo = cursorOverride
         }
         let tmp = ts.ks.format(data.programText, data.charNo)

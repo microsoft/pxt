@@ -55,6 +55,51 @@ namespace ts.ks {
         isTypeLocation: boolean;
     }
 
+    export const placeholderChar = "◊";
+    export const cursorMarker = "\uE108"
+    export const defaultImgLit = `
+. . . . .
+. . . . .
+. . # . .
+. . . . .
+. . . . .
+`
+
+    function renderDefaultVal(p: ts.ks.ParameterDesc, imgLit: boolean): string {
+        if (p.initializer) return p.initializer
+        if (p.defaults) return p.defaults[0]
+        if (p.type == "number") return "0"
+        else if (p.type == "string") {
+            if (imgLit) {
+                imgLit = false
+                return "`" + defaultImgLit + cursorMarker + "`";
+            }
+            return `"${cursorMarker}"`
+        }
+        let si = this.lookupInfo(p.type)
+        if (si && si.kind == SymbolKind.Enum) {
+            let en = Util.values(this.state.cache.apisInfo.byQName).filter(e => e.namespace == p.type)[0]
+            if (en)
+                return si.namespace + "." + si.name;
+        }
+        let m = /^\((.*)\) => (.*)$/.exec(p.type)
+        if (m)
+            return `(${m[1]}) => {\n    ${cursorMarker}\n}`
+        return placeholderChar;
+    }
+
+
+
+    export function renderParameters(si: SymbolInfo): string {
+        if (si.parameters) {
+            let imgLit = !!si.attributes.imageLiteral
+            return "(" + si.parameters
+                .filter(p => !p.initializer)
+                .map(p => renderDefaultVal(p, imgLit)).join(", ") + ")"
+        }
+        return '';
+    }
+
     function getSymbolKind(node: Node) {
         switch (node.kind) {
             case SK.MethodDeclaration:
@@ -166,46 +211,63 @@ namespace ts.ks {
         }
     }
 
-    export function genMarkdown(apiInfo: ApisInfo) {        
+    export function genMarkdown(apiInfo: ApisInfo): U.Map<string> {
+        let files: U.Map<string> = {};
         let infos = Util.values(apiInfo.byQName);
         let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
         namespaces.sort(compareSymbol)
-        let markdown = ""
-        let write = (s: string) => markdown += s + "\n"
-        write("# Reference")
-        write('')
+
+        let reference = ""
+        let writeRef = (s: string) => reference += s + "\n"
+        writeRef("# Reference")
+        writeRef('')
         for (let ns of namespaces) {
             let syms = infos
                 .filter(si => si.namespace == ns.name && !!si.attributes.help)
                 .sort(compareSymbol)
             if (!syms.length) continue;
-            
-            write(`## ${capitalize(ns.name)}`)
-            write('')
-            write(`${ns.attributes.jsDoc}`)
-            write('')
-            for (let si of syms) {
-                let url = si.attributes.help || `/reference/${urlify(si.namespace)}/${urlify(si.name)}`; 
-                write(`* [${si.name}](${url}): ${!hasBlock(si) ? "(JavaScript only)" : ""} ${si.attributes.jsDoc}`)
-                write('')
+
+            let nsmd = "";
+            let writeNs = (s: string) => {
+                nsmd += s + "\n"
             }
-            write('')
+
+            writeRef(`## [${capitalize(ns.name)}](/reference/${ns.name})`)
+            writeRef('')
+            writeRef(`${ns.attributes.jsDoc}`)
+            writeRef('')
+
+            writeNs(`# ${capitalize(ns.name)}`)
+            writeNs('')
+            writeNs(`${ns.attributes.jsDoc}`)
+            writeNs('')
+
+            writeRef('')
+            writeRef('```cards')
+            for (let si of syms) {
+                writeNs(`${ns.namespace}.${ns.name}${renderParameters(si)};`);
+            }
+            writeRef('')
+
+            files[ns.name + '.md'] = nsmd;
         }
-        return markdown;
-        
-        function hasBlock(sym : SymbolInfo) : boolean {
+
+        files["reference.md"] = reference;
+        return files;
+
+        function hasBlock(sym: SymbolInfo): boolean {
             return !!sym.attributes.block && !!sym.attributes.blockId;
         }
-        
+
         function capitalize(name: string) {
             return name[0].toUpperCase() + name.slice(1);
         }
-        
+
         function urlify(name: string) {
             return name.replace(/[A-Z]/g, '-$&').toLowerCase();
         }
-        
-        function compareSymbol(l : SymbolInfo, r: SymbolInfo) : number {
+
+        function compareSymbol(l: SymbolInfo, r: SymbolInfo): number {
             let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
             if (c) return c;
             c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
@@ -380,7 +442,7 @@ namespace ts.ks.service {
     function fileDiags(fn: string) {
         if (!/\.ts$/.test(fn))
             return []
-            
+
         let d = service.getSyntacticDiagnostics(fn)
         if (!d || !d.length)
             d = service.getSemanticDiagnostics(fn)
