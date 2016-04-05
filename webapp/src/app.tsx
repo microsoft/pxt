@@ -925,10 +925,11 @@ Ctrl+Shift+B
                                 <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
                                 {publishing ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
-                                <a href="/docs" role="menuitem" className="ui button icon" target="_blank">
-                                    <i className="help icon"></i>
-                                    <span className="ui landscape only">{lf("Help")}</span>
-                                </a>
+                            </div>
+                            <div className="ui buttons">
+                                <sui.DropdownMenu class="floating icon button" icon="help">
+                                    {targetTheme.docMenu.map(m => <div className="ui item"><a href={m.path} role="menuitem" target="_blank">{m.name}</a></div>)}
+                                </sui.DropdownMenu>
                             </div>
                         </div>
                         <div className="ui item">
