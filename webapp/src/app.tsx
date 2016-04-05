@@ -927,7 +927,7 @@ Ctrl+Shift+B
                                 {publishing ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                 <a href="/docs" role="menuitem" className="ui button icon" target="_blank">
                                     <i className="help icon"></i>
-                                    <span className="ui landscape only">{lf("Docs")}</span>
+                                    <span className="ui landscape only">{lf("Help")}</span>
                                 </a>
                             </div>
                         </div>
