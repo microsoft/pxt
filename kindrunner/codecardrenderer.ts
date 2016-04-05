@@ -55,7 +55,7 @@ namespace ks.docs.codeCard {
             return d;
         }        
         
-        let r = div(null, 'ui card ' + card.color);
+        let r = div(null, 'ui card ' + (card.color || ''));
         if (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
             let hr = div(h, "right floated meta")
