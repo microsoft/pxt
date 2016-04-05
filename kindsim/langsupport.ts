@@ -209,15 +209,15 @@ namespace ks.rt {
         export function debugMemLeaks() {
             dumpLivePointers();
         }
-        
+
         export function allocate() {
             U.userError("allocate() called in simulator")
         }
-        
+
         export function templateHash() {
             return 0;
         }
-        
+
         export function programHash() {
             return 0;
         }
@@ -323,6 +323,17 @@ namespace ks.rt {
 
         export function runInBackground(a: RefAction) {
             runtime.runFiberAsync(a).done()
+        }
+
+        export function forever(a: RefAction) {
+            function loop() {
+                runtime.runFiberAsync(a)
+                    .then(() => Promise.delay(20))
+                    .then(loop)
+                    .done()
+            }
+            incr(a)
+            loop()
         }
     }
 
