@@ -236,27 +236,27 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
 
         return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Share Project") }>
-                <div className={`ui ${formState} form`}>
-                    <div className="ui warning message">
-                        <sui.Button icon="cloud" class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
-                        <div className="header">{lf("Almost there!") }</div>
-                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") }</p>
-                    </div>
-                    <div className="ui success message">
-                        <div className="header">{lf("Your project is ready!") }</div>
-                        <p>{lf("Share this URL or copy the HTML to embed your project in web pages.") }</p>
-                    </div>
-                    { url ? 
+            <div className={`ui ${formState} form`}>
+                <div className="ui warning message">
+                    <sui.Button icon="cloud" class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
+                    <div className="header">{lf("Almost there!") }</div>
+                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") }</p>
+                </div>
+                <div className="ui success message">
+                    <div className="header">{lf("Your project is ready!") }</div>
+                    <p>{lf("Share this URL or copy the HTML to embed your project in web pages.") }</p>
+                </div>
+                { url ?
                     <sui.Field label={lf("URL") }>
-                        <p>{lf("Share this link to access your project.")}</p>
+                        <p>{lf("Share this link to access your project.") }</p>
                         <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
-                    { embed ?
+                { embed ?
                     <sui.Field label={lf("Embed This Project") }>
-                        <p>{lf("Embed this project in your website or blog by pasting this code into your web page.")}</p>
+                        <p>{lf("Embed this project in your website or blog by pasting this code into your web page.") }</p>
                         <sui.Input class="mini" readOnly={true} lines={3} value={embed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
-                </div>
+            </div>
         </sui.Modal>
     }
 }
@@ -413,7 +413,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (ks.appTarget.simulator && ks.appTarget.simulator.autoRun) {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
-                    if (output && !output.numDiagnosticsOverride 
+                    if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.debug
                         && (simulator.driver.state == ks.rt.SimulatorState.Running || simulator.driver.state == ks.rt.SimulatorState.Unloaded))
                         this.runSimulator({ background: true });
@@ -927,7 +927,7 @@ Ctrl+Shift+B
                                 {publishing ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                 <a href="/docs" role="menuitem" className="ui button icon" target="_blank">
                                     <i className="help icon"></i>
-                                    <span className="ui landscape only">{lf("Docs")}</span>
+                                    <span className="ui landscape only">{lf("Docs") }</span>
                                 </a>
                             </div>
                         </div>
@@ -938,8 +938,8 @@ Ctrl+Shift+B
                                     placeholder={lf("Pick a name...") }
                                     value={this.state.header ? this.state.header.name : ''}
                                     onChange={(e) => this.updateHeaderName((e.target as any).value) }>
-                                  <i className="write icon grey"></i>
                                 </input>
+                                <i className="write icon grey"></i>
                             </div>
                         </div>
                         { workspaces || targetTheme.rightLogo ?
