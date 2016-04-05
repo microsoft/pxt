@@ -483,7 +483,6 @@ namespace ks.blocks {
     var pNumber = mkPoint("number");
     var pBoolean = mkPoint("boolean");
     var pString = mkPoint("string");
-    var pImage = mkPoint("input.LedImage");
     var pUnit = mkPoint("void");
 
     function ground(t?: string): Point {
@@ -491,11 +490,10 @@ namespace ks.blocks {
             case "number": return pNumber;
             case "boolean": return pBoolean;
             case "string": return pString;
-            case "input.LedImage": return pImage;
             case "void": return pUnit;
             default:
                 // Unification variable.
-                return mkPoint(null);
+                return mkPoint(t);
         }
     }
 
