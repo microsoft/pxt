@@ -83,6 +83,12 @@ namespace ks.docs.codeCard {
             img.appendChild(svg[0]);          
         }
         
+        if (card.typeScript) {
+            let pre = document.createElement("pre");
+            pre.appendChild(document.createTextNode(card.typeScript));
+            img.appendChild(pre);
+        }
+        
         let ct = div(r, "ui content");
         if (card.name) {
             if (url) a(ct, url, card.name, 'header');

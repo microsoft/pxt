@@ -49,6 +49,7 @@ namespace ks {
         description?: string;
         promoUrl?: string;
         blocksXml?: string;
+        typeScript?: string;
         header?: string;
         time?: number;
         url?: string;

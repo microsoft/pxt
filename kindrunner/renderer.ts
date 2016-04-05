@@ -109,28 +109,34 @@ namespace ks.runner {
         });
     }
 
+    function decompileCallInfo(stmt: ts.Statement): ts.ks.CallInfo {
+        if (!stmt || stmt.kind != ts.SyntaxKind.ExpressionStatement)
+            return null;
+
+        let estmt = stmt as ts.ExpressionStatement;
+        if (!estmt.expression || estmt.expression.kind != ts.SyntaxKind.CallExpression)
+            return null;
+
+        let call = estmt.expression as ts.CallExpression;
+        let info = (<any>call).callInfo as ts.ks.CallInfo;
+
+        return info;
+    }
+
     function renderSignaturesAsync(options: ClientRenderOptions): Promise<void> {
         return renderNextSnippetAsync(options.signatureClass, (c, r) => {
             let cjs = r.compileJS;
             if (!cjs) return;
             let file = r.compileJS.ast.getSourceFile("main.ts");
-            let stmts = file.statements;
-            let stmt = stmts[0] as ts.ExpressionStatement;
-            if (!stmt) {
-                console.error('missing statement')
-                return;
-            }
+            let info = decompileCallInfo(file.statements[0]);
+            if (!info) return;
 
             let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
-            let call = stmt.expression as ts.CallExpression;
-            let info = (<any>call).callInfo as ts.ks.CallInfo
-            if (info) {
-                let sig = info.decl.getText().replace(/^export/, '');
-                sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
-                let js = $('<code/>').text(sig)
-                if (options.snippetReplaceParent) c = c.parent();
-                fillWithWidget(c, js, s, false);
-            }
+            let sig = info.decl.getText().replace(/^export/, '');
+            sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
+            let js = $('<code/>').text(sig)
+            if (options.snippetReplaceParent) c = c.parent();
+            fillWithWidget(c, js, s, false);
         });
     }
 
@@ -148,49 +154,37 @@ namespace ks.runner {
             if (!cjs) return;
             let file = r.compileJS.ast.getSourceFile("main.ts");
             let stmts = file.statements;
-            let ul = $('<ul></ul>');
+            let ul = $('<div />').addClass('ui cards');
 
-            let addItem = (name: string, url: string) => {
-                if (!name || !url) return;
+            let addItem = (card : ks.CodeCard) => {
+                if (!card) return;
 
-                let $li = $('<li><a></a></li>')
-                $li.find('a')
-                    .text(name)
-                    .attr("href", '/reference/' + url);
-                ul.append($li);
+                ul.append(ks.docs.codeCard.render(card));
             }
 
             stmts.forEach(stmt => {
-                switch (stmt.kind) {
-                    case ts.SyntaxKind.ExpressionStatement:
-                        let estmt = stmt as ts.ExpressionStatement;
-                        let expr = estmt.expression;
-                        if (expr)
-                            switch (expr.kind) {
-                                case ts.SyntaxKind.CallExpression:
-                                    let call = expr as ts.CallExpression;
-                                    let info = (<any>call).callInfo as ts.ks.CallInfo
-                                    if (info) {
-                                        addItem(info.qName, info.attrs.help)
-                                    }
-                                    break;
-                            }
-                        break;
-                    default:
-                        console.error('unsupported statement');
+                let info = decompileCallInfo(stmt);
+                if (info) {
+                    let block = Blockly.Blocks[info.attrs.blockId];
+                    if (block) {
+                        addItem(block.codeCard);
+                    }
                 }
+                    
+                
+                // TODO support statements
             })
 
             c.replaceWith(ul)
         })
     }
-    
-    function fillCodeCardAsync(c : JQuery, card : ks.CodeCard) : Promise<void> {
+
+    function fillCodeCardAsync(c: JQuery, card: ks.CodeCard): Promise<void> {
         if (!card) return Promise.resolve();
-        
+
         let cc = ks.docs.codeCard.render(card)
         c.replaceWith(cc);
-        
+
         return Promise.resolve();
     }
 
@@ -201,16 +195,16 @@ namespace ks.runner {
         if (!$el[0]) return Promise.resolve();
 
         $el.removeClass(cls);
-        let card : ks.CodeCard;
+        let card: ks.CodeCard;
         try {
-            card = JSON.parse($el.text()) as ks.CodeCard;                                   
+            card = JSON.parse($el.text()) as ks.CodeCard;
         } catch (e) {
             console.error('error while rendering ' + $el.html())
             $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
         }
-        
+
         return fillCodeCardAsync($el, card)
-                .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));        
+            .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));
     }
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {

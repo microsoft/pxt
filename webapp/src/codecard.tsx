@@ -71,11 +71,9 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                     {card.header}
                 </div> : "" }
                 <div className={"ui image" + (card.responsive ? " tall landscape only": "")}>
-                    {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div>
-                        : card.blocksXml 
-                        ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} />
-                        : null // <simview.MicrobitBoardView key="promosim" disableTilt={true} theme={simsvg.randomTheme() } />
-                    }
+                    {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : ''}
+                    {card.blocksXml  ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : '' }
+                    {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : '' }
                 </div>
                 <div className="content">
                     {card.name ? <a href={url} target="docs" className="header">{card.name}</a> : ''}
