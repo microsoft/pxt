@@ -215,7 +215,7 @@ namespace ks.runner {
             // simulators
             $('.' + options.simulatorClass).each((i, c) => {
                 let $c = $(c);
-                let $sim = $(`<div class="ui container"><div class="ui segment">
+                let $sim = $(`<div class="ui container"><div class="ui centered card">
                     <div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;">
                     <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
                     </div>
