@@ -637,7 +637,7 @@ ${lbl}: .short 0xffff
         function emitTemplateExpression(node: TemplateExpression) {
             let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) =>
                 isEmptyStringLiteral(b) ? a :
-                    ir.rtcallMask("StringMethods::concat", 3, false, [
+                    ir.rtcallMask("String_::concat", 3, false, [
                         a,
                         emitAsString(b)
                     ])
@@ -667,10 +667,10 @@ ${lbl}: .short 0xffff
                 flag = 3;
             else if (isRef)
                 flag = 1;
-            let coll = ir.shared(ir.rtcall("ArrayImpl::mk", [ir.numlit(flag)]))
+            let coll = ir.shared(ir.rtcall("Array_::mk", [ir.numlit(flag)]))
             for (let elt of node.elements) {
                 let e = ir.shared(emitExpr(elt))
-                proc.emitExpr(ir.rtcall("ArrayImpl::push", [coll, e]))
+                proc.emitExpr(ir.rtcall("Array_::push", [coll, e]))
                 if (isRef) {
                     proc.emitExpr(ir.op(EK.Decr, [e]))
                 }
@@ -732,9 +732,9 @@ ${lbl}: .short 0xffff
 
             let indexer = ""
             if (!assign && t.flags & TypeFlags.String)
-                indexer = "StringMethods::charAt"
+                indexer = "String_::charAt"
             else if (isArrayType(t))
-                indexer = assign ? "ArrayImpl::setAt" : "ArrayImpl::getAt"
+                indexer = assign ? "Array_::setAt" : "Array_::getAt"
             else if (isInterfaceType(t)) {
                 let attrs = parseCommentsOnSymbol(t.symbol)
                 indexer = assign ? attrs.indexerSet : attrs.indexerGet                
@@ -1153,7 +1153,7 @@ ${lbl}: .short 0xffff
             let tp = typeOf(node.operand)
             if (tp.flags & TypeFlags.Boolean) {
                 if (node.operator == SK.ExclamationToken) {
-                    return rtcallMask("BooleanMethods::bang", [node.operand])
+                    return rtcallMask("Boolean_::bang", [node.operand])
                 }
             }
 
@@ -1339,8 +1339,8 @@ ${lbl}: .short 0xffff
                 case SK.PlusToken: return "thumb::adds";
                 case SK.MinusToken: return "thumb::subs";
                 // we could expose __aeabi_idiv directly...
-                case SK.SlashToken: return "NumberImpl::div";
-                case SK.PercentToken: return "NumberImpl::mod";
+                case SK.SlashToken: return "Number_::div";
+                case SK.PercentToken: return "Number_::mod";
                 case SK.AsteriskToken: return "thumb::muls";
                 case SK.AmpersandToken: return "thumb::ands";
                 case SK.BarToken: return "thumb::orrs";
@@ -1349,16 +1349,16 @@ ${lbl}: .short 0xffff
                 case SK.GreaterThanGreaterThanToken: return "thumb::asrs"
                 case SK.GreaterThanGreaterThanGreaterThanToken: return "thumb::lsrs"
                 // these could be compiled to branches butthis is more code-size efficient
-                case SK.LessThanEqualsToken: return "NumberImpl::le";
-                case SK.LessThanToken: return "NumberImpl::lt";
-                case SK.GreaterThanEqualsToken: return "NumberImpl::ge";
-                case SK.GreaterThanToken: return "NumberImpl::gt";
+                case SK.LessThanEqualsToken: return "Number_::le";
+                case SK.LessThanToken: return "Number_::lt";
+                case SK.GreaterThanEqualsToken: return "Number_::ge";
+                case SK.GreaterThanToken: return "Number_::gt";
                 case SK.EqualsEqualsToken:
                 case SK.EqualsEqualsEqualsToken:
-                    return "NumberImpl::eq";
+                    return "Number_::eq";
                 case SK.ExclamationEqualsEqualsToken:
                 case SK.ExclamationEqualsToken:
-                    return "NumberImpl::neq";
+                    return "Number_::neq";
 
                 default: return null;
             }
@@ -1387,7 +1387,7 @@ ${lbl}: .short 0xffff
 
             if (node.operatorToken.kind == SK.PlusToken) {
                 if ((lt.flags & TypeFlags.String) || (rt.flags & TypeFlags.String)) {
-                    return ir.rtcallMask("StringMethods::concat", 3, false, [
+                    return ir.rtcallMask("String_::concat", 3, false, [
                         emitAsString(node.left),
                         emitAsString(node.right)])
                 }
@@ -1397,7 +1397,7 @@ ${lbl}: .short 0xffff
                 (lt.flags & TypeFlags.String)) {
 
                 let tmp = prepForAssignment(node.left)
-                let post = ir.shared(ir.rtcallMask("StringMethods::concat", 3, false, [
+                let post = ir.shared(ir.rtcallMask("String_::concat", 3, false, [
                     tmp.left,
                     emitAsString(node.right)]))
                 emitStore(node.left, post, tmp.storeCache)
@@ -1417,7 +1417,7 @@ ${lbl}: .short 0xffff
                     case SK.ExclamationEqualsToken:
                         return ir.rtcall(
                             simpleInstruction(node.operatorToken.kind),
-                            [shim("StringMethods::compare"), ir.numlit(0)])
+                            [shim("String_::compare"), ir.numlit(0)])
                     default:
                         unhandled(node.operatorToken, "numeric operator")
                 }
@@ -1426,10 +1426,10 @@ ${lbl}: .short 0xffff
             switch (node.operatorToken.kind) {
                 case SK.EqualsEqualsToken:
                 case SK.EqualsEqualsEqualsToken:
-                    return shim("NumberImpl::eq");
+                    return shim("Number_::eq");
                 case SK.ExclamationEqualsEqualsToken:
                 case SK.ExclamationEqualsToken:
-                    return shim("NumberImpl::neq");
+                    return shim("Number_::neq");
                 case SK.BarBarToken:
                 case SK.AmpersandAmpersandToken:
                     return emitLazyBinaryExpression(node);
@@ -1445,9 +1445,9 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
             if (tp.flags & TypeFlags.Number)
-                return ir.rtcall("NumberMethods::toString", [r])
+                return ir.rtcall("Number_::toString", [r])
             else if (tp.flags & TypeFlags.Boolean)
-                return ir.rtcall("BooleanMethods::toString", [r])
+                return ir.rtcall("Boolean_::toString", [r])
             else if (tp.flags & TypeFlags.String)
                 return r // OK
             else

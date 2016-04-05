@@ -27,7 +27,7 @@ namespace ks.rt {
 
 
 
-    export namespace ArrayImpl {
+    export namespace Array_ {
         export function mk(f: number) {
             return new RefCollection(f);
         }
@@ -116,7 +116,7 @@ namespace ks.rt {
         return (((a & 0xffff) * (b >>> 16) + (b & 0xffff) * (a >>> 16)) << 16) + ((a & 0xffff) * (b & 0xffff));
     }
 
-    export namespace NumberImpl {
+    export namespace Number_ {
         export function lt(x: number, y: number) { return x < y; }
         export function le(x: number, y: number) { return x <= y; }
         export function neq(x: number, y: number) { return x != y; }
@@ -125,9 +125,6 @@ namespace ks.rt {
         export function ge(x: number, y: number) { return x >= y; }
         export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
         export function mod(x: number, y: number) { return x % y; }
-    }
-
-    export namespace NumberMethods {
         export function toString(x: number) { return initString(x + ""); }
     }
 
@@ -163,9 +160,7 @@ namespace ks.rt {
         export function toNumber(s: string) {
             return parseInt(s);
         }
-    }
-
-    export namespace StringMethods {
+        
         // TODO check edge-conditions
 
         export function concat(a: string, b: string) {
@@ -201,7 +196,7 @@ namespace ks.rt {
         }
     }
 
-    export namespace BooleanMethods {
+    export namespace Boolean_ {
         export function toString(v: boolean) {
             return v ? "true" : "false"
         }
