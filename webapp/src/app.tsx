@@ -898,8 +898,10 @@ Ctrl+Shift+B
                                     <div className="ui separator"></div>
                                     <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                                     <div className="ui divider"></div>
-                                    <LoginBox />
-                                    // we always need a way to clear local storage, regardless if signed in or not
+                                    <LoginBox />                                    
+                                    { 
+                                        // we always need a way to clear local storage, regardless if signed in or not 
+                                    }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
                                 </sui.DropdownMenu>
                             </div>
