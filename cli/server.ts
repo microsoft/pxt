@@ -444,16 +444,12 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (pathname == "/--embed") {
-            // TODO use microbit for now
-            res.writeHead(302, { location: 'https://codemicrobit.com/--embed' })
-            res.end()
+            sendFile(path.join(fileDir,'node_modules/kindscript/webapp/public/embed.js'));
             return
         }
 
         if (pathname == "/--run") {
-            // TODO use microbit for now
-            res.writeHead(302, { location: 'https://codemicrobit.com/--run' + url.parse(req.url).search })
-            res.end()
+            sendFile(path.join(fileDir, 'node_modules/kindscript/webapp/public/run.html'));
             return
         }
 

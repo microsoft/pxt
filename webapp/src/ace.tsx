@@ -81,7 +81,7 @@ function mkSyntheticEntry(name: string, desc: string) {
             kind: SK.None,
             parameters: null,
             retType: "",
-        },        
+        },
         lastScore: 0,
         searchName: name,
         searchDesc: desc
@@ -108,6 +108,8 @@ let snippets = [
     mkSnippet("let", "Define a new variable", `let x = ${cursorMarker}`),
     // TODO proper text formatting for switch missing
     mkSnippet("switch", "Branch on a number or enum", `switch (${cursorMarker}) {\ncase 0:\nbreak\n}`),
+    mkSnippet("true", "True boolean value", `true`),
+    mkSnippet("false", "False boolean value", `false`),
     // for each not supported at the moment in the compiler
     //mkSnippet("for each", "Do something for all elements of an array", `for (let e of ${placeholderChar}) ${block}`),
 ]
@@ -330,7 +332,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         } else {
             if (si.kind == SK.None) return
         }
-        
+
         text += ts.ks.renderParameters(this.state.cache.apisInfo, si, cursorMarker);
 
         editor.session.replace(this.completionRange, text);
@@ -460,29 +462,47 @@ function highlight(text: string, str: string, limit = 100) {
     return spl;
 }
 
-/*
-            <div>
-                {this.currFile && this.currFile.isVirtual
-                    ? <sui.Button class="ui button floating" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
-                    : '' }
-                <sui.DropdownMenu class="ui button floating" text={lf("Edit") } icon="edit">
-                    <sui.Item icon="find" text={lf("Find") } onClick={() => this.editor.execCommand("find") } />
-                    <sui.Item icon="wizard" text={lf("Replace") } onClick={() => this.editor.execCommand("replace") } />
-                    <sui.Item icon="help circle" text={lf("Keyboard shortcuts") } onClick={() => this.editor.execCommand("showKeyboardShortcuts") } />
-                </sui.DropdownMenu>
-            </div>
-*/
-
 export class Editor extends srceditor.Editor {
     editor: AceAjax.Editor;
     currFile: pkg.File;
     completer: AceCompleter;
     isTypescript = false;
 
-    menu() : JSX.Element {
-        return this.currFile && this.currFile.isVirtual
-                    ? <sui.Button class="ui button floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.parent.openBlocks(this.currFile) } />
-                    : undefined
+    openBlocks() {
+        const tryAgain = () => {
+            core.confirmAsync({
+                header: lf("Oops, there is a program converting your code."),
+                body: lf("We are unable to convert your JavaScript code back to blocks. You can try to fix the errors in javaScript or discard your changes and go back to the previous Blocks version."),
+                agreeLbl: lf("Fix my JavaScript"),
+                disagreeLbl: lf("Discard and go to Blocks")
+            }).then(b => {
+                // discard
+                if (!b) this.parent.setFile(this.currFile.virtualSource);
+            })
+        }
+
+        this.parent.saveFileAsync()
+            .then(() => compiler.decompileAsync(this.currFile.name))
+            .then(resp => {
+                if (!resp.success) {
+                    this.forceDiagnosticsUpdate();
+                    tryAgain();
+                    return;
+                }
+                let xml = resp.outfiles[this.currFile.virtualSource.name];
+                Util.assert(!!xml);
+                this.currFile.virtualSource.setContentAsync(xml).done();
+                this.parent.setFile(this.currFile.virtualSource);
+            }).catch(e => {
+                ks.reportException(e, { js: this.currFile.content });
+                core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
+            })            
+    }
+
+    menu(): JSX.Element {
+        return this.currFile && this.currFile.virtualSource
+            ? <sui.Button class="ui green button floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
+            : undefined
     }
 
     undo() {

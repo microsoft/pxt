@@ -26,13 +26,13 @@ export class File {
     inSyncWithDisk = true;
     diagnostics: ts.ks.KsDiagnostic[];
     numDiagnosticsOverride: number;
-    isVirtual = false;
+    virtualSource: File;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string)
     { }
 
     isReadonly() {
-        return !this.epkg.header || this.isVirtual
+        return !this.epkg.header
     }
 
     getName() {
@@ -68,6 +68,7 @@ export class File {
     }
 
     setContentAsync(newContent: string) {
+        Util.assert(newContent !== undefined);
         this.inSyncWithEditor = true;
         if (newContent != this.content) {
             this.inSyncWithDisk = false;

@@ -257,12 +257,13 @@ namespace ks.runner {
             // simulators
             $('.' + options.simulatorClass).each((i, c) => {
                 let $c = $(c);
-                let $sim = $(`<div class="ui container"><div class="ui centered card">
+                let $sim = $(`<div class="ui centered card"><div class="ui content">
                     <div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;">
                     <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
                     </div>
                     </div></div>`)
                 $sim.find("iframe").attr("src", runUrl + "?code=" + encodeURIComponent($c.text().trim()));
+                if (options.snippetReplaceParent) $c = $c.parent();
                 $c.replaceWith($sim);
             });
         }

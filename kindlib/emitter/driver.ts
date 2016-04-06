@@ -7,6 +7,7 @@
 /// <reference path="ir.ts"/>
 /// <reference path="emitter.ts"/>
 /// <reference path="backthumb.ts"/>
+/// <reference path="decompiler.ts"/>
 
 namespace ts.ks {
     export interface CompileTarget {
@@ -205,4 +206,15 @@ namespace ts.ks {
 
         return res
     }
+        
+    export function decompile(opts: CompileOptions, fileName : string) {
+        let resp = compile(opts);
+        if (!resp.success) return resp;
+        
+        let file = resp.ast.getSourceFile(fileName);
+        let apis = getApiInfo(resp.ast);
+        let blocksInfo = ts.ks.getBlocksInfo(apis);
+        let bresp = ts.ks.decompiler.decompileToBlocks(blocksInfo, file)
+        return bresp;
+    }           
 }

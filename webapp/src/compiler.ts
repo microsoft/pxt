@@ -94,6 +94,25 @@ function compileCoreAsync(opts: ts.ks.CompileOptions): Promise<ts.ks.CompileResu
     return workerOpAsync("compile", { options: opts })
 }
 
+export function decompileAsync(fileName: string) {
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.ast = true;
+            return decompileCoreAsync(opts, fileName)
+        })
+        .then(resp => {
+            // TODO remove this
+            pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
+            setDiagnostics(resp.diagnostics)
+            return resp
+        })
+}
+
+function decompileCoreAsync(opts: ts.ks.CompileOptions, fileName: string): Promise<ts.ks.CompileResult> {
+    return workerOpAsync("decompile", { options: opts, fileName: fileName })
+}
+
 export function workerOpAsync(op: string, arg: ts.ks.service.OpArg) {
     return q.enqueue("main", () => new Promise<any>((resolve, reject) => {
         let id = "" + msgId++
