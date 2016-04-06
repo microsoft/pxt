@@ -444,12 +444,12 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (pathname == "/--embed") {
-            sendFile('./node_modules/kindscript/webapp/public/embed.js');
+            sendFile(path.join(fileDir,'node_modules/kindscript/webapp/public/embed.js'));
             return
         }
 
         if (pathname == "/--run") {
-            sendFile('./node_modules/kindscript/webapp/public/run.html');
+            sendFile(path.join(fileDir, 'node_modules/kindscript/webapp/public/run.html'));
             return
         }
 
