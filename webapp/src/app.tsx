@@ -123,7 +123,7 @@ interface ScriptSearchState {
 }
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
-    prevData: Cloud.JsonScript[] = [];
+    prevData: Cloud.JsonPointer[] = [];
     modal: sui.Modal;
 
     constructor(props: ISettingsProps) {
@@ -133,9 +133,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
     }
 
-    fetchCloudData(): Cloud.JsonScript[] {
+    fetchCloudData(): Cloud.JsonPointer[] {
         let cloud = ks.appTarget.cloud || {};
-        if (!cloud.workspaces) return [];
+        if (!cloud.workspaces && !cloud.packages) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
         let res = this.state.searchFor
             ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${ks.appTarget.id}`)
@@ -165,9 +165,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         let upd = (v: any) => {
             this.setState({ searchFor: (v.target as any).value })
         };
-        let install = (scr: Cloud.JsonScript) => {
+        let install = (scr: Cloud.JsonPointer) => {
             if (this.modal) this.modal.hide();
-            workspace.installByIdAsync(scr.id)
+            workspace.installByIdAsync(scr.scriptid)
                 .then(r => {
                     this.props.parent.loadHeader(r)
                 })
@@ -176,37 +176,40 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
-                <div className="ui items">
-                    <div className="ui item fluid icon input">
-                        <input type="text" placeholder={lf("Search...")} onChange={upd} />
+                <div className="ui search">
+                    <div className="ui fluid icon input">
+                        <input type="text" placeholder={lf("Search...") } onChange={upd} />
                         <i className="search icon"></i>
                     </div>
-                    <div className="ui item cards">
-                        {headers.map(scr =>
-                            <codecard.CodeCardView
-                                key={'local' + scr.id}
-                                name={scr.name}
-                                time={scr.recentUse}
-                                blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
-                                javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
-                                description={lf("local project") }
-                                onClick={() => chgHeader(scr) }
-                                />
-                        ) }
-                        {data.map(scr =>
-                            <codecard.CodeCardView
-                                name={scr.name}
-                                time={scr.time}
-                                blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
-                                javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
-                                description={scr.username}
-                                key={'cloud' + scr.id}
-                                onClick={() => install(scr) }
-                                url={'/' + scr.id} />
-                        ) }
-                    </div>
                 </div>
-            </sui.Modal>
+                <div className="ui cards">
+                    {headers.map(scr =>
+                        <codecard.CodeCardView
+                            key={'local' + scr.id}
+                            name={scr.name}
+                            time={scr.recentUse}
+                            description={scr.meta.description || ""}
+                            blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
+                            javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
+                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : lf("local project") }
+                            onClick={() => chgHeader(scr) }
+                            />
+                    ) }
+                    {data.map(scr =>
+                        <codecard.CodeCardView
+                            name={scr.scriptname}
+                            time={scr.time}
+                            header={scr.username}
+                            description={scr.description}
+                            key={'cloud' + scr.id}
+                            onClick={() => install(scr) }
+                            url={'/' + scr.scriptid}
+                            software={1}
+                            color="blue"
+                            />
+                    ) }
+                </div>
+            </sui.Modal >
         );
     }
 }
@@ -890,7 +893,7 @@ Ctrl+Shift+B
 
         const targetTheme = ks.appTarget.appTheme;
         const workspaces = ks.appTarget.cloud && ks.appTarget.cloud.workspaces;
-        const publishing = ks.appTarget.cloud && ks.appTarget.cloud.packages;
+        const packages = ks.appTarget.cloud && ks.appTarget.cloud.packages;
 
         return (
             <div id='root' className={"full-abs"}>
@@ -923,11 +926,11 @@ Ctrl+Shift+B
                                 <sui.Button role="menuitem" class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                {publishing ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                {packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                             </div>
                             <div className="ui buttons">
                                 <sui.DropdownMenu class="floating icon button" icon="help">
-                                    {targetTheme.docMenu.map(m => <a className="ui item" href={m.path} role="menuitem" target="_blank">{m.name}</a>)}
+                                    {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
                                 </sui.DropdownMenu>
                             </div>
                         </div>

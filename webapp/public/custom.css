@@ -150,9 +150,10 @@
 }
 
 .searchdialog .cards {
-    height: 20rem;
-    overflow-y: scroll;
-    overflow-x: hidden; 
+    max-height: 23rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top:0.5rem; 
 }
 
 .ui.top.attached.label .link.icon {
