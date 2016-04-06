@@ -43,7 +43,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
         core.navigateInWindow(url);
     }
 
-    signout() {
+    static signout() {
         LoginBox.signingOut = true;
         core.showLoading(lf("Signing out..."))
         workspace.resetAsync()
