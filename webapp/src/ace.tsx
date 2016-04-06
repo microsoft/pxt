@@ -470,6 +470,9 @@ export class Editor extends srceditor.Editor {
     isTypescript = false;
 
     openBlocks() {
+        const blockFile = pkg.mainEditorPkg().getBlockFile(this.currFile);
+        Util.assert(!!blockFile)
+        
         const tryAgain = () => {
             core.confirmAsync({
                 header: lf("Oops, there is a program converting your code."),
@@ -478,9 +481,9 @@ export class Editor extends srceditor.Editor {
                 disagreeLbl: lf("Discard and go to Blocks")
             }).then(b => {
                 // discard
-                if (!b) this.parent.setFile(this.currFile.virtualSource);
+                if (!b) this.parent.setFile(blockFile);
             })
-        }
+        }        
 
         this.parent.saveFileAsync()
             .then(() => compiler.decompileAsync(this.currFile.name))
@@ -490,10 +493,10 @@ export class Editor extends srceditor.Editor {
                     tryAgain();
                     return;
                 }
-                let xml = resp.outfiles[this.currFile.virtualSource.name];
+                let xml = resp.outfiles[blockFile.name];
                 Util.assert(!!xml);
-                this.currFile.virtualSource.setContentAsync(xml).done();
-                this.parent.setFile(this.currFile.virtualSource);
+                blockFile.setContentAsync(xml).done();
+                this.parent.setFile(blockFile);
             }).catch(e => {
                 ks.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
@@ -501,8 +504,8 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        return this.currFile && this.currFile.virtualSource
-            ? <sui.Button class="ui green button floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
+        return this.currFile && !!pkg.mainEditorPkg().getBlockFile(this.currFile)
+            ? <sui.Button class="ui green floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
             : undefined
     }
 
