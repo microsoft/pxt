@@ -252,7 +252,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 
     renderCore() {
         let parent = this.props.parent
-        if (!parent.state.showFiles)
+        if (!parent.state.showFiles && !(parent.state.header && parent.state.header.editor == ks.javaScriptProjectName))
             return null;
 
         let expands = this.state.expands;
@@ -280,6 +280,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                         className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
                         {file.name} {meta.isSaved ? "" : "*"}
+                        {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                         {meta.isReadonly ? <i className="lock icon"></i> : null}
                         {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                     </a>);
@@ -319,9 +320,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     constructor(props: IAppProps) {
         super(props);
-
-        document.title = lf("{0} powered by KindScript", ks.appTarget.title || ks.appTarget.name)
-
+        document.title = ks.appTarget.title || ks.appTarget.name;
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
             this.settings.theme = {}
@@ -582,7 +581,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let images = cdn + "images"
         let targetTheme = ks.appTarget.appTheme;
         core.confirmAsync({
-            logos: [targetTheme.logo, logoSvgXml],
+            logos: [targetTheme.logo],
             header: ks.appTarget.title + ' - ' + lf("Create Project"),
             hideCancel: hideCancel,
             hideAgree: true,
@@ -711,17 +710,21 @@ Ctrl+Shift+B
             })
     }
 
-    saveTypeScriptAsync(open?: boolean) {
+    saveTypeScriptAsync(open = false) : Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
             return Promise.resolve();
         let ts = this.editor.saveToTypeScript()
         if (!ts) return Promise.resolve();
 
-        let f: pkg.File = pkg.mainEditorPkg().files[this.editorFile.name + ".ts"];
-        if (!f)
-            f = pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
-        return f.setContentAsync(ts)
-            .then(() => { if (open) this.setFile(f); });
+        let mainPkg = pkg.mainEditorPkg();
+        let tsName = this.editorFile.getVirtualFileName();
+        Util.assert(tsName != this.editorFile.name);
+        return mainPkg.setContentAsync(tsName, ts).then(() => {
+            if (open) {
+                let f = mainPkg.files[tsName];
+                this.setFile(f);
+            }
+        })
     }
 
     compile() {
@@ -885,10 +888,11 @@ Ctrl+Shift+B
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     <div className="ui divider"></div>
+                                    {this.state.header && this.state.header.editor == ks.blocksProjectName ?
                                     <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
-                                    } } />
+                                    } } /> : undefined}
                                     <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } />
                                     <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
                                     <div className="ui separator"></div>

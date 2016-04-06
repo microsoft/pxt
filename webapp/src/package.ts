@@ -49,6 +49,16 @@ export class File {
         if (m) return m[1]
         return ""
     }
+    
+    static tsFileNameRx = /\.ts$/; 
+    static blocksFileNameRx = /\.blocks$/; 
+    getVirtualFileName() : string {
+        if (File.blocksFileNameRx.test(this.name))        
+            return this.name.replace(File.blocksFileNameRx, '.ts');
+        if (File.tsFileNameRx.test(this.name))       
+            return this.name.replace(File.tsFileNameRx, '.blocks');
+        return undefined;
+    }    
 
     weight() {
         if (/^main\./.test(this.name))
@@ -150,13 +160,11 @@ export class EditorPackage {
         return f
     }
     
-    getBlockFile(f: File) : File {
-        let rx = /\.blocks\.ts$/;
-        if (!rx.test(f.name)) return undefined;
-        
-        let blockName = f.name.replace(rx, '.blocks');
-        return this.files[blockName];
-    }
+    setContentAsync(n: string, v: string) {
+        let f = this.files[n];
+        if (!f) f = this.setFile(n, v);
+        return f.setContentAsync(v);
+    }    
 
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
