@@ -580,7 +580,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let images = cdn + "images"
         let targetTheme = ks.appTarget.appTheme;
         core.confirmAsync({
-            logos: [targetTheme.logo, logoSvgXml],
+            logos: [targetTheme.logo],
             header: ks.appTarget.title + ' - ' + lf("Create Project"),
             hideCancel: hideCancel,
             hideAgree: true,
