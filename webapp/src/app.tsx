@@ -163,7 +163,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             key={'local' + scr.id}
                             name={scr.name}
                             time={scr.recentUse}
-                            description={scr.meta.description || ""}
+                            description={scr.meta ? scr.meta.description || "" : ""}
                             blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
                             javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
                             url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ''}
