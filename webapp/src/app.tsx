@@ -319,9 +319,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     constructor(props: IAppProps) {
         super(props);
-
-        document.title = lf("{0} powered by KindScript", ks.appTarget.title || ks.appTarget.name)
-
+        document.title = ks.appTarget.title || ks.appTarget.name;
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
             this.settings.theme = {}
