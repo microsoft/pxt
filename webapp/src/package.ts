@@ -150,6 +150,14 @@ export class EditorPackage {
         data.invalidate("open-meta:")
         return f
     }
+    
+    getBlockFile(f: File) : File {
+        let rx = /\.blocks\.ts$/;
+        if (!rx.test(f.name)) return undefined;
+        
+        let blockName = f.name.replace(rx, '.blocks');
+        return this.files[blockName];
+    }
 
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))

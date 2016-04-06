@@ -719,11 +719,8 @@ Ctrl+Shift+B
         let f: pkg.File = pkg.mainEditorPkg().files[this.editorFile.name + ".ts"];
         if (!f)
             f = pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
-        f.virtualSource = this.editorFile;
         return f.setContentAsync(ts)
-            .then(() => {
-                if (open) this.setFile(f);
-            });
+            .then(() => { if (open) this.setFile(f); });
     }
 
     compile() {
