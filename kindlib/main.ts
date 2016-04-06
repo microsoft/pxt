@@ -205,7 +205,7 @@ namespace ks {
 
         private resolveVersionAsync() {
             let v = this._verspec
-            
+
             if (getEmbeddedScript(this.id)) {
                 this.resolvedVersion = v = "embed:" + this.id
             } else if (!v || v == "*")
@@ -294,6 +294,15 @@ namespace ks {
             else
                 return this.config.files.slice(0);
         }
+
+        addSnapshot(files: U.Map<string>, exts: string[] = [""]) {
+            for (let fn of this.getFiles()) {
+                if (exts.some(e => U.endsWith(fn, e))) {
+                    files[this.id + "/" + fn] = this.readFile(fn)
+                }
+            }
+            files[this.id + "/" + configName] = this.readFile(configName)
+        }
     }
 
     export class MainPackage
@@ -365,6 +374,7 @@ namespace ks {
                     if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
                     return (target.isNative ? this.host().getHexInfoAsync(ext) : Promise.resolve(null))
                         .then(inf => {
+                            ext = U.flatClone(ext)
                             delete ext.compileData;
                             delete ext.generatedFiles;
                             delete ext.extensionFiles;
