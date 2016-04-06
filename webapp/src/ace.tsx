@@ -474,27 +474,22 @@ export class Editor extends srceditor.Editor {
         let mainPkg = pkg.mainEditorPkg();
         let blockFile = this.currFile.getVirtualFileName();
 
-        const tryAgain = () => {
-            let bf = pkg.mainEditorPkg().files[blockFile];
-            core.confirmAsync({
-                header: lf("Oops, there is a program converting your code."),
-                body: lf("We are unable to convert your JavaScript code back to blocks. You can try to fix the errors in javaScript or discard your changes and go back to the previous Blocks version."),
-                agreeLbl: lf("Fix my JavaScript"),
-                hideCancel: !bf,
-                disagreeLbl: lf("Discard and go to Blocks")
-            }).then(b => {
-                // discard
-                if (!b) this.parent.setFile(bf);
-            })
-        }
-
         this.parent.saveFileAsync()
             .then(() => compiler.decompileAsync(this.currFile.name))
             .then(resp => {
                 if (!resp.success) {
                     this.forceDiagnosticsUpdate();
-                    tryAgain();
-                    return Promise.resolve()
+                    let bf = pkg.mainEditorPkg().files[blockFile];
+                    return core.confirmAsync({
+                        header: lf("Oops, there is a program converting your code."),
+                        body: lf("We are unable to convert your JavaScript code back to blocks. You can try to fix the errors in javaScript or discard your changes and go back to the previous Blocks version."),
+                        agreeLbl: lf("Fix my JavaScript"),
+                        hideCancel: !bf,
+                        disagreeLbl: lf("Discard and go to Blocks")
+                    }).then(b => {
+                        // discard
+                        if (!b) this.parent.setFile(bf);
+                    })
                 }
                 let xml = resp.outfiles[blockFile];
                 Util.assert(!!xml);
@@ -502,7 +497,7 @@ export class Editor extends srceditor.Editor {
             }).catch(e => {
                 ks.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
-            })
+            }).done()
     }
 
     menu(): JSX.Element {
@@ -539,7 +534,7 @@ export class Editor extends srceditor.Editor {
         return { programText, charNo }
 
     }
-    
+
     beforeCompile() {
         this.formatCode()
     }
