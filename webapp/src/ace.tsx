@@ -494,13 +494,12 @@ export class Editor extends srceditor.Editor {
                 if (!resp.success) {
                     this.forceDiagnosticsUpdate();
                     tryAgain();
-                    return;
+                    return Promise.resolve()
                 }
                 let xml = resp.outfiles[blockFile];
                 Util.assert(!!xml);
-                return mainPkg.setContentAsync(blockFile, xml)
-            }).then(() => this.parent.setFile(mainPkg.files[blockFile]))
-            .catch(e => {
+                return mainPkg.setContentAsync(blockFile, xml).then(() => this.parent.setFile(mainPkg.files[blockFile]))
+            }).catch(e => {
                 ks.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
             })
