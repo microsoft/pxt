@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
-import * as cloudworkspace from "./cloudworkspace";
 import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
@@ -47,7 +46,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
     signout() {
         LoginBox.signingOut = true;
         core.showLoading(lf("Signing out..."))
-        cloudworkspace.resetAsync()
+        workspace.resetAsync()
             .then(() => Cloud.privatePostAsync("logout", {}))
             .catch((e: any) => { })
             .then(() => {

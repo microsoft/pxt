@@ -12,6 +12,7 @@ import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
+import * as db from "./db"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"

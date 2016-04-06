@@ -8,7 +8,7 @@ import U = ks.Util;
 import Cloud = ks.Cloud;
 let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
-let currentTarget : string;
+let currentTarget: string;
 
 type Header = ws.Header;
 type ScriptText = ws.ScriptText;
@@ -88,7 +88,7 @@ function mergeFsPkg(pkg: ks.FsPkg) {
     }
 }
 
-function initAsync(target: string) {   
+function initAsync(target: string) {
     U.assert(allScripts.length == 0)
     currentTarget = target;
     // TODO check that target is correct.
@@ -155,7 +155,7 @@ function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
         if (pkg.files.length == 0) return Promise.resolve()
         return apiAsync("pkg/" + h.id, pkg)
             .then((pkg: ks.FsPkg) => {
-                e.fsText = savedText                
+                e.fsText = savedText
                 mergeFsPkg(pkg)
                 data.invalidate("header:" + h.id)
                 data.invalidate("header:*")
@@ -164,7 +164,7 @@ function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
                     h.saveId = null
                 }
             })
-            .catch(e => core.errorNotification(lf("Save failed!")))         
+            .catch(e => core.errorNotification(lf("Save failed!")))
     })
 }
 
@@ -211,6 +211,13 @@ function syncAsync() {
         })
 }
 
+function resetAsync() {
+    return db.db.destroy()
+        .then(() => {
+            window.localStorage.clear()
+        })
+}
+
 export var provider: ws.WorkspaceProvider = {
     getHeaders,
     getHeader,
@@ -219,5 +226,6 @@ export var provider: ws.WorkspaceProvider = {
     saveAsync,
     installAsync,
     saveToCloudAsync,
-    syncAsync
+    syncAsync,
+    resetAsync
 }
