@@ -75,7 +75,8 @@ export class Editor {
         return null
     }
     undo() { }
+    
+    beforeCompile() {}
 
     highlightStatement(brk: ts.ks.LocationInfo) {}
-
 }
