@@ -65,7 +65,7 @@ function mergeFsPkg(pkg: ks.FsPkg) {
         target: currentTarget,
         name: pkg.config.name,
         meta: {},
-        editor: "tsprj",
+        editor: ks.javaScriptProjectName,
         pubId: pkg.config.installedVersion,
         pubCurrent: false,
         _rev: null,

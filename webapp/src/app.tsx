@@ -251,7 +251,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 
     renderCore() {
         let parent = this.props.parent
-        if (!parent.state.showFiles)
+        if (!parent.state.showFiles && !(parent.state.header && parent.state.header.editor == ks.javaScriptProjectName))
             return null;
 
         let expands = this.state.expands;
@@ -710,17 +710,21 @@ Ctrl+Shift+B
             })
     }
 
-    saveTypeScriptAsync(open?: boolean) {
+    saveTypeScriptAsync(open = false) : Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
             return Promise.resolve();
         let ts = this.editor.saveToTypeScript()
         if (!ts) return Promise.resolve();
 
-        let f: pkg.File = pkg.mainEditorPkg().files[this.editorFile.name + ".ts"];
-        if (!f)
-            f = pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
-        return f.setContentAsync(ts)
-            .then(() => { if (open) this.setFile(f); });
+        let mainPkg = pkg.mainEditorPkg();
+        let tsName = this.editorFile.getVirtualFileName();
+        Util.assert(tsName != this.editorFile.name);
+        return mainPkg.setContentAsync(tsName, ts).then(() => {
+            if (open) {
+                let f = mainPkg.files[tsName];
+                this.setFile(f);
+            }
+        })
     }
 
     compile() {
@@ -878,10 +882,11 @@ Ctrl+Shift+B
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     <div className="ui divider"></div>
+                                    {this.state.header && this.state.header.editor == ks.javaScriptProjectName ?
                                     <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
-                                    } } />
+                                    } } /> : undefined}
                                     <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } />
                                     <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
                                     <div className="ui separator"></div>

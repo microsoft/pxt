@@ -212,10 +212,14 @@ export class Editor extends srceditor.Editor {
         this.editor.traceOn(true);
         this.editor.highlightBlock(bid);
     }
+    
+    openTypeScript() {
+        this.parent.saveTypeScriptAsync(true).done();
+    }
 
     menu() {
         return (
-            <sui.Button text={lf("Show Code") } textClass="ui landscape only" icon="keyboard" onClick={() => this.parent.saveTypeScriptAsync(true).done() } />
+            <sui.Button text={lf("Show Code") } textClass="ui landscape only" icon="keyboard" onClick={() => this.openTypeScript()} />
         )
     }
 }

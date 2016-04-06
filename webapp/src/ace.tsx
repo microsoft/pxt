@@ -469,20 +469,23 @@ export class Editor extends srceditor.Editor {
     isTypescript = false;
 
     openBlocks() {
-        const blockFile = pkg.mainEditorPkg().getBlockFile(this.currFile);
-        Util.assert(!!blockFile)
-        
+        // might be undefined
+        let mainPkg = pkg.mainEditorPkg();
+        let blockFile = this.currFile.getVirtualFileName();
+
         const tryAgain = () => {
+            let bf = pkg.mainEditorPkg().files[blockFile];
             core.confirmAsync({
                 header: lf("Oops, there is a program converting your code."),
                 body: lf("We are unable to convert your JavaScript code back to blocks. You can try to fix the errors in javaScript or discard your changes and go back to the previous Blocks version."),
                 agreeLbl: lf("Fix my JavaScript"),
+                hideCancel: !bf,
                 disagreeLbl: lf("Discard and go to Blocks")
             }).then(b => {
                 // discard
-                if (!b) this.parent.setFile(blockFile);
+                if (!b) this.parent.setFile(bf);
             })
-        }        
+        }
 
         this.parent.saveFileAsync()
             .then(() => compiler.decompileAsync(this.currFile.name))
@@ -492,19 +495,19 @@ export class Editor extends srceditor.Editor {
                     tryAgain();
                     return;
                 }
-                let xml = resp.outfiles[blockFile.name];
+                let xml = resp.outfiles[blockFile];
                 Util.assert(!!xml);
-                blockFile.setContentAsync(xml).done();
-                this.parent.setFile(blockFile);
-            }).catch(e => {
+                return mainPkg.setContentAsync(blockFile, xml)
+            }).then(() => this.parent.setFile(mainPkg.files[blockFile]))
+            .catch(e => {
                 ks.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
-            })            
+            })
     }
 
     menu(): JSX.Element {
-        return this.currFile && !!pkg.mainEditorPkg().getBlockFile(this.currFile)
-            ? <sui.Button class="ui green floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
+        return this.currFile && this.parent.state.header.editor == ks.blocksProjectName
+            ? <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
             : undefined
     }
 
