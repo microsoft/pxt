@@ -6,14 +6,14 @@ let lf = Util.lf;
 
 namespace ks.blocks {
     
-    var blockColors: Util.StringMap<number> = {
+    const blockColors: Util.StringMap<number> = {
         loops: 120,
         images: 45,
         variables: 330
     }
 
     // list of built-in blocks, should be touched.
-    var builtinBlocks: Util.StringMap<any> = {};
+    const builtinBlocks: Util.StringMap<any> = {};
     Object.keys(Blockly.Blocks).forEach(k => builtinBlocks[k] = Blockly.Blocks[k]);
 
     // blocks cached
@@ -638,11 +638,9 @@ namespace ks.blocks {
                     this.codeCard = <ks.CodeCard>{
                         header: name,
                         name: name,
-                        card: {
-                            software: 1
-                        },
+                        card: { software: 1 },
                         description: goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip,
-                        blocksXml: xml ? ("<xml>" + xml.outerHTML + "</xml>") : undefined,
+                        blocksXml: xml ? ("<xml>" + (xml.outerHTML || `<block type="${id}"</block>`) + "</xml>") : undefined,
                         url: url
                     }
                 }
@@ -653,10 +651,10 @@ namespace ks.blocks {
         monkeyPatchBlock("controls_repeat_ext", "for loop", "loops/repeat");
         monkeyPatchBlock("variables_set", "variable assignment", "assign");
         monkeyPatchBlock("math_number", "number", "number");
-        monkeyPatchBlock("logic_compare", "boolean operator", "math/math");
+        monkeyPatchBlock("logic_compare", "boolean operator", "math");
         monkeyPatchBlock("logic_operation", "boolean operation", "boolean");
         monkeyPatchBlock("logic_negate", "not operator", "boolean");
         monkeyPatchBlock("logic_boolean", "boolean value", "boolean");
-        monkeyPatchBlock("math_arithmetic", "arithmetic operation", "math/math");
+        monkeyPatchBlock("math_arithmetic", "arithmetic operation", "math");
     }
 }

@@ -173,18 +173,48 @@ namespace ks.runner {
                             name: nsi.name,
                             url: nsi.attributes.help || ("reference/" + nsi.name),
                             description: nsi.attributes.jsDoc,
-                            blocksXml: block && block.codeCard ? block.codeCard.blocksXml : undefined,
+                            blocksXml: block && block.codeCard 
+                                ? block.codeCard.blocksXml 
+                                : info.attrs.blockId 
+                                    ? `<xml><block type="${info.attrs.blockId}"></block></xml>` 
+                                    : undefined,
                             link: true
                         })
-                    } else {
-                        if (block) {
-                            let card = U.clone(block.codeCard);
-                            card.link = true;
-                            addItem(card);
-                        }
+                    } else if (block) {
+                        let card = U.clone(block.codeCard);
+                        card.link = true;
+                        addItem(card);
                     }
                 }
-                // TODO support statements
+                switch (stmt.kind) {
+                    case ts.SyntaxKind.IfStatement:
+                        addItem({
+                            name: ns ? "Logic" : "if",
+                            url: "reference/logic" + (ns ? "" : "/if"),
+                            description: ns ? lf("Logic operators and constants") : lf("Conditional statement"),
+                            blocksXml: '<xml><block type="controls_if"></block></xml>',
+                            link: true
+                        });
+                        break;
+                    case ts.SyntaxKind.ForStatement:
+                        addItem({
+                            name: ns ? "Loops" : "for",
+                            url: "reference/loops" + (ns ? "" : "/for"),
+                            description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
+                            blocksXml: '<xml><block type="controls_simple_for"></block></xml>',
+                            link: true
+                        });
+                        break;
+                    case ts.SyntaxKind.VariableStatement:
+                        addItem({
+                            name: ns ? "Variables" : "variable declaration",
+                            url: "reference/variables" + (ns ? "" : "/assign"),
+                            description: ns ? lf("Variables") : lf("Assign a value to a named variable."),
+                            blocksXml: '<xml><block type="variables_set"></block></xml>',
+                            link: true
+                        });
+                        break;
+                }
             })
 
             if (replaceParent) c = c.parent();
