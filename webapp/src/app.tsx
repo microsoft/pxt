@@ -731,6 +731,7 @@ Ctrl+Shift+B
     compile() {
         tickEvent("compile");
         console.log('compiling...')
+        this.editor.beforeCompile();
         let state = this.editor.snapshotState()
         compiler.compileAsync({ native: true })
             .then(resp => {
@@ -768,7 +769,12 @@ Ctrl+Shift+B
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
-        tickEvent(opts.debug ? "debug" : "run");
+        tickEvent(opts.background ? "autorun" : 
+                  opts.debug ? "debug" : "run");
+        
+        if (!opts.background)
+            this.editor.beforeCompile();
+
         this.stopSimulator();
 
         let logs = this.refs["logs"] as logview.LogView;

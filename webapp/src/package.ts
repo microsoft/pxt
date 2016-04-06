@@ -84,7 +84,6 @@ export class File {
             this.inSyncWithDisk = false;
             this.content = newContent;
             this.updateStatus();
-            data.invalidate("open:" + this.getName())
             return this.epkg.saveFilesAsync()
                 .then(() => {
                     if (this.content == newContent) {
@@ -357,7 +356,6 @@ export function loadPkgAsync(id: string) {
     return theHost.downloadPackageAsync(mainPkg)
         .then(() => theHost.readFile(mainPkg, ks.configName))
         .then(str => {
-            data.invalidate("open:")
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()
                 .catch(e => {
@@ -366,16 +364,6 @@ export function loadPkgAsync(id: string) {
         })
 }
 
-/*
-    open:<pkgName>/<filename> - one file
-*/
-data.mountVirtualApi("open", {
-    getSync: p => {
-        let f = getEditorPkg(mainPkg).lookupFile(data.stripProtocol(p))
-        if (f) return f.content
-        return null
-    },
-})
 
 export interface FileMeta {
     isReadonly: boolean;

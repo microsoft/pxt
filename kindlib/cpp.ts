@@ -98,15 +98,32 @@ namespace ks.cpp {
         return null
     }
 
+    var prevExtInfo: Y.ExtensionInfo;
+    var prevSnapshot: U.Map<string>;
+
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
-        var res = Y.emptyExtInfo();
-        var pointersInc = "\nKS_SHIMS_BEGIN\n"
-        var includesInc = `#include "kindscript.h"\n`
-        var thisErrors = ""
-        var dTsNamespace = ""
-        var err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
-        var lineNo = 0
-        var fileName = ""
+        let pkgSnapshot: U.Map<string> = {}
+        let constsName = "dal.d.ts"
+
+        for (let pkg of mainPkg.sortedDeps()) {
+            pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
+        }
+        
+        if (prevSnapshot && U.stringMapEq(pkgSnapshot, prevSnapshot)) {
+            console.log("Using cached extinfo")
+            return prevExtInfo
+        }
+        
+        console.log("Generating new extinfo")
+
+        let res = Y.emptyExtInfo();
+        let pointersInc = "\nKS_SHIMS_BEGIN\n"
+        let includesInc = `#include "kindscript.h"\n`
+        let thisErrors = ""
+        let dTsNamespace = ""
+        let err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
+        let lineNo = 0
+        let fileName = ""
         let protos = nsWriter("namespace")
         let shimsDTS = nsWriter("declare namespace")
         let enumsDTS = nsWriter("declare namespace")
@@ -134,9 +151,8 @@ namespace ks.cpp {
         res.microbitConfig.config["MICROBIT_BLE_ENABLED"] = "0"
 
         for (let pkg of mainPkg.sortedDeps()) {
-            let constName = "dal.d.ts"
-            if (pkg.getFiles().indexOf(constName) >= 0) {
-                let src = pkg.host().readFile(pkg, constName)
+            if (pkg.getFiles().indexOf(constsName) >= 0) {
+                let src = pkg.host().readFile(pkg, constsName)
                 src.split(/\r?\n/).forEach(ln => {
                     let m = /^\s*(\w+) = (.*),/.exec(ln)
                     if (m) {
@@ -508,6 +524,9 @@ namespace ks.cpp {
         res.compileData = btoa(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
+        
+        prevSnapshot = pkgSnapshot
+        prevExtInfo = res
 
         return res;
     }

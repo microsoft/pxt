@@ -341,7 +341,7 @@ namespace ts.ks {
             if (Util.lookup(r.entries, qName))
                 continue;
 
-            let decl = s.valueDeclaration || s.declarations[0]
+            let decl = s.valueDeclaration || (s.declarations || [])[0]
             if (!decl) continue;
 
             let si = createSymbolInfo(typechecker, qName, decl)

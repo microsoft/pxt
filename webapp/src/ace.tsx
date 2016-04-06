@@ -337,7 +337,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         editor.session.replace(this.completionRange, text);
         this.detach()
-        this.props.parent.formatCode();
+        if (/\n/.test(text))
+            this.props.parent.formatCode();
     }
 
 
@@ -539,6 +540,10 @@ export class Editor extends srceditor.Editor {
         return { programText, charNo }
 
     }
+    
+    beforeCompile() {
+        this.formatCode()
+    }
 
     formatCode(isAutomatic = false) {
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
@@ -584,19 +589,16 @@ export class Editor extends srceditor.Editor {
         this.editor = ace.edit("aceEditorInner");
         let langTools = acequire("ace/ext/language_tools");
 
-        let needsFormat = false
-
         this.editor.commands.on("exec", (e: any) => {
             console.info("beforeExec", e.command.name)
             if (!this.isTypescript) return;
 
             let insString: string = e.command.name == "insertstring" ? e.args : null
-            if (insString == "\n") needsFormat = true
-            if (insString && insString.trim() && insString.length == 1) {
-                if (!this.getCurrLinePrefix().trim()) {
-                    needsFormat = true
-                }
-            }
+
+            //if (insString == "\n") needsFormat = true
+            //if (insString && insString.trim() && insString.length == 1) {
+            //    if (!this.getCurrLinePrefix().trim()) {}
+            //}
         });
 
         let approvedCommands = {
@@ -622,12 +624,10 @@ export class Editor extends srceditor.Editor {
                     this.completer.forceUpdate();
                 }
             } else {
-                if (needsFormat) this.formatCode(true)
                 if (/^[a-zA-Z\.]$/.test(insString)) {
                     this.completer.showPopup();
                 }
             }
-            needsFormat = false
         });
 
         this.editor.commands.addCommand({

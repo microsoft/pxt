@@ -94,6 +94,17 @@ namespace ts.ks.Util {
         else return 1;
     }
 
+    export function stringMapEq(a: Map<string>, b: Map<string>) {
+        let ak = Object.keys(a)
+        let bk = Object.keys(b)
+        if (ak.length != bk.length) return false
+        for (let k of ak) {
+            if (!b.hasOwnProperty(k)) return false
+            if (a[k] !== b[k]) return false
+        }
+        return true
+    }
+
     export function endsWith(str: string, suffix: string) {
         if (str.length < suffix.length) return false
         if (suffix.length == 0) return true
@@ -541,18 +552,18 @@ namespace ts.ks.Util {
     export var httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;
     export var sha256: (hashData: string) => string;
     export var getRandomBuf: (buf: Uint8Array) => void;
-    
-    export function toDataUri(data: string, mimetype? : string) : string {
+
+    export function toDataUri(data: string, mimetype?: string): string {
         // TODO does this only support trusted data?
-        
+
         // already a data uri?       
         if (/^data:/i.test(data)) return data;
-        
+
         // infer mimetype
         if (!mimetype) {
             if (/^<svg/i.test(data)) mimetype = "image/svg+xml";
         }
-        
+
         // encode
         if (/xml|svg/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
         else return `data:${mimetype};base64,${btoa(toUTF8(data))}`;
@@ -563,10 +574,10 @@ namespace ts.ks.BrowserImpl {
     Util.httpRequestCoreAsync = httpRequestCoreAsync;
     Util.sha256 = sha256string;
     Util.getRandomBuf = buf => {
-        if(window.crypto)
+        if (window.crypto)
             window.crypto.getRandomValues(buf);
         else {
-            for(let i = 0; i < buf.length;++i)
+            for (let i = 0; i < buf.length; ++i)
                 buf[i] = Math.floor(Math.random() * 255);
         }
     }
