@@ -191,7 +191,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             description={scr.meta.description || ""}
                             blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
                             javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
-                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : lf("local project") }
+                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ''}
                             onClick={() => chgHeader(scr) }
                             />
                     ) }
@@ -398,9 +398,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     saveFileAsync() {
         if (!this.editorFile)
             return Promise.resolve()
-        this.saveTypeScript()
-        let txt = this.editor.getCurrentSource()
-        return this.editorFile.setContentAsync(txt)
+        return this.saveTypeScriptAsync()
+            .then(() => {
+                let txt = this.editor.getCurrentSource()
+                return this.editorFile.setContentAsync(txt);
+            });
     }
 
     public typecheckNow() {
@@ -734,24 +736,20 @@ Ctrl+Shift+B
             })
     }
 
-    saveTypeScript(open?: boolean) {
-        if (!this.editor) return
-        if (this.editorFile.epkg != pkg.mainEditorPkg())
-            return;
+    saveTypeScriptAsync(open?: boolean) {
+        if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
+            return Promise.resolve();
         let ts = this.editor.saveToTypeScript()
-        if (ts != null) {
-            let f = pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
-            f.isVirtual = true
-            if (open) this.setFile(f);
-        }
-    }
+        if (!ts) return Promise.resolve();
 
-    openBlocks(file: pkg.File) {
-        if (file.isVirtual) {
-            var bfname = file.getName().substr(0, file.getName().length - ".ts".length);
-            var bfile = pkg.mainEditorPkg().lookupFile(bfname);
-            if (bfile) this.setFile(bfile);
-        }
+        let f: pkg.File = pkg.mainEditorPkg().files[this.editorFile.name + ".ts"];
+        if (!f)
+            f = pkg.mainEditorPkg().setFile(this.editorFile.name + ".ts", ts)
+        f.virtualSource = this.editorFile;
+        return f.setContentAsync(ts)
+            .then(() => {
+                if (open) this.setFile(f);
+            });
     }
 
     compile() {
@@ -978,7 +976,7 @@ Ctrl+Shift+B
                         { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (ks.appTarget.title || ks.appTarget.name) }
                         <span>{targetVersion}</span>
                         - <span>&nbsp; {lf("powered by") }</span> &nbsp;
-                        <a href="https://github.com/Microsoft/kindscript"><i className='xicon ksempty'/> PXT</a><span>{ksVersion}</span> 
+                        <a href="https://github.com/Microsoft/kindscript"><i className='xicon ksempty'/> PXT</a><span>{ksVersion}</span>
                         - &copy; Microsoft Corporation - 2016
                         - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") }</a>
                         - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>

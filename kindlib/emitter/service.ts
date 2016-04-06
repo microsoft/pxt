@@ -493,6 +493,9 @@ namespace ts.ks.service {
         compile: v => {
             return compile(v.options)
         },
+        decompile: v => {
+            return decompile(v.options, v.fileName);
+        },
 
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 

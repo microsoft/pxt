@@ -222,7 +222,7 @@ namespace ks.runner {
                 let apis = ts.ks.getApiInfo(resp.ast);
                 let blocksInfo = ts.ks.getBlocksInfo(apis);
                 ks.blocks.initBlocks(blocksInfo);
-                let bresp = ks.blocks.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                let bresp = ts.ks.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
                 if (bresp.diagnostics && bresp.diagnostics.length > 0)
                     bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!bresp.success)

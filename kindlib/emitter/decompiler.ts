@@ -1,13 +1,12 @@
- /// <reference path="../built/kindlib.d.ts" />
 
-namespace ks.blocks {
-    let SK = ts.SyntaxKind;
+namespace ts.ks.decompiler {
+    const SK = ts.SyntaxKind;
 
     interface BlockSequence {
         top: number; current: number;
     }
 
-    var ops: U.Map<{ type: string; op: string; }> = {
+    const ops: U.Map<{ type: string; op: string; }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
         "-": { type: "math_arithmetic", op: "MINUS" },
         "/": { type: "math_arithmetic", op: "DIVIDE" },
@@ -22,7 +21,7 @@ namespace ks.blocks {
         "||": { type: "logic_operation", op: "OR" },
     }
     
-    var builtinBlocks: U.Map<{ block: string; blockId: string; }> = {
+    const builtinBlocks: U.Map<{ block: string; blockId: string; }> = {
         "Math.random" : { blockId:"device_random", block: "pick random 0 to %limit" },
         "Math.abs": {blockId: "math_op3", block:"absolute of %x" }
     }
@@ -31,7 +30,7 @@ namespace ks.blocks {
         let stmts: ts.Statement[] = file.statements;
         let result: ts.ks.CompileResult = {
             blocksInfo: blocksInfo,
-            outfiles: {}, diagnostics: undefined, success: true, times: {}
+            outfiles: {}, diagnostics: [], success: true, times: {}
         }
         let output = ""
         let nexts: BlockSequence[] = [];
@@ -95,16 +94,12 @@ ${output}</xml>`;
             }
         }
 
-        function error(n: ts.Node, msg?: string) {
-            if (n.kind != ts.SyntaxKind.CallExpression)
-                ks.reportError(`unsupported node ${ts.ks.stringKind(n)}`, { msg: msg, node: n });
-            
-            if (!result.diagnostics) result.diagnostics = [];
+        function error(n: ts.Node, msg?: string) {            
             let diags = ts.ks.patchUpDiagnostics([{
                 file: file,
                 start: n.getFullStart(),
                 length: n.getFullWidth(),
-                messageText: lf(`Language feature cannot be converted in blocks.`) || msg,
+                messageText: msg || `Language feature not supported in blocks`,
                 category: ts.DiagnosticCategory.Error,
                 code: 1001
             }])
@@ -252,7 +247,7 @@ write(`<block type="math_arithmetic">
             writeBeginBlock("controls_simple_for");
             let vd = n.initializer as ts.VariableDeclarationList;
             if (vd.declarations.length != 1) {
-                error(n, lf("for loop with multiple variables not supported"));
+                error(n, "for loop with multiple variables not supported");
             }
             let id = vd.declarations[0].name as ts.Identifier;
             write(`<field name="VAR">${Util.htmlEscape(id.text)}</field>`)
