@@ -910,7 +910,8 @@ namespace ts.ks {
             incrIndent(toks[0], () => {
                 ppToks(toks)
             })
-            output += "\n"
+            if (output[output.length - 1] != "\n")
+                output += "\n"
         }
 
         function writeToken(t: Token) {
