@@ -176,11 +176,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
-
-                <div className="ui segment items">
+                <div className="ui items">
                     <div className="ui item fluid icon input">
-                        <input type="text" placeholder="Search..." onChange={upd} />
-                        <i className="search icon"/>
+                        <input type="text" placeholder={lf("Search...")} onChange={upd} />
+                        <i className="search icon"></i>
                     </div>
                     <div className="ui item cards">
                         {headers.map(scr =>
