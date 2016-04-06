@@ -356,7 +356,7 @@ function syncAsync() {
 }
 
 
-export function resetAsync() {
+function resetAsync() {
     return db.db.destroy()
         .then(() => {
             window.localStorage.clear()
@@ -371,5 +371,6 @@ export var provider: ws.WorkspaceProvider = {
     saveAsync,
     installAsync,
     saveToCloudAsync,
-    syncAsync
+    syncAsync,
+    resetAsync
 }

@@ -12,6 +12,7 @@ import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
+import * as db from "./db"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
@@ -162,7 +163,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             key={'local' + scr.id}
                             name={scr.name}
                             time={scr.recentUse}
-                            description={scr.meta.description || ""}
+                            description={scr.meta ? scr.meta.description || "" : ""}
                             blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
                             javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
                             url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ''}
@@ -898,6 +899,8 @@ Ctrl+Shift+B
                                     <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
                                     <div className="ui divider"></div>
                                     <LoginBox />
+                                    // we always need a way to clear local storage, regardless if signed in or not
+                                    <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
                                 </sui.DropdownMenu>
                             </div>
                             <div className="ui">

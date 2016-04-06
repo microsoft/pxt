@@ -45,6 +45,7 @@ export interface WorkspaceProvider {
     installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
     saveToCloudAsync(h: Header): Promise<void>;
     syncAsync(): Promise<void>;
+    resetAsync(): Promise<void>;
 }
 
 var impl: WorkspaceProvider;
@@ -183,6 +184,10 @@ export function saveToCloudAsync(h: Header) {
 
 export function syncAsync() {
     return impl.syncAsync();
+}
+
+export function resetAsync() {
+    return impl.resetAsync()
 }
 
 /*
