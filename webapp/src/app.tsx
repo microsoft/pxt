@@ -928,7 +928,7 @@ Ctrl+Shift+B
                             </div>
                             <div className="ui buttons">
                                 <sui.DropdownMenu class="floating icon button" icon="help">
-                                    {targetTheme.docMenu.map(m => <div className="ui item"><a href={m.path} role="menuitem" target="_blank">{m.name}</a></div>)}
+                                    {targetTheme.docMenu.map(m => <a className="ui item" href={m.path} role="menuitem" target="_blank">{m.name}</a>)}
                                 </sui.DropdownMenu>
                             </div>
                         </div>

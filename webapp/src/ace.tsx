@@ -40,15 +40,7 @@ var acequire = (ace as any).acequire;
 var Range = acequire("ace/range").Range;
 var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
-var cursorMarker = "\uE108"
-var placeholderChar = "◊";
-var defaultImgLit = `
-. . . . .
-. . . . .
-. . # . .
-. . . . .
-. . . . .
-`
+export const cursorMarker = "\uE108"
 var maxCompleteItems = 20;
 
 export interface CompletionEntry {
@@ -326,12 +318,6 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         }
     }
 
-    lookupInfo(name: string) {
-        if (this.state.cache)
-            return Util.lookup(this.state.cache.apisInfo.byQName, name)
-        return null;
-    }
-
     commit(e: CompletionEntry) {
         let editor = this.props.parent.editor
         if (!editor || !this.completionRange) return
@@ -344,35 +330,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         } else {
             if (si.kind == SK.None) return
         }
-
-        let imgLit = !!si.attributes.imageLiteral
-
-        let defaultVal = (p: ts.ks.ParameterDesc) => {
-            if (p.initializer) return p.initializer
-            if (p.defaults) return p.defaults[0]
-            if (p.type == "number") return "0"
-            else if (p.type == "string") {
-                if (imgLit) {
-                    imgLit = false
-                    return "`" + defaultImgLit + cursorMarker + "`";
-                }
-                return `"${cursorMarker}"`
-            }
-            let si = this.lookupInfo(p.type)
-            if (si && si.kind == SK.Enum) {
-                let en = Util.values(this.state.cache.apisInfo.byQName).filter(e => e.namespace == p.type)[0]
-                if (en)
-                    return en.namespace + "." + en.name;
-            }
-            let m = /^\((.*)\) => (.*)$/.exec(p.type)
-            if (m)
-                return `(${m[1]}) => {\n    ${cursorMarker}\n}`
-            return placeholderChar;
-        }
-
-        if (si.parameters) {
-            text += "(" + si.parameters.filter(p => !p.initializer).map(defaultVal).join(", ") + ")"
-        }
+        
+        text += ts.ks.renderParameters(this.state.cache.apisInfo, si, cursorMarker);
 
         editor.session.replace(this.completionRange, text);
         this.detach()

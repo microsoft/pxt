@@ -45,6 +45,7 @@ namespace ts.ks {
         times: U.Map<number>;
         ast?: Program;
         breakpoints?: Breakpoint[];
+        blocksInfo?: BlocksInfo;
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {

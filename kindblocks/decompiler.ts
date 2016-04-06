@@ -30,6 +30,7 @@ namespace ks.blocks {
     export function decompileToBlocks(blocksInfo: ts.ks.BlocksInfo, file: ts.SourceFile): ts.ks.CompileResult {
         let stmts: ts.Statement[] = file.statements;
         let result: ts.ks.CompileResult = {
+            blocksInfo: blocksInfo,
             outfiles: {}, diagnostics: undefined, success: true, times: {}
         }
         let output = ""
