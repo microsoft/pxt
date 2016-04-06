@@ -67,32 +67,6 @@ interface ISettingsProps {
     visible?: boolean;
 }
 
-class Settings extends data.Component<ISettingsProps, {}> {
-    renderCore() {
-        let par = this.props.parent
-        let sizes: Util.StringMap<string> = {
-            '14px': lf("Small"),
-            '20px': lf("Medium"),
-            '24px': lf("Large"),
-        }
-        let fontSize = (v: string) => {
-            par.state.theme.fontSize = v;
-            par.forceUpdate()
-        }
-        return (
-            <sui.Popup icon='settings'>
-                <div className='ui form'>
-                    <sui.Field label="Font size">
-                        <sui.DropdownList class="selection" value={par.state.theme.fontSize} onChange={fontSize}>
-                            {Object.keys(sizes).map(k => <sui.Item key={k} value={k}>{sizes[k]}</sui.Item>) }
-                        </sui.DropdownList>
-                    </sui.Field>
-                </div>
-            </sui.Popup>
-        );
-    }
-}
-
 class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     renderCore() {
         Util.assert(ks.appTarget.cloud && ks.appTarget.cloud.workspaces);
@@ -906,7 +880,7 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
-                                    <div className="ui separator"></div>
+                                    <div className="ui divider"></div>
                                     <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
@@ -915,6 +889,8 @@ Ctrl+Shift+B
                                     <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
                                     <div className="ui separator"></div>
                                     <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
+                                    <div className="ui divider"></div>
+                                    <LoginBox />
                                 </sui.DropdownMenu>
                             </div>
                             <div className="ui">
@@ -928,6 +904,8 @@ Ctrl+Shift+B
                             <div className="ui buttons">
                                 <sui.DropdownMenu class="floating icon button" icon="help">
                                     {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
+                                    <div className="ui divider"></div>
+                                    <sui.Item key="translatebtn" onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate KindScript!") } />                                    
                                 </sui.DropdownMenu>
                             </div>
                         </div>
@@ -946,7 +924,6 @@ Ctrl+Shift+B
                             <div className="ui item right">
                                 <div>
                                     { workspaces ? <CloudSyncButton parent={this} /> : '' }
-                                    { workspaces ? <LoginBox /> : "" }
                                     { targetTheme.rightLogo ? <a id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a> : "" }
                                 </div>
                             </div> : "" }
@@ -978,7 +955,7 @@ Ctrl+Shift+B
                         - <span>&nbsp; {lf("powered by") }</span> &nbsp;
                         <a href="https://github.com/Microsoft/kindscript"><i className='xicon ksempty'/> PXT</a><span>{ksVersion}</span>
                         - &copy; Microsoft Corporation - 2016
-                        - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") }</a>
+                        - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") } </a>
                         - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
                     </div>
                 </div>
