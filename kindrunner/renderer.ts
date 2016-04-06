@@ -263,6 +263,7 @@ namespace ks.runner {
                     </div>
                     </div></div>`)
                 $sim.find("iframe").attr("src", runUrl + "?code=" + encodeURIComponent($c.text().trim()));
+                if (options.snippetReplaceParent) $c = $c.parent();
                 $c.replaceWith($sim);
             });
         }
