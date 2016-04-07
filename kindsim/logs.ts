@@ -5,7 +5,7 @@ namespace ks.rt.logs {
         onCSVData?: (name: string, d: string) => void;
     }
 
-    export interface ILogEntry {
+    interface ILogEntry {
         id: number;
         theme: string;
         variable?: string;
@@ -15,6 +15,7 @@ namespace ks.rt.logs {
         source: string;
         count: number;
 
+        dirty: boolean;
         element?: HTMLDivElement;
         accvaluesElement?: HTMLSpanElement;
         countElement?: HTMLSpanElement;
@@ -22,7 +23,7 @@ namespace ks.rt.logs {
         valueElement?: Text;
     }
 
-    export class TrendChartElement {
+    class TrendChartElement {
         public element: SVGSVGElement;
         g: SVGGElement;
         line: SVGPolylineElement;
@@ -58,6 +59,7 @@ namespace ks.rt.logs {
         static counter = 0;
         private shouldScroll = false;
         private entries: ILogEntry[] = [];
+        private serialBuffers: U.Map<string> = {};
         public element: HTMLDivElement;
 
         constructor(public props: ILogProps) {
@@ -93,12 +95,26 @@ namespace ks.rt.logs {
             window.addEventListener('message', (ev: MessageEvent) => {
                 let msg = ev.data;
                 switch (msg.type || '') {
-                    case 'run': this.clear(); break;
                     case 'serial':
-                        let value = msg.data || '';
+                        let value = (msg.data as string) || '';
                         let source = msg.id || '?';
                         let theme = source.split('-')[0] || '';
-                        this.appendEntry(source, value, theme);
+                        if (!/^[a-z]+$/.test(theme)) theme = 'black';
+                        let buffer = this.serialBuffers[source] || '';
+                        for(let i = 0; i < value.length; ++i) {
+                            switch(value.charCodeAt(i)) {
+                                case 10: //'\n'
+                                    this.appendEntry(source, buffer, theme);
+                                    buffer = '';
+                                    break;
+                                case 13: //'\r'
+                                    break;
+                                default:
+                                    buffer += value[i];
+                                    break;
+                            }
+                        }
+                        this.serialBuffers[source] = buffer;
                         break;
                 }
             }, false);
@@ -139,7 +155,7 @@ namespace ks.rt.logs {
                     last.element.insertBefore(last.countElement, last.element.firstChild);
                 }
                 last.count++;
-                this.render(last);
+                this.scheduleRender(last);
             }
             else {
                 let e: ILogEntry = {
@@ -149,6 +165,7 @@ namespace ks.rt.logs {
                     value: value,
                     source: source,
                     count: 1,
+                    dirty: true,
                     variable: variable,
                     accvalues: nvalue != null ? [{ t: 0, v: nvalue }] : undefined,
                     element: document.createElement("div"),
@@ -160,9 +177,7 @@ namespace ks.rt.logs {
                     e.accvaluesElement.className = "ui log " + e.theme + " gauge"
                     e.chartElement = new TrendChartElement(e, "ui trend " + e.theme)
                     if (this.props.onCSVData) {
-                        e.element.onclick = () => {
-                            this.tableToCSV(e);
-                        }
+                        e.element.onclick = () => this.tableToCSV(e);
                         e.element.className += " link";
                     }
                     e.element.appendChild(e.accvaluesElement);
@@ -171,30 +186,42 @@ namespace ks.rt.logs {
                 e.element.appendChild(e.valueElement);
                 ens.push(e);
                 this.element.appendChild(e.element);
-                this.render(e)
+                this.scheduleRender(e);
             }
+        }
+
+        renderFiberId: number;
+        private scheduleRender(e: ILogEntry) {
+            e.dirty = true;
+            if (!this.renderFiberId) this.renderFiberId = setTimeout(() => this.render(), 50);
         }
 
         clear() {
             this.entries = [];
             this.element.innerHTML = '';
+            this.serialBuffers = {};
         }
 
-        render(entry: ILogEntry) {
-            if (entry.countElement) entry.countElement.innerText = entry.count.toString();
-            if (entry.accvaluesElement) entry.accvaluesElement.innerText = entry.value;
-            if (entry.chartElement) entry.chartElement.render();
-            entry.valueElement.textContent = entry.accvalues ? '' : entry.value;
+        private render() {
+            this.entries.forEach(entry => {
+                if (!entry.dirty) return;
+                
+                if (entry.countElement) entry.countElement.innerText = entry.count.toString();
+                if (entry.accvaluesElement) entry.accvaluesElement.innerText = entry.value;
+                if (entry.chartElement) entry.chartElement.render();
+                entry.valueElement.textContent = entry.accvalues ? '' : entry.value;
+                entry.dirty = false;
+            });
+            this.renderFiberId = 0;
         }
 
-        tableToCSV(entry: ILogEntry) {
+        private tableToCSV(entry: ILogEntry) {
             let t0 = entry.accvalues.length > 0 ? entry.accvalues[0].t : 0;
             let name = entry.variable.trim() || "data";
             let csv = `${"time"}, ${name}\n`
                 + entry.accvalues.map(v => ((v.t - t0) / 1000) + ", " + v.v).join('\n');
-            let fn = `${(entry.variable.replace(/[^a-z0-9-_]/i, '') || "data")}.csv`;
+            let fn = `${(entry.variable.replace(/[^a-z0-9-_]/i, '') || "data")}.csv`;            
             this.props.onCSVData(fn, csv);
-            //core.browserDownloadText(csv, fn, 'text/csv')
         }
     }
 }
