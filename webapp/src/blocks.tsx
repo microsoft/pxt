@@ -100,6 +100,8 @@ export class Editor extends srceditor.Editor {
         } catch (e) {
             console.log(e);
         }
+        
+        this.changeCallback();
 
         return true;
     }
