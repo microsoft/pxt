@@ -1,5 +1,6 @@
-declare var require:any;
-var PouchDB = require("pouchdb")
+declare var require: any;
+var PouchDB = require("pouchdb");
+require('pouchdb/extras/memory');
 import * as Promise from "bluebird";
 
 (window as any).Promise = Promise;
@@ -10,43 +11,66 @@ import * as Promise from "bluebird";
     }
 });
 
-export let db = new PouchDB("yelm", { revs_limit: 2 })
+let _db: any = undefined;
+let inMemory = false;
 
-export class Table {    
-    constructor(public name:string)
-    {
-    }
-    
-    getAsync(id:string):Promise<any> {
-        return db.get(this.name + "--" + id).then((v:any) => {
+export function getDbAsync(): Promise<any> {
+    if (_db) return Promise.resolve(_db);
+
+    let temp = new PouchDB("pxt", { revs_limit: 2 })
+    return temp.get('pouchdbsupportabletest')
+        .catch(function(error: any) {
+            if (error && error.error && error.name == 'indexed_db_went_bad') {
+                // we are in private mode...
+                console.log('private mode...')
+                inMemory = true;
+                _db = new PouchDB("pxt", { adapter: 'memory' })
+                return Promise.resolve(_db);
+            } else {
+                _db = temp;
+                return Promise.resolve(_db);
+            }
+        })
+}
+
+export function destroyAsync() : Promise<void> {
+    return _db ? Promise.resolve() : _db.destroy();
+}
+
+export class Table {
+    constructor(public name: string)
+    { }
+
+    getAsync(id: string): Promise<any> {
+        return getDbAsync().then(db => db.get(this.name + "--" + id)).then((v: any) => {
             v.id = id
             return v
         })
     }
-    
-    getAllAsync():Promise<any[]> {
-        return db.allDocs({
+
+    getAllAsync(): Promise<any[]> {
+        return getDbAsync().then(db => db.allDocs({
             include_docs: true,
             startkey: this.name + "--",
             endkey: this.name + "--\uffff"
-        }).then((resp:any) => resp.rows.map((e:any) => e.doc))
+        })).then((resp: any) => resp.rows.map((e: any) => e.doc))
     }
-    
-    deleteAsync(obj:any):Promise<void> {
-        return db.remove(obj)
+
+    deleteAsync(obj: any): Promise<void> {
+        return getDbAsync().then(db => db.remove(obj))
     }
-    
-    forceSetAsync(obj:any):Promise<string> {
+
+    forceSetAsync(obj: any): Promise<string> {
         return this.getAsync(obj.id)
             .then(o => {
                 obj._rev = o._rev
                 return this.setAsync(obj)
             }, e => this.setAsync(obj))
     }
-    
-    setAsync(obj:any):Promise<string> {
+
+    setAsync(obj: any): Promise<string> {
         if (obj.id && !obj._id)
-            obj._id = this.name + "--" + obj.id            
-        return db.put(obj).then((resp:any) => resp.rev)
+            obj._id = this.name + "--" + obj.id
+        return getDbAsync().then(db => db.put(obj)).then((resp: any) => resp.rev)
     }
 } 
