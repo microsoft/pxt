@@ -72,24 +72,24 @@ function fatal(msg: string): Promise<any> {
 
 let globalConfig: UserConfig = {}
 
-function homeKindDir() {
+function homePxtDir() {
     return path.join(process.env["HOME"] || process.env["UserProfile"], ".pxt")
 }
 
 function cacheDir() {
-    return path.join(homeKindDir(), "cache")
+    return path.join(homePxtDir(), "cache")
 }
 
 function configPath() {
-    return path.join(homeKindDir(), "config.json")
+    return path.join(homePxtDir(), "config.json")
 }
 
 var homeDirsMade = false
 function mkHomeDirs() {
     if (homeDirsMade) return
     homeDirsMade = true
-    if (!fs.existsSync(homeKindDir()))
-        fs.mkdirSync(homeKindDir())
+    if (!fs.existsSync(homePxtDir()))
+        fs.mkdirSync(homePxtDir())
     if (!fs.existsSync(cacheDir()))
         fs.mkdirSync(cacheDir())
 }
@@ -275,7 +275,7 @@ function travisAsync() {
     } else {
         return buildTargetAsync()
             .then(() => {
-                let trg = readLocalKindTarget()
+                let trg = readLocalPxTarget()
                 if (rel)
                     return uploadtrgAsync(trg.id + "/" + rel)
                         .then(() => runNpmAsync("publish"))
@@ -473,7 +473,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         })
 }
 
-function readLocalKindTarget() {
+function readLocalPxTarget() {
     if (!fs.existsSync("pxtarget.json")) {
         console.error("This command requires pxtarget.json in current directory.")
         process.exit(1)
@@ -484,7 +484,7 @@ function readLocalKindTarget() {
 }
 
 function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage) => Promise<void>) {
-    let cfg = readLocalKindTarget()
+    let cfg = readLocalPxTarget()
     let prev = process.cwd()
 
     return Promise.mapSeries(cfg.bundleddirs, (dirname) => {
@@ -562,7 +562,7 @@ function addCmd(name: string) {
     return name + (/win/.test(process.platform) ? ".cmd" : "")
 }
 
-function buildKindScriptAsync(): Promise<string[]> {
+function buildPxtAsync(): Promise<string[]> {
     let ksd = "node_modules/pxt-core"
     if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
@@ -593,7 +593,7 @@ function travisInfo() {
 }
 
 function buildTargetCoreAsync() {
-    let cfg = readLocalKindTarget()
+    let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
     pxt.appTarget = cfg;
     let statFiles: U.Map<number> = {}
@@ -661,7 +661,7 @@ function buildAndWatchTargetAsync() {
         return Promise.resolve()
     }
 
-    return buildAndWatchAsync(() => buildKindScriptAsync()
+    return buildAndWatchAsync(() => buildPxtAsync()
         .then(() => buildTargetAsync().then(r => { }, e => {
             console.log("Build failed: " + e.message)
         }))
@@ -1456,7 +1456,7 @@ export function mainCli(targetDir: string) {
 
     nodeutil.targetDir = targetDir;
 
-    let trg = nodeutil.getKindTarget()
+    let trg = nodeutil.getPxtTarget()
     pxt.appTarget = trg;
     console.log(`Using PXT/${trg.id} from ${targetDir}.`)
 

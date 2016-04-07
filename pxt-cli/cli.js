@@ -6,7 +6,7 @@ let child_process = require("child_process")
 
 let targetdir = ""
 
-function findKindJs() {
+function findPxtJs() {
     let goUp = (s) => {
         let mod = s + "/node_modules/"
         let installed = mod + "pxt-core/built/pxt.js"
@@ -63,7 +63,7 @@ function target(n) {
 }
 
 function main() {
-    let path = findKindJs();
+    let path = findPxtJs();
 
     let args = process.argv.slice(2)
 
