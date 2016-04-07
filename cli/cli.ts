@@ -397,6 +397,7 @@ interface UploadOptions {
     fileContent?: U.Map<string>;
     label?: string
     legacyLabel?: boolean;
+    target?: string;
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
@@ -440,6 +441,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         commit: info.commitUrl,
         branch: info.tag || info.branch,
         buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
+        target: ks.appTarget ? ks.appTarget.id : ""
     })
         .then(resp => {
             console.log(resp)
