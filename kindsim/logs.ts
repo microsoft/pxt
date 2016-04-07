@@ -59,7 +59,7 @@ namespace ks.rt.logs {
         static counter = 0;
         private shouldScroll = false;
         private entries: ILogEntry[] = [];
-        private serialBuffers: U.Map<string> = {};
+        private serialBuffers: ks.rt.Map<string> = {};
         public element: HTMLDivElement;
 
         constructor(public props: ILogProps) {
