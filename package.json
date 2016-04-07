@@ -19,7 +19,7 @@
     "README.md",
     "built/pxt.js",
     "built/pxt-common.json",
-    "built/kind.d.ts",
+    "built/pxt.d.ts",
     "built/pxtlib.js",
     "built/pxtlib.d.ts",
     "built/pxtsim.d.ts",

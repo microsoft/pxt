@@ -20,7 +20,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/kind.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt'])
 
@@ -53,8 +53,8 @@ module.exports = null;
 `, ['built/pxt-common.json'])
 
 file('built/nodeutil.js', ['built/cli.js'])
-file('built/kind.d.ts', ['built/cli.js'], function () {
-    jake.cpR("built/cli.d.ts", "built/kind.d.ts")
+file('built/pxt.d.ts', ['built/cli.js'], function () {
+    jake.cpR("built/cli.d.ts", "built/pxt.d.ts")
 })
 file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
     if (!fs.existsSync("built")) fs.mkdirSync("built");

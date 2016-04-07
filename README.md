@@ -33,10 +33,10 @@ pxt serve
 
 The last command will open default browser and point it to http://localhost:3232/
 
-The `kind target microbit` is essentially the same as `mkdir node_modules; npm install pxt-microbit`
+The `pxt target microbit` is essentially the same as `mkdir node_modules; npm install pxt-microbit`
 plus setting up `pxtcli.json` file to point to the target.
 
-In future, you just need to run `kind serve`. You can also run `npm update` to upgrade 
+In future, you just need to run `pxt serve`. You can also run `npm update` to upgrade 
 the target and PXT.
 
 ## Build

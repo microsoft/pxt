@@ -73,7 +73,7 @@ function fatal(msg: string): Promise<any> {
 let globalConfig: UserConfig = {}
 
 function homeKindDir() {
-    return path.join(process.env["HOME"] || process.env["UserProfile"], ".kind")
+    return path.join(process.env["HOME"] || process.env["UserProfile"], ".pxt")
 }
 
 function cacheDir() {
@@ -128,7 +128,7 @@ export function loginAsync(access_token: string) {
     } else {
         let root = Cloud.apiRoot.replace(/api\/$/, "")
         console.log("USAGE:")
-        console.log(`  kind login https://example.com/?access_token=...`)
+        console.log(`  pxt login https://example.com/?access_token=...`)
         console.log(`Go to ${root}oauth/gettoken to obtain the token.`)
         return fatal("Bad usage")
     }
@@ -148,7 +148,7 @@ export function apiAsync(path: string, postArguments?: string) {
 }
 
 export function ptrAsync(path: string, target?: string) {
-    // in MinGW when you say 'kind ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
+    // in MinGW when you say 'pxt ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
     let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
 
     path = path.replace(mingwRx, "/")
@@ -176,7 +176,7 @@ export function ptrAsync(path: string, target?: string) {
         scriptid: "",
         artid: "",
         htmlartid: "",
-        userplatform: ["kind-cli"],
+        userplatform: ["pxt-cli"],
     }
 
     target = target.replace(mingwRx, "/")
@@ -1391,11 +1391,11 @@ export function helpAsync(all?: string) {
         return s
     }
     let showAll = all == "all"
-    console.log("USAGE: kind command args...")
+    console.log("USAGE: pxt command args...")
     if (showAll) {
         console.log("All commands:")
     } else {
-        console.log("Common commands (use 'kind help all' to show all):")
+        console.log("Common commands (use 'pxt help all' to show all):")
     }
     cmds.forEach(cmd => {
         if (cmd.priority >= 10) return;

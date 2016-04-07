@@ -1,6 +1,6 @@
 {
     "name": "format-test",
-    "description": "Test for 'kind format' command",
+    "description": "Test for 'pxt format' command",
     "files": [
         "simple.ts",
         "images.ts",
