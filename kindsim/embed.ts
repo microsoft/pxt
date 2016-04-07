@@ -1,4 +1,3 @@
-
 namespace ks.rt {
     export interface SimulatorMessage {
         type: string;
