@@ -927,9 +927,9 @@ function runYottaAsync(args: string[]) {
 }
 
 function patchHexInfo(extInfo: ts.pxt.ExtensionInfo) {
-    let infopath = ytPath + "/yotta_modules/kindscript-microbit-core/generated/metainfo.json"
+    let infopath = ytPath + "/yotta_modules/pxt-microbit-core/generated/metainfo.json"
 
-    let hexPath = ytPath + "/build/" + ytTarget + "/source/kindscript-microbit-app-combined.hex"
+    let hexPath = ytPath + "/build/" + ytTarget + "/source/pxt-microbit-app-combined.hex"
 
     let hexinfo = readJson(infopath)
     hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
@@ -1162,9 +1162,9 @@ function runCoreAsync(res: ts.pxt.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
         // TODO: non-microbit specific load
-        pxt.rt.initCurrentRuntime = pxt.rt.initBareRuntime
-        let r = new pxt.rt.Runtime(f)
-        pxt.rt.Runtime.messagePosted = (msg) => {
+        pxsim.initCurrentRuntime = pxsim.initBareRuntime
+        let r = new pxsim.Runtime(f)
+        pxsim.Runtime.messagePosted = (msg) => {
             if (msg.type == "serial")
                 console.log("SERIAL:", (msg as any).data)
         }
@@ -1173,7 +1173,7 @@ function runCoreAsync(res: ts.pxt.CompileResult) {
         }
         r.run(() => {
             console.log("DONE")
-            pxt.rt.dumpLivePointers();
+            pxsim.dumpLivePointers();
         })
     }
     return Promise.resolve()
@@ -1219,7 +1219,7 @@ function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.
 
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
-        let simName = "pxt.rt." + shim.replace(/::/g, ".")
+        let simName = "pxsim." + shim.replace(/::/g, ".")
         let sym = U.lookup(decls, simName)
         if (!sym) {
             console.log("missing in sim:", simName)
@@ -1231,7 +1231,7 @@ function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.
     for (let ent of U.values(apiInfo.byQName)) {
         let shim = ent.attributes.shim
         if (shim) {
-            let simName = "pxt.rt." + shim.replace(/::/g, ".")
+            let simName = "pxsim." + shim.replace(/::/g, ".")
             let sym = U.lookup(decls, simName)
             if (!sym) {
                 console.log("missing in sim:", simName)

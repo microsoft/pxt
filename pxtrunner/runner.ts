@@ -194,7 +194,7 @@ namespace pxt.runner {
                 }
                 let js = resp.outfiles["microbit.js"];
                 if (js) {
-                    let driver = new pxt.rt.SimulatorDriver(container, { simUrl: options.simUrl });
+                    let driver = new pxsim.SimulatorDriver(container, { simUrl: options.simUrl });
                     driver.run(js);
                 }
             })

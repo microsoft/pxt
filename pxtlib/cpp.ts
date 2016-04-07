@@ -117,8 +117,8 @@ namespace pxt.cpp {
         console.log("Generating new extinfo")
 
         let res = Y.emptyExtInfo();
-        let pointersInc = "\nKS_SHIMS_BEGIN\n"
-        let includesInc = `#include "kindscript.h"\n`
+        let pointersInc = "\nPXT_SHIMS_BEGIN\n"
+        let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
         let dTsNamespace = ""
         let err = (s: string) => thisErrors += `   ${fileName}(${lineNo}): ${s}\n`;
@@ -431,7 +431,7 @@ namespace pxt.cpp {
         }
 
         // This is overridden on the build server, but we need it for command line build
-        res.microbitConfig.dependencies["kindscript-microbit-core"] = "microsoft/kindscript-microbit-core#" + compileService.gittag;
+        res.microbitConfig.dependencies["pxt-microbit-core"] = "microsoft/pxt-microbit-core#" + compileService.gittag;
 
         if (mainPkg) {
             let seenMain = false
@@ -485,11 +485,11 @@ namespace pxt.cpp {
             cfginc += "#define " + k + " " + jsonconfig[k] + "\n"
         })
 
-        res.generatedFiles["/inc/KSConfig.h"] = cfginc
-        res.generatedFiles["/source/pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nKS_SHIMS_END\n"
+        res.generatedFiles["/inc/PxtConfig.h"] = cfginc
+        res.generatedFiles["/source/pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
 
         let moduleJson = {
-            "name": "kindscript-microbit-app",
+            "name": "pxt-microbit-app",
             "version": "0.0.0",
             "description": "Auto-generated. Do not edit.",
             "license": "n/a",
@@ -500,14 +500,14 @@ namespace pxt.cpp {
 
         let configJson = {
             "microbit": {
-                "configfile": "inc/KSConfig.h"
+                "configfile": "inc/PxtConfig.h"
             }
         }
 
 
         res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-        res.generatedFiles["/source/main.cpp"] = `#include "kindscript.h"\nvoid app_main() { kindscript::start(); }\n`
+        res.generatedFiles["/source/main.cpp"] = `#include "pxt.h"\nvoid app_main() { pxt::start(); }\n`
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)

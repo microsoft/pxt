@@ -167,16 +167,16 @@ ${getFunctionLabel(proc.action)}:
                     break;
                 case EK.Incr:
                     emitExpr(e.args[0])
-                    emitCallRaw("kindscript::incr")
+                    emitCallRaw("pxt::incr")
                     break;
                 case EK.Decr:
                     emitExpr(e.args[0])
-                    emitCallRaw("kindscript::decr")
+                    emitCallRaw("pxt::decr")
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     // it does the decr itself, no mask
-                    return emitExpr(ir.rtcall(withRef("ksrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
+                    return emitExpr(ir.rtcall(withRef("pxtrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
                 case EK.RuntimeCall:
@@ -190,7 +190,7 @@ ${getFunctionLabel(proc.action)}:
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
                     if (cell.isGlobal())
-                        return emitExpr(ir.rtcall(withRef("ksrt::ldglb", cell.isRef()), [ir.numlit(cell.index)]))
+                        return emitExpr(ir.rtcall(withRef("pxtrt::ldglb", cell.isRef()), [ir.numlit(cell.index)]))
                     else
                         return emitExprInto(e, "r0")
                 default:
@@ -260,7 +260,7 @@ ${getFunctionLabel(proc.action)}:
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
                     if (cell.isGlobal()) {
-                        emitExpr(ir.rtcall(withRef("ksrt::stglb", cell.isRef()), [src, ir.numlit(cell.index)]))
+                        emitExpr(ir.rtcall(withRef("pxtrt::stglb", cell.isRef()), [src, ir.numlit(cell.index)]))
                     } else {
                         emitExpr(src)
                         write("str r0, " + cellref(cell))
@@ -269,7 +269,7 @@ ${getFunctionLabel(proc.action)}:
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
                     // it does the decr itself, no mask
-                    emitExpr(ir.rtcall(withRef("ksrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    emitExpr(ir.rtcall(withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
                     break;
                 default: oops();
             }

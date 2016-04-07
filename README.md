@@ -1,7 +1,7 @@
 # Programming Experience Toolkit
 ## A kinder JavaScript experience
 
-[![Build Status](https://travis-ci.org/Microsoft/kindscript.svg?branch=master)](https://travis-ci.org/Microsoft/kindscript)
+[![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt)
 
 Programming Experience Toolkit (PXT) is a framework for creating special-purpose programming experiences for
 beginners, especially focused on computer science education. PXT's underlying

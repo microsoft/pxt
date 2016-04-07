@@ -627,7 +627,7 @@ ${lbl}: .short 0xffff
                 } else {
                     let lbl = bin.emitString(node.text)
                     let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(node.text))
-                    return ir.rtcall("kindscript::ptrOfLiteral", [ptr])
+                    return ir.rtcall("pxt::ptrOfLiteral", [ptr])
                 }
             } else {
                 throw oops();
@@ -950,7 +950,7 @@ ${lbl}: .short 0xffff
                 args.unshift(node.expression)
                 callInfo.args.unshift(node.expression)
 
-                return rtcallMask("kindscript::runAction" + suff, args, true)
+                return rtcallMask("pxt::runAction" + suff, args, true)
             }
 
             throw unhandled(node, stringKind(decl))
@@ -968,7 +968,7 @@ ${lbl}: .short 0xffff
                 let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
                 let info = getClassInfo(t)
 
-                let obj = ir.shared(ir.rtcall("kindscript::mkRecord", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
+                let obj = ir.shared(ir.rtcall("pxt::mkRecord", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
 
                 if (ctor) {
                     markUsed(ctor)
@@ -1019,7 +1019,7 @@ ${lbl}: .short 0xffff
             let lbl = getFunctionLabel(node)
             let r = ir.ptrlit(lbl + "_Lit", lbl)
             if (!raw) {
-                r = ir.rtcall("kindscript::ptrOfLiteral", [r])
+                r = ir.rtcall("pxt::ptrOfLiteral", [r])
             }
             return r
         }
@@ -1069,7 +1069,7 @@ ${lbl}: .short 0xffff
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null)
-                lit = ir.shared(ir.rtcall("kindscript::mkAction", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
+                lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
@@ -1077,7 +1077,7 @@ ${lbl}: .short 0xffff
                     let v = loc.loadCore()
                     if (loc.isRef() || loc.isByRefLocal())
                         v = ir.op(EK.Incr, [v])
-                    proc.emitExpr(ir.rtcall("ksrt::stclo", [lit, ir.numlit(i), v]))
+                    proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v]))
                 })
                 if (node.kind == SK.FunctionDeclaration) {
                     info.location = proc.mkLocal(node, getVarInfo(node))
@@ -1111,8 +1111,8 @@ ${lbl}: .short 0xffff
                     //console.log(l.toString(), l.info)
                     if (l.isByRefLocal()) {
                         // TODO add C++ support function to do this
-                        let tmp = ir.shared(ir.rtcall("ksrt::mkloc" + l.refSuff(), []))
-                        proc.emitExpr(ir.rtcall("ksrt::stloc" + l.refSuff(), [tmp, l.loadCore()]))
+                        let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuff(), []))
+                        proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuff(), [tmp, l.loadCore()]))
                         proc.emitExpr(l.storeDirect(tmp))
                     }
                 })
@@ -1653,7 +1653,7 @@ ${lbl}: .short 0xffff
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 proc.emitClrIfRef(loc) // we might be in a loop
-                proc.emitExpr(loc.storeDirect(ir.rtcall("ksrt::mkloc" + loc.refSuff(), [])))
+                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuff(), [])))
             }
             // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {

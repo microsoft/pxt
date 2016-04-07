@@ -1,4 +1,4 @@
-namespace pxt.rt {
+namespace pxsim {
     export module Svg {
 		var pt : SVGPoint;
         export function cursorPoint(pt: SVGPoint, svg: SVGSVGElement, evt : MouseEvent) : SVGPoint {

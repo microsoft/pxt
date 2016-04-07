@@ -1,6 +1,6 @@
 // APIs for language/runtime support (records, locals, function values)
 
-namespace pxt.rt {
+namespace pxsim {
     export var quiet = false;
 
     export function check(cond: boolean) {
@@ -67,7 +67,7 @@ namespace pxt.rt {
         }
     }
 
-    export namespace kindscript {
+    export namespace pxt {
         export function mkAction(reflen: number, len: number, fn: LabelFn) {
             let r = new RefAction();
             r.len = len
@@ -80,9 +80,9 @@ namespace pxt.rt {
             let cb = getResume();
 
             if (a instanceof RefAction) {
-                ksrt.incr(a)
+                pxtrt.incr(a)
                 cb(new FnWrapper(a.func, a.fields, a0, a1, () => {
-                    ksrt.decr(a)
+                    pxtrt.decr(a)
                 }))
             } else {
                 // no-closure case
@@ -198,9 +198,9 @@ namespace pxt.rt {
         })
     }
 
-    export namespace kindscript {
-        export var incr = rt.incr;
-        export var decr = rt.decr;
+    export namespace pxt {
+        export var incr = pxsim.incr;
+        export var decr = pxsim.decr;
 
         export function ptrOfLiteral(v: any) {
             return v;
@@ -223,9 +223,9 @@ namespace pxt.rt {
         }
     }
 
-    export namespace ksrt {
-        export var incr = rt.incr;
-        export var decr = rt.decr;
+    export namespace pxtrt {
+        export var incr = pxsim.incr;
+        export var decr = pxsim.decr;
 
         export function panic(code: number) {
             U.userError("PANIC! Code " + code)
@@ -300,7 +300,7 @@ namespace pxt.rt {
     }
 
 
-    export namespace kindscript {
+    export namespace pxt {
         export function mkRecord(reflen: number, totallen: number) {
             check(0 <= reflen && reflen <= totallen);
             check(reflen <= totallen && totallen <= 255);
@@ -314,7 +314,7 @@ namespace pxt.rt {
     }
 
     export namespace thread {
-        export var panic = ksrt.panic;
+        export var panic = pxtrt.panic;
 
         export function pause(ms: number) {
             let cb = getResume();

@@ -395,7 +395,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.debug
-                        && (simulator.driver.state == pxt.rt.SimulatorState.Running || simulator.driver.state == pxt.rt.SimulatorState.Unloaded))
+                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
                         this.runSimulator({ background: true });
                 }
             });
@@ -1025,7 +1025,7 @@ function initSerial() {
     }
     ws.onmessage = (ev) => {
         try {
-            let msg = JSON.parse(ev.data) as pxt.rt.SimulatorMessage;
+            let msg = JSON.parse(ev.data) as pxsim.SimulatorMessage;
             if (msg && msg.type == 'serial')
                 window.postMessage(msg, "*")
         }

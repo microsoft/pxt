@@ -1,6 +1,6 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 
-namespace pxt.rt {
+namespace pxsim {
     export module U {
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
@@ -92,7 +92,7 @@ namespace pxt.rt {
 
     export function initBareRuntime() {
         runtime.board = new BareBoard();
-        let myRT = rt as any
+        let myRT = pxsim as any
         myRT.basic = {
             pause: thread.pause,
             showNumber: (n: number) => {
@@ -169,7 +169,7 @@ namespace pxt.rt {
                 U.nextTick(() => {
                     runtime = this;
                     this.setupTop(resolve)
-                    kindscript.runAction2(a, arg0, arg1)
+                    pxt.runAction2(a, arg0, arg1)
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
@@ -228,7 +228,7 @@ namespace pxt.rt {
             // These variables are used by the generated code as well
             // ---
             var entryPoint: LabelFn;
-            var ksrt = rt.ksrt
+            var pxtrt = pxsim.pxtrt
             var breakpoints: Uint8Array = null
             var breakAlways = false
             var globals = this.globals

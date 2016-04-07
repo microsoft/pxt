@@ -1,4 +1,4 @@
-namespace pxt.rt {
+namespace pxsim {
     // type=debugger
     export interface DebuggerMessage extends SimulatorMessage {
         subtype: string;
