@@ -728,7 +728,7 @@ class Host
         } else if (module.verProtocol() == "file") {
             return module.verArgument() + "/" + filename
         } else {
-            return "kind_modules/" + module.id + "/" + filename
+            return "pxt_modules/" + module.id + "/" + filename
         }
     }
 

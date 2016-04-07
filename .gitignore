@@ -8,6 +8,7 @@ node_modules
 built
 typings/
 kind_modules
+pxt_modules
 tmp/
 *.ts.new
 temp/

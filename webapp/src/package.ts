@@ -41,7 +41,7 @@ export class File {
 
     getTypeScriptName() {
         if (this.epkg.isTopLevel()) return this.name
-        else return "kind_modules/" + this.epkg.getPkgId() + "/" + this.name
+        else return "pxt_modules/" + this.epkg.getPkgId() + "/" + this.name
     }
 
     getExtension() {

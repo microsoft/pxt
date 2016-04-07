@@ -150,7 +150,7 @@ namespace ts.ks {
         while (decl) {
             if (decl.kind == SK.SourceFile) {
                 let src = decl as SourceFile
-                return src.fileName.indexOf("kind_modules") >= 0
+                return src.fileName.indexOf("pxt_modules") >= 0
             }
             decl = decl.parent
         }

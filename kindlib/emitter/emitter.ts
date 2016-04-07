@@ -758,7 +758,7 @@ ${lbl}: .short 0xffff
             let res = (isGlobalVar(decl) && !isSideEffectfulInitializer((<VariableDeclaration>decl).initializer)) ||
                 isTopLevelFunctionDecl(decl)
             if (opts.testMode && res) {
-                if (!U.startsWith(getSourceFileOfNode(decl).fileName, "kind_modules"))
+                if (!U.startsWith(getSourceFileOfNode(decl).fileName, "pxt_modules"))
                     return false
             }
             return res
@@ -1311,7 +1311,7 @@ ${lbl}: .short 0xffff
             let brk = U.lookup(brkMap, nodeKey(node))
             if (!brk) {
                 let src = getSourceFileOfNode(node)
-                if (opts.justMyCode && U.startsWith(src.fileName, "kind_modules"))
+                if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
                     return;
                 let pos = node.pos
                 while (/^\s$/.exec(src.text[pos]))

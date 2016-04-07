@@ -414,7 +414,7 @@ namespace ks {
                             if (/\.(ts|asm)$/.test(f)) {
                                 let sn = f
                                 if (pkg.level > 0)
-                                    sn = "kind_modules/" + pkg.id + "/" + f
+                                    sn = "pxt_modules/" + pkg.id + "/" + f
                                 opts.sourceFiles.push(sn)
                                 opts.fileSystem[sn] = pkg.readFile(f)
                             }
@@ -601,7 +601,7 @@ Put some info here.
 node_modules
 yotta_modules
 yotta_targets
-kind_modules
+pxt_modules
 *.db
 *.tgz
 `,
@@ -614,7 +614,7 @@ kind_modules
 		"**/node_modules": true,
 		"**/yotta_modules": true,
 		"**/yotta_targets": true,
-		"**/kind_modules": true
+		"**/pxt_modules": true
 	}
 }`,
         ".vscode/tasks.json":
