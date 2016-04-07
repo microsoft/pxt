@@ -252,7 +252,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 
     renderCore() {
         let parent = this.props.parent
-        if (!parent.state.showFiles && !(parent.state.header && parent.state.header.editor == ks.javaScriptProjectName))
+        if (!parent.state.showFiles)
             return null;
 
         let expands = this.state.expands;
@@ -887,16 +887,14 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
-                                    <div className="ui divider"></div>
-                                    {this.state.header && this.state.header.editor == ks.blocksProjectName ?
-                                    <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
+                                    {this.state.header ? <div className="ui divider"></div> : undefined }
+                                    {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
                                     } } /> : undefined}
-                                    <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } />
-                                    <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } />
-                                    <div className="ui separator"></div>
-                                    <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />
+                                    {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }                                    
+                                    {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } /> : undefined}
+                                    {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />: undefined}
                                     <div className="ui divider"></div>
                                     <LoginBox />                                    
                                     { 

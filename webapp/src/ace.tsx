@@ -501,7 +501,8 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        return this.currFile && this.parent.state.header.editor == ks.blocksProjectName
+        let vf : string;
+        return this.currFile && (vf = this.currFile.getVirtualFileName()) && pkg.mainEditorPkg().files[vf]
             ? <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
             : undefined
     }
