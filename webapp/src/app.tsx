@@ -16,7 +16,7 @@ import * as db from "./db"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
-import * as kindjson from "./kindjson"
+import * as pxtjson from "./pxtjson"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
@@ -313,7 +313,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
     aceEditor: ace.Editor;
-    kindJsonEditor: kindjson.Editor;
+    pxtJsonEditor: pxtjson.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
@@ -403,7 +403,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     private initEditors() {
         this.aceEditor = new ace.Editor(this);
-        this.kindJsonEditor = new kindjson.Editor(this);
+        this.pxtJsonEditor = new pxtjson.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
         let hasChangeTimer = false
@@ -420,7 +420,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }
         }
 
-        this.allEditors = [this.kindJsonEditor, this.blocksEditor, this.aceEditor]
+        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.aceEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }

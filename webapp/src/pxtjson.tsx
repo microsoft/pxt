@@ -18,7 +18,7 @@ export class Editor extends srceditor.Editor {
     }
 
     getId() {
-        return "kindJsonEditor"
+        return "pxtJsonEditor"
     }
 
     display() {
