@@ -575,7 +575,7 @@ function buildPxtAsync(): Promise<string[]> {
         console.log("local pxt-core built.")
         return [ksd]
     }, e => {
-        console.log("local pxt-core build FAILED")
+        buildFailed("local pxt-core build FAILED")
         return [ksd]
     });
 }
@@ -655,6 +655,14 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 
 }
 
+function buildFailed(msg:string) {
+    console.log("")
+    console.log("***")
+    console.log("*** Build failed: " + msg)
+    console.log("***")
+    console.log("")
+}
+
 function buildAndWatchTargetAsync() {
     if (!fs.existsSync("sim/tsconfig.json")) {
         console.log("No sim/tsconfig.json; assuming npm installed package")
@@ -662,8 +670,8 @@ function buildAndWatchTargetAsync() {
     }
 
     return buildAndWatchAsync(() => buildPxtAsync()
-        .then(() => buildTargetAsync().then(r => { }, e => {
-            console.log("Build failed: " + e.message)
+        .then(() => buildTargetAsync().then(r => { }, e => {  
+            buildFailed(e.message)
         }))
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
