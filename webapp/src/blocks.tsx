@@ -17,7 +17,6 @@ export class Editor extends srceditor.Editor {
     loadingXml: boolean;
     blockInfo: ts.ks.BlocksInfo;
     compilationResult: ks.blocks.BlockCompilationResult;
-    undos: string[] = [];
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -96,6 +95,8 @@ export class Editor extends srceditor.Editor {
             let text = s || "<xml></xml>";
             let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(this.editor, xml);
+            
+            this.editor.clearUndo();
         } catch (e) {
             console.log(e);
         }
@@ -128,9 +129,11 @@ export class Editor extends srceditor.Editor {
             },
         });
         this.editor.addChangeListener((ev) => {
-            this.pushUndo();
-            this.changeCallback();
-            this.updateHelpCard();
+            if (ev.recordUndo)
+                this.changeCallback();
+            if (ev.type == 'ui' && ev.element == 'category') {
+                let toolboxVisible = !!ev.newValue;
+            }
         })
         Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
             this.updateHelpCard();
@@ -139,15 +142,8 @@ export class Editor extends srceditor.Editor {
         this.isReady = true
     }
 
-    private pushUndo() {
-        let xml = this.serializeBlocks();
-        this.undos.push(xml);
-    }
-
     undo() {
-        // drop current change
-        let xml: string;
-        while ((xml = this.undos.pop()) && !this.loadBlockly(xml));
+        this.editor.undo();
     }
 
     getId() {
@@ -176,7 +172,7 @@ export class Editor extends srceditor.Editor {
     loadFile(file: pkg.File) {
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
-        this.undos = [];
+        this.editor.clearUndo();
     }
 
     setDiagnostics(file: pkg.File) {
@@ -212,14 +208,14 @@ export class Editor extends srceditor.Editor {
         this.editor.traceOn(true);
         this.editor.highlightBlock(bid);
     }
-    
+
     openTypeScript() {
         this.parent.saveTypeScriptAsync(true).done();
     }
 
     menu() {
         return (
-            <sui.Button text={lf("Show Code") } textClass="ui landscape only" icon="keyboard" onClick={() => this.openTypeScript()} />
+            <sui.Button text={lf("Show Code") } textClass="ui landscape only" icon="keyboard" onClick={() => this.openTypeScript() } />
         )
     }
 }

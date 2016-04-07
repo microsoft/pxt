@@ -57,6 +57,7 @@ declare module Blockly {
     
     class FieldCheckbox extends Field {
         constructor(val:string);
+        static CHECK_CHAR : string;
     }
     
     class FieldTextInput extends Field {
@@ -127,6 +128,12 @@ declare module Blockly {
     
     interface BlocklyEvent {
         type : string;
+        blockId?:string;
+        workspaceId:string;
+        recordUndo:boolean;
+        element?: string;
+        oldValue?: string;
+        newValue?:string;
     }
 
     class Workspace {
@@ -141,6 +148,9 @@ declare module Blockly {
         updateToolbox(newTree: Element | string) : void;
         getCanvas() : any;
         highlightBlock(id:string):void;
+        undo():void;
+        redo():void;
+        clearUndo():void;
         getMetrics(): {            
             absoluteLeft: number;
             absoluteTop: number;

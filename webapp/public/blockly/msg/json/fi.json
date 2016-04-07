@@ -8,7 +8,8 @@
 			"McSalama",
 			"Espeox",
 			"SNuutti",
-			"PStudios"
+			"PStudios",
+			"Mikahama"
 		]
 	},
 	"VARIABLES_DEFAULT_NAME": "kohde",
@@ -20,8 +21,8 @@
 	"INLINE_INPUTS": "Tuo syötteet",
 	"DELETE_BLOCK": "Poista lohko",
 	"DELETE_X_BLOCKS": "Poista %1 lohkoa",
-	"DELETE_ALL_BLOCKS": "Poista kaikki %1 lohkot?",
-	"CLEAN_UP": "Siivoa Lohkot",
+	"DELETE_ALL_BLOCKS": "Poistetaanko kaikki %1 lohkoa?",
+	"CLEAN_UP": "Siivoa lohkot",
 	"COLLAPSE_BLOCK": "Sulje lohko",
 	"COLLAPSE_ALL": "Sulje lohkot",
 	"EXPAND_BLOCK": "Laajenna lohko",
@@ -29,6 +30,8 @@
 	"DISABLE_BLOCK": "Passivoi lohko",
 	"ENABLE_BLOCK": "Aktivoi lohko",
 	"HELP": "Apua",
+	"UNDO": "Kumoa",
+	"REDO": "Tee uudelleen",
 	"CHAT": "Keskustele yhteistyökumppanisi kanssa kirjoittamalla tähän kenttään!",
 	"AUTH": "Valtuuta tämä ohjelma jotta voit tallettaa työsi ja jakaa sen.",
 	"ME": "Minä",

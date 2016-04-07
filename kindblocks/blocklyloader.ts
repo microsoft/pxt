@@ -379,22 +379,7 @@ namespace ks.blocks {
         if (blocklyInitialized) blocklyInitialized = true;
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
-
-        Blockly.FieldCheckbox.prototype.init = function(block: Blockly.Block) {
-            if (this.sourceBlock_) {
-                // Checkbox has already been initialized once.
-                return;
-            }
-            Blockly.FieldCheckbox.superClass_.init.call(this, block);
-            // The checkbox doesn't use the inherited text element.
-            // Instead it uses a custom checkmark element that is either visible or not.
-            this.checkElement_ = Blockly.createSvgElement('text',
-                { 'class': 'blocklyText blocklyLed', 'x': 0, 'y': 12 }, this.fieldGroup_);
-            var textNode = document.createTextNode('■');
-            this.checkElement_.appendChild(textNode);
-            this.checkElement_.style.display = this.state_ ? 'block' : 'none';
-        };
-
+        Blockly.FieldCheckbox.CHECK_CHAR = '■';
         var blockColors = {
             loops: 120,
             variables: 330,
