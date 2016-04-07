@@ -173,14 +173,6 @@ namespace ks.rt.logs {
                 this.element.appendChild(e.element);
                 this.render(e)
             }
-            this.scroll();
-        }
-
-        scroll() {
-            this.shouldScroll = this.element.scrollTop + this.element.offsetHeight === this.element.scrollHeight;
-            if (this.shouldScroll) {
-                this.element.scrollTop = this.element.scrollHeight
-            }
         }
 
         clear() {
