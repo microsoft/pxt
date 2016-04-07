@@ -474,12 +474,12 @@ function uploadCoreAsync(opts: UploadOptions) {
 }
 
 function readLocalKindTarget() {
-    if (!fs.existsSync("kindtarget.json")) {
-        console.error("This command requires kindtarget.json in current directory.")
+    if (!fs.existsSync("pxtarget.json")) {
+        console.error("This command requires pxtarget.json in current directory.")
         process.exit(1)
     }
     nodeutil.targetDir = process.cwd()
-    let cfg: pxt.TargetBundle = readJson("kindtarget.json")
+    let cfg: pxt.TargetBundle = readJson("pxtarget.json")
     return cfg
 }
 
@@ -678,13 +678,13 @@ export function serveAsync(arg?: string) {
         saveConfig()
     }
     let localToken = globalConfig.localToken;
-    if (!fs.existsSync("kindtarget.json")) {
+    if (!fs.existsSync("pxtarget.json")) {
         let upper = path.join(__dirname, "../../..")
-        if (fs.existsSync(path.join(upper, "kindtarget.json"))) {
+        if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
             console.log("going to " + upper)
             process.chdir(upper)
         } else {
-            U.userError("Cannot find kindtarget.json to serve.")
+            U.userError("Cannot find pxtarget.json to serve.")
         }
     }
     return buildAndWatchTargetAsync()
@@ -1371,7 +1371,7 @@ cmd("serve    [-yt]               - start web server for your local target; -yt 
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
-cmd("buildtarget                  - build kindtarget.json", () => buildTargetAsync().then(() => { }), 1)
+cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
@@ -1501,10 +1501,10 @@ initGlobals();
 
 if (require.main === module) {
     let targetdir = path.resolve(path.join(__dirname, "../../.."))
-    if (!fs.existsSync(targetdir + "/kindtarget.json")) {
+    if (!fs.existsSync(targetdir + "/pxtarget.json")) {
         targetdir = path.resolve(path.join(__dirname, ".."))
-        if (!fs.existsSync(targetdir + "/kindtarget.json")) {
-            console.error("Cannot find kindtarget.json")
+        if (!fs.existsSync(targetdir + "/pxtarget.json")) {
+            console.error("Cannot find pxtarget.json")
             process.exit(1)
         }
     }

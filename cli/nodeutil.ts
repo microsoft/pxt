@@ -135,7 +135,7 @@ export function getKindTarget(): pxt.TargetBundle {
         let res: pxt.TargetBundle = readJson(targetDir + "/built/target.json")
         if (res.id && res.bundledpkgs) return res;
     }
-    let raw: pxt.TargetBundle = readJson(targetDir + "/kindtarget.json")
+    let raw: pxt.TargetBundle = readJson(targetDir + "/pxtarget.json")
     raw.bundledpkgs = {}
     return raw
 }

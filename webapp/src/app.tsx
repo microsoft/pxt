@@ -691,7 +691,7 @@ Ctrl+Shift+B
         let cfg = pxt.U.clone(prj.config);
         cfg.name = "Untitled" // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {
-            "kind.json": JSON.stringify(cfg, null, 4) + "\n",
+            "pxt.json": JSON.stringify(cfg, null, 4) + "\n",
         }
         for (let f in prj.files)
             files[f] = prj.files[f];
@@ -860,7 +860,7 @@ Ctrl+Shift+B
             });
         }
         catch (e) {
-            console.error('failed to read kind.json')
+            console.error('failed to read pxt.json')
         }
     }
 
@@ -895,7 +895,7 @@ Ctrl+Shift+B
                                         this.saveSettings();
                                     } } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }                                    
-                                    {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/kind.json")) } /> : undefined}
+                                    {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />: undefined}
                                     <div className="ui divider"></div>
                                     <LoginBox />                                    

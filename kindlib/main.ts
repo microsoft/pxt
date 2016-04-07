@@ -122,8 +122,8 @@ namespace pxt {
 
     export interface FsPkg {
         path: string; // eg "foo/bar"
-        config: pxt.PackageConfig; // kind.json
-        files: FsFile[]; // this includes kind.json
+        config: pxt.PackageConfig; // pxt.json
+        files: FsFile[]; // this includes pxt.json
     }
 
     export interface FsPkgs {
@@ -566,7 +566,7 @@ namespace pxt {
     }
 
     export var pkgPrefix = "ptr-pkg-"
-    export var configName = "kind.json"
+    export var configName = "pxt.json"
     export var blocksProjectName = "blocksprj";
     export var javaScriptProjectName = "tsprj";
     var info = function info(msg: string) {

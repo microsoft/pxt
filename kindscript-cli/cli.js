@@ -27,7 +27,7 @@ function findKindJs() {
             }
         }
 
-        let targetjson = s + "/kindtarget.json"
+        let targetjson = s + "/pxtarget.json"
         if (fs.existsSync(targetjson)) {
             targetdir = s            
             let local = s + "/built/kind.js" // local build
@@ -41,7 +41,7 @@ function findKindJs() {
         if (s != s2)
             return goUp(s2)
 
-        console.error("Cannot find node_modules/kindcli.json nor kindtarget.json")            
+        console.error("Cannot find node_modules/kindcli.json nor pxtarget.json")            
         return null
     }
     

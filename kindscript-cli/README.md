@@ -6,7 +6,7 @@ This package provides `kind` command line tool.
 
     kind init my-package
 
-`my-package` is package name. It has to be all lowercase, only letters, digits and dashed are allowed. You can then tweak `kind.json` file.
+`my-package` is package name. It has to be all lowercase, only letters, digits and dashed are allowed. You can then tweak `pxt.json` file.
 
 `kind init` creates appropriate `.gitignore` file, so to setup git (optional) you can just run:
 
