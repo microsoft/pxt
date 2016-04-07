@@ -2,6 +2,7 @@ namespace ks.rt.logs {
     export interface ILogProps {
         maxEntries?: number;
         maxAccValues?: number;
+        onCSVData?: (name: string, d: string) => void;
     }
 
     export interface ILogEntry {
@@ -13,12 +14,12 @@ namespace ks.rt.logs {
         value: string;
         source: string;
         count: number;
-        
+
         element?: HTMLDivElement;
         accvaluesElement?: HTMLSpanElement;
         countElement?: HTMLSpanElement;
-        chartElement? : TrendChartElement;
-        valueElement? : Text;
+        chartElement?: TrendChartElement;
+        valueElement?: Text;
     }
 
     export class TrendChartElement {
@@ -59,16 +60,11 @@ namespace ks.rt.logs {
         private entries: ILogEntry[] = [];
         public element: HTMLDivElement;
 
-        static defaultProps: ILogProps = {
-            maxEntries: 100,
-            maxAccValues: 1000
-        }
-
-        constructor(public props: ILogProps = LogViewElement.defaultProps) {
+        constructor(public props: ILogProps) {
             this.registerEvents();
             this.registerChromeSerial();
             this.element = document.createElement("div");
-            this.element.className= "ui segment hideempty logs";
+            this.element.className = "ui segment hideempty logs";
         }
 
         registerChromeSerial() {
@@ -110,9 +106,9 @@ namespace ks.rt.logs {
 
         appendEntry(source: string, value: string, theme: string) {
             let ens = this.entries;
-            while(ens.length > this.props.maxEntries) {
+            while (ens.length > this.props.maxEntries) {
                 let po = ens.shift();
-                if(po.element) po.element.remove();
+                if (po.element) po.element.remove();
             }
             // find the entry with same source
             let last: ILogEntry = undefined;
@@ -146,7 +142,7 @@ namespace ks.rt.logs {
                 this.render(last);
             }
             else {
-                let e : ILogEntry = {
+                let e: ILogEntry = {
                     id: LogViewElement.counter++,
                     theme: theme,
                     time: Date.now(),
@@ -158,17 +154,19 @@ namespace ks.rt.logs {
                     element: document.createElement("div"),
                     valueElement: document.createTextNode('')
                 };
+                e.element.className = "ui log " + e.theme;
                 if (e.accvalues) {
                     e.accvaluesElement = document.createElement('span');
                     e.accvaluesElement.className = "ui log " + e.theme + " gauge"
                     e.chartElement = new TrendChartElement(e, "ui trend " + e.theme)
-                    e.element.onclick = () => {
-                        this.tableToCSV(e);
+                    if (this.props.onCSVData) {
+                        e.element.onclick = () => {
+                            this.tableToCSV(e);
+                        }
+                        e.element.className += " link";
                     }
-                    
-                    e.element.className = "ui log " + e.theme + (e.accvalues ? " link" : "");
                     e.element.appendChild(e.accvaluesElement);
-                    e.element.appendChild(e.chartElement.element);                
+                    e.element.appendChild(e.chartElement.element);
                 }
                 e.element.appendChild(e.valueElement);
                 ens.push(e);
@@ -190,7 +188,7 @@ namespace ks.rt.logs {
             this.element.innerHTML = '';
         }
 
-        render(entry : ILogEntry) {            
+        render(entry: ILogEntry) {
             if (entry.countElement) entry.countElement.innerText = entry.count.toString();
             if (entry.accvaluesElement) entry.accvaluesElement.innerText = entry.value;
             if (entry.chartElement) entry.chartElement.render();
@@ -203,6 +201,7 @@ namespace ks.rt.logs {
             let csv = `${"time"}, ${name}\n`
                 + entry.accvalues.map(v => ((v.t - t0) / 1000) + ", " + v.v).join('\n');
             let fn = `${(entry.variable.replace(/[^a-z0-9-_]/i, '') || "data")}.csv`;
+            this.props.onCSVData(fn, csv);
             //core.browserDownloadText(csv, fn, 'text/csv')
         }
     }

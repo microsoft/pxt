@@ -11,7 +11,11 @@ export class LogView extends React.Component<{}, {}> {
     
     constructor(props: any) {
         super(props);
-        this.view = new ks.rt.logs.LogViewElement()
+        this.view = new ks.rt.logs.LogViewElement({
+            maxEntries: 80,
+            maxAccValues: 500,
+            onCSVData: (n,d) => core.browserDownloadText(d, n, 'text/csv')
+        })
     }
     
     componentDidMount() {
