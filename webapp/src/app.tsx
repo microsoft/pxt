@@ -56,8 +56,10 @@ interface IAppState {
     showFiles?: boolean;
     helpCard?: ks.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
+    
     running?: boolean;
     publishing?: boolean;
+    hideEditorFloats?: boolean;
 }
 
 
@@ -875,9 +877,9 @@ Ctrl+Shift+B
         const packages = ks.appTarget.cloud && ks.appTarget.cloud.packages;
 
         return (
-            <div id='root' className={"full-abs"}>
+            <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "")}>
                 <div id="menubar" role="banner">
-                    <div className={"ui small menu"} role="menubar">
+                    <div className="ui small menu" role="menubar">
                         <span id="logo" className="item">
                             {targetTheme.logo ? (<a href={targetTheme.logoUrl}><img className='ui logo' src={Util.toDataUri(targetTheme.logo) } /></a>) : ""}
                         </span>
@@ -940,9 +942,9 @@ Ctrl+Shift+B
                     </div>
                 </div>
                 <div id="filelist" className="ui items" role="complementary">
-                    <div id="mbitboardview" className={"ui vertical " + (this.state.helpCard ? "landscape only" : "") }>
+                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only" : "") }>
                     </div>
-                    <div className="ui landscape only">
+                    <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
@@ -954,7 +956,7 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor" role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={ks.appTarget.id} /></div> : null }
+                    {this.state.helpCard ? <div className="ui editorFloat" id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={ks.appTarget.id} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
