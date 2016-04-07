@@ -20,7 +20,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/kind.d.ts', 'built/kindrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/kind.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt'])
 
@@ -41,8 +41,8 @@ task('testfmt', ['built/pxt.js'], { async: true }, function () {
 
 ju.catFiles('built/pxt.js', [
     "node_modules/typescript/lib/typescript.js",
-    "built/kindlib.js",
-    "built/kindsim.js",
+    "built/pxtlib.js",
+    "built/pxtsim.js",
     "built/cli.js"
 ],
     `
@@ -70,12 +70,12 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function() {
    fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-compileDir("kindlib", ["built/typescriptServices.d.ts"])
-compileDir("kindblocks", ["built/kindlib.js"])
-compileDir("kindrunner", ["built/kindlib.js", "built/kindsim.js", "built/kindblocks.js"])
-compileDir("kindsim", ["built/kindlib.js", "built/kindblocks.js"])
-compileDir("cli", ["built/kindlib.js", "built/kindsim.js"])
-compileDir("backendutils", ['kindlib/emitter/util.ts', 'kindlib/docsrender.ts'])
+compileDir("pxtlib", ["built/typescriptServices.d.ts"])
+compileDir("pxtblocks", ["built/pxtlib.js"])
+compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
+compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
+compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
+compileDir("backendutils", ['pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
 
 task("travis", ["test", "upload"])
 
@@ -164,7 +164,7 @@ file('built/localization.json', ju.expand1(["webapp/src"]), function () {
 })
 
 task('wapp', [
-    "built/web/kindlib.js",
+    "built/web/pxtlib.js",
     'built/web/main.js',
     'built/web/worker.js',
     'built/web/fonts/icons.woff2',
@@ -173,15 +173,15 @@ task('wapp', [
     "built/web/semantic.js"
 ])
 
-file("built/web/kindlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/kindlib.js", "built/kindblocks.js", "built/kindsim.js", "built/kindrunner.js"], function () {
+file("built/web/pxtlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/pxtlib.js", "built/pxtblocks.js", "built/pxtsim.js", "built/pxtrunner.js"], function () {
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
     jake.cpR("webapp/ace/mode/assembly_armthumb.js", "node_modules/brace/mode/")
-    jake.cpR("built/kindlib.js", "built/web/")
-    jake.cpR("built/kindblocks.js", "built/web/")
-    jake.cpR("built/kindsim.js", "built/web/")
-    jake.cpR("built/kindrunner.js", "built/web/")
+    jake.cpR("built/pxtlib.js", "built/web/")
+    jake.cpR("built/pxtblocks.js", "built/web/")
+    jake.cpR("built/pxtsim.js", "built/web/")
+    jake.cpR("built/pxtrunner.js", "built/web/")
 
     let additionalExports = [
         "getCompletionData"
@@ -194,7 +194,7 @@ file("built/web/kindlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/kin
 })
 
 file('built/webapp/src/app.js', expand([
-    "webapp", "built/web/kindlib.js"]), { async: true }, function () {
+    "webapp", "built/web/pxtlib.js"]), { async: true }, function () {
         tscIn(this, "webapp")
     })
 

@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../built/kindblocks.js",
+        "out": "../built/pxtblocks.js",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": true

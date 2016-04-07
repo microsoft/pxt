@@ -1,5 +1,5 @@
 /// <reference path="./blockly.d.ts" />
-/// <reference path="../built/kindlib.d.ts" />
+/// <reference path="../built/pxtlib.d.ts" />
 import Util = pxt.Util;
 
 let lf = Util.lf;

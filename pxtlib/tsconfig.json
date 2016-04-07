@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../built/kindlib.js",
+        "out": "../built/pxtlib.js",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": true

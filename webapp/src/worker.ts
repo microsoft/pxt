@@ -1,6 +1,6 @@
 importScripts(
     "./typescript.js",
-    "./kindlib.js"
+    "./pxtlib.js"
 )
 
 let pm : any = postMessage;

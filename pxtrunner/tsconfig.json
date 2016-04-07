@@ -4,7 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../built/kindrunner.js",
+        "out": "../built/pxtrunner.js",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": true

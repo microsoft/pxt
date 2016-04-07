@@ -1,4 +1,4 @@
-/// <reference path="../../kindblocks/blockly.d.ts" />
+/// <reference path="../../pxtblocks/blockly.d.ts" />
 /// <reference path="../../typings/jquery/jquery.d.ts" />
 
 import * as React from "react";

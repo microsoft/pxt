@@ -1,4 +1,4 @@
-/// <reference path="../../built/kindlib.d.ts" />
+/// <reference path="../../built/pxtlib.d.ts" />
 
 import * as db from "./db";
 import * as core from "./core";

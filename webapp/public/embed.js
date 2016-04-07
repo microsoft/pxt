@@ -12,10 +12,10 @@
         "blockly/blockly_compressed.js",
         "blockly/blocks_compressed.js",
         "blockly/msg/js/en.js",
-        "kindlib.js",
-        "kindblocks.js",
-        "kindsim.js",
-        "kindrunner.js"
+        "pxtlib.js",
+        "pxtblocks.js",
+        "pxtsim.js",
+        "pxtrunner.js"
     ].map(function(s) { return appCdnRoot + s; })
 
     if (typeof jQuery == "undefined")

@@ -1,6 +1,6 @@
-/// <reference path="../../built/kindlib.d.ts"/>
-/// <reference path="../../built/kindblocks.d.ts"/>
-/// <reference path="../../built/kindsim.d.ts"/>
+/// <reference path="../../built/pxtlib.d.ts"/>
+/// <reference path="../../built/pxtblocks.d.ts"/>
+/// <reference path="../../built/pxtsim.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

@@ -1,6 +1,6 @@
 /// <reference path="../typings/node/node.d.ts"/>
-/// <reference path="../built/kindlib.d.ts"/>
-/// <reference path="../built/kindsim.d.ts"/>
+/// <reference path="../built/pxtlib.d.ts"/>
+/// <reference path="../built/pxtsim.d.ts"/>
 
 
 (global as any).pxt = pxt;

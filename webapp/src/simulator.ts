@@ -1,4 +1,4 @@
-/// <reference path="../../built/kindsim.d.ts" />
+/// <reference path="../../built/pxtsim.d.ts" />
 
 import U = pxt.U
 

@@ -1,4 +1,4 @@
-/// <reference path="../kindlib/docsrender.ts"/>
+/// <reference path="../pxtlib/docsrender.ts"/>
 
 declare var global:any;
 
