@@ -9,20 +9,20 @@ let targetdir = ""
 function findKindJs() {
     let goUp = (s) => {
         let mod = s + "/node_modules/"
-        let installed = mod + "kindscript/built/kind.js"
-        let kindcli = mod + "kindcli.json"
-        if (fs.existsSync(kindcli)) {
+        let installed = mod + "pxt-core/built/pxt.js"
+        let pxtcli = mod + "pxtcli.json"
+        if (fs.existsSync(pxtcli)) {
             try {
-                let cfg = JSON.parse(fs.readFileSync(kindcli, "utf8"))
+                let cfg = JSON.parse(fs.readFileSync(pxtcli, "utf8"))
                 let innerPath = mod + cfg.targetdir + "/"
                 targetdir = path.resolve(innerPath)
-                let nested = innerPath + "node_modules/kindscript/built/kind.js"
+                let nested = innerPath + "node_modules/pxt-core/built/pxt.js"
                 if (fs.existsSync(nested)) return nested
                 if (fs.existsSync(installed)) return installed
-                console.error("Found", kindcli, "but cannot find neither", nested, "nor", installed)
+                console.error("Found", pxtcli, "but cannot find neither", nested, "nor", installed)
                 return null
             } catch (e) {
-                console.error(kindcli, e.message)
+                console.error(pxtcli, e.message)
                 return null
             }
         }
@@ -30,7 +30,7 @@ function findKindJs() {
         let targetjson = s + "/pxtarget.json"
         if (fs.existsSync(targetjson)) {
             targetdir = s            
-            let local = s + "/built/kind.js" // local build
+            let local = s + "/built/pxt.js" // local build
             if (fs.existsSync(local)) return local            
             if (fs.existsSync(installed)) return installed            
             console.error("Found", targetjson, "but cannot find neither", local, "nor", installed)
@@ -41,7 +41,7 @@ function findKindJs() {
         if (s != s2)
             return goUp(s2)
 
-        console.error("Cannot find node_modules/kindcli.json nor pxtarget.json")            
+        console.error("Cannot find node_modules/pxtcli.json nor pxtarget.json")            
         return null
     }
     
@@ -51,15 +51,15 @@ function findKindJs() {
 function target(n) {
     if (!fs.existsSync("node_modules"))
         fs.mkdirSync("node_modules")
-    console.log(`Installing kindscript-${n} locally; don't worry about package.json warnings.`)
-    child_process.execSync(`npm install kindscript-${n}`, {
+    console.log(`Installing pxt-${n} locally; don't worry about package.json warnings.`)
+    child_process.execSync(`npm install pxt-${n}`, {
         stdio: "inherit"
     })
-    fs.writeFileSync("node_modules/kindcli.json", JSON.stringify({
-        targetdir: "kindscript-" + n
+    fs.writeFileSync("node_modules/pxtcli.json", JSON.stringify({
+        targetdir: "pxt-" + n
     }, null, 4))
-    console.log(`Installed KindScript/${n}. To start server run:`)
-    console.log(`    kind serve`)
+    console.log(`Installed PXT/${n}. To start server run:`)
+    console.log(`    pxt serve`)
 }
 
 function main() {
@@ -73,7 +73,7 @@ function main() {
     }
 
     if (!path) {
-        console.error("Couldn't find KindScript; maybe try 'kind target microbit'?")
+        console.error("Couldn't find PXT; maybe try 'pxt target microbit'?")
         process.exit(1)
     }
 

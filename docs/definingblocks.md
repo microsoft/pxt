@@ -1,6 +1,6 @@
 # Defining blocks
 
-This section describes how to annotate your KindScript APIs to expose them in the Block Editor.
+This section describes how to annotate your PXT APIs to expose them in the Block Editor.
 
 ## Category
 

@@ -5,10 +5,10 @@
 			"name": "Launch",
 			"type": "node",
 			"request": "launch",
-			"program": "${workspaceRoot}/built/kind.js",
+			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": ["buildtarget"],
-			"cwd": "${workspaceRoot}/../kindscript-microbit",
+			"cwd": "${workspaceRoot}/../pxt-microbit",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"

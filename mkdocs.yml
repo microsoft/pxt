@@ -1,7 +1,7 @@
-site_name: KindScript
+site_name: Programming Experience Toolkit
 site_description: A Kinder JavaScript Experience.
 pages:
 - Home: index.md
 theme: readthedocs
-repo_url: https://github.com/microsoft/kindscript/
+repo_url: https://github.com/microsoft/pxt/
 copyright: Copyright &copy; 2016 Microsoft

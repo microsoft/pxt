@@ -1449,8 +1449,8 @@ export function mainCli(targetDir: string) {
     process.on('uncaughtException', errorHandler);
 
     if (!targetDir) {
-        console.error("Please upgrade your kindscript-cli.")
-        console.error("   npm update -g kindscript-cli")
+        console.error("Please upgrade your pxt CLI module.")
+        console.error("   npm update -g pxt")
         process.exit(30)
     }
 
@@ -1458,7 +1458,7 @@ export function mainCli(targetDir: string) {
 
     let trg = nodeutil.getKindTarget()
     pxt.appTarget = trg;
-    console.log(`Using KindScript/${trg.id} from ${targetDir}.`)
+    console.log(`Using PXT/${trg.id} from ${targetDir}.`)
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
 
@@ -1474,10 +1474,10 @@ export function mainCli(targetDir: string) {
 
     if (!cmd) {
         if (deployCoreAsync) {
-            console.log("running 'kind deploy' (run 'kind help' for usage)")
+            console.log("running 'pxt deploy' (run 'pxt help' for usage)")
             cmd = "deploy"
         } else {
-            console.log("running 'kind build' (run 'kind help' for usage)")
+            console.log("running 'pxt build' (run 'pxt help' for usage)")
             cmd = "build"
         }
     }

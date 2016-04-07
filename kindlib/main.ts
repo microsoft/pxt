@@ -619,12 +619,12 @@ pxt_modules
 }`,
         ".vscode/tasks.json":
         `
-// A task runner that calls the KindScript compiler (kind) and
+// A task runner that calls the PXT compiler and
 {
 	"version": "0.1.0",
 
-	// The command is kind. Assumes that KindScript has been installed using npm install -g kindscript-cli
-	"command": "kind",
+	// The command is pxt. Assumes that PXT has been installed using npm install -g pxt
+	"command": "pxt",
 
 	// The command is a shell script
 	"isShellCommand": true,

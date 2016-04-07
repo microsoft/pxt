@@ -1,7 +1,7 @@
 {
-  "name": "kindscript-app",
+  "name": "pxt-app",
   "version": "0.1.0",
-  "description": "A KindScript electron app",
+  "description": "A PXT electron app",
   "main": "main.js",
   "scripts": {
     "start": "electron main.js"

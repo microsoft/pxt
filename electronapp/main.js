@@ -67,7 +67,7 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false
         },
-        title: "KindScript"
+        title: "Programming Experience Toolkit"
     });
     mainWindow.setMenu(null)
     mainWindow.webContents.session.on('will-download', downloadAndDeployHexFile)

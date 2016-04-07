@@ -1,7 +1,7 @@
 {
-  "name": "kindscript-cli",
-  "version": "0.1.0",
-  "description": "KindScript - command line interface",
+  "name": "pxt",
+  "version": "0.2.0",
+  "description": "Programming Experience Toolkit - command line interface",
   "keywords": [
     "TypeScript",
     "JavaScript",
@@ -10,19 +10,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/kindscript.git"
+    "url": "git+https://github.com/Microsoft/pxt.git"
   },
   "author": "",
   "license": "MIT",
-  "homepage": "https://github.com/Microsoft/kindscript#readme",
+  "homepage": "https://github.com/Microsoft/pxt#readme",
   "files": [
     "README.md",
     "cli.js",
-    "kind"
+    "pxt"
   ],
   "preferGlobal": true,
   "bin": {
-    "kind": "./kind"
+    "pxt": "./pxt"
   },
   "dependencies": {}
 }

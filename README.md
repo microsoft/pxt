@@ -1,13 +1,14 @@
-# KindScript - A kinder JavaScript experience
+# Programming Experience Toolkit
+## A kinder JavaScript experience
 
 [![Build Status](https://travis-ci.org/Microsoft/kindscript.svg?branch=master)](https://travis-ci.org/Microsoft/kindscript)
 
-KindScript is a framework for creating special-purpose programming experiences for
-beginners, especially focused on computer science education. KindScript's underlying
+Programming Experience Toolkit (PXT) is a framework for creating special-purpose programming experiences for
+beginners, especially focused on computer science education. PXT's underlying
 programming language is a subset of TypeScript (leaving out JavaScript dynamic
 features).
 
-The main features of KindScript are:
+The main features of PXT are:
 * a Blockly-based code editor along with converter to the text format
 * an ACE-based text editor with enhanced, robust auto-completion and auto-correction
 * extensibility support to define new blocks in TypeScript
@@ -16,26 +17,27 @@ The main features of KindScript are:
 
 ## Running a target from localhost
 
-Install the `kind` command line tool (only need to do it once):
+Install the `pxt` command line tool (only need to do it once):
 
 ```
-npm install -g kindscript-cli
+npm install -g pxt
 ```
 
 Now, let's say you want to install `microbit` target:
 ```
 mkdir mymicrobit
 cd mymicrobit
-kind target microbit
-kind serve
+pxt target microbit
+pxt serve
 ```
 
 The last command will open default browser and point it to http://localhost:3232/
 
-The `kind target microbit` is essentially the same as `mkdir node_modules; npm install kindscript-microbit`
+The `kind target microbit` is essentially the same as `mkdir node_modules; npm install pxt-microbit`
+plus setting up `pxtcli.json` file to point to the target.
 
 In future, you just need to run `kind serve`. You can also run `npm update` to upgrade 
-the target and KindScript.
+the target and PXT.
 
 ## Build
 
@@ -45,7 +47,7 @@ npm install -g jake
 npm install -g tsd
 ```
 
-To build the KindScript command line tools:
+To build the PXT command line tools:
 
 ```
 tsd reinstall
@@ -53,15 +55,15 @@ npm install
 jake
 ```
 
-Then install the `kind` command line tool (only need to do it once):
+Then install the `pxt` command line tool (only need to do it once):
 
 ```
-npm install -g kindscript-cli
+npm install -g pxt
 ```
 
-After this you can run `kind` from anywhere within the build tree.
+After this you can run `pxt` from anywhere within the build tree.
 
-To start the local web app server do `kind serve` within the root directory
+To start the local web app server do `pxt serve` within the root directory
 of build tree (where this file sits) and then browse to http://localhost:3232 
 
 ### Icons

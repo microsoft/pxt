@@ -1,5 +1,5 @@
 {
-  "name": "kindscript",
+  "name": "pxt-core",
   "version": "0.2.42",
   "description": "A kinder JavaScript experience",
   "keywords": [
@@ -17,7 +17,7 @@
   "homepage": "https://github.com/Microsoft/kindscript#readme",
   "files": [
     "README.md",
-    "built/kind.js",
+    "built/pxt.js",
     "built/pxt-common.json",
     "built/kind.d.ts",
     "built/kindlib.js",
@@ -37,7 +37,7 @@
     "typings/marked"
   ],
   "preferGlobal": true,
-  "main": "built/kind.js",
+  "main": "built/pxt.js",
   "dependencies": {
     "bluebird": "^3.1.4",
     "faye-websocket": "^0.11.0",

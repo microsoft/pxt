@@ -1,14 +1,14 @@
-# KindScript CLI
+# Programming Experience Toolkit CLI
 
-This package provides `kind` command line tool.
+This package provides `pxt` command line tool.
 
 ### Package setup 
 
-    kind init my-package
+    pxt init my-package
 
 `my-package` is package name. It has to be all lowercase, only letters, digits and dashed are allowed. You can then tweak `pxt.json` file.
 
-`kind init` creates appropriate `.gitignore` file, so to setup git (optional) you can just run:
+`pxt init` creates appropriate `.gitignore` file, so to setup git (optional) you can just run:
 
     git init
     git add .
@@ -18,11 +18,11 @@ After setting up the packge, you can edit `main.ts` file. We recommend using VS 
 
 ### Building your package
 
-`kind build` will build the package. `kind deploy` will build and try to copy the results to the device. `kind` is an alias for `kind deploy`.
+`pxt build` will build the package. `pxt deploy` will build and try to copy the results to the device. `pxt` is an alias for `pxt deploy`.
 
 ### More info
 
-https://www.npmjs.com/package/kindscript
+https://www.npmjs.com/package/pxt-core
 
 ## License
 

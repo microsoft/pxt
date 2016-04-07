@@ -20,7 +20,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'built/kind.js', 'built/kind.d.ts', 'built/kindrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/kind.d.ts', 'built/kindrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt'])
 
@@ -35,11 +35,11 @@ task('clean', function () {
     jake.rmRf("built")
 })
 
-task('testfmt', ['built/kind.js'], { async: true }, function () {
-    cmdIn(this, "libs/format-test", 'node ../../built/kind.js format -t')
+task('testfmt', ['built/pxt.js'], { async: true }, function () {
+    cmdIn(this, "libs/format-test", 'node ../../built/pxt.js format -t')
 })
 
-ju.catFiles('built/kind.js', [
+ju.catFiles('built/pxt.js', [
     "node_modules/typescript/lib/typescript.js",
     "built/kindlib.js",
     "built/kindsim.js",
@@ -79,16 +79,16 @@ compileDir("backendutils", ['kindlib/emitter/util.ts', 'kindlib/docsrender.ts'])
 
 task("travis", ["test", "upload"])
 
-task('upload', ["wapp", "built/kind.js"], { async: true }, function () {
+task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
     jake.exec([
-          "node built/kind.js travis",
+          "node built/pxt.js travis",
     ], { printStdout: true });
 })
 
 
 task('bump', function () {
     jake.exec([
-        "node built/kind.js bump",
+        "node built/pxt.js bump",
     ], { printStdout: true });
 })
 
