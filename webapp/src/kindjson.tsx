@@ -5,13 +5,13 @@ import * as srceditor from "./srceditor"
 import * as sui from "./sui";
 import * as codecard from "./codecard"
 
-import Cloud = ks.Cloud;
-import Util = ks.Util;
+import Cloud = pxt.Cloud;
+import Util = pxt.Util;
 
 var lf = Util.lf
 
 export class Editor extends srceditor.Editor {
-    config: ks.PackageConfig = {} as any;
+    config: pxt.PackageConfig = {} as any;
 
     prepare() {
         this.isReady = true
@@ -80,7 +80,7 @@ export class Editor extends srceditor.Editor {
     }
 
     acceptsFile(file: pkg.File) {
-        if (file.name != ks.configName) return false
+        if (file.name != pxt.configName) return false
 
         if (file.isReadonly()) {
             // TODO add read-only support
@@ -102,6 +102,6 @@ export class Editor extends srceditor.Editor {
     }
 
     menu() {
-        return (<sui.Button class="button floating" text={lf("Back to Code") } icon={this.parent.state.header.editor == ks.blocksProjectName ? "puzzle" : "keyboard"} onClick={() => this.parent.setFile(pkg.mainEditorPkg().getMainFile()) } />)
+        return (<sui.Button class="button floating" text={lf("Back to Code") } icon={this.parent.state.header.editor == pxt.blocksProjectName ? "puzzle" : "keyboard"} onClick={() => this.parent.setFile(pkg.mainEditorPkg().getMainFile()) } />)
     }
 }

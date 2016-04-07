@@ -5,8 +5,8 @@ import * as core from "./core";
 export type Action = () => void;
 export type AnyComponent = Component<any, any>;
 
-import Cloud = ks.Cloud;
-import Util = ks.Util;
+import Cloud = pxt.Cloud;
+import Util = pxt.Util;
 
 interface CacheEntry {
     path: string;

@@ -4,8 +4,8 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
 
-import Cloud = ks.Cloud;
-import U = ks.Util;
+import Cloud = pxt.Cloud;
+import U = pxt.Util;
 
 let tsWorker: Worker;
 let pendingMsgs: U.StringMap<(v: any) => void> = {}
@@ -36,7 +36,7 @@ export function init() {
     }
 }
 
-function setDiagnostics(diagnostics: ts.ks.KsDiagnostic[]) {
+function setDiagnostics(diagnostics: ts.pxt.KsDiagnostic[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -90,7 +90,7 @@ export function compileAsync(options: CompileOptions = {}) {
         })
 }
 
-function compileCoreAsync(opts: ts.ks.CompileOptions): Promise<ts.ks.CompileResult> {
+function compileCoreAsync(opts: ts.pxt.CompileOptions): Promise<ts.pxt.CompileResult> {
     return workerOpAsync("compile", { options: opts })
 }
 
@@ -109,19 +109,19 @@ export function decompileAsync(fileName: string) {
         })
 }
 
-function decompileCoreAsync(opts: ts.ks.CompileOptions, fileName: string): Promise<ts.ks.CompileResult> {
+function decompileCoreAsync(opts: ts.pxt.CompileOptions, fileName: string): Promise<ts.pxt.CompileResult> {
     return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
 
-export function workerOpAsync(op: string, arg: ts.ks.service.OpArg) {
+export function workerOpAsync(op: string, arg: ts.pxt.service.OpArg) {
     return q.enqueue("main", () => new Promise<any>((resolve, reject) => {
         let id = "" + msgId++
         pendingMsgs[id] = v => {
             if (!v) {
-                ks.reportError("no worker response", null)
+                pxt.reportError("no worker response", null)
                 reject(new Error("no response"))
             } else if (v.errorMessage) {
-                ks.reportError("worker response: " + v.errorMessage, null)
+                pxt.reportError("worker response: " + v.errorMessage, null)
                 reject(new Error(v.errorMessage))
             } else {
                 resolve(v)
@@ -132,7 +132,7 @@ export function workerOpAsync(op: string, arg: ts.ks.service.OpArg) {
 }
 
 var firstTypecheck: Promise<void>;
-var cachedApis: ts.ks.ApisInfo;
+var cachedApis: ts.pxt.ApisInfo;
 var refreshApis = false;
 
 function waitForFirstTypecheckAsync() {
@@ -163,9 +163,9 @@ export function getApisInfoAsync() {
         .then(() => cachedApis)
 }
 
-export function getBlocksAsync(): Promise<ts.ks.BlocksInfo> {
+export function getBlocksAsync(): Promise<ts.pxt.BlocksInfo> {
     return getApisInfoAsync()
-        .then(info => ts.ks.getBlocksInfo(info));
+        .then(info => ts.pxt.getBlocksInfo(info));
 }
 
 export function newProject() {

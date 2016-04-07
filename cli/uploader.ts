@@ -7,8 +7,8 @@ import * as crypto from 'crypto';
 
 import * as nodeutil from './nodeutil';
 
-import U = ks.Util;
-import Cloud = ks.Cloud;
+import U = pxt.Util;
+import Cloud = pxt.Cloud;
 
 var uploadCache: U.Map<string> = {};
 var uploadPromises: U.Map<Promise<string>> = {};
@@ -161,7 +161,7 @@ export function uploadAsync(...args: string[]) {
         args.shift()
     }
 
-    ptrPrefix = "/" + ks.appTarget.id
+    ptrPrefix = "/" + pxt.appTarget.id
 
     let files = args.map(a => {
         if (U.startsWith(a, "docs/")) return a.slice(4)

@@ -1,4 +1,4 @@
-namespace ts.ks {
+namespace ts.pxt {
     export function jsEmit(bin: Binary) {
         let jssource = ""
         bin.procs.forEach(p => {

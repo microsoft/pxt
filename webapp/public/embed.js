@@ -21,19 +21,19 @@
     if (typeof jQuery == "undefined")
         scripts.unshift(appCdnRoot + "jquery.js")
 
-    var ksCallbacks = []
+    var pxtCallbacks = []
 
     window.ksRunnerReady = function (f) {
-        if (ksCallbacks == null) f()
-        else ksCallbacks.push(f)
+        if (pxtCallbacks == null) f()
+        else pxtCallbacks.push(f)
     }
 
     window.ksRunnerWhenLoaded = function() {
-        ks.runner.initCallbacks = ksCallbacks
-        ksCallbacks.push(function() {
-            ksCallbacks = null
+        pxt.runner.initCallbacks = pxtCallbacks
+        pxtCallbacks.push(function() {
+            pxtCallbacks = null
         })
-        ks.runner.init({
+        pxt.runner.init({
             appCdnRoot: appCdnRoot,
             simCdnRoot: simCdnRoot,
             simUrl: simUrl,

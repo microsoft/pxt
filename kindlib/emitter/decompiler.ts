@@ -1,5 +1,5 @@
 
-namespace ts.ks.decompiler {
+namespace ts.pxt.decompiler {
     const SK = ts.SyntaxKind;
 
     interface BlockSequence {
@@ -26,9 +26,9 @@ namespace ts.ks.decompiler {
         "Math.abs": {blockId: "math_op3", block:"absolute of %x" }
     }
 
-    export function decompileToBlocks(blocksInfo: ts.ks.BlocksInfo, file: ts.SourceFile): ts.ks.CompileResult {
+    export function decompileToBlocks(blocksInfo: ts.pxt.BlocksInfo, file: ts.SourceFile): ts.pxt.CompileResult {
         let stmts: ts.Statement[] = file.statements;
-        let result: ts.ks.CompileResult = {
+        let result: ts.pxt.CompileResult = {
             blocksInfo: blocksInfo,
             outfiles: {}, diagnostics: [], success: true, times: {}
         }
@@ -95,7 +95,7 @@ ${output}</xml>`;
         }
 
         function error(n: ts.Node, msg?: string) {            
-            let diags = ts.ks.patchUpDiagnostics([{
+            let diags = ts.pxt.patchUpDiagnostics([{
                 file: file,
                 start: n.getFullStart(),
                 length: n.getFullWidth(),
@@ -310,7 +310,7 @@ write(`<block type="math_arithmetic">
         }
 
         function emitPropertyAccessExpression(n: ts.PropertyAccessExpression): void {
-            let callInfo = (n as any).callInfo as ts.ks.CallInfo;
+            let callInfo = (n as any).callInfo as ts.pxt.CallInfo;
             if (!callInfo) {
                 error(n);
                 return;
@@ -368,7 +368,7 @@ write(`<block type="math_arithmetic">
 
         function isHat(stmt: ts.Statement): boolean {
             let expr: ts.Expression;
-            let call: ts.ks.CallInfo;
+            let call: ts.pxt.CallInfo;
             return stmt.kind == ts.SyntaxKind.ExpressionStatement
                 && !!(expr = (stmt as ts.ExpressionStatement).expression)
                 && expr.kind == ts.SyntaxKind.CallExpression
@@ -455,7 +455,7 @@ write(`<block type="math_arithmetic">
             write(`<block type="logic_boolean"><field name="BOOL">${U.htmlEscape(n.kind == ts.SyntaxKind.TrueKeyword ? 'TRUE' : 'FALSE')}</field></block>`)
         }
 
-        function emitCallImageLiteralExpression(node: ts.CallExpression, info: ts.ks.CallInfo) {
+        function emitCallImageLiteralExpression(node: ts.CallExpression, info: ts.pxt.CallInfo) {
             let arg = node.arguments[0];
             if (arg.kind != ts.SyntaxKind.StringLiteral && arg.kind != ts.SyntaxKind.NoSubstitutionTemplateLiteral) {
                 error(node)
@@ -473,7 +473,7 @@ write(`<block type="math_arithmetic">
         }
 
         function emitCallExpression(node: ts.CallExpression) {
-            let info: ts.ks.CallInfo = (node as any).callInfo
+            let info: ts.pxt.CallInfo = (node as any).callInfo
             if (!info) {
                 error(node);
                 return;

@@ -1,4 +1,4 @@
-namespace ts.ks {
+namespace ts.pxt {
     export interface ParameterDesc {
         name: string;
         description: string;
@@ -64,7 +64,7 @@ namespace ts.ks {
 . . . . .
 `
 
-    function renderDefaultVal(apis: ts.ks.ApisInfo, p: ts.ks.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
+    function renderDefaultVal(apis: ts.pxt.ApisInfo, p: ts.pxt.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
         if (p.defaults) return p.defaults[0]
         if (p.type == "number") return "0"
@@ -87,7 +87,7 @@ namespace ts.ks {
         return placeholderChar;
     }
 
-    export function renderParameters(apis: ts.ks.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
+    export function renderParameters(apis: ts.pxt.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
         if (si.parameters) {
             let imgLit = !!si.attributes.imageLiteral
             return "(" + si.parameters
@@ -204,7 +204,7 @@ namespace ts.ks {
     export function getBlocksInfo(info: ApisInfo) {
         return {
             apis: info,
-            blocks: ks.Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != ts.ks.SymbolKind.EnumMember))
+            blocks: pxt.Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != ts.pxt.SymbolKind.EnumMember))
         }
     }
 
@@ -358,7 +358,7 @@ namespace ts.ks {
 }
 
 
-namespace ts.ks.service {
+namespace ts.pxt.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],

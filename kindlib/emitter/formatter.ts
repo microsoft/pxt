@@ -1,4 +1,4 @@
-namespace ts.ks {
+namespace ts.pxt {
 
     enum TokenKind {
         None,

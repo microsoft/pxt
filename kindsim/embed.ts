@@ -1,4 +1,4 @@
-namespace ks.rt {
+namespace pxt.rt {
     export interface SimulatorMessage {
         type: string;
     }
@@ -64,7 +64,7 @@ namespace ks.rt {
         
         // TODO remove this; this should be using Runtime.runtime which gets
         // set correctly depending on which runtime is currently running
-        var runtime : ks.rt.Runtime;
+        var runtime : pxt.rt.Runtime;
                 
         export function stop() {
             if (runtime) {
@@ -82,7 +82,7 @@ namespace ks.rt {
                 .done(() => {
                     runtime.run((v) => {
                         console.log("DONE")
-                        ks.rt.dumpLivePointers();
+                        pxt.rt.dumpLivePointers();
                     })                   
                 })            
         }
@@ -99,6 +99,6 @@ namespace ks.rt {
 
 if (typeof window !== 'undefined') {
             window.addEventListener('load', function(ev) {
-            ks.rt.Embed.start();
+            pxt.rt.Embed.start();
         });
 }

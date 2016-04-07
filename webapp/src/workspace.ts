@@ -9,8 +9,8 @@ import * as fileworkspace from "./fileworkspace"
 
 let scripts = new db.Table("script")
 
-import U = ks.Util;
-import Cloud = ks.Cloud;
+import U = pxt.Util;
+import Cloud = pxt.Cloud;
 let lf = U.lf
 
 export interface InstallHeader {
@@ -109,7 +109,7 @@ export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
         description: meta.description,
         islibrary: meta.islibrary,
         ishidden: false,
-        userplatform: ["ks-web"],
+        userplatform: ["pxt-web"],
         target: h.target,
         editor: h.editor,
         text: stext
@@ -141,8 +141,8 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 
 export function fixupFileNames(txt: ScriptText) {
     if (!txt) return txt
-    if (!txt[ks.configName] && txt["yelm.json"]) {
-        txt[ks.configName] = txt["yelm.json"]
+    if (!txt[pxt.configName] && txt["yelm.json"]) {
+        txt[pxt.configName] = txt["yelm.json"]
         delete txt["yelm.json"]
     }
     return txt

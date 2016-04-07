@@ -1,6 +1,6 @@
-namespace ks.docs.codeCard {
+namespace pxt.docs.codeCard {
     
-    let repeat = ks.Util.repeatMap;
+    let repeat = pxt.Util.repeatMap;
 
     interface SocialNetwork {
         parse: (text: string) => { source: string; id: string }
@@ -27,8 +27,8 @@ namespace ks.docs.codeCard {
         }
     ];
     
-    export function render(card : ks.CodeCard) : HTMLElement {
-        const repeat = ks.Util.repeatMap;        
+    export function render(card : pxt.CodeCard) : HTMLElement {
+        const repeat = pxt.Util.repeatMap;        
         const promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];        
         let color = card.color || "";
         if (!color) {
@@ -81,7 +81,7 @@ namespace ks.docs.codeCard {
         }
         
         if (card.blocksXml) {
-            let svg = ks.blocks.render(card.blocksXml, { emPixels: 14, align: true });
+            let svg = pxt.blocks.render(card.blocksXml, { emPixels: 14, align: true });
             if (!svg) {
                 console.error("failed to render blocks");
                 console.log(card.blocksXml);
@@ -105,7 +105,7 @@ namespace ks.docs.codeCard {
         if (card.time) {
             let meta = div(ct, "ui meta");
             let m = div(meta, "date", "span");
-            m.appendChild(document.createTextNode(ks.Util.timeSince(card.time)));
+            m.appendChild(document.createTextNode(pxt.Util.timeSince(card.time)));
         }
         if (card.description) {
             let descr = div(ct, 'ui description');            

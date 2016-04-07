@@ -18,7 +18,7 @@
   "files": [
     "README.md",
     "built/kind.js",
-    "built/ks-common.json",
+    "built/pxt-common.json",
     "built/kind.d.ts",
     "built/kindlib.js",
     "built/kindlib.d.ts",

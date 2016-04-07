@@ -1,6 +1,6 @@
 // APIs for language/runtime support (records, locals, function values)
 
-namespace ks.rt {
+namespace pxt.rt {
     export var quiet = false;
 
     export function check(cond: boolean) {

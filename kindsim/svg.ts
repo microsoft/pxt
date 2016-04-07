@@ -1,4 +1,4 @@
-namespace ks.rt {
+namespace pxt.rt {
     export module Svg {
 		var pt : SVGPoint;
         export function cursorPoint(pt: SVGPoint, svg: SVGSVGElement, evt : MouseEvent) : SVGPoint {

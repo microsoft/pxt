@@ -8,8 +8,8 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";
 
-import Cloud = ks.Cloud;
-import Util = ks.Util;
+import Cloud = pxt.Cloud;
+import Util = pxt.Util;
 
 var lf = Util.lf;
 
@@ -78,7 +78,7 @@ export function infoNotification(msg: string) {
 }
 
 export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream") {
-    ks.BrowserUtils.browserDownloadText(
+    pxt.BrowserUtils.browserDownloadText(
         text, 
         name, 
         contentType, 

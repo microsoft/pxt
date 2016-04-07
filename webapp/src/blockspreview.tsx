@@ -23,7 +23,7 @@ export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPre
 
     renderSvg() {
         let el = $(ReactDOM.findDOMNode(this));
-        let svg = ks.blocks.render(this.props.xml);
+        let svg = pxt.blocks.render(this.props.xml);
 
         el.children().remove();
         el.append(svg);

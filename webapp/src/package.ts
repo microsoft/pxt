@@ -3,8 +3,8 @@ import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
 
-import Cloud = ks.Cloud;
-import Util = ks.Util;
+import Cloud = pxt.Cloud;
+import Util = pxt.Util;
 var lf = Util.lf
 
 let hostCache = new db.Table("hostcache")
@@ -16,15 +16,15 @@ let extWeight: Util.StringMap<number> = {
     "md": 40,
 }
 
-export function setupAppTarget(trgbundle: ks.TargetBundle) {
+export function setupAppTarget(trgbundle: pxt.TargetBundle) {
     //if (!trgbundle.appTheme) trgbundle.appTheme = {};
-    ks.appTarget = trgbundle
+    pxt.appTarget = trgbundle
 }
 
 export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
-    diagnostics: ts.ks.KsDiagnostic[];
+    diagnostics: ts.pxt.KsDiagnostic[];
     numDiagnosticsOverride: number;
     virtualSource: File;
 
@@ -108,7 +108,7 @@ export class EditorPackage {
     id: string;
     outputPkg: EditorPackage;
 
-    constructor(private ksPkg: ks.Package, private topPkg: EditorPackage) {
+    constructor(private ksPkg: pxt.Package, private topPkg: EditorPackage) {
         if (ksPkg && ksPkg.verProtocol() == "workspace")
             this.header = workspace.getHeader(ksPkg.verArgument())
     }
@@ -123,11 +123,11 @@ export class EditorPackage {
         this.outputPkg.id = "built"
     }
     
-    updateConfigAsync(update: (cfg: ks.PackageConfig) => void) {
-        let cfgFile = this.files[ks.configName]
+    updateConfigAsync(update: (cfg: pxt.PackageConfig) => void) {
+        let cfgFile = this.files[pxt.configName]
         if (cfgFile) {
             try {
-                let cfg = <ks.PackageConfig>JSON.parse(cfgFile.content)
+                let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);                
                 return cfgFile.setContentAsync(JSON.stringify(cfg, null, 2))
             } catch (e) { }
@@ -204,10 +204,10 @@ export class EditorPackage {
     saveFilesAsync() {
         if (!this.header) return Promise.resolve();
 
-        let cfgFile = this.files[ks.configName]
+        let cfgFile = this.files[pxt.configName]
         if (cfgFile) {
             try {
-                let cfg = <ks.PackageConfig>JSON.parse(cfgFile.content)
+                let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 this.header.name = cfg.name
             } catch (e) {
             }
@@ -235,7 +235,7 @@ export class EditorPackage {
     pkgAndDeps(): EditorPackage[] {
         if (this.topPkg != this)
             return this.topPkg.pkgAndDeps();
-        return Util.values((this.ksPkg as ks.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
+        return Util.values((this.ksPkg as pxt.MainPackage).deps).map(getEditorPkg).concat([this.outputPkg])
     }
 
     filterFiles(cond: (f: File) => boolean) {
@@ -248,22 +248,22 @@ export class EditorPackage {
 }
 
 class Host
-    implements ks.Host {
+    implements pxt.Host {
 
-    readFile(module: ks.Package, filename: string): string {
+    readFile(module: pxt.Package, filename: string): string {
         let epkg = getEditorPkg(module)
         let file = epkg.files[filename]
         return file ? file.content : null
     }
 
-    writeFile(module: ks.Package, filename: string, contents: string): void {
-        if (filename == ks.configName)
+    writeFile(module: pxt.Package, filename: string, contents: string): void {
+        if (filename == pxt.configName)
             return; // ignore config writes
         throw Util.oops("trying to write " + module + " / " + filename)
     }
 
-    getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
-        return ks.hex.getHexInfoAsync(this, extInfo)
+    getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+        return pxt.hex.getHexInfoAsync(this, extInfo)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -278,7 +278,7 @@ class Host
             .then(v => v.val, e => null)
     }
 
-    downloadPackageAsync(pkg: ks.Package) {
+    downloadPackageAsync(pkg: pxt.Package) {
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
@@ -295,15 +295,15 @@ class Host
             return workspace.getTextAsync(arg)
                 .then(scr => epkg.setFiles(scr));
         } else if (proto == "embed") {
-            epkg.setFiles(ks.getEmbeddedScript(pkg.verArgument()))
+            epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
     }
 
-    resolveVersionAsync(pkg: ks.Package) {
-        return data.getAsync("cloud:" + ks.pkgPrefix + pkg.id).then(r => {
+    resolveVersionAsync(pkg: pxt.Package) {
+        return data.getAsync("cloud:" + pxt.pkgPrefix + pkg.id).then(r => {
             let id = (r || {})["scriptid"]
             if (!id)
                 Util.userError(lf("cannot resolve package {0}", pkg.id))
@@ -317,9 +317,9 @@ function resolvePath(p:string) {
 }
 
 var theHost = new Host();
-export var mainPkg = new ks.MainPackage(theHost);
+export var mainPkg = new pxt.MainPackage(theHost);
 
-export function getEditorPkg(p: ks.Package) {
+export function getEditorPkg(p: pxt.Package) {
     let r: EditorPackage = (p as any)._editorPkg
     if (r) return r
 
@@ -350,11 +350,11 @@ export function notifySyncDone(updated: Util.StringMap<number>) {
 }
 
 export function loadPkgAsync(id: string) {
-    mainPkg = new ks.MainPackage(theHost)
+    mainPkg = new pxt.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id
 
     return theHost.downloadPackageAsync(mainPkg)
-        .then(() => theHost.readFile(mainPkg, ks.configName))
+        .then(() => theHost.readFile(mainPkg, pxt.configName))
         .then(str => {
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()

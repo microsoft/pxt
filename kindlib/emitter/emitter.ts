@@ -1,8 +1,8 @@
-namespace ts.ks {
+namespace ts.pxt {
     export var assert = Util.assert;
     export var oops = Util.oops;
     export type StringMap<T> = Util.Map<T>;
-    export import U = ts.ks.Util;
+    export import U = ts.pxt.Util;
 
     let EK = ir.EK;
     export var SK = SyntaxKind;

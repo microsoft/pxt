@@ -7,8 +7,8 @@ import * as ws from "./workspace"
 let headers = new db.Table("header")
 let texts = new db.Table("text")
 
-import U = ks.Util;
-import Cloud = ks.Cloud;
+import U = pxt.Util;
+import Cloud = pxt.Cloud;
 let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 

@@ -7,11 +7,11 @@ import * as core from "./core";
 
 
 export class LogView extends React.Component<{}, {}> {
-    private view : ks.rt.logs.LogViewElement;
+    private view : pxt.rt.logs.LogViewElement;
     
     constructor(props: any) {
         super(props);
-        this.view = new ks.rt.logs.LogViewElement({
+        this.view = new pxt.rt.logs.LogViewElement({
             maxEntries: 80,
             maxAccValues: 500,
             onCSVData: (n,d) => core.browserDownloadText(d, n, 'text/csv')

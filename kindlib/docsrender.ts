@@ -1,7 +1,7 @@
 /// <reference path='../typings/marked/marked.d.ts' />
 /// <reference path="emitter/util.ts"/>
 
-namespace ks {
+namespace pxt {
     export interface AppTheme {
         id?: string;
         name?: string;
@@ -26,10 +26,10 @@ namespace ks {
     }
 }
 
-namespace ks.docs {
+namespace pxt.docs {
     declare var require: any;
     var marked: MarkedStatic;
-    import U = ts.ks.Util;
+    import U = ts.pxt.Util;
 
     var stdboxes: U.Map<string> = {
     }

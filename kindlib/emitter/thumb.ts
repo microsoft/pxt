@@ -1,4 +1,4 @@
-module ts.ks.thumb {
+module ts.pxt.thumb {
     /* Docs:
      *
      * Thumb 16-bit Instruction Set Quick Reference Card

@@ -6,7 +6,7 @@ importScripts(
 let pm : any = postMessage;
 
 onmessage = ev => {
-    let res = ts.ks.service.performOperation(ev.data.op, ev.data.arg)
+    let res = ts.pxt.service.performOperation(ev.data.op, ev.data.arg)
     pm({
         op: ev.data.op,
         id: ev.data.id,

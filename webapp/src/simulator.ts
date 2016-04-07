@@ -1,18 +1,18 @@
 /// <reference path="../../built/kindsim.d.ts" />
 
-import U = ks.U
+import U = pxt.U
 
 interface SimulatorConfig {
-    highlightStatement(stmt: ts.ks.LocationInfo): void;
+    highlightStatement(stmt: ts.pxt.LocationInfo): void;
     editor: string;
 }
 
-export var driver: ks.rt.SimulatorDriver;
+export var driver: pxt.rt.SimulatorDriver;
 var nextFrameId: number = 0;
 var themes = ["blue", "red", "green", "yellow"];
-var currentRuntime: ks.rt.SimulatorRunMessage;
+var currentRuntime: pxt.rt.SimulatorRunMessage;
 var config: SimulatorConfig;
-var lastCompileResult: ts.ks.CompileResult;
+var lastCompileResult: ts.pxt.CompileResult;
 
 var $debugger: JQuery;
 
@@ -26,7 +26,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         `
     )
     $debugger = $('#debugger')    
-    driver = new ks.rt.SimulatorDriver($('#simulators')[0], {
+    driver = new pxt.rt.SimulatorDriver($('#simulators')[0], {
         onDebuggerBreakpoint: function(brk) {
             updateDebuggerButtons(brk)
             let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
@@ -52,7 +52,7 @@ export function setState(editor: string) {
     }
 }
 
-export function run(debug: boolean, res: ts.ks.CompileResult) {
+export function run(debug: boolean, res: ts.pxt.CompileResult) {
     let js = res.outfiles["microbit.js"]
     lastCompileResult = res
     driver.run(js, debug)
@@ -63,7 +63,7 @@ export function stop(unload?: boolean) {
     $debugger.empty();
 }
 
-function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
+function updateDebuggerButtons(brk: pxt.rt.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
         let b = $(`<button class="ui mini button teal" title="${Util.htmlEscape(label)}"></button>`)
         if (icon) b.addClass("icon").append(`<i class="${icon} icon"></i>`)
@@ -75,21 +75,21 @@ function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
     if (!driver.debug) return;    
     let advanced = config.editor == 'tsprj';
     
-    if (driver.state == ks.rt.SimulatorState.Paused) {
-        let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Resume));
-        let $stepOver = btn("xicon stepover", lf("Step over"), lf("Step over next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepOver));
-        let $stepInto = btn("xicon stepinto", lf("Step into"), lf("Step into next function call"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.StepInto));
+    if (driver.state == pxt.rt.SimulatorState.Paused) {
+        let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(pxt.rt.SimulatorDebuggerCommand.Resume));
+        let $stepOver = btn("xicon stepover", lf("Step over"), lf("Step over next function call"), () => driver.resume(pxt.rt.SimulatorDebuggerCommand.StepOver));
+        let $stepInto = btn("xicon stepinto", lf("Step into"), lf("Step into next function call"), () => driver.resume(pxt.rt.SimulatorDebuggerCommand.StepInto));
         $debugger.append($resume).append($stepOver)
         if (advanced)
             $debugger.append($stepInto);
-    } else if (driver.state == ks.rt.SimulatorState.Running) {
-        let $pause = btn("pause", lf("Pause"), lf("Pause execution on the next instruction"), () => driver.resume(ks.rt.SimulatorDebuggerCommand.Pause));
+    } else if (driver.state == pxt.rt.SimulatorState.Running) {
+        let $pause = btn("pause", lf("Pause"), lf("Pause execution on the next instruction"), () => driver.resume(pxt.rt.SimulatorDebuggerCommand.Pause));
         $debugger.append($pause);        
     }
 
     if (!brk || !advanced) return
 
-    function vars(hd: string, frame: ks.rt.Variables) {
+    function vars(hd: string, frame: pxt.rt.Variables) {
         let frameView = $(`<div><h4>${U.htmlEscape(hd)}</h4></div>`)
         for (let k of Object.keys(frame)) {
             let v = frame[k]
@@ -114,7 +114,7 @@ function updateDebuggerButtons(brk: ks.rt.DebuggerBreakpointMessage = null) {
     let dbgView = $(`<div class="ui segment debuggerview"></div>`)
     dbgView.append(vars(U.lf("globals"), brk.globals))
     brk.stackframes.forEach(sf => {
-        let info = sf.funcInfo as ts.ks.FunctionLocationInfo
+        let info = sf.funcInfo as ts.pxt.FunctionLocationInfo
         dbgView.append(vars(info.functionName, sf.locals))
     })
     $('#debugger').append(dbgView)

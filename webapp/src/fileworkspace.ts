@@ -4,8 +4,8 @@ import * as pkg from "./package";
 import * as data from "./data";
 import * as ws from "./workspace"
 
-import U = ks.Util;
-import Cloud = ks.Cloud;
+import U = pxt.Util;
+import Cloud = pxt.Cloud;
 let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 let currentTarget: string;
@@ -46,7 +46,7 @@ function apiAsync(path: string, data?: any) {
     }).then(r => r.json)
 }
 
-function mergeFsPkg(pkg: ks.FsPkg) {
+function mergeFsPkg(pkg: pxt.FsPkg) {
     let e = lookup(pkg.path)
     if (!e) {
         e = {
@@ -65,7 +65,7 @@ function mergeFsPkg(pkg: ks.FsPkg) {
         target: currentTarget,
         name: pkg.config.name,
         meta: {},
-        editor: ks.javaScriptProjectName,
+        editor: pxt.javaScriptProjectName,
         pubId: pkg.config.installedVersion,
         pubCurrent: false,
         _rev: null,
@@ -97,7 +97,7 @@ function initAsync(target: string) {
 
 function fetchTextAsync(e: HeaderWithScript): Promise<ws.ScriptText> {
     return apiAsync("pkg/" + e.id)
-        .then((resp: ks.FsPkg) => {
+        .then((resp: pxt.FsPkg) => {
             if (!e.text) {
                 // otherwise we were beaten to it
                 e.text = {};
@@ -137,7 +137,7 @@ function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
 
     return headerQ.enqueue<void>(h.id, () => {
         U.assert(!!e.fsText)
-        let pkg: ks.FsPkg = {
+        let pkg: pxt.FsPkg = {
             files: [],
             config: null,
             path: h.id,
@@ -154,7 +154,7 @@ function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
         let savedText = U.flatClone(e.text)
         if (pkg.files.length == 0) return Promise.resolve()
         return apiAsync("pkg/" + h.id, pkg)
-            .then((pkg: ks.FsPkg) => {
+            .then((pkg: pxt.FsPkg) => {
                 e.fsText = savedText
                 mergeFsPkg(pkg)
                 data.invalidate("header:" + h.id)
@@ -202,7 +202,7 @@ function saveToCloudAsync(h: ws.Header) {
 }
 
 function syncAsync() {
-    return apiAsync("list").then((h: ks.FsPkgs) => {
+    return apiAsync("list").then((h: pxt.FsPkgs) => {
         h.pkgs.forEach(mergeFsPkg)
     })
         .then(() => {

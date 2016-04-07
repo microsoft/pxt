@@ -22,8 +22,8 @@ import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
 
-import Cloud = ks.Cloud;
-import Util = ks.Util;
+import Cloud = pxt.Cloud;
+import Util = pxt.Util;
 var lf = Util.lf
 
 declare module Raygun {
@@ -54,7 +54,7 @@ interface IAppState {
     theme?: srceditor.Theme;
     fileState?: string;
     showFiles?: boolean;
-    helpCard?: ks.CodeCard;
+    helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
     
     running?: boolean;
@@ -72,7 +72,7 @@ interface ISettingsProps {
 
 class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     renderCore() {
-        Util.assert(ks.appTarget.cloud && ks.appTarget.cloud.workspaces);
+        Util.assert(pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces);
 
         let par = this.props.parent
         let hd = par.state.header
@@ -111,11 +111,11 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchCloudData(): Cloud.JsonPointer[] {
-        let cloud = ks.appTarget.cloud || {};
+        let cloud = pxt.appTarget.cloud || {};
         if (!cloud.workspaces && !cloud.packages) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
         let res = this.state.searchFor
-            ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${ks.appTarget.id}`)
+            ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${pxt.appTarget.id}`)
             : null
         if (res) this.prevData = res.items
         let data = this.prevData
@@ -166,8 +166,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             name={scr.name}
                             time={scr.recentUse}
                             description={scr.meta ? scr.meta.description || "" : ""}
-                            blocks={scr.editor == ks.blocksProjectName ? 1 : 0}
-                            javascript={scr.editor == ks.javaScriptProjectName ? 1 : 0}
+                            blocks={scr.editor == pxt.blocksProjectName ? 1 : 0}
+                            javascript={scr.editor == pxt.javaScriptProjectName ? 1 : 0}
                             url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ''}
                             onClick={() => chgHeader(scr) }
                             />
@@ -198,7 +198,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let header = this.props.parent.state.header;
         if (!header) return <div></div>
 
-        let rootUrl = ks.appTarget.appTheme.embedUrl
+        let rootUrl = pxt.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
         let ready = !!header.pubId && header.pubCurrent;
         let url: string;
@@ -296,7 +296,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
         let filesWithHeader = (p: pkg.EditorPackage) =>
             p.isTopLevel() ? filesOf(p) : [
                 <div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p) }>
-                    {p.getPkgId() != ks.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
+                    {p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
                     {p.getPkgId() }
                 </div>
             ].concat(expands[p.getPkgId()] ? filesOf(p) : [])
@@ -322,7 +322,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     constructor(props: IAppProps) {
         super(props);
-        document.title = ks.appTarget.title || ks.appTarget.name;
+        document.title = pxt.appTarget.title || pxt.appTarget.name;
         this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
         if (!this.settings.theme)
             this.settings.theme = {}
@@ -391,11 +391,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         compiler.typecheckAsync()
             .done(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (ks.appTarget.simulator && ks.appTarget.simulator.autoRun) {
+                if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.debug
-                        && (simulator.driver.state == ks.rt.SimulatorState.Running || simulator.driver.state == ks.rt.SimulatorState.Unloaded))
+                        && (simulator.driver.state == pxt.rt.SimulatorState.Running || simulator.driver.state == pxt.rt.SimulatorState.Unloaded))
                         this.runSimulator({ background: true });
                 }
             });
@@ -487,7 +487,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return
 
         this.stopSimulator(true);
-        ks.blocks.cleanBlocks();
+        pxt.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
 
@@ -527,7 +527,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     importHexFile(file: File) {
         if (!file) return;
-        ks.cpp.unpackSourceFromHexFileAsync(file)
+        pxt.cpp.unpackSourceFromHexFileAsync(file)
             .then(data => {
                 console.log('decoded hex file')
                 if (!data || !data.meta) {
@@ -539,10 +539,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     console.log('importing microbit.co.uk blocks project')
                     compiler.getBlocksAsync()
                         .then(info => this.newBlocksProjectAsync({
-                            "main.blocks": ks.blocks.importXml(info, data.source)
+                            "main.blocks": pxt.blocks.importXml(info, data.source)
                         })).done();
                     return;
-                } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget()) {
+                } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget() || data.meta.cloudId == "pxt/" + workspace.getCurrentTarget()) {
                     console.log("importing project")
                     let h: workspace.InstallHeader = {
                         target: workspace.getCurrentTarget(),
@@ -581,10 +581,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     newProject(hideCancel = false) {
         let cdn = (window as any).appCdnRoot
         let images = cdn + "images"
-        let targetTheme = ks.appTarget.appTheme;
+        let targetTheme = pxt.appTarget.appTheme;
         core.confirmAsync({
             logos: [targetTheme.logo],
-            header: ks.appTarget.title + ' - ' + lf("Create Project"),
+            header: pxt.appTarget.title + ' - ' + lf("Create Project"),
             hideCancel: hideCancel,
             hideAgree: true,
             onLoaded: (_) => {
@@ -631,7 +631,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         <img src="${images}/newkodu.png">
         </div>
         <div class="content">
-        <div class="header">${lf("Kodu for {0}", ks.appTarget.name)}</div>
+        <div class="header">${lf("Kodu for {0}", pxt.appTarget.name)}</div>
         <div class="description">
             ${lf("Tile based Coding")}
         </div>
@@ -666,7 +666,7 @@ ${lf("To create an new KindScript project, <a href='{0}' target='_blank'>install
 <pre>
 [sudo] npm install -g kindscript-cli
 mkdir myproject && cd myproject
-kind init ${ks.appTarget.id} myproject
+kind init ${pxt.appTarget.id} myproject
 </pre>
 <p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
 <pre>
@@ -680,16 +680,16 @@ Ctrl+Shift+B
     }
 
     newTypeScriptProjectAsync(fileOverrides?: Util.Map<string>) {
-        return this.newProjectFromIdAsync(ks.appTarget.tsprj, fileOverrides);
+        return this.newProjectFromIdAsync(pxt.appTarget.tsprj, fileOverrides);
     }
 
     newBlocksProjectAsync(fileOverrides?: Util.Map<string>) {
-        return this.newProjectFromIdAsync(ks.appTarget.blocksprj, fileOverrides);
+        return this.newProjectFromIdAsync(pxt.appTarget.blocksprj, fileOverrides);
     }
 
-    newProjectFromIdAsync(prj: ks.ProjectTemplate, fileOverrides?: Util.Map<string>): Promise<void> {
-        let cfg = ks.U.clone(prj.config);
-        cfg.name = "Untitled" // ks.U.fmt(cfg.name, Util.getAwesomeAdj());
+    newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: Util.Map<string>): Promise<void> {
+        let cfg = pxt.U.clone(prj.config);
+        cfg.name = "Untitled" // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: workspace.ScriptText = {
             "kind.json": JSON.stringify(cfg, null, 4) + "\n",
         }
@@ -846,14 +846,14 @@ Ctrl+Shift+B
             })
     }
 
-    setHelp(helpCard: ks.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
+    setHelp(helpCard: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
         this.setState({ helpCard: helpCard, helpCardClick: onClick })
     }
 
     updateHeaderName(name: string) {
         try {
-            let f = pkg.mainEditorPkg().lookupFile("this/" + ks.configName);
-            let config = JSON.parse(f.content) as ks.PackageConfig;
+            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.configName);
+            let config = JSON.parse(f.content) as pxt.PackageConfig;
             config.name = name;
             f.setContentAsync(JSON.stringify(config, null, 2)).done(() => {
                 this.forceUpdate();
@@ -872,9 +872,9 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
-        const targetTheme = ks.appTarget.appTheme;
-        const workspaces = ks.appTarget.cloud && ks.appTarget.cloud.workspaces;
-        const packages = ks.appTarget.cloud && ks.appTarget.cloud.packages;
+        const targetTheme = pxt.appTarget.appTheme;
+        const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
+        const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
 
         return (
             <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "")}>
@@ -906,7 +906,7 @@ Ctrl+Shift+B
                                 </sui.DropdownMenu>
                             </div>
                             <div className="ui">
-                                {ks.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
+                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
                                 <sui.Button role="menuitem" key='runbtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                                 <sui.Button role="menuitem" class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
@@ -948,7 +948,7 @@ Ctrl+Shift+B
                         <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
-                        {ks.appTarget.compile ? <sui.Button icon='xicon microbitdown' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
+                        {pxt.appTarget.compile ? <sui.Button icon='xicon microbitdown' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                         <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {dbgMode && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                     </div>
@@ -956,13 +956,13 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor" role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div className="ui editorFloat" id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={ks.appTarget.id} /></div> : null }
+                    {this.state.helpCard ? <div className="ui editorFloat" id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
                 <div id="footer" role="footer">
                     <div>
-                        { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (ks.appTarget.title || ks.appTarget.name) }
+                        { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (pxt.appTarget.title || pxt.appTarget.name) }
                         <span>{targetVersion}</span>
                         - <span>&nbsp; {lf("powered by") }</span> &nbsp;
                         <a href="https://github.com/Microsoft/kindscript"><i className='xicon ksempty'/> PXT</a><span>{ksVersion}</span>
@@ -1012,7 +1012,7 @@ function initLogin() {
 }
 
 function initSerial() {
-    if (!ks.appTarget.serial || !/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
+    if (!pxt.appTarget.serial || !/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
         return;
 
     console.log('initializing serial pipe');
@@ -1025,7 +1025,7 @@ function initSerial() {
     }
     ws.onmessage = (ev) => {
         try {
-            let msg = JSON.parse(ev.data) as ks.rt.SimulatorMessage;
+            let msg = JSON.parse(ev.data) as pxt.rt.SimulatorMessage;
             if (msg && msg.type == 'serial')
                 window.postMessage(msg, "*")
         }
@@ -1064,13 +1064,13 @@ function enableCrashReporting(releaseid: string) {
         Raygun.setVersion(releaseid);
         Raygun.saveIfOffline(true);
 
-        let rexp = ks.reportException;
-        ks.reportException = function(err: any, data: any): void {
+        let rexp = pxt.reportException;
+        pxt.reportException = function(err: any, data: any): void {
             if (rexp) rexp(err, data);
             Raygun.send(err, data)
         }
-        let re = ks.reportError;
-        ks.reportError = function(msg: string, data: any): void {
+        let re = pxt.reportError;
+        pxt.reportError = function(msg: string, data: any): void {
             if (re) re(msg, data);
             try {
                 throw msg
@@ -1156,7 +1156,7 @@ $(document).ready(() => {
         .then(() => {
             return compiler.init();
         })
-        .then(() => workspace.initAsync(ks.appTarget.id))
+        .then(() => workspace.initAsync(pxt.appTarget.id))
         .then(() => {
             $("#loading").remove();
             render()

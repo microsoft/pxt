@@ -1,4 +1,4 @@
-namespace ks.rt {
+namespace pxt.rt {
     // type=debugger
     export interface DebuggerMessage extends SimulatorMessage {
         subtype: string;
@@ -23,7 +23,7 @@ namespace ks.rt {
         globals: Variables;
         stackframes: {
             locals: Variables;
-            funcInfo: any; // ts.ks.FunctionLocationInfo
+            funcInfo: any; // ts.pxt.FunctionLocationInfo
         }[];
     }
 

@@ -13,9 +13,9 @@ import * as codecard from "./codecard";
 declare var require: any;
 var ace: AceAjax.Ace = require("brace");
 
-let SK = ts.ks.SymbolKind;
+let SK = ts.pxt.SymbolKind;
 
-import Util = ks.Util;
+import Util = pxt.Util;
 var lf = Util.lf
 
 require('brace/mode/typescript');
@@ -45,7 +45,7 @@ var maxCompleteItems = 20;
 
 export interface CompletionEntry {
     name: string;
-    symbolInfo: ts.ks.SymbolInfo;
+    symbolInfo: ts.pxt.SymbolInfo;
     lastScore: number;
     searchName: string;
     searchDesc: string;
@@ -54,8 +54,8 @@ export interface CompletionEntry {
 }
 
 export interface CompletionCache {
-    apisInfo: ts.ks.ApisInfo;
-    completionInfo: ts.ks.CompletionInfo;
+    apisInfo: ts.pxt.ApisInfo;
+    completionInfo: ts.pxt.CompletionInfo;
     entries: CompletionEntry[];
     fuseEntries: Fuse;
     posTxt: string;
@@ -173,7 +173,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     return
                 }
                 // console.log(compl)
-                let mkEntry = (q: string, si: ts.ks.SymbolInfo) => fixupSearch({
+                let mkEntry = (q: string, si: ts.pxt.SymbolInfo) => fixupSearch({
                     name: si.isContextual ? si.name : q,
                     symbolInfo: si,
                     lastScore: 0,
@@ -333,7 +333,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             if (si.kind == SK.None) return
         }
 
-        text += ts.ks.renderParameters(this.state.cache.apisInfo, si, cursorMarker);
+        text += ts.pxt.renderParameters(this.state.cache.apisInfo, si, cursorMarker);
 
         editor.session.replace(this.completionRange, text);
         this.detach()
@@ -501,12 +501,12 @@ export class Editor extends srceditor.Editor {
                 xml = resp.outfiles[blockFile];
                 Util.assert(!!xml);
                 // try to convert back to typescript
-                return compiler.getBlocksAsync().then((blocksInfo: ts.ks.BlocksInfo) => {
+                return compiler.getBlocksAsync().then((blocksInfo: ts.pxt.BlocksInfo) => {
                     let workspace = new Blockly.Workspace();
                     Blockly.Xml.domToWorkspace(workspace, Blockly.Xml.textToDom(xml));
-                    let b2jsr = ks.blocks.compile(workspace, blocksInfo);
+                    let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
                     if (b2jsr.source.replace(/\s/g, '') != js.replace(/\s/g,'')) {
-                        ks.reportError('decompilation failure', {
+                        pxt.reportError('decompilation failure', {
                             js: js,
                             blockly: xml,
                             jsroundtrip: b2jsr.source
@@ -517,7 +517,7 @@ export class Editor extends srceditor.Editor {
                     return mainPkg.setContentAsync(blockFile, xml).then(() => this.parent.setFile(mainPkg.files[blockFile]));
                 })
             }).catch(e => {
-                ks.reportException(e, { js: this.currFile.content });
+                pxt.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
             }).done()
     }
@@ -574,7 +574,7 @@ export class Editor extends srceditor.Editor {
             data.programText = Util.replaceAll(data.programText, cursorMarker, "")
             data.charNo = cursorOverride
         }
-        let tmp = ts.ks.format(data.programText, data.charNo)
+        let tmp = ts.pxt.format(data.programText, data.charNo)
         if (isAutomatic && tmp.formatted == data.programText)
             return;
         let formatted = tmp.formatted
@@ -675,7 +675,7 @@ export class Editor extends srceditor.Editor {
             exec: () => this.parent.runSimulator()
         })
 
-        if (ks.appTarget.compile.hasHex) {
+        if (pxt.appTarget.compile.hasHex) {
             this.editor.commands.addCommand({
                 name: "compileHex",
                 bindKey: { win: "Ctrl-Alt-Enter", mac: "Command-Alt-Enter" },
@@ -792,7 +792,7 @@ export class Editor extends srceditor.Editor {
         return false;
     }
 
-    highlightStatement(brk: ts.ks.LocationInfo) {
+    highlightStatement(brk: ts.pxt.LocationInfo) {
         this.forceDiagnosticsUpdate()
         if (!brk) return
         let sess = this.editor.getSession();

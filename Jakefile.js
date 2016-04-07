@@ -50,7 +50,7 @@ ju.catFiles('built/kind.js', [
 // make sure TypeScript doesn't overwrite our module.exports
 global.savedModuleExports = module.exports;
 module.exports = null;
-`, ['built/ks-common.json'])
+`, ['built/pxt-common.json'])
 
 file('built/nodeutil.js', ['built/cli.js'])
 file('built/kind.d.ts', ['built/cli.js'], function () {
@@ -61,7 +61,7 @@ file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptSe
     jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
 })
 
-file('built/ks-common.json', expand(['libs/ks-common'], ".ts"), function() {
+file('built/pxt-common.json', expand(['libs/ks-common'], ".ts"), function() {
    console.log(`[${this.name}]`)
    let std = {}
    for (let f of this.prereqs) {

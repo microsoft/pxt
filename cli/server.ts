@@ -9,8 +9,8 @@ import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';
 import * as os from 'os';
 
-import U = ks.Util;
-import Cloud = ks.Cloud;
+import U = pxt.Util;
+import Cloud = pxt.Cloud;
 
 let root = ""
 let dirs = [""]
@@ -34,7 +34,7 @@ let readFileAsync = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
 
 // provided by target
-let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
+let deployCoreAsync: (r: ts.pxt.CompileResult) => void = undefined;
 
 function initTargetCommands() {
     let cmdsjs = path.resolve('built/cmds.js');
@@ -66,15 +66,15 @@ function throwError(code: number, msg: string = null) {
     throw err
 }
 
-type FsFile = ks.FsFile;
-type FsPkg = ks.FsPkg;
+type FsFile = pxt.FsFile;
+type FsPkg = pxt.FsPkg;
 
 function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(fileDir, logicalDirname)
-    return readFileAsync(path.join(dirname, ks.configName))
+    return readFileAsync(path.join(dirname, pxt.configName))
         .then(buf => {
-            let cfg: ks.PackageConfig = JSON.parse(buf.toString("utf8"))
-            let files = [ks.configName].concat(cfg.files || []).concat(cfg.testFiles || [])
+            let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
+            let files = [pxt.configName].concat(cfg.files || []).concat(cfg.testFiles || [])
             return Promise.map(files, fn =>
                 statOptAsync(path.join(dirname, fn))
                     .then<FsFile>(st => {
@@ -121,7 +121,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]> {
     logicalDirname = logicalDirname.replace(/^\//, "")
     let dirname = path.join(fileDir, logicalDirname)
-    return existsAsync(path.join(dirname, ks.configName))
+    return existsAsync(path.join(dirname, pxt.configName))
         .then(ispkg =>
             ispkg ? readPkgAsync(logicalDirname).then(r => [r], err => []) :
                 depth <= 1 ? [] :
@@ -156,7 +156,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
 
     if (cmd == "GET list")
         return returnDirAsync(innerPath, 3)
-            .then<ks.FsPkgs>(lst => {
+            .then<pxt.FsPkgs>(lst => {
                 return {
                     pkgs: lst
                 }
@@ -283,7 +283,7 @@ function initSocketServer() {
 }
 
 function initSerialMonitor() {
-    if (!ks.appTarget.serial || !ks.appTarget.serial.log) return;
+    if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
 
     console.log('serial: monitoring ports...')
     initSocketServer();
@@ -328,7 +328,7 @@ function initSerialMonitor() {
         });
     }
 
-    let manufacturerRx = ks.appTarget.serial.manufacturerFilter ? new RegExp(ks.appTarget.serial.manufacturerFilter) : undefined;
+    let manufacturerRx = pxt.appTarget.serial.manufacturerFilter ? new RegExp(pxt.appTarget.serial.manufacturerFilter) : undefined;
     function filterPort(info: SerialPortInfo): boolean {
         return manufacturerRx ? manufacturerRx.test(info.manufacturer) : true;
     }
@@ -413,8 +413,8 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (pathname.slice(0, ks.appTarget.id.length + 2) == "/" + ks.appTarget.id + "/") {
-            res.writeHead(301, { location: req.url.slice(ks.appTarget.id.length + 1) })
+        if (pathname.slice(0, pxt.appTarget.id.length + 2) == "/" + pxt.appTarget.id + "/") {
+            res.writeHead(301, { location: req.url.slice(pxt.appTarget.id.length + 1) })
             res.end()
             return
         }
@@ -484,7 +484,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (fileExistsSync(webFile)) {
             if (/\.md$/.test(webFile)) {
-                let html = ks.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), ks.appTarget.appTheme)
+                let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme)
                 sendHtml(html)
             } else {
                 sendFile(webFile)

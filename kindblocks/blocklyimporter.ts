@@ -2,8 +2,8 @@
 ///<reference path='touchdevelop.d.ts'/>
 /// <reference path="../built/kindlib.d.ts" />
 
-namespace ks.blocks {
-    export function importXml(info: ts.ks.BlocksInfo, xml: string) : string {
+namespace pxt.blocks {
+    export function importXml(info: ts.pxt.BlocksInfo, xml: string) : string {
         try {
             let parser = new DOMParser();
             let doc = parser.parseFromString(xml, "application/xml");
@@ -12,7 +12,7 @@ namespace ks.blocks {
             let enums : U.Map<string> = {};
             for(let k in info.apis.byQName) {
                 let api = info.apis.byQName[k];
-                if (api.kind == ts.ks.SymbolKind.EnumMember)
+                if (api.kind == ts.pxt.SymbolKind.EnumMember)
                     enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)] = api.namespace + '.' + api.name;
             }
           
@@ -30,7 +30,7 @@ namespace ks.blocks {
         }        
     }
     
-    function patchBlock(info: ts.ks.BlocksInfo, enums: U.Map<string>, block : Element) : void {
+    function patchBlock(info: ts.pxt.BlocksInfo, enums: U.Map<string>, block : Element) : void {
         let type = block.getAttribute("type");
         let b = Blockly.Blocks[type];
         let symbol = blockSymbol(type);
@@ -39,7 +39,7 @@ namespace ks.blocks {
         let params = parameterNames(symbol);
         symbol.parameters.forEach((p, i) => {
             let ptype = info.apis.byQName[p.type];
-            if (ptype && ptype.kind == ts.ks.SymbolKind.Enum) {
+            if (ptype && ptype.kind == ts.pxt.SymbolKind.Enum) {
                 let field = block.querySelector(`field[name=${params[p.name].name}]`);
                 if (field) {
                     let en = enums[ptype.name + '.' + field.textContent];

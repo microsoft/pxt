@@ -1,6 +1,6 @@
 /// <reference path="emitter/util.ts"/>
 
-namespace ks {
+namespace pxt {
     declare var require: any;
 
     function getLzma() {
@@ -37,9 +37,9 @@ namespace ks {
     }
 }
 
-namespace ks.cpp {
-    import U = ts.ks.Util;
-    import Y = ts.ks;
+namespace pxt.cpp {
+    import U = ts.pxt.Util;
+    import Y = ts.pxt;
     let lf = U.lf;
 
     function parseExpr(e: string): number {
@@ -323,7 +323,7 @@ namespace ks.cpp {
 
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
-                    let parsedAttrs = ts.ks.parseCommentString(currAttrs)
+                    let parsedAttrs = ts.pxt.parseCommentString(currAttrs)
                     if (!currNs) err("missing namespace declaration");
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
                     let funName = m[3]
@@ -650,11 +650,11 @@ namespace ks.cpp {
     }
 }
 
-namespace ks.hex {
+namespace pxt.hex {
     var downloadCache: U.Map<Promise<any>> = {};
     var cdnUrlPromise: Promise<string>;
 
-    function downloadHexInfoAsync(extInfo: ts.ks.ExtensionInfo) {
+    function downloadHexInfoAsync(extInfo: ts.pxt.ExtensionInfo) {
         if (downloadCache.hasOwnProperty(extInfo.sha))
             return downloadCache[extInfo.sha]
         return (downloadCache[extInfo.sha] = downloadHexInfoCoreAsync(extInfo))
@@ -665,7 +665,7 @@ namespace ks.hex {
         else return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig").then(r => r.primaryCdnUrl));
     }
 
-    function downloadHexInfoCoreAsync(extInfo: ts.ks.ExtensionInfo) {
+    function downloadHexInfoCoreAsync(extInfo: ts.pxt.ExtensionInfo) {
         let hexurl = ""
         return getCdnUrlAsync()
             .then(url => {
@@ -724,12 +724,12 @@ namespace ks.hex {
             })
     }
 
-    export function getHexInfoAsync(host: Host, extInfo: ts.ks.ExtensionInfo): Promise<any> {
+    export function getHexInfoAsync(host: Host, extInfo: ts.pxt.ExtensionInfo): Promise<any> {
         if (!extInfo.sha)
             return Promise.resolve(null)
 
-        if (ts.ks.hex.isSetupFor(extInfo))
-            return Promise.resolve(ts.ks.hex.currentHexInfo)
+        if (ts.pxt.hex.isSetupFor(extInfo))
+            return Promise.resolve(ts.pxt.hex.currentHexInfo)
 
         console.log("get hex info: " + extInfo.sha)
 

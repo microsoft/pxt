@@ -1,5 +1,5 @@
 
-namespace ks.blocks.layout {
+namespace pxt.blocks.layout {
     const nodeSeparation = 12;
 
     interface Edge {

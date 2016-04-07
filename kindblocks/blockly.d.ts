@@ -44,7 +44,7 @@ declare module Blockly {
         customContextMenu?: any;        
     }
     
-    var Blocks : ks.Util.StringMap<BlockDefinition>;    
+    var Blocks : pxt.Util.StringMap<BlockDefinition>;    
     
     class Field {
         init(block:Block): void;        

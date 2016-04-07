@@ -80,10 +80,10 @@
             var sims = document.getElementById('simulators');                            
             if (hex) {
                 console.log('compiling script to hex')
-                ks.runner.generateHexFileAsync(options).done(function(hex) {
+                pxt.runner.generateHexFileAsync(options).done(function(hex) {
                     loading.remove();
                     var name = "microbit.hex";
-                    var uri = ks.BrowserUtils.browserDownloadText(hex, name)                    
+                    var uri = pxt.BrowserUtils.browserDownloadText(hex, name)                    
                     var a = document.createElement("a");
                     a.href = uri;
                     a.download = name;
@@ -92,7 +92,7 @@
                 })
             } else {
                 console.log('simulating script')
-                ks.runner.simulateAsync(sims, options).done(function() {
+                pxt.runner.simulateAsync(sims, options).done(function() {
                     console.log('simulator started...')
                     loading.remove();
                 })

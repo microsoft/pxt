@@ -3,7 +3,7 @@
 /// <reference path="../built/kindsim.d.ts"/>
 
 
-(global as any).ks = ks;
+(global as any).pxt = pxt;
 
 import * as nodeutil from './nodeutil';
 nodeutil.init();
@@ -12,8 +12,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
-import U = ks.Util;
-import Cloud = ks.Cloud;
+import U = pxt.Util;
+import Cloud = pxt.Cloud;
 
 import * as server from './server';
 import * as uploader from './uploader';
@@ -21,7 +21,7 @@ import * as uploader from './uploader';
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
 // provided by target
-let deployCoreAsync: (r: ts.ks.CompileResult) => void = undefined;
+let deployCoreAsync: (r: ts.pxt.CompileResult) => void = undefined;
 
 function initTargetCommands() {
     let cmdsjs = nodeutil.targetDir + '/built/cmds.js';
@@ -47,13 +47,13 @@ export interface UserConfig {
 
 let reportDiagnostic = reportDiagnosticSimply;
 
-function reportDiagnostics(diagnostics: ts.ks.KsDiagnostic[]): void {
+function reportDiagnostics(diagnostics: ts.pxt.KsDiagnostic[]): void {
     for (const diagnostic of diagnostics) {
         reportDiagnostic(diagnostic);
     }
 }
 
-function reportDiagnosticSimply(diagnostic: ts.ks.KsDiagnostic): void {
+function reportDiagnosticSimply(diagnostic: ts.pxt.KsDiagnostic): void {
     let output = "";
 
     if (diagnostic.fileName) {
@@ -364,7 +364,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
         .then(r => r || Cloud.privateGetAsync(nodeutil.pathToPtr(apprel))
             .then(ptr => Cloud.privateGetAsync(ptr.releaseid)))
         .then(r => r.kind == "release" ? r : null)
-        .then<ks.Cloud.JsonRelease>(r => r, e => {
+        .then<pxt.Cloud.JsonRelease>(r => r, e => {
             console.log("Cannot find release: " + apprel)
             process.exit(1)
         })
@@ -441,7 +441,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         commit: info.commitUrl,
         branch: info.tag || info.branch,
         buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
-        target: ks.appTarget ? ks.appTarget.id : ""
+        target: pxt.appTarget ? pxt.appTarget.id : ""
     })
         .then(resp => {
             console.log(resp)
@@ -479,17 +479,17 @@ function readLocalKindTarget() {
         process.exit(1)
     }
     nodeutil.targetDir = process.cwd()
-    let cfg: ks.TargetBundle = readJson("kindtarget.json")
+    let cfg: pxt.TargetBundle = readJson("kindtarget.json")
     return cfg
 }
 
-function forEachBundledPkgAsync(f: (pkg: ks.MainPackage) => Promise<void>) {
+function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage) => Promise<void>) {
     let cfg = readLocalKindTarget()
     let prev = process.cwd()
 
     return Promise.mapSeries(cfg.bundleddirs, (dirname) => {
         process.chdir(path.join(nodeutil.targetDir, dirname))
-        mainPkg = new ks.MainPackage(new Host())
+        mainPkg = new pxt.MainPackage(new Host())
         return f(mainPkg);
     })
         .finally(() => process.chdir(prev))
@@ -595,7 +595,7 @@ function travisInfo() {
 function buildTargetCoreAsync() {
     let cfg = readLocalKindTarget()
     cfg.bundledpkgs = {}
-    ks.appTarget = cfg;
+    pxt.appTarget = cfg;
     let statFiles: U.Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
     console.log("building target.json...")
@@ -616,7 +616,7 @@ function buildTargetCoreAsync() {
             }
             nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
-            ks.appTarget = cfg; // make sure we're using the latest version
+            pxt.appTarget = cfg; // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
@@ -721,8 +721,8 @@ let statAsync = Promise.promisify(fs.stat)
 let commonfiles: U.Map<string> = {};
 
 class Host
-    implements ks.Host {
-    resolve(module: ks.Package, filename: string) {
+    implements pxt.Host {
+    resolve(module: pxt.Package, filename: string) {
         if (module.level == 0) {
             return "./" + filename
         } else if (module.verProtocol() == "file") {
@@ -732,7 +732,7 @@ class Host
         }
     }
 
-    readFile(module: ks.Package, filename: string): string {
+    readFile(module: pxt.Package, filename: string): string {
         let commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
@@ -744,7 +744,7 @@ class Host
         }
     }
 
-    writeFile(module: ks.Package, filename: string, contents: string): void {
+    writeFile(module: pxt.Package, filename: string, contents: string): void {
         let p = this.resolve(module, filename)
         let check = (p: string) => {
             let dir = p.replace(/\/[^\/]+$/, "")
@@ -759,9 +759,9 @@ class Host
         fs.writeFileSync(p, contents, "utf8")
     }
 
-    getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
+    getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
         if (extInfo.onlyPublic || forceCloudBuild)
-            return ks.hex.getHexInfoAsync(this, extInfo)
+            return pxt.hex.getHexInfoAsync(this, extInfo)
 
         return buildHexAsync(extInfo)
             .then(() => patchHexInfo(extInfo))
@@ -777,7 +777,7 @@ class Host
             .then((v: string) => v, (e: any) => null as string)
     }
 
-    downloadPackageAsync(pkg: ks.Package) {
+    downloadPackageAsync(pkg: pxt.Package) {
         let proto = pkg.verProtocol()
 
         if (proto == "pub") {
@@ -794,8 +794,8 @@ class Host
         }
     }
 
-    resolveVersionAsync(pkg: ks.Package) {
-        return Cloud.privateGetAsync(ks.pkgPrefix + pkg.id).then(r => {
+    resolveVersionAsync(pkg: pxt.Package) {
+        return Cloud.privateGetAsync(pxt.pkgPrefix + pkg.id).then(r => {
             let id = r["scriptid"]
             if (!id) {
                 U.userError("scriptid no set on ptr for pkg " + pkg.id)
@@ -806,7 +806,7 @@ class Host
 
 }
 
-let mainPkg = new ks.MainPackage(new Host())
+let mainPkg = new pxt.MainPackage(new Host())
 
 export function installAsync(packageName?: string) {
     ensurePkgDir();
@@ -918,7 +918,7 @@ function runYottaAsync(args: string[]) {
     })
 }
 
-function patchHexInfo(extInfo: ts.ks.ExtensionInfo) {
+function patchHexInfo(extInfo: ts.pxt.ExtensionInfo) {
     let infopath = ytPath + "/yotta_modules/kindscript-microbit-core/generated/metainfo.json"
 
     let hexPath = ytPath + "/build/" + ytTarget + "/source/kindscript-microbit-app-combined.hex"
@@ -929,7 +929,7 @@ function patchHexInfo(extInfo: ts.ks.ExtensionInfo) {
     return hexinfo
 }
 
-function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
+function buildHexAsync(extInfo: ts.pxt.ExtensionInfo) {
     let yottaTasks = Promise.resolve()
     let buildCachePath = ytPath + "/buildcache.json"
     let buildCache: BuildCache = {}
@@ -984,7 +984,7 @@ function buildHexAsync(extInfo: ts.ks.ExtensionInfo) {
     return yottaTasks
 }
 
-var parseCppInt = ks.cpp.parseCppInt;
+var parseCppInt = pxt.cpp.parseCppInt;
 
 function buildDalConst(force = false) {
     let constName = "dal.d.ts"
@@ -1111,7 +1111,7 @@ export function formatAsync(...fileNames: string[]) {
             let numErr = 0
             for (let f of fileNames) {
                 let input = fs.readFileSync(f, "utf8")
-                let tmp = ts.ks.format(input, 0)
+                let tmp = ts.pxt.format(input, 0)
                 let formatted = tmp.formatted
                 let expected = testMode && fs.existsSync(f + ".exp") ? fs.readFileSync(f + ".exp", "utf8") : null
                 let fn = f + ".new"
@@ -1150,13 +1150,13 @@ export function formatAsync(...fileNames: string[]) {
         })
 }
 
-function runCoreAsync(res: ts.ks.CompileResult) {
+function runCoreAsync(res: ts.pxt.CompileResult) {
     let f = res.outfiles["microbit.js"]
     if (f) {
         // TODO: non-microbit specific load
-        ks.rt.initCurrentRuntime = ks.rt.initBareRuntime
-        let r = new ks.rt.Runtime(f)
-        ks.rt.Runtime.messagePosted = (msg) => {
+        pxt.rt.initCurrentRuntime = pxt.rt.initBareRuntime
+        let r = new pxt.rt.Runtime(f)
+        pxt.rt.Runtime.messagePosted = (msg) => {
             if (msg.type == "serial")
                 console.log("SERIAL:", (msg as any).data)
         }
@@ -1165,18 +1165,18 @@ function runCoreAsync(res: ts.ks.CompileResult) {
         }
         r.run(() => {
             console.log("DONE")
-            ks.rt.dumpLivePointers();
+            pxt.rt.dumpLivePointers();
         })
     }
     return Promise.resolve()
 }
 
-function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult, pkgOpts: ts.ks.CompileOptions) {
+function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.CompileOptions) {
     let decls: U.Map<ts.Symbol> = {}
 
     if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
 
-    let opts: ts.ks.CompileOptions = {
+    let opts: ts.pxt.CompileOptions = {
         fileSystem: {},
         sourceFiles: ["built/sim.d.ts", "node_modules/kindscript/built/kindsim.d.ts"],
         target: mainPkg.getTargetOptions(),
@@ -1189,14 +1189,14 @@ function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult, pkgOpts: ts.ks.Co
         opts.fileSystem[fn] = fs.readFileSync(path.join(nodeutil.targetDir, fn), "utf8")
     }
 
-    let simDeclRes = ts.ks.compile(opts)
+    let simDeclRes = ts.pxt.compile(opts)
     reportDiagnostics(simDeclRes.diagnostics);
     let typechecker = simDeclRes.ast.getTypeChecker()
     let doSymbol = (sym: ts.Symbol) => {
         if (sym.getFlags() & ts.SymbolFlags.HasExports) {
             typechecker.getExportsOfModule(sym).forEach(doSymbol)
         }
-        decls[ts.ks.getFullName(typechecker, sym)] = sym
+        decls[ts.pxt.getFullName(typechecker, sym)] = sym
     }
     let doStmt = (stmt: ts.Statement) => {
         let mod = stmt as ts.ModuleDeclaration
@@ -1211,7 +1211,7 @@ function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult, pkgOpts: ts.ks.Co
 
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
-        let simName = "ks.rt." + shim.replace(/::/g, ".")
+        let simName = "pxt.rt." + shim.replace(/::/g, ".")
         let sym = U.lookup(decls, simName)
         if (!sym) {
             console.log("missing in sim:", simName)
@@ -1219,11 +1219,11 @@ function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult, pkgOpts: ts.ks.Co
     }
 
     /*
-    let apiInfo = ts.ks.getApiInfo(pkgCompileRes.ast)
+    let apiInfo = ts.pxt.getApiInfo(pkgCompileRes.ast)
     for (let ent of U.values(apiInfo.byQName)) {
         let shim = ent.attributes.shim
         if (shim) {
-            let simName = "ks.rt." + shim.replace(/::/g, ".")
+            let simName = "pxt.rt." + shim.replace(/::/g, ".")
             let sym = U.lookup(decls, simName)
             if (!sym) {
                 console.log("missing in sim:", simName)
@@ -1234,7 +1234,7 @@ function simulatorCoverage(pkgCompileRes: ts.ks.CompileResult, pkgOpts: ts.ks.Co
 }
 
 function testForBuildTargetAsync() {
-    let opts: ts.ks.CompileOptions
+    let opts: ts.pxt.CompileOptions
     return mainPkg.loadAsync()
         .then(() => {
             copyCommonFiles();
@@ -1247,7 +1247,7 @@ function testForBuildTargetAsync() {
             opts = o
             opts.testMode = true
             opts.ast = true
-            return ts.ks.compile(opts)
+            return ts.pxt.compile(opts)
         })
         .then(res => {
             reportDiagnostics(res.diagnostics);
@@ -1280,7 +1280,7 @@ function buildCoreAsync(mode: BuildOption) {
                 opts.testMode = true
             if (mode == BuildOption.GenDocs)
                 opts.ast = true
-            return ts.ks.compile(opts)
+            return ts.pxt.compile(opts)
         })
         .then(res => {
             U.iterStringMap(res.outfiles, (fn, c) =>
@@ -1293,8 +1293,8 @@ function buildCoreAsync(mode: BuildOption) {
             console.log("Package built; hexsize=" + (res.outfiles["microbit.hex"] || "").length)
 
             if (mode == BuildOption.GenDocs) {
-                let apiInfo = ts.ks.getApiInfo(res.ast)
-                let md = ts.ks.genMarkdown(apiInfo)
+                let apiInfo = ts.pxt.getApiInfo(res.ast)
+                let md = ts.pxt.genMarkdown(apiInfo)
                 for(let fn in md) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, md[fn])
                     console.log(`Wrote built/${fn}; size=${md[fn].length}`)                    
@@ -1408,7 +1408,7 @@ export function helpAsync(all?: string) {
 
 function goToPkgDir() {
     let goUp = (s: string): string => {
-        if (fs.existsSync(s + "/" + ks.configName)) {
+        if (fs.existsSync(s + "/" + pxt.configName)) {
             return s
         }
         let s2 = path.resolve(path.join(s, ".."))
@@ -1419,11 +1419,11 @@ function goToPkgDir() {
     }
     let dir = goUp(process.cwd())
     if (!dir) {
-        console.error(`Cannot find ${ks.configName} in any of the parent directories.`)
+        console.error(`Cannot find ${pxt.configName} in any of the parent directories.`)
         process.exit(1)
     } else {
         if (dir != process.cwd()) {
-            console.log(`Going up to ${dir} which has ${ks.configName}`)
+            console.log(`Going up to ${dir} which has ${pxt.configName}`)
             process.chdir(dir)
         }
     }
@@ -1457,10 +1457,10 @@ export function mainCli(targetDir: string) {
     nodeutil.targetDir = targetDir;
 
     let trg = nodeutil.getKindTarget()
-    ks.appTarget = trg;
+    pxt.appTarget = trg;
     console.log(`Using KindScript/${trg.id} from ${targetDir}.`)
 
-    commonfiles = readJson(__dirname + "/ks-common.json")
+    commonfiles = readJson(__dirname + "/pxt-common.json")
 
     let args = process.argv.slice(2)
 
@@ -1493,7 +1493,7 @@ export function mainCli(targetDir: string) {
 
 function initGlobals() {
     let g = global as any
-    g.ks = ks;
+    g.pxt = pxt;
     g.ts = ts;
 }
 

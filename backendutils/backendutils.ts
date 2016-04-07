@@ -2,4 +2,4 @@
 
 declare var global:any;
 
-global.ks = ks;
+global.pxt = pxt;

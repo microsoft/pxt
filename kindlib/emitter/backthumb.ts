@@ -1,4 +1,4 @@
-namespace ts.ks {
+namespace ts.pxt {
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
         let resText = ""
         let write = (s: string) => { resText += asmline(s); }

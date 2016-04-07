@@ -1,4 +1,4 @@
-namespace ks.runner {
+namespace pxt.runner {
 
     export interface ClientRenderOptions {
         snippetClass?: string;
@@ -74,14 +74,14 @@ namespace ks.runner {
         $container.replaceWith([$c, $h]);
     }
 
-    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: ks.runner.DecompileResult) => void): Promise<void> {
+    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void): Promise<void> {
         if (!cls) return Promise.resolve();
 
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
         $el.removeClass(cls);
-        return ks.runner.decompileToBlocksAsync($el.text())
+        return pxt.runner.decompileToBlocksAsync($el.text())
             .then((r) => {
                 try {
                     render($el, r);
@@ -110,7 +110,7 @@ namespace ks.runner {
         });
     }
 
-    function decompileCallInfo(stmt: ts.Statement): ts.ks.CallInfo {
+    function decompileCallInfo(stmt: ts.Statement): ts.pxt.CallInfo {
         if (!stmt || stmt.kind != ts.SyntaxKind.ExpressionStatement)
             return null;
 
@@ -119,7 +119,7 @@ namespace ks.runner {
             return null;
 
         let call = estmt.expression as ts.CallExpression;
-        let info = (<any>call).callInfo as ts.ks.CallInfo;
+        let info = (<any>call).callInfo as ts.pxt.CallInfo;
 
         return info;
     }
@@ -157,9 +157,9 @@ namespace ks.runner {
             let stmts = file.statements;
             let ul = $('<div />').addClass('ui cards');
 
-            let addItem = (card: ks.CodeCard) => {
+            let addItem = (card: pxt.CodeCard) => {
                 if (!card) return;
-                ul.append(ks.docs.codeCard.render(card));
+                ul.append(pxt.docs.codeCard.render(card));
             }
 
             stmts.forEach(stmt => {
@@ -222,10 +222,10 @@ namespace ks.runner {
         })
     }
 
-    function fillCodeCardAsync(c: JQuery, card: ks.CodeCard): Promise<void> {
+    function fillCodeCardAsync(c: JQuery, card: pxt.CodeCard): Promise<void> {
         if (!card) return Promise.resolve();
 
-        let cc = ks.docs.codeCard.render(card)
+        let cc = pxt.docs.codeCard.render(card)
         c.replaceWith(cc);
 
         return Promise.resolve();
@@ -238,9 +238,9 @@ namespace ks.runner {
         if (!$el[0]) return Promise.resolve();
 
         $el.removeClass(cls);
-        let card: ks.CodeCard;
+        let card: pxt.CodeCard;
         try {
-            card = JSON.parse($el.text()) as ks.CodeCard;
+            card = JSON.parse($el.text()) as pxt.CodeCard;
         } catch (e) {
             console.error('error while rendering ' + $el.html())
             $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));

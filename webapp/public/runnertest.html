@@ -96,7 +96,7 @@
             if (!p) return;
             console.log('rendering:')
             console.log(p)
-            ks.runner.decompileToBlocksAsync(p).done(function(r) {
+            pxt.runner.decompileToBlocksAsync(p).done(function(r) {
                 let svg = r.blocksSvg;
                 $('#loading').remove();
                 if (svg) {
@@ -116,7 +116,7 @@
         }
             
         ksRunnerReady(function() {
-            ks.runner.renderAsync({
+            pxt.runner.renderAsync({
                 snippetClass: 'lang-blocks',
                 signatureClass: 'lang-sig',
                 blocksClass:'lang-block',

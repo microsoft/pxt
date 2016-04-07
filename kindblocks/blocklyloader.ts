@@ -1,10 +1,10 @@
 /// <reference path="./blockly.d.ts" />
 /// <reference path="../built/kindlib.d.ts" />
-import Util = ks.Util;
+import Util = pxt.Util;
 
 let lf = Util.lf;
 
-namespace ks.blocks {
+namespace pxt.blocks {
     
     const blockColors: Util.StringMap<number> = {
         loops: 120,
@@ -19,13 +19,13 @@ namespace ks.blocks {
     // blocks cached
     interface CachedBlock {
         hash: string;
-        fn: ts.ks.SymbolInfo;
+        fn: ts.pxt.SymbolInfo;
         block: Blockly.BlockDefinition;
     }
     var cachedBlocks: Util.StringMap<CachedBlock> = {};
     var cachedToolbox: string = "";
     
-    export function blockSymbol(type: string) : ts.ks.SymbolInfo {
+    export function blockSymbol(type: string) : ts.pxt.SymbolInfo {
         let b = cachedBlocks[type];
         return b ? b.fn : undefined;
     }
@@ -60,9 +60,9 @@ namespace ks.blocks {
         shadowValue?: string;
     }
 
-    export function parameterNames(fn: ts.ks.SymbolInfo): Util.StringMap<BlockParameter> {
+    export function parameterNames(fn: ts.pxt.SymbolInfo): Util.StringMap<BlockParameter> {
         // collect blockly parameter name mapping
-        const instance = fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property;
+        const instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
         let attrNames: Util.StringMap<BlockParameter> = {};
 
         if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
@@ -91,7 +91,7 @@ namespace ks.blocks {
         return attrNames;
     }
 
-    function createToolboxBlock(info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
+    function createToolboxBlock(info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
         //
         // toolbox update
         //
@@ -99,7 +99,7 @@ namespace ks.blocks {
         block.setAttribute("type", fn.attributes.blockId);
         if (fn.attributes.blockGap)
             block.setAttribute("gap", fn.attributes.blockGap);
-        if ((fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property)
+        if ((fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property)
             && attrNames["this"] && attrNames["this"].shadowType) {
             let attr = attrNames["this"];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
@@ -115,7 +115,7 @@ namespace ks.blocks {
         return block;
     }
 
-    function injectToolbox(tb: Element, info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, block: HTMLElement) {
+    function injectToolbox(tb: Element, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, block: HTMLElement) {
         let ns = fn.namespace.split('.')[0];
         let catName = ns[0].toUpperCase() + ns.slice(1);
         let category = tb.querySelector("category[name~='" + catName + "']");
@@ -158,11 +158,11 @@ namespace ks.blocks {
         return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
     }
 
-    function injectBlockDefinition(info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
+    function injectBlockDefinition(info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
-            ks.reportError('trying to override builtin block ' + id, null);
+            pxt.reportError('trying to override builtin block ' + id, null);
             return false;
         }
 
@@ -191,7 +191,7 @@ namespace ks.blocks {
         return true;
     }
 
-    function initField(i: any, ni: number, fn: ts.ks.SymbolInfo, pre: string, right?: boolean, type?: string): any {
+    function initField(i: any, ni: number, fn: ts.pxt.SymbolInfo, pre: string, right?: boolean, type?: string): any {
         if (ni == 0 && fn.attributes.icon)
             i.appendField(iconToFieldImage(fn.attributes.icon))
         if (pre)
@@ -203,7 +203,7 @@ namespace ks.blocks {
         return i;
     }
 
-    function mkCard(fn: ts.ks.SymbolInfo, blockXml: HTMLElement): ks.CodeCard {
+    function mkCard(fn: ts.pxt.SymbolInfo, blockXml: HTMLElement): pxt.CodeCard {
         return {
             header: fn.name,
             name: fn.namespace + '.' + fn.name,
@@ -217,9 +217,9 @@ namespace ks.blocks {
         }
     }
     
-    function initBlock(block: any, info: ts.ks.BlocksInfo, fn: ts.ks.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+    function initBlock(block: any, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
         const ns = fn.namespace.split('.')[0];
-        const instance = fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property;
+        const instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
 
         if (fn.attributes.help)
             block.setHelpUrl("./reference/" + fn.attributes.help);
@@ -262,7 +262,7 @@ namespace ks.blocks {
                     i = initField(block.appendValueInput(p), ni, fn, pre, true, "String");
                 } else {
                     let prtype = Util.lookup(info.apis.byQName, pr.type);
-                    if (prtype && prtype.kind == ts.ks.SymbolKind.Enum) {
+                    if (prtype && prtype.kind == ts.pxt.SymbolKind.Enum) {
                         let dd = Util.values(info.apis.byQName)
                             .filter(e => e.namespace == pr.type)
                             .map(v => [v.attributes.block || v.attributes.blockId || v.name, v.namespace + "." + v.name]);
@@ -310,7 +310,7 @@ namespace ks.blocks {
         block.setTooltip(fn.attributes.jsDoc);
     }
 
-    export function initBlocks(blockInfo: ts.ks.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
+    export function initBlocks(blockInfo: ts.pxt.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
         init();
         
         blockInfo.blocks.sort((f1, f2) => {
@@ -369,7 +369,7 @@ namespace ks.blocks {
             removeBlock(cachedBlocks[b].fn);
     }
 
-    function removeBlock(fn: ts.ks.SymbolInfo) {
+    function removeBlock(fn: ts.pxt.SymbolInfo) {
         delete Blockly.Blocks[fn.attributes.blockId];
         delete cachedBlocks[fn.attributes.blockId];
     }
@@ -620,7 +620,7 @@ namespace ks.blocks {
                 if (!this.codeCard) {
                     let tb = document.getElementById('blocklyToolboxDefinition');
                     let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
-                    this.codeCard = <ks.CodeCard>{
+                    this.codeCard = <pxt.CodeCard>{
                         header: name,
                         name: name,
                         card: { software: 1 },

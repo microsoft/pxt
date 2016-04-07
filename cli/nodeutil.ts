@@ -9,7 +9,7 @@ import * as path from 'path';
 
 Promise = require("bluebird");
 
-import Util = ks.Util;
+import Util = pxt.Util;
 
 export var targetDir: string = process.cwd();
 
@@ -129,13 +129,13 @@ export function readJson(fn: string) {
     return JSON.parse(fs.readFileSync(fn, "utf8"))
 }
 
-export function getKindTarget(): ks.TargetBundle {
+export function getKindTarget(): pxt.TargetBundle {
 
     if (fs.existsSync(targetDir + "/built/target.json")) {
-        let res: ks.TargetBundle = readJson(targetDir + "/built/target.json")
+        let res: pxt.TargetBundle = readJson(targetDir + "/built/target.json")
         if (res.id && res.bundledpkgs) return res;
     }
-    let raw: ks.TargetBundle = readJson(targetDir + "/kindtarget.json")
+    let raw: pxt.TargetBundle = readJson(targetDir + "/kindtarget.json")
     raw.bundledpkgs = {}
     return raw
 }

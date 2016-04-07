@@ -1,9 +1,9 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
-namespace ks {
-    export import U = ts.ks.Util;
-    export import Util = ts.ks.Util;
+namespace pxt {
+    export import U = ts.pxt.Util;
+    export import Util = ts.pxt.Util;
     let lf = U.lf;
 
     export var appTarget: TargetBundle;
@@ -30,13 +30,13 @@ namespace ks {
         }
     }
 
-    export type CompileTarget = ts.ks.CompileTarget;
+    export type CompileTarget = ts.pxt.CompileTarget;
 
     export interface Host {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
-        getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any>;
+        getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any>;
         resolveVersionAsync(pkg: Package): Promise<string>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
         cacheGetAsync(id: string): Promise<string>; // null if not found
@@ -108,7 +108,7 @@ namespace ks {
         testFiles?: string[];
         public?: boolean;
         binaryonly?: boolean;
-        microbit?: ts.ks.MicrobitConfig;
+        microbit?: ts.pxt.MicrobitConfig;
         card?: CodeCard;
     }
 
@@ -122,7 +122,7 @@ namespace ks {
 
     export interface FsPkg {
         path: string; // eg "foo/bar"
-        config: ks.PackageConfig; // kind.json
+        config: pxt.PackageConfig; // kind.json
         files: FsFile[]; // this includes kind.json
     }
 
@@ -132,7 +132,7 @@ namespace ks {
 
     export interface ProjectTemplate {
         id: string;
-        config: ks.PackageConfig;
+        config: pxt.PackageConfig;
         files: U.Map<string>;
     }
 
@@ -347,7 +347,7 @@ namespace ks {
         getTargetOptions(): CompileTarget { return U.clone(appTarget.compile); }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
-            let opts: ts.ks.CompileOptions = {
+            let opts: ts.pxt.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
                 target: target,
@@ -424,17 +424,17 @@ namespace ks {
                 })
         }
 
-        buildAsync(target: ts.ks.CompileTarget) {
+        buildAsync(target: ts.pxt.CompileTarget) {
             return this.getCompileOptionsAsync(target)
-                .then(opts => ts.ks.compile(opts))
+                .then(opts => ts.pxt.compile(opts))
         }
 
         serviceAsync(op: string) {
             return this.getCompileOptionsAsync()
                 .then(opts => {
-                    ts.ks.service.performOperation("reset", {})
-                    ts.ks.service.performOperation("setOpts", { options: opts })
-                    return ts.ks.service.performOperation(op, {})
+                    ts.pxt.service.performOperation("reset", {})
+                    ts.pxt.service.performOperation("setOpts", { options: opts })
+                    return ts.pxt.service.performOperation(op, {})
                 })
         }
 

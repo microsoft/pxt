@@ -10,7 +10,7 @@
 import J = TDev.AST.Json;
 import B = Blockly;
 
-namespace ks.blocks {
+namespace pxt.blocks {
 
     // A series of utility functions for constructing various J* AST nodes.
     module Helpers {
@@ -845,7 +845,7 @@ namespace ks.blocks {
                     else expr = compileStdCall(e, b, call);
                 }
                 else {
-                    ks.reportError("Unable to compile expression: " + b.type, null);
+                    pxt.reportError("Unable to compile expression: " + b.type, null);
                     expr = defaultValueForType(returnType(e, b));
                 }
                 break;
@@ -1230,7 +1230,7 @@ namespace ks.blocks {
     // - All variables have been assigned an initial [Point] in the union-find.
     // - Variables have been marked to indicate if they are compatible with the
     //   TouchDevelop for-loop model.
-    function mkEnv(w: B.Workspace, blockInfo: ts.ks.BlocksInfo): Environment {
+    function mkEnv(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): Environment {
         // The to-be-returned environment.
         let e = emptyEnv(w);
 
@@ -1239,11 +1239,11 @@ namespace ks.blocks {
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
-                        ks.reportError("compiler: function " + fn.attributes.blockId + " already defined", null);
+                        pxt.reportError("compiler: function " + fn.attributes.blockId + " already defined", null);
                         return;
                     }
-                    let fieldMap = ks.blocks.parameterNames(fn);
-                    let instance = fn.kind == ts.ks.SymbolKind.Method || fn.kind == ts.ks.SymbolKind.Property;
+                    let fieldMap = pxt.blocks.parameterNames(fn);
+                    let instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
                     let args = fn.parameters.map(p => {
                         if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
                         else return null;
@@ -1328,7 +1328,7 @@ namespace ks.blocks {
         return e;
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: ts.ks.BlocksInfo, options: CompileOptions): J.JApp {
+    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo, options: CompileOptions): J.JApp {
         try {
             var decls: J.JDecl[] = [];
             var e = mkEnv(w, blockInfo);
@@ -1386,7 +1386,7 @@ namespace ks.blocks {
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: ts.ks.BlocksInfo, options: CompileOptions = {}): BlockCompilationResult {
+    export function compile(b: B.Workspace, blockInfo: ts.pxt.BlocksInfo, options: CompileOptions = {}): BlockCompilationResult {
         Errors.clear();
         return tdASTtoTS(compileWorkspace(b, blockInfo, options));
     }
@@ -1512,7 +1512,7 @@ namespace ks.blocks {
                             rec(ee, prio)
                         break
                     default:
-                        ks.reportError("invalid nodeType when flattening: " + e.nodeType, null);
+                        pxt.reportError("invalid nodeType when flattening: " + e.nodeType, null);
                         Util.oops("invalid nodeType when flattening: " + e.nodeType)
                 }
             }

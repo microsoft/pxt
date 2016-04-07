@@ -1,4 +1,4 @@
-namespace ks.rt.logs {
+namespace pxt.rt.logs {
     export interface ILogProps {
         maxEntries?: number;
         maxAccValues?: number;
@@ -59,7 +59,7 @@ namespace ks.rt.logs {
         static counter = 0;
         private shouldScroll = false;
         private entries: ILogEntry[] = [];
-        private serialBuffers: ks.rt.Map<string> = {};
+        private serialBuffers: pxt.rt.Map<string> = {};
         public element: HTMLDivElement;
 
         constructor(public props: ILogProps) {
@@ -70,7 +70,7 @@ namespace ks.rt.logs {
         }
 
         registerChromeSerial() {
-            let buffers: ks.rt.Map<string> = {};
+            let buffers: pxt.rt.Map<string> = {};
             let chrome = (window as any).chrome;
             if (chrome && chrome.runtime) {
                 let port = chrome.runtime.connect("cihhkhnngbjlhahcfmhekmbnnjcjdbge", { name: "micro:bit" });

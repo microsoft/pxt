@@ -1,6 +1,6 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 
-namespace ks.rt {
+namespace pxt.rt {
     export module U {
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {

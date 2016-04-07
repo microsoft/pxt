@@ -1,4 +1,4 @@
-namespace ks {
+namespace pxt {
     export module BrowserUtils {
         export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError? : (err:any) => void) : string {
             console.log('trigger download')

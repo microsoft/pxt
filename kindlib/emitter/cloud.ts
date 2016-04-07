@@ -1,5 +1,5 @@
-namespace ks.Cloud {
-    import Util = ts.ks.Util;
+namespace pxt.Cloud {
+    import Util = ts.pxt.Util;
     
     export var apiRoot = "https://kindscript.com/api/";
     export var accessToken = "";

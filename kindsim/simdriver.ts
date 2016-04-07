@@ -1,4 +1,4 @@
-namespace ks.rt {
+namespace pxt.rt {
     export interface SimulatorDriverOptions {
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
@@ -24,7 +24,7 @@ namespace ks.rt {
         private themes = ["blue", "red", "green", "yellow"];
         private nextFrameId = 0;
         private frameCounter = 0;
-        private currentRuntime: ks.rt.SimulatorRunMessage;
+        private currentRuntime: pxt.rt.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
         public debug = false;
         public state = SimulatorState.Unloaded;
@@ -46,7 +46,7 @@ namespace ks.rt {
             }
         }
 
-        private postMessage(msg: ks.rt.SimulatorMessage, source?: Window) {
+        private postMessage(msg: pxt.rt.SimulatorMessage, source?: Window) {
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
             if (source
@@ -122,7 +122,7 @@ namespace ks.rt {
         }
 
         private startFrame(frame: HTMLIFrameElement) {
-            let msg = JSON.parse(JSON.stringify(this.currentRuntime)) as ks.rt.SimulatorRunMessage;
+            let msg = JSON.parse(JSON.stringify(this.currentRuntime)) as pxt.rt.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
             msg.frameCounter = ++this.frameCounter;
@@ -147,7 +147,7 @@ namespace ks.rt {
                 let msg = ev.data;
                 switch (msg.type || '') {
                     case 'ready':
-                        let frameid = (msg as ks.rt.SimulatorReadyMessage).frameid;
+                        let frameid = (msg as pxt.rt.SimulatorReadyMessage).frameid;
                         let frame = document.getElementById(frameid) as HTMLIFrameElement;
                         if (frame) this.startFrame(frame);
                         break;
@@ -156,7 +156,7 @@ namespace ks.rt {
                     default:
                         if (msg.type == 'radiopacket') {
                             // assign rssi noisy?
-                            (msg as ks.rt.SimulatorRadioPacketMessage).rssi = 10;
+                            (msg as pxt.rt.SimulatorRadioPacketMessage).rssi = 10;
                         }
                         this.postMessage(ev.data, ev.source);
                         break;
@@ -191,11 +191,11 @@ namespace ks.rt {
             this.postDebuggerMessage(msg)
         }
 
-        private handleDebuggerMessage(msg: ks.rt.DebuggerMessage) {
+        private handleDebuggerMessage(msg: pxt.rt.DebuggerMessage) {
             console.log("DBG-MSG", msg.subtype, msg)
             switch (msg.subtype) {
                 case "breakpoint":
-                    let brk = msg as ks.rt.DebuggerBreakpointMessage
+                    let brk = msg as pxt.rt.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
                         this.setState(SimulatorState.Paused);
                         if (this.options.onDebuggerBreakpoint)
@@ -208,7 +208,7 @@ namespace ks.rt {
         }
 
         private postDebuggerMessage(subtype: string, data: any = {}) {
-            let msg: ks.rt.DebuggerMessage = JSON.parse(JSON.stringify(data))
+            let msg: pxt.rt.DebuggerMessage = JSON.parse(JSON.stringify(data))
             msg.type = "debugger"
             msg.subtype = subtype
             this.postMessage(msg)

@@ -2,7 +2,7 @@
 /// <reference path="../built/kindlib.d.ts" />
 /// <reference path="../typings/jquery/jquery.d.ts" />
 
-namespace ks.blocks {
+namespace pxt.blocks {
 
     var blocklyDiv = document.createElement("div");
     blocklyDiv.style.position = "absolute";

@@ -1,6 +1,6 @@
 /// <reference path="../../typings/bluebird/bluebird.d.ts"/>
 
-namespace ts.ks.Util {
+namespace ts.pxt.Util {
     export interface Map<T> {
         [index: string]: T;
     }
@@ -570,7 +570,7 @@ namespace ts.ks.Util {
     }
 }
 
-namespace ts.ks.BrowserImpl {
+namespace ts.pxt.BrowserImpl {
     Util.httpRequestCoreAsync = httpRequestCoreAsync;
     Util.sha256 = sha256string;
     Util.getRandomBuf = buf => {

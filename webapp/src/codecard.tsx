@@ -3,8 +3,8 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as blockspreview from "./blockspreview"
 
-let lf = ks.Util.lf;
-let repeat = ks.Util.repeatMap;
+let lf = pxt.Util.lf;
+let repeat = pxt.Util.repeatMap;
 
 interface SocialNetwork {
     parse: (text: string) => { source: string; id: string }
@@ -34,9 +34,9 @@ let socialNetworks: SocialNetwork[] = [{
 
 export interface CodeCardState { }
 
-export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
+export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
 
-    constructor(props: ks.CodeCard) {
+    constructor(props: pxt.CodeCard) {
         super(props);
 
         this.state = {};
@@ -78,7 +78,7 @@ export class CodeCardView extends React.Component<ks.CodeCard, CodeCardState> {
                 <div className="content">
                     {card.name ? <a href={url} target="docs" className="header">{card.name}</a> : ''}
                     <div className="meta">
-                        {card.time ? <span key="date" className="date">{ks.Util.timeSince(card.time) }</span> : ""}
+                        {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : ""}
                     </div>
                     {card.description ? <div className="description">{card.description}</div> : ''}
                 </div>

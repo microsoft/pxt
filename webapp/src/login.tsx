@@ -6,8 +6,8 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
 
-import Cloud = ks.Cloud;
-import Util = ks.Util;
+import Cloud = pxt.Cloud;
+import Util = pxt.Util;
 
 export interface ILoginBoxProps {
 }

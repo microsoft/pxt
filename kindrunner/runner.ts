@@ -2,7 +2,7 @@
 /// <reference path="../built/kindblocks.d.ts" />
 /// <reference path="../built/kindsim.d.ts" />
 
-namespace ks.runner {
+namespace pxt.runner {
     export interface RunnerOptions {
         appCdnRoot: string;
         simCdnRoot: string;
@@ -18,7 +18,7 @@ namespace ks.runner {
         files: Util.StringMap<string> = {};
         id: string;
 
-        constructor(private ksPkg: ks.Package, public topPkg: EditorPackage) {
+        constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) {
         }
 
         getKsPkg() {
@@ -43,21 +43,21 @@ namespace ks.runner {
     }
 
     class Host
-        implements ks.Host {
+        implements pxt.Host {
 
-        readFile(module: ks.Package, filename: string): string {
+        readFile(module: pxt.Package, filename: string): string {
             let epkg = getEditorPkg(module)
             return U.lookup(epkg.files, filename)
         }
 
-        writeFile(module: ks.Package, filename: string, contents: string): void {
-            if (filename == ks.configName)
+        writeFile(module: pxt.Package, filename: string, contents: string): void {
+            if (filename == pxt.configName)
                 return; // ignore config writes
             throw Util.oops("trying to write " + module + " / " + filename)
         }
 
-        getHexInfoAsync(extInfo: ts.ks.ExtensionInfo): Promise<any> {
-            return ks.hex.getHexInfoAsync(this, extInfo)
+        getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+            return pxt.hex.getHexInfoAsync(this, extInfo)
         }
 
         cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -68,7 +68,7 @@ namespace ks.runner {
             return Promise.resolve(null as string)
         }
 
-        downloadPackageAsync(pkg: ks.Package) {
+        downloadPackageAsync(pkg: pxt.Package) {
             let proto = pkg.verProtocol()
             let epkg = getEditorPkg(pkg)
 
@@ -86,8 +86,8 @@ namespace ks.runner {
             }
         }
 
-        resolveVersionAsync(pkg: ks.Package) {
-            return Cloud.privateGetAsync(ks.pkgPrefix + pkg.id)
+        resolveVersionAsync(pkg: pxt.Package) {
+            return Cloud.privateGetAsync(pxt.pkgPrefix + pkg.id)
                 .then(r => {
                     let id = (r || {})["scriptid"]
                     if (!id)
@@ -97,9 +97,9 @@ namespace ks.runner {
         }
     }
 
-    export var mainPkg: ks.MainPackage;
+    export var mainPkg: pxt.MainPackage;
 
-    function getEditorPkg(p: ks.Package) {
+    function getEditorPkg(p: pxt.Package) {
         let r: EditorPackage = (p as any)._editorPkg
         if (r) return r
         let top: EditorPackage = null
@@ -115,7 +115,7 @@ namespace ks.runner {
     function emptyPrjFiles() {
         let p = appTarget.tsprj
         let files = U.clone(p.files)
-        files[ks.configName] = JSON.stringify(p.config, null, 4) + "\n"
+        files[pxt.configName] = JSON.stringify(p.config, null, 4) + "\n"
         return files
     }
 
@@ -123,9 +123,9 @@ namespace ks.runner {
         let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
         return Util.updateLocalizationAsync(options.appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
             .then(() => Util.httpGetJsonAsync(options.simCdnRoot + "target.json"))
-            .then((trgbundle: ks.TargetBundle) => {
-                ks.appTarget = trgbundle
-                mainPkg = new ks.MainPackage(new Host());
+            .then((trgbundle: pxt.TargetBundle) => {
+                pxt.appTarget = trgbundle
+                mainPkg = new pxt.MainPackage(new Host());
             })
     }
 
@@ -135,11 +135,11 @@ namespace ks.runner {
 
     function loadPackageAsync(id: string) {
         let host = mainPkg.host();
-        mainPkg = new ks.MainPackage(host)
+        mainPkg = new pxt.MainPackage(host)
         mainPkg._verspec = id ? "pub:" + id : "empty:tsprj"
 
         return host.downloadPackageAsync(mainPkg)
-            .then(() => host.readFile(mainPkg, ks.configName))
+            .then(() => host.readFile(mainPkg, pxt.configName))
             .then(str => {
                 if (!str) return Promise.resolve()
                 return mainPkg.installAllAsync()
@@ -156,11 +156,11 @@ namespace ks.runner {
         return mainPkg.getCompileOptionsAsync(trg)
     }
 
-    function compileAsync(hex: boolean, updateOptions?: (ops: ts.ks.CompileOptions) => void) {
+    function compileAsync(hex: boolean, updateOptions?: (ops: ts.pxt.CompileOptions) => void) {
         return getCompileOptionsAsync()
             .then(opts => {
                 if (updateOptions) updateOptions(opts);
-                let resp = ts.ks.compile(opts)
+                let resp = ts.pxt.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     resp.diagnostics.forEach(diag => {
                         console.error(diag.messageText)
@@ -194,15 +194,15 @@ namespace ks.runner {
                 }
                 let js = resp.outfiles["microbit.js"];
                 if (js) {
-                    let driver = new ks.rt.SimulatorDriver(container, { simUrl: options.simUrl });
+                    let driver = new pxt.rt.SimulatorDriver(container, { simUrl: options.simUrl });
                     driver.run(js);
                 }
             })
     }
 
     export interface DecompileResult {
-        compileJS?: ts.ks.CompileResult;
-        compileBlocks?: ts.ks.CompileResult;
+        compileJS?: ts.pxt.CompileResult;
+        compileBlocks?: ts.pxt.CompileResult;
         blocksSvg?: JQuery;
     }
 
@@ -213,17 +213,17 @@ namespace ks.runner {
                 // compile
                 opts.fileSystem["main.ts"] = code
                 opts.ast = true
-                let resp = ts.ks.compile(opts)
+                let resp = ts.pxt.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
                     return { compileJS: resp };
 
                 // decompile to blocks
-                let apis = ts.ks.getApiInfo(resp.ast);
-                let blocksInfo = ts.ks.getBlocksInfo(apis);
-                ks.blocks.initBlocks(blocksInfo);
-                let bresp = ts.ks.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                let apis = ts.pxt.getApiInfo(resp.ast);
+                let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                pxt.blocks.initBlocks(blocksInfo);
+                let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
                 if (bresp.diagnostics && bresp.diagnostics.length > 0)
                     bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!bresp.success)
@@ -232,7 +232,7 @@ namespace ks.runner {
                 return {
                     compileJS: resp,
                     compileBlocks: bresp,
-                    blocksSvg: ks.blocks.render(bresp.outfiles["main.blocks"], { emPixels: 14, align: true })
+                    blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], { emPixels: 14, align: true })
                 };
             })
     }

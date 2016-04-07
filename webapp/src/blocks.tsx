@@ -8,15 +8,15 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 
-import Util = ks.Util;
+import Util = pxt.Util;
 var lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
     loadingXml: boolean;
-    blockInfo: ts.ks.BlocksInfo;
-    compilationResult: ks.blocks.BlockCompilationResult;
+    blockInfo: ts.pxt.BlocksInfo;
+    compilationResult: pxt.blocks.BlockCompilationResult;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -32,7 +32,7 @@ export class Editor extends srceditor.Editor {
 
     saveToTypeScript(): string {
         let cfg = pkg.mainPkg.config
-        this.compilationResult = ks.blocks.compile(this.editor, this.blockInfo, {
+        this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo, {
             name: cfg.name,
             description: cfg.description
         })
@@ -55,7 +55,7 @@ export class Editor extends srceditor.Editor {
                     this.blockInfo = bi;
 
                     let toolbox = document.getElementById('blocklyToolboxDefinition');
-                    ks.blocks.initBlocks(this.blockInfo, this.editor, toolbox)
+                    pxt.blocks.initBlocks(this.blockInfo, this.editor, toolbox)
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -193,7 +193,7 @@ export class Editor extends srceditor.Editor {
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.forEach(diag => {
-            let bid = ks.blocks.findBlockId(sourceMap, diag);
+            let bid = pxt.blocks.findBlockId(sourceMap, diag);
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
@@ -204,10 +204,10 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    highlightStatement(brk: ts.ks.LocationInfo) {
+    highlightStatement(brk: ts.pxt.LocationInfo) {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
-        let bid = ks.blocks.findBlockId(this.compilationResult.sourceMap, brk);
+        let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, brk);
         this.editor.traceOn(true);
         this.editor.highlightBlock(bid);
     }

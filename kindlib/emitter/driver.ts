@@ -9,7 +9,7 @@
 /// <reference path="backthumb.ts"/>
 /// <reference path="decompiler.ts"/>
 
-namespace ts.ks {
+namespace ts.pxt {
     export interface CompileTarget {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
@@ -213,8 +213,8 @@ namespace ts.ks {
         
         let file = resp.ast.getSourceFile(fileName);
         let apis = getApiInfo(resp.ast);
-        let blocksInfo = ts.ks.getBlocksInfo(apis);
-        let bresp = ts.ks.decompiler.decompileToBlocks(blocksInfo, file)
+        let blocksInfo = ts.pxt.getBlocksInfo(apis);
+        let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
         return bresp;
     }           
 }
