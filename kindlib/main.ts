@@ -390,7 +390,7 @@ namespace pxt {
                             comment: this.config.description,
                             status: "unpublished",
                             scriptId: this.config.installedVersion,
-                            cloudId: "ks/" + appTarget.id,
+                            cloudId: "pxt/" + appTarget.id,
                             editor: U.lookup(files, "main.blocks") ? "blocksprj" : "tsprj"
                         })
                         let programText = JSON.stringify(files)
@@ -530,7 +530,7 @@ namespace pxt {
                         description: this.config.description || "",
                         islibrary: true,
                         ishidden: false,
-                        userplatform: ["ks"],
+                        userplatform: ["pxt"],
                         editor: javaScriptProjectName,
                         target: appTarget.id,
                         text: text

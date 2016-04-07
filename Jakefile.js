@@ -61,7 +61,7 @@ file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptSe
     jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
 })
 
-file('built/pxt-common.json', expand(['libs/ks-common'], ".ts"), function() {
+file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function() {
    console.log(`[${this.name}]`)
    let std = {}
    for (let f of this.prereqs) {
