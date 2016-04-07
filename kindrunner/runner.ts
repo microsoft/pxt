@@ -6,6 +6,7 @@ namespace ks.runner {
     export interface RunnerOptions {
         appCdnRoot: string;
         simCdnRoot: string;
+        simUrl: string;
     }
 
     export interface SimulateOptions {
@@ -182,10 +183,10 @@ namespace ks.runner {
             });
     }
 
-    export function simulateAsync(container: HTMLElement, options: SimulateOptions) {
-        return loadPackageAsync(options.id)
+    export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
+        return loadPackageAsync(simOptions.id)
             .then(() => compileAsync(false, opts => {
-                if (options.code) opts.fileSystem["main.ts"] = options.code;
+                if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
             }))
             .then(resp => {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
@@ -193,7 +194,7 @@ namespace ks.runner {
                 }
                 let js = resp.outfiles["microbit.js"];
                 if (js) {
-                    let driver = new ks.rt.SimulatorDriver(container);
+                    let driver = new ks.rt.SimulatorDriver(container, { simUrl: options.simUrl });
                     driver.run(js);
                 }
             })

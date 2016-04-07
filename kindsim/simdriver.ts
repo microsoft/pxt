@@ -3,6 +3,7 @@ namespace ks.rt {
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
+        simUrl?: string;
     }
 
     export enum SimulatorState {
@@ -70,8 +71,8 @@ namespace ks.rt {
             frame.className = 'simframe';
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            let cdn = (window as any).simCdnRoot
-            frame.src = cdn + 'simulator.html#' + frame.id;
+            let simUrl = this.options.simUrl || (window as any).simUrl 
+            frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             return frame;
         }

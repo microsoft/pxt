@@ -3,6 +3,7 @@
 
     var appCdnRoot = "./";
     var simCdnRoot = "sim/";
+    var simUrl = "/sim/simulator.html";
 
     var scripts = [
         "bluebird.min.js",
@@ -35,6 +36,7 @@
         ks.runner.init({
             appCdnRoot: appCdnRoot,
             simCdnRoot: simCdnRoot,
+            simUrl: simUrl,
         })
     }
 
