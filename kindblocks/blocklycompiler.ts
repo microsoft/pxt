@@ -952,7 +952,12 @@ namespace ks.blocks {
         var binding = lookup(e, bVar);
         assert(binding.usedAsForIndex > 0);
 
-        if (isClassicForLoop(b) && !binding.incompatibleWithFor)
+        if (isClassicForLoop(b) && !binding.incompatibleWithFor) {  
+            let bToExpr = compileExpression(e, bTo);
+            if (bToExpr.nodeType == "numberLiteral")
+                bToExpr = H.mkNumberLiteral((bToExpr as J.JNumberLiteral).value + 1)
+            else
+                bToExpr = H.mkSimpleCall("+", [bToExpr, H.mkNumberLiteral(1)]);
             // In the perfect case, we can do a local binding that declares a local
             // variable. The code that generates global variable declarations is in sync
             // and won't generate a global binding.
@@ -960,9 +965,10 @@ namespace ks.blocks {
                 // FOR 0 <= VAR
                 H.mkFor(bVar,
                     // < TO + 1 DO
-                    H.mkExprHolder([], H.mkSimpleCall("+", [compileExpression(e, bTo), H.mkNumberLiteral(1)])),
+                    H.mkExprHolder([], bToExpr),
                     compileStatements(e, bDo))
             ];
+        }
         else {
             // Evaluate the bound first, and store it in b (bound may change over
             // several loop iterations).
