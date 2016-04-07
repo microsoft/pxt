@@ -1195,8 +1195,8 @@ namespace ks.blocks {
     // Top-level definitions for compiling an entire blockly workspace
 
     export interface CompileOptions {
-        name: string;
-        description: string;
+        name?: string;
+        description?: string;
     }
 
     function isHandlerRegistration(b: B.Block) {
@@ -1356,7 +1356,7 @@ namespace ks.blocks {
             removeAllPlaceholders(w);
         }
 
-        return H.mkApp(options.name, options.description, decls);
+        return H.mkApp(options.name || 'untitled', options.description || '', decls);
     }
 
     export interface SourceInterval {
@@ -1380,7 +1380,7 @@ namespace ks.blocks {
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: ts.ks.BlocksInfo, options: CompileOptions): BlockCompilationResult {
+    export function compile(b: B.Workspace, blockInfo: ts.ks.BlocksInfo, options: CompileOptions = {}): BlockCompilationResult {
         Errors.clear();
         return tdASTtoTS(compileWorkspace(b, blockInfo, options));
     }

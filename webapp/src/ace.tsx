@@ -470,30 +470,52 @@ export class Editor extends srceditor.Editor {
     isTypescript = false;
 
     openBlocks() {
+        // needed to test roundtrip
+        this.formatCode();
+        
         // might be undefined
         let mainPkg = pkg.mainEditorPkg();
         let blockFile = this.currFile.getVirtualFileName();
+        let js = this.currFile.content;
+        let xml: string;
+
+        const failedAsync = () => {
+            this.forceDiagnosticsUpdate();
+            let bf = pkg.mainEditorPkg().files[blockFile];
+            return core.confirmAsync({
+                header: lf("Oops, there is a program converting your code."),
+                body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
+                agreeLbl: lf("Stay in JavaScript"),
+                hideCancel: !bf,
+                disagreeLbl: lf("Discard and go to Blocks")
+            }).then(b => {
+                // discard
+                if (!b) this.parent.setFile(bf);
+            })
+        }
 
         this.parent.saveFileAsync()
             .then(() => compiler.decompileAsync(this.currFile.name))
             .then(resp => {
-                if (!resp.success) {
-                    this.forceDiagnosticsUpdate();
-                    let bf = pkg.mainEditorPkg().files[blockFile];
-                    return core.confirmAsync({
-                        header: lf("Oops, there is a program converting your code."),
-                        body: lf("We are unable to convert your JavaScript code back to blocks. You can try to fix the errors in javaScript or discard your changes and go back to the previous Blocks version."),
-                        agreeLbl: lf("Fix my JavaScript"),
-                        hideCancel: !bf,
-                        disagreeLbl: lf("Discard and go to Blocks")
-                    }).then(b => {
-                        // discard
-                        if (!b) this.parent.setFile(bf);
-                    })
-                }
-                let xml = resp.outfiles[blockFile];
+                if (!resp.success) return failedAsync();
+                xml = resp.outfiles[blockFile];
                 Util.assert(!!xml);
-                return mainPkg.setContentAsync(blockFile, xml).then(() => this.parent.setFile(mainPkg.files[blockFile]))
+                // try to convert back to typescript
+                return compiler.getBlocksAsync().then((blocksInfo: ts.ks.BlocksInfo) => {
+                    let workspace = new Blockly.Workspace();
+                    Blockly.Xml.domToWorkspace(workspace, Blockly.Xml.textToDom(xml));
+                    let b2jsr = ks.blocks.compile(workspace, blocksInfo);
+                    if (b2jsr.source.replace(/\s/g, '') != js.replace(/\s/g,'')) {
+                        ks.reportError('decompilation failure', {
+                            js: js,
+                            blockly: xml,
+                            jsroundtrip: b2jsr.source
+                        })
+                        return failedAsync();
+                    }
+
+                    return mainPkg.setContentAsync(blockFile, xml).then(() => this.parent.setFile(mainPkg.files[blockFile]));
+                })
             }).catch(e => {
                 ks.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
@@ -501,7 +523,7 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        let vf : string;
+        let vf: string;
         return this.currFile && (vf = this.currFile.getVirtualFileName()) && pkg.mainEditorPkg().files[vf]
             ? <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
             : undefined
