@@ -45,7 +45,7 @@ function deployHexFile(file) {
 
 function downloadAndDeployHexFile(event, item, webContents) {
     if (item.getMimeType() != "application/x-microbit-hex") return;
-    let downoads = app.getPath("downloads") + "/kindscript";
+    let downoads = app.getPath("downloads") + "/pxt";
     if (!fs.existsSync(downoads)) fs.mkdirSync(downoads);
     let fpath = path.join(downoads, item.getFilename());
     console.log('saving to ' + fpath)

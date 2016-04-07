@@ -109,7 +109,7 @@ svgo svgicons/myicon.svg
 * [x] x ? a : b
 * [x] x as T support
 * [x] check on ("foo" + true)
-* [ ] simulator at sim-microbit.kindscript.net
+* [x] simulator at sim-microbit.kindscript.net
 * [ ] `ptr-<username>-*` as the main way publishing packages
 * [ ] lambdas returning values (maybe just works?)
 * [ ] clear variables when they get out of scope to limit memory usage

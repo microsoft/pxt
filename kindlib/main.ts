@@ -69,7 +69,7 @@ namespace pxt {
 
     export interface TargetVersions {
         target: string;
-        kindscript: string;
+        pxt: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL

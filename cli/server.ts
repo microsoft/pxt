@@ -22,7 +22,7 @@ let tempDir = ""
 function setupRootDir() {
     root = process.cwd()
     console.log("Starting server in", root)
-    dirs = ["node_modules/kindscript/built/web", "node_modules/kindscript/webapp/public"].map(p => path.join(root, p))
+    dirs = ["node_modules/pxt-core/built/web", "node_modules/pxt-core/webapp/public"].map(p => path.join(root, p))
     simdirs = ["built", "sim/public"].map(p => path.join(root, p))
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
@@ -444,12 +444,12 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (pathname == "/--embed") {
-            sendFile(path.join(fileDir,'node_modules/kindscript/webapp/public/embed.js'));
+            sendFile(path.join(fileDir,'node_modules/pxt-core/webapp/public/embed.js'));
             return
         }
 
         if (pathname == "/--run") {
-            sendFile(path.join(fileDir, 'node_modules/kindscript/webapp/public/run.html'));
+            sendFile(path.join(fileDir, 'node_modules/pxt-core/webapp/public/run.html'));
             return
         }
 

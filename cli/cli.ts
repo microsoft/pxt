@@ -266,7 +266,7 @@ function travisAsync() {
     let latest = branch == "master" ? "latest" : "git-" + branch
 
     let pkg = readJson("package.json")
-    if (pkg["name"] == "kindscript") {
+    if (pkg["name"] == "pxt-core") {
         if (rel)
             return uploadrelAsync("release/" + rel)
                 .then(() => runNpmAsync("publish"))
@@ -287,35 +287,35 @@ function travisAsync() {
 
 function bumpKsDepAsync() {
     let pkg = readJson("package.json")
-    if (pkg["name"] == "kindscript") return Promise.resolve(pkg)
+    if (pkg["name"] == "pxt-core") return Promise.resolve(pkg)
 
     let gitPull = Promise.resolve()
 
-    if (fs.existsSync("node_modules/kindscript/.git")) {
+    if (fs.existsSync("node_modules/pxt-core/.git")) {
         gitPull = spawnAsync({
             cmd: "git",
             args: ["pull"],
-            cwd: "node_modules/kindscript"
+            cwd: "node_modules/pxt-core"
         })
     }
 
     return gitPull
         .then(() => {
-            let kspkg = readJson("node_modules/kindscript/package.json")
-            let currVer = pkg["dependencies"]["kindscript"]
+            let kspkg = readJson("node_modules/pxt-core/package.json")
+            let currVer = pkg["dependencies"]["pxt-core"]
             let newVer = kspkg["version"]
             if (currVer == newVer) {
-                console.log(`Referenced kindscript dep up to date: ${currVer}`)
+                console.log(`Referenced pxt-core dep up to date: ${currVer}`)
                 return pkg
             }
 
-            console.log(`Bumping kindscript dep version: ${currVer} -> ${newVer}`)
+            console.log(`Bumping pxt-core dep version: ${currVer} -> ${newVer}`)
             if (currVer != "*" && semverCmp(currVer, newVer) > 0) {
-                U.userError("Trying to downgrade kindscript.")
+                U.userError("Trying to downgrade pxt-core.")
             }
-            pkg["dependencies"]["kindscript"] = newVer
+            pkg["dependencies"]["pxt-core"] = newVer
             fs.writeFileSync("package.json", JSON.stringify(pkg, null, 4) + "\n")
-            return runGitAsync("commit", "-m", `Bump kindscript to ${newVer}`, "--", "package.json")
+            return runGitAsync("commit", "-m", `Bump pxt-core to ${newVer}`, "--", "package.json")
                 .then(() => pkg)
         })
 }
@@ -355,7 +355,7 @@ function pkgVersion() {
 
 export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
-        let pkg = readJson("node_modules/kindscript/package.json")
+        let pkg = readJson("node_modules/pxt-core/package.json")
         apprel = "release/v" + pkg.version
     }
     return Promise.resolve()
@@ -563,8 +563,8 @@ function addCmd(name: string) {
 }
 
 function buildKindScriptAsync(): Promise<string[]> {
-    let ksd = "node_modules/kindscript"
-    if (!fs.existsSync(ksd + "/kindlib/main.ts")) return Promise.resolve([]);
+    let ksd = "node_modules/pxt-core"
+    if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
     console.log(`building ${ksd}...`);
     return spawnAsync({
@@ -572,10 +572,10 @@ function buildKindScriptAsync(): Promise<string[]> {
         args: [],
         cwd: ksd
     }).then(() => {
-        console.log("local kindscript built.")
+        console.log("local pxt-core built.")
         return [ksd]
     }, e => {
-        console.log("local kindscript build FAILED")
+        console.log("local pxt-core build FAILED")
         return [ksd]
     });
 }
@@ -612,7 +612,7 @@ function buildTargetCoreAsync() {
                 tag: info.tag,
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
-                kindscript: readJson("node_modules/kindscript/package.json")["version"],
+                pxt: readJson("node_modules/pxt-core/package.json")["version"],
             }
             nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
@@ -665,7 +665,7 @@ function buildAndWatchTargetAsync() {
         .then(() => buildTargetAsync().then(r => { }, e => {
             console.log("Build failed: " + e.message)
         }))
-        .then(() => [path.resolve("node_modules/kindscript")].concat(dirsToWatch)));
+        .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
 export function serveAsync(arg?: string) {
@@ -1178,7 +1178,7 @@ function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.
 
     let opts: ts.pxt.CompileOptions = {
         fileSystem: {},
-        sourceFiles: ["built/sim.d.ts", "node_modules/kindscript/built/kindsim.d.ts"],
+        sourceFiles: ["built/sim.d.ts", "node_modules/pxt-core/built/pxtsim.d.ts"],
         target: mainPkg.getTargetOptions(),
         ast: true,
         noEmit: true,
