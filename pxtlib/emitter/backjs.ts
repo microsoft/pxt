@@ -6,7 +6,7 @@ namespace ts.pxt {
         })
         if (bin.res.breakpoints)
             jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
-        jssource += "\nrt.setupStringLiterals(" +
+        jssource += "\npxsim.setupStringLiterals(" +
             JSON.stringify(U.mapStringMap(bin.strings, (k, v) => 1), null, 1) +
             ")\n"
         bin.writeFile("microbit.js", jssource)
@@ -221,7 +221,7 @@ switch (step) {
             let args = info.flattened.map(emitExprInto).join(", ")
 
             let name: string = topExpr.data
-            let text = `rt.${name.replace(/::/g, ".")}(${args})`
+            let text = `pxsim.${name.replace(/::/g, ".")}(${args})`
 
             if (topExpr.isAsync) {
                 let loc = ++lblIdx
