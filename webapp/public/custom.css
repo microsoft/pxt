@@ -447,6 +447,9 @@ html {
     .ui.landscape.only {
         display:none !important;
     }
+    .hideEditorFloats .editorFloat {
+        display:none;
+    }    
     #filelist {
         position:absolute;
         z-index:5;

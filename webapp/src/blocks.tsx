@@ -135,6 +135,7 @@ export class Editor extends srceditor.Editor {
                 this.changeCallback();
             if (ev.type == 'ui' && ev.element == 'category') {
                 let toolboxVisible = !!ev.newValue;
+                this.parent.setState({ hideEditorFloats: toolboxVisible });
             }
         })
         Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
