@@ -188,15 +188,15 @@
 }
 
 .blocklyTreeLabel, .blocklyText {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;   
+    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;   
 }
 
 .blocklyText {    
-    font-size:1rem;
+    font-size:1rem !important;
 }
 
 .blocklyTreeLabel {
-    font-size:1.25rem;
+    font-size:1.25rem !important;
 }
 
 .blocklyCheckbox {
