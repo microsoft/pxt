@@ -13,8 +13,17 @@ namespace pxsim {
 				`translate(${originX},${originY}) rotate(${degrees+90}) translate(${-originX},${-originY})`
 			);
 		}
-        
                 
+        export function addClass(el : SVGElement, cls : string) {
+            if (el.classList) el.classList.add(cls);
+            else if (!el.className.baseVal.indexOf(cls)) el.className.baseVal += ' ' + cls;
+        }
+        
+        export function removeClass(el : SVGElement, cls: string) {
+            if (el.classList) el.classList.remove(cls);
+            else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
+        }
+                        
         export function elt(name:string) : SVGElement {        
             return document.createElementNS("http://www.w3.org/2000/svg", name)
         }
@@ -101,7 +110,7 @@ namespace pxsim {
         }
         
         export function animate(el: SVGElement, cls: string) {
-            el.classList.add(cls);
+            Svg.addClass(el, cls);
             let p = el.parentElement;
             p.removeChild(el);
             p.appendChild(el)

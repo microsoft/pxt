@@ -212,7 +212,7 @@ function syncAsync() {
 }
 
 function resetAsync() {
-    return db.db.destroy()
+    return db.destroyAsync()
         .then(() => {
             window.localStorage.clear()
         })

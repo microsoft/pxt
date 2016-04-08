@@ -85,7 +85,8 @@ namespace pxsim {
             let frames = this.container.getElementsByTagName("iframe");
             for (let i = 0; i < frames.length; ++i) {
                 let frame = frames[i] as HTMLIFrameElement
-                frame.classList.add("grayscale");
+                if (!/grayscale/.test(frame.className))
+                U.addClass(frame, "grayscale");
             }
         }
 
@@ -132,7 +133,7 @@ namespace pxsim {
             };
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.contentWindow.postMessage(msg, "*");
-            frame.classList.remove("grayscale");
+            U.removeClass(frame, "grayscale");
         }
 
         private removeEventListeners() {

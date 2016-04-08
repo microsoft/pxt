@@ -2,6 +2,16 @@
 
 namespace pxsim {
     export module U {
+        export function addClass(el : HTMLElement, cls : string) {
+            if (el.classList) el.classList.add(cls);
+            else if (!el.className.indexOf(cls)) el.className += ' ' + cls;
+        }
+        
+        export function removeClass(el : HTMLElement, cls: string) {
+            if (el.classList) el.classList.remove(cls);
+            else el.className = el.className.replace(cls, '').replace(/\s{2,}/, ' ');
+        }
+        
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
                 debugger
