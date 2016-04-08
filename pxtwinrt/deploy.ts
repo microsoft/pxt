@@ -16,7 +16,7 @@ namespace pxtwinrt {
             return pxtwinrt.promisify(
                     folder.createFileAsync("firmware.hex", Windows.Storage.CreationCollisionOption.replaceExisting)
                     .then(file => Windows.Storage.FileIO.writeTextAsync(file, r))
-                    ).catch(e => {
+                    ).then(r => {}).catch(e => {
                         console.log(`failed to write to ${folder.displayName} - ${e}`)
                     })
         }
