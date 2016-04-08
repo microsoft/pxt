@@ -739,9 +739,16 @@ Ctrl+Shift+B
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
-                pxt.commands.deployCoreAsync(resp).done();
-            })
-            .done()
+                if (!resp.outfiles["microbit.hex"]) {
+                    core.warningNotification(lf("Compilation failed, please check your code for errors."));                
+                    return Promise.resolve()
+                }
+                return pxt.commands.deployCoreAsync(resp)
+                    .catch(e => {
+                        core.warningNotification(lf("Compilation failed, please try again."));
+                        pxt.reportException(e, resp);                                     
+                    })
+            }).done();
     }
 
     stopSimulator(unload = false) {

@@ -3,20 +3,25 @@
 /// <reference path="../built/pxtlib.d.ts"/>
 namespace pxtwinrt {
     export function deployCoreAsync(res: ts.pxt.CompileResult) : Promise<void> {
+        
         let drives = pxt.appTarget.compile.deployDrives;
         pxt.Util.assert(!!drives);
+        console.log(`deploying to drives ${drives}`)
 
-        let drx = new RegExp(drives, 'i');
+        let drx = new RegExp(drives);
         let r = res.outfiles["microbit.hex"];        
         
         function writeAsync(folder : Windows.Storage.StorageFolder) : Promise<void> {
-            return pxtwinrt.promisify(folder.createFileAsync("firmware.hex")
-                    .then(file => {
-                        Windows.Storage.FileIO.writeTextAsync(file, r);
-                    }))            
+            console.log(`writing .hex to ${folder.displayName}`)
+            return pxtwinrt.promisify(
+                    folder.createFileAsync("firmware.hex", Windows.Storage.CreationCollisionOption.replaceExisting)
+                    .then(file => Windows.Storage.FileIO.writeTextAsync(file, r))
+                    ).catch(e => {
+                        console.log(`failed to write to ${folder.displayName} - ${e}`)
+                    })           
         }
         
-        return promisify(Windows.Storage.KnownFolders.removableDevices.getFoldersAsync())
+        return pxtwinrt.promisify(Windows.Storage.KnownFolders.removableDevices.getFoldersAsync())
             .then(ds => {
                 let df = ds.filter(d => drx.test(d.displayName));
                 let pdf = df.map(writeAsync);
