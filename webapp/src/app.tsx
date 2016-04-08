@@ -868,7 +868,8 @@ Ctrl+Shift+B
                 <div id="menubar" role="banner">
                     <div className="ui small menu" role="menubar">
                         <span id="logo" className="item">
-                            {targetTheme.logo ? (<a href={targetTheme.logoUrl}><img className='ui logo' src={Util.toDataUri(targetTheme.logo) } /></a>) : ""}
+                            {targetTheme.logo || targetTheme.portraitLogo ? (<a href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.squareLogo) } /></a>) : null}
+                            {targetTheme.portraitLogo ? (<a href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                         </span>
                         <div className="ui item">
                             <div className="ui buttons">

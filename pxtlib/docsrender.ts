@@ -8,6 +8,7 @@ namespace pxt {
         title?: string;
         logoUrl?: string;
         logo?: string;
+        portraitLogo?: string;
         rightLogo?: string;
         footerLogo?: string;
         docsLogo?: string;
