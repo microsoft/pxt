@@ -56,7 +56,7 @@ interface IAppState {
     showFiles?: boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
-    
+
     running?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
@@ -712,7 +712,7 @@ Ctrl+Shift+B
             })
     }
 
-    saveTypeScriptAsync(open = false) : Promise<void> {
+    saveTypeScriptAsync(open = false): Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
             return Promise.resolve();
         let ts = this.editor.saveToTypeScript()
@@ -738,28 +738,7 @@ Ctrl+Shift+B
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
-                let hex = resp.outfiles["microbit.hex"]
-                if (hex) {
-                    let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
-                    console.log('saving ' + fn)
-                    core.browserDownloadText(hex, fn, "application/x-microbit-hex")
-                    if (Cloud.isLocalHost()) {
-                        console.log('local deployment...');
-                        core.infoNotification("Uploading .hex file...");
-                        Util.requestAsync({
-                            url: "http://localhost:3232/api/deploy",
-                            headers: { "Authorization": Cloud.localToken },
-                            method: "POST",
-                            data: resp
-                        }).done(() => {
-                            core.infoNotification(lf(".hex file uploaded..."));
-                        }, () => {
-                            core.warningNotification(lf("Oops, something went wrong while deploying the .hex file..."));
-                        })
-                    }
-                } else {
-                    core.warningNotification(lf("Oops, we could not compile this project. Please check your code for errors."))
-                }
+                pxt.commands.deployCoreAsync(resp).done();
             })
             .done()
     }
@@ -770,9 +749,9 @@ Ctrl+Shift+B
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
-        tickEvent(opts.background ? "autorun" : 
-                  opts.debug ? "debug" : "run");
-        
+        tickEvent(opts.background ? "autorun" :
+            opts.debug ? "debug" : "run");
+
         if (!opts.background)
             this.editor.beforeCompile();
 
@@ -877,7 +856,7 @@ Ctrl+Shift+B
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
 
         return (
-            <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "")}>
+            <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "") }>
                 <div id="menubar" role="banner">
                     <div className="ui small menu" role="menubar">
                         <span id="logo" className="item">
@@ -894,12 +873,12 @@ Ctrl+Shift+B
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
                                     } } /> : undefined}
-                                    {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }                                    
+                                    {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
-                                    {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />: undefined}
+                                    {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } /> : undefined}
                                     <div className="ui divider"></div>
-                                    <LoginBox />                                    
-                                    { 
+                                    <LoginBox />
+                                    {
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
@@ -917,7 +896,7 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class="floating icon button" icon="help">
                                     {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
                                     <div className="ui divider"></div>
-                                    <sui.Item key="translatebtn" onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate Programming Experience Toolkit!") } />                                    
+                                    <sui.Item key="translatebtn" onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate Programming Experience Toolkit!") } />
                                 </sui.DropdownMenu>
                             </div>
                         </div>
@@ -1052,6 +1031,39 @@ function tickEvent(id: string) {
     ai.trackEvent(id);
 }
 
+function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult) : Promise<void> {
+    let hex = resp.outfiles["microbit.hex"]
+    if (hex) {
+        let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
+        console.log('saving ' + fn)
+        core.browserDownloadText(hex, fn, "application/x-microbit-hex")
+    } else {
+        core.warningNotification(lf("Oops, we could not compile this project. Please check your code for errors."))
+    }
+    return Promise.resolve();
+}
+
+function localhostDeployCoreAsync(resp: ts.pxt.CompileResult) : Promise<void> {
+    let hex = resp.outfiles["microbit.hex"]
+    if (hex) {
+        console.log('local deployment...');
+        core.infoNotification("Uploading .hex file...");
+        return Util.requestAsync({
+            url: "http://localhost:3232/api/deploy",
+            headers: { "Authorization": Cloud.localToken },
+            method: "POST",
+            data: resp
+        }).then(() => {
+            core.infoNotification(lf(".hex file uploaded..."));
+        }, () => {
+            core.warningNotification(lf("Oops, something went wrong while deploying the .hex file..."));
+        })
+    } else {
+        core.warningNotification(lf("Oops, we could not compile this project. Please check your code for errors."))
+        return Promise.resolve();
+    }
+}
+
 function enableCrashReporting(releaseid: string) {
     if (typeof Raygun === "undefined") return; // don't report local crashes    
     try {
@@ -1149,6 +1161,10 @@ $(document).ready(() => {
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
+
+    pxt.commands.deployCoreAsync = Cloud.isLocalHost() 
+        ? localhostDeployCoreAsync 
+        : browserDownloadDeployCoreAsync;
 
     Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
         .then(() => Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json"))
