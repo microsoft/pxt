@@ -16,7 +16,7 @@
   <Applications>
     <Application Id="App" StartPage="http://localhost:3232/index.html?ws=cloud">
       <uap:ApplicationContentUriRules>
-        <uap:Rule Match="http://localhost:3232/" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="http://localhost:3232/index.html" Type="include" WindowsRuntimeAccess="all" />
       </uap:ApplicationContentUriRules>
       <uap:VisualElements DisplayName="PXT Local Test App" Description="Test Application for PXT targets" BackgroundColor="transparent" Square150x150Logo="images\Square150x150Logo.png" Square44x44Logo="images\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png">

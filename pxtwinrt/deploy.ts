@@ -18,7 +18,7 @@ namespace pxtwinrt {
                     .then(file => Windows.Storage.FileIO.writeTextAsync(file, r))
                     ).catch(e => {
                         console.log(`failed to write to ${folder.displayName} - ${e}`)
-                    })           
+                    })
         }
         
         return pxtwinrt.promisify(Windows.Storage.KnownFolders.removableDevices.getFoldersAsync())
