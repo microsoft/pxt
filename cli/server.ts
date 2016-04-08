@@ -215,7 +215,7 @@ function setupTemplate() {
         docsTemplate = fs.readFileSync(templatePath, "utf8")
     }
 
-    let url = "https://www.kindscript.com/templates/docs"
+    let url = "https://www.pxt.io/templates/docs"
     U.requestAsync({ url })
         .then(resp => {
             if (resp.text != docsTemplate) {

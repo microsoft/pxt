@@ -1,7 +1,7 @@
 namespace pxt.Cloud {
     import Util = ts.pxt.Util;
     
-    export var apiRoot = "https://kindscript.com/api/";
+    export var apiRoot = "https://www.pxt.io/api/";
     export var accessToken = "";
     export var localToken = "";
     var _isOnline = true;
