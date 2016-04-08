@@ -610,7 +610,17 @@ function buildTargetCoreAsync() {
             cfg.appTheme.id = cfg.id
             cfg.appTheme.title = cfg.title
             cfg.appTheme.name = cfg.name
-
+            
+            // expand logo
+            let logos = (cfg.appTheme as any as U.Map<string>);
+            Object.keys(logos)
+                .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
+                .forEach(k => {
+                    let fn = path.join('./docs', logos[k]);
+                    console.log(`importing ${fn}`)
+                    let b = fs.readFileSync(fn)
+                    logos[k] = b.toString('utf8');
+                })
             nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
             pxt.appTarget = cfg; // make sure we're using the latest version
