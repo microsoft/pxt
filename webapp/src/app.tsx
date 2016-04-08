@@ -13,6 +13,7 @@ import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as db from "./db"
+import * as cmds from "./cmds"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
@@ -21,6 +22,11 @@ import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
+
+type Header = pxt.workspace.Header;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type InstallHeader = pxt.workspace.InstallHeader;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -49,7 +55,7 @@ export interface EditorSettings {
 
 interface IAppProps { }
 interface IAppState {
-    header?: workspace.Header;
+    header?: Header;
     currFile?: pkg.File;
     theme?: srceditor.Theme;
     fileState?: string;
@@ -122,10 +128,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return data;
     }
 
-    fetchLocalData(): workspace.Header[] {
+    fetchLocalData(): Header[] {
         if (this.state.packages) return [];
 
-        let headers: workspace.Header[] = this.getData("header:*")
+        let headers: Header[] = this.getData("header:*")
         if (this.state.searchFor)
             headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
         return headers;
@@ -135,7 +141,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         let headers = this.fetchLocalData();
         let data = this.fetchCloudData();
 
-        let chgHeader = (hdr: workspace.Header) => {
+        let chgHeader = (hdr: Header) => {
             if (this.modal) this.modal.hide();
             this.props.parent.loadHeader(hdr)
         }
@@ -482,7 +488,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    loadHeader(h: workspace.Header) {
+    loadHeader(h: Header) {
         if (!h)
             return
 
@@ -544,7 +550,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     return;
                 } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget() || data.meta.cloudId == "pxt/" + workspace.getCurrentTarget()) {
                     console.log("importing project")
-                    let h: workspace.InstallHeader = {
+                    let h: InstallHeader = {
                         target: workspace.getCurrentTarget(),
                         editor: data.meta.editor,
                         name: data.meta.name,
@@ -690,7 +696,7 @@ Ctrl+Shift+B
     newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: Util.Map<string>): Promise<void> {
         let cfg = pxt.U.clone(prj.config);
         cfg.name = "Untitled" // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
-        let files: workspace.ScriptText = {
+        let files: ScriptText = {
             "pxt.json": JSON.stringify(cfg, null, 4) + "\n",
         }
         for (let f in prj.files)
@@ -738,30 +744,16 @@ Ctrl+Shift+B
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
-                let hex = resp.outfiles["microbit.hex"]
-                if (hex) {
-                    let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
-                    console.log('saving ' + fn)
-                    core.browserDownloadText(hex, fn, "application/x-microbit-hex")
-                    if (Cloud.isLocalHost()) {
-                        console.log('local deployment...');
-                        core.infoNotification("Uploading .hex file...");
-                        Util.requestAsync({
-                            url: "http://localhost:3232/api/deploy",
-                            headers: { "Authorization": Cloud.localToken },
-                            method: "POST",
-                            data: resp
-                        }).done(() => {
-                            core.infoNotification(lf(".hex file uploaded..."));
-                        }, () => {
-                            core.warningNotification(lf("Oops, something went wrong while deploying the .hex file..."));
-                        })
-                    }
-                } else {
-                    core.warningNotification(lf("Oops, we could not compile this project. Please check your code for errors."))
+                if (!resp.outfiles["microbit.hex"]) {
+                    core.warningNotification(lf("Compilation failed, please check your code for errors."));                
+                    return Promise.resolve()
                 }
-            })
-            .done()
+                return pxt.commands.deployCoreAsync(resp)
+                    .catch(e => {
+                        core.warningNotification(lf("Compilation failed, please try again."));
+                        pxt.reportException(e, resp);                                     
+                    })
+            }).done();
     }
 
     stopSimulator(unload = false) {
@@ -881,7 +873,8 @@ Ctrl+Shift+B
                 <div id="menubar" role="banner">
                     <div className="ui small menu" role="menubar">
                         <span id="logo" className="item">
-                            {targetTheme.logo ? (<a href={targetTheme.logoUrl}><img className='ui logo' src={Util.toDataUri(targetTheme.logo) } /></a>) : ""}
+                            {targetTheme.logo || targetTheme.portraitLogo ? (<a href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>) : null}
+                            {targetTheme.portraitLogo ? (<a href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                         </span>
                         <div className="ui item">
                             <div className="ui buttons">
@@ -1151,9 +1144,10 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1])
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
-    Util.updateLocalizationAsync(config.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
-        .then(() => Util.httpGetJsonAsync(config.targetCdnUrl + "target.json"))
+    Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
+        .then(() => cmds.initCommandsAsync())
+        .then(() => Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => {
             return compiler.init();
         })

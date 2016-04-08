@@ -20,17 +20,13 @@ import * as uploader from './uploader';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
-// provided by target
-let deployCoreAsync: (r: ts.pxt.CompileResult) => void = undefined;
-
 function initTargetCommands() {
     let cmdsjs = nodeutil.targetDir + '/built/cmds.js';
     if (fs.existsSync(cmdsjs)) {
         console.log(`loading cli extensions...`)
         let cli = require(cmdsjs)
         if (cli.deployCoreAsync) {
-            console.log('imported deploy command')
-            deployCoreAsync = cli.deployCoreAsync
+            pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
     }
 }
@@ -649,7 +645,17 @@ function buildTargetCoreAsync() {
             cfg.appTheme.id = cfg.id
             cfg.appTheme.title = cfg.title
             cfg.appTheme.name = cfg.name
-
+            
+            // expand logo
+            let logos = (cfg.appTheme as any as U.Map<string>);
+            Object.keys(logos)
+                .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
+                .forEach(k => {
+                    let fn = path.join('./docs', logos[k]);
+                    console.log(`importing ${fn}`)
+                    let b = fs.readFileSync(fn)
+                    logos[k] = b.toString('utf8');
+                })
             nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
             pxt.appTarget = cfg; // make sure we're using the latest version
@@ -1345,11 +1351,11 @@ function buildCoreAsync(mode: BuildOption) {
                 }
                 return null
             } else if (mode == BuildOption.Deploy) {
-                if (!deployCoreAsync) {
+                if (!pxt.commands.deployCoreAsync) {
                     console.log("no deploy functionality defined by this target")
                     return null;
                 }
-                return deployCoreAsync(res);
+                return pxt.commands.deployCoreAsync(res);
             }
             else if (mode == BuildOption.Run)
                 return runCoreAsync(res);
@@ -1517,7 +1523,7 @@ export function mainCli(targetDir: string) {
     }
 
     if (!cmd) {
-        if (deployCoreAsync) {
+        if (pxt.commands.deployCoreAsync) {
             console.log("running 'pxt deploy' (run 'pxt help' for usage)")
             cmd = "deploy"
         } else {

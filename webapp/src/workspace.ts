@@ -1,4 +1,5 @@
 /// <reference path="../../built/pxtlib.d.ts" />
+/// <reference path="../../built/pxteditor.d.ts" />
 
 import * as db from "./db";
 import * as core from "./core";
@@ -7,46 +8,17 @@ import * as data from "./data";
 import * as cloudworkspace from "./cloudworkspace"
 import * as fileworkspace from "./fileworkspace"
 
+type Header = pxt.workspace.Header;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type InstallHeader = pxt.workspace.InstallHeader;
+
 let scripts = new db.Table("script")
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 let lf = U.lf
 
-export interface InstallHeader {
-    name: string;
-    meta: any;
-    editor: string;
-    // older script might miss this
-    target: string;
-    pubId: string; // for published scripts
-    pubCurrent: boolean; // is this exactly pubId, or just based on it
-}
-
-export interface Header extends InstallHeader {
-    _rev: string;
-    id: string; // guid
-    recentUse: number; // seconds since epoch
-    modificationTime: number; // seconds since epoch
-    blobId: string; // blob name for cloud version
-    blobCurrent: boolean;      // has the current version of the script been pushed to cloud
-    isDeleted: boolean;
-    saveId?: any;
-}
-
-export type ScriptText = U.StringMap<string>;
-
-export interface WorkspaceProvider {
-    getHeaders(): Header[];
-    getHeader(id: string): Header;
-    getTextAsync(id: string): Promise<ScriptText>;
-    initAsync(target: string): Promise<void>;
-    saveAsync(h: Header, text?: ScriptText): Promise<void>;
-    installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
-    saveToCloudAsync(h: Header): Promise<void>;
-    syncAsync(): Promise<void>;
-    resetAsync(): Promise<void>;
-}
 
 var impl: WorkspaceProvider;
 

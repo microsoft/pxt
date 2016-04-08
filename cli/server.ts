@@ -137,7 +137,7 @@ function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]>
                         .then(U.concat))
 }
 
-function isAuthorizedLocalRequestAsync(req: http.IncomingMessage): boolean {
+function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
     // validate token
     return req.headers["authorization"]
         && req.headers["authorization"] == serveOptions.localToken;
@@ -425,7 +425,7 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (elts[0] == "api") {
-            if (!isAuthorizedLocalRequestAsync(req)) {
+            if (!isAuthorizedLocalRequest(req)) {
                 error(403);
                 return null;
             }
