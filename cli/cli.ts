@@ -1478,7 +1478,7 @@ export function mainCli(targetDir: string) {
     }
 
     if (!cmd) {
-        if (deployCoreAsync) {
+        if (pxt.commands.deployCoreAsync) {
             console.log("running 'pxt deploy' (run 'pxt help' for usage)")
             cmd = "deploy"
         } else {
