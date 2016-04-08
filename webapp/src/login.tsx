@@ -60,7 +60,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
     }
 
     renderCore() {
-        let settings: Cloud.UserSettings = this.getData("cloud:me/settings?format=nonsensitive") || {}
+        let settings: Cloud.UserSettings = Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {} || {}
         let name = Cloud.isLoggedIn() ? (settings.nickname || lf("Loading...")) : lf("Sign in")
         let icon = Cloud.isLoggedIn() ? "user" : "sign in";
         let buttonAction = () => {
