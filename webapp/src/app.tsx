@@ -13,6 +13,7 @@ import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as db from "./db"
+import * as cmds from "./cmds"
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
@@ -1031,39 +1032,6 @@ function tickEvent(id: string) {
     ai.trackEvent(id);
 }
 
-function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult) : Promise<void> {
-    let hex = resp.outfiles["microbit.hex"]
-    if (hex) {
-        let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
-        console.log('saving ' + fn)
-        core.browserDownloadText(hex, fn, "application/x-microbit-hex")
-    } else {
-        core.warningNotification(lf("Oops, we could not compile this project. Please check your code for errors."))
-    }
-    return Promise.resolve();
-}
-
-function localhostDeployCoreAsync(resp: ts.pxt.CompileResult) : Promise<void> {
-    let hex = resp.outfiles["microbit.hex"]
-    if (hex) {
-        console.log('local deployment...');
-        core.infoNotification("Uploading .hex file...");
-        return Util.requestAsync({
-            url: "http://localhost:3232/api/deploy",
-            headers: { "Authorization": Cloud.localToken },
-            method: "POST",
-            data: resp
-        }).then(() => {
-            core.infoNotification(lf(".hex file uploaded..."));
-        }, () => {
-            core.warningNotification(lf("Oops, something went wrong while deploying the .hex file..."));
-        })
-    } else {
-        core.warningNotification(lf("Oops, we could not compile this project. Please check your code for errors."))
-        return Promise.resolve();
-    }
-}
-
 function enableCrashReporting(releaseid: string) {
     if (typeof Raygun === "undefined") return; // don't report local crashes    
     try {
@@ -1162,13 +1130,10 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1])
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
-    pxt.commands.deployCoreAsync = Cloud.isLocalHost() 
-        ? localhostDeployCoreAsync 
-        : browserDownloadDeployCoreAsync;
-
-    Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
-        .then(() => Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json"))
+    Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json")
         .then(pkg.setupAppTarget)
+        .then(() => cmds.initCommandsAsync())
+        .then(() => Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => {
             return compiler.init();
         })
