@@ -25,6 +25,9 @@
     },
     "marked/marked.d.ts": {
       "commit": "418e6719c3d9444629dea0d27bebf9cfda9c6c45"
+    },
+    "winrt/winrt.d.ts": {
+      "commit": "ec9eb4b28c74665a602c22db3457f0a76fa0fa23"
     }
   }
 }
