@@ -378,10 +378,6 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             // the cloud only accepts *.json and sim* files in targets
             opts.fileList = opts.fileList.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
 
-            let simHtmlPath = "sim/public/simulator.html"
-            let simHtml = fs.readFileSync(simHtmlPath, "utf8")
-            opts.fileContent[simHtmlPath] = simHtml.replace(/\/cdn\//g, r.cdnUrl).replace(/\/sim\//g, "./")
-
             return uploadCoreAsync(opts)
         })
 }
@@ -610,6 +606,11 @@ function buildTargetCoreAsync() {
                 target: readJson("package.json")["version"],
                 pxt: readJson("node_modules/pxt-core/package.json")["version"],
             }
+            
+            cfg.appTheme.id = cfg.id
+            cfg.appTheme.title = cfg.title
+            cfg.appTheme.name = cfg.name
+
             nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
             pxt.appTarget = cfg; // make sure we're using the latest version
@@ -651,7 +652,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 
 }
 
-function buildFailed(msg:string) {
+function buildFailed(msg: string) {
     console.log("")
     console.log("***")
     console.log("*** Build failed: " + msg)
@@ -666,7 +667,7 @@ function buildAndWatchTargetAsync() {
     }
 
     return buildAndWatchAsync(() => buildPxtAsync()
-        .then(() => buildTargetAsync().then(r => { }, e => {  
+        .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed(e.message)
         }))
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
@@ -1299,9 +1300,9 @@ function buildCoreAsync(mode: BuildOption) {
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.pxt.getApiInfo(res.ast)
                 let md = ts.pxt.genMarkdown(apiInfo)
-                for(let fn in md) {
+                for (let fn in md) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, md[fn])
-                    console.log(`Wrote built/${fn}; size=${md[fn].length}`)                    
+                    console.log(`Wrote built/${fn}; size=${md[fn].length}`)
                 }
                 return null
             } else if (mode == BuildOption.Deploy) {
