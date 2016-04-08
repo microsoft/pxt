@@ -13,3 +13,7 @@ tmp/
 *.ts.new
 temp/
 *.db
+pxtwapp/pxtwapp/bin
+pxtwapp/pxtwapp/bld
+*.suo
+*.user
