@@ -23,6 +23,11 @@ CACHE:
 /cdn/blockly/media/click.mp3
 /cdn/blockly/media/disconnect.wav
 /cdn/blockly/media/delete.mp3
+/cdn/images/microbit.bw.svg
+/cdn/images/newblock.png
+/cdn/images/newkodu.png
+/cdn/images/newtypescript.png
+/cdn/images/newvisualstudiocode.png
 
 @workerjs@
 
