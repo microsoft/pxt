@@ -382,10 +382,6 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             // the cloud only accepts *.json and sim* files in targets
             opts.fileList = opts.fileList.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
 
-            let simHtmlPath = "sim/public/simulator.html"
-            let simHtml = fs.readFileSync(simHtmlPath, "utf8")
-            opts.fileContent[simHtmlPath] = simHtml.replace(/\/cdn\//g, r.cdnUrl).replace(/\/sim\//g, "./")
-
             return uploadCoreAsync(opts)
         })
 }
