@@ -399,6 +399,27 @@ interface UploadOptions {
 function uploadCoreAsync(opts: UploadOptions) {
     let liteId = "<none>"
 
+    let replacements: U.Map<string> = {
+        "/sim/simulator.html": "@simUrl@",
+        "/worker.js": "@workerjs@",
+        "/embed.js": "@relprefix@embed",
+        "/cdn/": "@pxtCdnUrl@",
+        "/sim/": "@targetCdnUrl@",
+        "data-manifest=\"\"": "@manifest@",
+        "var pxtConfig = null": "var pxtConfig = @cfg@",
+    }
+
+    let replFiles = [
+        "index.html",
+        "embed.js",
+        "run.html",
+        "release.manifest",
+        "worker.js",
+        "simulator.html",
+    ]
+
+    nodeutil.mkdirP("built/uploadrepl")
+    
     let uploadFileAsync = (p: string) => {
         let rdf: Promise<Buffer> = null
         if (opts.fileContent) {
@@ -418,11 +439,24 @@ function uploadCoreAsync(opts: UploadOptions) {
                 let fileName = p.replace(/^(built\/web\/|\w+\/public\/|built\/)/, "")
                 let mime = U.getMime(p)
                 let isText = /^(text\/.*|application\/(javascript|json))$/.test(mime)
+                let content = ""
+                if (isText) {
+                    content = data.toString("utf8")
+                    if (replFiles.indexOf(fileName) >= 0) {
+                        for (let from of Object.keys(replacements)) {
+                            content = U.replaceAll(content, from, replacements[from])
+                        }
+                        // save it for developer inspection
+                        fs.writeFileSync("built/uploadrepl/" + fileName, content)
+                    }
+                } else {
+                    content = data.toString("base64")
+                }
                 return Cloud.privatePostAsync(liteId + "/files", {
                     encoding: isText ? "utf8" : "base64",
                     filename: fileName,
                     contentType: mime,
-                    content: isText ? data.toString("utf8") : data.toString("base64"),
+                    content,
                 })
                     .then(resp => {
                         console.log(fileName, mime)
@@ -437,7 +471,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         commit: info.commitUrl,
         branch: info.tag || info.branch,
         buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
-        target: pxt.appTarget ? pxt.appTarget.id : ""
+        target: pxt.appTarget ? pxt.appTarget.id : "",
+        type: opts.baserelease ? "target" : "base",
     })
         .then(resp => {
             console.log(resp)
@@ -610,7 +645,7 @@ function buildTargetCoreAsync() {
                 target: readJson("package.json")["version"],
                 pxt: readJson("node_modules/pxt-core/package.json")["version"],
             }
-            
+
             cfg.appTheme.id = cfg.id
             cfg.appTheme.title = cfg.title
             cfg.appTheme.name = cfg.name

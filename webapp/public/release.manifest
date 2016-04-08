@@ -22,9 +22,11 @@ CACHE:
 /cdn/blockly/media/disconnect.wav
 /cdn/blockly/media/delete.mp3
 
+@workerjs@
 
-/app/worker.js?r=@TRGREL@
+@simUrl@
 /sim/target.json
+/sim/sim.js
     
 https://cdn.raygun.io/raygun4js/raygun.min.js
 https://az416426.vo.msecnd.net/scripts/a/ai.0.js

@@ -30,6 +30,42 @@ namespace pxt {
         }
     }
 
+    export interface WebConfig {
+        relprefix: string; // "/beta---",
+        workerjs: string;  // "/beta---worker",
+        pxtVersion: string; // "0.3.8",
+        pxtRelId: string; // "zstad",
+        pxtCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zstad/c/",
+        targetVersion: string; // "0.2.108",
+        targetRelId: string; // "zowrj",
+        targetCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zowrj/c/",
+        targetId: string; // "microbit",
+        simUrl: string; // "https://trg-microbit.kindscript.net/sim/zowrj"
+    }
+    
+    export function localWebConfig() {
+        let r:WebConfig = {
+            relprefix: "/--",
+            workerjs: "/worker.js",
+            pxtVersion: "local",
+            pxtRelId: "",
+            pxtCdnUrl: "/cdn/",
+            targetVersion: "local",
+            targetRelId: "",
+            targetCdnUrl: "/sim/",
+            targetId: appTarget ? appTarget.id : "",
+            simUrl: "/sim/simulator.html",
+        }
+        return r
+    }
+    
+    export var webConfig:WebConfig;
+
+    export function setupWebConfig(cfg:WebConfig) {
+        if (cfg) webConfig = cfg;
+        else if (!webConfig) webConfig = localWebConfig()        
+    }
+    
     export type CompileTarget = ts.pxt.CompileTarget;
 
     export interface Host {

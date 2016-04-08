@@ -118,7 +118,7 @@ export class Editor extends srceditor.Editor {
         this.editor = Blockly.inject(blocklyDiv, {
             toolbox: toolboxDiv,
             scrollbars: true,
-            media: (window as any).appCdnRoot + "blockly/media/",
+            media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
             sound: true,
             trashcan: false,
             zoom: {

@@ -71,7 +71,7 @@ namespace pxsim {
             frame.className = 'simframe';
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            let simUrl = this.options.simUrl || (window as any).simUrl 
+            let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html" 
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             return frame;

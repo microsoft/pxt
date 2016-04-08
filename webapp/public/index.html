@@ -22,29 +22,26 @@
     </div>
 
     <style type="text/css">
-        @import "./semantic.css";
-        @import "./custom.css";
-        @import "./icons.css";
+        @import "/cdn/semantic.css";
+        @import "/cdn/custom.css";
+        @import "/cdn/icons.css";
     </style>
     <script>
         // This line gets patched up by the cloud
-        var rootUrl = "dummy";
-        var appCdnRoot = "./";
-        var simCdnRoot = "sim/"; 
-        var simUrl = "/sim/simulator.html";
+        var pxtConfig = null;
     </script>
    
-    <script type="text/javascript" src="./lzma/lzma_worker-min.js"></script>
-    <script type="text/javascript" src="./jquery.js"></script>
-    <script type="text/javascript" src="./typescript.js"></script>
-    <script type="text/javascript" src="./blockly/blockly_compressed.js"></script>
-    <script type="text/javascript" src="./blockly/blocks_compressed.js"></script>
-    <script type="text/javascript" src="./blockly/msg/js/en.js"></script>
-    <script type="text/javascript" src="./fuse/fuse.min.js"></script>
-    <script type="text/javascript" src="./pxtlib.js"></script>
-    <script type="text/javascript" src="./pxtblocks.js"></script>
-    <script type="text/javascript" src="./pxtsim.js"></script>
-    <script type="text/javascript" src="./semantic.js"></script>
+    <script type="text/javascript" src="/cdn/lzma/lzma_worker-min.js"></script>
+    <script type="text/javascript" src="/cdn/jquery.js"></script>
+    <script type="text/javascript" src="/cdn/typescript.js"></script>
+    <script type="text/javascript" src="/cdn/blockly/blockly_compressed.js"></script>
+    <script type="text/javascript" src="/cdn/blockly/blocks_compressed.js"></script>
+    <script type="text/javascript" src="/cdn/blockly/msg/js/en.js"></script>
+    <script type="text/javascript" src="/cdn/fuse/fuse.min.js"></script>
+    <script type="text/javascript" src="/cdn/pxtlib.js"></script>
+    <script type="text/javascript" src="/cdn/pxtblocks.js"></script>
+    <script type="text/javascript" src="/cdn/pxtsim.js"></script>
+    <script type="text/javascript" src="/cdn/semantic.js"></script>
     <script type="text/javascript">
     !function(a,b,c,d,e,f,g,h){a.RaygunObject=e,a[e]=a[e]||function(){
     (a[e].o=a[e].o||[]).push(arguments)},f=b.createElement(c),g=b.getElementsByTagName(c)[0],
@@ -62,7 +59,7 @@
         
         window.appInsights=appInsights;
     </script>   
-    <script id="mainscript" type="text/javascript" src="./main.js"></script>
+    <script id="mainscript" type="text/javascript" src="/cdn/main.js"></script>
     <xml id="blocklyToolboxDefinition" style="display: none">
         <category name="Loops" colour="120" category="50">
             <block type="controls_repeat_ext">

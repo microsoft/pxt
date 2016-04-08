@@ -3,12 +3,6 @@
 /// <reference path="../built/pxtsim.d.ts" />
 
 namespace pxt.runner {
-    export interface RunnerOptions {
-        appCdnRoot: string;
-        simCdnRoot: string;
-        simUrl: string;
-    }
-
     export interface SimulateOptions {
         id?: string;
         code?: string;
@@ -121,8 +115,9 @@ namespace pxt.runner {
 
     function initInnerAsync() {
         let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        return Util.updateLocalizationAsync(options.appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
-            .then(() => Util.httpGetJsonAsync(options.simCdnRoot + "target.json"))
+        let cfg = pxt.webConfig
+        return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
+            .then(() => Util.httpGetJsonAsync(cfg.targetCdnUrl + "target.json"))
             .then((trgbundle: pxt.TargetBundle) => {
                 pxt.appTarget = trgbundle
                 mainPkg = new pxt.MainPackage(new Host());
@@ -194,7 +189,7 @@ namespace pxt.runner {
                 }
                 let js = resp.outfiles["microbit.js"];
                 if (js) {
-                    let driver = new pxsim.SimulatorDriver(container, { simUrl: options.simUrl });
+                    let driver = new pxsim.SimulatorDriver(container);
                     driver.run(js);
                 }
             })
@@ -238,9 +233,7 @@ namespace pxt.runner {
     }
 
     export var initCallbacks: (() => void)[] = [];
-    export var options: RunnerOptions;
-    export function init(opts: RunnerOptions) {
-        options = opts;
+    export function init() {
         initInnerAsync()
             .done(() => {
                 for (let i = 0; i < initCallbacks.length; ++i) {

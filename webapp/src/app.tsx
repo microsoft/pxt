@@ -56,7 +56,7 @@ interface IAppState {
     showFiles?: boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
-    
+
     running?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
@@ -579,7 +579,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     newProject(hideCancel = false) {
-        let cdn = (window as any).appCdnRoot
+        let cdn = pxt.webConfig.pxtCdnUrl
         let images = cdn + "images"
         let targetTheme = pxt.appTarget.appTheme;
         core.confirmAsync({
@@ -712,7 +712,7 @@ Ctrl+Shift+B
             })
     }
 
-    saveTypeScriptAsync(open = false) : Promise<void> {
+    saveTypeScriptAsync(open = false): Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
             return Promise.resolve();
         let ts = this.editor.saveToTypeScript()
@@ -770,9 +770,9 @@ Ctrl+Shift+B
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
-        tickEvent(opts.background ? "autorun" : 
-                  opts.debug ? "debug" : "run");
-        
+        tickEvent(opts.background ? "autorun" :
+            opts.debug ? "debug" : "run");
+
         if (!opts.background)
             this.editor.beforeCompile();
 
@@ -877,7 +877,7 @@ Ctrl+Shift+B
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
 
         return (
-            <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "")}>
+            <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "") }>
                 <div id="menubar" role="banner">
                     <div className="ui small menu" role="menubar">
                         <span id="logo" className="item">
@@ -894,12 +894,12 @@ Ctrl+Shift+B
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
                                     } } /> : undefined}
-                                    {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }                                    
+                                    {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
-                                    {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } />: undefined}
+                                    {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } /> : undefined}
                                     <div className="ui divider"></div>
-                                    <LoginBox />                                    
-                                    { 
+                                    <LoginBox />
+                                    {
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
@@ -917,7 +917,7 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class="floating icon button" icon="help">
                                     {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
                                     <div className="ui divider"></div>
-                                    <sui.Item key="translatebtn" onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate Programming Experience Toolkit!") } />                                    
+                                    <sui.Item key="translatebtn" onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate Programming Experience Toolkit!") } />
                                 </sui.DropdownMenu>
                             </div>
                         </div>
@@ -1124,9 +1124,10 @@ export var targetVersion: string;
 export var dbgMode: boolean = false;
 
 $(document).ready(() => {
-    let config = (window as any).tdConfig || {};
-    ksVersion = config.ksVersion || config.tdVersion || "";
-    targetVersion = config.targetVersion || config.tdVersion || "";
+    pxt.setupWebConfig((window as any).pxtConfig);
+    let config = pxt.webConfig
+    ksVersion = config.pxtVersion;
+    targetVersion = config.targetVersion;
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
     dbgMode = /dbg=1/i.test(window.location.href);
 
@@ -1150,8 +1151,8 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1])
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
-    Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language))
-        .then(() => Util.httpGetJsonAsync((window as any).simCdnRoot + "target.json"))
+    Util.updateLocalizationAsync(config.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
+        .then(() => Util.httpGetJsonAsync(config.targetCdnUrl + "target.json"))
         .then(pkg.setupAppTarget)
         .then(() => {
             return compiler.init();

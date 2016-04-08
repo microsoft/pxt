@@ -3,21 +3,8 @@
 /// <reference path="../typings/jquery/jquery.d.ts" />
 
 namespace pxt.blocks {
-
-    var blocklyDiv = document.createElement("div");
-    blocklyDiv.style.position = "absolute";
-    blocklyDiv.style.top = "0";
-    blocklyDiv.style.left = "0";
-    blocklyDiv.style.width = "1px";
-    blocklyDiv.style.height = "1px";
-
-    document.body.appendChild(blocklyDiv);
-    var workspace = Blockly.inject(blocklyDiv, {
-        scrollbars: false,
-        readOnly: true,
-        zoom: false,
-        media: (window as any).appCdnRoot + "blockly/media/"
-    });
+    var workspace: B.Workspace;
+    var blocklyDiv:HTMLElement;
 
     function align(ws: B.Workspace) {
         let blocks = ws.getTopBlocks(true);
@@ -28,14 +15,30 @@ namespace pxt.blocks {
             y += 14; //buffer            
         })
     }
-    
+
     export interface BlocksRenderOptions {
         emPixels?: number;
         align?: boolean;
         clean?: boolean;
     }
-    
+
     export function render(blocksXml: string, options: BlocksRenderOptions = {}): JQuery {
+        if (!workspace) {
+            blocklyDiv = document.createElement("div");
+            blocklyDiv.style.position = "absolute";
+            blocklyDiv.style.top = "0";
+            blocklyDiv.style.left = "0";
+            blocklyDiv.style.width = "1px";
+            blocklyDiv.style.height = "1px";
+            document.body.appendChild(blocklyDiv);
+            workspace = Blockly.inject(blocklyDiv, {
+                scrollbars: false,
+                readOnly: true,
+                zoom: false,
+                media: pxt.webConfig.pxtCdnUrl + "blockly/media/"
+            });
+        }
+        
         workspace.clear();
         try {
             let text = blocksXml || "<xml></xml>";
@@ -44,9 +47,9 @@ namespace pxt.blocks {
 
             if (options.align)
                 align(workspace);
-                
+
             if (options.clean && (<any>workspace).cleanUp_)
-                (<any>workspace).cleanUp_();                
+                (<any>workspace).cleanUp_();
 
             let metrics = workspace.getMetrics();
 
@@ -58,9 +61,9 @@ namespace pxt.blocks {
             svg[0].setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
             svg.removeAttr('width');
             svg.removeAttr('height');
-            
+
             if (options.emPixels)
-                svg[0].style.width =  (metrics.contentWidth / options.emPixels) + 'em';
+                svg[0].style.width = (metrics.contentWidth / options.emPixels) + 'em';
 
             return svg;
 
