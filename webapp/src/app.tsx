@@ -23,6 +23,11 @@ import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
 
+type Header = pxt.workspace.Header;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type InstallHeader = pxt.workspace.InstallHeader;
+
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 var lf = Util.lf
@@ -50,7 +55,7 @@ export interface EditorSettings {
 
 interface IAppProps { }
 interface IAppState {
-    header?: workspace.Header;
+    header?: Header;
     currFile?: pkg.File;
     theme?: srceditor.Theme;
     fileState?: string;
@@ -123,10 +128,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return data;
     }
 
-    fetchLocalData(): workspace.Header[] {
+    fetchLocalData(): Header[] {
         if (this.state.packages) return [];
 
-        let headers: workspace.Header[] = this.getData("header:*")
+        let headers: Header[] = this.getData("header:*")
         if (this.state.searchFor)
             headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
         return headers;
@@ -136,7 +141,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         let headers = this.fetchLocalData();
         let data = this.fetchCloudData();
 
-        let chgHeader = (hdr: workspace.Header) => {
+        let chgHeader = (hdr: Header) => {
             if (this.modal) this.modal.hide();
             this.props.parent.loadHeader(hdr)
         }
@@ -483,7 +488,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    loadHeader(h: workspace.Header) {
+    loadHeader(h: Header) {
         if (!h)
             return
 
@@ -545,7 +550,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     return;
                 } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget() || data.meta.cloudId == "pxt/" + workspace.getCurrentTarget()) {
                     console.log("importing project")
-                    let h: workspace.InstallHeader = {
+                    let h: InstallHeader = {
                         target: workspace.getCurrentTarget(),
                         editor: data.meta.editor,
                         name: data.meta.name,
@@ -691,7 +696,7 @@ Ctrl+Shift+B
     newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: Util.Map<string>): Promise<void> {
         let cfg = pxt.U.clone(prj.config);
         cfg.name = "Untitled" // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
-        let files: workspace.ScriptText = {
+        let files: ScriptText = {
             "pxt.json": JSON.stringify(cfg, null, 4) + "\n",
         }
         for (let f in prj.files)

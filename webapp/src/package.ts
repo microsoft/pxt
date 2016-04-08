@@ -100,7 +100,7 @@ export class File {
 
 export class EditorPackage {
     files: Util.StringMap<File> = {};
-    header: workspace.Header;
+    header: pxt.workspace.Header;
     onupdate = () => { };
     saveScheduled = false;
     savingNow = 0;

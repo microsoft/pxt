@@ -7,17 +7,20 @@ import * as ws from "./workspace"
 let headers = new db.Table("header")
 let texts = new db.Table("text")
 
+type Header = pxt.workspace.Header;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type InstallHeader = pxt.workspace.InstallHeader;
+
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 
-type Header = ws.Header;
-
 interface HeaderWithScript {
     id: string;
-    header: ws.Header;
-    text: ws.ScriptText;
+    header: Header;
+    text: ScriptText;
     textRev?: string;
     textNeedsSave?: boolean;
 }
@@ -55,7 +58,7 @@ function initAsync(target: string) {
     })
 }
 
-function fetchTextAsync(e: HeaderWithScript): Promise<ws.ScriptText> {
+function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
     return texts.getAsync(e.id)
         .then(resp => {
             if (!e.text) {
@@ -69,10 +72,10 @@ function fetchTextAsync(e: HeaderWithScript): Promise<ws.ScriptText> {
 
 let headerQ = new U.PromiseQueue();
 
-function getTextAsync(id: string): Promise<ws.ScriptText> {
+function getTextAsync(id: string): Promise<ScriptText> {
     let e = lookup(id)
     if (!e)
-        return Promise.resolve(null as ws.ScriptText)
+        return Promise.resolve(null as ScriptText)
     if (e.text)
         return Promise.resolve(e.text)
     return headerQ.enqueue(id, () => fetchTextAsync(e))
@@ -84,7 +87,7 @@ function fetchTextRevAsync(e: HeaderWithScript) {
     return fetchTextAsync(e).then(() => { }, err => { })
 }
 
-function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
+function saveCoreAsync(h: Header, text?: ScriptText) {
     let e = lookup(h.id)
 
     U.assert(e.header === h)
@@ -121,12 +124,12 @@ function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
     })
 }
 
-function saveAsync(h: ws.Header, text: ws.ScriptText) {
+function saveAsync(h: Header, text: ScriptText) {
     return saveCoreAsync(h, text)
 }
 
-function installAsync(h0: ws.InstallHeader, text: ws.ScriptText) {
-    let h = <ws.Header>h0
+function installAsync(h0: InstallHeader, text: ScriptText) {
+    let h = <Header>h0
     h.id = U.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
@@ -158,15 +161,15 @@ interface InstalledHeaders {
     blobcontainer: string;
 }
 
-function isProject(h: ws.Header) {
+function isProject(h: Header) {
     return /prj$/.test(h.editor)
 }
 
-function saveToCloudAsync(h: ws.Header) {
+function saveToCloudAsync(h: Header) {
     return syncOneUpAsync(h)
 }
 
-function syncOneUpAsync(h: ws.Header) {
+function syncOneUpAsync(h: Header) {
     let saveId = {}
     let e = lookup(h.id)
     return getTextAsync(h.id)
@@ -363,7 +366,7 @@ function resetAsync() {
         })
 }
 
-export var provider: ws.WorkspaceProvider = {
+export var provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,

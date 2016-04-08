@@ -10,8 +10,10 @@ let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 let currentTarget: string;
 
-type Header = ws.Header;
-type ScriptText = ws.ScriptText;
+type Header = pxt.workspace.Header;
+type ScriptText = pxt.workspace.ScriptText;
+type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+type InstallHeader = pxt.workspace.InstallHeader;
 
 interface HeaderWithScript {
     id: string;
@@ -95,7 +97,7 @@ function initAsync(target: string) {
     return syncAsync();
 }
 
-function fetchTextAsync(e: HeaderWithScript): Promise<ws.ScriptText> {
+function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
     return apiAsync("pkg/" + e.id)
         .then((resp: pxt.FsPkg) => {
             if (!e.text) {
@@ -114,16 +116,16 @@ function fetchTextAsync(e: HeaderWithScript): Promise<ws.ScriptText> {
 
 let headerQ = new U.PromiseQueue();
 
-function getTextAsync(id: string): Promise<ws.ScriptText> {
+function getTextAsync(id: string): Promise<ScriptText> {
     let e = lookup(id)
     if (!e)
-        return Promise.resolve(null as ws.ScriptText)
+        return Promise.resolve(null as ScriptText)
     if (e.text)
         return Promise.resolve(e.text)
     return headerQ.enqueue(id, () => fetchTextAsync(e))
 }
 
-function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
+function saveCoreAsync(h: Header, text?: ScriptText) {
     let e = lookup(h.id)
 
     U.assert(e.header === h)
@@ -168,12 +170,12 @@ function saveCoreAsync(h: ws.Header, text?: ws.ScriptText) {
     })
 }
 
-function saveAsync(h: ws.Header, text: ws.ScriptText) {
+function saveAsync(h: Header, text: ScriptText) {
     return saveCoreAsync(h, text)
 }
 
-function installAsync(h0: ws.InstallHeader, text: ws.ScriptText) {
-    let h = <ws.Header>h0
+function installAsync(h0: InstallHeader, text: ScriptText) {
+    let h = <Header>h0
     let path = "projects/" + h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (lookup(path)) {
         let n = 2
@@ -197,7 +199,7 @@ function installAsync(h0: ws.InstallHeader, text: ws.ScriptText) {
         .then(() => h)
 }
 
-function saveToCloudAsync(h: ws.Header) {
+function saveToCloudAsync(h: Header) {
     return Promise.resolve()
 }
 
@@ -218,7 +220,7 @@ function resetAsync() {
         })
 }
 
-export var provider: ws.WorkspaceProvider = {
+export var provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,
