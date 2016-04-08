@@ -1,4 +1,5 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
+/// <reference path="../../built/pxtwinrt.d.ts"/>
 import * as core from "./core";
 import * as pkg from "./package";
 import Cloud = pxt.Cloud;
@@ -37,10 +38,13 @@ function localhostDeployCoreAsync(resp: ts.pxt.CompileResult) : Promise<void> {
 }
 
 export function initCommandsAsync() : Promise<void> {
-    pxt.commands.deployCoreAsync = 
-        Cloud.isLocalHost() && Cloud.localToken 
-        ? localhostDeployCoreAsync 
-        : browserDownloadDeployCoreAsync;
-        
+    if (pxtwinrt.isWinRT()) {
+        console.log('using winrt commands')
+        pxt.commands.deployCoreAsync = pxtwinrt.deployCoreAsync;  
+    } if (Cloud.isLocalHost() && Cloud.localToken) {
+        pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
+    } else {
+        pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;        
+    }       
     return Promise.resolve();
 }

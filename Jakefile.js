@@ -197,7 +197,7 @@ file("built/web/pxtlib.js", ["webapp/ace/mode/assembly_armthumb.js", "built/pxtl
 })
 
 file('built/webapp/src/app.js', expand([
-    "webapp", "built/web/pxtlib.js"]), { async: true }, function () {
+    "webapp", "built/web/pxtlib.js", "built/web/pxtwinrt.js"]), { async: true }, function () {
         tscIn(this, "webapp")
     })
 

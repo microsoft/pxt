@@ -20,17 +20,13 @@ import * as uploader from './uploader';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
-// provided by target
-let deployCoreAsync: (r: ts.pxt.CompileResult) => void = undefined;
-
 function initTargetCommands() {
     let cmdsjs = nodeutil.targetDir + '/built/cmds.js';
     if (fs.existsSync(cmdsjs)) {
         console.log(`loading cli extensions...`)
         let cli = require(cmdsjs)
         if (cli.deployCoreAsync) {
-            console.log('imported deploy command')
-            deployCoreAsync = cli.deployCoreAsync
+            pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
     }
 }
@@ -1309,11 +1305,11 @@ function buildCoreAsync(mode: BuildOption) {
                 }
                 return null
             } else if (mode == BuildOption.Deploy) {
-                if (!deployCoreAsync) {
+                if (!pxt.commands.deployCoreAsync) {
                     console.log("no deploy functionality defined by this target")
                     return null;
                 }
-                return deployCoreAsync(res);
+                return pxt.commands.deployCoreAsync(res);
             }
             else if (mode == BuildOption.Run)
                 return runCoreAsync(res);
