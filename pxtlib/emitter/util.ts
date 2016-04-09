@@ -420,6 +420,7 @@ namespace ts.pxt.Util {
                 case "png": return "image/png";
                 case "ico": return "image/x-icon";
                 case "manifest": return "text/cache-manifest";
+                case "webmanifest": return "application/manifest+json";
                 case "json": return "application/json";
                 case "svg": return "image/svg+xml";
                 case "eot": return "application/vnd.ms-fontobject";

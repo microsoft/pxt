@@ -368,7 +368,7 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
             console.log(`Uploading target against: ${apprel} /${r.id}`);
             let opts: UploadOptions = {
                 label: label,
-                fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json"])
+                fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json", ".webmanifest"])
                     .concat(allFiles("sim/public")),
                 pkgversion: pkgVersion(),
                 baserelease: r.id,
@@ -397,6 +397,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     let replacements: U.Map<string> = {
         "/sim/simulator.html": "@simUrl@",
+        "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/worker.js": "@workerjs@",
         "/embed.js": "@relprefix@embed",
         "/cdn/": "@pxtCdnUrl@",
@@ -413,10 +414,11 @@ function uploadCoreAsync(opts: UploadOptions) {
         "worker.js",
         "simulator.html",
         "sim.manifest",
+        "sim.webmanifest",
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
-    
+
     let uploadFileAsync = (p: string) => {
         let rdf: Promise<Buffer> = null
         if (opts.fileContent) {
@@ -435,7 +437,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 // Strip the leading directory name, unless we are uploading a single file.
                 let fileName = p.replace(/^(built\/web\/|\w+\/public\/|built\/)/, "")
                 let mime = U.getMime(p)
-                let isText = /^(text\/.*|application\/(javascript|json))$/.test(mime)
+                let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
                 let content = ""
                 if (isText) {
                     content = data.toString("utf8")
@@ -620,6 +622,35 @@ function travisInfo() {
     }
 }
 
+function buildWebManifest(cfg: pxt.TargetBundle) {
+    let webmanifest: any = {
+        "lang": "en",
+        "dir": "ltr",
+        "name": cfg.name,
+        "short_name": cfg.name,
+        "icons": [
+            {
+                "src": "https://az851932.vo.msecnd.net/pub/zuxbkpza",
+                "sizes": "128x128",
+                "type": "image/png"
+            }, {
+                "src": "https://az851932.vo.msecnd.net/pub/hbcabbim",
+                "sizes": "200x200",
+                "type": "image/png"
+            }
+        ],
+        "scope": "/",
+        "start_url": "/",
+        "display": "standalone",
+        "orientation": "landscape"
+    }
+    let diskManifest: any = {}
+    if (fs.existsSync("webmanifest.json"))
+        diskManifest = nodeutil.readJson("webmanifest.json")
+    U.jsonCopyFrom(webmanifest, diskManifest)
+    return webmanifest;
+}
+
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
@@ -647,6 +678,8 @@ function buildTargetCoreAsync() {
             cfg.appTheme.title = cfg.title
             cfg.appTheme.name = cfg.name
             
+            let webmanifest = buildWebManifest(cfg)
+            
             // expand logo
             let logos = (cfg.appTheme as any as U.Map<string>);
             Object.keys(logos)
@@ -666,6 +699,7 @@ function buildTargetCoreAsync() {
             delete targetlight.appTheme
             fs.writeFileSync("built/targetlight.json", JSON.stringify(targetlight, null, 2))
             fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
+            fs.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
         })
         .then(() => {
             console.log("target.json built.")
