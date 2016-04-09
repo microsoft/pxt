@@ -31,14 +31,8 @@ CACHE:
 
 @workerjs@
 
-# Base target
-@simUrl@
 /sim/target.json
-/sim/sim.js
 
-# Additional target entries
-@manifestfiles@
-    
 # External
 https://cdn.raygun.io/raygun4js/raygun.min.js
 https://az416426.vo.msecnd.net/scripts/a/ai.0.js
