@@ -1146,6 +1146,7 @@ $(document).ready(() => {
 
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
+        .then(() => pxtwinrt.initAsync())
         .then(() => cmds.initCommandsAsync())
         .then(() => Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => {
@@ -1158,7 +1159,6 @@ $(document).ready(() => {
             workspace.syncAsync().done()
         })
         .then(() => {
-
             if (hashCmd == "pub" || hashCmd == "edit") {
                 let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hashArg)[0]
                 if (existing) {

@@ -173,7 +173,8 @@ namespace pxt {
     }
 
     export interface AppSerial {
-        manufacturerFilter?: string;
+        manufacturerFilter?: string; // used by node-serial
+        nameFilter?: string; // used by winrt
         log?: boolean;
     }
 
