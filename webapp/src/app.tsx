@@ -888,8 +888,8 @@ Ctrl+Shift+B
                 <div id="menubar" role="banner">
                     <div className="ui small menu" role="menubar">
                         <span id="logo" className="item">
-                            {targetTheme.logo || targetTheme.portraitLogo ? (<a href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>) : null}
-                            {targetTheme.portraitLogo ? (<a href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
+                            {targetTheme.logo || targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>) : null}
+                            {targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                         </span>
                         <div className="ui item">
                             <div className="ui buttons">
@@ -944,7 +944,7 @@ Ctrl+Shift+B
                             <div className="ui item right">
                                 <div>
                                     { workspaces ? <CloudSyncButton parent={this} /> : '' }
-                                    { targetTheme.rightLogo ? <a id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a> : "" }
+                                    { targetTheme.rightLogo ? <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a> : "" }
                                 </div>
                             </div> : "" }
                     </div>
@@ -973,13 +973,13 @@ Ctrl+Shift+B
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
                 <div id="footer" role="footer">
                     <div>
-                        { targetTheme.footerLogo ? <a id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (pxt.appTarget.title || pxt.appTarget.name) }
+                        { targetTheme.footerLogo ? <a target="_blank" id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (pxt.appTarget.title || pxt.appTarget.name) }
                         <span>{targetVersion}</span>
                         - <span>&nbsp; {lf("powered by") }</span> &nbsp;
-                        <a href="https://github.com/Microsoft/pxt" title="Microsoft Programming Experience Toolkit"><i className='xicon ksempty'/> PXT</a><span>{ksVersion}</span>
+                        <a target="_blank" href="https://github.com/Microsoft/pxt" title="Microsoft Programming Experience Toolkit"><i className='xicon ksempty'/> PXT</a><span>{ksVersion}</span>
                         - &copy; Microsoft Corporation - 2016
-                        - <a href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") } </a>
-                        - <a href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
+                        - <a target="_blank" href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") } </a>
+                        - <a target="_blank" href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
                     </div>
                 </div>
             </div>
