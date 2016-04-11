@@ -108,12 +108,12 @@ namespace pxt.cpp {
         for (let pkg of mainPkg.sortedDeps()) {
             pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
         }
-        
+
         if (prevSnapshot && U.stringMapEq(pkgSnapshot, prevSnapshot)) {
             console.log("Using cached extinfo")
             return prevExtInfo
         }
-        
+
         console.log("Generating new extinfo")
 
         let res = Y.emptyExtInfo();
@@ -524,7 +524,7 @@ namespace pxt.cpp {
         res.compileData = btoa(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
-        
+
         prevSnapshot = pkgSnapshot
         prevExtInfo = res
 
@@ -612,41 +612,54 @@ namespace pxt.cpp {
         }
     }
 
-    export function unpackSourceFromHexFileAsync(file: File): Promise<{ meta?: { cloudId: string; editor: string; name: string; }; source: string; }> { // string[] (guid)
+    export interface HexFile {
+        meta?: {
+            cloudId: string;
+            editor: string;
+            name: string;
+        };
+        source: string;
+    }
+
+    export function unpackSourceFromHexFileAsync(file: File): Promise<HexFile> { // string[] (guid)
         if (!file) return undefined;
 
-        return fileReadAsArrayBufferAsync(file)
-            .then((dat: ArrayBuffer) => {
-                let str = fromUTF8Bytes(new Uint8Array(dat));
-                let tmp = extractSource(str || "")
-                if (!tmp) return undefined
+        return fileReadAsArrayBufferAsync(file).then(data => {
+            let a = new Uint8Array(data);
+            return unpackSourceFromHexAsync(a);
+        });
+    }
 
-                if (!tmp.meta || !tmp.text) {
-                    console.log("This .hex file doesn't contain source.")
-                    return undefined;
-                }
+    export function unpackSourceFromHexAsync(dat: Uint8Array): Promise<HexFile> { // string[] (guid)
+        let str = fromUTF8Bytes(dat);
+        let tmp = extractSource(str || "")
+        if (!tmp) return undefined
 
-                var hd: { compression: string; headerSize: number; metaSize: number; editor: string; target?: string; } = JSON.parse(tmp.meta)
-                if (!hd) {
-                    console.log("This .hex file is not valid.")
-                    return undefined;
-                }
-                else if (hd.compression == "LZMA") {
-                    return lzmaDecompressAsync(tmp.text)
-                        .then(res => {
-                            if (!res) return null;
-                            let meta = res.slice(0, hd.headerSize || hd.metaSize);
-                            let text = res.slice(meta.length);
-                            let metajs = JSON.parse(meta);
-                            return { meta: metajs, source: text }
-                        })
-                } else if (hd.compression) {
-                    console.log("Compression type {0} not supported.", hd.compression)
-                    return undefined
-                } else {
-                    return { meta: undefined, source: fromUTF8Bytes(tmp.text) };
-                }
-            })
+        if (!tmp.meta || !tmp.text) {
+            console.log("This .hex file doesn't contain source.")
+            return undefined;
+        }
+
+        var hd: { compression: string; headerSize: number; metaSize: number; editor: string; target?: string; } = JSON.parse(tmp.meta)
+        if (!hd) {
+            console.log("This .hex file is not valid.")
+            return undefined;
+        }
+        else if (hd.compression == "LZMA") {
+            return lzmaDecompressAsync(tmp.text)
+                .then(res => {
+                    if (!res) return null;
+                    let meta = res.slice(0, hd.headerSize || hd.metaSize);
+                    let text = res.slice(meta.length);
+                    let metajs = JSON.parse(meta);
+                    return { meta: metajs, source: text }
+                })
+        } else if (hd.compression) {
+            console.log("Compression type {0} not supported.", hd.compression)
+            return undefined
+        } else {
+            return Promise.resolve({ source: fromUTF8Bytes(tmp.text) });
+        }
     }
 }
 

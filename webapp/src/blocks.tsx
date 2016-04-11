@@ -33,8 +33,8 @@ export class Editor extends srceditor.Editor {
     saveToTypeScript(): string {
         let cfg = pkg.mainPkg.config
         this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo, {
-            name: cfg.name,
-            description: cfg.description
+            name: cfg ? cfg.name : lf("Untitled"),
+            description: cfg ? cfg.description : ""
         })
         return this.compilationResult.source;
     }

@@ -16,7 +16,7 @@
   <Applications>
     <Application Id="App" StartPage="http://localhost:3232/index.html?ws=cloud">
       <uap:ApplicationContentUriRules>
-        <uap:Rule Match="http://localhost:3232/index.html" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="http://localhost:3232/index.html?ws=cloud" Type="include" WindowsRuntimeAccess="all" />
       </uap:ApplicationContentUriRules>
       <uap:VisualElements DisplayName="PXT Local Test App" Description="Test Application for PXT targets" BackgroundColor="transparent" Square150x150Logo="images\Square150x150Logo.png" Square44x44Logo="images\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png">
@@ -27,7 +27,6 @@
         <uap:Extension Category="windows.fileTypeAssociation">
           <uap:FileTypeAssociation Name="pxthex">
             <uap:DisplayName>pxt binary file</uap:DisplayName>
-            <uap:EditFlags OpenIsSafe="true" />
             <uap:SupportedFileTypes>
               <uap:FileType ContentType="application/x-microbit-hex">.hex</uap:FileType>
             </uap:SupportedFileTypes>
@@ -39,6 +38,7 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <uap:Capability Name="removableStorage" />
+    <DeviceCapability Name="bluetooth" />
     <DeviceCapability Name="serialcommunication">
       <Device Id="any">
         <Function Type="name:serialPort" />

@@ -534,38 +534,39 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     importHexFile(file: File) {
         if (!file) return;
         pxt.cpp.unpackSourceFromHexFileAsync(file)
-            .then(data => {
-                console.log('decoded hex file')
-                if (!data || !data.meta) {
-                    core.warningNotification("Sorry, we could not recognize this file.")
-                    return;
-                }
-                if (data.meta.cloudId == "microbit.co.uk"
-                    && data.meta.editor == "blockly") {
-                    console.log('importing microbit.co.uk blocks project')
-                    compiler.getBlocksAsync()
-                        .then(info => this.newBlocksProjectAsync({
-                            "main.blocks": pxt.blocks.importXml(info, data.source)
-                        })).done();
-                    return;
-                } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget() || data.meta.cloudId == "pxt/" + workspace.getCurrentTarget()) {
-                    console.log("importing project")
-                    let h: InstallHeader = {
-                        target: workspace.getCurrentTarget(),
-                        editor: data.meta.editor,
-                        name: data.meta.name,
-                        meta: {},
-                        pubId: "",
-                        pubCurrent: false
-                    };
-                    let files = JSON.parse(data.source);
-                    workspace.installAsync(h, files)
-                        .done(hd => this.loadHeader(hd));
-                    return;
-                }
+            .done(data => this.importHex(data));
+    }
 
-                core.warningNotification("Sorry, we could not import this project.")
-            })
+    importHex(data: pxt.cpp.HexFile) {
+        if (!data || !data.meta) {
+            core.warningNotification("Sorry, we could not recognize this file.")
+            return;
+        }
+        if (data.meta.cloudId == "microbit.co.uk"
+            && data.meta.editor == "blockly") {
+            console.log('importing microbit.co.uk blocks project')
+            compiler.getBlocksAsync()
+                .then(info => this.newBlocksProjectAsync({
+                    "main.blocks": pxt.blocks.importXml(info, data.source)
+                })).done();
+            return;
+        } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget() || data.meta.cloudId == "pxt/" + workspace.getCurrentTarget()) {
+            console.log("importing project")
+            let h: InstallHeader = {
+                target: workspace.getCurrentTarget(),
+                editor: data.meta.editor,
+                name: data.meta.name,
+                meta: {},
+                pubId: "",
+                pubCurrent: false
+            };
+            let files = JSON.parse(data.source);
+            workspace.installAsync(h, files)
+                .done(hd => this.loadHeader(hd));
+            return;
+        }
+
+        core.warningNotification("Sorry, we could not import this project.")
     }
 
     initDragAndDrop() {
@@ -745,13 +746,13 @@ Ctrl+Shift+B
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (!resp.outfiles["microbit.hex"]) {
-                    core.warningNotification(lf("Compilation failed, please check your code for errors."));                
+                    core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf("Compilation failed, please try again."));
-                        pxt.reportException(e, resp);                                     
+                        pxt.reportException(e, resp);
                     })
             }).done();
     }
@@ -1144,9 +1145,9 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1])
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
+    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
-        .then(() => pxtwinrt.initAsync())
         .then(() => cmds.initCommandsAsync())
         .then(() => Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => {
@@ -1181,6 +1182,7 @@ $(document).ready(() => {
         })
         .then(() => {
             initSerial()
+            return pxtwinrt.initAsync(ih);
         })
 
     window.addEventListener("unload", ev => {
