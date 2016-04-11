@@ -58,7 +58,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
             : undefined;
 
         return (
-            <div className={"ui card " + color + (card.onClick ? " link" : '')} onClick={e => card.onClick ? card.onClick(e) : undefined } >
+            <div className={"ui card " + color + (card.onClick ? " link" : '') + (card.className ? (' ' + card.className) : '')} onClick={e => card.onClick ? card.onClick(e) : undefined } >
                 {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
                     <div className="right floated meta">

@@ -831,17 +831,18 @@ export class Editor extends srceditor.Editor {
 
     private setAnnotationHelpCard(annotation: AceAjax.Annotation): void {
         if (!annotation) {
-            this.parent.setHelp(undefined);
+            this.parent.setErrorCard(undefined);
             return undefined;
         }
 
-        this.parent.setHelp({
+        this.parent.setErrorCard({
             header: lf("line {0}", annotation.row + 1),
             name: lf("error"),
             description: annotation.text,
             color: 'red'
         }, (e) => {
             this.setViewState(annotation);
+            this.editor.setHighlightActiveLine(true);
             e.preventDefault();
             return false;
         })

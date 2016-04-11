@@ -101,6 +101,7 @@ namespace pxt {
         onClick?: (e: any) => void; // React event
 
         target?: string;
+        className?: string;
     }
 
     export interface TargetVersions {

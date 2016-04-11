@@ -386,7 +386,7 @@ svg.ui.trend.black polyline {
     -webkit-filter: grayscale(1);
     filter: grayscale(1);
 }
-    
+  
 .highlight {
     border-bottom: 2px solid #FFC107;     
 }
@@ -401,6 +401,10 @@ svg.ui.trend.black polyline {
 
 html {
     font-size:16px;
+}
+
+.top-margin {
+    margin-top:0.5em !important;
 }
 
 /* extra-large desktop screen */

@@ -60,6 +60,8 @@ interface IAppState {
     theme?: srceditor.Theme;
     fileState?: string;
     showFiles?: boolean;
+    errorCard?: pxt.CodeCard;
+    errorCardClick?: (e: React.MouseEvent) => boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
 
@@ -484,7 +486,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     setFile(fn: pkg.File) {
         this.setState({
             currFile: fn,
-            helpCard: undefined
+            helpCard: undefined,
+            errorCard: undefined
         })
     }
 
@@ -496,7 +499,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
-
+        this.setState({
+            helpCard: undefined,
+            errorCard: undefined
+        })
         pkg.loadPkgAsync(h.id)
             .then(() => {
                 compiler.newProject();
@@ -839,8 +845,16 @@ Ctrl+Shift+B
             })
     }
 
-    setHelp(helpCard: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
-        this.setState({ helpCard: helpCard, helpCardClick: onClick })
+    setErrorCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
+        this.setState({ 
+            errorCard: card, 
+            errorCardClick: onClick })
+    }
+
+    setHelpCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
+        this.setState({ 
+            helpCard: card, 
+            helpCardClick: onClick })
     }
 
     updateHeaderName(name: string) {
@@ -936,7 +950,10 @@ Ctrl+Shift+B
                     </div>
                 </div>
                 <div id="filelist" className="ui items" role="complementary">
-                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only" : "") }>
+                    {this.state.errorCard ? <div id="errorcard" className="ui item">
+                        <codecard.CodeCardView className="fluid top-margin" responsive={true} onClick={this.state.errorCardClick} {...this.state.errorCard} target={pxt.appTarget.id} />
+                    </div>  : null }
+                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only" : "") + (this.state.errorCard ? "errored" : "") }>
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
@@ -950,7 +967,7 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor" role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div className="ui editorFloat" id="helpcard" onClick={this.state.helpCardClick}><codecard.CodeCardView responsive={true} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
+                    {this.state.helpCard ? <div id="helpcard" className="ui editorFloat"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />

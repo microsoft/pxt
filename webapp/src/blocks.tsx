@@ -109,7 +109,7 @@ export class Editor extends srceditor.Editor {
     updateHelpCard() {
         let selected = Blockly.selected;
         let card = selected ? selected.codeCard : undefined;
-        this.parent.setHelp(card);
+        this.parent.setHelpCard(card);
     }
 
     prepare() {
