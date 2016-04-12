@@ -902,8 +902,8 @@ export function installAsync(packageName?: string) {
     }
 }
 
-export function initAsync(targetName: string, packageName: string) {
-    return mainPkg.initAsync(targetName || "", packageName || "")
+export function initAsync(packageName: string) {
+    return mainPkg.initAsync(packageName || "")
         .then(() => mainPkg.installAllAsync())
 }
 
@@ -1441,28 +1441,32 @@ function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 
     })
 }
 
-cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
-cmd("init     TARGET PACKAGE_NAME - start new package for a given target", initAsync)
+cmd("help                         - display this message", helpAsync)
+
+cmd("init     PACKAGE_NAME        - start new package for a given target", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
-cmd("publish                      - publish current package", publishAsync)
+
 cmd("build                        - build current package", buildAsync)
-cmd("gendocs                      - build current package and its docs", gendocsAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
-cmd("test                         - run tests on current package", testAsync)
-cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync)
-cmd("help                         - display this message", helpAsync)
-cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
+cmd("publish                      - publish current package", publishAsync)
+cmd("test                         - run tests on current package", testAsync, 1)
+cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
+cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 
-cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
-cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
+cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
+cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadAsync, 1)
+
+cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
+
+cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
+cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
-cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 

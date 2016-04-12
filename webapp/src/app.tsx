@@ -672,11 +672,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             header: lf("New Visual Studio Code project"),
             htmlBody:
             `<p>${lf("<b>Programming Experience Toolkit</b> (PXT) comes with command line tools to integrate into existing editors.")}
-${lf("To create an new PXT project, <a href='{0}' target='_blank'>install Node.js</a>, open a console and run:", "https://nodejs.org/en/download/")}</p>
+${lf("To create an new PXT project, <a href='{0}' target='_blank'>install Node.js</a>, open a console in a fresh folder and run:", "https://nodejs.org/en/download/")}</p>
 <pre>
-[sudo] npm install -g pxt
-mkdir myproject && cd myproject
-pxt init ${pxt.appTarget.id} myproject
+npm install -g pxt
+pxt target ${pxt.appTarget.id}
+pxt init myproject
 </pre>
 <p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
 <pre>

@@ -476,9 +476,7 @@ namespace pxt {
                 })
         }
 
-        initAsync(target: string, name: string) {
-            if (!target)
-                U.userError("missing target")
+        initAsync(name: string) {
             if (!name)
                 U.userError("missing project name")
 
@@ -486,26 +484,27 @@ namespace pxt {
             if (str)
                 U.userError("config already present")
 
-            console.log(`initializing ${name} for target ${target}`);
-
-            let deps: U.Map<string> = {};
-            deps[target] = "*";
-            if (target == "microbit")
-                deps["microbit-radio"] = "*";
-
-            this.config = {
-                name: name,
-                description: "",
-                installedVersion: "",
-                files: Object.keys(defaultFiles).filter(s => !/test/.test(s)),
-                testFiles: Object.keys(defaultFiles).filter(s => /test/.test(s)),
-                dependencies: deps
-            }
+            console.log(`initializing ${name} for target ${pxt.appTarget.id}`);
+            let prj = pxt.appTarget.tsprj;
+            this.config = pxt.U.clone(prj.config);
+            this.config.name = name;
+            
+            let files: U.Map<string> = {};
+            for (let f in prj.files)
+                files[f] = prj.files[f];
+            for (let f in defaultFiles)
+                files[f] = defaultFiles[f];
+            files["pxt.json"] = undefined;
+            
+            this.config.files = Object.keys(files).filter(s => !/test/.test(s));
+            this.config.testFiles = Object.keys(files).filter(s => /test/.test(s));
+            
             this.validateConfig();
             this.saveConfig()
 
-            U.iterStringMap(defaultFiles, (k, v) => {
-                this.host().writeFile(this, k, v.replace(/@NAME@/g, name))
+            U.iterStringMap(files, (k, v) => {
+                if (v)
+                    this.host().writeFile(this, k, v.replace(/@NAME@/g, name))
             })
             info("package initialized")
 
@@ -612,28 +611,6 @@ namespace pxt {
     }
 
     var defaultFiles: U.Map<string> = {
-        "README.md":
-        `# @NAME@
-
-Put some info here.
-`,
-        "tsconfig.json":
-        `{
-    "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "outDir": "built",
-        "rootDir": "."
-    }
-}
-`,
-        "main.ts":
-        `
-`,
-        "tests.ts":
-        `// Put your testing code in this file. 
-// It will not be compiled when compiling as a library (dependency of another module).
-`,
         ".gitignore":
         `built
 node_modules
