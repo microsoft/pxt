@@ -143,11 +143,16 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         };
         let install = (scr: Cloud.JsonPointer) => {
             if (this.modal) this.modal.hide();
-            workspace.installByIdAsync(scr.scriptid)
-                .then(r => {
-                    this.props.parent.loadHeader(r)
-                })
-                .done()
+            if (this.state.packages) {
+                let p = pkg.mainEditorPkg();
+                p.addDepAsync(scr.scriptname, "pub:" + scr.scriptid);
+            } else {
+                workspace.installByIdAsync(scr.scriptid)
+                    .then(r => {
+                        this.props.parent.loadHeader(r)
+                    })
+                    .done()
+            }
         }
 
         return (
