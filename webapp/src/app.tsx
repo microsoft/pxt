@@ -754,7 +754,7 @@ Ctrl+Shift+B
                 if (!resp.outfiles["microbit.hex"]) {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
-                }
+                }                
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf("Compilation failed, please try again."));

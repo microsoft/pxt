@@ -40,7 +40,13 @@ function localhostDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
 export function initCommandsAsync(): Promise<void> {
     if (pxtwinrt.isWinRT()) {
         console.log('using winrt commands')
-        pxt.commands.deployCoreAsync = pxtwinrt.deployCoreAsync;
+        pxt.commands.deployCoreAsync = (resp) => {
+            core.infoNotification("Uploading .hex file");
+            return pxtwinrt.deployCoreAsync(resp)
+                .then(() => {
+                    core.infoNotification(".hex file upladed");
+                })
+        }
         pxt.commands.browserDownloadAsync = pxtwinrt.browserDownloadAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;

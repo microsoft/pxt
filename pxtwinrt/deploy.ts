@@ -31,14 +31,12 @@ namespace pxtwinrt {
     }
     
     export function browserDownloadAsync(text: string, name: string, contentType: string) : Promise<void> {
-        
-        let buf = pxt.Util.stringToUint8Array(pxt.Util.toUTF8(text))
-        let uri = "data:" + contentType + ";base64," + btoa(pxt.Util.uint8ArrayToString(buf))
-        
-        return pxtwinrt.promisify<void>(Windows.System.Launcher.launchUriAsync(new Windows.Foundation.Uri(uri), <any>{
-                contentType: contentType,
-                desiredRemainingView: (Windows.UI.ViewManagement as any).ViewSizePreference.useHalf,
-                ui: false
-            }).then(b => {}));
+        let file : Windows.Storage.StorageFile;
+        return pxtwinrt.promisify<void>(
+            Windows.Storage.ApplicationData.current.temporaryFolder.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting)
+            .then(f => Windows.Storage.FileIO.writeTextAsync(file = f, text))
+            .then(() => Windows.System.Launcher.launchFileAsync(file))
+            .then(b => {})
+            );
     }
 }
