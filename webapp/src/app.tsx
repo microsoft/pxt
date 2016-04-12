@@ -32,15 +32,6 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 var lf = Util.lf
 
-declare module Raygun {
-    function init(apiKey: string, options: any): {
-        attach: () => void;
-    }
-    function send(err: any, data: any): void;
-    function setVersion(v: string): void;
-    function saveIfOffline(b: boolean): void;
-}
-
 export interface FileHistoryEntry {
     id: string;
     name: string;
@@ -1055,30 +1046,14 @@ function enableInsights(version: string) {
     if (!ai) return;
 
     ai.trackPageView();
-}
-
-function tickEvent(id: string) {
-    let ai = (window as any).appInsights;
-    if (!ai) return;
-    ai.trackEvent(id);
-}
-
-function enableCrashReporting(releaseid: string) {
-    if (typeof Raygun === "undefined") return; // don't report local crashes    
-    try {
-        Raygun.init('/wIRcLktINPpixxiUnyjPQ==', {
-            ignoreAjaxAbort: true,
-            ignoreAjaxError: true,
-            ignore3rdPartyErrors: true
-            //    excludedHostnames: ['localhost'],
-        }).attach();
-        Raygun.setVersion(releaseid);
-        Raygun.saveIfOffline(true);
-
         let rexp = pxt.reportException;
         pxt.reportException = function(err: any, data: any): void {
             if (rexp) rexp(err, data);
-            Raygun.send(err, data)
+            let props : pxt.U.Map<string> = {};
+            if (data)
+                for(let k in data)
+                    props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
+            ai.trackException(err, 'exception', props)
         }
         let re = pxt.reportError;
         pxt.reportError = function(msg: string, data: any): void {
@@ -1087,16 +1062,20 @@ function enableCrashReporting(releaseid: string) {
                 throw msg
             }
             catch (err) {
-                Raygun.send(err, data)
+                let props : pxt.U.Map<string> = {};
+                if (data)
+                    for(let k in data)
+                        props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
+                ai.trackException(err, 'error', props)
             }
         }
-        console.log('raygun initialized...');
-    }
-    catch (e) {
-        console.error('raygun loader failed')
-    }
 }
 
+function tickEvent(id: string) {
+    let ai = (window as any).appInsights;
+    if (!ai) return;
+    ai.trackEvent(id);
+}
 
 function showIcons() {
     var usedIcons = [
@@ -1142,7 +1121,6 @@ $(document).ready(() => {
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
     dbgMode = /dbg=1/i.test(window.location.href);
 
-    enableCrashReporting(ksVersion);
     enableInsights(ksVersion);
     initLogin();
 
