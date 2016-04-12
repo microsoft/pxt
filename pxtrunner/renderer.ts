@@ -182,8 +182,10 @@ namespace pxt.runner {
                         })
                     } else if (block) {
                         let card = U.clone(block.codeCard);
-                        card.link = true;
-                        addItem(card);
+                        if (card) {
+                            card.link = true;
+                            addItem(card);                            
+                        }
                     }
                 }
                 switch (stmt.kind) {
