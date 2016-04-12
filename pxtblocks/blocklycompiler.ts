@@ -486,7 +486,8 @@ namespace pxt.blocks {
     var pUnit = mkPoint("void");
 
     function ground(t?: string): Point {
-        switch (t) {
+        if (!t) return mkPoint(t);
+        switch (t.toLowerCase()) {
             case "number": return pNumber;
             case "boolean": return pBoolean;
             case "string": return pString;
@@ -872,7 +873,6 @@ namespace pxt.blocks {
         type: Point;
         usedAsForIndex: number;
         incompatibleWithFor?: boolean;
-        setInMain?: boolean;
     }
 
     function isCompiledAsForIndex(b: Binding) {
@@ -1310,8 +1310,6 @@ namespace pxt.blocks {
                     // Second reason why we can't compile as a TouchDevelop for-loop: loop
                     // index is assigned to
                     binding.incompatibleWithFor = true;
-                if (b.type == "variables_set" && isTopBlock(b))
-                    binding.setInMain = true;
             } else if (b.type == "variables_get") {
                 let x = b.getFieldValue("VAR");
                 if (lookup(e, x) == null)
@@ -1338,7 +1336,7 @@ namespace pxt.blocks {
             var stmtsVariables: J.JStmt[] = [];
             e.bindings.forEach((b: Binding) => {
                 var btype = find(b.type);
-                if (!isCompiledAsForIndex(b) && true) // !b.setInMain)
+                if (!isCompiledAsForIndex(b))
                     stmtsVariables.push(H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type))));
             });
 
