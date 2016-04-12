@@ -1380,6 +1380,7 @@ function buildCoreAsync(mode: BuildOption) {
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.pxt.getApiInfo(res.ast)
                 let md = ts.pxt.genMarkdown(apiInfo)
+                mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, md[fn])
                     console.log(`Wrote built/${fn}; size=${md[fn].length}`)
