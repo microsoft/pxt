@@ -14,6 +14,7 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as db from "./db"
 import * as cmds from "./cmds"
+import * as appcache from "./appcache";
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
@@ -1128,6 +1129,7 @@ $(document).ready(() => {
     dbgMode = /dbg=1/i.test(window.location.href);
 
     enableInsights(ksVersion);
+    appcache.init();
     initLogin();
 
     let hashCmd = ""
