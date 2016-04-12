@@ -497,7 +497,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         logs.clear();
         this.setState({
             helpCard: undefined,
-            errorCard: undefined
+            errorCard: undefined,
+            showFiles: h.editor == pxt.javaScriptProjectName
         })
         pkg.loadPkgAsync(h.id)
             .then(() => {
