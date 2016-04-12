@@ -54,11 +54,9 @@ namespace pxt.runner {
         // runner menu
         if (run) {
             let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
-                $h.find('.active').removeClass('active')
-                $runBtn.addClass('active')
-
-                let $embed = $(`<div class="ui centered card"><div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div>`);
-                $c.empty().append($embed);
+                $c.find('.sim').remove(); // remove previous simulators
+                let $embed = $(`<div class="ui centered card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
+                $c.append($embed);
             })
             $menu.append($runBtn);
         }
