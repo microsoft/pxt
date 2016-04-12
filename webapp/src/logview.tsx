@@ -14,7 +14,7 @@ export class LogView extends React.Component<{}, {}> {
         this.view = new pxsim.logs.LogViewElement({
             maxEntries: 80,
             maxAccValues: 500,
-            onCSVData: (n,d) => core.browserDownloadText(d, n, 'text/csv')
+            onCSVData: (n,d) => pxt.commands.browserDownloadAsync(d, n, 'text/csv')
         })
     }
     

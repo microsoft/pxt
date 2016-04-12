@@ -4,12 +4,26 @@ import * as core from "./core";
 import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 
+function browserDownloadAsync(text: string, name: string, contentType: string) : Promise<void> {
+    pxt.BrowserUtils.browserDownloadText(
+        text, 
+        name, 
+        contentType, 
+        e => core.errorNotification(lf("saving file failed..."))
+    );
+    
+    $('#compilemsg').finish()
+        .html(`${lf("Download ready.")} <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>${lf("Use this link to save to another location.")}</a>`)
+        .fadeIn('fast').delay(7000).fadeOut('slow');
+    
+    return Promise.resolve();
+}
+
 function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
     let hex = resp.outfiles["microbit.hex"]
     let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
     console.log('saving ' + fn)
-    core.browserDownloadText(hex, fn, "application/x-microbit-hex")
-    return Promise.resolve();
+    return pxt.commands.browserDownloadAsync(hex, fn, "application/x-microbit-hex")
 }
 
 function localhostDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
@@ -27,10 +41,14 @@ export function initCommandsAsync(): Promise<void> {
     if (pxtwinrt.isWinRT()) {
         console.log('using winrt commands')
         pxt.commands.deployCoreAsync = pxtwinrt.deployCoreAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken) {
+        pxt.commands.browserDownloadAsync = pxtwinrt.browserDownloadAsync;
+    } else if (Cloud.isLocalHost() && Cloud.localToken) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
-    } else {
+        pxt.commands.browserDownloadAsync = browserDownloadAsync;
+    } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
+        pxt.commands.browserDownloadAsync = browserDownloadAsync;
     }
+        
     return Promise.resolve();
 }

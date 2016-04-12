@@ -29,4 +29,16 @@ namespace pxtwinrt {
                 return all;
             }).then(r => {});
     }
+    
+    export function browserDownloadAsync(text: string, name: string, contentType: string) : Promise<void> {
+        
+        let buf = pxt.Util.stringToUint8Array(pxt.Util.toUTF8(text))
+        let uri = "data:" + contentType + ";base64," + btoa(pxt.Util.uint8ArrayToString(buf))
+        
+        return pxtwinrt.promisify<void>(Windows.System.Launcher.launchUriAsync(new Windows.Foundation.Uri(uri), <any>{
+                contentType: contentType,
+                desiredRemainingView: (Windows.UI.ViewManagement as any).ViewSizePreference.useHalf,
+                ui: false
+            }).then(b => {}));
+    }
 }
