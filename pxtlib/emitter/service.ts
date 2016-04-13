@@ -28,11 +28,6 @@ namespace ts.pxt {
         isContextual?: boolean;
     }
 
-    export interface EnumInfo {
-        name: string;
-        values: CommentAttrs[];
-    }
-
     export interface ApisInfo {
         byQName: Util.Map<SymbolInfo>;
     }

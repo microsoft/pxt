@@ -105,6 +105,14 @@ declare interface String {
     //% shim=String_::compare
     compare(that: string): number;
 
+    /**
+     * Return substring of the current string.
+     * @param start first character index; can be negative from counting from the end
+     * @param length number of characters to extract
+     */
+    //% shim=String_::substr length.defl=1000000
+    substr(start:number, length?:number): string;
+
     /** Returns the length of a String object. */
     //% property shim=String_::length
     length: number;

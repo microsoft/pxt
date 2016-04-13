@@ -677,9 +677,9 @@ function buildTargetCoreAsync() {
             cfg.appTheme.id = cfg.id
             cfg.appTheme.title = cfg.title
             cfg.appTheme.name = cfg.name
-            
+
             let webmanifest = buildWebManifest(cfg)
-            
+
             // expand logo
             let logos = (cfg.appTheme as any as U.Map<string>);
             Object.keys(logos)
@@ -1349,7 +1349,45 @@ function copyCommonFiles() {
     }
 }
 
-function buildCoreAsync(mode: BuildOption) {
+function testDirAsync(dir: string) {
+    return prepBuildOptionsAsync(BuildOption.Test)
+        .then(opts => {
+            let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
+            if (tsFiles.length != 1)
+                U.userError("need exactly one .ts file in package to 'testdir'")
+
+            let tsFile = tsFiles[0]
+            delete opts.fileSystem[tsFile]
+            opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
+
+            let errors:string[] = []
+
+            for (let fn of fs.readdirSync(dir)) {
+                if (!U.endsWith(fn, ".ts") || fn[0] == ".") continue;
+                console.log("***", fn)
+                let opts2 = U.flatClone(opts)
+                opts2.fileSystem = U.flatClone(opts.fileSystem)
+                opts2.sourceFiles = opts.sourceFiles.slice()
+                opts2.sourceFiles.push(fn)
+                opts2.fileSystem[fn] = fs.readFileSync(dir + "/" + fn, "utf8")
+                let res = ts.pxt.compile(opts2)
+                reportDiagnostics(res.diagnostics);
+                if (!res.success) {
+                    errors.push(fn)
+                    console.log("ERRORS", fn)
+                }
+            }
+            
+            if (errors) {
+                console.log("Errors: " + errors.join(", "))
+                process.exit(1)
+            } else {
+                console.log("All OK.")                
+            }
+        })
+}
+
+function prepBuildOptionsAsync(mode: BuildOption) {
     ensurePkgDir();
     return mainPkg.loadAsync()
         .then(() => {
@@ -1365,8 +1403,14 @@ function buildCoreAsync(mode: BuildOption) {
                 opts.testMode = true
             if (mode == BuildOption.GenDocs)
                 opts.ast = true
-            return ts.pxt.compile(opts)
+            return opts;
         })
+}
+
+function buildCoreAsync(mode: BuildOption) {
+    ensurePkgDir();
+    return prepBuildOptionsAsync(mode)
+        .then(ts.pxt.compile)
         .then(res => {
             U.iterStringMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
@@ -1380,6 +1424,7 @@ function buildCoreAsync(mode: BuildOption) {
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.pxt.getApiInfo(res.ast)
                 let md = ts.pxt.genMarkdown(apiInfo)
+                mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, md[fn])
                     console.log(`Wrote built/${fn}; size=${md[fn].length}`)
@@ -1453,6 +1498,7 @@ cmd("publish                      - publish current package", publishAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
+cmd("testdir  DIR                 - compile files from DIR one-by-one replacing the main file of current package", testDirAsync, 1)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
