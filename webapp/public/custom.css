@@ -427,7 +427,7 @@ html {
 }
 
 /* smaller desktop screen */
-@media only screen and (max-width: 60em) {
+@media only screen and (max-width: 60em), only screen and (max-aspect-ratio: 12/10) {
     #logo .name {
         display: none !important;
     }    
@@ -443,7 +443,7 @@ html {
 }
 
 /* thin desktop portrait mode */
-@media only screen and (max-width: 55em) {
+@media only screen and (max-width: 55em), only screen and (max-aspect-ratio: 7/10) {
     #helpcard {
         right: 2rem;
         top: initial;
