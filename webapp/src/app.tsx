@@ -550,11 +550,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             compiler.getBlocksAsync()
                 .then(info => this.newBlocksProjectAsync({
                     "main.blocks": pxt.blocks.importXml(info, data.source)
-                })).done();
+                }, data.meta.name)).done();
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             console.log('importing microbit.co.uk TD project')
-            this.newTypeScriptProjectAsync({ "main.ts": "  " })
+            this.newTypeScriptProjectAsync({ "main.ts": "  " }, data.meta.name)
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
                     // this is somewhat hacky...
@@ -698,17 +698,17 @@ Ctrl+Shift+B
         }).done();
     }
 
-    newTypeScriptProjectAsync(fileOverrides?: Util.Map<string>) {
-        return this.newProjectFromIdAsync(pxt.appTarget.tsprj, fileOverrides);
+    newTypeScriptProjectAsync(fileOverrides?: Util.Map<string>, nameOverride?: string) {
+        return this.newProjectFromIdAsync(pxt.appTarget.tsprj, fileOverrides, nameOverride);
     }
 
-    newBlocksProjectAsync(fileOverrides?: Util.Map<string>) {
-        return this.newProjectFromIdAsync(pxt.appTarget.blocksprj, fileOverrides);
+    newBlocksProjectAsync(fileOverrides?: Util.Map<string>, nameOverride?: string) {
+        return this.newProjectFromIdAsync(pxt.appTarget.blocksprj, fileOverrides, nameOverride);
     }
 
-    newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: Util.Map<string>): Promise<void> {
+    newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: Util.Map<string>, nameOverride?: string): Promise<void> {
         let cfg = pxt.U.clone(prj.config);
-        cfg.name = "Untitled" // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
+        cfg.name = nameOverride || "Untitled" // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: ScriptText = {
             "pxt.json": JSON.stringify(cfg, null, 4) + "\n",
         }
