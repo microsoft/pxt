@@ -241,7 +241,7 @@ namespace pxt.docs {
         }
         
         let breadcrumbHtml = '';
-        if (breadcrumb && breadcrumb.length > 0) {
+        if (breadcrumb && breadcrumb.length > 1) {
             breadcrumb = breadcrumb.map(html2Quote);
             breadcrumbHtml = `<div class="ui breadcrumb">${breadcrumb.map((b,i) => `<a class="${i == breadcrumb.length-1 ? "active": ""} section" href="/${
                 breadcrumb.slice(0, i+1).join("/")
