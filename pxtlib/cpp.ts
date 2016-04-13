@@ -381,7 +381,7 @@ namespace pxt.cpp {
                         shimsDTS.write(currAttrs)
                         funName = toJs(funName)
                         if (interfaceName()) {
-                            let tp0 = args[0].replace(/^.*:\s*/, "").trim()
+                            let tp0 = (args[0] || "").replace(/^.*:\s*/, "").trim()
                             if (tp0.toLowerCase() != interfaceName().toLowerCase()) {
                                 err(lf("Invalid first argument; should be of type '{0}', but is '{1}'", interfaceName(), tp0))
                             }
