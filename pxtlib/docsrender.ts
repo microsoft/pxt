@@ -285,7 +285,7 @@ namespace pxt.docs {
         params["body"] = html
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["targetname"] = theme.name || "PXT"
-        params["targetlogo"] = theme.docsLogo ? `<img src="${U.toDataUri(theme.docsLogo)}" />` : ""
+        params["targetlogo"] = theme.docsLogo ? `<img class="ui image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         params["name"] = params["title"] + " - " + params["targetname"]
 
         return injectHtml(template, params, ["body", "menu", "targetlogo"])
