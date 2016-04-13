@@ -189,7 +189,7 @@ namespace pxt.blocks {
         }
 
         // Generates a reference to bound variable [x]
-        export function mkLocalRef(x: string, t?:string): J.JLocalRef {
+        export function mkLocalRef(x: string, t?:J.JTypeRef): J.JLocalRef {
             assert(!!x);
             return {
                 nodeType: "localRef",
@@ -1464,7 +1464,7 @@ namespace pxt.blocks {
                             if (!variables[variables.length - 1][varname]) {
                                 variables[variables.length - 1][varname] = "1";
                                 pushOp("let")
-                                letType = varloc.type;
+                                letType = varloc.type as any as string;
                             }
                         }
                         rec(e.args[0], bindLeft ? infixPri : infixPri + 0.1)

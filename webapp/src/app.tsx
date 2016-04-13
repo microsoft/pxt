@@ -972,10 +972,11 @@ Ctrl+Shift+B
                 <div id="footer" role="footer">
                     <div>
                         { targetTheme.footerLogo ? <a target="_blank" id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (pxt.appTarget.title || pxt.appTarget.name) }
-                        <span>{targetVersion}</span>
-                        - <span>&nbsp; {lf("powered by") }</span> &nbsp;
-                        <a target="_blank" href="https://github.com/Microsoft/pxt" title="Microsoft Programming Experience Toolkit"><i className='xicon ksempty'/> PXT</a><span>{ksVersion}</span>
-                        - &copy; Microsoft Corporation - 2016
+                        <span>v{targetVersion}</span>&nbsp;
+                        - <a target="_blank" href="https://github.com/Microsoft/pxt" title="Microsoft Programming Experience Toolkit"><i className='xicon ksempty'/> PXT</a>
+                        &nbsp;<span>v{ksVersion}</span>&nbsp;
+                        - &copy; Microsoft Corporation 
+                        - 2016
                         - <a target="_blank" href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") } </a>
                         - <a target="_blank" href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
                     </div>
