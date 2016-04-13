@@ -142,9 +142,29 @@ namespace pxt.docs {
             return `<!-- macro ${name} -->`
         })
 
-        if (!marked)
+        if (!marked) {
             marked = require("marked");
-
+            let renderer = new marked.Renderer()
+            renderer.image = function(href: string, title:string, text: string) {
+                let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
+                if (title) {
+                    out += ' title="' + title + '"';
+                }
+                out += this.options.xhtml ? '/>' : '>';
+                return out;                  
+            }
+            marked.setOptions({
+                renderer: renderer,
+                gfm: true,
+                tables: true,
+                breaks: false,
+                pedantic: false,
+                sanitize: true,
+                smartLists: true,
+                smartypants: true
+            })
+        };
+        
         src = src.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
@@ -157,10 +177,10 @@ namespace pxt.docs {
             return f
         })
 
-        let html = marked(src, {
-            sanitize: true,
-            smartypants: true,
-        })
+        let html = marked(src)
+        
+        // support for breaks which somehow don't work out of the box
+        html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
 
         let endBox = ""
 
