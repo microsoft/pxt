@@ -184,6 +184,10 @@ namespace pxsim {
         export function length(s: string) {
             return s.length
         }
+        
+        export function substr(s:string, start:number, length?:number) {
+            return s.substr(start, length)
+        }
 
         function inRange(s: string, i: number) { return 0 <= i && i < s.length }
 
