@@ -189,13 +189,14 @@ namespace pxt.blocks {
         }
 
         // Generates a reference to bound variable [x]
-        export function mkLocalRef(x: string): J.JLocalRef {
+        export function mkLocalRef(x: string, t?:string): J.JLocalRef {
             assert(!!x);
             return {
                 nodeType: "localRef",
                 id: null,
                 name: x,
-                localId: null // same here
+                localId: null, // same here
+                type: t
             }
         }
 
@@ -303,7 +304,7 @@ namespace pxt.blocks {
         //   [var x: t := e]
         export function mkDefAndAssign(x: string, t: J.JTypeRef, e: J.JExpr): J.JStmt {
             var def: J.JLocalDef = mkDef(x, t);
-            var assign = mkSimpleCall("=", [mkLocalRef(x), e]);
+            var assign = mkSimpleCall("=", [mkLocalRef(x,t), e]);
             var expr = mkExprHolder([def], assign);
             return mkExprStmt(expr);
         }
@@ -1456,16 +1457,23 @@ namespace pxt.blocks {
                         rec(e.args[0], infixPri)
                     } else {
                         var bindLeft = infixPri != 3 && e.name != "**"
+                        var letType : string = undefined;
                         if (e.name == "=" && e.args[0].nodeType == 'localRef') {
-                            let varname = (<TDev.AST.Json.JLocalRef>e.args[0]).name;
+                            let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
+                            let varname = varloc.name;
                             if (!variables[variables.length - 1][varname]) {
                                 variables[variables.length - 1][varname] = "1";
                                 pushOp("let")
+                                letType = varloc.type;
                             }
                         }
                         rec(e.args[0], bindLeft ? infixPri : infixPri + 0.1)
+                        if (letType && letType != "number") {
+                            pushOp(":")
+                            pushOp(letType)
+                        }
                         pushOp(e.name)
-                        rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)
+                        rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)                        
                     }
                     if (infixPri < outPrio) pushOp(")");
                 } else {
