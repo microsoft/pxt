@@ -30,24 +30,19 @@ namespace pxt.runner {
         let $c = $('<div class="ui top attached segment"></div>');
         let $menu = $h.find('.right.menu');
 
-        // blocks menu
-        if ($svg && $svg[0]) {
-            $c.append($svg);
-            let $blockBtn = $('<a class="active item"><i aria-label="Blocks" class="puzzle icon"></i></a>').click(() => {
-                $h.find('.active').removeClass('active')
-                $blockBtn.addClass('active')
-                $c.empty().append($svg);
-            })
-            $menu.append($blockBtn);
-        }
-
+        // blocks
+        $c.append($svg);
+        
         // js menu
         {
             let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
-                $c.find('.js').remove(); // remove previous simulators
-                let $jsc = $('<div class="ui content js"/>').append($js);
-                if ($svg) $jsc.insertAfter($svg);
-                else $c.append($jsc);
+                if ($c.find('.js')[0])
+                    $c.find('.js').remove(); // remove previous simulators
+                else {
+                    let $jsc = $('<div class="ui content js"/>').append($js);
+                    if ($svg) $jsc.insertAfter($svg);
+                    else $c.append($jsc);
+                }
             })
             $menu.append($jsBtn);
         }
@@ -55,9 +50,12 @@ namespace pxt.runner {
         // runner menu
         if (run) {
             let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
-                $c.find('.sim').remove(); // remove previous simulators
-                let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
-                $c.append($embed);
+                if ($c.find('.sim')[0])
+                    $c.find('.sim').remove(); // remove previous simulators
+                else {
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
+                    $c.append($embed);
+                }
             })
             $menu.append($runBtn);
         }
@@ -172,10 +170,10 @@ namespace pxt.runner {
                             name: nsi.name,
                             url: nsi.attributes.help || ("reference/" + nsi.name),
                             description: nsi.attributes.jsDoc,
-                            blocksXml: block && block.codeCard 
-                                ? block.codeCard.blocksXml 
-                                : info.attrs.blockId 
-                                    ? `<xml><block type="${info.attrs.blockId}"></block></xml>` 
+                            blocksXml: block && block.codeCard
+                                ? block.codeCard.blocksXml
+                                : info.attrs.blockId
+                                    ? `<xml><block type="${info.attrs.blockId}"></block></xml>`
                                     : undefined,
                             link: true
                         })
@@ -183,7 +181,7 @@ namespace pxt.runner {
                         let card = U.clone(block.codeCard);
                         if (card) {
                             card.link = true;
-                            addItem(card);                            
+                            addItem(card);
                         }
                     }
                 }
