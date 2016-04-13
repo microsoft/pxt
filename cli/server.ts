@@ -484,7 +484,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (fileExistsSync(webFile)) {
             if (/\.md$/.test(webFile)) {
-                let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme)
+                let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), elts, pxt.appTarget.appTheme)
                 sendHtml(html)
             } else {
                 sendFile(webFile)

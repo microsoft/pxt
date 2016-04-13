@@ -95,14 +95,13 @@ namespace pxt.docs {
         },
     ]
 
-    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null): string {
+    export function renderMarkdown(template: string, src: string, breadcrumb: string[] = undefined, theme: AppTheme = {}, pubinfo: U.Map<string> = null): string {
         let params: U.Map<string> = pubinfo || {}
 
         let boxes = U.clone(stdboxes)
         let macros = U.clone(stdmacros)
         let settings = U.clone(stdsettings)
         let menus: U.Map<string> = {}
-
 
         function parseHtmlAttrs(s: string) {
             let attrs: U.Map<string> = {};
@@ -142,9 +141,29 @@ namespace pxt.docs {
             return `<!-- macro ${name} -->`
         })
 
-        if (!marked)
+        if (!marked) {
             marked = require("marked");
-
+            let renderer = new marked.Renderer()
+            renderer.image = function(href: string, title:string, text: string) {
+                let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
+                if (title) {
+                    out += ' title="' + title + '"';
+                }
+                out += this.options.xhtml ? '/>' : '>';
+                return out;                  
+            }
+            marked.setOptions({
+                renderer: renderer,
+                gfm: true,
+                tables: true,
+                breaks: false,
+                pedantic: false,
+                sanitize: true,
+                smartLists: true,
+                smartypants: true
+            })
+        };
+        
         src = src.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
@@ -157,10 +176,10 @@ namespace pxt.docs {
             return f
         })
 
-        let html = marked(src, {
-            sanitize: true,
-            smartypants: true,
-        })
+        let html = marked(src)
+        
+        // support for breaks which somehow don't work out of the box
+        html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
 
         let endBox = ""
 
@@ -220,7 +239,14 @@ namespace pxt.docs {
                     params["description"] = html2Quote(descM[1])
             }
         }
-
+        
+        let breadcrumbHtml = '';
+        if (breadcrumb && breadcrumb.length > 1) {
+            breadcrumb = breadcrumb.map(html2Quote);
+            breadcrumbHtml = `<div class="ui breadcrumb">${breadcrumb.map((b,i) => `<a class="${i == breadcrumb.length-1 ? "active": ""} section" href="/${
+                breadcrumb.slice(0, i+1).join("/")
+            }">${b}</a>`).join('<i class="right chevron icon divider"></i>')}</div>`;
+        }
 
         let registers: U.Map<string> = {}
         registers["main"] = "" // first
@@ -264,11 +290,12 @@ namespace pxt.docs {
 
         params["body"] = html
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
+        params["breadcrumb"] = breadcrumbHtml;
         params["targetname"] = theme.name || "PXT"
-        params["targetlogo"] = theme.docsLogo ? `<img src="${U.toDataUri(theme.docsLogo)}" />` : ""
+        params["targetlogo"] = theme.docsLogo ? `<img class="ui image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         params["name"] = params["title"] + " - " + params["targetname"]
 
-        return injectHtml(template, params, ["body", "menu", "targetlogo"])
+        return injectHtml(template, params, ["body", "menu", "breadcrumb", "targetlogo"])
     }
 
     function injectHtml(template: string, vars: U.Map<string>, quoted: string[] = []) {
