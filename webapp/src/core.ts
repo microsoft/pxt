@@ -77,19 +77,6 @@ export function infoNotification(msg: string) {
     htmlmsg("info", msg)
 }
 
-export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream") {
-    pxt.BrowserUtils.browserDownloadText(
-        text, 
-        name, 
-        contentType, 
-        e => errorNotification(lf("saving file failed..."))
-    );
-    
-    $('#compilemsg').finish()
-        .html(`${lf("Download ready.")} <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>${lf("Use this link to save to another location.")}</a>`)
-        .fadeIn('fast').delay(7000).fadeOut('slow');
-}
-
 export function handleNetworkError(e: any) {
     let statusCode = <number>e.status
     if (e.isOffline) {

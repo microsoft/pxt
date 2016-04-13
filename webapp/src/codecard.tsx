@@ -76,7 +76,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : '' }
                 </div>
                 <div className="content">
-                    {card.name ? <a href={url} target="docs" className="header">{card.name}</a> : ''}
+                    {card.name ? <a href={card.onClick ? '' : url} target="docs" className="header">{card.name}</a> : ''}
                     <div className="meta">
                         {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : ""}
                     </div>
@@ -84,7 +84,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 </div>
                 {card.url ?
                 <div key="extra" className={"ui extra content" + (card.responsive ? " tall desktop only" : "")}>
-                    {card.url ? <a target="docs" href={url}>{card.url}</a> : ""}
+                    {card.url ? <a target="docs" href={card.onClick ? '' : url}>{card.url}</a> : ""}
                 </div> : ""}
             </div>
         )

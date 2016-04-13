@@ -14,6 +14,7 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as db from "./db"
 import * as cmds from "./cmds"
+import * as appcache from "./appcache";
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
@@ -31,15 +32,6 @@ type InstallHeader = pxt.workspace.InstallHeader;
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 var lf = Util.lf
-
-declare module Raygun {
-    function init(apiKey: string, options: any): {
-        attach: () => void;
-    }
-    function send(err: any, data: any): void;
-    function setVersion(v: string): void;
-    function saveIfOffline(b: boolean): void;
-}
 
 export interface FileHistoryEntry {
     id: string;
@@ -152,11 +144,16 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         };
         let install = (scr: Cloud.JsonPointer) => {
             if (this.modal) this.modal.hide();
-            workspace.installByIdAsync(scr.scriptid)
-                .then(r => {
-                    this.props.parent.loadHeader(r)
-                })
-                .done()
+            if (this.state.packages) {
+                let p = pkg.mainEditorPkg();
+                p.addDepAsync(scr.scriptname, "*").done();
+            } else {
+                workspace.installByIdAsync(scr.scriptid)
+                    .then(r => {
+                        this.props.parent.loadHeader(r)
+                    })
+                    .done()
+            }
         }
 
         return (
@@ -501,7 +498,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         logs.clear();
         this.setState({
             helpCard: undefined,
-            errorCard: undefined
+            errorCard: undefined,
+            showFiles: h.editor == pxt.javaScriptProjectName
         })
         pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -675,11 +673,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             header: lf("New Visual Studio Code project"),
             htmlBody:
             `<p>${lf("<b>Programming Experience Toolkit</b> (PXT) comes with command line tools to integrate into existing editors.")}
-${lf("To create an new PXT project, <a href='{0}' target='_blank'>install Node.js</a>, open a console and run:", "https://nodejs.org/en/download/")}</p>
+${lf("To create an new PXT project, <a href='{0}' target='_blank'>install Node.js</a>, open a console in a fresh folder and run:", "https://nodejs.org/en/download/")}</p>
 <pre>
-[sudo] npm install -g pxt
-mkdir myproject && cd myproject
-pxt init ${pxt.appTarget.id} myproject
+npm install -g pxt
+pxt target ${pxt.appTarget.id}
+pxt init myproject
 </pre>
 <p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
 <pre>
@@ -754,7 +752,7 @@ Ctrl+Shift+B
                 if (!resp.outfiles["microbit.hex"]) {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
-                }
+                }                
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf("Compilation failed, please try again."));
@@ -1055,30 +1053,14 @@ function enableInsights(version: string) {
     if (!ai) return;
 
     ai.trackPageView();
-}
-
-function tickEvent(id: string) {
-    let ai = (window as any).appInsights;
-    if (!ai) return;
-    ai.trackEvent(id);
-}
-
-function enableCrashReporting(releaseid: string) {
-    if (typeof Raygun === "undefined") return; // don't report local crashes    
-    try {
-        Raygun.init('/wIRcLktINPpixxiUnyjPQ==', {
-            ignoreAjaxAbort: true,
-            ignoreAjaxError: true,
-            ignore3rdPartyErrors: true
-            //    excludedHostnames: ['localhost'],
-        }).attach();
-        Raygun.setVersion(releaseid);
-        Raygun.saveIfOffline(true);
-
         let rexp = pxt.reportException;
         pxt.reportException = function(err: any, data: any): void {
             if (rexp) rexp(err, data);
-            Raygun.send(err, data)
+            let props : pxt.U.Map<string> = {};
+            if (data)
+                for(let k in data)
+                    props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
+            ai.trackException(err, 'exception', props)
         }
         let re = pxt.reportError;
         pxt.reportError = function(msg: string, data: any): void {
@@ -1087,16 +1069,20 @@ function enableCrashReporting(releaseid: string) {
                 throw msg
             }
             catch (err) {
-                Raygun.send(err, data)
+                let props : pxt.U.Map<string> = {};
+                if (data)
+                    for(let k in data)
+                        props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
+                ai.trackException(err, 'error', props)
             }
         }
-        console.log('raygun initialized...');
-    }
-    catch (e) {
-        console.error('raygun loader failed')
-    }
 }
 
+function tickEvent(id: string) {
+    let ai = (window as any).appInsights;
+    if (!ai) return;
+    ai.trackEvent(id);
+}
 
 function showIcons() {
     var usedIcons = [
@@ -1142,8 +1128,8 @@ $(document).ready(() => {
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
     dbgMode = /dbg=1/i.test(window.location.href);
 
-    enableCrashReporting(ksVersion);
     enableInsights(ksVersion);
+    appcache.init();
     initLogin();
 
     let hashCmd = ""

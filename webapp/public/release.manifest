@@ -34,7 +34,6 @@ CACHE:
 /sim/target.json
 
 # External
-https://cdn.raygun.io/raygun4js/raygun.min.js
 https://az416426.vo.msecnd.net/scripts/a/ai.0.js
   
 NETWORK:

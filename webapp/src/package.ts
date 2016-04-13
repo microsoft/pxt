@@ -140,6 +140,11 @@ export class EditorPackage {
         return this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid])
                .then(() => this.saveFilesAsync());
     }
+    
+    addDepAsync(pkgid: string, pkgversion: string) {
+        return this.updateConfigAsync(cfg => cfg.dependencies[pkgid] = pkgversion)
+            .then(() => this.saveFilesAsync());
+    }
 
     getKsPkg() {
         return this.ksPkg;

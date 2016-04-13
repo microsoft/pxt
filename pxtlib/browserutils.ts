@@ -1,10 +1,9 @@
 namespace pxt {
     export module BrowserUtils {
-        export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError? : (err:any) => void) : string {
+        export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError? : (err:any) => void) {
             console.log('trigger download')
             let buf = Util.stringToUint8Array(Util.toUTF8(text))
-            let uri = browserDownloadUInt8Array(buf, name, contentType, onError);
-            return uri;
+            browserDownloadUInt8Array(buf, name, contentType, onError);
         }
 
         function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", onError? : (err:any) => void): string {

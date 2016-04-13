@@ -29,4 +29,14 @@ namespace pxtwinrt {
                 return all;
             }).then(r => {});
     }
+    
+    export function browserDownloadAsync(text: string, name: string, contentType: string) : Promise<void> {
+        let file : Windows.Storage.StorageFile;
+        return pxtwinrt.promisify<void>(
+            Windows.Storage.ApplicationData.current.temporaryFolder.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting)
+            .then(f => Windows.Storage.FileIO.writeTextAsync(file = f, text))
+            .then(() => Windows.System.Launcher.launchFileAsync(file))
+            .then(b => {})
+            );
+    }
 }
