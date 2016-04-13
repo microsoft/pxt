@@ -27,7 +27,7 @@ require('brace/mode/xml');
 require('brace/mode/markdown');
 require('brace/mode/assembly_armthumb');
 
-require('brace/theme/sqlserver');
+require('brace/theme/textmate');
 require('brace/theme/tomorrow_night_bright');
 
 require("brace/ext/language_tools");
@@ -708,7 +708,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setTheme(theme: srceditor.Theme) {
-        let th = 'ace/theme/github'
+        let th = 'ace/theme/textmate'
         if (this.editor.getTheme() != th) {
             this.editor.setTheme(th)
         }
