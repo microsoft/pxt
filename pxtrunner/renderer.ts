@@ -43,10 +43,11 @@ namespace pxt.runner {
 
         // js menu
         {
-            let $jsBtn = $('<a class="item"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
-                $h.find('.active').removeClass('active')
-                $jsBtn.addClass('active')
-                $c.empty().append($js);
+            let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
+                $c.find('.js').remove(); // remove previous simulators
+                let $jsc = $('<div class="ui content js"/>').append($js);
+                if ($svg) $jsc.insertAfter($svg);
+                else $c.append($jsc);
             })
             $menu.append($jsBtn);
         }
@@ -55,7 +56,7 @@ namespace pxt.runner {
         if (run) {
             let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
                 $c.find('.sim').remove(); // remove previous simulators
-                let $embed = $(`<div class="ui centered card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
+                let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
                 $c.append($embed);
             })
             $menu.append($runBtn);
