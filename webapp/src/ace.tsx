@@ -732,6 +732,10 @@ export class Editor extends srceditor.Editor {
         this.lastSet = v;
         this.editor.session.setValue(v);
     }
+    
+    overrideFile(content:string) {
+        this.editor.session.setValue(content);
+    }
 
     loadFile(file: pkg.File) {
         let ext = file.getExtension()

@@ -399,6 +399,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/simulator.html": "@simUrl@",
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/worker.js": "@workerjs@",
+        "/tdworker.js": "@tdworkerjs@",
         "/embed.js": "@relprefix@embed",
         "/cdn/": "@pxtCdnUrl@",
         "/sim/": "@targetCdnUrl@",
@@ -412,6 +413,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "run.html",
         "release.manifest",
         "worker.js",
+        "tdworker.js",
         "simulator.html",
         "sim.manifest",
         "sim.webmanifest",
@@ -1356,9 +1358,9 @@ function testConverterAsync(configFile: string) {
     } = readJson(configFile)
     let cachePath = "built/cache/"
     nodeutil.mkdirP(cachePath)
-    let tdev = require(__dirname + "/../external/tdast")
+    let tdev = require("./web/tdast")
     let errors: string[] = []
-    return getAstInfoAsync()
+    return getApiInfoAsync()
         .then(astinfo => prepTestOptionsAsync()
             .then(opts => {
                 fs.writeFileSync("built/apiinfo.json", JSON.stringify(astinfo, null, 1))
@@ -1414,7 +1416,7 @@ function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
     return res.success
 }
 
-function getAstInfoAsync() {
+function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
         .then(ts.pxt.compile)
         .then(res => {

@@ -12,6 +12,7 @@ import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
+import * as tdlegacy from "./tdlegacy"
 import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
@@ -137,7 +138,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
         let chgHeader = (hdr: Header) => {
             if (this.modal) this.modal.hide();
-            this.props.parent.loadHeader(hdr)
+            this.props.parent.loadHeaderAsync(hdr)
         }
         let upd = (v: any) => {
             this.setState({ searchFor: (v.target as any).value })
@@ -149,9 +150,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 p.addDepAsync(scr.scriptname, "*").done();
             } else {
                 workspace.installByIdAsync(scr.scriptid)
-                    .then(r => {
-                        this.props.parent.loadHeader(r)
-                    })
+                    .then(r => this.props.parent.loadHeaderAsync(r))
                     .done()
             }
         }
@@ -272,7 +271,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             }).done(res => {
                 if (res) {
                     pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
-                        .done(() => this.props.parent.loadHeader(this.props.parent.state.header));
+                        .done(() => this.props.parent.loadHeaderAsync(this.props.parent.state.header));
                 }
             })
         }
@@ -449,7 +448,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         setTimeout(() => {
             let header = this.getData("header:*")[0];
             if (!this.state.header && header) {
-                this.loadHeader(header)
+                this.loadHeaderAsync(header)
             }
             if (!this.state.header)
                 this.newProject(true);
@@ -488,9 +487,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    loadHeader(h: Header) {
+    loadHeaderAsync(h: Header):Promise<void> {
         if (!h)
-            return
+            return Promise.resolve()
 
         this.stopSimulator(true);
         pxt.blocks.cleanBlocks();
@@ -501,7 +500,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             errorCard: undefined,
             showFiles: h.editor == pxt.javaScriptProjectName
         })
-        pkg.loadPkgAsync(h.id)
+        return pkg.loadPkgAsync(h.id)
             .then(() => {
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
@@ -515,7 +514,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 })
                 core.infoNotification(lf("Project loaded: {0}", h.name))
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
-                    this.loadHeader(h)
+                    this.loadHeaderAsync(h).done()
                 }
             })
     }
@@ -546,13 +545,22 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             core.warningNotification("Sorry, we could not recognize this file.")
             return;
         }
-        if (data.meta.cloudId == "microbit.co.uk"
-            && data.meta.editor == "blockly") {
+        if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
             console.log('importing microbit.co.uk blocks project')
             compiler.getBlocksAsync()
                 .then(info => this.newBlocksProjectAsync({
                     "main.blocks": pxt.blocks.importXml(info, data.source)
                 })).done();
+            return;
+        } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
+            console.log('importing microbit.co.uk TD project')
+            this.newTypeScriptProjectAsync({ "main.ts": "  " })
+                .then(() => tdlegacy.td2tsAsync(data.source))
+                .then(text => {
+                    // this is somewhat hacky...
+                    this.aceEditor.overrideFile(text)
+                    this.aceEditor.formatCode()                    
+                })
             return;
         } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget() || data.meta.cloudId == "pxt/" + workspace.getCurrentTarget()) {
             console.log("importing project")
@@ -566,7 +574,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             };
             let files = JSON.parse(data.source);
             workspace.installAsync(h, files)
-                .done(hd => this.loadHeader(hd));
+                .done(hd => this.loadHeaderAsync(hd));
             return;
         }
 
@@ -718,9 +726,7 @@ Ctrl+Shift+B
             pubCurrent: false,
             target: workspace.getCurrentTarget()
         }, files)
-            .then(hd => {
-                this.loadHeader(hd)
-            })
+            .then(hd => this.loadHeaderAsync(hd))
     }
 
     saveTypeScriptAsync(open = false): Promise<void> {
@@ -1167,12 +1173,12 @@ $(document).ready(() => {
             if (hashCmd == "pub" || hashCmd == "edit") {
                 let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hashArg)[0]
                 if (existing) {
-                    theEditor.loadHeader(existing)
+                    theEditor.loadHeaderAsync(existing)
                     return null
                 } else {
                     return workspace.installByIdAsync(hashArg)
                         .then(hd => {
-                            theEditor.loadHeader(hd)
+                            theEditor.loadHeaderAsync(hd)
                         })
                 }
             }
@@ -1181,7 +1187,7 @@ $(document).ready(() => {
             let hd = workspace.getHeaders()[0]
             if (ent)
                 hd = workspace.getHeader(ent.id)
-            theEditor.loadHeader(hd)
+            theEditor.loadHeaderAsync(hd)
             return null
         })
         .then(() => {
