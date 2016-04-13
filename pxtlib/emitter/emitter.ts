@@ -132,7 +132,7 @@ namespace ts.pxt {
         icon?: string;
         imageLiteral?: number;
         weight?: number;
-        
+
         // on interfaces
         indexerGet?: string;
         indexerSet?: string;
@@ -206,13 +206,13 @@ namespace ts.pxt {
 
         return res
     }
-    
+
     export function parseCommentsOnSymbol(symbol: Symbol): CommentAttrs {
         let cmts = ""
         for (let decl of symbol.declarations) {
             cmts += getComments(decl)
         }
-        return parseCommentString(cmts)        
+        return parseCommentString(cmts)
     }
 
     export function parseComments(node: Node): CommentAttrs {
@@ -727,7 +727,7 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitIndexedAccess(node: ElementAccessExpression, assign:ir.Expr = null): ir.Expr {
+        function emitIndexedAccess(node: ElementAccessExpression, assign: ir.Expr = null): ir.Expr {
             let t = typeOf(node.expression)
 
             let indexer = ""
@@ -737,7 +737,7 @@ ${lbl}: .short 0xffff
                 indexer = assign ? "Array_::setAt" : "Array_::getAt"
             else if (isInterfaceType(t)) {
                 let attrs = parseCommentsOnSymbol(t.symbol)
-                indexer = assign ? attrs.indexerSet : attrs.indexerGet                
+                indexer = assign ? attrs.indexerSet : attrs.indexerGet
             }
 
             if (indexer) {
@@ -831,7 +831,7 @@ ${lbl}: .short 0xffff
                 case SK.FalseKeyword:
                 case SK.NumericLiteral:
                     return true;
-                default:
+                default:                    
                     return false;
             }
         }
@@ -1246,7 +1246,7 @@ ${lbl}: .short 0xffff
                 proc.emitExpr(ir.op(EK.Store, [cachedTrg || emitExpr(trg), src]))
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
-            } else { 
+            } else {
                 unhandled(trg, "assignment target")
             }
         }
@@ -1259,7 +1259,7 @@ ${lbl}: .short 0xffff
             return src
         }
 
-        function rtcallMask(name: string, args: Expression[], isAsync = false, append:ir.Expr[] = null) {
+        function rtcallMask(name: string, args: Expression[], isAsync = false, append: ir.Expr[] = null) {
             let args2 = args.map(emitExpr)
             if (append) args2 = args2.concat(append)
             return ir.rtcallMask(name, getMask(args), isAsync, args2)
@@ -1524,6 +1524,13 @@ ${lbl}: .short 0xffff
 
         function emitExprAsStmt(node: Expression) {
             if (!node) return;
+            switch (node.kind) {
+                case SK.Identifier:
+                case SK.StringLiteral:
+                case SK.NumericLiteral:
+                case SK.NullKeyword:
+                    return; // no-op
+            }
             emitBrk(node)
             let v = emitExpr(node);
             let a = typeOf(node)
