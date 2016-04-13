@@ -62,30 +62,30 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
                     <div className="right floated meta">
-                        {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : ""}</i>) : ""}
+                        {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : null}</i>) : null}
                         {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle oragne icon" ></i>) }
                         {repeat(card.javascript, (k) => <i key={"costjs" + k} className="keyboard blue icon" ></i>) }
                         {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
                         {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
                     </div>
                     {card.header}
-                </div> : "" }
+                </div> : null }
                 <div className={"ui image" + (card.responsive ? " tall landscape only": "")}>
-                    {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : ''}
-                    {card.blocksXml  ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : '' }
-                    {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : '' }
+                    {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : null}
+                    {card.blocksXml  ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> :  null}
+                    {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
                 </div>
                 <div className="content">
-                    {card.name ? <a href={card.onClick ? '' : url} target="docs" className="header">{card.name}</a> : ''}
+                    {card.name ? card.onClick || !url ? <div className="header">{card.name}</div> : <a href={url} target="docs" className="header">{card.name}</a> : null}
                     <div className="meta">
-                        {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : ""}
+                        {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
                     </div>
-                    {card.description ? <div className="description">{card.description}</div> : ''}
+                    {card.description ? <div className="description">{card.description}</div> : null}
                 </div>
                 {card.url ?
                 <div key="extra" className={"ui extra content" + (card.responsive ? " tall desktop only" : "")}>
-                    {card.url ? <a target="docs" href={card.onClick ? '' : url}>{card.url}</a> : ""}
-                </div> : ""}
+                    {card.onClick ? card.url : <a target="docs" href={url}>{card.url}</a>}
+                </div> : null}
             </div>
         )
     }
