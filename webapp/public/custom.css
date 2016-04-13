@@ -407,6 +407,11 @@ html {
     margin-top:0.5em !important;
 }
 
+/* ace */
+.ace_gutter-layer {
+    min-width: 2.8em !important;
+}
+
 /* extra-large desktop screen */
 @media only screen and (min-width: 100em) and (min-height:44em) {
     #filelist {

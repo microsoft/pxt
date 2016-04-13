@@ -604,6 +604,8 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         this.editor = ace.edit("aceEditorInner");
+        this.editor.setShowPrintMargin(false);
+        
         let langTools = acequire("ace/ext/language_tools");
 
         this.editor.commands.on("exec", (e: any) => {
@@ -706,7 +708,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setTheme(theme: srceditor.Theme) {
-        let th = 'ace/theme/sqlserver'
+        let th = 'ace/theme/github'
         if (this.editor.getTheme() != th) {
             this.editor.setTheme(th)
         }
