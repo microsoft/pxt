@@ -958,7 +958,7 @@ Ctrl+Shift+B
                     {this.state.errorCard ? <div id="errorcard" className="ui item">
                         <codecard.CodeCardView className="fluid top-margin" responsive={true} onClick={this.state.errorCardClick} {...this.state.errorCard} target={pxt.appTarget.id} />
                     </div>  : null }
-                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only " : "") + (this.state.errorCard ? "errored " : "") + (!this.state.running ? "wide only ": null) }>
+                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only " : "") + (this.state.errorCard ? "errored " : "")}>
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
