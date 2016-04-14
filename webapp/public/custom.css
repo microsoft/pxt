@@ -498,6 +498,10 @@ html {
 }
 
 @media only screen and (max-width:36em) {
+    #logo {
+        font-size: 0rem;
+        padding-right: 0;        
+    }
     .ui.wide.only {
         display:none !important;        
     }
