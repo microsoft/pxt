@@ -958,7 +958,7 @@ Ctrl+Shift+B
                     {this.state.errorCard ? <div id="errorcard" className="ui item">
                         <codecard.CodeCardView className="fluid top-margin" responsive={true} onClick={this.state.errorCardClick} {...this.state.errorCard} target={pxt.appTarget.id} />
                     </div>  : null }
-                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only" : "") + (this.state.errorCard ? "errored" : "") }>
+                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only " : "") + (this.state.errorCard ? "errored " : "") + (!this.state.running ? "wide only ": null) }>
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
@@ -982,8 +982,7 @@ Ctrl+Shift+B
                         <span>v{targetVersion}</span>&nbsp;
                         - <a target="_blank" href="https://github.com/Microsoft/pxt" title="Microsoft Programming Experience Toolkit"><i className='xicon ksempty'/> PXT</a>
                         &nbsp;<span>v{ksVersion}</span>&nbsp;
-                        - &copy; Microsoft Corporation 
-                        - 2016
+                        - &copy; Microsoft Corporation 2016
                         - <a target="_blank" href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") } </a>
                         - <a target="_blank" href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
                     </div>
