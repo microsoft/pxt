@@ -920,8 +920,8 @@ Ctrl+Shift+B
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
                                 <sui.Button role="menuitem" key='runbtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                                <sui.Button role="menuitem" class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
-                                <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
+                                <sui.Button role="menuitem" class="ui small portrait only" icon="undo" onClick={() => this.editor.undo() } />
+                                <sui.Button role="menuitem" class="ui small landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
                                 {packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                             </div>
