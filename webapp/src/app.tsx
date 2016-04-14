@@ -972,7 +972,7 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor" role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div id="helpcard" className="ui editorFloat"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
+                    {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
