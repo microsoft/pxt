@@ -155,7 +155,7 @@ function uploadJsonAsync() {
     return uploadFileAsync("/theme.json")
 }
 
-export function uploadAsync(...args: string[]) {
+function getDocsFiles(args:string[]) : string[] {
     if (args[0] == "-v") {
         showVerbose = true
         args.shift()
@@ -169,6 +169,11 @@ export function uploadAsync(...args: string[]) {
     })
     if (files.length == 0)
         files = getFiles().filter(fn => !/^\/_/.test(fn))
+    return files;    
+}
+
+export function uploadDocsAsync(...args: string[]) : Promise<void> {
+    let files = getDocsFiles(args);
 
     uploadDir = "docs"
     return Promise.map(files, uploadFileAsync, { concurrency: 20 })
@@ -183,4 +188,31 @@ export function uploadAsync(...args: string[]) {
         .then(() => {
             console.log("ALL DONE")
         })
+}
+
+export function checkDocsAsync(...args: string[]) : Promise<void> {
+    let files = getDocsFiles(args);    
+    console.log(`checking docs`);
+    
+    // known urls
+    let urls : U.Map<string> = {};
+    files.forEach(f => urls[f.replace(/\.[a-z0-9]+$/i, '')] = f);
+    
+    files.forEach(f => {
+        let header = false;
+        console.log(`checking ${f}`);
+        let contentType = U.getMime(f)
+        if (!contentType || !/^text/.test(contentType))
+            return;
+        let text = fs.readFileSync("docs" + f).toString("utf8");
+        text.replace(/]\((\/[^)]+)\)/, (m) => {
+            console.log('.');
+            let url = /]\((\/[^)]+)\)/.exec(m)[1];
+            if (!urls[url])
+                console.log(`${f}: broken link ${url}`);
+            return '';
+        })
+    })
+    
+    return Promise.resolve();
 }
