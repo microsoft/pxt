@@ -902,7 +902,8 @@ Ctrl+Shift+B
                                 <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                {packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                { packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
                                 <sui.Button role="menuitem" icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
@@ -910,6 +911,7 @@ Ctrl+Shift+B
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
+                                    {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                             this.saveSettings();
@@ -918,6 +920,10 @@ Ctrl+Shift+B
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } /> : undefined}
                                     <div className="ui divider"></div>
+                                    <a className="ui item" href="/docs" role="menuitem" target="_blank">
+                                        <i className="help icon"></i>
+                                        {lf("Help")}
+                                    </a>
                                     <LoginBox />
                                     {
                                         // we always need a way to clear local storage, regardless if signed in or not 
@@ -942,13 +948,10 @@ Ctrl+Shift+B
                                 <i className="write icon grey"></i>
                             </div>
                         </div>
-                        { workspaces || targetTheme.rightLogo ?
-                            <div className="ui item right">
-                                <div>
-                                    { workspaces ? <CloudSyncButton parent={this} /> : '' }
-                                    { targetTheme.rightLogo ? <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a> : "" }
-                                </div>
-                            </div> : "" }
+                        {targetTheme.rightLogo ?
+                        <div className="ui item right wide only">
+                            <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
+                        </div> : null }
                     </div>
                 </div>
                 <div id="filelist" className="ui items" role="complementary">
