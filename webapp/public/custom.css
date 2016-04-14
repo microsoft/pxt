@@ -514,3 +514,11 @@ html {
         height:8rem;
     }
 }
+
+@media only screen and (max-width:36em) and (orientation:landscape) {
+    #filelist {
+        top:0rem;
+        right:0rem;
+        left:unset;
+    }    
+}
