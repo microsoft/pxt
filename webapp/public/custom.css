@@ -489,3 +489,15 @@ html {
         display:none !important;
     }
 }
+
+/* thin display, mobile */
+@media only screen and (max-width:36em) {
+    .ui.small.only {
+        display:none !important;        
+    }
+    .simframe {
+        display:inline-block;
+        width: 10rem;
+        height:8rem;
+    }
+}
