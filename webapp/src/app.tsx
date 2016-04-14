@@ -890,12 +890,20 @@ Ctrl+Shift+B
         return (
             <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "") }>
                 <div id="menubar" role="banner">
-                    <div className="ui small menu" role="menubar">
-                        <span id="logo" className="ui item small only">
+                    <div className="ui borderless small menu" role="menubar">
+                        <span id="logo" className="ui item">
                             {targetTheme.logo || targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>) : null}
                             {targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                         </span>
                         <div className="ui item">
+                            <div className="ui">
+                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
+                                <sui.Button role="menuitem" key='runbtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                                <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
+                                <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
+                                {this.editor.menu() }
+                                {packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                            </div>
                             <div className="ui buttons">
                                 <sui.Button role="menuitem" icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
                                 <sui.DropdownMenu class='floating icon button' icon='dropdown'>
@@ -916,22 +924,14 @@ Ctrl+Shift+B
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
                                 </sui.DropdownMenu>
-                            </div>
-                            <div className="ui">
-                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
-                                <sui.Button role="menuitem" key='runbtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                                <sui.Button role="menuitem" class="ui small portrait only" icon="undo" onClick={() => this.editor.undo() } />
-                                <sui.Button role="menuitem" class="ui small landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
-                                {this.editor.menu() }
-                                {packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
-                            </div>
-                            <div className="ui buttons small only">
+                            </div>                            
+                            <div className="ui buttons wide only">
                                 <sui.DropdownMenu class="floating icon button" icon="help">
                                     {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
                                 </sui.DropdownMenu>
                             </div>
                         </div>
-                        <div className="ui item">
+                        <div className="ui item wide only">
                             <div className="ui massive transparent input">
                                 <input
                                     type="text"
