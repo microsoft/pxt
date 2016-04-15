@@ -392,7 +392,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     private autoRunSimulator = ts.pxt.Util.debounce(
         () => this.runSimulator({ background: true }), 
-        2500, false);    
+        3000, false);    
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
