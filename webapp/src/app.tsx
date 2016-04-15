@@ -147,7 +147,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
-                p.addDepAsync(scr.scriptname, "*").done();
+                p.addDepAsync(scr.scriptname, "*")
+                 .then(r => this.props.parent.loadHeaderAsync(this.props.parent.state.header))
+                 .done();
             } else {
                 workspace.installByIdAsync(scr.scriptid)
                     .then(r => this.props.parent.loadHeaderAsync(r))
