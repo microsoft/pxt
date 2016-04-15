@@ -143,6 +143,21 @@ export function apiAsync(path: string, postArguments?: string) {
         })
 }
 
+function uploadFileAsync(path:string) {
+    let buf = fs.readFileSync(path)
+    let mime = U.getMime(path)
+    console.log("Upload", path)
+    return Cloud.privatePostAsync("upload/files", {
+        filename: path,
+        encoding: "base64",
+        content: buf.toString("base64"),
+        contentType: mime
+    })
+    .then(resp => {
+        console.log(resp)
+    })
+}
+
 export function ptrAsync(path: string, target?: string) {
     // in MinGW when you say 'pxt ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
     let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
@@ -1513,6 +1528,7 @@ cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsyn
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
+cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 
