@@ -143,7 +143,7 @@ export function apiAsync(path: string, postArguments?: string) {
         })
 }
 
-function uploadFileAsync(path:string) {
+function uploadFileAsync(path: string) {
     let buf = fs.readFileSync(path)
     let mime = U.getMime(path)
     console.log("Upload", path)
@@ -153,9 +153,9 @@ function uploadFileAsync(path:string) {
         content: buf.toString("base64"),
         contentType: mime
     })
-    .then(resp => {
-        console.log(resp)
-    })
+        .then(resp => {
+            console.log(resp)
+        })
 }
 
 export function ptrAsync(path: string, target?: string) {
@@ -1161,12 +1161,12 @@ function buildDalConst(force = false) {
         (force || !fs.existsSync(constName))) {
         console.log(`rebuilding ${constName}...`)
         let incPath = ytPath + "/yotta_modules/microbit-dal/inc/"
-        let files = fs.readdirSync(incPath)
+        let files = allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: U.Map<string> = {}
         for (let fn of files) {
             if (U.endsWith(fn, "Config.h")) continue
-            fc[fn] = fs.readFileSync(incPath + fn, "utf8")
+            fc[fn] = fs.readFileSync(fn, "utf8")
         }
         files = Object.keys(fc)
 
@@ -1399,7 +1399,7 @@ function testConverterAsync(configFile: string) {
                             fs.writeFileSync("built/" + id + ".ts.fail", src)
                         }
                     })
-                    .then(() => {}, err => {
+                    .then(() => { }, err => {
                         console.log(`ERROR ${id}: ${err.message}`)
                         errors.push(id)
                     })
