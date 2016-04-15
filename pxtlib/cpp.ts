@@ -458,10 +458,10 @@ namespace pxt.cpp {
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         src = parseCpp(src, isHeader)
                         res.extensionFiles["/source/" + fullName] = src
-
+                        
                         if (pkg.level == 0)
                             res.onlyPublic = false
-                        if (pkg.verProtocol() != "pub" && pkg.verProtocol() != "embed")
+                        if (pkg.verProtocol() && pkg.verProtocol() != "pub" && pkg.verProtocol() != "embed")
                             res.onlyPublic = false
                     }
                 }
