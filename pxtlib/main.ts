@@ -88,12 +88,12 @@ namespace pxt {
         promoUrl?: string;
         blocksXml?: string;
         typeScript?: string;
-        header?: string;
         time?: number;
         link?: boolean;
         url?: string;
         responsive?: boolean;
-
+        
+        header?: string;
         any?: number;
         hardware?: number;
         software?: number;
