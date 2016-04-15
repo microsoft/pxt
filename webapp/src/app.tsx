@@ -390,6 +390,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.typecheck()
     }
 
+    private autoRunSimulator = ts.pxt.Util.debounce(
+        () => this.runSimulator({ background: true }), 
+        2500, false);    
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
@@ -400,7 +403,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.debug
                         && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
-                        this.runSimulator({ background: true });
+                            this.autoRunSimulator();
                 }
             });
     }
