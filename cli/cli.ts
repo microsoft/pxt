@@ -775,6 +775,7 @@ function buildAndWatchTargetAsync() {
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed(e.message)
         }))
+        .then(() => uploader.checkDocsAsync())
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
