@@ -179,6 +179,14 @@ export function ptrAsync(path: string, target?: string) {
                 console.log("Pointer " + path + " deleted.")
             })
     }
+    
+    if (target == "refresh") {
+        return Cloud.privatePostAsync(nodeutil.pathToPtr(path), {})
+            .then(r => {
+                console.log(r)
+                return r
+            })
+    }
 
     let ptr = {
         path: path,
