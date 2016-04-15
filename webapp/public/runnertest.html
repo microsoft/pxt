@@ -34,7 +34,7 @@
 
     <script type="text/javascript" src="./jquery.js"></script>
     <script type="text/javascript" src="./semantic.js"></script>
-    <script type="text/javascript" src="./embed.js"></script>
+    <script type="text/javascript" src="/embed.js"></script>
     <script type="text/javascript">
         var ps = [ 
             "0"
@@ -70,10 +70,21 @@
             , "for(let i = 0; i<5;i++) { basic.showNumber(0); basic.showNumber(1);}"
             , "basic.showNumber(1+1); basic.showNumber(0);"
             ,"basic.showLeds(`# # # . .. . . . .. . # . #. # . . ## . . . #`);"
-            ,"true && false;true || false;!true;"
-            ,"42 == 0;42 != 0;42 < 0;42 > 0;42 <= 0;42 >= 0;"
-            ,"(false && false) == false;(false && true) == false;(true && false) == false;(true && true) == true;"
-            ,"(!false) == true;(!true) == false;"
+            ,"true && false"
+            ,"true || false"
+            ,"!true;"
+            ,"42 == 0"
+            ,"42 != 0"
+            ,"42 < 0"
+            ,"42 > 0"
+            ,"42 <= 0"
+            ,"42 >= 0;"
+            ,"(false && false) == false"
+            ,"(false && true) == false"
+            ,"(true && false) == false"
+            ,"(true && true) == true;"
+            ,"(!false) == true"
+            ,"(!true) == false;"
             ,"let x = 0; x = 1;"
             ,"let x = 0; x = x + 1;"
             ,"let x = 0; x++;"
@@ -89,7 +100,9 @@
             ,"let count = 0; while (count < 10) { basic.pause(100); basic.showNumber(count) }"     
             ,"Math.abs(1)"
             ,"Math.random(4)"            
-            ,"input.onGesture(Gestures.Shake, () => { basic.clearScreen(); })"
+            ,"input.onGesture(Gesture.Shake, () => { basic.clearScreen(); })"
+            , "Math.min(0,1)"
+            , "Math.max(0,1)"
            ];
         function next() {
             var p = ps.pop();
@@ -116,6 +129,7 @@
         }
             
         ksRunnerReady(function() {
+            next();
             pxt.runner.renderAsync({
                 snippetClass: 'lang-blocks',
                 signatureClass: 'lang-sig',
@@ -161,14 +175,14 @@ images.createImage(`
         "target": "microbit"
         }
     </pre> -->
-    <pre class='lang-namespaces'>
+    <!--<pre class='lang-namespaces'>
         basic.showNumber(2)
         input.onButtonPressed(Button.A, () => {})
         if (true) {}
         for(let i = 0;i<5;++i) {}
         let x = 0;
         Math.random(5);
-    </pre> <!--
+    </pre>--> <!--
     <pre class='lang-links'>
         basic.showNumber(2)
         basic.showString(2)
