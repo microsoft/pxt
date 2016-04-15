@@ -222,7 +222,7 @@ namespace pxt.blocks {
         const instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
 
         if (fn.attributes.help)
-            block.setHelpUrl("./reference/" + fn.attributes.help);
+            block.setHelpUrl("/reference/" + fn.attributes.help);
         
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(
@@ -461,7 +461,7 @@ namespace pxt.blocks {
 
         Blockly.Blocks['math_op2'] = {
             init: function() {
-                this.setHelpUrl('./reference/math');
+                this.setHelpUrl('/reference/math');
                 this.setColour(230);
                 this.appendValueInput("x")
                     .setCheck("Number")
@@ -478,7 +478,7 @@ namespace pxt.blocks {
 
         Blockly.Blocks['math_op3'] = {
             init: function() {
-                this.setHelpUrl('./reference/math/abs');
+                this.setHelpUrl('/reference/math/abs');
                 this.setColour(230);
                 this.appendDummyInput()
                     .appendField("absolute of");
@@ -492,7 +492,7 @@ namespace pxt.blocks {
 
         Blockly.Blocks['device_while'] = {
             init: function() {
-                this.setHelpUrl('./reference/loops/while');
+                this.setHelpUrl('/reference/loops/while');
                 this.setColour(blockColors.loops);
                 this.appendValueInput("COND")
                     .setCheck("Boolean")
@@ -501,13 +501,13 @@ namespace pxt.blocks {
                     .appendField("do");
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
-                this.setTooltip(lf("Run the same sequence of actions while the condition is met. Don't forget to pause!"));
+                this.setTooltip(lf("Run the same sequence of actions while the condition is met."));
             }
         };
 
         Blockly.Blocks['device_random'] = {
             init: function() {
-                this.setHelpUrl('./reference/math/random');
+                this.setHelpUrl('/reference/math/random');
                 this.setColour(230);
                 this.appendDummyInput()
                     .appendField("pick random 0 to");
@@ -526,7 +526,7 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             init: function() {
-                this.setHelpUrl("./reference/loops/for");
+                this.setHelpUrl("/reference/loops/for");
                 this.setColour((<any>Blockly.Blocks).loops.HUE);
                 this.appendDummyInput()
                     .appendField("for")
@@ -600,7 +600,7 @@ namespace pxt.blocks {
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
                 this.setTooltip(lf("Changes the value of the variable by this amount"));
-                this.setHelpUrl('./reference/assign');
+                this.setHelpUrl('/reference/assign');
                 this.setColour(blockColors.variables);
             }
         };
@@ -616,14 +616,14 @@ namespace pxt.blocks {
             Blockly.Blocks[id].init = function() {
                 // The magic of dynamic this-binding.
                 old.call(this);
-                this.setHelpUrl("./reference/" + url);
+                this.setHelpUrl("/reference/" + url);
                 if (!this.codeCard) {
                     let tb = document.getElementById('blocklyToolboxDefinition');
                     let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
                     this.codeCard = <pxt.CodeCard>{
                         header: name,
                         name: name,
-                        card: { software: 1 },
+                        software: 1,
                         description: goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip,
                         blocksXml: xml ? ("<xml>" + (xml.outerHTML || `<block type="${id}"</block>`) + "</xml>") : undefined,
                         url: url
@@ -634,12 +634,20 @@ namespace pxt.blocks {
 
         monkeyPatchBlock("controls_if", "if", "logic/if");
         monkeyPatchBlock("controls_repeat_ext", "for loop", "loops/repeat");
+        monkeyPatchBlock("device_while", "while loop", "loops/while");
+
         monkeyPatchBlock("variables_set", "variable assignment", "assign");
-        monkeyPatchBlock("math_number", "number", "number");
+        monkeyPatchBlock("variables_change", "variable update", "assign");
+
         monkeyPatchBlock("logic_compare", "boolean operator", "math");
         monkeyPatchBlock("logic_operation", "boolean operation", "boolean");
         monkeyPatchBlock("logic_negate", "not operator", "boolean");
         monkeyPatchBlock("logic_boolean", "boolean value", "boolean");
+
+        monkeyPatchBlock("math_number", "number", "number");
         monkeyPatchBlock("math_arithmetic", "arithmetic operation", "math");
+        monkeyPatchBlock("math_op2", "Math min/max operators", "math");
+        monkeyPatchBlock("math_op3", "Math abs operator", "math");
+        monkeyPatchBlock("device_random", "pick random number", "math/random");
     }
 }
