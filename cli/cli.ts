@@ -1600,7 +1600,7 @@ cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadDocsAsync, 1)
-cmd("checkdoc  [docs/foo.md...]   - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
+cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
 

@@ -191,28 +191,33 @@ export function uploadDocsAsync(...args: string[]) : Promise<void> {
 }
 
 export function checkDocsAsync(...args: string[]) : Promise<void> {
-    let files = getDocsFiles(args);    
     console.log(`checking docs`);
+    let files = getFiles();  
     
     // known urls
     let urls : U.Map<string> = {};
-    files.forEach(f => urls[f.replace(/\.[a-z0-9]+$/i, '')] = f);
-    
-    files.forEach(f => {
+    files.forEach(f => urls[f.replace(/\.md$/i, '')] = f);
+
+    let checked = 0;    
+    let broken = 0;
+    files.filter(f => /\.md$/i.test(f)).forEach(f => {
         let header = false;
-        console.log(`checking ${f}`);
         let contentType = U.getMime(f)
         if (!contentType || !/^text/.test(contentType))
             return;
+        checked++;
         let text = fs.readFileSync("docs" + f).toString("utf8");
         text.replace(/]\((\/[^)]+)\)/, (m) => {
-            console.log('.');
             let url = /]\((\/[^)]+)\)/.exec(m)[1];
-            if (!urls[url])
-                console.log(`${f}: broken link ${url}`);
+            if (!urls[url]) {
+                console.error(`${f}: broken link ${url}`);
+                broken++;
+            }
             return '';
         })
     })
     
+    console.log(`checked ${checked} files, found ${broken} broken links`);
+    if (broken > 0) throw new Error(`found ${broken} broken links in docs`)
     return Promise.resolve();
 }
