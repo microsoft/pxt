@@ -888,6 +888,12 @@ class Host
                     U.iterStringMap(resp, (fn: string, cont: string) => {
                         pkg.host().writeFile(pkg, fn, cont)
                     }))
+        } else if (proto == "embed") {
+            let resp = pxt.getEmbeddedScript(pkg.verArgument())
+            U.iterStringMap(resp, (fn: string, cont: string) => {
+                pkg.host().writeFile(pkg, fn, cont)
+            })
+            return Promise.resolve()
         } else if (proto == "file") {
             console.log(`skip download of local pkg: ${pkg.version()}`)
             return Promise.resolve()
