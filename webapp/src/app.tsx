@@ -909,8 +909,8 @@ Ctrl+Shift+B
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
-                                <sui.Button role="menuitem" icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
-                                <sui.DropdownMenu class='floating icon button' icon='dropdown'>
+                                <sui.DropdownMenu class='floating icon button' text="More..." textClass="ui landscape only" icon='sidebar'>
+                                    <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
