@@ -27,7 +27,7 @@ require('brace/mode/xml');
 require('brace/mode/markdown');
 require('brace/mode/assembly_armthumb');
 
-require('brace/theme/sqlserver');
+require('brace/theme/textmate');
 require('brace/theme/tomorrow_night_bright');
 
 require("brace/ext/language_tools");
@@ -604,6 +604,8 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         this.editor = ace.edit("aceEditorInner");
+        this.editor.setShowPrintMargin(false);
+        
         let langTools = acequire("ace/ext/language_tools");
 
         this.editor.commands.on("exec", (e: any) => {
@@ -706,7 +708,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setTheme(theme: srceditor.Theme) {
-        let th = 'ace/theme/sqlserver'
+        let th = 'ace/theme/textmate'
         if (this.editor.getTheme() != th) {
             this.editor.setTheme(th)
         }
@@ -729,6 +731,10 @@ export class Editor extends srceditor.Editor {
     private setValue(v: string) {
         this.lastSet = v;
         this.editor.session.setValue(v);
+    }
+    
+    overrideFile(content:string) {
+        this.editor.session.setValue(content);
     }
 
     loadFile(file: pkg.File) {

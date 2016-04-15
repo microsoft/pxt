@@ -95,6 +95,8 @@ declare module TDev.AST.Json
     {
         name:string;
         localId:JNodeRef;
+        
+        type?: JTypeRef; // used by blockly compiler
     }
 
     export interface JPlaceholder extends JExpr

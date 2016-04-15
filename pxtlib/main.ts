@@ -33,6 +33,7 @@ namespace pxt {
     export interface WebConfig {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",
+        tdworkerjs: string;  // "/beta---tdworker",
         pxtVersion: string; // "0.3.8",
         pxtRelId: string; // "zstad",
         pxtCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zstad/c/",
@@ -47,6 +48,7 @@ namespace pxt {
         let r:WebConfig = {
             relprefix: "/--",
             workerjs: "/worker.js",
+            tdworkerjs: "/tdworker.js",
             pxtVersion: "local",
             pxtRelId: "",
             pxtCdnUrl: "/cdn/",

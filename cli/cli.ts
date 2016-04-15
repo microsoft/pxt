@@ -414,6 +414,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/simulator.html": "@simUrl@",
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/worker.js": "@workerjs@",
+        "/tdworker.js": "@tdworkerjs@",
         "/embed.js": "@relprefix@embed",
         "/cdn/": "@pxtCdnUrl@",
         "/sim/": "@targetCdnUrl@",
@@ -427,6 +428,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "run.html",
         "release.manifest",
         "worker.js",
+        "tdworker.js",
         "simulator.html",
         "sim.manifest",
         "sim.webmanifest",
@@ -1364,7 +1366,80 @@ function copyCommonFiles() {
     }
 }
 
-function testDirAsync(dir: string) {
+function testConverterAsync(configFile: string) {
+    let cfg: {
+        apiUrl: string,
+        ids: string[]
+    } = readJson(configFile)
+    let cachePath = "built/cache/"
+    nodeutil.mkdirP(cachePath)
+    let tdev = require("./web/tdast")
+    let errors: string[] = []
+    return getApiInfoAsync()
+        .then(astinfo => prepTestOptionsAsync()
+            .then(opts => {
+                fs.writeFileSync("built/apiinfo.json", JSON.stringify(astinfo, null, 1))
+                return Promise.map(cfg.ids, (id) => (readFileAsync(cachePath + id, "utf8") as Promise<string>)
+                    .then(v => v, (e: any) => "")
+                    .then<string>(v => v ? Promise.resolve(v) :
+                        U.httpGetTextAsync(cfg.apiUrl + id + "/text")
+                            .then(v => writeFileAsync(cachePath + id, v)
+                                .then(() => v)))
+                    .then(v => {
+                        let tdopts = {
+                            text: v,
+                            useExtensions: true,
+                            apiInfo: astinfo
+                        }
+                        let r = tdev.AST.td2ts(tdopts)
+                        let src: string = r.text
+                        U.assert(!!src.trim(), "source is empty")
+                        if (!compilesOK(opts, id + ".ts", src)) {
+                            errors.push(id)
+                            fs.writeFileSync("built/" + id + ".ts.fail", src)
+                        }
+                    })
+                    .then(() => {}, err => {
+                        console.log(`ERROR ${id}: ${err.message}`)
+                        errors.push(id)
+                    })
+                    , { concurrency: 5 })
+            }))
+        .then(() => {
+            if (errors.length) {
+                console.log("Errors: " + errors.join(", "))
+                process.exit(1)
+            } else {
+                console.log("All OK.")
+            }
+        })
+}
+
+function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
+    console.log(`*** ${fn}, size=${content.length}`)
+    let opts2 = U.flatClone(opts)
+    opts2.fileSystem = U.flatClone(opts.fileSystem)
+    opts2.sourceFiles = opts.sourceFiles.slice()
+    opts2.sourceFiles.push(fn)
+    opts2.fileSystem[fn] = content
+    let res = ts.pxt.compile(opts2)
+    reportDiagnostics(res.diagnostics);
+    if (!res.success) {
+        console.log("ERRORS", fn)
+    }
+
+    return res.success
+}
+
+function getApiInfoAsync() {
+    return prepBuildOptionsAsync(BuildOption.GenDocs)
+        .then(ts.pxt.compile)
+        .then(res => {
+            return ts.pxt.getApiInfo(res.ast)
+        })
+}
+
+function prepTestOptionsAsync() {
     return prepBuildOptionsAsync(BuildOption.Test)
         .then(opts => {
             let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
@@ -1374,30 +1449,26 @@ function testDirAsync(dir: string) {
             let tsFile = tsFiles[0]
             delete opts.fileSystem[tsFile]
             opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
+            return opts
+        })
+}
 
-            let errors:string[] = []
+function testDirAsync(dir: string) {
+    return prepTestOptionsAsync()
+        .then(opts => {
+            let errors: string[] = []
 
             for (let fn of fs.readdirSync(dir)) {
                 if (!U.endsWith(fn, ".ts") || fn[0] == ".") continue;
-                console.log("***", fn)
-                let opts2 = U.flatClone(opts)
-                opts2.fileSystem = U.flatClone(opts.fileSystem)
-                opts2.sourceFiles = opts.sourceFiles.slice()
-                opts2.sourceFiles.push(fn)
-                opts2.fileSystem[fn] = fs.readFileSync(dir + "/" + fn, "utf8")
-                let res = ts.pxt.compile(opts2)
-                reportDiagnostics(res.diagnostics);
-                if (!res.success) {
+                if (!compilesOK(opts, fn, fs.readFileSync(dir + "/" + fn, "utf8")))
                     errors.push(fn)
-                    console.log("ERRORS", fn)
-                }
             }
-            
-            if (errors) {
+
+            if (errors.length) {
                 console.log("Errors: " + errors.join(", "))
                 process.exit(1)
             } else {
-                console.log("All OK.")                
+                console.log("All OK.")
             }
         })
 }
@@ -1514,6 +1585,7 @@ cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one replacing the main file of current package", testDirAsync, 1)
+cmd("testconv JSONCONFIG          - test TD->TS converter", testConverterAsync, 2)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
@@ -1521,7 +1593,8 @@ cmd("pubtarget                    - publish all bundled target libraries", publi
 cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
-cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadAsync, 1)
+cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadDocsAsync, 1)
+cmd("checkdoc  [docs/foo.md...]   - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
 

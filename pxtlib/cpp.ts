@@ -507,7 +507,7 @@ namespace pxt.cpp {
 
         res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-        res.generatedFiles["/source/main.cpp"] = `#include "pxt.h"\nvoid app_main() { pxt::start(); }\n`
+        res.generatedFiles["/source/main.cpp"] = `#include "pxt.h"\nint main() { uBit.init(); pxt::start(); return 0; }\n`
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)

@@ -208,7 +208,7 @@ namespace pxt.blocks {
             header: fn.name,
             name: fn.namespace + '.' + fn.name,
             description: fn.attributes.jsDoc,
-            url: 'reference/' + fn.attributes.help,
+            url: fn.attributes.help ? 'reference/' + fn.attributes.help : undefined,
             blocksXml: `<xml xmlns="http://www.w3.org/1999/xhtml">
         ${blockXml.outerHTML}
 </xml>`,
