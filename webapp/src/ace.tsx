@@ -503,7 +503,12 @@ export class Editor extends srceditor.Editor {
                 // try to convert back to typescript
                 return compiler.getBlocksAsync().then((blocksInfo: ts.pxt.BlocksInfo) => {
                     let workspace = new Blockly.Workspace();
-                    Blockly.Xml.domToWorkspace(workspace, Blockly.Xml.textToDom(xml));
+                    try {
+                        Blockly.Xml.domToWorkspace(workspace, Blockly.Xml.textToDom(xml));
+                    } catch(e) {
+                        pxt.reportException(e, { xml: xml });
+                        return failedAsync();
+                    }
                     let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
                     if (b2jsr.source.replace(/\s/g, '') != js.replace(/\s/g,'')) {
                         pxt.reportError('decompilation failure', {
