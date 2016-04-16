@@ -531,6 +531,10 @@ write(`<block type="math_arithmetic">
                 }
             })
             writeEndBlock()
+            
+            // if this block does not support "next", close next
+            if (!/^on /.test(info.attrs.block) || info.attrs.blockStatement)
+                flushBlocks();
         }
     }
 }
