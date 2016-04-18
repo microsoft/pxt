@@ -472,7 +472,7 @@ export class Editor extends srceditor.Editor {
     openBlocks() {
         // needed to test roundtrip
         this.formatCode();
-        
+
         // might be undefined
         let mainPkg = pkg.mainEditorPkg();
         let blockFile = this.currFile.getVirtualFileName();
@@ -494,33 +494,44 @@ export class Editor extends srceditor.Editor {
             })
         }
 
+        // it's a bit for a wild round trip:
+        // 1) convert blocks to js to see if any changes happened, otherwise, just reload blocks
+        // 2) decompile js -> blocks then take the decompiled blocks -> js
+        // 3) check that decompiled js == current js % white space
+        let blocksInfo: ts.pxt.BlocksInfo;
         this.parent.saveFileAsync()
-            .then(() => compiler.decompileAsync(this.currFile.name))
-            .then(resp => {
-                if (!resp.success) return failedAsync();
-                xml = resp.outfiles[blockFile];
-                Util.assert(!!xml);
-                // try to convert back to typescript
-                return compiler.getBlocksAsync().then((blocksInfo: ts.pxt.BlocksInfo) => {
-                    let workspace = new Blockly.Workspace();
-                    try {
-                        Blockly.Xml.domToWorkspace(workspace, Blockly.Xml.textToDom(xml));
-                    } catch(e) {
-                        pxt.reportException(e, { xml: xml });
-                        return failedAsync();
+            .then(() => compiler.getBlocksAsync())
+            .then((bi) => {
+                blocksInfo = bi;
+                let oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
+                if (oldWorkspace) {
+                    let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
+                    if (oldJs == js) {
+                        console.log('js not changed, skipping decompile');
+                        return this.parent.setFile(mainPkg.files[blockFile]);
                     }
-                    let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
-                    if (b2jsr.source.replace(/\s/g, '') != js.replace(/\s/g,'')) {
-                        pxt.reportError('decompilation failure', {
-                            js: js,
-                            blockly: xml,
-                            jsroundtrip: b2jsr.source
-                        })
-                        return failedAsync();
-                    }
+                }
+                return compiler.decompileAsync(this.currFile.name)
+                    .then(resp => {
+                        if (!resp.success) return failedAsync();
+                        xml = resp.outfiles[blockFile];
+                        Util.assert(!!xml);
+                        // try to convert back to typescript
+                        let workspace = pxt.blocks.loadWorkspaceXml(xml);
+                        if (!workspace) return failedAsync();
 
-                    return mainPkg.setContentAsync(blockFile, xml).then(() => this.parent.setFile(mainPkg.files[blockFile]));
-                })
+                        let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
+                        if (b2jsr.source.replace(/\s/g, '') != js.replace(/\s/g, '')) {
+                            pxt.reportError('decompilation failure', {
+                                js: js,
+                                blockly: xml,
+                                jsroundtrip: b2jsr.source
+                            })
+                            return failedAsync();
+                        }
+
+                        return mainPkg.setContentAsync(blockFile, xml).then(() => this.parent.setFile(mainPkg.files[blockFile]));
+                    })
             }).catch(e => {
                 pxt.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
@@ -610,7 +621,7 @@ export class Editor extends srceditor.Editor {
     prepare() {
         this.editor = ace.edit("aceEditorInner");
         this.editor.setShowPrintMargin(false);
-        
+
         let langTools = acequire("ace/ext/language_tools");
 
         this.editor.commands.on("exec", (e: any) => {
@@ -737,8 +748,8 @@ export class Editor extends srceditor.Editor {
         this.lastSet = v;
         this.editor.session.setValue(v);
     }
-    
-    overrideFile(content:string) {
+
+    overrideFile(content: string) {
         this.editor.session.setValue(content);
     }
 
