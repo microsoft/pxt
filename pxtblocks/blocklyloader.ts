@@ -302,11 +302,11 @@ namespace pxt.blocks {
             //TODO
             default: block.setOutput(true, fn.retType);
         }
-
-        if (!/^on /.test(fn.attributes.block) || fn.attributes.blockStatement) {
-            block.setPreviousStatement(fn.retType == "void");
-            block.setNextStatement(fn.retType == "void");
-        }
+        
+        // hook up/down if return value is void
+        block.setPreviousStatement(fn.retType == "void");
+        block.setNextStatement(fn.retType == "void");
+        
         block.setTooltip(fn.attributes.jsDoc);
     }
 
@@ -605,7 +605,9 @@ namespace pxt.blocks {
             }
         };
 
-        Blockly.BlockSvg.START_HAT = true;
+        // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
+        // we're taking off hats.
+        // Blockly.BlockSvg.START_HAT = true;
 
         // Here's a helper to override the help URL for a block that's *already defined
         // by Blockly*. For blocks that we define ourselves, just change the call to

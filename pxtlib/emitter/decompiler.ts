@@ -332,9 +332,7 @@ write(`<block type="math_arithmetic">
             // chunk statements
             let chunks: ts.Statement[][] = [[]];
             stmts.forEach(stmt => {
-                if (isHat(stmt) ||
-                    (stmt.kind == ts.SyntaxKind.ExpressionStatement && isOutputExpression((stmt as ts.ExpressionStatement).expression))
-                )
+                if (stmt.kind == ts.SyntaxKind.ExpressionStatement && isOutputExpression((stmt as ts.ExpressionStatement).expression))
                     chunks.push([]);
                 chunks[chunks.length - 1].push(stmt);
             })
@@ -366,16 +364,6 @@ write(`<block type="math_arithmetic">
                 }
                 default: return false;
             }
-        }
-
-        function isHat(stmt: ts.Statement): boolean {
-            let expr: ts.Expression;
-            let call: ts.pxt.CallInfo;
-            return stmt.kind == ts.SyntaxKind.ExpressionStatement
-                && !!(expr = (stmt as ts.ExpressionStatement).expression)
-                && expr.kind == ts.SyntaxKind.CallExpression
-                && !!(call = (expr as any).callInfo)
-                && /^on /.test(call.attrs.block)
         }
 
         function emitBlock(n: ts.Block) {
@@ -531,10 +519,6 @@ write(`<block type="math_arithmetic">
                 }
             })
             writeEndBlock()
-            
-            // if this block does not support "next", close next
-            if (!/^on /.test(info.attrs.block) || info.attrs.blockStatement)
-                flushBlocks();
         }
     }
 }

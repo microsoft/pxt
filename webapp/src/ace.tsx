@@ -530,7 +530,8 @@ export class Editor extends srceditor.Editor {
                             return failedAsync();
                         }
 
-                        return mainPkg.setContentAsync(blockFile, xml).then(() => this.parent.setFile(mainPkg.files[blockFile]));
+                        return mainPkg.setContentAsync(blockFile, xml)
+                            .then(() => this.parent.setFile(mainPkg.files[blockFile]));
                     })
             }).catch(e => {
                 pxt.reportException(e, { js: this.currFile.content });

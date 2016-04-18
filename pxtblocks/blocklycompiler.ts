@@ -1164,10 +1164,6 @@ namespace pxt.blocks {
                 r = [compileChange(e, b)];
                 break;
 
-            case 'device_forever':
-                r = [compileForever(e, b)];
-                break;
-
             case 'controls_repeat_ext':
                 r = [compileControlsRepeat(e, b)];
                 break;
@@ -1204,11 +1200,6 @@ namespace pxt.blocks {
     export interface CompileOptions {
         name?: string;
         description?: string;
-    }
-
-    function isHandlerRegistration(b: B.Block) {
-        return !(b as any).previousConnection && !(b as any).outputConnection;
-        //return /(forever|_event)$/.test(b.type);
     }
 
     // Find the parent (as in "scope" parent) of a Block. The [parentNode_] property
@@ -1292,7 +1283,6 @@ namespace pxt.blocks {
         };
 
         function isTopBlock(b: B.Block): boolean {
-            if (isHandlerRegistration(b)) return false;
             if (!b.parentBlock_) return true;
             return isTopBlock(b.parentBlock_);
         }
@@ -1344,18 +1334,13 @@ namespace pxt.blocks {
             // [stmtsHandlers] contains calls to register event handlers. They must be
             // executed before the code that goes in the main function, as that latter
             // code may block, and prevent the event handler from being registered.
-            var stmtsHandlers: J.JStmt[] = [];
-            var stmtsMain: J.JStmt[] = [];
+            let stmtsMain: J.JStmt[] = [];
             w.getTopBlocks(true).forEach((b: B.Block) => {
-                if (isHandlerRegistration(b))
-                    append(stmtsHandlers, compileStatements(e, b));
-                else
-                    append(stmtsMain, compileStatements(e, b));
+                append(stmtsMain, compileStatements(e, b));
             });
 
             decls.push(H.mkAction("main",
                 stmtsVariables
-                    .concat(stmtsHandlers)
                     .concat(stmtsMain), [], []));
         } finally {
             removeAllPlaceholders(w);

@@ -78,10 +78,9 @@ export class Editor extends srceditor.Editor {
     }
 
     serializeBlocks(): string {
-        let xml = Blockly.Xml.workspaceToDom(this.editor);
-        let text = Blockly.Xml.domToPrettyText(xml);
-        console.log(text)
-        return text;
+        let xml = pxt.blocks.saveWorkspaceXml(this.editor);
+        console.log(xml)
+        return xml;
     }
 
     loadBlockly(s: string): boolean {
