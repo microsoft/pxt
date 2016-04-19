@@ -386,7 +386,7 @@ namespace pxt {
             return ids.map(id => this.resolveDep(id))
         }
 
-        getTargetOptions(): CompileTarget { return U.clone(appTarget.compile); }
+        getTargetOptions(): CompileTarget { return U.clone(appTarget.compile) || <CompileTarget>{ isNative: false, hasHex: false }; }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
             let opts: ts.pxt.CompileOptions = {
