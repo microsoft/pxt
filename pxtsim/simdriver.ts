@@ -1,5 +1,7 @@
 namespace pxsim {
     export interface SimulatorDriverOptions {
+        revealElement?: (el: HTMLElement) => void;
+        removeElement?: (el: HTMLElement) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
@@ -51,10 +53,10 @@ namespace pxsim {
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
             if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket')) {
-                if(frames.length < 2) {
+                if (frames.length < 2) {
                     let frame = this.createFrame()
                     this.container.appendChild(frame);
-                    frames = this.container.getElementsByTagName("iframe");                    
+                    frames = this.container.getElementsByTagName("iframe");
                 } else if (frames[1].dataset['runid'] != this.runId) {
                     this.startFrame(frames[1]);
                 }
@@ -82,20 +84,22 @@ namespace pxsim {
         }
 
         public stop(unload = false) {
-            this.cancelFrameCleanup();
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
-
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i] as HTMLIFrameElement
-                if (!/grayscale/.test(frame.className))
-                    U.addClass(frame, "grayscale");
+            else {
+                let frames = this.container.getElementsByTagName("iframe");
+                for (let i = 0; i < frames.length; ++i) {
+                    let frame = frames[i] as HTMLIFrameElement
+                    if (!/grayscale/.test(frame.className))
+                        U.addClass(frame, "grayscale");
+                }
+                this.scheduleFrameCleanup();
             }
         }
 
         private unload() {
+            this.cancelFrameCleanup();
             this.container.innerHTML = '';
             this.setState(SimulatorState.Unloaded);
         }
@@ -117,10 +121,13 @@ namespace pxsim {
         private cleanupFrames() {
             // drop unused extras frames after 5 seconds
             let frames = this.container.getElementsByTagName("iframe");
-            for(let i = 1; i < frames.length;++i) {
+            for (let i = 1; i < frames.length; ++i) {
                 let frame = frames[i];
-                if (frame.dataset['runid'] != this.runId)
-                    this.container.removeChild(frame);
+                if (this.state == SimulatorState.Stopped
+                    || frame.dataset['runid'] != this.runId) {
+                    if (this.options.removeElement) this.options.removeElement(frame);
+                    else frame.remove();
+                }
             }
         }
 
@@ -134,7 +141,7 @@ namespace pxsim {
                 type: 'run',
                 code: js
             }
-            
+
             this.scheduleFrameCleanup();
 
             // first frame            
@@ -143,14 +150,13 @@ namespace pxsim {
             if (!frame) {
                 frame = this.createFrame();
                 this.container.appendChild(frame);
-                // delay started
-            } else
-                this.startFrame(frame);
+            } else this.startFrame(frame);
 
             this.setState(SimulatorState.Running);
         }
 
         private startFrame(frame: HTMLIFrameElement) {
+            console.log(`starting frame ${frame.id}`);
             let msg = JSON.parse(JSON.stringify(this.currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
@@ -173,26 +179,33 @@ namespace pxsim {
         }
 
         private addEventListeners() {
-            this.listener = (ev: MessageEvent) => {
-                let msg = ev.data;
-                switch (msg.type || '') {
-                    case 'ready':
-                        let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
-                        let frame = document.getElementById(frameid) as HTMLIFrameElement;
-                        if (frame) this.startFrame(frame);
-                        break;
-                    case 'serial': break; //handled elsewhere
-                    case 'debugger': this.handleDebuggerMessage(msg); break;
-                    default:
-                        if (msg.type == 'radiopacket') {
-                            // assign rssi noisy?
-                            (msg as pxsim.SimulatorRadioPacketMessage).rssi = 10;
-                        }
-                        this.postMessage(ev.data, ev.source);
-                        break;
+            if (!this.listener) {
+                this.listener = (ev: MessageEvent) => {
+                    let msg = ev.data;
+                    switch (msg.type || '') {
+                        case 'ready':
+                            let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
+                            console.log(`frame ${frameid} ready`)
+                            let frame = document.getElementById(frameid) as HTMLIFrameElement;
+                            if (frame) {
+                                this.startFrame(frame);
+                                if (this.options.revealElement)
+                                    this.options.revealElement(frame);
+                            }
+                            break;
+                        case 'serial': break; //handled elsewhere
+                        case 'debugger': this.handleDebuggerMessage(msg); break;
+                        default:
+                            if (msg.type == 'radiopacket') {
+                                // assign rssi noisy?
+                                (msg as pxsim.SimulatorRadioPacketMessage).rssi = 10;
+                            }
+                            this.postMessage(ev.data, ev.source);
+                            break;
+                    }
                 }
+                window.addEventListener('message', this.listener, false);
             }
-            window.addEventListener('message', this.listener, false);
         }
 
         public resume(c: SimulatorDebuggerCommand) {

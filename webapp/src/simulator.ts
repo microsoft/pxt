@@ -27,6 +27,21 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     )
     $debugger = $('#debugger')    
     driver = new pxsim.SimulatorDriver($('#simulators')[0], {
+        revealElement: (el) => {
+            ($(el) as any).transition({
+                animation: 'fly right in',   
+                duration: '0.5s',
+            })            
+        },
+        removeElement: (el) => {
+            ($(el) as any).transition({
+                animation: 'fly right out',   
+                duration: '0.5s',
+                onComplete: function() {
+                    el.remove();
+                }
+            })
+        },
         onDebuggerBreakpoint: function(brk) {
             updateDebuggerButtons(brk)
             let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
