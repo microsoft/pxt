@@ -5,7 +5,7 @@ import Util = pxt.Util;
 let lf = Util.lf;
 
 namespace pxt.blocks {
-    
+
     const blockColors: Util.StringMap<number> = {
         loops: 120,
         images: 45,
@@ -24,8 +24,8 @@ namespace pxt.blocks {
     }
     var cachedBlocks: Util.StringMap<CachedBlock> = {};
     var cachedToolbox: string = "";
-    
-    export function blockSymbol(type: string) : ts.pxt.SymbolInfo {
+
+    export function blockSymbol(type: string): ts.pxt.SymbolInfo {
         let b = cachedBlocks[type];
         return b ? b.fn : undefined;
     }
@@ -181,7 +181,7 @@ namespace pxt.blocks {
             fn: fn,
             block: {
                 codeCard: mkCard(fn, blockXml),
-                init: function() { initBlock(this, info, fn, attrNames) }
+                init: function () { initBlock(this, info, fn, attrNames) }
             }
         }
 
@@ -216,14 +216,14 @@ namespace pxt.blocks {
             software: 1
         }
     }
-    
+
     function initBlock(block: any, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
         const ns = fn.namespace.split('.')[0];
         const instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
 
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help);
-        
+
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(
             info.apis.byQName[ns].attributes.color
@@ -302,17 +302,17 @@ namespace pxt.blocks {
             //TODO
             default: block.setOutput(true, fn.retType);
         }
-        
+
         // hook up/down if return value is void
         block.setPreviousStatement(fn.retType == "void");
         block.setNextStatement(fn.retType == "void");
-        
+
         block.setTooltip(fn.attributes.jsDoc);
     }
 
     export function initBlocks(blockInfo: ts.pxt.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
         init();
-        
+
         blockInfo.blocks.sort((f1, f2) => {
             let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
             let ns2 = blockInfo.apis.byQName[f2.namespace.split('.')[0]];
@@ -379,13 +379,23 @@ namespace pxt.blocks {
         if (blocklyInitialized) blocklyInitialized = true;
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
+
+        if (window.navigator.pointerEnabled) {
+            (Blockly.bindEvent_ as any).TOUCH_MAP = {
+                mousedown: 'pointerdown',
+                mousemove: 'pointermove',
+                mouseup: 'pointerup'
+            };
+            document.body.style.touchAction = 'none';
+        }
+
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
         var blockColors = {
             loops: 120,
             variables: 330,
         }
 
-        Blockly.Variables.flyoutCategory = function(workspace) {
+        Blockly.Variables.flyoutCategory = function (workspace) {
             var variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
             // In addition to the user's variables, we also want to display the default
@@ -421,7 +431,7 @@ namespace pxt.blocks {
                     var field = goog.dom.createDom('field', null, variableList[i]);
                     field.setAttribute('name', 'VAR');
                     block.appendChild(field);
-                    
+
                     var value = goog.dom.createDom('value');
                     value.setAttribute('name', 'VALUE');
                     var shadow = goog.dom.createDom('shadow');
@@ -432,7 +442,7 @@ namespace pxt.blocks {
                     field.appendChild(document.createTextNode("0"));
                     shadow.appendChild(field);
                     block.appendChild(value);
-                    
+
                     xmlList.push(block);
                 }
                 {
@@ -460,7 +470,7 @@ namespace pxt.blocks {
         };
 
         Blockly.Blocks['math_op2'] = {
-            init: function() {
+            init: function () {
                 this.setHelpUrl('/reference/math');
                 this.setColour(230);
                 this.appendValueInput("x")
@@ -477,7 +487,7 @@ namespace pxt.blocks {
         };
 
         Blockly.Blocks['math_op3'] = {
-            init: function() {
+            init: function () {
                 this.setHelpUrl('/reference/math/abs');
                 this.setColour(230);
                 this.appendDummyInput()
@@ -491,7 +501,7 @@ namespace pxt.blocks {
         };
 
         Blockly.Blocks['device_while'] = {
-            init: function() {
+            init: function () {
                 this.setHelpUrl('/reference/loops/while');
                 this.setColour(blockColors.loops);
                 this.appendValueInput("COND")
@@ -506,7 +516,7 @@ namespace pxt.blocks {
         };
 
         Blockly.Blocks['device_random'] = {
-            init: function() {
+            init: function () {
                 this.setHelpUrl('/reference/math/random');
                 this.setColour(230);
                 this.appendDummyInput()
@@ -525,7 +535,7 @@ namespace pxt.blocks {
              * Block for 'for' loop.
              * @this Blockly.Block
              */
-            init: function() {
+            init: function () {
                 this.setHelpUrl("/reference/loops/for");
                 this.setColour((<any>Blockly.Blocks).loops.HUE);
                 this.appendDummyInput()
@@ -542,7 +552,7 @@ namespace pxt.blocks {
                 this.setInputsInline(true);
                 // Assign 'this' to a variable for use in the tooltip closure below.
                 var thisBlock = this;
-                this.setTooltip(function() {
+                this.setTooltip(function () {
                     return Blockly.Msg.CONTROLS_FOR_TOOLTIP.replace('%1',
                         thisBlock.getFieldValue('VAR'));
                 });
@@ -552,7 +562,7 @@ namespace pxt.blocks {
              * @return {!Array.<string>} List of variable names.
              * @this Blockly.Block
              */
-            getVars: function(): any[] {
+            getVars: function (): any[] {
                 return [this.getFieldValue('VAR')];
             },
             /**
@@ -562,7 +572,7 @@ namespace pxt.blocks {
              * @param {string} newName Renamed variable.
              * @this Blockly.Block
              */
-            renameVar: function(oldName: string, newName: string) {
+            renameVar: function (oldName: string, newName: string) {
                 if (Blockly.Names.equals(oldName, this.getFieldValue('VAR'))) {
                     this.setFieldValue(newName, 'VAR');
                 }
@@ -572,7 +582,7 @@ namespace pxt.blocks {
              * @param {!Array} options List of menu options to add to.
              * @this Blockly.Block
              */
-            customContextMenu: function(options: any[]) {
+            customContextMenu: function (options: any[]) {
                 if (!this.isCollapsed()) {
                     var option: any = { enabled: true };
                     var name = this.getFieldValue('VAR');
@@ -589,7 +599,7 @@ namespace pxt.blocks {
 
 
         Blockly.Blocks['variables_change'] = {
-            init: function() {
+            init: function () {
                 this.appendDummyInput()
                     .appendField("change")
                     .appendField(new Blockly.FieldVariable("item"), "VAR");
@@ -615,7 +625,7 @@ namespace pxt.blocks {
         function monkeyPatchBlock(id: string, name: string, url: string) {
             var old = Blockly.Blocks[id].init;
             // fix sethelpurl
-            Blockly.Blocks[id].init = function() {
+            Blockly.Blocks[id].init = function () {
                 // The magic of dynamic this-binding.
                 old.call(this);
                 this.setHelpUrl("/reference/" + url);
