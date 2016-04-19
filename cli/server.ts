@@ -109,8 +109,10 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
     return Promise.map(data.files, f =>
         readFileAsync(path.join(dirname, f.name))
             .then(buf => {
-                if (buf.toString("utf8") !== f.prevContent)
+                if (buf.toString("utf8") !== f.prevContent) {
+                    console.log(`merge error for ${f.name}: previous content changed...`);
                     throwError(409)
+                }
             }, err => { }))
         // no conflict, proceed with writing
         .then(() => Promise.map(data.files, f =>
