@@ -897,7 +897,9 @@ Ctrl+Shift+B
                 <div id="menubar" role="banner">
                     <div className="ui borderless small menu" role="menubar">
                         <span id="logo" className="ui item">
-                            {targetTheme.logo || targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>) : null}
+                            {targetTheme.logo || targetTheme.portraitLogo 
+                                ? <a target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a> 
+                                : <span>{targetTheme.name}</span>}
                             {targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                         </span>
                         <div className="ui item">
