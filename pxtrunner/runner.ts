@@ -203,7 +203,7 @@ namespace pxt.runner {
 
     export function decompileToBlocksAsync(code: string): Promise<DecompileResult> {
         return loadPackageAsync(null)
-            .then(() => getCompileOptionsAsync(appTarget.compile.hasHex))
+            .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false)
             .then(opts => {
                 // compile
                 opts.fileSystem["main.ts"] = code
