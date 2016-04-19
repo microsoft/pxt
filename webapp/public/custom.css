@@ -68,7 +68,7 @@ body {
 .simframe {
     border: none;
     width: 20rem;
-    height: 16rem;
+    height: 16.4rem;
     margin: 0;
     padding: 0;
     background:transparent;    
@@ -485,7 +485,7 @@ html {
     .simframe {
         display:inline-block;
         width: 15rem;
-        height:12rem;
+        height:12.3rem;
     }
     
     .blocklyTreeLabel {
@@ -530,7 +530,7 @@ html {
     }
     .simframe.grayscale {
         width:5rem;
-        height:4rem;
+        height:4.1rem;
     }
 }
 
