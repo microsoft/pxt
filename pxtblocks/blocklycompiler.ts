@@ -189,7 +189,7 @@ namespace pxt.blocks {
         }
 
         // Generates a reference to bound variable [x]
-        export function mkLocalRef(x: string, t?:J.JTypeRef): J.JLocalRef {
+        export function mkLocalRef(x: string, t?: J.JTypeRef): J.JLocalRef {
             assert(!!x);
             return {
                 nodeType: "localRef",
@@ -295,17 +295,17 @@ namespace pxt.blocks {
         }
 
         export function mkAssign(x: J.JExpr, e: J.JExpr): J.JStmt {
-            var assign = mkSimpleCall("=", [x, e]);
-            var expr = mkExprHolder([], assign);
+            let assign = mkSimpleCall("=", [x, e]);
+            let expr = mkExprHolder([], assign);
             return mkExprStmt(expr);
         }
 
         // Generate the AST for:
         //   [var x: t := e]
         export function mkDefAndAssign(x: string, t: J.JTypeRef, e: J.JExpr): J.JStmt {
-            var def: J.JLocalDef = mkDef(x, t);
-            var assign = mkSimpleCall("=", [mkLocalRef(x,t), e]);
-            var expr = mkExprHolder([def], assign);
+            let def: J.JLocalDef = mkDef(x, t);
+            let assign = mkSimpleCall("=", [mkLocalRef(x, t), e]);
+            let expr = mkExprHolder([def], assign);
             return mkExprStmt(expr);
         }
 
@@ -873,6 +873,7 @@ namespace pxt.blocks {
         name: string;
         type: Point;
         usedAsForIndex: number;
+        assigned?: boolean;
         incompatibleWithFor?: boolean;
     }
 
@@ -953,7 +954,7 @@ namespace pxt.blocks {
         var binding = lookup(e, bVar);
         assert(binding.usedAsForIndex > 0);
 
-        if (isClassicForLoop(b) && !binding.incompatibleWithFor) {  
+        if (isClassicForLoop(b) && !binding.incompatibleWithFor) {
             let bToExpr = compileExpression(e, bTo);
             if (bToExpr.nodeType == "numberLiteral")
                 bToExpr = H.mkNumberLiteral((bToExpr as J.JNumberLiteral).value + 1)
@@ -1193,15 +1194,6 @@ namespace pxt.blocks {
         return stmts;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // Top-level definitions for compiling an entire blockly workspace
-
-    export interface CompileOptions {
-        name?: string;
-        description?: string;
-    }
-
     // Find the parent (as in "scope" parent) of a Block. The [parentNode_] property
     // will return the visual parent, that is, the one connected to the top of the
     // block.
@@ -1291,45 +1283,25 @@ namespace pxt.blocks {
         // set block, 1) make sure that the variable is bound, then 2) mark the
         // variable if needed.
         w.getAllBlocks().forEach((b: B.Block) => {
-            if (b.type == "variables_set" || b.type == "variables_change") {
-                let x = b.getFieldValue("VAR");
-                if (lookup(e, x) == null)
-                    e = extend(e, x, null);
-
-                let binding = lookup(e, x);
-                if (binding.usedAsForIndex)
-                    // Second reason why we can't compile as a TouchDevelop for-loop: loop
-                    // index is assigned to
-                    binding.incompatibleWithFor = true;
-            } else if (b.type == "variables_get") {
+            if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
                 let x = b.getFieldValue("VAR");
                 if (lookup(e, x) == null)
                     e = extend(e, x, null);
 
                 let binding = lookup(e, x);
                 if (binding.usedAsForIndex && !variableIsScoped(b, x))
-                    // Third reason why we can't compile to a TouchDevelop for-loop: loop
-                    // index is read outside the loop.
+                    // loop index is read outside the loop.
                     binding.incompatibleWithFor = true;
             }
         });
-
         return e;
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo, options: CompileOptions): J.JApp {
+    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): J.JApp {
+        let decls: J.JDecl[] = [];
         try {
-            var decls: J.JDecl[] = [];
-            var e = mkEnv(w, blockInfo);
+            let e = mkEnv(w, blockInfo);
             infer(e, w);
-
-            // All variables in this script are compiled as locals within main.
-            var stmtsVariables: J.JStmt[] = [];
-            e.bindings.forEach((b: Binding) => {
-                var btype = find(b.type);
-                if (!isCompiledAsForIndex(b))
-                    stmtsVariables.push(H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type))));
-            });
 
             // [stmtsHandlers] contains calls to register event handlers. They must be
             // executed before the code that goes in the main function, as that latter
@@ -1339,14 +1311,20 @@ namespace pxt.blocks {
                 append(stmtsMain, compileStatements(e, b));
             });
 
+            // All variables in this script are compiled as locals within main unless loop or previsouly assigned
+            let stmtsVariables = e.bindings.filter(b => !isCompiledAsForIndex(b) && !b.assigned)
+                .map(b => {
+                    var btype = find(b.type);
+                    return H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type)));
+                });
+
             decls.push(H.mkAction("main",
-                stmtsVariables
-                    .concat(stmtsMain), [], []));
+                stmtsVariables.concat(stmtsMain), [], []));
         } finally {
             removeAllPlaceholders(w);
         }
 
-        return H.mkApp(options.name || 'untitled', options.description || '', decls);
+        return H.mkApp('untitled', '', decls);
     }
 
     export interface SourceInterval {
@@ -1370,9 +1348,9 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: ts.pxt.BlocksInfo, options: CompileOptions = {}): BlockCompilationResult {
+    export function compile(b: B.Workspace, blockInfo: ts.pxt.BlocksInfo): BlockCompilationResult {
         Errors.clear();
-        return tdASTtoTS(compileWorkspace(b, blockInfo, options));
+        return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
     function tdASTtoTS(app: J.JApp): BlockCompilationResult {
@@ -1442,7 +1420,7 @@ namespace pxt.blocks {
                         rec(e.args[0], infixPri)
                     } else {
                         var bindLeft = infixPri != 3 && e.name != "**"
-                        var letType : string = undefined;
+                        var letType: string = undefined;
                         if (e.name == "=" && e.args[0].nodeType == 'localRef') {
                             let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
                             let varname = varloc.name;
@@ -1458,7 +1436,7 @@ namespace pxt.blocks {
                             pushOp(letType)
                         }
                         pushOp(e.name)
-                        rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)                        
+                        rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)
                     }
                     if (infixPri < outPrio) pushOp(")");
                 } else {
@@ -1524,7 +1502,7 @@ namespace pxt.blocks {
                 f();
                 return;
             }
-            
+
             let start = output.length;
             f();
             let end = output.length;
