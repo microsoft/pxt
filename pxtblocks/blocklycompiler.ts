@@ -670,7 +670,6 @@ namespace pxt.blocks {
                                     unionParam(e, b, p.field, ground(t));
                                 }
                             });
-                            compileCall(e, b);
                         }
                 }
             } catch (e) {
@@ -763,13 +762,6 @@ namespace pxt.blocks {
     function compileMathOp3(e: Environment, b: B.Block): J.JExpr {
         var x = compileExpression(e, b.getInputTargetBlock("x"));
         return H.mathCall("abs", [x]);
-    }
-
-    function compileVariableGet(e: Environment, b: B.Block): J.JExpr {
-        var name = b.getFieldValue("VAR");
-        var binding = lookup(e, name);
-        assert(binding != null && binding.type != null);
-        return H.mkLocalRef(name);
     }
 
     function compileText(e: Environment, b: B.Block): J.JExpr {
@@ -869,11 +861,17 @@ namespace pxt.blocks {
         stdCallTable: Util.StringMap<StdFunc>;
     }
 
+    enum VarUsage {
+        Unknown,
+        Read,
+        Assign
+    }
+
     interface Binding {
         name: string;
         type: Point;
         usedAsForIndex: number;
-        assigned?: boolean;
+        assigned?: VarUsage;
         incompatibleWithFor?: boolean;
     }
 
@@ -947,11 +945,11 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: B.Block): J.JStmt[] {
-        var bVar = b.getFieldValue("VAR");
-        var bTo = b.getInputTargetBlock("TO");
-        var bDo = b.getInputTargetBlock("DO");
+        let bVar = b.getFieldValue("VAR");
+        let bTo = b.getInputTargetBlock("TO");
+        let bDo = b.getInputTargetBlock("DO");
 
-        var binding = lookup(e, bVar);
+        let binding = lookup(e, bVar);
         assert(binding.usedAsForIndex > 0);
 
         if (isClassicForLoop(b) && !binding.incompatibleWithFor) {
@@ -1029,22 +1027,35 @@ namespace pxt.blocks {
         var body = compileStatements(e, bBody);
         return mkCallWithCallback(e, "basic", "forever", [], body);
     }
+    
+    function compileVariableGet(e: Environment, b: B.Block): J.JExpr {
+        let name = b.getFieldValue("VAR");
+        let binding = lookup(e, name);
+        if (!binding.assigned) 
+            binding.assigned = VarUsage.Read;
+        assert(binding != null && binding.type != null);
+        return H.mkLocalRef(name);
+    }
 
     function compileSet(e: Environment, b: B.Block): J.JStmt {
-        var bVar = b.getFieldValue("VAR");
-        var bExpr = b.getInputTargetBlock("VALUE");
-        var binding = lookup(e, bVar);
-        var expr = compileExpression(e, bExpr);
-        var ref = H.mkLocalRef(bVar);
+        let bVar = b.getFieldValue("VAR");
+        let bExpr = b.getInputTargetBlock("VALUE");
+        let binding = lookup(e, bVar);
+        if (!binding.assigned && !findParent(b)) 
+            binding.assigned = VarUsage.Assign;
+        let expr = compileExpression(e, bExpr);
+        let ref = H.mkLocalRef(bVar);
         return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, expr])));
     }
 
     function compileChange(e: Environment, b: B.Block): J.JStmt {
-        var bVar = b.getFieldValue("VAR");
-        var bExpr = b.getInputTargetBlock("VALUE");
-        var binding = lookup(e, bVar);
-        var expr = compileExpression(e, bExpr);
-        var ref = H.mkLocalRef(bVar);
+        let bVar = b.getFieldValue("VAR");
+        let bExpr = b.getInputTargetBlock("VALUE");
+        let binding = lookup(e, bVar);
+        if (!binding.assigned) 
+            binding.assigned = VarUsage.Read;
+        let expr = compileExpression(e, bExpr);
+        let ref = H.mkLocalRef(bVar);
         return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, H.mkSimpleCall("+", [ref, expr])])));
     }
 
@@ -1183,10 +1194,9 @@ namespace pxt.blocks {
     }
 
     function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
-        if (b == null)
-            return [];
+        if (!b) return [];
 
-        var stmts: J.JStmt[] = [];
+        let stmts: J.JStmt[] = [];
         while (b) {
             if (!b.disabled) append(stmts, compileStatementBlock(e, b));
             b = b.getNextBlock();
@@ -1201,7 +1211,7 @@ namespace pxt.blocks {
         var candidate = b.parentBlock_;
         if (!candidate)
             return null;
-        var isActualInput = false;
+        let isActualInput = false;
         candidate.inputList.forEach((i: B.Input) => {
             if (i.name && candidate.getInputTargetBlock(i.name) == b)
                 isActualInput = true;
@@ -1209,6 +1219,11 @@ namespace pxt.blocks {
         return isActualInput && candidate || null;
     }
 
+    function isTopBlock(b: B.Block): boolean {
+        if (!b.parentBlock_) return true;
+        return isTopBlock(b.parentBlock_);
+    }
+        
     // This function creates an empty environment where type inference has NOT yet
     // been performed.
     // - All variables have been assigned an initial [Point] in the union-find.
@@ -1247,8 +1262,18 @@ namespace pxt.blocks {
                     }
                 })
 
-        // First pass: collect loop variables.
-        w.getAllBlocks().forEach((b: B.Block) => {
+        const variableIsScoped = (b: B.Block, name: string): boolean => {
+            if (!b)
+                return false;
+            else if ((b.type == "controls_for" || b.type == "controls_simple_for")
+                && b.getFieldValue("VAR") == name)
+                return true;
+            else
+                return variableIsScoped(findParent(b), name);
+        };
+
+        // collect loop variables.
+        w.getAllBlocks().forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for") {
                 let x = b.getFieldValue("VAR");
                 // It's ok for two loops to share the same variable.
@@ -1264,25 +1289,9 @@ namespace pxt.blocks {
             }
         });
 
-        var variableIsScoped = (b: B.Block, name: string): boolean => {
-            if (!b)
-                return false;
-            else if ((b.type == "controls_for" || b.type == "controls_simple_for")
-                && b.getFieldValue("VAR") == name)
-                return true;
-            else
-                return variableIsScoped(findParent(b), name);
-        };
-
-        function isTopBlock(b: B.Block): boolean {
-            if (!b.parentBlock_) return true;
-            return isTopBlock(b.parentBlock_);
-        }
-
-        // Last series of checks to determine for-loop compatibility: for each get or
-        // set block, 1) make sure that the variable is bound, then 2) mark the
-        // variable if needed.
-        w.getAllBlocks().forEach((b: B.Block) => {
+        // determine for-loop compatibility: for each get or
+        // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
+        w.getAllBlocks().forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
                 let x = b.getFieldValue("VAR");
                 if (lookup(e, x) == null)
@@ -1294,6 +1303,7 @@ namespace pxt.blocks {
                     binding.incompatibleWithFor = true;
             }
         });
+
         return e;
     }
 
@@ -1307,12 +1317,12 @@ namespace pxt.blocks {
             // executed before the code that goes in the main function, as that latter
             // code may block, and prevent the event handler from being registered.
             let stmtsMain: J.JStmt[] = [];
-            w.getTopBlocks(true).forEach((b: B.Block) => {
+            w.getTopBlocks(true).map(b => {
                 append(stmtsMain, compileStatements(e, b));
             });
 
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
-            let stmtsVariables = e.bindings.filter(b => !isCompiledAsForIndex(b) && !b.assigned)
+            let stmtsVariables = e.bindings.filter(b => !isCompiledAsForIndex(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
                     var btype = find(b.type);
                     return H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type)));
@@ -1555,8 +1565,10 @@ namespace pxt.blocks {
                     localRef(n.name)
             },
 
-            operator: (n: J.JOperator) => {
-                if (/^[\d()]/.test(n.op))
+            operator: (n: J.JOperator) => {                
+                if (n.op == "let")
+                    write(n.op + " ");
+                else if (/^[\d()]/.test(n.op))
                     write(n.op)
                 else if (n.op == ",")
                     write(n.op + " ")
