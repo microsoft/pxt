@@ -147,9 +147,6 @@ namespace pxt.cpp {
             return name.trim().replace(/_$/, "")
         }
 
-        // defaults:
-        res.microbitConfig.config["MICROBIT_BLE_ENABLED"] = "0"
-
         for (let pkg of mainPkg.sortedDeps()) {
             if (pkg.getFiles().indexOf(constsName) >= 0) {
                 let src = pkg.host().readFile(pkg, constsName)
@@ -418,20 +415,20 @@ namespace pxt.cpp {
         }
 
         function parseJson(pkg: Package) {
-            let json = pkg.config.microbit
+            let json = pkg.config.yotta
             if (!json) return;
 
             // TODO check for conflicts
             if (json.dependencies) {
-                U.jsonCopyFrom(res.microbitConfig.dependencies, json.dependencies)
+                U.jsonCopyFrom(res.yotta.dependencies, json.dependencies)
             }
 
             if (json.config)
-                U.jsonCopyFrom(res.microbitConfig.config, json.config)
+                U.jsonMergeFrom(res.yotta.config, json.config);
         }
 
         // This is overridden on the build server, but we need it for command line build
-        res.microbitConfig.dependencies["pxt-microbit-core"] = "microsoft/pxt-microbit-core#" + compileService.gittag;
+        res.yotta.dependencies["pxt-microbit-core"] = "microsoft/pxt-microbit-core#" + compileService.gittag;
 
         if (mainPkg) {
             let seenMain = false
@@ -466,7 +463,7 @@ namespace pxt.cpp {
                     }
                 }
                 if (thisErrors) {
-                    res.errors += lf("Packge {0}:\n", pkg.id) + thisErrors
+                    res.errors += lf("Package {0}:\n", pkg.id) + thisErrors
                 }
             }
         }
@@ -474,37 +471,17 @@ namespace pxt.cpp {
         if (res.errors)
             return res;
 
-        let cfginc = ""
-        let jsonconfig = res.microbitConfig.config
-        Object.keys(jsonconfig).forEach(k => {
-            if (!/^\w+$/.test(k))
-                err(lf("invalid config variable: {0}", k))
-            cfginc += "#undef " + k + "\n"
-            if (!/^\w+$/.test(jsonconfig[k]))
-                err(lf("invalid config value: {0}: {1}", k, jsonconfig[k]))
-            cfginc += "#define " + k + " " + jsonconfig[k] + "\n"
-        })
-
-        res.generatedFiles["/inc/PxtConfig.h"] = cfginc
-        res.generatedFiles["/source/pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
-
+        let configJson = res.yotta.config
         let moduleJson = {
             "name": "pxt-microbit-app",
             "version": "0.0.0",
             "description": "Auto-generated. Do not edit.",
             "license": "n/a",
-            "dependencies": res.microbitConfig.dependencies,
+            "dependencies": res.yotta.dependencies,
             "targetDependencies": {},
             "bin": "./source"
         }
-
-        let configJson = {
-            "microbit": {
-                "configfile": "inc/PxtConfig.h"
-            }
-        }
-
-
+        res.generatedFiles["/source/pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
         res.generatedFiles["/source/main.cpp"] = `
@@ -524,7 +501,7 @@ int main() {
             config: compileService.serviceId,
             tag: compileService.gittag,
             replaceFiles: tmp,
-            dependencies: res.microbitConfig.dependencies,
+            dependencies: res.yotta.dependencies,
         }
 
         let data = JSON.stringify(creq)

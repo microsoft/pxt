@@ -9,7 +9,7 @@ namespace pxt {
     export var appTarget: TargetBundle;
 
     // general error reported
-    export var reportException: (err: any, data: any) => void = function(e, d) {
+    export var reportException: (err: any, data: any) => void = function (e, d) {
         if (console) {
             console.error(e);
             if (d) {
@@ -19,7 +19,7 @@ namespace pxt {
             }
         }
     }
-    export var reportError: (msg: string, data: any) => void = function(m, d) {
+    export var reportError: (msg: string, data: any) => void = function (m, d) {
         if (console) {
             console.error(m);
             if (d) {
@@ -43,9 +43,9 @@ namespace pxt {
         targetId: string; // "microbit",
         simUrl: string; // "https://trg-microbit.kindscript.net/sim/zowrj"
     }
-    
+
     export function localWebConfig() {
-        let r:WebConfig = {
+        let r: WebConfig = {
             relprefix: "/--",
             workerjs: "/worker.js",
             tdworkerjs: "/tdworker.js",
@@ -60,14 +60,14 @@ namespace pxt {
         }
         return r
     }
-    
-    export var webConfig:WebConfig;
 
-    export function setupWebConfig(cfg:WebConfig) {
+    export var webConfig: WebConfig;
+
+    export function setupWebConfig(cfg: WebConfig) {
         if (cfg) webConfig = cfg;
-        else if (!webConfig) webConfig = localWebConfig()        
+        else if (!webConfig) webConfig = localWebConfig()
     }
-    
+
     export type CompileTarget = ts.pxt.CompileTarget;
 
     export interface Host {
@@ -92,7 +92,7 @@ namespace pxt {
         link?: boolean;
         url?: string;
         responsive?: boolean;
-        
+
         header?: string;
         any?: number;
         hardware?: number;
@@ -114,6 +114,11 @@ namespace pxt {
         commits?: string; // URL
     }
 
+    export interface TargetCompileService {
+        gittag: string;
+        serviceId: string;
+    }
+
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
@@ -125,10 +130,7 @@ namespace pxt {
         compile: CompileTarget;
         serial?: AppSerial;
         appTheme: AppTheme;
-        compileService?: {
-            gittag: string;
-            serviceId: string;
-        }
+        compileService?: TargetCompileService;
     }
 
     export interface TargetBundle extends AppTarget {
@@ -147,7 +149,7 @@ namespace pxt {
         testFiles?: string[];
         public?: boolean;
         binaryonly?: boolean;
-        microbit?: ts.pxt.MicrobitConfig;
+        yotta?: ts.pxt.YottaConfig;
         card?: CodeCard;
     }
 
@@ -490,17 +492,17 @@ namespace pxt {
             let prj = pxt.appTarget.tsprj;
             this.config = pxt.U.clone(prj.config);
             this.config.name = name;
-            
+
             let files: U.Map<string> = {};
             for (let f in prj.files)
                 files[f] = prj.files[f];
             for (let f in defaultFiles)
                 files[f] = defaultFiles[f];
             files["pxt.json"] = undefined;
-            
+
             this.config.files = Object.keys(files).filter(s => !/test/.test(s));
             this.config.testFiles = Object.keys(files).filter(s => /test/.test(s));
-            
+
             this.validateConfig();
             this.saveConfig()
 

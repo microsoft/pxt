@@ -1921,16 +1921,16 @@ ${lbl}: .short 0xffff
         value: number;
     }
 
-    export interface MicrobitConfig {
+    export interface YottaConfig {
         dependencies?: U.Map<string>;
-        config?: U.Map<string>;
+        config?: any;
     }
 
     export interface ExtensionInfo {
         functions: FuncInfo[];
         generatedFiles: U.Map<string>;
         extensionFiles: U.Map<string>;
-        microbitConfig: MicrobitConfig;
+        yotta: YottaConfig;
         errors: string;
         sha: string;
         compileData: string;
@@ -1950,7 +1950,7 @@ ${lbl}: .short 0xffff
             shimsDTS: "",
             enumsDTS: "",
             onlyPublic: true,
-            microbitConfig: {
+            yotta: {
                 dependencies: {},
                 config: {}
             }
