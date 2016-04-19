@@ -179,7 +179,7 @@ export function ptrAsync(path: string, target?: string) {
                 console.log("Pointer " + path + " deleted.")
             })
     }
-    
+
     if (target == "refresh") {
         return Cloud.privatePostAsync(nodeutil.pathToPtr(path), {})
             .then(r => {
@@ -676,6 +676,26 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     return webmanifest;
 }
 
+function saveThemeJson(cfg: pxt.TargetBundle) {
+    cfg.appTheme.id = cfg.id
+    cfg.appTheme.title = cfg.title
+    cfg.appTheme.name = cfg.name
+
+    // expand logo
+    let logos = (cfg.appTheme as any as U.Map<string>);
+    Object.keys(logos)
+        .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
+        .forEach(k => {
+            let fn = path.join('./docs', logos[k]);
+            console.log(`importing ${fn}`)
+            let b = fs.readFileSync(fn)
+            logos[k] = b.toString('utf8');
+        })
+
+    nodeutil.mkdirP("built");
+    fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
+}
+
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
@@ -699,23 +719,9 @@ function buildTargetCoreAsync() {
                 pxt: readJson("node_modules/pxt-core/package.json")["version"],
             }
 
-            cfg.appTheme.id = cfg.id
-            cfg.appTheme.title = cfg.title
-            cfg.appTheme.name = cfg.name
+            saveThemeJson(cfg)
 
             let webmanifest = buildWebManifest(cfg)
-
-            // expand logo
-            let logos = (cfg.appTheme as any as U.Map<string>);
-            Object.keys(logos)
-                .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
-                .forEach(k => {
-                    let fn = path.join('./docs', logos[k]);
-                    console.log(`importing ${fn}`)
-                    let b = fs.readFileSync(fn)
-                    logos[k] = b.toString('utf8');
-                })
-            nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
             pxt.appTarget = cfg; // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
@@ -723,7 +729,6 @@ function buildTargetCoreAsync() {
             delete targetlight.bundledpkgs
             delete targetlight.appTheme
             fs.writeFileSync("built/targetlight.json", JSON.stringify(targetlight, null, 2))
-            fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
             fs.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
         })
         .then(() => {
@@ -1565,6 +1570,13 @@ export function testAsync() {
     return buildCoreAsync(BuildOption.Test)
 }
 
+export function uploadDocsAsync(...args: string[]): Promise<void> {
+    let cfg = readLocalPxTarget()
+    if (cfg.id == "core")
+        saveThemeJson(cfg)
+    return uploader.uploadDocsAsync(...args)
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -1608,7 +1620,7 @@ cmd("pubtarget                    - publish all bundled target libraries", publi
 cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
-cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadDocsAsync, 1)
+cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)

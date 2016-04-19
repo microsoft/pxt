@@ -155,13 +155,15 @@ function uploadJsonAsync() {
     return uploadFileAsync("/theme.json")
 }
 
-function getDocsFiles(args:string[]) : string[] {
+function getDocsFiles(args: string[]): string[] {
     if (args[0] == "-v") {
         showVerbose = true
         args.shift()
     }
 
-    ptrPrefix = "/" + pxt.appTarget.id
+    // core 'target' is prefix-less - it contains docs for the entire system
+    if (pxt.appTarget.id != "core")
+        ptrPrefix = "/" + pxt.appTarget.id
 
     let files = args.map(a => {
         if (U.startsWith(a, "docs/")) return a.slice(4)
@@ -169,10 +171,10 @@ function getDocsFiles(args:string[]) : string[] {
     })
     if (files.length == 0)
         files = getFiles().filter(fn => !/^\/_/.test(fn))
-    return files;    
+    return files;
 }
 
-export function uploadDocsAsync(...args: string[]) : Promise<void> {
+export function uploadDocsAsync(...args: string[]): Promise<void> {
     let files = getDocsFiles(args);
 
     uploadDir = "docs"
@@ -190,15 +192,15 @@ export function uploadDocsAsync(...args: string[]) : Promise<void> {
         })
 }
 
-export function checkDocsAsync(...args: string[]) : Promise<void> {
+export function checkDocsAsync(...args: string[]): Promise<void> {
     console.log(`checking docs`);
-    let files = getFiles();  
-    
+    let files = getFiles();
+
     // known urls
-    let urls : U.Map<string> = {};
+    let urls: U.Map<string> = {};
     files.forEach(f => urls[f.replace(/\.md$/i, '')] = f);
 
-    let checked = 0;    
+    let checked = 0;
     let broken = 0;
     files.filter(f => /\.md$/i.test(f)).forEach(f => {
         let header = false;
@@ -216,8 +218,8 @@ export function checkDocsAsync(...args: string[]) : Promise<void> {
             return '';
         })
     })
-    
+
     console.log(`checked ${checked} files, found ${broken} broken links`);
-   // if (broken > 0) throw new Error(`found ${broken} broken links in docs`)
+    // if (broken > 0) throw new Error(`found ${broken} broken links in docs`)
     return Promise.resolve();
 }
