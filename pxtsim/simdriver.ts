@@ -22,6 +22,7 @@ namespace pxsim {
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
+        private runId = '';
         private nextFrameId = 0;
         private frameCounter = 0;
         private currentRuntime: pxsim.SimulatorRunMessage;
@@ -49,12 +50,14 @@ namespace pxsim {
         private postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
-            if (source
-                && (msg.type === 'eventbus' || msg.type == 'radiopacket')
-                && frames.length < 2) {
-                let frame = this.createFrame()
-                this.container.appendChild(frame);
-                frames = this.container.getElementsByTagName("iframe");
+            if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket')) {
+                if(frames.length < 2) {
+                    let frame = this.createFrame()
+                    this.container.appendChild(frame);
+                    frames = this.container.getElementsByTagName("iframe");                    
+                } else if (frames[1].dataset['runid'] != this.runId) {
+                    this.startFrame(frames[1]);
+                }
             }
 
             for (let i = 0; i < frames.length; ++i) {
@@ -71,13 +74,15 @@ namespace pxsim {
             frame.className = 'simframe';
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html" 
+            let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
+            frame.dataset['runid'] = this.runId;
             return frame;
         }
 
         public stop(unload = false) {
+            this.cancelFrameCleanup();
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
@@ -86,7 +91,7 @@ namespace pxsim {
             for (let i = 0; i < frames.length; ++i) {
                 let frame = frames[i] as HTMLIFrameElement
                 if (!/grayscale/.test(frame.className))
-                U.addClass(frame, "grayscale");
+                    U.addClass(frame, "grayscale");
             }
         }
 
@@ -95,9 +100,33 @@ namespace pxsim {
             this.setState(SimulatorState.Unloaded);
         }
 
+        private frameCleanupTimeout = 0;
+        private cancelFrameCleanup() {
+            if (this.frameCleanupTimeout) {
+                clearTimeout(this.frameCleanupTimeout);
+                this.frameCleanupTimeout = 0;
+            }
+        }
+        private scheduleFrameCleanup() {
+            this.cancelFrameCleanup();
+            this.frameCleanupTimeout = setTimeout(() => {
+                this.frameCleanupTimeout = 0;
+                this.cleanupFrames();
+            }, 5000);
+        }
+        private cleanupFrames() {
+            // drop unused extras frames after 5 seconds
+            let frames = this.container.getElementsByTagName("iframe");
+            for(let i = 1; i < frames.length;++i) {
+                let frame = frames[i];
+                if (frame.dataset['runid'] != this.runId)
+                    this.container.removeChild(frame);
+            }
+        }
+
         public run(js: string, debug?: boolean) {
             this.debug = debug;
-
+            this.runId = this.nextId();
             this.addEventListeners();
 
             // store information
@@ -105,10 +134,9 @@ namespace pxsim {
                 type: 'run',
                 code: js
             }
+            
+            this.scheduleFrameCleanup();
 
-            // drop extras frames
-            while (this.container.childElementCount > 1)
-                this.container.removeChild(this.container.lastElementChild);
             // first frame            
             let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
             // lazy allocate iframe
@@ -132,6 +160,7 @@ namespace pxsim {
                 player: mc
             };
             msg.id = `${msg.options.theme}-${this.nextId()}`;
+            frame.dataset['runid'] = this.runId;
             frame.contentWindow.postMessage(msg, "*");
             U.removeClass(frame, "grayscale");
         }
