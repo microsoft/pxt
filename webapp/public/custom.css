@@ -535,7 +535,8 @@ html {
         height:8rem;
     }
     .simframe.grayscale {
-        display:none !important;
+        width:4rem;
+        height:3.1rem;
     }
 }
 
