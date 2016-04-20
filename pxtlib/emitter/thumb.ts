@@ -188,7 +188,6 @@ module ts.pxt.thumb {
         public lineNo: number;
         public words: string[];
         public scope: string;
-        public noJs: boolean;
 
         public instruction: Instruction;
         public numArgs: number[];
@@ -744,12 +743,6 @@ module ts.pxt.thumb {
                     }
                 }
 
-                if (w0.charAt(0) == "*") {
-                    l.text = l.text.replace("*", "")
-                    w0 = l.words[0] = l.words[0].slice(1)
-                    l.noJs = true
-                }
-
                 let c0 = w0.charAt(0)
                 if (c0 == "." || c0 == "@") {
                     l.type = "directive";
@@ -828,7 +821,6 @@ module ts.pxt.thumb {
                     text = text.replace(/; WAS: .*/, "")
                     if (!text.trim()) return;
                 }
-                if (ln.noJs) text += " ; NOJS"
                 res += text + "\n"
             })
 
