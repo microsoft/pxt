@@ -95,7 +95,12 @@ namespace pxt.docs {
         },
     ]
 
-    export function renderMarkdown(template: string, src: string, breadcrumb: string[] = undefined, theme: AppTheme = {}, pubinfo: U.Map<string> = null): string {
+    export interface BreadcrumbEntry {
+        name: string;
+        href: string;
+    }
+
+    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null, breadcrumb: BreadcrumbEntry[] = []): string {
         let params: U.Map<string> = pubinfo || {}
 
         let boxes = U.clone(stdboxes)
@@ -144,13 +149,13 @@ namespace pxt.docs {
         if (!marked) {
             marked = require("marked");
             let renderer = new marked.Renderer()
-            renderer.image = function(href: string, title:string, text: string) {
+            renderer.image = function (href: string, title: string, text: string) {
                 let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
                 if (title) {
                     out += ' title="' + title + '"';
                 }
                 out += this.options.xhtml ? '/>' : '>';
-                return out;                  
+                return out;
             }
             marked.setOptions({
                 renderer: renderer,
@@ -163,7 +168,7 @@ namespace pxt.docs {
                 smartypants: true
             })
         };
-        
+
         src = src.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
@@ -177,7 +182,7 @@ namespace pxt.docs {
         })
 
         let html = marked(src)
-        
+
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
 
@@ -224,28 +229,27 @@ namespace pxt.docs {
             }
         })
 
-        if (pubinfo) {
-            params["title"] = pubinfo["name"]
-        } else {
-            if (!params["title"]) {
-                let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)
-                if (titleM)
-                    params["title"] = html2Quote(titleM[1])
-            }
-
-            if (!params["description"]) {
-                let descM = /<p>(.+?)<\/p>/.exec(html)
-                if (descM)
-                    params["description"] = html2Quote(descM[1])
-            }
+        if (!params["title"]) {
+            let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)
+            if (titleM)
+                params["title"] = html2Quote(titleM[1])
         }
-        
+
+        if (!params["description"]) {
+            let descM = /<p>(.+?)<\/p>/.exec(html)
+            if (descM)
+                params["description"] = html2Quote(descM[1])
+        }
+
         let breadcrumbHtml = '';
         if (breadcrumb && breadcrumb.length > 1) {
-            breadcrumb = breadcrumb.map(html2Quote);
-            breadcrumbHtml = `<div class="ui breadcrumb">${breadcrumb.map((b,i) => `<a class="${i == breadcrumb.length-1 ? "active": ""} section" href="/${
-                breadcrumb.slice(0, i+1).join("/")
-            }">${b}</a>`).join('<i class="right chevron icon divider"></i>')}</div>`;
+            breadcrumbHtml = `
+            <div class="ui breadcrumb">
+                ${breadcrumb.map((b, i) =>
+                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section" 
+                        href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
+                    .join('<i class="right chevron icon divider"></i>')}
+            </div>`;
         }
 
         let registers: U.Map<string> = {}

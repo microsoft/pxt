@@ -1,5 +1,16 @@
 
 namespace pxt.blocks.layout {
+    
+    export function verticalAlign(ws: B.Workspace) {
+        let blocks = ws.getTopBlocks(true);
+        let y = 0
+        blocks.forEach(block => {
+            block.moveBy(0, y)
+            y += block.getHeightWidth().height
+            y += 14; //buffer            
+        })
+    };
+    
     const nodeSeparation = 12;
 
     interface Edge {

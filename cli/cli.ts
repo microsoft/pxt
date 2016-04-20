@@ -143,6 +143,21 @@ export function apiAsync(path: string, postArguments?: string) {
         })
 }
 
+function uploadFileAsync(path: string) {
+    let buf = fs.readFileSync(path)
+    let mime = U.getMime(path)
+    console.log("Upload", path)
+    return Cloud.privatePostAsync("upload/files", {
+        filename: path,
+        encoding: "base64",
+        content: buf.toString("base64"),
+        contentType: mime
+    })
+        .then(resp => {
+            console.log(resp)
+        })
+}
+
 export function ptrAsync(path: string, target?: string) {
     // in MinGW when you say 'pxt ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
     let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
@@ -162,6 +177,14 @@ export function ptrAsync(path: string, target?: string) {
         return Cloud.privateDeleteAsync(nodeutil.pathToPtr(path))
             .then(() => {
                 console.log("Pointer " + path + " deleted.")
+            })
+    }
+
+    if (target == "refresh") {
+        return Cloud.privatePostAsync(nodeutil.pathToPtr(path), {})
+            .then(r => {
+                console.log(r)
+                return r
             })
     }
 
@@ -653,6 +676,26 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     return webmanifest;
 }
 
+function saveThemeJson(cfg: pxt.TargetBundle) {
+    cfg.appTheme.id = cfg.id
+    cfg.appTheme.title = cfg.title
+    cfg.appTheme.name = cfg.name
+
+    // expand logo
+    let logos = (cfg.appTheme as any as U.Map<string>);
+    Object.keys(logos)
+        .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
+        .forEach(k => {
+            let fn = path.join('./docs', logos[k]);
+            console.log(`importing ${fn}`)
+            let b = fs.readFileSync(fn)
+            logos[k] = b.toString('utf8');
+        })
+
+    nodeutil.mkdirP("built");
+    fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
+}
+
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
@@ -676,23 +719,9 @@ function buildTargetCoreAsync() {
                 pxt: readJson("node_modules/pxt-core/package.json")["version"],
             }
 
-            cfg.appTheme.id = cfg.id
-            cfg.appTheme.title = cfg.title
-            cfg.appTheme.name = cfg.name
+            saveThemeJson(cfg)
 
             let webmanifest = buildWebManifest(cfg)
-
-            // expand logo
-            let logos = (cfg.appTheme as any as U.Map<string>);
-            Object.keys(logos)
-                .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
-                .forEach(k => {
-                    let fn = path.join('./docs', logos[k]);
-                    console.log(`importing ${fn}`)
-                    let b = fs.readFileSync(fn)
-                    logos[k] = b.toString('utf8');
-                })
-            nodeutil.mkdirP("built");
             fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
             pxt.appTarget = cfg; // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
@@ -700,7 +729,6 @@ function buildTargetCoreAsync() {
             delete targetlight.bundledpkgs
             delete targetlight.appTheme
             fs.writeFileSync("built/targetlight.json", JSON.stringify(targetlight, null, 2))
-            fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
             fs.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
         })
         .then(() => {
@@ -752,6 +780,7 @@ function buildAndWatchTargetAsync() {
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed(e.message)
         }))
+        .then(() => uploader.checkDocsAsync())
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
@@ -873,6 +902,12 @@ class Host
                     U.iterStringMap(resp, (fn: string, cont: string) => {
                         pkg.host().writeFile(pkg, fn, cont)
                     }))
+        } else if (proto == "embed") {
+            let resp = pxt.getEmbeddedScript(pkg.verArgument())
+            U.iterStringMap(resp, (fn: string, cont: string) => {
+                pkg.host().writeFile(pkg, fn, cont)
+            })
+            return Promise.resolve()
         } else if (proto == "file") {
             console.log(`skip download of local pkg: ${pkg.version()}`)
             return Promise.resolve()
@@ -1146,12 +1181,12 @@ function buildDalConst(force = false) {
         (force || !fs.existsSync(constName))) {
         console.log(`rebuilding ${constName}...`)
         let incPath = ytPath + "/yotta_modules/microbit-dal/inc/"
-        let files = fs.readdirSync(incPath)
+        let files = allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: U.Map<string> = {}
         for (let fn of files) {
             if (U.endsWith(fn, "Config.h")) continue
-            fc[fn] = fs.readFileSync(incPath + fn, "utf8")
+            fc[fn] = fs.readFileSync(fn, "utf8")
         }
         files = Object.keys(fc)
 
@@ -1385,7 +1420,7 @@ function testConverterAsync(configFile: string) {
                             fs.writeFileSync("built/" + id + ".ts.fail", src)
                         }
                     })
-                    .then(() => {}, err => {
+                    .then(() => { }, err => {
                         console.log(`ERROR ${id}: ${err.message}`)
                         errors.push(id)
                     })
@@ -1537,6 +1572,13 @@ export function testAsync() {
     return buildCoreAsync(BuildOption.Test)
 }
 
+export function uploadDocsAsync(...args: string[]): Promise<void> {
+    let cfg = readLocalPxTarget()
+    if (cfg.id == "core")
+        saveThemeJson(cfg)
+    return uploader.uploadDocsAsync(...args)
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -1580,13 +1622,15 @@ cmd("pubtarget                    - publish all bundled target libraries", publi
 cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
-cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploader.uploadAsync, 1)
+cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
+cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
+cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 

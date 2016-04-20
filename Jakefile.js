@@ -84,6 +84,7 @@ task("travis", ["test", "upload"])
 task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
     jake.exec([
           "node built/pxt.js travis",
+          "node built/pxt.js uploaddoc",
     ], { printStdout: true });
 })
 

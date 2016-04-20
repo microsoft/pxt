@@ -27,7 +27,11 @@ namespace pxt.docs.codeCard {
         }
     ];
     
-    export function render(card : pxt.CodeCard) : HTMLElement {
+    export interface CodeCardRenderOptions {
+        hideHeader?: boolean;
+    }
+    
+    export function render(card : pxt.CodeCard, options : CodeCardRenderOptions = {}) : HTMLElement {
         const repeat = pxt.Util.repeatMap;        
         const promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];        
         let color = card.color || "";
@@ -43,7 +47,7 @@ namespace pxt.docs.codeCard {
             if (cls)
                 d.className = cls;
             if (parent) parent.appendChild(d);
-            if (text) d.innerText = text + '';
+            if (text) d.appendChild( document.createTextNode(text + ''));
             return d;            
         }
         const a = (parent : HTMLElement, href : string, text: string, cls : string) : HTMLAnchorElement => {
@@ -54,11 +58,11 @@ namespace pxt.docs.codeCard {
             d.target = '_blank';
             parent.appendChild(d);
             return d;
-        }        
+        }
         
         let r = div(null, 'ui card ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
         if (link) (r as HTMLAnchorElement).href = url;
-        if (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any) {
+        if (!options.hideHeader && (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any)) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
             let hr = div(h, "right floated meta")
             if (card.any) div(hr, "ui grey circular label tiny", "i", card.any > 0 ? card.any : "");
@@ -67,8 +71,7 @@ namespace pxt.docs.codeCard {
             repeat(card.hardware, (k) => div(hr,"certificate black icon","i"));
             repeat(card.software, (k) => div(hr,"square teal icon","i"));
             
-            if (card.header)
-                h.appendChild(document.createTextNode(card.header));
+            if (card.header) div(h, 'description','span',card.header);
         }
         
         let img = div(r, "ui image" + (card.responsive ? " tall landscape only": ""));
@@ -99,8 +102,8 @@ namespace pxt.docs.codeCard {
         
         let ct = div(r, "ui content");
         if (card.name) {
-            if (url) a(ct, url, card.name, 'header');
-            else (ct.appendChild(document.createTextNode(card.name)));            
+            if (url && !link) a(ct, url, card.name, 'header');
+            else div(ct, 'header', 'div', card.name);
         }
         if (card.time) {
             let meta = div(ct, "ui meta");

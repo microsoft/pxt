@@ -46,7 +46,7 @@ namespace pxt.blocks {
             Blockly.Xml.domToWorkspace(workspace, xml);
 
             if (options.align)
-                align(workspace);
+                pxt.blocks.layout.verticalAlign(workspace);
 
             if (options.clean && (<any>workspace).cleanUp_)
                 (<any>workspace).cleanUp_();

@@ -34,7 +34,7 @@ export function getDbAsync(): Promise<any> {
 }
 
 export function destroyAsync() : Promise<void> {
-    return _db ? Promise.resolve() : _db.destroy();
+    return !_db ? Promise.resolve() : _db.destroy();
 }
 
 export class Table {

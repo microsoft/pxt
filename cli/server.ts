@@ -109,8 +109,10 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
     return Promise.map(data.files, f =>
         readFileAsync(path.join(dirname, f.name))
             .then(buf => {
-                if (buf.toString("utf8") !== f.prevContent)
+                if (buf.toString("utf8") !== f.prevContent) {
+                    console.log(`merge error for ${f.name}: previous content changed...`);
                     throwError(409)
+                }
             }, err => { }))
         // no conflict, proceed with writing
         .then(() => Promise.map(data.files, f =>
@@ -484,7 +486,13 @@ export function serveAsync(options: ServeOptions) {
 
         if (fileExistsSync(webFile)) {
             if (/\.md$/.test(webFile)) {
-                let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), elts, pxt.appTarget.appTheme)
+                let bc = elts.map((e, i) => {
+                    return {
+                        href: "/" + elts.slice(0, i + 1).join("/"),
+                        name: e 
+                    }
+                })
+                let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc)
                 sendHtml(html)
             } else {
                 sendFile(webFile)

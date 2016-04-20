@@ -91,7 +91,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
 }
 
 function initAsync(target: string) {
-    U.assert(allScripts.length == 0)
+    allScripts = [];
     currentTarget = target;
     // TODO check that target is correct.
     return syncAsync();

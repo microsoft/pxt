@@ -81,6 +81,15 @@ namespace ts.pxt.Util {
         return r
     }
 
+    export function jsonMergeFrom(trg: any, src: any) {
+        if (!src) return;
+        Object.keys(src).forEach(k => {
+            if (typeof trg[k] === 'object' && typeof src[k] === 'object')
+                jsonMergeFrom(trg[k], src[k]);
+            else trg[k] = clone(src[k]);
+        });
+    }
+
     export function jsonCopyFrom<T>(trg: T, src: T) {
         var v = clone(src)
         for (let k of Object.keys(src)) {
@@ -201,6 +210,26 @@ namespace ts.pxt.Util {
                 return cache[id]
             return (cache[id] = createNew(v))
         }
+    }
+
+    // Returns a function, that, as long as it continues to be invoked, will not
+    // be triggered. The function will be called after it stops being called for
+    // N milliseconds. If `immediate` is passed, trigger the function on the
+    // leading edge, instead of the trailing.
+    export function debounce(func: () => void, wait: number, immediate: boolean) {
+        let timeout: any;
+        return function () {
+            let context = this
+            let args = arguments;
+            let later = function () {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+            let callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
+        };
     }
 
     export function randomPermute<T>(arr: T[]) {
@@ -488,7 +517,7 @@ namespace ts.pxt.Util {
 
     export function fmt_va(f: string, args: any[]): string {
         if (args.length == 0) return f;
-        return f.replace(/\{([0-9]+)(\:[^\}]+)?\}/g, function(s: string, n: string, spec: string): string {
+        return f.replace(/\{([0-9]+)(\:[^\}]+)?\}/g, function (s: string, n: string, spec: string): string {
             var v = args[parseInt(n)];
             var r = "";
             var fmtMatch = /^:f(\d*)\.(\d+)/.exec(spec);

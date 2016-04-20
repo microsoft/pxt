@@ -7,20 +7,20 @@ namespace pxsim {
         id?: string;
         frameCounter?: number;
         options?: any;
-        
+
         code: string;
     }
 
     export interface SimulatorReadyMessage extends SimulatorMessage {
         frameid: string;
     }
-    
+
     export interface SimulatorStateMessage extends SimulatorMessage {
         frameid?: string;
-        runtimeid?:string;
-        state:string;
+        runtimeid?: string;
+        state: string;
     }
-    
+
     export interface SimulatorEventBusMessage extends SimulatorMessage {
         id: number;
         eventid: number;
@@ -34,13 +34,13 @@ namespace pxsim {
         data: number[];
         rssi?: number;
     }
-    
+
     export module Embed {
         export function start() {
             console.log('listening for simulator commands')
             window.addEventListener("message", receiveMessage, false);
             let frameid = window.location.hash.slice(1)
-            Runtime.postMessage(<SimulatorReadyMessage>{ type:'ready', frameid: frameid});     
+            Runtime.postMessage(<SimulatorReadyMessage>{ type: 'ready', frameid: frameid });
         }
 
         function receiveMessage(event: MessageEvent) {
@@ -51,28 +51,28 @@ namespace pxsim {
             let type = data.type || '';
             if (!type) return;
             switch (type || '') {
-                case 'run': run(<SimulatorRunMessage>data);break;
+                case 'run': run(<SimulatorRunMessage>data); break;
                 case 'stop': stop(); break;
-                case 'debugger': 
+                case 'debugger':
                     if (runtime) {
-                        runtime.handleDebuggerMsg(data as DebuggerMessage); 
+                        runtime.handleDebuggerMsg(data as DebuggerMessage);
                     }
                     break;
                 default: queue(data); break;
             }
         }
-        
+
         // TODO remove this; this should be using Runtime.runtime which gets
         // set correctly depending on which runtime is currently running
-        var runtime : pxsim.Runtime;
-                
+        var runtime: pxsim.Runtime;
+
         export function stop() {
             if (runtime) {
                 console.log('stopping simulator...')
                 runtime.kill();
-            }            
+            }
         }
-        
+
         export function run(msg: SimulatorRunMessage) {
             stop();
             console.log(`starting ${msg.id}`);
@@ -83,22 +83,23 @@ namespace pxsim {
                     runtime.run((v) => {
                         console.log("DONE")
                         pxsim.dumpLivePointers();
-                    })                   
-                })            
+                    })
+                })
         }
-        
-        function queue(msg : SimulatorMessage) {
+
+        function queue(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) {
                 return;
-            }            
+            }
             runtime.board.receiveMessage(msg);
         }
-                           
+
     }
 }
 
 if (typeof window !== 'undefined') {
-            window.addEventListener('load', function(ev) {
-            pxsim.Embed.start();
-        });
+    window.addEventListener('load', function (ev) {
+        console.log('simulator loaded and ready...')
+        pxsim.Embed.start();
+    });
 }

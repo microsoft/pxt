@@ -3,39 +3,60 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
-    export function importXml(info: ts.pxt.BlocksInfo, xml: string) : string {
+    export function saveWorkspaceXml(ws : Blockly.Workspace) : string {
+        let xml = Blockly.Xml.workspaceToDom(ws);
+        let text = Blockly.Xml.domToPrettyText(xml);
+        return text;
+    }    
+    
+    /**
+     * Loads the xml into a off-screen workspace (not suitable for size computations)
+     */
+    export function loadWorkspaceXml(xml: string) {
+        let workspace = new Blockly.Workspace();
+        try {
+            Blockly.Xml.domToWorkspace(workspace, Blockly.Xml.textToDom(xml));
+            return workspace;
+        } catch (e) {
+            pxt.reportException(e, { xml: xml });
+            return null;
+        }
+    }
+
+
+    export function importXml(info: ts.pxt.BlocksInfo, xml: string): string {
         try {
             let parser = new DOMParser();
             let doc = parser.parseFromString(xml, "application/xml");
-          
+
             // build upgrade map
-            let enums : U.Map<string> = {};
-            for(let k in info.apis.byQName) {
+            let enums: U.Map<string> = {};
+            for (let k in info.apis.byQName) {
                 let api = info.apis.byQName[k];
                 if (api.kind == ts.pxt.SymbolKind.EnumMember)
                     enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)] = api.namespace + '.' + api.name;
             }
-          
+
             // walk through blocks and patch enums
-            let blocks = doc.getElementsByTagName("block");   
-            for(let i = 0; i < blocks.length; ++i)
+            let blocks = doc.getElementsByTagName("block");
+            for (let i = 0; i < blocks.length; ++i)
                 patchBlock(info, enums, blocks[i]);
-            
+
             // serialize and return
-            return new XMLSerializer().serializeToString(doc);            
+            return new XMLSerializer().serializeToString(doc);
         }
-        catch(e) {
+        catch (e) {
             reportException(e, xml);
             return xml;
-        }        
+        }
     }
-    
-    function patchBlock(info: ts.pxt.BlocksInfo, enums: U.Map<string>, block : Element) : void {
+
+    function patchBlock(info: ts.pxt.BlocksInfo, enums: U.Map<string>, block: Element): void {
         let type = block.getAttribute("type");
         let b = Blockly.Blocks[type];
         let symbol = blockSymbol(type);
         if (!symbol || !b) return;
-        
+
         let params = parameterNames(symbol);
         symbol.parameters.forEach((p, i) => {
             let ptype = info.apis.byQName[p.type];

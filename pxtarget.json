@@ -1,4 +1,24 @@
 {
-    "id": "bare",
-    "bundleddirs": []
+    "id": "core",
+    "name": "PXT",
+    "title": "PXT",
+    "bundleddirs": [],
+    "appTheme": {
+        "logoUrl": "https://www.pxt.io/",
+        "logo": "./static/logo.svg",
+        "docsLogo": "./static/logo.svg",
+        "portraitLogo":"./static/logo.svg",
+        "footerLogo": "./static/logo.svg",
+        "homeUrl": "https://www.pxt.io/",
+        "docMenu": [
+            {
+                "name": "About",
+                "path": "/about"
+            },
+            {
+                "name": "Blocks",
+                "path": "/defining-blocks"
+            }
+        ]
+    }
 }

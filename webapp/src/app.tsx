@@ -48,6 +48,7 @@ export interface EditorSettings {
 
 interface IAppProps { }
 interface IAppState {
+    active?: boolean; // is this tab visible at all
     header?: Header;
     currFile?: pkg.File;
     theme?: srceditor.Theme;
@@ -147,7 +148,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
-                p.addDepAsync(scr.scriptname, "*").done();
+                p.addDepAsync(scr.scriptname, "*")
+                 .then(r => this.props.parent.loadHeaderAsync(this.props.parent.state.header))
+                 .done();
             } else {
                 workspace.installByIdAsync(scr.scriptid)
                     .then(r => this.props.parent.loadHeaderAsync(r))
@@ -334,9 +337,26 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             showFiles: !!this.settings.showFiles,
             theme: {
                 fontSize: this.settings.theme.fontSize || "20px"
-            }
+            },
+            active: document.visibilityState == 'visible'
         };
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
+    }
+    
+    updateVisibility() {
+        let active = document.visibilityState == 'visible';
+        console.log(`page visibility: ${active}`)
+        if (!active) {
+            this.stopSimulator();
+            this.saveFileAsync()
+                .done(() => this.setState({ active: active}));            
+        } else if (this.state.header) {
+            let id = this.state.header.id;
+            workspace.initAsync(pxt.appTarget.id)
+            .then(() => workspace.getHeader(id))
+            .then(h => this.loadHeaderAsync(h))            
+            .done(() => this.setState({ active: active}));                                
+        }
     }
 
     saveSettings() {
@@ -390,6 +410,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.typecheck()
     }
 
+    private autoRunSimulator = ts.pxt.Util.debounce(
+        () => {
+            if (!this.state.active) return;
+            this.runSimulator({ background: true });
+        }, 
+        3000, false);    
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
@@ -400,7 +426,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.debug
                         && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
-                        this.runSimulator({ background: true });
+                            this.autoRunSimulator();
                 }
             });
     }
@@ -460,6 +486,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     private updateEditorFile(editorOverride: srceditor.Editor = null) {
+        if (!this.state.active) return;
         if (this.state.currFile == this.editorFile && !editorOverride)
             return;
         this.saveSettings();
@@ -890,50 +917,56 @@ Ctrl+Shift+B
         return (
             <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "") }>
                 <div id="menubar" role="banner">
-                    <div className="ui small menu" role="menubar">
-                        <span id="logo" className="item">
-                            {targetTheme.logo || targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>) : null}
+                    <div className="ui borderless small menu" role="menubar">
+                        <span id="logo" className="ui item">
+                            {targetTheme.logo || targetTheme.portraitLogo 
+                                ? <a target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a> 
+                                : <span>{targetTheme.name}</span>}
                             {targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                         </span>
                         <div className="ui item">
+                            <div className="ui">
+                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
+                                <sui.Button role="menuitem" key='runbtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                                <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
+                                <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
+                                {this.editor.menu() }
+                                { packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                { workspaces ? <CloudSyncButton parent={this} /> : null }
+                            </div>
                             <div className="ui buttons">
-                                <sui.Button role="menuitem" icon="file outline" textClass="ui landscape only" text={lf("New Project") } onClick={() => this.newProject() } />
-                                <sui.DropdownMenu class='floating icon button' icon='dropdown'>
+                                <sui.DropdownMenu class='floating icon button' text="More..." textClass="ui landscape only" icon='sidebar'>
+                                    <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
-                                    <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } />
+                                    {pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } /> : null }
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
+                                    {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
-                                        this.saveSettings();
+                                            this.saveSettings();
                                     } } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } /> : undefined}
                                     <div className="ui divider"></div>
+                                    <a className="ui item" href="/docs" role="menuitem" target="_blank">
+                                        <i className="help icon"></i>
+                                        {lf("Help")}
+                                    </a>
                                     <LoginBox />
                                     {
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
                                 </sui.DropdownMenu>
-                            </div>
-                            <div className="ui">
-                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
-                                <sui.Button role="menuitem" key='runbtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                                <sui.Button role="menuitem" class="portrait only" icon="undo" onClick={() => this.editor.undo() } />
-                                <sui.Button role="menuitem" class="landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
-                                {this.editor.menu() }
-                                {packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
-                            </div>
-                            <div className="ui buttons">
+                            </div>                            
+                            <div className="ui buttons wide only">
                                 <sui.DropdownMenu class="floating icon button" icon="help">
                                     {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
-                                    <div className="ui divider"></div>
-                                    <sui.Item key="translatebtn" onClick={() => { window.location.href = "https://crowdin.com/project/KindScript" } } icon='translate' text={lf("Help translate Programming Experience Toolkit!") } />
                                 </sui.DropdownMenu>
                             </div>
                         </div>
-                        <div className="ui item">
+                        <div className="ui item wide only">
                             <div className="ui massive transparent input">
                                 <input
                                     type="text"
@@ -944,20 +977,17 @@ Ctrl+Shift+B
                                 <i className="write icon grey"></i>
                             </div>
                         </div>
-                        { workspaces || targetTheme.rightLogo ?
-                            <div className="ui item right">
-                                <div>
-                                    { workspaces ? <CloudSyncButton parent={this} /> : '' }
-                                    { targetTheme.rightLogo ? <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a> : "" }
-                                </div>
-                            </div> : "" }
+                        {targetTheme.rightLogo ?
+                        <div className="ui item right wide only">
+                            <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
+                        </div> : null }
                     </div>
                 </div>
                 <div id="filelist" className="ui items" role="complementary">
                     {this.state.errorCard ? <div id="errorcard" className="ui item">
                         <codecard.CodeCardView className="fluid top-margin" responsive={true} onClick={this.state.errorCardClick} {...this.state.errorCard} target={pxt.appTarget.id} />
                     </div>  : null }
-                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only" : "") + (this.state.errorCard ? "errored" : "") }>
+                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only " : "") + (this.state.errorCard ? "errored " : "")}>
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
@@ -971,7 +1001,7 @@ Ctrl+Shift+B
                 </div>
                 <div id="maineditor" role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div id="helpcard" className="ui editorFloat"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
+                    {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
@@ -981,8 +1011,7 @@ Ctrl+Shift+B
                         <span>v{targetVersion}</span>&nbsp;
                         - <a target="_blank" href="https://github.com/Microsoft/pxt" title="Microsoft Programming Experience Toolkit"><i className='xicon ksempty'/> PXT</a>
                         &nbsp;<span>v{ksVersion}</span>&nbsp;
-                        - &copy; Microsoft Corporation 
-                        - 2016
+                        - &copy; Microsoft Corporation 2016
                         - <a target="_blank" href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") } </a>
                         - <a target="_blank" href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
                     </div>
@@ -1194,6 +1223,10 @@ $(document).ready(() => {
             initSerial()
             return pxtwinrt.initAsync(ih);
         })
+      
+    document.addEventListener("visibilitychange", ev => {
+        theEditor.updateVisibility();        
+    });     
 
     window.addEventListener("unload", ev => {
         if (theEditor && !LoginBox.signingOut)

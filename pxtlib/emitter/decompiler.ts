@@ -21,9 +21,11 @@ namespace ts.pxt.decompiler {
         "||": { type: "logic_operation", op: "OR" },
     }
     
-    const builtinBlocks: U.Map<{ block: string; blockId: string; }> = {
+    const builtinBlocks: U.Map<{ block: string; blockId: string; fields?: string }> = {
         "Math.random" : { blockId:"device_random", block: "pick random 0 to %limit" },
-        "Math.abs": {blockId: "math_op3", block:"absolute of %x" }
+        "Math.abs": { blockId: "math_op3", block:"absolute of %x" },
+        "Math.min": { blockId: "math_op2", block:"of %x|and %y" },
+        "Math.max": { blockId: "math_op2", block:"of %x|and %y", fields: `<field name="op">max</field>` }
     }
 
     export function decompileToBlocks(blocksInfo: ts.pxt.BlocksInfo, file: ts.SourceFile): ts.pxt.CompileResult {
@@ -99,7 +101,7 @@ ${output}</xml>`;
                 file: file,
                 start: n.getFullStart(),
                 length: n.getFullWidth(),
-                messageText: msg || `Language feature not supported in blocks`,
+                messageText: msg || `Language feature "${n.getFullText().trim()}"" not supported in blocks`,
                 category: ts.DiagnosticCategory.Error,
                 code: 1001
             }])
@@ -330,9 +332,7 @@ write(`<block type="math_arithmetic">
             // chunk statements
             let chunks: ts.Statement[][] = [[]];
             stmts.forEach(stmt => {
-                if (isHat(stmt) ||
-                    (stmt.kind == ts.SyntaxKind.ExpressionStatement && isOutputExpression((stmt as ts.ExpressionStatement).expression))
-                )
+                if (stmt.kind == ts.SyntaxKind.ExpressionStatement && isOutputExpression((stmt as ts.ExpressionStatement).expression))
                     chunks.push([]);
                 chunks[chunks.length - 1].push(stmt);
             })
@@ -364,16 +364,6 @@ write(`<block type="math_arithmetic">
                 }
                 default: return false;
             }
-        }
-
-        function isHat(stmt: ts.Statement): boolean {
-            let expr: ts.Expression;
-            let call: ts.pxt.CallInfo;
-            return stmt.kind == ts.SyntaxKind.ExpressionStatement
-                && !!(expr = (stmt as ts.ExpressionStatement).expression)
-                && expr.kind == ts.SyntaxKind.CallExpression
-                && !!(call = (expr as any).callInfo)
-                && /^on /.test(call.attrs.block)
         }
 
         function emitBlock(n: ts.Block) {
@@ -473,6 +463,7 @@ write(`<block type="math_arithmetic">
         }
 
         function emitCallExpression(node: ts.CallExpression) {
+            let extraArgs = '';
             let info: ts.pxt.CallInfo = (node as any).callInfo
             if (!info) {
                 error(node);
@@ -486,6 +477,7 @@ write(`<block type="math_arithmetic">
                 }
                 info.attrs.block = builtin.block;
                 info.attrs.blockId = builtin.blockId;
+                if (builtin.fields) extraArgs += builtin.fields;
             }
 
             if (info.attrs.imageLiteral) {
@@ -500,6 +492,7 @@ write(`<block type="math_arithmetic">
             })
 
             writeBeginBlock(info.attrs.blockId);
+            if (extraArgs) write(extraArgs);
             info.args.forEach((e, i) => {
                 switch (e.kind) {
                     case SK.ArrowFunction:

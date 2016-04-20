@@ -187,8 +187,9 @@ namespace pxsim {
         // communication
         static messagePosted: (data: SimulatorMessage) => void;
         static postMessage(data: SimulatorMessage) {
+            if (!data) return;
             // TODO: origins
-            if (typeof window !== 'undefined' && window.parent) {
+            if (typeof window !== 'undefined' && window.parent && window.parent.postMessage) {
                 window.parent.postMessage(data, "*");
             }
             if (Runtime.messagePosted) Runtime.messagePosted(data);

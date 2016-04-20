@@ -189,7 +189,7 @@ namespace pxt.blocks {
         }
 
         // Generates a reference to bound variable [x]
-        export function mkLocalRef(x: string, t?:J.JTypeRef): J.JLocalRef {
+        export function mkLocalRef(x: string, t?: J.JTypeRef): J.JLocalRef {
             assert(!!x);
             return {
                 nodeType: "localRef",
@@ -295,17 +295,17 @@ namespace pxt.blocks {
         }
 
         export function mkAssign(x: J.JExpr, e: J.JExpr): J.JStmt {
-            var assign = mkSimpleCall("=", [x, e]);
-            var expr = mkExprHolder([], assign);
+            let assign = mkSimpleCall("=", [x, e]);
+            let expr = mkExprHolder([], assign);
             return mkExprStmt(expr);
         }
 
         // Generate the AST for:
         //   [var x: t := e]
         export function mkDefAndAssign(x: string, t: J.JTypeRef, e: J.JExpr): J.JStmt {
-            var def: J.JLocalDef = mkDef(x, t);
-            var assign = mkSimpleCall("=", [mkLocalRef(x,t), e]);
-            var expr = mkExprHolder([def], assign);
+            let def: J.JLocalDef = mkDef(x, t);
+            let assign = mkSimpleCall("=", [mkLocalRef(x, t), e]);
+            let expr = mkExprHolder([def], assign);
             return mkExprStmt(expr);
         }
 
@@ -670,7 +670,6 @@ namespace pxt.blocks {
                                     unionParam(e, b, p.field, ground(t));
                                 }
                             });
-                            compileCall(e, b);
                         }
                 }
             } catch (e) {
@@ -763,13 +762,6 @@ namespace pxt.blocks {
     function compileMathOp3(e: Environment, b: B.Block): J.JExpr {
         var x = compileExpression(e, b.getInputTargetBlock("x"));
         return H.mathCall("abs", [x]);
-    }
-
-    function compileVariableGet(e: Environment, b: B.Block): J.JExpr {
-        var name = b.getFieldValue("VAR");
-        var binding = lookup(e, name);
-        assert(binding != null && binding.type != null);
-        return H.mkLocalRef(name);
     }
 
     function compileText(e: Environment, b: B.Block): J.JExpr {
@@ -869,10 +861,17 @@ namespace pxt.blocks {
         stdCallTable: Util.StringMap<StdFunc>;
     }
 
+    enum VarUsage {
+        Unknown,
+        Read,
+        Assign
+    }
+
     interface Binding {
         name: string;
         type: Point;
         usedAsForIndex: number;
+        assigned?: VarUsage;
         incompatibleWithFor?: boolean;
     }
 
@@ -946,14 +945,14 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: B.Block): J.JStmt[] {
-        var bVar = b.getFieldValue("VAR");
-        var bTo = b.getInputTargetBlock("TO");
-        var bDo = b.getInputTargetBlock("DO");
+        let bVar = b.getFieldValue("VAR");
+        let bTo = b.getInputTargetBlock("TO");
+        let bDo = b.getInputTargetBlock("DO");
 
-        var binding = lookup(e, bVar);
+        let binding = lookup(e, bVar);
         assert(binding.usedAsForIndex > 0);
 
-        if (isClassicForLoop(b) && !binding.incompatibleWithFor) {  
+        if (isClassicForLoop(b) && !binding.incompatibleWithFor) {
             let bToExpr = compileExpression(e, bTo);
             if (bToExpr.nodeType == "numberLiteral")
                 bToExpr = H.mkNumberLiteral((bToExpr as J.JNumberLiteral).value + 1)
@@ -1028,22 +1027,35 @@ namespace pxt.blocks {
         var body = compileStatements(e, bBody);
         return mkCallWithCallback(e, "basic", "forever", [], body);
     }
+    
+    function compileVariableGet(e: Environment, b: B.Block): J.JExpr {
+        let name = b.getFieldValue("VAR");
+        let binding = lookup(e, name);
+        if (!binding.assigned) 
+            binding.assigned = VarUsage.Read;
+        assert(binding != null && binding.type != null);
+        return H.mkLocalRef(name);
+    }
 
     function compileSet(e: Environment, b: B.Block): J.JStmt {
-        var bVar = b.getFieldValue("VAR");
-        var bExpr = b.getInputTargetBlock("VALUE");
-        var binding = lookup(e, bVar);
-        var expr = compileExpression(e, bExpr);
-        var ref = H.mkLocalRef(bVar);
+        let bVar = b.getFieldValue("VAR");
+        let bExpr = b.getInputTargetBlock("VALUE");
+        let binding = lookup(e, bVar);
+        if (!binding.assigned && !findParent(b)) 
+            binding.assigned = VarUsage.Assign;
+        let expr = compileExpression(e, bExpr);
+        let ref = H.mkLocalRef(bVar);
         return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, expr])));
     }
 
     function compileChange(e: Environment, b: B.Block): J.JStmt {
-        var bVar = b.getFieldValue("VAR");
-        var bExpr = b.getInputTargetBlock("VALUE");
-        var binding = lookup(e, bVar);
-        var expr = compileExpression(e, bExpr);
-        var ref = H.mkLocalRef(bVar);
+        let bVar = b.getFieldValue("VAR");
+        let bExpr = b.getInputTargetBlock("VALUE");
+        let binding = lookup(e, bVar);
+        if (!binding.assigned) 
+            binding.assigned = VarUsage.Read;
+        let expr = compileExpression(e, bExpr);
+        let ref = H.mkLocalRef(bVar);
         return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, H.mkSimpleCall("+", [ref, expr])])));
     }
 
@@ -1164,10 +1176,6 @@ namespace pxt.blocks {
                 r = [compileChange(e, b)];
                 break;
 
-            case 'device_forever':
-                r = [compileForever(e, b)];
-                break;
-
             case 'controls_repeat_ext':
                 r = [compileControlsRepeat(e, b)];
                 break;
@@ -1186,29 +1194,14 @@ namespace pxt.blocks {
     }
 
     function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
-        if (b == null)
-            return [];
+        if (!b) return [];
 
-        var stmts: J.JStmt[] = [];
+        let stmts: J.JStmt[] = [];
         while (b) {
             if (!b.disabled) append(stmts, compileStatementBlock(e, b));
             b = b.getNextBlock();
         }
         return stmts;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // Top-level definitions for compiling an entire blockly workspace
-
-    export interface CompileOptions {
-        name?: string;
-        description?: string;
-    }
-
-    function isHandlerRegistration(b: B.Block) {
-        return !(b as any).previousConnection && !(b as any).outputConnection;
-        //return /(forever|_event)$/.test(b.type);
     }
 
     // Find the parent (as in "scope" parent) of a Block. The [parentNode_] property
@@ -1218,7 +1211,7 @@ namespace pxt.blocks {
         var candidate = b.parentBlock_;
         if (!candidate)
             return null;
-        var isActualInput = false;
+        let isActualInput = false;
         candidate.inputList.forEach((i: B.Input) => {
             if (i.name && candidate.getInputTargetBlock(i.name) == b)
                 isActualInput = true;
@@ -1226,6 +1219,11 @@ namespace pxt.blocks {
         return isActualInput && candidate || null;
     }
 
+    function isTopBlock(b: B.Block): boolean {
+        if (!b.parentBlock_) return true;
+        return isTopBlock(b.parentBlock_);
+    }
+        
     // This function creates an empty environment where type inference has NOT yet
     // been performed.
     // - All variables have been assigned an initial [Point] in the union-find.
@@ -1264,8 +1262,18 @@ namespace pxt.blocks {
                     }
                 })
 
-        // First pass: collect loop variables.
-        w.getAllBlocks().forEach((b: B.Block) => {
+        const variableIsScoped = (b: B.Block, name: string): boolean => {
+            if (!b)
+                return false;
+            else if ((b.type == "controls_for" || b.type == "controls_simple_for")
+                && b.getFieldValue("VAR") == name)
+                return true;
+            else
+                return variableIsScoped(findParent(b), name);
+        };
+
+        // collect loop variables.
+        w.getAllBlocks().forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for") {
                 let x = b.getFieldValue("VAR");
                 // It's ok for two loops to share the same variable.
@@ -1281,45 +1289,17 @@ namespace pxt.blocks {
             }
         });
 
-        var variableIsScoped = (b: B.Block, name: string): boolean => {
-            if (!b)
-                return false;
-            else if ((b.type == "controls_for" || b.type == "controls_simple_for")
-                && b.getFieldValue("VAR") == name)
-                return true;
-            else
-                return variableIsScoped(findParent(b), name);
-        };
-
-        function isTopBlock(b: B.Block): boolean {
-            if (isHandlerRegistration(b)) return false;
-            if (!b.parentBlock_) return true;
-            return isTopBlock(b.parentBlock_);
-        }
-
-        // Last series of checks to determine for-loop compatibility: for each get or
-        // set block, 1) make sure that the variable is bound, then 2) mark the
-        // variable if needed.
-        w.getAllBlocks().forEach((b: B.Block) => {
-            if (b.type == "variables_set" || b.type == "variables_change") {
-                let x = b.getFieldValue("VAR");
-                if (lookup(e, x) == null)
-                    e = extend(e, x, null);
-
-                let binding = lookup(e, x);
-                if (binding.usedAsForIndex)
-                    // Second reason why we can't compile as a TouchDevelop for-loop: loop
-                    // index is assigned to
-                    binding.incompatibleWithFor = true;
-            } else if (b.type == "variables_get") {
+        // determine for-loop compatibility: for each get or
+        // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
+        w.getAllBlocks().forEach(b => {
+            if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
                 let x = b.getFieldValue("VAR");
                 if (lookup(e, x) == null)
                     e = extend(e, x, null);
 
                 let binding = lookup(e, x);
                 if (binding.usedAsForIndex && !variableIsScoped(b, x))
-                    // Third reason why we can't compile to a TouchDevelop for-loop: loop
-                    // index is read outside the loop.
+                    // loop index is read outside the loop.
                     binding.incompatibleWithFor = true;
             }
         });
@@ -1327,41 +1307,34 @@ namespace pxt.blocks {
         return e;
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo, options: CompileOptions): J.JApp {
+    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): J.JApp {
+        let decls: J.JDecl[] = [];
         try {
-            var decls: J.JDecl[] = [];
-            var e = mkEnv(w, blockInfo);
+            let e = mkEnv(w, blockInfo);
             infer(e, w);
-
-            // All variables in this script are compiled as locals within main.
-            var stmtsVariables: J.JStmt[] = [];
-            e.bindings.forEach((b: Binding) => {
-                var btype = find(b.type);
-                if (!isCompiledAsForIndex(b))
-                    stmtsVariables.push(H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type))));
-            });
 
             // [stmtsHandlers] contains calls to register event handlers. They must be
             // executed before the code that goes in the main function, as that latter
             // code may block, and prevent the event handler from being registered.
-            var stmtsHandlers: J.JStmt[] = [];
-            var stmtsMain: J.JStmt[] = [];
-            w.getTopBlocks(true).forEach((b: B.Block) => {
-                if (isHandlerRegistration(b))
-                    append(stmtsHandlers, compileStatements(e, b));
-                else
-                    append(stmtsMain, compileStatements(e, b));
+            let stmtsMain: J.JStmt[] = [];
+            w.getTopBlocks(true).map(b => {
+                append(stmtsMain, compileStatements(e, b));
             });
 
+            // All variables in this script are compiled as locals within main unless loop or previsouly assigned
+            let stmtsVariables = e.bindings.filter(b => !isCompiledAsForIndex(b) && b.assigned != VarUsage.Assign)
+                .map(b => {
+                    var btype = find(b.type);
+                    return H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type)));
+                });
+
             decls.push(H.mkAction("main",
-                stmtsVariables
-                    .concat(stmtsHandlers)
-                    .concat(stmtsMain), [], []));
+                stmtsVariables.concat(stmtsMain), [], []));
         } finally {
             removeAllPlaceholders(w);
         }
 
-        return H.mkApp(options.name || 'untitled', options.description || '', decls);
+        return H.mkApp('untitled', '', decls);
     }
 
     export interface SourceInterval {
@@ -1385,9 +1358,9 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: ts.pxt.BlocksInfo, options: CompileOptions = {}): BlockCompilationResult {
+    export function compile(b: B.Workspace, blockInfo: ts.pxt.BlocksInfo): BlockCompilationResult {
         Errors.clear();
-        return tdASTtoTS(compileWorkspace(b, blockInfo, options));
+        return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
     function tdASTtoTS(app: J.JApp): BlockCompilationResult {
@@ -1457,7 +1430,7 @@ namespace pxt.blocks {
                         rec(e.args[0], infixPri)
                     } else {
                         var bindLeft = infixPri != 3 && e.name != "**"
-                        var letType : string = undefined;
+                        var letType: string = undefined;
                         if (e.name == "=" && e.args[0].nodeType == 'localRef') {
                             let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
                             let varname = varloc.name;
@@ -1473,7 +1446,7 @@ namespace pxt.blocks {
                             pushOp(letType)
                         }
                         pushOp(e.name)
-                        rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)                        
+                        rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)
                     }
                     if (infixPri < outPrio) pushOp(")");
                 } else {
@@ -1539,7 +1512,7 @@ namespace pxt.blocks {
                 f();
                 return;
             }
-            
+
             let start = output.length;
             f();
             let end = output.length;
@@ -1592,8 +1565,10 @@ namespace pxt.blocks {
                     localRef(n.name)
             },
 
-            operator: (n: J.JOperator) => {
-                if (/^[\d()]/.test(n.op))
+            operator: (n: J.JOperator) => {                
+                if (n.op == "let")
+                    write(n.op + " ");
+                else if (/^[\d()]/.test(n.op))
                     write(n.op)
                 else if (n.op == ",")
                     write(n.op + " ")

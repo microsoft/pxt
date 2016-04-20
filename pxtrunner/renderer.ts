@@ -156,7 +156,7 @@ namespace pxt.runner {
 
             let addItem = (card: pxt.CodeCard) => {
                 if (!card) return;
-                ul.append(pxt.docs.codeCard.render(card));
+                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true }));
             }
 
             stmts.forEach(stmt => {
@@ -221,10 +221,10 @@ namespace pxt.runner {
         })
     }
 
-    function fillCodeCardAsync(c: JQuery, card: pxt.CodeCard): Promise<void> {
+    function fillCodeCardAsync(c: JQuery, card: pxt.CodeCard, options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
         if (!card) return Promise.resolve();
 
-        let cc = pxt.docs.codeCard.render(card)
+        let cc = pxt.docs.codeCard.render(card, options)
         c.replaceWith(cc);
 
         return Promise.resolve();
@@ -245,7 +245,7 @@ namespace pxt.runner {
             $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
         }
 
-        return fillCodeCardAsync($el, card)
+        return fillCodeCardAsync($el, card, {hideHeader: true})
             .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));
     }
 

@@ -1,3 +1,18 @@
+html {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  height: 100%;
+  padding: 0;
+  overflow: auto;
+  margin: 0;
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
 #filelist,
 #maineditor {
   position: absolute;
@@ -53,7 +68,7 @@
 .simframe {
     border: none;
     width: 20rem;
-    height: 16rem;
+    height: 16.4rem;
     margin: 0;
     padding: 0;
     background:transparent;    
@@ -187,7 +202,7 @@
     stroke:none !important;
 }
 
-.blocklyTreeLabel, .blocklyText {
+.blocklyTreeLabel, .blocklyText, .blocklyHtmlInput {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;   
 }
 
@@ -386,6 +401,12 @@ svg.ui.trend.black polyline {
     -webkit-filter: grayscale(1);
     filter: grayscale(1);
 }
+
+.blur {    
+    -moz-filter: blur(1);
+    -webkit-filter: blur(1);
+    filter: blur(1);
+}
   
 .highlight {
     border-bottom: 2px solid #FFC107;     
@@ -421,8 +442,8 @@ html {
         left:23rem;
     }
     .simframe {
-        width: 22rem;
-        height: 17.6rem;
+        width: 21rem;
+        height: 17.1rem;
     }
 }
 
@@ -470,7 +491,7 @@ html {
     .simframe {
         display:inline-block;
         width: 15rem;
-        height:12rem;
+        height:12.3rem;
     }
     
     .blocklyTreeLabel {
@@ -488,4 +509,41 @@ html {
     .ui.tall.only {
         display:none !important;
     }
+}
+
+/* thin display, mobile */
+@media only screen and (min-width:36em) {
+    .ui.thin.only {
+        display:none !important;        
+    }
+}
+
+@media only screen and (max-width:36em) {
+    #logo {
+        font-size: 0rem;
+        padding-right: 0;        
+    }
+    .ui.wide.only {
+        display:none !important;        
+    }
+    .blocklyTreeLabel, .blocklyText {
+        font-size:0.8rem !important;
+    }    
+    .simframe {
+        display:inline-block;
+        width: 10rem;
+        height:8rem;
+    }
+    .simframe.grayscale {
+        width:4rem;
+        height:3.1rem;
+    }
+}
+
+@media only screen and (max-width:36em) and (orientation:landscape) {
+    #filelist {
+        top:0rem;
+        right:0rem;
+        left:unset;
+    }    
 }
