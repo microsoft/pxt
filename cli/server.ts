@@ -8,7 +8,6 @@ import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';
 import * as os from 'os';
-import * as dapjs from 'dapjs'
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -251,50 +250,69 @@ function initSocketServer() {
     const WebSocket = require('faye-websocket');
 
     function startSerial(request: any, socket: any, body: any) {
-        console.log('ws connection at ' + request.url);
         let ws = new WebSocket(request, socket, body);
         wsSerialClients.push(ws);
-        ws.on('message', function (event: any) {
-            try {
-                var msg = JSON.parse(event.data);
-                if (msg.type == "dapjs") {
-                    Promise.resolve()
-                        .then(() => dapjs.handleMessageAsync(msg))
-                        .then(resp => {
-                            if (resp == null || typeof resp != "object")
-                                resp = { response: resp }
-                            resp.id = msg.id
-                            ws.send(JSON.stringify(resp))
-                        }, error => {
-                            let resp = {
-                                error: error.message || "Error",
-                                errorStackTrace: error.stack,
-                                id: msg.id
-                            }
-                            ws.send(JSON.stringify(resp))
-                        })
-                }
-            } catch (e) {
-            }
+        ws.on('message', function(event: any) {
+            // ignore
         });
-        ws.on('close', function (event: any) {
+        ws.on('close', function(event: any) {
             console.log('ws connection closed')
             wsSerialClients.splice(wsSerialClients.indexOf(ws), 1)
             ws = null;
         });
-        ws.on('error', function () {
+        ws.on('error', function() {
             console.log('ws connection closed')
             wsSerialClients.splice(wsSerialClients.indexOf(ws), 1)
             ws = null;
         })
     }
 
+    function startDebug(request: any, socket: any, body: any) {
+        let ws = new WebSocket(request, socket, body);
+        let dapjs:any
+        
+        ws.on('message', function(event: any) {
+            try {
+                let msg = JSON.parse(event.data);
+                if (!dapjs) dapjs = require("dapjs")
+                Promise.resolve()
+                    .then(() => dapjs.handleMessageAsync(msg))
+                    .then(resp => {
+                        if (resp == null || typeof resp != "object")
+                            resp = { response: resp }
+                        resp.id = msg.id
+                        ws.send(JSON.stringify(resp))
+                    }, error => {
+                        let resp = {
+                            error: error.message || "Error",
+                            errorStackTrace: error.stack,
+                            id: msg.id
+                        }
+                        ws.send(JSON.stringify(resp))
+                    })
+            } catch (e) {
+                console.log("ws debug error", e)
+            }
+        });
+        ws.on('close', function(event: any) {
+            console.log('ws debug connection closed')
+            ws = null;
+        });
+        ws.on('error', function() {
+            console.log('ws debug connection closed')
+            ws = null;
+        })
+    }
+
     let wsserver = http.createServer();
-    wsserver.on('upgrade', function (request: http.IncomingMessage, socket: WebSocket, body: any) {
+    wsserver.on('upgrade', function(request: http.IncomingMessage, socket: WebSocket, body: any) {
         try {
             if (WebSocket.isWebSocket(request)) {
+                console.log('ws connection at ' + request.url);
                 if (request.url == "/" + serveOptions.localToken + "/serial")
                     startSerial(request, socket, body);
+                else if (request.url == "/" + serveOptions.localToken + "/debug")
+                    startDebug(request, socket, body);
                 else console.log('refused connection at ' + request.url);
             }
         } catch (e) {
@@ -324,14 +342,14 @@ function initSerialMonitor() {
         info.port = new serialport.SerialPort(info.comName, {
             baudrate: 115200
         }, false); // this is the openImmediately flag [default is true]
-        info.port.open(function (error: any) {
+        info.port.open(function(error: any) {
             if (error) {
                 console.log('failed to open: ' + error);
                 close(info);
             } else {
                 console.log(`serial: connected to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
                 info.opened = true;
-                info.port.on('data', function (buffer: Buffer) {
+                info.port.on('data', function(buffer: Buffer) {
                     //console.log(`data received: ${buffer.length} bytes`);
                     if (wsSerialClients.length == 0) return;
                     // send it to ws clients
@@ -341,12 +359,12 @@ function initSerialMonitor() {
                         data: buffer.toString('utf8')
                     })
                     //console.log('sending ' + msg);
-                    wsSerialClients.forEach(function (client: any) {
+                    wsSerialClients.forEach(function(client: any) {
                         client.send(msg);
                     })
                 });
-                info.port.on('error', function () { close(info); });
-                info.port.on('close', function () { close(info); });
+                info.port.on('error', function() { close(info); });
+                info.port.on('close', function() { close(info); });
             }
         });
     }
@@ -357,7 +375,7 @@ function initSerialMonitor() {
     }
 
     setInterval(() => {
-        serialport.list(function (err: any, ports: SerialPortInfo[]) {
+        serialport.list(function(err: any, ports: SerialPortInfo[]) {
             ports.filter(filterPort)
                 .filter(info => !serialPorts[info.pnpId])
                 .forEach((info) => open(info));
