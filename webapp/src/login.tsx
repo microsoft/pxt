@@ -64,10 +64,39 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
         let name = Cloud.isLoggedIn() ? (settings.nickname || lf("Loading...")) : lf("Developer sign in")
         let icon = Cloud.isLoggedIn() ? "user" : "sign in";
         let buttonAction = () => {
-            if (Cloud.isLoggedIn())
-                this.child(".ui.dropdown").dropdown("show");
-            else
-                this.signin();
+            if (Cloud.isLoggedIn()) {
+                core.confirmAsync({
+                    header: lf("User properties"),
+                    htmlBody:
+                    `<p>Manage your account and assets using the <code>pxt</code> command line.</p>
+<ul>
+<li>install the <code>pxt</code> command line and login following the on-screen instructions
+<pre>
+npm install -g pxt
+pxt login
+</pre>
+</li>
+<li>delete your account (NO UNDO!) and related packages.
+<pre>
+pxt delete me
+</pre>
+</li>
+<li>list all your packages
+<pre>
+pxt list me
+</pre>
+</li>
+<li>delete a particular package
+<pre>
+pxt delete PACKAGEID
+</pre>
+</li>
+</ul>
+`,
+                    agreeLbl: lf("Got it!"),
+                    hideCancel: true
+                }).done();
+            } else this.signin();
         }
 
         return <sui.Item text={name} icon={icon} onClick={buttonAction} />
