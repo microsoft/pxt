@@ -166,6 +166,8 @@ function isProject(h: Header) {
 }
 
 function saveToCloudAsync(h: Header) {
+    if (!Cloud.isLoggedIn()) return Promise.resolve();
+    
     return syncOneUpAsync(h)
 }
 
