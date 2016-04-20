@@ -13,7 +13,7 @@ let iface: workeriface.Iface
 
 export function init() {
     if (!iface) {
-        iface = workeriface.make(pxt.webConfig.workerjs)
+        iface = workeriface.makeWebWorker(pxt.webConfig.workerjs)
     }
 }
 
