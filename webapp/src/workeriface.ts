@@ -62,9 +62,22 @@ export function makeWebWorker(workerFile: string) {
 
 export function makeWebSocket(url: string) {
     let ws = new WebSocket(url)
-    let iface = wrap(v => ws.send(JSON.stringify(v)))
+    let sendq:string[] = []
+    let iface = wrap(v => {
+        let s = JSON.stringify(v)
+        if (sendq) sendq.push(s)
+        else ws.send(s)
+    })
     ws.onmessage = ev => {
         iface.recvHandler(JSON.parse(ev.data))
+    }
+    ws.onopen = (ev) => {
+        console.log('socket opened');
+        for (let m of sendq) ws.send(m)
+        sendq = null
+    }
+    ws.onclose = (ev) => {
+        console.log('socket closed')
     }
     return iface
 }
