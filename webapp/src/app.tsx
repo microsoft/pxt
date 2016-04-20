@@ -336,7 +336,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.state = {
             showFiles: !!this.settings.showFiles,
             theme: {
-                fontSize: this.settings.theme.fontSize || "20px"
+                fontSize: "24px"
             },
             active: document.visibilityState == 'visible'
         };
