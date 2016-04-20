@@ -48,6 +48,7 @@ export interface EditorSettings {
 
 interface IAppProps { }
 interface IAppState {
+    active?: boolean; // is this tab visible at all
     header?: Header;
     currFile?: pkg.File;
     theme?: srceditor.Theme;
@@ -336,9 +337,26 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             showFiles: !!this.settings.showFiles,
             theme: {
                 fontSize: this.settings.theme.fontSize || "20px"
-            }
+            },
+            active: document.visibilityState == 'visible'
         };
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
+    }
+    
+    updateVisibility() {
+        let active = document.visibilityState == 'visible';
+        console.log(`page visibility: ${active}`)
+        if (!active) {
+            this.stopSimulator();
+            this.saveFileAsync()
+                .done(() => this.setState({ active: active}));            
+        } else if (this.state.header) {
+            let id = this.state.header.id;
+            workspace.initAsync(pxt.appTarget.id)
+            .then(() => workspace.getHeader(id))
+            .then(h => this.loadHeaderAsync(h))            
+            .done(() => this.setState({ active: active}));                                
+        }
     }
 
     saveSettings() {
@@ -393,7 +411,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     private autoRunSimulator = ts.pxt.Util.debounce(
-        () => this.runSimulator({ background: true }), 
+        () => {
+            if (!this.state.active) return;
+            this.runSimulator({ background: true });
+        }, 
         3000, false);    
     private typecheck() {
         let state = this.editor.snapshotState()
@@ -465,6 +486,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     private updateEditorFile(editorOverride: srceditor.Editor = null) {
+        if (!this.state.active) return;
         if (this.state.currFile == this.editorFile && !editorOverride)
             return;
         this.saveSettings();
@@ -1201,6 +1223,10 @@ $(document).ready(() => {
             initSerial()
             return pxtwinrt.initAsync(ih);
         })
+      
+    document.addEventListener("visibilitychange", ev => {
+        theEditor.updateVisibility();        
+    });     
 
     window.addEventListener("unload", ev => {
         if (theEditor && !LoginBox.signingOut)

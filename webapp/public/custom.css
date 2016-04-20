@@ -202,7 +202,7 @@ body {
     stroke:none !important;
 }
 
-.blocklyTreeLabel, .blocklyText {
+.blocklyTreeLabel, .blocklyText, .blocklyHtmlInput {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;   
 }
 
@@ -401,6 +401,12 @@ svg.ui.trend.black polyline {
     -webkit-filter: grayscale(1);
     filter: grayscale(1);
 }
+
+.blur {    
+    -moz-filter: blur(1);
+    -webkit-filter: blur(1);
+    filter: blur(1);
+}
   
 .highlight {
     border-bottom: 2px solid #FFC107;     
@@ -436,8 +442,8 @@ html {
         left:23rem;
     }
     .simframe {
-        width: 22rem;
-        height: 18rem;
+        width: 21rem;
+        height: 17.1rem;
     }
 }
 
@@ -529,8 +535,8 @@ html {
         height:8rem;
     }
     .simframe.grayscale {
-        width:5rem;
-        height:4.1rem;
+        width:4rem;
+        height:3.1rem;
     }
 }
 

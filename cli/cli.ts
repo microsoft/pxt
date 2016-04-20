@@ -1387,6 +1387,7 @@ function copyCommonFiles() {
 }
 
 function testConverterAsync(configFile: string) {
+    forceCloudBuild = true
     let cfg: {
         apiUrl: string,
         ids: string[]
@@ -1474,6 +1475,7 @@ function prepTestOptionsAsync() {
 }
 
 function testDirAsync(dir: string) {
+    forceCloudBuild = true
     return prepTestOptionsAsync()
         .then(opts => {
             let errors: string[] = []
