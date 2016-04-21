@@ -222,11 +222,10 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             }
         }
         
-        return cache.entries;
+        return cache.entries.filter(e => e.lastScore > 0);
     }
 
     computeFuzzyMatch(pref: string): CompletionEntry[] {
-
         let cache = this.state.cache
         let fu = cache.fuseEntries;
 
@@ -246,7 +245,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     name: "searchDesc",
                     weight: 0.1
                 }],
-            threshold: 0.65
+            threshold: 0.7
         })
 
         let fures: { item: CompletionEntry; score: number; matches: any; }[] = fu.search(pref);
@@ -255,7 +254,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             let e = fue.item as CompletionEntry;
             e.lastScore = (1 - fue.score) * 100;
         });
-        return fures.map(e => e.item);
+        return fures.filter(e => e.score > 0).map(e => e.item);
     }
 
     fetchCompletionInfo(textPos: AceAjax.Position, pref: string, isTopLevel: boolean) {
@@ -268,6 +267,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         if (cache.entries) {
             let matches = this.computeMatch(pref);
+            if (!matches.length) 
+                matches = this.computeFuzzyMatch(pref);
             for (let e of matches) {
                 let k = e.symbolInfo.kind
                 if (isTopLevel) {
@@ -279,9 +280,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 if (e.symbolInfo.isContextual)
                     e.lastScore *= 1.1;
             }
-            let res = pref ? matches.filter(e => e.lastScore > 0) : matches;
-            res.sort((a, b) => (b.lastScore - a.lastScore) || Util.strcmp(a.searchName, b.searchName))
-            return res
+            matches.sort((a, b) => (b.lastScore - a.lastScore) || Util.strcmp(a.searchName, b.searchName))
+            return matches
         }
 
         return null
