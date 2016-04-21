@@ -350,12 +350,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             this.stopSimulator();
             this.saveFileAsync()
                 .done(() => this.setState({ active: active}));            
-        } else if (this.state.header) {
-            let id = this.state.header.id;
-            workspace.initAsync(pxt.appTarget.id)
-            .then(() => workspace.getHeader(id))
-            .then(h => this.loadHeaderAsync(h))            
-            .done(() => this.setState({ active: active}));                                
+        } else if (workspace.isSessionOutdated()) {
+            console.log('workspace changed, reloading...')
+            let id = this.state.header ? this.state.header.id : '';
+            workspace.initAsync()
+                .then(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve())            
+                .done(() => this.setState({ active: active}));                                
         }
     }
 
@@ -568,6 +568,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     importHex(data: pxt.cpp.HexFile) {
+        let targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
             core.warningNotification("Sorry, we could not recognize this file.")
             return;
@@ -589,10 +590,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.aceEditor.formatCode()                    
                 })
             return;
-        } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget() || data.meta.cloudId == "pxt/" + workspace.getCurrentTarget()) {
+        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == "pxt/" + targetId) {
             console.log("importing project")
             let h: InstallHeader = {
-                target: workspace.getCurrentTarget(),
+                target: targetId,
                 editor: data.meta.editor,
                 name: data.meta.name,
                 meta: {},
@@ -751,7 +752,7 @@ Ctrl+Shift+B
             editor: prj.id,
             pubId: "",
             pubCurrent: false,
-            target: workspace.getCurrentTarget()
+            target: pxt.appTarget.id
         }, files)
             .then(hd => this.loadHeaderAsync(hd))
     }
@@ -1192,7 +1193,7 @@ $(document).ready(() => {
         .then(() => {
             return compiler.init();
         })
-        .then(() => workspace.initAsync(pxt.appTarget.id))
+        .then(() => workspace.initAsync())
         .then(() => {
             $("#loading").remove();
             render()

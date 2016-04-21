@@ -36,6 +36,8 @@ export function setupWorkspace(id: string) {
 }
 
 export function getHeaders(withDeleted = false) {
+    checkSession();
+    
     let r = impl.getHeaders()
     if (!withDeleted)
         r = r.filter(r => !r.isDeleted)
@@ -44,25 +46,37 @@ export function getHeaders(withDeleted = false) {
 }
 
 export function getHeader(id: string) {
+    checkSession();
+
     let hd = impl.getHeader(id)
     if (hd && !hd.isDeleted)
         return hd
     return null
 }
 
-var currentTarget = "";
-
-export function getCurrentTarget() {
-    return currentTarget
+let sessionID : string;
+export function isSessionOutdated() {
+    return localStorage['pxt_workspace_session_id']  != sessionID;
+}
+function checkSession() {
+    if (isSessionOutdated()) {
+        Util.assert(false, "trying to access outdated session")
+    } 
 }
 
-export function initAsync(target: string) {
+export function initAsync() {
     if (!impl) impl = cloudworkspace.provider;
-    currentTarget = target
-    return impl.initAsync(target)
+    
+    // generate new workspace session id to avoid races with other tabs
+    sessionID = Util.guidGen();
+    localStorage['pxt_workspace_session_id'] = sessionID;
+    console.log(`workspace session: ${sessionID}`);
+    
+    return impl.initAsync(pxt.appTarget.id)
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
+    checkSession();
     return impl.getTextAsync(id);
 }
 
@@ -98,6 +112,7 @@ export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
 }
 
 export function saveAsync(h: Header, text?: ScriptText) {
+    checkSession();
     if (text || h.isDeleted) {
         h.pubCurrent = false
         h.blobCurrent = false
@@ -108,6 +123,7 @@ export function saveAsync(h: Header, text?: ScriptText) {
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
+    checkSession();
     return impl.installAsync(h0, text)
 }
 
@@ -126,6 +142,7 @@ export function fixupFileNames(txt: ScriptText) {
 let scriptDlQ = new U.PromiseQueue();
 //let scriptCache:any = {}
 export function getPublishedScriptAsync(id: string) {
+    checkSession();
     //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])   
     return scriptDlQ.enqueue(id, () => scripts.getAsync(id)
         .then(v => v.files, e => Cloud.downloadScriptFilesAsync(id)
@@ -153,14 +170,17 @@ export function installByIdAsync(id: string) {
 }
 
 export function saveToCloudAsync(h: Header) {
+    checkSession();
     return impl.saveToCloudAsync(h)
 }
 
 export function syncAsync() {
+    checkSession();
     return impl.syncAsync();
 }
 
 export function resetAsync() {
+    checkSession();
     return impl.resetAsync()
 }
 

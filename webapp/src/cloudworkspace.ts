@@ -46,7 +46,7 @@ function initAsync(target: string) {
         allScripts = h
             .filter((hh: Header) => {
                 if (!hh.target) hh.target = "microbit"
-                return hh.target == ws.getCurrentTarget()
+                return hh.target == pxt.appTarget.id
             })
             .map((hh: Header) => {
                 return {
@@ -133,7 +133,7 @@ function installAsync(h0: InstallHeader, text: ScriptText) {
     h.id = U.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
-    h.target = ws.getCurrentTarget();
+    h.target = pxt.appTarget.id;
     let e: HeaderWithScript = {
         id: h.id,
         header: h,
@@ -192,7 +192,7 @@ function syncOneUpAsync(h: Header) {
                 recentUse: h.recentUse,
                 editor: h.editor,
                 script: scr,
-                target: ws.getCurrentTarget()
+                target: pxt.appTarget.id
             }
             console.log(`sync up ${h.id}; ${body.script.length} chars`)
             h.saveId = saveId;
