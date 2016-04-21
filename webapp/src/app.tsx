@@ -1141,9 +1141,9 @@ function showIcons() {
 function assembleCurrent() {
     compiler.compileAsync({ native: true })
         .then(() => compiler.assemble(getEditor().editorFile.content))
-        .then(v => {            
-                        
-            console.log("[" + nums.map(n => n.toString()).join(",") + "]")
+        .then(v => {
+            let nums = v.words            
+            console.log("[" + nums.map(n => "0x" + n.toString(16)).join(",") + "]")
         })
 }
 
