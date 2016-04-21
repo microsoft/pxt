@@ -990,7 +990,7 @@ namespace pxt.blocks {
                 // while
                 H.mkWhile(
                     // VAR <= B
-                    H.mkExprHolder([], H.mkSimpleCall("≤", [eVar, eLocal])),
+                    H.mkExprHolder([], H.mkSimpleCall("<=", [eVar, eLocal])),
                     // DO
                     compileStatements(e, bDo).concat([
                         H.mkExprStmt(
