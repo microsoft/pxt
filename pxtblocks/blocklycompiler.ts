@@ -516,7 +516,7 @@ namespace pxt.blocks {
             return find((<any>b).p);
 
         if (b.type == "variables_get")
-            return find(lookup(e, b.getFieldValue("VAR")).type);
+            return find(lookup(e, escapeVarName(b.getFieldValue("VAR"))).type);
 
         assert(!b.outputConnection || b.outputConnection.check_ && b.outputConnection.check_.length > 0);
 
@@ -637,7 +637,7 @@ namespace pxt.blocks {
                         break;
                     case "variables_set":
                     case "variables_change":
-                        var x = b.getFieldValue("VAR");
+                        var x = escapeVarName(b.getFieldValue("VAR"));
                         var p1 = lookup(e, x).type;
                         attachPlaceholderIf(e, b, "VALUE");
                         var rhs = b.getInputTargetBlock("VALUE");
@@ -945,7 +945,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: B.Block): J.JStmt[] {
-        let bVar = b.getFieldValue("VAR");
+        let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bTo = b.getInputTargetBlock("TO");
         let bDo = b.getInputTargetBlock("DO");
 
@@ -1028,17 +1028,26 @@ namespace pxt.blocks {
         return mkCallWithCallback(e, "basic", "forever", [], body);
     }
     
+    // convert to javascript friendly name
+    function escapeVarName(name: string) : string {
+        if (!name) return '_';
+        let n = name.split(/[^a-zA-Z0-9_$]+/)
+            .map((c,i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1))
+            .join('');
+        return n;
+    }
+    
     function compileVariableGet(e: Environment, b: B.Block): J.JExpr {
-        let name = b.getFieldValue("VAR");
+        let name = escapeVarName(b.getFieldValue("VAR"));
         let binding = lookup(e, name);
         if (!binding.assigned) 
             binding.assigned = VarUsage.Read;
         assert(binding != null && binding.type != null);
         return H.mkLocalRef(name);
     }
-
+    
     function compileSet(e: Environment, b: B.Block): J.JStmt {
-        let bVar = b.getFieldValue("VAR");
+        let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned && !findParent(b)) 
@@ -1049,7 +1058,7 @@ namespace pxt.blocks {
     }
 
     function compileChange(e: Environment, b: B.Block): J.JStmt {
-        let bVar = b.getFieldValue("VAR");
+        let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned) 
@@ -1266,7 +1275,7 @@ namespace pxt.blocks {
             if (!b)
                 return false;
             else if ((b.type == "controls_for" || b.type == "controls_simple_for")
-                && b.getFieldValue("VAR") == name)
+                && escapeVarName(b.getFieldValue("VAR")) == name)
                 return true;
             else
                 return variableIsScoped(findParent(b), name);
@@ -1275,7 +1284,7 @@ namespace pxt.blocks {
         // collect loop variables.
         w.getAllBlocks().forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for") {
-                let x = b.getFieldValue("VAR");
+                let x = escapeVarName(b.getFieldValue("VAR"));
                 // It's ok for two loops to share the same variable.
                 if (lookup(e, x) == null)
                     e = extend(e, x, pNumber.type);
@@ -1293,7 +1302,7 @@ namespace pxt.blocks {
         // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
         w.getAllBlocks().forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
-                let x = b.getFieldValue("VAR");
+                let x = escapeVarName(b.getFieldValue("VAR"));
                 if (lookup(e, x) == null)
                     e = extend(e, x, null);
 
