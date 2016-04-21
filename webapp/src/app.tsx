@@ -149,8 +149,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
                 p.addDepAsync(scr.scriptname, "*")
-                 .then(r => this.props.parent.loadHeaderAsync(this.props.parent.state.header))
-                 .done();
+                    .then(r => this.props.parent.loadHeaderAsync(this.props.parent.state.header))
+                    .done();
             } else {
                 workspace.installByIdAsync(scr.scriptid)
                     .then(r => this.props.parent.loadHeaderAsync(r))
@@ -342,20 +342,20 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         };
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
     }
-    
+
     updateVisibility() {
         let active = document.visibilityState == 'visible';
         console.log(`page visibility: ${active}`)
         if (!active) {
             this.stopSimulator();
             this.saveFileAsync()
-                .done(() => this.setState({ active: active}));            
+                .done(() => this.setState({ active: active }));
         } else if (this.state.header) {
             let id = this.state.header.id;
             workspace.initAsync(pxt.appTarget.id)
-            .then(() => workspace.getHeader(id))
-            .then(h => this.loadHeaderAsync(h))            
-            .done(() => this.setState({ active: active}));                                
+                .then(() => workspace.getHeader(id))
+                .then(h => this.loadHeaderAsync(h))
+                .done(() => this.setState({ active: active }));
         }
     }
 
@@ -414,8 +414,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         () => {
             if (!this.state.active) return;
             this.runSimulator({ background: true });
-        }, 
-        3000, false);    
+        },
+        3000, false);
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
@@ -426,7 +426,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.debug
                         && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
-                            this.autoRunSimulator();
+                        this.autoRunSimulator();
                 }
             });
     }
@@ -514,7 +514,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    loadHeaderAsync(h: Header):Promise<void> {
+    loadHeaderAsync(h: Header): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -586,7 +586,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 .then(text => {
                     // this is somewhat hacky...
                     this.aceEditor.overrideFile(text)
-                    this.aceEditor.formatCode()                    
+                    this.aceEditor.formatCode()
                 })
             return;
         } else if (data.meta.cloudId == "ks/" + workspace.getCurrentTarget() || data.meta.cloudId == "pxt/" + workspace.getCurrentTarget()) {
@@ -785,7 +785,7 @@ Ctrl+Shift+B
                 if (!resp.outfiles["microbit.hex"]) {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
-                }                
+                }
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf("Compilation failed, please try again."));
@@ -877,15 +877,17 @@ Ctrl+Shift+B
     }
 
     setErrorCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
-        this.setState({ 
-            errorCard: card, 
-            errorCardClick: onClick })
+        this.setState({
+            errorCard: card,
+            errorCardClick: onClick
+        })
     }
 
     setHelpCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
-        this.setState({ 
-            helpCard: card, 
-            helpCardClick: onClick })
+        this.setState({
+            helpCard: card,
+            helpCardClick: onClick
+        })
     }
 
     updateHeaderName(name: string) {
@@ -919,8 +921,8 @@ Ctrl+Shift+B
                 <div id="menubar" role="banner">
                     <div className="ui borderless small menu" role="menubar">
                         <span id="logo" className="ui item">
-                            {targetTheme.logo || targetTheme.portraitLogo 
-                                ? <a target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a> 
+                            {targetTheme.logo || targetTheme.portraitLogo
+                                ? <a target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
                                 : <span>{targetTheme.name}</span>}
                             {targetTheme.portraitLogo ? (<a target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                         </span>
@@ -943,7 +945,7 @@ Ctrl+Shift+B
                                     {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
-                                            this.saveSettings();
+                                        this.saveSettings();
                                     } } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
@@ -951,7 +953,7 @@ Ctrl+Shift+B
                                     <div className="ui divider"></div>
                                     <a className="ui item" href="/docs" role="menuitem" target="_blank">
                                         <i className="help icon"></i>
-                                        {lf("Help")}
+                                        {lf("Help") }
                                     </a>
                                     <LoginBox />
                                     {
@@ -959,7 +961,7 @@ Ctrl+Shift+B
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
                                 </sui.DropdownMenu>
-                            </div>                            
+                            </div>
                             <div className="ui buttons wide only">
                                 <sui.DropdownMenu class="floating icon button" icon="help">
                                     {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
@@ -978,16 +980,16 @@ Ctrl+Shift+B
                             </div>
                         </div>
                         {targetTheme.rightLogo ?
-                        <div className="ui item right wide only">
-                            <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
-                        </div> : null }
+                            <div className="ui item right wide only">
+                                <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
+                            </div> : null }
                     </div>
                 </div>
                 <div id="filelist" className="ui items" role="complementary">
                     {this.state.errorCard ? <div id="errorcard" className="ui item">
                         <codecard.CodeCardView className="fluid top-margin" responsive={true} onClick={this.state.errorCardClick} {...this.state.errorCard} target={pxt.appTarget.id} />
-                    </div>  : null }
-                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only " : "") + (this.state.errorCard ? "errored " : "")}>
+                    </div> : null }
+                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only " : "") + (this.state.errorCard ? "errored " : "") }>
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
@@ -1010,7 +1012,7 @@ Ctrl+Shift+B
                         { targetTheme.footerLogo ? <a target="_blank" id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (pxt.appTarget.title || pxt.appTarget.name) }
                         <span>v{targetVersion}</span>&nbsp;
                         - <a target="_blank" href="https://github.com/Microsoft/pxt" title="Microsoft Programming Experience Toolkit"><i className='xicon ksempty'/> PXT</a>
-                        &nbsp;<span>v{ksVersion}</span>&nbsp;
+                        &nbsp; <span>v{ksVersion}</span>&nbsp;
                         - &copy; Microsoft Corporation 2016
                         - <a target="_blank" href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") } </a>
                         - <a target="_blank" href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
@@ -1089,29 +1091,29 @@ function enableInsights(version: string) {
     if (!ai) return;
 
     ai.trackPageView();
-        let rexp = pxt.reportException;
-        pxt.reportException = function(err: any, data: any): void {
-            if (rexp) rexp(err, data);
-            let props : pxt.U.Map<string> = {};
+    let rexp = pxt.reportException;
+    pxt.reportException = function (err: any, data: any): void {
+        if (rexp) rexp(err, data);
+        let props: pxt.U.Map<string> = {};
+        if (data)
+            for (let k in data)
+                props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
+        ai.trackException(err, 'exception', props)
+    }
+    let re = pxt.reportError;
+    pxt.reportError = function (msg: string, data: any): void {
+        if (re) re(msg, data);
+        try {
+            throw msg
+        }
+        catch (err) {
+            let props: pxt.U.Map<string> = {};
             if (data)
-                for(let k in data)
+                for (let k in data)
                     props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
-            ai.trackException(err, 'exception', props)
+            ai.trackException(err, 'error', props)
         }
-        let re = pxt.reportError;
-        pxt.reportError = function(msg: string, data: any): void {
-            if (re) re(msg, data);
-            try {
-                throw msg
-            }
-            catch (err) {
-                let props : pxt.U.Map<string> = {};
-                if (data)
-                    for(let k in data)
-                        props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
-                ai.trackException(err, 'error', props)
-            }
-        }
+    }
 }
 
 function tickEvent(id: string) {
@@ -1138,8 +1140,11 @@ function showIcons() {
 
 function assembleCurrent() {
     compiler.compileAsync({ native: true })
-    .then(() => compiler.assemble(getEditor().editorFile.content))
-    .then(v => console.log(v))
+        .then(() => compiler.assemble(getEditor().editorFile.content))
+        .then(v => {            
+                        
+            console.log("[" + nums.map(n => n.toString()).join(",") + "]")
+        })
 }
 
 
@@ -1231,10 +1236,10 @@ $(document).ready(() => {
             initSerial()
             return pxtwinrt.initAsync(ih);
         })
-      
+
     document.addEventListener("visibilitychange", ev => {
-        theEditor.updateVisibility();        
-    });     
+        theEditor.updateVisibility();
+    });
 
     window.addEventListener("unload", ev => {
         if (theEditor && !LoginBox.signingOut)

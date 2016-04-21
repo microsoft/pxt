@@ -71,8 +71,20 @@ export function compileAsync(options: CompileOptions = {}) {
         })
 }
 
-export function assemble(src:string) {
+function assembleCore(src: string): Promise<{ words: number[] }> {
     return workerOpAsync("assemble", { fileContent: src })
+}
+
+export function assemble(src: string) {
+    let stackBase = 0x20004000
+    return assembleCore(`.startaddr ${stackBase - 256}\n${src}`)
+        .then(r => {
+            return assembleCore(`.startaddr ${stackBase - (r.words.length + 1) * 4}\n${src}`)
+            .then(rr => {
+                U.assert(rr.words.length == r.words.length)
+                return rr
+            })
+        })
 }
 
 function compileCoreAsync(opts: ts.pxt.CompileOptions): Promise<ts.pxt.CompileResult> {

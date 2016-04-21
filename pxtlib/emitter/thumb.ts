@@ -257,7 +257,7 @@ module ts.pxt.thumb {
             this.currLine.lineNo = 0;
         }
 
-        public baseOffset: number;
+        public baseOffset: number = 0;
         public finalEmit: boolean;
         public reallyFinalEmit: boolean;
         public checkStack = true;
@@ -358,7 +358,6 @@ module ts.pxt.thumb {
 
             if (v == null && this.looksLikeLabel(s)) {
                 v = this.lookupLabel(s, true);
-                v += this.baseOffset;
             }
 
             if (v == null || isNaN(v)) return null;
@@ -383,8 +382,10 @@ module ts.pxt.thumb {
             var scoped = this.scopedName(name)
             if (this.labels.hasOwnProperty(scoped))
                 v = this.labels[scoped];
-            else if (this.lookupExternalLabel)
+            else if (this.lookupExternalLabel) {
                 v = this.lookupExternalLabel(name)
+                if (v != null) v -= this.baseOffset
+            }
             if (v == null && direct) {
                 if (this.finalEmit)
                     this.directiveError(lf("unknown label: {0}", name));
@@ -596,7 +597,11 @@ module ts.pxt.thumb {
                     this.emitSpace(words);
                     break;
 
-                case "@js":
+                case ".startaddr":
+                    if (this.location())
+                        this.directiveError(lf(".startaddr can be only be specified at the beginning of the file"))
+                    expectOne()
+                    this.baseOffset = this.parseOneInt(words[1]);
                     break;
 
                 // The usage for this is as follows:
@@ -664,7 +669,7 @@ module ts.pxt.thumb {
                     this.emitShort(op.opcode2);
                 ln.instruction = instr;
                 ln.numArgs = op.numArgs;
-                
+
                 return true;
             }
             return false;
@@ -900,7 +905,7 @@ module ts.pxt.thumb {
             }
         }
 
-        private peepPass(reallyFinal:boolean) {
+        private peepPass(reallyFinal: boolean) {
             if (this.disablePeepHole)
                 return;
 

@@ -545,7 +545,7 @@ ${getFunctionLabel(proc.action)}:
         export function lookupFunctionAddr(name: string) {
             var inf = lookupFunc(name)
             if (inf)
-                return inf.value - bytecodeStartAddr
+                return inf.value
             return null
         }
 
@@ -554,6 +554,10 @@ ${getFunctionLabel(proc.action)}:
             var sha = currentSetup ? currentSetup.slice(0, 16) : ""
             while (sha.length < 16) sha += "0"
             return sha.toUpperCase()
+        }
+
+        export function hexPrelude() {
+            return `    .startaddr 0x${bytecodeStartAddr.toString(16)}\n`
         }
 
         function hexBytes(bytes: number[]) {
@@ -661,7 +665,8 @@ ${lbl}: .string ${stringLiteral(s)}
 
     function serialize(bin: Binary) {
         let asmsource = `; start
-    .hex 708E3B92C615A841C49866C975EE5197
+${hex.hexPrelude()}        
+    .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
     .space 16 ; reserved
