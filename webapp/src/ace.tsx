@@ -201,12 +201,35 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(() => this.setState({ cache: cache }))
     }
 
-    computeMatch(pref: string): { item: CompletionEntry; score: number; }[] {
+    computeMatch(pref: string): CompletionEntry[] {
         let cache = this.state.cache
 
-        if (!pref) return cache.entries.map(entry => { return { item: entry, score: 0 } });
+        if (!pref) return cache.entries;
 
+        pref = pref.toLowerCase()
+        let spcPref = " " + pref;
+        for (let e of cache.entries) {
+            e.lastScore = 0
+            let idx = e.searchName.indexOf(pref)
+            if (idx == 0)
+                e.lastScore += 100
+            else if (idx > 0)
+                e.lastScore += 50
+            else {
+                idx = e.searchDesc.indexOf(spcPref)
+                if (idx >= 0)
+                    e.lastScore += 10;
+            }
+        }
+        
+        return cache.entries;
+    }
+
+    computeFuzzyMatch(pref: string): CompletionEntry[] {
+
+        let cache = this.state.cache
         let fu = cache.fuseEntries;
+
         if (!fu) fu = cache.fuseEntries = new Fuse(cache.entries, {
             include: ["score", "matches"],
             shouldSort: false,
@@ -225,8 +248,14 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 }],
             threshold: 0.65
         })
+
         let fures: { item: CompletionEntry; score: number; matches: any; }[] = fu.search(pref);
-        return fures;
+        cache.entries.forEach(ce => ce.lastScore = 0);
+        fures.forEach(fue => {
+            let e = fue.item as CompletionEntry;
+            e.lastScore = (1 - fue.score) * 100;
+        });
+        return fures.map(e => e.item);
     }
 
     fetchCompletionInfo(textPos: AceAjax.Position, pref: string, isTopLevel: boolean) {
@@ -238,25 +267,19 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         }
 
         if (cache.entries) {
-            let fures = this.computeMatch(pref);
-            cache.entries.forEach(ce => ce.lastScore = 0);
-            for (let fue of fures) {
-                let e = fue.item as CompletionEntry;
-                e.lastScore = (1 - fue.score) * 100;
-
+            let matches = this.computeMatch(pref);
+            for (let e of matches) {
                 let k = e.symbolInfo.kind
                 if (isTopLevel) {
                     if (k == SK.Enum || k == SK.EnumMember)
                         e.lastScore *= 1e-5;
                 }
-
                 if (!e.symbolInfo.isContextual && (k == SK.Method || k == SK.Property))
                     e.lastScore *= 1e-3;
-
                 if (e.symbolInfo.isContextual)
                     e.lastScore *= 1.1;
             }
-            let res = cache.entries.filter(e => e.lastScore > 0);
+            let res = pref ? matches.filter(e => e.lastScore > 0) : matches;
             res.sort((a, b) => (b.lastScore - a.lastScore) || Util.strcmp(a.searchName, b.searchName))
             return res
         }
