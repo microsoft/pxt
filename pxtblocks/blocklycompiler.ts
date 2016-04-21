@@ -1113,8 +1113,10 @@ namespace pxt.blocks {
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
         var bBody = b.getInputTargetBlock("HANDLER");
-        var compiledArgs = args.map((arg: string) => {
+        var compiledArgs : J.JNode[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
+            let argb = b.getInputTargetBlock(arg);
+            if (argb) return compileExpression(e, argb);
             return H.mkLocalRef(b.getFieldValue(arg))
         });
         var body = compileStatements(e, bBody);
