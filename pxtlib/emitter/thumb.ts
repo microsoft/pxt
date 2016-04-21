@@ -289,7 +289,7 @@ module ts.pxt.thumb {
             return this.buf.length * 2;
         }
 
-        public parseOneInt(s: string) {
+        public parseOneInt(s: string):number {
             if (!s)
                 return null;
 
@@ -311,6 +311,10 @@ module ts.pxt.thumb {
             }
 
             var v: number = null
+            
+            if (U.endsWith(s, "|1")) {
+                return this.parseOneInt(s.slice(0, s.length - 2)) | 1
+            }
 
             if (s[0] == "0") {
                 if (s[1] == "x" || s[1] == "X") {
