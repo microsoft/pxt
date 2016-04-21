@@ -1136,6 +1136,13 @@ function showIcons() {
 }
 
 
+function assembleCurrent() {
+    compiler.compileAsync({ native: true })
+    .then(() => compiler.assemble(getEditor().editorFile.content))
+    .then(v => console.log(v))
+}
+
+
 // This is for usage from JS console
 let myexports: any = {
     workspace,
@@ -1148,7 +1155,8 @@ let myexports: any = {
     getsrc,
     sim: simulator,
     apiAsync: core.apiAsync,
-    showIcons
+    showIcons,
+    assembleCurrent
 };
 (window as any).E = myexports;
 

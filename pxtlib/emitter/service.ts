@@ -491,6 +491,12 @@ namespace ts.pxt.service {
         decompile: v => {
             return decompile(v.options, v.fileName);
         },
+        
+        assemble: v => {
+            return {
+                words: thumbInlineAssemble(v.fileContent)
+            }
+        },
 
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 

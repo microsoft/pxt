@@ -71,6 +71,10 @@ export function compileAsync(options: CompileOptions = {}) {
         })
 }
 
+export function assemble(src:string) {
+    return workerOpAsync("assemble", { fileContent: src })
+}
+
 function compileCoreAsync(opts: ts.pxt.CompileOptions): Promise<ts.pxt.CompileResult> {
     return workerOpAsync("compile", { options: opts })
 }
