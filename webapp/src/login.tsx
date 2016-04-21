@@ -78,17 +78,17 @@ pxt login
 </li>
 <li>delete your account (NO UNDO!) and related packages.
 <pre>
-pxt delete me
+pxt api me delete
 </pre>
 </li>
 <li>list all your packages
 <pre>
-pxt list me
+pxt api me/pointers
 </pre>
 </li>
 <li>delete a particular package
 <pre>
-pxt delete PACKAGEID
+pxt api PACKAGEID delete
 </pre>
 </li>
 </ul>
