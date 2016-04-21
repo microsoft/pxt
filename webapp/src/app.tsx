@@ -931,7 +931,7 @@ Ctrl+Shift+B
                                 <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                { packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                { packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Publish") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
@@ -940,7 +940,7 @@ Ctrl+Shift+B
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     {pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } /> : null }
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
-                                    {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Share") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                    {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Publish") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                             this.saveSettings();
