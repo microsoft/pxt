@@ -133,6 +133,11 @@ export function loginAsync(access_token: string) {
 }
 
 export function apiAsync(path: string, postArguments?: string) {
+    if (postArguments == "delete") {
+        return Cloud.privateDeleteAsync(path)
+            .then(resp => console.log(resp))
+    }
+
     let dat = postArguments ? eval("(" + postArguments + ")") : null
     return Cloud.privateRequestAsync({
         url: path,
