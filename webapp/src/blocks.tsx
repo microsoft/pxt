@@ -36,7 +36,7 @@ export class Editor extends srceditor.Editor {
             return this.compilationResult.source;
         } catch (e) {
             pxt.reportException(e, { blocks: this.serializeBlocks() })
-            core.errorNotification(lf("OSorry, we were not able to convert this program."))
+            core.errorNotification(lf("Sorry, we were not able to convert this program."))
             return '';
         }
     }
