@@ -59,16 +59,11 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
 
     }
 
-    renderCore() {
-        let settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
-        let name = Cloud.isLoggedIn() ? (settings.nickname || lf("Loading...")) : lf("Developer sign in")
-        let icon = Cloud.isLoggedIn() ? "user" : "sign in";
-        let buttonAction = () => {
-            if (Cloud.isLoggedIn()) {
-                core.confirmAsync({
-                    header: lf("User properties"),
-                    htmlBody:
-                    `<p>Manage your account and assets using the <code>pxt</code> command line.</p>
+    static showUserPropertiesAsync() {
+        return core.confirmAsync({
+            header: lf("User properties"),
+            htmlBody:
+            `<p>Manage your account and assets using the <code>pxt</code> command line.</p>
 <ul>
 <li>install the <code>pxt</code> command line and login following the on-screen instructions
 <pre>
@@ -93,10 +88,19 @@ pxt delete PACKAGEID
 </li>
 </ul>
 `,
-                    agreeLbl: lf("Got it!"),
-                    hideCancel: true
-                }).done();
-            } else this.signin();
+            agreeLbl: lf("Got it!"),
+            hideCancel: true
+        })
+    }
+
+    renderCore() {
+        let settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
+        let name = Cloud.isLoggedIn() ? (settings.nickname || lf("Loading...")) : lf("Developer sign in")
+        let icon = Cloud.isLoggedIn() ? "user" : "sign in";
+        let buttonAction = () => {
+            if (Cloud.isLoggedIn())
+              LoginBox.showUserPropertiesAsync().done();
+            else this.signin();
         }
 
         return <sui.Item text={name} icon={icon} onClick={buttonAction} />

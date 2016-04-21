@@ -960,7 +960,10 @@ Ctrl+Shift+B
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
                                 </sui.DropdownMenu>
-                            </div>                            
+                            </div>   
+                            <div className="ui">                         
+                                {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync().done() } /> : undefined}
+                            </div>
                             <div className="ui buttons wide only">
                                 <sui.DropdownMenu class="floating icon button" icon="help">
                                     {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
