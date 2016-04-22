@@ -4,9 +4,9 @@
 <head>
     <meta charset="utf-8">
     <title>Programming Experience Toolkit</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="manifest" href="/sim/sim.webmanifest">
-    <link rel="shortcut icon" href="/static/favicon.png" />    
+    <link rel="shortcut icon" href="/static/favicon.png" />
 </head>
 
 <body role="application">
@@ -33,7 +33,7 @@
         // This line gets patched up by the cloud
         var pxtConfig = null;
     </script>
-   
+
     <script type="text/javascript" src="/cdn/lzma/lzma_worker-min.js"></script>
     <script type="text/javascript" src="/cdn/jquery.js"></script>
     <script type="text/javascript" src="/cdn/typescript.js"></script>
@@ -48,7 +48,7 @@
     <script type="text/javascript" src="/cdn/pxtsim.js"></script>
     <script type="text/javascript" src="/cdn/semantic.js"></script>
     <script type="text/javascript">
-    var appInsights=window.appInsights||function(config){
+        var appInsights=window.appInsights||function(config){
         function r(config){t[config]=function(){var i=arguments;t.queue.push(function(){t[config].apply(t,i)})}}var t={config:config},u=document,e=window,o="script",s=u.createElement(o),i,f;for(s.src=config.url||"//az416426.vo.msecnd.net/scripts/a/ai.0.js",u.getElementsByTagName(o)[0].parentNode.appendChild(s),t.cookie=u.cookie,t.queue=[],i=["Event","Exception","Metric","PageView","Trace"];i.length;)r("track"+i.pop());return r("setAuthenticatedUserContext"),r("clearAuthenticatedUserContext"),config.disableExceptionTracking||(i="onerror",r("_"+i),f=e[i],e[i]=function(config,r,u,e,o){var s=f&&f(config,r,u,e,o);return s!==!0&&t["_"+i](config,r,u,e,o),s}),t
         }({
             instrumentationKey:"e9ae05ca-350b-427a-9775-3ba3f6efabce",
@@ -56,7 +56,7 @@
         });
         
         window.appInsights=appInsights;
-    </script>   
+    </script>
     <script id="mainscript" type="text/javascript" src="/cdn/main.js"></script>
     <xml id="blocklyToolboxDefinition" style="display: none">
         <category name="Loops" colour="120" category="50">
@@ -83,8 +83,8 @@
         <category name="Logic" colour="210" category="49">
             <block type="controls_if"></block>
             <block type="controls_if">
-	          <mutation else="1"></mutation>
-	        </block>            
+                <mutation else="1"></mutation>
+            </block>
             <block type="logic_compare" gap="8">
                 <field name="OP">LT</field>
                 <value name="A">
@@ -133,8 +133,9 @@
                 <field name="BOOL">FALSE</field>
             </block>
         </category>
-        <category name="Variables" colour="330" custom="VARIABLE"  category="48"></category>
-        <category name="Math" colour="230"  category="47">
+        <category name="Variables" colour="330" custom="VARIABLE" category="48">
+        </category>
+        <category name="Math" colour="230" category="47">
             <block type="math_arithmetic" gap="8">
                 <value name="A">
                     <shadow type="math_number">
@@ -230,7 +231,134 @@
             <block type="math_number">
                 <field name="NUM">0</field>
             </block>
-        </category> 
+        </category>
+        <category colour="160" name="Text" category="46">
+            <block type="text"></block>
+            <block type="text_join"></block>
+            <block type="text_append">
+                <value name="TEXT">
+                    <shadow type="text"></shadow>
+                </value>
+            </block>
+            <block type="text_length">
+                <value name="VALUE">
+                    <shadow type="text">
+                        <field name="TEXT">abc</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="text_isEmpty">
+                <value name="VALUE">
+                    <shadow type="text">
+                        <field name="TEXT"></field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="text_indexOf">
+                <value name="VALUE">
+                    <block type="variables_get">
+                        <field name="VAR">text</field>
+                    </block>
+                </value>
+                <value name="FIND">
+                    <shadow type="text">
+                        <field name="TEXT">abc</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="text_charAt">
+                <value name="VALUE">
+                    <block type="variables_get">
+                        <field name="VAR">text</field>
+                    </block>
+                </value>
+            </block>
+            <block type="text_getSubstring">
+                <value name="STRING">
+                    <block type="variables_get">
+                        <field name="VAR">text</field>
+                    </block>
+                </value>
+            </block>
+            <block type="text_changeCase">
+                <value name="TEXT">
+                    <shadow type="text">
+                        <field name="TEXT">abc</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="text_trim">
+                <value name="TEXT">
+                    <shadow type="text">
+                        <field name="TEXT">abc</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="text_print">
+                <value name="TEXT">
+                    <shadow type="text">
+                        <field name="TEXT">abc</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="text_prompt_ext">
+                <value name="TEXT">
+                    <shadow type="text">
+                        <field name="TEXT">abc</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+        <category colour="260" name="Lists" category="45">
+            <block type="lists_create_with">
+                <mutation items="0"></mutation>
+            </block>
+            <block type="lists_create_with"></block>
+            <block type="lists_repeat">
+                <value name="NUM">
+                    <shadow type="math_number">
+                        <field name="NUM">5</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_length"></block>
+            <block type="lists_isEmpty"></block>
+            <block type="lists_indexOf">
+                <value name="VALUE">
+                    <block type="variables_get">
+                        <field name="VAR">list</field>
+                    </block>
+                </value>
+            </block>
+            <block type="lists_getIndex">
+                <value name="VALUE">
+                    <block type="variables_get">
+                        <field name="VAR">list</field>
+                    </block>
+                </value>
+            </block>
+            <block type="lists_setIndex">
+                <value name="LIST">
+                    <block type="variables_get">
+                        <field name="VAR">list</field>
+                    </block>
+                </value>
+            </block>
+            <block type="lists_getSublist">
+                <value name="LIST">
+                    <block type="variables_get">
+                        <field name="VAR">list</field>
+                    </block>
+                </value>
+            </block>
+            <block type="lists_split">
+                <value name="DELIM">
+                    <shadow type="text">
+                        <field name="TEXT">,</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
     </xml>
 </body>
 </html>

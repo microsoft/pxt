@@ -312,6 +312,17 @@ namespace pxt.blocks {
 
     export function initBlocks(blockInfo: ts.pxt.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
         init();
+        
+        // create new toolbox and update block definitions
+        let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
+     
+        let config = pxt.appTarget.runtime || {};
+        if (!config.mathBlocks)
+            tb.querySelector(`category[name="Math"]`).remove();
+        if (!config.textBlocks)
+            tb.querySelector(`category[name="Text"]`).remove();
+        if (!config.listBlocks)
+            tb.querySelector(`category[name="Lists"]` ).remove();        
 
         blockInfo.blocks.sort((f1, f2) => {
             let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
@@ -329,7 +340,6 @@ namespace pxt.blocks {
         let currentBlocks: Util.StringMap<number> = {};
 
         // create new toolbox and update block definitions
-        let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
         blockInfo.blocks
             .filter(fn => !tb || !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
             .forEach(fn => {
