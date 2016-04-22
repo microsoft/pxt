@@ -122,6 +122,7 @@ namespace pxt {
     export interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
+        listsBlocks?: boolean;
     }
 
     export interface AppTarget {
