@@ -67,13 +67,14 @@ namespace pxt.blocks {
             };
         }
 
-        export function mkCall(name: string, parent: J.JTypeRef, args: J.JExpr[]): J.JCall {
+        export function mkCall(name: string, parent: J.JTypeRef, args: J.JExpr[], property = false): J.JCall {
             return {
                 nodeType: "call",
                 id: null,
                 name: name,
                 parent: parent,
                 args: args,
+                property: property
             };
         }
 
@@ -103,8 +104,8 @@ namespace pxt.blocks {
         }
 
         // Call extension method [name] on the first argument
-        export function extensionCall(name: string, args: J.JExpr[]) {
-            return mkCall(name, mkTypeRef("call"), args);
+        export function extensionCall(name: string, args: J.JExpr[], property: boolean) {
+            return mkCall(name, mkTypeRef("call"), args, property);
         }
 
         function mkNamespaceRef(lib: string, namespace: string): J.JSingletonRef {
@@ -1069,7 +1070,7 @@ namespace pxt.blocks {
     }
 
     function compileCall(e: Environment, b: B.Block): J.JStmt {
-        var call = e.stdCallTable[b.type];
+        let call = e.stdCallTable[b.type];
         return call.imageLiteral
             ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))))
             : call.hasHandler ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
@@ -1077,7 +1078,7 @@ namespace pxt.blocks {
     }
 
     function compileArgument(e: Environment, b: B.Block, p: StdArg): J.JExpr {
-        var lit: any = p.literal;
+        let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
         var f = b.getFieldValue(p.field);
@@ -1088,9 +1089,9 @@ namespace pxt.blocks {
     }
 
     function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
-        var args = func.args.map((p: StdArg) => compileArgument(e, b, p));
+        let args = func.args.map((p: StdArg) => compileArgument(e, b, p));
         if (func.isExtensionMethod) {
-            return H.extensionCall(func.f, args);
+            return H.extensionCall(func.f, args, !!func.property);
         } else if (func.namespace) {
             return H.namespaceCall(func.namespace, func.f, args);
         } else {
@@ -1166,6 +1167,7 @@ namespace pxt.blocks {
         isExtensionMethod?: boolean;
         imageLiteral?: number;
         hasHandler?: boolean;
+        property?: boolean;
         namespace?: string;
     }
 
@@ -1254,7 +1256,7 @@ namespace pxt.blocks {
                     }
                     let fieldMap = pxt.blocks.parameterNames(fn);
                     let instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
-                    let args = fn.parameters.map(p => {
+                    let args = ( fn.parameters || [] ).map(p => {
                         if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
                         else return null;
                     }).filter(a => !!a);
@@ -1268,9 +1270,10 @@ namespace pxt.blocks {
                         f: fn.name,
                         isExtensionMethod: instance,
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: fn.parameters.some(p => p.type == "() => void"),
+                        hasHandler: fn.parameters && fn.parameters.some(p => p.type == "() => void"),
+                        property: !fn.parameters,
                         args: args
-                    }
+                    } 
                 })
 
         const variableIsScoped = (b: B.Block, name: string): boolean => {
@@ -1468,12 +1471,14 @@ namespace pxt.blocks {
                         parent: e.parent,
                         declId: e.declId,
                     })
-                    pushOp("(")
-                    e.args.slice(1).forEach((ee, i) => {
-                        if (i > 0) pushOp(",")
-                        rec(ee, -1)
-                    })
-                    pushOp(")")
+                    if (!e.property) {
+                        pushOp("(")
+                        e.args.slice(1).forEach((ee, i) => {
+                            if (i > 0) pushOp(",")
+                            rec(ee, -1)
+                        })
+                        pushOp(")")
+                    }
                 }
             }
 

@@ -13,8 +13,12 @@ namespace pxt.blocks {
     }
 
     // list of built-in blocks, should be touched.
-    const builtinBlocks: Util.StringMap<any> = {};
-    Object.keys(Blockly.Blocks).forEach(k => builtinBlocks[k] = Blockly.Blocks[k]);
+    const builtinBlocks: Util.StringMap<{
+        block: B.BlockDefinition;
+        symbol?: ts.pxt.SymbolInfo;    
+    }> = {};
+    Object.keys(Blockly.Blocks)
+        .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
 
     // blocks cached
     interface CachedBlock {
@@ -66,11 +70,12 @@ namespace pxt.blocks {
         let attrNames: Util.StringMap<BlockParameter> = {};
 
         if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
-        fn.parameters.forEach(pr => attrNames[pr.name] = {
-            name: pr.name,
-            type: pr.type,
-            shadowValue: pr.defaults ? pr.defaults[0] : undefined
-        });
+        if (fn.parameters)
+            fn.parameters.forEach(pr => attrNames[pr.name] = {
+                name: pr.name,
+                type: pr.type,
+                shadowValue: pr.defaults ? pr.defaults[0] : undefined
+            });
         if (fn.attributes.block) {
             Object.keys(attrNames).forEach(k => attrNames[k].name = "");
             let rx = /%([a-zA-Z0-9_]+)(=([a-zA-Z0-9_]+))?/g;
@@ -104,14 +109,15 @@ namespace pxt.blocks {
             let attr = attrNames["this"];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
         }
-        fn.parameters.filter(pr => !!attrNames[pr.name].name &&
-            (/string|number/.test(attrNames[pr.name].type)
-                || !!attrNames[pr.name].shadowType
-                || !!attrNames[pr.name].shadowValue))
-            .forEach(pr => {
-                let attr = attrNames[pr.name];
-                block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
-            })
+        if (fn.parameters)
+            fn.parameters.filter(pr => !!attrNames[pr.name].name &&
+                (/string|number/.test(attrNames[pr.name].type)
+                    || !!attrNames[pr.name].shadowType
+                    || !!attrNames[pr.name].shadowValue))
+                .forEach(pr => {
+                    let attr = attrNames[pr.name];
+                    block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
+                })
         return block;
     }
 
@@ -343,12 +349,17 @@ namespace pxt.blocks {
         blockInfo.blocks
             .filter(fn => !tb || !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
             .forEach(fn => {
-                let pnames = parameterNames(fn);
-                let block = createToolboxBlock(blockInfo, fn, pnames);
-                if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
-                    if (tb)
-                        injectToolbox(tb, blockInfo, fn, block);
-                    currentBlocks[fn.attributes.blockId] = 1;
+                if(fn.attributes.blockBuiltin) {
+                    Util.assert(!!builtinBlocks[fn.attributes.blockId]);
+                    builtinBlocks[fn.attributes.blockId].symbol = fn;
+                } else {
+                    let pnames = parameterNames(fn);
+                    let block = createToolboxBlock(blockInfo, fn, pnames);
+                    if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
+                        if (tb)
+                            injectToolbox(tb, blockInfo, fn, block);
+                        currentBlocks[fn.attributes.blockId] = 1;
+                    }                    
                 }
             })
 
