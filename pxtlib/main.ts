@@ -118,7 +118,7 @@ namespace pxt {
         gittag: string;
         serviceId: string;
     }
-    
+
     export interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
@@ -622,6 +622,16 @@ namespace pxt {
     }
 
     var defaultFiles: U.Map<string> = {
+        "tsconfig.json":
+        `{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "outDir": "built",
+        "rootDir": "."
+    }
+}
+`,
         ".gitignore":
         `built
 node_modules
