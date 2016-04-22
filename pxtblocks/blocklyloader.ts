@@ -211,15 +211,12 @@ namespace pxt.blocks {
 
     function mkCard(fn: ts.pxt.SymbolInfo, blockXml: HTMLElement): pxt.CodeCard {
         return {
-            header: fn.name,
             name: fn.namespace + '.' + fn.name,
             description: fn.attributes.jsDoc,
-            url: fn.attributes.help ? 'reference/' + fn.attributes.help : undefined,
+            url: fn.attributes.help ? 'reference/' + fn.attributes.help.replace(/^\//, '') : undefined,
             blocksXml: `<xml xmlns="http://www.w3.org/1999/xhtml">
         ${blockXml.outerHTML}
 </xml>`,
-            blocks: 1,
-            software: 1
         }
     }
 
