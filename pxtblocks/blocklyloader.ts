@@ -321,7 +321,7 @@ namespace pxt.blocks {
             tb.querySelector(`category[name="Math"]`).remove();
         if (!config.textBlocks)
             tb.querySelector(`category[name="Text"]`).remove();
-        if (!config.listBlocks)
+        if (!config.listsBlocks)
             tb.querySelector(`category[name="Lists"]` ).remove();        
 
         blockInfo.blocks.sort((f1, f2) => {
