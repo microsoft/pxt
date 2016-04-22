@@ -118,6 +118,11 @@ namespace pxt {
         gittag: string;
         serviceId: string;
     }
+    
+    export interface RuntimeOptions {
+        mathBlocks?: boolean;
+        textBlocks?: boolean;
+    }
 
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
@@ -127,6 +132,7 @@ namespace pxt {
         simulator?: AppSimulator;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
+        runtime?: RuntimeOptions;
         compile: CompileTarget;
         serial?: AppSerial;
         appTheme: AppTheme;

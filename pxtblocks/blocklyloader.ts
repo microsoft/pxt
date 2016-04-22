@@ -377,6 +377,7 @@ namespace pxt.blocks {
     var blocklyInitialized = false;
     function init() {
         if (blocklyInitialized) blocklyInitialized = true;
+
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
 
@@ -390,11 +391,193 @@ namespace pxt.blocks {
         }
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
-        var blockColors = {
-            loops: 120,
-            variables: 330,
+       
+        initMath();
+        initVariables(); 
+        initLoops();
+
+        // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
+        // we're taking off hats.
+        // Blockly.BlockSvg.START_HAT = true;
+
+        // Here's a helper to override the help URL for a block that's *already defined
+        // by Blockly*. For blocks that we define ourselves, just change the call to
+        // setHelpUrl in the corresponding definition above.
+        function monkeyPatchBlock(id: string, name: string, url: string) {
+            var old = Blockly.Blocks[id].init;
+            if (!old) return;
+            // fix sethelpurl
+            Blockly.Blocks[id].init = function () {
+                // The magic of dynamic this-binding.
+                old.call(this);
+                this.setHelpUrl("/reference/" + url);
+                if (!this.codeCard) {
+                    let tb = document.getElementById('blocklyToolboxDefinition');
+                    let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
+                    this.codeCard = <pxt.CodeCard>{
+                        header: name,
+                        name: name,
+                        software: 1,
+                        description: goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip,
+                        blocksXml: xml ? ("<xml>" + (xml.outerHTML || `<block type="${id}"</block>`) + "</xml>") : undefined,
+                        url: url
+                    }
+                }
+            };
         }
 
+        monkeyPatchBlock("controls_if", "if", "logic/if");
+        monkeyPatchBlock("controls_repeat_ext", "for loop", "loops/repeat");
+        monkeyPatchBlock("device_while", "while loop", "loops/while");
+
+        monkeyPatchBlock("variables_set", "variable assignment", "assign");
+        monkeyPatchBlock("variables_change", "variable update", "assign");
+
+        monkeyPatchBlock("logic_compare", "boolean operator", "math");
+        monkeyPatchBlock("logic_operation", "boolean operation", "boolean");
+        monkeyPatchBlock("logic_negate", "not operator", "boolean");
+        monkeyPatchBlock("logic_boolean", "boolean value", "boolean");
+
+        monkeyPatchBlock("math_number", "number", "number");
+        monkeyPatchBlock("math_arithmetic", "arithmetic operation", "math");
+        monkeyPatchBlock("math_op2", "Math min/max operators", "math");
+        monkeyPatchBlock("math_op3", "Math abs operator", "math");
+        monkeyPatchBlock("device_random", "pick random number", "math/random");
+    }
+    
+    function initLoops() {
+        Blockly.Blocks['device_while'] = {
+            init: function () {
+                this.setHelpUrl('/reference/loops/while');
+                this.setColour(blockColors['loops']);
+                this.appendValueInput("COND")
+                    .setCheck("Boolean")
+                    .appendField("while");
+                this.appendStatementInput("DO")
+                    .appendField("do");
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+                this.setTooltip(lf("Run the same sequence of actions while the condition is met."));
+            }
+        };
+
+        Blockly.Blocks['controls_simple_for'] = {
+            /**
+             * Block for 'for' loop.
+             * @this Blockly.Block
+             */
+            init: function () {
+                this.setHelpUrl("/reference/loops/for");
+                this.setColour((<any>Blockly.Blocks).loops.HUE);
+                this.appendDummyInput()
+                    .appendField("for")
+                    .appendField(new Blockly.FieldVariable(null), 'VAR')
+                    .appendField("from 0 to");
+                this.appendValueInput("TO")
+                    .setCheck("Number")
+                    .setAlign(Blockly.ALIGN_RIGHT);
+                this.appendStatementInput('DO')
+                    .appendField(Blockly.Msg.CONTROLS_FOR_INPUT_DO);
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+                this.setInputsInline(true);
+                // Assign 'this' to a variable for use in the tooltip closure below.
+                var thisBlock = this;
+                this.setTooltip(function () {
+                    return Blockly.Msg.CONTROLS_FOR_TOOLTIP.replace('%1',
+                        thisBlock.getFieldValue('VAR'));
+                });
+            },
+            /**
+             * Return all variables referenced by this block.
+             * @return {!Array.<string>} List of variable names.
+             * @this Blockly.Block
+             */
+            getVars: function (): any[] {
+                return [this.getFieldValue('VAR')];
+            },
+            /**
+             * Notification that a variable is renaming.
+             * If the name matches one of this block's variables, rename it.
+             * @param {string} oldName Previous name of variable.
+             * @param {string} newName Renamed variable.
+             * @this Blockly.Block
+             */
+            renameVar: function (oldName: string, newName: string) {
+                if (Blockly.Names.equals(oldName, this.getFieldValue('VAR'))) {
+                    this.setFieldValue(newName, 'VAR');
+                }
+            },
+            /**
+             * Add menu option to create getter block for loop variable.
+             * @param {!Array} options List of menu options to add to.
+             * @this Blockly.Block
+             */
+            customContextMenu: function (options: any[]) {
+                if (!this.isCollapsed()) {
+                    var option: any = { enabled: true };
+                    var name = this.getFieldValue('VAR');
+                    option.text = Blockly.Msg.VARIABLES_SET_CREATE_GET.replace('%1', name);
+                    var xmlField = goog.dom.createDom('field', null, name);
+                    xmlField.setAttribute('name', 'VAR');
+                    var xmlBlock = goog.dom.createDom('block', null, xmlField);
+                    xmlBlock.setAttribute('type', 'variables_get');
+                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                    options.push(option);
+                }
+            }
+        };        
+    }
+    
+    function initMath() {
+        Blockly.Blocks['math_op2'] = {
+            init: function () {
+                this.setHelpUrl('/reference/math');
+                this.setColour(230);
+                this.appendValueInput("x")
+                    .setCheck("Number")
+                    .appendField(new Blockly.FieldDropdown([["min", "min"], ["max", "max"]]), "op")
+                    .appendField("of");
+                this.appendValueInput("y")
+                    .setCheck("Number")
+                    .appendField("and");
+                this.setInputsInline(true);
+                this.setOutput(true, "Number");
+                this.setTooltip(lf("Math operators."));
+            }
+        };
+
+        Blockly.Blocks['math_op3'] = {
+            init: function () {
+                this.setHelpUrl('/reference/math/abs');
+                this.setColour(230);
+                this.appendDummyInput()
+                    .appendField("absolute of");
+                this.appendValueInput("x")
+                    .setCheck("Number")
+                this.setInputsInline(true);
+                this.setOutput(true, "Number");
+                this.setTooltip(lf("Math operators."));
+            }
+        };
+
+        Blockly.Blocks['device_random'] = {
+            init: function () {
+                this.setHelpUrl('/reference/math/random');
+                this.setColour(230);
+                this.appendDummyInput()
+                    .appendField("pick random 0 to");
+                this.appendValueInput("limit")
+                    .setCheck("Number")
+                    .setAlign(Blockly.ALIGN_RIGHT);
+                this.setInputsInline(true);
+                this.setOutput(true, "Number");
+                this.setTooltip(lf("Returns a random integer between 0 and the specified bound (inclusive)."));
+            }
+        };        
+    }
+
+    function initVariables() {
         Blockly.Variables.flyoutCategory = function (workspace) {
             var variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
@@ -468,136 +651,7 @@ namespace pxt.blocks {
             }
             return xmlList;
         };
-
-        Blockly.Blocks['math_op2'] = {
-            init: function () {
-                this.setHelpUrl('/reference/math');
-                this.setColour(230);
-                this.appendValueInput("x")
-                    .setCheck("Number")
-                    .appendField(new Blockly.FieldDropdown([["min", "min"], ["max", "max"]]), "op")
-                    .appendField("of");
-                this.appendValueInput("y")
-                    .setCheck("Number")
-                    .appendField("and");
-                this.setInputsInline(true);
-                this.setOutput(true, "Number");
-                this.setTooltip(lf("Math operators."));
-            }
-        };
-
-        Blockly.Blocks['math_op3'] = {
-            init: function () {
-                this.setHelpUrl('/reference/math/abs');
-                this.setColour(230);
-                this.appendDummyInput()
-                    .appendField("absolute of");
-                this.appendValueInput("x")
-                    .setCheck("Number")
-                this.setInputsInline(true);
-                this.setOutput(true, "Number");
-                this.setTooltip(lf("Math operators."));
-            }
-        };
-
-        Blockly.Blocks['device_while'] = {
-            init: function () {
-                this.setHelpUrl('/reference/loops/while');
-                this.setColour(blockColors.loops);
-                this.appendValueInput("COND")
-                    .setCheck("Boolean")
-                    .appendField("while");
-                this.appendStatementInput("DO")
-                    .appendField("do");
-                this.setPreviousStatement(true);
-                this.setNextStatement(true);
-                this.setTooltip(lf("Run the same sequence of actions while the condition is met."));
-            }
-        };
-
-        Blockly.Blocks['device_random'] = {
-            init: function () {
-                this.setHelpUrl('/reference/math/random');
-                this.setColour(230);
-                this.appendDummyInput()
-                    .appendField("pick random 0 to");
-                this.appendValueInput("limit")
-                    .setCheck("Number")
-                    .setAlign(Blockly.ALIGN_RIGHT);
-                this.setInputsInline(true);
-                this.setOutput(true, "Number");
-                this.setTooltip(lf("Returns a random integer between 0 and the specified bound (inclusive)."));
-            }
-        };
-
-        Blockly.Blocks['controls_simple_for'] = {
-            /**
-             * Block for 'for' loop.
-             * @this Blockly.Block
-             */
-            init: function () {
-                this.setHelpUrl("/reference/loops/for");
-                this.setColour((<any>Blockly.Blocks).loops.HUE);
-                this.appendDummyInput()
-                    .appendField("for")
-                    .appendField(new Blockly.FieldVariable(null), 'VAR')
-                    .appendField("from 0 to");
-                this.appendValueInput("TO")
-                    .setCheck("Number")
-                    .setAlign(Blockly.ALIGN_RIGHT);
-                this.appendStatementInput('DO')
-                    .appendField(Blockly.Msg.CONTROLS_FOR_INPUT_DO);
-                this.setPreviousStatement(true);
-                this.setNextStatement(true);
-                this.setInputsInline(true);
-                // Assign 'this' to a variable for use in the tooltip closure below.
-                var thisBlock = this;
-                this.setTooltip(function () {
-                    return Blockly.Msg.CONTROLS_FOR_TOOLTIP.replace('%1',
-                        thisBlock.getFieldValue('VAR'));
-                });
-            },
-            /**
-             * Return all variables referenced by this block.
-             * @return {!Array.<string>} List of variable names.
-             * @this Blockly.Block
-             */
-            getVars: function (): any[] {
-                return [this.getFieldValue('VAR')];
-            },
-            /**
-             * Notification that a variable is renaming.
-             * If the name matches one of this block's variables, rename it.
-             * @param {string} oldName Previous name of variable.
-             * @param {string} newName Renamed variable.
-             * @this Blockly.Block
-             */
-            renameVar: function (oldName: string, newName: string) {
-                if (Blockly.Names.equals(oldName, this.getFieldValue('VAR'))) {
-                    this.setFieldValue(newName, 'VAR');
-                }
-            },
-            /**
-             * Add menu option to create getter block for loop variable.
-             * @param {!Array} options List of menu options to add to.
-             * @this Blockly.Block
-             */
-            customContextMenu: function (options: any[]) {
-                if (!this.isCollapsed()) {
-                    var option: any = { enabled: true };
-                    var name = this.getFieldValue('VAR');
-                    option.text = Blockly.Msg.VARIABLES_SET_CREATE_GET.replace('%1', name);
-                    var xmlField = goog.dom.createDom('field', null, name);
-                    xmlField.setAttribute('name', 'VAR');
-                    var xmlBlock = goog.dom.createDom('block', null, xmlField);
-                    xmlBlock.setAttribute('type', 'variables_get');
-                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
-                    options.push(option);
-                }
-            }
-        };
-
-
+                
         Blockly.Blocks['variables_change'] = {
             init: function () {
                 this.appendDummyInput()
@@ -611,55 +665,8 @@ namespace pxt.blocks {
                 this.setNextStatement(true);
                 this.setTooltip(lf("Changes the value of the variable by this amount"));
                 this.setHelpUrl('/reference/assign');
-                this.setColour(blockColors.variables);
+                this.setColour(blockColors['variables']);
             }
         };
-
-        // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
-        // we're taking off hats.
-        // Blockly.BlockSvg.START_HAT = true;
-
-        // Here's a helper to override the help URL for a block that's *already defined
-        // by Blockly*. For blocks that we define ourselves, just change the call to
-        // setHelpUrl in the corresponding definition above.
-        function monkeyPatchBlock(id: string, name: string, url: string) {
-            var old = Blockly.Blocks[id].init;
-            // fix sethelpurl
-            Blockly.Blocks[id].init = function () {
-                // The magic of dynamic this-binding.
-                old.call(this);
-                this.setHelpUrl("/reference/" + url);
-                if (!this.codeCard) {
-                    let tb = document.getElementById('blocklyToolboxDefinition');
-                    let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
-                    this.codeCard = <pxt.CodeCard>{
-                        header: name,
-                        name: name,
-                        software: 1,
-                        description: goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip,
-                        blocksXml: xml ? ("<xml>" + (xml.outerHTML || `<block type="${id}"</block>`) + "</xml>") : undefined,
-                        url: url
-                    }
-                }
-            };
-        }
-
-        monkeyPatchBlock("controls_if", "if", "logic/if");
-        monkeyPatchBlock("controls_repeat_ext", "for loop", "loops/repeat");
-        monkeyPatchBlock("device_while", "while loop", "loops/while");
-
-        monkeyPatchBlock("variables_set", "variable assignment", "assign");
-        monkeyPatchBlock("variables_change", "variable update", "assign");
-
-        monkeyPatchBlock("logic_compare", "boolean operator", "math");
-        monkeyPatchBlock("logic_operation", "boolean operation", "boolean");
-        monkeyPatchBlock("logic_negate", "not operator", "boolean");
-        monkeyPatchBlock("logic_boolean", "boolean value", "boolean");
-
-        monkeyPatchBlock("math_number", "number", "number");
-        monkeyPatchBlock("math_arithmetic", "arithmetic operation", "math");
-        monkeyPatchBlock("math_op2", "Math min/max operators", "math");
-        monkeyPatchBlock("math_op3", "Math abs operator", "math");
-        monkeyPatchBlock("device_random", "pick random number", "math/random");
     }
 }
