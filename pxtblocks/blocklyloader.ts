@@ -312,6 +312,12 @@ namespace pxt.blocks {
 
         block.setTooltip(fn.attributes.jsDoc);
     }
+    
+    function removeCategory(tb: Element, name:string) {
+        let e = tb.querySelector(`category[name="Math"]`);
+        if (e) 
+            e.remove();        
+    }
 
     export function initBlocks(blockInfo: ts.pxt.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
         init();
@@ -320,12 +326,9 @@ namespace pxt.blocks {
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
      
         let config = pxt.appTarget.runtime || {};
-        if (!config.mathBlocks)
-            tb.querySelector(`category[name="Math"]`).remove();
-        if (!config.textBlocks)
-            tb.querySelector(`category[name="Text"]`).remove();
-        if (!config.listsBlocks)
-            tb.querySelector(`category[name="Lists"]` ).remove();        
+        if (!config.mathBlocks) removeCategory(tb, "Math");
+        if (!config.textBlocks) removeCategory(tb, "Text");
+        if (!config.listsBlocks) removeCategory(tb, "Lists");
 
         blockInfo.blocks.sort((f1, f2) => {
             let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
