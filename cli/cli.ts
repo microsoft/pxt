@@ -39,6 +39,9 @@ if (prevExports) {
 export interface UserConfig {
     accessToken?: string;
     localToken?: string;
+    noAutoBuild?: boolean;
+    noAutoStart?: boolean;
+    localBuild?: boolean;
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
@@ -745,6 +748,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
     let currMtime = Date.now()
     return f()
         .then(dirs => {
+            if (globalConfig.noAutoBuild) return
             console.log('watching ' + dirs.join(', ') + '...');
             let loop = () => {
                 Promise.delay(1000)
@@ -790,9 +794,11 @@ function buildAndWatchTargetAsync() {
 }
 
 export function serveAsync(arg?: string) {
-    forceCloudBuild = true
+    forceCloudBuild = !globalConfig.localBuild
     if (arg == "-yt") {
         forceCloudBuild = false
+    } else if (arg == "-cloud") {
+        forceCloudBuild = true
     }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
@@ -809,7 +815,10 @@ export function serveAsync(arg?: string) {
         }
     }
     return buildAndWatchTargetAsync()
-        .then(() => server.serveAsync({ localToken: localToken }))
+        .then(() => server.serveAsync({
+            localToken: localToken,
+            autoStart: !globalConfig.noAutoStart
+        }))
 }
 
 function extensionAsync(add: string) {
