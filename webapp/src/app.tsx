@@ -346,16 +346,15 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     updateVisibility() {
         let active = document.visibilityState == 'visible';
         console.log(`page visibility: ${active}`)
+        this.setState({ active: active})
         if (!active) {
             this.stopSimulator();
-            this.saveFileAsync()
-                .done(() => this.setState({ active: active}));            
+            this.saveFileAsync().done();            
         } else if (workspace.isSessionOutdated()) {
             console.log('workspace changed, reloading...')
-            let id = this.state.header ? this.state.header.id : '';
+            let id = this.state.header ? this.state.header.id : '';            
             workspace.initAsync()
-                .then(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve())            
-                .done(() => this.setState({ active: active}));                                
+                .done(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
         }
     }
 
@@ -412,7 +411,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     private autoRunSimulator = ts.pxt.Util.debounce(
         () => {
-            if (!this.state.active) return;
+            if (!this.state.active) 
+                return;
             this.runSimulator({ background: true });
         }, 
         3000, false);    
@@ -486,7 +486,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     private updateEditorFile(editorOverride: srceditor.Editor = null) {
-        if (!this.state.active) return;
+        if (!this.state.active) 
+            return;
         if (this.state.currFile == this.editorFile && !editorOverride)
             return;
         this.saveSettings();
