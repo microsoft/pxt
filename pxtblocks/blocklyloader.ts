@@ -314,7 +314,7 @@ namespace pxt.blocks {
     }
     
     function removeCategory(tb: Element, name:string) {
-        let e = tb.querySelector(`category[name="Math"]`);
+        let e = tb ? tb.querySelector(`category[name="${name}"]`) : undefined;
         if (e) 
             e.remove();        
     }
