@@ -8,7 +8,6 @@
         "logo": "./static/logo.svg",
         "docsLogo": "./static/logo.svg",
         "portraitLogo":"./static/logo.svg",
-        "footerLogo": "./static/logo.svg",
         "homeUrl": "https://www.pxt.io/",
         "docMenu": [
             {

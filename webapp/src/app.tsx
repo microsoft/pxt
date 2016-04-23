@@ -903,6 +903,16 @@ Ctrl+Shift+B
             console.error('failed to read pxt.json')
         }
     }
+    
+    about() {
+        core.confirmAsync({
+            header: lf("About {0}", pxt.appTarget.name),
+            htmlBody: `
+<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${targetVersion}</p>
+<p>${lf("PXT version: {0}", ksVersion)}</p>                        
+`
+        }).done();
+    }
 
     renderCore() {
         theEditor = this;
@@ -933,7 +943,7 @@ Ctrl+Shift+B
                                 <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                { packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Publish") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                { this.state.header && packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Publish") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
@@ -942,7 +952,6 @@ Ctrl+Shift+B
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     {pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } /> : null }
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
-                                    {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Publish") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
                                             this.saveSettings();
@@ -951,7 +960,7 @@ Ctrl+Shift+B
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } /> : undefined}
                                     <div className="ui divider"></div>
-                                    <a className="ui item" href="/docs" role="menuitem" target="_blank">
+                                    <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
                                         <i className="help icon"></i>
                                         {lf("Help")}
                                     </a>
@@ -960,6 +969,10 @@ Ctrl+Shift+B
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
+                                    <div className="ui divider"></div>
+                                    <a className="ui item" href="https://go.microsoft.com/fwlink/?LinkId=521839" role="menuitem" target="_blank">{lf("Privacy & Cookies")}</a>
+                                    <a className="ui item" href="https://go.microsoft.com/fwlink/?LinkID=206977" role="menuitem" target="_blank">{lf("Terms Of Use")}</a>
+                                    <sui.Item role="menuitem" text={lf("About...")} onClick={() => this.about()} />
                                 </sui.DropdownMenu>
                             </div>   
                             <div className="ui">                         
@@ -1010,17 +1023,6 @@ Ctrl+Shift+B
                 </div>
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
-                <div id="footer" role="footer">
-                    <div>
-                        { targetTheme.footerLogo ? <a target="_blank" id="footerlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.footerLogo) } /></a> : (pxt.appTarget.title || pxt.appTarget.name) }
-                        <span>v{targetVersion}</span>&nbsp;
-                        - <a target="_blank" href="https://github.com/Microsoft/pxt" title="Microsoft Programming Experience Toolkit"><i className='xicon ksempty'/> PXT</a>
-                        &nbsp;<span>v{ksVersion}</span>&nbsp;
-                        - &copy; Microsoft Corporation 2016
-                        - <a target="_blank" href="https://www.microsoft.com/en-us/legal/intellectualproperty/copyright/default.aspx">{lf("Terms of Use") } </a>
-                        - <a target="_blank" href="https://privacy.microsoft.com/en-us/privacystatement">{lf("Privacy") }</a>
-                    </div>
-                </div>
             </div>
         );
     }

@@ -10,7 +10,6 @@ namespace pxt {
         logo?: string;
         portraitLogo?: string;
         rightLogo?: string;
-        footerLogo?: string;
         docsLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
