@@ -922,6 +922,7 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
+        const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
         const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
@@ -976,7 +977,7 @@ Ctrl+Shift+B
                                 </sui.DropdownMenu>
                             </div>   
                             <div className="ui">                         
-                                {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync().done() } /> : undefined}
+                                {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync(settings).done() } /> : undefined}
                             </div>
                             <div className="ui buttons wide only">
                                 <sui.DropdownMenu class="floating icon button" icon="help">
