@@ -9,13 +9,14 @@ namespace pxt.blocks {
     const blockColors: Util.StringMap<number> = {
         loops: 120,
         images: 45,
-        variables: 330
+        variables: 330,
+        text: 160
     }
 
     // list of built-in blocks, should be touched.
     const builtinBlocks: Util.StringMap<{
         block: B.BlockDefinition;
-        symbol?: ts.pxt.SymbolInfo;    
+        symbol?: ts.pxt.SymbolInfo;
     }> = {};
     Object.keys(Blockly.Blocks)
         .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
@@ -122,7 +123,7 @@ namespace pxt.blocks {
     }
 
     function injectToolbox(tb: Element, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, block: HTMLElement) {
-        let ns = fn.namespace.split('.')[0];
+        let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         let catName = ns[0].toUpperCase() + ns.slice(1);
         let category = tb.querySelector("category[name~='" + catName + "']");
         if (!category) {
@@ -130,14 +131,16 @@ namespace pxt.blocks {
             category = document.createElement("category");
             category.setAttribute("name", catName)
             let nsn = info.apis.byQName[ns];
+            let nsWeight = (nsn ? nsn.attributes.weight : 50) || 50; 
             category.setAttribute("weight", nsn.attributes.weight.toString())
-            if (nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
+            if (nsn && nsn.attributes.color) category.setAttribute("colour", nsWeight.toString())
+            else if (blockColors[ns]) category.setAttribute("colour", blockColors[ns].toString());
             // find the place to insert the category        
             let categories = tb.querySelectorAll("category");
             let ci = 0;
             for (ci = 0; ci < categories.length; ++ci) {
                 let cat = categories.item(ci);
-                if (parseInt(cat.getAttribute("weight") || "50") < (nsn.attributes.weight || 50)) {
+                if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
                     tb.insertBefore(category, cat);
                     break;
                 }
@@ -155,7 +158,7 @@ namespace pxt.blocks {
             canvas = iconCanvasCache[c] = document.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
-            var ctx = canvas.getContext('2d');
+            let ctx = canvas.getContext('2d');
             ctx.fillStyle = 'white';
             ctx.font = "56px Icons";
             ctx.textAlign = "center";
@@ -182,7 +185,7 @@ namespace pxt.blocks {
             return false;
         }
 
-        var cachedBlock: CachedBlock = {
+        let cachedBlock: CachedBlock = {
             hash: hash,
             fn: fn,
             block: {
@@ -221,15 +224,16 @@ namespace pxt.blocks {
     }
 
     function initBlock(block: any, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
-        const ns = fn.namespace.split('.')[0];
+        const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
+        const nsinfo = info.apis.byQName[ns];
 
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help);
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(
-            info.apis.byQName[ns].attributes.color
+            (nsinfo ? nsinfo.attributes.color : undefined)
             || blockColors[ns]
             || 255);
 
@@ -312,23 +316,18 @@ namespace pxt.blocks {
 
         block.setTooltip(fn.attributes.jsDoc);
     }
-    
-    function removeCategory(tb: Element, name:string) {
+
+    function removeCategory(tb: Element, name: string) {
         let e = tb ? tb.querySelector(`category[name="${name}"]`) : undefined;
-        if (e) 
-            e.remove();        
+        if (e)
+            e.remove();
     }
 
     export function initBlocks(blockInfo: ts.pxt.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
         init();
-        
+
         // create new toolbox and update block definitions
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
-     
-        let config = pxt.appTarget.runtime || {};
-        if (!config.mathBlocks) removeCategory(tb, "Math");
-        if (!config.textBlocks) removeCategory(tb, "Text");
-        if (!config.listsBlocks) removeCategory(tb, "Lists");
 
         blockInfo.blocks.sort((f1, f2) => {
             let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
@@ -349,7 +348,7 @@ namespace pxt.blocks {
         blockInfo.blocks
             .filter(fn => !tb || !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
             .forEach(fn => {
-                if(fn.attributes.blockBuiltin) {
+                if (fn.attributes.blockBuiltin) {
                     Util.assert(!!builtinBlocks[fn.attributes.blockId]);
                     builtinBlocks[fn.attributes.blockId].symbol = fn;
                 } else {
@@ -359,7 +358,7 @@ namespace pxt.blocks {
                         if (tb)
                             injectToolbox(tb, blockInfo, fn, block);
                         currentBlocks[fn.attributes.blockId] = 1;
-                    }                    
+                    }
                 }
             })
 
@@ -367,6 +366,12 @@ namespace pxt.blocks {
         Object
             .keys(cachedBlocks).filter(k => !currentBlocks[k])
             .forEach(k => removeBlock(cachedBlocks[k].fn));
+
+        // remove unused categories
+        let config = pxt.appTarget.runtime || {};
+        if (!config.mathBlocks) removeCategory(tb, "Math");
+        if (!config.textBlocks) removeCategory(tb, "Text");
+        if (!config.listsBlocks) removeCategory(tb, "Lists");
 
         // update shadow types
         if (tb) {
@@ -412,9 +417,9 @@ namespace pxt.blocks {
         }
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
-       
+
         initMath();
-        initVariables(); 
+        initVariables();
         initLoops();
 
         // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
@@ -465,7 +470,7 @@ namespace pxt.blocks {
         monkeyPatchBlock("math_op3", "Math abs operator", "math");
         monkeyPatchBlock("device_random", "pick random number", "math/random");
     }
-    
+
     function initLoops() {
         Blockly.Blocks['device_while'] = {
             init: function () {
@@ -547,9 +552,9 @@ namespace pxt.blocks {
                     options.push(option);
                 }
             }
-        };        
+        };
     }
-    
+
     function initMath() {
         Blockly.Blocks['math_op2'] = {
             init: function () {
@@ -595,7 +600,7 @@ namespace pxt.blocks {
                 this.setOutput(true, "Number");
                 this.setTooltip(lf("Returns a random integer between 0 and the specified bound (inclusive)."));
             }
-        };        
+        };
     }
 
     function initVariables() {
@@ -672,7 +677,7 @@ namespace pxt.blocks {
             }
             return xmlList;
         };
-                
+
         Blockly.Blocks['variables_change'] = {
             init: function () {
                 this.appendDummyInput()
