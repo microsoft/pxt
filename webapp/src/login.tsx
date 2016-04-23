@@ -89,7 +89,9 @@ pxt api PACKAGEID delete
 </ul>
 `,
             agreeLbl: lf("Got it!"),
-            hideCancel: true
+            disagreeLbl: lf("Sign out")
+        }).then(b => {
+            if (!b) LoginBox.signout();
         })
     }
 
