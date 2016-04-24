@@ -49,8 +49,10 @@ export interface CompletionEntry {
     lastScore: number;
     searchName: string;
     searchDesc: string;
+    desc:string;
     block?: string;
     snippet?: string;
+    matches?: Util.Map<number[][]>;
 }
 
 export interface CompletionCache {
@@ -84,7 +86,8 @@ function mkSyntheticEntry(name: string, desc: string) {
         },
         lastScore: 0,
         searchName: name,
-        searchDesc: desc
+        searchDesc: desc,
+        desc: desc
     })
 }
 
@@ -178,6 +181,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     symbolInfo: si,
                     lastScore: 0,
                     searchDesc: q + " " + (si.attributes.jsDoc || ""),
+                    desc: si.attributes.jsDoc || "",
                     searchName: si.name,
                     block: si.attributes.block
                 })
@@ -201,12 +205,35 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             .then(() => this.setState({ cache: cache }))
     }
 
-    computeMatch(pref: string): { item: CompletionEntry; score: number; }[] {
+    computeMatch(pref: string): CompletionEntry[] {
         let cache = this.state.cache
 
-        if (!pref) return cache.entries.map(entry => { return { item: entry, score: 0 } });
+        if (!pref) return cache.entries;
 
+        pref = pref.toLowerCase()
+        let spcPref = " " + pref;
+        for (let e of cache.entries) {
+            e.lastScore = 0
+            e.matches = undefined;
+            let idx = e.searchName.indexOf(pref)
+            if (idx == 0)
+                e.lastScore += 100
+            else if (idx > 0)
+                e.lastScore += 50
+            else {
+                idx = e.searchDesc.indexOf(spcPref)
+                if (idx >= 0)
+                    e.lastScore += 10;
+            }
+        }
+
+        return cache.entries.filter(e => e.lastScore > 0);
+    }
+
+    computeFuzzyMatch(pref: string): CompletionEntry[] {
+        let cache = this.state.cache
         let fu = cache.fuseEntries;
+
         if (!fu) fu = cache.fuseEntries = new Fuse(cache.entries, {
             include: ["score", "matches"],
             shouldSort: false,
@@ -220,13 +247,30 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                     name: "block",
                     weight: 0.2
                 }, {
-                    name: "searchDesc",
+                    name: "desc",
                     weight: 0.1
                 }],
-            threshold: 0.65
+            threshold: 0.7
         })
-        let fures: { item: CompletionEntry; score: number; matches: any; }[] = fu.search(pref);
-        return fures;
+
+        let fures: {
+            item: CompletionEntry;
+            score: number;
+            matches: {
+                key: string;
+                indices: number[][];
+            }[];
+        }[] = fu.search(pref);
+        cache.entries.forEach(ce => ce.lastScore = 0);
+        fures.forEach(fue => {
+            let e = fue.item as CompletionEntry;
+            e.lastScore = (1 - fue.score) * 100;
+            e.matches = {}
+            fue.matches
+               .filter(match => match.indices && match.indices.length > 0)
+               .forEach(match => e.matches[match.key] = match.indices)
+        });
+        return fures.filter(e => e.score > 0).map(e => e.item);
     }
 
     fetchCompletionInfo(textPos: AceAjax.Position, pref: string, isTopLevel: boolean) {
@@ -238,27 +282,22 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         }
 
         if (cache.entries) {
-            let fures = this.computeMatch(pref);
-            cache.entries.forEach(ce => ce.lastScore = 0);
-            for (let fue of fures) {
-                let e = fue.item as CompletionEntry;
-                e.lastScore = (1 - fue.score) * 100;
-
+            let matches = this.computeMatch(pref);
+            if (!matches.length)
+                matches = this.computeFuzzyMatch(pref);
+            for (let e of matches) {
                 let k = e.symbolInfo.kind
                 if (isTopLevel) {
                     if (k == SK.Enum || k == SK.EnumMember)
                         e.lastScore *= 1e-5;
                 }
-
                 if (!e.symbolInfo.isContextual && (k == SK.Method || k == SK.Property))
                     e.lastScore *= 1e-3;
-
                 if (e.symbolInfo.isContextual)
                     e.lastScore *= 1.1;
             }
-            let res = cache.entries.filter(e => e.lastScore > 0);
-            res.sort((a, b) => (b.lastScore - a.lastScore) || Util.strcmp(a.searchName, b.searchName))
-            return res
+            matches.sort((a, b) => (b.lastScore - a.lastScore) || Util.strcmp(a.searchName, b.searchName))
+            return matches
         }
 
         return null
@@ -427,11 +466,11 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                         onClick={() => this.commit(e) }
                         >
                         <div className="name">
-                            <span className="funname">{highlight(e.name, pref) }</span>
+                            <span className="funname">{highlightCompletionEntry(e, "name", e.name, pref) }</span>
                             <span className="args">{getArgs(e) }</span>
                         </div>
                         <div className="doc">
-                            {highlight(e.symbolInfo.attributes.jsDoc || "", pref) }
+                            {highlightCompletionEntry(e, "desc", e.desc, pref) }
                         </div>
                     </sui.Item>
                 ) }
@@ -445,7 +484,22 @@ function friendlyTypeName(tp: string) {
     return tp.replace(/.*\./, "")
 }
 
-function highlight(text: string, str: string, limit = 100) {
+function highlightCompletionEntry(entry: CompletionEntry, key:string, text: string, str: string, limit = 100) {
+    let match = entry.matches ? entry.matches[key] : undefined;
+    if (!match) return highlight(text, str, limit);
+    
+    let spl: JSX.Element[] = []
+    let cur = 0;
+    match.forEach(interval => {
+        spl.push(<span key={spl.length}>{text.slice(cur, interval[0]) }</span>)        
+        spl.push(<span key={spl.length} className="highlight">{text.slice(interval[0], interval[1])}</span>)        
+        cur = interval[1];
+    });
+    spl.push(<span key={spl.length}>{text.slice(match[match.length-1][1]) }</span>);
+    return spl;
+}
+
+function highlight(text: string, str: string, limit = 100) : JSX.Element[] {
     let tmp = text.toLowerCase();
     let spl: JSX.Element[] = []
     let written = 0

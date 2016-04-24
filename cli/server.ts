@@ -405,6 +405,7 @@ function openUrl(startUrl: string) {
 
 export interface ServeOptions {
     localToken: string;
+    autoStart: boolean;
 }
 
 var serveOptions: ServeOptions;
@@ -553,7 +554,8 @@ export function serveAsync(options: ServeOptions) {
 
     let start = `http://localhost:3232/#local_token=${options.localToken}`;
     console.log(`Open this URL: ${start}`);
-    openUrl(start);
+    if (options.autoStart)
+        openUrl(start);
 
     return new Promise<void>((resolve, reject) => { })
 }

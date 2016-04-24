@@ -67,13 +67,14 @@ namespace pxt.blocks {
             };
         }
 
-        export function mkCall(name: string, parent: J.JTypeRef, args: J.JExpr[]): J.JCall {
+        export function mkCall(name: string, parent: J.JTypeRef, args: J.JExpr[], property = false): J.JCall {
             return {
                 nodeType: "call",
                 id: null,
                 name: name,
                 parent: parent,
                 args: args,
+                property: property
             };
         }
 
@@ -103,8 +104,8 @@ namespace pxt.blocks {
         }
 
         // Call extension method [name] on the first argument
-        export function extensionCall(name: string, args: J.JExpr[]) {
-            return mkCall(name, mkTypeRef("call"), args);
+        export function extensionCall(name: string, args: J.JExpr[], property: boolean) {
+            return mkCall(name, mkTypeRef("call"), args, property);
         }
 
         function mkNamespaceRef(lib: string, namespace: string): J.JSingletonRef {
@@ -516,7 +517,7 @@ namespace pxt.blocks {
             return find((<any>b).p);
 
         if (b.type == "variables_get")
-            return find(lookup(e, b.getFieldValue("VAR")).type);
+            return find(lookup(e, escapeVarName(b.getFieldValue("VAR"))).type);
 
         assert(!b.outputConnection || b.outputConnection.check_ && b.outputConnection.check_.length > 0);
 
@@ -637,7 +638,7 @@ namespace pxt.blocks {
                         break;
                     case "variables_set":
                     case "variables_change":
-                        var x = b.getFieldValue("VAR");
+                        var x = escapeVarName(b.getFieldValue("VAR"));
                         var p1 = lookup(e, x).type;
                         attachPlaceholderIf(e, b, "VALUE");
                         var rhs = b.getInputTargetBlock("VALUE");
@@ -945,7 +946,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: B.Block): J.JStmt[] {
-        let bVar = b.getFieldValue("VAR");
+        let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bTo = b.getInputTargetBlock("TO");
         let bDo = b.getInputTargetBlock("DO");
 
@@ -990,7 +991,7 @@ namespace pxt.blocks {
                 // while
                 H.mkWhile(
                     // VAR <= B
-                    H.mkExprHolder([], H.mkSimpleCall("≤", [eVar, eLocal])),
+                    H.mkExprHolder([], H.mkSimpleCall("<=", [eVar, eLocal])),
                     // DO
                     compileStatements(e, bDo).concat([
                         H.mkExprStmt(
@@ -1028,17 +1029,26 @@ namespace pxt.blocks {
         return mkCallWithCallback(e, "basic", "forever", [], body);
     }
     
+    // convert to javascript friendly name
+    function escapeVarName(name: string) : string {
+        if (!name) return '_';
+        let n = name.split(/[^a-zA-Z0-9_$]+/)
+            .map((c,i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1))
+            .join('');
+        return n;
+    }
+    
     function compileVariableGet(e: Environment, b: B.Block): J.JExpr {
-        let name = b.getFieldValue("VAR");
+        let name = escapeVarName(b.getFieldValue("VAR"));
         let binding = lookup(e, name);
         if (!binding.assigned) 
             binding.assigned = VarUsage.Read;
         assert(binding != null && binding.type != null);
         return H.mkLocalRef(name);
     }
-
+    
     function compileSet(e: Environment, b: B.Block): J.JStmt {
-        let bVar = b.getFieldValue("VAR");
+        let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned && !findParent(b)) 
@@ -1049,7 +1059,7 @@ namespace pxt.blocks {
     }
 
     function compileChange(e: Environment, b: B.Block): J.JStmt {
-        let bVar = b.getFieldValue("VAR");
+        let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned) 
@@ -1060,7 +1070,7 @@ namespace pxt.blocks {
     }
 
     function compileCall(e: Environment, b: B.Block): J.JStmt {
-        var call = e.stdCallTable[b.type];
+        let call = e.stdCallTable[b.type];
         return call.imageLiteral
             ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))))
             : call.hasHandler ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
@@ -1068,7 +1078,7 @@ namespace pxt.blocks {
     }
 
     function compileArgument(e: Environment, b: B.Block, p: StdArg): J.JExpr {
-        var lit: any = p.literal;
+        let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
         var f = b.getFieldValue(p.field);
@@ -1079,9 +1089,9 @@ namespace pxt.blocks {
     }
 
     function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
-        var args = func.args.map((p: StdArg) => compileArgument(e, b, p));
+        let args = func.args.map((p: StdArg) => compileArgument(e, b, p));
         if (func.isExtensionMethod) {
-            return H.extensionCall(func.f, args);
+            return H.extensionCall(func.f, args, !!func.property);
         } else if (func.namespace) {
             return H.namespaceCall(func.namespace, func.f, args);
         } else {
@@ -1104,8 +1114,10 @@ namespace pxt.blocks {
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
         var bBody = b.getInputTargetBlock("HANDLER");
-        var compiledArgs = args.map((arg: string) => {
+        var compiledArgs : J.JNode[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
+            let argb = b.getInputTargetBlock(arg);
+            if (argb) return compileExpression(e, argb);
             return H.mkLocalRef(b.getFieldValue(arg))
         });
         var body = compileStatements(e, bBody);
@@ -1155,6 +1167,7 @@ namespace pxt.blocks {
         isExtensionMethod?: boolean;
         imageLiteral?: number;
         hasHandler?: boolean;
+        property?: boolean;
         namespace?: string;
     }
 
@@ -1243,7 +1256,7 @@ namespace pxt.blocks {
                     }
                     let fieldMap = pxt.blocks.parameterNames(fn);
                     let instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
-                    let args = fn.parameters.map(p => {
+                    let args = ( fn.parameters || [] ).map(p => {
                         if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
                         else return null;
                     }).filter(a => !!a);
@@ -1257,16 +1270,17 @@ namespace pxt.blocks {
                         f: fn.name,
                         isExtensionMethod: instance,
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: fn.parameters.some(p => p.type == "() => void"),
+                        hasHandler: fn.parameters && fn.parameters.some(p => p.type == "() => void"),
+                        property: !fn.parameters,
                         args: args
-                    }
+                    } 
                 })
 
         const variableIsScoped = (b: B.Block, name: string): boolean => {
             if (!b)
                 return false;
             else if ((b.type == "controls_for" || b.type == "controls_simple_for")
-                && b.getFieldValue("VAR") == name)
+                && escapeVarName(b.getFieldValue("VAR")) == name)
                 return true;
             else
                 return variableIsScoped(findParent(b), name);
@@ -1275,7 +1289,7 @@ namespace pxt.blocks {
         // collect loop variables.
         w.getAllBlocks().forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for") {
-                let x = b.getFieldValue("VAR");
+                let x = escapeVarName(b.getFieldValue("VAR"));
                 // It's ok for two loops to share the same variable.
                 if (lookup(e, x) == null)
                     e = extend(e, x, pNumber.type);
@@ -1293,7 +1307,7 @@ namespace pxt.blocks {
         // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
         w.getAllBlocks().forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
-                let x = b.getFieldValue("VAR");
+                let x = escapeVarName(b.getFieldValue("VAR"));
                 if (lookup(e, x) == null)
                     e = extend(e, x, null);
 
@@ -1457,12 +1471,14 @@ namespace pxt.blocks {
                         parent: e.parent,
                         declId: e.declId,
                     })
-                    pushOp("(")
-                    e.args.slice(1).forEach((ee, i) => {
-                        if (i > 0) pushOp(",")
-                        rec(ee, -1)
-                    })
-                    pushOp(")")
+                    if (!e.property) {
+                        pushOp("(")
+                        e.args.slice(1).forEach((ee, i) => {
+                            if (i > 0) pushOp(",")
+                            rec(ee, -1)
+                        })
+                        pushOp(")")
+                    }
                 }
             }
 

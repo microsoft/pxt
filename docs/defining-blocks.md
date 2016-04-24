@@ -4,8 +4,17 @@ This section describes how to annotate your PXT APIs to expose them in the Block
 
 ## Category
 
-The namespace JSDoc and properties are used to populate a category in the Block Editor toolbox. You have to provide a `description`, 
-`color` and `weight` at least once per namespace.
+Each top-level javascript namespace is used to populate a category in the Block Editor toolbox. The name will automatically be capitalized in the toolbox.
+
+````
+namespace basic {
+    ...
+}
+````
+
+You can also provide a JsDoc comment, color and weight for the namespace. We strongly recommend carefully picking colors as it dramatically impacts
+that appearance and readability of your blocks. All blocks within the same namespace have the same color so that users can find the category easily from
+samples.
 
 ````
 /**
@@ -15,17 +24,16 @@ The namespace JSDoc and properties are used to populate a category in the Block 
 namespace basic {
 ````
 
-Special attribute annotation like `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value.
+Special attribute annotation like `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
 
 ## Blocks
 
 All **exported** functions with a `blockId` and `block` attribute
-will be available in the Block Editor.
+will be available in the Block Editor. 
 
 ```
 //% blockId=device_show_number 
 //% block="show|number %v" 
-//% blockGap=8 
 //% icon="\uf1ec"
 export function showNumber(v: number, interval: number = 150): void
 { }
@@ -35,9 +43,8 @@ export function showNumber(v: number, interval: number = 150): void
 * `block` contains the syntax to build the block structure (more below).
 
 Other optional attributes can also be used:
-* `blockGap` the distance from this block to the next block (to create groups)
 * `blockExternalInputs=` forces `External Inputs` rendering
-* `icon` icon characte from the icon font to display
+* `icon` icon character from the icon font to display
 
 ## Block syntax
 
@@ -77,7 +84,6 @@ enum Button {
 ## Docs and default values
 
 The JSDoc comment is automatically used as the help for the block.
-
 ````
 /**
  * Scroll a number on the screen. If the number fits on the screen (i.e. is a single digit), do not scroll.
@@ -91,13 +97,68 @@ export function showNumber(value: number, interval: number = 150): void
 * If `@param` annotation is available with an `eg:` section, the first
 value is used as the shadow value.
 * An optional `help` attribute can be used to point to an specific documentation path.
+* If the parameter has a default value (``interval`` in this case), it is **not** exposed in blocks.
+
+## Objects and Instance methods
+
+Blocks work best with "flat" C-style APIs. However, it is possible to expose instance methods in blocks as well.
+
+```
+//%
+class Message {
+    ...    
+    //% blockId="message_get_text" block="%this|text"
+    public getText() { ... }
+}
+```
+
+* when annotating an instance method, you need to specify the ``%this`` parameter in the block syntax definition.
+
+
+You will need to expose a factory method to create your objects as needed. For the example above, we add a function that creates the message:
+```
+//% blockId="create_message" block="create message|with %text"
+export function createMessage(text: string) : Message {
+    return new Message(text);
+}
+```
+
+## Ordering
+
+All blocks have a default **weight** of 50 that is used to sort them in the UI with the highest weight showing up first. To tweak the ordering,
+simply annotate the function with the ``weight`` macro:
+
+```
+//% weight=10
+...
+```
+
+## Grouping
+
+Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter, 
+this macro allows to definte groups of blocks. The default ``blockGap`` value is ``8``.
+
+```
+//% blockGap=14
+...
+```
+
+## Testing your Blocks
+
+We recommend to build your block APIs iteratively and try it out in the editor to get the "feel of it". 
+To do so, the ideal setup is:
+- run your target locally using ``pxt serve``
+- keep a code editor with the TypeScript opened where you can edit the APIs
+- refresh the browser and try out the changes on a dummy program.
+
+Interrestingly, you can design your entire API without implementing it!
 
 ## API design Tips and Tricks
 
 A few tips gathered while designing various APIs for the Block Editor.
 
 * **Design for beginners**: the block interface is for beginners. You'll want to create a specific layer of C-like function for that purpose.
-* **Anything that snaps together will be tried**: your runtime should deal with invalid input with graceful degradation rather than abrupt crashes.
+* **Anything that snaps together will be tried by the user**: your runtime should deal with invalid input with graceful degradation rather than abrupt crashes.
 Some users will try to snap anything together - get ready for it.
 * **OO is cumbersome** in blocks: we recommend using a C-like APIs -- just function -- rather than OO classes. It maps better to blocks.
 * **Keep the number of blocks small**: there's only so much space in the toolbox. Be specific about each API you want to see in Blocks.

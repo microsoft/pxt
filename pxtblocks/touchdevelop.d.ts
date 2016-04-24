@@ -140,6 +140,9 @@ declare module TDev.AST.Json
         // Other types of calls can be determined by careful inspection of the
         // receiver. See the C++ code emitter.
         callType?: string;
+        
+        // don't emit () for arguments
+        property?: boolean;
     }
 
     // Expressions can be represented in two different manners.

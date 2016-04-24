@@ -119,6 +119,12 @@ namespace pxt {
         serviceId: string;
     }
 
+    export interface RuntimeOptions {
+        mathBlocks?: boolean;
+        textBlocks?: boolean;
+        listsBlocks?: boolean;
+    }
+
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
@@ -127,6 +133,7 @@ namespace pxt {
         simulator?: AppSimulator;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
+        runtime?: RuntimeOptions;
         compile: CompileTarget;
         serial?: AppSerial;
         appTheme: AppTheme;
@@ -615,6 +622,16 @@ namespace pxt {
     }
 
     var defaultFiles: U.Map<string> = {
+        "tsconfig.json":
+        `{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "outDir": "built",
+        "rootDir": "."
+    }
+}
+`,
         ".gitignore":
         `built
 node_modules

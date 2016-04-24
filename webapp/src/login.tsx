@@ -59,15 +59,50 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
 
     }
 
+    static showUserPropertiesAsync(settings: Cloud.UserSettings) {
+        return core.confirmAsync({
+            header: lf("{0}: user settings", Util.htmlEscape(settings.nickname)),
+            htmlBody:
+            `<p>Hi ${Util.htmlEscape(settings.nickname)}, manage your account and assets using the <code>pxt</code> command line.</p>
+<ul>
+<li>install the <code>pxt</code> command line and login following the on-screen instructions
+<pre>
+npm install -g pxt
+pxt login
+</pre>
+</li>
+<li>delete your account (NO UNDO!) and related packages.
+<pre>
+pxt api me delete
+</pre>
+</li>
+<li>list all your packages
+<pre>
+pxt api me/pointers
+</pre>
+</li>
+<li>delete a particular package
+<pre>
+pxt api PACKAGEID delete
+</pre>
+</li>
+</ul>
+`,
+            agreeLbl: lf("Got it!"),
+            disagreeLbl: lf("Sign out")
+        }).then(b => {
+            if (!b) LoginBox.signout();
+        })
+    }
+
     renderCore() {
-        let settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
-        let name = Cloud.isLoggedIn() ? (settings.nickname || lf("Loading...")) : lf("Developer sign in")
-        let icon = Cloud.isLoggedIn() ? "user" : "sign in";
-        let buttonAction = () => {
+        const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
+        const name = Cloud.isLoggedIn() ? (settings.nickname || lf("Loading...")) : lf("Developer sign in")
+        const icon = Cloud.isLoggedIn() ? "user" : "sign in";
+        const buttonAction = () => {
             if (Cloud.isLoggedIn())
-                this.child(".ui.dropdown").dropdown("show");
-            else
-                this.signin();
+              LoginBox.showUserPropertiesAsync(settings).done();
+            else this.signin();
         }
 
         return <sui.Item text={name} icon={icon} onClick={buttonAction} />

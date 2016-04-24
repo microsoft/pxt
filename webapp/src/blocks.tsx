@@ -31,8 +31,14 @@ export class Editor extends srceditor.Editor {
     }
 
     saveToTypeScript(): string {
-        this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
-        return this.compilationResult.source;
+        try {
+            this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
+            return this.compilationResult.source;
+        } catch (e) {
+            pxt.reportException(e, { blocks: this.serializeBlocks() })
+            core.errorNotification(lf("Sorry, we were not able to convert this program."))
+            return '';
+        }
     }
 
     domUpdate() {
@@ -90,12 +96,12 @@ export class Editor extends srceditor.Editor {
             let text = s || "<xml></xml>";
             let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(this.editor, xml);
-            
+
             this.editor.clearUndo();
         } catch (e) {
             console.log(e);
         }
-        
+
         this.changeCallback();
 
         return true;

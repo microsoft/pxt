@@ -115,6 +115,7 @@ declare interface String {
 
     /** Returns the length of a String object. */
     //% property shim=String_::length
+    //% blockId="text_length" block="length of %VALUE" blockBuiltin=true
     length: number;
 
     [index: number]: string;

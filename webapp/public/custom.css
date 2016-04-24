@@ -17,7 +17,7 @@ body {
 #maineditor {
   position: absolute;
   top:4.5rem;
-  bottom: 2rem;
+  bottom: 0rem;
 }
 #logo {
     font-size: 2.8rem;
@@ -40,29 +40,6 @@ body {
 
 #logo img, #rightlogo img {
     height: 2.5rem;    
-}
-
-#footerlogo {
-    vertical-align: middle;
-    margin-right: 0.5rem;    
-}
-
-#footerlogo img {
-    height: 1rem;    
-}
-
-#footer {
-    position: absolute;
-    bottom: 0;
-    height: 2rem;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.05);
-}
-#footer div {
-    font-size:0.8rem;
-    text-align: center;
-    margin-top:0.4rem;
 }
 
 .simframe {
