@@ -83,17 +83,25 @@ interface Array<T> {
     //% blockId="array_indexof" block="in %this|index of %item" blockNamespace="lists"    
     indexOf(item: T, fromIndex?: number): number;
 
+    //% helper=arrayGet
+    //% blockId="array_get" block="%this|at %index" blockNamespace="lists"
+    get(index: number): T;
+
+    //% helper=arraySet
+    //% blockId="array_set" block="%this|set at %index|with value %value" blockNamespace="lists"
+    set(index: number, value : T) : void;
+
     [n: number]: T;
 }
 
 declare interface String {
     /**
      * Returns the character at the specified index.
-     * @param pos The zero-based index of the desired character.
+     * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt
-    //% blockId="string_charAt" block="char from %this|at %pos" blockNamespace="text"
-    charAt(pos: number): string;
+    //% blockId="string_get" block="char from %this|at %pos" blockNamespace="text"
+    charAt(index: number): string;
 
     /** 
      * Returns the Unicode value of the character at the specified location.
