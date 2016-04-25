@@ -82,7 +82,7 @@ declare interface String {
      * @param pos The zero-based index of the desired character.
      */
     //% shim=String_::charAt
-    //% blockId="string_charAt" block="char at %pos|from %this" blockNamespace="text"
+    //% blockId="string_charAt" block="char from %this|at %pos" blockNamespace="text"
     charAt(pos: number): string;
 
     /** 
@@ -97,7 +97,7 @@ declare interface String {
      * @param other The string to append to the end of the string.  
      */
     //% shim=String_::concat
-    //% blockId="string_concat" block="%this|+ %other" blockNamespace="text"
+    //% blockId="string_concat" block="concat %this|with %other" blockNamespace="text"
     concat(other: string): string;
 
     /**
@@ -105,7 +105,7 @@ declare interface String {
      * @param that String to compare to target string
      */
     //% shim=String_::compare
-    //% blockId="string_compare" block="%this|compare to %that" blockNamespace="text"
+    //% blockId="string_compare" block="compare %this| to %that" blockNamespace="text"
     compare(that: string): number;
 
     /**
@@ -114,7 +114,7 @@ declare interface String {
      * @param length number of characters to extract
      */
     //% shim=String_::substr length.defl=1000000
-    //% blockId="string_substr" block="get substring of %this|from %start|of length %length" blockNamespace="text"
+    //% blockId="string_substr" block="substring of %this|from %start|of length %length" blockNamespace="text"
     substr(start:number, length?:number): string;
 
     /** Returns the length of a String object. */
