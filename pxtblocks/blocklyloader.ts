@@ -469,6 +469,9 @@ namespace pxt.blocks {
         monkeyPatchBlock("math_op2", "Math min/max operators", "math");
         monkeyPatchBlock("math_op3", "Math abs operator", "math");
         monkeyPatchBlock("device_random", "pick random number", "math/random");
+
+        monkeyPatchBlock("text", "a piece of text", "text");
+        monkeyPatchBlock("text_length", "number of characters in the string", "text/length");
     }
 
     function initLoops() {
