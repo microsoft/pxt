@@ -134,7 +134,7 @@ namespace pxt.blocks {
             let nsn = info.apis.byQName[ns];
             let nsWeight = (nsn ? nsn.attributes.weight : 50) || 50; 
             category.setAttribute("weight", nsn.attributes.weight.toString())
-            if (nsn && nsn.attributes.color) category.setAttribute("colour", nsWeight.toString())
+            if (nsn && nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
             else if (blockColors[ns]) category.setAttribute("colour", blockColors[ns].toString());
             // find the place to insert the category        
             let categories = tb.querySelectorAll("category");
