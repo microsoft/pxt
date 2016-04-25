@@ -150,7 +150,8 @@ declare interface String {
   * @param s A string to convert into a number.
   */
 //% shim=String_::toNumber
-declare function parseInt(s: string): number;
+//% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
+declare function parseInt(text: string): number;
 
 interface Object {}
 interface Function {}
