@@ -184,9 +184,8 @@ export class Editor extends srceditor.Editor {
             return;
 
         // clear previous warnings
-        this.editor.getAllBlocks().forEach(b => b.setWarningText(null));
-
-        let tsfile = file.epkg.lookupFile(file.getName() + ".ts");
+        this.editor.getAllBlocks().forEach(b => b.setWarningText(null));        
+        let tsfile = file.epkg.files[file.getVirtualFileName()];
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors
