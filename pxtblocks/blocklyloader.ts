@@ -10,7 +10,8 @@ namespace pxt.blocks {
         loops: 120,
         images: 45,
         variables: 330,
-        text: 160
+        text: 160,
+        lists: 260
     }
 
     // list of built-in blocks, should be touched.
@@ -282,7 +283,7 @@ namespace pxt.blocks {
             }
         });
 
-        let body = fn.parameters.filter(pr => pr.type == "() => void")[0];
+        let body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
         if (body) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");

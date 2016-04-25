@@ -5,6 +5,7 @@ interface Array<T> {
       * Gets or sets the length of the array. This is a number one higher than the highest element defined in an array.
       */
     //% shim=Array_::length
+    //% blockId="lists_length" block="length of %VALUE" blockBuiltin=true blockNamespace="lists"
     length: number;
 
     /**
@@ -12,25 +13,37 @@ interface Array<T> {
       * @param items New elements of the Array.
       */
     //% shim=Array_::push
+    //% blockId="array_push" block="in %this|push last item %item" blockNamespace="lists"
     push(item: T): void;
     
     /**
       * Removes the last element from an array and returns it.
       */
     //% helper=arrayPop
+    //% blockId="array_pop" block="from %this|pop last item" blockNamespace="lists"
     pop(): T;
 
     /**
       * Reverses the elements in an Array. 
       */
     //% helper=arrayReverse
+    //% blockId="array_reverse" block="reverse %this" blockNamespace="lists"
     reverse(): void;
     
     /**
       * Removes the first element from an array and returns it.
       */
     //% helper=arrayShift
+    //% blockId="array_shift" block="from %this|shift first item" blockNamespace="lists"
     shift(): T;
+
+    /**
+      * Inserts new elements at the start of an array.
+      * @param items  Elements to insert at the start of the Array.
+      */
+    //% helper=arrayUnshift
+    //% blockId="array_unshift" block="in %this|unshift first item %item" blockNamespace="lists"
+    unshift(item:T): void;
     
     /** 
       * Returns a section of an array.
@@ -38,7 +51,17 @@ interface Array<T> {
       * @param end The end of the specified portion of the array.
       */
     //% helper=arraySlice
+    //% blockId="array_slice" block="from %this|slice from %start|to end %end" blockNamespace="lists"
     slice(start: number, end: number): T[];
+
+    /**
+      * Removes elements from an array.
+      * @param start The zero-based location in the array from which to start removing elements.
+      * @param deleteCount The number of elements to remove.
+      */
+    //% helper=arraySplice
+    //% blockId="array_splice" block="from %this|splice from %start|delete %deleteCount" blockNamespace="lists"
+    splice(start: number, deleteCount: number): void;
 
     /** Removes the first occurence of an object. Returns true if removed. */
     //% shim=Array_::removeElement
@@ -46,32 +69,19 @@ interface Array<T> {
     
     /** Removes the object at position index. */
     //% shim=Array_::removeAt
-    removeAt(idx:number) : void;
+    //% blockId="array_removeat" block="from %this|remove at %index" blockNamespace="lists"
+    removeAt(index:number) : void;
     
     
-    /**
-      * Removes elements from an array.
-      * @param start The zero-based location in the array from which to start removing elements.
-      * @param deleteCount The number of elements to remove.
-      */
-    //% helper=arraySplice
-    splice(start: number, deleteCount: number): void;
-
-    /**
-      * Inserts new elements at the start of an array.
-      * @param items  Elements to insert at the start of the Array.
-      */
-    //% helper=arrayUnshift
-    unshift(item:T): void;
 
     /**
       * Returns the index of the first occurrence of a value in an array.
-      * @param searchElement The value to locate in the array.
+      * @param item The value to locate in the array.
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
     //% shim=Array_::indexOf
-    indexOf(searchElement: T, fromIndex?: number): number;
-
+    //% blockId="array_indexof" block="in %this|index of %item" blockNamespace="lists"    
+    indexOf(item: T, fromIndex?: number): number;
 
     [n: number]: T;
 }
