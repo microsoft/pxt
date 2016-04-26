@@ -130,7 +130,7 @@ namespace pxsim.logs {
             }
             // find the entry with same source
             let last: ILogEntry = undefined;
-            let m = /(([^:]+):)?\s*(-?\d+)/i.exec(value);
+            let m = /^\s*(([^:]+):)?\s*(-?\d+)/i.exec(value);
             let variable = m ? (m[2] || ' ') : undefined;
             let nvalue = m ? parseInt(m[3]) : null;
             for (let i = ens.length - 1; i >= 0; --i) {
@@ -230,8 +230,10 @@ namespace pxsim.logs {
 
             let csv = ''
             // name columns
-            csv += dataEntries.map(entry => `${entry.theme} time, ${entry.theme} ${entry.variable.trim() || "data"}`).join(', ');
-            csv += ', log time, log source, log message\n';
+            csv += dataEntries.map(entry => `${entry.theme} time, ${entry.theme} ${entry.variable.trim() || "data"}`)
+                .concat(['log time', 'log source', 'log message'])
+                .join(', ');
+            csv += '\n';
 
             for (let i = 0; i < rows; ++i) {
                 let cols: string[] = []
