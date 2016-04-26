@@ -320,8 +320,8 @@ namespace pxt.blocks {
 
     function removeCategory(tb: Element, name: string) {
         let e = tb ? tb.querySelector(`category[name="${name}"]`) : undefined;
-        if (e)
-            e.remove();
+        if (e && e.parentElement)
+            e.parentElement.removeChild(e);
     }
 
     export function initBlocks(blockInfo: ts.pxt.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
