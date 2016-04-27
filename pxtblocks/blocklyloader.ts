@@ -373,6 +373,8 @@ namespace pxt.blocks {
         if (!config.mathBlocks) removeCategory(tb, "Math");
         if (!config.textBlocks) removeCategory(tb, "Text");
         if (!config.listsBlocks) removeCategory(tb, "Lists");
+        if (!config.variablesBlocks) removeCategory(tb, "Variables");
+        if (!config.logicBlocks) removeCategory(tb, "Logic");
 
         // update shadow types
         if (tb) {

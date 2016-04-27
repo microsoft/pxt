@@ -123,6 +123,8 @@ namespace pxt {
         mathBlocks?: boolean;
         textBlocks?: boolean;
         listsBlocks?: boolean;
+        variablesBlocks?: boolean;
+        logicBlocks?: boolean;
     }
 
     export interface AppTarget {
