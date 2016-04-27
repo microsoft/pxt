@@ -243,9 +243,17 @@
             </block>
         </category>
         <category colour="260" name="Lists" category="45">
-            <block type="lists_create_with"></block>       
-            <block type="lists_length"></block>            
+            <block type="lists_create_with">
+                <mutation items="1"></mutation>
+                <value name="ADD0">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_length"></block>
         </category>
     </xml>
 </body>
+
 </html>

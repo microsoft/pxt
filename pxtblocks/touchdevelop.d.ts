@@ -88,6 +88,11 @@ declare module TDev.AST.Json
         // Otherwise stringified form of 'value' is used
         stringForm?:string;
     }
+    
+    // An array literal, NOT IN TOUCHDEVELOP!
+    export interface JArrayLiteral extends JExpr {
+        values:J.JExpr[];
+    }
 
     // when building expressions of these three types you can provide localId/type or name;
     // if you provide both, name is ignored

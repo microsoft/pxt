@@ -19,6 +19,14 @@ namespace pxt.blocks {
             return mkOp(x);
         }
 
+        export function mkArrayLiteral(args: J.JExpr[]): J.JArrayLiteral {
+            return {
+                nodeType: "arrayLiteral",
+                id: null,
+                values: args
+            };
+        }
+
         export function mkNumberLiteral(x: number): J.JNumberLiteral {
             return {
                 nodeType: "numberLiteral",
@@ -786,6 +794,18 @@ namespace pxt.blocks {
             return H.mathCall("random", [H.mkSimpleCall(opToTok["+"], [expr, H.mkNumberLiteral(1)])])
     }
 
+    function compileCreateList(e: Environment, b: B.Block): J.JExpr {
+        // collect argument
+        let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock()) : undefined)
+            .filter(e => !!e);
+
+        // we need at least 1 element to determine the type...
+        if (args.length < 0)
+            U.userError(lf("The list must have at least one element"));
+
+        return H.mkArrayLiteral(args);
+    }
+
     function defaultValueForType(t: Point): J.JExpr {
         if (t.type == null) {
             union(t, ground(pNumber.type));
@@ -833,6 +853,8 @@ namespace pxt.blocks {
                 expr = compileVariableGet(e, b); break;
             case "text":
                 expr = compileText(e, b); break;
+            case "lists_create_with":
+                expr = compileCreateList(e, b); break;
             default:
                 var call = e.stdCallTable[b.type];
                 if (call) {
@@ -1028,30 +1050,30 @@ namespace pxt.blocks {
         var body = compileStatements(e, bBody);
         return mkCallWithCallback(e, "basic", "forever", [], body);
     }
-    
+
     // convert to javascript friendly name
-    function escapeVarName(name: string) : string {
+    function escapeVarName(name: string): string {
         if (!name) return '_';
         let n = name.split(/[^a-zA-Z0-9_$]+/)
-            .map((c,i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1))
+            .map((c, i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1))
             .join('');
         return n;
     }
-    
+
     function compileVariableGet(e: Environment, b: B.Block): J.JExpr {
         let name = escapeVarName(b.getFieldValue("VAR"));
         let binding = lookup(e, name);
-        if (!binding.assigned) 
+        if (!binding.assigned)
             binding.assigned = VarUsage.Read;
         assert(binding != null && binding.type != null);
         return H.mkLocalRef(name);
     }
-    
+
     function compileSet(e: Environment, b: B.Block): J.JStmt {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
-        if (!binding.assigned && !findParent(b)) 
+        if (!binding.assigned && !findParent(b))
             binding.assigned = VarUsage.Assign;
         let expr = compileExpression(e, bExpr);
         let ref = H.mkLocalRef(bVar);
@@ -1062,7 +1084,7 @@ namespace pxt.blocks {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
-        if (!binding.assigned) 
+        if (!binding.assigned)
             binding.assigned = VarUsage.Read;
         let expr = compileExpression(e, bExpr);
         let ref = H.mkLocalRef(bVar);
@@ -1114,7 +1136,7 @@ namespace pxt.blocks {
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
         var bBody = b.getInputTargetBlock("HANDLER");
-        var compiledArgs : J.JNode[] = args.map((arg: string) => {
+        var compiledArgs: J.JNode[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
             let argb = b.getInputTargetBlock(arg);
             if (argb) return compileExpression(e, argb);
@@ -1236,7 +1258,7 @@ namespace pxt.blocks {
         if (!b.parentBlock_) return true;
         return isTopBlock(b.parentBlock_);
     }
-        
+
     // This function creates an empty environment where type inference has NOT yet
     // been performed.
     // - All variables have been assigned an initial [Point] in the union-find.
@@ -1256,7 +1278,7 @@ namespace pxt.blocks {
                     }
                     let fieldMap = pxt.blocks.parameterNames(fn);
                     let instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
-                    let args = ( fn.parameters || [] ).map(p => {
+                    let args = (fn.parameters || []).map(p => {
                         if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
                         else return null;
                     }).filter(a => !!a);
@@ -1273,7 +1295,7 @@ namespace pxt.blocks {
                         hasHandler: fn.parameters && fn.parameters.some(p => p.type == "() => void"),
                         property: !fn.parameters,
                         args: args
-                    } 
+                    }
                 })
 
         const variableIsScoped = (b: B.Block, name: string): boolean => {
@@ -1490,6 +1512,7 @@ namespace pxt.blocks {
                     case "numberLiteral":
                         pushOp((<J.JNumberLiteral>e).value.toString())
                         break;
+                    case "arrayLiteral":
                     case "stringLiteral":
                     case "booleanLiteral":
                     case "localRef":
@@ -1581,7 +1604,7 @@ namespace pxt.blocks {
                     localRef(n.name)
             },
 
-            operator: (n: J.JOperator) => {                
+            operator: (n: J.JOperator) => {
                 if (n.op == "let")
                     write(n.op + " ");
                 else if (/^[\d()]/.test(n.op))
@@ -1606,6 +1629,17 @@ namespace pxt.blocks {
 
             booleanLiteral: (n: J.JBooleanLiteral) => {
                 write(n.value ? "true" : "false")
+            },
+            
+            arrayLiteral: (n: J.JArrayLiteral) => {
+                write("[");
+                if (n.values)
+                    n.values.forEach((a,i) => {
+                        if (i > 0) write(', ');
+                        let toks = flatten(a)
+                        toks.forEach(emit)
+                    })
+                write("]");  
             },
 
             "if": (n: J.JIf) => {
