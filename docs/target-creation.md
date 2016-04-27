@@ -20,7 +20,7 @@ A target contains the following folders:
 npm install -g pxt
 ```
 
-* Get a copy of the [sample target sources](https://github.com/microbit/pxt-sample) and open it in your favorite editor.
+* Get a copy of the [sample target sources](https://github.com/microsoft/pxt-sample) and open it in your favorite editor.
 * Open a command prompt in the target folder and run these commands to setup the tools.
 
 ```
