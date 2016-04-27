@@ -1034,7 +1034,7 @@ function runYottaAsync(args: string[]) {
             let q = path.join(pp, "yotta.exe")
             if (fs.existsSync(q)) {
                 ytCommand = q
-                env["PATH"] = env["PATH"] + ypath
+                env["PATH"] = env["PATH"] + ";" + ypath
                 break
             }
         }
