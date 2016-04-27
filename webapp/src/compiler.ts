@@ -75,7 +75,7 @@ function assembleCore(src: string): Promise<{ words: number[] }> {
     return workerOpAsync("assemble", { fileContent: src })
 }
 
-export function assemble(src: string) {
+export function assembleAsync(src: string) {
     let stackBase = 0x20004000
     return assembleCore(`.startaddr ${stackBase - 256}\n${src}`)
         .then(r => {

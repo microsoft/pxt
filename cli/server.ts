@@ -271,20 +271,26 @@ function initSocketServer() {
         let ws = new WebSocket(request, socket, body);
         let dapjs:any
         
+        ws.on('open', () => {
+            ws.send(JSON.stringify({ id: "ready" }))
+        })
+        
         ws.on('message', function(event: any) {
             try {
                 let msg = JSON.parse(event.data);
                 if (!dapjs) dapjs = require("dapjs")
+                console.log("DEBUGMSG", msg)
                 Promise.resolve()
                     .then(() => dapjs.handleMessageAsync(msg))
                     .then(resp => {
                         if (resp == null || typeof resp != "object")
                             resp = { response: resp }
                         resp.id = msg.id
+                        console.log("DEBUGRESP", resp)
                         ws.send(JSON.stringify(resp))
                     }, error => {
                         let resp = {
-                            error: error.message || "Error",
+                            errorMessage: error.message || "Error",
                             errorStackTrace: error.stack,
                             id: msg.id
                         }

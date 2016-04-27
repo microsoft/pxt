@@ -24,6 +24,7 @@ import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
+import * as hwdbg from "./hwdbg"
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -1145,7 +1146,7 @@ function showIcons() {
 
 function assembleCurrent() {
     compiler.compileAsync({ native: true })
-        .then(() => compiler.assemble(getEditor().editorFile.content))
+        .then(() => compiler.assembleAsync(getEditor().editorFile.content))
         .then(v => {
             let nums = v.words
             console.log("[" + nums.map(n => "0x" + n.toString(16)).join(",") + "]")
@@ -1166,6 +1167,7 @@ let myexports: any = {
     sim: simulator,
     apiAsync: core.apiAsync,
     showIcons,
+    hwdbg,
     assembleCurrent
 };
 (window as any).E = myexports;
