@@ -185,6 +185,10 @@ namespace pxsim {
             return s.length
         }
         
+        export function isEmpty(s : string) : boolean {
+            return s == null || s.length == 0;
+        }
+        
         export function substr(s:string, start:number, length?:number) {
             return s.substr(start, length)
         }

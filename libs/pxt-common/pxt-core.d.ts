@@ -143,6 +143,11 @@ declare interface String {
     //% property shim=String_::length
     //% blockId="text_length" block="length of %VALUE" blockBuiltin=true blockNamespace="text"
     length: number;
+    
+    /** Returns a value indicating if the string is empty */
+    //% shim=String_::isEmpty
+    //% blockId="string_isempty" block="%this| is empty" blockNamespace="text" 
+    isEmpty() : boolean;
 
     [index: number]: string;
 }

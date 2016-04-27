@@ -391,9 +391,6 @@ namespace pxt.blocks {
                 workspace.updateToolbox(tb)
             }
         }
-        
-        // dump toolbox
-        console.log(tb.innerHTML)
     }
 
     export function cleanBlocks() {
