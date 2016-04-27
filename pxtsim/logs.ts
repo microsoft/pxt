@@ -67,6 +67,8 @@ namespace pxsim.logs {
             this.registerChromeSerial();
             this.element = document.createElement("div");
             this.element.className = "ui segment hideempty logs";
+            if (this.props.onCSVData)
+                this.element.onclick = () => this.allToCSV();
         }
 
         registerChromeSerial() {
@@ -101,8 +103,8 @@ namespace pxsim.logs {
                         let theme = source.split('-')[0] || '';
                         if (!/^[a-z]+$/.test(theme)) theme = 'black';
                         let buffer = this.serialBuffers[source] || '';
-                        for(let i = 0; i < value.length; ++i) {
-                            switch(value.charCodeAt(i)) {
+                        for (let i = 0; i < value.length; ++i) {
+                            switch (value.charCodeAt(i)) {
                                 case 10: //'\n'
                                     this.appendEntry(source, buffer, theme);
                                     buffer = '';
@@ -128,7 +130,7 @@ namespace pxsim.logs {
             }
             // find the entry with same source
             let last: ILogEntry = undefined;
-            let m = /(([^:]+):)?\s*(-?\d+)/i.exec(value);
+            let m = /^\s*(([^:]+):)?\s*(-?\d+)/i.exec(value);
             let variable = m ? (m[2] || ' ') : undefined;
             let nvalue = m ? parseInt(m[3]) : null;
             for (let i = ens.length - 1; i >= 0; --i) {
@@ -177,8 +179,8 @@ namespace pxsim.logs {
                     e.accvaluesElement.className = "ui log " + e.theme + " gauge"
                     e.chartElement = new TrendChartElement(e, "ui trend " + e.theme)
                     if (this.props.onCSVData) {
-                        e.element.onclick = () => this.tableToCSV(e);
-                        e.element.className += " link";
+                        e.chartElement.element.onclick = () => this.tableToCSV(e);
+                        e.chartElement.element.className += " link";
                     }
                     e.element.appendChild(e.accvaluesElement);
                     e.element.appendChild(e.chartElement.element);
@@ -205,7 +207,7 @@ namespace pxsim.logs {
         private render() {
             this.entries.forEach(entry => {
                 if (!entry.dirty) return;
-                
+
                 if (entry.countElement) entry.countElement.innerText = entry.count.toString();
                 if (entry.accvaluesElement) entry.accvaluesElement.innerText = entry.value;
                 if (entry.chartElement) entry.chartElement.render();
@@ -215,12 +217,55 @@ namespace pxsim.logs {
             this.renderFiberId = 0;
         }
 
+        private allToCSV() {
+            // first log all data entries to CSV
+            let dataEntries: ILogEntry[] = [];
+            let rows = this.entries.length;
+            this.entries.forEach(e => {
+                if (e.accvalues && e.accvalues.length > 0) {
+                    dataEntries.push(e);
+                    rows = Math.max(e.accvalues.length, rows);
+                }
+            });
+
+            let csv = ''
+            // name columns
+            csv += dataEntries.map(entry => `${entry.theme} time, ${entry.theme} ${entry.variable.trim() || "data"}`)
+                .concat(['log time', 'log source', 'log message'])
+                .join(', ');
+            csv += '\n';
+
+            for (let i = 0; i < rows; ++i) {
+                let cols: string[] = []
+
+                dataEntries.forEach(entry => {
+                    let t0 = entry.accvalues[0].t;
+                    if (i < entry.accvalues.length) {
+                        cols.push(((entry.accvalues[i].t - t0) / 1000).toString());
+                        cols.push(entry.accvalues[i].v.toString());
+                    } else {
+                        cols.push(' ');
+                        cols.push(' ');
+                    }
+                });
+
+                if (i < this.entries.length) {
+                    let t0 = this.entries[0].time;
+                    cols.push(((this.entries[i].time - t0) / 1000).toString());
+                    cols.push(this.entries[i].source);
+                    cols.push(this.entries[i].value);                    
+                }
+
+                csv += cols.join(', ') + '\n';
+            }
+            this.props.onCSVData('data.csv', csv);
+        }
+
         private tableToCSV(entry: ILogEntry) {
             let t0 = entry.accvalues.length > 0 ? entry.accvalues[0].t : 0;
-            let name = entry.variable.trim() || "data";
-            let csv = `${"time"}, ${name}\n`
+            let csv = `${entry.theme} time, ${entry.variable.trim() || "data"}\n`
                 + entry.accvalues.map(v => ((v.t - t0) / 1000) + ", " + v.v).join('\n');
-            let fn = `${(entry.variable.replace(/[^a-z0-9-_]/i, '') || "data")}.csv`;            
+            let fn = `${(entry.variable.replace(/[^a-z0-9-_]/i, '') || "data")}.csv`;
             this.props.onCSVData(fn, csv);
         }
     }
