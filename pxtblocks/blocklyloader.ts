@@ -113,7 +113,7 @@ namespace pxt.blocks {
         }
         if (fn.parameters)
             fn.parameters.filter(pr => !!attrNames[pr.name].name &&
-                (/string|number/.test(attrNames[pr.name].type)
+                (/^(string|number)$/.test(attrNames[pr.name].type)
                     || !!attrNames[pr.name].shadowType
                     || !!attrNames[pr.name].shadowValue))
                 .forEach(pr => {
@@ -253,10 +253,11 @@ namespace pxt.blocks {
                     return;
                 }
                 let pr = attrNames[n];
-                if (instance && n == "this") {
+                if (/\[\]$/.test(pr.type)) { // Array type
+                    i = initField(block.appendValueInput(p), ni, fn, pre, true, "Array");
+                } else if (instance && n == "this") {
                     i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);
-                }
-                else if (pr.type == "number") {
+                } else if (pr.type == "number") {
                     if (pr.shadowType && pr.shadowType == "value") {
                         i = block.appendDummyInput();
                         if (pre) i.appendField(pre)
@@ -390,6 +391,9 @@ namespace pxt.blocks {
                 workspace.updateToolbox(tb)
             }
         }
+        
+        // dump toolbox
+        console.log(tb.innerHTML)
     }
 
     export function cleanBlocks() {
