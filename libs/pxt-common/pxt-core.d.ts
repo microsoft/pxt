@@ -4,7 +4,7 @@ interface Array<T> {
     /**
       * Gets or sets the length of the array. This is a number one higher than the highest element defined in an array.
       */
-    //% shim=Array_::length
+    //% shim=Array_::length weight=84
     //% blockId="lists_length" block="length of %VALUE" blockBuiltin=true blockNamespace="lists"
     length: number;
 
@@ -12,28 +12,28 @@ interface Array<T> {
       * Appends new elements to an array.
       * @param items New elements of the Array.
       */
-    //% shim=Array_::push
+    //% shim=Array_::push weight=75
     //% blockId="array_push" block="in %this|push last item %item" blockNamespace="lists"
     push(item: T): void;
     
     /**
       * Removes the last element from an array and returns it.
       */
-    //% helper=arrayPop
+    //% helper=arrayPop weight=74
     //% blockId="array_pop" block="from %this|pop last item" blockNamespace="lists"
     pop(): T;
 
     /**
       * Reverses the elements in an Array. 
       */
-    //% helper=arrayReverse
+    //% helper=arrayReverse weight=10
     //% blockId="array_reverse" block="reverse %this" blockNamespace="lists"
     reverse(): void;
     
     /**
       * Removes the first element from an array and returns it.
       */
-    //% helper=arrayShift
+    //% helper=arrayShift weight=70
     //% blockId="array_shift" block="from %this|shift first item" blockNamespace="lists"
     shift(): T;
 
@@ -41,7 +41,7 @@ interface Array<T> {
       * Inserts new elements at the start of an array.
       * @param items  Elements to insert at the start of the Array.
       */
-    //% helper=arrayUnshift
+    //% helper=arrayUnshift weight=69
     //% blockId="array_unshift" block="in %this|unshift first item %item" blockNamespace="lists"
     unshift(item:T): void;
     
@@ -50,7 +50,7 @@ interface Array<T> {
       * @param start The beginning of the specified portion of the array.
       * @param end The end of the specified portion of the array.
       */
-    //% helper=arraySlice
+    //% helper=arraySlice weight=41
     //% blockId="array_slice" block="from %this|slice from %start|to end %end" blockNamespace="lists"
     slice(start: number, end: number): T[];
 
@@ -59,36 +59,40 @@ interface Array<T> {
       * @param start The zero-based location in the array from which to start removing elements.
       * @param deleteCount The number of elements to remove.
       */
-    //% helper=arraySplice
+    //% helper=arraySplice weight=40
     //% blockId="array_splice" block="from %this|splice from %start|delete %deleteCount" blockNamespace="lists"
     splice(start: number, deleteCount: number): void;
 
     /** Removes the first occurence of an object. Returns true if removed. */
-    //% shim=Array_::removeElement
+    //% shim=Array_::removeElement weight=48
     removeElement(element:T) : boolean;
     
     /** Removes the object at position index. */
-    //% shim=Array_::removeAt
+    //% shim=Array_::removeAt weight=49
     //% blockId="array_removeat" block="from %this|remove at %index" blockNamespace="lists"
     removeAt(index:number) : void;
     
-    
-
     /**
       * Returns the index of the first occurrence of a value in an array.
       * @param item The value to locate in the array.
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
-    //% shim=Array_::indexOf
+    //% shim=Array_::indexOf weight=50
     //% blockId="array_indexof" block="in %this|index of %item" blockNamespace="lists"    
     indexOf(item: T, fromIndex?: number): number;
 
-    //% helper=arrayGet
-    //% blockId="array_get" block="%this|at %index" blockNamespace="lists"
+    /**
+     * Gets the value at a particular index
+     */
+    //% helper=arrayGet weight=85
+    //% blockId="array_get" block="from %this|at %index" blockNamespace="lists"
     get(index: number): T;
 
-    //% helper=arraySet
-    //% blockId="array_set" block="%this|set at %index|with value %value" blockNamespace="lists"
+    /**
+     * Stores the value at a particular index
+     */
+    //% helper=arraySet weight=84
+    //% blockId="array_set" block="in %this|set at %index|with value %value" blockNamespace="lists"
     set(index: number, value : T) : void;
 
     [n: number]: T;
@@ -142,8 +146,6 @@ declare interface String {
 
     [index: number]: string;
 }
-
-
 
 /**
   * Converts A string to an integer.
