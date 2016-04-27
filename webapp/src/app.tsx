@@ -24,6 +24,7 @@ import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
+import * as hwdbg from "./hwdbg"
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -1143,6 +1144,15 @@ function showIcons() {
     })
 }
 
+function assembleCurrent() {
+    compiler.compileAsync({ native: true })
+        .then(() => compiler.assembleAsync(getEditor().editorFile.content))
+        .then(v => {
+            let nums = v.words
+            console.log("[" + nums.map(n => "0x" + n.toString(16)).join(",") + "]")
+        })
+}
+
 
 // This is for usage from JS console
 let myexports: any = {
@@ -1156,7 +1166,9 @@ let myexports: any = {
     getsrc,
     sim: simulator,
     apiAsync: core.apiAsync,
-    showIcons
+    showIcons,
+    hwdbg,
+    assembleCurrent
 };
 (window as any).E = myexports;
 

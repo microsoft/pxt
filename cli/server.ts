@@ -250,7 +250,6 @@ function initSocketServer() {
     const WebSocket = require('faye-websocket');
 
     function startSerial(request: any, socket: any, body: any) {
-        console.log('ws connection at ' + request.url);
         let ws = new WebSocket(request, socket, body);
         wsSerialClients.push(ws);
         ws.on('message', function(event: any) {
@@ -268,12 +267,58 @@ function initSocketServer() {
         })
     }
 
+    function startDebug(request: any, socket: any, body: any) {
+        let ws = new WebSocket(request, socket, body);
+        let dapjs:any
+        
+        ws.on('open', () => {
+            ws.send(JSON.stringify({ id: "ready" }))
+        })
+        
+        ws.on('message', function(event: any) {
+            try {
+                let msg = JSON.parse(event.data);
+                if (!dapjs) dapjs = require("dapjs")
+                console.log("DEBUGMSG", msg)
+                Promise.resolve()
+                    .then(() => dapjs.handleMessageAsync(msg))
+                    .then(resp => {
+                        if (resp == null || typeof resp != "object")
+                            resp = { response: resp }
+                        resp.id = msg.id
+                        console.log("DEBUGRESP", resp)
+                        ws.send(JSON.stringify(resp))
+                    }, error => {
+                        let resp = {
+                            errorMessage: error.message || "Error",
+                            errorStackTrace: error.stack,
+                            id: msg.id
+                        }
+                        ws.send(JSON.stringify(resp))
+                    })
+            } catch (e) {
+                console.log("ws debug error", e)
+            }
+        });
+        ws.on('close', function(event: any) {
+            console.log('ws debug connection closed')
+            ws = null;
+        });
+        ws.on('error', function() {
+            console.log('ws debug connection closed')
+            ws = null;
+        })
+    }
+
     let wsserver = http.createServer();
     wsserver.on('upgrade', function(request: http.IncomingMessage, socket: WebSocket, body: any) {
         try {
             if (WebSocket.isWebSocket(request)) {
-                if (request.url ==  "/" + serveOptions.localToken + "/serial")
+                console.log('ws connection at ' + request.url);
+                if (request.url == "/" + serveOptions.localToken + "/serial")
                     startSerial(request, socket, body);
+                else if (request.url == "/" + serveOptions.localToken + "/debug")
+                    startDebug(request, socket, body);
                 else console.log('refused connection at ' + request.url);
             }
         } catch (e) {
@@ -372,9 +417,9 @@ export interface ServeOptions {
 var serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
-    
+
     setupRootDir()
-    
+
     nodeutil.mkdirP(tempDir)
 
     setupTemplate()
@@ -447,7 +492,7 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (pathname == "/--embed") {
-            sendFile(path.join(fileDir,'node_modules/pxt-core/webapp/public/embed.js'));
+            sendFile(path.join(fileDir, 'node_modules/pxt-core/webapp/public/embed.js'));
             return
         }
 
@@ -490,7 +535,7 @@ export function serveAsync(options: ServeOptions) {
                 let bc = elts.map((e, i) => {
                     return {
                         href: "/" + elts.slice(0, i + 1).join("/"),
-                        name: e 
+                        name: e
                     }
                 })
                 let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc)

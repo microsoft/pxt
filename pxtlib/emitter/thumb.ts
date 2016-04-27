@@ -115,7 +115,7 @@ module ts.pxt.thumb {
                             labelName = "rel" + v
                         } else {
                             labelName = actual
-                            v = ln.bin.getRelativeLabel(actual)
+                            v = ln.bin.getRelativeLabel(actual, enc.isWordAligned)
                             if (v == null) {
                                 if (ln.bin.finalEmit)
                                     return emitErr("unknown label", actual)
@@ -188,7 +188,6 @@ module ts.pxt.thumb {
         public lineNo: number;
         public words: string[];
         public scope: string;
-        public noJs: boolean;
 
         public instruction: Instruction;
         public numArgs: number[];
@@ -258,7 +257,7 @@ module ts.pxt.thumb {
             this.currLine.lineNo = 0;
         }
 
-        public baseOffset: number;
+        public baseOffset: number = 0;
         public finalEmit: boolean;
         public reallyFinalEmit: boolean;
         public checkStack = true;
@@ -290,7 +289,7 @@ module ts.pxt.thumb {
             return this.buf.length * 2;
         }
 
-        public parseOneInt(s: string) {
+        public parseOneInt(s: string):number {
             if (!s)
                 return null;
 
@@ -312,6 +311,10 @@ module ts.pxt.thumb {
             }
 
             var v: number = null
+            
+            if (U.endsWith(s, "|1")) {
+                return this.parseOneInt(s.slice(0, s.length - 2)) | 1
+            }
 
             if (s[0] == "0") {
                 if (s[1] == "x" || s[1] == "X") {
@@ -359,7 +362,7 @@ module ts.pxt.thumb {
 
             if (v == null && this.looksLikeLabel(s)) {
                 v = this.lookupLabel(s, true);
-                v += this.baseOffset;
+                if (v != null) v += this.baseOffset
             }
 
             if (v == null || isNaN(v)) return null;
@@ -370,7 +373,7 @@ module ts.pxt.thumb {
         private looksLikeLabel(name: string) {
             if (/^(r\d|pc|sp|lr)$/i.test(name))
                 return false
-            return /^[\.a-zA-Z_][\.\w+]*$/.test(name)
+            return /^[\.a-zA-Z_][\.:\w+]*$/.test(name)
         }
 
         private scopedName(name: string) {
@@ -384,8 +387,10 @@ module ts.pxt.thumb {
             var scoped = this.scopedName(name)
             if (this.labels.hasOwnProperty(scoped))
                 v = this.labels[scoped];
-            else if (this.lookupExternalLabel)
+            else if (this.lookupExternalLabel) {
                 v = this.lookupExternalLabel(name)
+                if (v != null) v -= this.baseOffset
+            }
             if (v == null && direct) {
                 if (this.finalEmit)
                     this.directiveError(lf("unknown label: {0}", name));
@@ -395,10 +400,12 @@ module ts.pxt.thumb {
             return v;
         }
 
-        public getRelativeLabel(s: string) {
+        public getRelativeLabel(s: string, wordAligned = false) {
             var l = this.lookupLabel(s);
             if (l == null) return null;
-            return l - (this.location() + 4);
+            let pc = this.location() + 4
+            if (wordAligned) pc = pc & 0xfffffffc
+            return l - pc;
         }
 
         private align(n: number) {
@@ -597,7 +604,11 @@ module ts.pxt.thumb {
                     this.emitSpace(words);
                     break;
 
-                case "@js":
+                case ".startaddr":
+                    if (this.location())
+                        this.directiveError(lf(".startaddr can be only be specified at the beginning of the file"))
+                    expectOne()
+                    this.baseOffset = this.parseOneInt(words[1]);
                     break;
 
                 // The usage for this is as follows:
@@ -665,7 +676,7 @@ module ts.pxt.thumb {
                     this.emitShort(op.opcode2);
                 ln.instruction = instr;
                 ln.numArgs = op.numArgs;
-                
+
                 return true;
             }
             return false;
@@ -742,12 +753,6 @@ module ts.pxt.thumb {
                             return;
                         }
                     }
-                }
-
-                if (w0.charAt(0) == "*") {
-                    l.text = l.text.replace("*", "")
-                    w0 = l.words[0] = l.words[0].slice(1)
-                    l.noJs = true
                 }
 
                 let c0 = w0.charAt(0)
@@ -828,7 +833,6 @@ module ts.pxt.thumb {
                     text = text.replace(/; WAS: .*/, "")
                     if (!text.trim()) return;
                 }
-                if (ln.noJs) text += " ; NOJS"
                 res += text + "\n"
             })
 
@@ -908,7 +912,7 @@ module ts.pxt.thumb {
             }
         }
 
-        private peepPass(reallyFinal:boolean) {
+        private peepPass(reallyFinal: boolean) {
             if (this.disablePeepHole)
                 return;
 
@@ -987,6 +991,7 @@ module ts.pxt.thumb {
         isImmediate: boolean;
         isRegList: boolean;
         isLabel: boolean;
+        isWordAligned?: boolean;
     }
 
     var instructions: StringMap<Instruction[]>;
@@ -1031,7 +1036,7 @@ module ts.pxt.thumb {
 
         encoders = {};
         var addEnc = (n: string, p: string, e: (v: number) => number) => {
-            var ee = {
+            var ee:Encoder = {
                 name: n,
                 pretty: p,
                 encode: e,
@@ -1099,7 +1104,7 @@ module ts.pxt.thumb {
             return e & mask;
         }
 
-        addEnc("$la", "LABEL", v => inrange(255, v / 4, v >> 2))
+        addEnc("$la", "LABEL", v => inrange(255, v / 4, v >> 2)).isWordAligned = true;
         addEnc("$lb", "LABEL", v => inrangeSigned(127, v / 2, v >> 1))
         addEnc("$lb11", "LABEL", v => inrangeSigned(1023, v / 2, v >> 1))
 
@@ -1140,7 +1145,7 @@ module ts.pxt.thumb {
         add("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800);
         add("ldr   $r0, [$r1, $r4]", 0x5800, 0xfe00);
         add("ldr   $r5, [pc, $i1]", 0x4800, 0xf800);
-        //add("ldr   $r5, $la",        0x4800, 0xf800);
+        add("ldr   $r5, $la", 0x4800, 0xf800);
         add("ldr   $r5, [sp, $i1]", 0x9800, 0xf800);
         add("ldrb  $r0, [$r1, $i4]", 0x7800, 0xf800);
         add("ldrb  $r0, [$r1, $r4]", 0x5c00, 0xfe00);

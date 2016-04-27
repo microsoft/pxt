@@ -13,7 +13,7 @@ let iface: workeriface.Iface
 
 export function init() {
     if (!iface) {
-        iface = workeriface.make(pxt.webConfig.workerjs)
+        iface = workeriface.makeWebWorker(pxt.webConfig.workerjs)
     }
 }
 
@@ -68,6 +68,22 @@ export function compileAsync(options: CompileOptions = {}) {
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
             return resp
+        })
+}
+
+function assembleCore(src: string): Promise<{ words: number[] }> {
+    return workerOpAsync("assemble", { fileContent: src })
+}
+
+export function assembleAsync(src: string) {
+    let stackBase = 0x20004000
+    return assembleCore(`.startaddr ${stackBase - 256}\n${src}`)
+        .then(r => {
+            return assembleCore(`.startaddr ${stackBase - (r.words.length + 1) * 4}\n${src}`)
+            .then(rr => {
+                U.assert(rr.words.length == r.words.length)
+                return rr
+            })
         })
 }
 

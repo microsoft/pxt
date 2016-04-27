@@ -9,10 +9,10 @@ import U = pxt.Util;
 
 export interface Iface {
     opAsync: (op: string, arg: any) => Promise<any>;
+    recvHandler: (v: any) => void;
 }
 
-export function make(workerFile: string) {
-    let tsWorker: Worker;
+export function wrap(send: (v: any) => void): Iface {
     let pendingMsgs: U.StringMap<(v: any) => void> = {}
     let msgId = 0;
     let q = new U.PromiseQueue();
@@ -22,14 +22,13 @@ export function make(workerFile: string) {
     })
     q.enqueue("main", () => initPromise)
 
-    tsWorker = new Worker(workerFile)
-    tsWorker.onmessage = ev => {
-        if (pendingMsgs.hasOwnProperty(ev.data.id)) {
-            let cb = pendingMsgs[ev.data.id]
-            delete pendingMsgs[ev.data.id]
-            cb(ev.data.result)
+    let recvHandler = (data: any) => {
+        if (pendingMsgs.hasOwnProperty(data.id)) {
+            let cb = pendingMsgs[data.id]
+            delete pendingMsgs[data.id]
+            cb(data.result)
         }
-    }
+    };
 
     function opAsync(op: string, arg: any) {
         return q.enqueue("main", () => new Promise<any>((resolve, reject) => {
@@ -45,10 +44,40 @@ export function make(workerFile: string) {
                     resolve(v)
                 }
             }
-            tsWorker.postMessage({ id, op, arg })
+            send({ id, op, arg })
         }))
     }
 
-    return { opAsync }
+    return { opAsync, recvHandler }
 }
 
+export function makeWebWorker(workerFile: string) {
+    let worker = new Worker(workerFile)
+    let iface = wrap(v => worker.postMessage(v))
+    worker.onmessage = ev => {
+        iface.recvHandler(ev.data)
+    }
+    return iface
+}
+
+export function makeWebSocket(url: string) {
+    let ws = new WebSocket(url)
+    let sendq:string[] = []
+    let iface = wrap(v => {
+        let s = JSON.stringify(v)
+        if (sendq) sendq.push(s)
+        else ws.send(s)
+    })
+    ws.onmessage = ev => {
+        iface.recvHandler(JSON.parse(ev.data))
+    }
+    ws.onopen = (ev) => {
+        console.log('socket opened');
+        for (let m of sendq) ws.send(m)
+        sendq = null
+    }
+    ws.onclose = (ev) => {
+        console.log('socket closed')
+    }
+    return iface
+}
