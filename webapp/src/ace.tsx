@@ -634,6 +634,8 @@ export class Editor extends srceditor.Editor {
     }
 
     formatCode(isAutomatic = false) {
+        if (!this.isTypescript) return;
+        
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
             return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
         }

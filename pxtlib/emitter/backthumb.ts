@@ -440,8 +440,8 @@ ${getFunctionLabel(proc.action)}:
         }
 
         var currentSetup: string = null;
-        export var currentHexInfo:any;
-        
+        export var currentHexInfo: any;
+
         export function setupFor(extInfo: ExtensionInfo, hexinfo: any) {
             if (isSetupFor(extInfo))
                 return;
@@ -545,7 +545,7 @@ ${getFunctionLabel(proc.action)}:
         export function lookupFunctionAddr(name: string) {
             var inf = lookupFunc(name)
             if (inf)
-                return inf.value - bytecodeStartAddr
+                return inf.value
             return null
         }
 
@@ -554,6 +554,10 @@ ${getFunctionLabel(proc.action)}:
             var sha = currentSetup ? currentSetup.slice(0, 16) : ""
             while (sha.length < 16) sha += "0"
             return sha.toUpperCase()
+        }
+
+        export function hexPrelude() {
+            return `    .startaddr 0x${bytecodeStartAddr.toString(16)}\n`
         }
 
         function hexBytes(bytes: number[]) {
@@ -661,7 +665,8 @@ ${lbl}: .string ${stringLiteral(s)}
 
     function serialize(bin: Binary) {
         let asmsource = `; start
-    .hex 708E3B92C615A841C49866C975EE5197
+${hex.hexPrelude()}        
+    .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
     .space 16 ; reserved
@@ -685,8 +690,19 @@ ${lbl}: .string ${stringLiteral(s)}
         return src.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + sha.slice(0, 16).toUpperCase() + " ; program hash\n")
     }
 
-    let peepDbg = false
-    function assemble(bin: Binary, src: string) {
+    export function thumbInlineAssemble(src: string) {
+        let b = mkThumbFile()
+        b.emit(src)
+        throwThumbErrors(b)
+        
+        let res:number[] = []
+        for (let i = 0; i < b.buf.length; i += 2) {
+            res.push((((b.buf[i + 1] || 0) << 16) | b.buf[i]) >>> 0)
+        }
+        return res
+    }
+    
+    function mkThumbFile() {
         thumb.test(); // just in case
 
         var b = new thumb.File();
@@ -696,11 +712,12 @@ ${lbl}: .string ${stringLiteral(s)}
             if (inf) return inf.name;
             return s
         }
-
         // b.throwOnError = true;
-        b.emit(src);
-        src = b.getSource(!peepDbg);
-
+        
+        return b
+    }
+    
+    function throwThumbErrors(b:thumb.File){
         if (b.errors.length > 0) {
             var userErrors = ""
             b.errors.forEach(e => {
@@ -708,12 +725,8 @@ ${lbl}: .string ${stringLiteral(s)}
                 if (m) {
                     // This generally shouldn't happen, but it may for certin kind of global 
                     // errors - jump range and label redefinitions
-                    var no = parseInt(m[1])
-                    var proc = bin.procs.filter(p => p.seqNo == no)[0]
-                    if (proc && proc.action)
-                        userErrors += U.lf("At function {0}:\n", proc.getName())
-                    else
-                        userErrors += U.lf("At inline assembly:\n")
+                    var no = parseInt(m[1]) // TODO lookup assembly file name
+                    userErrors += U.lf("At inline assembly:\n")
                     userErrors += e.message
                 }
             })
@@ -727,6 +740,16 @@ ${lbl}: .string ${stringLiteral(s)}
                 throw new Error(b.errors[0].message)
             }
         }
+    }
+
+    let peepDbg = false
+    function assemble(bin: Binary, src: string) {
+        let b = mkThumbFile()
+        b.emit(src);
+        
+        src = b.getSource(!peepDbg);
+        
+        throwThumbErrors(b)
 
         return {
             src: src,
@@ -741,9 +764,9 @@ ${lbl}: .string ${stringLiteral(s)}
         if (totallen > 40000) {
             return "; program too long\n";
         }
-        
+
         let str =
-`
+            `
     .balign 16
     .hex 41140E2FB82FA2BB
     .short ${metablob.length}
@@ -769,7 +792,7 @@ _stored_program: .string "`
         return str
     }
 
-    export function thumbEmit(bin: Binary, opts:CompileOptions) {
+    export function thumbEmit(bin: Binary, opts: CompileOptions) {
         let src = serialize(bin)
         src = patchSrcHash(src)
         if (opts.embedBlob)

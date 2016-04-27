@@ -1034,7 +1034,7 @@ function runYottaAsync(args: string[]) {
             let q = path.join(pp, "yotta.exe")
             if (fs.existsSync(q)) {
                 ytCommand = q
-                env["PATH"] = env["PATH"] + ypath
+                env["PATH"] = env["PATH"] + ";" + ypath
                 break
             }
         }
@@ -1401,6 +1401,7 @@ function copyCommonFiles() {
 }
 
 function testConverterAsync(configFile: string) {
+    forceCloudBuild = true
     let cfg: {
         apiUrl: string,
         ids: string[]
@@ -1488,6 +1489,7 @@ function prepTestOptionsAsync() {
 }
 
 function testDirAsync(dir: string) {
+    forceCloudBuild = true
     return prepTestOptionsAsync()
         .then(opts => {
             let errors: string[] = []
