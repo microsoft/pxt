@@ -128,6 +128,7 @@ namespace ts.pxt {
         blockExternalInputs?: boolean;
         blockImportId?: string;
         blockBuiltin?: boolean;
+        blockNamespace?: string;
         color?: string;
         icon?: string;
         imageLiteral?: number;
