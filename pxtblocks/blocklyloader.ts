@@ -125,8 +125,8 @@ namespace pxt.blocks {
 
     function injectToolbox(tb: Element, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, block: HTMLElement) {
         let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-        let catName = ns[0].toUpperCase() + ns.slice(1);
-        let category = tb.querySelector("category[name~='" + catName + "']");
+        let catName = Util.capitalize(ns)
+        let category = categoryElement(tb, catName);
         if (!category) {
             console.log('toolbox: adding category ' + ns)
             category = document.createElement("category");
@@ -320,7 +320,7 @@ namespace pxt.blocks {
     }
 
     function removeCategory(tb: Element, name: string) {
-        let e = tb ? tb.querySelector(`category[name="${name}"]`) : undefined;
+        let e = categoryElement(tb, name);
         if (e && e.parentElement)
             e.parentElement.removeChild(e);
     }
@@ -378,6 +378,29 @@ namespace pxt.blocks {
         if (!config.logicBlocks) removeCategory(tb, "Logic");
         if (!config.loopsBlocks) removeCategory(tb, "Loops");
 
+        // add extra blocks
+        if (tb && pxt.appTarget.runtime.extraBlocks) {
+            pxt.appTarget.runtime.extraBlocks.forEach(eb => {
+                let cat = categoryElement(tb, eb.namespace);
+                if (cat) {
+                    let el = document.createElement("block");
+                    el.setAttribute("type", eb.type);
+                    el.setAttribute("weight", (eb.weight || 50).toString());
+                    if (eb.fields) {
+                        for(let f in eb.fields) {
+                            let fe = document.createElement("field");
+                            fe.setAttribute("name", f);
+                            fe.appendChild(document.createTextNode(eb.fields[f]));
+                            el.appendChild(fe);
+                        }
+                    }
+                    cat.appendChild(el);
+                } else {
+                    console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
+                }
+            })
+        }
+
         // update shadow types
         if (tb) {
             $(tb).find('shadow:empty').each((i, shadow) => {
@@ -392,6 +415,10 @@ namespace pxt.blocks {
                 workspace.updateToolbox(tb)
             }
         }
+    }
+    
+    function categoryElement(tb: Element, name:string) : Element {
+        return tb ? tb.querySelector(`category[name="${Util.capitalize(name)}"]`) : undefined;        
     }
 
     export function cleanBlocks() {

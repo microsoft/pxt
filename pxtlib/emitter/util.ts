@@ -583,6 +583,10 @@ namespace ts.pxt.Util {
     export var sha256: (hashData: string) => string;
     export var getRandomBuf: (buf: Uint8Array) => void;
 
+    export function capitalize(n : string) : string {
+        return n ? (n[0].toLocaleUpperCase() + n.slice(1)) : n;
+    }
+
     export function toDataUri(data: string, mimetype?: string): string {
         // TODO does this only support trusted data?
 
