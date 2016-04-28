@@ -2,10 +2,11 @@ namespace pxsim.logs {
     export interface ILogProps {
         maxEntries?: number;
         maxAccValues?: number;
-        onCSVData?: (name: string, d: string) => void;
+        onClick?: (entries: ILogEntry[]) => void;
+        onTrendChartClick?: (entry: ILogEntry) => void;
     }
 
-    interface ILogEntry {
+    export interface ILogEntry {
         id: number;
         theme: string;
         variable?: string;
@@ -14,7 +15,9 @@ namespace pxsim.logs {
         value: string;
         source: string;
         count: number;
+    }
 
+    interface ILogEntryElement extends ILogEntry {
         dirty: boolean;
         element?: HTMLDivElement;
         accvaluesElement?: HTMLSpanElement;
@@ -30,7 +33,7 @@ namespace pxsim.logs {
         vpw = 80;
         vph = 15;
 
-        constructor(public log: ILogEntry, className: string) {
+        constructor(public log: ILogEntryElement, className: string) {
             this.log = log;
             this.element = Svg.elt("svg") as SVGSVGElement;
             Svg.hydrate(this.element, { class: className, viewBox: `0 0 ${this.vpw} ${this.vph}` })
@@ -58,7 +61,7 @@ namespace pxsim.logs {
     export class LogViewElement {
         static counter = 0;
         private shouldScroll = false;
-        private entries: ILogEntry[] = [];
+        private entries: ILogEntryElement[] = [];
         private serialBuffers: pxsim.Map<string> = {};
         public element: HTMLDivElement;
 
@@ -67,8 +70,24 @@ namespace pxsim.logs {
             this.registerChromeSerial();
             this.element = document.createElement("div");
             this.element.className = "ui segment hideempty logs";
-            if (this.props.onCSVData)
-                this.element.onclick = () => this.allToCSV();
+            if (this.props.onClick)
+                this.element.onclick = () => this.props.onClick(this.rows());
+        }
+
+        // creates a deep clone of the log entries
+        public rows(): ILogEntry[] {
+            return this.entries.map(e => {
+                return {
+                    id: e.id,
+                    theme: e.theme,
+                    variable: e.variable,
+                    accvalues: e.accvalues ? e.accvalues.slice(0) : undefined,
+                    time: e.time,
+                    value: e.value,
+                    source: e.source,
+                    count: e.count
+                };
+            });
         }
 
         registerChromeSerial() {
@@ -129,7 +148,7 @@ namespace pxsim.logs {
                 if (po.element) po.element.remove();
             }
             // find the entry with same source
-            let last: ILogEntry = undefined;
+            let last: ILogEntryElement = undefined;
             let m = /^\s*(([^:]+):)?\s*(-?\d+)/i.exec(value);
             let variable = m ? (m[2] || ' ') : undefined;
             let nvalue = m ? parseInt(m[3]) : null;
@@ -160,7 +179,7 @@ namespace pxsim.logs {
                 this.scheduleRender(last);
             }
             else {
-                let e: ILogEntry = {
+                let e: ILogEntryElement = {
                     id: LogViewElement.counter++,
                     theme: theme,
                     time: Date.now(),
@@ -178,8 +197,8 @@ namespace pxsim.logs {
                     e.accvaluesElement = document.createElement('span');
                     e.accvaluesElement.className = "ui log " + e.theme + " gauge"
                     e.chartElement = new TrendChartElement(e, "ui trend " + e.theme)
-                    if (this.props.onCSVData) {
-                        e.chartElement.element.onclick = () => this.tableToCSV(e);
+                    if (this.props.onTrendChartClick) {
+                        e.chartElement.element.onclick = () => this.props.onTrendChartClick(e);
                         e.chartElement.element.className += " link";
                     }
                     e.element.appendChild(e.accvaluesElement);
@@ -193,7 +212,7 @@ namespace pxsim.logs {
         }
 
         renderFiberId: number;
-        private scheduleRender(e: ILogEntry) {
+        private scheduleRender(e: ILogEntryElement) {
             e.dirty = true;
             if (!this.renderFiberId) this.renderFiberId = setTimeout(() => this.render(), 50);
         }
@@ -216,57 +235,57 @@ namespace pxsim.logs {
             });
             this.renderFiberId = 0;
         }
+    }
 
-        private allToCSV() {
-            // first log all data entries to CSV
-            let dataEntries: ILogEntry[] = [];
-            let rows = this.entries.length;
-            this.entries.forEach(e => {
-                if (e.accvalues && e.accvalues.length > 0) {
-                    dataEntries.push(e);
-                    rows = Math.max(e.accvalues.length, rows);
+    export function entriesToCSV(entries: ILogEntry[]) {
+        // first log all data entries to CSV
+        let dataEntries: ILogEntry[] = [];
+        let rows = entries.length;
+        entries.forEach(e => {
+            if (e.accvalues && e.accvalues.length > 0) {
+                dataEntries.push(e);
+                rows = Math.max(e.accvalues.length, rows);
+            }
+        });
+
+        let csv = ''
+        // name columns
+        csv += dataEntries.map(entry => `${entry.theme} time, ${entry.theme} ${entry.variable.trim() || "data"}`)
+            .concat(['log time', 'log source', 'log message'])
+            .join(', ');
+        csv += '\n';
+
+        for (let i = 0; i < rows; ++i) {
+            let cols: string[] = []
+
+            dataEntries.forEach(entry => {
+                let t0 = entry.accvalues[0].t;
+                if (i < entry.accvalues.length) {
+                    cols.push(((entry.accvalues[i].t - t0) / 1000).toString());
+                    cols.push(entry.accvalues[i].v.toString());
+                } else {
+                    cols.push(' ');
+                    cols.push(' ');
                 }
             });
 
-            let csv = ''
-            // name columns
-            csv += dataEntries.map(entry => `${entry.theme} time, ${entry.theme} ${entry.variable.trim() || "data"}`)
-                .concat(['log time', 'log source', 'log message'])
-                .join(', ');
-            csv += '\n';
-
-            for (let i = 0; i < rows; ++i) {
-                let cols: string[] = []
-
-                dataEntries.forEach(entry => {
-                    let t0 = entry.accvalues[0].t;
-                    if (i < entry.accvalues.length) {
-                        cols.push(((entry.accvalues[i].t - t0) / 1000).toString());
-                        cols.push(entry.accvalues[i].v.toString());
-                    } else {
-                        cols.push(' ');
-                        cols.push(' ');
-                    }
-                });
-
-                if (i < this.entries.length) {
-                    let t0 = this.entries[0].time;
-                    cols.push(((this.entries[i].time - t0) / 1000).toString());
-                    cols.push(this.entries[i].source);
-                    cols.push(this.entries[i].value);                    
-                }
-
-                csv += cols.join(', ') + '\n';
+            if (i < entries.length) {
+                let t0 = entries[0].time;
+                cols.push(((entries[i].time - t0) / 1000).toString());
+                cols.push(entries[i].source);
+                cols.push(entries[i].value);
             }
-            this.props.onCSVData('data.csv', csv);
+
+            csv += cols.join(', ') + '\n';
         }
 
-        private tableToCSV(entry: ILogEntry) {
-            let t0 = entry.accvalues.length > 0 ? entry.accvalues[0].t : 0;
-            let csv = `${entry.theme} time, ${entry.variable.trim() || "data"}\n`
-                + entry.accvalues.map(v => ((v.t - t0) / 1000) + ", " + v.v).join('\n');
-            let fn = `${(entry.variable.replace(/[^a-z0-9-_]/i, '') || "data")}.csv`;
-            this.props.onCSVData(fn, csv);
-        }
+        return csv;
+    }
+
+    export function entryToCSV(entry: ILogEntry) {
+        let t0 = entry.accvalues.length > 0 ? entry.accvalues[0].t : 0;
+        let csv = `${entry.theme} time, ${entry.variable.trim() || "data"}\n`
+            + entry.accvalues.map(v => ((v.t - t0) / 1000) + ", " + v.v).join('\n');
+        return csv;
     }
 }
