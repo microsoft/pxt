@@ -126,6 +126,14 @@ namespace pxt {
         variablesBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
+
+        extraBlocks?: {
+            namespace: string;
+            type: string;
+            gap?: number;
+            weight?: number;
+            fields?: U.Map<string>;
+        }[]
     }
 
     export interface AppTarget {
