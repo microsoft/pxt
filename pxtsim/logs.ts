@@ -89,6 +89,42 @@ namespace pxsim.logs {
                 };
             });
         }
+        
+        public streamPayload(startTime: number) : { fields: string[]; values: number[][]; } {
+            // filter out data
+            let es = this.entries.filter(e => !!e.accvalues && e.time + e.accvalues[e.accvalues.length -1].t >= startTime);
+            if (es.length == 0) return undefined;
+            
+            let fields : Map<number> =  { "timestamp":1, "partition": 1 };
+            let rows: number[][] = [];
+            
+            function entryVariable(e : ILogEntry) : string {
+                return /^\s*$/.test(e.variable) ? 'data' : e.variable                
+            }
+            
+            // collect fields
+            es.forEach(e => {
+                let n = entryVariable(e);
+                if (!fields[n]) fields[n] = 1;
+            })
+            
+            // collapse data and fill values
+            let fs = Object.keys(fields);
+            es.forEach(e => {
+                let n = entryVariable(e);
+                let ei = fs.indexOf(n);
+                e.accvalues
+                    .filter(v => (e.time + v.t) >= startTime)
+                    .forEach(v => {
+                    let row = [e.time + v.t, 0];
+                    for(let i = 2; i < fs.length; ++i)                        
+                        row.push(i == ei ? v.v : null);                    
+                    rows.push(row); 
+                })
+            })
+            
+            return { fields:fs, values:rows };
+        }
 
         registerChromeSerial() {
             let buffers: pxsim.Map<string> = {};

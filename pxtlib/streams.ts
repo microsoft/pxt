@@ -27,6 +27,7 @@ namespace pxt.streams {
         fields: string[];
         values: number[][];
     }
+    
     export interface JsonStreamPayloadResponse {
         meta: JsonStreamMeta;
         quotaUsedHere: number;
@@ -39,7 +40,11 @@ namespace pxt.streams {
         continuationUrl?: string;
     }
     
-    export function createStream(name?: string) : Promise<JsonStream> {
+    export function createStreamAsync(name?: string) : Promise<JsonStream> {
         return Cloud.privatePostAsync("streams", { name: name }).then(j => <JsonStream>j);
+    }
+    
+    export function postPayloadAsync(stream: JsonStream, data: JsonStreamPayload) : Promise<void> {
+        return Cloud.privatePostAsync(`${stream.id}/data`, data);
     }
 }
