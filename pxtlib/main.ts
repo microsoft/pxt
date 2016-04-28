@@ -125,6 +125,7 @@ namespace pxt {
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
         logicBlocks?: boolean;
+        loopsBlocks?: boolean;
     }
 
     export interface AppTarget {
