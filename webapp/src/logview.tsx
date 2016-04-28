@@ -142,7 +142,7 @@ export class LogView extends React.Component<{}, LogViewState> {
         <div class="content">
             <div class="header">${lf("Local File")}</div>
             <div class="description">
-                ${lf("Save the data to your local Downloads folder.")}
+                ${lf("Save the data to your local Downloads folder and open it in Excel.")}
             </div>
         </div>
         <div id="datasavelocalfile" class="ui bottom attached button">
