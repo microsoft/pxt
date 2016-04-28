@@ -386,6 +386,7 @@ namespace pxt.blocks {
                     let el = document.createElement("block");
                     el.setAttribute("type", eb.type);
                     el.setAttribute("weight", (eb.weight || 50).toString());
+                    if (eb.gap) el.setAttribute("gap", eb.gap.toString());
                     if (eb.fields) {
                         for(let f in eb.fields) {
                             let fe = document.createElement("field");

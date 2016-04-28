@@ -130,6 +130,7 @@ namespace pxt {
         extraBlocks?: {
             namespace: string;
             type: string;
+            gap?: number;
             weight?: number;
             fields?: U.Map<string>;
         }[]
