@@ -779,6 +779,7 @@ Ctrl+Shift+B
     compile() {
         tickEvent("compile");
         console.log('compiling...')
+        this.clearLog();
         this.editor.beforeCompile();
         let state = this.editor.snapshotState()
         compiler.compileAsync({ native: true })
@@ -801,6 +802,11 @@ Ctrl+Shift+B
         simulator.stop(unload)
         this.setState({ running: false })
     }
+    
+    clearLog() {
+        let logs = this.refs["logs"] as logview.LogView;
+        logs.clear();        
+    }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
         tickEvent(opts.background ? "autorun" :
@@ -810,9 +816,8 @@ Ctrl+Shift+B
             this.editor.beforeCompile();
 
         this.stopSimulator();
+        this.clearLog();
 
-        let logs = this.refs["logs"] as logview.LogView;
-        logs.clear();
         let state = this.editor.snapshotState()
         compiler.compileAsync(opts)
             .then(resp => {
