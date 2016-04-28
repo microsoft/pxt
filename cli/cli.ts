@@ -142,12 +142,16 @@ export function apiAsync(path: string, postArguments?: string) {
     }
 
     let dat = postArguments ? eval("(" + postArguments + ")") : null
+    if (dat)
+        console.log("POST", "/api/" + path, JSON.stringify(dat, null, 2))
     return Cloud.privateRequestAsync({
         url: path,
         data: dat
     })
         .then(resp => {
-            console.log(resp.json)
+            if (resp.json)
+                console.log(JSON.stringify(resp.json, null, 2))
+            else console.log(resp.text)
         })
 }
 
