@@ -315,8 +315,8 @@ namespace ts.pxt.Util {
         return httpRequestCoreAsync(options)
             .then(resp => {
                 if (resp.statusCode != 200 && !options.allowHttpErrors) {
-                    let msg = Util.lf("Bad HTTP status code: {0} at {1}",
-                        resp.statusCode, options.url)
+                    let msg = Util.lf("Bad HTTP status code: {0} at {1}; message: {2}",
+                        resp.statusCode, options.url, (resp.text || "").slice(0, 500))
                     let err: any = new Error(msg)
                     err.statusCode = resp.statusCode
                     return Promise.reject(err)
