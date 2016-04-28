@@ -58,6 +58,7 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   margin-top: 0;  
+  margin-bottom: 0;
 }
 
 #menubar {
