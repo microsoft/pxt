@@ -203,7 +203,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
     modal: sui.Modal;
 
     renderCore() {
-        let header = this.props.parent.state.header;
+        const header = this.props.parent.state.header;
         if (!header) return <div></div>
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl
