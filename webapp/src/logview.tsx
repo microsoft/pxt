@@ -11,7 +11,6 @@ export interface LogViewState {
 
 export class LogView extends React.Component<{}, LogViewState> {
     private view: pxsim.logs.LogViewElement;
-    private streamUploader = 0;
 
     constructor(props: any) {
         super(props);
