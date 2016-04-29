@@ -104,7 +104,7 @@ export class LogView extends React.Component<{}, LogViewState> {
         let streamUrl = this.state.stream ? rootUrl + this.state.stream.id : undefined;
 
         core.confirmAsync({
-            logos: [targetTheme.logo],
+            logos: ["https://az851932.vo.msecnd.net/pub/hjlxsmaf"], // azure logo
             header: pxt.appTarget.title + ' - ' + lf("Analyze Data"),
             hideAgree: true,
             disagreeLbl: lf("Close"),

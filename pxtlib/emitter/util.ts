@@ -589,6 +589,9 @@ namespace ts.pxt.Util {
 
     export function toDataUri(data: string, mimetype?: string): string {
         // TODO does this only support trusted data?
+        
+        // weed out urls
+        if (/^http?s:/i.test(data)) return data;
 
         // already a data uri?       
         if (/^data:/i.test(data)) return data;
