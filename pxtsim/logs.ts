@@ -64,6 +64,7 @@ namespace pxsim.logs {
         private entries: ILogEntryElement[] = [];
         private serialBuffers: pxsim.Map<string> = {};
         public element: HTMLDivElement;
+        private labelElement: HTMLElement;
 
         constructor(public props: ILogProps) {
             this.registerEvents();
@@ -72,6 +73,20 @@ namespace pxsim.logs {
             this.element.className = "ui segment hideempty logs";
             if (this.props.onClick)
                 this.element.onclick = () => this.props.onClick(this.rows());
+        }
+
+        public setLabel(text: string) {
+            if (this.labelElement && this.labelElement.innerText == text) return;
+
+            if (this.labelElement) {
+                if (this.labelElement.parentElement) this.labelElement.parentElement.removeChild(this.labelElement);
+                this.labelElement = undefined;
+            }
+            if (text) {
+                this.labelElement = document.createElement("a");
+                this.labelElement.className = "ui green top right attached mini label";
+                this.labelElement.appendChild(document.createTextNode(text));
+            }       
         }
 
         // creates a deep clone of the log entries
@@ -89,25 +104,25 @@ namespace pxsim.logs {
                 };
             });
         }
-        
-        public streamPayload(startTime: number) : { fields: string[]; values: number[][]; } {
+
+        public streamPayload(startTime: number): { fields: string[]; values: number[][]; } {
             // filter out data
-            let es = this.entries.filter(e => !!e.accvalues && e.time + e.accvalues[e.accvalues.length -1].t >= startTime);
+            let es = this.entries.filter(e => !!e.accvalues && e.time + e.accvalues[e.accvalues.length - 1].t >= startTime);
             if (es.length == 0) return undefined;
-            
-            let fields : Map<number> =  { "timestamp":1, "partition": 1 };
+
+            let fields: Map<number> = { "timestamp": 1, "partition": 1 };
             let rows: number[][] = [];
-            
-            function entryVariable(e : ILogEntry) : string {
-                return /^\s*$/.test(e.variable) ? 'data' : e.variable                
+
+            function entryVariable(e: ILogEntry): string {
+                return /^\s*$/.test(e.variable) ? 'data' : e.variable
             }
-            
+
             // collect fields
             es.forEach(e => {
                 let n = entryVariable(e);
                 if (!fields[n]) fields[n] = 1;
             })
-            
+
             // collapse data and fill values
             let fs = Object.keys(fields);
             es.forEach(e => {
@@ -116,14 +131,14 @@ namespace pxsim.logs {
                 e.accvalues
                     .filter(v => (e.time + v.t) >= startTime)
                     .forEach(v => {
-                    let row = [e.time + v.t, 0];
-                    for(let i = 2; i < fs.length; ++i)                        
-                        row.push(i == ei ? v.v : null);                    
-                    rows.push(row); 
-                })
+                        let row = [e.time + v.t, 0];
+                        for (let i = 2; i < fs.length; ++i)
+                            row.push(i == ei ? v.v : null);
+                        rows.push(row);
+                    })
             })
-            
-            return { fields:fs, values:rows };
+
+            return { fields: fs, values: rows };
         }
 
         registerChromeSerial() {
@@ -178,6 +193,9 @@ namespace pxsim.logs {
         }
 
         appendEntry(source: string, value: string, theme: string) {
+            if (this.labelElement && !this.labelElement.parentElement)
+                this.element.insertBefore(this.labelElement, this.element.firstElementChild);
+            
             let ens = this.entries;
             while (ens.length > this.props.maxEntries) {
                 let po = ens.shift();
@@ -255,6 +273,8 @@ namespace pxsim.logs {
 
         clear() {
             this.entries = [];
+            if (this.labelElement && this.labelElement.parentElement) 
+                this.labelElement.parentElement.removeChild(this.labelElement);
             this.element.innerHTML = '';
             this.serialBuffers = {};
         }

@@ -285,6 +285,7 @@ body {
     overflow-x: hidden;
     width: 100%;
     margin-bottom: 1em;
+    cursor:pointer;
 }
 
 .ui.log {

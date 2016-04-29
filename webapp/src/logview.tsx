@@ -36,6 +36,7 @@ export class LogView extends React.Component<{}, LogViewState> {
     }
 
     componentDidUpdate() {
+        this.view.setLabel(this.state.stream ? lf("streaming to cloud") : undefined);
         if (this.state.stream)
             this.scheduleStreamData();
     }
@@ -119,7 +120,6 @@ export class LogView extends React.Component<{}, LogViewState> {
                         .then(stream => {
                             core.hideLoading();
                             this.setStream(stream);
-                            this.showStreamDialog(entries);
                         }).catch(e => {
                             pxt.reportException(e, {});
                             core.hideLoading();
