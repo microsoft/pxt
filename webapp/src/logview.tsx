@@ -116,7 +116,7 @@ export class LogView extends React.Component<{}, LogViewState> {
                     _.find('#datastreamstart').click(() => {
                         _.modal('hide');
                         core.showLoading(lf("Creating stream in Microsoft Azure..."))
-                        pxt.streams.createStreamAsync()
+                        pxt.streams.createStreamAsync(pxt.appTarget.id)
                         .then(stream => {
                             core.hideLoading();
                             this.setStream(stream);
