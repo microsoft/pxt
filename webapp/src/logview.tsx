@@ -116,17 +116,16 @@ export class LogView extends React.Component<{}, LogViewState> {
                     _.find('#datastreamstart').click(() => {
                         _.modal('hide');
                         core.showLoading(lf("Creating stream in Microsoft Azure..."))
-                        pxt.streams.createStreamAsync()
-                        .catch(e => {
-                            pxt.reportException(e, {});
-                            core.hideLoading();
-                            core.warningNotification(lf("Oops, we could not create the stream. Please try again later."));
-                        })
-                        .done(stream => {
+                        pxt.streams.createStreamAsync(pxt.appTarget.id)
+                        .then(stream => {
                             core.hideLoading();
                             this.setStream(stream);
                             this.showStreamDialog(entries);
-                        })
+                        }).catch(e => {
+                            pxt.reportException(e, {});
+                            core.hideLoading();
+                            core.warningNotification(lf("Oops, we could not create the stream. Please try again later."));
+                        }).done();
                     })
                 _.find('#datastreamstop').click(() => {
                     _.modal('hide');

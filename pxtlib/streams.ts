@@ -40,11 +40,12 @@ namespace pxt.streams {
         continuationUrl?: string;
     }
     
-    export function createStreamAsync(name?: string) : Promise<JsonStream> {
-        return Cloud.privatePostAsync("streams", { name: name }).then(j => <JsonStream>j);
+    export function createStreamAsync(target:string, name?: string) : Promise<JsonStream> {
+        return Cloud.privatePostAsync("streams", { target: target, name: name }).then(j => <JsonStream>j);
     }
     
     export function postPayloadAsync(stream: JsonStream, data: JsonStreamPayload) : Promise<void> {
-        return Cloud.privatePostAsync(`${stream.id}/data`, data);
+        Util.assert(!!stream.privatekey);
+        return Cloud.privatePostAsync(`${stream.id}/data?privatekey=${stream.privatekey}`, data);
     }
 }
