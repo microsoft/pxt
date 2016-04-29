@@ -634,6 +634,10 @@ module ts.pxt.thumb {
                     this.scope = words[1] || "";
                     this.currLineNo = this.scope ? 0 : this.realCurrLineNo;
                     break;
+                
+                case "@nostackcheck":
+                    this.checkStack = false
+                    break
 
                 case ".section":
                 case ".global":

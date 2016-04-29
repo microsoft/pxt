@@ -39,9 +39,9 @@ function callAndPush(prc: string) {
     push {r0}
     b .next${idx}
     .balign 4
-.proc${idx}
+.proc${idx}:
     .word ${prc}|1
-.next${idx}
+.next${idx}:
 `
 }
 
@@ -64,6 +64,7 @@ function callForStateAsync() {
 
     asm += `
     bkpt 42
+    @nostackcheck
 `
 
     return compiler.compileAsync({ native: true })
@@ -117,8 +118,21 @@ export function getHwStateAsync() {
         })
 }
 
+var devPath: Promise<string>;
+
 export function workerOpAsync(op: string, arg: any = {}) {
     init()
-    return iface.opAsync(op, arg)
+    if (!devPath)
+        devPath = iface.opAsync("list", {})
+            .then((devs: any) => {
+                let d0 = devs.devices[0]
+                if (d0) return d0.path
+                else throw new Error("No device connected")
+            })
+    return devPath
+        .then(path => {
+            arg["path"] = path;
+            return iface.opAsync(op, arg)
+        })
 }
 
