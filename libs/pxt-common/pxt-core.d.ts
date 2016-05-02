@@ -13,14 +13,14 @@ interface Array<T> {
       * @param items New elements of the Array.
       */
     //% shim=Array_::push weight=75
-    //% blockId="array_push" block="in %this|push last item %item" blockNamespace="lists"
+    //% blockId="array_push" block="push into %this|with last item %item" blockNamespace="lists"
     push(item: T): void;
     
     /**
       * Removes the last element from an array and returns it.
       */
     //% helper=arrayPop weight=74
-    //% blockId="array_pop" block="from %this|pop last item" blockNamespace="lists"
+    //% blockId="array_pop" block="pop last item from %this" blockNamespace="lists"
     pop(): T;
 
     /**
@@ -34,7 +34,7 @@ interface Array<T> {
       * Removes the first element from an array and returns it.
       */
     //% helper=arrayShift weight=70
-    //% blockId="array_shift" block="from %this|shift first item" blockNamespace="lists"
+    //% blockId="array_shift" block="shift first item from %this" blockNamespace="lists"
     shift(): T;
 
     /**
@@ -42,7 +42,7 @@ interface Array<T> {
       * @param items  Elements to insert at the start of the Array.
       */
     //% helper=arrayUnshift weight=69
-    //% blockId="array_unshift" block="in %this|unshift first item %item" blockNamespace="lists"
+    //% blockId="array_unshift" block="unshift into %this|with first item %item" blockNamespace="lists"
     unshift(item:T): void;
     
     /** 
@@ -51,7 +51,7 @@ interface Array<T> {
       * @param end The end of the specified portion of the array.
       */
     //% helper=arraySlice weight=41
-    //% blockId="array_slice" block="from %this|slice from %start|to end %end" blockNamespace="lists"
+    //% blockId="array_slice" block="slice %this|from %start|to %end" blockNamespace="lists"
     slice(start: number, end: number): T[];
 
     /**
@@ -60,7 +60,6 @@ interface Array<T> {
       * @param deleteCount The number of elements to remove.
       */
     //% helper=arraySplice weight=40
-    //% blockId="array_splice" block="from %this|splice from %start|delete %deleteCount" blockNamespace="lists"
     splice(start: number, deleteCount: number): void;
 
     /** Removes the first occurence of an object. Returns true if removed. */
@@ -69,7 +68,7 @@ interface Array<T> {
     
     /** Removes the object at position index. */
     //% shim=Array_::removeAt weight=49
-    //% blockId="array_removeat" block="from %this|remove at %index" blockNamespace="lists"
+    //% blockId="array_removeat" block="remove from %this|at %index" blockNamespace="lists"
     removeAt(index:number) : void;
     
     /**
@@ -78,21 +77,21 @@ interface Array<T> {
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
     //% shim=Array_::indexOf weight=50
-    //% blockId="array_indexof" block="in %this|index of %item" blockNamespace="lists"    
+    //% blockId="array_indexof" block="index in %this|of %item" blockNamespace="lists"    
     indexOf(item: T, fromIndex?: number): number;
 
     /**
      * Gets the value at a particular index
      */
     //% helper=arrayGet weight=85
-    //% blockId="array_get" block="from %this|at %index" blockNamespace="lists"
+    //% blockId="array_get" block="get from %this|at %index" blockNamespace="lists"
     get(index: number): T;
 
     /**
      * Stores the value at a particular index
      */
     //% helper=arraySet weight=84
-    //% blockId="array_set" block="in %this|set at %index|with value %value" blockNamespace="lists"
+    //% blockId="array_set" block="set in %this|at %index|with value %value" blockNamespace="lists"
     set(index: number, value : T) : void;
 
     [n: number]: T;
