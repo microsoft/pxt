@@ -47,8 +47,8 @@ interface Array<T> {
     
     /** 
       * Returns a section of an array.
-      * @param start The beginning of the specified portion of the array.
-      * @param end The end of the specified portion of the array.
+      * @param start The beginning of the specified portion of the array. eg: 0
+      * @param end The end of the specified portion of the array. eg: 0
       */
     //% helper=arraySlice weight=41
     //% blockId="array_slice" block="slice %this|from %start|to %end" blockNamespace="lists"
@@ -56,8 +56,8 @@ interface Array<T> {
 
     /**
       * Removes elements from an array.
-      * @param start The zero-based location in the array from which to start removing elements.
-      * @param deleteCount The number of elements to remove.
+      * @param start The zero-based location in the array from which to start removing elements. eg: 0
+      * @param deleteCount The number of elements to remove. eg: 0
       */
     //% helper=arraySplice weight=40
     splice(start: number, deleteCount: number): void;
@@ -82,6 +82,7 @@ interface Array<T> {
 
     /**
      * Gets the value at a particular index
+     * @param index the zero-based position in the list of the item, eg: 0
      */
     //% helper=arrayGet weight=85
     //% blockId="array_get" block="get from %this|at %index" blockNamespace="lists"
@@ -89,6 +90,8 @@ interface Array<T> {
 
     /**
      * Stores the value at a particular index
+     * @param index the zero-based position in the list to store the value, eg: 0
+     * @param the value to insert, eg: 0
      */
     //% helper=arraySet weight=84
     //% blockId="array_set" block="set in %this|at %index|with value %value" blockNamespace="lists"
