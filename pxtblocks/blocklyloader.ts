@@ -379,7 +379,7 @@ namespace pxt.blocks {
         if (!config.loopsBlocks) removeCategory(tb, "Loops");
 
         // add extra blocks
-        if (tb && pxt.appTarget.runtime.extraBlocks) {
+        if (tb && pxt.appTarget.runtime && pxt.appTarget.runtime.extraBlocks) {
             pxt.appTarget.runtime.extraBlocks.forEach(eb => {
                 let cat = categoryElement(tb, eb.namespace);
                 if (cat) {
