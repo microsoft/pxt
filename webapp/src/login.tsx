@@ -18,6 +18,30 @@ export interface ILoginBoxState {
 
 var lf = Util.lf
 
+export function showDeleteAccountDialog() {
+    core.confirmAsync({
+        header: lf("Would you like to delete your account?"),
+        htmlBody: `<emph>${lf("DANGER ZONE")}<emph>
+        <p>${lf("Your account and all published packages will be deleted from all PXT-based web sites <emph>without the posibility of recovery</emph>.")}</p>
+        `,
+        agreeLbl: lf("Delete my account"),
+        agreeClass: "red",
+        agreeIcon: "trash",
+    }).then(res => {
+        if (res) {
+            core.showLoading(lf("Deleting your account..."));
+            Cloud.privateDeleteAsync("me")
+                .then(() => {
+                    core.hideLoading();
+                    LoginBox.signout();
+                }).catch(e => {
+                    core.hideLoading();
+                    core.errorNotification(lf("Oops, we could not delete your account."));
+                })
+        }
+    }).done()
+}
+
 export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
     static signingOut = false;
 
@@ -71,7 +95,7 @@ npm install -g pxt
 pxt login
 </pre>
 </li>
-<li>delete your account (NO UNDO!) and related packages.
+<li>delete your account <emph>(NO UNDO!)</emph> and related packages.
 <pre>
 pxt api me delete
 </pre>
@@ -89,7 +113,13 @@ pxt api PACKAGEID delete
 </ul>
 `,
             agreeLbl: lf("Got it!"),
-            disagreeLbl: lf("Sign out")
+            disagreeLbl: lf("Sign out"),
+            onLoaded: (_) => {
+                _.find("button.delete").click(() => {
+                    _.modal('hide');
+                    showDeleteAccountDialog();
+                })
+            }
         }).then(b => {
             if (!b) LoginBox.signout();
         })
@@ -101,7 +131,7 @@ pxt api PACKAGEID delete
         const icon = Cloud.isLoggedIn() ? "user" : "sign in";
         const buttonAction = () => {
             if (Cloud.isLoggedIn())
-              LoginBox.showUserPropertiesAsync(settings).done();
+                LoginBox.showUserPropertiesAsync(settings).done();
             else this.signin();
         }
 

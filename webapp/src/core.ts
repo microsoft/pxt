@@ -97,10 +97,11 @@ export interface ConfirmOptions {
     agreeClass?: string;
     hideCancel?: boolean;
     hideAgree?: boolean;
+    deleteBtnLbl?:string;
     onLoaded?: (_: JQuery) => void;
 }
 
-export function confirmAsync(options: ConfirmOptions) : Promise<boolean> {
+export function confirmAsync(options: ConfirmOptions): Promise<boolean> {
     let logos = (options.logos || [])
         .filter(logo => !!logo)
         .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
@@ -116,7 +117,14 @@ export function confirmAsync(options: ConfirmOptions) : Promise<boolean> {
     </div>`
     html += `<div class="actions">`
     html += logos
-    
+
+    if (options.deleteBtnLbl) {
+        html += `<button class="ui delete red right labeled icon button">
+        ${Util.htmlEscape(options.deleteBtnLbl)}
+        <i class="delete icon"></i>
+      </button>`
+    }
+
     if (!options.hideCancel) {
         html += `<button class="ui cancel right labeled icon button">
         ${Util.htmlEscape(options.disagreeLbl || lf("Cancel"))}
