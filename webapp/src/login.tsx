@@ -114,7 +114,7 @@ pxt api PACKAGEID delete
 `,
             agreeLbl: lf("Got it!"),
             disagreeLbl: lf("Sign out"),
-            deleteLbl: lf("Delete Account"),
+            deleteLbl: lf("Delete my account"),
             onLoaded: (_) => {
                 _.find("button.delete").click(() => {
                     _.modal('hide');
