@@ -21,7 +21,7 @@ var lf = Util.lf
 export function showDeleteAccountDialog() {
     core.confirmAsync({
         header: lf("Would you like to delete your account?"),
-        htmlBody: `<emph>${lf("DANGER ZONE")}<emph>
+        htmlBody: `<div class="ui inverted red segment">${lf("DANGER ZONE")}</div>
         <p>${lf("Your account and all published packages will be deleted from all PXT-based web sites <emph>without the posibility of recovery</emph>.")}</p>
         `,
         agreeLbl: lf("Delete my account"),
@@ -114,14 +114,16 @@ pxt api PACKAGEID delete
 `,
             agreeLbl: lf("Got it!"),
             disagreeLbl: lf("Sign out"),
+            deleteLbl: lf("Delete Account"),
             onLoaded: (_) => {
                 _.find("button.delete").click(() => {
                     _.modal('hide');
                     showDeleteAccountDialog();
                 })
+                _.find("button.cancel").click(() => {
+                    LoginBox.signout();                    
+                })
             }
-        }).then(b => {
-            if (!b) LoginBox.signout();
         })
     }
 

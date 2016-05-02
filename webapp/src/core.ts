@@ -97,7 +97,7 @@ export interface ConfirmOptions {
     agreeClass?: string;
     hideCancel?: boolean;
     hideAgree?: boolean;
-    deleteBtnLbl?:string;
+    deleteLbl?:string;
     onLoaded?: (_: JQuery) => void;
 }
 
@@ -118,9 +118,9 @@ export function confirmAsync(options: ConfirmOptions): Promise<boolean> {
     html += `<div class="actions">`
     html += logos
 
-    if (options.deleteBtnLbl) {
+    if (options.deleteLbl) {
         html += `<button class="ui delete red right labeled icon button">
-        ${Util.htmlEscape(options.deleteBtnLbl)}
+        ${Util.htmlEscape(options.deleteLbl)}
         <i class="delete icon"></i>
       </button>`
     }
