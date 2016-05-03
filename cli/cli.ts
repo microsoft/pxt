@@ -799,10 +799,13 @@ function buildAndWatchTargetAsync() {
 
 export function serveAsync(arg?: string) {
     forceCloudBuild = !globalConfig.localBuild
+    let justServe = false
     if (arg == "-yt") {
         forceCloudBuild = false
     } else if (arg == "-cloud") {
         forceCloudBuild = true
+    } else if (arg == "-just") {
+        justServe = true
     }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
@@ -818,7 +821,7 @@ export function serveAsync(arg?: string) {
             U.userError("Cannot find pxtarget.json to serve.")
         }
     }
-    return buildAndWatchTargetAsync()
+    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
         .then(() => server.serveAsync({
             localToken: localToken,
             autoStart: !globalConfig.noAutoStart
