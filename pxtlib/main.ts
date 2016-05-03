@@ -516,6 +516,7 @@ namespace pxt {
                 files[f] = prj.files[f];
             for (let f in defaultFiles)
                 files[f] = defaultFiles[f];
+            files["README.md"] = ""; // override existing readme files
             files["pxt.json"] = undefined;
 
             this.config.files = Object.keys(files).filter(s => !/test/.test(s));
