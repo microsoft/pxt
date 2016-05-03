@@ -227,7 +227,8 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                 <div className="ui warning message">
                     <sui.Button icon="cloud" class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
                     <div className="header">{lf("Almost there!") }</div>
-                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") }</p>
+                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
+                    lf("You acknowledge having consent to publish this content.")}</p>
                 </div>
                 <div className="ui success message">
                     <div className="header">{lf("Your project is ready!") }</div>
