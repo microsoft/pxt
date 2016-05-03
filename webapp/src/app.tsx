@@ -748,6 +748,10 @@ Ctrl+Shift+B
         if (fileOverrides)
             for (let f in fileOverrides)
                 files[f] = fileOverrides[f];
+        // remove markdown files
+        cfg.files = cfg.files.filter(f => !/\.md$/i.test(f));
+        for(let fk in files)
+            if(/\.md$/i.test(fk)) delete files[fk];
 
         return workspace.installAsync({
             name: cfg.name,
