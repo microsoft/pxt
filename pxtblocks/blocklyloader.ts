@@ -208,7 +208,8 @@ namespace pxt.blocks {
             i.appendField(pre);
         if (right)
             i.setAlign(Blockly.ALIGN_RIGHT)
-        if (type)
+        // ignore generic types
+        if (type && type != "T")
             i.setCheck(type);
         return i;
     }
@@ -230,7 +231,7 @@ namespace pxt.blocks {
         const nsinfo = info.apis.byQName[ns];
 
         if (fn.attributes.help)
-            block.setHelpUrl("/reference/" + fn.attributes.help);
+            block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(
