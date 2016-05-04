@@ -101,7 +101,10 @@ function uploadArtAsync(fn: string): Promise<string> {
 function uploadFileAsync(fn: string) {
     if (uploadPromises[fn])
         return uploadPromises[fn]
-    let path = ptrPrefix + fn.replace(/\.md$/, "")
+    let path = fn.replace(/\.md$/, "")
+    let mm = /^\/_locales\/([A-Za-z\-]+)(\/.*)/.exec(path)
+    if (mm) path = mm[2] + "@" + mm[1].toLowerCase()
+    path = ptrPrefix + path
     uploadPromises[fn] = uploadArtAsync(fn)
         .then(bloburl => {
             if (U.startsWith(fn, "/static/"))
@@ -139,7 +142,7 @@ function getFiles() {
     let res: string[] = []
     function loop(path: string) {
         for (let fn of fs.readdirSync(path)) {
-            if (fn[0] == ".") continue;
+            if (fn[0] == "." || fn[0] == "_") continue;
             let fp = path + "/" + fn
             let st = fs.statSync(fp)
             if (st.isDirectory()) loop(fp)
@@ -147,6 +150,7 @@ function getFiles() {
         }
     }
     loop("docs")
+    loop("docs/_locales")
     return res
 }
 
@@ -170,7 +174,7 @@ function getDocsFiles(args: string[]): string[] {
         else throw error("File name has to start with docs/: " + a)
     })
     if (files.length == 0)
-        files = getFiles().filter(fn => !/^\/_/.test(fn))
+        files = getFiles()
     return files;
 }
 
