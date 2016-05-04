@@ -133,7 +133,7 @@ namespace pxt.blocks {
             category.setAttribute("name", catName)
             let nsn = info.apis.byQName[ns];
             let nsWeight = (nsn ? nsn.attributes.weight : 50) || 50; 
-            category.setAttribute("weight", nsn.attributes.weight.toString())
+            category.setAttribute("weight", nsWeight.toString())
             if (nsn && nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
             else if (blockColors[ns]) category.setAttribute("colour", blockColors[ns].toString());
             // find the place to insert the category        
