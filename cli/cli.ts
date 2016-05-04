@@ -135,15 +135,22 @@ export function loginAsync(access_token: string) {
     return Promise.resolve()
 }
 
-export function apiAsync(path: string, postArguments?: string) {
+export function apiAsync(path: string, postArguments?: string):Promise<void> {
     if (postArguments == "delete") {
         return Cloud.privateDeleteAsync(path)
             .then(resp => console.log(resp))
     }
 
+    if (postArguments == "-") {
+        return nodeutil.readResAsync(process.stdin)
+            .then(buf => buf.toString("utf8"))
+            .then(str => apiAsync(path, str))
+    }
+
     let dat = postArguments ? eval("(" + postArguments + ")") : null
     if (dat)
         console.log("POST", "/api/" + path, JSON.stringify(dat, null, 2))
+
     return Cloud.privateRequestAsync({
         url: path,
         data: dat
@@ -703,7 +710,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
             let b = fs.readFileSync(fn)
             logos[k] = b.toString('utf8');
         })
-    
+
     cfg.appTheme.locales = {}
 
     let lpath = "docs/_locales"
