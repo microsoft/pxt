@@ -208,6 +208,7 @@ namespace pxt {
 
     export interface AppSimulator {
         autoRun?: boolean;
+        aspectRatio?: number; // width / height
     }
 
     export interface ICompilationOptions {

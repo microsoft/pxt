@@ -42,18 +42,22 @@ body {
     height: 2.5rem;    
 }
 
-.simframe {
-    border: none;
-    width: 20rem;
-    height: 16.4rem;
-    margin: 0;
-    padding: 0;
+div.simframe {
+    border:none;
+    margin:0 0 0.5rem 0;
+    position: relative;
     background:transparent;    
+    width:100%;
+    padding-bottom: 81.96%;
+}
+
+div.simframe > iframe {
+    position:absolute;
+    top:0; left: 0; width:100%; height:100%;
 }
 
 #filelist {
   left: 0;
-  width: 21rem;
   padding: 0em 1em 0em 0.5em;
   overflow-x: hidden;
   overflow-y: auto;
@@ -87,7 +91,6 @@ body {
 
 #maineditor {
   right: 0;
-  left: 21rem;
 }
 
 #helpcard {
@@ -412,17 +415,24 @@ html {
     min-width: 2.8em !important;
 }
 
+/* default layout */
+#filelist {
+  left: 0;
+  min-width: 23rem;
+}
+
+#maineditor {
+  left: 23rem;
+}
+
+
 /* extra-large desktop screen */
 @media only screen and (min-width: 100em) and (min-height:44em) {
     #filelist {
-        width:23rem;
+        width:26rem;
     }
     #maineditor {
-        left:23rem;
-    }
-    .simframe {
-        width: 21rem;
-        height: 17.1rem;
+        left:26rem;
     }
 }
 
@@ -470,7 +480,6 @@ html {
     .simframe {
         display:inline-block;
         width: 15rem;
-        height:12.3rem;
     }
     
     .blocklyTreeLabel {
@@ -511,11 +520,9 @@ html {
     .simframe {
         display:inline-block;
         width: 10rem;
-        height:8rem;
     }
     .simframe.grayscale {
         width:4rem;
-        height:3.1rem;
     }
 }
 

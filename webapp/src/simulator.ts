@@ -26,7 +26,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         `
     )
     $debugger = $('#debugger')    
-    driver = new pxsim.SimulatorDriver($('#simulators')[0], {
+    let options : pxsim.SimulatorDriverOptions = {
         revealElement: (el) => {
             ($(el) as any).transition({
                 animation: 'fly right in',   
@@ -54,7 +54,10 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onStateChanged: function(state) {
             updateDebuggerButtons()
         }
-    });
+    };
+    if (pxt.appTarget.simulator)
+        options.aspectRatio = pxt.appTarget.simulator.aspectRatio;
+    driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
     config = cfg
     updateDebuggerButtons();
 }

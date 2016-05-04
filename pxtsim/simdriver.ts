@@ -6,6 +6,7 @@ namespace pxsim {
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
         simUrl?: string;
+        aspectRatio?: number;
     }
 
     export enum SimulatorState {
@@ -54,8 +55,7 @@ namespace pxsim {
             let frames = this.container.getElementsByTagName("iframe");
             if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket')) {
                 if (frames.length < 2) {
-                    let frame = this.createFrame()
-                    this.container.appendChild(frame);
+                    this.container.appendChild(this.createFrame());
                     frames = this.container.getElementsByTagName("iframe");
                 } else if (frames[1].dataset['runid'] != this.runId) {
                     this.startFrame(frames[1]);
@@ -70,17 +70,24 @@ namespace pxsim {
             }
         }
 
-        private createFrame(): HTMLIFrameElement {
+        private createFrame(): HTMLDivElement {
+            let wrapper = document.createElement("div") as HTMLDivElement;
+            wrapper.className = 'simframe';
+            
             let frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
-            frame.className = 'simframe';
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
+            if (this.options.aspectRatio)
+                wrapper.style.paddingBottom = (100 / this.options.aspectRatio) + "%";                
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
-            return frame;
+            
+            wrapper.appendChild(frame);
+            
+            return wrapper;
         }
 
         public stop(unload = false) {
@@ -125,8 +132,8 @@ namespace pxsim {
                 let frame = frames[i];
                 if (this.state == SimulatorState.Stopped
                     || frame.dataset['runid'] != this.runId) {
-                    if (this.options.removeElement) this.options.removeElement(frame);
-                    else frame.remove();
+                    if (this.options.removeElement) this.options.removeElement(frame.parentElement);
+                    else frame.parentElement.remove();
                 }
             }
         }
@@ -148,8 +155,9 @@ namespace pxsim {
             let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
-                frame = this.createFrame();
-                this.container.appendChild(frame);
+                let wrapper = this.createFrame();
+                this.container.appendChild(wrapper);
+                frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else this.startFrame(frame);
 
             this.setState(SimulatorState.Running);

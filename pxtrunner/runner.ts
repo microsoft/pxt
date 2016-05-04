@@ -189,7 +189,10 @@ namespace pxt.runner {
                 }
                 let js = resp.outfiles["microbit.js"];
                 if (js) {
-                    let driver = new pxsim.SimulatorDriver(container);
+                    let options : pxsim.SimulatorDriverOptions = {};
+                    if (pxt.appTarget.simulator)
+                        options.aspectRatio = pxt.appTarget.simulator.aspectRatio;
+                    let driver = new pxsim.SimulatorDriver(container, options);
                     driver.run(js);
                 }
             })
