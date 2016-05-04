@@ -227,7 +227,8 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                 <div className="ui warning message">
                     <sui.Button icon="cloud" class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
                     <div className="header">{lf("Almost there!") }</div>
-                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") }</p>
+                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
+                    lf("You acknowledge having consent to publish this content.")}</p>
                 </div>
                 <div className="ui success message">
                     <div className="header">{lf("Your project is ready!") }</div>
@@ -747,6 +748,10 @@ Ctrl+Shift+B
         if (fileOverrides)
             for (let f in fileOverrides)
                 files[f] = fileOverrides[f];
+        // remove markdown files
+        cfg.files = cfg.files.filter(f => !/\.md$/i.test(f));
+        for(let fk in files)
+            if(/\.md$/i.test(fk)) delete files[fk];
 
         return workspace.installAsync({
             name: cfg.name,

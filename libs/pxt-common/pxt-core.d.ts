@@ -84,7 +84,7 @@ interface Array<T> {
      * Gets the value at a particular index
      * @param index the zero-based position in the list of the item, eg: 0
      */
-    //% helper=arrayGet weight=85
+    //% shim=Array_::getAt weight=85
     //% blockId="array_get" block="get from %this|at %index" blockNamespace="lists"
     get(index: number): T;
 
@@ -93,7 +93,7 @@ interface Array<T> {
      * @param index the zero-based position in the list to store the value, eg: 0
      * @param the value to insert, eg: 0
      */
-    //% helper=arraySet weight=84
+    //% shim=Array_::setAt weight=84
     //% blockId="array_set" block="set in %this|at %index|with value %value" blockNamespace="lists"
     set(index: number, value : T) : void;
 

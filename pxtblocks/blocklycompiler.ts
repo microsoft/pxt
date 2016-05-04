@@ -1039,10 +1039,7 @@ namespace pxt.blocks {
     function compileWhile(e: Environment, b: B.Block): J.JStmt {
         var cond = compileExpression(e, b.getInputTargetBlock("COND"));
         var body = compileStatements(e, b.getInputTargetBlock("DO"));
-        return H.mkWhile(H.mkExprHolder([], cond), body.concat([
-            // Insert a pause instruction after the body of the while loop.
-            H.mkExprStmt(H.mkExprHolder([], H.namespaceCall("basic", "pause", [H.mkNumberLiteral(20)])))
-        ]));
+        return H.mkWhile(H.mkExprHolder([], cond), body);
     }
 
     function compileForever(e: Environment, b: B.Block): J.JStmt {
