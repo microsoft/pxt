@@ -703,6 +703,17 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
             let b = fs.readFileSync(fn)
             logos[k] = b.toString('utf8');
         })
+    
+    cfg.appTheme.locales = {}
+
+    let lpath = "docs/_locales"
+    if (fs.existsSync(lpath)) {
+        for (let loc of fs.readdirSync(lpath)) {
+            let fn = lpath + "/" + loc + "/_theme.json"
+            if (fs.existsSync(fn))
+                cfg.appTheme.locales[loc.toLowerCase()] = readJson(fn)
+        }
+    }
 
     nodeutil.mkdirP("built");
     fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))

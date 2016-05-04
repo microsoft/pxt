@@ -16,6 +16,7 @@ namespace pxt {
         koduUrl?: string;
         visualStudioCode?: boolean;
         docMenu?: DocMenuEntry[];
+        locales?: ts.pxt.Util.Map<AppTheme>;
     }
 
     export interface DocMenuEntry {
