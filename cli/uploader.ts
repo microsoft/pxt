@@ -150,7 +150,8 @@ function getFiles() {
         }
     }
     loop("docs")
-    loop("docs/_locales")
+    if (fs.existsSync("docs/_locales"))
+        loop("docs/_locales")
     return res
 }
 
