@@ -139,6 +139,7 @@ namespace pxt {
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
+        corepkg: string;
         title?: string;
         cloud?: AppCloud;
         simulator?: AppSimulator;

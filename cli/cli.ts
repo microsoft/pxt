@@ -1417,6 +1417,15 @@ function testForBuildTargetAsync() {
         })
 }
 
+function simshimAsync() {
+    let prog = ts.pxt.plainTsc("sim")
+    let shims = pxt.simshim(prog)
+    for (let s of Object.keys(shims)) {
+        fs.writeFileSync("libs/" + s, shims[s])
+    }
+    return Promise.resolve()
+}
+
 function copyCommonFiles() {
     for (let f of mainPkg.getFiles()) {
         if (U.lookup(commonfiles, f)) {
@@ -1672,6 +1681,7 @@ cmd("travis                       - upload release and npm package", travisAsync
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
+cmd("simshim                      - test shim generation from simulator", simshimAsync, 2)
 
 cmd("extension ADD_TEXT           - try compile extension", extensionAsync, 10)
 

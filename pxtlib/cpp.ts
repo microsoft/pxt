@@ -60,7 +60,7 @@ namespace pxt.cpp {
         return null;
     }
 
-    function nsWriter(nskw = "namespace") {
+    export function nsWriter(nskw = "namespace") {
         let text = ""
         let currNs = ""
         let setNs = (ns: string, over = "") => {
