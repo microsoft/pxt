@@ -1217,10 +1217,11 @@ $(document).ready(() => {
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
+    const cfg = pxt.webConfig;
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
         .then(() => cmds.initCommandsAsync())
-        .then(() => Util.updateLocalizationAsync((window as any).appCdnRoot, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
+        .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => {
             return compiler.init();
         })
