@@ -13,7 +13,7 @@ import B = Blockly;
 namespace pxt.blocks {
 
     // A series of utility functions for constructing various J* AST nodes.
-    module Helpers {
+    namespace Helpers {
         // Digits are operators...
         export function mkDigit(x: string): J.JOperator {
             return mkOp(x);
@@ -412,7 +412,7 @@ namespace pxt.blocks {
         throw e;
     }
 
-    module Errors {
+    namespace Errors {
 
         export interface CompilationError {
             msg: string;

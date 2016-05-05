@@ -35,7 +35,7 @@ namespace pxsim {
         rssi?: number;
     }
 
-    export module Embed {
+    export namespace Embed {
         export function start() {
             console.log('listening for simulator commands')
             window.addEventListener("message", receiveMessage, false);

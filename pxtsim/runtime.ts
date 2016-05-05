@@ -1,7 +1,7 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 
 namespace pxsim {
-    export module U {
+    export namespace U {
         export function addClass(el: HTMLElement, cls: string) {
             if (el.classList) el.classList.add(cls);
             else if (!el.className.indexOf(cls)) el.className += ' ' + cls;
@@ -444,6 +444,7 @@ namespace pxsim {
                 }
             }
 
+            // tsline:disable-next-line
             eval(code)
 
             this.run = (cb) => topCall(entryPoint, cb)

@@ -383,7 +383,7 @@ ${getFunctionLabel(proc.action)}:
     }
 
     // TODO should be internal
-    export module hex {
+    export namespace hex {
         let funcInfo: StringMap<FuncInfo>;
         let hex: string[];
         let jmpStartAddr: number;
