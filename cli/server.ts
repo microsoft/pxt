@@ -54,8 +54,7 @@ function existsAsync(fn: string) {
     })
 }
 
-function statOptAsync(fn: string): Promise<fs.Stats> // or null
-{
+function statOptAsync(fn: string): Promise<fs.Stats> {// or null
     return statAsync(fn)
         .then(st => st, err => null)
 }
@@ -202,7 +201,7 @@ function fileExistsSync(p: string): boolean {
     }
 }
 
-var docsTemplate: string = "@body@"
+let docsTemplate: string = "@body@"
 
 function setupTemplate() {
     let templatePath = path.join(tempDir, "template-override.html")
@@ -422,7 +421,7 @@ export interface ServeOptions {
     autoStart: boolean;
 }
 
-var serveOptions: ServeOptions;
+let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
 

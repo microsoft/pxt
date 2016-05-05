@@ -317,7 +317,7 @@ ${getFunctionLabel(proc.action)}:
         }
 
         function emitCallRaw(name: string) {
-            var inf = hex.lookupFunc(name)
+            let inf = hex.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
             write("bl " + name + " ; *" + inf.type + inf.args + " (raw)")
         }
@@ -346,8 +346,8 @@ ${getFunctionLabel(proc.action)}:
 
             assert(v != null);
 
-            var n = Math.floor(v)
-            var isNeg = false
+            let n = Math.floor(v)
+            let isNeg = false
             if (n < 0) {
                 isNeg = true
                 n = -n
@@ -384,18 +384,19 @@ ${getFunctionLabel(proc.action)}:
 
     // TODO should be internal
     export module hex {
-        var funcInfo: StringMap<FuncInfo>;
-        var hex: string[];
-        var jmpStartAddr: number;
-        var jmpStartIdx: number;
-        var bytecodeStartAddr: number;
-        var bytecodeStartIdx: number;
-        var asmLabels: StringMap<boolean> = {};
-        export var asmTotalSource: string = "";
+        let funcInfo: StringMap<FuncInfo>;
+        let hex: string[];
+        let jmpStartAddr: number;
+        let jmpStartIdx: number;
+        let bytecodeStartAddr: number;
+        let bytecodeStartIdx: number;
+        let asmLabels: StringMap<boolean> = {};
+        export let asmTotalSource: string = "";
 
         function swapBytes(str: string) {
-            var r = ""
-            for (var i = 0; i < str.length; i += 2)
+            let r = ""
+            let i = 0
+            for (; i < str.length; i += 2)
                 r = str[i] + str[i + 1] + r
             assert(i == str.length)
             return r
@@ -432,15 +433,15 @@ ${getFunctionLabel(proc.action)}:
         function parseHexBytes(bytes: string): number[] {
             bytes = bytes.replace(/^[\s:]/, "")
             if (!bytes) return []
-            var m = /^([a-f0-9][a-f0-9])/i.exec(bytes)
+            let m = /^([a-f0-9][a-f0-9])/i.exec(bytes)
             if (m)
                 return [parseInt(m[1], 16)].concat(parseHexBytes(bytes.slice(2)))
             else
                 throw oops("bad bytes " + bytes)
         }
 
-        var currentSetup: string = null;
-        export var currentHexInfo: any;
+        let currentSetup: string = null;
+        export let currentHexInfo: any;
 
         export function setupFor(extInfo: ExtensionInfo, hexinfo: any) {
             if (isSetupFor(extInfo))
@@ -451,21 +452,21 @@ ${getFunctionLabel(proc.action)}:
 
             hex = hexinfo.hex;
 
-            var i = 0;
-            var upperAddr = "0000"
-            var lastAddr = 0
-            var lastIdx = 0
+            let i = 0;
+            let upperAddr = "0000"
+            let lastAddr = 0
+            let lastIdx = 0
             bytecodeStartAddr = 0
             for (; i < hex.length; ++i) {
-                var m = /:02000004(....)/.exec(hex[i])
+                let m = /:02000004(....)/.exec(hex[i])
                 if (m) {
                     upperAddr = m[1]
                 }
                 m = /^:..(....)00/.exec(hex[i])
                 if (m) {
-                    var newAddr = parseInt(upperAddr + m[1], 16)
+                    let newAddr = parseInt(upperAddr + m[1], 16)
                     if (!bytecodeStartAddr && newAddr >= 0x3C000) {
-                        var bytes = parseHexBytes(hex[lastIdx])
+                        let bytes = parseHexBytes(hex[lastIdx])
                         if (bytes[0] != 0x10) {
                             bytes.pop() // checksum
                             bytes[0] = 0x10;
@@ -492,16 +493,16 @@ ${getFunctionLabel(proc.action)}:
                 oops("No hex start")
 
             funcInfo = {};
-            var funs: FuncInfo[] = hexinfo.functions.concat(extInfo.functions);
+            let funs: FuncInfo[] = hexinfo.functions.concat(extInfo.functions);
 
-            for (var i = jmpStartIdx + 1; i < hex.length; ++i) {
-                var m = /^:10(....)00(.{16})/.exec(hex[i])
+            for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
+                let m = /^:10(....)00(.{16})/.exec(hex[i])
 
                 if (!m) continue;
 
-                var s = hex[i].slice(9)
+                let s = hex[i].slice(9)
                 while (s.length >= 8) {
-                    var inf = funs.shift()
+                    let inf = funs.shift()
                     if (!inf) return;
                     funcInfo[inf.name] = inf;
                     let hexb = s.slice(0, 8)
@@ -543,7 +544,7 @@ ${getFunctionLabel(proc.action)}:
         }
 
         export function lookupFunctionAddr(name: string) {
-            var inf = lookupFunc(name)
+            let inf = lookupFunc(name)
             if (inf)
                 return inf.value
             return null
@@ -551,7 +552,7 @@ ${getFunctionLabel(proc.action)}:
 
 
         export function hexTemplateHash() {
-            var sha = currentSetup ? currentSetup.slice(0, 16) : ""
+            let sha = currentSetup ? currentSetup.slice(0, 16) : ""
             while (sha.length < 16) sha += "0"
             return sha.toUpperCase()
         }
@@ -561,8 +562,8 @@ ${getFunctionLabel(proc.action)}:
         }
 
         function hexBytes(bytes: number[]) {
-            var chk = 0
-            var r = ":"
+            let chk = 0
+            let r = ":"
             bytes.forEach(b => chk += b)
             bytes.push((-chk) & 0xff)
             bytes.forEach(b => r += ("0" + b.toString(16)).slice(-2))
@@ -570,15 +571,15 @@ ${getFunctionLabel(proc.action)}:
         }
 
         export function patchHex(bin: Binary, buf: number[], shortForm: boolean) {
-            var myhex = hex.slice(0, bytecodeStartIdx)
+            let myhex = hex.slice(0, bytecodeStartIdx)
 
             assert(buf.length < 32000)
 
-            var ptr = 0
+            let ptr = 0
 
             function nextLine(buf: number[], addr: number) {
-                var bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
-                for (var j = 0; j < 8; ++j) {
+                let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
+                for (let j = 0; j < 8; ++j) {
                     bytes.push((buf[ptr] || 0) & 0xff)
                     bytes.push((buf[ptr] || 0) >>> 8)
                     ptr++
@@ -586,9 +587,9 @@ ${getFunctionLabel(proc.action)}:
                 return bytes
             }
 
-            var hd = [0x4208, bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
-            var tmp = hexTemplateHash()
-            for (var i = 0; i < 4; ++i)
+            let hd = [0x4208, bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
+            let tmp = hexTemplateHash()
+            for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
 
             myhex[jmpStartIdx] = hexBytes(nextLine(hd, jmpStartAddr))
@@ -597,8 +598,8 @@ ${getFunctionLabel(proc.action)}:
 
             if (shortForm) myhex = []
 
-            var addr = bytecodeStartAddr;
-            var upper = (addr - 16) >> 16
+            let addr = bytecodeStartAddr;
+            let upper = (addr - 16) >> 16
             while (ptr < buf.length) {
                 if ((addr >> 16) != upper) {
                     upper = addr >> 16
@@ -626,17 +627,17 @@ ${getFunctionLabel(proc.action)}:
 
     function isDataRecord(s: string) {
         if (!s) return false
-        var m = /^:......(..)/.exec(s)
+        let m = /^:......(..)/.exec(s)
         assert(!!m)
         return m[1] == "00"
     }
 
     function stringLiteral(s: string) {
-        var r = "\""
-        for (var i = 0; i < s.length; ++i) {
+        let r = "\""
+        for (let i = 0; i < s.length; ++i) {
             // TODO generate warning when seeing high character ?
-            var c = s.charCodeAt(i) & 0xff
-            var cc = String.fromCharCode(c)
+            let c = s.charCodeAt(i) & 0xff
+            let cc = String.fromCharCode(c)
             if (cc == "\\" || cc == "\"")
                 r += "\\" + cc
             else if (cc == "\n")
@@ -694,18 +695,18 @@ ${hex.hexPrelude()}
         let b = mkThumbFile()
         b.emit(src)
         throwThumbErrors(b)
-        
-        let res:number[] = []
+
+        let res: number[] = []
         for (let i = 0; i < b.buf.length; i += 2) {
             res.push((((b.buf[i + 1] || 0) << 16) | b.buf[i]) >>> 0)
         }
         return res
     }
-    
+
     function mkThumbFile() {
         thumb.test(); // just in case
 
-        var b = new thumb.File();
+        let b = new thumb.File();
         b.lookupExternalLabel = hex.lookupFunctionAddr;
         b.normalizeExternalLabel = s => {
             let inf = hex.lookupFunc(s)
@@ -713,19 +714,19 @@ ${hex.hexPrelude()}
             return s
         }
         // b.throwOnError = true;
-        
+
         return b
     }
-    
-    function throwThumbErrors(b:thumb.File){
+
+    function throwThumbErrors(b: thumb.File) {
         if (b.errors.length > 0) {
-            var userErrors = ""
+            let userErrors = ""
             b.errors.forEach(e => {
-                var m = /^user(\d+)/.exec(e.scope)
+                let m = /^user(\d+)/.exec(e.scope)
                 if (m) {
                     // This generally shouldn't happen, but it may for certin kind of global 
                     // errors - jump range and label redefinitions
-                    var no = parseInt(m[1]) // TODO lookup assembly file name
+                    let no = parseInt(m[1]) // TODO lookup assembly file name
                     userErrors += U.lf("At inline assembly:\n")
                     userErrors += e.message
                 }
@@ -746,9 +747,9 @@ ${hex.hexPrelude()}
     function assemble(bin: Binary, src: string) {
         let b = mkThumbFile()
         b.emit(src);
-        
+
         src = b.getSource(!peepDbg);
-        
+
         throwThumbErrors(b)
 
         return {
@@ -758,8 +759,8 @@ ${hex.hexPrelude()}
     }
 
     function addSource(meta: string, binstring: string) {
-        var metablob = Util.toUTF8(meta)
-        var totallen = metablob.length + binstring.length
+        let metablob = Util.toUTF8(meta)
+        let totallen = metablob.length + binstring.length
 
         if (totallen > 40000) {
             return "; program too long\n";
@@ -776,8 +777,8 @@ ${hex.hexPrelude()}
 _stored_program: .string "`
 
         let addblob = (b: string) => {
-            for (var i = 0; i < b.length; ++i) {
-                var v = b.charCodeAt(i) & 0xff
+            for (let i = 0; i < b.length; ++i) {
+                let v = b.charCodeAt(i) & 0xff
                 if (v <= 0xf)
                     str += "\\x0" + v.toString(16)
                 else
@@ -807,5 +808,5 @@ _stored_program: .string "`
         }
     }
 
-    export var validateShim = hex.validateShim;
+    export let validateShim = hex.validateShim;
 }

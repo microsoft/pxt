@@ -10,11 +10,11 @@ import * as nodeutil from './nodeutil';
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
-var uploadCache: U.Map<string> = {};
-var uploadPromises: U.Map<Promise<string>> = {};
-var usedPromises: U.Map<boolean> = {};
-var ptrPrefix = ""
-var showVerbose = false
+let uploadCache: U.Map<string> = {};
+let uploadPromises: U.Map<Promise<string>> = {};
+let usedPromises: U.Map<boolean> = {};
+let ptrPrefix = ""
+let showVerbose = false
 
 function error(msg: string) {
     U.userError(msg)

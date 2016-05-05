@@ -28,8 +28,8 @@ namespace pxt.blocks {
         fn: ts.pxt.SymbolInfo;
         block: Blockly.BlockDefinition;
     }
-    var cachedBlocks: Util.StringMap<CachedBlock> = {};
-    var cachedToolbox: string = "";
+    let cachedBlocks: Util.StringMap<CachedBlock> = {};
+    let cachedToolbox: string = "";
 
     export function blockSymbol(type: string): ts.pxt.SymbolInfo {
         let b = cachedBlocks[type];
@@ -90,7 +90,7 @@ namespace pxt.blocks {
                     m = rx.exec(fn.attributes.block); if (!m) break;
                 }
 
-                var at = attrNames[fn.parameters[i++].name];
+                let at = attrNames[fn.parameters[i++].name];
                 at.name = m[1];
                 if (m[3]) at.shadowType = m[3];
             }
@@ -132,7 +132,7 @@ namespace pxt.blocks {
             category = document.createElement("category");
             category.setAttribute("name", catName)
             let nsn = info.apis.byQName[ns];
-            let nsWeight = (nsn ? nsn.attributes.weight : 50) || 50; 
+            let nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
             category.setAttribute("weight", nsWeight.toString())
             if (nsn && nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
             else if (blockColors[ns]) category.setAttribute("colour", blockColors[ns].toString());
@@ -152,7 +152,7 @@ namespace pxt.blocks {
         category.appendChild(block);
     }
 
-    var iconCanvasCache: Util.StringMap<HTMLCanvasElement> = {};
+    let iconCanvasCache: Util.StringMap<HTMLCanvasElement> = {};
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let canvas = iconCanvasCache[c];
         if (!canvas) {
@@ -389,7 +389,7 @@ namespace pxt.blocks {
                     el.setAttribute("weight", (eb.weight || 50).toString());
                     if (eb.gap) el.setAttribute("gap", eb.gap.toString());
                     if (eb.fields) {
-                        for(let f in eb.fields) {
+                        for (let f in eb.fields) {
                             let fe = document.createElement("field");
                             fe.setAttribute("name", f);
                             fe.appendChild(document.createTextNode(eb.fields[f]));
@@ -418,9 +418,9 @@ namespace pxt.blocks {
             }
         }
     }
-    
-    function categoryElement(tb: Element, name:string) : Element {
-        return tb ? tb.querySelector(`category[name="${Util.capitalize(name)}"]`) : undefined;        
+
+    function categoryElement(tb: Element, name: string): Element {
+        return tb ? tb.querySelector(`category[name="${Util.capitalize(name)}"]`) : undefined;
     }
 
     export function cleanBlocks() {
@@ -434,7 +434,7 @@ namespace pxt.blocks {
         delete cachedBlocks[fn.attributes.blockId];
     }
 
-    var blocklyInitialized = false;
+    let blocklyInitialized = false;
     function init() {
         if (blocklyInitialized) blocklyInitialized = true;
 
@@ -464,7 +464,7 @@ namespace pxt.blocks {
         // by Blockly*. For blocks that we define ourselves, just change the call to
         // setHelpUrl in the corresponding definition above.
         function monkeyPatchBlock(id: string, name: string, url: string) {
-            var old = Blockly.Blocks[id].init;
+            let old = Blockly.Blocks[id].init;
             if (!old) return;
             // fix sethelpurl
             Blockly.Blocks[id].init = function () {
@@ -545,7 +545,7 @@ namespace pxt.blocks {
                 this.setNextStatement(true);
                 this.setInputsInline(true);
                 // Assign 'this' to a variable for use in the tooltip closure below.
-                var thisBlock = this;
+                let thisBlock = this;
                 this.setTooltip(function () {
                     return Blockly.Msg.CONTROLS_FOR_TOOLTIP.replace('%1',
                         thisBlock.getFieldValue('VAR'));
@@ -578,12 +578,12 @@ namespace pxt.blocks {
              */
             customContextMenu: function (options: any[]) {
                 if (!this.isCollapsed()) {
-                    var option: any = { enabled: true };
-                    var name = this.getFieldValue('VAR');
+                    let option: any = { enabled: true };
+                    let name = this.getFieldValue('VAR');
                     option.text = Blockly.Msg.VARIABLES_SET_CREATE_GET.replace('%1', name);
-                    var xmlField = goog.dom.createDom('field', null, name);
+                    let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
-                    var xmlBlock = goog.dom.createDom('block', null, xmlField);
+                    let xmlBlock = goog.dom.createDom('block', null, xmlField);
                     xmlBlock.setAttribute('type', 'variables_get');
                     option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
                     options.push(option);
@@ -642,7 +642,7 @@ namespace pxt.blocks {
 
     function initVariables() {
         Blockly.Variables.flyoutCategory = function (workspace) {
-            var variableList = Blockly.Variables.allVariables(workspace);
+            let variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
@@ -650,44 +650,47 @@ namespace pxt.blocks {
             goog.array.remove(variableList, Blockly.Msg.VARIABLES_DEFAULT_NAME);
             variableList.unshift(Blockly.Msg.VARIABLES_DEFAULT_NAME);
 
-            var xmlList: HTMLElement[] = [];
+            let xmlList: HTMLElement[] = [];
             // variables getters first
-            for (var i = 0; i < variableList.length; i++) {
+            for (let i = 0; i < variableList.length; i++) {
                 // <block type="variables_get" gap="24">
                 //   <field name="VAR">item</field>
                 // </block>
-                var block = goog.dom.createDom('block');
+                let block = goog.dom.createDom('block');
                 block.setAttribute('type', 'variables_get');
                 block.setAttribute('gap', '8');
-                var field = goog.dom.createDom('field', null, variableList[i]);
+                let field = goog.dom.createDom('field', null, variableList[i]);
                 field.setAttribute('name', 'VAR');
                 block.appendChild(field);
                 xmlList.push(block);
             }
             xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
-            for (var i = 0; i < Math.min(1, variableList.length); i++) {
+            for (let i = 0; i < Math.min(1, variableList.length); i++) {
                 {
                     // <block type="variables_set" gap="8">
                     //   <field name="VAR">item</field>
                     // </block>
-                    var block = goog.dom.createDom('block');
+                    let block = goog.dom.createDom('block');
                     block.setAttribute('type', 'variables_set');
                     block.setAttribute('gap', '8');
-                    var field = goog.dom.createDom('field', null, variableList[i]);
-                    field.setAttribute('name', 'VAR');
-                    block.appendChild(field);
-
-                    var value = goog.dom.createDom('value');
-                    value.setAttribute('name', 'VALUE');
-                    var shadow = goog.dom.createDom('shadow');
-                    shadow.setAttribute("type", "math_number");
-                    value.appendChild(shadow);
-                    var field = goog.dom.createDom('field');
-                    field.setAttribute('name', 'NUM');
-                    field.appendChild(document.createTextNode("0"));
-                    shadow.appendChild(field);
-                    block.appendChild(value);
+                    {
+                        let field = goog.dom.createDom('field', null, variableList[i]);
+                        field.setAttribute('name', 'VAR');
+                        block.appendChild(field);
+                    }
+                    {
+                        let value = goog.dom.createDom('value');
+                        value.setAttribute('name', 'VALUE');
+                        let shadow = goog.dom.createDom('shadow');
+                        shadow.setAttribute("type", "math_number");
+                        value.appendChild(shadow);
+                        let field = goog.dom.createDom('field');
+                        field.setAttribute('name', 'NUM');
+                        field.appendChild(document.createTextNode("0"));
+                        shadow.appendChild(field);
+                        block.appendChild(value);
+                    }
 
                     xmlList.push(block);
                 }
@@ -695,15 +698,15 @@ namespace pxt.blocks {
                     // <block type="variables_get" gap="24">
                     //   <field name="VAR">item</field>
                     // </block>
-                    var block = goog.dom.createDom('block');
+                    let block = goog.dom.createDom('block');
                     block.setAttribute('type', 'variables_change');
                     block.setAttribute('gap', '24');
-                    var value = goog.dom.createDom('value');
+                    let value = goog.dom.createDom('value');
                     value.setAttribute('name', 'VALUE');
-                    var shadow = goog.dom.createDom('shadow');
+                    let shadow = goog.dom.createDom('shadow');
                     shadow.setAttribute("type", "math_number");
                     value.appendChild(shadow);
-                    var field = goog.dom.createDom('field');
+                    let field = goog.dom.createDom('field');
                     field.setAttribute('name', 'NUM');
                     field.appendChild(document.createTextNode("1"));
                     shadow.appendChild(field);

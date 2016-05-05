@@ -18,7 +18,7 @@ namespace ts.pxt {
 
     function userError(msg: string): Error {
         debugger;
-        var e = new Error(msg);
+        let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
         throw e;
     }
@@ -555,7 +555,7 @@ namespace ts.pxt {
                 }
             }
 
-            var lbl = "_img" + bin.lblNo++
+            let lbl = "_img" + bin.lblNo++
             if (lit.length % 4 != 0)
                 lit += "42" // pad
 
@@ -795,7 +795,7 @@ ${lbl}: .short 0xffff
         }
         function getMask(args: Expression[]) {
             assert(args.length <= 8)
-            var m = 0
+            let m = 0
             args.forEach((a, i) => {
                 if (isRefCountedExpr(a))
                     m |= (1 << i)
@@ -832,7 +832,7 @@ ${lbl}: .short 0xffff
                 case SK.FalseKeyword:
                 case SK.NumericLiteral:
                     return true;
-                default:                    
+                default:
                     return false;
             }
         }
@@ -1974,7 +1974,7 @@ ${lbl}: .short 0xffff
 
         isDataRecord(s: string) {
             if (!s) return false
-            var m = /^:......(..)/.exec(s)
+            let m = /^:......(..)/.exec(s)
             assert(!!m)
             return m[1] == "00"
         }
@@ -1989,7 +1989,7 @@ ${lbl}: .short 0xffff
         emitString(s: string): string {
             if (this.strings.hasOwnProperty(s))
                 return this.strings[s]
-            var lbl = "_str" + this.lblNo++
+            let lbl = "_str" + this.lblNo++
             this.strings[s] = lbl;
             return lbl
         }

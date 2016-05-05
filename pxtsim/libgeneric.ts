@@ -100,7 +100,7 @@ namespace pxsim {
         }
         export function random(max: number): number {
             if (max < 1) return 0;
-            var r = 0;
+            let r = 0;
             do {
                 r = Math.floor(Math.random() * max);
             } while (r == max);
@@ -160,7 +160,7 @@ namespace pxsim {
         export function toNumber(s: string) {
             return parseInt(s);
         }
-        
+
         // TODO check edge-conditions
 
         export function concat(a: string, b: string) {
@@ -184,12 +184,12 @@ namespace pxsim {
         export function length(s: string) {
             return s.length
         }
-        
-        export function isEmpty(s : string) : boolean {
+
+        export function isEmpty(s: string): boolean {
             return s == null || s.length == 0;
         }
-        
-        export function substr(s:string, start:number, length?:number) {
+
+        export function substr(s: string, start: number, length?: number) {
             return s.substr(start, length)
         }
 
@@ -223,17 +223,17 @@ namespace pxsim {
             console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
         }
     }
-    
+
     export namespace BufferMethods {
-        export function createBuffer(size:number) {
+        export function createBuffer(size: number) {
             return new RefBuffer(new Uint8Array(size));
         }
-        
-        export function getBytes(buf:RefBuffer) {
+
+        export function getBytes(buf: RefBuffer) {
             // not sure if this is any useful...
             return buf.data;
         }
-        
+
         function inRange(buf: RefBuffer, off: number) {
             return 0 <= off && off < buf.data.length
         }

@@ -84,14 +84,14 @@ namespace ts.pxt.Util {
     export function jsonMergeFrom(trg: any, src: any) {
         if (!src) return;
         Object.keys(src).forEach(k => {
-            if (typeof trg[k] === 'object' && typeof src[k] === 'object')
+            if (typeof trg[k] === 'object' && typeof src[k] === "object")
                 jsonMergeFrom(trg[k], src[k]);
             else trg[k] = clone(src[k]);
         });
     }
 
     export function jsonCopyFrom<T>(trg: T, src: T) {
-        var v = clone(src)
+        let v = clone(src)
         for (let k of Object.keys(src)) {
             (trg as any)[k] = (v as any)[k]
         }
@@ -140,17 +140,17 @@ namespace ts.pxt.Util {
     }
 
     export function chopArray<T>(arr: T[], chunkSize: number): T[][] {
-        var res: T[][] = []
-        for (var i = 0; i < arr.length; i += chunkSize)
+        let res: T[][] = []
+        for (let i = 0; i < arr.length; i += chunkSize)
             res.push(arr.slice(i, i + chunkSize))
         return res
     }
 
     export function unique<T>(arr: T[], f: (t: T) => string): T[] {
-        var v: T[] = [];
-        var r: { [index: string]: any; } = {}
+        let v: T[] = [];
+        let r: { [index: string]: any; } = {}
         arr.forEach(e => {
-            var k = f(e)
+            let k = f(e)
             if (!r.hasOwnProperty(k)) {
                 r[k] = null;
                 v.push(e);
@@ -160,9 +160,9 @@ namespace ts.pxt.Util {
     }
 
     export function groupBy<T>(arr: T[], f: (t: T) => string): Map<T[]> {
-        var r: Map<T[]> = {}
+        let r: Map<T[]> = {}
         arr.forEach(e => {
-            var k = f(e)
+            let k = f(e)
             if (!r.hasOwnProperty(k)) r[k] = []
             r[k].push(e)
         })
@@ -170,7 +170,7 @@ namespace ts.pxt.Util {
     }
 
     export function toDictionary<T>(arr: T[], f: (t: T) => string): Map<T> {
-        var r: Map<T> = {}
+        let r: Map<T> = {}
         arr.forEach(e => { r[f(e)] = e })
         return r
     }
@@ -181,14 +181,14 @@ namespace ts.pxt.Util {
     }
 
     export function toArray<T>(a: ArrayLike<T>): T[] {
-        var r: T[] = []
-        for (var i = 0; i < a.length; ++i)
+        let r: T[] = []
+        for (let i = 0; i < a.length; ++i)
             r.push(a[i])
         return r
     }
 
     export function indexOfMatching<T>(arr: T[], f: (t: T) => boolean): number {
-        for (var i = 0; i < arr.length; ++i)
+        for (let i = 0; i < arr.length; ++i)
             if (f(arr[i])) return i;
         return -1;
     }
@@ -233,9 +233,9 @@ namespace ts.pxt.Util {
     }
 
     export function randomPermute<T>(arr: T[]) {
-        for (var i = 0; i < arr.length; ++i) {
-            var j = randomUint32() % arr.length
-            var tmp = arr[i]
+        for (let i = 0; i < arr.length; ++i) {
+            let j = randomUint32() % arr.length
+            let tmp = arr[i]
             arr[i] = arr[j]
             arr[j] = tmp
         }
@@ -246,7 +246,7 @@ namespace ts.pxt.Util {
         return arr[randomUint32() % arr.length];
     }
 
-    var awesomeAdj: string[];
+    let awesomeAdj: string[];
     export function getAwesomeAdj(): string {
         if (!awesomeAdj)
             awesomeAdj = (
@@ -258,15 +258,15 @@ namespace ts.pxt.Util {
     }
 
     export function isoTime(time: number) {
-        var d = new Date(time * 1000)
+        let d = new Date(time * 1000)
         return Util.fmt("{0}-{1:f02.0}-{2:f02.0} {3:f02.0}:{4:f02.0}:{5:f02.0}",
             d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds())
     }
 
     export function timeSince(time: number) {
-        var now = Date.now();
+        let now = Date.now();
         time *= 1000;
-        var diff = (now - time) / 1000;
+        let diff = (now - time) / 1000;
         if (isNaN(diff)) return ""
 
         if (diff < -30) {
@@ -293,7 +293,7 @@ namespace ts.pxt.Util {
         }
     }
 
-    export var isNodeJS = false;
+    export let isNodeJS = false;
 
     export interface HttpRequestOptions {
         url: string;
@@ -347,17 +347,17 @@ namespace ts.pxt.Util {
 
     // this will take lower 8 bits from each character
     export function stringToUint8Array(input: string) {
-        var len = input.length;
-        var res = new Uint8Array(len)
-        for (var i = 0; i < len; ++i)
+        let len = input.length;
+        let res = new Uint8Array(len)
+        for (let i = 0; i < len; ++i)
             res[i] = input.charCodeAt(i) & 0xff;
         return res;
     }
 
     export function uint8ArrayToString(input: Uint8Array) {
-        var len = input.length;
-        var res = ""
-        for (var i = 0; i < len; ++i)
+        let len = input.length;
+        let res = ""
+        for (let i = 0; i < len; ++i)
             res += String.fromCharCode(input[i]);
         return res;
     }
@@ -367,9 +367,9 @@ namespace ts.pxt.Util {
         if (!binstr) return ""
 
         // escape function is deprecated
-        var escaped = ""
-        for (var i = 0; i < binstr.length; ++i) {
-            var k = binstr.charCodeAt(i) & 0xff
+        let escaped = ""
+        for (let i = 0; i < binstr.length; ++i) {
+            let k = binstr.charCodeAt(i) & 0xff
             if (k == 37 || k > 0x7f) {
                 escaped += "%" + k.toString(16);
             } else {
@@ -382,16 +382,16 @@ namespace ts.pxt.Util {
     }
 
     export function toUTF8(str: string) {
-        var res = "";
+        let res = "";
         if (!str) return res;
-        for (var i = 0; i < str.length; ++i) {
-            var code = str.charCodeAt(i);
+        for (let i = 0; i < str.length; ++i) {
+            let code = str.charCodeAt(i);
             if (code <= 0x7f) res += str.charAt(i);
             else if (code <= 0x7ff) {
                 res += String.fromCharCode(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
             } else {
                 if (0xd800 <= code && code <= 0xdbff) {
-                    var next = str.charCodeAt(++i);
+                    let next = str.charCodeAt(++i);
                     if (!isNaN(next))
                         code = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
                 }
@@ -473,8 +473,8 @@ namespace ts.pxt.Util {
         return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
     }
 
-    var _localizeLang: string = "en";
-    var _localizeStrings: Map<string> = {};
+    let _localizeLang: string = "en";
+    let _localizeStrings: Map<string> = {};
 
     export function _localize(s: string, account: boolean) {
         return _localizeStrings[s] || s;
@@ -483,10 +483,10 @@ namespace ts.pxt.Util {
     export function updateLocalizationAsync(baseUrl: string, code: string): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|zh)/i.test(code))
-            code = code.split('-')[0]
+            code = code.split("-")[0]
 
         if (_localizeLang != code) {
-            return Util.httpGetJsonAsync(baseUrl + 'locales/' + code + '/strings.json')
+            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
                 .then(tr => {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
@@ -506,7 +506,7 @@ namespace ts.pxt.Util {
     export function jsStringQuote(s: string) {
         return s.replace(/[^\w .!?\-$]/g,
             (c) => {
-                var h = c.charCodeAt(0).toString(16);
+                let h = c.charCodeAt(0).toString(16);
                 return "\\u" + "0000".substr(0, 4 - h.length) + h;
             });
     }
@@ -518,14 +518,14 @@ namespace ts.pxt.Util {
     export function fmt_va(f: string, args: any[]): string {
         if (args.length == 0) return f;
         return f.replace(/\{([0-9]+)(\:[^\}]+)?\}/g, function (s: string, n: string, spec: string): string {
-            var v = args[parseInt(n)];
-            var r = "";
-            var fmtMatch = /^:f(\d*)\.(\d+)/.exec(spec);
+            let v = args[parseInt(n)];
+            let r = "";
+            let fmtMatch = /^:f(\d*)\.(\d+)/.exec(spec);
             if (fmtMatch) {
-                var precision = parseInt(fmtMatch[2])
-                var len = parseInt(fmtMatch[1]) || 0
-                var fillChar = /^0/.test(fmtMatch[1]) ? "0" : " ";
-                var num = (<number>v).toFixed(precision)
+                let precision = parseInt(fmtMatch[2])
+                let len = parseInt(fmtMatch[1]) || 0
+                let fillChar = /^0/.test(fmtMatch[1]) ? "0" : " ";
+                let num = (<number>v).toFixed(precision)
                 if (len > 0 && precision > 0) len += precision + 1;
                 if (len > 0) {
                     while (num.length < len) {
@@ -564,9 +564,9 @@ namespace ts.pxt.Util {
 
     export function fmt(f: string, ...args: any[]) { return fmt_va(f, args); }
 
-    var sForPlural = true;
+    let sForPlural = true;
     export function lf_va(format: string, args: any[]): string {
-        var lfmt = Util._localize(format, true)
+        let lfmt = Util._localize(format, true)
 
         if (!sForPlural && lfmt != format && /\d:s\}/.test(lfmt)) {
             lfmt = lfmt.replace(/\{\d+:s\}/g, "")
@@ -579,17 +579,17 @@ namespace ts.pxt.Util {
         return lf_va(format, args);
     }
 
-    export var httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;
-    export var sha256: (hashData: string) => string;
-    export var getRandomBuf: (buf: Uint8Array) => void;
+    export let httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;
+    export let sha256: (hashData: string) => string;
+    export let getRandomBuf: (buf: Uint8Array) => void;
 
-    export function capitalize(n : string) : string {
+    export function capitalize(n: string): string {
         return n ? (n[0].toLocaleUpperCase() + n.slice(1)) : n;
     }
 
     export function toDataUri(data: string, mimetype?: string): string {
         // TODO does this only support trusted data?
-        
+
         // weed out urls
         if (/^http?s:/i.test(data)) return data;
 
@@ -621,8 +621,8 @@ namespace ts.pxt.BrowserImpl {
 
     function httpRequestCoreAsync(options: Util.HttpRequestOptions) {
         return new Promise<Util.HttpResponse>((resolve, reject) => {
-            var client: XMLHttpRequest;
-            var resolved = false
+            let client: XMLHttpRequest;
+            let resolved = false
 
             let headers = Util.clone(options.headers) || {}
 
@@ -678,7 +678,7 @@ namespace ts.pxt.BrowserImpl {
         })
     }
 
-    var sha256_k = new Uint32Array([
+    let sha256_k = new Uint32Array([
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
         0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
@@ -697,28 +697,28 @@ namespace ts.pxt.BrowserImpl {
         Util.assert(hs.length == 8);
         Util.assert(w.length == 64);
 
-        for (var i = 16; i < 64; ++i) {
-            var s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
-            var s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+        for (let i = 16; i < 64; ++i) {
+            let s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+            let s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
             w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
         }
 
-        var a = hs[0];
-        var b = hs[1];
-        var c = hs[2];
-        var d = hs[3];
-        var e = hs[4];
-        var f = hs[5];
-        var g = hs[6];
-        var h = hs[7];
+        let a = hs[0];
+        let b = hs[1];
+        let c = hs[2];
+        let d = hs[3];
+        let e = hs[4];
+        let f = hs[5];
+        let g = hs[6];
+        let h = hs[7];
 
-        for (var i = 0; i < 64; ++i) {
-            var s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)
-            var ch = (e & f) ^ (~e & g)
-            var temp1 = (h + s1 + ch + sha256_k[i] + w[i]) | 0
-            var s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)
-            var maj = (a & b) ^ (a & c) ^ (b & c)
-            var temp2 = (s0 + maj) | 0
+        for (let i = 0; i < 64; ++i) {
+            let s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)
+            let ch = (e & f) ^ (~e & g)
+            let temp1 = (h + s1 + ch + sha256_k[i] + w[i]) | 0
+            let s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)
+            let maj = (a & b) ^ (a & c) ^ (b & c)
+            let temp2 = (s0 + maj) | 0
 
             h = g
             g = f
@@ -741,7 +741,7 @@ namespace ts.pxt.BrowserImpl {
     }
 
     export function sha256buffer(buf: Uint8Array) {
-        var h = new Uint32Array(8);
+        let h = new Uint32Array(8);
         h[0] = 0x6a09e667
         h[1] = 0xbb67ae85
         h[2] = 0x3c6ef372
@@ -751,15 +751,15 @@ namespace ts.pxt.BrowserImpl {
         h[6] = 0x1f83d9ab
         h[7] = 0x5be0cd19
 
-        var work = new Uint32Array(64);
+        let work = new Uint32Array(64);
 
-        var chunkLen = 16 * 4;
+        let chunkLen = 16 * 4;
 
         function addBuf(buf: Uint8Array) {
-            var end = buf.length - (chunkLen - 1)
-            for (var i = 0; i < end; i += chunkLen) {
-                for (var j = 0; j < 16; j++) {
-                    var off = (j << 2) + i
+            let end = buf.length - (chunkLen - 1)
+            for (let i = 0; i < end; i += chunkLen) {
+                for (let j = 0; j < 16; j++) {
+                    let off = (j << 2) + i
                     work[j] = (buf[off] << 24) | (buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3]
                 }
                 sha256round(h, work)
@@ -768,16 +768,16 @@ namespace ts.pxt.BrowserImpl {
 
         addBuf(buf)
 
-        var padSize = 64 - (buf.length + 9) % 64
+        let padSize = 64 - (buf.length + 9) % 64
         if (padSize == 64) padSize = 0
-        var endPos = buf.length - (buf.length % chunkLen)
-        var padBuf = new Uint8Array((buf.length - endPos) + 1 + padSize + 8)
-        var dst = 0
+        let endPos = buf.length - (buf.length % chunkLen)
+        let padBuf = new Uint8Array((buf.length - endPos) + 1 + padSize + 8)
+        let dst = 0
         while (endPos < buf.length) padBuf[dst++] = buf[endPos++]
         padBuf[dst++] = 0x80
         while (padSize-- > 0)
             padBuf[dst++] = 0x00
-        var len = buf.length * 8
+        let len = buf.length * 8
         dst = padBuf.length
         while (len > 0) {
             padBuf[--dst] = len & 0xff
@@ -786,8 +786,8 @@ namespace ts.pxt.BrowserImpl {
 
         addBuf(padBuf)
 
-        var res = ""
-        for (var i = 0; i < h.length; ++i)
+        let res = ""
+        for (let i = 0; i < h.length; ++i)
             res += ("000000000" + h[i].toString(16)).slice(-8)
 
         return res.toLowerCase()

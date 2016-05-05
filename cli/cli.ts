@@ -83,7 +83,7 @@ function configPath() {
     return path.join(homePxtDir(), "config.json")
 }
 
-var homeDirsMade = false
+let homeDirsMade = false
 function mkHomeDirs() {
     if (homeDirsMade) return
     homeDirsMade = true
@@ -135,7 +135,7 @@ export function loginAsync(access_token: string) {
     return Promise.resolve()
 }
 
-export function apiAsync(path: string, postArguments?: string):Promise<void> {
+export function apiAsync(path: string, postArguments?: string): Promise<void> {
     if (postArguments == "delete") {
         return Cloud.privateDeleteAsync(path)
             .then(resp => console.log(resp))
@@ -283,7 +283,7 @@ function semverCmp(a: string, b: string) {
     return parse(a) - parse(b)
 }
 
-var readJson = nodeutil.readJson;
+let readJson = nodeutil.readJson;
 
 function travisAsync() {
     forceCloudBuild = true
@@ -654,7 +654,7 @@ function buildPxtAsync(): Promise<string[]> {
     });
 }
 
-var dirsToWatch: string[] = []
+let dirsToWatch: string[] = []
 
 function travisInfo() {
     return {
@@ -1145,7 +1145,7 @@ function buildHexAsync(extInfo: ts.pxt.ExtensionInfo) {
     return yottaTasks
 }
 
-var parseCppInt = pxt.cpp.parseCppInt;
+let parseCppInt = pxt.cpp.parseCppInt;
 
 function buildDalConst(force = false) {
     let constName = "dal.d.ts"
@@ -1158,7 +1158,7 @@ function buildDalConst(force = false) {
 
     function extractConstants(fileName: string, src: string, dogenerate = false): string {
         let lineNo = 0
-        //let err = (s: string) => U.userError(`${fileName}(${lineNo}): ${s}\n`)
+        // let err = (s: string) => U.userError(`${fileName}(${lineNo}): ${s}\n`)
         let outp = ""
         let inEnum = false
         let enumVal = 0
