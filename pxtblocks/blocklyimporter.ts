@@ -3,12 +3,12 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
-    export function saveWorkspaceXml(ws : Blockly.Workspace) : string {
+    export function saveWorkspaceXml(ws: Blockly.Workspace): string {
         let xml = Blockly.Xml.workspaceToDom(ws);
         let text = Blockly.Xml.domToPrettyText(xml);
         return text;
-    }    
-    
+    }
+
     /**
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */

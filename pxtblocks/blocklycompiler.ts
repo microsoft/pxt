@@ -60,7 +60,7 @@ namespace pxt.blocks {
         }
 
         // A map from "classic" [JPropertyRef]s to their proper [parent].
-        var knownPropertyRefs: { [index: string]: string } = {
+        let knownPropertyRefs: { [index: string]: string } = {
             "=": "Unknown",
         };
         ["==", "!=", "<", "<=", ">", ">=", "+", "-", "/", "*"].forEach(x => knownPropertyRefs[x] = "Number");
@@ -86,9 +86,9 @@ namespace pxt.blocks {
             };
         }
 
-        var librarySymbol = "♻";
-        var libraryName = "micro:bit";
-        var librarySingleton = mkSingletonRef(librarySymbol);
+        let librarySymbol = "♻";
+        let libraryName = "micro:bit";
+        let librarySingleton = mkSingletonRef(librarySymbol);
 
         function mkSingletonRef(name: string): J.JSingletonRef {
             return {
@@ -285,15 +285,15 @@ namespace pxt.blocks {
         // else branch to abide by the TouchDevelop typeesentation (see comments in
         // [jsonInterfaces.ts]).
         export function mkIf(condition: J.JExprHolder, thenBranch: J.JStmt[], elseBranch: J.JStmt[]): J.JIf[] {
-            var ifNode = mkSimpleIf(condition, thenBranch)
+            let ifNode = mkSimpleIf(condition, thenBranch)
 
             // The transformation into a "flat" if / else if / else sequence is only
             // valid if the else branch it itself such a sequence.
-            var fitForFlattening = elseBranch.length && elseBranch.every((s: J.JStmt, i: number) =>
+            let fitForFlattening = elseBranch.length && elseBranch.every((s: J.JStmt, i: number) =>
                 s.nodeType == "if" && (i == 0 || (<J.JIf>s).isElseIf)
             );
             if (fitForFlattening) {
-                var first = <J.JIf>elseBranch[0];
+                let first = <J.JIf>elseBranch[0];
                 assert(!first.isElseIf);
                 first.isElseIf = true;
                 return [ifNode].concat(<J.JIf[]>elseBranch);
@@ -407,7 +407,7 @@ namespace pxt.blocks {
     }
 
     function throwBlockError(msg: string, block: B.Block) {
-        var e = new Error(msg);
+        let e = new Error(msg);
         (<any>e).block = block;
         throw e;
     }
@@ -419,7 +419,7 @@ namespace pxt.blocks {
             block: B.Block;
         }
 
-        var errors: CompilationError[] = [];
+        let errors: CompilationError[] = [];
 
         export function report(m: string, b: B.Block) {
             errors.push({ msg: m, block: b });
@@ -480,7 +480,7 @@ namespace pxt.blocks {
         if (p1 == p2)
             return;
 
-        var t = unify(p1.type, p2.type);
+        let t = unify(p1.type, p2.type);
         p1.link = p2;
         p1.type = null;
         p2.type = t;
@@ -490,10 +490,10 @@ namespace pxt.blocks {
     function mkPoint(t: string): Point {
         return new Point(null, t);
     }
-    var pNumber = mkPoint("number");
-    var pBoolean = mkPoint("boolean");
-    var pString = mkPoint("string");
-    var pUnit = mkPoint("void");
+    let pNumber = mkPoint("number");
+    let pBoolean = mkPoint("boolean");
+    let pString = mkPoint("string");
+    let pUnit = mkPoint("void");
 
     function ground(t?: string): Point {
         if (!t) return mkPoint(t);
@@ -559,7 +559,7 @@ namespace pxt.blocks {
     function attachPlaceholderIf(e: Environment, b: B.Block, n: string) {
         // Ugly hack to keep track of the type we want there.
         if (!b.getInputTargetBlock(n)) {
-            var i = b.inputList.filter(x => x.name == n)[0];
+            let i = b.inputList.filter(x => x.name == n)[0];
             assert(i != null);
             i.connection.targetConnection = new B.Connection(mkPlaceholderBlock(e), 0);
         }
@@ -613,14 +613,14 @@ namespace pxt.blocks {
                             case "EQ": case "NEQ":
                                 attachPlaceholderIf(e, b, "A");
                                 attachPlaceholderIf(e, b, "B");
-                                var p1 = returnType(e, b.getInputTargetBlock("A"));
-                                var p2 = returnType(e, b.getInputTargetBlock("B"));
+                                let p1 = returnType(e, b.getInputTargetBlock("A"));
+                                let p2 = returnType(e, b.getInputTargetBlock("B"));
                                 try {
                                     union(p1, p2);
                                 } catch (e) {
                                     throwBlockError("Comparing objects of different types", b);
                                 }
-                                var t = find(p1).type;
+                                let t = find(p1).type;
                                 if (t != pString.type && t != pBoolean.type && t != pNumber.type && t != null)
                                     throwBlockError("I can only compare strings, booleans and numbers", b);
                                 break;
@@ -637,7 +637,7 @@ namespace pxt.blocks {
                         break;
 
                     case "controls_if":
-                        for (var i = 0; i <= (<B.IfBlock>b).elseifCount_; ++i)
+                        for (let i = 0; i <= (<B.IfBlock>b).elseifCount_; ++i)
                             unionParam(e, b, "IF" + i, ground(pBoolean.type));
                         break;
 
@@ -646,12 +646,12 @@ namespace pxt.blocks {
                         break;
                     case "variables_set":
                     case "variables_change":
-                        var x = escapeVarName(b.getFieldValue("VAR"));
-                        var p1 = lookup(e, x).type;
+                        let x = escapeVarName(b.getFieldValue("VAR"));
+                        let p1 = lookup(e, x).type;
                         attachPlaceholderIf(e, b, "VALUE");
-                        var rhs = b.getInputTargetBlock("VALUE");
+                        let rhs = b.getInputTargetBlock("VALUE");
                         if (rhs) {
-                            var tr = returnType(e, rhs);
+                            let tr = returnType(e, rhs);
                             try {
                                 union(p1, tr);
                             } catch (e) {
@@ -671,11 +671,11 @@ namespace pxt.blocks {
                         if (b.type in e.stdCallTable) {
                             e.stdCallTable[b.type].args.forEach((p: StdArg) => {
                                 if (p.field && !b.getFieldValue(p.field)) {
-                                    var i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
+                                    let i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
                                     // This will throw if someone modified blocks-custom.js and forgot to add
                                     // [setCheck]s in the block definition. This is intentional and MUST be
                                     // fixed.
-                                    var t = i.connection.check_[0];
+                                    let t = i.connection.check_[0];
                                     unionParam(e, b, p.field, ground(t));
                                 }
                             });
@@ -705,12 +705,12 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function extractNumber(b: B.Block): number {
-        var v = b.getFieldValue("NUM");
+        let v = b.getFieldValue("NUM");
         if (!v.match(/\d+/)) {
             Errors.report(v + " is not a valid numeric value", b);
             return 0;
         } else {
-            var i = parseInt(v);
+            let i = parseInt(v);
             if (i >> 0 != i) {
                 Errors.report(v + " is either too big or too small", b);
                 return 0;
@@ -723,7 +723,7 @@ namespace pxt.blocks {
         return H.mkNumberLiteral(extractNumber(b));
     }
 
-    var opToTok: { [index: string]: string } = {
+    let opToTok: { [index: string]: string } = {
         // POWER gets a special treatment because there's no operator for it in
         // TouchDevelop
         "ADD": "+",
@@ -741,11 +741,11 @@ namespace pxt.blocks {
     };
 
     function compileArithmetic(e: Environment, b: B.Block): J.JExpr {
-        var bOp = b.getFieldValue("OP");
-        var left = b.getInputTargetBlock("A");
-        var right = b.getInputTargetBlock("B");
-        var args = [compileExpression(e, left), compileExpression(e, right)];
-        var t = returnType(e, left).type;
+        let bOp = b.getFieldValue("OP");
+        let left = b.getInputTargetBlock("A");
+        let right = b.getInputTargetBlock("B");
+        let args = [compileExpression(e, left), compileExpression(e, right)];
+        let t = returnType(e, left).type;
 
         if (t == pString.type) {
             if (bOp == "EQ") return H.stringCall("==", args);
@@ -762,14 +762,14 @@ namespace pxt.blocks {
     }
 
     function compileMathOp2(e: Environment, b: B.Block): J.JExpr {
-        var op = b.getFieldValue("op");
-        var x = compileExpression(e, b.getInputTargetBlock("x"));
-        var y = compileExpression(e, b.getInputTargetBlock("y"));
+        let op = b.getFieldValue("op");
+        let x = compileExpression(e, b.getInputTargetBlock("x"));
+        let y = compileExpression(e, b.getInputTargetBlock("y"));
         return H.mathCall(op, [x, y]);
     }
 
     function compileMathOp3(e: Environment, b: B.Block): J.JExpr {
-        var x = compileExpression(e, b.getInputTargetBlock("x"));
+        let x = compileExpression(e, b.getInputTargetBlock("x"));
         return H.mathCall("abs", [x]);
     }
 
@@ -782,7 +782,7 @@ namespace pxt.blocks {
     }
 
     function compileNot(e: Environment, b: B.Block): J.JExpr {
-        var expr = compileExpression(e, b.getInputTargetBlock("BOOL"));
+        let expr = compileExpression(e, b.getInputTargetBlock("BOOL"));
         return H.mkSimpleCall("!", [expr]);
     }
 
@@ -856,7 +856,7 @@ namespace pxt.blocks {
             case "lists_create_with":
                 expr = compileCreateList(e, b); break;
             default:
-                var call = e.stdCallTable[b.type];
+                let call = e.stdCallTable[b.type];
                 if (call) {
                     if (call.imageLiteral) expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))
                     else expr = compileStdCall(e, b, call);
@@ -912,15 +912,15 @@ namespace pxt.blocks {
     }
 
     function lookup(e: Environment, n: string): Binding {
-        for (var i = 0; i < e.bindings.length; ++i)
+        for (let i = 0; i < e.bindings.length; ++i)
             if (e.bindings[i].name == n)
                 return e.bindings[i];
         return null;
     }
 
     function fresh(e: Environment, s: string): string {
-        var i = 0;
-        var unique = s;
+        let i = 0;
+        let unique = s;
         while (lookup(e, unique) != null)
             unique = s + i++;
         return unique;
@@ -939,11 +939,11 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function compileControlsIf(e: Environment, b: B.IfBlock): J.JStmt[] {
-        var stmts: J.JIf[] = [];
+        let stmts: J.JIf[] = [];
         // Notice the <= (if there's no else-if, we still compile the primary if).
-        for (var i = 0; i <= b.elseifCount_; ++i) {
-            var cond = compileExpression(e, b.getInputTargetBlock("IF" + i));
-            var thenBranch = compileStatements(e, b.getInputTargetBlock("DO" + i));
+        for (let i = 0; i <= b.elseifCount_; ++i) {
+            let cond = compileExpression(e, b.getInputTargetBlock("IF" + i));
+            let thenBranch = compileStatements(e, b.getInputTargetBlock("DO" + i));
             stmts.push(H.mkSimpleIf(H.mkExprHolder([], cond), thenBranch));
             if (i > 0)
                 stmts[stmts.length - 1].isElseIf = true;
@@ -958,8 +958,8 @@ namespace pxt.blocks {
         if (b.type == "controls_simple_for") {
             return true;
         } else if (b.type == "controls_for") {
-            var bBy = b.getInputTargetBlock("BY");
-            var bFrom = b.getInputTargetBlock("FROM");
+            let bBy = b.getInputTargetBlock("BY");
+            let bFrom = b.getInputTargetBlock("FROM");
             return bBy.type.match(/^math_number/) && extractNumber(bBy) == 1 &&
                 bFrom.type.match(/^math_number/) && extractNumber(bFrom) == 0;
         } else {
@@ -995,56 +995,56 @@ namespace pxt.blocks {
         else {
             // Evaluate the bound first, and store it in b (bound may change over
             // several loop iterations).
-            var local = fresh(e, "bound");
+            let local = fresh(e, "bound");
             e = extend(e, local, pNumber.type);
-            var eLocal = H.mkLocalRef(local);
-            var eTo = compileExpression(e, bTo);
-            var eVar = H.mkLocalRef(bVar);
-            var eBy = H.mkNumberLiteral(1);
-            var eFrom = H.mkNumberLiteral(0);
+            let eLocal = H.mkLocalRef(local);
+            let eTo = compileExpression(e, bTo);
+            let eVar = H.mkLocalRef(bVar);
+            let eBy = H.mkNumberLiteral(1);
+            let eFrom = H.mkNumberLiteral(0);
             // Fallback to a while loop followed by an assignment to
             // make sure we don't overshoot the loop variable above the "to" field
             // (since Blockly allows someone to read it afterwards).
             return [
                 // LOCAL = TO
                 H.mkAssign(eLocal, eTo),
-                // VAR = FROM
+                // let = FROM
                 H.mkAssign(eVar, eFrom),
                 // while
                 H.mkWhile(
-                    // VAR <= B
+                    // let <= B
                     H.mkExprHolder([], H.mkSimpleCall("<=", [eVar, eLocal])),
                     // DO
                     compileStatements(e, bDo).concat([
                         H.mkExprStmt(
                             H.mkExprHolder([],
-                                // VAR =
+                                // let =
                                 H.mkSimpleCall("=", [eVar,
-                                    // VAR + BY
+                                    // let + BY
                                     H.mkSimpleCall("+", [eVar, eBy])])))])),
             ];
         }
     }
 
     function compileControlsRepeat(e: Environment, b: B.Block): J.JStmt {
-        var bound = compileExpression(e, b.getInputTargetBlock("TIMES"));
-        var body = compileStatements(e, b.getInputTargetBlock("DO"));
-        var valid = (x: string) => !lookup(e, x) || !isCompiledAsForIndex(lookup(e, x));
-        var name = "i";
-        for (var i = 0; !valid(name); i++)
+        let bound = compileExpression(e, b.getInputTargetBlock("TIMES"));
+        let body = compileStatements(e, b.getInputTargetBlock("DO"));
+        let valid = (x: string) => !lookup(e, x) || !isCompiledAsForIndex(lookup(e, x));
+        let name = "i";
+        for (let i = 0; !valid(name); i++)
             name = "i" + i;
         return H.mkFor(name, H.mkExprHolder([], bound), body);
     }
 
     function compileWhile(e: Environment, b: B.Block): J.JStmt {
-        var cond = compileExpression(e, b.getInputTargetBlock("COND"));
-        var body = compileStatements(e, b.getInputTargetBlock("DO"));
+        let cond = compileExpression(e, b.getInputTargetBlock("COND"));
+        let body = compileStatements(e, b.getInputTargetBlock("DO"));
         return H.mkWhile(H.mkExprHolder([], cond), body);
     }
 
     function compileForever(e: Environment, b: B.Block): J.JStmt {
-        var bBody = b.getInputTargetBlock("HANDLER");
-        var body = compileStatements(e, bBody);
+        let bBody = b.getInputTargetBlock("HANDLER");
+        let body = compileStatements(e, bBody);
         return mkCallWithCallback(e, "basic", "forever", [], body);
     }
 
@@ -1100,7 +1100,7 @@ namespace pxt.blocks {
         let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
-        var f = b.getFieldValue(p.field);
+        let f = b.getFieldValue(p.field);
         if (f)
             return H.mkLocalRef(f);
         else
@@ -1123,7 +1123,7 @@ namespace pxt.blocks {
     }
 
     function mkCallWithCallback(e: Environment, n: string, f: string, args: J.JExpr[], body: J.JStmt[]): J.JStmt {
-        var def = H.mkDef("_body_", H.mkGTypeRef("Action"));
+        let def = H.mkDef("_body_", H.mkGTypeRef("Action"));
         return H.mkInlineActions(
             [H.mkInlineAction(body, true, def)],
             H.mkExprHolder(
@@ -1132,26 +1132,26 @@ namespace pxt.blocks {
     }
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
-        var bBody = b.getInputTargetBlock("HANDLER");
-        var compiledArgs: J.JNode[] = args.map((arg: string) => {
+        let bBody = b.getInputTargetBlock("HANDLER");
+        let compiledArgs: J.JNode[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
             let argb = b.getInputTargetBlock(arg);
             if (argb) return compileExpression(e, argb);
             return H.mkLocalRef(b.getFieldValue(arg))
         });
-        var body = compileStatements(e, bBody);
+        let body = compileStatements(e, bBody);
         return mkCallWithCallback(e, ns, event, compiledArgs, body);
     }
 
     function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: J.JExpr[]): J.JCall {
         args = args === undefined ? [] : args;
-        var state = "\n";
-        var rows = 5;
-        var columns = frames * 5;
-        for (var i = 0; i < rows; ++i) {
+        let state = "\n";
+        let rows = 5;
+        let columns = frames * 5;
+        for (let i = 0; i < rows; ++i) {
             if (i > 0)
                 state += '\n';
-            for (var j = 0; j < columns; ++j) {
+            for (let j = 0; j < columns; ++j) {
                 if (j > 0)
                     state += ' ';
                 state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "#" : ".";
@@ -1240,7 +1240,7 @@ namespace pxt.blocks {
     // will return the visual parent, that is, the one connected to the top of the
     // block.
     function findParent(b: B.Block) {
-        var candidate = b.parentBlock_;
+        let candidate = b.parentBlock_;
         if (!candidate)
             return null;
         let isActualInput = false;
@@ -1357,7 +1357,7 @@ namespace pxt.blocks {
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
             let stmtsVariables = e.bindings.filter(b => !isCompiledAsForIndex(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
-                    var btype = find(b.type);
+                    let btype = find(b.type);
                     return H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type)));
                 });
 
@@ -1431,7 +1431,7 @@ namespace pxt.blocks {
 
 
         function flatten(e0: J.JExpr) {
-            var r: J.JToken[] = []
+            let r: J.JToken[] = []
 
             function pushOp(c: string) {
                 r.push(<J.JOperator>{
@@ -1442,7 +1442,7 @@ namespace pxt.blocks {
             }
 
             function call(e: J.JCall, outPrio: number) {
-                var infixPri = 0
+                let infixPri = 0
                 if (infixPriTable.hasOwnProperty(e.name))
                     infixPri = infixPriTable[e.name]
 
@@ -1462,8 +1462,8 @@ namespace pxt.blocks {
                         pushOp(e.name)
                         rec(e.args[0], infixPri)
                     } else {
-                        var bindLeft = infixPri != 3 && e.name != "**"
-                        var letType: string = undefined;
+                        let bindLeft = infixPri != 3 && e.name != "**"
+                        let letType: string = undefined;
                         if (e.name == "=" && e.args[0].nodeType == 'localRef') {
                             let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
                             let varname = varloc.name;
@@ -1522,7 +1522,7 @@ namespace pxt.blocks {
                     case "return":
                     case "continue":
                         pushOp(e.nodeType)
-                        var ee = (<J.JReturn>e).expr
+                        let ee = (<J.JReturn>e).expr
                         if (ee)
                             rec(ee, prio)
                         break
@@ -1627,16 +1627,16 @@ namespace pxt.blocks {
             booleanLiteral: (n: J.JBooleanLiteral) => {
                 write(n.value ? "true" : "false")
             },
-            
+
             arrayLiteral: (n: J.JArrayLiteral) => {
                 write("[");
                 if (n.values)
-                    n.values.forEach((a,i) => {
+                    n.values.forEach((a, i) => {
                         if (i > 0) write(', ');
                         let toks = flatten(a)
                         toks.forEach(emit)
                     })
-                write("]");  
+                write("]");
             },
 
             "if": (n: J.JIf) => {

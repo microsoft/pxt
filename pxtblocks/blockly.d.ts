@@ -1,74 +1,74 @@
 declare module goog {
-    function require(name:string) : void;
-    function provide(name:string): void;
+    function require(name: string): void;
+    function provide(name: string): void;
     function isFunction(f: any): boolean;
-    
+
     module string {
-        var caseInsensitiveCompare : (a:string,b:string) =>number;
+        var caseInsensitiveCompare: (a: string, b: string) => number;
     }
-        
+
     module array {
-        function remove(ar:string[], v:string) : void;    
+        function remove(ar: string[], v: string): void;
     }
-    
+
     module dom {
-        function createDom(name:string, ns?: string, children?: any) : HTMLElement;
+        function createDom(name: string, ns?: string, children?: any): HTMLElement;
     }
 
     module math {
         class Coordinate {
-            x : number;
-            y : number;
-            
-            static difference(a : Coordinate, b : Coordinate): Coordinate;
-            static magnitude(a : Coordinate): number;
+            x: number;
+            y: number;
+
+            static difference(a: Coordinate, b: Coordinate): Coordinate;
+            static magnitude(a: Coordinate): number;
         }
-    }    
+    }
 }
 declare module Blockly {
     var selected: any;
-    function bindEvent_(node: any, eventName: string, target: any, fn : () => void): void;
-    function fireUiEvent(node: any, eventName: string) : void;
-    
-    var ALIGN_RIGHT : number;
-    
+    function bindEvent_(node: any, eventName: string, target: any, fn: () => void): void;
+    function fireUiEvent(node: any, eventName: string): void;
+
+    var ALIGN_RIGHT: number;
+
     class FieldImage {
-        constructor(url:string, width:number, height:number, def:string);
+        constructor(url: string, width: number, height: number, def: string);
     }
-    
+
     interface BlockDefinition {
         codeCard?: any;
         init: () => void;
         getVars?: () => any[];
-        renameVar?: (oldName:string, newName:string) => void;
-        customContextMenu?: any;        
+        renameVar?: (oldName: string, newName: string) => void;
+        customContextMenu?: any;
     }
-    
-    var Blocks : pxt.Util.StringMap<BlockDefinition>;    
-    
+
+    var Blocks: pxt.Util.StringMap<BlockDefinition>;
+
     class Field {
-        init(block:Block): void;        
+        init(block: Block): void;
         static superClass_: Field;
     }
-    
+
     class FieldVariable extends Field {
-        constructor(d:any);
+        constructor(d: any);
     }
-    
+
     class FieldCheckbox extends Field {
-        constructor(val:string);
-        static CHECK_CHAR : string;
+        constructor(val: string);
+        static CHECK_CHAR: string;
     }
-    
+
     class FieldTextInput extends Field {
-        constructor(text:string, validator:any);
-        static numberValidator : any;
+        constructor(text: string, validator: any);
+        static numberValidator: any;
     }
-    
+
     class FieldDropdown extends Field {
         constructor(val: string[][]);
     }
-    
+
     class Block {
         static obtain(workspace: Workspace, prototypeName?: string): Block;
 
@@ -79,15 +79,15 @@ declare module Blockly {
         // Returns null if the field does not exist on the specified block.
         getFieldValue(field: string): string;
         setFieldValue(newValue: string, field: string): void;
-        setWarningText(text: string) : void;
+        setWarningText(text: string): void;
         // Returns null if the input does not exist on the specified block, or
         // is disconnected.
         getInputTargetBlock(field: string): Block;
         // Returns null if no next block or is disconnected.
         getNextBlock(): Block;
 
-        moveBy(x : number, y: number) : void;
-        getHeightWidth() : { width: number; height: number;};
+        moveBy(x: number, y: number): void;
+        getHeightWidth(): { width: number; height: number; };
         getBoundingRectangle(): {
             topLeft: goog.math.Coordinate;
             bottomRight: goog.math.Coordinate;
@@ -125,43 +125,43 @@ declare module Blockly {
     class DefOrCallBlock extends Block {
         arguments_: string[];
     }
-    
+
     interface BlocklyEvent {
-        type : string;
-        blockId?:string;
-        workspaceId:string;
-        recordUndo:boolean;
+        type: string;
+        blockId?: string;
+        workspaceId: string;
+        recordUndo: boolean;
         element?: string;
         oldValue?: string;
-        newValue?:string;
+        newValue?: string;
     }
 
     class Workspace {
         clear(): void;
         dispose(): void;
         getTopBlocks(ordered: boolean): Block[];
-        getBlockById(id:string): Block;
+        getBlockById(id: string): Block;
         getAllBlocks(): Block[];
-        traceOn(armed:boolean):void;
-        addChangeListener(f: (e : BlocklyEvent) => void): callbackHandler;
+        traceOn(armed: boolean): void;
+        addChangeListener(f: (e: BlocklyEvent) => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
-        updateToolbox(newTree: Element | string) : void;
-        getCanvas() : any;
-        highlightBlock(id:string):void;
-        undo():void;
-        redo():void;
-        clearUndo():void;
-        getMetrics(): {            
+        updateToolbox(newTree: Element | string): void;
+        getCanvas(): any;
+        highlightBlock(id: string): void;
+        undo(): void;
+        redo(): void;
+        clearUndo(): void;
+        getMetrics(): {
             absoluteLeft: number;
             absoluteTop: number;
-            contentHeight:number;
-            contentLeft:number;
+            contentHeight: number;
+            contentLeft: number;
             contentTop: number;
             contentWidth: number;
             viewHeight: number;
             viewLeft: number;
             viewTop: number;
-            viewWidth: number;       
+            viewWidth: number;
         }
     }
 
@@ -204,34 +204,34 @@ declare module Blockly {
     interface callbackHandler { }
 
     function inject(elt: Element, options?: Options): Workspace;
-   
-    function createSvgElement(tag:string, options:any, fg:any) : any;
-   
+
+    function createSvgElement(tag: string, options: any, fg: any): any;
+
     module Names {
-        function equals(old : string, n : any) : boolean;
+        function equals(old: string, n: any): boolean;
     }
-   
+
     module Variables {
-        function allVariables(wp : Workspace) : string[];
-        var flyoutCategory : (wp : Workspace) => HTMLElement[];
+        function allVariables(wp: Workspace): string[];
+        var flyoutCategory: (wp: Workspace) => HTMLElement[];
     }
-    
+
     module ContextMenu {
-        function callbackFactory(block: Block, xml : HTMLElement):void;
+        function callbackFactory(block: Block, xml: HTMLElement): void;
     }
-    
+
     module Msg {
-        var VARIABLES_DEFAULT_NAME : string;
+        var VARIABLES_DEFAULT_NAME: string;
         var VARIABLES_SET_CREATE_GET: string;
         var CONTROLS_FOR_INPUT_DO: string;
         var CONTROLS_FOR_TOOLTIP: string;
     }
-    
+
     module BlockSvg {
-        var START_HAT : boolean;
+        var START_HAT: boolean;
     }
-    
+
     module Events {
-        var DELETE : string;
+        var DELETE: string;
     }
 }

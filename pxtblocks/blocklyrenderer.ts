@@ -3,8 +3,8 @@
 /// <reference path="../typings/jquery/jquery.d.ts" />
 
 namespace pxt.blocks {
-    var workspace: B.Workspace;
-    var blocklyDiv:HTMLElement;
+    let workspace: B.Workspace;
+    let blocklyDiv: HTMLElement;
 
     function align(ws: B.Workspace) {
         let blocks = ws.getTopBlocks(true);
@@ -38,7 +38,7 @@ namespace pxt.blocks {
                 media: pxt.webConfig.pxtCdnUrl + "blockly/media/"
             });
         }
-        
+
         workspace.clear();
         try {
             let text = blocksXml || "<xml></xml>";
