@@ -1,12 +1,12 @@
 /// <reference path="../../built/typescriptServices.d.ts"/>
 
 declare namespace ts {
-    function getNodeId(node: Node): number;   
+    function getNodeId(node: Node): number;
     interface Node extends TextRange {
         symbol?: Symbol;                // Symbol declared by node (initialized by binding)
     }
 
-    
+
     interface DiagnosticCollection {
         add(diagnostic: Diagnostic): void;
         getGlobalDiagnostics(): Diagnostic[];

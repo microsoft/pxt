@@ -4,7 +4,7 @@ namespace pxt {
         let typechecker = prog.getTypeChecker()
         let mainWr = cpp.nsWriter("declare namespace")
         let currNs = ""
-        
+
         for (let src of prog.getSourceFiles()) {
             if (!U.startsWith(src.fileName, "sim/"))
                 continue;
@@ -15,8 +15,8 @@ namespace pxt {
                 }
             }
         }
-        
-        let res:U.Map<string> = {}
+
+        let res: U.Map<string> = {}
         res[appTarget.corepkg + "/shims.d.ts"] = mainWr.finish()
         return res
 
@@ -29,20 +29,20 @@ namespace pxt {
         }
         */
 
-        function emitModuleDeclaration(mod:ts.ModuleDeclaration) {
+        function emitModuleDeclaration(mod: ts.ModuleDeclaration) {
             let prevNs = currNs
             currNs += mod.name.text + "."
             doStmt(mod.body)
             currNs = prevNs
         }
-        
+
         function doStmt(stmt: ts.Statement) {
             switch (stmt.kind) {
                 case SK.ModuleDeclaration:
                     return emitModuleDeclaration(stmt as ts.ModuleDeclaration)
                 case SK.ModuleBlock:
                     return (stmt as ts.ModuleBlock).statements.forEach(doStmt)
-                
+
             }
             console.log(ts.pxt.stringKind(stmt))
             let mod = stmt as ts.ModuleDeclaration

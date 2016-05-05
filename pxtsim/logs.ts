@@ -35,10 +35,10 @@ namespace pxsim.logs {
 
         constructor(public log: ILogEntryElement, className: string) {
             this.log = log;
-            this.element = Svg.elt("svg") as SVGSVGElement;
-            Svg.hydrate(this.element, { class: className, viewBox: `0 0 ${this.vpw} ${this.vph}` })
-            this.g = Svg.child(this.element, "g") as SVGGElement;
-            this.line = Svg.child(this.g, "polyline") as SVGPolylineElement;
+            this.element = svg.elt("svg") as SVGSVGElement;
+            svg.hydrate(this.element, { class: className, viewBox: `0 0 ${this.vpw} ${this.vph}` })
+            this.g = svg.child(this.element, "g") as SVGGElement;
+            this.line = svg.child(this.g, "polyline") as SVGPolylineElement;
         }
 
         render() {
@@ -54,7 +54,7 @@ namespace pxsim.logs {
             const w = (maxt - mint) || 10;
 
             const points = data.map(d => `${(d.t - mint) / w * this.vpw},${this.vph - (d.v - minv) / h * (this.vph - 2 * margin) - margin}`).join(' ');
-            Svg.hydrate(this.line, { points: points });
+            svg.hydrate(this.line, { points: points });
         }
     }
 

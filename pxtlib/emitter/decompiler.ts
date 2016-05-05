@@ -20,12 +20,12 @@ namespace ts.pxt.decompiler {
         "&&": { type: "logic_operation", op: "AND" },
         "||": { type: "logic_operation", op: "OR" },
     }
-    
+
     const builtinBlocks: U.Map<{ block: string; blockId: string; fields?: string }> = {
-        "Math.random" : { blockId:"device_random", block: "pick random 0 to %limit" },
-        "Math.abs": { blockId: "math_op3", block:"absolute of %x" },
-        "Math.min": { blockId: "math_op2", block:"of %x|and %y" },
-        "Math.max": { blockId: "math_op2", block:"of %x|and %y", fields: `<field name="op">max</field>` }
+        "Math.random": { blockId: "device_random", block: "pick random 0 to %limit" },
+        "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
+        "Math.min": { blockId: "math_op2", block: "of %x|and %y" },
+        "Math.max": { blockId: "math_op2", block: "of %x|and %y", fields: `<field name="op">max</field>` }
     }
 
     export function decompileToBlocks(blocksInfo: ts.pxt.BlocksInfo, file: ts.SourceFile): ts.pxt.CompileResult {
@@ -96,7 +96,7 @@ ${output}</xml>`;
             }
         }
 
-        function error(n: ts.Node, msg?: string) {            
+        function error(n: ts.Node, msg?: string) {
             let diags = ts.pxt.patchUpDiagnostics([{
                 file: file,
                 start: n.getFullStart(),
@@ -172,10 +172,10 @@ ${output}</xml>`;
                 case ts.SyntaxKind.PlusToken:
                     emit(n.operand); break;
                 case ts.SyntaxKind.MinusToken:
-                    if (n.operand.kind == ts.SyntaxKind.NumericLiteral) {                        
-                        write(`<block type="math_number"><field name="NUM">-${U.htmlEscape((n.operand as ts.LiteralExpression).text)}</field></block>`)                        
+                    if (n.operand.kind == ts.SyntaxKind.NumericLiteral) {
+                        write(`<block type="math_number"><field name="NUM">-${U.htmlEscape((n.operand as ts.LiteralExpression).text)}</field></block>`)
                     } else {
-write(`<block type="math_arithmetic">
+                        write(`<block type="math_arithmetic">
         <field name="OP">MINUS</field>
         <value name="A">
           <block type="math_number">
@@ -184,15 +184,15 @@ write(`<block type="math_arithmetic">
         </value>
         <value name="B">
           <block type="math_number">
-            <field name="NUM">`); 
-            pushBlocks();
-            emit(n.operand) 
-            flushBlocks();
-            write(`</field>
+            <field name="NUM">`);
+                        pushBlocks();
+                        emit(n.operand)
+                        flushBlocks();
+                        write(`</field>
           </block>
         </value>
-      </block>`)  
-                    }             
+      </block>`)
+                    }
                     break; // TODO add negation block
                 case ts.SyntaxKind.PlusPlusToken:
                 case ts.SyntaxKind.MinusMinusToken:
@@ -203,7 +203,7 @@ write(`<block type="math_arithmetic">
                         return;
                     }
                     emitVariableSetOrChange((n.operand as ts.Identifier).text, n.operator == ts.SyntaxKind.PlusPlusToken ? 1 : -1, true);
-                    break;                    
+                    break;
                 default:
                     error(n);
                     break;
@@ -354,7 +354,7 @@ write(`<block type="math_arithmetic">
             switch (expr.kind) {
                 case ts.SyntaxKind.BinaryExpression:
                     return !/[=<>]/.test((expr as ts.BinaryExpression).operatorToken.getText());
-                case ts.SyntaxKind.PrefixUnaryExpression: {              
+                case ts.SyntaxKind.PrefixUnaryExpression: {
                     let op = (expr as ts.PrefixUnaryExpression).operator;
                     return op != ts.SyntaxKind.PlusPlusToken && op != ts.SyntaxKind.MinusMinusToken;
                 }
