@@ -1582,9 +1582,10 @@ function buildCoreAsync(mode: BuildOption) {
                 let md = ts.pxt.genMarkdown(apiInfo)
                 mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
-                    let folder = fn == "strings.json" ? "" : /\.md$/.test(fn) ? "../../docs/" : "built/";
-                    mainPkg.host().writeFile(mainPkg, folder + fn, md[fn])
-                    console.log(`generated ${folder}${fn}; size=${md[fn].length}`)
+                    let folder = fn == "strings.json" ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
+                    let ffn = folder + fn;
+                    mainPkg.host().writeFile(mainPkg, ffn, md[fn])
+                    console.log(`generated ${ffn}; size=${md[fn].length}`)
                 }
                 return null
             } else if (mode == BuildOption.Deploy) {
