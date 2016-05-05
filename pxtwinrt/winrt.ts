@@ -18,7 +18,7 @@ namespace pxtwinrt {
         return typeof Windows !== "undefined";
     }
 
-    export function initAsync(onHexFileImported? : (hex : pxt.cpp.HexFile) => void) {
+    export function initAsync(onHexFileImported?: (hex: pxt.cpp.HexFile) => void) {
         if (!isWinRT()) return Promise.resolve();
 
         initSerial();
@@ -28,9 +28,9 @@ namespace pxtwinrt {
         return Promise.resolve();
     }
 
-    function initActivation(onHexFileImported : (hex : pxt.cpp.HexFile) => void) {
+    function initActivation(onHexFileImported: (hex: pxt.cpp.HexFile) => void) {
         // Subscribe to the Windows Activation Event
-        (Windows.UI.WebUI.WebUIApplication as any).addEventListener("activated", function(args: Windows.ApplicationModel.Activation.IActivatedEventArgs) {
+        (Windows.UI.WebUI.WebUIApplication as any).addEventListener("activated", function (args: Windows.ApplicationModel.Activation.IActivatedEventArgs) {
             let activation = Windows.ApplicationModel.Activation;
             if (args.kind === activation.ActivationKind.file) {
                 let info = args as Windows.UI.WebUI.WebUIFileActivatedEventArgs;
@@ -43,7 +43,7 @@ namespace pxtwinrt {
                             let dataReader = Windows.Storage.Streams.DataReader.fromBuffer(buffer);
                             dataReader.readBytes(ar);
                             dataReader.close();
-                            
+
                             pxt.cpp.unpackSourceFromHexAsync(ar)
                                 .done(hex => onHexFileImported(hex));
                         });
