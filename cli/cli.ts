@@ -1579,10 +1579,10 @@ function buildCoreAsync(mode: BuildOption) {
 
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.pxt.getApiInfo(res.ast)
-                let md = ts.pxt.genMarkdown(apiInfo)
+                let md = ts.pxt.genMarkdown(mainPkg.config.name, apiInfo)
                 mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
-                    let folder = fn == "strings.json" ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
+                    let folder = /-strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
                     let ffn = folder + fn;
                     mainPkg.host().writeFile(mainPkg, ffn, md[fn])
                     console.log(`generated ${ffn}; size=${md[fn].length}`)

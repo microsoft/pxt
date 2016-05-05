@@ -203,7 +203,7 @@ namespace ts.pxt {
         }
     }
 
-    export function genMarkdown(apiInfo: ApisInfo): U.Map<string> {
+    export function genMarkdown(pkg: string, apiInfo: ApisInfo): U.Map<string> {
         let files: U.Map<string> = {};
         let infos = Util.values(apiInfo.byQName);
         let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
@@ -213,13 +213,9 @@ namespace ts.pxt {
         let reference = ""
         let writeRef = (s: string) => reference += s + "\n"
         let writeLoc = (attrs: CommentAttrs) => { if (attrs.jsDoc) locStrings[attrs.jsDoc] = 1; }
-        writeRef("# Reference")
+        writeRef(`# ${pkg} Reference`)
         writeRef('')
         writeRef('```namespaces')
-        writeRef('for (let i = 0;i<5;++i) {}');
-        writeRef('if (true){}')
-        writeRef('let x = 0;');
-        writeRef('Math.random(5);');
         for (let ns of namespaces) {
             let syms = infos
                 .filter(si => si.namespace == ns.name && !!si.attributes.help)
@@ -253,12 +249,12 @@ namespace ts.pxt {
 
             files["reference/" + ns.name + '.md'] = nsmd;
         }
-        writeRef('');
+        writeRef('```');
 
-        files["reference.md"] = reference;
+        files[pkg + "-reference.md"] = reference;
         let locs: U.Map<string> = {};
         Object.keys(locStrings).sort().forEach(l => locs[l] = l);
-        files["strings.json"] = JSON.stringify(locs, null, 2);
+        files[pkg + "-strings.json"] = JSON.stringify(locs, null, 2);
         return files;
 
         function hasBlock(sym: SymbolInfo): boolean {
