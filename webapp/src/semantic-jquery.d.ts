@@ -7,7 +7,7 @@ interface JQuery {
 
 declare var require: any;
 
-declare module AceAjax {
+declare namespace AceAjax {
     export interface CommandManager {
         on(eventName: string, cb: (e: { command: EditorCommand; }) => void): void;
     }

@@ -444,7 +444,7 @@ namespace pxsim {
                 }
             }
 
-            // tsline:disable-next-line
+            // tslint:disable-next-line
             eval(code)
 
             this.run = (cb) => topCall(entryPoint, cb)

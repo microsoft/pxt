@@ -1,21 +1,21 @@
-declare module goog {
+declare namespace goog {
     function require(name: string): void;
     function provide(name: string): void;
     function isFunction(f: any): boolean;
 
-    module string {
-        var caseInsensitiveCompare: (a: string, b: string) => number;
+    namespace string {
+        let caseInsensitiveCompare: (a: string, b: string) => number;
     }
 
-    module array {
+    namespace array {
         function remove(ar: string[], v: string): void;
     }
 
-    module dom {
+    namespace dom {
         function createDom(name: string, ns?: string, children?: any): HTMLElement;
     }
 
-    module math {
+    namespace math {
         class Coordinate {
             x: number;
             y: number;
@@ -25,12 +25,12 @@ declare module goog {
         }
     }
 }
-declare module Blockly {
-    var selected: any;
+declare namespace Blockly {
+    let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: () => void): void;
     function fireUiEvent(node: any, eventName: string): void;
 
-    var ALIGN_RIGHT: number;
+    let ALIGN_RIGHT: number;
 
     class FieldImage {
         constructor(url: string, width: number, height: number, def: string);
@@ -44,7 +44,7 @@ declare module Blockly {
         customContextMenu?: any;
     }
 
-    var Blocks: pxt.Util.StringMap<BlockDefinition>;
+    let Blocks: pxt.Util.StringMap<BlockDefinition>;
 
     class Field {
         init(block: Block): void;
@@ -165,7 +165,7 @@ declare module Blockly {
         }
     }
 
-    module Xml {
+    namespace Xml {
         function domToText(dom: Element): string;
         function domToPrettyText(dom: Element): string;
         function domToWorkspace(workspace: Workspace, dom: Element): void;
@@ -201,37 +201,38 @@ declare module Blockly {
         enableRealTime?: boolean;
     }
 
+    // tslint:disable-next-line
     interface callbackHandler { }
 
     function inject(elt: Element, options?: Options): Workspace;
 
     function createSvgElement(tag: string, options: any, fg: any): any;
 
-    module Names {
+    namespace Names {
         function equals(old: string, n: any): boolean;
     }
 
-    module Variables {
+    namespace Variables {
         function allVariables(wp: Workspace): string[];
-        var flyoutCategory: (wp: Workspace) => HTMLElement[];
+        let flyoutCategory: (wp: Workspace) => HTMLElement[];
     }
 
-    module ContextMenu {
+    namespace ContextMenu {
         function callbackFactory(block: Block, xml: HTMLElement): void;
     }
 
-    module Msg {
-        var VARIABLES_DEFAULT_NAME: string;
-        var VARIABLES_SET_CREATE_GET: string;
-        var CONTROLS_FOR_INPUT_DO: string;
-        var CONTROLS_FOR_TOOLTIP: string;
+    namespace Msg {
+        let VARIABLES_DEFAULT_NAME: string;
+        let VARIABLES_SET_CREATE_GET: string;
+        let CONTROLS_FOR_INPUT_DO: string;
+        let CONTROLS_FOR_TOOLTIP: string;
     }
 
-    module BlockSvg {
-        var START_HAT: boolean;
+    namespace BlockSvg {
+        let START_HAT: boolean;
     }
 
-    module Events {
-        var DELETE: string;
+    namespace Events {
+        let DELETE: string;
     }
 }

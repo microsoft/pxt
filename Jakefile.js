@@ -79,7 +79,7 @@ compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ['pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
 
-task("travis", ["test", "upload"])
+task("travis", ["lint", "test", "upload"])
 
 task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
     jake.exec([
@@ -88,6 +88,22 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
     ], { printStdout: true });
 })
 
+task("lint", [], {async:true}, function() {
+    console.log('linting...')
+    jake.exec([
+        "cli",
+        "pxt-cli", 
+        "pxtblocks",
+        "pxteditor",
+        "pxtlib", 
+        "pxtlib/emitter", 
+        "pxtrunner",
+        "pxtsim", 
+        "pxtwinrt",
+        "webapp/src"]
+        .map(function(d){ return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts"})        
+    , { printStdout: true });
+})
 
 task('bump', function () {
     jake.exec([

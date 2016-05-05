@@ -167,7 +167,7 @@ function isProject(h: Header) {
 
 function saveToCloudAsync(h: Header) {
     if (!Cloud.isLoggedIn()) return Promise.resolve();
-    
+
     return syncOneUpAsync(h)
 }
 
@@ -208,10 +208,10 @@ function syncOneUpAsync(h: Header) {
 }
 
 function syncAsync() {
-    var numUp = 0
-    var numDown = 0
-    var blobConatiner = ""
-    var updated: U.StringMap<number> = {}
+    let numUp = 0
+    let numDown = 0
+    let blobConatiner = ""
+    let updated: U.StringMap<number> = {}
 
     if (!Cloud.hasAccessToken())
         return Promise.resolve()
@@ -256,7 +256,7 @@ function syncAsync() {
                 header.modificationTime = cloudHeader.scriptVersion.time
                 header.editor = resp.editor
                 header.name = resp.name
-                var files: U.StringMap<string> = { "_default_": resp.script }
+                let files: U.StringMap<string> = { "_default_": resp.script }
                 if (isProject(header))
                     files = JSON.parse(resp.script)
                 header.recentUse = cloudHeader.recentUse

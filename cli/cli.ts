@@ -147,6 +147,7 @@ export function apiAsync(path: string, postArguments?: string): Promise<void> {
             .then(str => apiAsync(path, str))
     }
 
+    // tslint:disable-next-line
     let dat = postArguments ? eval("(" + postArguments + ")") : null
     if (dat)
         console.log("POST", "/api/" + path, JSON.stringify(dat, null, 2))
