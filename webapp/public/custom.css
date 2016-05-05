@@ -475,13 +475,17 @@ html {
         bottom:2rem;
         left:1rem;
         top:initial;      
-        width:initial;     
+        width:initial;  
+        min-width: unset;   
     }
-    .simframe {
+    div.simframe {
         display:inline-block;
-        width: 15rem;
+        width: 18rem;
+        margin-right:0.5rem;
     }
-    
+    div.simframe:not(:first-child) {
+        display:none;
+    }    
     .blocklyTreeLabel {
         font-size:1rem;
     }    
@@ -517,11 +521,15 @@ html {
     .blocklyTreeLabel, .blocklyText {
         font-size:0.8rem !important;
     }    
-    .simframe {
+    div.simframe {
         display:inline-block;
         width: 10rem;
+        margin-right:0.5rem;
     }
-    .simframe.grayscale {
+    div.simframe:not(:first-child) {
+        display:none;
+    }    
+    div.simframe.grayscale {
         width:4rem;
     }
 }
@@ -531,5 +539,6 @@ html {
         top:0rem;
         right:0rem;
         left:unset;
+        min-width: unset;   
     }    
 }
