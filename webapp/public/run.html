@@ -6,15 +6,25 @@
     <title>PXT Simulator</title>
     <style>
         html {
-            width:100%;
-            height:100%;
-            overflow:hidden;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
+        
         body {
             height: 100%;
         }
         
-        iframe {
+        div.simframe {
+            border: none;
+            margin: 0 0 0.5rem 0;
+            position: relative;
+            background: transparent;
+            width: 100%;
+            padding-bottom: 81.96%;
+        }
+        
+        div.simframe > iframe {
             position: absolute;
             left: 0;
             top: 0;
