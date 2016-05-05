@@ -1582,8 +1582,9 @@ function buildCoreAsync(mode: BuildOption) {
                 let md = ts.pxt.genMarkdown(apiInfo)
                 mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
-                    mainPkg.host().writeFile(mainPkg, "built/" + fn, md[fn])
-                    console.log(`Wrote built/${fn}; size=${md[fn].length}`)
+                    let folder = fn == "strings.json" ? "" : /\.md$/.test(fn) ? "../../docs/" : "built/";
+                    mainPkg.host().writeFile(mainPkg, folder + fn, md[fn])
+                    console.log(`generated ${folder}${fn}; size=${md[fn].length}`)
                 }
                 return null
             } else if (mode == BuildOption.Deploy) {

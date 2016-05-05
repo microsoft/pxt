@@ -209,10 +209,17 @@ namespace ts.pxt {
         let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
         namespaces.sort(compareSymbol)
 
+        let locStrings: U.Map<number> = {};
         let reference = ""
         let writeRef = (s: string) => reference += s + "\n"
+        let writeLoc = (attrs: CommentAttrs) => { if (attrs.jsDoc) locStrings[attrs.jsDoc] = 1; }
         writeRef("# Reference")
         writeRef('')
+        writeRef('```namespaces')
+        writeRef('for (let i = 0;i<5;++i) {}');
+        writeRef('if (true){}')
+        writeRef('let x = 0;');
+        writeRef('Math.random(5);');
         for (let ns of namespaces) {
             let syms = infos
                 .filter(si => si.namespace == ns.name && !!si.attributes.help)
@@ -224,27 +231,34 @@ namespace ts.pxt {
                 nsmd += s + "\n"
             }
 
-            writeRef(`## [${capitalize(ns.name)}](/reference/${ns.name})`)
-            writeRef('')
-            writeRef(`${ns.attributes.jsDoc}`)
-            writeRef('')
-
             writeNs(`# ${capitalize(ns.name)}`)
             writeNs('')
-            writeNs(`${ns.attributes.jsDoc}`)
-            writeNs('')
 
-            writeNs('')
-            writeNs('```cards')
-            for (let si of syms) {
-                writeNs(`${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`);
+            if (ns.attributes.jsDoc) {
+                writeLoc(ns.attributes);
+
+                writeNs(`${ns.attributes.jsDoc}`)
+                writeNs('')
             }
+
+            writeNs('```cards')
+            syms.forEach((si, i) => {
+                writeLoc(si.attributes);
+                let call = `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
+                if (i == 0)
+                    writeRef(call);
+                writeNs(call)
+            })
             writeNs('```')
 
-            files[ns.name + '.md'] = nsmd;
+            files["reference/" + ns.name + '.md'] = nsmd;
         }
+        writeRef('');
 
         files["reference.md"] = reference;
+        let locs: U.Map<string> = {};
+        Object.keys(locStrings).sort().forEach(l => locs[l] = l);
+        files["strings.json"] = JSON.stringify(locs, null, 2);
         return files;
 
         function hasBlock(sym: SymbolInfo): boolean {
