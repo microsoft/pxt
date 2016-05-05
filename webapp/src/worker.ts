@@ -3,7 +3,7 @@ importScripts(
     "/cdn/pxtlib.js"
 )
 
-let pm : any = postMessage;
+let pm: any = postMessage;
 
 onmessage = ev => {
     let res = ts.pxt.service.performOperation(ev.data.op, ev.data.arg)

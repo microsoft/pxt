@@ -62,7 +62,7 @@ export function makeWebWorker(workerFile: string) {
 
 export function makeWebSocket(url: string) {
     let ws = new WebSocket(url)
-    let sendq:string[] = []
+    let sendq: string[] = []
     let iface = wrap(v => {
         let s = JSON.stringify(v)
         if (sendq) sendq.push(s)

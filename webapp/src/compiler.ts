@@ -80,10 +80,10 @@ export function assembleAsync(src: string) {
     return assembleCore(`.startaddr ${stackBase - 256}\n${src}`)
         .then(r => {
             return assembleCore(`.startaddr ${stackBase - (r.words.length + 1) * 4}\n${src}`)
-            .then(rr => {
-                U.assert(rr.words.length == r.words.length)
-                return rr
-            })
+                .then(rr => {
+                    U.assert(rr.words.length == r.words.length)
+                    return rr
+                })
         })
 }
 
@@ -115,9 +115,9 @@ export function workerOpAsync(op: string, arg: ts.pxt.service.OpArg) {
     return iface.opAsync(op, arg)
 }
 
-var firstTypecheck: Promise<void>;
-var cachedApis: ts.pxt.ApisInfo;
-var refreshApis = false;
+let firstTypecheck: Promise<void>;
+let cachedApis: ts.pxt.ApisInfo;
+let refreshApis = false;
 
 function waitForFirstTypecheckAsync() {
     if (firstTypecheck) return firstTypecheck;

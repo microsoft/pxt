@@ -75,8 +75,8 @@ export class Editor {
         return null
     }
     undo() { }
-    
-    beforeCompile() {}
 
-    highlightStatement(brk: ts.pxt.LocationInfo) {}
+    beforeCompile() { }
+
+    highlightStatement(brk: ts.pxt.LocationInfo) { }
 }

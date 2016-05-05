@@ -16,7 +16,7 @@ export interface ILoginBoxState {
 }
 
 
-var lf = Util.lf
+const lf = Util.lf
 
 export function showDeleteAccountDialog() {
     core.confirmAsync({
@@ -47,17 +47,17 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
 
     signin(addParameters = "") {
 
-        var m = /u=\w+/.exec(document.URL);
+        let m = /u=\w+/.exec(document.URL);
         if (m)
             addParameters = "&" + m[0];
 
-        var uid = Cloud.getUserId()
+        let uid = Cloud.getUserId()
         if (uid) addParameters = "&u=" + encodeURIComponent(uid)
 
         let oauthState = window.localStorage["oauthState"] = Util.guidGen()
 
-        var hereUrl = window.location.href;
-        var url = Cloud.getServiceUrl() + "/oauth/dialog?response_type=token&client_id=" +
+        let hereUrl = window.location.href;
+        let url = Cloud.getServiceUrl() + "/oauth/dialog?response_type=token&client_id=" +
             encodeURIComponent("webapp3") +
             "&redirect_uri=" + encodeURIComponent(hereUrl) +
             "&state=" + encodeURIComponent(oauthState) + addParameters;
@@ -121,7 +121,7 @@ pxt api PACKAGEID delete
                     showDeleteAccountDialog();
                 })
                 _.find("button.cancel").click(() => {
-                    LoginBox.signout();                    
+                    LoginBox.signout();
                 })
             }
         })

@@ -14,11 +14,11 @@ declare module fuse {
 		include?: string[];
 		shouldSort?: boolean;
 		searchFn?: any;
-		sortFn?: (a: {score: number}, b: {score: number}) => number;
+		sortFn?: (a: { score: number }, b: { score: number }) => number;
 		getFn?: (obj: any, path: string) => any;
         // modified from tsd
-		keys?: string[] | { name:string; weight:number} [];
-        verbose?:boolean;
+		keys?: string[] | { name: string; weight: number }[];
+        verbose?: boolean;
 	}
 
 	interface ISearchOptions {

@@ -8,7 +8,7 @@ import * as sui from "./sui";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-var lf = Util.lf
+const lf = Util.lf
 
 interface IBrowserProps { }
 interface IBrowserState {
@@ -16,7 +16,7 @@ interface IBrowserState {
 }
 
 export class ScriptCard extends data.Component<{ data: Cloud.JsonScript }, {}> {
-    
+
 }
 
 export class CardBrowser extends data.Component<IBrowserProps, IBrowserState> {

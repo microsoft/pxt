@@ -10,13 +10,13 @@ import * as sui from "./sui";
 import * as data from "./data";
 import * as codecard from "./codecard";
 
-declare var require: any;
-let ace: AceAjax.Ace = require("brace");
+declare let require: any;
+const ace: AceAjax.Ace = require("brace");
 
-let SK = ts.pxt.SymbolKind;
+const SK = ts.pxt.SymbolKind;
 
 import Util = pxt.Util;
-var lf = Util.lf
+const lf = Util.lf
 
 require('brace/mode/typescript');
 require('brace/mode/javascript');
@@ -36,12 +36,12 @@ require("brace/ext/searchbox");
 
 
 
-var acequire = (ace as any).acequire;
-var Range = acequire("ace/range").Range;
-var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
+let acequire = (ace as any).acequire;
+let Range = acequire("ace/range").Range;
+let HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
 export const cursorMarker = "\uE108"
-var maxCompleteItems = 20;
+let maxCompleteItems = 20;
 
 export interface CompletionEntry {
     name: string;
@@ -329,7 +329,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         editor.on("mousedown", () => this.detach())
         editor.on("mousewheel", () => this.detach())
         editor.on("change", e => {
-            var cursor = (editor.selection as any).lead;
+            let cursor = (editor.selection as any).lead;
             if (this.completionRange) {
                 let basePos = this.completionRange.start
                 if (cursor.row != basePos.row || cursor.column < basePos.column) {

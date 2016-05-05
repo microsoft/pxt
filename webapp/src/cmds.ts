@@ -4,18 +4,18 @@ import * as core from "./core";
 import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 
-function browserDownloadAsync(text: string, name: string, contentType: string) : Promise<void> {
+function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadText(
-        text, 
-        name, 
-        contentType, 
+        text,
+        name,
+        contentType,
         e => core.errorNotification(lf("saving file failed..."))
     );
-    
+
     $('#compilemsg').finish()
         .html(`${lf("Download ready.")} <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>${lf("Use this link to save to another location.")}</a>`)
         .fadeIn('fast').delay(7000).fadeOut('slow');
-    
+
     return Promise.resolve();
 }
 
@@ -34,7 +34,7 @@ function localhostDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
         headers: { "Authorization": Cloud.localToken },
         method: "POST",
         data: resp
-    }).then(r => {});
+    }).then(r => { });
 }
 
 export function initCommandsAsync(): Promise<void> {
@@ -55,6 +55,6 @@ export function initCommandsAsync(): Promise<void> {
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
         pxt.commands.browserDownloadAsync = browserDownloadAsync;
     }
-        
+
     return Promise.resolve();
 }

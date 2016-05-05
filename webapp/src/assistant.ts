@@ -1,16 +1,16 @@
 import * as core from "./core"
 
-export function shouldNag(id : string) : boolean {
+export function shouldNag(id: string): boolean {
     let nag = window.localStorage["nag"] || {};
     let r = !!nag[id];
     nag[id] = true;
-    window.localStorage["nag"] = nag;    
+    window.localStorage["nag"] = nag;
     return r;
 }
 
 export function nagUploader() {
     if (!shouldNag('uploader') || !/windows/i.test(navigator.userAgent)) return;
-    
+
     core.confirmAsync({
         header: lf("Tired of copying files to the micro:bit?"),
         hideCancel: true,
