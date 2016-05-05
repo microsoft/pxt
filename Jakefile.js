@@ -61,13 +61,13 @@ file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptSe
     jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
 })
 
-file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function() {
-   console.log(`[${this.name}]`)
-   let std = {}
-   for (let f of this.prereqs) {
-     std[path.basename(f)] = fs.readFileSync(f, "utf8")
-   }
-   fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
+file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
+    console.log(`[${this.name}]`)
+    let std = {}
+    for (let f of this.prereqs) {
+        std[path.basename(f)] = fs.readFileSync(f, "utf8")
+    }
+    fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
 compileDir("pxtlib", ["built/typescriptServices.d.ts"])
@@ -83,26 +83,29 @@ task("travis", ["lint", "test", "upload"])
 
 task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
     jake.exec([
-          "node built/pxt.js travis",
-          "node built/pxt.js uploaddoc",
+        "node built/pxt.js travis",
+        "node built/pxt.js uploaddoc",
     ], { printStdout: true });
 })
 
-task("lint", [], {async:true}, function() {
+task("lint", [], { async: true }, function () {
     console.log('linting...')
     jake.exec([
         "cli",
-        "pxt-cli", 
+        "pxt-cli",
         "pxtblocks",
         "pxteditor",
-        "pxtlib", 
-        "pxtlib/emitter", 
+        "pxtlib",
+        "pxtlib/emitter",
         "pxtrunner",
-        "pxtsim", 
+        "pxtsim",
         "pxtwinrt",
         "webapp/src"]
-        .map(function(d){ return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts"})        
-    , { printStdout: true });
+        .map(function (d) { return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts" })
+        , { printStdout: true }, function () {
+            console.log('linted.');
+            complete();
+        });
 })
 
 task('bump', function () {
@@ -197,14 +200,14 @@ task('wapp', [
 ])
 
 file("built/web/pxtlib.js", [
-    "webapp/ace/mode/assembly_armthumb.js", 
-    "built/pxtlib.js", 
-    "built/pxtblocks.js", 
-    "built/pxtsim.js", 
-    "built/pxtrunner.js", 
+    "webapp/ace/mode/assembly_armthumb.js",
+    "built/pxtlib.js",
+    "built/pxtblocks.js",
+    "built/pxtsim.js",
+    "built/pxtrunner.js",
     "built/pxtwinrt.js",
     "built/pxteditor.js"
-    ], function () {
+], function () {
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
@@ -228,15 +231,15 @@ file("built/web/pxtlib.js", [
 })
 
 file('built/webapp/src/app.js', expand([
-    "webapp", 
-    "built/web/pxtlib.js", 
-    "built/web/pxtwinrt.js", 
+    "webapp",
+    "built/web/pxtlib.js",
+    "built/web/pxtwinrt.js",
     "built/web/pxtsim.js",
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js"
-    ]), { async: true }, function () {
-        tscIn(this, "webapp")
-    })
+]), { async: true }, function () {
+    tscIn(this, "webapp")
+})
 
 file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
@@ -256,39 +259,39 @@ file('built/web/semantic.css', ["webapp/theme.config"], { async: true }, functio
 })
 
 file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
-  let webfontsGenerator = require('webfonts-generator')
-  let name = "xicon"
-  let task = this
- 
-  webfontsGenerator({
-    fontName: name,
-    files: expand(["svgicons"], ".svg"),
-    dest: "built/fonts/", // fake
-    templateOptions: {
-      classPrefix: name + ".",
-      baseClass: name
-    },
-    writeFiles: false,
-  }, function(error, res) {
-    if (error) {
-      task.fail(error)
-    } else {
-      let css = res.generateCss()
-      let data = res["woff"].toString("base64")
-      css = css.replace(/^\s*src:[^;]+;/m, 
-        "    src: url(data:application/x-font-woff;charset=utf-8;base64," + data + ") format(\"woff\");")
-      css = css.replace(/line-height:\s*1;/, "")
-      console.log("Generated icons.css -", css.length, "bytes")
-      let html = "<!doctype html>\n<html><body style='font-size: 30px'><style>@import './icons.css';</style>\n"
-      css.replace(/\.(\w+):before /g, (f, n) => {
-        html += `<div style="margin:20px;"> <i class="${name} ${n}"></i> <span style='padding-left:1em; font-size:0.8em; opacity:0.5;'>${n}</span> </div>\n`
-      })
-      html += "</body></html>\n"
-      fs.writeFileSync("built/web/icons.html", html)
-      fs.writeFileSync("built/web/icons.css", css)
-      task.complete()
-    }
-  })
+    let webfontsGenerator = require('webfonts-generator')
+    let name = "xicon"
+    let task = this
+
+    webfontsGenerator({
+        fontName: name,
+        files: expand(["svgicons"], ".svg"),
+        dest: "built/fonts/", // fake
+        templateOptions: {
+            classPrefix: name + ".",
+            baseClass: name
+        },
+        writeFiles: false,
+    }, function (error, res) {
+        if (error) {
+            task.fail(error)
+        } else {
+            let css = res.generateCss()
+            let data = res["woff"].toString("base64")
+            css = css.replace(/^\s*src:[^;]+;/m,
+                "    src: url(data:application/x-font-woff;charset=utf-8;base64," + data + ") format(\"woff\");")
+            css = css.replace(/line-height:\s*1;/, "")
+            console.log("Generated icons.css -", css.length, "bytes")
+            let html = "<!doctype html>\n<html><body style='font-size: 30px'><style>@import './icons.css';</style>\n"
+            css.replace(/\.(\w+):before /g, (f, n) => {
+                html += `<div style="margin:20px;"> <i class="${name} ${n}"></i> <span style='padding-left:1em; font-size:0.8em; opacity:0.5;'>${n}</span> </div>\n`
+            })
+            html += "</body></html>\n"
+            fs.writeFileSync("built/web/icons.html", html)
+            fs.writeFileSync("built/web/icons.css", css)
+            task.complete()
+        }
+    })
 })
 
 ju.catFiles("built/web/semantic.js",
