@@ -86,7 +86,7 @@ namespace pxsim.logs {
                 this.labelElement = document.createElement("a");
                 this.labelElement.className = "ui green top right attached mini label";
                 this.labelElement.appendChild(document.createTextNode(text));
-            }       
+            }
         }
 
         // creates a deep clone of the log entries
@@ -195,7 +195,7 @@ namespace pxsim.logs {
         appendEntry(source: string, value: string, theme: string) {
             if (this.labelElement && !this.labelElement.parentElement)
                 this.element.insertBefore(this.labelElement, this.element.firstElementChild);
-            
+
             let ens = this.entries;
             while (ens.length > this.props.maxEntries) {
                 let po = ens.shift();
@@ -273,7 +273,7 @@ namespace pxsim.logs {
 
         clear() {
             this.entries = [];
-            if (this.labelElement && this.labelElement.parentElement) 
+            if (this.labelElement && this.labelElement.parentElement)
                 this.labelElement.parentElement.removeChild(this.labelElement);
             this.element.innerHTML = '';
             this.serialBuffers = {};

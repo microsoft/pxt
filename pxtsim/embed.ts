@@ -64,7 +64,7 @@ namespace pxsim {
 
         // TODO remove this; this should be using Runtime.runtime which gets
         // set correctly depending on which runtime is currently running
-        var runtime: pxsim.Runtime;
+        let runtime: pxsim.Runtime;
 
         export function stop() {
             if (runtime) {

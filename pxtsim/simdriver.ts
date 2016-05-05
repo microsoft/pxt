@@ -73,20 +73,20 @@ namespace pxsim {
         private createFrame(): HTMLDivElement {
             let wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = 'simframe';
-            
+
             let frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             if (this.options.aspectRatio)
-                wrapper.style.paddingBottom = (100 / this.options.aspectRatio) + "%";                
+                wrapper.style.paddingBottom = (100 / this.options.aspectRatio) + "%";
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
-            
+
             wrapper.appendChild(frame);
-            
+
             return wrapper;
         }
 

@@ -32,7 +32,7 @@ namespace pxt.runner {
 
         // blocks
         $c.append($svg);
-        
+
         // js menu
         {
             let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
@@ -245,7 +245,7 @@ namespace pxt.runner {
             $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
         }
 
-        return fillCodeCardAsync($el, card, {hideHeader: true})
+        return fillCodeCardAsync($el, card, { hideHeader: true })
             .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));
     }
 

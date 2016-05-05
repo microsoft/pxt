@@ -2,16 +2,16 @@
 
 namespace pxsim {
     export module U {
-        export function addClass(el : HTMLElement, cls : string) {
+        export function addClass(el: HTMLElement, cls: string) {
             if (el.classList) el.classList.add(cls);
             else if (!el.className.indexOf(cls)) el.className += ' ' + cls;
         }
-        
-        export function removeClass(el : HTMLElement, cls: string) {
+
+        export function removeClass(el: HTMLElement, cls: string) {
             if (el.classList) el.classList.remove(cls);
             else el.className = el.className.replace(cls, '').replace(/\s{2,}/, ' ');
         }
-        
+
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
                 debugger
@@ -69,7 +69,7 @@ namespace pxsim {
         finalCallback?: ResumeFn;
     }
 
-    export var runtime: Runtime;
+    export let runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
     export class BaseBoard {
@@ -110,13 +110,13 @@ namespace pxsim {
                 console.log("SHOW NUMBER:", n)
                 U.nextTick(cb)
             }
-        }       
+        }
         myRT.serial = {
             writeString: (s: string) => runtime.board.writeSerial(s),
-        }        
+        }
         myRT.pins = {
             createBuffer: BufferMethods.createBuffer,
-        }        
+        }
         myRT.control = {
             inBackground: thread.runInBackground
         }
@@ -151,7 +151,7 @@ namespace pxsim {
     }
 
     // overriden at loadtime by specific implementation
-    export var initCurrentRuntime: () => void = undefined;
+    export let initCurrentRuntime: () => void = undefined;
 
     export class Runtime {
         public board: BaseBoard;
@@ -234,23 +234,23 @@ namespace pxsim {
         constructor(code: string) {
             U.assert(!!initCurrentRuntime);
 
-            var yieldMaxSteps = 100
+            let yieldMaxSteps = 100
 
             // These variables are used by the generated code as well
             // ---
-            var entryPoint: LabelFn;
-            var pxtrt = pxsim.pxtrt
-            var breakpoints: Uint8Array = null
-            var breakAlways = false
-            var globals = this.globals
-            var yieldSteps = yieldMaxSteps
+            let entryPoint: LabelFn;
+            let pxtrt = pxsim.pxtrt
+            let breakpoints: Uint8Array = null
+            let breakAlways = false
+            let globals = this.globals
+            let yieldSteps = yieldMaxSteps
             // ---
 
-            var currResume: ResumeFn;
-            var dbgResume: ResumeFn;
-            var breakFrame: StackFrame = null // for step-over
-            var lastYield = Date.now()
-            var _this = this
+            let currResume: ResumeFn;
+            let dbgResume: ResumeFn;
+            let breakFrame: StackFrame = null // for step-over
+            let lastYield = Date.now()
+            let _this = this
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
