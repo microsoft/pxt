@@ -406,7 +406,13 @@ namespace pxt {
             return ids.map(id => this.resolveDep(id))
         }
 
-        getTargetOptions(): CompileTarget { return U.clone(appTarget.compile) || <CompileTarget>{ isNative: false, hasHex: false }; }
+        getTargetOptions(): CompileTarget {
+            let res = U.clone(appTarget.compile)
+            if (!res) res = { isNative: false, hasHex: false }
+            if (res.hasHex && res.jsRefCounting === undefined)
+                res.jsRefCounting = true
+            return res
+        }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
             let opts: ts.pxt.CompileOptions = {
@@ -518,8 +524,8 @@ namespace pxt {
                 files[f] = prj.files[f];
             for (let f in defaultFiles)
                 files[f] = defaultFiles[f];
-            files["README.md"] = ""; // override existing readme files
-            files["pxt.json"] = undefined;
+            delete files["README.md"]; // override existing readme files
+            delete files["pxt.json"];
 
             this.config.files = Object.keys(files).filter(s => !/test/.test(s));
             this.config.testFiles = Object.keys(files).filter(s => /test/.test(s));
@@ -528,7 +534,7 @@ namespace pxt {
             this.saveConfig()
 
             U.iterStringMap(files, (k, v) => {
-                if (v)
+                if (v != null)
                     this.host().writeFile(this, k, v.replace(/@NAME@/g, name))
             })
             info("package initialized")

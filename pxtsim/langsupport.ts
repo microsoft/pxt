@@ -12,6 +12,11 @@ namespace pxsim {
     let liveRefObjs: any = {};
     let stringLiterals: any;
     let stringRefCounts: any = {};
+    let refCounting = true;
+
+    export function noRefCounting() {
+        refCounting = false;
+    }
 
     export class RefObject {
         id: number = refObjId++;
@@ -130,6 +135,7 @@ namespace pxsim {
     }
 
     export function decr(v: any): void {
+        if (noRefCounting) return
         if (v instanceof RefObject) {
             let o = <RefObject>v
             check(o.refcnt > 0)
@@ -177,6 +183,7 @@ namespace pxsim {
     }
 
     export function incr(v: any) {
+        if (noRefCounting) return v
         if (v instanceof RefObject) {
             let o = <RefObject>v
             check(o.refcnt > 0)
@@ -189,6 +196,7 @@ namespace pxsim {
     }
 
     export function dumpLivePointers() {
+        if (noRefCounting) return
         Object.keys(liveRefObjs).forEach(k => {
             (<RefObject>liveRefObjs[k]).print()
         })

@@ -740,19 +740,14 @@ Ctrl+Shift+B
     newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: Util.Map<string>, nameOverride?: string): Promise<void> {
         let cfg = pxt.U.clone(prj.config);
         cfg.name = nameOverride || "Untitled" // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
-        let files: ScriptText = {
-            "pxt.json": JSON.stringify(cfg, null, 4) + "\n",
-        }
-        for (let f in prj.files)
-            files[f] = prj.files[f];
+        let files: ScriptText = Util.clone(prj.files)
         if (fileOverrides)
-            for (let f in fileOverrides)
-                files[f] = fileOverrides[f];
+            Util.jsonCopyFrom(files, fileOverrides)
         // remove markdown files
         cfg.files = cfg.files.filter(f => !/\.md$/i.test(f));
         for (let fk in files)
             if (/\.md$/i.test(fk)) delete files[fk];
-
+        files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
         return workspace.installAsync({
             name: cfg.name,
             meta: {},

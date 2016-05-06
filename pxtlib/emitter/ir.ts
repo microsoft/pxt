@@ -18,6 +18,12 @@ namespace ts.pxt.ir {
         Sequence,
         JmpValue,
     }
+    
+    export enum CallingConvention {
+        Plain,
+        Async,
+        Promise,
+    }
 
     export class Node {
         isExpr(): this is Expr { return false }
@@ -28,7 +34,7 @@ namespace ts.pxt.ir {
         public jsInfo: string;
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
-        public isAsync: boolean;
+        public callingConvention = CallingConvention.Plain;
 
         constructor(
             public exprKind: EK,
@@ -46,8 +52,7 @@ namespace ts.pxt.ir {
                 copy.totalUses = e.totalUses
                 copy.currUses = e.currUses
             }
-            if (e.isAsync)
-                copy.isAsync = e.isAsync
+            copy.callingConvention = e.callingConvention
             return copy
         }
 
@@ -531,7 +536,7 @@ namespace ts.pxt.ir {
         return op(EK.RuntimeCall, args, name)
     }
 
-    export function rtcallMask(name: string, mask: number, isAsync: boolean, args: Expr[]) {
+    export function rtcallMask(name: string, mask: number, callingConv: CallingConvention, args: Expr[]) {
         let decrs: ir.Expr[] = []
         args = args.map((a, i) => {
             if (mask & (1 << i)) {
@@ -541,7 +546,7 @@ namespace ts.pxt.ir {
             } else return a;
         })
         let r = op(EK.RuntimeCall, args, name)
-        r.isAsync = isAsync
+        r.callingConvention = callingConv
 
         if (decrs.length > 0) {
             r = shared(r)
