@@ -1,15 +1,58 @@
 
 namespace pxt.blocks.layout {
 
-    export function verticalAlign(ws: B.Workspace) {
+    export function verticalAlign(ws: B.Workspace, emPixels: number) {
         let blocks = ws.getTopBlocks(true);
         let y = 0
         blocks.forEach(block => {
             block.moveBy(0, y)
             y += block.getHeightWidth().height
-            y += 14; //buffer            
+            y += emPixels; //buffer            
         })
     };
+
+    export function shuffle(ws: B.Workspace) {
+        let blocks = ws.getAllBlocks();
+        // unplug all blocks
+        blocks.forEach(b => b.unplug());
+        // TODO: better layout
+        // randomize order
+        fisherYates(blocks);
+        // apply layout
+        flow(blocks);
+    }
+
+    function flow(blocks: Blockly.Block[]) {
+        const gap = 14;
+        const maxx = 320;
+        let insertx = 0;
+        let inserty = 0;
+        let endy = 0;
+        for (let block of blocks) {
+            let r = block.getBoundingRectangle();
+            let s = block.getHeightWidth();
+            // move block to insertion point
+            block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
+            insertx += s.width + gap;
+            if (insertx > maxx) { // start new line
+                insertx = 0;
+                inserty = endy;
+            } else endy = Math.max(endy, inserty + s.height + gap);
+        }
+    }
+
+    function fisherYates<T>(myArray: T[]): void {
+        let i = myArray.length;
+        if (i == 0) return;
+        // TODO: seeded random
+        while (--i) {
+            let j = Math.floor(Math.random() * (i + 1));
+            let tempi = myArray[i];
+            let tempj = myArray[j];
+            myArray[i] = tempj;
+            myArray[j] = tempi;
+        }
+    }
 
     const nodeSeparation = 12;
 
@@ -45,6 +88,46 @@ namespace pxt.blocks.layout {
                 r[k] = 1;
             return r;
         }
+    }
+
+    function removeOverlapsOnTinyGraph(blocks: Blockly.Block[]) {
+        if (blocks.length == 1)
+            return;
+        if (blocks.length == 2) {
+            let a = blocks[0];
+            let b = blocks[1];
+
+            //if (ApproximateComparer.Close(center(a), center(b)))
+            //    b.Center += new Point(0.001, 0);
+
+            let idealDist = getIdealDistanceBetweenTwoNodes(a, b);
+            let c = center(centerBlock(a), centerBlock(b));
+            let dir = goog.math.Coordinate.difference(centerBlock(a), centerBlock(b));
+            let dist = goog.math.Coordinate.magnitude(dir);
+            dir = scale(dir, 0.5 * idealDist / dist);
+
+            setCenter(a, goog.math.Coordinate.sum(c, dir))
+            setCenter(b, goog.math.Coordinate.sum(c, dir))
+        }
+    }
+
+    function scale(c: goog.math.Coordinate, f: number): goog.math.Coordinate {
+        return new goog.math.Coordinate(c.x * f, c.y * f);
+    }
+
+    function center(l: goog.math.Coordinate, r: goog.math.Coordinate): goog.math.Coordinate {
+        return new goog.math.Coordinate(
+            l.x + (r.x - l.x) / 2,
+            l.y + (r.y - l.y) / 2);
+    }
+
+    function centerBlock(b: Blockly.Block): goog.math.Coordinate {
+        let br = b.getBoundingRectangle();
+        return center(br.bottomRight, br.topLeft);
+    }
+
+    function setCenter(b: Blockly.Block, c: goog.math.Coordinate) {
+
     }
 
     function getIdealDistanceBetweenTwoNodes(a: Blockly.Block, b: Blockly.Block): number {

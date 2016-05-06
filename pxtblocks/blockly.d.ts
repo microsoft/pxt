@@ -19,8 +19,10 @@ declare namespace goog {
         class Coordinate {
             x: number;
             y: number;
+            constructor(x: number, y: number);
 
             static difference(a: Coordinate, b: Coordinate): Coordinate;
+            static sum(a: Coordinate, b: Coordinate): Coordinate;
             static magnitude(a: Coordinate): number;
         }
     }
@@ -85,6 +87,8 @@ declare namespace Blockly {
         getInputTargetBlock(field: string): Block;
         // Returns null if no next block or is disconnected.
         getNextBlock(): Block;
+        // Unplug this block from its superior block.  If this block is a statement, optionally reconnect the block underneath with the block on top.
+        unplug() : void;
 
         moveBy(x: number, y: number): void;
         getHeightWidth(): { width: number; height: number; };

@@ -204,7 +204,7 @@ namespace pxt.runner {
         blocksSvg?: JQuery;
     }
 
-    export function decompileToBlocksAsync(code: string): Promise<DecompileResult> {
+    export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         return loadPackageAsync(null)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
@@ -230,7 +230,7 @@ namespace pxt.runner {
                 return {
                     compileJS: resp,
                     compileBlocks: bresp,
-                    blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], { emPixels: 14, align: true })
+                    blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
                 };
             })
     }

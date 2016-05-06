@@ -110,7 +110,7 @@
             if (!p) return;
             console.log('rendering:')
             console.log(p)
-            pxt.runner.decompileToBlocksAsync(p).done(function(r) {
+            pxt.runner.decompileToBlocksAsync(p, { emPixels:14, layout: pxt.blocks.BlockLayout.Shuffle }).done(function(r) {
                 let svg = r.blocksSvg;
                 $('#loading').remove();
                 if (svg) {
@@ -135,6 +135,7 @@
                 snippetClass: 'lang-blocks',
                 signatureClass: 'lang-sig',
                 blocksClass:'lang-block',
+                shuffleClass: 'lang-shuffle',
                 simulatorClass:'lang-sim',
                 linksClass: 'lang-links',
                 namespacesClass: 'lang-namespaces',

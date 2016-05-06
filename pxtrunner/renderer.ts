@@ -4,6 +4,7 @@ namespace pxt.runner {
         snippetClass?: string;
         signatureClass?: string;
         blocksClass?: string;
+        shuffleClass?: string;
         simulatorClass?: string;
         linksClass?: string;
         namespacesClass?: string;
@@ -73,14 +74,14 @@ namespace pxt.runner {
         $container.replaceWith([$c, $h]);
     }
 
-    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void): Promise<void> {
+    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void, options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
         if (!cls) return Promise.resolve();
 
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
         $el.removeClass(cls);
-        return pxt.runner.decompileToBlocksAsync($el.text())
+        return pxt.runner.decompileToBlocksAsync($el.text(), options)
             .then((r) => {
                 try {
                     render($el, r);
@@ -88,7 +89,7 @@ namespace pxt.runner {
                     console.error('error while rendering ' + $el.html())
                     $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                 }
-                return Promise.delay(1, renderNextSnippetAsync(cls, render));
+                return Promise.delay(1, renderNextSnippetAsync(cls, render, options));
             })
     }
 
@@ -138,6 +139,14 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(c, js, s, false);
         });
+    }
+
+    function renderShuffleAsync(options: ClientRenderOptions): Promise<void> {
+        return renderNextSnippetAsync(options.shuffleClass, (c, r) => {
+            let s = r.blocksSvg;
+            if (options.snippetReplaceParent) c = c.parent();
+            c.replaceWith(s);
+        }, { emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -272,6 +281,7 @@ namespace pxt.runner {
         }
 
         return Promise.resolve()
+            .then(() => renderShuffleAsync(options))
             .then(() => renderLinksAsync(options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options.namespacesClass, options.snippetReplaceParent, true))
             .then(() => renderSignaturesAsync(options))
