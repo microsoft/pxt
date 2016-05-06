@@ -122,6 +122,8 @@ namespace ts.pxt {
         helper?: string;
         help?: string;
         async?: boolean;
+        promise?: boolean;
+        callingConvention: ir.CallingConvention;
         block?: string;
         blockId?: string;
         blockGap?: string;
@@ -161,7 +163,7 @@ namespace ts.pxt {
     let lf = thumb.lf;
     let checker: TypeChecker;
 
-    function getComments(node: Node) {
+    export function getComments(node: Node) {
         let src = getSourceFileOfNode(node)
         let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
         if (!doc) return "";
@@ -170,7 +172,7 @@ namespace ts.pxt {
     }
 
     export function parseCommentString(cmt: string): CommentAttrs {
-        let res: CommentAttrs = { paramDefl: {} }
+        let res: CommentAttrs = { paramDefl: {}, callingConvention: ir.CallingConvention.Plain }
         let didSomething = true
         while (didSomething) {
             didSomething = false
@@ -204,6 +206,11 @@ namespace ts.pxt {
         })
 
         res.jsDoc = res.jsDoc.trim()
+
+        if (res.async)
+            res.callingConvention = ir.CallingConvention.Async
+        if (res.promise)
+            res.callingConvention = ir.CallingConvention.Promise
 
         return res
     }
@@ -638,7 +645,7 @@ ${lbl}: .short 0xffff
         function emitTemplateExpression(node: TemplateExpression) {
             let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) =>
                 isEmptyStringLiteral(b) ? a :
-                    ir.rtcallMask("String_::concat", 3, false, [
+                    ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
                         a,
                         emitAsString(b)
                     ])
@@ -746,7 +753,7 @@ ${lbl}: .short 0xffff
                     let arr = emitExpr(node.expression)
                     let idx = emitExpr(node.argumentExpression)
                     let args = [node.expression, node.argumentExpression]
-                    return rtcallMask(indexer, args, false, assign ? [assign] : [])
+                    return rtcallMask(indexer, args, ir.CallingConvention.Plain, assign ? [assign] : [])
                 } else {
                     throw unhandled(node, lf("non-numeric indexer on {0}", indexer))
                 }
@@ -822,7 +829,7 @@ ${lbl}: .short 0xffff
                 hex.validateShim(getDeclName(decl), attrs, hasRet, args.length);
             }
 
-            return rtcallMask(attrs.shim, args, attrs.async)
+            return rtcallMask(attrs.shim, args, attrs.callingConvention)
         }
 
         function isNumericLiteral(node: Expression) {
@@ -951,7 +958,7 @@ ${lbl}: .short 0xffff
                 args.unshift(node.expression)
                 callInfo.args.unshift(node.expression)
 
-                return rtcallMask("pxt::runAction" + suff, args, true)
+                return rtcallMask("pxt::runAction" + suff, args, ir.CallingConvention.Async)
             }
 
             throw unhandled(node, stringKind(decl))
@@ -1260,10 +1267,10 @@ ${lbl}: .short 0xffff
             return src
         }
 
-        function rtcallMask(name: string, args: Expression[], isAsync = false, append: ir.Expr[] = null) {
+        function rtcallMask(name: string, args: Expression[], callingConv = ir.CallingConvention.Plain, append: ir.Expr[] = null) {
             let args2 = args.map(emitExpr)
             if (append) args2 = args2.concat(append)
-            return ir.rtcallMask(name, getMask(args), isAsync, args2)
+            return ir.rtcallMask(name, getMask(args), callingConv, args2)
         }
 
         function emitInJmpValue(expr: ir.Expr) {
@@ -1388,7 +1395,7 @@ ${lbl}: .short 0xffff
 
             if (node.operatorToken.kind == SK.PlusToken) {
                 if ((lt.flags & TypeFlags.String) || (rt.flags & TypeFlags.String)) {
-                    return ir.rtcallMask("String_::concat", 3, false, [
+                    return ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
                         emitAsString(node.left),
                         emitAsString(node.right)])
                 }
@@ -1398,7 +1405,7 @@ ${lbl}: .short 0xffff
                 (lt.flags & TypeFlags.String)) {
 
                 let tmp = prepForAssignment(node.left)
-                let post = ir.shared(ir.rtcallMask("String_::concat", 3, false, [
+                let post = ir.shared(ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
                     tmp.left,
                     emitAsString(node.right)]))
                 emitStore(node.left, post, tmp.storeCache)

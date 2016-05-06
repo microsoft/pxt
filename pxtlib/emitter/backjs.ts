@@ -223,15 +223,21 @@ switch (step) {
             let name: string = topExpr.data
             let text = `pxsim.${name.replace(/::/g, ".")}(${args})`
 
-            if (topExpr.isAsync) {
+
+            if (topExpr.callingConvention == ir.CallingConvention.Plain) {
+                write(`r0 = ${text};`)
+            } else {
                 let loc = ++lblIdx
-                write(`setupResume(s, ${loc});`)
-                write(`return ${text};`)
+                if (topExpr.callingConvention == ir.CallingConvention.Promise) {
+                    write(`(function(cb) { ${text}.done(cb) })(buildResume(s, ${loc}));`)
+                } else {
+                    write(`setupResume(s, ${loc});`)
+                    write(`${text};`)
+                }
+                write(`return;`)
                 writeRaw(`  case ${loc}:`)
                 write(`checkResumeConsumed();`)
                 write(`r0 = s.retval;`)
-            } else {
-                write(`r0 = ${text};`)
             }
         }
 

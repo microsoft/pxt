@@ -76,7 +76,8 @@ function mkSyntheticEntry(name: string, desc: string) {
         symbolInfo: {
             attributes: {
                 jsDoc: desc,
-                paramDefl: {}
+                paramDefl: {},
+                callingConvention: ts.pxt.ir.CallingConvention.Plain
             },
             name: name,
             namespace: "",

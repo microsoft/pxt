@@ -2,16 +2,16 @@
 
 namespace pxsim {
     export module U {
-        export function addClass(el : HTMLElement, cls : string) {
+        export function addClass(el: HTMLElement, cls: string) {
             if (el.classList) el.classList.add(cls);
             else if (!el.className.indexOf(cls)) el.className += ' ' + cls;
         }
-        
-        export function removeClass(el : HTMLElement, cls: string) {
+
+        export function removeClass(el: HTMLElement, cls: string) {
             if (el.classList) el.classList.remove(cls);
             else el.className = el.className.replace(cls, '').replace(/\s{2,}/, ' ');
         }
-        
+
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
                 debugger
@@ -110,13 +110,13 @@ namespace pxsim {
                 console.log("SHOW NUMBER:", n)
                 U.nextTick(cb)
             }
-        }       
+        }
         myRT.serial = {
             writeString: (s: string) => runtime.board.writeSerial(s),
-        }        
+        }
         myRT.pins = {
             createBuffer: BufferMethods.createBuffer,
-        }        
+        }
         myRT.control = {
             inBackground: thread.runInBackground
         }
@@ -420,9 +420,13 @@ namespace pxsim {
             }
 
             function setupResume(s: StackFrame, retPC: number) {
+                currResume = buildResume(s, retPC)
+            }
+
+            function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
-                currResume = (v) => {
+                return (v: any) => {
                     if (_this.dead) return;
                     runtime = _this;
                     U.assert(s.pc == retPC);
