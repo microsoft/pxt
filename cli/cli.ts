@@ -1420,8 +1420,17 @@ function testForBuildTargetAsync() {
 function simshimAsync() {
     let prog = ts.pxt.plainTsc("sim")
     let shims = pxt.simshim(prog)
+    let filename = "sims.d.ts"
     for (let s of Object.keys(shims)) {
-        fs.writeFileSync("libs/" + s, shims[s])
+        let cont = shims[s]
+        if (!cont.trim()) continue
+        cont = "// Auto-generated from simulator. Do not edit.\n" + cont +
+            "\n// Auto-generated. Do not edit. Really.\n"
+        let cfgname = "libs/" + s + "/" + pxt.configName
+        let cfg: pxt.PackageConfig = readJson(cfgname)
+        if (cfg.files.indexOf(filename) == -1)
+            U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
+        fs.writeFileSync("libs/" + s + "/" + filename, cont)
     }
     return Promise.resolve()
 }
