@@ -518,8 +518,8 @@ namespace pxt {
                 files[f] = prj.files[f];
             for (let f in defaultFiles)
                 files[f] = defaultFiles[f];
-            files["README.md"] = ""; // override existing readme files
-            files["pxt.json"] = undefined;
+            delete files["README.md"]; // override existing readme files
+            delete files["pxt.json"];
 
             this.config.files = Object.keys(files).filter(s => !/test/.test(s));
             this.config.testFiles = Object.keys(files).filter(s => /test/.test(s));
@@ -528,7 +528,7 @@ namespace pxt {
             this.saveConfig()
 
             U.iterStringMap(files, (k, v) => {
-                if (v)
+                if (v != null)
                     this.host().writeFile(this, k, v.replace(/@NAME@/g, name))
             })
             info("package initialized")
