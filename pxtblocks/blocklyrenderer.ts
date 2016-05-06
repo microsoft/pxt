@@ -6,23 +6,29 @@ namespace pxt.blocks {
     let workspace: B.Workspace;
     let blocklyDiv: HTMLElement;
 
-    function align(ws: B.Workspace) {
+    function align(ws: B.Workspace, emPixels: number) {
         let blocks = ws.getTopBlocks(true);
         let y = 0
         blocks.forEach(block => {
             block.moveBy(0, y)
             y += block.getHeightWidth().height
-            y += 14; //buffer            
+            y += emPixels; //buffer            
         })
+    }
+
+    export enum BlockLayout {
+        Align = 1,
+        Shuffle = 2,
+        Clean = 3
     }
 
     export interface BlocksRenderOptions {
         emPixels?: number;
-        align?: boolean;
+        layout?: BlockLayout;
         clean?: boolean;
     }
 
-    export function render(blocksXml: string, options: BlocksRenderOptions = {}): JQuery {
+    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Align }): JQuery {
         if (!workspace) {
             blocklyDiv = document.createElement("div");
             blocklyDiv.style.position = "absolute";
@@ -45,11 +51,17 @@ namespace pxt.blocks {
             let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(workspace, xml);
 
-            if (options.align)
-                pxt.blocks.layout.verticalAlign(workspace);
+            switch (options.layout) {
+                case BlockLayout.Align:
+                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels); break;
+                case BlockLayout.Shuffle:
+                    pxt.blocks.layout.shuffle(workspace); break;
+                case BlockLayout.Clean:
+                    if ((<any>workspace).cleanUp_)
+                        (<any>workspace).cleanUp_();
+                    break;
+            }
 
-            if (options.clean && (<any>workspace).cleanUp_)
-                (<any>workspace).cleanUp_();
 
             let metrics = workspace.getMetrics();
 
