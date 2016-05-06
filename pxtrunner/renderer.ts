@@ -145,7 +145,8 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.shuffleClass, (c, r) => {
             let s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
-            c.replaceWith(s);
+            let segment = $('<div class="ui segment"/>').append(s);
+            c.replaceWith(segment);
         }, { emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle });
     }
 
