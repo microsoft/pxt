@@ -1813,7 +1813,17 @@ function initGlobals() {
 initGlobals();
 
 if (require.main === module) {
-    let targetdir = path.resolve(path.join(__dirname, "../../.."))
+    let targetdir = process.cwd()
+    while (true) {
+        if (fs.existsSync(targetdir + "/pxtarget.json")) break;
+        let newone = path.resolve(targetdir + "/..")
+        if (newone == targetdir) {
+            targetdir = path.resolve(path.join(__dirname, "../../.."))
+            break
+        } else {
+            targetdir = newone
+        }
+    }
     if (!fs.existsSync(targetdir + "/pxtarget.json")) {
         targetdir = path.resolve(path.join(__dirname, ".."))
         if (!fs.existsSync(targetdir + "/pxtarget.json")) {
