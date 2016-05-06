@@ -18,7 +18,7 @@ namespace ts.pxt.ir {
         Sequence,
         JmpValue,
     }
-    
+
     export enum CallingConvention {
         Plain,
         Async,

@@ -20,7 +20,7 @@ namespace ts.pxt {
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
         let refCounting = !!bin.target.jsRefCounting
-        
+
         writeRaw(`
 var ${getFunctionLabel(proc.action)} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
 var r0 = s.r0, step = s.pc;
