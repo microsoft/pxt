@@ -80,7 +80,6 @@ namespace pxt.runner {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
-        $el.removeClass(cls);
         return pxt.runner.decompileToBlocksAsync($el.text(), options)
             .then((r) => {
                 try {
@@ -89,6 +88,7 @@ namespace pxt.runner {
                     console.error('error while rendering ' + $el.html())
                     $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                 }
+                $el.removeClass(cls);
                 return Promise.delay(1, renderNextSnippetAsync(cls, render, options));
             })
     }
