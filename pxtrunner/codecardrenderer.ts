@@ -1,5 +1,5 @@
 namespace pxt.docs.codeCard {
-    
+
     let repeat = pxt.Util.repeatMap;
 
     interface SocialNetwork {
@@ -12,7 +12,7 @@ namespace pxt.docs.codeCard {
             if (text)
                 text.replace(/https?:\/\/(youtu\.be\/([a-z0-9\-_]+))|(www\.youtube\.com\/watch\?v=([a-z0-9\-_]+))/i,
                     (m, m2, id1, m3, id2) => {
-                        var ytid = id1 || id2;
+                        let ytid = id1 || id2;
                         links.push(ytid); return ''
                     });
             if (links[0]) return { source: 'youtube', id: links[0] };
@@ -26,80 +26,80 @@ namespace pxt.docs.codeCard {
             }
         }
     ];
-    
+
     export interface CodeCardRenderOptions {
         hideHeader?: boolean;
     }
-    
-    export function render(card : pxt.CodeCard, options : CodeCardRenderOptions = {}) : HTMLElement {
-        const repeat = pxt.Util.repeatMap;        
-        const promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];        
+
+    export function render(card: pxt.CodeCard, options: CodeCardRenderOptions = {}): HTMLElement {
+        const repeat = pxt.Util.repeatMap;
+        const promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];
         let color = card.color || "";
         if (!color) {
             if (card.hardware && !card.software) color = 'black';
             else if (card.software && !card.hardware) color = 'teal';
         }
-        const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/,''))
+        const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
         const link = card.link && url;
-        const div = (parent : HTMLElement, cls : string, tag = "div", text : string|number = '') : HTMLElement => {
+        const div = (parent: HTMLElement, cls: string, tag = "div", text: string | number = ''): HTMLElement => {
             let d = document.createElement(tag);
             if (cls)
                 d.className = cls;
             if (parent) parent.appendChild(d);
-            if (text) d.appendChild( document.createTextNode(text + ''));
-            return d;            
+            if (text) d.appendChild(document.createTextNode(text + ''));
+            return d;
         }
-        const a = (parent : HTMLElement, href : string, text: string, cls : string) : HTMLAnchorElement => {
+        const a = (parent: HTMLElement, href: string, text: string, cls: string): HTMLAnchorElement => {
             let d = document.createElement('a');
             d.className = cls;
             d.href = href;
-            d.appendChild( document.createTextNode(text));
+            d.appendChild(document.createTextNode(text));
             d.target = '_blank';
             parent.appendChild(d);
             return d;
         }
-        
+
         let r = div(null, 'ui card ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
         if (link) (r as HTMLAnchorElement).href = url;
         if (!options.hideHeader && (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any)) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
             let hr = div(h, "right floated meta")
             if (card.any) div(hr, "ui grey circular label tiny", "i", card.any > 0 ? card.any : "");
-            repeat(card.blocks, (k) => div(hr,"puzzle orange icon","i"));
-            repeat(card.javascript, (k) => div(hr,"keyboard blue icon","i"));
-            repeat(card.hardware, (k) => div(hr,"certificate black icon","i"));
-            repeat(card.software, (k) => div(hr,"square teal icon","i"));
-            
-            if (card.header) div(h, 'description','span',card.header);
+            repeat(card.blocks, (k) => div(hr, "puzzle orange icon", "i"));
+            repeat(card.javascript, (k) => div(hr, "keyboard blue icon", "i"));
+            repeat(card.hardware, (k) => div(hr, "certificate black icon", "i"));
+            repeat(card.software, (k) => div(hr, "square teal icon", "i"));
+
+            if (card.header) div(h, 'description', 'span', card.header);
         }
-        
-        let img = div(r, "ui image" + (card.responsive ? " tall landscape only": ""));
+
+        let img = div(r, "ui image" + (card.responsive ? " tall landscape only" : ""));
         if (promo) {
             let promoDiv = div(img, "ui embed");
             promoDiv.dataset["source"] = promo.source;
-            promoDiv.dataset["id"] =promo.id;
-        
+            promoDiv.dataset["id"] = promo.id;
+
             ($(promoDiv) as any).embed();
         }
-        
+
         if (card.blocksXml) {
             let svg = pxt.blocks.render(card.blocksXml, { emPixels: 14, align: true });
             if (!svg) {
                 console.error("failed to render blocks");
                 console.log(card.blocksXml);
             } else {
-                let holder = div(img, ''); holder.setAttribute('style', 'width:100%; min-height:10em'); 
+                let holder = div(img, ''); holder.setAttribute('style', 'width:100%; min-height:10em');
                 holder.appendChild(svg[0]);
             }
         }
-        
+
         if (card.typeScript) {
             let pre = document.createElement("pre");
             pre.appendChild(document.createTextNode(card.typeScript));
             img.appendChild(pre);
         }
-        
+
         let ct = div(r, "ui content");
         if (card.name) {
             if (url && !link) a(ct, url, card.name, 'header');
@@ -111,14 +111,14 @@ namespace pxt.docs.codeCard {
             m.appendChild(document.createTextNode(pxt.Util.timeSince(card.time)));
         }
         if (card.description) {
-            let descr = div(ct, 'ui description');            
+            let descr = div(ct, 'ui description');
             descr.appendChild(document.createTextNode(card.description.split('.')[0] + '.'));
         }
         if (url && !link) {
             let extra = div(r, "ui extra content" + (card.responsive ? " tall desktop only" : ""));
-            a(extra, url, card.url, '');            
+            a(extra, url, card.url, '');
         }
-        
+
         return r;
     }
 }

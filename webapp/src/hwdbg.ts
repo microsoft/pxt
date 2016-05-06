@@ -118,7 +118,7 @@ export function getHwStateAsync() {
         })
 }
 
-var devPath: Promise<string>;
+let devPath: Promise<string>;
 
 export function workerOpAsync(op: string, arg: any = {}) {
     init()

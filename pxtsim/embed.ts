@@ -35,7 +35,7 @@ namespace pxsim {
         rssi?: number;
     }
 
-    export module Embed {
+    export namespace Embed {
         export function start() {
             console.log('listening for simulator commands')
             window.addEventListener("message", receiveMessage, false);
@@ -64,7 +64,7 @@ namespace pxsim {
 
         // TODO remove this; this should be using Runtime.runtime which gets
         // set correctly depending on which runtime is currently running
-        var runtime: pxsim.Runtime;
+        let runtime: pxsim.Runtime;
 
         export function stop() {
             if (runtime) {

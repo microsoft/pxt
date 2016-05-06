@@ -627,15 +627,15 @@ namespace pxt {
         }
     }
 
-    export var pkgPrefix = "ptr-pkg-"
-    export var configName = "pxt.json"
-    export var blocksProjectName = "blocksprj";
-    export var javaScriptProjectName = "tsprj";
-    var info = function info(msg: string) {
+    export const pkgPrefix = "ptr-pkg-"
+    export const configName = "pxt.json"
+    export const blocksProjectName = "blocksprj";
+    export const javaScriptProjectName = "tsprj";
+    const info = function info(msg: string) {
         console.log(msg)
     }
 
-    var defaultFiles: U.Map<string> = {
+    const defaultFiles: U.Map<string> = {
         "tsconfig.json":
         `{
     "compilerOptions": {
@@ -659,43 +659,43 @@ pxt_modules
         `{
     "editor.formatOnType": true,
     "files.autoSave": "afterDelay",
-	"search.exclude": {
-		"**/built": true,
-		"**/node_modules": true,
-		"**/yotta_modules": true,
-		"**/yotta_targets": true,
-		"**/pxt_modules": true
-	}
+    "search.exclude": {
+        "**/built": true,
+        "**/node_modules": true,
+        "**/yotta_modules": true,
+        "**/yotta_targets": true,
+        "**/pxt_modules": true
+    }
 }`,
         ".vscode/tasks.json":
         `
 // A task runner that calls the PXT compiler and
 {
-	"version": "0.1.0",
+    "version": "0.1.0",
 
-	// The command is pxt. Assumes that PXT has been installed using npm install -g pxt
-	"command": "pxt",
+    // The command is pxt. Assumes that PXT has been installed using npm install -g pxt
+    "command": "pxt",
 
-	// The command is a shell script
-	"isShellCommand": true,
+    // The command is a shell script
+    "isShellCommand": true,
 
-	// Show the output window always.
-	"showOutput": "always",
+    // Show the output window always.
+    "showOutput": "always",
 
     "tasks": [{
         "taskName": "deploy",
         "isBuildCommand": true,
-	    "problemMatcher": "$tsc",
-    	"args": ["deploy"]
+        "problemMatcher": "$tsc",
+        "args": ["deploy"]
     }, {
         "taskName": "build",
         "isTestCommand": true,
-	    "problemMatcher": "$tsc",
-    	"args": ["build"]
+        "problemMatcher": "$tsc",
+        "args": ["build"]
     }, {
         "taskName": "publish",
-	    "problemMatcher": "$tsc",
-    	"args": ["publish"]
+        "problemMatcher": "$tsc",
+        "args": ["publish"]
     }]
 }
 `

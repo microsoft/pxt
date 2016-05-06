@@ -9,7 +9,7 @@ import * as compiler from "./compiler"
 import * as sui from "./sui";
 
 import Util = pxt.Util;
-var lf = Util.lf
+let lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
@@ -184,7 +184,7 @@ export class Editor extends srceditor.Editor {
             return;
 
         // clear previous warnings
-        this.editor.getAllBlocks().forEach(b => b.setWarningText(null));        
+        this.editor.getAllBlocks().forEach(b => b.setWarningText(null));
         let tsfile = file.epkg.files[file.getVirtualFileName()];
         if (!tsfile || !tsfile.diagnostics) return;
 

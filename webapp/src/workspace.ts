@@ -20,7 +20,7 @@ import Cloud = pxt.Cloud;
 let lf = U.lf
 
 
-var impl: WorkspaceProvider;
+let impl: WorkspaceProvider;
 
 export function setupWorkspace(id: string) {
     switch (id) {
@@ -37,7 +37,7 @@ export function setupWorkspace(id: string) {
 
 export function getHeaders(withDeleted = false) {
     checkSession();
-    
+
     let r = impl.getHeaders()
     if (!withDeleted)
         r = r.filter(r => !r.isDeleted)
@@ -54,24 +54,24 @@ export function getHeader(id: string) {
     return null
 }
 
-let sessionID : string;
+let sessionID: string;
 export function isSessionOutdated() {
-    return localStorage['pxt_workspace_session_id']  != sessionID;
+    return localStorage['pxt_workspace_session_id'] != sessionID;
 }
 function checkSession() {
     if (isSessionOutdated()) {
         Util.assert(false, "trying to access outdated session")
-    } 
+    }
 }
 
 export function initAsync() {
     if (!impl) impl = cloudworkspace.provider;
-    
+
     // generate new workspace session id to avoid races with other tabs
     sessionID = Util.guidGen();
     localStorage['pxt_workspace_session_id'] = sessionID;
     console.log(`workspace session: ${sessionID}`);
-    
+
     return impl.initAsync(pxt.appTarget.id)
 }
 

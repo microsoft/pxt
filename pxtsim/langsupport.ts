@@ -8,10 +8,10 @@ namespace pxsim {
             throw new Error("sim: check failed")
     }
 
-    var refObjId = 1;
-    var liveRefObjs: any = {};
-    var stringLiterals: any;
-    var stringRefCounts: any = {};
+    let refObjId = 1;
+    let liveRefObjs: any = {};
+    let stringLiterals: any;
+    let stringRefCounts: any = {};
 
     export class RefObject {
         id: number = refObjId++;

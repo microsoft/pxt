@@ -1,4 +1,4 @@
-module ts.pxt.thumb {
+namespace ts.pxt.thumb {
     /* Docs:
      *
      * Thumb 16-bit Instruction Set Quick Reference Card
@@ -37,7 +37,7 @@ module ts.pxt.thumb {
         return fmt.replace(/{(\d+)}/g, (match, index) => args[+index]);
     }
 
-    var badNameError = emitErr("opcode name doesn't match", "<name>")
+    let badNameError = emitErr("opcode name doesn't match", "<name>")
 
     class Instruction {
         public name: string;
@@ -56,26 +56,26 @@ module ts.pxt.thumb {
                 return m
             })
 
-            var words = tokenize(format)
+            let words = tokenize(format)
             this.name = words[0]
             this.args = words.slice(1)
         }
 
         emit(ln: Line): EmitResult {
-            var tokens = ln.words;
+            let tokens = ln.words;
             if (tokens[0] != this.name) return badNameError;
-            var r = this.opcode;
-            var j = 1;
-            var stack = 0;
-            var numArgs: number[] = []
-            var labelName: string = null
+            let r = this.opcode;
+            let j = 1;
+            let stack = 0;
+            let numArgs: number[] = []
+            let labelName: string = null
 
-            for (var i = 0; i < this.args.length; ++i) {
-                var formal = this.args[i]
-                var actual = tokens[j++]
+            for (let i = 0; i < this.args.length; ++i) {
+                let formal = this.args[i]
+                let actual = tokens[j++]
                 if (formal[0] == "$") {
-                    var enc = encoders[formal]
-                    var v: number = null
+                    let enc = encoders[formal]
+                    let v: number = null
                     if (enc.isRegister) {
                         v = registerNo(actual);
                         if (v == null) return emitErr("expecting register name", actual)
@@ -97,7 +97,7 @@ module ts.pxt.thumb {
                             actual = tokens[j++];
                             if (!actual)
                                 return emitErr("expecting }", tokens[j - 2])
-                            var no = registerNo(actual);
+                            let no = registerNo(actual);
                             if (no == null) return emitErr("expecting register name", actual)
                             if (v & (1 << no)) return emitErr("duplicate register name", actual)
                             v |= (1 << no);
@@ -158,7 +158,7 @@ module ts.pxt.thumb {
 
         private emitBl(v: number, actual: string): EmitResult {
             if (v % 2) return emitErr("uneven BL?", actual);
-            var off = v / 2
+            let off = v / 2
             assert(off != null)
             if ((off | 0) != off ||
                 // we can actually support more but the board has 256k (128k instructions)
@@ -166,8 +166,8 @@ module ts.pxt.thumb {
                 return emitErr("jump out of range", actual);
 
             // note that off is already in instructions, not bytes
-            var imm11 = off & 0x7ff
-            var imm10 = (off >> 11) & 0x3ff
+            let imm11 = off & 0x7ff
+            let imm10 = (off >> 11) & 0x3ff
 
             return {
                 opcode: (off & 0xf0000000) ? (0xf400 | imm10) : (0xf000 | imm10),
@@ -205,9 +205,9 @@ module ts.pxt.thumb {
 
         public singleReg() {
             assert(this.getOp() == "push" || this.getOp() == "pop")
-            var k = 0;
-            var ret = -1;
-            var v = this.numArgs[0]
+            let k = 0;
+            let ret = -1;
+            let v = this.numArgs[0]
             while (v > 0) {
                 if (v & 1) {
                     if (ret == -1) ret = k;
@@ -289,44 +289,46 @@ module ts.pxt.thumb {
             return this.buf.length * 2;
         }
 
-        public parseOneInt(s: string):number {
+        public parseOneInt(s: string): number {
             if (!s)
                 return null;
 
             if (s == "0") return 0;
 
-            var mul = 1
+            let mul = 1
 
-            if (s.indexOf("*") >= 0)
+            if (s.indexOf("*") >= 0) {
+                let m: RegExpExecArray = null;
                 while (m = /^([^\*]*)\*(.*)$/.exec(s)) {
-                    var tmp = this.parseOneInt(m[1])
+                    let tmp = this.parseOneInt(m[1])
                     if (tmp == null) return null;
                     mul *= tmp;
                     s = m[2]
                 }
+            }
 
             if (s[0] == "-") {
                 mul *= -1;
                 s = s.slice(1)
             }
 
-            var v: number = null
-            
+            let v: number = null
+
             if (U.endsWith(s, "|1")) {
                 return this.parseOneInt(s.slice(0, s.length - 2)) | 1
             }
 
             if (s[0] == "0") {
                 if (s[1] == "x" || s[1] == "X") {
-                    var m = /^0x([a-f0-9]+)$/i.exec(s)
+                    let m = /^0x([a-f0-9]+)$/i.exec(s)
                     if (m) v = parseInt(m[1], 16)
                 } else if (s[1] == "b" || s[1] == "B") {
-                    m = /^0b([01]+)$/i.exec(s)
+                    let m = /^0b([01]+)$/i.exec(s)
                     if (m) v = parseInt(m[1], 2)
                 }
             }
 
-            m = /^(\d+)$/i.exec(s)
+            let m = /^(\d+)$/i.exec(s)
             if (m) v = parseInt(m[1], 10)
 
             if (s.indexOf("@") >= 0) {
@@ -383,8 +385,8 @@ module ts.pxt.thumb {
         }
 
         public lookupLabel(name: string, direct = false) {
-            var v: number = null;
-            var scoped = this.scopedName(name)
+            let v: number = null;
+            let scoped = this.scopedName(name)
             if (this.labels.hasOwnProperty(scoped))
                 v = this.labels[scoped];
             else if (this.lookupExternalLabel) {
@@ -401,7 +403,7 @@ module ts.pxt.thumb {
         }
 
         public getRelativeLabel(s: string, wordAligned = false) {
-            var l = this.lookupLabel(s);
+            let l = this.lookupLabel(s);
             if (l == null) return null;
             let pc = this.location() + 4
             if (wordAligned) pc = pc & 0xfffffffc
@@ -415,7 +417,7 @@ module ts.pxt.thumb {
         }
 
         public pushError(msg: string, hints: string = "") {
-            var err = <InlineError>{
+            let err = <InlineError>{
                 scope: this.scope,
                 message: lf("  -> Line {2} ('{1}'), error: {0}\n{3}", msg, this.currLine.text, this.currLine.lineNo, hints),
                 lineNo: this.currLine.lineNo,
@@ -436,30 +438,30 @@ module ts.pxt.thumb {
         private emitString(l: string) {
             function byteAt(s: string, i: number) { return (s.charCodeAt(i) || 0) & 0xff }
 
-            var m = /^\s*([\w\.]+\s*:\s*)?.\w+\s+(".*")\s*$/.exec(l)
-            var s: string;
+            let m = /^\s*([\w\.]+\s*:\s*)?.\w+\s+(".*")\s*$/.exec(l)
+            let s: string;
             if (!m || null == (s = parseString(m[2]))) {
                 this.directiveError(lf("expecting string"))
             } else {
                 this.align(2);
                 // s.length + 1 to NUL terminate
-                for (var i = 0; i < s.length + 1; i += 2) {
+                for (let i = 0; i < s.length + 1; i += 2) {
                     this.emitShort((byteAt(s, i + 1) << 8) | byteAt(s, i))
                 }
             }
         }
 
         private parseNumber(words: string[]): number {
-            var v = this.parseOneInt(words.shift())
+            let v = this.parseOneInt(words.shift())
             if (v == null) return null;
             return v;
         }
 
         private parseNumbers(words: string[]) {
             words = words.slice(1)
-            var nums: number[] = []
+            let nums: number[] = []
             while (true) {
-                var n = this.parseNumber(words)
+                let n = this.parseNumber(words)
                 if (n == null) {
                     this.directiveError(lf("cannot parse number at '{0}'", words[0]))
                     break;
@@ -481,7 +483,7 @@ module ts.pxt.thumb {
         }
 
         private emitSpace(words: string[]) {
-            var nums = this.parseNumbers(words);
+            let nums = this.parseNumbers(words);
             if (nums.length == 1)
                 nums.push(0)
             if (nums.length != 2)
@@ -489,22 +491,22 @@ module ts.pxt.thumb {
             else if (nums[0] % 2 != 0)
                 this.directiveError(lf("only even space supported"))
             else {
-                var f = nums[1] & 0xff;
+                let f = nums[1] & 0xff;
                 f = f | (f << 8)
-                for (var i = 0; i < nums[0]; i += 2)
+                for (let i = 0; i < nums[0]; i += 2)
                     this.emitShort(f)
             }
         }
 
         private emitBytes(words: string[]) {
-            var nums = this.parseNumbers(words)
+            let nums = this.parseNumbers(words)
             if (nums.length % 2 != 0) {
                 this.directiveError(".bytes needs an even number of arguments")
                 nums.push(0)
             }
-            for (var i = 0; i < nums.length; i += 2) {
-                var n0 = nums[i]
-                var n1 = nums[i + 1]
+            for (let i = 0; i < nums.length; i += 2) {
+                let n0 = nums[i]
+                let n1 = nums[i + 1]
                 if (0 <= n0 && n1 <= 0xff &&
                     0 <= n1 && n0 <= 0xff)
                     this.emitShort((n0 & 0xff) | ((n1 & 0xff) << 8))
@@ -521,8 +523,8 @@ module ts.pxt.thumb {
                 else if (!/^[a-f0-9]+$/i.test(w))
                     this.directiveError(".hex needs a hex number")
                 else
-                    for (var i = 0; i < w.length; i += 4) {
-                        var n = parseInt(w.slice(i, i + 4), 16)
+                    for (let i = 0; i < w.length; i += 4) {
+                        let n = parseInt(w.slice(i, i + 4), 16)
                         n = ((n & 0xff) << 8) | ((n >> 8) & 0xff)
                         this.emitShort(n)
                     }
@@ -530,14 +532,14 @@ module ts.pxt.thumb {
         }
 
         private handleDirective(l: Line) {
-            var words = l.words;
+            let words = l.words;
 
-            var expectOne = () => {
+            let expectOne = () => {
                 if (words.length != 2)
                     this.directiveError(lf("expecting one argument"));
             }
 
-            var num0: number;
+            let num0: number;
 
             switch (words[0]) {
                 case ".ascii":
@@ -634,7 +636,7 @@ module ts.pxt.thumb {
                     this.scope = words[1] || "";
                     this.currLineNo = this.scope ? 0 : this.realCurrLineNo;
                     break;
-                
+
                 case "@nostackcheck":
                     this.checkStack = false
                     break
@@ -670,7 +672,7 @@ module ts.pxt.thumb {
         }
 
         private handleOneInstruction(ln: Line, instr: Instruction) {
-            var op = instr.emit(ln);
+            let op = instr.emit(ln);
             if (!op.error) {
                 this.stack += op.stack;
                 if (this.checkStack && this.stack < 0)
@@ -692,23 +694,23 @@ module ts.pxt.thumb {
                     return;
             }
 
-            var getIns = (n: string) => instructions.hasOwnProperty(n) ? instructions[n] : [];
+            let getIns = (n: string) => instructions.hasOwnProperty(n) ? instructions[n] : [];
 
             if (!ln.instruction) {
-                var ins = getIns(ln.words[0])
-                for (var i = 0; i < ins.length; ++i) {
+                let ins = getIns(ln.words[0])
+                for (let i = 0; i < ins.length; ++i) {
                     if (this.handleOneInstruction(ln, ins[i]))
                         return;
                 }
             }
 
-            var w0 = ln.words[0].toLowerCase().replace(/s$/, "").replace(/[^a-z]/g, "")
+            let w0 = ln.words[0].toLowerCase().replace(/s$/, "").replace(/[^a-z]/g, "")
 
-            var hints = ""
-            var possibilities = getIns(w0).concat(getIns(w0 + "s"))
+            let hints = ""
+            let possibilities = getIns(w0).concat(getIns(w0 + "s"))
             if (possibilities.length > 0) {
                 possibilities.forEach(i => {
-                    var err = i.emit(ln);
+                    let err = i.emit(ln);
                     hints += lf("   Maybe: {0} ({1} at '{2}')\n", i.toString(), err.error, err.errorAt)
                 })
             }
@@ -717,7 +719,7 @@ module ts.pxt.thumb {
         }
 
         private mkLine(tx: string) {
-            var l = new Line(this, tx);
+            let l = new Line(this, tx);
             l.scope = this.scope;
             l.lineNo = this.currLineNo;
             this.lines.push(l);
@@ -736,14 +738,14 @@ module ts.pxt.thumb {
                 this.currLineNo++;
                 this.realCurrLineNo++;
 
-                var l = this.mkLine(tx);
-                var words = tokenize(l.text) || [];
+                let l = this.mkLine(tx);
+                let words = tokenize(l.text) || [];
                 l.words = words;
 
                 let w0 = words[0] || ""
 
                 if (w0.charAt(w0.length - 1) == ":") {
-                    var m = /^([\.\w]+):$/.exec(words[0])
+                    let m = /^([\.\w]+):$/.exec(words[0])
                     if (m) {
                         l.type = "label";
                         l.text = m[1] + ":"
@@ -786,9 +788,9 @@ module ts.pxt.thumb {
                 if (l.words.length == 0) return;
 
                 if (l.type == "label") {
-                    var lblname = this.scopedName(l.words[0])
+                    let lblname = this.scopedName(l.words[0])
                     if (this.finalEmit) {
-                        var curr = this.labels[lblname]
+                        let curr = this.labels[lblname]
                         if (curr == null)
                             oops()
                         assert(this.errors.length > 0 || curr == this.location())
@@ -815,20 +817,20 @@ module ts.pxt.thumb {
         }
 
         public getSource(clean: boolean) {
-            var lenTotal = this.buf ? this.buf.length * 2 : 0
-            var lenThumb = this.labels["_program_end"] || lenTotal;
-            var res =
+            let lenTotal = this.buf ? this.buf.length * 2 : 0
+            let lenThumb = this.labels["_program_end"] || lenTotal;
+            let res =
                 lf("; thumb size: {0} bytes; src size {1} bytes\n", lenThumb, lenTotal - lenThumb) +
                 lf("; assembly: {0} lines\n", this.lines.length) +
                 this.stats + "\n\n"
 
-            var pastEnd = false;
+            let pastEnd = false;
 
             this.lines.forEach((ln, i) => {
                 if (pastEnd) return;
                 if (ln.type == "label" && ln.words[0] == "_program_end")
                     pastEnd = true;
-                var text = ln.text
+                let text = ln.text
                 if (clean) {
                     if (ln.words[0] == "@stackempty" &&
                         this.lines[i - 1].text == ln.text)
@@ -846,21 +848,21 @@ module ts.pxt.thumb {
         private peepHole() {
             // TODO add: str X; ldr X -> str X ?
 
-            var lb11 = encoders["$lb11"]
-            var lb = encoders["$lb"]
+            let lb11 = encoders["$lb11"]
+            let lb = encoders["$lb"]
 
-            var mylines = this.lines.filter(l => l.type != "empty")
+            let mylines = this.lines.filter(l => l.type != "empty")
 
-            for (var i = 0; i < mylines.length; ++i) {
-                var ln = mylines[i];
+            for (let i = 0; i < mylines.length; ++i) {
+                let ln = mylines[i];
                 if (/^user/.test(ln.scope)) // skip opt for user-supplied assembly
                     continue;
-                var lnNext = mylines[i + 1];
+                let lnNext = mylines[i + 1];
                 if (!lnNext) continue;
-                var lnNext2 = mylines[i + 2]
+                let lnNext2 = mylines[i + 2]
                 if (ln.type == "instruction") {
-                    var lnop = ln.getOp()
-                    var isSkipBranch = false
+                    let lnop = ln.getOp()
+                    let isSkipBranch = false
                     if (lnop == "bne" || lnop == "beq") {
                         if (lnNext.getOp() == "b" && ln.numArgs[0] == 0)
                             isSkipBranch = true;
@@ -963,7 +965,7 @@ module ts.pxt.thumb {
                 return;
 
             let maxPasses = 5
-            for (var i = 0; i < maxPasses; ++i) {
+            for (let i = 0; i < maxPasses; ++i) {
                 this.peepPass(i == maxPasses);
                 if (this.peepOps == 0) break;
             }
@@ -978,9 +980,9 @@ module ts.pxt.thumb {
             case "lr": actual = "r14"; break;
             case "sp": actual = "r13"; break;
         }
-        var m = /^r(\d+)$/.exec(actual)
+        let m = /^r(\d+)$/.exec(actual)
         if (m) {
-            var r = parseInt(m[1], 10)
+            let r = parseInt(m[1], 10)
             if (0 <= r && r < 16)
                 return r;
         }
@@ -998,8 +1000,8 @@ module ts.pxt.thumb {
         isWordAligned?: boolean;
     }
 
-    var instructions: StringMap<Instruction[]>;
-    var encoders: StringMap<Encoder>;
+    let instructions: StringMap<Instruction[]>;
+    let encoders: StringMap<Encoder>;
 
     function tokenize(line: string): string[] {
         let words: string[] = []
@@ -1039,8 +1041,8 @@ module ts.pxt.thumb {
         if (instructions) return;
 
         encoders = {};
-        var addEnc = (n: string, p: string, e: (v: number) => number) => {
-            var ee:Encoder = {
+        let addEnc = (n: string, p: string, e: (v: number) => number) => {
+            let ee: Encoder = {
                 name: n,
                 pretty: p,
                 encode: e,
@@ -1053,7 +1055,7 @@ module ts.pxt.thumb {
             return ee
         }
 
-        var inrange = (max: number, v: number, e: number) => {
+        let inrange = (max: number, v: number, e: number) => {
             if (Math.floor(v) != v) return null;
             if (v < 0) return null;
             if (v > max) return null;
@@ -1100,11 +1102,11 @@ module ts.pxt.thumb {
         addEnc("$rl1", "{LR,R0-7,...}", v => (v & 0x4000) ? inrange(255, (v & ~0x4000), 0x100 | (v & 0xff)) : inrange(255, v, v))
         addEnc("$rl2", "{PC,R0-7,...}", v => (v & 0x8000) ? inrange(255, (v & ~0x8000), 0x100 | (v & 0xff)) : inrange(255, v, v))
 
-        var inrangeSigned = (max: number, v: number, e: number) => {
+        let inrangeSigned = (max: number, v: number, e: number) => {
             if (Math.floor(v) != v) return null;
             if (v < -(max + 1)) return null;
             if (v > max) return null;
-            var mask = (max << 1) | 1
+            let mask = (max << 1) | 1
             return e & mask;
         }
 
@@ -1113,8 +1115,8 @@ module ts.pxt.thumb {
         addEnc("$lb11", "LABEL", v => inrangeSigned(1023, v / 2, v >> 1))
 
         instructions = {}
-        var add = (name: string, code: number, mask: number, jsFormat?: string) => {
-            var ins = new Instruction(name, code, mask, jsFormat)
+        let add = (name: string, code: number, mask: number, jsFormat?: string) => {
+            let ins = new Instruction(name, code, mask, jsFormat)
             if (!instructions.hasOwnProperty(ins.name))
                 instructions[ins.name] = [];
             instructions[ins.name].push(ins)
@@ -1254,14 +1256,14 @@ module ts.pxt.thumb {
     }
 
     function testOne(op: string, code: number) {
-        var b = new File()
+        let b = new File()
         b.checkStack = false;
         b.emit(op)
         assert(b.buf[0] == code)
     }
 
     function expectError(asm: string) {
-        var b = new File();
+        let b = new File();
         b.emit(asm);
         if (b.errors.length == 0) {
             oops("ASMTEST: expecting error for: " + asm)
@@ -1277,13 +1279,13 @@ module ts.pxt.thumb {
     }
 
     function expect(disasm: string) {
-        var exp: number[] = []
-        var asm = disasm.replace(/^([0-9a-fA-F]{4})\s/gm, (w, n) => {
+        let exp: number[] = []
+        let asm = disasm.replace(/^([0-9a-fA-F]{4})\s/gm, (w, n) => {
             exp.push(parseInt(n, 16))
             return ""
         })
 
-        var b = new File();
+        let b = new File();
         b.throwOnError = true;
         b.disablePeepHole = true;
         b.emit(asm);
@@ -1294,7 +1296,7 @@ module ts.pxt.thumb {
 
         if (b.buf.length != exp.length)
             oops("ASMTEST: wrong buf len")
-        for (var i = 0; i < exp.length; ++i) {
+        for (let i = 0; i < exp.length; ++i) {
             if (b.buf[i] != exp[i])
                 oops("ASMTEST: wrong buf content, exp:" + tohex(exp[i]) + ", got: " + tohex(b.buf[i]))
         }

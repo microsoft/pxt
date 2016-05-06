@@ -98,8 +98,8 @@ namespace pxt.cpp {
         return null
     }
 
-    var prevExtInfo: Y.ExtensionInfo;
-    var prevSnapshot: U.Map<string>;
+    let prevExtInfo: Y.ExtensionInfo;
+    let prevSnapshot: U.Map<string>;
 
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         let pkgSnapshot: U.Map<string> = {}
@@ -361,8 +361,8 @@ namespace pxt.cpp {
 
                         return `${argName}${qm}: ${mapType(m[1])}`
                     })
-                    var numArgs = args.length
-                    var fi: Y.FuncInfo = {
+                    let numArgs = args.length
+                    let fi: Y.FuncInfo = {
                         name: currNs + "::" + funName,
                         type: retTp == "void" ? "P" : "F",
                         args: numArgs,
@@ -455,7 +455,7 @@ namespace pxt.cpp {
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         src = parseCpp(src, isHeader)
                         res.extensionFiles["/source/" + fullName] = src
-                        
+
                         if (pkg.level == 0)
                             res.onlyPublic = false
                         if (pkg.verProtocol() && pkg.verProtocol() != "pub" && pkg.verProtocol() != "embed")
@@ -497,7 +497,7 @@ int main() {
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)
 
-        var creq = {
+        let creq = {
             config: compileService.serviceId,
             tag: compileService.gittag,
             replaceFiles: tmp,
@@ -521,7 +521,7 @@ int main() {
             return Promise.resolve<ArrayBuffer>(null);
         else {
             return new Promise<ArrayBuffer>((resolve, reject) => {
-                var reader = new FileReader();
+                let reader = new FileReader();
                 reader.onerror = (ev) => resolve(null);
                 reader.onload = (ev) => resolve(reader.result);
                 reader.readAsArrayBuffer(f);
@@ -533,9 +533,9 @@ int main() {
         if (!binstr) return ""
 
         // escape function is deprecated
-        var escaped = ""
-        for (var i = 0; i < binstr.length; ++i) {
-            var k = binstr[i] & 0xff
+        let escaped = ""
+        for (let i = 0; i < binstr.length; ++i) {
+            let k = binstr[i] & 0xff
             if (k == 37 || k > 0x7f) {
                 escaped += "%" + k.toString(16);
             } else {
@@ -548,8 +548,9 @@ int main() {
     }
 
     function swapBytes(str: string): string {
-        var r = ""
-        for (var i = 0; i < str.length; i += 2)
+        let r = ""
+        let i = 0
+        for (; i < str.length; i += 2)
             r = str[i] + str[i + 1] + r
         Util.assert(i == str.length)
         return r
@@ -558,13 +559,13 @@ int main() {
     function extractSource(hexfile: string): { meta: string; text: Uint8Array; } {
         if (!hexfile) return undefined;
 
-        var metaLen = 0
-        var textLen = 0
-        var toGo = 0
-        var buf: number[];
-        var ptr = 0;
+        let metaLen = 0
+        let textLen = 0
+        let toGo = 0
+        let buf: number[];
+        let ptr = 0;
         hexfile.split(/\r?\n/).forEach(ln => {
-            var m = /^:10....0041140E2FB82FA2BB(....)(....)(....)(....)(..)/.exec(ln)
+            let m = /^:10....0041140E2FB82FA2BB(....)(....)(....)(....)(..)/.exec(ln)
             if (m) {
                 metaLen = parseInt(swapBytes(m[1]), 16)
                 textLen = parseInt(swapBytes(m[2]), 16)
@@ -573,7 +574,7 @@ int main() {
             } else if (toGo > 0) {
                 m = /^:10....00(.*)(..)$/.exec(ln)
                 if (!m) return
-                var k = m[1]
+                let k = m[1]
                 while (toGo > 0 && k.length > 0) {
                     buf[ptr++] = parseInt(k[0] + k[1], 16)
                     k = k.slice(2)
@@ -584,11 +585,11 @@ int main() {
         if (!buf || !(toGo == 0 && ptr == buf.length)) {
             return undefined;
         }
-        var bufmeta = new Uint8Array(metaLen)
-        var buftext = new Uint8Array(textLen)
-        for (var i = 0; i < metaLen; ++i)
+        let bufmeta = new Uint8Array(metaLen)
+        let buftext = new Uint8Array(textLen)
+        for (let i = 0; i < metaLen; ++i)
             bufmeta[i] = buf[i];
-        for (var i = 0; i < textLen; ++i)
+        for (let i = 0; i < textLen; ++i)
             buftext[i] = buf[metaLen + i];
         // iOS Safari doesn't seem to have slice() on Uint8Array
         return {
@@ -625,7 +626,7 @@ int main() {
             return undefined;
         }
 
-        var hd: { compression: string; headerSize: number; metaSize: number; editor: string; target?: string; } = JSON.parse(tmp.meta)
+        let hd: { compression: string; headerSize: number; metaSize: number; editor: string; target?: string; } = JSON.parse(tmp.meta)
         if (!hd) {
             console.log("This .hex file is not valid.")
             return undefined;
@@ -649,8 +650,8 @@ int main() {
 }
 
 namespace pxt.hex {
-    var downloadCache: U.Map<Promise<any>> = {};
-    var cdnUrlPromise: Promise<string>;
+    let downloadCache: U.Map<Promise<any>> = {};
+    let cdnUrlPromise: Promise<string>;
 
     function downloadHexInfoAsync(extInfo: ts.pxt.ExtensionInfo) {
         if (downloadCache.hasOwnProperty(extInfo.sha))
@@ -736,7 +737,7 @@ namespace pxt.hex {
             .then(res => {
                 if (res) {
                     console.log("cache hit, size=" + res.length)
-                    var meta = JSON.parse(res)
+                    let meta = JSON.parse(res)
                     meta.hex = decompressHex(meta.hex)
                     return recordGetAsync(host, "hex-keys", key)
                         .then(() => meta)
@@ -746,9 +747,9 @@ namespace pxt.hex {
 
                     return downloadHexInfoAsync(extInfo)
                         .then(meta => {
-                            var origHex = meta.hex
+                            let origHex = meta.hex
                             meta.hex = compressHex(meta.hex)
-                            var store = JSON.stringify(meta)
+                            let store = JSON.stringify(meta)
                             meta.hex = origHex
                             return storeWithLimitAsync(host, "hex-keys", key, store)
                                 .then(() => meta)
@@ -758,22 +759,22 @@ namespace pxt.hex {
     }
 
     function decompressHex(hex: string[]) {
-        var outp: string[] = []
+        let outp: string[] = []
 
-        for (var i = 0; i < hex.length; i++) {
-            var m = /^([@!])(....)$/.exec(hex[i])
+        for (let i = 0; i < hex.length; i++) {
+            let m = /^([@!])(....)$/.exec(hex[i])
             if (!m) {
                 outp.push(hex[i])
                 continue;
             }
 
-            var addr = parseInt(m[2], 16)
-            var nxt = hex[++i]
-            var buf = ""
+            let addr = parseInt(m[2], 16)
+            let nxt = hex[++i]
+            let buf = ""
 
             if (m[1] == "@") {
                 buf = ""
-                var cnt = parseInt(nxt, 16)
+                let cnt = parseInt(nxt, 16)
                 while (cnt-- > 0) {
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
                 }
@@ -784,21 +785,21 @@ namespace pxt.hex {
             Util.assert(buf.length > 0)
             Util.assert(buf.length % 16 == 0)
 
-            for (var j = 0; j < buf.length;) {
-                var bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
+            for (let j = 0; j < buf.length; ) {
+                let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
                 addr += 16;
-                for (var k = 0; k < 16; ++k) {
+                for (let k = 0; k < 16; ++k) {
                     bytes.push(buf.charCodeAt(j++))
                 }
 
-                var chk = 0
-                for (var k = 0; k < bytes.length; ++k)
+                let chk = 0
+                for (let k = 0; k < bytes.length; ++k)
                     chk += bytes[k]
                 bytes.push((-chk) & 0xff)
 
-                var r = ":"
-                for (var k = 0; k < bytes.length; ++k) {
-                    var b = bytes[k] & 0xff
+                let r = ":"
+                for (let k = 0; k < bytes.length; ++k) {
+                    let b = bytes[k] & 0xff
                     if (b <= 0xf)
                         r += "0"
                     r += b.toString(16)
@@ -811,22 +812,23 @@ namespace pxt.hex {
     }
 
     function compressHex(hex: string[]) {
-        var outp: string[] = []
+        let outp: string[] = []
+        let j = 0;
 
-        for (var i = 0; i < hex.length; i += j) {
-            var addr = -1;
-            var outln = ""
-            var j = 0;
-            var zeroMode = false;
+        for (let i = 0; i < hex.length; i += j) {
+            let addr = -1;
+            let outln = ""
+            j = 0;
+            let zeroMode = false;
 
             while (j < 500) {
-                var m = /^:10(....)00(.{32})(..)$/.exec(hex[i + j])
+                let m = /^:10(....)00(.{32})(..)$/.exec(hex[i + j])
                 if (!m)
                     break;
 
-                var h = m[2]
-                var isZero = /^0+$/.test(h)
-                var newaddr = parseInt(m[1], 16)
+                let h = m[2]
+                let isZero = /^0+$/.test(h)
+                let newaddr = parseInt(m[1], 16)
                 if (addr == -1) {
                     zeroMode = isZero;
                     outp.push((zeroMode ? "@" : "!") + m[1])
@@ -853,8 +855,8 @@ namespace pxt.hex {
                 if (zeroMode) {
                     outp.push(j.toString(16))
                 } else {
-                    var bin = ""
-                    for (var k = 0; k < outln.length; k += 2)
+                    let bin = ""
+                    for (let k = 0; k < outln.length; k += 2)
                         bin += String.fromCharCode(parseInt(outln.slice(k, k + 2), 16))
                     outp.push(btoa(bin))
                 }

@@ -5,7 +5,7 @@ import * as db from "./db";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-var lf = Util.lf
+const lf = Util.lf
 
 let hostCache = new db.Table("hostcache")
 
@@ -28,8 +28,7 @@ export class File {
     numDiagnosticsOverride: number;
     virtualSource: File;
 
-    constructor(public epkg: EditorPackage, public name: string, public content: string)
-    { }
+    constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
     isReadonly() {
         return !this.epkg.header
@@ -49,16 +48,16 @@ export class File {
         if (m) return m[1]
         return ""
     }
-    
-    static tsFileNameRx = /\.ts$/; 
-    static blocksFileNameRx = /\.blocks$/; 
-    getVirtualFileName() : string {
-        if (File.blocksFileNameRx.test(this.name))        
+
+    static tsFileNameRx = /\.ts$/;
+    static blocksFileNameRx = /\.blocks$/;
+    getVirtualFileName(): string {
+        if (File.blocksFileNameRx.test(this.name))
             return this.name.replace(File.blocksFileNameRx, '.ts');
-        if (File.tsFileNameRx.test(this.name))       
+        if (File.tsFileNameRx.test(this.name))
             return this.name.replace(File.tsFileNameRx, '.blocks');
         return undefined;
-    }    
+    }
 
     weight() {
         if (/^main\./.test(this.name))
@@ -122,25 +121,25 @@ export class EditorPackage {
         this.outputPkg = new EditorPackage(null, this)
         this.outputPkg.id = "built"
     }
-    
+
     updateConfigAsync(update: (cfg: pxt.PackageConfig) => void) {
         let cfgFile = this.files[pxt.configName]
         if (cfgFile) {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
-                update(cfg);                
+                update(cfg);
                 return cfgFile.setContentAsync(JSON.stringify(cfg, null, 2))
             } catch (e) { }
         }
-        
+
         return null;
     }
-    
-    removeDepAsync(pkgid : string) {
+
+    removeDepAsync(pkgid: string) {
         return this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid])
-               .then(() => this.saveFilesAsync());
+            .then(() => this.saveFilesAsync());
     }
-    
+
     addDepAsync(pkgid: string, pkgversion: string) {
         return this.updateConfigAsync(cfg => cfg.dependencies[pkgid] = pkgversion)
             .then(() => this.saveFilesAsync());
@@ -164,12 +163,12 @@ export class EditorPackage {
         data.invalidate("open-meta:")
         return f
     }
-    
+
     setContentAsync(n: string, v: string) {
         let f = this.files[n];
         if (!f) f = this.setFile(n, v);
         return f.setContentAsync(v);
-    }    
+    }
 
     setFiles(files: Util.StringMap<string>) {
         this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
@@ -275,7 +274,7 @@ class Host
         return hostCache.forceSetAsync({
             id: id,
             val: val
-        }).then(() => {})
+        }).then(() => { })
     }
 
     cacheGetAsync(id: string): Promise<string> {
@@ -317,11 +316,11 @@ class Host
     }
 }
 
-function resolvePath(p:string) {
+function resolvePath(p: string) {
     return p.replace(/\/+/g, "/").replace(/[^\/]+\/\.\.\//g, "").replace(/\/\.\//g, "/")
 }
 
-var theHost = new Host();
+const theHost = new Host();
 export var mainPkg = new pxt.MainPackage(theHost);
 
 export function getEditorPkg(p: pxt.Package) {

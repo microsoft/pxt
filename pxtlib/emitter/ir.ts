@@ -228,7 +228,7 @@ namespace ts.pxt.ir {
         }
 
         toString() {
-            var n = ""
+            let n = ""
             if (this.def) n += (<any>this.def.name).text || "?"
             if (this.isarg) n = "ARG " + n
             if (this.isRef()) n = "REF " + n
@@ -343,7 +343,7 @@ namespace ts.pxt.ir {
         }
 
         mkLocal(def: Declaration, info: VariableAddInfo) {
-            var l = new Cell(this.locals.length, def, info)
+            let l = new Cell(this.locals.length, def, info)
             this.locals.push(l)
             return l
         }
@@ -367,7 +367,7 @@ namespace ts.pxt.ir {
 
         emitClrs() {
             if (this.isRoot) return;
-            var lst = this.locals.concat(this.args)
+            let lst = this.locals.concat(this.args)
             lst.forEach(p => this.emitClrIfRef(p))
         }
 
@@ -425,7 +425,7 @@ namespace ts.pxt.ir {
             let opt = (e: ir.Expr): ir.Expr => {
                 if (e.exprKind == EK.SharedRef)
                     return e;
-                    
+
                 iterargs(e, opt)
 
                 switch (e.exprKind) {

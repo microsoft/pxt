@@ -15,7 +15,7 @@ export var targetDir: string = process.cwd();
 
 export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
-        var bufs: Buffer[] = []
+        let bufs: Buffer[] = []
         g.on('data', (c: any) => {
             if (typeof c === "string")
                 bufs.push(new Buffer(c, "utf8"))

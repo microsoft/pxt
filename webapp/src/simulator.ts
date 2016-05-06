@@ -8,13 +8,13 @@ interface SimulatorConfig {
 }
 
 export var driver: pxsim.SimulatorDriver;
-var nextFrameId: number = 0;
-var themes = ["blue", "red", "green", "yellow"];
-var currentRuntime: pxsim.SimulatorRunMessage;
-var config: SimulatorConfig;
-var lastCompileResult: ts.pxt.CompileResult;
+let nextFrameId: number = 0;
+const themes = ["blue", "red", "green", "yellow"];
+let currentRuntime: pxsim.SimulatorRunMessage;
+let config: SimulatorConfig;
+let lastCompileResult: ts.pxt.CompileResult;
 
-var $debugger: JQuery;
+let $debugger: JQuery;
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
     $(root).html(
@@ -25,33 +25,33 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         </div>
         `
     )
-    $debugger = $('#debugger')    
-    let options : pxsim.SimulatorDriverOptions = {
+    $debugger = $('#debugger')
+    let options: pxsim.SimulatorDriverOptions = {
         revealElement: (el) => {
             ($(el) as any).transition({
-                animation: 'fly right in',   
+                animation: 'fly right in',
                 duration: '0.5s',
-            })            
+            })
         },
         removeElement: (el) => {
             ($(el) as any).transition({
-                animation: 'fly right out',   
+                animation: 'fly right out',
                 duration: '0.5s',
-                onComplete: function() {
+                onComplete: function () {
                     el.remove();
                 }
             })
         },
-        onDebuggerBreakpoint: function(brk) {
+        onDebuggerBreakpoint: function (brk) {
             updateDebuggerButtons(brk)
             let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
             config.highlightStatement(brkInfo)
         },
-        onDebuggerResume: function() {
+        onDebuggerResume: function () {
             config.highlightStatement(null)
             updateDebuggerButtons()
         },
-        onStateChanged: function(state) {
+        onStateChanged: function (state) {
             updateDebuggerButtons()
         }
     };
@@ -90,9 +90,9 @@ function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
     }
 
     $debugger.empty();
-    if (!driver.debug) return;    
+    if (!driver.debug) return;
     let advanced = config.editor == 'tsprj';
-    
+
     if (driver.state == pxsim.SimulatorState.Paused) {
         let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(pxsim.SimulatorDebuggerCommand.Resume));
         let $stepOver = btn("xicon stepover", lf("Step over"), lf("Step over next function call"), () => driver.resume(pxsim.SimulatorDebuggerCommand.StepOver));
@@ -102,7 +102,7 @@ function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
             $debugger.append($stepInto);
     } else if (driver.state == pxsim.SimulatorState.Running) {
         let $pause = btn("pause", lf("Pause"), lf("Pause execution on the next instruction"), () => driver.resume(pxsim.SimulatorDebuggerCommand.Pause));
-        $debugger.append($pause);        
+        $debugger.append($pause);
     }
 
     if (!brk || !advanced) return

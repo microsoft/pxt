@@ -147,7 +147,7 @@ export function apiAsync(path: string, postArguments?: string): Promise<void> {
             .then(str => apiAsync(path, str))
     }
 
-    let dat = postArguments ? eval("(" + postArguments + ")") : null
+    let dat = postArguments ? JSON.parse(postArguments) : null
     if (dat)
         console.log("POST", "/api/" + path, JSON.stringify(dat, null, 2))
 
@@ -1588,11 +1588,13 @@ function buildCoreAsync(mode: BuildOption) {
 
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.pxt.getApiInfo(res.ast)
-                let md = ts.pxt.genMarkdown(apiInfo)
+                let md = ts.pxt.genMarkdown(mainPkg.config.name, apiInfo)
                 mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
-                    mainPkg.host().writeFile(mainPkg, "built/" + fn, md[fn])
-                    console.log(`Wrote built/${fn}; size=${md[fn].length}`)
+                    let folder = /-strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
+                    let ffn = folder + fn;
+                    mainPkg.host().writeFile(mainPkg, ffn, md[fn])
+                    console.log(`generated ${ffn}; size=${md[fn].length}`)
                 }
                 return null
             } else if (mode == BuildOption.Deploy) {

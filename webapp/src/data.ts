@@ -18,7 +18,7 @@ interface CacheEntry {
     api: VirtualApi;
 }
 
-var virtualApis: Util.StringMap<VirtualApi> = {}
+const virtualApis: Util.StringMap<VirtualApi> = {}
 
 mountVirtualApi("cloud", {
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
@@ -27,13 +27,13 @@ mountVirtualApi("cloud", {
 })
 
 mountVirtualApi("td-cloud", {
-    getAsync: p => 
+    getAsync: p =>
         Util.httpGetJsonAsync("https://www.touchdevelop.com/api/" + stripProtocol(p))
-            .catch(core.handleNetworkError), 
+            .catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
 })
 
-var cachedData: Util.StringMap<CacheEntry> = {};
+const cachedData: Util.StringMap<CacheEntry> = {};
 
 function subscribe(component: AnyComponent, path: string) {
     let e = lookup(path)

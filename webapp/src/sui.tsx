@@ -266,13 +266,13 @@ export interface ModalState {
     visible?: boolean;
 }
 
-export class Modal extends data.Component<ModalProps,ModalState> {
-    id : string;
+export class Modal extends data.Component<ModalProps, ModalState> {
+    id: string;
     constructor(props: ModalProps) {
         super(props)
         this.id = Util.guidGen();
     }
-           
+
     show() {
         this.setState({ visible: true })
     }

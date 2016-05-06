@@ -15,7 +15,7 @@ namespace ts.pxt {
         EOF
     }
 
-    var inputForMsg = ""
+    let inputForMsg = ""
 
     interface Stmt {
         tokens: Token[];
@@ -165,7 +165,7 @@ namespace ts.pxt {
 
     }
 
-    var brokenRegExps = false;
+    let brokenRegExps = false;
 
     function tokenize(input: string) {
         inputForMsg = input

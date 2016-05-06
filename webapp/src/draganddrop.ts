@@ -1,7 +1,7 @@
 export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean, dragged: (files: File[]) => void) {
     let dragAndDrop = document && document.createElement && 'draggable' in document.createElement('span');
 
-    r.addEventListener('paste', function(e: ClipboardEvent) {
+    r.addEventListener('paste', function (e: ClipboardEvent) {
         console.log('clipboard paste');
         if (e.clipboardData) {
             // has file?
@@ -22,7 +22,7 @@ export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean
             }
         }
     })
-    r.addEventListener('dragover', function(e: DragEvent) {
+    r.addEventListener('dragover', function (e: DragEvent) {
         let types = e.dataTransfer.types;
         let found = false;
         for (let i = 0; i < types.length; ++i)
@@ -35,7 +35,7 @@ export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean
         }
         return true;
     }, false);
-    r.addEventListener('drop', function(e: DragEvent) {
+    r.addEventListener('drop', function (e: DragEvent) {
         let files = Util.toArray<File>(e.dataTransfer.files);
         if (files.length > 0) {
             e.stopPropagation(); // Stops some browsers from redirecting.
@@ -44,7 +44,7 @@ export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean
         }
         return false;
     }, false);
-    r.addEventListener('dragend', function(e: DragEvent) {
+    r.addEventListener('dragend', function (e: DragEvent) {
         return false;
     }, false);
 }

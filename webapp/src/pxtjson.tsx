@@ -8,7 +8,7 @@ import * as codecard from "./codecard"
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-var lf = Util.lf
+const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
@@ -34,39 +34,39 @@ export class Editor extends srceditor.Editor {
 
         return (
             <div className="ui content">
-            <div className="ui segment form text" style={{ backgroundColor: "white" }}>
-                {Cloud.isLoggedIn() ?
-                <sui.Field>
-                    <div className="ui toggle checkbox ">
-                        <input type="checkbox" name="public" checked={c.public}
-                            onChange={() => update(c.public = !c.public) } />
-                        <label>{lf("Public package (library)") }</label>
+                <div className="ui segment form text" style={{ backgroundColor: "white" }}>
+                    {Cloud.isLoggedIn() ?
+                        <sui.Field>
+                            <div className="ui toggle checkbox ">
+                                <input type="checkbox" name="public" checked={c.public}
+                                    onChange={() => update(c.public = !c.public) } />
+                                <label>{lf("Public package (library)") }</label>
+                            </div>
+                        </sui.Field> : ""}
+                    <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
+                    <div className="three fields">
+                        <sui.Input inputLabel={lf("Any") } type="number" value={(card.any || 0).toString() } onChange={v => {
+                            initCard();
+                            let vi = Math.max(0, parseInt(v) || 0)
+                            update(c.card.any = vi)
+                        } } />
+                        <sui.Input inputLabel={lf("Hardware") } type="number" value={(card.hardware || 0).toString() } onChange={v => {
+                            initCard();
+                            let vi = Math.max(0, parseInt(v) || 0)
+                            update(c.card.hardware = vi)
+                        } } />
+                        <sui.Input inputLabel={lf("Software") } type="number" value={(card.software || 0).toString() } onChange={v => {
+                            initCard();
+                            let vi = Math.max(0, parseInt(v) || 0)
+                            update(c.card.software = vi)
+                        } } />
                     </div>
-                </sui.Field> : ""}
-                <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
-                <div className="three fields">
-                    <sui.Input inputLabel={lf("Any") } type="number" value={(card.any || 0).toString() } onChange={v => {
-                        initCard();
-                        let vi = Math.max(0, parseInt(v) || 0)
-                        update(c.card.any = vi)
-                    } } />
-                    <sui.Input inputLabel={lf("Hardware") } type="number" value={(card.hardware || 0).toString() } onChange={v => {
-                        initCard();
-                        let vi = Math.max(0, parseInt(v) || 0)
-                        update(c.card.hardware = vi)
-                    } } />
-                    <sui.Input inputLabel={lf("Software") } type="number" value={(card.software || 0).toString() } onChange={v => {
-                        initCard();
-                        let vi = Math.max(0, parseInt(v) || 0)
-                        update(c.card.software = vi)
-                    } } />
+                    <sui.Field>
+                        <div className="ui buttons">
+                            <sui.Button text={lf("Edit Settings As Text") } onClick={() => this.parent.editText() } />
+                        </div>
+                    </sui.Field>
                 </div>
-                <sui.Field>
-                    <div className="ui buttons">
-                        <sui.Button text={lf("Edit Settings As Text")} onClick={() => this.parent.editText() } />
-                    </div>
-                </sui.Field>                
-            </div>
             </div>
         )
     }

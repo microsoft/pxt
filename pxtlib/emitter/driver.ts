@@ -207,15 +207,15 @@ namespace ts.pxt {
 
         return res
     }
-        
-    export function decompile(opts: CompileOptions, fileName : string) {
+
+    export function decompile(opts: CompileOptions, fileName: string) {
         let resp = compile(opts);
         if (!resp.success) return resp;
-        
+
         let file = resp.ast.getSourceFile(fileName);
         let apis = getApiInfo(resp.ast);
         let blocksInfo = ts.pxt.getBlocksInfo(apis);
         let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
         return bresp;
-    }           
+    }
 }

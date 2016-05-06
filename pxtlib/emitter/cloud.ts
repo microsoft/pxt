@@ -1,10 +1,10 @@
 namespace pxt.Cloud {
     import Util = ts.pxt.Util;
-    
+
     export var apiRoot = "https://www.pxt.io/api/";
     export var accessToken = "";
     export var localToken = "";
-    var _isOnline = true;
+    let _isOnline = true;
     export var onOffline = () => { };
 
     function offlineError(url: string) {
@@ -12,15 +12,15 @@ namespace pxt.Cloud {
         e.isOffline = true;
         return Promise.delay(1000).then(() => Promise.reject(e))
     }
-    
+
     export function hasAccessToken() {
         return !!accessToken
     }
-    
-    export function isLocalHost() : boolean {
+
+    export function isLocalHost(): boolean {
         try {
             return /^http:\/\/(localhost|127\.0\.0\.1):3232\//.test(window.location.href);
-        }catch(e) { return false; }
+        } catch (e) { return false; }
     }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
@@ -123,7 +123,7 @@ namespace pxt.Cloud {
     }
 
     export interface JsonPublication extends JsonIdObject {
-        time: number;// time when publication was created
+        time: number; // time when publication was created
         userid: string; // user id of user who published
         userscore: number;
         username: string;

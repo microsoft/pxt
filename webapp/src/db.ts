@@ -1,5 +1,5 @@
 declare var require: any;
-var PouchDB = require("pouchdb");
+const PouchDB = require("pouchdb");
 require('pouchdb/extras/memory');
 import * as Promise from "bluebird";
 
@@ -19,7 +19,7 @@ export function getDbAsync(): Promise<any> {
 
     let temp = new PouchDB("pxt", { revs_limit: 2 })
     return temp.get('pouchdbsupportabletest')
-        .catch(function(error: any) {
+        .catch(function (error: any) {
             if (error && error.error && error.name == 'indexed_db_went_bad') {
                 // we are in private mode...
                 console.log('private mode...')
@@ -33,13 +33,12 @@ export function getDbAsync(): Promise<any> {
         })
 }
 
-export function destroyAsync() : Promise<void> {
+export function destroyAsync(): Promise<void> {
     return !_db ? Promise.resolve() : _db.destroy();
 }
 
 export class Table {
-    constructor(public name: string)
-    { }
+    constructor(public name: string) { }
 
     getAsync(id: string): Promise<any> {
         return getDbAsync().then(db => db.get(this.name + "--" + id)).then((v: any) => {
@@ -73,4 +72,4 @@ export class Table {
             obj._id = this.name + "--" + obj.id
         return getDbAsync().then(db => db.put(obj)).then((resp: any) => resp.rev)
     }
-} 
+}

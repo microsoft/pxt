@@ -29,18 +29,18 @@ namespace pxt {
 
 namespace pxt.docs {
     declare var require: any;
-    var marked: MarkedStatic;
+    let marked: MarkedStatic;
     import U = ts.pxt.Util;
 
-    var stdboxes: U.Map<string> = {
+    let stdboxes: U.Map<string> = {
     }
 
-    var stdmacros: U.Map<string> = {
+    let stdmacros: U.Map<string> = {
     }
 
-    var stdSetting = "<!-- @CMD@ @ARGS@ -->"
+    const stdSetting = "<!-- @CMD@ @ARGS@ -->"
 
-    var stdsettings: U.Map<string> = {
+    let stdsettings: U.Map<string> = {
         "parent": stdSetting,
         "short": stdSetting,
         "description": "<!-- desc -->"

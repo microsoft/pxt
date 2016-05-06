@@ -1,6 +1,6 @@
 
 namespace pxt.blocks.layout {
-    
+
     export function verticalAlign(ws: B.Workspace) {
         let blocks = ws.getTopBlocks(true);
         let y = 0
@@ -10,7 +10,7 @@ namespace pxt.blocks.layout {
             y += 14; //buffer            
         })
     };
-    
+
     const nodeSeparation = 12;
 
     interface Edge {
@@ -47,7 +47,7 @@ namespace pxt.blocks.layout {
         }
     }
 
-    function getIdealDistanceBetweenTwoNodes(a: Blockly.Block, b: Blockly.Block) : number {
+    function getIdealDistanceBetweenTwoNodes(a: Blockly.Block, b: Blockly.Block): number {
         let abox = a.getBoundingRectangle();
         let bbox = b.getBoundingRectangle();
         //abox.Pad(nodeSeparation / 2);
@@ -61,7 +61,7 @@ namespace pxt.blocks.layout {
         let wx = (Math.abs(abox.topLeft.x - abox.bottomRight.x) / 2 + Math.abs(bbox.topLeft.x - bbox.bottomRight.x) / 2);
         let wy = (Math.abs(abox.topLeft.y - abox.bottomRight.y) / 2 + Math.abs(bbox.topLeft.y - bbox.bottomRight.y) / 2);
         const machineAcc = 1.0e-16;
-        let t : number;
+        let t: number;
         if (dx < machineAcc * wx)
             t = wy / dy;
         else if (dy < machineAcc * wy)

@@ -31,7 +31,7 @@ namespace pxsim {
         [name: string]: any;
     }
 
-    export function getBreakpointMsg(s: StackFrame, brkId:number) {
+    export function getBreakpointMsg(s: StackFrame, brkId: number) {
         function valToJSON(v: any) {
             switch (typeof v) {
                 case "string":

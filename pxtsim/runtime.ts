@@ -69,7 +69,7 @@ namespace pxsim {
         finalCallback?: ResumeFn;
     }
 
-    export var runtime: Runtime;
+    export let runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
     export class BaseBoard {
@@ -151,7 +151,7 @@ namespace pxsim {
     }
 
     // overriden at loadtime by specific implementation
-    export var initCurrentRuntime: () => void = undefined;
+    export let initCurrentRuntime: () => void = undefined;
 
     export class Runtime {
         public board: BaseBoard;
@@ -234,23 +234,23 @@ namespace pxsim {
         constructor(code: string) {
             U.assert(!!initCurrentRuntime);
 
-            var yieldMaxSteps = 100
+            let yieldMaxSteps = 100
 
             // These variables are used by the generated code as well
             // ---
-            var entryPoint: LabelFn;
-            var pxtrt = pxsim.pxtrt
-            var breakpoints: Uint8Array = null
-            var breakAlways = false
-            var globals = this.globals
-            var yieldSteps = yieldMaxSteps
+            let entryPoint: LabelFn;
+            let pxtrt = pxsim.pxtrt
+            let breakpoints: Uint8Array = null
+            let breakAlways = false
+            let globals = this.globals
+            let yieldSteps = yieldMaxSteps
             // ---
 
-            var currResume: ResumeFn;
-            var dbgResume: ResumeFn;
-            var breakFrame: StackFrame = null // for step-over
-            var lastYield = Date.now()
-            var _this = this
+            let currResume: ResumeFn;
+            let dbgResume: ResumeFn;
+            let breakFrame: StackFrame = null // for step-over
+            let lastYield = Date.now()
+            let _this = this
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
@@ -448,6 +448,7 @@ namespace pxsim {
                 }
             }
 
+            // tslint:disable-next-line
             eval(code)
 
             this.run = (cb) => topCall(entryPoint, cb)

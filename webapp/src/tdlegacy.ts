@@ -9,7 +9,7 @@ let iface: workeriface.Iface
 
 export function td2tsAsync(td: string) {
     if (!iface) iface = workeriface.makeWebWorker(pxt.webConfig.tdworkerjs)
-    
+
     return pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => {
             opts.ast = true

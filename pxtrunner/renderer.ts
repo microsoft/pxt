@@ -32,7 +32,7 @@ namespace pxt.runner {
 
         // blocks
         $c.append($svg);
-        
+
         // js menu
         {
             let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
@@ -53,7 +53,9 @@ namespace pxt.runner {
                 if ($c.find('.sim')[0])
                     $c.find('.sim').remove(); // remove previous simulators
                 else {
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
+                    let padding = '81.97%';
+                    if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -245,7 +247,7 @@ namespace pxt.runner {
             $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
         }
 
-        return fillCodeCardAsync($el, card, {hideHeader: true})
+        return fillCodeCardAsync($el, card, { hideHeader: true })
             .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));
     }
 
@@ -256,8 +258,10 @@ namespace pxt.runner {
             // simulators
             $('.' + options.simulatorClass).each((i, c) => {
                 let $c = $(c);
+                let padding = '81.97%';
+                if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                 let $sim = $(`<div class="ui centered card"><div class="ui content">
-                    <div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;">
+                    <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
                     <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
                     </div>
                     </div></div>`)

@@ -10,13 +10,13 @@ import * as sui from "./sui";
 import * as data from "./data";
 import * as codecard from "./codecard";
 
-declare var require: any;
-var ace: AceAjax.Ace = require("brace");
+declare let require: any;
+const ace: AceAjax.Ace = require("brace");
 
-let SK = ts.pxt.SymbolKind;
+const SK = ts.pxt.SymbolKind;
 
 import Util = pxt.Util;
-var lf = Util.lf
+const lf = Util.lf
 
 require('brace/mode/typescript');
 require('brace/mode/javascript');
@@ -36,12 +36,12 @@ require("brace/ext/searchbox");
 
 
 
-var acequire = (ace as any).acequire;
-var Range = acequire("ace/range").Range;
-var HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
+let acequire = (ace as any).acequire;
+let Range = acequire("ace/range").Range;
+let HashHandler = acequire("ace/keyboard/hash_handler").HashHandler;
 
 export const cursorMarker = "\uE108"
-var maxCompleteItems = 20;
+let maxCompleteItems = 20;
 
 export interface CompletionEntry {
     name: string;
@@ -49,7 +49,7 @@ export interface CompletionEntry {
     lastScore: number;
     searchName: string;
     searchDesc: string;
-    desc:string;
+    desc: string;
     block?: string;
     snippet?: string;
     matches?: Util.Map<number[][]>;
@@ -268,8 +268,8 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
             e.lastScore = (1 - fue.score) * 100;
             e.matches = {}
             fue.matches
-               .filter(match => match.indices && match.indices.length > 0)
-               .forEach(match => e.matches[match.key] = match.indices)
+                .filter(match => match.indices && match.indices.length > 0)
+                .forEach(match => e.matches[match.key] = match.indices)
         });
         return fures.filter(e => e.score > 0).map(e => e.item);
     }
@@ -330,7 +330,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         editor.on("mousedown", () => this.detach())
         editor.on("mousewheel", () => this.detach())
         editor.on("change", e => {
-            var cursor = (editor.selection as any).lead;
+            let cursor = (editor.selection as any).lead;
             if (this.completionRange) {
                 let basePos = this.completionRange.start
                 if (cursor.row != basePos.row || cursor.column < basePos.column) {
@@ -485,22 +485,22 @@ function friendlyTypeName(tp: string) {
     return tp.replace(/.*\./, "")
 }
 
-function highlightCompletionEntry(entry: CompletionEntry, key:string, text: string, str: string, limit = 100) {
+function highlightCompletionEntry(entry: CompletionEntry, key: string, text: string, str: string, limit = 100) {
     let match = entry.matches ? entry.matches[key] : undefined;
     if (!match) return highlight(text, str, limit);
-    
+
     let spl: JSX.Element[] = []
     let cur = 0;
     match.forEach(interval => {
-        spl.push(<span key={spl.length}>{text.slice(cur, interval[0]) }</span>)        
-        spl.push(<span key={spl.length} className="highlight">{text.slice(interval[0], interval[1])}</span>)        
+        spl.push(<span key={spl.length}>{text.slice(cur, interval[0]) }</span>)
+        spl.push(<span key={spl.length} className="highlight">{text.slice(interval[0], interval[1]) }</span>)
         cur = interval[1];
     });
-    spl.push(<span key={spl.length}>{text.slice(match[match.length-1][1]) }</span>);
+    spl.push(<span key={spl.length}>{text.slice(match[match.length - 1][1]) }</span>);
     return spl;
 }
 
-function highlight(text: string, str: string, limit = 100) : JSX.Element[] {
+function highlight(text: string, str: string, limit = 100): JSX.Element[] {
     let tmp = text.toLowerCase();
     let spl: JSX.Element[] = []
     let written = 0
@@ -636,7 +636,7 @@ export class Editor extends srceditor.Editor {
 
     formatCode(isAutomatic = false) {
         if (!this.isTypescript) return;
-        
+
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
             return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
         }

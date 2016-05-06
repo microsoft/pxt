@@ -11,7 +11,7 @@ import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-var lf = Util.lf;
+const lf = Util.lf;
 
 export type Component<S, T> = data.Component<S, T>;
 
@@ -97,7 +97,7 @@ export interface ConfirmOptions {
     agreeClass?: string;
     hideCancel?: boolean;
     hideAgree?: boolean;
-    deleteLbl?:string;
+    deleteLbl?: string;
     onLoaded?: (_: JQuery) => void;
 }
 
