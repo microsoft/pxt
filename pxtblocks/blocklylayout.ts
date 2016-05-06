@@ -24,7 +24,14 @@ namespace pxt.blocks.layout {
 
     function flow(blocks: Blockly.Block[]) {
         const gap = 14;
-        const maxx = 320;
+        // compute total block surface and infer width
+        let surface = 0;
+        for (let block of blocks) {
+            let s = block.getHeightWidth();
+            surface += s.width * s.height;
+        }
+        const maxx = Math.sqrt(surface) * 1.62;
+
         let insertx = 0;
         let inserty = 0;
         let endy = 0;
@@ -34,10 +41,11 @@ namespace pxt.blocks.layout {
             // move block to insertion point
             block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
             insertx += s.width + gap;
+            endy = Math.max(endy, inserty + s.height + gap);
             if (insertx > maxx) { // start new line
                 insertx = 0;
                 inserty = endy;
-            } else endy = Math.max(endy, inserty + s.height + gap);
+            }
         }
     }
 
