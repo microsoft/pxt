@@ -14,6 +14,7 @@ namespace ts.pxt {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
+        jsRefCounting?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
     }
 

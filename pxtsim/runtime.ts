@@ -79,6 +79,8 @@ namespace pxsim {
 
         protected serialOutBuffer: string = '';
         public writeSerial(s: string) {
+            if (!s) return
+            
             for (let i = 0; i < s.length; ++i) {
                 let c = s[i];
                 switch (c) {

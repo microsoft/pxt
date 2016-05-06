@@ -1,6 +1,8 @@
 namespace ts.pxt {
     export function jsEmit(bin: Binary) {
         let jssource = ""
+        if (!bin.target.jsRefCounting)
+            jssource += "pxsim.noRefCounting();\n"
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })
@@ -17,7 +19,8 @@ namespace ts.pxt {
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
-
+        let refCounting = !!bin.target.jsRefCounting
+        
         writeRaw(`
 var ${getFunctionLabel(proc.action)} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
 var r0 = s.r0, step = s.pc;
@@ -152,7 +155,7 @@ switch (step) {
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
                     if (cell.isGlobal()) {
-                        if (cell.isRef())
+                        if (refCounting && cell.isRef())
                             return `pxtrt.incr(${glbref(cell)})`
                         else
                             return glbref(cell)
@@ -173,11 +176,13 @@ switch (step) {
                     break;
                 case EK.Incr:
                     emitExpr(e.args[0])
-                    write(`pxtrt.incr(r0);`)
+                    if (refCounting)
+                        write(`pxtrt.incr(r0);`)
                     break;
                 case EK.Decr:
                     emitExpr(e.args[0])
-                    write(`pxtrt.decr(r0);`)
+                    if (refCounting)
+                        write(`pxtrt.decr(r0);`)
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
@@ -273,7 +278,7 @@ switch (step) {
                     let cell = trg.data as ir.Cell
                     emitExpr(src)
                     if (cell.isGlobal()) {
-                        if (cell.isRef())
+                        if (refCounting && cell.isRef())
                             write(`pxtrt.decr(${glbref(cell)});`)
                         write(`${glbref(cell)} = r0;`)
                     } else {
