@@ -74,7 +74,7 @@ namespace pxt.runner {
         $container.replaceWith([$c, $h]);
     }
 
-    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void, options? : pxt.blocks.BlocksRenderOptions): Promise<void> {
+    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void, options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
         if (!cls) return Promise.resolve();
 
         let $el = $("." + cls).first();
@@ -281,7 +281,7 @@ namespace pxt.runner {
         }
 
         return Promise.resolve()
-            .then(() => renderShuffleAsync(options));        
+            .then(() => renderShuffleAsync(options))
             .then(() => renderLinksAsync(options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options.namespacesClass, options.snippetReplaceParent, true))
             .then(() => renderSignaturesAsync(options))

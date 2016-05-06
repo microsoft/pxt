@@ -18,16 +18,33 @@ namespace pxt.blocks.layout {
         // TODO: better layout
         // randomize order
         fisherYates(blocks);
-        // random layout
-        let b: Blockly.Block;
-        while (b = blocks.pop()) {
-            b.moveBy(Math.random() * 100, Math.random() * 100);
+        // apply layout
+        flow(blocks);
+    }
+
+    function flow(blocks: Blockly.Block[]) {
+        const gap = 14;
+        const maxx = 320;
+        let insertx = 0;
+        let inserty = 0;
+        let endy = 0;
+        for (let block of blocks) {
+            let r = block.getBoundingRectangle();
+            let s = block.getHeightWidth();
+            // move block to insertion point
+            block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
+            insertx += s.width + gap;
+            if (insertx > maxx) { // start new line
+                insertx = 0;
+                inserty = endy;
+            } else endy = Math.max(endy, inserty + s.height + gap);
         }
     }
 
     function fisherYates<T>(myArray: T[]): void {
         let i = myArray.length;
         if (i == 0) return;
+        // TODO: seeded random
         while (--i) {
             let j = Math.floor(Math.random() * (i + 1));
             let tempi = myArray[i];
