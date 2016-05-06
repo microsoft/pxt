@@ -26,6 +26,7 @@ namespace ts.pxt {
         parameters: ParameterDesc[];
         retType: string;
         isContextual?: boolean;
+        qName?: string;
     }
 
     export interface ApisInfo {
@@ -199,7 +200,8 @@ namespace ts.pxt {
     export function getBlocksInfo(info: ApisInfo) {
         return {
             apis: info,
-            blocks: pxt.Util.values(info.byQName).filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != ts.pxt.SymbolKind.EnumMember))
+            blocks: pxt.Util.values(info.byQName)
+                .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != ts.pxt.SymbolKind.EnumMember))
         }
     }
 
@@ -209,10 +211,13 @@ namespace ts.pxt {
         let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
         namespaces.sort(compareSymbol)
 
-        let locStrings: U.Map<number> = {};
+        let locStrings: U.Map<string> = {};
         let reference = ""
         let writeRef = (s: string) => reference += s + "\n"
-        let writeLoc = (attrs: CommentAttrs) => { if (attrs.jsDoc) locStrings[attrs.jsDoc] = 1; }
+        let writeLoc = (si: SymbolInfo) => {
+            if (si.qName && si.attributes.jsDoc)
+                locStrings[si.qName] = si.attributes.jsDoc;
+        }
         writeRef(`# ${pkg} Reference`)
         writeRef('')
         writeRef('```namespaces')
@@ -231,7 +236,7 @@ namespace ts.pxt {
             writeNs('')
 
             if (ns.attributes.jsDoc) {
-                writeLoc(ns.attributes);
+                writeLoc(ns);
 
                 writeNs(`${ns.attributes.jsDoc}`)
                 writeNs('')
@@ -239,7 +244,7 @@ namespace ts.pxt {
 
             writeNs('```cards')
             syms.forEach((si, i) => {
-                writeLoc(si.attributes);
+                writeLoc(si);
                 let call = `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
                 if (i == 0)
                     writeRef(call);
@@ -253,7 +258,7 @@ namespace ts.pxt {
 
         files[pkg + "-reference.md"] = reference;
         let locs: U.Map<string> = {};
-        Object.keys(locStrings).sort().forEach(l => locs[l] = l);
+        Object.keys(locStrings).sort().forEach(l => locs[l] = locStrings[l]);
         files[pkg + "-strings.json"] = JSON.stringify(locs, null, 2);
         return files;
 
@@ -326,6 +331,10 @@ namespace ts.pxt {
         for (let srcFile of program.getSourceFiles()) {
             srcFile.statements.forEach(collectDecls)
         }
+
+        // store qName in symbols
+        for (let qName in res.byQName)
+            res.byQName[qName].qName = qName;
 
         return res
     }
