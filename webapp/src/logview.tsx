@@ -98,8 +98,13 @@ export class LogView extends React.Component<{}, LogViewState> {
 
     showStreamDialog(entries: pxsim.logs.ILogEntry[]) {
         const targetTheme = pxt.appTarget.appTheme;
+        let rootUrl = targetTheme.embedUrl
 
-        let rootUrl = pxt.appTarget.appTheme.embedUrl
+        if (!rootUrl || !/dbg=1/.test(window.location.href)) {
+            pxt.commands.browserDownloadAsync(pxsim.logs.entriesToCSV(entries), "data.csv", 'text/csv')
+            return;
+        }
+
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
         let streamUrl = this.state.stream ? rootUrl + this.state.stream.id : undefined;
 
