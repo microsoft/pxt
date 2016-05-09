@@ -70,6 +70,7 @@ namespace pxt.cpp {
                 text += over || (nskw + " " + ns + " {\n")
             currNs = ns
         }
+        let indent = "    "
         return {
             setNs,
             clear: () => {
@@ -79,9 +80,17 @@ namespace pxt.cpp {
             write: (s: string) => {
                 if (!s.trim()) text += "\n"
                 else {
-                    s = s.trim().replace(/^\s*/mg, "    ").replace(/^    \*/mg, "     *")
+                    s = s.trim()
+                        .replace(/^\s*/mg, indent)
+                        .replace(/^(\s*)\*/mg, (f, s) => s + " *")
                     text += s + "\n"
                 }
+            },
+            incrIndent: () => {
+                indent += "    "
+            },
+            decrIndent: () => {
+                indent = indent.slice(4)
             },
             finish: () => {
                 setNs("")
@@ -785,7 +794,7 @@ namespace pxt.hex {
             Util.assert(buf.length > 0)
             Util.assert(buf.length % 16 == 0)
 
-            for (let j = 0; j < buf.length; ) {
+            for (let j = 0; j < buf.length;) {
                 let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
                 addr += 16;
                 for (let k = 0; k < 16; ++k) {

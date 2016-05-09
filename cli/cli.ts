@@ -611,7 +611,8 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export function buildTargetAsync(): Promise<void> {
-    return buildFolderAsync('sim')
+    return simshimAsync()
+        .then(() => buildFolderAsync('sim'))
         .then(buildTargetCoreAsync)
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildFolderAsync('server', true))
@@ -1418,6 +1419,7 @@ function testForBuildTargetAsync() {
 }
 
 function simshimAsync() {
+    console.log("Looking for shim annotations in the simulator.")
     let prog = ts.pxt.plainTsc("sim")
     let shims = pxt.simshim(prog)
     let filename = "sims.d.ts"
@@ -1430,7 +1432,11 @@ function simshimAsync() {
         let cfg: pxt.PackageConfig = readJson(cfgname)
         if (cfg.files.indexOf(filename) == -1)
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
-        fs.writeFileSync("libs/" + s + "/" + filename, cont)
+        let fn = "libs/" + s + "/" + filename
+        if (fs.readFileSync(fn, "utf8") != cont) {
+            console.log(`updating ${fn}`)
+            fs.writeFileSync(fn, cont)
+        }
     }
     return Promise.resolve()
 }
@@ -1692,7 +1698,6 @@ cmd("travis                       - upload release and npm package", travisAsync
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
-cmd("simshim                      - test shim generation from simulator", simshimAsync, 2)
 
 cmd("extension ADD_TEXT           - try compile extension", extensionAsync, 10)
 

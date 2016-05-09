@@ -8,7 +8,7 @@ and JavaScript and/or C++.
 
 A target contains the following folders:
 
-* ``/libs``, packages that define the JavaScript and APIs and how they should be exposed in blocks.
+* ``/libs``, packages (sometimes referred to as libraries) that define the JavaScript and APIs and how they should be exposed in blocks.
 * ``/sim``, TypeScript source for the in-browser simulator (if any).
 * ``/docs``, markdown documentation pages
 
@@ -63,10 +63,13 @@ Whenever you make a change, the local web server will trigger a build. Simply re
 
 ## Defining APIs and Blocks
 
-The APIs available in the PXT environment are loaded export TypeScript or C++ declarations from the package.
+The APIs available in the PXT environment are loaded from TypeScript package (library) files
+(the ones under ``/libs``). 
+They can optionally be [auto-generated](/simshim) from C++ library files or from TypeScript
+simulator files.
 
 Read more about [how to annotate your APIS](/defining-blocks)
-to expose them in PXT.
+to expose them as blocks in PXT.
 
 ## Simulator
 
