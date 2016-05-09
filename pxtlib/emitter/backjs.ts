@@ -236,7 +236,7 @@ switch (step) {
             if (name[0] == ".")
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
             else if (U.startsWith(name, "new "))
-                text = `new pxsim.${name.slice(4).replace(/::/g, ".")}(${args.join(", ")})`            
+                text = `new pxsim.${name.slice(4).replace(/::/g, ".")}(${args.join(", ")})`
             else
                 text = `pxsim.${name.replace(/::/g, ".")}(${args.join(", ")})`
 
