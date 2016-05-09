@@ -72,7 +72,6 @@ namespace pxt {
             if (currNs) currNs += "."
             currNs += cl.name.text
 
-            mainWr.write(`//% shim=${currNs}`)
             mainWr.write(`declare class ${cl.name.text} {`)
             mainWr.incrIndent()
 
@@ -120,6 +119,7 @@ namespace pxt {
             let tp = checker.getTypeAtLocation(fn)
             let args = fn.parameters.map(p => p.name.getText() + ": " + mapType(typeOf(p)))
             mainWr.write(cmts)
+            mainWr.write(`//% shim="new ${currNs}"`)
             mainWr.write(`constructor(${args.join(", ")});`)
             mainWr.write("")
         }

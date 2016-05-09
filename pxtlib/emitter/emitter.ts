@@ -984,11 +984,12 @@ ${lbl}: .short 0xffff
                 if (ctor) {
                     markUsed(ctor)
                     let args = node.arguments.slice(0)
-                    addDefaultParameters(checker.getResolvedSignature(node), args, parseComments(ctor))
+                    let ctorAttrs = parseComments(ctor)
+                    addDefaultParameters(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map(emitExpr)
-                    if (info.attrs.shim)
-                        // lose obj
-                        return ir.rtcall("new " + info.attrs.shim, compiled)
+                    if (ctorAttrs.shim)
+                        // we drop 'obj' variable
+                        return ir.rtcall(ctorAttrs.shim, compiled)
                     compiled.unshift(ir.op(EK.Incr, [obj]))
                     proc.emitExpr(ir.op(EK.ProcCall, compiled, ctor))
                     return obj
