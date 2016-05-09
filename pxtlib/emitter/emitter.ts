@@ -158,6 +158,7 @@ namespace ts.pxt {
         reffields: PropertyDeclaration[];
         primitivefields: PropertyDeclaration[];
         allfields: PropertyDeclaration[];
+        attrs: CommentAttrs;
     }
 
     let lf = thumb.lf;
@@ -308,6 +309,7 @@ namespace ts.pxt {
         idx: number;
         name: string;
         isRef: boolean;
+        shimName: string;
     }
 
     export type VarOrParam = VariableDeclaration | ParameterDeclaration;
@@ -512,7 +514,8 @@ namespace ts.pxt {
                 info = {
                     reffields: [],
                     primitivefields: [],
-                    allfields: null
+                    allfields: null,
+                    attrs: parseComments(decl)
                 }
                 classInfos[id + ""] = info;
                 for (let mem of decl.members) {
@@ -983,6 +986,9 @@ ${lbl}: .short 0xffff
                     let args = node.arguments.slice(0)
                     addDefaultParameters(checker.getResolvedSignature(node), args, parseComments(ctor))
                     let compiled = args.map(emitExpr)
+                    if (info.attrs.shim)
+                        // lose obj
+                        return ir.rtcall("new " + info.attrs.shim, compiled)
                     compiled.unshift(ir.op(EK.Incr, [obj]))
                     proc.emitExpr(ir.op(EK.ProcCall, compiled, ctor))
                     return obj
@@ -1225,10 +1231,12 @@ ${lbl}: .short 0xffff
                 let fld = info.allfields.filter(f => (<Identifier>f.name).text == pacc.name.text)[0]
                 if (!fld)
                     userError(lf("field {0} not found", pacc.name.text))
+                let attrs = parseComments(fld)
                 return {
                     idx: info.allfields.indexOf(fld),
                     name: pacc.name.text,
-                    isRef: isRefType(typeOf(pacc))
+                    isRef: isRefType(typeOf(pacc)),
+                    shimName: attrs.shim
                 }
             } else {
                 throw unhandled(pacc, "bad field access")

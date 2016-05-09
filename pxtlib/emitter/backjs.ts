@@ -20,7 +20,7 @@ namespace ts.pxt {
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
         let refCounting = !!bin.target.jsRefCounting
-        
+
         writeRaw(`
 var ${getFunctionLabel(proc.action)} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
 var r0 = s.r0, step = s.pc;
@@ -186,6 +186,12 @@ switch (step) {
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
+                    if (info.shimName) {
+                        assert(!refCounting)
+                        emitExpr(e.args[0])
+                        write(`r0 = r0${info.shimName};`)
+                        return
+                    }
                     // it does the decr itself, no mask
                     return emitExpr(ir.rtcall(withRef("pxtrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
                 case EK.Store:
@@ -223,11 +229,16 @@ switch (step) {
 
             info.precomp.forEach(emitExpr)
 
-            let args = info.flattened.map(emitExprInto).join(", ")
-
             let name: string = topExpr.data
-            let text = `pxsim.${name.replace(/::/g, ".")}(${args})`
+            let args = info.flattened.map(emitExprInto)
 
+            let text = ""
+            if (name[0] == ".")
+                text = `${args[0]}${name}(${args.slice(1).join(", ")})`
+            else if (U.startsWith(name, "new "))
+                text = `new pxsim.${name.slice(4).replace(/::/g, ".")}(${args.join(", ")})`            
+            else
+                text = `pxsim.${name.replace(/::/g, ".")}(${args.join(", ")})`
 
             if (topExpr.callingConvention == ir.CallingConvention.Plain) {
                 write(`r0 = ${text};`)
@@ -239,9 +250,9 @@ switch (step) {
                     write(`setupResume(s, ${loc});`)
                     write(`${text};`)
                 }
+                write(`checkResumeConsumed();`)
                 write(`return;`)
                 writeRaw(`  case ${loc}:`)
-                write(`checkResumeConsumed();`)
                 write(`r0 = s.retval;`)
             }
         }

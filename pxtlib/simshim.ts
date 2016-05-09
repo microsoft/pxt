@@ -61,11 +61,75 @@ namespace pxt {
             return null
         }
 
-        function emitFunctionDeclaration(fn: ts.FunctionDeclaration) {
-            let cmts = ts.pxt.getComments(fn)
-            if (!/^\s*\/\/%/m.test(cmts)) return
-            let fnname = fn.name.text
-            let attrs = "//% shim=" + currNs + "::" + fnname
+        function emitClassDeclaration(cl: ts.ClassDeclaration) {
+            let cmts = getExportComments(cl)
+            if (!cmts) return
+
+            mainWr.setNs(currNs)
+            mainWr.write(cmts)
+
+            let prevNs = currNs
+            if (currNs) currNs += "."
+            currNs += cl.name.text
+
+            mainWr.write(`//% shim=${currNs}`)
+            mainWr.write(`declare class ${cl.name.text} {`)
+            mainWr.incrIndent()
+
+            for (let mem of cl.members) {
+                switch (mem.kind) {
+                    case SK.MethodDeclaration:
+                        emitFunctionDeclaration(mem as ts.MethodDeclaration)
+                        break
+                    case SK.PropertyDeclaration:
+                        emitPropertyDeclaration(mem as ts.PropertyDeclaration)
+                        break
+                    case SK.Constructor:
+                        emitConstructorDeclaration(mem as ts.ConstructorDeclaration)
+                        break
+                    default:
+                        break;
+                }
+            }
+            currNs = prevNs
+            mainWr.decrIndent()
+            mainWr.write(`}`)
+        }
+
+        function getExportComments(n: ts.Node) {
+            let cmts = ts.pxt.getComments(n)
+            if (!/^\s*\/\/%/m.test(cmts)) return null
+            return cmts
+        }
+
+        function emitPropertyDeclaration(fn: ts.PropertyDeclaration) {
+            let cmts = getExportComments(fn)
+            if (!cmts) return
+            let nm = fn.name.getText()
+            let attrs = "//% shim=." + nm
+            let tp = checker.getTypeAtLocation(fn)
+            mainWr.write(cmts)
+            mainWr.write(attrs)
+            mainWr.write(`public ${nm}: ${mapType(tp)};`)
+            mainWr.write("")
+        }
+
+        function emitConstructorDeclaration(fn: ts.ConstructorDeclaration) {
+            let cmts = getExportComments(fn)
+            if (!cmts) return
+            let tp = checker.getTypeAtLocation(fn)
+            let args = fn.parameters.map(p => p.name.getText() + ": " + mapType(typeOf(p)))
+            mainWr.write(cmts)
+            mainWr.write(`constructor(${args.join(", ")});`)
+            mainWr.write("")
+        }
+
+        function emitFunctionDeclaration(fn: ts.FunctionLikeDeclaration) {
+            let cmts = getExportComments(fn)
+            if (!cmts) return
+            let fnname = fn.name.getText()
+            let isMethod = fn.kind == SK.MethodDeclaration
+            let attrs = "//% shim=" + (isMethod ? "." + fnname : currNs + "::" + fnname)
             let sig = checker.getSignatureFromDeclaration(fn)
             let rettp = checker.getReturnTypeOfSignature(sig)
             let asyncName = /Async$/.test(fnname)
@@ -80,11 +144,13 @@ namespace pxt {
             }
             let args = fn.parameters.map(p => p.name.getText() + ": " + mapType(typeOf(p)))
             let localname = fnname.replace(/Async$/, "")
+            let defkw = isMethod ? "public" : "function"
 
-            mainWr.setNs(currNs)
+            if (!isMethod)
+                mainWr.setNs(currNs)
             mainWr.write(cmts)
             mainWr.write(attrs)
-            mainWr.write(`function ${localname}(${args.join(", ")}): ${mapType(rettp)};`)
+            mainWr.write(`${defkw} ${localname}(${args.join(", ")}): ${mapType(rettp)};`)
             mainWr.write("")
         }
 
@@ -96,6 +162,8 @@ namespace pxt {
                     return (stmt as ts.ModuleBlock).statements.forEach(doStmt)
                 case SK.FunctionDeclaration:
                     return emitFunctionDeclaration(stmt as ts.FunctionDeclaration)
+                case SK.ClassDeclaration:
+                    return emitClassDeclaration(stmt as ts.ClassDeclaration)
             }
             //console.log("SKIP", ts.pxt.stringKind(stmt))
             //let mod = stmt as ts.ModuleDeclaration
