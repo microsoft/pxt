@@ -24,7 +24,14 @@ namespace pxt.blocks.layout {
 
     function flow(blocks: Blockly.Block[]) {
         const gap = 14;
-        const maxx = 320;
+        // compute total block surface and infer width
+        let surface = 0;
+        for (let block of blocks) {
+            let s = block.getHeightWidth();
+            surface += s.width * s.height;
+        }
+        const maxx = Math.sqrt(surface) * 1.62;
+
         let insertx = 0;
         let inserty = 0;
         let endy = 0;
@@ -34,10 +41,26 @@ namespace pxt.blocks.layout {
             // move block to insertion point
             block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
             insertx += s.width + gap;
+            endy = Math.max(endy, inserty + s.height + gap);
             if (insertx > maxx) { // start new line
                 insertx = 0;
                 inserty = endy;
-            } else endy = Math.max(endy, inserty + s.height + gap);
+            }
+        }
+    }
+
+    function robertJenkins(): () => number {
+        let seed = 0x2F6E2B1;
+        return function () {
+            // https://gist.github.com/mathiasbynens/5670917
+            // Robert Jenkins’ 32 bit integer hash function
+            seed = ((seed + 0x7ED55D16) + (seed << 12)) & 0xFFFFFFFF;
+            seed = ((seed ^ 0xC761C23C) ^ (seed >>> 19)) & 0xFFFFFFFF;
+            seed = ((seed + 0x165667B1) + (seed << 5)) & 0xFFFFFFFF;
+            seed = ((seed + 0xD3A2646C) ^ (seed << 9)) & 0xFFFFFFFF;
+            seed = ((seed + 0xFD7046C5) + (seed << 3)) & 0xFFFFFFFF;
+            seed = ((seed ^ 0xB55A4F09) ^ (seed >>> 16)) & 0xFFFFFFFF;
+            return (seed & 0xFFFFFFF) / 0x10000000;
         }
     }
 
@@ -45,8 +68,9 @@ namespace pxt.blocks.layout {
         let i = myArray.length;
         if (i == 0) return;
         // TODO: seeded random
+        let rnd = robertJenkins();
         while (--i) {
-            let j = Math.floor(Math.random() * (i + 1));
+            let j = Math.floor(rnd() * (i + 1));
             let tempi = myArray[i];
             let tempj = myArray[j];
             myArray[i] = tempj;

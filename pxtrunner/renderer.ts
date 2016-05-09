@@ -80,7 +80,6 @@ namespace pxt.runner {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
-        $el.removeClass(cls);
         return pxt.runner.decompileToBlocksAsync($el.text(), options)
             .then((r) => {
                 try {
@@ -89,6 +88,7 @@ namespace pxt.runner {
                     console.error('error while rendering ' + $el.html())
                     $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                 }
+                $el.removeClass(cls);
                 return Promise.delay(1, renderNextSnippetAsync(cls, render, options));
             })
     }
@@ -145,7 +145,8 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.shuffleClass, (c, r) => {
             let s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
-            c.replaceWith(s);
+            let segment = $('<div class="ui segment"/>').append(s);
+            c.replaceWith(segment);
         }, { emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle });
     }
 

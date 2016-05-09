@@ -1,7 +1,7 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 
 namespace pxsim {
-    export module U {
+    export namespace U {
         export function addClass(el: HTMLElement, cls: string) {
             if (el.classList) el.classList.add(cls);
             else if (!el.className.indexOf(cls)) el.className += ' ' + cls;
@@ -80,7 +80,7 @@ namespace pxsim {
         protected serialOutBuffer: string = '';
         public writeSerial(s: string) {
             if (!s) return
-            
+
             for (let i = 0; i < s.length; ++i) {
                 let c = s[i];
                 switch (c) {

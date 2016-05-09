@@ -88,7 +88,7 @@ declare namespace Blockly {
         // Returns null if no next block or is disconnected.
         getNextBlock(): Block;
         // Unplug this block from its superior block.  If this block is a statement, optionally reconnect the block underneath with the block on top.
-        unplug() : void;
+        unplug(): void;
 
         moveBy(x: number, y: number): void;
         getHeightWidth(): { width: number; height: number; };
