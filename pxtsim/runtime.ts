@@ -76,6 +76,7 @@ namespace pxsim {
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) { }
         public initAsync(msg: SimulatorRunMessage): Promise<void> { return Promise.resolve(); }
+        public kill() { }
 
         protected serialOutBuffer: string = '';
         public writeSerial(s: string) {

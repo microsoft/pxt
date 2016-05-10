@@ -56,5 +56,13 @@ The **cards** language displays a code card for each function call.
     basic.clearScreen();
     ````
 
+### shuffle
+
+The **shuffle** macro shuffles the blocks from a program which makes for a great student activity.
+
+    ```shuffle
+    basic.showNumber(5)
+    ```
+
 See [basic namespace docs](https://codemicrobit.com/reference/basic) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic).
