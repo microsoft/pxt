@@ -2,7 +2,7 @@
 
 namespace ts.pxt.Util {
     export var debug = false;
-    
+
     export interface Map<T> {
         [index: string]: T;
     }
