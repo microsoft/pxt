@@ -1,6 +1,8 @@
 /// <reference path="../../typings/bluebird/bluebird.d.ts"/>
 
 namespace ts.pxt.Util {
+    export var debug = false;
+    
     export interface Map<T> {
         [index: string]: T;
     }

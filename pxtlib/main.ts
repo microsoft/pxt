@@ -7,6 +7,10 @@ namespace pxt {
     let lf = U.lf;
 
     export var appTarget: TargetBundle;
+    export function debugMode() { return ts.pxt.Util.debug; }
+    export function setDebugMode(debug: boolean) {
+        ts.pxt.Util.debug = !!debug;
+    }
 
     // general error reported
     export var reportException: (err: any, data: any) => void = function (e, d) {

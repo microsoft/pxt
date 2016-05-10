@@ -117,6 +117,7 @@ namespace ts.pxt {
     }
 
     export interface CommentAttrs {
+        debug?: boolean; // requires ?dbg=1
         shim?: string;
         enumval?: string;
         helper?: string;

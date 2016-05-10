@@ -1022,7 +1022,7 @@ Ctrl+Shift+B
                     <div className="ui item landscape only">
                         {pxt.appTarget.compile ? <sui.Button icon='xicon microbitdown' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                         <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                        {dbgMode && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
+                        {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                     </div>
                     <FileList parent={this} />
                 </div>
@@ -1181,7 +1181,6 @@ let myexports: any = {
 
 export var ksVersion: string;
 export var targetVersion: string;
-export var dbgMode: boolean = false;
 
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
@@ -1189,7 +1188,7 @@ $(document).ready(() => {
     ksVersion = config.pxtVersion;
     targetVersion = config.targetVersion;
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-    dbgMode = /dbg=1/i.test(window.location.href);
+    pxt.setDebugMode(/dbg=1/i.test(window.location.href));
 
     enableInsights(ksVersion);
     appcache.init();

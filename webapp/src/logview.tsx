@@ -100,7 +100,7 @@ export class LogView extends React.Component<{}, LogViewState> {
         const targetTheme = pxt.appTarget.appTheme;
         let rootUrl = targetTheme.embedUrl
 
-        if (!rootUrl || !/dbg=1/.test(window.location.href)) {
+        if (!rootUrl || pxt.debugMode()) {
             pxt.commands.browserDownloadAsync(pxsim.logs.entriesToCSV(entries), "data.csv", 'text/csv')
             return;
         }

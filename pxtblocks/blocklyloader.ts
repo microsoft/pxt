@@ -331,7 +331,6 @@ namespace pxt.blocks {
 
         // create new toolbox and update block definitions
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
-
         blockInfo.blocks.sort((f1, f2) => {
             let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
             let ns2 = blockInfo.apis.byQName[f2.namespace.split('.')[0]];
@@ -346,7 +345,7 @@ namespace pxt.blocks {
         })
 
         let currentBlocks: Util.StringMap<number> = {};
-
+        const dbg = pxt.debugMode();
         // create new toolbox and update block definitions
         blockInfo.blocks
             .filter(fn => !tb || !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
@@ -358,7 +357,7 @@ namespace pxt.blocks {
                     let pnames = parameterNames(fn);
                     let block = createToolboxBlock(blockInfo, fn, pnames);
                     if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
-                        if (tb)
+                        if (tb && (!fn.attributes.debug || dbg))
                             injectToolbox(tb, blockInfo, fn, block);
                         currentBlocks[fn.attributes.blockId] = 1;
                     }
