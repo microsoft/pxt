@@ -18,6 +18,7 @@ let simdirs = [""]
 let fileDir = process.cwd()
 let docsDir = ""
 let tempDir = ""
+let packagedDir = ""
 
 function setupRootDir() {
     root = process.cwd()
@@ -26,6 +27,7 @@ function setupRootDir() {
     simdirs = ["built", "sim/public"].map(p => path.join(root, p))
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
+    packagedDir = path.join(root, "built/packaged")
 }
 
 let statAsync = Promise.promisify(fs.stat)
@@ -419,6 +421,7 @@ function openUrl(startUrl: string) {
 export interface ServeOptions {
     localToken: string;
     autoStart: boolean;
+    packaged?: boolean;
 }
 
 let serveOptions: ServeOptions;
@@ -468,12 +471,6 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (pathname.slice(0, pxt.appTarget.id.length + 2) == "/" + pxt.appTarget.id + "/") {
-            res.writeHead(301, { location: req.url.slice(pxt.appTarget.id.length + 1) })
-            res.end()
-            return
-        }
-
         let elts = pathname.split("/").filter(s => !!s)
         if (elts.some(s => s[0] == ".")) {
             return error(400, "Bad path :-(\n")
@@ -496,6 +493,21 @@ export function serveAsync(options: ServeOptions) {
                         console.log(err.stack)
                     }
                 })
+        }
+
+        if (options.packaged) {
+            let filename = path.resolve(path.join(packagedDir, pathname))
+            if (fileExistsSync(filename)) {
+                return sendFile(filename)
+            } else {
+                return error(404, "Packaged file not found")
+            }
+        }
+
+        if (pathname.slice(0, pxt.appTarget.id.length + 2) == "/" + pxt.appTarget.id + "/") {
+            res.writeHead(301, { location: req.url.slice(pxt.appTarget.id.length + 1) })
+            res.end()
+            return
         }
 
         if (pathname == "/--embed") {

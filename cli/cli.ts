@@ -265,13 +265,18 @@ function onlyExts(files: string[], exts: string[]) {
     return files.filter(f => exts.indexOf(path.extname(f)) >= 0)
 }
 
+function pxtFileList(pref: string) {
+    return allFiles(pref + "webapp/public")
+        .concat(onlyExts(allFiles(pref + "built/web", 1), [".js", ".css"]))
+        .concat(allFiles(pref + "built/web/fonts", 1))
+
+}
+
 export function uploadrelAsync(label?: string) {
     return uploadCoreAsync({
         label: label,
         pkgversion: pkgVersion(),
-        fileList: allFiles("webapp/public")
-            .concat(onlyExts(allFiles("built/web", 1), [".js", ".css"]))
-            .concat(allFiles("built/web/fonts", 1))
+        fileList: pxtFileList("")
     })
 }
 
@@ -391,6 +396,13 @@ function pkgVersion() {
     return ver
 }
 
+function targetFileList() {
+    let lst = onlyExts(allFiles("built", 1), [".js", ".css", ".json", ".webmanifest"])
+        .concat(allFiles("sim/public"))
+    // the cloud only accepts *.json and sim* files in targets
+    return lst.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
+}
+
 export function uploadtrgAsync(label?: string, apprel?: string) {
     if (!apprel) {
         let pkg = readJson("node_modules/pxt-core/package.json")
@@ -408,19 +420,13 @@ export function uploadtrgAsync(label?: string, apprel?: string) {
         })
         .then(r => {
             console.log(`Uploading target against: ${apprel} /${r.id}`);
-            let opts: UploadOptions = {
+            return uploadCoreAsync({
                 label: label,
-                fileList: onlyExts(allFiles("built", 1), [".js", ".css", ".json", ".webmanifest"])
-                    .concat(allFiles("sim/public")),
+                fileList: targetFileList(),
                 pkgversion: pkgVersion(),
                 baserelease: r.id,
                 fileContent: {}
-            }
-
-            // the cloud only accepts *.json and sim* files in targets
-            opts.fileList = opts.fileList.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
-
-            return uploadCoreAsync(opts)
+            })
         })
 }
 
@@ -432,6 +438,7 @@ interface UploadOptions {
     label?: string
     legacyLabel?: boolean;
     target?: string;
+    localDir?: string;
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
@@ -440,13 +447,36 @@ function uploadCoreAsync(opts: UploadOptions) {
     let replacements: U.Map<string> = {
         "/sim/simulator.html": "@simUrl@",
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
-        "/worker.js": "@workerjs@",
-        "/tdworker.js": "@tdworkerjs@",
         "/embed.js": "@relprefix@embed",
         "/cdn/": "@pxtCdnUrl@",
         "/sim/": "@targetCdnUrl@",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
+    }
+
+
+    if (opts.localDir) {
+        let cfg: pxt.WebConfig = {
+            "relprefix": opts.localDir,
+            "workerjs": opts.localDir + "worker.js",
+            "tdworkerjs": opts.localDir + "tdworker.js",
+            "pxtVersion": opts.pkgversion,
+            "pxtRelId": "",
+            "pxtCdnUrl": opts.localDir,
+            "targetVersion": opts.pkgversion,
+            "targetRelId": "",
+            "targetCdnUrl": opts.localDir,
+            "targetId": opts.target,
+            "simUrl": opts.localDir + "simulator.html"
+        }
+        replacements = {
+            "/embed.js": opts.localDir + "embed.js",
+            "/cdn/": opts.localDir,
+            "/sim/": opts.localDir,
+            "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
+            //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
+            "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
+        }
     }
 
     let replFiles = [
@@ -479,22 +509,34 @@ function uploadCoreAsync(opts: UploadOptions) {
         return rdf
             .then((data: Buffer) => {
                 // Strip the leading directory name, unless we are uploading a single file.
-                let fileName = p.replace(/^(built\/web\/|\w+\/public\/|built\/)/, "")
+                let fileName = p.replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
                 let mime = U.getMime(p)
                 let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
                 let content = ""
+
                 if (isText) {
                     content = data.toString("utf8")
                     if (replFiles.indexOf(fileName) >= 0) {
                         for (let from of Object.keys(replacements)) {
                             content = U.replaceAll(content, from, replacements[from])
                         }
-                        // save it for developer inspection
-                        fs.writeFileSync("built/uploadrepl/" + fileName, content)
+                        if (opts.localDir) {
+                            data = new Buffer(content, "utf8")
+                        } else {
+                            // save it for developer inspection
+                            fs.writeFileSync("built/uploadrepl/" + fileName, content)
+                        }
                     }
                 } else {
                     content = data.toString("base64")
                 }
+
+                if (opts.localDir) {
+                    let fn = path.join("built/packaged" + opts.localDir, fileName)
+                    nodeutil.mkdirP(path.dirname(fn))
+                    return writeFileAsync(fn, data)
+                }
+
                 return Cloud.privatePostAsync(liteId + "/files", {
                     encoding: isText ? "utf8" : "base64",
                     filename: fileName,
@@ -506,6 +548,12 @@ function uploadCoreAsync(opts: UploadOptions) {
                     })
             })
     }
+
+    if (opts.localDir)
+        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+            .then(() => {
+                console.log("Release files written to", opts.localDir)
+            })
 
     let info = travisInfo()
     return Cloud.privatePostAsync("releases", {
@@ -816,15 +864,48 @@ function buildAndWatchTargetAsync() {
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
+function cpR(src: string, dst: string, maxDepth = 8) {
+    src = path.resolve(src)
+    let files = allFiles(src, maxDepth)
+    let dirs: U.Map<boolean> = {}
+    for (let f of files) {
+        let bn = f.slice(src.length)
+        let dd = path.join(dst, bn)
+        let dir = path.dirname(dd)
+        if (!U.lookup(dirs, dir)) {
+            nodeutil.mkdirP(dir)
+            dirs[dir] = true
+        }
+        let buf = fs.readFileSync(f)
+        fs.writeFileSync(dd, buf)
+    }
+}
+
+export function staticpkgAsync(label?: string) {
+    let pref = path.resolve("built/packaged/")
+    if (!label) label = "local"
+    return Promise.resolve()
+        .then(() => uploadCoreAsync({
+            label: label,
+            pkgversion: "0.0.0",
+            fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+            localDir: "/" + label + "/"
+        }))
+}
+
 export function serveAsync(arg?: string) {
     forceCloudBuild = !globalConfig.localBuild
     let justServe = false
+    let packaged = false
     if (arg == "-yt") {
         forceCloudBuild = false
     } else if (arg == "-cloud") {
         forceCloudBuild = true
     } else if (arg == "-just") {
         justServe = true
+    } else if (arg == "-pkg") {
+        justServe = true
+        packaged = true
     }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
@@ -843,7 +924,8 @@ export function serveAsync(arg?: string) {
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
         .then(() => server.serveAsync({
             localToken: localToken,
-            autoStart: !globalConfig.noAutoStart
+            autoStart: !globalConfig.noAutoStart,
+            packaged: packaged
         }))
 }
 
@@ -1688,6 +1770,7 @@ cmd("bump                         - bump target patch version", bumpAsync, 1)
 cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
+cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
