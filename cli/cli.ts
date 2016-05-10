@@ -352,7 +352,7 @@ function bumpKsDepAsync() {
                 U.userError("Trying to downgrade pxt-core.")
             }
             pkg["dependencies"]["pxt-core"] = newVer
-            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 4) + "\n")
+            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
             return runGitAsync("commit", "-m", `Bump pxt-core to ${newVer}`, "--", "package.json")
                 .then(() => pkg)
         })
