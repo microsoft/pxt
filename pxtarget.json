@@ -15,8 +15,8 @@
                 "path": "/about"
             },
             {
-                "name": "Blocks",
-                "path": "/defining-blocks"
+                "name": "Docs",
+                "path": "/docs"
             }
         ]
     }
