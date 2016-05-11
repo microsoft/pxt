@@ -417,6 +417,8 @@ namespace pxt {
             if (!res) res = { isNative: false, hasHex: false }
             if (res.hasHex && res.jsRefCounting === undefined)
                 res.jsRefCounting = true
+            if (!res.hasHex && res.floatingPoint === undefined)
+                res.floatingPoint = true
             return res
         }
 

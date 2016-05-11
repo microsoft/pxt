@@ -1,4 +1,12 @@
 namespace ts.pxt {
+    const jsOpMap: U.Map<string> = {
+        "thumb::adds": "+",
+        "thumb::subs": "-",
+        "Number_::div": "/",
+        "Number_::mod": "%",
+        "thumb::muls": "*"
+    }
+
     export function jsEmit(bin: Binary) {
         let jssource = ""
         if (!bin.target.jsRefCounting)
@@ -237,6 +245,8 @@ switch (step) {
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
             else if (U.startsWith(name, "new "))
                 text = `new pxsim.${name.slice(4).replace(/::/g, ".")}(${args.join(", ")})`
+            else if (args.length == 2 && bin.target.floatingPoint && U.lookup(jsOpMap, name))
+                text = `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})`
             else
                 text = `pxsim.${name.replace(/::/g, ".")}(${args.join(", ")})`
 

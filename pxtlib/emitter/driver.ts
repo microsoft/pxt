@@ -15,6 +15,7 @@ namespace ts.pxt {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         jsRefCounting?: boolean;
+        floatingPoint?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
     }
 
