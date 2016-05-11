@@ -534,7 +534,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 }
 
                 if (opts.localDir) {
-                    let fn = path.join("built/packaged" + opts.localDir, fileName)
+                    let fn = path.join(builtPackaged + opts.localDir, fileName)
                     nodeutil.mkdirP(path.dirname(fn))
                     return writeFileAsync(fn, data)
                 }
@@ -554,7 +554,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
-                console.log("Release files written to", path.resolve("built/packaged" + opts.localDir))
+                console.log("Release files written to", path.resolve(builtPackaged + opts.localDir))
             })
 
     let info = travisInfo()
@@ -648,6 +648,61 @@ export function spawnAsync(opts: {
             resolve()
         });
     })
+}
+
+function ghpSetupRepoAsync() {
+    function getreponame() {
+        let cfg = fs.readFileSync("built/gh-pages/.git/config", "utf8")
+        let m = /^\s*url\s*=\s*.*github.*\/([^\/\s]+)$/mi.exec(cfg)
+        if (!m) U.userError("cannot determine GitHub repo name")
+        return m[1].replace(/\.git$/, "")
+    }
+    if (fs.existsSync("built/gh-pages")) {
+        console.log("Skipping init of built/gh-pages; you can delete it first to get full re-init")
+        return Promise.resolve(getreponame())
+    }
+
+    cpR(".git", "built/gh-pages/.git")
+    return ghpGitAsync("checkout", "gh-pages")
+        .then(() => getreponame(), (e: any) => {
+            U.userError("No gh-pages branch. Try 'pxt ghpinit' first.")
+        })
+}
+
+function ghpGitAsync(...args: string[]) {
+    return spawnAsync({
+        cmd: "git",
+        cwd: "built/gh-pages",
+        args: args
+    })
+}
+
+export function ghpPushAsync() {
+    let repoName = ""
+    return ghpSetupRepoAsync()
+        .then(name => staticpkgAsync((repoName = name)))
+        .then(() => {
+            cpR(builtPackaged + "/" + repoName, "built/gh-pages")
+        })
+        .then(() => ghpGitAsync("add", "."))
+        .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
+        .then(() => ghpGitAsync("push"))
+}
+
+export function ghpInitAsync() {
+    if (fs.existsSync("built/gh-pages"))
+        U.userError("built/gh-pages already exists")
+    cpR(".git", "built/gh-pages/.git")
+    return ghpGitAsync("checkout", "gh-pages")
+        .then(() => U.userError("gh-pages branch already exists"), (e: any) => { })
+        .then(() => ghpGitAsync("checkout", "--orphan", "gh-pages"))
+        .then(() => ghpGitAsync("rm", "-rf", "."))
+        .then(() => {
+            fs.writeFileSync("built/gh-pages/index.html", "Under construction.")
+            return ghpGitAsync("add", ".")
+        })
+        .then(() => ghpGitAsync("commit", "-m", "Initial."))
+        .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
 }
 
 function maxMTimeAsync(dirs: string[]) {
@@ -883,9 +938,11 @@ function cpR(src: string, dst: string, maxDepth = 8) {
     }
 }
 
+let builtPackaged = "built/packaged"
+
 function renderDocs(localDir: string) {
-    let dst = path.resolve("built/packaged/" + localDir)
-    
+    let dst = path.resolve(builtPackaged + localDir)
+
     cpR("node_modules/pxt-core/docfiles", dst + "/docfiles")
     if (fs.existsSync("docfiles"))
         cpR("docfiles", dst + "/docfiles")
@@ -895,7 +952,7 @@ function renderDocs(localDir: string) {
     docsTemplate = U.replaceAll(docsTemplate, "/cdn/", webpath)
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
-    
+
     let dirs: U.Map<boolean> = {}
     for (let f of allFiles("docs", 8)) {
         let dd = path.join(dst, f)
@@ -916,7 +973,7 @@ function renderDocs(localDir: string) {
             })
             let html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
-              return beg + ` href="${webpath}docs${url}.html"`  
+                return beg + ` href="${webpath}docs${url}.html"`
             })
             buf = new Buffer(html, "utf8")
             dd = dd.slice(0, dd.length - 3) + ".html"
@@ -927,7 +984,6 @@ function renderDocs(localDir: string) {
 }
 
 export function staticpkgAsync(label?: string) {
-    let pref = path.resolve("built/packaged/")
     let dir = label ? "/" + label + "/" : "/"
     return Promise.resolve()
         .then(() => uploadCoreAsync({
@@ -1818,6 +1874,9 @@ cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
+
+cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) hosting for target", ghpInitAsync, 1)
+cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
 
