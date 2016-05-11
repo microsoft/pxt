@@ -823,7 +823,12 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
             let fn = path.join('./docs', logos[k]);
             console.log(`importing ${fn}`)
             let b = fs.readFileSync(fn)
-            logos[k] = b.toString('utf8');
+            let mimeType = '';
+            if (/\.svg$/i.test(fn)) mimeType = "image/svg+xml";
+            else if (/\.png$/i.test(fn)) mimeType = "image/png";
+            else if (/\.jpe?g$/i.test(fn)) mimeType = "image/jpeg";
+            if (mimeType) logos[k] = `data:${mimeType};base64,${b.toString('base64')}`;
+            else logos[k] = b.toString('utf8');
         })
 
     cfg.appTheme.locales = {}
