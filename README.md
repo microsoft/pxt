@@ -1,5 +1,7 @@
-# Programming Experience Toolkit
+# Programming Experience Toolkit - pxt.io
 ## A kinder JavaScript experience
+
+* [Try it live!](https://pxt.io)
 
 [![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt)
 
