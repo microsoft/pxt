@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>PXT Simulator</title>
+    <title>simulator</title>
     <style>
         html {
             width: 100%;
@@ -35,19 +35,30 @@
         
         footer {
             position: absolute;
-            bottom: 1em;
-            right: 1em;
+            bottom: 0;
+            right: 0;
+            left: 0;
             z-index: 1;
-            font-size: 0.8em;
-            font-family: monospace;
-            color: #fff;
-            mix-blend-mode: difference;
-            border-radius: 0.2em;
+            font-size: 0.75rem;
+            font-family: "Lucida Console", Monaco, monospace;
+            color: #333;
             padding: 0.5em;
+            margin: 0;
+            background: #fff;
         }
         
-        footer a {
-            color: #fff;
+        footer img {
+            max-height: 1rem;
+            vertical-align: middle;
+            margin-left: 0.5rem;
+        }
+        
+        footer a,
+        footer a:visited {
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            color: #333;
         }
         
         a.center {
@@ -61,8 +72,10 @@
     <div id='loading' style='font-size: 25px; font-family:monospace; margin: 20% auto; width: 200px;'>
         loading...
     </div>
-    <div id='simulators'>
+    <div id="simulators">
     </div>
+    <footer id="footer" style="display:none;">
+    </footer>
     <script>
         // This line gets patched up by the cloud
         var pxtConfig = null;
@@ -74,16 +87,19 @@
         var id = /id=([^&?]+)/i.exec(window.location.href); 
         var code = /code=([^&?]+)/i.exec(window.location.href);
         var hex = !!/hex=1/i.exec(window.location.href);
+        var footer = !/nofooter=1/i.exec(window.location.href);
         if (!id && !code) {
             console.error("missing id or code");
             loading.innerText = 'Oops, wrong arguments...';
             return;
         }
         var options = { id: id ? id[1] : undefined, code: code ? decodeURIComponent(code[1]) : undefined };
-        console.log(JSON.stringify(options, null, 2))
-    
+        console.log(JSON.stringify(options, null, 2))    
+        var sims = document.getElementById('simulators');        
         ksRunnerReady(function() {
-            var sims = document.getElementById('simulators');                            
+            let theme = pxt.appTarget.appTheme;
+            document.title = theme.title;
+            if (footer) pxt.runner.initFooter($('#footer'), id);
             if (hex) {
                 console.log('compiling script to hex')
                 pxt.runner.generateHexFileAsync(options).done(function(hex) {
@@ -103,7 +119,7 @@
                     loading.remove();
                 })
             }
-    })
+        })
 })()
     </script>
 </body>

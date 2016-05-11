@@ -124,6 +124,22 @@ namespace pxt.runner {
             })
     }
 
+    export function initFooter(footer: JQuery, shareId?: string) {
+        let theme = pxt.appTarget.appTheme;
+        if (footer.length == 0) return;
+        let body = $('body');
+
+        let footera = $('<a/>').attr('href', theme.homeUrl)
+            .attr('target', '_blank');
+        footer.append(footera);
+        if (theme.organizationLogo)
+            footera.append($('<img/>').attr('src', Util.toDataUri(theme.organizationLogo)));
+        else footera.append(lf("powered by {0}", theme.title));
+
+        body.mouseenter(ev => footer.fadeOut());
+        body.mouseleave(ev => footer.fadeIn());
+    }
+
     export function showError(msg: string) {
         console.error(msg)
     }
@@ -244,7 +260,6 @@ namespace pxt.runner {
                 }
             })
     }
-
 
     function windowLoad() {
         let f = (window as any).ksRunnerWhenLoaded
