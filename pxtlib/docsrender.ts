@@ -20,6 +20,7 @@ namespace pxt {
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
+        accentColor?: string;
         locales?: ts.pxt.Util.Map<AppTheme>;
     }
 
@@ -302,6 +303,13 @@ namespace pxt.docs {
         params["targetname"] = theme.name || "PXT"
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         params["name"] = params["title"] + " - " + params["targetname"]
+
+        let style = '';
+        if (theme.accentColor) style += `
+.ui.accent { color: ${theme.accentColor}; }
+.ui.inverted.accent { background: ${theme.accentColor}; }
+`
+        params["targetstyle"] = style;
 
         return injectHtml(template, params, ["body", "menu", "breadcrumb", "targetlogo"])
     }
