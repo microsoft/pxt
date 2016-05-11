@@ -41,6 +41,13 @@ body {
 #logo img, #rightlogo img {
     height: 2.5rem;    
 }
+#organization {
+    position:absolute;
+    left:1.5rem;
+    bottom:0.5rem;
+    height:2rem;
+    z-index:100;
+}
 
 div.simframe {
     border:none;

@@ -11,6 +11,7 @@ namespace pxt {
         portraitLogo?: string;
         rightLogo?: string;
         docsLogo?: string;
+        organizationLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
         koduUrl?: string;
