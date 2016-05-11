@@ -61,6 +61,10 @@ New projects are created under the ``/projects`` folder when testing a target lo
 
 Whenever you make a change, the local web server will trigger a build. Simply reload the page once the build is done.
 
+### Deploying targets
+
+Your best bet is likely static files on GitHub Pages, [read more](/staticpkg).
+
 ## Defining APIs and Blocks
 
 The APIs available in the PXT environment are loaded from TypeScript package (library) files
