@@ -1,0 +1,145 @@
+div.listing
+{
+    color:Black;
+    border-style:none;
+    margin: 0px 0px 0px 0px;
+    font-size: 11pt;
+    font-family: Consolas, "Andale Mono WT" , "Andale Mono" , "Lucida Console" , "Lucida Sans Typewriter" , "DejaVu Sans Mono" , "Bitstream Vera Sans Mono" , "Liberation Mono" , "Nimbus Mono L" , Monaco, "Courier New" , Courier, monospace;
+    padding: 5px 5px 5px 5px;
+    background: #f8f8f8;
+    clear: both;
+    
+    white-space: pre-wrap; /* css-3 */
+    white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+    white-space: -pre-wrap; /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
+div.listing A:link 
+{
+    color:#000020;
+    text-decoration: none;
+}
+div.listing A:visited 
+{
+    color:#000020;
+    text-decoration: none;
+}
+div.listing A:active
+{
+    color:#000080;
+    text-decoration: none;
+}
+div.listing A:hover 
+{
+    color:#000080;
+    text-decoration: underline; 
+}
+
+.mainbody {
+    margin-top: 6em;
+    margin-bottom: 3em;
+}
+
+.prodname {
+    font-weight: normal;
+    font-size: 1.8em;
+    margin-left: 0.5em;
+    color: #ff7d00;
+}
+
+#root .editor-image {
+    margin: 2em auto;
+    display: block;
+    max-width: 80%;    
+}
+
+pre {
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f7f7f7;
+    border-radius: 3px;
+}
+
+p > code {
+    padding: 0;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+    margin: 0;
+    font-size: 85%;
+    background-color: rgba(0,0,0,0.04);
+    border-radius: 3px;
+}
+
+p > code:before, p > code:after {
+    letter-spacing: -0.2em;
+    content: "\00a0";
+}
+
+
+.avatar {
+    position: relative;
+}
+
+#root .avatar .message {
+    margin-left: 4em;
+    margin-bottom: 1em;                    
+}
+
+.avatar .avatar-image {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3em;
+    height: 3em;
+    background-image: url(https://az851932.vo.msecnd.net/pub/nbduqpku/logo-solid.svg);
+}
+
+.avatar .message:after {
+    top: 1.1em;
+    left: -1em;
+    bottom: auto;
+    border-width: 0px 1em 0.7em 0;
+    border-color: rgba(0, 0, 0, 0) #EEE;
+    content: '';
+    position: absolute;
+    border-style: solid;
+    display: block;
+    width: 0;
+}
+
+.ui[class*="5:3"].embed {
+    padding-bottom: 83%;
+    background:transparent !important;
+}
+
+code {
+        white-space: pre-wrap;
+}
+code.lang-blocks::before,
+code.lang-sig::before,
+code.lang-block::before,
+code.lang-shuffle::before,
+code.lang-sim::before,
+code.lang-cards::before,
+code.lang-namespace::before,
+code.lang-codecard::before
+{
+    content:"...";
+    position: absolute;
+    top:calc(50% - 0.5em);
+    left:calc(50% - 5em);
+}
+code.lang-blocks,
+code.lang-sig,
+code.lang-block,
+code.lang-shuffle,
+code.lang-sim,
+code.lang-cards,
+code.lang-namespace,
+code.lang-codecard
+{
+    color:transparent;   
+}

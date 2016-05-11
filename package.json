@@ -34,7 +34,8 @@
     "webapp/public",
     "typings/bluebird",
     "typings/node",
-    "typings/marked"
+    "typings/marked",
+    "docfiles"
   ],
   "main": "built/pxt.js",
   "dependencies": {

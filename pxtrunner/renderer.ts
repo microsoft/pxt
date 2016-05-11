@@ -15,7 +15,6 @@ namespace pxt.runner {
         hexName?: string;
     }
 
-    let runUrl = '/--run';
     function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
         if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
@@ -56,7 +55,7 @@ namespace pxt.runner {
                 else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runUrl + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl() + "?code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -261,6 +260,10 @@ namespace pxt.runner {
             .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));
     }
 
+    function getRunUrl() {
+        return pxt.webConfig && pxt.webConfig.runUrl ? pxt.webConfig.runUrl : '/--run';
+    }
+
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
 
@@ -275,7 +278,7 @@ namespace pxt.runner {
                     <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
                     </div>
                     </div></div>`)
-                $sim.find("iframe").attr("src", runUrl + "?code=" + encodeURIComponent($c.text().trim()));
+                $sim.find("iframe").attr("src", getRunUrl() + "?code=" + encodeURIComponent($c.text().trim()));
                 if (options.snippetReplaceParent) $c = $c.parent();
                 $c.replaceWith($sim);
             });

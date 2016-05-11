@@ -46,6 +46,8 @@ namespace pxt {
         targetCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zowrj/c/",
         targetId: string; // "microbit",
         simUrl: string; // "https://trg-microbit.kindscript.net/sim/zowrj"
+        runUrl?: string; // "/--run"
+        isStatic?: boolean;
     }
 
     export function localWebConfig() {

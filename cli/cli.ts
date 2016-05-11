@@ -467,7 +467,9 @@ function uploadCoreAsync(opts: UploadOptions) {
             "targetRelId": "",
             "targetCdnUrl": opts.localDir,
             "targetId": opts.target,
-            "simUrl": opts.localDir + "simulator.html"
+            "simUrl": opts.localDir + "simulator.html",
+            "runUrl": opts.localDir + "run.html",
+            "isStatic": true,
         }
         replacements = {
             "/embed.js": opts.localDir + "embed.js",
@@ -552,7 +554,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
-                console.log("Release files written to", opts.localDir)
+                console.log("Release files written to", path.resolve("built/packaged" + opts.localDir))
             })
 
     let info = travisInfo()
@@ -881,16 +883,60 @@ function cpR(src: string, dst: string, maxDepth = 8) {
     }
 }
 
+function renderDocs(localDir: string) {
+    let dst = path.resolve("built/packaged/" + localDir)
+    
+    cpR("node_modules/pxt-core/docfiles", dst + "/docfiles")
+    if (fs.existsSync("docfiles"))
+        cpR("docfiles", dst + "/docfiles")
+
+    let webpath = localDir
+    let docsTemplate = fs.readFileSync(dst + "/docfiles/template.html", "utf8")
+    docsTemplate = U.replaceAll(docsTemplate, "/cdn/", webpath)
+    docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
+    docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
+    
+    let dirs: U.Map<boolean> = {}
+    for (let f of allFiles("docs", 8)) {
+        let dd = path.join(dst, f)
+        let dir = path.dirname(dd)
+        if (!U.lookup(dirs, dir)) {
+            nodeutil.mkdirP(dir)
+            dirs[dir] = true
+        }
+        let buf = fs.readFileSync(f)
+        if (/\.md$/.test(f)) {
+            let str = buf.toString("utf8")
+            let path = f.slice(5).split(/\//)
+            let bc = path.map((e, i) => {
+                return {
+                    href: "/" + path.slice(0, i + 1).join("/"),
+                    name: e
+                }
+            })
+            let html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc)
+            html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
+              return beg + ` href="${webpath}docs${url}.html"`  
+            })
+            buf = new Buffer(html, "utf8")
+            dd = dd.slice(0, dd.length - 3) + ".html"
+        }
+        fs.writeFileSync(dd, buf)
+    }
+    console.log("Docs written.")
+}
+
 export function staticpkgAsync(label?: string) {
     let pref = path.resolve("built/packaged/")
-    if (!label) label = "local"
+    let dir = label ? "/" + label + "/" : "/"
     return Promise.resolve()
         .then(() => uploadCoreAsync({
-            label: label,
+            label: label || "main",
             pkgversion: "0.0.0",
             fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-            localDir: "/" + label + "/"
+            localDir: dir
         }))
+        .then(() => renderDocs(dir))
 }
 
 export function serveAsync(arg?: string) {

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta charset="UTF-8">
+    <title>@name@</title>
+    <meta name="Description" content="@description@" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@kindscript" />
+    <meta name="twitter:domain" content="pxt.io" />
+    <meta name="twitter:image:src" content="@image@" />
+    <meta property="og:title" content="@name@" />
+    <meta property="og:site_name" content="PXT" />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content="" />
+    <meta property="fb:app_id" content="" />
+    <meta property="og:image" content="/docfiles/logo.png" />
+
+
+    <link rel="apple-touch-icon" sizes="200x200" href="/docfiles/logo.png">
+    <link rel="icon" type="image/png" href="/docfiles/logo.png" sizes="200x200">
+
+    <!-- Semantic UI CSS -->
+    <link rel="stylesheet" href="/cdn/semantic.css" />
+
+    <link rel="stylesheet" href="/docfiles/style.css" />
+
+
+    <script src="/cdn/jquery.js"></script>
+    <script src="/cdn/semantic.js"></script>
+    <script src="/cdn/lzma/lzma_worker-min.js"></script>
+
+    <script src="/--embed" type="text/javascript"></script>
+    <script src="/docfiles/docs.js" type="text/javascript"></script>
+
+
+     
+</head>
+
+<body id='root' class='root'>
+
+    
+<div class="ui fixed inverted menu">
+    <div class="ui container">
+        <a href="/" class="header item">
+                @targetlogo@
+        </a>
+        <!-- Menu -->
+        @menu@
+    </div>
+</div>
+
+
+    <!-- BODY -->
+
+    
+
+<aside id=video>
+    <div class="ui embed mdvid" data-url="https://www.microbit.co.uk/embed/@ARGS@" data-placeholder="https://www.microbit.co.uk/@ARGS@/thumb"
+    data-icon="video play">
+    </div>
+</aside>
+
+<aside id=vimeo>
+    <div class="ui embed mdvid" data-source="vimeo" data-id="@ARGS@" data-placeholder="/thumbnail/1024/vimeo/@ARGS@" data-icon="video play">
+    </div>
+</aside>
+
+<aside id=youtube>
+    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
+    </div>
+</aside>
+
+<aside id=section>
+    <!-- section @ARGS@ -->
+</aside>
+
+<aside id=hide class=box>
+    <div style='display:none'>
+        @BODY@
+    </div>
+</aside>
+
+<aside id=avatar class=box>
+    <div class='avatar @ARGS@'>
+        <div class='avatar-image'></div>
+        <div class='ui message'>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=hint class=box>
+    <div class="ui icon green message">
+        <i class="help checkmark icon"></i>
+        <div class="content">
+            <div class="header">Hint</div>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<!-- wrapped around ordinary content -->
+<aside id=main-container class=box>
+    <div class="ui text">
+        @BODY@
+    </div>
+</aside>
+
+<!-- used for 'column' box - they are collected and wrapped in 'column-container' -->
+<aside id=column class=aside>
+    <div class='column'>
+        @BODY@
+    </div>
+</aside>
+<aside id=column-container class=box>
+    <div class="ui three column stackable grid text">
+        @BODY@
+    </div>
+</aside>
+
+
+<!-- Menu on the top of the page -->
+<aside id=item class=menu>
+    <a class="item" href="@LINK@">@NAME@</a>
+</aside>
+
+<aside id=divider class=menu>
+    <div class="divider"></div>
+</aside>
+
+<aside id=top-dropdown class=menu>
+    <div class="ui simple dropdown item" title="@TITLE@">
+        @NAME@
+        <i class="dropdown icon"></i>
+        <div class="menu">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=inner-dropdown class=menu>
+    <div class="item" title="@TITLE@">
+        <i class="dropdown icon"></i> @NAME@
+        <div class="menu">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<style>
+        
+    svg {
+        max-width: 100%;
+    }
+    
+    .blocklyText {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+    }
+    
+    .blocklyCheckbox, .blocklyLed {        
+        fill: #ff3030 !important;
+        text-shadow: 0px 0px 7px #f00;
+        font-size: 24px;
+    }
+    
+    .ui.card  .blocklyPreview {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        width: calc(100% - 1em);
+        max-height: calc(100% - 1em);
+    }    
+</style>
+<div class="ui main container mainbody">
+
+@breadcrumb@
+@body@
+
+
+</div>
+
+
+    <div class="ui inverted vertical footer segment">
+        <div class="ui center aligned container">
+            <!--
+            <div class="ui stackable inverted divided grid">
+                <div class="three wide column">
+                    <h4 class="ui inverted header">Group 1</h4>
+                    <div class="ui inverted link list">
+                        <a href="#" class="item">Link One</a>
+                        <a href="#" class="item">Link Two</a>
+                        <a href="#" class="item">Link Three</a>
+                        <a href="#" class="item">Link Four</a>
+                    </div>
+                </div>
+                <div class="three wide column">
+                    <h4 class="ui inverted header">Group 2</h4>
+                    <div class="ui inverted link list">
+                        <a href="#" class="item">Link One</a>
+                        <a href="#" class="item">Link Two</a>
+                        <a href="#" class="item">Link Three</a>
+                        <a href="#" class="item">Link Four</a>
+                    </div>
+                </div>
+                <div class="three wide column">
+                    <h4 class="ui inverted header">Group 3</h4>
+                    <div class="ui inverted link list">
+                        <a href="#" class="item">Link One</a>
+                        <a href="#" class="item">Link Two</a>
+                        <a href="#" class="item">Link Three</a>
+                        <a href="#" class="item">Link Four</a>
+                    </div>
+                </div>
+                <div class="seven wide column">
+                    <h4 class="ui inverted header">Footer Header</h4>
+                    <p>Extra space for a call to action inside the footer that could help re-engage users.</p>
+
+                     
+                </div>
+            </div>
+            <div class="ui inverted section divider"></div>
+            -->
+            <div class="ui horizontal inverted small divided link list">
+                <a class="item" href="https://www.pxt.io/" title="Programming Experience Toolkit">Powered by PXT</a>
+                <a class="item" href="https://www.pxt.io/contact">Contact Us</a>
+                <a class="item" href="https://www.pxt.io/privacy">Privacy & Cookies</a>
+                <a class="item" href="https://www.pxt.io/legal">Terms Of Use</a>
+                <a class="item" href="https://www.pxt.io/trademarks">Trademarks</a>
+                <div class="item">© 2016 Microsoft</div>    
+                <!-- we need to force the browser to load this font -->
+                <div style='font-family: Icons; color: #010101;' aria-hidden="true">.</div>
+            </div>
+            <a class="item" href="https://www.microsoft.com/"><img class="ui centered image" src="https://az851932.vo.msecnd.net/pub/pmapoirq"/></a>
+        </div>
+    </div>
+    <script type="text/javascript">
+    var appInsights=window.appInsights||function(config){
+        function r(config){t[config]=function(){var i=arguments;t.queue.push(function(){t[config].apply(t,i)})}}var t={config:config},u=document,e=window,o="script",s=u.createElement(o),i,f;for(s.src=config.url||"//az416426.vo.msecnd.net/scripts/a/ai.0.js",u.getElementsByTagName(o)[0].parentNode.appendChild(s),t.cookie=u.cookie,t.queue=[],i=["Event","Exception","Metric","PageView","Trace"];i.length;)r("track"+i.pop());return r("setAuthenticatedUserContext"),r("clearAuthenticatedUserContext"),config.disableExceptionTracking||(i="onerror",r("_"+i),f=e[i],e[i]=function(config,r,u,e,o){var s=f&&f(config,r,u,e,o);return s!==!0&&t["_"+i](config,r,u,e,o),s}),t
+        }({
+            instrumentationKey:"e9ae05ca-350b-427a-9775-3ba3f6efabce"
+        });
+        
+        window.appInsights=appInsights;
+        appInsights.trackPageView();
+    </script>
+</body>
+
+</html>
