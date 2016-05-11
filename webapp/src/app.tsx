@@ -979,8 +979,8 @@ Ctrl+Shift+B
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
                                     <div className="ui divider"></div>
-                                    <a className="ui item" href="https://go.microsoft.com/fwlink/?LinkId=521839" role="menuitem" target="_blank">{lf("Privacy & Cookies") }</a>
-                                    <a className="ui item" href="https://go.microsoft.com/fwlink/?LinkID=206977" role="menuitem" target="_blank">{lf("Terms Of Use") }</a>
+                                    { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
+                                    { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }
                                     <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                 </sui.DropdownMenu>
                             </div>

@@ -16,6 +16,9 @@ namespace pxt {
         koduUrl?: string;
         visualStudioCode?: boolean;
         docMenu?: DocMenuEntry[];
+        privacyUrl?: string;
+        termsOfUseUrl?: string;
+        contactUrl?: string;
         locales?: ts.pxt.Util.Map<AppTheme>;
     }
 
