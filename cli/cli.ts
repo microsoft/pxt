@@ -1037,6 +1037,61 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
         .then(() => { });
 }
 
+function ghpSetupRepoAsync() {
+    function getreponame() {
+        let cfg = fs.readFileSync("built/gh-pages/.git/config", "utf8")
+        let m = /^\s*url\s*=\s*.*github.*\/([^\/\s]+)$/mi.exec(cfg)
+        if (!m) U.userError("cannot determine GitHub repo name")
+        return m[1].replace(/\.git$/, "")
+    }
+    if (fs.existsSync("built/gh-pages")) {
+        console.log("Skipping init of built/gh-pages; you can delete it first to get full re-init")
+        return Promise.resolve(getreponame())
+    }
+
+    nodeutil.cpR(".git", "built/gh-pages/.git")
+    return ghpGitAsync("checkout", "gh-pages")
+        .then(() => getreponame(), (e: any) => {
+            U.userError("No gh-pages branch. Try 'pxt ghpinit' first.")
+        })
+}
+
+function ghpGitAsync(...args: string[]) {
+    return nodeutil.spawnAsync({
+        cmd: "git",
+        cwd: "built/gh-pages",
+        args: args
+    })
+}
+
+export function ghpPushAsync() {
+    let repoName = ""
+    return ghpSetupRepoAsync()
+        .then(name => internalStaticPkgAsync((repoName = name)))
+        .then(() => {
+        nodeutil.cpR(builtPackaged + "/" + repoName, "built/gh-pages")
+    })
+        .then(() => ghpGitAsync("add", "."))
+        .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
+        .then(() => ghpGitAsync("push"))
+}
+
+export function ghpInitAsync() {
+    if (fs.existsSync("built/gh-pages"))
+        U.userError("built/gh-pages already exists")
+    nodeutil.cpR(".git", "built/gh-pages/.git")
+    return ghpGitAsync("checkout", "gh-pages")
+        .then(() => U.userError("gh-pages branch already exists"), (e: any) => { })
+        .then(() => ghpGitAsync("checkout", "--orphan", "gh-pages"))
+        .then(() => ghpGitAsync("rm", "-rf", "."))
+        .then(() => {
+            fs.writeFileSync("built/gh-pages/index.html", "Under construction.")
+            return ghpGitAsync("add", ".")
+        })
+        .then(() => ghpGitAsync("commit", "-m", "Initial."))
+        .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
+}
+
 function maxMTimeAsync(dirs: string[]) {
     let max = 0
     return Promise.map(dirs, dn => readDirAsync(dn)
@@ -1499,8 +1554,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
-let builtPackaged = "built/packaged"
-
+const builtPackaged = "built/packaged"
 function renderDocs(localDir: string) {
     let dst = path.resolve(builtPackaged + localDir)
 
@@ -1515,7 +1569,7 @@ function renderDocs(localDir: string) {
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
-    let dirs: Map<boolean> = {}
+    const dirs: Map<boolean> = {}
     for (const f of nodeutil.allFiles("docs", 8)) {
         let dd = path.join(dst, f)
         let dir = path.dirname(dd)
@@ -3346,14 +3400,19 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const pref = path.resolve("built/packaged/")
     const label = parsed.arguments[0] || "local";
+    return internalStaticPkgAsync(label);
+}
+
+function internalStaticPkgAsync(label: string) {
+    const pref = path.resolve(builtPackaged);
+    const dir = label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
-        label: label,
+        label: label || "main",
         pkgversion: "0.0.0",
         fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
         localDir: "/" + label + "/"
-    })
+    }).then(() => renderDocs(dir))
 }
 
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
