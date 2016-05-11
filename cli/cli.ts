@@ -528,6 +528,15 @@ function uploadCoreAsync(opts: UploadOptions) {
                             // save it for developer inspection
                             fs.writeFileSync("built/uploadrepl/" + fileName, content)
                         }
+                    } else if (fileName == "target.json" && opts.localDir) {
+                        let trg: pxt.TargetBundle = JSON.parse(content)
+                        for (let e of trg.appTheme.docMenu)
+                            if (e.path[0] == "/") {
+                                e.path = opts.localDir + "docs" + e.path + ".html"
+                            }
+                        trg.appTheme.logoUrl = opts.localDir
+                        trg.appTheme.homeUrl = opts.localDir
+                        data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                     }
                 } else {
                     content = data.toString("base64")
