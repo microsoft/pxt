@@ -35,7 +35,7 @@ pxt serve
 
 The last command will open default browser and point it to http://localhost:3232/
 
-The `pxt target microbit` is essentially the same as `mkdir node_modules; npm install pxt-microbit`
+The `pxt target microbit` is essentially the same as ``mkdir node_modules; npm install pxt-microbit``
 plus setting up `pxtcli.json` file to point to the target.
 
 In future, you just need to run `pxt serve`. You can also run `npm update` to upgrade 
@@ -112,10 +112,10 @@ svgo svgicons/myicon.svg
 * [x] x as T support
 * [x] check on ("foo" + true)
 * [x] simulator at sim-microbit.kindscript.net
-* [ ] `ptr-<username>-*` as the main way publishing packages
+* [ ] ``ptr-<username>-*`` as the main way publishing packages
 * [ ] lambdas returning values (maybe just works?)
 * [ ] clear variables when they get out of scope to limit memory usage
-* [ ] allow use of floating point for non-native targets
+* [x] allow use of floating point for non-native targets
 * [ ] do not DECR no-closure functions
 * [ ] after uninstall pouch db throws 404 after reload
 * [ ] in simulator currResume start loop() in nextTick
@@ -123,9 +123,9 @@ svgo svgicons/myicon.svg
 * [x] in JS emitter - generate pause every 1000 loop iterations or so
 * [x] `>=` in formatter becomes `> =`
 * [ ] expose simulator errors in web app
-* [ ] implement .hex file cache in browser
-* [ ] implement .hex file cache in CLI
-* [ ] deal with C++ enums
+* [x] implement .hex file cache in browser
+* [x] implement .hex file cache in CLI
+* [x] deal with C++ enums
 * [ ] deal with C++ classes
 
 * [x] enum support without enumval= (esp for non-hex targets)
@@ -138,18 +138,18 @@ svgo svgicons/myicon.svg
 * [x] move target definition from pxt.json to pxtarget.json
 
 #### Bigger items
-* [ ] generate .d.ts from .cpp
-* [ ] generate .d.ts from simulator code
+* [x] generate .d.ts from .cpp
+* [x] generate .d.ts from simulator code
 * [ ] debugger hooks
 * [ ] auto-fix of parenthesis
-* [ ] integrate TD converter
+* [x] integrate TD converter
 * [ ] think about package versioning (semver?)
 
 #### Maybe
 * [ ] virtual methods
 * [ ] 3-way merge upon sync
 * [ ] class field initializers (?)
-* [ ] support Enum.X + 0 etc ?
+* [x] support Enum.X + 0 etc ?
 
 ### web app
 
@@ -157,25 +157,25 @@ svgo svgicons/myicon.svg
 * [x] do not type-check while auto-completing
 * [x] scroll completion window with keyboard
 * [x] indent when entering first character on a line
-* [ ] save source in hex
+* [x] save source in hex
 * [ ] Save json
-* [ ] Drag and drop load
+* [x] Drag and drop load
 * [x] Link up simulator
 * [ ] Flag to hide from TS auto completion (eg: set sprite property with enum)
-* [ ] add markdown processor for docs
+* [x] add markdown processor for docs
 * [ ] help for specific arguments
-* [ ] stepping debugger
+* [x] stepping debugger
 * [ ] attaching runtime warning to specific lines of code or block
 
 
 ### converter from TD to TS (different repo)
 
 * [x] multi-line strings into backtick literals
-* [ ] use bit operators for bits.XYZ
+* [x] use bit operators for bits.XYZ
 * [x] fish out {shim:...} and friends
 * [x] {hints:...} -> @param x Blah, eg: 100, 200 (?)
 * [x] async is flipped
-* [ ] use `expr as Type` not `<Type> expr`
+* [x] use `expr as Type` not `<Type> expr`
 
 ## License
 
