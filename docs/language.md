@@ -15,14 +15,15 @@ PXT programs are executed in at least three different environments:
 * browsers
 * server-side JavaScript engines (node.js, etc)
 
-We refer to the browser execution environment as the "simulator" (or the
+We refer to the browser execution environment as the "simulator" (of the
 microcontroller), even though for most targets it's the only environment.
 
 The node.js execution is currently only used for automated testing, but one
 can easily imagine a programming experience for scripts running on headless
 devices, either locally or in the cloud.
 
-In case of microcontrollers, PXT programs are compiled in the browser
+In case of microcontrollers, PXT programs are 
+[compiled in the browser](https://www.touchdevelop.com/docs/touch-develop-in-208-bits)
 to ARM Thumb assembly, and then to machine code, resulting in a file
 which is then deployed to the microcontroller.
 
@@ -92,5 +93,5 @@ unlikely to miss it):
 * `for ... in` statements
 * JSX (HTML as part of JavaScript)
 
-Note, that you can use all of these while implemneting your runtime environment
+Note, that you can use all of these while implementing your runtime environment
 (simulator), they just cannot be used in user's programs.
