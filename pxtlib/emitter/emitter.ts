@@ -124,6 +124,7 @@ namespace ts.pxt {
         help?: string;
         async?: boolean;
         promise?: boolean;
+        hidden?: boolean;
         callingConvention: ir.CallingConvention;
         block?: string;
         blockId?: string;

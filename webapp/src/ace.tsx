@@ -202,6 +202,12 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 Util.iterStringMap(cache.completionInfo.entries, (k, v) => {
                     cache.entries.push(mkEntry(k, v))
                 })
+
+                cache.entries = cache.entries.filter(e => {
+                    if (e.symbolInfo.attributes.hidden)
+                        return false
+                    return true
+                })
             })
             .then(() => this.setState({ cache: cache }))
     }
