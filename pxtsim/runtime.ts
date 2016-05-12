@@ -433,6 +433,9 @@ namespace pxsim {
                     if (_this.dead) return;
                     runtime = _this;
                     U.assert(s.pc == retPC);
+                    // TODO should loop() be called here using U.nextTick?
+                    // This matters if the simulator function calls cb()
+                    // synchronously.
                     if (v instanceof FnWrapper) {
                         let w = <FnWrapper>v
                         let frame: StackFrame = {

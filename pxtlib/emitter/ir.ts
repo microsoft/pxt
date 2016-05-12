@@ -392,6 +392,7 @@ namespace ts.pxt.ir {
 
         resolve() {
             // TODO remove decr(stringData)
+            // TODO remove decr(static function literal)
 
             let iterargs = (e: Expr, f: (v: Expr) => Expr) => {
                 if (e.args)
