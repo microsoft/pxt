@@ -137,6 +137,10 @@ simply annotate the function with the ``weight`` macro:
 ...
 ```
 
+If given API is only for Blocks usage, and doesn't make much sense in TypeScript
+(for example, because there are alternative TypeScript APIs), you can use ``//% hidden``
+flag to disable showing it in auto-completion.
+
 ## Grouping
 
 Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter, 
