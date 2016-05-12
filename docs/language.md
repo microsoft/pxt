@@ -51,7 +51,7 @@ See also [issue #51](https://github.com/Microsoft/pxt/issues/51).
 * all arithmetic operators (including bitwise operators); note that in microcontroller targets
   all arithmetic is performed on integers, also when simulating in the browser
 * strings (with a few common methods)
-* [string templates](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) (```x is ${x}```)
+* [string templates](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) (`` `x is ${x}` ``)
 * arrow functions `() => ...`
 * classes with fields, methods and constructors; `new` keyword
 * array literals `[1, 2, 3]`
@@ -84,7 +84,7 @@ unlikely to miss it):
 * `yield` expression and ``function*``
 * `await` expression and `async function`
 * `typeof` expression
-* tagged templates ``tag `text ${expression} more text```; regular templates are supported
+* tagged templates ``tag `text ${expression} more text` ``; regular templates are supported
 * binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * `with` statement
 * `eval`
