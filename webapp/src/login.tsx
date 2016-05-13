@@ -54,7 +54,8 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
         let uid = Cloud.getUserId()
         if (uid) addParameters = "&u=" + encodeURIComponent(uid)
 
-        let oauthState = window.localStorage["oauthState"] = Util.guidGen()
+        let oauthState = Util.guidGen();
+        pxt.storage.setLocal("oauthState", oauthState);
 
         let hereUrl = window.location.href;
         let url = Cloud.getServiceUrl() + "/oauth/dialog?response_type=token&client_id=" +

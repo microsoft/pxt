@@ -33,7 +33,7 @@ mountVirtualApi("td-cloud", {
     expirationTime: p => 60 * 1000,
 })
 
-const cachedData: Util.StringMap<CacheEntry> = {};
+let cachedData: Util.StringMap<CacheEntry> = {};
 
 function subscribe(component: AnyComponent, path: string) {
     let e = lookup(path)
@@ -65,8 +65,13 @@ function shouldCache(ce: CacheEntry) {
     return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path)
 }
 
+export function clearCache() {
+    cachedData = {};
+    saveCache();
+}
+
 function loadCache() {
-    JSON.parse(window.localStorage["apiCache2"] || "[]").forEach((e: any) => {
+    JSON.parse(pxt.storage.getLocal("apiCache2") || "[]").forEach((e: any) => {
         let ce = lookup(e.path)
         ce.data = e.data
     })
@@ -79,7 +84,7 @@ function saveCache() {
             data: e.data
         }
     })
-    window.localStorage["apiCache2"] = JSON.stringify(obj)
+    pxt.storage.setLocal("apiCache2", JSON.stringify(obj))
 }
 
 function matches(ce: CacheEntry, prefix: string) {

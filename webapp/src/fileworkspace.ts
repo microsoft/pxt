@@ -216,7 +216,8 @@ function syncAsync() {
 function resetAsync() {
     return db.destroyAsync()
         .then(() => {
-            window.localStorage.clear()
+            pxt.storage.clearLocal();
+            data.clearCache();
         })
 }
 

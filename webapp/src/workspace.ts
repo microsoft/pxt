@@ -56,7 +56,7 @@ export function getHeader(id: string) {
 
 let sessionID: string;
 export function isSessionOutdated() {
-    return localStorage['pxt_workspace_session_id'] != sessionID;
+    return pxt.storage.getLocal('pxt_workspace_session_id') != sessionID;
 }
 function checkSession() {
     if (isSessionOutdated()) {
@@ -69,7 +69,7 @@ export function initAsync() {
 
     // generate new workspace session id to avoid races with other tabs
     sessionID = Util.guidGen();
-    localStorage['pxt_workspace_session_id'] = sessionID;
+    pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     console.log(`workspace session: ${sessionID}`);
 
     return impl.initAsync(pxt.appTarget.id)

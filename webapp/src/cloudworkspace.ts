@@ -2,7 +2,7 @@ import * as db from "./db";
 import * as core from "./core";
 import * as pkg from "./package";
 import * as data from "./data";
-import * as ws from "./workspace"
+import * as ws from "./workspace";
 
 let headers = new db.Table("header")
 let texts = new db.Table("text")
@@ -364,7 +364,8 @@ function syncAsync() {
 function resetAsync() {
     return db.destroyAsync()
         .then(() => {
-            window.localStorage.clear()
+            pxt.storage.clearLocal();
+            data.clearCache();
         })
 }
 

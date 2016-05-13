@@ -1,10 +1,11 @@
 import * as core from "./core"
+import * as workspace from "./workspace"
 
 export function shouldNag(id: string): boolean {
-    let nag = window.localStorage["nag"] || {};
+    let nag = JSON.parse(pxt.storage.getLocal("nag") || "{}");
     let r = !!nag[id];
     nag[id] = true;
-    window.localStorage["nag"] = nag;
+    pxt.storage.setLocal("nag", JSON.stringify(nag));
     return r;
 }
 

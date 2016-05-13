@@ -332,7 +332,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
-        this.settings = JSON.parse(window.localStorage["editorSettings"] || "{}")
+        this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         if (!this.settings.theme)
             this.settings.theme = {}
         this.state = {
@@ -378,7 +378,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             sett.fileHistory.unshift(n)
         }
 
-        window.localStorage["editorSettings"] = JSON.stringify(this.settings)
+        pxt.storage.setLocal("editorSettings", JSON.stringify(this.settings))
     }
 
     componentDidUpdate() {
@@ -1053,23 +1053,23 @@ function initLogin() {
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
         if (qs["access_token"]) {
-            let ex = localStorage["oauthState"]
+            let ex =pxt.storage.getLocal("oauthState")
             if (ex && ex == qs["state"]) {
-                window.localStorage["access_token"] = qs["access_token"]
-                window.localStorage.removeItem("oauthState")
+                pxt.storage.setLocal("access_token", qs["access_token"])
+                pxt.storage.removeLocal("oauthState")
             }
             location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
         }
-        Cloud.accessToken = window.localStorage["access_token"] || "";
+        Cloud.accessToken = pxt.storage.getLocal("access_token") || "";
     }
 
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
         if (qs["local_token"]) {
-            window.localStorage["local_token"] = qs["local_token"]
+            pxt.storage.setLocal("local_token", qs["local_token"])
             location.hash = location.hash.replace(/(%23)?[\#\&\?]*local_token.*/, "")
         }
-        Cloud.localToken = window.localStorage["local_token"] || "";
+        Cloud.localToken = pxt.storage.getLocal("local_token") || "";
     }
 }
 
