@@ -95,4 +95,4 @@ PXT support cooperative multithreading and implicit async functions.
 
 ## Favicon
 
-Use [realfavicongenerator](http://realfavicongenerator.net/) to generate all the relevant favicon icon files and save them under ``/docs/static/icons``.
+Use [realfavicongenerator](http://realfavicongenerator.net/) to generate all the relevant favicon icon files and save them under ``static/icons`` in the ``docs`` folder.
