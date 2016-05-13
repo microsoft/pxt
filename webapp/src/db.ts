@@ -17,14 +17,14 @@ let inMemory = false;
 export function getDbAsync(): Promise<any> {
     if (_db) return Promise.resolve(_db);
 
-    let temp = new PouchDB("pxt", { revs_limit: 2 })
+    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), { revs_limit: 2 })
     return temp.get('pouchdbsupportabletest')
         .catch(function (error: any) {
             if (error && error.error && error.name == 'indexed_db_went_bad') {
                 // we are in private mode...
                 console.log('private mode...')
                 inMemory = true;
-                _db = new PouchDB("pxt", { adapter: 'memory' })
+                _db = new PouchDB("pxt-" + pxt.storage.storageId(), { adapter: 'memory' })
                 return Promise.resolve(_db);
             } else {
                 _db = temp;

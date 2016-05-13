@@ -1,7 +1,10 @@
 namespace pxt.storage {
-    function targetKey(key: string): string {
+    export function storageId(): string {
         let id = pxt.appTarget ? pxt.appTarget.id : (<any>window).pxtConfig ? (<any>window).pxtConfig.targetId : '';
-        return id + '/' + key;
+        return id;
+    }
+    function targetKey(key: string): string {
+        return storageId() + '/' + key;
     }
     export function setLocal(key: string, value: string) {
         window.localStorage[targetKey(key)] = value;
