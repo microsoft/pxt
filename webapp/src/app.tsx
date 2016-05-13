@@ -947,7 +947,7 @@ Ctrl+Shift+B
                         </span>
                         <div className="ui item">
                             <div className="ui">
-                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='xicon microbitdown' onClick={() => this.compile() } /> : "" }
+                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
                                 <sui.Button role="menuitem" key='runmenubtn' class={(this.state.running ? "teal" : "orange") + " portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                                 <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
@@ -1020,7 +1020,7 @@ Ctrl+Shift+B
                         <logview.LogView ref="logs" />
                     </div>
                     <div className="ui item landscape only">
-                        {pxt.appTarget.compile ? <sui.Button icon='xicon microbitdown' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
+                        {pxt.appTarget.compile ? <sui.Button icon='icon download' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
                         <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                     </div>
