@@ -459,7 +459,7 @@ namespace ts.pxt.Util {
                 case "woff": return "application/font-woff";
                 case "woff2": return "application/font-woff2";
                 case "md": return "text/markdown";
-                case "xml": return "text/xml";
+                case "xml": return "application/xml";
                 default: return "application/octet-stream";
             }
         else return "application/octet-stream";
