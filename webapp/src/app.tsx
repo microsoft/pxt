@@ -222,7 +222,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         }
         let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
 
-        return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Share Project") }>
+        return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Embed Project") }>
             <div className={`ui ${formState} form`}>
                 <div className="ui warning message">
                     <sui.Button icon="cloud" class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
@@ -952,7 +952,7 @@ Ctrl+Shift+B
                                 <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                { this.state.header && packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Publish") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                { this.state.header && packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
