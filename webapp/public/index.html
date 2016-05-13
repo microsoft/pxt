@@ -81,10 +81,13 @@
             </block>
         </category>
         <category name="Logic" colour="210" category="49">
-            <block type="controls_if"></block>
-            <block type="controls_if">
+            <block type="controls_if" gap="8"></block>
+            <block type="controls_if" gap="8">
                 <mutation else="1"></mutation>
             </block>
+            <block type="controls_if">
+                <mutation else="1" elseif="1"></mutation>
+            </block>                
             <block type="logic_compare" gap="8">
                 <field name="OP">LT</field>
                 <value name="A">
