@@ -92,3 +92,7 @@ We recommend to contact the team to help you get started on this topic.
 
 PXT support cooperative multithreading and implicit async functions.
 [See more](/async).
+
+## Favicon
+
+Use [realfavicongenerator](http://realfavicongenerator.net/) to generate all the relevant favicon icon files and save them under ``/docs/static/icons``.
