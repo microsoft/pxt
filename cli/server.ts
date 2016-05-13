@@ -578,7 +578,12 @@ export function serveAsync(options: ServeOptions) {
     server.listen(3232, "127.0.0.1");
 
     let start = `http://localhost:3232/#local_token=${options.localToken}`;
-    console.log(`Open this URL: ${start}`);
+    console.log(`---------------------------------------------`);
+    console.log(``);
+    console.log(`To launch the editor, open this URL:`);
+    console.log(start);
+    console.log(``);
+    console.log(`---------------------------------------------`);
     if (options.autoStart)
         openUrl(start);
 
