@@ -19,7 +19,7 @@ that assume they sit under `/foo/` on the web server. If you do not specify anyt
 the files assume they sit right under `/`. To test it, run `pxt server -pkg` and head to
 `http://localhost:3232/foo/index.html`.
 
-## GitHub Pages support
+## [GitHub Pages](https://pages.github.com/) support
 
 GitHub provides you with free hosting for your project files.
 
@@ -36,7 +36,6 @@ This will:
 
 You can then head to `https://your-username.github.io/repo-name/`.
 
-## Multiple target warning
+## Multiple targets
 
-If you're deploying multiple targets under a single domain (eg one GitHub user account), 
-take a look at https://github.com/Microsoft/pxt/issues/35
+It is possible to host multiple editors under the same pages domains.
