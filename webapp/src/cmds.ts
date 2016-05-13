@@ -5,7 +5,7 @@ import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
-    pxt.BrowserUtils.browserDownloadText(
+    let url = pxt.BrowserUtils.browserDownloadText(
         text,
         name,
         contentType,
@@ -13,7 +13,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
     );
 
     $('#compilemsg').finish()
-        .html(`${lf("Download ready.")} <a href='" + encodeURI(uri) + "' download='" + name + "' target='_blank'>${lf("Use this link to save to another location.")}</a>`)
+        .html(`${lf("Download ready.")} <a href='${encodeURI(url)}' download='${Util.htmlEscape(name)}' target='_blank'>${lf("Use this link to save to another location.")}</a>`)
         .fadeIn('fast').delay(7000).fadeOut('slow');
 
     return Promise.resolve();
