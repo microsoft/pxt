@@ -1,5 +1,5 @@
 namespace pxt.BrowserUtils {
-    export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void) : string {
+    export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
         console.log('trigger download')
         let buf = Util.stringToUint8Array(Util.toUTF8(text))
         return browserDownloadUInt8Array(buf, name, contentType, onError);
