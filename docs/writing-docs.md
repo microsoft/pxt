@@ -14,6 +14,24 @@ PXT assumes that the documentation is located under the ``/docs`` folder. The we
 
 Static assets such as picture can be placed under the ``/docs/static`` folder.
 
+## Macros
+
+The following macros are custom extensions to markdown.
+
+### avatar
+
+    ```
+    ### ~avatar [class]
+
+    [content]
+
+    ### ~
+    ```
+    
+See [blink lesson](https://m.pxt.io/lessons/blink/activity) 
+and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/lessons/blink/activity.md).
+    
+
 ## Code snippets
 
 To avoid screenshot hell, PXT automatically renders code snippets to blocks or javascript. This is done by specifying a language on code blocks.
@@ -25,7 +43,7 @@ The **blocks** language renders a JavaScript snippet into blocks and provide a s
     ```blocks
     basic.showNumber(5)
     ```
-See [forever docs](https://codemicrobit.com/reference/basic/show-string) 
+See [forever docs](https://m.pxt.io/reference/basic/show-string) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
 
 ### sig
@@ -36,7 +54,7 @@ The **sig** displays a signature of the first function call in the snippet.
     basic.showNumber(5)
     ```
 
-See [forever docs](https://codemicrobit.com/reference/basic/show-string) 
+See [forever docs](https://m.pxt.io/reference/basic/show-string) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
 
 ### cards
@@ -55,6 +73,25 @@ The **cards** language displays a code card for each function call.
     basic.showString("Hello!");
     basic.clearScreen();
     ````
+    
+### namespaces
+
+The **namespaces** language display a code card for the first symbol of each namespace.    
+
+    ```namespaces
+    basic.showNumber(0);
+    input.onButtonPressed(() => {});
+    ````
+See [basic namespace docs](https://m.pxt.io/reference) 
+and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference.md).
+
+### block
+
+The **block** language renders a JavaScript snippet into blocks without any simulator.
+
+    ```block
+    basic.showNumber(5)
+    ```
 
 ### shuffle
 
@@ -64,5 +101,14 @@ The **shuffle** macro shuffles the blocks from a program which makes for a great
     basic.showNumber(5)
     ```
 
-See [basic namespace docs](https://codemicrobit.com/reference/basic) 
-and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic).
+See [basic namespace docs](https://m.pxt.io/reference/basic) 
+and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic.md).
+
+### codecard
+
+Renders a codecard payload into a card
+
+    ```codecard
+    basic.showNumber(5)
+    ```
+  
