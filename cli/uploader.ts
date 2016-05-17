@@ -207,6 +207,7 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
 
     let checked = 0;
     let broken = 0;
+    let snipCount = 0;
     files.filter(f => /\.md$/i.test(f)).forEach(f => {
         let header = false;
         let contentType = U.getMime(f)
@@ -214,6 +215,7 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
             return;
         checked++;
         let text = fs.readFileSync("docs" + f).toString("utf8");
+        // look for broken urls
         text.replace(/]\((\/[^)]+)\)/g, (m) => {
             let url = /]\((\/[^)]+)\)/.exec(m)[1];
             if (!urls[url]) {
@@ -222,9 +224,20 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
             }
             return '';
         })
-    })
 
-    console.log(`checked ${checked} files, found ${broken} broken links`);
-    // if (broken > 0) throw new Error(`found ${broken} broken links in docs`)
+        // extract all snippets
+        let snipIndex = 0;
+        text.replace(/^`{3}([\S]+)?\n([\s\S]+?)\n`{3}$/gm, (m,type,code) => {
+            type = type || "pre"
+            let dir = "built/docs/snippets/" + type;
+            let fn = `${dir}/${f.replace(/^\//,'').replace(/\//g, '-').replace(/\.\w+$/,'')}-${snipIndex++}.ts`;
+            nodeutil.mkdirP(dir);
+            fs.writeFileSync(fn, code);
+            snipCount++;
+            return '';
+        });
+    });
+
+    console.log(`checked ${checked} files: ${broken} broken links, ${snipCount} snippets`);
     return Promise.resolve();
 }
