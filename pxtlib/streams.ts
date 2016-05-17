@@ -41,7 +41,7 @@ namespace pxt.streams {
     }
 
     export function createStreamAsync(target: string, name?: string): Promise<JsonStream> {
-        return Cloud.privatePostAsync("streams", { target: target, name: name }).then(j => <JsonStream>j);
+        return Cloud.privatePostAsync("streams", { target: target, name: name || 'data' }).then(j => <JsonStream>j);
     }
 
     export function postPayloadAsync(stream: JsonStream, data: JsonStreamPayload): Promise<void> {

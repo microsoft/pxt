@@ -137,11 +137,8 @@ export class LogView extends React.Component<{}, LogViewState> {
                 })
             },
             htmlBody: `
-<div class="ui two column grid">
-  <div class="column">
-    <div class="ui fluid card">
-        <div class="ui image">
-        </div>
+<div class="ui cards">
+    <div class="ui card">
         <div class="content">
             <div class="header">${lf("Local File")}</div>
             <div class="description">
@@ -153,11 +150,7 @@ export class LogView extends React.Component<{}, LogViewState> {
             Download data
         </div>        
     </div>
-  </div>
-  <div class="column">
-    <div id="datastreamcard" class="ui fluid card">
-        <div class="ui image">
-        </div>
+    <div id="datastreamcard" class="ui card">
         <div class="content">
             <div class="header">${lf("Stream to Cloud")}</div>
             <div class="description">
@@ -175,7 +168,6 @@ export class LogView extends React.Component<{}, LogViewState> {
                 ${lf("Start")}
                 </div>`
             }
-    </div>
   </div>
 </div>`
         }).done();
