@@ -51,6 +51,7 @@ interface IAppProps { }
 interface IAppState {
     active?: boolean; // is this tab visible at all
     header?: Header;
+    projectName?: string; // project name value while being edited
     currFile?: pkg.File;
     theme?: srceditor.Theme;
     fileState?: string;
@@ -564,6 +565,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     file = main.lookupFile(e.name) || file
                 this.setState({
                     header: h,
+                    projectName: h.name,
                     currFile: file
                 })
                 core.infoNotification(lf("Project loaded: {0}", h.name))
@@ -922,13 +924,28 @@ Ctrl+Shift+B
         })
     }
 
+    private debouncedSaveProjectName = Util.debounce(() => this.saveProjectName(), 2000, false);
+
     updateHeaderName(name: string) {
+        this.setState({
+            projectName: name
+        })
+        this.debouncedSaveProjectName();
+    }
+
+    saveProjectName() {
+        if (!this.state.projectName || !this.state.header) return;
+        
+        console.log('saving project name to ' + this.state.projectName);
         try {
             let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.configName);
             let config = JSON.parse(f.content) as pxt.PackageConfig;
-            config.name = name;
+            config.name = this.state.projectName;
             f.setContentAsync(JSON.stringify(config, null, 2)).done(() => {
-                this.forceUpdate();
+                if (this.state.header)
+                    this.setState({
+                        projectName: this.state.header.name
+                    })
             });
         }
         catch (e) {
@@ -1022,10 +1039,10 @@ Ctrl+Shift+B
                                 <input
                                     type="text"
                                     placeholder={lf("Pick a name...") }
-                                    value={this.state.header ? this.state.header.name : ''}
+                                    value={this.state.projectName || ''}
                                     onChange={(e) => this.updateHeaderName((e.target as any).value) }>
                                 </input>
-                                <i className="write icon grey"></i>
+                                <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
                             </div>
                         </div>
                         {targetTheme.rightLogo ?
