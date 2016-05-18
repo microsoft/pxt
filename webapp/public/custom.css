@@ -14,10 +14,18 @@ body {
 }
 
 #filelist,
-#maineditor {
+#maineditor,
+#sidedocs {
   position: absolute;
   top:4.5rem;
   bottom: 0rem;
+}
+#sidedocs {
+  display:none;
+  overflow-y: auto;
+  background:#fafafa;
+  width:18rem;
+  right: 0;
 }
 #logo {
     font-size: 2.8rem;
@@ -430,12 +438,16 @@ html {
 
 
 /* extra-large desktop screen */
-@media only screen and (min-width: 100em) and (min-height:44em) {
+@media only screen and (min-width: 96em) and (min-height:44em) {
     #filelist {
         width:26rem;
     }
     #maineditor {
         left:26rem;
+        right:18rem;
+    }
+    #sidedocs {
+        display:unset;
     }
 }
 

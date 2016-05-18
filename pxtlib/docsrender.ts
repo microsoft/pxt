@@ -17,6 +17,7 @@ namespace pxt {
         koduUrl?: string;
         visualStudioCode?: boolean;
         docMenu?: DocMenuEntry[];
+        sideDocMenu?: DocMenuEntry[];
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;

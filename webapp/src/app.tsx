@@ -60,6 +60,8 @@ interface IAppState {
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
 
+    sideDocsPath?: string;
+
     running?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
@@ -248,6 +250,28 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         </sui.Modal>
     }
 }
+
+class SideDocs extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    renderCore() {
+        const parent = this.props.parent
+        const state = parent.state;
+        const theme = pxt.appTarget.appTheme;
+
+        if (state.sideDocsPath) {
+            return <div/>
+        } else {
+            const menu = theme.sideDocMenu || theme.docMenu;
+            return <div className="ui vertical fluid menu">
+                {menu.map(m => <a className="ui item" key={"sidedocsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
+            </div>
+        }
+    }
+}
+
 interface FileListState {
     expands: Util.Map<boolean>;
 }
@@ -1030,7 +1054,10 @@ Ctrl+Shift+B
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                {targetTheme.organizationLogo ? <img id="organization" src={Util.toDataUri(targetTheme.organizationLogo)} /> : undefined }
+                <div id="sidedocs" role="complementary">
+                    <SideDocs parent={this} />
+                </div>
+                {targetTheme.organizationLogo ? <img id="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
             </div>
@@ -1053,7 +1080,7 @@ function initLogin() {
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
         if (qs["access_token"]) {
-            let ex =pxt.storage.getLocal("oauthState")
+            let ex = pxt.storage.getLocal("oauthState")
             if (ex && ex == qs["state"]) {
                 pxt.storage.setLocal("access_token", qs["access_token"])
                 pxt.storage.removeLocal("oauthState")
