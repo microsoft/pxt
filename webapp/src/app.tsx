@@ -535,7 +535,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setSideDoc(path: string) {
-        this.setState({ sideDocsPath : path });
+        this.setState({ sideDocsPath: path });
     }
 
     loadHeaderAsync(h: Header): Promise<void> {
@@ -967,6 +967,7 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
+//  ${targetTheme.accentColor ? "inverted accent " : ''}
         const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
         const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
@@ -975,7 +976,7 @@ Ctrl+Shift+B
         return (
             <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "") }>
                 <div id="menubar" role="banner">
-                    <div className="ui borderless small menu" role="menubar">
+                    <div className={`ui borderless small menu`} role="menubar">
                         <span id="logo" className="ui item">
                             {targetTheme.logo || targetTheme.portraitLogo
                                 ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
@@ -1220,6 +1221,16 @@ let myexports: any = {
 export var ksVersion: string;
 export var targetVersion: string;
 
+function initTheme() {
+    if (pxt.appTarget.appTheme.accentColor) {
+        let style = document.createElement('style');
+        style.type = 'text/css';
+        style.innerHTML = `.ui.accent { color: ${pxt.appTarget.appTheme.accentColor}; }
+        .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${pxt.appTarget.appTheme.accentColor}; }`;
+        document.getElementsByTagName('head')[0].appendChild(style);
+    }
+}
+
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     let config = pxt.webConfig
@@ -1254,6 +1265,7 @@ $(document).ready(() => {
     const cfg = pxt.webConfig;
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
+        .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => {
