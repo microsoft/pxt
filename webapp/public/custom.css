@@ -442,12 +442,14 @@ html {
     }
     #maineditor {
         left:26rem;
-        right:22rem;
+        /*right:22rem;*/
     }
+    /*
     #sidedocs {
         display:unset;
         width:22rem;
     }
+    */
 }
 
 /* smaller desktop screen */

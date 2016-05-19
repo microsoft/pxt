@@ -61,7 +61,7 @@ interface IAppState {
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
 
-    sideDocsMarkdown?: string;
+    sideDocsPath?: string;
 
     running?: boolean;
     publishing?: boolean;
@@ -258,10 +258,9 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const template = "@body@";
-        let source = this.props.parent.state.sideDocsMarkdown || "";
-        let ht = pxt.docs.renderMarkdown(template, source);
-        return <div className="ui segment" dangerouslySetInnerHTML={{ __html: ht }} />
+        let path = this.props.parent.state.sideDocsPath;
+        if (!this.props.parent.state.sideDocsPath) return <div></div>
+        return <iframe src={"https://m.pxt.io/" + path} />
     }
 }
 
@@ -477,7 +476,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     public componentWillMount() {
         this.initEditors()
         this.initDragAndDrop();
-        this.loadSideDocAsync(pxt.appTarget.appTheme.sideDoc);
+        this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
     }
 
     public componentDidMount() {
@@ -535,14 +534,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    loadSideDocAsync(path: string): Promise<void> {
-        if (!path) {
-            this.setState({ sideDocsMarkdown: '' });
-            return Promise.resolve();
-        }
-
-        return Util.httpGetTextAsync("https://www.pxt.io/api/md/" + pxt.appTarget.id + "/" + path.replace(/^\//, ''))
-            .then(md => this.setState({ sideDocsMarkdown: md }))
+    setSideDoc(path: string) {
+        this.setState({ sideDocsPath : path });
     }
 
     loadHeaderAsync(h: Header): Promise<void> {
@@ -1073,9 +1066,6 @@ Ctrl+Shift+B
                 <div id="maineditor" role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
-                </div>
-                <div id="sidedocs" role="complementary">
-                    <SideDocs parent={this} />
                 </div>
                 {targetTheme.organizationLogo ? <img id="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
