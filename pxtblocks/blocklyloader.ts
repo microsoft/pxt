@@ -489,13 +489,13 @@ namespace pxt.blocks {
         monkeyPatchBlock("controls_repeat_ext", "for loop", "loops/repeat");
         monkeyPatchBlock("device_while", "while loop", "loops/while");
 
-        monkeyPatchBlock("variables_set", "variable assignment", "assign");
-        monkeyPatchBlock("variables_change", "variable update", "assign");
+        monkeyPatchBlock("variables_set", "variable assignment", "variables/assign");
+        monkeyPatchBlock("variables_change", "variable update", "variables/change");
 
-        monkeyPatchBlock("logic_compare", "boolean operator", "math");
-        monkeyPatchBlock("logic_operation", "boolean operation", "boolean");
-        monkeyPatchBlock("logic_negate", "not operator", "boolean");
-        monkeyPatchBlock("logic_boolean", "boolean value", "boolean");
+        monkeyPatchBlock("logic_compare", "boolean operator", "types/boolean");
+        monkeyPatchBlock("logic_operation", "boolean operation", "types/boolean");
+        monkeyPatchBlock("logic_negate", "not operator", "types/boolean");
+        monkeyPatchBlock("logic_boolean", "boolean value", "types/boolean");
 
         monkeyPatchBlock("math_number", "number", "number");
         monkeyPatchBlock("math_arithmetic", "arithmetic operation", "math");
