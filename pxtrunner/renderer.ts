@@ -195,36 +195,56 @@ namespace pxt.runner {
                             addItem(card);
                         }
                     }
-                }
-                switch (stmt.kind) {
-                    case ts.SyntaxKind.IfStatement:
-                        addItem({
-                            name: ns ? "Logic" : "if",
-                            url: "reference/logic" + (ns ? "" : "/if"),
-                            description: ns ? lf("Logic operators and constants") : lf("Conditional statement"),
-                            blocksXml: '<xml><block type="controls_if"></block></xml>',
-                            link: true
-                        });
-                        break;
-                    case ts.SyntaxKind.ForStatement:
-                        addItem({
-                            name: ns ? "Loops" : "for",
-                            url: "reference/loops" + (ns ? "" : "/for"),
-                            description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
-                            blocksXml: '<xml><block type="controls_simple_for"></block></xml>',
-                            link: true
-                        });
-                        break;
-                    case ts.SyntaxKind.VariableStatement:
-                        addItem({
-                            name: ns ? "Variables" : "variable declaration",
-                            url: "reference/variables" + (ns ? "" : "/assign"),
-                            description: ns ? lf("Variables") : lf("Assign a value to a named variable."),
-                            blocksXml: '<xml><block type="variables_set"></block></xml>',
-                            link: true
-                        });
-                        break;
-                }
+                } else
+                    switch (stmt.kind) {
+                        case ts.SyntaxKind.ExpressionStatement:
+                            let es = stmt as ts.ExpressionStatement;
+                            switch (es.expression.kind) {
+                                case ts.SyntaxKind.TrueKeyword:
+                                case ts.SyntaxKind.FalseKeyword:
+                                    addItem({
+                                        name: "Boolean",
+                                        url: "reference/types/boolean",
+                                        description: lf("True or false values"),
+                                        blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="logic_boolean"><field name="BOOL">TRUE</field></block></xml>',
+                                        link: true
+                                    });
+                                    break;
+                                default:
+                                    console.log(`card expr kind: ${es.expression.kind}`);
+                                    break;
+                            }
+                            break;
+                        case ts.SyntaxKind.IfStatement:
+                            addItem({
+                                name: ns ? "Logic" : "if",
+                                url: "reference/logic" + (ns ? "" : "/if"),
+                                description: ns ? lf("Logic operators and constants") : lf("Conditional statement"),
+                                blocksXml: '<xml><block type="controls_if"></block></xml>',
+                                link: true
+                            });
+                            break;
+                        case ts.SyntaxKind.ForStatement:
+                            addItem({
+                                name: ns ? "Loops" : "for",
+                                url: "reference/loops" + (ns ? "" : "/for"),
+                                description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
+                                blocksXml: '<xml><block type="controls_simple_for"></block></xml>',
+                                link: true
+                            });
+                            break;
+                        case ts.SyntaxKind.VariableStatement:
+                            addItem({
+                                name: ns ? "Variables" : "variable declaration",
+                                url: "reference/variables" + (ns ? "" : "/assign"),
+                                description: ns ? lf("Variables") : lf("Assign a value to a named variable."),
+                                blocksXml: '<xml><block type="variables_set"></block></xml>',
+                                link: true
+                            });
+                            break;
+                        default:
+                            console.log(`card kind: ${stmt.kind}`)
+                    }
             })
 
             if (replaceParent) c = c.parent();
