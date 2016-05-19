@@ -17,7 +17,7 @@ namespace pxt {
         koduUrl?: string;
         visualStudioCode?: boolean;
         docMenu?: DocMenuEntry[];
-        sideDocMenu?: DocMenuEntry[];
+        sideDoc?: string;
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
@@ -106,6 +106,8 @@ namespace pxt.docs {
         href: string;
     }
 
+    export var requireMarked = () => require("marked");
+
     export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null, breadcrumb: BreadcrumbEntry[] = []): string {
         let params: U.Map<string> = pubinfo || {}
 
@@ -153,7 +155,7 @@ namespace pxt.docs {
         })
 
         if (!marked) {
-            marked = require("marked");
+            marked = requireMarked();
             let renderer = new marked.Renderer()
             renderer.image = function (href: string, title: string, text: string) {
                 let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';

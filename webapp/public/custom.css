@@ -23,8 +23,6 @@ body {
 #sidedocs {
   display:none;
   overflow-y: auto;
-  background:#fafafa;
-  width:18rem;
   right: 0;
 }
 #logo {
@@ -438,16 +436,17 @@ html {
 
 
 /* extra-large desktop screen */
-@media only screen and (min-width: 96em) and (min-height:44em) {
+@media only screen and (min-width: 92em) and (min-height:44em) {
     #filelist {
         width:26rem;
     }
     #maineditor {
         left:26rem;
-        right:18rem;
+        right:22rem;
     }
     #sidedocs {
         display:unset;
+        width:22rem;
     }
 }
 

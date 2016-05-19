@@ -61,7 +61,7 @@ interface IAppState {
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
 
-    sideDocsPath?: string;
+    sideDocsMarkdown?: string;
 
     running?: boolean;
     publishing?: boolean;
@@ -258,18 +258,10 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const parent = this.props.parent
-        const state = parent.state;
-        const theme = pxt.appTarget.appTheme;
-
-        if (state.sideDocsPath) {
-            return <div/>
-        } else {
-            const menu = theme.sideDocMenu || theme.docMenu;
-            return <div className="ui vertical fluid menu">
-                {menu.map(m => <a className="ui item" key={"sidedocsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
-            </div>
-        }
+        const template = "@body@";
+        let source = this.props.parent.state.sideDocsMarkdown || "";
+        let ht = pxt.docs.renderMarkdown(template, source);
+        return <div className="ui segment" dangerouslySetInnerHTML={{ __html: ht }} />
     }
 }
 
@@ -485,6 +477,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     public componentWillMount() {
         this.initEditors()
         this.initDragAndDrop();
+        this.loadSideDocAsync(pxt.appTarget.appTheme.sideDoc);
     }
 
     public componentDidMount() {
@@ -540,6 +533,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             errorCard: undefined
         })
+    }
+
+    loadSideDocAsync(path: string): Promise<void> {
+        if (!path) {
+            this.setState({ sideDocsMarkdown: '' });
+            return Promise.resolve();
+        }
+
+        return Util.httpGetTextAsync("https://www.pxt.io/api/md/" + pxt.appTarget.id + "/" + path.replace(/^\//, ''))
+            .then(md => this.setState({ sideDocsMarkdown: md }))
     }
 
     loadHeaderAsync(h: Header): Promise<void> {
@@ -935,7 +938,7 @@ Ctrl+Shift+B
 
     saveProjectName() {
         if (!this.state.projectName || !this.state.header) return;
-        
+
         console.log('saving project name to ' + this.state.projectName);
         try {
             let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.configName);
@@ -1254,6 +1257,8 @@ $(document).ready(() => {
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1])
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
+
+    pxt.docs.requireMarked = () => require("marked");
 
     const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     const cfg = pxt.webConfig;
