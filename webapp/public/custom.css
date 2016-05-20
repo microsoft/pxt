@@ -534,8 +534,14 @@ html {
 }
 
 /* thin display, mobile */
-@media only screen and (min-width:50em) {
+@media only screen and (min-width:36em) {
     .ui.thin.only {
+        display:none !important;        
+    }
+}
+
+@media only screen and (max-width:36em) {
+    .ui.wide.only {
         display:none !important;        
     }
 }
@@ -544,9 +550,6 @@ html {
     #logo {
         font-size: 0rem;
         padding-right: 0;        
-    }
-    .ui.wide.only {
-        display:none !important;        
     }
     .blocklyTreeLabel, .blocklyText {
         font-size:0.75rem !important;
