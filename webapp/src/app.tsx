@@ -784,13 +784,16 @@ Ctrl+Shift+B
     saveTypeScriptAsync(open = false): Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
             return Promise.resolve();
-        let ts = this.editor.saveToTypeScript()
-        if (!ts) return Promise.resolve();
+        let src = this.editor.saveToTypeScript()
+
+        if (!src) return Promise.resolve();
+        // format before saving
+        src = ts.pxt.format(src, 0).formatted;
 
         let mainPkg = pkg.mainEditorPkg();
         let tsName = this.editorFile.getVirtualFileName();
         Util.assert(tsName != this.editorFile.name);
-        return mainPkg.setContentAsync(tsName, ts).then(() => {
+        return mainPkg.setContentAsync(tsName, src).then(() => {
             if (open) {
                 let f = mainPkg.files[tsName];
                 this.setFile(f);
@@ -967,7 +970,7 @@ Ctrl+Shift+B
             this.updateEditorFile();
         }
 
-//  ${targetTheme.accentColor ? "inverted accent " : ''}
+        //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const settings: Cloud.UserSettings = (Cloud.isLoggedIn() ? this.getData("cloud:me/settings?format=nonsensitive") : {}) || {}
         const targetTheme = pxt.appTarget.appTheme;
         const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
