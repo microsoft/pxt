@@ -486,8 +486,9 @@ html {
     }
     #organization {
         top:unset;left:unset;
-        right:1rem;
-        bottom:0.5rem;
+        right: 5rem;
+        bottom: 2rem;
+        height: 1.3rem;        
     }
     #maineditor {
         left: 0;
@@ -513,7 +514,7 @@ html {
         margin-right:0.5rem;
     }
     div.simframe:not(:first-child) {
-        display:none;
+        display:none !important;
     }    
     .blocklyTreeLabel {
         font-size:1rem;
@@ -533,13 +534,13 @@ html {
 }
 
 /* thin display, mobile */
-@media only screen and (min-width:36em) {
+@media only screen and (min-width:50em) {
     .ui.thin.only {
         display:none !important;        
     }
 }
 
-@media only screen and (max-width:36em) {
+@media only screen and (max-width:50em) {
     #logo {
         font-size: 0rem;
         padding-right: 0;        
@@ -556,14 +557,14 @@ html {
         margin-right:0.5rem;
     }
     div.simframe:not(:first-child) {
-        display:none;
+        display:none !important;
     }    
-    div.simframe.grayscale {
-        width:4rem;
+    div.simframe iframe.grayscale {
+        display:none !important;
     }
 }
 
-@media only screen and (max-width:36em) and (orientation:landscape) {
+@media only screen and (max-width:50em) and (orientation:landscape) {
     #filelist {
         top:0.5rem;
         right:0.5rem;
