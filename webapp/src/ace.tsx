@@ -779,7 +779,6 @@ export class Editor extends srceditor.Editor {
         this.editor.$blockScrolling = Infinity;
 
         this.editor.setTheme("ace/theme/textmate")
-        this.editor.setFontSize("24px")
 
         sess.on("change", () => {
             if (this.lastSet != null) {

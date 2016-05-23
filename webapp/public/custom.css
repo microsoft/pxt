@@ -13,6 +13,7 @@ body {
   overflow-scrolling: touch;
 }
 
+
 #filelist,
 #maineditor,
 #sidedocs {
@@ -223,16 +224,19 @@ div.simframe > iframe {
 }
 
 /* ACE */
+#aceEditor, #aceEditor .ace_editor {
+    font: 1.5rem/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+}
 
 #aceEditor .ace_search .ace_search_field {
-    height: 1.4em;
+    height: 1.4rem;
 }
 
 #aceEditor .ace_search .ace_searchbtn,
 #aceEditor .ace_search .ace_replacebtn,
 #aceEditor .ace_search .ace_button {
-    height: 1.4em;
-    min-width: 1.4em;
+    height: 1.4rem;
+    min-width: 1.4rem;
     width: auto;
 }
 
@@ -490,8 +494,14 @@ html {
         bottom: 2rem;
         height: 1.3rem;        
     }
+    #aceEditor, #aceEditor .ace_editor {
+        font-size: 1rem;
+    }
     #maineditor {
         left: 0;
+    }
+    #boardview.errored {
+        display:none !important;
     }
     .ui.landscape.only {
         display:none !important;

@@ -468,7 +468,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        simulator.init($("#mbitboardview")[0], {
+        simulator.init($("#boardview")[0], {
             highlightStatement: stmt => {
                 if (this.editor) this.editor.highlightStatement(stmt)
             },
@@ -1041,7 +1041,7 @@ Ctrl+Shift+B
                     {this.state.errorCard ? <div id="errorcard" className="ui item">
                         <codecard.CodeCardView className="fluid top-margin" responsive={true} onClick={this.state.errorCardClick} {...this.state.errorCard} target={pxt.appTarget.id} />
                     </div> : null }
-                    <div id="mbitboardview" className={"ui vertical editorFloat " + (this.state.helpCard ? "landscape only " : "") + (this.state.errorCard ? "errored " : "") }>
+                    <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""} ${this.state.errorCard ? "errored " : ""}`}>
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
