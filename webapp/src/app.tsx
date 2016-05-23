@@ -42,7 +42,6 @@ export interface FileHistoryEntry {
 }
 
 export interface EditorSettings {
-    theme: srceditor.Theme;
     showFiles?: boolean;
     fileHistory: FileHistoryEntry[];
 }
@@ -53,7 +52,6 @@ interface IAppState {
     header?: Header;
     projectName?: string; // project name value while being edited
     currFile?: pkg.File;
-    theme?: srceditor.Theme;
     fileState?: string;
     showFiles?: boolean;
     errorCard?: pxt.CodeCard;
@@ -349,13 +347,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
-        if (!this.settings.theme)
-            this.settings.theme = {}
         this.state = {
             showFiles: !!this.settings.showFiles,
-            theme: {
-                fontSize: "24px"
-            },
             active: document.visibilityState == 'visible'
         };
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -378,7 +371,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     saveSettings() {
         let sett = this.settings
-        sett.theme = this.state.theme
         sett.showFiles = !!this.state.showFiles
 
         let f = this.editorFile
@@ -401,11 +393,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
-    }
-
-    private setTheme() {
-        if (!this.editor) return
-        this.editor.setTheme(this.state.theme)
     }
 
     saveFile() {
@@ -966,7 +953,6 @@ Ctrl+Shift+B
         theEditor = this;
 
         if (this.editor && this.editor.isReady) {
-            this.setTheme()
             this.updateEditorFile();
         }
 

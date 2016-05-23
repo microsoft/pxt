@@ -5,10 +5,6 @@ import * as app from "./app";
 import * as React from "react";
 
 
-export interface Theme {
-    fontSize?: string;
-}
-
 export type ViewState = any;
 export type ProjectView = app.ProjectView;
 
@@ -17,7 +13,6 @@ export interface ParentProps {
 }
 
 export class Editor {
-    protected currTheme: Theme = {};
     protected currSource: string;
     isVisible = false;
     constructor(public parent: ProjectView) {
@@ -25,9 +20,6 @@ export class Editor {
     changeCallback = () => { };
     setVisible(v: boolean) {
         this.isVisible = v;
-    }
-    setTheme(themeSetting: Theme): void {
-        this.currTheme = themeSetting
     }
     getViewState(): ViewState {
         return {}

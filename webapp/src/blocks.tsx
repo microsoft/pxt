@@ -154,9 +154,6 @@ export class Editor extends srceditor.Editor {
         return "blocksEditor"
     }
 
-    setTheme(theme: srceditor.Theme) {
-    }
-
     getViewState() {
         // ZOOM etc
         return {}

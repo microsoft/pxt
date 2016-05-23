@@ -778,6 +778,9 @@ export class Editor extends srceditor.Editor {
         sess.setUseSoftTabs(true);
         this.editor.$blockScrolling = Infinity;
 
+        this.editor.setTheme("ace/theme/textmate")
+        this.editor.setFontSize("24px")
+
         sess.on("change", () => {
             if (this.lastSet != null) {
                 this.lastSet = null
@@ -792,14 +795,6 @@ export class Editor extends srceditor.Editor {
 
     getId() {
         return "aceEditor"
-    }
-
-    setTheme(theme: srceditor.Theme) {
-        let th = 'ace/theme/textmate'
-        if (this.editor.getTheme() != th) {
-            this.editor.setTheme(th)
-        }
-        this.editor.setFontSize(theme.fontSize)
     }
 
     getViewState() {
