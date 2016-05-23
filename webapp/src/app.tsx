@@ -159,6 +159,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     .done()
             }
         }
+        let importHex = () => {
+            if (this.modal) this.modal.hide();
+            this.props.parent.importHexFileDialog();
+        }
 
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
@@ -169,15 +173,20 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     </div>
                 </div>
                 <div className="ui cards">
+                    {pxt.appTarget.compile && pxt.appTarget.compile.hasHex && !this.state.packages ?
+                        <codecard.CodeCardView
+                            key="importhex"
+                            name={lf("import...") }
+                            description={lf("Import project from a .hex file") }
+                            onClick={() => importHex() }
+                            /> : undefined}
                     {headers.map(scr =>
                         <codecard.CodeCardView
                             key={'local' + scr.id}
                             name={scr.name}
                             time={scr.recentUse}
                             description={scr.meta ? scr.meta.description || "" : ""}
-                            blocks={scr.editor == pxt.blocksProjectName ? 1 : 0}
-                            javascript={scr.editor == pxt.javaScriptProjectName ? 1 : 0}
-                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ''}
+                            url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                             onClick={() => chgHeader(scr) }
                             />
                     ) }
@@ -986,7 +995,6 @@ Ctrl+Shift+B
                                 <sui.DropdownMenu class='floating icon button' text="More..." textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
-                                    {pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? <sui.Item role="menuitem" icon="upload" text={lf("Import .hex file") } onClick={() => this.importHexFileDialog() } /> : null }
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         this.setState({ showFiles: !this.state.showFiles });
@@ -994,7 +1002,6 @@ Ctrl+Shift+B
                                     } } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
-                                    {this.state.header ? <sui.Item role="menuitem" icon='trash' text={lf("Delete project") } onClick={() => this.removeProject() } /> : undefined}
                                     <div className="ui divider"></div>
                                     <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
                                         <i className="help icon"></i>
