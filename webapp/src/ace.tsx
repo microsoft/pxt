@@ -582,7 +582,14 @@ export class Editor extends srceditor.Editor {
                         if (!workspace) return failedAsync();
 
                         let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
-                        if (b2jsr.source.replace(/\s/g, '') != js.replace(/\s/g, '')) {
+
+                        const cleanRx = /[\s;]/g;
+                        if (b2jsr.source.replace(cleanRx, '') != js.replace(cleanRx, '')) {
+                            console.log('js roundtrip failed:')
+                            console.log('-- original:');
+                            console.log(js.replace(cleanRx, ''));
+                            console.log('-- roundtrip:');
+                            console.log(b2jsr.source.replace(cleanRx, ''));
                             pxt.reportError('decompilation failure', {
                                 js: js,
                                 blockly: xml,
