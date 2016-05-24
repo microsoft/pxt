@@ -437,10 +437,12 @@ namespace pxt.cpp {
         }
 
         // This is overridden on the build server, but we need it for command line build
-        U.assert(!!pxt.appTarget.compileService.yottaCorePackage);
-        U.assert(!!pxt.appTarget.compileService.githubCorePackage);
-        U.assert(!!pxt.appTarget.compileService.gittag);
-        res.yotta.dependencies[pxt.appTarget.compileService.yottaCorePackage] = pxt.appTarget.compileService.githubCorePackage + "#" + compileService.gittag;
+        if (pxt.appTarget.compile && pxt.appTarget.compile.isNative) {
+            U.assert(!!pxt.appTarget.compileService.yottaCorePackage);
+            U.assert(!!pxt.appTarget.compileService.githubCorePackage);
+            U.assert(!!pxt.appTarget.compileService.gittag);
+            res.yotta.dependencies[pxt.appTarget.compileService.yottaCorePackage] = pxt.appTarget.compileService.githubCorePackage + "#" + compileService.gittag;            
+        }
 
         if (mainPkg) {
             let seenMain = false
