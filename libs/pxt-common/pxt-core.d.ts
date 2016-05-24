@@ -102,27 +102,32 @@ interface Array<T> {
 
 declare interface String {
     /**
+     * Returns a string that contains the concatenation of two or more strings.
+     * @param other The string to append to the end of the string.  
+     */
+    //% shim=String_::concat weight=80
+    //% blockId="string_concat" block="join %this|%other" blockNamespace="text"
+    concat(other: string): string;
+
+    /**
      * Returns the character at the specified index.
      * @param index The zero-based index of the desired character.
      */
-    //% shim=String_::charAt
+    //% shim=String_::charAt weight=77
     //% blockId="string_get" block="char from %this|at %pos" blockNamespace="text"
     charAt(index: number): string;
-
+    
+    /** Returns the length of a String object. */
+    //% property shim=String_::length weight=75
+    //% blockId="text_length" block="length of %this" blockBuiltin=true blockNamespace="text"
+    length: number;
+    
     /** 
      * Returns the Unicode value of the character at the specified location.
      * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
      */
     //% shim=String_::charCodeAt
     charCodeAt(index: number): number;
-
-    /**
-     * Returns a string that contains the concatenation of two or more strings.
-     * @param other The string to append to the end of the string.  
-     */
-    //% shim=String_::concat
-    //% blockId="string_concat" block="concat %this|with %other" blockNamespace="text"
-    concat(other: string): string;
 
     /**
      * Determines whether relative order of two strings (in ASCII encoding).
@@ -140,11 +145,6 @@ declare interface String {
     //% shim=String_::substr length.defl=1000000
     //% blockId="string_substr" block="substring of %this|from %start|of length %length" blockNamespace="text"
     substr(start:number, length?:number): string;
-
-    /** Returns the length of a String object. */
-    //% property shim=String_::length
-    //% blockId="text_length" block="length of %VALUE" blockBuiltin=true blockNamespace="text"
-    length: number;
     
     /** Returns a value indicating if the string is empty */
     //% shim=String_::isEmpty
