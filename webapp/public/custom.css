@@ -489,17 +489,18 @@ html {
         margin: 0;
     }
     #organization {
-        top:unset;left:unset;
-        right: 5rem;
-        bottom: 2rem;
+        top:unset;left:0.5rem;
+        right: unset;
+        bottom: 0.5rem;
         height: 1.3rem;        
     }
     #aceEditor, #aceEditor .ace_editor {
         font-size: 1rem;
     }
-    #maineditor {
+    #maineditor {     
         left: 0;
-    }
+        bottom:2rem;
+    }    
     #boardview.errored {
         display:none !important;
     }
@@ -512,7 +513,7 @@ html {
     #filelist {
         position:absolute;
         z-index:5;
-        bottom:2rem;
+        bottom:3rem;
         left:1rem;
         top:initial;      
         width:initial;  
