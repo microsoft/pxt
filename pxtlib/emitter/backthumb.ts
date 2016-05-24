@@ -798,13 +798,13 @@ _stored_program: .string "`
         src = patchSrcHash(src)
         if (opts.embedBlob)
             src += addSource(opts.embedMeta, atob(opts.embedBlob))
-        bin.writeFile("microbit.asm", src)
+        bin.writeFile(ts.pxt.BINARY_ASM, src)
         let res = assemble(bin, src)
         if (res.src)
-            bin.writeFile("microbit.asm", res.src)
+            bin.writeFile(ts.pxt.BINARY_ASM, res.src)
         if (res.buf) {
             const myhex = hex.patchHex(bin, res.buf, false).join("\r\n") + "\r\n"
-            bin.writeFile("microbit.hex", myhex)
+            bin.writeFile(ts.pxt.BINARY_HEX, myhex)
         }
     }
 

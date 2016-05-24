@@ -4,6 +4,10 @@ namespace ts.pxt {
     export type StringMap<T> = Util.Map<T>;
     export import U = ts.pxt.Util;
 
+    export const BINARY_JS = "binary.js";
+    export const BINARY_HEX = "binary.hex";
+    export const BINARY_ASM = "binary.asm";
+
     let EK = ir.EK;
     export var SK = SyntaxKind;
 

@@ -190,7 +190,7 @@ namespace pxt.runner {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
                 }
-                return resp.outfiles["microbit.hex"];
+                return resp.outfiles[ts.pxt.BINARY_HEX];
             });
     }
 
@@ -203,7 +203,7 @@ namespace pxt.runner {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
                 }
-                let js = resp.outfiles["microbit.js"];
+                let js = resp.outfiles[ts.pxt.BINARY_JS];
                 if (js) {
                     let options: pxsim.SimulatorDriverOptions = {};
                     if (pxt.appTarget.simulator)

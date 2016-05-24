@@ -1540,7 +1540,7 @@ export function formatAsync(...fileNames: string[]) {
 }
 
 function runCoreAsync(res: ts.pxt.CompileResult) {
-    let f = res.outfiles["microbit.js"]
+    let f = res.outfiles[ts.pxt.BINARY_JS]
     if (f) {
         // TODO: non-microbit specific load
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
@@ -1817,7 +1817,7 @@ function buildCoreAsync(mode: BuildOption) {
                 process.exit(1)
             }
 
-            console.log("Package built; hexsize=" + (res.outfiles["microbit.hex"] || "").length)
+            console.log("Package built; hexsize=" + (res.outfiles[ts.pxt.BINARY_HEX] || "").length)
 
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.pxt.getApiInfo(res.ast)

@@ -99,8 +99,8 @@ namespace pxt.runner {
             let js = $('<code/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             let compiled = r.compileJS && r.compileJS.success;
-            let hex = options.hex && compiled && r.compileJS.outfiles["microbit.hex"]
-                ? r.compileJS.outfiles["microbit.hex"] : undefined;
+            let hex = options.hex && compiled && r.compileJS.outfiles[ts.pxt.BINARY_HEX]
+                ? r.compileJS.outfiles[ts.pxt.BINARY_HEX] : undefined;
             let hexname = `${appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
             fillWithWidget(c, js, s,
                 options.simulator && compiled,

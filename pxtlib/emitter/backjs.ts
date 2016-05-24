@@ -19,7 +19,7 @@ namespace ts.pxt {
         jssource += "\npxsim.setupStringLiterals(" +
             JSON.stringify(U.mapStringMap(bin.strings, (k, v) => 1), null, 1) +
             ")\n"
-        bin.writeFile("microbit.js", jssource)
+        bin.writeFile(BINARY_JS, jssource)
     }
 
     export function irToJS(bin: Binary, proc: ir.Procedure) {

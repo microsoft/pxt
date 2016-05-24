@@ -826,7 +826,7 @@ Ctrl+Shift+B
             .then(resp => {
                 console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (!resp.outfiles["microbit.hex"]) {
+                if (!resp.outfiles[ts.pxt.BINARY_HEX]) {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
@@ -863,7 +863,7 @@ Ctrl+Shift+B
         compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (resp.outfiles["microbit.js"]) {
+                if (resp.outfiles[ts.pxt.BINARY_JS]) {
                     simulator.run(opts.debug, resp)
                     this.setState({ running: true })
                 } else if (!opts.background) {

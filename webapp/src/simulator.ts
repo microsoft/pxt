@@ -73,7 +73,7 @@ export function setState(editor: string) {
 }
 
 export function run(debug: boolean, res: ts.pxt.CompileResult) {
-    let js = res.outfiles["microbit.js"]
+    let js = res.outfiles[ts.pxt.BINARY_JS]
     lastCompileResult = res
     driver.run(js, debug)
 }

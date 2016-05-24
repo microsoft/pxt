@@ -9,7 +9,7 @@ namespace pxtwinrt {
         console.log(`deploying to drives ${drives}`)
 
         let drx = new RegExp(drives);
-        let r = res.outfiles["microbit.hex"];
+        let r = res.outfiles[ts.pxt.BINARY_HEX];
 
         function writeAsync(folder: Windows.Storage.StorageFolder): Promise<void> {
             console.log(`writing .hex to ${folder.displayName}`)

@@ -104,7 +104,7 @@
                 console.log('compiling script to hex')
                 pxt.runner.generateHexFileAsync(options).done(function(hex) {
                     loading.remove();
-                    var name = "microbit.hex";
+                    var name = ts.pxt.BINARY_HEX;
                     var uri = pxt.BrowserUtils.browserDownloadText(hex, name)                    
                     var a = document.createElement("a");
                     a.href = uri;

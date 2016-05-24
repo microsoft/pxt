@@ -20,8 +20,8 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 }
 
 function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
-    let hex = resp.outfiles["microbit.hex"]
-    let fn = "microbit-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
+    let hex = resp.outfiles[ts.pxt.BINARY_HEX]
+    let fn = pxt.appTarget.id + "-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
     console.log('saving ' + fn)
     return pxt.commands.browserDownloadAsync(hex, fn, "application/x-microbit-hex")
 }
