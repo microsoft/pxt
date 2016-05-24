@@ -638,11 +638,11 @@ export function publishTargetAsync() {
 export function spawnAsync(opts: {
     cmd: string,
     args: string[],
-    cwd: string,
+    cwd?: string,
     shell?: boolean
 }) {
     let info = opts.cmd + " " + opts.args.join(" ")
-    if (opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
+    if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
     console.log("[run] " + info)
     return new Promise<void>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
@@ -1065,6 +1065,9 @@ export function serveAsync(arg?: string) {
         } else {
             U.userError("Cannot find pxtarget.json to serve.")
         }
+    }
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
     }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
         .then(() => server.serveAsync({
