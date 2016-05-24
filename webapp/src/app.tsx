@@ -64,6 +64,12 @@ interface IAppState {
     running?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
+
+    simulatorCompilation?: {
+        name: string;
+        content: string;
+        contentType: string;
+    }
 }
 
 
@@ -481,6 +487,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             highlightStatement: stmt => {
                 if (this.editor) this.editor.highlightStatement(stmt)
             },
+            onCompile: (name, content, contentType) => {
+                this.setState({
+                    simulatorCompilation: { name: name, content: content, contentType: contentType }
+                })
+            },
             editor: this.state.header ? this.state.header.editor : ''
         })
         this.forceUpdate(); // we now have editors prepared
@@ -799,6 +810,14 @@ Ctrl+Shift+B
 
     compile() {
         tickEvent("compile");
+
+        if (pxt.appTarget.compile.simulatorPostMessage) {
+            let cmp = this.state.simulatorCompilation;
+            if (cmp)
+                pxt.BrowserUtils.browserDownloadText(cmp.content, cmp.name, cmp.contentType);
+            return;
+        }
+
         console.log('compiling...')
         this.clearLog();
         this.editor.beforeCompile();
@@ -838,6 +857,7 @@ Ctrl+Shift+B
 
         this.stopSimulator();
         this.clearLog();
+        this.setState({ simulatorCompilation: undefined })
 
         let state = this.editor.snapshotState()
         compiler.compileAsync(opts)
@@ -970,6 +990,8 @@ Ctrl+Shift+B
         const targetTheme = pxt.appTarget.appTheme;
         const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
+        const compile = pxt.appTarget.compile;
+        const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
 
         return (
             <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "") }>
@@ -1050,13 +1072,13 @@ Ctrl+Shift+B
                     </div> : null }
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""} ${this.state.errorCard ? "errored " : ""}`}>
                     </div>
-                    <div className="ui editorFloat landscape only">
-                        <logview.LogView ref="logs" />
-                    </div>
                     <div className="ui item landscape only">
-                        {pxt.appTarget.compile ? <sui.Button icon='icon download' class="blue" text={lf("Compile") } onClick={() => this.compile() } /> : ""}
+                        {compile ? <sui.Button icon='icon download' class="blue" text={lf("Compile") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
                         <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
+                    </div>
+                    <div className="ui editorFloat landscape only">
+                        <logview.LogView ref="logs" />
                     </div>
                     <FileList parent={this} />
                 </div>

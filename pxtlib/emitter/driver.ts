@@ -11,6 +11,7 @@
 
 namespace ts.pxt {
     export interface CompileTarget {
+        simulatorPostMessage?: boolean; // provided by simulator as a post command message
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;

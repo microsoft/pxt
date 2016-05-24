@@ -5,6 +5,7 @@ import U = pxt.U
 interface SimulatorConfig {
     highlightStatement(stmt: ts.pxt.LocationInfo): void;
     editor: string;
+    onCompile(name: string, content: string, contentType: string): void;
 }
 
 export var driver: pxsim.SimulatorDriver;
@@ -53,7 +54,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onStateChanged: function (state) {
             updateDebuggerButtons()
-        }
+        },
+        onCompile: cfg.onCompile
     };
     if (pxt.appTarget.simulator)
         options.aspectRatio = pxt.appTarget.simulator.aspectRatio;

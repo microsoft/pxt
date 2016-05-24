@@ -4,6 +4,7 @@ namespace pxsim {
         removeElement?: (el: HTMLElement) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
+        onCompile?: (name: string, content: string, contentType: string) => void;
         onStateChanged?: (state: SimulatorState) => void;
         simUrl?: string;
         aspectRatio?: number;
@@ -203,6 +204,11 @@ namespace pxsim {
                             break;
                         case 'serial': break; //handled elsewhere
                         case 'debugger': this.handleDebuggerMessage(msg); break;
+                        case 'compile':
+                            let cmp = msg as pxsim.SimulatorCompilationMessage;
+                            if (this.options.onCompile)
+                                this.options.onCompile(cmp.name, cmp.content, cmp.contentType);
+                            break;
                         default:
                             if (msg.type == 'radiopacket') {
                                 // assign rssi noisy?

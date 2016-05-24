@@ -130,12 +130,13 @@ export class Item extends data.Component<ItemProps, {}> {
 
 export interface ButtonProps extends WithPopupProps {
     onClick?: () => void;
+    disabled?: boolean;
 }
 
 export class Button extends UiElement<ButtonProps> {
     renderCore() {
         return (
-            <button className={genericClassName("ui button", this.props) }
+            <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
                 title={this.props.text}
                 onClick={this.props.onClick}>
