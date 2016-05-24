@@ -879,6 +879,8 @@ function buildTargetCoreAsync() {
     pxt.appTarget = cfg;
     let statFiles: U.Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
+    dirsToWatch.push("sim"); // simulator
+    dirsToWatch.push("sim/public"); // simulator
     console.log("building target.json...")
     return forEachBundledPkgAsync(pkg =>
         pkg.filesToBePublishedAsync()
