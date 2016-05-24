@@ -441,7 +441,7 @@ namespace pxt.cpp {
             U.assert(!!pxt.appTarget.compileService.yottaCorePackage);
             U.assert(!!pxt.appTarget.compileService.githubCorePackage);
             U.assert(!!pxt.appTarget.compileService.gittag);
-            res.yotta.dependencies[pxt.appTarget.compileService.yottaCorePackage] = pxt.appTarget.compileService.githubCorePackage + "#" + compileService.gittag;            
+            res.yotta.dependencies[pxt.appTarget.compileService.yottaCorePackage] = pxt.appTarget.compileService.githubCorePackage + "#" + compileService.gittag;
         }
 
         if (mainPkg) {
