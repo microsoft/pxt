@@ -363,6 +363,13 @@ function bumpKsDepAsync() {
         })
 }
 
+function updateAsync() {
+    return Promise.resolve()
+        .then(() => runGitAsync("pull"))
+        .then(() => bumpKsDepAsync())
+        .then(() => runNpmAsync("install"));
+}
+
 function bumpAsync() {
     return Promise.resolve()
         .then(() => runGitAsync("pull"))
@@ -1911,6 +1918,7 @@ cmd("testdir  DIR                 - compile files from DIR one-by-one replacing 
 cmd("testconv JSONCONFIG          - test TD->TS converter", testConverterAsync, 2)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
+cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("bump                         - bump target patch version", bumpAsync, 1)
