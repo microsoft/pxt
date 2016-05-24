@@ -235,7 +235,8 @@ namespace pxt.blocks {
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(
-            (nsinfo ? nsinfo.attributes.color : undefined)
+            fn.attributes.color
+            || (nsinfo ? nsinfo.attributes.color : undefined)
             || blockColors[ns]
             || 255);
 

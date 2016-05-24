@@ -121,7 +121,7 @@ namespace pxt.blocks {
                 nodeType: "singletonRef",
                 id: null,
                 libraryName: lib,
-                name: namespace.toLowerCase(),
+                name: namespace,
                 type: mkTypeRef(namespace)
             };
         }
