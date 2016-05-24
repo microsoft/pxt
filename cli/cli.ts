@@ -1270,8 +1270,7 @@ export function timeAsync() {
         .then(() => console.log("MIN", min))
 }
 
-let ytPath = "built/yt"
-let ytTarget = "bbc-microbit-classic-gcc"
+const ytPath = "built/yt"
 
 interface BuildCache {
     sha?: string;
@@ -1308,9 +1307,9 @@ function runYottaAsync(args: string[]) {
 }
 
 function patchHexInfo(extInfo: ts.pxt.ExtensionInfo) {
-    let infopath = ytPath + "/yotta_modules/pxt-microbit-core/generated/metainfo.json"
+    let infopath = ytPath + "/yotta_modules/" + pxt.appTarget.compileService.yottaCorePackage + "/generated/metainfo.json"
 
-    let hexPath = ytPath + "/build/" + ytTarget + "/source/pxt-microbit-app-combined.hex"
+    let hexPath = ytPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
 
     let hexinfo = readJson(infopath)
     hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
@@ -1351,7 +1350,7 @@ function buildHexAsync(extInfo: ts.pxt.ExtensionInfo) {
     let modSha = U.sha256(extInfo.generatedFiles["/module.json"])
     if (buildCache.modSha !== modSha) {
         yottaTasks = yottaTasks
-            .then(() => runYottaAsync(["target", ytTarget]))
+            .then(() => runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget]))
             .then(() => runYottaAsync(["update"]))
             .then(() => {
                 buildCache.sha = ""

@@ -121,6 +121,9 @@ namespace pxt {
     }
 
     export interface TargetCompileService {
+        yottaTarget?: string; // bbc-microbit-classic-gcc
+        yottaCorePackage?: string; // pxt-microbit-core
+        githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
     }

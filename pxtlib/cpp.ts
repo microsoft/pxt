@@ -437,7 +437,10 @@ namespace pxt.cpp {
         }
 
         // This is overridden on the build server, but we need it for command line build
-        res.yotta.dependencies["pxt-microbit-core"] = "microsoft/pxt-microbit-core#" + compileService.gittag;
+        U.assert(!!pxt.appTarget.compileService.yottaCorePackage);
+        U.assert(!!pxt.appTarget.compileService.githubCorePackage);
+        U.assert(!!pxt.appTarget.compileService.gittag);
+        res.yotta.dependencies[pxt.appTarget.compileService.yottaCorePackage] = pxt.appTarget.compileService.githubCorePackage + "#" + compileService.gittag;
 
         if (mainPkg) {
             let seenMain = false
