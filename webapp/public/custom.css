@@ -462,6 +462,13 @@ html {
         left:1.5rem;
         bottom:0.5rem;
     }
+    #filelist {
+        bottom:3rem;
+        min-width:20rem;
+    }
+    #maineditor {
+        left:20rem;
+    }
 }
 
 /* smaller desktop screen */
@@ -478,6 +485,9 @@ html {
         bottom: 2.2rem;
         margin: 0;
     }
+    .blocklyTreeLabel {
+        font-size:1rem;
+    }    
 }
 
 /* thin desktop portrait mode */
