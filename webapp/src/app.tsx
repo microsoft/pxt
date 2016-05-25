@@ -614,7 +614,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             console.log('importing microbit.co.uk TD project')
-            this.newTypeScriptProjectAsync({ "main.ts": "  " }, data.meta.name)
+            this.newBlocksProjectAsync({ "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">", "main.ts": "  " }, data.meta.name)
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
                     // this is somewhat hacky...
@@ -658,108 +658,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     newProject(hideCancel = false) {
-        let cdn = pxt.webConfig.pxtCdnUrl
-        let images = cdn + "images"
-        let targetTheme = pxt.appTarget.appTheme;
-        core.confirmAsync({
-            logos: [targetTheme.logo],
-            header: pxt.appTarget.title + ' - ' + lf("Create Project"),
-            hideCancel: hideCancel,
-            hideAgree: true,
-            onLoaded: (_) => {
-                _.find('#newblockproject').click(() => { _.modal('hide'); this.newBlocksProjectAsync().done() })
-                _.find('#newtypescript').click(() => { _.modal('hide'); this.newTypeScriptProjectAsync().done() })
-                if (targetTheme.koduUrl)
-                    _.find('#newkodu').click(() => { window.location.href = targetTheme.koduUrl })
-                _.find('#newvisualstudiocode').click(() => { _.modal('hide'); this.newVisualStudioProject() })
-            },
-            htmlBody: `
-<div class="ui two column grid">
-  <div class="column">
-    <div id="newblockproject" class="ui fluid card link">
-        <div class="ui image">
-            <img src="${images}/newblock.png">
-        </div>
-        <div class="content">
-        <div class="header">${lf("Blocks")}</div>
-        <div class="description">
-            ${lf("Drag and Drop Coding")}
-        </div>
-        </div>
-    </div>
-  </div>
-  <div class="column">
-    <div id="newtypescript" class="ui fluid card link">
-        <div class="ui image">
-            <img class="visible content" src="${images}/newtypescript.png">
-        </div>
-        <div class="content">
-        <div class="header">${lf("JavaScript")}</div>
-        <div class="description">
-            ${lf("Text based Coding")}
-        </div>
-        </div>
-    </div>
-  </div>
-</div>`
-            + (targetTheme.koduUrl || targetTheme.visualStudioCode ? `<div class="ui two column grid">
-  <div class="column">
-    ${targetTheme.koduUrl ? `
-    <div id="newkodu" class="ui fluid card link">
-        <div class="image">
-        <img src="${images}/newkodu.png">
-        </div>
-        <div class="content">
-        <div class="header">${lf("Kodu for {0}", pxt.appTarget.name)}</div>
-        <div class="description">
-            ${lf("Tile based Coding")}
-        </div>
-        </div>
-    </div>` : ''}
-  </div>
-  <div class="column">
-    ${targetTheme.visualStudioCode ? `
-    <div id="newvisualstudiocode" class="ui fluid card link">
-        <div class="image">
-        <img src="${images}/newvisualstudiocode.png">
-        </div>
-        <div class="content">
-        <div class="header">Visual Studio Code</div>
-        <div class="description">
-            ${lf("For Professional Developers")}
-        </div>
-        </div>
-    </div>` : ''}
-  </div>
-</div>
-` : "")
-        }).done();
-    }
-
-    newVisualStudioProject() {
-        core.confirmAsync({
-            header: lf("New Visual Studio Code project"),
-            htmlBody:
-            `<p>${lf("<b>Programming Experience Toolkit</b> (PXT) comes with command line tools to integrate into existing editors.")}
-${lf("To create an new PXT project, <a href='{0}' target='_blank'>install Node.js</a>, open a console in a fresh folder and run:", "https://nodejs.org/en/download/")}</p>
-<pre>
-npm install -g pxt
-pxt target ${pxt.appTarget.id}
-pxt init myproject
-</pre>
-<p>${lf("<b>Looking for a slick cross-platform editor?</b>")} <a href="https://code.visualstudio.com/" target="_blank">${lf("Try Visual Studio Code!")}</a> ${lf("Run this from your project folder:")}</p>
-<pre>
-code .
-Ctrl+Shift+B
-</pre>
-`,
-            agreeLbl: lf("Got it!"),
-            hideCancel: true
-        }).done();
-    }
-
-    newTypeScriptProjectAsync(fileOverrides?: Util.Map<string>, nameOverride?: string) {
-        return this.newProjectFromIdAsync(pxt.appTarget.tsprj, fileOverrides, nameOverride);
+        core.showLoading(lf("creating new project..."));
+        this.newBlocksProjectAsync()
+            .then(() => Promise.delay(1500))
+            .done(() => core.hideLoading());
     }
 
     newBlocksProjectAsync(fileOverrides?: Util.Map<string>, nameOverride?: string) {

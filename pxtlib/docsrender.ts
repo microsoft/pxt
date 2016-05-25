@@ -14,8 +14,6 @@ namespace pxt {
         organizationLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
-        koduUrl?: string;
-        visualStudioCode?: boolean;
         docMenu?: DocMenuEntry[];
         sideDoc?: string;
         privacyUrl?: string;
