@@ -992,6 +992,7 @@ Ctrl+Shift+B
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const compile = pxt.appTarget.compile;
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
+        const devSignin = !pxtwinrt.isWinRT();
 
         return (
             <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "") }>
@@ -1029,7 +1030,7 @@ Ctrl+Shift+B
                                         <i className="help icon"></i>
                                         {lf("Help") }
                                     </a>
-                                    <LoginBox />
+                                    { devSignin ? <LoginBox /> : undefined }
                                     {
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
