@@ -564,6 +564,7 @@ export class Editor extends srceditor.Editor {
             .then(() => compiler.getBlocksAsync())
             .then((bi) => {
                 blocksInfo = bi;
+                pxt.blocks.initBlocks(blocksInfo);
                 let oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                 if (oldWorkspace) {
                     let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;

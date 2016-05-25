@@ -205,7 +205,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             key={'cloud' + scr.id}
                             onClick={() => install(scr) }
                             url={'/' + scr.scriptid}
-                            software={1}
                             color="blue"
                             />
                     ) }
