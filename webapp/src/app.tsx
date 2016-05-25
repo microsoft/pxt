@@ -375,11 +375,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (!active) {
             this.stopSimulator();
             this.saveFileAsync().done();
-        } else if (workspace.isSessionOutdated()) {
-            console.log('workspace changed, reloading...')
-            let id = this.state.header ? this.state.header.id : '';
-            workspace.initAsync()
-                .done(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
+        } else {
+            if (workspace.isSessionOutdated()) {
+                console.log('workspace changed, reloading...')
+                let id = this.state.header ? this.state.header.id : '';
+                workspace.initAsync()
+                    .done(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
+            } else if (pxt.appTarget.simulator.autoRun && !this.state.running)
+                this.runSimulator();
         }
     }
 
