@@ -215,7 +215,7 @@ namespace pxt.blocks {
         return i;
     }
 
-    function cleanOuterHTML(el :HTMLElement): string {
+    function cleanOuterHTML(el: HTMLElement): string {
         // remove IE11 junk
         return el.outerHTML.replace(/^<\?[^>]*>/, '');
     }
