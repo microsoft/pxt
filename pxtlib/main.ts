@@ -72,7 +72,6 @@ namespace pxt {
     export function setupWebConfig(cfg: WebConfig) {
         if (cfg) webConfig = cfg;
         else if (!webConfig) webConfig = localWebConfig()
-        if (!webConfig.runUrl && webConfig.pxtCdnUrl) webConfig.runUrl = webConfig.pxtCdnUrl + "run.html";
     }
 
     export type CompileTarget = ts.pxt.CompileTarget;
