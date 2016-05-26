@@ -49,11 +49,12 @@ namespace pxt.blocks {
         let value = document.createElement("value");
         value.setAttribute("name", name);
 
-        let shadow = document.createElement("shadow"); value.appendChild(shadow);
+        let shadowTypeType = shadowType == "variables_get" ? "block" : "shadow";
+        let shadow = document.createElement(shadowTypeType); value.appendChild(shadow);
         shadow.setAttribute("type", shadowType ? shadowType : type == "number" ? "math_number" : type == "string" ? "text" : type);
         if (type == "number" || type == "string") {
             let field = document.createElement("field"); shadow.appendChild(field);
-            field.setAttribute("name", type == "number" ? "NUM" : "TEXT");
+            field.setAttribute("name", shadowType == "variables_get" ? "VAR" : type == "number" ? "NUM" : "TEXT");
             field.appendChild(document.createTextNode(v || (type == "number" ? "0" : "")));
         }
         return value;
@@ -107,9 +108,9 @@ namespace pxt.blocks {
         if (fn.attributes.blockGap)
             block.setAttribute("gap", fn.attributes.blockGap);
         if ((fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property)
-            && attrNames["this"] && attrNames["this"].shadowType) {
+            && attrNames["this"]) {
             let attr = attrNames["this"];
-            block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
+            block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue || attr.name, attr.shadowType || "variables_get"));
         }
         if (fn.parameters)
             fn.parameters.filter(pr => !!attrNames[pr.name].name &&
