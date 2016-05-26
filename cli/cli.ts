@@ -1060,7 +1060,6 @@ export function serveAsync(arg?: string) {
         justServe = true
         packaged = true
     }
-    forceCloudBuild = false;
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
         saveConfig()
@@ -1324,7 +1323,6 @@ function patchHexInfo(extInfo: ts.pxt.ExtensionInfo) {
     let hexPath = ytPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
 
     let hexinfo = readJson(infopath)
-    console.log('hexinfo: ' + JSON.stringify(hexinfo, null, 2))
     hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
 
     return hexinfo
