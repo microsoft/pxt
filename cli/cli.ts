@@ -771,7 +771,7 @@ function buildPxtAsync(): Promise<string[]> {
         console.log("local pxt-core built.")
         return [ksd]
     }, e => {
-        buildFailed("local pxt-core build FAILED")
+        buildFailed("local pxt-core build FAILED", e)
         return [ksd]
     });
 }
@@ -949,10 +949,11 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
 
 }
 
-function buildFailed(msg: string) {
+function buildFailed(msg: string, e: any) {
     console.log("")
     console.log("***")
     console.log("*** Build failed: " + msg)
+    console.log(e.stack)
     console.log("***")
     console.log("")
 }
@@ -965,7 +966,7 @@ function buildAndWatchTargetAsync() {
 
     return buildAndWatchAsync(() => buildPxtAsync()
         .then(() => buildTargetAsync().then(r => { }, e => {
-            buildFailed(e.message)
+            buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => uploader.checkDocsAsync())
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
@@ -1059,6 +1060,7 @@ export function serveAsync(arg?: string) {
         justServe = true
         packaged = true
     }
+    forceCloudBuild = false;
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
         saveConfig()
@@ -1322,6 +1324,7 @@ function patchHexInfo(extInfo: ts.pxt.ExtensionInfo) {
     let hexPath = ytPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
 
     let hexinfo = readJson(infopath)
+    console.log('hexinfo: ' + JSON.stringify(hexinfo, null, 2))
     hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
 
     return hexinfo

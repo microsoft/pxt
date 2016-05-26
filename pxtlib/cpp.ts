@@ -437,7 +437,7 @@ namespace pxt.cpp {
         }
 
         // This is overridden on the build server, but we need it for command line build
-        if (pxt.appTarget.compile && pxt.appTarget.compile.isNative) {
+        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             U.assert(!!pxt.appTarget.compileService.yottaCorePackage);
             U.assert(!!pxt.appTarget.compileService.githubCorePackage);
             U.assert(!!pxt.appTarget.compileService.gittag);

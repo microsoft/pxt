@@ -7,8 +7,8 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["uploaddoc"],
-			"cwd": "${workspaceRoot}",
+			"args": ["serve"],
+			"cwd": "${workspaceRoot}/../pxt-microbit",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
