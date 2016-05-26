@@ -215,14 +215,20 @@ namespace pxt.blocks {
         return i;
     }
 
+    function cleanOuterHTML(el :HTMLElement): string {
+        // remove IE11 junk
+        return el.outerHTML.replace(/^<\?[^>]*>/, '');
+    }
+
     function mkCard(fn: ts.pxt.SymbolInfo, blockXml: HTMLElement): pxt.CodeCard {
+        let xml = blockXml.outerHTML
+            // remove IE11
+            .replace(/^<\?[^>]*>/, '');
         return {
             name: fn.namespace + '.' + fn.name,
             description: fn.attributes.jsDoc,
             url: fn.attributes.help ? 'reference/' + fn.attributes.help.replace(/^\//, '') : undefined,
-            blocksXml: `<xml xmlns="http://www.w3.org/1999/xhtml">
-        ${blockXml.outerHTML}
-</xml>`,
+            blocksXml: `<xml xmlns="http://www.w3.org/1999/xhtml">${cleanOuterHTML(blockXml)}</xml>`,
         }
     }
 
@@ -480,7 +486,7 @@ namespace pxt.blocks {
                         name: name,
                         software: 1,
                         description: goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip,
-                        blocksXml: xml ? ("<xml>" + (xml.outerHTML || `<block type="${id}"</block>`) + "</xml>") : undefined,
+                        blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"</block>`) + "</xml>") : undefined,
                         url: url
                     }
                 }

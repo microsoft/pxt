@@ -184,7 +184,7 @@ namespace pxt.runner {
                             blocksXml: block && block.codeCard
                                 ? block.codeCard.blocksXml
                                 : info.attrs.blockId
-                                    ? `<xml><block type="${info.attrs.blockId}"></block></xml>`
+                                    ? `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${info.attrs.blockId}"></block></xml>`
                                     : undefined,
                             link: true
                         })
@@ -220,7 +220,7 @@ namespace pxt.runner {
                                 name: ns ? "Logic" : "if",
                                 url: "reference/logic" + (ns ? "" : "/if"),
                                 description: ns ? lf("Logic operators and constants") : lf("Conditional statement"),
-                                blocksXml: '<xml><block type="controls_if"></block></xml>',
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_if"></block></xml>',
                                 link: true
                             });
                             break;
@@ -229,7 +229,7 @@ namespace pxt.runner {
                                 name: ns ? "Loops" : "for",
                                 url: "reference/loops" + (ns ? "" : "/for"),
                                 description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
-                                blocksXml: '<xml><block type="controls_simple_for"></block></xml>',
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>',
                                 link: true
                             });
                             break;
@@ -238,7 +238,7 @@ namespace pxt.runner {
                                 name: ns ? "Variables" : "variable declaration",
                                 url: "reference/variables" + (ns ? "" : "/assign"),
                                 description: ns ? lf("Variables") : lf("Assign a value to a named variable."),
-                                blocksXml: '<xml><block type="variables_set"></block></xml>',
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="variables_set"></block></xml>',
                                 link: true
                             });
                             break;

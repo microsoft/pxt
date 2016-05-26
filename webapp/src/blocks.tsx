@@ -93,7 +93,7 @@ export class Editor extends srceditor.Editor {
 
         this.editor.clear();
         try {
-            let text = s || "<xml></xml>";
+            let text = s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(this.editor, xml);
 
