@@ -74,8 +74,10 @@ namespace pxt.blocks {
             svg.removeAttr('width');
             svg.removeAttr('height');
 
-            if (options.emPixels)
+            if (options.emPixels) {
                 svg[0].style.width = (metrics.contentWidth / options.emPixels) + 'em';
+                svg[0].style.height = (metrics.contentHeight / options.emPixels) + 'em';
+            }
 
             return svg;
 

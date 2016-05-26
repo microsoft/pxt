@@ -103,7 +103,7 @@
             if (hex) {
                 console.log('compiling script to hex')
                 pxt.runner.generateHexFileAsync(options).done(function(hex) {
-                    loading.remove();
+                    $(loading).remove();
                     var name = ts.pxt.BINARY_HEX;
                     var uri = pxt.BrowserUtils.browserDownloadText(hex, name)                    
                     var a = document.createElement("a");
@@ -116,7 +116,7 @@
                 console.log('simulating script')
                 pxt.runner.simulateAsync(sims, options).done(function() {
                     console.log('simulator started...')
-                    loading.remove();
+                    $(loading).remove();
                 })
             }
         })

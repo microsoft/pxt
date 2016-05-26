@@ -199,7 +199,7 @@ namespace pxsim.logs {
             let ens = this.entries;
             while (ens.length > this.props.maxEntries) {
                 let po = ens.shift();
-                if (po.element) po.element.remove();
+                if (po.element && po.element.parentElement) po.element.parentElement.removeChild(po.element);
             }
             // find the entry with same source
             let last: ILogEntryElement = undefined;

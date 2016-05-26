@@ -39,7 +39,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 animation: 'fly right out',
                 duration: '0.5s',
                 onComplete: function () {
-                    el.remove();
+                    $(el).remove();
                 }
             })
         },
