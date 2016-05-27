@@ -378,7 +378,7 @@ namespace pxt {
         /**
          * Returns localized strings qName -> translation
          */
-        localizationStrings(lang: string): U.Map<string> {
+        packageLocalizationStrings(lang: string): U.Map<string> {
             let files = this.config.files;
             let fn = `_locales/${lang.toLowerCase()}/strings.json`;
             if (files.indexOf(fn) > -1)
@@ -434,8 +434,8 @@ namespace pxt {
 
         localizationStrings(lang: string): U.Map<string> {
             let loc: U.Map<string> = {};
-            this.sortedDeps().forEach(dep => {
-                let depLoc = dep.localizationStrings(lang);
+            Util.values(this.deps).forEach(dep => {
+                let depLoc = dep.packageLocalizationStrings(lang);
                 if (depLoc) // merge data
                     for (let k in depLoc)
                         if (!loc[k]) loc[k] = depLoc[k];
