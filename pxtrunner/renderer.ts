@@ -13,9 +13,10 @@ namespace pxt.runner {
         simulator?: boolean;
         hex?: boolean;
         hexName?: string;
+        pxtUrl?: string;
     }
 
-    function fillWithWidget($container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
+    function fillWithWidget(options: ClientRenderOptions, $container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
         if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
             $c.append($js);
@@ -55,7 +56,7 @@ namespace pxt.runner {
                 else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl() + "?nofooter=1&code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl(options) + "?nofooter=1&code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -102,7 +103,7 @@ namespace pxt.runner {
             let hex = options.hex && compiled && r.compileJS.outfiles[ts.pxt.BINARY_HEX]
                 ? r.compileJS.outfiles[ts.pxt.BINARY_HEX] : undefined;
             let hexname = `${appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
-            fillWithWidget(c, js, s,
+            fillWithWidget(options, c, js, s,
                 options.simulator && compiled,
                 hexname,
                 hex);
@@ -136,7 +137,7 @@ namespace pxt.runner {
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code/>').text(sig)
             if (options.snippetReplaceParent) c = c.parent();
-            fillWithWidget(c, js, s, false);
+            fillWithWidget(options, c, js, s, false);
         });
     }
 
@@ -280,12 +281,14 @@ namespace pxt.runner {
             .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));
     }
 
-    function getRunUrl() {
-        return pxt.webConfig && pxt.webConfig.runUrl ? pxt.webConfig.runUrl : '/--run';
+    function getRunUrl(options: ClientRenderOptions) {
+        return options.pxtUrl ? options.pxtUrl + '/--run' : pxt.webConfig && pxt.webConfig.runUrl ? pxt.webConfig.runUrl : '/--run';
     }
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
+
+        if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
 
         if (options.simulatorClass) {
             // simulators
@@ -298,7 +301,7 @@ namespace pxt.runner {
                     <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
                     </div>
                     </div></div>`)
-                $sim.find("iframe").attr("src", getRunUrl() + "?nofooter=1&code=" + encodeURIComponent($c.text().trim()));
+                $sim.find("iframe").attr("src", getRunUrl(options) + "?nofooter=1&code=" + encodeURIComponent($c.text().trim()));
                 if (options.snippetReplaceParent) $c = $c.parent();
                 $c.replaceWith($sim);
             });
