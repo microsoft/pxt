@@ -458,7 +458,8 @@ html {
 
 @media only screen and (max-width: 64em), only screen and (max-aspect-ratio: 14/10) {
     #organization {
-        right:unset; top:unset;
+        right:initial; 
+        top:initial;
         left:1.5rem;
         bottom:0.5rem;
     }
@@ -499,8 +500,8 @@ html {
         margin: 0;
     }
     #organization {
-        top:unset;left:0.5rem;
-        right: unset;
+        top:initial;left:0.5rem;
+        right: initial;
         bottom: 0.5rem;
         height: 1.3rem;        
     }
@@ -527,7 +528,7 @@ html {
         left:1rem;
         top:initial;      
         width:initial;  
-        min-width: unset;   
+        min-width: initial;   
     }
     div.simframe {
         display:inline-block;
@@ -592,7 +593,7 @@ html {
     #filelist {
         top:0.5rem;
         right:0.5rem;
-        left:unset;
-        min-width: unset;   
+        left:initial;
+        min-width: initial;   
     }    
 }
