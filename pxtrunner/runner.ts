@@ -214,57 +214,98 @@ namespace pxt.runner {
             })
     }
 
+    export function startDocServer(loading: HTMLElement, content: HTMLElement) {
+        window.addEventListener('message', (ev: MessageEvent) => {
+            let data = ev.data as pxsim.SimulatorMessage;
+            switch (data.type) {
+                case 'doc':
+                    let docid = (<pxsim.SimulatorDocMessage>ev.data).docid;
+                    $(loading).show()
+                    $(content).hide()
+                    renderDocAsync(content, docid)
+                        .done(() => {
+                            $(loading).hide()
+                            $(content).show()
+                        });
+                    break;
+            }
+        });
+    }
+
+    export function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
+        let template = "@body@";
+        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
+            .then(md => {
+                let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme);
+                content.innerHTML = html;
+                return pxt.runner.renderAsync({
+                    snippetClass: 'lang-blocks',
+                    signatureClass: 'lang-sig',
+                    blocksClass: 'lang-block',
+                    shuffleClass: 'lang-shuffle',
+                    simulatorClass: 'lang-sim',
+                    linksClass: 'lang-cards',
+                    namespacesClass: 'lang-namespaces',
+                    codeCardClass: 'lang-codecard',
+                    snippetReplaceParent: true,
+                    simulator: true,
+                    hex: true,
+                    hexName: pxt.appTarget.id
+                })
+            });
+    }
+
     export interface DecompileResult {
-        compileJS?: ts.pxt.CompileResult;
-        compileBlocks?: ts.pxt.CompileResult;
-        blocksSvg?: JQuery;
+            compileJS?: ts.pxt.CompileResult;
+            compileBlocks?: ts.pxt.CompileResult;
+            blocksSvg?: JQuery;
+        }
+
+        export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+            return loadPackageAsync(null)
+                .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
+                .then(opts => {
+                    // compile
+                    opts.fileSystem["main.ts"] = code
+                    opts.ast = true
+                    let resp = ts.pxt.compile(opts)
+                    if (resp.diagnostics && resp.diagnostics.length > 0)
+                        resp.diagnostics.forEach(diag => console.error(diag.messageText));
+                    if (!resp.success)
+                        return { compileJS: resp };
+
+                    // decompile to blocks
+                    let apis = ts.pxt.getApiInfo(resp.ast);
+                    let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                    pxt.blocks.initBlocks(blocksInfo);
+                    let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                    if (bresp.diagnostics && bresp.diagnostics.length > 0)
+                        bresp.diagnostics.forEach(diag => console.error(diag.messageText));
+                    if (!bresp.success)
+                        return { compileJS: resp, compileBlocks: bresp };
+                    console.log(bresp.outfiles["main.blocks"])
+                    return {
+                        compileJS: resp,
+                        compileBlocks: bresp,
+                        blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                    };
+                })
+        }
+
+        export var initCallbacks: (() => void)[] = [];
+        export function init() {
+            initInnerAsync()
+                .done(() => {
+                    for (let i = 0; i < initCallbacks.length; ++i) {
+                        initCallbacks[i]();
+                    }
+                })
+        }
+
+        function windowLoad() {
+            let f = (window as any).ksRunnerWhenLoaded
+            if (f) f();
+        }
+
+        windowLoad();
     }
-
-    export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-        return loadPackageAsync(null)
-            .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
-            .then(opts => {
-                // compile
-                opts.fileSystem["main.ts"] = code
-                opts.ast = true
-                let resp = ts.pxt.compile(opts)
-                if (resp.diagnostics && resp.diagnostics.length > 0)
-                    resp.diagnostics.forEach(diag => console.error(diag.messageText));
-                if (!resp.success)
-                    return { compileJS: resp };
-
-                // decompile to blocks
-                let apis = ts.pxt.getApiInfo(resp.ast);
-                let blocksInfo = ts.pxt.getBlocksInfo(apis);
-                pxt.blocks.initBlocks(blocksInfo);
-                let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
-                if (bresp.diagnostics && bresp.diagnostics.length > 0)
-                    bresp.diagnostics.forEach(diag => console.error(diag.messageText));
-                if (!bresp.success)
-                    return { compileJS: resp, compileBlocks: bresp };
-                console.log(bresp.outfiles["main.blocks"])
-                return {
-                    compileJS: resp,
-                    compileBlocks: bresp,
-                    blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
-                };
-            })
-    }
-
-    export var initCallbacks: (() => void)[] = [];
-    export function init() {
-        initInnerAsync()
-            .done(() => {
-                for (let i = 0; i < initCallbacks.length; ++i) {
-                    initCallbacks[i]();
-                }
-            })
-    }
-
-    function windowLoad() {
-        let f = (window as any).ksRunnerWhenLoaded
-        if (f) f();
-    }
-
-    windowLoad();
-}

@@ -46,7 +46,11 @@ namespace pxt.Cloud {
             })
     }
 
-    export function privateGetAsync(path: string) {
+    export function privateGetTextAsync(path: string): Promise<string> {
+        return privateRequestAsync({ url: path }).then(resp => resp.text)
+    }
+
+    export function privateGetAsync(path: string): Promise<any> {
         return privateRequestAsync({ url: path }).then(resp => resp.json)
     }
 
