@@ -7,6 +7,6 @@
         "out": "../built/pxtlib.js",
         "rootDir": ".",
         "newLine": "LF",
-        "sourceMap": true
+        "sourceMap": false
     }
 }
