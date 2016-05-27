@@ -479,6 +479,13 @@ namespace ts.pxt.Util {
     let _localizeLang: string = "en";
     let _localizeStrings: Map<string> = {};
 
+    /**
+     * Returns current user language iSO-code. Default is `en`.
+     */
+    export function userLanguage(): string {
+        return _localizeLang;
+    }
+
     export function _localize(s: string) {
         return _localizeStrings[s] || s;
     }
