@@ -265,7 +265,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
 }
 
 
-class DocMenu extends data.Component<ISettingsProps, {}> {
+class DocsMenu extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -276,9 +276,9 @@ class DocMenu extends data.Component<ISettingsProps, {}> {
 
     render() {
         const targetTheme = pxt.appTarget.appTheme;
-        return <div className="ui buttons wide only">
+        return <div id="docsmenu" className="ui buttons">
             <sui.DropdownMenu class="floating icon button" icon="help">
-                {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank" onClick={() => this.openDoc(m.path)}>{m.name}</a>) }
+                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenu" + m.path} onClick={() => this.openDoc(m.path)}>{m.name}</sui.Item>) }
             </sui.DropdownMenu>
         </div>
     }
@@ -978,7 +978,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className="ui">
                                 {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync(settings).done() } /> : undefined}
                             </div>
-                            <DocMenu parent={this} />
+                            <DocsMenu parent={this} />
                         </div>
                         <div className="ui item wide only">
                             <div className="ui massive transparent input">
