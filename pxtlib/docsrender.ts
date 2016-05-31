@@ -316,6 +316,8 @@ namespace pxt.docs {
     }
 
     function injectHtml(template: string, vars: U.Map<string>, quoted: string[] = []) {
+        if (!template) return '';
+
         return template.replace(/@(\w+)@/g, (f, key) => {
             let res = U.lookup(vars, key) || "";
             res += ""; // make sure it's a string

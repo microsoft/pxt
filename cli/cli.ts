@@ -492,6 +492,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "index.html",
         "embed.js",
         "run.html",
+        "docs.html",
         "release.manifest",
         "worker.js",
         "tdworker.js",

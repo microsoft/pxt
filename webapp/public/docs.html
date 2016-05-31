@@ -4,28 +4,29 @@
 <head>
     <meta charset="utf-8">
     <style>
-    svg {
-        max-width: 100%;
-    }
-    
-    .blocklyText {
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-    }
-    
-    .blocklyCheckbox, .blocklyLed {        
-        fill: #ff3030 !important;
-        text-shadow: 0px 0px 7px #f00;
-        font-size: 24px;
-    }
-    
-    .ui.card  .blocklyPreview {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%,-50%);
-        width: calc(100% - 1em);
-        max-height: calc(100% - 1em);
-    }            
+        svg {
+            max-width: 100%;
+        }
+        
+        .blocklyText {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+        }
+        
+        .blocklyCheckbox,
+        .blocklyLed {
+            fill: #ff3030 !important;
+            text-shadow: 0px 0px 7px #f00;
+            font-size: 24px;
+        }
+        
+        .ui.card .blocklyPreview {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: calc(100% - 1em);
+            max-height: calc(100% - 1em);
+        }
     </style>
 </head>
 
@@ -34,7 +35,7 @@
         @import "/cdn/semantic.css";
         @import "/cdn/custom.css";
         @import "/cdn/icons.css";
-    </style>    
+    </style>
     <div id='loading' style='font-size: 25px; font-family:monospace; margin: 20% auto; width: 200px;'>
         loading...
     </div>
@@ -44,6 +45,21 @@
         // This line gets patched up by the cloud
         var pxtConfig = null;
     </script>
+    <script type="text/javascript" src="/cdn/lzma/lzma_worker-min.js"></script>
+    <script type="text/javascript" src="/cdn/marked/marked.min.js"></script>
+    <script type="text/javascript" src="/cdn/jquery.js"></script>
+    <script type="text/javascript" src="/cdn/typescript.js"></script>
+    <script type="text/javascript" src="/cdn/blockly/blockly_compressed.js"></script>
+    <script type="text/javascript" src="/cdn/blockly/blocks_compressed.js"></script>
+    <script type="text/javascript" src="/cdn/blockly/msg/js/en.js"></script>
+    <script type="text/javascript" src="/cdn/fuse/fuse.min.js"></script>
+    <script type="text/javascript" src="/cdn/pxtlib.js"></script>
+    <script type="text/javascript" src="/cdn/pxtblocks.js"></script>
+    <script type="text/javascript" src="/cdn/pxtwinrt.js"></script>
+    <script type="text/javascript" src="/cdn/pxteditor.js"></script>
+    <script type="text/javascript" src="/cdn/pxtsim.js"></script>
+    <script type="text/javascript" src="/cdn/pxtrunner.js"></script>
+    <script type="text/javascript" src="/cdn/semantic.js"></script>
     <script type="text/javascript" src="/embed.js"></script>
     <script type="text/javascript">
         (function () {    
@@ -51,9 +67,10 @@
         var content = document.getElementById('content');        
         var docid = /docid=([^&?]+)/i.exec(window.location.href); 
         ksRunnerReady(function() {
+            pxt.docs.requireMarked = () => marked;
             pxt.runner.startDocsServer(loading, content, docid ? docid[1] : undefined);
-        })
-})()
+        });
+        })();
     </script>
 </body>
 
