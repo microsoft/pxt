@@ -249,11 +249,65 @@ namespace pxt.runner {
     }
 
     export function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
-        let template = "@body@";
+        const template = `
+<aside id=youtube>
+    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
+    </div>
+</aside>
+
+<aside id=section>
+    <!-- section @ARGS@ -->
+</aside>
+        
+<aside id=hide class=box>
+    <div style='display:none'>
+        @BODY@
+    </div>
+</aside>
+
+<aside id=avatar class=box>
+    <div class='avatar @ARGS@'>
+        <div class='avatar-image'></div>
+        <div class='ui message'>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=hint class=box>
+    <div class="ui icon green message">
+        <i class="help checkmark icon"></i>
+        <div class="content">
+            <div class="header">Hint</div>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<!-- wrapped around ordinary content -->
+<aside id=main-container class=box>
+    <div class="ui text">
+        @BODY@
+    </div>
+</aside>
+
+<!-- used for 'column' box - they are collected and wrapped in 'column-container' -->
+<aside id=column class=aside>
+    <div class='column'>
+        @BODY@
+    </div>
+</aside>
+<aside id=column-container class=box>
+    <div class="ui three column stackable grid text">
+        @BODY@
+    </div>
+</aside>
+@body@`;
         return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}`)
             .then(md => {
                 let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme);
                 content.innerHTML = html;
+                ($(content) as any).embed();
                 return pxt.runner.renderAsync({
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
@@ -267,7 +321,7 @@ namespace pxt.runner {
                     simulator: true,
                     hex: true,
                     hexName: pxt.appTarget.id
-                })
+                });
             });
     }
 
