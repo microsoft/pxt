@@ -235,6 +235,14 @@ namespace pxt.runner {
                 .done(() => { });
         }
 
+        window.addEventListener("hashchange", () => {
+            let m = /#doc:([^&?:]+)/i.exec(window.location.hash);
+            if (m) {
+                // navigation occured
+                render(m[1]);
+            }
+        }, false);
+
         window.addEventListener('message', (ev: MessageEvent) => {
             let data = ev.data as pxsim.SimulatorMessage;
             switch (data.type) {
@@ -248,7 +256,7 @@ namespace pxt.runner {
             window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{ type: "docsready" }, "*");
     }
 
-    export function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
+    function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         const template = `
 <aside id=youtube>
     <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
@@ -307,7 +315,7 @@ namespace pxt.runner {
             .then(md => {
                 let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme);
                 content.innerHTML = html;
-                ($(content) as any).embed();
+                $(content).find('a').attr('target', '_blank');
                 return pxt.runner.renderAsync({
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
@@ -322,7 +330,12 @@ namespace pxt.runner {
                     hex: true,
                     hexName: pxt.appTarget.id
                 });
-            });
+            }).finally(() => {
+                // patch links
+                $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
+                    $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
+                })
+            })
     }
 
     export interface DecompileResult {
