@@ -214,22 +214,30 @@ namespace pxt.runner {
             })
     }
 
-    export function startDocServer(loading: HTMLElement, content: HTMLElement) {
+    export function startDocsServer(loading: HTMLElement, content: HTMLElement, startDocId?: string) {
+        function render(docid: string) {
+            console.log(`rendering ${docid}`);
+            $(content).hide()
+            $(loading).show()
+            renderDocAsync(content, docid)
+                .finally(() => {
+                    $(loading).hide()
+                    $(content).show()
+                })
+                .done(() => { });
+        }
+
         window.addEventListener('message', (ev: MessageEvent) => {
             let data = ev.data as pxsim.SimulatorMessage;
             switch (data.type) {
                 case 'doc':
-                    let docid = (<pxsim.SimulatorDocMessage>ev.data).docid;
-                    $(loading).show()
-                    $(content).hide()
-                    renderDocAsync(content, docid)
-                        .done(() => {
-                            $(loading).hide()
-                            $(content).show()
-                        });
+                    render((<pxsim.SimulatorDocMessage>ev.data).docid);
                     break;
             }
         });
+        if (startDocId) render(startDocId);
+        if (window.parent)
+            window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{ type: "docsready" }, "*");
     }
 
     export function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
@@ -256,56 +264,56 @@ namespace pxt.runner {
     }
 
     export interface DecompileResult {
-            compileJS?: ts.pxt.CompileResult;
-            compileBlocks?: ts.pxt.CompileResult;
-            blocksSvg?: JQuery;
-        }
-
-        export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-            return loadPackageAsync(null)
-                .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
-                .then(opts => {
-                    // compile
-                    opts.fileSystem["main.ts"] = code
-                    opts.ast = true
-                    let resp = ts.pxt.compile(opts)
-                    if (resp.diagnostics && resp.diagnostics.length > 0)
-                        resp.diagnostics.forEach(diag => console.error(diag.messageText));
-                    if (!resp.success)
-                        return { compileJS: resp };
-
-                    // decompile to blocks
-                    let apis = ts.pxt.getApiInfo(resp.ast);
-                    let blocksInfo = ts.pxt.getBlocksInfo(apis);
-                    pxt.blocks.initBlocks(blocksInfo);
-                    let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
-                    if (bresp.diagnostics && bresp.diagnostics.length > 0)
-                        bresp.diagnostics.forEach(diag => console.error(diag.messageText));
-                    if (!bresp.success)
-                        return { compileJS: resp, compileBlocks: bresp };
-                    console.log(bresp.outfiles["main.blocks"])
-                    return {
-                        compileJS: resp,
-                        compileBlocks: bresp,
-                        blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
-                    };
-                })
-        }
-
-        export var initCallbacks: (() => void)[] = [];
-        export function init() {
-            initInnerAsync()
-                .done(() => {
-                    for (let i = 0; i < initCallbacks.length; ++i) {
-                        initCallbacks[i]();
-                    }
-                })
-        }
-
-        function windowLoad() {
-            let f = (window as any).ksRunnerWhenLoaded
-            if (f) f();
-        }
-
-        windowLoad();
+        compileJS?: ts.pxt.CompileResult;
+        compileBlocks?: ts.pxt.CompileResult;
+        blocksSvg?: JQuery;
     }
+
+    export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        return loadPackageAsync(null)
+            .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
+            .then(opts => {
+                // compile
+                opts.fileSystem["main.ts"] = code
+                opts.ast = true
+                let resp = ts.pxt.compile(opts)
+                if (resp.diagnostics && resp.diagnostics.length > 0)
+                    resp.diagnostics.forEach(diag => console.error(diag.messageText));
+                if (!resp.success)
+                    return { compileJS: resp };
+
+                // decompile to blocks
+                let apis = ts.pxt.getApiInfo(resp.ast);
+                let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                pxt.blocks.initBlocks(blocksInfo);
+                let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                if (bresp.diagnostics && bresp.diagnostics.length > 0)
+                    bresp.diagnostics.forEach(diag => console.error(diag.messageText));
+                if (!bresp.success)
+                    return { compileJS: resp, compileBlocks: bresp };
+                console.log(bresp.outfiles["main.blocks"])
+                return {
+                    compileJS: resp,
+                    compileBlocks: bresp,
+                    blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                };
+            })
+    }
+
+    export var initCallbacks: (() => void)[] = [];
+    export function init() {
+        initInnerAsync()
+            .done(() => {
+                for (let i = 0; i < initCallbacks.length; ++i) {
+                    initCallbacks[i]();
+                }
+            })
+    }
+
+    function windowLoad() {
+        let f = (window as any).ksRunnerWhenLoaded
+        if (f) f();
+    }
+
+    windowLoad();
+}

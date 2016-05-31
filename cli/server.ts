@@ -520,6 +520,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--docs") {
+            sendFile(path.join(fileDir, 'node_modules/pxt-core/webapp/public/docs.html'));
+            return
+        }
+
         if (!/\.js\.map$/.test(pathname)) {
             let dd = dirs
             if (U.startsWith(pathname, "/sim/")) {

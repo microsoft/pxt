@@ -25,6 +25,9 @@ namespace pxsim {
         frameid: string;
     }
 
+    export interface SimulatorDocsReadyMessage extends SimulatorMessage {
+    }
+
     export interface SimulatorStateMessage extends SimulatorMessage {
         frameid?: string;
         runtimeid?: string;
