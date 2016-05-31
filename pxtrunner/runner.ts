@@ -214,15 +214,9 @@ namespace pxt.runner {
             })
     }
 
-    export function startDocsServer(loading: HTMLElement, content: HTMLElement, startDocId?: string) {
+    export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
         $(loading).hide()
-        let currentDocId = '';
         function render(docid: string) {
-            if (currentDocId == docid) {
-                // don't re-render...
-                return;
-            }
-            currentDocId = docid;
             console.log(`rendering ${docid}`);
             $(content).hide()
             $(loading).show()
@@ -235,25 +229,19 @@ namespace pxt.runner {
                 .done(() => { });
         }
 
-        window.addEventListener("hashchange", () => {
+        function renderHash() {
             let m = /#doc:([^&?:]+)/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 render(m[1]);
             }
+        }
+
+        window.addEventListener("hashchange", () => {
+            renderHash();
         }, false);
 
-        window.addEventListener('message', (ev: MessageEvent) => {
-            let data = ev.data as pxsim.SimulatorMessage;
-            switch (data.type) {
-                case 'doc':
-                    render((<pxsim.SimulatorDocMessage>ev.data).docid);
-                    break;
-            }
-        });
-        if (startDocId) render(startDocId);
-        if (window.parent)
-            window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{ type: "docsready" }, "*");
+        renderHash();
     }
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {

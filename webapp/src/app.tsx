@@ -289,19 +289,9 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    componentDidUpdate() {
-        const path = this.props.parent.state.sideDocsPath;
-        const frame = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
-        if (frame && frame.contentWindow)
-            frame.contentWindow.postMessage({
-                type: "doc",
-                docid: path
-            }, "*");
-    }
-
     renderCore() {
         return <iframe id="sidedocs"
-            src={pxt.webConfig.pxtCdnUrl + "/docs.html"}
+            src={pxt.webConfig.pxtCdnUrl + "/docs.html#doc:" + this.props.parent.state.sideDocsPath}
             role="complementary" />
     }
 }
