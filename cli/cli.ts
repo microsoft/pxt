@@ -2018,7 +2018,8 @@ export function mainCli(targetDir: string) {
 
     let trg = nodeutil.getPxtTarget()
     pxt.appTarget = trg;
-    console.log(`Using PXT/${trg.id} from ${targetDir}.`)
+    
+    process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
 
