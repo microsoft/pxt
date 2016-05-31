@@ -25,6 +25,8 @@ body {
   display:none;
   overflow-y: auto;
   right: 0;
+  border:none;
+  height:100%;   
 }
 #logo {
     font-size: 2.8rem;
@@ -438,7 +440,6 @@ html {
   left: 23rem;
 }
 
-
 /* extra-large desktop screen */
 @media only screen and (min-width: 92em) and (min-height:44em) {
     #filelist {
@@ -446,14 +447,12 @@ html {
     }
     #maineditor {
         left:26rem;
-        /*right:22rem;*/
+        right:22rem;
     }
-    /*    
     #sidedocs {
-        display:unset;
+        display:initial;
         width:22rem;
     }
-    */
 }
 
 @media only screen and (max-width: 64em), only screen and (max-aspect-ratio: 14/10) {

@@ -9,16 +9,23 @@
         }
         
         .blocklyText {
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
         }
         
-        .blocklyCheckbox,
-        .blocklyLed {
+        .blocklyText {
+            font-size: 1rem !important;
+        }
+        
+        .blocklyTreeLabel {
+            font-size: 1.25rem !important;
+        }
+        
+        .blocklyCheckbox {
             fill: #ff3030 !important;
-            text-shadow: 0px 0px 7px #f00;
+            text-shadow: 0px 0px 6px #f00;
             font-size: 24px;
         }
-        
+                
         .ui.card .blocklyPreview {
             position: absolute;
             top: 50%;
@@ -33,13 +40,12 @@
 <body>
     <style type="text/css">
         @import "/cdn/semantic.css";
-        @import "/cdn/custom.css";
         @import "/cdn/icons.css";
     </style>
     <div id='loading' style='font-size: 25px; font-family:monospace; margin: 20% auto; width: 200px;'>
-        loading...
+        ...
     </div>
-    <div id="content">
+    <div id="content" class="ui container">
     </div>
     <script>
         // This line gets patched up by the cloud

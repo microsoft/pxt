@@ -215,6 +215,7 @@ namespace pxt.runner {
     }
 
     export function startDocsServer(loading: HTMLElement, content: HTMLElement, startDocId?: string) {
+        $(loading).hide()
         function render(docid: string) {
             console.log(`rendering ${docid}`);
             $(content).hide()

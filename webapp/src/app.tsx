@@ -269,10 +269,20 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
+    componentDidUpdate() {
+        const path = this.props.parent.state.sideDocsPath;
+        const frame = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
+        if (frame && frame.contentWindow)
+            frame.contentWindow.postMessage({
+                type: "doc",
+                docid: path
+            }, "*");
+    }
+
     renderCore() {
-        let path = this.props.parent.state.sideDocsPath;
-        if (!this.props.parent.state.sideDocsPath) return <div></div>
-        return <iframe src={"https://m.pxt.io/" + path} />
+        return <iframe id="sidedocs" 
+            src={pxt.webConfig.pxtCdnUrl + "/docs.html"}
+            role="complementary" />
     }
 }
 
@@ -991,6 +1001,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
+                <SideDocs parent={this} />
                 {targetTheme.organizationLogo ? <img id="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
