@@ -16,4 +16,7 @@ Next, edit `settings.json`. When you're done, run:
 pxt api config/settings - < settings.json
 ```
 
+It's best to now remove `settings.json`, so that you're sure you'll be getting
+the latest server version next time you edit it.
+
 There is also `config/compile` in addition to `config/settings`.
