@@ -264,6 +264,26 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
     }
 }
 
+
+class DocMenu extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    openDoc(path: string) {
+        this.props.parent.setSideDoc(path);
+    }
+
+    render() {
+        const targetTheme = pxt.appTarget.appTheme;
+        return <div className="ui buttons wide only">
+            <sui.DropdownMenu class="floating icon button" icon="help">
+                {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank" onClick={() => this.openDoc(m.path)}>{m.name}</a>) }
+            </sui.DropdownMenu>
+        </div>
+    }
+}
+
 class SideDocs extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -280,7 +300,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <iframe id="sidedocs" 
+        return <iframe id="sidedocs"
             src={pxt.webConfig.pxtCdnUrl + "/docs.html"}
             role="complementary" />
     }
@@ -958,11 +978,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className="ui">
                                 {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync(settings).done() } /> : undefined}
                             </div>
-                            <div className="ui buttons wide only">
-                                <sui.DropdownMenu class="floating icon button" icon="help">
-                                    {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
-                                </sui.DropdownMenu>
-                            </div>
+                            <DocMenu parent={this} />
                         </div>
                         <div className="ui item wide only">
                             <div className="ui massive transparent input">

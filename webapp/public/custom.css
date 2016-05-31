@@ -26,7 +26,7 @@ body {
   overflow-y: auto;
   right: 0;
   border:none;
-  height:100%;   
+  height: calc(100% - 4.5rem);
 }
 #logo {
     font-size: 2.8rem;
@@ -447,11 +447,11 @@ html {
     }
     #maineditor {
         left:26rem;
-        right:22rem;
+        right:24rem;
     }
     #sidedocs {
         display:initial;
-        width:22rem;
+        width:24rem;
     }
 }
 

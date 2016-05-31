@@ -226,7 +226,8 @@ namespace pxt.runner {
             console.log(`rendering ${docid}`);
             $(content).hide()
             $(loading).show()
-            renderDocAsync(content, docid)
+            Promise.delay(100) // allow UI to update
+                .then(() => renderDocAsync(content, docid))
                 .finally(() => {
                     $(loading).hide()
                     $(content).show()
@@ -249,7 +250,7 @@ namespace pxt.runner {
 
     export function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         let template = "@body@";
-        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
+        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}`)
             .then(md => {
                 let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme);
                 content.innerHTML = html;
