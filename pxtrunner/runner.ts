@@ -216,7 +216,13 @@ namespace pxt.runner {
 
     export function startDocsServer(loading: HTMLElement, content: HTMLElement, startDocId?: string) {
         $(loading).hide()
+        let currentDocId = '';
         function render(docid: string) {
+            if (currentDocId == docid) {
+                // don't re-render...
+                return;
+            }
+            currentDocId = docid;
             console.log(`rendering ${docid}`);
             $(content).hide()
             $(loading).show()
