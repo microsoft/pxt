@@ -374,6 +374,23 @@ namespace pxt {
             }
             files[this.id + "/" + configName] = this.readFile(configName)
         }
+
+        /**
+         * Returns localized strings qName -> translation
+         */
+        packageLocalizationStrings(lang: string): U.Map<string> {
+            let files = this.config.files;
+            let fn = `_locales/${lang.toLowerCase()}/strings.json`;
+            if (files.indexOf(fn) > -1)
+                return JSON.parse(this.readFile(fn)) as U.Map<string>;
+
+            lang = lang.substring(0, 2);
+            fn = `_locales/${lang.toLowerCase()}/strings.json`;
+            if (files.indexOf(fn) > -1)
+                return JSON.parse(this.readFile(fn)) as U.Map<string>;
+
+            return undefined;
+        }
     }
 
     export class MainPackage
@@ -413,6 +430,17 @@ namespace pxt {
             }
             rec(this)
             return ids.map(id => this.resolveDep(id))
+        }
+
+        localizationStrings(lang: string): U.Map<string> {
+            let loc: U.Map<string> = {};
+            Util.values(this.deps).forEach(dep => {
+                let depLoc = dep.packageLocalizationStrings(lang);
+                if (depLoc) // merge data
+                    for (let k in depLoc)
+                        if (!loc[k]) loc[k] = depLoc[k];
+            })
+            return loc;
         }
 
         getTargetOptions(): CompileTarget {

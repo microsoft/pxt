@@ -479,7 +479,14 @@ namespace ts.pxt.Util {
     let _localizeLang: string = "en";
     let _localizeStrings: Map<string> = {};
 
-    export function _localize(s: string, account: boolean) {
+    /**
+     * Returns current user language iSO-code. Default is `en`.
+     */
+    export function userLanguage(): string {
+        return _localizeLang;
+    }
+
+    export function _localize(s: string) {
         return _localizeStrings[s] || s;
     }
 
@@ -569,7 +576,7 @@ namespace ts.pxt.Util {
 
     let sForPlural = true;
     export function lf_va(format: string, args: any[]): string {
-        let lfmt = Util._localize(format, true)
+        let lfmt = Util._localize(format)
 
         if (!sForPlural && lfmt != format && /\d:s\}/.test(lfmt)) {
             lfmt = lfmt.replace(/\{\d+:s\}/g, "")

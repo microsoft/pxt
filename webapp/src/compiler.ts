@@ -124,6 +124,19 @@ function waitForFirstTypecheckAsync() {
     else return typecheckAsync();
 }
 
+function localizeApis(apis: ts.pxt.ApisInfo) {
+
+    const lang = ts.pxt.Util.userLanguage();
+    if (ts.pxt.Util.userLanguage() != "en") {
+        let loc = pkg.mainPkg.localizationStrings(lang);
+        Util.values(apis.byQName).forEach(fn => {
+            const jsDoc = fn.attributes.jsDoc;
+            if (jsDoc)
+                fn.attributes.jsDoc = loc[fn.qName] || jsDoc;
+        });
+    }
+}
+
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => workerOpAsync("setOptions", { options: opts }))
@@ -134,6 +147,7 @@ export function typecheckAsync() {
                 return workerOpAsync("apiInfo", {})
                     .then(apis => {
                         refreshApis = false;
+                        localizeApis(apis);
                         cachedApis = apis;
                     })
             else return Promise.resolve()
