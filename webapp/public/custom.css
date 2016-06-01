@@ -449,18 +449,18 @@ html {
         right:22rem;
     }
     #docsmenu {
-        display:initial;
+        display:block;
     }
     #sidedocs {
-        display:initial;
+        display:block;
         width:22rem;
     }
 }
 
 @media only screen and (max-width: 64em), only screen and (max-aspect-ratio: 14/10) {
     #organization {
-        right:initial; 
-        top:initial;
+        right:auto; 
+        top:auto;
         left:1.5rem;
         bottom:0.5rem;
     }
@@ -483,7 +483,7 @@ html {
     }
     #helpcard {
         right: 2rem;
-        top: initial;
+        top: auto;
         bottom: 2.2rem;
         margin: 0;
     }
@@ -496,13 +496,14 @@ html {
 @media only screen and (max-width: 55em), only screen and (max-aspect-ratio: 7/10) {
     #helpcard {
         right: 2rem;
-        top: initial;
+        top: auto;
         bottom: 2rem;
         margin: 0;
     }
     #organization {
-        top:initial;left:0.5rem;
-        right: initial;
+        top:auto;
+        left:0.5rem;
+        right: auto;
         bottom: 0.5rem;
         height: 1.3rem;        
     }
@@ -527,9 +528,9 @@ html {
         z-index:5;
         bottom:3rem;
         left:1rem;
-        top:initial;      
-        width:initial;  
-        min-width: initial;   
+        top:auto;      
+        width:auto;  
+        min-width: auto;   
     }
     div.simframe {
         display:inline-block;
@@ -594,7 +595,7 @@ html {
     #filelist {
         top:0.5rem;
         right:0.5rem;
-        left:initial;
-        min-width: initial;   
+        left:auto;
+        min-width: auto;   
     }    
 }
