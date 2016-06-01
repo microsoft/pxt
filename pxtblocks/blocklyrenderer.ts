@@ -26,6 +26,7 @@ namespace pxt.blocks {
         emPixels?: number;
         layout?: BlockLayout;
         clean?: boolean;
+        aspectRatio?: number;
     }
 
     export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Align }): JQuery {
@@ -55,7 +56,7 @@ namespace pxt.blocks {
                 case BlockLayout.Align:
                     pxt.blocks.layout.verticalAlign(workspace, options.emPixels); break;
                 case BlockLayout.Shuffle:
-                    pxt.blocks.layout.shuffle(workspace); break;
+                    pxt.blocks.layout.shuffle(workspace, options.aspectRatio); break;
                 case BlockLayout.Clean:
                     if ((<any>workspace).cleanUp_)
                         (<any>workspace).cleanUp_();

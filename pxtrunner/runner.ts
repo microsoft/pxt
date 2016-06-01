@@ -314,6 +314,7 @@ namespace pxt.runner {
                 $(content).html(html);
                 $(content).find('a').attr('target', '_blank');
                 return pxt.runner.renderAsync({
+                    blocksAspectRatio: 0.5,
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
                     blocksClass: 'lang-block',
@@ -331,7 +332,7 @@ namespace pxt.runner {
                 pxt.reportException(e, { docid: docid });
                 $(content).html(lf("<h3>Something wrong happened, please check your internet connection."));
             }).finally(() => {
-                // patch links
+                // patch a elements
                 $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
                     $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
                 })

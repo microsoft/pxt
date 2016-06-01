@@ -445,19 +445,15 @@ html {
 
 /* extra-large desktop screen */
 @media only screen and (min-width: 92em) and (min-height:44em) {
-    #filelist {
-        width:26rem;
-    }
     #maineditor {
-        left:26rem;
-        right:24rem;
+        right:22rem;
     }
     #docsmenu {
         display:initial;
     }
     #sidedocs {
         display:initial;
-        width:24rem;
+        width:22rem;
     }
 }
 

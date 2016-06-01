@@ -5,6 +5,7 @@ namespace pxt.runner {
         signatureClass?: string;
         blocksClass?: string;
         shuffleClass?: string;
+        blocksAspectRatio?: number;
         simulatorClass?: string;
         linksClass?: string;
         namespacesClass?: string;
@@ -147,7 +148,7 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             let segment = $('<div class="ui segment"/>').append(s);
             c.replaceWith(segment);
-        }, { emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle });
+        }, { emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
