@@ -5,9 +5,10 @@
     <meta charset="utf-8">
     <style>
         #content {
-            margin-bottom:3rem !important;
-            margin-top:0.5rem !important;
+            margin-bottom: 3rem !important;
+            margin-top: 0.5rem !important;
         }
+        
         svg {
             max-width: 100%;
         }
@@ -37,6 +38,34 @@
             transform: translate(-50%, -50%);
             width: calc(100% - 1em);
             max-height: calc(100% - 1em);
+        }
+        
+        code {
+            white-space: pre-wrap;
+        }                
+        code.lang-blocks::before,
+        code.lang-sig::before,
+        code.lang-block::before,
+        code.lang-shuffle::before,
+        code.lang-sim::before,
+        code.lang-cards::before,
+        code.lang-namespaces::before,
+        code.lang-codecard::before {
+            content: "...";
+            position: absolute;
+            top: calc(50% - 0.5em);
+            left: calc(50% - 5em);
+        }
+        
+        code.lang-blocks,
+        code.lang-sig,
+        code.lang-block,
+        code.lang-shuffle,
+        code.lang-sim,
+        code.lang-cards,
+        code.lang-namespaces,
+        code.lang-codecard {
+            color: transparent;
         }
     </style>
 </head>
