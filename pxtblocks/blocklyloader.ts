@@ -459,6 +459,7 @@ namespace pxt.blocks {
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
 
+        initContextMenu();
         initMath();
         initVariables();
         initLoops();
@@ -597,6 +598,150 @@ namespace pxt.blocks {
                 }
             }
         };
+    }
+
+    export var onShowContextMenu: (workspace: Blockly.Workspace,
+        items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
+
+    function initContextMenu() {
+        /**
+         * Show the context menu for the workspace.
+         * @param {!Event} e Mouse event.
+         * @private
+         */
+        (<any>Blockly).WorkspaceSvg.prototype.showContextMenu_ = function (e: any) {
+            if (this.options.readOnly || this.isFlyout) {
+                return;
+            }
+            let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
+            let topBlocks = this.getTopBlocks(true);
+            let eventGroup = Blockly.genUid();
+
+            // Options to undo/redo previous action.
+            let undoOption: any = {};
+            undoOption.text = Blockly.Msg.UNDO;
+            undoOption.enabled = this.undoStack_.length > 0;
+            undoOption.callback = this.undo.bind(this, false);
+            menuOptions.push(undoOption);
+            let redoOption: any = {};
+            redoOption.text = Blockly.Msg.REDO;
+            redoOption.enabled = this.redoStack_.length > 0;
+            redoOption.callback = this.undo.bind(this, true);
+            menuOptions.push(redoOption);
+
+            // Add a little animation to collapsing and expanding.
+            const DELAY = 10;
+            if (this.options.collapse) {
+                let hasCollapsedBlocks = false;
+                let hasExpandedBlocks = false;
+                for (let i = 0; i < topBlocks.length; i++) {
+                    let block = topBlocks[i];
+                    while (block) {
+                        if (block.isCollapsed()) {
+                            hasCollapsedBlocks = true;
+                        } else {
+                            hasExpandedBlocks = true;
+                        }
+                        block = block.getNextBlock();
+                    }
+                }
+
+                /**
+                 * Option to collapse or expand top blocks.
+                 * @param {boolean} shouldCollapse Whether a block should collapse.
+                 * @private
+                 */
+                let toggleOption = function (shouldCollapse: boolean) {
+                    let ms = 0;
+                    for (let i = 0; i < topBlocks.length; i++) {
+                        let block = topBlocks[i];
+                        while (block) {
+                            setTimeout(block.setCollapsed.bind(block, shouldCollapse), ms);
+                            block = block.getNextBlock();
+                            ms += DELAY;
+                        }
+                    }
+                };
+
+                // Option to collapse top blocks.
+                let collapseOption: any = { enabled: hasExpandedBlocks };
+                collapseOption.text = Blockly.Msg.COLLAPSE_ALL;
+                collapseOption.callback = function () {
+                    toggleOption(true);
+                };
+                menuOptions.push(collapseOption);
+
+                // Option to expand top blocks.
+                let expandOption: any = { enabled: hasCollapsedBlocks };
+                expandOption.text = Blockly.Msg.EXPAND_ALL;
+                expandOption.callback = function () {
+                    toggleOption(false);
+                };
+                menuOptions.push(expandOption);
+            }
+
+            // Option to delete all blocks.
+            // Count the number of blocks that are deletable.
+            let deleteList: any[] = [];
+            function addDeletableBlocks(block: any) {
+                if (block.isDeletable()) {
+                    deleteList = deleteList.concat(block.getDescendants());
+                } else {
+                    let children = block.getChildren();
+                    for (let i = 0; i < children.length; i++) {
+                        addDeletableBlocks(children[i]);
+                    }
+                }
+            }
+            for (let i = 0; i < topBlocks.length; i++) {
+                addDeletableBlocks(topBlocks[i]);
+            }
+
+            function deleteNext() {
+                (<any>Blockly).Events.setGroup(eventGroup);
+                let block = deleteList.shift();
+                if (block) {
+                    if (block.workspace) {
+                        block.dispose(false, true);
+                        setTimeout(deleteNext, DELAY);
+                    } else {
+                        deleteNext();
+                    }
+                }
+                Blockly.Events.setGroup(false);
+            }
+
+            let deleteOption = {
+                text: deleteList.length == 1 ? Blockly.Msg.DELETE_BLOCK :
+                    Blockly.Msg.DELETE_X_BLOCKS.replace('%1', String(deleteList.length)),
+                enabled: deleteList.length > 0,
+                callback: function () {
+                    if (deleteList.length < 2 ||
+                        window.confirm(Blockly.Msg.DELETE_ALL_BLOCKS.replace('%1',
+                            String(deleteList.length)))) {
+                        deleteNext();
+                    }
+                }
+            };
+            menuOptions.push(deleteOption);
+
+            let shuffleOption = {
+                text: lf("Shuffle blocks"),
+                enabled: true,
+                callback: () => {
+                    pxt.blocks.layout.shuffle(this, 1);
+                }
+            };
+            menuOptions.push(shuffleOption);
+
+            // custom options...
+            if (onShowContextMenu)
+                onShowContextMenu(this, menuOptions);
+
+            Blockly.ContextMenu.show(e, menuOptions, this.RTL);
+        };
+
+
     }
 
     function initMath() {

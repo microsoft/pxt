@@ -31,6 +31,7 @@ declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: () => void): void;
     function fireUiEvent(node: any, eventName: string): void;
+    function genUid() : string;
 
     let ALIGN_RIGHT: number;
 
@@ -222,14 +223,28 @@ declare namespace Blockly {
     }
 
     namespace ContextMenu {
+        interface MenuItem {
+            enabled?: boolean;
+            text?:string;
+            callback?: () => void;
+        }
+        
         function callbackFactory(block: Block, xml: HTMLElement): void;
+        function show(e: any, menu: MenuItem[], rtl:boolean): void;
     }
 
     namespace Msg {
-        let VARIABLES_DEFAULT_NAME: string;
-        let VARIABLES_SET_CREATE_GET: string;
-        let CONTROLS_FOR_INPUT_DO: string;
-        let CONTROLS_FOR_TOOLTIP: string;
+        const VARIABLES_DEFAULT_NAME: string;
+        const VARIABLES_SET_CREATE_GET: string;
+        const CONTROLS_FOR_INPUT_DO: string;
+        const CONTROLS_FOR_TOOLTIP: string;
+        const UNDO: string;
+        const REDO: string;
+        const COLLAPSE_ALL: string;
+        const EXPAND_ALL: string;
+        const DELETE_BLOCK: string;
+        const DELETE_X_BLOCKS: string;
+        const DELETE_ALL_BLOCKS: string;
     }
 
     namespace BlockSvg {
@@ -237,6 +252,7 @@ declare namespace Blockly {
     }
 
     namespace Events {
-        let DELETE: string;
+        const DELETE: string;
+        function setGroup(group: any) : void;
     }
 }
