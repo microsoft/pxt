@@ -291,7 +291,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         return <iframe id="sidedocs"
-            src={pxt.webConfig.pxtCdnUrl + "/docs.html#doc:" + this.props.parent.state.sideDocsPath}
+            src={pxt.webConfig.pxtCdnUrl + "docs.html#doc:" + this.props.parent.state.sideDocsPath}
             role="complementary" />
     }
 }

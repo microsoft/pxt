@@ -298,11 +298,20 @@ namespace pxt.runner {
         @BODY@
     </div>
 </aside>
+@breadcrumb@
 @body@`;
-        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}`)
+        docid = docid.replace(/^\//, "");
+        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
             .then(md => {
-                let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme);
-                content.innerHTML = html;
+                const parts = docid.split('/');
+                const bc = parts.map((e, i) => {
+                    return {
+                        href: "/" + parts.slice(0, i + 1).join("/"),
+                        name: e
+                    }
+                })
+                let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme, null, bc);
+                $(content).html(html);
                 $(content).find('a').attr('target', '_blank');
                 return pxt.runner.renderAsync({
                     snippetClass: 'lang-blocks',
@@ -318,6 +327,9 @@ namespace pxt.runner {
                     hex: true,
                     hexName: pxt.appTarget.id
                 });
+            }).catch(e => {
+                pxt.reportException(e, { docid: docid });
+                $(content).html(lf("<h3>Something wrong happened, please check your internet connection."));
             }).finally(() => {
                 // patch links
                 $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
