@@ -47,6 +47,7 @@ namespace pxt {
         targetId: string; // "microbit",
         simUrl: string; // "https://trg-microbit.kindscript.net/sim/zowrj"
         runUrl?: string; // "/--run"
+        docsUrl?: string; // "/--docs"
         isStatic?: boolean;
     }
 

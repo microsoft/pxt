@@ -223,7 +223,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
-        let ready = !!header.pubId && header.pubCurrent;
+        const ready = !!header.pubId && header.pubCurrent;
         let url: string;
         let embed: string;
         if (ready) {
@@ -278,7 +278,7 @@ class DocsMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <div id="docsmenu" className="ui buttons">
             <sui.DropdownMenu class="floating icon button" icon="help">
-                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenu" + m.path} onClick={() => this.openDoc(m.path)}>{m.name}</sui.Item>) }
+                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenu" + m.path} onClick={() => this.openDoc(m.path) }>{m.name}</sui.Item>) }
             </sui.DropdownMenu>
         </div>
     }
@@ -290,8 +290,9 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
+        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         return <iframe id="sidedocs"
-            src={pxt.webConfig.pxtCdnUrl + "docs.html#doc:" + this.props.parent.state.sideDocsPath}
+            src={`${docsUrl}#doc:${this.props.parent.state.sideDocsPath}`}
             role="complementary" />
     }
 }

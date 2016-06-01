@@ -476,6 +476,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "targetId": opts.target,
             "simUrl": opts.localDir + "simulator.html",
             "runUrl": opts.localDir + "run.html",
+            "docsUrl": opts.localDir + "docs.html",
             "isStatic": true,
         }
         replacements = {
