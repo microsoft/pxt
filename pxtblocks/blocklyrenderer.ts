@@ -50,7 +50,7 @@ namespace pxt.blocks {
         try {
             let text = blocksXml || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(workspace, xml);
+            Blockly.Xml.domToWorkspace(xml, workspace);
 
             switch (options.layout) {
                 case BlockLayout.Align:

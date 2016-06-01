@@ -232,10 +232,19 @@ namespace pxt.blocks {
         }
     }
 
+    function integerValidator(text: string): string {
+        let n = Blockly.FieldTextInput.numberValidator(text);
+        if (n) {
+            n = String(Math.floor(n));
+        }
+        return n;
+    }
+
     function initBlock(block: any, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
+        const floatingPoint = !pxt.appTarget.compile || !!pxt.appTarget.compile.floatingPoint;
 
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
@@ -270,7 +279,10 @@ namespace pxt.blocks {
                     if (pr.shadowType && pr.shadowType == "value") {
                         i = block.appendDummyInput();
                         if (pre) i.appendField(pre)
-                        i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
+                        if (floatingPoint)
+                            i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
+                        else
+                            i.appendField(new Blockly.FieldTextInput("0", integerValidator), p);
                     }
                     else i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
                 }

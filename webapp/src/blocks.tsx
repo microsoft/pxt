@@ -25,7 +25,7 @@ export class Editor extends srceditor.Editor {
         if (this.isVisible) {
             $(classes).show();
             // Fire a resize event since the toolbox may have changed width and height.
-            Blockly.fireUiEvent(window, 'resize');
+            $(window).resize();
         }
         else $(classes).hide();
     }
@@ -95,7 +95,7 @@ export class Editor extends srceditor.Editor {
         try {
             let text = s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(this.editor, xml);
+            Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.editor.clearUndo();
         } catch (e) {
@@ -137,10 +137,9 @@ export class Editor extends srceditor.Editor {
             if (ev.type == 'ui' && ev.element == 'category') {
                 let toolboxVisible = !!ev.newValue;
                 this.parent.setState({ hideEditorFloats: toolboxVisible });
+            } else if (ev.type == 'ui' && ev.element == 'selected') {
+                this.updateHelpCard();
             }
-        })
-        Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
-            this.updateHelpCard();
         })
 
         this.isReady = true
