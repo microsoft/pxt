@@ -54,8 +54,9 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
             if (card.hardware && !card.software) color = 'black';
             else if (card.software && !card.hardware) color = 'teal';
         }
-        let url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
+        const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
+        const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
 
         return (
             <div className={"ui card " + color + (card.onClick ? " link" : '') + (card.className ? (' ' + card.className) : '') } onClick={e => card.onClick ? card.onClick(e) : undefined } >
@@ -83,8 +84,8 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     {card.description ? <div className="description">{card.description}</div> : null}
                 </div>
                 {card.url ?
-                    <div key="extra" className={"ui extra content" + (card.responsive ? " tall desktop only" : "") }>
-                        {card.onClick ? card.url : <a target="docs" href={url}>{card.url}</a>}
+                    <div key="extra" className={"ui extra content" + (card.responsive ? " tall widedesktop only" : "") }>
+                        {card.onClick ? card.url : <a className="ui widedesktop only" href={sideUrl}>{card.url}</a>}
                     </div> : null}
             </div>
         )

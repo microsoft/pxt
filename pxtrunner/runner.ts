@@ -230,7 +230,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /#doc:([^&?:]+)/i.exec(window.location.hash);
+            let m = /^#doc:([^&?:]+)/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 render(m[1]);

@@ -1172,6 +1172,17 @@ function initTheme() {
     }
 }
 
+function initHashchange() {
+    window.addEventListener("hashchange", e => {
+        let editor = theEditor;
+        if (!editor) return;
+
+        let hash = window.location.hash;
+        let m = /^#doc:([^&?:]+)/i.exec(hash);
+        if (m) editor.setSideDoc(m[1]);
+    });
+}
+
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     let config = pxt.webConfig
@@ -1241,6 +1252,7 @@ $(document).ready(() => {
         })
         .then(() => {
             initSerial()
+            initHashchange();
             return pxtwinrt.initAsync(ih);
         })
 

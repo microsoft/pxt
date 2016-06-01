@@ -443,8 +443,15 @@ html {
   left: 23rem;
 }
 
+.ui.widedesktop.only {
+    display:none !important;
+}
+
 /* extra-large desktop screen */
 @media only screen and (min-width: 92em) and (min-height:44em) {
+    .ui.widedesktop.only {
+        display:block !important;
+    }
     #maineditor {
         right:22rem;
     }
