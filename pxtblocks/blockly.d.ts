@@ -31,7 +31,7 @@ declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: () => void): void;
     function fireUiEvent(node: any, eventName: string): void;
-    function genUid() : string;
+    function genUid(): string;
 
     let ALIGN_RIGHT: number;
 
@@ -225,12 +225,12 @@ declare namespace Blockly {
     namespace ContextMenu {
         interface MenuItem {
             enabled?: boolean;
-            text?:string;
+            text?: string;
             callback?: () => void;
         }
-        
+
         function callbackFactory(block: Block, xml: HTMLElement): void;
-        function show(e: any, menu: MenuItem[], rtl:boolean): void;
+        function show(e: any, menu: MenuItem[], rtl: boolean): void;
     }
 
     namespace Msg {
@@ -253,6 +253,6 @@ declare namespace Blockly {
 
     namespace Events {
         const DELETE: string;
-        function setGroup(group: any) : void;
+        function setGroup(group: any): void;
     }
 }
