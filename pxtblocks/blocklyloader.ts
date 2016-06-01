@@ -726,7 +726,7 @@ namespace pxt.blocks {
             menuOptions.push(deleteOption);
 
             let shuffleOption = {
-                text: lf("Shuffle blocks"),
+                text: lf("Shuffle Blocks"),
                 enabled: true,
                 callback: () => {
                     pxt.blocks.layout.shuffle(this, 1);
