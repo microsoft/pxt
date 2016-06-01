@@ -11,6 +11,10 @@ namespace pxsim {
         code: string;
     }
 
+    export interface SimulatorDocMessage extends SimulatorMessage {
+        docid?: string;
+    }
+
     export interface SimulatorCompilationMessage extends SimulatorMessage {
         name: string;
         content: string;
@@ -19,6 +23,9 @@ namespace pxsim {
 
     export interface SimulatorReadyMessage extends SimulatorMessage {
         frameid: string;
+    }
+
+    export interface SimulatorDocsReadyMessage extends SimulatorMessage {
     }
 
     export interface SimulatorStateMessage extends SimulatorMessage {

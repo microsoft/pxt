@@ -264,15 +264,35 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
     }
 }
 
+
+class DocsMenu extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    openDoc(path: string) {
+        this.props.parent.setSideDoc(path);
+    }
+
+    render() {
+        const targetTheme = pxt.appTarget.appTheme;
+        return <div id="docsmenu" className="ui buttons">
+            <sui.DropdownMenu class="floating icon button" icon="help">
+                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenu" + m.path} onClick={() => this.openDoc(m.path)}>{m.name}</sui.Item>) }
+            </sui.DropdownMenu>
+        </div>
+    }
+}
+
 class SideDocs extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
     }
 
     renderCore() {
-        let path = this.props.parent.state.sideDocsPath;
-        if (!this.props.parent.state.sideDocsPath) return <div></div>
-        return <iframe src={"https://m.pxt.io/" + path} />
+        return <iframe id="sidedocs"
+            src={pxt.webConfig.pxtCdnUrl + "docs.html#doc:" + this.props.parent.state.sideDocsPath}
+            role="complementary" />
     }
 }
 
@@ -948,11 +968,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className="ui">
                                 {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync(settings).done() } /> : undefined}
                             </div>
-                            <div className="ui buttons wide only">
-                                <sui.DropdownMenu class="floating icon button" icon="help">
-                                    {targetTheme.docMenu.map(m => <a className="ui item" key={"docsmenu" + m.path} href={m.path} role="menuitem" target="_blank">{m.name}</a>) }
-                                </sui.DropdownMenu>
-                            </div>
+                            <DocsMenu parent={this} />
                         </div>
                         <div className="ui item wide only">
                             <div className="ui massive transparent input">
@@ -991,6 +1007,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
+                <SideDocs parent={this} />
                 {targetTheme.organizationLogo ? <img id="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />

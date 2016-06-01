@@ -214,6 +214,131 @@ namespace pxt.runner {
             })
     }
 
+    export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
+        $(loading).hide()
+        function render(docid: string) {
+            console.log(`rendering ${docid}`);
+            $(content).hide()
+            $(loading).show()
+            Promise.delay(100) // allow UI to update
+                .then(() => renderDocAsync(content, docid))
+                .finally(() => {
+                    $(loading).hide()
+                    $(content).show()
+                })
+                .done(() => { });
+        }
+
+        function renderHash() {
+            let m = /#doc:([^&?:]+)/i.exec(window.location.hash);
+            if (m) {
+                // navigation occured
+                render(m[1]);
+            }
+        }
+
+        window.addEventListener("hashchange", () => {
+            renderHash();
+        }, false);
+
+        renderHash();
+    }
+
+    function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
+        const template = `
+<aside id=youtube>
+    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
+    </div>
+</aside>
+
+<aside id=section>
+    <!-- section @ARGS@ -->
+</aside>
+        
+<aside id=hide class=box>
+    <div style='display:none'>
+        @BODY@
+    </div>
+</aside>
+
+<aside id=avatar class=box>
+    <div class='avatar @ARGS@'>
+        <div class='avatar-image'></div>
+        <div class='ui message'>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=hint class=box>
+    <div class="ui icon green message">
+        <i class="help checkmark icon"></i>
+        <div class="content">
+            <div class="header">Hint</div>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<!-- wrapped around ordinary content -->
+<aside id=main-container class=box>
+    <div class="ui text">
+        @BODY@
+    </div>
+</aside>
+
+<!-- used for 'column' box - they are collected and wrapped in 'column-container' -->
+<aside id=column class=aside>
+    <div class='column'>
+        @BODY@
+    </div>
+</aside>
+<aside id=column-container class=box>
+    <div class="ui three column stackable grid text">
+        @BODY@
+    </div>
+</aside>
+@breadcrumb@
+@body@`;
+        docid = docid.replace(/^\//, "");
+        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
+            .then(md => {
+                const parts = docid.split('/');
+                const bc = parts.map((e, i) => {
+                    return {
+                        href: "/" + parts.slice(0, i + 1).join("/"),
+                        name: e
+                    }
+                })
+                let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme, null, bc);
+                $(content).html(html);
+                $(content).find('a').attr('target', '_blank');
+                return pxt.runner.renderAsync({
+                    blocksAspectRatio: 0.5,
+                    snippetClass: 'lang-blocks',
+                    signatureClass: 'lang-sig',
+                    blocksClass: 'lang-block',
+                    shuffleClass: 'lang-shuffle',
+                    simulatorClass: 'lang-sim',
+                    linksClass: 'lang-cards',
+                    namespacesClass: 'lang-namespaces',
+                    codeCardClass: 'lang-codecard',
+                    snippetReplaceParent: true,
+                    simulator: true,
+                    hex: true,
+                    hexName: pxt.appTarget.id
+                });
+            }).catch(e => {
+                pxt.reportException(e, { docid: docid });
+                $(content).html(lf("<h3>Something wrong happened, please check your internet connection."));
+            }).finally(() => {
+                // patch a elements
+                $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
+                    $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
+                })
+            })
+    }
+
     export interface DecompileResult {
         compileJS?: ts.pxt.CompileResult;
         compileBlocks?: ts.pxt.CompileResult;

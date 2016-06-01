@@ -492,6 +492,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "index.html",
         "embed.js",
         "run.html",
+        "docs.html",
         "release.manifest",
         "worker.js",
         "tdworker.js",
@@ -2018,7 +2019,7 @@ export function mainCli(targetDir: string) {
 
     let trg = nodeutil.getPxtTarget()
     pxt.appTarget = trg;
-    
+
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
