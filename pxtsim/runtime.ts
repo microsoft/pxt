@@ -198,7 +198,6 @@ namespace pxsim {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
-
         kill() {
             this.dead = true
             // TODO fix this

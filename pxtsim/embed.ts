@@ -83,15 +83,14 @@ namespace pxsim {
             if (runtime) {
                 console.log('stopping simulator...')
                 runtime.kill();
+                if (runtime.board)
+                    runtime.board.kill();
             }
         }
 
         export function run(msg: SimulatorRunMessage) {
             stop();
             console.log(`starting ${msg.id}`);
-
-            if (runtime && runtime.board)
-                runtime.board.kill();
 
             runtime = new Runtime(msg.code);
             runtime.id = msg.id;
