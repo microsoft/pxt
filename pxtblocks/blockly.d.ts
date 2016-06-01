@@ -78,6 +78,7 @@ declare namespace Blockly {
         // May allow downcasting (see below).
         type: string;
         id: string;
+        isShadow_: boolean;
 
         // Returns null if the field does not exist on the specified block.
         getFieldValue(field: string): string;

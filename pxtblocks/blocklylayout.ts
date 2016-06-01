@@ -12,7 +12,7 @@ namespace pxt.blocks.layout {
     };
 
     export function shuffle(ws: B.Workspace, ratio?: number) {
-        let blocks = ws.getAllBlocks();
+        let blocks = ws.getAllBlocks().filter(b => !b.isShadow_);
         // unplug all blocks
         blocks.forEach(b => b.unplug());
         // TODO: better layout
