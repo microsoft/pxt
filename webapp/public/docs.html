@@ -42,7 +42,8 @@
         
         code {
             white-space: pre-wrap;
-        }                
+        }
+        
         code.lang-blocks::before,
         code.lang-sig::before,
         code.lang-block::before,
@@ -106,7 +107,7 @@
         var loading = document.getElementById('loading');
         var content = document.getElementById('content');        
         ksRunnerReady(function() {
-            pxt.docs.requireMarked = () => marked;
+            pxt.docs.requireMarked = function() { return marked; }
             pxt.runner.startDocsServer(loading, content);
         });
         })();
