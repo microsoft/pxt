@@ -624,7 +624,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 .then(() => {
                     if (workspace.getHeaders().length > 0)
                         this.scriptSearch.modal.show();
-                    else this.newProject(true);
+                    else this.newProject();
                 })
         })
     }
@@ -693,7 +693,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.scriptSearch.modal.show()
     }
 
-    newProject(hideCancel = false) {
+    newProject() {
         core.showLoading(lf("creating new project..."));
         this.newBlocksProjectAsync()
             .then(() => Promise.delay(1500))
@@ -1196,17 +1196,24 @@ function parseHash(): { cmd: string; arg: string } {
     return { cmd: '', arg: '' };
 }
 
+function handleHash(hash: { cmd: string; arg: string }) {
+    if (!hash) return;
+    let editor = theEditor;
+    if (!editor) return;
+    switch (hash.cmd) {
+        case "doc":
+            editor.setSideDoc(hash.arg);
+            break;
+        case "follow":
+            editor.setSideDoc(hash.arg);
+            editor.newProject();
+            break;
+    }
+}
+
 function initHashchange() {
     window.addEventListener("hashchange", e => {
-        let editor = theEditor;
-        if (!editor) return;
-
-        let hash = parseHash();
-        switch (hash.cmd) {
-            case "doc":
-                editor.setSideDoc(hash.arg);
-                break;
-        }
+        handleHash(parseHash());
     });
 }
 
@@ -1262,9 +1269,8 @@ $(document).ready(() => {
                         return theEditor.loadHeaderAsync(existing)
                     else return workspace.installByIdAsync(hash.arg)
                         .then(hd => theEditor.loadHeaderAsync(hd))
-                case "doc":
-                    theEditor.setSideDoc(hash.arg);
-                    break;
+                default:
+                    handleHash(hash); break;
             }
 
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
@@ -1272,7 +1278,7 @@ $(document).ready(() => {
             if (ent)
                 hd = workspace.getHeader(ent.id)
             if (hd) return theEditor.loadHeaderAsync(hd)
-            else theEditor.newProject(true);
+            else theEditor.newProject();
             return Promise.resolve();
         }).done();
 
