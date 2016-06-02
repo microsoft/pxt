@@ -28,6 +28,12 @@ body {
   border:none;
   height: calc(100% - 4.5rem);
 }
+#sidedocsbutton {
+  position: absolute;
+  top:4.75rem;
+  right:1.25rem;
+  display:none;
+}
 #docsmenu {
    display:none;
 }
@@ -455,15 +461,18 @@ html {
     .ui.widedesktop.hidden {
         display:none !important;
     }
-    #maineditor {
+    .sideDocs #maineditor {
         right:22rem;
     }
     #docsmenu {
         display:block;
     }
-    #sidedocs {
+    .sideDocs #sidedocs {
         display:block;
         width:22rem;
+    }
+    #sidedocsbutton {
+        display:block;
     }
 }
 

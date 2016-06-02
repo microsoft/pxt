@@ -58,6 +58,7 @@ interface IAppState {
     errorCardClick?: (e: React.MouseEvent) => boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
+    sideDocsCollapsed?: boolean;
 
     running?: boolean;
     publishing?: boolean;
@@ -289,13 +290,30 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        let el = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
-        el.src = `${docsUrl}#doc:${path}`;
+        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
+        if (el)
+            el.src = `${docsUrl}#doc:${path}`;
+    }
+
+    toggleVisibility() {
+        const state = this.props.parent.state;
+        this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
+    }
+
+    componentDidUpdate() {
+        Blockly.fireUiEvent(window, 'resize');
     }
 
     renderCore() {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        return <iframe id="sidedocs" src={docsUrl} role="complementary" />
+        const state = this.props.parent.state;
+        const icon = state.sideDocsCollapsed ? "expand" : "compress";
+        return <div>
+            <iframe id="sidedocs" src={docsUrl} role="complementary" />
+            <button id="sidedocsbutton" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
+                <i className={`${icon} icon`}></i>
+            </button>
+        </div>
     }
 }
 
@@ -560,6 +578,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let sd = this.refs["sidedoc"] as SideDocs;
         if (!sd) return;
         sd.setPath(path);
+        this.setState({ sideDocsCollapsed: false });
     }
 
     loadHeaderAsync(h: Header): Promise<void> {
@@ -914,7 +933,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const devSignin = !pxtwinrt.isWinRT();
 
         return (
-            <div id='root' className={"full-abs " + (this.state.hideEditorFloats ? " hideEditorFloats" : "") }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${this.state.sideDocsCollapsed ? "" : "sideDocs"}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless small menu`} role="menubar">
                         <span id="logo" className="ui item">
@@ -1185,7 +1204,7 @@ function initHashchange() {
         let hash = parseHash();
         switch (hash.cmd) {
             case "doc":
-                editor.setSideDoc(hash.arg); 
+                editor.setSideDoc(hash.arg);
                 break;
         }
     });
