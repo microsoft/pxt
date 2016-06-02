@@ -452,6 +452,9 @@ html {
     .ui.widedesktop.only {
         display:block !important;
     }
+    .ui.widedesktop.hidden {
+        display:none !important;
+    }
     #maineditor {
         right:22rem;
     }
