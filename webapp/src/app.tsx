@@ -518,16 +518,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             editor: this.state.header ? this.state.header.editor : ''
         })
         this.forceUpdate(); // we now have editors prepared
-
-        // load first header or popup new project
-        setTimeout(() => {
-            let header = this.getData("header:*")[0];
-            if (!this.state.header && header) {
-                this.loadHeaderAsync(header)
-            }
-            if (!this.state.header)
-                this.newProject(true);
-        }, 1000)
     }
 
     private pickEditorFor(f: pkg.File): srceditor.Editor {
@@ -1230,16 +1220,17 @@ $(document).ready(() => {
             workspace.syncAsync().done()
         })
         .then(() => {
+            initSerial()
+            initHashchange();
+            return pxtwinrt.initAsync(ih);
+        }).then(() => {
             if (hashCmd == "pub" || hashCmd == "edit") {
                 let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hashArg)[0]
                 if (existing) {
-                    theEditor.loadHeaderAsync(existing)
-                    return null
+                    return theEditor.loadHeaderAsync(existing)
                 } else {
                     return workspace.installByIdAsync(hashArg)
-                        .then(hd => {
-                            theEditor.loadHeaderAsync(hd)
-                        })
+                        .then(hd => theEditor.loadHeaderAsync(hd))
                 }
             }
 
@@ -1247,14 +1238,10 @@ $(document).ready(() => {
             let hd = workspace.getHeaders()[0]
             if (ent)
                 hd = workspace.getHeader(ent.id)
-            theEditor.loadHeaderAsync(hd)
-            return null
-        })
-        .then(() => {
-            initSerial()
-            initHashchange();
-            return pxtwinrt.initAsync(ih);
-        })
+            if (hd) return theEditor.loadHeaderAsync(hd)
+            else theEditor.newProject(true);
+            return Promise.resolve();
+        }).done();
 
     document.addEventListener("visibilitychange", ev => {
         theEditor.updateVisibility();
