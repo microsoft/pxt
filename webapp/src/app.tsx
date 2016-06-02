@@ -1162,14 +1162,27 @@ function initTheme() {
     }
 }
 
+function parseHash(): { cmd: string; arg: string } {
+    let hashCmd = ""
+    let hashArg = ""
+    let hashM = /^#(\w+):([\/\-\w]+)$/.exec(window.location.hash)
+    if (hashM) {
+        window.location.hash = ""
+        return { cmd: hashM[1], arg: hashM[2] };
+    }
+    return { cmd: '', arg: '' };
+}
+
 function initHashchange() {
     window.addEventListener("hashchange", e => {
         let editor = theEditor;
         if (!editor) return;
 
-        let hash = window.location.hash;
-        let m = /^#doc:([^&?:]+)/i.exec(hash);
-        if (m) editor.setSideDoc(m[1]);
+        let hash = parseHash();
+        switch (hash.cmd) {
+            case "doc":
+                editor.setSideDoc(hash.arg); break;
+        }
     });
 }
 
@@ -1185,14 +1198,7 @@ $(document).ready(() => {
     appcache.init();
     initLogin();
 
-    let hashCmd = ""
-    let hashArg = ""
-    let hashM = /^#(\w+):(\w+)/.exec(window.location.hash)
-    if (hashM) {
-        window.location.hash = ""
-        hashCmd = hashM[1]
-        hashArg = hashM[2]
-    }
+    let hash = parseHash();
 
     let hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
@@ -1224,14 +1230,17 @@ $(document).ready(() => {
             initHashchange();
             return pxtwinrt.initAsync(ih);
         }).then(() => {
-            if (hashCmd == "pub" || hashCmd == "edit") {
-                let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hashArg)[0]
-                if (existing) {
-                    return theEditor.loadHeaderAsync(existing)
-                } else {
-                    return workspace.installByIdAsync(hashArg)
+            switch (hash.cmd) {
+                case "pub":
+                case "edit":
+                    let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
+                    if (existing)
+                        return theEditor.loadHeaderAsync(existing)
+                    else return workspace.installByIdAsync(hash.arg)
                         .then(hd => theEditor.loadHeaderAsync(hd))
-                }
+                case "doc":
+                    theEditor.setSideDoc(hash.arg);
+                    break;
             }
 
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
