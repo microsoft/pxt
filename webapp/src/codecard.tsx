@@ -84,10 +84,6 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     </div>
                     {card.description ? <div className="description">{card.description}</div> : null}
                 </div>
-                {card.url ?
-                    <div key="extra" className={"ui extra content" + (card.responsive ? " tall widedesktop only" : "") }>
-                        {card.onClick ? card.url : <a className="ui widedesktop only" href={sideUrl}>{card.url}</a>}
-                    </div> : null}
             </div>
         )
     }

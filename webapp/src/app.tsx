@@ -59,8 +59,6 @@ interface IAppState {
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
 
-    sideDocsPath?: string;
-
     running?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
@@ -289,11 +287,15 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
+    setPath(path: string) {
+        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        let el = ReactDOM.findDOMNode(this) as HTMLIFrameElement;
+        el.src = `${docsUrl}#doc:${path}`;
+    }
+
     renderCore() {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        return <iframe id="sidedocs"
-            src={`${docsUrl}#doc:${this.props.parent.state.sideDocsPath}`}
-            role="complementary" />
+        return <iframe id="sidedocs" src={docsUrl} role="complementary" />
     }
 }
 
@@ -501,10 +503,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     public componentWillMount() {
         this.initEditors()
         this.initDragAndDrop();
-        this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
     }
 
     public componentDidMount() {
+        this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
             highlightStatement: stmt => {
@@ -555,7 +557,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setSideDoc(path: string) {
-        this.setState({ sideDocsPath: path });
+        let sd = this.refs["sidedoc"] as SideDocs;
+        if (!sd) return;
+        sd.setPath(path);
     }
 
     loadHeaderAsync(h: Header): Promise<void> {
@@ -998,7 +1002,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                <SideDocs parent={this} />
+                <SideDocs ref="sidedoc" parent={this} />
                 {targetTheme.organizationLogo ? <img id="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
@@ -1181,7 +1185,8 @@ function initHashchange() {
         let hash = parseHash();
         switch (hash.cmd) {
             case "doc":
-                editor.setSideDoc(hash.arg); break;
+                editor.setSideDoc(hash.arg); 
+                break;
         }
     });
 }
