@@ -381,12 +381,12 @@ namespace pxt {
          */
         packageLocalizationStrings(lang: string): U.Map<string> {
             let files = this.config.files;
-            let fn = `_locales/${lang.toLowerCase()}/strings.json`;
+            let fn = `_locales/${lang.toLowerCase()}/${this.id}-strings.json`;
             if (files.indexOf(fn) > -1)
                 return JSON.parse(this.readFile(fn)) as U.Map<string>;
 
             lang = lang.substring(0, 2);
-            fn = `_locales/${lang.toLowerCase()}/strings.json`;
+            fn = `_locales/${lang.toLowerCase()}/${this.id}-strings.json`;
             if (files.indexOf(fn) > -1)
                 return JSON.parse(this.readFile(fn)) as U.Map<string>;
 

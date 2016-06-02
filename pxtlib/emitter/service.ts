@@ -259,7 +259,7 @@ namespace ts.pxt {
         files[pkg + "-reference.md"] = reference;
         let locs: U.Map<string> = {};
         Object.keys(locStrings).sort().forEach(l => locs[l] = locStrings[l]);
-        files["strings.json"] = JSON.stringify(locs, null, 2);
+        files[pkg + "-strings.json"] = JSON.stringify(locs, null, 2);
         return files;
 
         function hasBlock(sym: SymbolInfo): boolean {
