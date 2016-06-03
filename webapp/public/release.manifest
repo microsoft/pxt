@@ -4,6 +4,7 @@ CACHE:
 /cdn/semantic.js
 /cdn/main.js
 /cdn/typescript.js
+/cdn/marked/marked.min.js
 /cdn/lzma/lzma_worker-min.js
 /cdn/jquery.js
 /cdn/blockly/blockly_compressed.js
