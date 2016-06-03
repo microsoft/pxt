@@ -21,6 +21,26 @@ export class Editor extends srceditor.Editor {
         return "pxtJsonEditor"
     }
 
+    /*
+                    <div className="three fields">
+                        <sui.Input inputLabel={lf("Any") } type="number" value={(card.any || 0).toString() } onChange={v => {
+                            initCard();
+                            let vi = Math.max(0, parseInt(v) || 0)
+                            update(c.card.any = vi)
+                        } } />
+                        <sui.Input inputLabel={lf("Hardware") } type="number" value={(card.hardware || 0).toString() } onChange={v => {
+                            initCard();
+                            let vi = Math.max(0, parseInt(v) || 0)
+                            update(c.card.hardware = vi)
+                        } } />
+                        <sui.Input inputLabel={lf("Software") } type="number" value={(card.software || 0).toString() } onChange={v => {
+                            initCard();
+                            let vi = Math.max(0, parseInt(v) || 0)
+                            update(c.card.software = vi)
+                        } } />
+                    </div>
+*/
+
     display() {
         let c = this.config
         let update = (v: any) => {
@@ -44,26 +64,9 @@ export class Editor extends srceditor.Editor {
                             </div>
                         </sui.Field> : ""}
                     <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
-                    <div className="three fields">
-                        <sui.Input inputLabel={lf("Any") } type="number" value={(card.any || 0).toString() } onChange={v => {
-                            initCard();
-                            let vi = Math.max(0, parseInt(v) || 0)
-                            update(c.card.any = vi)
-                        } } />
-                        <sui.Input inputLabel={lf("Hardware") } type="number" value={(card.hardware || 0).toString() } onChange={v => {
-                            initCard();
-                            let vi = Math.max(0, parseInt(v) || 0)
-                            update(c.card.hardware = vi)
-                        } } />
-                        <sui.Input inputLabel={lf("Software") } type="number" value={(card.software || 0).toString() } onChange={v => {
-                            initCard();
-                            let vi = Math.max(0, parseInt(v) || 0)
-                            update(c.card.software = vi)
-                        } } />
-                    </div>
                     <sui.Field>
-                            <sui.Button text={lf("Edit Settings As text") } onClick={() => this.parent.editText() } />
-                            <sui.Button class="red" text={lf("Delete Project")} onClick={() => this.parent.removeProject()} />
+                        <sui.Button text={lf("Edit Settings As text") } onClick={() => this.parent.editText() } />
+                        <sui.Button class="red" text={lf("Delete Project") } onClick={() => this.parent.removeProject() } />
                     </sui.Field>
                 </div>
             </div>
