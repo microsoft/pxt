@@ -66,7 +66,7 @@ namespace pxt.runner {
 
         if (hexname && hex) {
             let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {
-                BrowserUtils.browserDownloadText(hex, hexname, "application/x-microbit-hex");
+                BrowserUtils.browserDownloadText(hex, hexname, pxt.appTarget.compile.hexMimeType);
             })
             $menu.append($hexBtn);
         }

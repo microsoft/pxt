@@ -14,6 +14,13 @@ namespace pxtwinrt {
         return r;
     }
 
+    /**
+     * Detects if the script is running in a browser on windows
+     */
+    export function isWindows(): boolean {
+        return !!navigator && /Win32/i.test(navigator.platform);
+    }
+
     export function isWinRT(): boolean {
         return typeof Windows !== "undefined";
     }

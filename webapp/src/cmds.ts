@@ -22,17 +22,17 @@ function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<voi
     let url = pxt.BrowserUtils.browserDownloadText(
         hex,
         name,
-        "application/x-microbit-hex",
+        pxt.appTarget.compile.hexMimeType,
         e => core.errorNotification(lf("saving file failed..."))
     );
     return showUploadInstructionsAsync(fn, url);
 }
 
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
-    let boardName = "BBC micro:bit";
-    let boardDriveName = "MICROBIT";
+    let boardName = pxt.appTarget.appTheme.boardName || "???";
+    let boardDriveName = pxt.appTarget.compile.driveName || "???";
     return core.confirmAsync({
-        header: lf("Upload your code to the {0}", boardName),
+        header: lf("Upload your code to the {0}...  ", boardName),
         htmlBody: `        
 <div class="ui fluid vertical steps">
   <div class="step">
@@ -56,7 +56,14 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
       <div class="description">${lf("Wait till the yellow LED is done blinking.")}</div>
     </div>
   </div>
-</div>`,
+</div>
+${pxtwinrt.isWindows() ? `
+    <div>
+        <em>Tired of copying the .hex file?</em>
+        <a href="/uploader" target="_blank">Install the Uploader</a>!
+    </div>
+    ` : ""}
+`,
         hideCancel: true,
         agreeLbl: lf("Done!")
     }).then(() => { });

@@ -16,6 +16,7 @@ namespace pxt {
         embedUrl?: string;
         docMenu?: DocMenuEntry[];
         sideDoc?: string;
+        boardName?: string;
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
