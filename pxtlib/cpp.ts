@@ -35,8 +35,6 @@ namespace pxt {
             }
         })
     }
-
-    export var decodeBase64 = function (s: string) { return atob(s); }
 }
 
 namespace pxt.cpp {
@@ -795,7 +793,7 @@ namespace pxt.hex {
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
                 }
             } else {
-                buf = pxt.decodeBase64(nxt)
+                buf = ts.pxt.decodeBase64(nxt)
             }
 
             Util.assert(buf.length > 0)

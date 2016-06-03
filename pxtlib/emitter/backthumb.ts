@@ -1,4 +1,6 @@
 namespace ts.pxt {
+    export var decodeBase64 = function (s: string) { return atob(s); }
+
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
         let resText = ""
         let write = (s: string) => { resText += asmline(s); }
@@ -797,7 +799,7 @@ _stored_program: .string "`
         let src = serialize(bin)
         src = patchSrcHash(src)
         if (opts.embedBlob)
-            src += addSource(opts.embedMeta, atob(opts.embedBlob))
+            src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
         bin.writeFile(ts.pxt.BINARY_ASM, src)
         let res = assemble(bin, src)
         if (res.src)

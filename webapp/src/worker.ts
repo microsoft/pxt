@@ -9,7 +9,7 @@ let pm: any = postMessage;
 // work around safari not providing atob
 if (!atob) {
     // http://www.rise4fun.com/Bek/base64encode
-    pxt.decodeBase64 = function (_input: string): string {
+    ts.pxt.decodeBase64 = function (_input: string): string {
         function _base64(_x: number): number { return ((_x <= 0x19) ? (_x + 0x41) : ((_x <= 0x33) ? (_x + 0x47) : ((_x <= 0x3D) ? (_x - 0x4) : ((_x == 0x3E) ? 0x2B : 0x2F)))); };
         let result = new Array();
         let _q = 0x0;
