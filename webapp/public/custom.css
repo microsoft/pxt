@@ -316,6 +316,7 @@ div.simframe > iframe {
 }
 
 .ui.log {
+    clear:both;
     border-left-width: 2px;
     border-left-style: solid;
     border-top-left-radius: 2px;
