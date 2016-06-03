@@ -12,10 +12,6 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
         e => core.errorNotification(lf("saving file failed..."))
     );
 
-    $('#compilemsg').finish()
-        .html(`${lf("Download ready.")} <a href='${encodeURI(url)}' download='${Util.htmlEscape(name)}' target='_blank'>${lf("Use this link to save to another location.")}</a>`)
-        .fadeIn('fast').delay(7000).fadeOut('slow');
-
     return Promise.resolve();
 }
 
@@ -23,7 +19,47 @@ function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<voi
     let hex = resp.outfiles[ts.pxt.BINARY_HEX]
     let fn = pxt.appTarget.id + "-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
     console.log('saving ' + fn)
-    return pxt.commands.browserDownloadAsync(hex, fn, "application/x-microbit-hex")
+    let url = pxt.BrowserUtils.browserDownloadText(
+        hex,
+        name,
+        "application/x-microbit-hex",
+        e => core.errorNotification(lf("saving file failed..."))
+    );
+    return showUploadInstructionsAsync(fn, url);
+}
+
+function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
+    let boardName = "BBC micro:bit";
+    let boardDriveName = "MICROBIT";
+    return core.confirmAsync({
+        header: lf("Upload your code to the {0}", boardName),
+        htmlBody: `        
+<div class="ui fluid vertical steps">
+  <div class="step">
+    <i class="violet plug icon"></i>
+    <div class="content">
+      <div class="title">${lf("Connect")}</div>
+      <div class="description">${lf("Connect your {0} to your computer using the USB cable.", boardName)}</div>
+    </div>
+  </div>
+  <a href='${encodeURI(url)}' download='${Util.htmlEscape(fn)}' target='_blank' class="step">
+    <i class="violet copy icon"></i>
+    <div class="content">
+      <div class="title">${lf("Copy")}</div>
+      <div class="description">${lf("Drag and drop <code>{0}</code> to the <code>{1}</code> drive.", fn, boardDriveName)}</div>
+    </div>
+  </a>
+  <div class="step">
+    <i class="yellow loading spinner icon"></i>
+    <div class="content">
+      <div class="title">${lf("Transfer")}</div>
+      <div class="description">${lf("Wait till the yellow LED is done blinking.")}</div>
+    </div>
+  </div>
+</div>`,
+        hideCancel: true,
+        agreeLbl: lf("Done!")
+    }).then(() => { });
 }
 
 function localhostDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
