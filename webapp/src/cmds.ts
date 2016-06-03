@@ -32,7 +32,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let boardName = pxt.appTarget.appTheme.boardName || "???";
     let boardDriveName = pxt.appTarget.compile.driveName || "???";
     return core.confirmAsync({
-        header: lf("Upload your code to the {0}...  ", boardName),
+        header: lf("Move your code to the {0}...  ", boardName),
         htmlBody: `        
 <div class="ui fluid vertical steps">
   <div class="step">
@@ -42,24 +42,31 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
       <div class="description">${lf("Connect your {0} to your computer using the USB cable.", boardName)}</div>
     </div>
   </div>
+  <div class="step">
+    <i class="violet save icon"></i>
+    <div class="content">
+      <div class="title">${lf("Save")}</div>
+      <div class="description">${lf("Save the <code>.hex</code> file to your computer.")}</div>
+    </div>
+  </div>
   <a href='${encodeURI(url)}' download='${Util.htmlEscape(fn)}' target='_blank' class="step">
     <i class="violet copy icon"></i>
     <div class="content">
       <div class="title">${lf("Copy")}</div>
-      <div class="description">${lf("Drag and drop <code>{0}</code> to the <code>{1}</code> drive.", fn, boardDriveName)}</div>
+      <div class="description">${lf("Move the saved <code>.hex<code> file to the <code>{0}</code> drive.", boardDriveName)}</div>
     </div>
   </a>
   <div class="step">
-    <i class="yellow loading spinner icon"></i>
+    <i class="yellow flash circle icon"></i>
     <div class="content">
-      <div class="title">${lf("Transfer")}</div>
+      <div class="title">${lf("Almost done...")}</div>
       <div class="description">${lf("Wait till the yellow LED is done blinking.")}</div>
     </div>
   </div>
 </div>
 ${pxtwinrt.isWindows() ? `
-    <div>
-        <em>Tired of copying the .hex file?</em>
+    <div class="ui info message">
+        Tired of copying the .hex file?
         <a href="/uploader" target="_blank">Install the Uploader</a>!
     </div>
     ` : ""}

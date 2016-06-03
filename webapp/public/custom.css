@@ -453,6 +453,15 @@ html {
     display:none !important;
 }
 
+.flash {
+    animation: flash-animation 0.4s alternate infinite;
+}
+
+@keyframes flash-animation {  
+    from { opacity: 1; }
+    to   { opacity: 0.4; }
+}
+
 /* extra-large desktop screen */
 @media only screen and (min-width: 92em) and (min-height:44em) {
     .ui.widedesktop.only {
