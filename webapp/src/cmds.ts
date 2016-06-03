@@ -21,7 +21,7 @@ function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<voi
     console.log('saving ' + fn)
     let url = pxt.BrowserUtils.browserDownloadText(
         hex,
-        name,
+        fn,
         pxt.appTarget.compile.hexMimeType,
         e => core.errorNotification(lf("saving file failed..."))
     );
