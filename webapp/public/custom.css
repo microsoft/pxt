@@ -9,8 +9,6 @@ body {
   padding: 0;
   overflow: auto;
   margin: 0;
-  -webkit-overflow-scrolling: touch;
-  overflow-scrolling: touch;
 }
 
 
@@ -559,7 +557,7 @@ html {
         left:1rem;
         top:auto;      
         width:auto;  
-        min-width: auto;   
+        min-width: inherit;   
     }
     div.simframe {
         display:inline-block;
@@ -620,11 +618,11 @@ html {
     }
 }
 
-@media only screen and (max-width:50em) and (orientation:landscape) {
+@media only screen and (max-height:36em) and (max-width: 49em) {
     #filelist {
         top:0.5rem;
         right:0.5rem;
         left:auto;
-        min-width: auto;   
+        min-width: inherit;   
     }    
 }
