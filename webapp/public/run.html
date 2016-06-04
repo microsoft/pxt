@@ -97,7 +97,7 @@
         console.log(JSON.stringify(options, null, 2))    
         var sims = document.getElementById('simulators');        
         ksRunnerReady(function() {
-            let theme = pxt.appTarget.appTheme;
+            var theme = pxt.appTarget.appTheme;
             document.title = theme.title;
             if (footer) pxt.runner.initFooter($('#footer'), id);
             if (hex) {
