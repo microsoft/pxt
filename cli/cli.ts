@@ -757,7 +757,7 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
 }
 
 function addCmd(name: string) {
-    return name + (/win/.test(process.platform) ? ".cmd" : "")
+    return name + (/^win/.test(process.platform) ? ".cmd" : "")
 }
 
 function buildPxtAsync(): Promise<string[]> {
