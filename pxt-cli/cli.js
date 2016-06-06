@@ -33,7 +33,7 @@ function findPxtJs() {
             let local = s + "/built/pxt.js" // local build
             if (fs.existsSync(local)) return local            
             if (fs.existsSync(installed)) return installed            
-            console.error("Found", targetjson, "but cannot find neither", local, "nor", installed)
+            console.error("Found", targetjson, "but cannot find neither", local, "nor", installed, ", did you run 'jake' in the PXT folder once?")
             return null
         }
         
