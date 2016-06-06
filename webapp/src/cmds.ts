@@ -53,7 +53,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     <i class="violet copy icon"></i>
     <div class="content">
       <div class="title">${lf("Copy")}</div>
-      <div class="description">${lf("Move the saved <code>.hex<code> file to the <code>{0}</code> drive.", boardDriveName)}</div>
+      <div class="description">${lf("Move the saved <code>.hex</code> file to the <code>{0}</code> drive.", boardDriveName)}</div>
     </div>
   </a>
   <div class="step">
