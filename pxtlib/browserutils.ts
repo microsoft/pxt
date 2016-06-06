@@ -7,7 +7,7 @@ namespace pxt.BrowserUtils {
 
     function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
         const isMobileBrowser = /mobile/.test(navigator.userAgent);
-        const isSafari = /safari/i.test(navigator.userAgent);
+        const isSafari = /safari/i.test(navigator.userAgent) && !/chrome/i.test(navigator.userAgent);
         const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
 
         const dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf))
