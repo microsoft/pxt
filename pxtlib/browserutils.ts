@@ -9,7 +9,7 @@ namespace pxt.BrowserUtils {
         const isMobileBrowser = /mobile/.test(navigator.userAgent);
         const isSafari = /safari/i.test(navigator.userAgent);
         const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
-        
+
         const dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf))
         try {
             if (isDesktopIE) {
@@ -27,7 +27,7 @@ namespace pxt.BrowserUtils {
                     iframe.style.right = "0";
                     iframe.style.bottom = "0";
                     iframe.style.zIndex = "-1";
-                    iframe.style.width= "1px";
+                    iframe.style.width = "1px";
                     iframe.style.height = "1px";
                     document.body.appendChild(iframe);
                 }
