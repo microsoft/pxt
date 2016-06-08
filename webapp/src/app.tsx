@@ -271,7 +271,6 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
     }
 }
 
-
 class DocsMenu extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -285,7 +284,8 @@ class DocsMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <div id="docsmenu" className="ui buttons">
             <sui.DropdownMenu class="floating icon button" icon="help">
-                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenu" + m.path} onClick={() => this.openDoc(m.path) }>{m.name}</sui.Item>) }
+                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} className="ui item widedesktop hidden">{m.name}</a>)}
+                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} class="widedesktop only" onClick={() => this.openDoc(m.path) }>{m.name}</sui.Item>) }
             </sui.DropdownMenu>
         </div>
     }

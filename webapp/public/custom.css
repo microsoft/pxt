@@ -32,9 +32,6 @@ body {
   right:1.25rem;
   display:none;
 }
-#docsmenu {
-   display:none;
-}
 #logo {
     font-size: 2.8rem;
     margin: 0;
@@ -481,9 +478,6 @@ html {
     .sideDocs #maineditor {
         right:22rem;
     }
-    #docsmenu {
-        display:block;
-    }
     .sideDocs #sidedocs {
         display:block;
         width:22rem;
@@ -549,7 +543,7 @@ html {
     #maineditor {     
         left: 0;
         bottom:2rem;
-    }    
+    }        
     #boardview.errored {
         display:none !important;
     }
