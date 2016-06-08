@@ -684,16 +684,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         );
     }
     openProject() {
+        tickEvent("openproject");
         this.scriptSearch.setState({ packages: false, searchFor: '' })
         this.scriptSearch.modal.show()
     }
 
     addPackage() {
+        tickEvent("addpackage");
         this.scriptSearch.setState({ packages: true, searchFor: '' })
         this.scriptSearch.modal.show()
     }
 
     newProject() {
+        tickEvent("newproject");
         core.showLoading(lf("creating new project..."));
         this.newBlocksProjectAsync()
             .then(() => Promise.delay(1500))
@@ -840,6 +843,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     publishAsync(): Promise<string> {
+        tickEvent("publish");
         this.setState({ publishing: true })
         let mpkg = pkg.mainPkg
         let epkg = pkg.getEditorPkg(mpkg)
@@ -907,6 +911,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     about() {
+        tickEvent("about");
         core.confirmAsync({
             header: lf("About {0}", pxt.appTarget.name),
             htmlBody: `
@@ -914,6 +919,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 <p>${lf("PXT version: {0}", ksVersion)}</p>                        
 `
         }).done();
+    }
+
+    embed() {
+        tickEvent("embed");
+        this.shareEditor.modal.show();
     }
 
     renderCore() {
@@ -949,7 +959,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                { this.state.header && packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.shareEditor.modal.show() } /> : null}
+                                { this.state.header && packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
@@ -958,6 +968,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
+                                        tickEvent("showfiles");
                                         this.setState({ showFiles: !this.state.showFiles });
                                         this.saveSettings();
                                     } } /> : undefined}
@@ -1098,10 +1109,6 @@ function enableAnalytics(version: string) {
     enableMixPanel(version);
 }
 
-function enableMixPanel(version: string) {
-    // TODO: use json configuration
-}
-
 function enableAppInsights(version: string) {
     // TODO: use json configuration
     let ai = (window as any).appInsights;
@@ -1133,7 +1140,18 @@ function enableAppInsights(version: string) {
     }
 }
 
-function tickEvent(id: string) {
+function enableMixPanel(version: string) {
+    let mp = (window as any).mixpanel;
+    if (!mp) return;
+
+    let report = pxt.reportError;
+    pxt.reportError = function (msg: string, data: any): void {
+        mp.track("error:" + msg);
+        report(msg, data);
+    }
+}
+
+export function tickEvent(id: string) {
     /*
     let ai = (window as any).appInsights;
     if (!ai) return;
@@ -1141,6 +1159,7 @@ function tickEvent(id: string) {
     */
 
     let mp = (window as any).mixpanel;
+    if (!mp) return;
     mp.track(id);
 }
 
