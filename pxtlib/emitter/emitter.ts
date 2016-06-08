@@ -342,6 +342,21 @@ namespace ts.pxt {
         let brkMap: U.Map<Breakpoint> = {}
 
         if (opts.target.isNative) {
+            if (!opts.hexinfo) {
+                // we may have not been able to compile or download the hex file
+                return {
+                    diagnostics: [{
+                        file:  program.getSourceFiles()[0],
+                        start: 0,
+                        length: 0,
+                        category: DiagnosticCategory.Error,
+                        code: 9043,
+                        messageText: lf("The hex file is not available, please connect to internet and try again.")
+                    }],
+                    emitSkipped: true
+                };
+            }
+
             hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
         }

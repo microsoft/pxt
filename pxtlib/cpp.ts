@@ -757,8 +757,6 @@ namespace pxt.hex {
                         .then(() => meta)
                 }
                 else {
-                    //if (!Cloud.isOnline()) return null;
-
                     return downloadHexInfoAsync(extInfo)
                         .then(meta => {
                             let origHex = meta.hex
@@ -767,6 +765,9 @@ namespace pxt.hex {
                             meta.hex = origHex
                             return storeWithLimitAsync(host, "hex-keys", key, store)
                                 .then(() => meta)
+                        }).catch(e => {
+                            pxt.reportException(e, { sha: extInfo.sha });
+                            return Promise.resolve(null);
                         })
                 }
             })
