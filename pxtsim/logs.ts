@@ -84,7 +84,7 @@ namespace pxsim.logs {
             }
             if (text) {
                 this.labelElement = document.createElement("a");
-                this.labelElement.className = "ui green top right attached mini label";
+                this.labelElement.className = "ui green top right attached mini label cloudflash";
                 this.labelElement.appendChild(document.createTextNode(text));
             }
         }

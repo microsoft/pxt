@@ -461,6 +461,15 @@ html {
     to   { opacity: 0.4; }
 }
 
+.cloudflash {
+    animation: cloud-flash-animation 0.8s alternate infinite;
+}
+
+@keyframes cloud-flash-animation {  
+    from { opacity: 1; }
+    to   { opacity: 0.8; }
+}
+
 /* extra-large desktop screen */
 @media only screen and (min-width: 92em) and (min-height:44em) {
     .ui.widedesktop.only {

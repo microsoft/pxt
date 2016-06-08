@@ -5,6 +5,8 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as core from "./core";
 
+const STREAM_INTERVAL = 30000;
+
 export interface LogViewState {
     stream?: pxt.streams.JsonStream;
 }
@@ -53,7 +55,7 @@ export class LogView extends React.Component<{}, LogViewState> {
 
     private scheduleStreamData() {
         this.cancelStreamData();
-        let towait = Math.max(100, 5000 - (Util.now() - this.lastStreamUploadTime));
+        let towait = Math.max(100, STREAM_INTERVAL - (Util.now() - this.lastStreamUploadTime));
         this.streamUploadTimeout = setTimeout(() => this.streamData(), towait);
     }
 
@@ -100,7 +102,7 @@ export class LogView extends React.Component<{}, LogViewState> {
         const targetTheme = pxt.appTarget.appTheme;
         let rootUrl = targetTheme.embedUrl
 
-        if (!rootUrl || pxt.debugMode()) {
+        if (!rootUrl) {
             pxt.commands.browserDownloadAsync(pxsim.logs.entriesToCSV(entries), "data.csv", 'text/csv')
             return;
         }
