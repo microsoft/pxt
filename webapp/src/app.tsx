@@ -225,10 +225,13 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         const ready = !!header.pubId && header.pubCurrent;
         let url: string;
         let embed: string;
+        let docembed: string;
         if (ready) {
             let runurl = `${rootUrl}--run?id=${header.pubId}`;
+            let docurl = `${rootUrl}--docs?id=${header.pubId}`;
             url = `${rootUrl}${header.pubId}`
             embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
+            docembed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
         }
 
         let publish = () => {
@@ -252,6 +255,11 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                     <sui.Field label={lf("URL") }>
                         <p>{lf("Share this link to access your project.") }</p>
                         <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
+                    </sui.Field> : null }
+                { pxt.debugMode() && docembed ?
+                    <sui.Field label={lf("Embed The Code") }>
+                        <p>{lf("Embed the code of this project in your website or blog by pasting this code into your web page.") }</p>
+                        <sui.Input class="mini" readOnly={true} lines={3} value={docembed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
                 { embed ?
                     <sui.Field label={lf("Embed This Project") }>
