@@ -412,7 +412,7 @@ namespace ts.pxt.service {
         }
 
         getScriptFileNames(): string[] {
-            return this.opts.sourceFiles;
+            return this.opts.sourceFiles.filter(f => U.endsWith(f, ".ts"));
         }
 
         getScriptVersion(fileName: string): string {
