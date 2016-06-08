@@ -1093,7 +1093,17 @@ function getsrc() {
     console.log(theEditor.editor.getCurrentSource())
 }
 
-function enableInsights(version: string) {
+function enableAnalytics(version: string) {
+    enableAppInsights(version);
+    enableMixPanel(version);
+}
+
+function enableMixPanel(version: string) {
+    // TODO: use json configuration
+}
+
+function enableAppInsights(version: string) {
+    // TODO: use json configuration
     let ai = (window as any).appInsights;
     if (!ai) return;
 
@@ -1124,9 +1134,14 @@ function enableInsights(version: string) {
 }
 
 function tickEvent(id: string) {
+    /*
     let ai = (window as any).appInsights;
     if (!ai) return;
     ai.trackEvent(id);
+    */
+
+    let mp = (window as any).mixpanel;
+    mp.track(id);
 }
 
 function showIcons() {
@@ -1225,7 +1240,7 @@ $(document).ready(() => {
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
     pxt.setDebugMode(/dbg=1/i.test(window.location.href));
 
-    enableInsights(ksVersion);
+    enableAnalytics(ksVersion)
     appcache.init();
     initLogin();
 

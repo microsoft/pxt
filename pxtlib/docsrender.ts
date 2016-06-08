@@ -22,6 +22,9 @@ namespace pxt {
         contactUrl?: string;
         accentColor?: string;
         locales?: ts.pxt.Util.Map<AppTheme>;
+
+        appInsightsId?: string;
+        mixPanelId?: string;
     }
 
     export interface DocMenuEntry {
