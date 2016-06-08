@@ -111,7 +111,24 @@ mixpanel.init("762fef19c053a0ea4cec43d2fecae76e");</script><!-- end Mixpanel -->
         var content = document.getElementById('content');        
         ksRunnerReady(function() {
             pxt.docs.requireMarked = function() { return marked; }
-            pxt.runner.startDocsServer(loading, content);
+            var projectid = /projectid=([^&?]+)/i.exec(window.location.href); 
+            var code = /code=([^&?]+)/i.exec(window.location.href);
+            if (code) {
+                var md = "```blocks\n" + decodeURIComponent(code[1]) + "```"
+                console.log('rendering code:')
+                console.log(md);
+                pxt.runner.renderMarkdownAsync(content, md).done(function() {
+                    $(loading).hide();
+                    $(content).show();
+                });
+            } else if (projectid) {                
+                pxt.runner.renderProjectAsync(content, projectid[1]).done(function() {
+                    $(loading).hide();
+                    $(content).show();
+                });
+            }
+            else
+                pxt.runner.startDocsServer(loading, content);
         });
         })();
     </script>

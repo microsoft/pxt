@@ -244,8 +244,27 @@ namespace pxt.runner {
         renderHash();
     }
 
+    export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
+        return Cloud.privateGetTextAsync(projectid + "/main.ts")
+            .then(ts => {
+                let md = `\`\`\`${template}
+${ts}
+\`\`\``;
+                return renderMarkdownAsync(content, md);
+            })
+    }
+
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
-        const template = `
+        docid = docid.replace(/^\//, "");
+        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
+            .then(md => renderMarkdownAsync(content, md, docid))
+            .catch(e => {
+                pxt.reportException(e, { docid: docid });
+                $(content).html(lf("<h3>Something wrong happened, please check your internet connection."));
+            })
+    }
+
+    const template = `
 <aside id=youtube>
     <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
     </div>
@@ -300,43 +319,39 @@ namespace pxt.runner {
 </aside>
 @breadcrumb@
 @body@`;
-        docid = docid.replace(/^\//, "");
-        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
-            .then(md => {
-                const parts = docid.split('/');
-                const bc = parts.map((e, i) => {
-                    return {
-                        href: "/" + parts.slice(0, i + 1).join("/"),
-                        name: e
-                    }
-                })
-                let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme, null, bc);
-                $(content).html(html);
-                $(content).find('a').attr('target', '_blank');
-                return pxt.runner.renderAsync({
-                    blocksAspectRatio: 0.5,
-                    snippetClass: 'lang-blocks',
-                    signatureClass: 'lang-sig',
-                    blocksClass: 'lang-block',
-                    shuffleClass: 'lang-shuffle',
-                    simulatorClass: 'lang-sim',
-                    linksClass: 'lang-cards',
-                    namespacesClass: 'lang-namespaces',
-                    codeCardClass: 'lang-codecard',
-                    snippetReplaceParent: true,
-                    simulator: true,
-                    hex: true,
-                    hexName: pxt.appTarget.id
-                });
-            }).catch(e => {
-                pxt.reportException(e, { docid: docid });
-                $(content).html(lf("<h3>Something wrong happened, please check your internet connection."));
-            }).finally(() => {
-                // patch a elements
-                $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
-                    $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
-                })
+
+    export function renderMarkdownAsync(content: HTMLElement, md: string, path?: string): Promise<void> {
+        const parts = (path || '').split('/');
+        const bc = !path ? null : parts.map((e, i) => {
+            return {
+                href: "/" + parts.slice(0, i + 1).join("/"),
+                name: e
+            }
+        })
+
+        let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme, null, bc);
+        $(content).html(html);
+        $(content).find('a').attr('target', '_blank');
+        return pxt.runner.renderAsync({
+            blocksAspectRatio: 0.5,
+            snippetClass: 'lang-blocks',
+            signatureClass: 'lang-sig',
+            blocksClass: 'lang-block',
+            shuffleClass: 'lang-shuffle',
+            simulatorClass: 'lang-sim',
+            linksClass: 'lang-cards',
+            namespacesClass: 'lang-namespaces',
+            codeCardClass: 'lang-codecard',
+            snippetReplaceParent: true,
+            simulator: true,
+            hex: true,
+            hexName: pxt.appTarget.id
+        }).then(() => {
+            // patch a elements
+            $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
+                $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
             })
+        });
     }
 
     export interface DecompileResult {
