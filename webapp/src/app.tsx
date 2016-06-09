@@ -991,7 +991,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     {
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
-                                    <sui.Item role="menuitem" icon='sign out' text={lf("Sign out / Reset") } onClick={() => LoginBox.signout() } />
+                                    <sui.Item role="menuitem" icon='sign out' text={devSignin ? lf("Sign out / Reset") : lf("Reset") } onClick={() => LoginBox.signout() } />
                                     <div className="ui divider"></div>
                                     { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                                     { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }
