@@ -103,12 +103,33 @@ mixpanel.init("762fef19c053a0ea4cec43d2fecae76e");</script><!-- end Mixpanel -->
             </block>
         </category>
         <category name="Logic" colour="210" category="49">
-            <block type="controls_if" gap="8"></block>
+            <block type="controls_if" gap="8">
+                <value name="IF0">
+                    <shadow type="logic_boolean">
+                        <field name="BOOL">TRUE</field>
+                    </shadow>
+                </value>                
+            </block>
             <block type="controls_if" gap="8">
                 <mutation else="1"></mutation>
+                <value name="IF0">
+                    <shadow type="logic_boolean">
+                        <field name="BOOL">TRUE</field>
+                    </shadow>
+                </value>                
             </block>
             <block type="controls_if">
                 <mutation else="1" elseif="1"></mutation>
+                <value name="IF0">
+                    <shadow type="logic_boolean">
+                        <field name="BOOL">TRUE</field>
+                    </shadow>
+                </value>                
+                <value name="IF1">
+                    <shadow type="logic_boolean">
+                        <field name="BOOL">TRUE</field>
+                    </shadow>
+                </value>                
             </block>
             <block type="logic_compare" gap="8">
                 <value name="A">
