@@ -93,6 +93,14 @@ The **block** language renders a JavaScript snippet into blocks without any simu
     basic.showNumber(5)
     ```
 
+### javascript
+
+If you need a rendering of typescript, javascript code, do not specify the language
+
+    ```
+    let x = 0;
+    ```
+
 ### shuffle
 
 The **shuffle** macro shuffles the blocks from a program which makes for a great student activity.
@@ -106,9 +114,15 @@ and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/
 
 ### codecard
 
-Renders a codecard payload into a card
+Renders one or more codecards as JSON into cards
 
     ```codecard
-    basic.showNumber(5)
+    [{ 
+        "title": "A card", 
+        "url": "...." 
+    }, {
+        "title": "Another card", 
+        "url": "...." 
+    }]
     ```
   
