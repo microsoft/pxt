@@ -95,8 +95,8 @@ namespace pxt {
         promoUrl?: string;
         blocksXml?: string;
         typeScript?: string;
+        imageUrl?: string;
         time?: number;
-        link?: boolean;
         url?: string;
         responsive?: boolean;
 

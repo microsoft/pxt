@@ -187,8 +187,7 @@ namespace pxt.runner {
                                 ? block.codeCard.blocksXml
                                 : info.attrs.blockId
                                     ? `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${info.attrs.blockId}"></block></xml>`
-                                    : undefined,
-                            link: true
+                                    : undefined
                         })
                     } else if (block) {
                         let card = U.clone(block.codeCard);
@@ -208,8 +207,7 @@ namespace pxt.runner {
                                         name: "Boolean",
                                         url: "reference/types/boolean",
                                         description: lf("True or false values"),
-                                        blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="logic_boolean"><field name="BOOL">TRUE</field></block></xml>',
-                                        link: true
+                                        blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="logic_boolean"><field name="BOOL">TRUE</field></block></xml>'
                                     });
                                     break;
                                 default:
@@ -222,8 +220,7 @@ namespace pxt.runner {
                                 name: ns ? "Logic" : "if",
                                 url: "reference/logic" + (ns ? "" : "/if"),
                                 description: ns ? lf("Logic operators and constants") : lf("Conditional statement"),
-                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_if"></block></xml>',
-                                link: true
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_if"></block></xml>'
                             });
                             break;
                         case ts.SyntaxKind.ForStatement:
@@ -231,8 +228,7 @@ namespace pxt.runner {
                                 name: ns ? "Loops" : "for",
                                 url: "reference/loops" + (ns ? "" : "/for"),
                                 description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
-                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>',
-                                link: true
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
                             });
                             break;
                         case ts.SyntaxKind.VariableStatement:
@@ -240,8 +236,7 @@ namespace pxt.runner {
                                 name: ns ? "Variables" : "variable declaration",
                                 url: "reference/variables" + (ns ? "" : "/assign"),
                                 description: ns ? lf("Variables") : lf("Assign a value to a named variable."),
-                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="variables_set"></block></xml>',
-                                link: true
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="variables_set"></block></xml>'
                             });
                             break;
                         default:
@@ -254,32 +249,42 @@ namespace pxt.runner {
         })
     }
 
-    function fillCodeCardAsync(c: JQuery, card: pxt.CodeCard, options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
-        if (!card) return Promise.resolve();
+    function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
+        if (!cards || cards.length == 0) return Promise.resolve();
 
-        let cc = pxt.docs.codeCard.render(card, options)
-        c.replaceWith(cc);
+        if (cards.length == 0) {
+            let cc = pxt.docs.codeCard.render(cards[0], options)
+            c.replaceWith(cc);
+        } else {
+            let cd = document.createElement("div")
+            cd.className = "ui cards";
+            cards.forEach(card => cd.appendChild(pxt.docs.codeCard.render(card, options)));
+            c.replaceWith(cd);
+        }
 
         return Promise.resolve();
     }
 
-    function renderNextCodeCardAsync(cls: string): Promise<void> {
+    function renderNextCodeCardAsync(cls: string, options: ClientRenderOptions): Promise<void> {
         if (!cls) return Promise.resolve();
 
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
         $el.removeClass(cls);
-        let card: pxt.CodeCard;
+        let cards: pxt.CodeCard[];
         try {
-            card = JSON.parse($el.text()) as pxt.CodeCard;
+            let js: any = JSON.parse($el.text());
+            if (!Array.isArray(js)) js = [js];
+            cards = js as pxt.CodeCard[];
         } catch (e) {
             console.error('error while rendering ' + $el.html())
             $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
         }
 
-        return fillCodeCardAsync($el, card, { hideHeader: true })
-            .then(() => Promise.delay(1, renderNextCodeCardAsync(cls)));
+        if (options.snippetReplaceParent) $el = $el.parent();
+        return fillCodeCardAsync($el, cards, { hideHeader: true })
+            .then(() => Promise.delay(1, renderNextCodeCardAsync(cls, options)));
     }
 
     function getRunUrl(options: ClientRenderOptions) {
@@ -313,7 +318,7 @@ namespace pxt.runner {
             .then(() => renderLinksAsync(options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options.namespacesClass, options.snippetReplaceParent, true))
             .then(() => renderSignaturesAsync(options))
-            .then(() => renderNextCodeCardAsync(options.codeCardClass))
+            .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options));
     }

@@ -41,7 +41,7 @@ namespace pxt.docs.codeCard {
         }
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
-        const link = card.link && url;
+        const link = !!url;
         const div = (parent: HTMLElement, cls: string, tag = "div", text: string | number = ''): HTMLElement => {
             let d = document.createElement(tag);
             if (cls)
@@ -61,7 +61,7 @@ namespace pxt.docs.codeCard {
         }
 
         let r = div(null, 'ui card ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
-        if (link) (r as HTMLAnchorElement).href = url;
+        if (url) (r as HTMLAnchorElement).href = url;
         if (!options.hideHeader && (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any)) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
             let hr = div(h, "right floated meta")
@@ -100,6 +100,14 @@ namespace pxt.docs.codeCard {
             img.appendChild(pre);
         }
 
+        if (card.imageUrl) {
+            let image = document.createElement("img") as HTMLImageElement;
+            image.className = "ui image";
+            image.src = card.imageUrl;
+            img.appendChild(image)
+        }
+
+
         let ct = div(r, "ui content");
         if (card.name) {
             if (url && !link) a(ct, url, card.name, 'header');
@@ -113,10 +121,6 @@ namespace pxt.docs.codeCard {
         if (card.description) {
             let descr = div(ct, 'ui description');
             descr.appendChild(document.createTextNode(card.description.split('.')[0] + '.'));
-        }
-        if (url && !link) {
-            let extra = div(r, "ui extra content" + (card.responsive ? " tall desktop only" : ""));
-            a(extra, url, card.url, '');
         }
 
         return r;
