@@ -189,7 +189,7 @@ export class Editor extends srceditor.Editor {
         let diags = tsfile.diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
-        diags.forEach(diag => {
+        diags.filter(diag => diag.category == ts.DiagnosticCategory.Error).forEach(diag => {
             let bid = pxt.blocks.findBlockId(sourceMap, diag);
             if (bid) {
                 let b = this.editor.getBlockById(bid)

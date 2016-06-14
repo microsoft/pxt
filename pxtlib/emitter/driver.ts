@@ -62,7 +62,7 @@ namespace ts.pxt {
         options.module = ModuleKind.None;
         options.noImplicitAny = true;
         options.noImplicitReturns = true;
-
+        options.allowUnreachableCode = true;
         return options
     }
 
