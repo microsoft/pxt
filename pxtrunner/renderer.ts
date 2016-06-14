@@ -218,7 +218,7 @@ namespace pxt.runner {
                         case ts.SyntaxKind.IfStatement:
                             addItem({
                                 name: ns ? "Logic" : "if",
-                                url: "reference/logic" + (ns ? "" : "/if"),
+                                url: "blocks/logic" + (ns ? "" : "/if"),
                                 description: ns ? lf("Logic operators and constants") : lf("Conditional statement"),
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_if"></block></xml>'
                             });
@@ -226,7 +226,7 @@ namespace pxt.runner {
                         case ts.SyntaxKind.ForStatement:
                             addItem({
                                 name: ns ? "Loops" : "for",
-                                url: "reference/loops" + (ns ? "" : "/for"),
+                                url: "blocks/loops" + (ns ? "" : "/for"),
                                 description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
                             });
@@ -234,7 +234,7 @@ namespace pxt.runner {
                         case ts.SyntaxKind.VariableStatement:
                             addItem({
                                 name: ns ? "Variables" : "variable declaration",
-                                url: "reference/variables" + (ns ? "" : "/assign"),
+                                url: "blocks/variables" + (ns ? "" : "/assign"),
                                 description: ns ? lf("Variables") : lf("Assign a value to a named variable."),
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="variables_set"></block></xml>'
                             });

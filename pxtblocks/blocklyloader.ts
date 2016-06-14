@@ -747,7 +747,7 @@ namespace pxt.blocks {
     function initMath() {
         Blockly.Blocks['math_op2'] = {
             init: function () {
-                this.setHelpUrl('/reference/math');
+                this.setHelpUrl('/blocks/math');
                 this.setColour(230);
                 this.appendValueInput("x")
                     .setCheck("Number")
@@ -764,7 +764,7 @@ namespace pxt.blocks {
 
         Blockly.Blocks['math_op3'] = {
             init: function () {
-                this.setHelpUrl('/reference/math/abs');
+                this.setHelpUrl('/blocks/math/abs');
                 this.setColour(230);
                 this.appendDummyInput()
                     .appendField("absolute of");
@@ -778,7 +778,7 @@ namespace pxt.blocks {
 
         Blockly.Blocks['device_random'] = {
             init: function () {
-                this.setHelpUrl('/reference/math/random');
+                this.setHelpUrl('/blocks/math/random');
                 this.setColour(230);
                 this.appendDummyInput()
                     .appendField("pick random 0 to");
