@@ -239,6 +239,14 @@ namespace pxt.runner {
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_if"></block></xml>'
                             });
                             break;
+                        case ts.SyntaxKind.WhileStatement:
+                            addItem({
+                                name: ns ? "Loops" : "while",
+                                url: "blocks/loops" + (ns ? "" : "/while"),
+                                description: ns ? lf("Loops and repetition") : lf("Repeat code while a condition is true."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="device_while"></block></xml>'
+                            });
+                            break;
                         case ts.SyntaxKind.ForStatement:
                             addItem({
                                 name: ns ? "Loops" : "for",
