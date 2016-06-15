@@ -21,20 +21,26 @@ namespace pxt.runner {
 
     export interface WidgetOptions {
         showJs?: boolean;
+        hideGutter?: boolean;
         run?: boolean;
         hexname?: string;
         hex?: string;
     }
 
-    function appendJs($parent: JQuery, $js: JQuery) {
+    function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
         if (typeof ace !== "undefined") {
-            let $c = $('<div class="ui content js"></div>').text($js.text());
+            const src = $js.text() || '';
+            let $c = $('<div class="ui content js"></div>').text(src);
             let editor = ace.edit($c[0]);
             editor.setTheme("ace/theme/textmate");
             editor.getSession().setMode("ace/mode/typescript");
             editor.setReadOnly(true);
             editor.setShowPrintMargin(false);
+            editor.renderer.setShowGutter(!woptions.hideGutter && src.split('\n').length > 5);
+            editor.setHighlightActiveLine(false);
+            editor.clearSelection();
             editor.$blockScrolling = Infinity;
+            (editor.renderer as any).$cursorLayer.element.style.display = "none"
             editor.setOptions({
                 maxLines: 1024
             });
@@ -70,14 +76,14 @@ namespace pxt.runner {
 
         // js menu
         if (woptions.showJs) {
-            appendJs($c, $js);
+            appendJs($c, $js, woptions);
         } else {
             let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
                 if ($c.find('.js')[0])
                     $c.find('.js').remove(); // remove previous simulators
                 else {
-                    if ($svg) appendJs($svg.parent(), $js);
-                    else appendJs($c, $js);
+                    if ($svg) appendJs($svg.parent(), $js, woptions);
+                    else appendJs($c, $js, woptions);
                 }
             })
             $menu.append($jsBtn);
@@ -141,7 +147,7 @@ namespace pxt.runner {
             fillWithWidget(options, c, js, s, {
                 run: options.simulator && compiled,
                 hexname: hexname,
-                hex: hex
+                hex: hex,
             });
         });
     }
@@ -173,7 +179,7 @@ namespace pxt.runner {
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
-            fillWithWidget(options, c, js, s, { showJs: true });
+            fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
         });
     }
 
