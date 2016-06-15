@@ -519,7 +519,7 @@ namespace pxt.blocks {
     function initLoops() {
         Blockly.Blocks['device_while'] = {
             init: function () {
-                this.setHelpUrl('/reference/loops/while');
+                this.setHelpUrl('/blocks/loops/while');
                 this.setColour(blockColors['loops']);
                 this.appendValueInput("COND")
                     .setCheck("Boolean")
@@ -538,7 +538,7 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             init: function () {
-                this.setHelpUrl("/reference/loops/for");
+                this.setHelpUrl("/blocks/loops/for");
                 this.setColour((<any>Blockly.Blocks).loops.HUE);
                 this.appendDummyInput()
                     .appendField("for")
