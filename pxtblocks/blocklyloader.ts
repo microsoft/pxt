@@ -494,23 +494,23 @@ namespace pxt.blocks {
             };
         }
 
-        monkeyPatchBlock("controls_if", lf("a conditional statement"), "logic/if");
-        monkeyPatchBlock("controls_repeat_ext", lf("a loopt that repeats and increments an index"), "loops/repeat");
-        monkeyPatchBlock("device_while", lf("a loop that repeats while the condition is true"), "loops/while");
+        monkeyPatchBlock("controls_if", lf("a conditional statement"), "blocks/logic/if");
+        monkeyPatchBlock("controls_repeat_ext", lf("a loop that repeats and increments an index"), "blocks/loops/repeat");
+        monkeyPatchBlock("device_while", lf("a loop that repeats while the condition is true"), "blocks/loops/while");
 
-        monkeyPatchBlock("variables_set", lf("assign the value of a variable"), "variables/assign");
-        monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "variables/change");
+        monkeyPatchBlock("variables_set", lf("assign the value of a variable"), "blocks/variables/assign");
+        monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change");
 
-        monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "types/boolean");
-        monkeyPatchBlock("logic_operation", lf("boolean operation"), "types/boolean");
-        monkeyPatchBlock("logic_negate", lf("logical negation"), "types/boolean");
-        monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "types/boolean");
+        monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "reference/types/boolean");
+        monkeyPatchBlock("logic_operation", lf("boolean operation"), "reference/types/boolean");
+        monkeyPatchBlock("logic_negate", lf("logical negation"), "reference/types/boolean");
+        monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "reference/types/boolean");
 
         monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("a integer number") : lf("a decimal number"), "types/number");
-        monkeyPatchBlock("math_arithmetic", lf("arithmetic operation"), "math");
-        monkeyPatchBlock("math_op2", lf("minimum or maximum of 2 numbers"), "math");
-        monkeyPatchBlock("math_op3", lf("absolute value of a number"), "math");
-        monkeyPatchBlock("device_random", lf("pick random number"), "math/random");
+        monkeyPatchBlock("math_arithmetic", lf("arithmetic operation"), "blocks/math");
+        monkeyPatchBlock("math_op2", lf("minimum or maximum of 2 numbers"), "blocks/math");
+        monkeyPatchBlock("math_op3", lf("absolute value of a number"), "blocks/math");
+        monkeyPatchBlock("device_random", lf("pick random number"), "blocks/math");
 
         monkeyPatchBlock("text", lf("a piece of text"), "text");
         monkeyPatchBlock("text_length", lf("number of characters in the string"), "text/length");
