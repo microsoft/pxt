@@ -8,8 +8,8 @@ CACHE:
 /cdn/lzma/lzma_worker-min.js
 /cdn/jquery.js
 /cdn/ace/ace.js
-/cdn/ace/mode_typescript.js
-/cdn/ace/theme_textmate.js
+/cdn/ace/mode-typescript.js
+/cdn/ace/theme-textmate.js
 /cdn/blockly/blockly_compressed.js
 /cdn/blockly/blocks_compressed.js
 /cdn/blockly/msg/js/en.js
