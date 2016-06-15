@@ -38,6 +38,7 @@ namespace pxt.runner {
             editor.setShowPrintMargin(false);
             editor.renderer.setShowGutter(!woptions.hideGutter && src.split('\n').length > 5);
             editor.setHighlightActiveLine(false);
+            editor.getSession().setUseWrapMode(true);
             editor.clearSelection();
             editor.$blockScrolling = Infinity;
             (editor.renderer as any).$cursorLayer.element.style.display = "none"
