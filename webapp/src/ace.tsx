@@ -541,6 +541,8 @@ export class Editor extends srceditor.Editor {
     isTypescript = false;
 
     openBlocks() {
+        pxt.tickEvent("typescript.showBlocks");
+
         let blockFile = this.currFile.getVirtualFileName();
         if (!blockFile) {
             let mainPkg = pkg.mainEditorPkg();
@@ -567,8 +569,13 @@ export class Editor extends srceditor.Editor {
                 hideCancel: !bf,
                 disagreeLbl: lf("Discard and go to Blocks")
             }).then(b => {
-                // discard
-                if (!b) this.parent.setFile(bf);
+                // discard                
+                if (!b) {
+                    pxt.tickEvent("typescript.discardText");
+                    this.parent.setFile(bf);
+                } else {
+                    pxt.tickEvent("typescript.keepText");
+                }
             })
         }
 
@@ -587,6 +594,7 @@ export class Editor extends srceditor.Editor {
                     let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
                     if (oldJs == js) {
                         console.log('js not changed, skipping decompile');
+                        pxt.tickEvent("typescript.noChanges")
                         return this.parent.setFile(mainPkg.files[blockFile]);
                     }
                 }
@@ -603,6 +611,7 @@ export class Editor extends srceditor.Editor {
 
                         const cleanRx = /[\s;]/g;
                         if (b2jsr.source.replace(cleanRx, '') != js.replace(cleanRx, '')) {
+                            pxt.tickEvent("typescript.conversionFailed");
                             console.log('js roundtrip failed:')
                             console.log('-- original:');
                             console.log(js.replace(cleanRx, ''));

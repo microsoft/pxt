@@ -34,6 +34,9 @@ namespace pxt {
         }
     }
 
+    export var tickEvent: (id: string) => void = function (id) {
+    }
+
     export interface WebConfig {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",

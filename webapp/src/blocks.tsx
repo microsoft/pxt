@@ -210,6 +210,7 @@ export class Editor extends srceditor.Editor {
     }
 
     openTypeScript() {
+        pxt.tickEvent("text.showText");
         this.parent.saveTypeScriptAsync(true).done();
     }
 
