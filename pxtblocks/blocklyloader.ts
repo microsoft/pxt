@@ -501,10 +501,10 @@ namespace pxt.blocks {
         monkeyPatchBlock("variables_set", lf("assign the value of a variable"), "blocks/variables/assign");
         monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change");
 
-        monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "reference/types/boolean");
-        monkeyPatchBlock("logic_operation", lf("boolean operation"), "reference/types/boolean");
-        monkeyPatchBlock("logic_negate", lf("logical negation"), "reference/types/boolean");
-        monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "reference/types/boolean");
+        monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "blocks/logic");
+        monkeyPatchBlock("logic_operation", lf("boolean operation"), "blocks/logic");
+        monkeyPatchBlock("logic_negate", lf("logical negation"), "blocks/logic");
+        monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "blocks/logic");
 
         monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("a integer number") : lf("a decimal number"), "types/number");
         monkeyPatchBlock("math_arithmetic", lf("arithmetic operation"), "blocks/math");
