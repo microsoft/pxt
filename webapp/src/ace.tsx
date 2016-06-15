@@ -497,7 +497,7 @@ function highlightCompletionEntry(entry: CompletionEntry, key: string, text: str
 
     let spl: JSX.Element[] = []
     let cur = 0;
-    match.forEach(interval => {
+    match.forEach(interval => { 
         spl.push(<span key={spl.length}>{text.slice(cur, interval[0]) }</span>)
         spl.push(<span key={spl.length} className="highlight">{text.slice(interval[0], interval[1]) }</span>)
         cur = interval[1];
@@ -531,12 +531,19 @@ export class Editor extends srceditor.Editor {
     isTypescript = false;
 
     openBlocks() {
+        let blockFile = this.currFile.getVirtualFileName();
+        if (!blockFile) {
+            let mainPkg = pkg.mainEditorPkg();
+            if (mainPkg)
+                this.parent.setFile(mainPkg.files["main.blocks"] || mainPkg.files["main.ts"]);
+            return;
+        }
+
         // needed to test roundtrip
         this.formatCode();
 
         // might be undefined
         let mainPkg = pkg.mainEditorPkg();
-        let blockFile = this.currFile.getVirtualFileName();
         let js = this.currFile.content;
         let xml: string;
 
@@ -609,10 +616,7 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        let vf: string;
-        return this.currFile && (vf = this.currFile.getVirtualFileName()) && pkg.mainEditorPkg().files[vf]
-            ? <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
-            : undefined
+        return <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
     }
 
     undo() {
