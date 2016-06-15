@@ -205,7 +205,7 @@ namespace pxt.runner {
                                 case ts.SyntaxKind.FalseKeyword:
                                     addItem({
                                         name: "Boolean",
-                                        url: "reference/types/boolean",
+                                        url: "blocks/logic/boolean",
                                         description: lf("True or false values"),
                                         blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="logic_boolean"><field name="BOOL">TRUE</field></block></xml>'
                                     });
