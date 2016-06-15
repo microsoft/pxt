@@ -290,7 +290,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         if (cache.entries) {
             let matches = this.computeMatch(pref);
-            if (!matches.length)
+            if (!matches.length && pref.length > 5)
                 matches = this.computeFuzzyMatch(pref);
             for (let e of matches) {
                 let k = e.symbolInfo.kind
