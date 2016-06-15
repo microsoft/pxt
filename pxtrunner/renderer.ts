@@ -1,3 +1,5 @@
+/// <reference path="../typings/ace/ace.d.ts" />
+
 namespace pxt.runner {
 
     export interface ClientRenderOptions {
@@ -22,6 +24,24 @@ namespace pxt.runner {
         run?: boolean;
         hexname?: string;
         hex?: string;
+    }
+
+    function appendJs($parent: JQuery, $js: JQuery) {
+        if (typeof ace !== "undefined") {
+            let $c = $('<div class="ui content js"></div>').text($js.text());
+            let editor = ace.edit($c[0]);
+            editor.setTheme("ace/theme/textmate");
+            editor.getSession().setMode("ace/mode/typescript");
+            editor.setReadOnly(true);
+            editor.setShowPrintMargin(false);
+            editor.$blockScrolling = Infinity;
+            editor.setOptions({
+                maxLines: 1024
+            });
+            $parent.append($c);
+            editor.resize(true);
+        } else
+            $parent.append($('<div class="ui content js"/>').append($js));
     }
 
     function fillWithWidget(
@@ -50,15 +70,14 @@ namespace pxt.runner {
 
         // js menu
         if (woptions.showJs) {
-            $c.append($('<div class="ui content js"/>').append($js));
+            appendJs($c, $js);
         } else {
             let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
                 if ($c.find('.js')[0])
                     $c.find('.js').remove(); // remove previous simulators
                 else {
-                    let $jsc = $('<div class="ui content js"/>').append($js);
-                    if ($svg) $jsc.insertAfter($svg);
-                    else $c.append($jsc);
+                    if ($svg) appendJs($svg.parent(), $js);
+                    else appendJs($c, $js);
                 }
             })
             $menu.append($jsBtn);
@@ -152,7 +171,7 @@ namespace pxt.runner {
             let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
-            let js = $('<code/>').text(sig)
+            let js = $('<code/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, { showJs: true });
         });
