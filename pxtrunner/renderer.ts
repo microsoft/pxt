@@ -17,7 +17,20 @@ namespace pxt.runner {
         pxtUrl?: string;
     }
 
-    function fillWithWidget(options: ClientRenderOptions, $container: JQuery, $js: JQuery, $svg: JQuery, run?: boolean, hexname?: string, hex?: string) {
+    export interface WidgetOptions {
+        showJs?: boolean;
+        run?: boolean;
+        hexname?: string;
+        hex?: string;
+    }
+
+    function fillWithWidget(
+        options: ClientRenderOptions,
+        $container: JQuery,
+        $js: JQuery,
+        $svg: JQuery,
+        woptions: WidgetOptions = {}
+    ) {
         if (!$svg || !$svg[0]) {
             let $c = $('<div class="ui segment"></div>');
             $c.append($js);
@@ -36,7 +49,9 @@ namespace pxt.runner {
         $c.append($svg);
 
         // js menu
-        {
+        if (woptions.showJs) {
+            $c.append($('<div class="ui content js"/>').append($js));
+        } else {
             let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
                 if ($c.find('.js')[0])
                     $c.find('.js').remove(); // remove previous simulators
@@ -50,7 +65,7 @@ namespace pxt.runner {
         }
 
         // runner menu
-        if (run) {
+        if (woptions.run) {
             let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
                 if ($c.find('.sim')[0])
                     $c.find('.sim').remove(); // remove previous simulators
@@ -64,9 +79,9 @@ namespace pxt.runner {
             $menu.append($runBtn);
         }
 
-        if (hexname && hex) {
+        if (woptions.hexname && woptions.hex) {
             let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {
-                BrowserUtils.browserDownloadText(hex, hexname, pxt.appTarget.compile.hexMimeType);
+                BrowserUtils.browserDownloadText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
             })
             $menu.append($hexBtn);
         }
@@ -104,10 +119,11 @@ namespace pxt.runner {
             let hex = options.hex && compiled && r.compileJS.outfiles[ts.pxt.BINARY_HEX]
                 ? r.compileJS.outfiles[ts.pxt.BINARY_HEX] : undefined;
             let hexname = `${appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
-            fillWithWidget(options, c, js, s,
-                options.simulator && compiled,
-                hexname,
-                hex);
+            fillWithWidget(options, c, js, s, {
+                run: options.simulator && compiled,
+                hexname: hexname,
+                hex: hex
+            });
         });
     }
 
@@ -138,7 +154,7 @@ namespace pxt.runner {
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code/>').text(sig)
             if (options.snippetReplaceParent) c = c.parent();
-            fillWithWidget(options, c, js, s, false);
+            fillWithWidget(options, c, js, s, { showJs: true });
         });
     }
 
