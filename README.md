@@ -1,5 +1,4 @@
 # Programming Experience Toolkit - pxt.io
-## A kinder JavaScript experience
 
 * [Try it live!](https://pxt.io)
 
