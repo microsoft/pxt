@@ -478,7 +478,7 @@ namespace pxt.blocks {
             Blockly.Blocks[id].init = function () {
                 // The magic of dynamic this-binding.
                 old.call(this);
-                this.setHelpUrl("/reference/" + url);
+                this.setHelpUrl("/blocks/" + url);
                 if (!this.codeCard) {
                     let tb = document.getElementById('blocklyToolboxDefinition');
                     let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
