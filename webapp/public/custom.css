@@ -256,9 +256,8 @@ div.simframe > iframe {
     position: absolute;
     z-index: 10;
     left: 10px;
-    top: 10px;
     width: 30em;
-    max-height: 30em;
+    max-height: 26em;
     overflow-y: auto;
     margin-top: 0.4em;
     margin-left: -1.1em;

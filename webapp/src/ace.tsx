@@ -425,18 +425,10 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
 
         textPos.column -= pref.length
 
-        let pos = renderer.$cursorLayer.getPixelPosition(textPos, false);
-        pos.top -= renderer.scrollTop;
-        pos.left -= renderer.scrollLeft;
-        pos.top += renderer.layerConfig.lineHeight;
-        pos.left += renderer.gutterWidth;
-
         let info = this.fetchCompletionInfo(textPos, pref, isTopLevel);
-
         if (!info) return null; // or Loading... ?
 
         let hasMore = false
-
         if (info.length > maxCompleteItems) {
             info = info.slice(0, maxCompleteItems)
             info.push(mkSyntheticEntry(lf("There's more!"), lf("Keep typing to explore functionality")))
@@ -444,6 +436,19 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         }
 
         this.entries = info;
+
+        const lineHeight = renderer.layerConfig.lineHeight;
+        let pos = renderer.$cursorLayer.getPixelPosition(textPos, false) as { top?: number; bottom?: number; left: number; };
+        pos.top -= renderer.scrollTop;
+        pos.left -= renderer.scrollLeft;
+        pos.top += lineHeight;
+        pos.left += renderer.gutterWidth;
+
+        // rebase the complition dialog when the cursor is low on the screen.
+        if (pos.top > renderer.$size.height * 0.66 && pos.top + 2.1 * lineHeight * (Math.min(info.length, 10) + 1) > renderer.$size.height) {
+            pos.bottom = renderer.$size.height - pos.top + lineHeight * 1.5;
+            delete pos.top;
+        }
 
         this.completionRange = new Range(textPos.row, textPos.column, textPos.row, textPos.column + pref.length);
         let idx = this.selectedIndex();
@@ -464,9 +469,14 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
                 args += " : " + friendlyTypeName(si.retType)
             return args
         }
-
+        let style: any = { left: pos.left + "px" };
+        if (pos.top) style.top = pos.top + "px";
+        if (pos.bottom) {
+            style.bottom = pos.bottom + "px";
+            style.maxHeight = "22em";
+        }
         return (
-            <div className='ui vertical menu inverted completer' style={{ left: pos.left + "px", top: pos.top + "px" }}>
+            <div className='ui vertical menu inverted completer' style={style}>
                 {info.map((e, i) =>
                     <sui.Item class={'link ' + (i == idx ? "active" : "") }
                         key={e.name}
@@ -497,7 +507,7 @@ function highlightCompletionEntry(entry: CompletionEntry, key: string, text: str
 
     let spl: JSX.Element[] = []
     let cur = 0;
-    match.forEach(interval => { 
+    match.forEach(interval => {
         spl.push(<span key={spl.length}>{text.slice(cur, interval[0]) }</span>)
         spl.push(<span key={spl.length} className="highlight">{text.slice(interval[0], interval[1]) }</span>)
         cur = interval[1];
