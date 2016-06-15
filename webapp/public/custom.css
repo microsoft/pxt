@@ -541,6 +541,9 @@ html {
     #aceEditor, #aceEditor .ace_editor {
         font-size: 1rem;
     }
+    #errorcard {
+        display:none;
+    }
     #maineditor {     
         left: 0;
         bottom:2rem;
