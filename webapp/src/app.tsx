@@ -646,7 +646,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     importHex(data: pxt.cpp.HexFile) {
         let targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
-            core.warningNotification("Sorry, we could not recognize this file.")
+            core.warningNotification(lf("Sorry, we could not recognize this file."))
             return;
         }
         if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
@@ -682,7 +682,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         }
 
-        core.warningNotification("Sorry, we could not import this project.")
+        core.warningNotification(lf("Sorry, we could not import this project."))
     }
 
     initDragAndDrop() {
@@ -717,7 +717,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: Util.Map<string>, nameOverride?: string): Promise<void> {
         let cfg = pxt.U.clone(prj.config);
-        cfg.name = nameOverride || "Untitled" // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
+        cfg.name = nameOverride || lf("Untitled") // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: ScriptText = Util.clone(prj.files)
         if (fileOverrides)
             Util.jsonCopyFrom(files, fileOverrides)
@@ -971,7 +971,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
-                                <sui.DropdownMenu class='floating icon button' text="More..." textClass="ui landscape only" icon='sidebar'>
+                                <sui.DropdownMenu class='floating icon button' text={lf("More...")} textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     {this.state.header ? <div className="ui divider"></div> : undefined }

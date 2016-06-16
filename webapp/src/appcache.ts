@@ -14,7 +14,7 @@ export function init() {
     }, false);
 
     appCache.addEventListener('updateready', () => {
-        core.infoNotification("Update download complete. Updating...");
+        core.infoNotification(lf("Update download complete. Reloading..."));
         setTimeout(() => location.reload(), 3000);
     }, false);
 }
