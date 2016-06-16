@@ -92,7 +92,9 @@ div.simframe > iframe {
   overflow-y: auto;
   margin-top: 0;  
   margin-bottom: 0;
-  direction:ltr;
+}
+.filemenu {
+  direction:ltr;    
 }
 
 #menubar {
@@ -163,6 +165,10 @@ div.simframe > iframe {
 
 #msg > div:empty {
    display: none;
+}
+
+.rtl .ui.menu .ui.dropdown .menu > .item {
+    text-align: right;
 }
 
 .ui.dropdown,
