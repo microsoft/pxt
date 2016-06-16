@@ -214,8 +214,37 @@ namespace pxt.runner {
             })
     }
 
+    export enum LanguageMode {
+        Blocks,
+        TypeScript
+    }
+
+    let languageMode = LanguageMode.Blocks;
+    export var onLanguageModeChanged: (mode: LanguageMode) => void = undefined;
+
+    export function setLanguageMode(mode: LanguageMode) {
+        if (mode != languageMode) {
+            console.log('language: ' + mode);
+            languageMode = mode;
+            if (onLanguageModeChanged) onLanguageModeChanged(languageMode);
+        }
+    }
+
+    function receieDocMessage(e: MessageEvent) {
+        let m = e.data as pxsim.SimulatorMessage;
+        if (!m) return;
+        switch (m.type) {
+            case "fileloaded":
+                let fm = m as pxsim.SimulatorFileLoadedMessage;
+                let name = fm.name;
+                if (/\.ts$/i.test(name)) setLanguageMode(LanguageMode.TypeScript);
+                else if (/\.blocks/i.test(name)) setLanguageMode(LanguageMode.Blocks);
+        }
+    }
+
     export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
         $(loading).hide()
+
         function render(docid: string) {
             console.log(`rendering ${docid}`);
             $(content).hide()
@@ -237,6 +266,7 @@ namespace pxt.runner {
             }
         }
 
+        window.addEventListener("message", receieDocMessage, false);
         window.addEventListener("hashchange", () => {
             renderHash();
         }, false);

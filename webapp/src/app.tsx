@@ -572,6 +572,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
         if (e)
             this.editor.setViewState(e.pos)
+
+        this.notifySideDocs({
+            type: "fileloaded",
+            name: this.editorFile.getName()
+        } as pxsim.SimulatorFileLoadedMessage)
+    }
+
+    notifySideDocs(message: pxsim.SimulatorMessage) {
+        let sd = document.getElementById("sidedocs") as HTMLIFrameElement;
+        if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
     }
 
     setFile(fn: pkg.File) {
