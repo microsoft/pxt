@@ -38,6 +38,6 @@ export class BlocksPreview extends React.Component<BlocksPreviewProps, BlocksPre
     }
 
     render() {
-        return (<div style={ { width: '100%', minHeight: '10em' } }></div>)
+        return (<div style={ { width: "100%", minHeight: "10em", direction:"ltr" } }></div>)
     }
 }
