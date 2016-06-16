@@ -66,8 +66,8 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
 </div>
 ${pxtwinrt.isWindows() ? `
     <div class="ui info message">
-        Tired of copying the .hex file?
-        <a href="/uploader" target="_blank">Install the Uploader</a>!
+        ${lf("Tired of copying the .hex file?")}
+        <a href="/uploader" target="_blank">${lf("Install the Uploader!")}</a>
     </div>
     ` : ""}
 `,
@@ -78,7 +78,7 @@ ${pxtwinrt.isWindows() ? `
 
 function localhostDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
     console.log('local deployment...');
-    core.infoNotification("Uploading .hex file...");
+    core.infoNotification(lf("Uploading .hex file..."));
     return Util.requestAsync({
         url: "http://localhost:3232/api/deploy",
         headers: { "Authorization": Cloud.localToken },
@@ -91,10 +91,10 @@ export function initCommandsAsync(): Promise<void> {
     if (pxtwinrt.isWinRT()) {
         console.log('using winrt commands')
         pxt.commands.deployCoreAsync = (resp) => {
-            core.infoNotification("Uploading .hex file");
+            core.infoNotification(lf("Uploading .hex file..."));
             return pxtwinrt.deployCoreAsync(resp)
                 .then(() => {
-                    core.infoNotification(".hex file upladed");
+                    core.infoNotification(lf(".hex file uploaded"));
                 })
         }
         pxt.commands.browserDownloadAsync = pxtwinrt.browserDownloadAsync;

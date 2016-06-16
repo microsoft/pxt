@@ -149,7 +149,7 @@ export class LogView extends React.Component<{}, LogViewState> {
         </div>
         <div id="datasavelocalfile" class="ui bottom attached button">
             <i class="download icon"></i>
-            Download data
+            ${lf("Download data")}
         </div>        
     </div>
     <div id="datastreamcard" class="ui card">
