@@ -987,7 +987,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
-                                <sui.DropdownMenu class='floating icon button' text={lf("More...")} textClass="ui landscape only" icon='sidebar'>
+                                <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
@@ -1057,7 +1057,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 <SideDocs ref="sidedoc" parent={this} />
-                {targetTheme.organizationLogo ? <img id="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
+                {targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
                 <ShareEditor parent={this} ref={v => this.shareEditor = v} />
             </div>
@@ -1237,6 +1237,12 @@ function initTheme() {
         .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${pxt.appTarget.appTheme.accentColor}; }`;
         document.getElementsByTagName('head')[0].appendChild(style);
     }
+    // RTL languages
+    if (/^ar/i.test(Util.userLanguage())) {
+        console.log("rtl layout");
+        document.body.classList.add("rtl");
+        document.body.style.direction = "rtl";
+    }
 }
 
 function parseHash(): { cmd: string; arg: string } {
@@ -1304,9 +1310,9 @@ $(document).ready(() => {
     const cfg = pxt.webConfig;
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
+        .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => {
             return compiler.init();
         })

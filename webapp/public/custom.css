@@ -56,12 +56,19 @@ body {
 #logo img, #rightlogo img {
     height: 2.5rem;    
 }
-#organization {
+.ace_content, .completer {
+    direction:ltr;
+}
+.organization {
     position:absolute;
     top:1rem;
     right:1rem;
     height:2rem;        
     z-index:100;
+}
+.rtl .organization {
+    right:auto;
+    left:1rem;
 }
 
 div.simframe {
@@ -85,6 +92,7 @@ div.simframe > iframe {
   overflow-y: auto;
   margin-top: 0;  
   margin-bottom: 0;
+  direction:ltr;
 }
 
 #menubar {
@@ -489,11 +497,15 @@ html {
 }
 
 @media only screen and (max-width: 64em), only screen and (max-aspect-ratio: 14/10) {
-    #organization {
+    .organization {
         right:auto; 
         top:auto;
         left:1.5rem;
         bottom:0.5rem;
+    }
+    .rtl .organization {
+        left:1.5rem;
+        right:auto;
     }
     #filelist {
         bottom:3rem;
@@ -531,13 +543,17 @@ html {
         bottom: 2rem;
         margin: 0;
     }
-    #organization {
+    .organization {
         top:auto;
         left:0.5rem;
         right: auto;
         bottom: 0.5rem;
         height: 1.3rem;        
     }
+    .rtl .organization {
+        left:0.5rem;
+        right: auto;
+    }    
     #aceEditor, #aceEditor .ace_editor {
         font-size: 1rem;
     }
