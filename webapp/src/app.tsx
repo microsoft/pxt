@@ -703,10 +703,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.scriptSearch.modal.show()
     }
 
-    newProject() {
+    newEmptyProject() {
+        this.newProject({
+            "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>"
+        })
+    }
+
+    newProject(filesOverride?: Util.Map<string>) {
         pxt.tickEvent("menu.newproject");
         core.showLoading(lf("creating new project..."));
-        this.newBlocksProjectAsync()
+        this.newBlocksProjectAsync(filesOverride)
             .then(() => Promise.delay(1500))
             .done(() => core.hideLoading());
     }
@@ -972,7 +978,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </div>
                             <div className="ui buttons">
                                 <sui.DropdownMenu class='floating icon button' text={lf("More...")} textClass="ui landscape only" icon='sidebar'>
-                                    <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newProject() } />
+                                    <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
@@ -1244,9 +1250,12 @@ function handleHash(hash: { cmd: string; arg: string }) {
             break;
         case "follow":
             editor.setSideDoc(hash.arg);
-            editor.newProject();
+            editor.newEmptyProject();
             break;
         case "newproject":
+            editor.newEmptyProject();
+            break;
+        case "gettingstarted":
             editor.newProject();
             break;
     }
