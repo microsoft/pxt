@@ -1226,10 +1226,10 @@ function initTheme() {
 function parseHash(): { cmd: string; arg: string } {
     let hashCmd = ""
     let hashArg = ""
-    let hashM = /^#(\w+):([\/\-\w]+)$/.exec(window.location.hash)
+    let hashM = /^#(\w+)(:([\/\-\w]+))?$/.exec(window.location.hash)
     if (hashM) {
         window.location.hash = ""
-        return { cmd: hashM[1], arg: hashM[2] };
+        return { cmd: hashM[1], arg: hashM[3] || '' };
     }
     return { cmd: '', arg: '' };
 }
@@ -1244,6 +1244,9 @@ function handleHash(hash: { cmd: string; arg: string }) {
             break;
         case "follow":
             editor.setSideDoc(hash.arg);
+            editor.newProject();
+            break;
+        case "newproject":
             editor.newProject();
             break;
     }
