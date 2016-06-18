@@ -212,11 +212,14 @@ namespace ts.pxt {
         namespaces.sort(compareSymbol)
 
         let locStrings: U.Map<string> = {};
+        let blockStrings: U.Map<string> = {};
         let reference = ""
         let writeRef = (s: string) => reference += s + "\n"
         let writeLoc = (si: SymbolInfo) => {
             if (si.qName && si.attributes.jsDoc)
                 locStrings[si.qName] = si.attributes.jsDoc;
+            if (si.qName && si.attributes.block)
+                blockStrings[si.qName] = si.attributes.block;
         }
         writeRef(`# ${pkg} Reference`)
         writeRef('')
@@ -257,10 +260,15 @@ namespace ts.pxt {
         writeRef('```');
 
         files[pkg + "-reference.md"] = reference;
-        let locs: U.Map<string> = {};
-        Object.keys(locStrings).sort().forEach(l => locs[l] = locStrings[l]);
-        files[pkg + "-strings.json"] = JSON.stringify(locs, null, 2);
+        mapLocs(locStrings, "");
+        mapLocs(blockStrings, "-blocks");
         return files;
+
+        function mapLocs(m: U.Map<string>, name: string) {
+            let locs: U.Map<string> = {};
+            Object.keys(m).sort().forEach(l => locs[l] = m[l]);
+            files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
+        }
 
         function hasBlock(sym: SymbolInfo): boolean {
             return !!sym.attributes.block && !!sym.attributes.blockId;
