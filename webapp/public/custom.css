@@ -28,11 +28,19 @@ body {
   border:none;
   height: calc(100% - 4.5rem);
 }
+.rtl #sidedocs {
+    right:auto;
+    left:0;
+}
 #sidedocsbutton {
   position: absolute;
   top:4.75rem;
   right:1.25rem;
   display:none;
+}
+.rtl #sidedocsbutton {
+    right:auto;
+    left:1.25rem;
 }
 #logo {
     font-size: 2.8rem;
@@ -86,13 +94,13 @@ div.simframe > iframe {
 }
 
 #filelist {
-  left: 0;
   padding: 0em 1em 0em 0.5em;
   overflow-x: hidden;
   overflow-y: auto;
   margin-top: 0;  
   margin-bottom: 0;
 }
+
 .filemenu {
   direction:ltr;    
 }
@@ -121,16 +129,16 @@ div.simframe > iframe {
     background: rgba(0,0,0,0.05);
 }
 
-#maineditor {
-  right: 0;
-}
-
 #helpcard {
     position: absolute;
     right: 2rem;
     bottom: 2.2rem;
     margin: 0;
     z-index: 5;
+}
+.rtl #helpcard {
+    left:2rem;
+    right:auto;
 }
 
 #settings .popup {
@@ -167,7 +175,8 @@ div.simframe > iframe {
    display: none;
 }
 
-.rtl .ui.menu .ui.dropdown .menu > .item {
+.rtl .ui.menu .ui.dropdown .menu > .item,
+.rtl .ui.modal {
     text-align: right;
 }
 
@@ -239,10 +248,15 @@ div.simframe > iframe {
 
 .blocklyPreview {
  position: absolute;
- top: 50%; left: 50%;
+ top: 50%; 
+ left: 50%;
  transform: translate(-50%,-50%);    
  width: calc(100% - 1em);
  max-height: calc(100% - 1em);
+}
+.rtl .blocklyPreview {
+    right:50%;
+    left:auto;
 }
 
 /* ACE */
@@ -455,9 +469,18 @@ html {
   left: 0;
   min-width: 23rem;
 }
+.rtl #filelist {
+    left: auto;
+    right: 0;
+}
 
 #maineditor {
+  right: 0;
   left: 23rem;
+}
+.rtl #maineditor {
+    left:0;
+    right:23rem;
 }
 
 .ui.widedesktop.only {
@@ -493,6 +516,10 @@ html {
     .sideDocs #maineditor {
         right:22rem;
     }
+    .rtl .sideDocs #maineditor {
+        left:22rem;
+        right:23rem;
+    }
     .sideDocs #sidedocs {
         display:block;
         width:22rem;
@@ -520,6 +547,10 @@ html {
     #maineditor {
         left:20rem;
     }
+    .rtl #maineditor {
+        right:0rem;
+        left:0;
+    }
 }
 
 /* smaller desktop screen */
@@ -531,7 +562,6 @@ html {
         display:none !important;
     }
     #helpcard {
-        right: 2rem;
         top: auto;
         bottom: 2.2rem;
         margin: 0;
@@ -544,7 +574,6 @@ html {
 /* thin desktop portrait mode */
 @media only screen and (max-width: 55em), only screen and (max-aspect-ratio: 7/10) {
     #helpcard {
-        right: 2rem;
         top: auto;
         bottom: 2rem;
         margin: 0;
@@ -568,6 +597,7 @@ html {
     }
     #maineditor {     
         left: 0;
+        right:0;
         bottom:2rem;
     }        
     #boardview.errored {
@@ -587,6 +617,10 @@ html {
         top:auto;      
         width:auto;  
         min-width: inherit;   
+    }
+    .rtl #filelist {
+        left:auto;
+        right:1rem;
     }
     div.simframe {
         display:inline-block;
