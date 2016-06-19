@@ -130,6 +130,7 @@ export class Editor extends srceditor.Editor {
                 minScale: .1,
                 scaleSpeed: 1.1
             },
+            rtl: Util.userLanguageRtl()
         });
         this.editor.addChangeListener((ev) => {
             if (ev.recordUndo)

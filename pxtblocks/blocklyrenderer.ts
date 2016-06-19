@@ -42,7 +42,9 @@ namespace pxt.blocks {
                 scrollbars: false,
                 readOnly: true,
                 zoom: false,
-                media: pxt.webConfig.pxtCdnUrl + "blockly/media/"
+                sound: false,
+                media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
+                rtl: Util.userLanguageRtl()
             });
         }
 

@@ -486,6 +486,10 @@ namespace ts.pxt.Util {
         return _localizeLang;
     }
 
+    export function userLanguageRtl(): boolean {
+        return /^ar|iw/i.test(_localizeLang);
+    }
+
     export function _localize(s: string) {
         return _localizeStrings[s] || s;
     }

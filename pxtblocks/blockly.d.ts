@@ -205,6 +205,7 @@ declare namespace Blockly {
             scaleSpeed?: number;
         };
         enableRealTime?: boolean;
+        rtl?: boolean;
     }
 
     // tslint:disable-next-line
