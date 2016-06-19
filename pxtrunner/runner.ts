@@ -230,7 +230,7 @@ namespace pxt.runner {
         }
     }
 
-    function receieDocMessage(e: MessageEvent) {
+    function receiveDocMessage(e: MessageEvent) {
         let m = e.data as pxsim.SimulatorMessage;
         if (!m) return;
         switch (m.type) {
@@ -266,7 +266,7 @@ namespace pxt.runner {
             }
         }
 
-        window.addEventListener("message", receieDocMessage, false);
+        window.addEventListener("message", receiveDocMessage, false);
         window.addEventListener("hashchange", () => {
             renderHash();
         }, false);
