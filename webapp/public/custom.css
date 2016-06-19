@@ -557,7 +557,7 @@ html {
         left:20rem;
     }
     .rtl #maineditor {
-        right:0rem;
+        right:20rem;
         left:0;
     }
 }
@@ -604,11 +604,11 @@ html {
     #errorcard {
         display:none;
     }
-    #maineditor {     
+    #maineditor, .rtl #maineditor {     
         left: 0;
         right:0;
         bottom:2rem;
-    }        
+    }            
     #boardview.errored {
         display:none !important;
     }
