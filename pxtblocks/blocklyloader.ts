@@ -126,13 +126,14 @@ namespace pxt.blocks {
 
     function injectToolbox(tb: Element, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, block: HTMLElement) {
         let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+        let nsn = info.apis.byQName[ns];
+        if (nsn) ns = nsn.attributes.block || ns;
         let catName = Util.capitalize(ns)
         let category = categoryElement(tb, catName);
         if (!category) {
             console.log('toolbox: adding category ' + ns)
             category = document.createElement("category");
             category.setAttribute("name", catName)
-            let nsn = info.apis.byQName[ns];
             let nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
             category.setAttribute("weight", nsWeight.toString())
             if (nsn && nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
