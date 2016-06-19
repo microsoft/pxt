@@ -254,9 +254,18 @@ div.simframe > iframe {
  width: calc(100% - 1em);
  max-height: calc(100% - 1em);
 }
-.rtl .blocklyPreview {
-    right:50%;
-    left:auto;
+@supports (-ms-accelerator:true) {
+    .rtl .blocklyPreview {
+        right:50%;
+        left:auto;
+    }
+}
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active), (-ms-accelerator:true) {
+     /* IE10+, Edge CSS styles go here */
+    .rtl .blocklyPreview {
+        right:50%;
+        left:auto;
+    }
 }
 
 /* ACE */
