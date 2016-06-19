@@ -212,15 +212,25 @@ namespace ts.pxt {
         namespaces.sort(compareSymbol)
 
         let locStrings: U.Map<string> = {};
-        let blockStrings: U.Map<string> = {};
         let reference = ""
-        let writeRef = (s: string) => reference += s + "\n"
-        let writeLoc = (si: SymbolInfo) => {
-            if (si.qName && si.attributes.jsDoc)
+        const writeRef = (s: string) => reference += s + "\n"
+        const writeLoc = (si: SymbolInfo) => {
+            if (!si.qName) return;
+            if (si.attributes.jsDoc)
                 locStrings[si.qName] = si.attributes.jsDoc;
-            if (si.qName && si.attributes.block)
-                blockStrings[si.qName] = si.attributes.block;
+            if (si.attributes.block)
+                locStrings[`${si.qName}|block`] = si.attributes.block;
+            if (si.parameters)
+                si.parameters.filter(pi => !!pi.description).forEach(pi => {
+                    locStrings[`${si.qName}|param|${pi.name}`] = pi.description;
+                })
         }
+        const mapLocs = (m: U.Map<string>, name: string) => {
+            let locs: U.Map<string> = {};
+            Object.keys(m).sort().forEach(l => locs[l] = m[l]);
+            files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
+        }
+
         writeRef(`# ${pkg} Reference`)
         writeRef('')
         writeRef('```namespaces')
@@ -229,6 +239,9 @@ namespace ts.pxt {
                 .filter(si => si.namespace == ns.name && !!si.attributes.help)
                 .sort(compareSymbol)
             if (!syms.length) continue;
+
+            if (!ns.attributes.block) ns.attributes.block = ns.name; // reusing this field to store localized namespace name
+            writeLoc(ns);
 
             let nsmd = "";
             let writeNs = (s: string) => {
@@ -239,8 +252,6 @@ namespace ts.pxt {
             writeNs('')
 
             if (ns.attributes.jsDoc) {
-                writeLoc(ns);
-
                 writeNs(`${ns.attributes.jsDoc}`)
                 writeNs('')
             }
@@ -261,14 +272,7 @@ namespace ts.pxt {
 
         files[pkg + "-reference.md"] = reference;
         mapLocs(locStrings, "");
-        mapLocs(blockStrings, "-blocks");
         return files;
-
-        function mapLocs(m: U.Map<string>, name: string) {
-            let locs: U.Map<string> = {};
-            Object.keys(m).sort().forEach(l => locs[l] = m[l]);
-            files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
-        }
 
         function hasBlock(sym: SymbolInfo): boolean {
             return !!sym.attributes.block && !!sym.attributes.blockId;

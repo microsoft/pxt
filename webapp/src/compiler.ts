@@ -130,9 +130,13 @@ function localizeApis(apis: ts.pxt.ApisInfo) {
     if (ts.pxt.Util.userLanguage() != "en") {
         let loc = pkg.mainPkg.localizationStrings(lang);
         Util.values(apis.byQName).forEach(fn => {
-            const jsDoc = fn.attributes.jsDoc;
-            if (jsDoc)
-                fn.attributes.jsDoc = loc[fn.qName] || jsDoc;
+            const jsDoc = loc[fn.qName]
+            if (jsDoc) {
+                fn.attributes.jsDoc = jsDoc;
+                fn.attributes.block = loc[`${fn.qName}|block`] || fn.attributes.block;
+                if (fn.parameters)
+                    fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
+            }
         });
     }
 }
