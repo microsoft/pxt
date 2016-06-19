@@ -131,6 +131,14 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return data;
     }
 
+    fetchBundled(): pxt.PackageConfig[] {
+        if (!this.state.packages || !!this.state.searchFor) return [];
+
+        const bundled = pxt.appTarget.bundledpkgs;
+        return Util.values(bundled)
+            .map(bundle => JSON.parse(bundle["pxt.json"]) as pxt.PackageConfig)
+    }
+
     fetchLocalData(): Header[] {
         if (this.state.packages) return [];
 
@@ -141,12 +149,20 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     renderCore() {
-        let headers = this.fetchLocalData();
-        let data = this.fetchCloudData();
+        const headers = this.fetchLocalData();
+        const data = this.fetchCloudData();
+        const bundles = this.fetchBundled();
 
         let chgHeader = (hdr: Header) => {
             if (this.modal) this.modal.hide();
             this.props.parent.loadHeaderAsync(hdr)
+        }
+        let chgBundle = (scr: pxt.PackageConfig) => {
+            if (this.modal) this.modal.hide();
+            let p = pkg.mainEditorPkg();
+            p.addDepAsync(scr.name, "*")
+                .then(r => this.props.parent.loadHeaderAsync(this.props.parent.state.header))
+                .done();
         }
         let upd = (v: any) => {
             this.setState({ searchFor: (v.target as any).value })
@@ -185,6 +201,15 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             description={lf("Import project from a .hex file") }
                             onClick={() => importHex() }
                             /> : undefined}
+                    {bundles.map(scr =>
+                        <codecard.CodeCardView
+                            key={'bundled' + scr.name}
+                            name={scr.name}
+                            description={scr.description}
+                            url={"/" + scr.installedVersion}
+                            onClick={() => chgBundle(scr) }
+                            />
+                    ) }
                     {headers.map(scr =>
                         <codecard.CodeCardView
                             key={'local' + scr.id}
@@ -1262,16 +1287,20 @@ function handleHash(hash: { cmd: string; arg: string }) {
     if (!editor) return;
     switch (hash.cmd) {
         case "doc":
+            pxt.tickEvent("hash.doc")
             editor.setSideDoc(hash.arg);
             break;
         case "follow":
+            pxt.tickEvent("hash.follow")
             editor.setSideDoc(hash.arg);
             editor.newEmptyProject();
             break;
         case "newproject":
+            pxt.tickEvent("hash.newproject")
             editor.newEmptyProject();
             break;
         case "gettingstarted":
+            pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
             break;
     }
