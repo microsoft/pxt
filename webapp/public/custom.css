@@ -236,6 +236,10 @@ div.simframe > iframe {
     font-size:1rem !important;
 }
 
+.rtl .blocklyText {
+    text-align:right;
+}
+
 .blocklyTreeLabel {
     font-size:1.25rem !important;
 }
