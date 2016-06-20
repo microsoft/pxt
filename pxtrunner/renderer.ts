@@ -195,8 +195,10 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             let segment = $('<div class="ui segment"/>').append(s);
             c.replaceWith(segment);
-        }, { emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio, 
-            config: options.config });
+        }, {
+            emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio,
+                config: options.config
+            });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
