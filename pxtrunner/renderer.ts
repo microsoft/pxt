@@ -17,6 +17,8 @@ namespace pxt.runner {
         hex?: boolean;
         hexName?: string;
         pxtUrl?: string;
+        configClass?: string;
+        config?: pxt.PackageConfig;
     }
 
     export interface WidgetOptions {
@@ -122,6 +124,9 @@ namespace pxt.runner {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
+        if (!options.emPixels) options.emPixels = 14;
+        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
+
         return pxt.runner.decompileToBlocksAsync($el.text(), options)
             .then((r) => {
                 try {
@@ -150,7 +155,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        });
+        }, { config: options.config });
     }
 
     function decompileCallInfo(stmt: ts.Statement): ts.pxt.CallInfo {
@@ -181,7 +186,7 @@ namespace pxt.runner {
             let js = $('<code/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
-        });
+        }, { config: options.config });
     }
 
     function renderShuffleAsync(options: ClientRenderOptions): Promise<void> {
@@ -190,7 +195,8 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             let segment = $('<div class="ui segment"/>').append(s);
             c.replaceWith(segment);
-        }, { emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio });
+        }, { emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio, 
+            config: options.config });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -198,10 +204,10 @@ namespace pxt.runner {
             let s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
             c.replaceWith(s);
-        });
+        }, { config: options.config });
     }
 
-    function renderLinksAsync(cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
+    function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
         return renderNextSnippetAsync(cls, (c, r) => {
             let cjs = r.compileJS;
             if (!cjs) return;
@@ -296,7 +302,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        })
+        }, { config: options.config })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
@@ -341,11 +347,31 @@ namespace pxt.runner {
         return options.pxtUrl ? options.pxtUrl + '/--run' : pxt.webConfig && pxt.webConfig.runUrl ? pxt.webConfig.runUrl : '/--run';
     }
 
+    function mergeConfig(options: ClientRenderOptions) {
+        // additional config options
+        if (!options.configClass) return;
+        $('.' + options.configClass).each((i, c) => {
+            let $c = $(c);
+            try {
+                let cfg = JSON.parse($c.text()) as pxt.PackageConfig;
+                if (!options.config) options.config = {} as pxt.PackageConfig;
+                Util.jsonMergeFrom(options.config, cfg);
+                if (options.snippetReplaceParent) $c = $c.parent();
+                $c.remove();
+                console.log('merged pxt.json config:', JSON.stringify(options.config, null, 2));
+            } catch (e) {
+                console.log("invalid json payload: ", e);
+                $c.append($('<div/>').addClass("ui segment warning").text(e.message));
+            }
+        });
+    }
+
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
 
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
 
+        mergeConfig(options);
         if (options.simulatorClass) {
             // simulators
             $('.' + options.simulatorClass).each((i, c) => {
@@ -365,8 +391,8 @@ namespace pxt.runner {
 
         return Promise.resolve()
             .then(() => renderShuffleAsync(options))
-            .then(() => renderLinksAsync(options.linksClass, options.snippetReplaceParent, false))
-            .then(() => renderLinksAsync(options.namespacesClass, options.snippetReplaceParent, true))
+            .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
+            .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
             .then(() => renderSignaturesAsync(options))
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderSnippetsAsync(options))

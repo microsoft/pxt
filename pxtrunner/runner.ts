@@ -6,6 +6,7 @@ namespace pxt.runner {
     export interface SimulateOptions {
         id?: string;
         code?: string;
+        config?: pxt.PackageConfig;
     }
 
     class EditorPackage {
@@ -144,7 +145,7 @@ namespace pxt.runner {
         console.error(msg)
     }
 
-    function loadPackageAsync(id: string) {
+    function loadPackageAsync(id: string, config?: pxt.PackageConfig) {
         let host = mainPkg.host();
         mainPkg = new pxt.MainPackage(host)
         mainPkg._verspec = id ? "pub:" + id : "empty:tsprj"
@@ -157,7 +158,7 @@ namespace pxt.runner {
                     .catch(e => {
                         showError(lf("Cannot load package: {0}", e.message))
                     })
-            })
+            });
     }
 
     function getCompileOptionsAsync(hex?: boolean) {
@@ -182,7 +183,7 @@ namespace pxt.runner {
     }
 
     export function generateHexFileAsync(options: SimulateOptions): Promise<string> {
-        return loadPackageAsync(options.id)
+        return loadPackageAsync(options.id, options.config)
             .then(() => compileAsync(true, opts => {
                 if (options.code) opts.fileSystem["main.ts"] = options.code;
             }))
@@ -195,7 +196,7 @@ namespace pxt.runner {
     }
 
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
-        return loadPackageAsync(simOptions.id)
+        return loadPackageAsync(simOptions.id, simOptions.config)
             .then(() => compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
             }))
@@ -391,7 +392,7 @@ ${ts}
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-        return loadPackageAsync(null)
+        return loadPackageAsync(null, options.config)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 // compile

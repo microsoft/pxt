@@ -36,6 +36,19 @@ and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/
 
 To avoid screenshot hell, PXT automatically renders code snippets to blocks or javascript. This is done by specifying a language on code blocks.
 
+### dependencies
+
+You need declare the packages required to load your snippet, unless they are part of the default empty template. 
+To find the correct syntax, add the require packages to a project then open the ``pxt.json`` file as text and copy the ``dependencies`` section.
+
+    ```config
+    {
+        "dependencies": {
+            "microbit-devices": "*"
+        }
+    }
+    ```
+
 ### blocks
 
 The **blocks** language renders a JavaScript snippet into blocks and provide a simulator if needed.

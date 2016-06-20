@@ -27,6 +27,7 @@ namespace pxt.blocks {
         layout?: BlockLayout;
         clean?: boolean;
         aspectRatio?: number;
+        config?: pxt.PackageConfig;
     }
 
     export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Align }): JQuery {
