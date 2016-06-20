@@ -36,36 +36,36 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         htmlBody: `        
 <div class="ui fluid vertical steps">
   <div class="step">
-    <i class="violet plug icon"></i>
+    <i class="ui violet plug icon landscape only"></i>
     <div class="content">
-      <div class="title">${lf("Connect")}</div>
+      <div class="ui title landscape only">${lf("Connect")}</div>
       <div class="description">${lf("Connect your {0} to your computer using the USB cable.", boardName)}</div>
     </div>
   </div>
   <div class="step">
-    <i class="violet save icon"></i>
+    <i class="ui violet save icon landscape only"></i>
     <div class="content">
-      <div class="title">${lf("Save")}</div>
+      <div class="ui title landscape only">${lf("Save")}</div>
       <div class="description">${lf("Save the <code>.hex</code> file to your computer.")}</div>
     </div>
   </div>
   <a href='${encodeURI(url)}' download='${Util.htmlEscape(fn)}' target='_blank' class="step">
-    <i class="violet copy icon"></i>
+    <i class="ui violet copy icon landscape only"></i>
     <div class="content">
-      <div class="title">${lf("Copy")}</div>
+      <div class="ui title landscape only">${lf("Copy")}</div>
       <div class="description">${lf("Move the saved <code>.hex</code> file to the <code>{0}</code> drive.", boardDriveName)}</div>
     </div>
   </a>
   <div class="step">
-    <i class="yellow flash circle icon"></i>
+    <i class="ui yellow flash circle icon landscape only"></i>
     <div class="content">
-      <div class="title">${lf("Almost done...")}</div>
+      <div class="ui title landscape only">${lf("Almost done...")}</div>
       <div class="description">${lf("Wait till the yellow LED is done blinking.")}</div>
     </div>
   </div>
 </div>
 ${pxtwinrt.isWindows() ? `
-    <div class="ui info message">
+    <div class="ui info message landscape only">
         ${lf("Tired of copying the .hex file?")}
         <a href="/uploader" target="_blank">${lf("Install the Uploader!")}</a>
     </div>
