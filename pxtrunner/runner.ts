@@ -6,7 +6,6 @@ namespace pxt.runner {
     export interface SimulateOptions {
         id?: string;
         code?: string;
-        config?: pxt.PackageConfig;
     }
 
     class EditorPackage {
@@ -76,6 +75,13 @@ namespace pxt.runner {
             } else if (proto == "empty") {
                 epkg.setFiles(emptyPrjFiles())
                 return Promise.resolve()
+            } else if (proto == "docs") {
+                let files = emptyPrjFiles();
+                let cfg = JSON.parse(files[pxt.configName]) as pxt.PackageConfig;
+                cfg.dependencies[pkg.verArgument()] = "*";
+                files[pxt.configName] = JSON.stringify(cfg, null, 4);
+                epkg.setFiles(files);
+                return Promise.resolve();
             } else {
                 return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
             }
@@ -145,10 +151,10 @@ namespace pxt.runner {
         console.error(msg)
     }
 
-    function loadPackageAsync(id: string, config?: pxt.PackageConfig) {
+    function loadPackageAsync(id: string) {
         let host = mainPkg.host();
         mainPkg = new pxt.MainPackage(host)
-        mainPkg._verspec = id ? "pub:" + id : "empty:tsprj"
+        mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
 
         return host.downloadPackageAsync(mainPkg)
             .then(() => host.readFile(mainPkg, pxt.configName))
@@ -183,7 +189,7 @@ namespace pxt.runner {
     }
 
     export function generateHexFileAsync(options: SimulateOptions): Promise<string> {
-        return loadPackageAsync(options.id, options.config)
+        return loadPackageAsync(options.id)
             .then(() => compileAsync(true, opts => {
                 if (options.code) opts.fileSystem["main.ts"] = options.code;
             }))
@@ -196,7 +202,7 @@ namespace pxt.runner {
     }
 
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
-        return loadPackageAsync(simOptions.id, simOptions.config)
+        return loadPackageAsync(simOptions.id)
             .then(() => compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
             }))
@@ -322,7 +328,6 @@ ${ts}
 
 <aside id=hint class=box>
     <div class="ui icon green message">
-        <i class="help checkmark icon"></i>
         <div class="content">
             <div class="header">Hint</div>
             @BODY@
@@ -373,6 +378,7 @@ ${ts}
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
             codeCardClass: 'lang-codecard',
+            packageClass: 'lang-package',
             snippetReplaceParent: true,
             simulator: true,
             hex: true,
@@ -392,7 +398,7 @@ ${ts}
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-        return loadPackageAsync(null, options.config)
+        return loadPackageAsync(options && options.package ? "docs:" + options.package : null)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 // compile

@@ -17,8 +17,8 @@ namespace pxt.runner {
         hex?: boolean;
         hexName?: string;
         pxtUrl?: string;
-        configClass?: string;
-        config?: pxt.PackageConfig;
+        packageClass?: string;
+        package?: string;
     }
 
     export interface WidgetOptions {
@@ -155,7 +155,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        }, { config: options.config });
+        }, { package: options.package });
     }
 
     function decompileCallInfo(stmt: ts.Statement): ts.pxt.CallInfo {
@@ -186,7 +186,7 @@ namespace pxt.runner {
             let js = $('<code/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
-        }, { config: options.config });
+        }, { package: options.package });
     }
 
     function renderShuffleAsync(options: ClientRenderOptions): Promise<void> {
@@ -197,7 +197,7 @@ namespace pxt.runner {
             c.replaceWith(segment);
         }, {
             emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio,
-                config: options.config
+                package: options.package
             });
     }
 
@@ -206,7 +206,7 @@ namespace pxt.runner {
             let s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
             c.replaceWith(s);
-        }, { config: options.config });
+        }, { package: options.package });
     }
 
     function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
@@ -304,7 +304,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        }, { config: options.config })
+        }, { package: options.package })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
@@ -351,20 +351,12 @@ namespace pxt.runner {
 
     function mergeConfig(options: ClientRenderOptions) {
         // additional config options
-        if (!options.configClass) return;
-        $('.' + options.configClass).each((i, c) => {
+        if (!options.packageClass) return;
+        $('.' + options.packageClass).each((i, c) => {
             let $c = $(c);
-            try {
-                let cfg = JSON.parse($c.text()) as pxt.PackageConfig;
-                if (!options.config) options.config = {} as pxt.PackageConfig;
-                Util.jsonMergeFrom(options.config, cfg);
-                if (options.snippetReplaceParent) $c = $c.parent();
-                $c.remove();
-                console.log('merged pxt.json config:', JSON.stringify(options.config, null, 2));
-            } catch (e) {
-                console.log("invalid json payload: ", e);
-                $c.append($('<div/>').addClass("ui segment warning").text(e.message));
-            }
+            options.package = $c.text().trim();
+            if (options.snippetReplaceParent) $c = $c.parent();
+            $c.remove();
         });
     }
 
