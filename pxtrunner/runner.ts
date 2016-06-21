@@ -78,7 +78,7 @@ namespace pxt.runner {
             } else if (proto == "docs") {
                 let files = emptyPrjFiles();
                 let cfg = JSON.parse(files[pxt.configName]) as pxt.PackageConfig;
-                cfg.dependencies[pkg.verArgument()] = "*";
+                pkg.verArgument().split(',').forEach(d => cfg.dependencies[d] = "*");
                 files[pxt.configName] = JSON.stringify(cfg, null, 4);
                 epkg.setFiles(files);
                 return Promise.resolve();
