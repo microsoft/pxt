@@ -354,7 +354,7 @@ namespace pxt.runner {
         if (!options.packageClass) return;
         $('.' + options.packageClass).each((i, c) => {
             let $c = $(c);
-            let name = $c.text().split('\n').map(s => s.replace(/\s/g, '')).join(',');
+            let name = $c.text().split('\n').map(s => s.replace(/\s*/g, '')).filter(s => !!s).join(',');
             options.package = options.package ? `${options.package},${name}` : name;
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
