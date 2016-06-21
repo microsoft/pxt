@@ -701,4 +701,8 @@ html {
         left:auto;
         min-width: inherit;   
     }    
+    .rtl #filelist {
+        left:0.5rem;
+        right:auto;
+    }
 }
