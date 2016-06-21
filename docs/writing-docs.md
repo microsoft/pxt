@@ -39,14 +39,11 @@ To avoid screenshot hell, PXT automatically renders code snippets to blocks or j
 ### dependencies
 
 You need declare the packages required to load your snippet, unless they are part of the default empty template. 
-To find the correct syntax, add the require packages to a project then open the ``pxt.json`` file as text and copy the ``dependencies`` section.
+Simple provide a list of package name using the ``package`` macro.
 
-    ```config
-    {
-        "dependencies": {
-            "microbit-devices": "*"
-        }
-    }
+    ```package
+    microbit-devices
+    microbit-bluetooth
     ```
 
 ### blocks
