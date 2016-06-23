@@ -23,7 +23,7 @@ export function td2tsAsync(td: string) {
             return iface.opAsync("td2ts", arg)
         })
         .then(resp => {
-            console.log(resp)
+            pxt.debug(resp)
             return resp.text as string
         })
 }

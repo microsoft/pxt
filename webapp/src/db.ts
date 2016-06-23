@@ -22,7 +22,7 @@ export function getDbAsync(): Promise<any> {
         .catch(function (error: any) {
             if (error && error.error && error.name == 'indexed_db_went_bad') {
                 // we are in private mode...
-                console.log('private mode...')
+                pxt.debug('private mode...')
                 inMemory = true;
                 _db = new PouchDB("pxt-" + pxt.storage.storageId(), { adapter: 'memory' })
                 return Promise.resolve(_db);

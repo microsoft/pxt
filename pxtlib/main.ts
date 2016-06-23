@@ -13,12 +13,22 @@ namespace pxt {
     }
 
     // general error reported
+    export var debug: (msg: any, ...args: any[]) => void = typeof console !== "undefined" && !!console.debug
+        ? (msg, args) => {
+            if (ts.pxt.Util.debug)
+                console.debug(msg, args);
+        } : (msg, args) => { };
+    export var log: (msg: any, ...args: any[]) => void = typeof console !== "undefined" && !!console.log
+        ? (msg, args) => {
+            console.log(msg, args);
+        } : (msg, args) => { };
+
     export var reportException: (err: any, data: any) => void = function (e, d) {
         if (console) {
             console.error(e);
             if (d) {
                 try {
-                    console.log(JSON.stringify(d, null, 2))
+                    pxt.log(JSON.stringify(d, null, 2))
                 } catch (e) { }
             }
         }
@@ -28,7 +38,7 @@ namespace pxt {
             console.error(m);
             if (d) {
                 try {
-                    console.log(JSON.stringify(d, null, 2))
+                    pxt.log(JSON.stringify(d, null, 2))
                 } catch (e) { }
             }
         }
@@ -297,7 +307,7 @@ namespace pxt {
                 .then(verNo => {
                     if (this.config && this.config.installedVersion == verNo)
                         return
-                    console.log('downloading ' + verNo)
+                    pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
                             let confStr = this.readFile(configName)
@@ -308,7 +318,7 @@ namespace pxt {
                             this.saveConfig()
                         })
                         .then(() => {
-                            info(`installed ${this.id} /${verNo}`)
+                            pxt.debug(`installed ${this.id} /${verNo}`)
                         })
 
                 })
@@ -470,14 +480,14 @@ namespace pxt {
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, configName))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
-                    console.log(lf("updating {0} (size={1})...", fn, cont.length))
+                    pxt.debug(lf("updating {0} (size={1})...", fn, cont.length))
                     this.host().writeFile(this, fn, cont)
                 }
             }
 
             return this.loadAsync()
                 .then(() => {
-                    info(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
+                    pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
                     if (ext.errors)
                         U.userError(ext.errors)
@@ -557,7 +567,7 @@ namespace pxt {
             if (str)
                 U.userError("config already present")
 
-            console.log(`initializing ${name} for target ${pxt.appTarget.id}`);
+            pxt.debug(`initializing ${name} for target ${pxt.appTarget.id}`);
             let prj = pxt.appTarget.tsprj;
             this.config = pxt.U.clone(prj.config);
             this.config.name = name;
@@ -580,7 +590,7 @@ namespace pxt {
                 if (v != null)
                     this.host().writeFile(this, k, v.replace(/@NAME@/g, name))
             })
-            info("package initialized")
+            pxt.log("package initialized")
 
             return Promise.resolve()
         }
@@ -598,7 +608,7 @@ namespace pxt {
                         if (v != "*" && !/^pub:/.test(v)) {
                             cfg.dependencies[k] = "*"
                             if (v)
-                                info(`local dependency '${v}' replaced with '*' in published package`)
+                                pxt.log(`local dependency '${v}' replaced with '*' in published package`)
                         }
                     })
                     files[configName] = JSON.stringify(cfg, null, 4)
@@ -621,7 +631,7 @@ namespace pxt {
                 .then(files => {
                     text = JSON.stringify(files, null, 2)
                     let hash = U.sha256(text).substr(0, 32)
-                    info(`checking for pre-existing script at ${hash}`)
+                    pxt.log(`checking for pre-existing script at ${hash}`)
                     return Cloud.privateGetAsync("scripthash/" + hash)
                         .then(resp => {
                             if (resp.items && resp.items[0])
@@ -632,7 +642,7 @@ namespace pxt {
                 .then(sinfo => {
                     scrInfo = sinfo;
                     if (scrInfo) {
-                        info(`found existing script at /${scrInfo.id}`)
+                        pxt.log(`found existing script at /${scrInfo.id}`)
                         return Promise.resolve();
                     }
                     let scrReq = {
@@ -646,25 +656,25 @@ namespace pxt {
                         target: appTarget.id,
                         text: text
                     }
-                    info(`publishing script; ${text.length} bytes; target=${scrReq.target}`)
+                    pxt.log(`publishing script; ${text.length} bytes; target=${scrReq.target}`)
                     return Cloud.privatePostAsync("scripts", scrReq)
                         .then(inf => {
                             scrInfo = inf
-                            info(`published; id /${scrInfo.id}`)
+                            pxt.log(`published; id /${scrInfo.id}`)
                         })
                 })
                 .then(() => Cloud.privateGetAsync(pkgPrefix + this.config.name)
                     .then(res => res.scriptid == scrInfo.id, e => false))
                 .then(alreadySet => {
                     if (alreadySet) {
-                        info(`package already published`)
+                        pxt.log(`package already published`)
                         return
                     }
                     return Cloud.privatePostAsync("pointers", {
                         path: pkgPrefix.replace(/^ptr-/, "").replace(/-$/, "") + "/" + this.config.name,
                         scriptid: scrInfo.id
                     }).then(() => {
-                        info(`package published`)
+                        pxt.log(`package published`)
                     })
                 })
                 .then(() => {
@@ -680,10 +690,6 @@ namespace pxt {
     export const configName = "pxt.json"
     export const blocksProjectName = "blocksprj";
     export const javaScriptProjectName = "tsprj";
-    const info = function info(msg: string) {
-        console.log(msg)
-    }
-
     const defaultFiles: U.Map<string> = {
         "tsconfig.json":
         `{

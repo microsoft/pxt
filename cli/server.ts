@@ -41,10 +41,10 @@ let deployCoreAsync: (r: ts.pxt.CompileResult) => void = undefined;
 function initTargetCommands() {
     let cmdsjs = path.resolve('built/cmds.js');
     if (fs.existsSync(cmdsjs)) {
-        console.log(`loading cli extensions...`)
+        pxt.debug(`loading cli extensions...`)
         let cli = require(cmdsjs)
         if (cli.deployCoreAsync) {
-            console.log('imported deploy command')
+            pxt.debug('imported deploy command')
             deployCoreAsync = cli.deployCoreAsync
         }
     }

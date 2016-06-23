@@ -74,7 +74,7 @@ export class LogView extends React.Component<{}, LogViewState> {
             return;
         }
 
-        console.log('streaming payload...')
+        pxt.debug('streaming payload...')
         let data = this.view.streamPayload(this.lastStreamUploadTime);
         this.lastStreamUploadTime = Util.now();
 

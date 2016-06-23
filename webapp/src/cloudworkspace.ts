@@ -194,7 +194,7 @@ function syncOneUpAsync(h: Header) {
                 script: scr,
                 target: pxt.appTarget.id
             }
-            console.log(`sync up ${h.id}; ${body.script.length} chars`)
+            pxt.debug(`sync up ${h.id}; ${body.script.length} chars`)
             h.saveId = saveId;
             return Cloud.privatePostAsync("me/installed", { bodies: [body] })
         })
@@ -217,7 +217,7 @@ function syncAsync() {
         return Promise.resolve()
 
     function uninstallAsync(h: Header) {
-        console.log(`uninstall local ${h.id}`)
+        pxt.debug(`uninstall local ${h.id}`)
         let e = lookup(h.id)
         let idx = allScripts.indexOf(e)
         U.assert(idx >= 0)
@@ -247,7 +247,7 @@ function syncAsync() {
         numDown++
         U.assert(header.id == cloudHeader.guid)
         let blobId = cloudHeader.scriptVersion.baseSnapshot
-        console.log(`sync down ${header.id} - ${blobId}`)
+        pxt.debug(`sync down ${header.id} - ${blobId}`)
         return U.httpGetJsonAsync(blobConatiner + blobId)
             .then(resp => {
                 U.assert(resp.guid == header.id)

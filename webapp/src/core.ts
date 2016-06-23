@@ -63,17 +63,17 @@ function htmlmsg(kind: string, msg: string) {
 }
 
 export function errorNotification(msg: string) {
-    console.log("ERROR", msg)
+    pxt.reportError(msg, undefined)
     htmlmsg("err", msg)
 }
 
 export function warningNotification(msg: string) {
-    console.log("WARNING", msg)
+    pxt.log("warning: ", msg)
     htmlmsg("warn", msg)
 }
 
 export function infoNotification(msg: string) {
-    console.log("INFO", msg)
+    pxt.debug(msg)
     htmlmsg("info", msg)
 }
 

@@ -131,7 +131,7 @@ namespace pxt.blocks {
         let catName = Util.capitalize(ns)
         let category = categoryElement(tb, catName);
         if (!category) {
-            console.log('toolbox: adding category ' + ns)
+            pxt.debug('toolbox: adding category ' + ns)
             category = document.createElement("category");
             category.setAttribute("name", catName)
             let nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
@@ -432,7 +432,7 @@ namespace pxt.blocks {
     }
 
     export function cleanBlocks() {
-        console.log('removing all custom blocks')
+        pxt.debug('removing all custom blocks')
         for (let b in cachedBlocks)
             removeBlock(cachedBlocks[b].fn);
     }

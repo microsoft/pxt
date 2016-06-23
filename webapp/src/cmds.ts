@@ -18,7 +18,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
     let hex = resp.outfiles[ts.pxt.BINARY_HEX]
     let fn = pxt.appTarget.id + "-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
-    console.log('saving ' + fn)
+    pxt.debug('saving ' + fn)
     let url = pxt.BrowserUtils.browserDownloadText(
         hex,
         fn,
@@ -77,7 +77,7 @@ ${pxtwinrt.isWindows() ? `
 }
 
 function localhostDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
-    console.log('local deployment...');
+    pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
     return Util.requestAsync({
         url: "http://localhost:3232/api/deploy",
@@ -89,7 +89,7 @@ function localhostDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
 
 export function initCommandsAsync(): Promise<void> {
     if (pxtwinrt.isWinRT()) {
-        console.log('using winrt commands')
+        pxt.debug('using winrt commands')
         pxt.commands.deployCoreAsync = (resp) => {
             core.infoNotification(lf("Uploading .hex file..."));
             return pxtwinrt.deployCoreAsync(resp)

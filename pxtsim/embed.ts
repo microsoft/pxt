@@ -55,7 +55,6 @@ namespace pxsim {
 
     export namespace Embed {
         export function start() {
-            console.log('listening for simulator commands')
             window.addEventListener("message", receiveMessage, false);
             let frameid = window.location.hash.slice(1)
             Runtime.postMessage(<SimulatorReadyMessage>{ type: 'ready', frameid: frameid });
@@ -86,7 +85,6 @@ namespace pxsim {
 
         export function stop() {
             if (runtime) {
-                console.log('stopping simulator...')
                 runtime.kill();
                 if (runtime.board)
                     runtime.board.kill();
@@ -95,14 +93,12 @@ namespace pxsim {
 
         export function run(msg: SimulatorRunMessage) {
             stop();
-            console.log(`starting ${msg.id}`);
 
             runtime = new Runtime(msg.code);
             runtime.id = msg.id;
             runtime.board.initAsync(msg)
                 .done(() => {
                     runtime.run((v) => {
-                        console.log("DONE")
                         pxsim.dumpLivePointers();
                     })
                 })
@@ -120,7 +116,6 @@ namespace pxsim {
 
 if (typeof window !== 'undefined') {
     window.addEventListener('load', function (ev) {
-        console.log('simulator loaded and ready...')
         pxsim.Embed.start();
     });
 }

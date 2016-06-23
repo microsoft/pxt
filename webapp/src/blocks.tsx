@@ -81,13 +81,13 @@ export class Editor extends srceditor.Editor {
 
     serializeBlocks(): string {
         let xml = pxt.blocks.saveWorkspaceXml(this.editor);
-        console.log(xml)
+        pxt.debug(xml)
         return xml;
     }
 
     loadBlockly(s: string): boolean {
         if (this.serializeBlocks() == s) {
-            console.log('blocks already loaded...');
+            pxt.debug('blocks already loaded...');
             return false;
         }
 
@@ -99,7 +99,7 @@ export class Editor extends srceditor.Editor {
 
             this.editor.clearUndo();
         } catch (e) {
-            console.log(e);
+            pxt.log(e);
         }
 
         this.changeCallback();

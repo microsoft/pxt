@@ -86,7 +86,7 @@ namespace pxt.blocks {
             return svg;
 
         } catch (e) {
-            console.log(e);
+            pxt.reportException(e, { blocks: blocksXml });
             return undefined;
         }
     }

@@ -87,7 +87,7 @@ namespace pxt.docs.codeCard {
             let svg = pxt.blocks.render(card.blocksXml);
             if (!svg) {
                 console.error("failed to render blocks");
-                console.log(card.blocksXml);
+                pxt.debug(card.blocksXml);
             } else {
                 let holder = div(img, ''); holder.setAttribute('style', 'width:100%; min-height:10em');
                 holder.appendChild(svg[0]);

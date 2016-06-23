@@ -119,11 +119,11 @@ namespace pxt.cpp {
         }
 
         if (prevSnapshot && U.stringMapEq(pkgSnapshot, prevSnapshot)) {
-            console.log("Using cached extinfo")
+            pxt.debug("Using cached extinfo")
             return prevExtInfo
         }
 
-        console.log("Generating new extinfo")
+        pxt.debug("Generating new extinfo")
 
         let res = Y.emptyExtInfo();
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
@@ -636,13 +636,13 @@ int main() {
         if (!tmp) return undefined
 
         if (!tmp.meta || !tmp.text) {
-            console.log("This .hex file doesn't contain source.")
+            pxt.debug("This .hex file doesn't contain source.")
             return undefined;
         }
 
         let hd: { compression: string; headerSize: number; metaSize: number; editor: string; target?: string; } = JSON.parse(tmp.meta)
         if (!hd) {
-            console.log("This .hex file is not valid.")
+            pxt.debug("This .hex file is not valid.")
             return undefined;
         }
         else if (hd.compression == "LZMA") {
@@ -655,7 +655,7 @@ int main() {
                     return { meta: metajs, source: text }
                 })
         } else if (hd.compression) {
-            console.log("Compression type {0} not supported.", hd.compression)
+            pxt.debug("Compression type {0} not supported.", hd.compression)
             return undefined
         } else {
             return Promise.resolve({ source: fromUTF8Bytes(tmp.text) });
@@ -744,13 +744,13 @@ namespace pxt.hex {
         if (ts.pxt.hex.isSetupFor(extInfo))
             return Promise.resolve(ts.pxt.hex.currentHexInfo)
 
-        console.log("get hex info: " + extInfo.sha)
+        pxt.debug("get hex info: " + extInfo.sha)
 
         let key = "hex-" + extInfo.sha
         return host.cacheGetAsync(key)
             .then(res => {
                 if (res) {
-                    console.log("cache hit, size=" + res.length)
+                    pxt.debug("cache hit, size=" + res.length)
                     let meta = JSON.parse(res)
                     meta.hex = decompressHex(meta.hex)
                     return recordGetAsync(host, "hex-keys", key)

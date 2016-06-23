@@ -1,6 +1,6 @@
 namespace pxt.BrowserUtils {
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
-        console.log('trigger download')
+        pxt.debug('trigger download')
         let buf = Util.stringToUint8Array(Util.toUTF8(text))
         return browserDownloadUInt8Array(buf, name, contentType, onError);
     }
@@ -20,7 +20,7 @@ namespace pxt.BrowserUtils {
                 // PouchDB database                
                 let iframe = document.getElementById("downloader") as HTMLIFrameElement;
                 if (!iframe) {
-                    console.log('injecting downloader iframe')
+                    pxt.debug('injecting downloader iframe')
                     iframe = document.createElement("iframe") as HTMLIFrameElement;
                     iframe.id = "downloader";
                     iframe.style.position = "absolute";
@@ -46,7 +46,7 @@ namespace pxt.BrowserUtils {
             }
         } catch (e) {
             if (onError) onError(e);
-            console.log("saving failed")
+            pxt.debug("saving failed")
         }
         return dataurl;
     }

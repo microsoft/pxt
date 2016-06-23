@@ -261,7 +261,7 @@ namespace pxt.runner {
                                     });
                                     break;
                                 default:
-                                    console.log(`card expr kind: ${es.expression.kind}`);
+                                    pxt.debug(`card expr kind: ${es.expression.kind}`);
                                     break;
                             }
                             break;
@@ -298,7 +298,7 @@ namespace pxt.runner {
                             });
                             break;
                         default:
-                            console.log(`card kind: ${stmt.kind}`)
+                            pxt.debug(`card kind: ${stmt.kind}`)
                     }
             })
 

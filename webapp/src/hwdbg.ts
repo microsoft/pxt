@@ -20,7 +20,7 @@ function init() {
     if (!iface) {
         if (!/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
             return;
-        console.log('initializing debug pipe');
+        pxt.debug('initializing debug pipe');
         iface = workeriface.makeWebSocket('ws://localhost:3233/' + Cloud.localToken + '/debug')
     }
 }

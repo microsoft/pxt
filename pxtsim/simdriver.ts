@@ -44,7 +44,7 @@ namespace pxsim {
 
         private setState(state: SimulatorState) {
             if (this.state != state) {
-                console.log(`simulator: ${this.state} -> ${state}`);
+                console.debug(`simulator: ${this.state} -> ${state}`);
                 this.state = state;
                 if (this.options.onStateChanged)
                     this.options.onStateChanged(this.state);
@@ -165,7 +165,7 @@ namespace pxsim {
         }
 
         private startFrame(frame: HTMLIFrameElement) {
-            console.log(`starting frame ${frame.id}`);
+            console.debug(`starting frame ${frame.id}`);
             let msg = JSON.parse(JSON.stringify(this.currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
@@ -194,7 +194,7 @@ namespace pxsim {
                     switch (msg.type || '') {
                         case 'ready':
                             let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
-                            console.log(`frame ${frameid} ready`)
+                            console.debug(`frame ${frameid} ready`)
                             let frame = document.getElementById(frameid) as HTMLIFrameElement;
                             if (frame) {
                                 this.startFrame(frame);
@@ -241,7 +241,7 @@ namespace pxsim {
                     msg = 'pause';
                     break;
                 default:
-                    console.log('unknown command')
+                    console.debug('unknown command')
                     return;
             }
 

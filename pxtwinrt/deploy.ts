@@ -6,18 +6,18 @@ namespace pxtwinrt {
 
         let drives = pxt.appTarget.compile.deployDrives;
         pxt.Util.assert(!!drives);
-        console.log(`deploying to drives ${drives}`)
+        pxt.log(`deploying to drives ${drives}`)
 
         let drx = new RegExp(drives);
         let r = res.outfiles[ts.pxt.BINARY_HEX];
 
         function writeAsync(folder: Windows.Storage.StorageFolder): Promise<void> {
-            console.log(`writing .hex to ${folder.displayName}`)
+            pxt.log(`writing .hex to ${folder.displayName}`)
             return pxtwinrt.promisify(
                 folder.createFileAsync("firmware.hex", Windows.Storage.CreationCollisionOption.replaceExisting)
                     .then(file => Windows.Storage.FileIO.writeTextAsync(file, r))
             ).then(r => { }).catch(e => {
-                console.log(`failed to write to ${folder.displayName} - ${e}`)
+                pxt.log(`failed to write to ${folder.displayName} - ${e}`)
             })
         }
 

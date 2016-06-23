@@ -72,12 +72,12 @@ export function makeWebSocket(url: string) {
         iface.recvHandler(JSON.parse(ev.data))
     }
     ws.onopen = (ev) => {
-        console.log('socket opened');
+        pxt.debug('socket opened');
         for (let m of sendq) ws.send(m)
         sendq = null
     }
     ws.onclose = (ev) => {
-        console.log('socket closed')
+        pxt.debug('socket closed')
     }
     return iface
 }

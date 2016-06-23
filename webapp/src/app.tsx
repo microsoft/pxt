@@ -444,14 +444,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     updateVisibility() {
         let active = document.visibilityState == 'visible';
-        console.log(`page visibility: ${active}`)
+        pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active })
         if (!active) {
             this.stopSimulator();
             this.saveFileAsync().done();
         } else {
             if (workspace.isSessionOutdated()) {
-                console.log('workspace changed, reloading...')
+                pxt.debug('workspace changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.initAsync()
                     .done(() => id ? this.loadHeaderAsync(workspace.getHeader(id)) : Promise.resolve());
@@ -685,14 +685,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         }
         if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
-            console.log('importing microbit.co.uk blocks project')
+            pxt.debug('importing microbit.co.uk blocks project')
             compiler.getBlocksAsync()
                 .then(info => this.newBlocksProjectAsync({
                     "main.blocks": pxt.blocks.importXml(info, data.source)
                 }, data.meta.name)).done();
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
-            console.log('importing microbit.co.uk TD project')
+            pxt.debug('importing microbit.co.uk TD project')
             this.newBlocksProjectAsync({ "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">", "main.ts": "  " }, data.meta.name)
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
@@ -702,7 +702,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 })
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == "pxt/" + targetId) {
-            console.log("importing project")
+            pxt.debug("importing project")
             let h: InstallHeader = {
                 target: targetId,
                 editor: data.meta.editor,
@@ -808,13 +808,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         }
 
-        console.log('compiling...')
+        pxt.debug('compiling...')
         this.clearLog();
         this.editor.beforeCompile();
         let state = this.editor.snapshotState()
         compiler.compileAsync({ native: true })
             .then(resp => {
-                console.log('done')
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (!resp.outfiles[ts.pxt.BINARY_HEX]) {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
@@ -942,7 +941,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     saveProjectName() {
         if (!this.state.projectName || !this.state.header) return;
 
-        console.log('saving project name to ' + this.state.projectName);
+        pxt.debug('saving project name to ' + this.state.projectName);
         try {
             let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.configName);
             let config = JSON.parse(f.content) as pxt.PackageConfig;
@@ -1129,13 +1128,13 @@ function initSerial() {
     if (!pxt.appTarget.serial || !/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
         return;
 
-    console.log('initializing serial pipe');
+    pxt.debug('initializing serial pipe');
     let ws = new WebSocket('ws://localhost:3233/' + Cloud.localToken + '/serial');
     ws.onopen = (ev) => {
-        console.log('serial: socket opened');
+        pxt.debug('serial: socket opened');
     }
     ws.onclose = (ev) => {
-        console.log('serial: socket closed')
+        pxt.debug('serial: socket closed')
     }
     ws.onmessage = (ev) => {
         try {
@@ -1144,13 +1143,13 @@ function initSerial() {
                 window.postMessage(msg, "*")
         }
         catch (e) {
-            console.log('unknown message: ' + ev.data);
+            pxt.debug('unknown message: ' + ev.data);
         }
     }
 }
 
 function getsrc() {
-    console.log(theEditor.editor.getCurrentSource())
+    pxt.log(theEditor.editor.getCurrentSource())
 }
 
 function enableAnalytics(version: string) {
@@ -1203,7 +1202,7 @@ function enableMixPanel(version: string) {
         try {
             mp.track(id.toLowerCase());
         } catch (e) {
-            console.log(e);
+            pxt.log(e);
         }
     }
 }
@@ -1228,7 +1227,7 @@ function assembleCurrent() {
         .then(() => compiler.assembleAsync(getEditor().editorFile.content))
         .then(v => {
             let nums = v.words
-            console.log("[" + nums.map(n => "0x" + n.toString(16)).join(",") + "]")
+            pxt.debug("[" + nums.map(n => "0x" + n.toString(16)).join(",") + "]")
         })
 }
 
@@ -1264,7 +1263,7 @@ function initTheme() {
     }
     // RTL languages
     if (/^ar/i.test(Util.userLanguage())) {
-        console.log("rtl layout");
+        pxt.debug("rtl layout");
         document.body.classList.add("rtl");
         document.body.style.direction = "rtl";
     }

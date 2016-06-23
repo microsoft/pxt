@@ -2,7 +2,6 @@ export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean
     let dragAndDrop = document && document.createElement && 'draggable' in document.createElement('span');
 
     r.addEventListener('paste', function (e: ClipboardEvent) {
-        console.log('clipboard paste');
         if (e.clipboardData) {
             // has file?
             let files = Util.toArray<File>(e.clipboardData.files).filter(filter)

@@ -23,7 +23,7 @@ let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 function initTargetCommands() {
     let cmdsjs = nodeutil.targetDir + '/built/cmds.js';
     if (fs.existsSync(cmdsjs)) {
-        console.log(`loading cli extensions...`)
+        pxt.debug(`loading cli extensions...`)
         let cli = require(cmdsjs)
         if (cli.deployCoreAsync) {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
@@ -61,11 +61,11 @@ function reportDiagnosticSimply(diagnostic: ts.pxt.KsDiagnostic): void {
 
     const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
     output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}`;
-    console.log(output);
+    pxt.log(output);
 }
 
 function fatal(msg: string): Promise<any> {
-    console.log("Fatal error:", msg)
+    pxt.log("Fatal error:", msg)
     throw new Error(msg)
 }
 

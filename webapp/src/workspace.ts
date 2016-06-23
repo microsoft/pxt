@@ -70,7 +70,7 @@ export function initAsync() {
     // generate new workspace session id to avoid races with other tabs
     sessionID = Util.guidGen();
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
-    console.log(`workspace session: ${sessionID}`);
+    pxt.debug(`workspace session: ${sessionID}`);
 
     return impl.initAsync(pxt.appTarget.id)
 }
@@ -100,12 +100,12 @@ export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
         editor: h.editor,
         text: stext
     }
-    console.log(`publishing script; ${stext.length} bytes`)
+    pxt.debug(`publishing script; ${stext.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq)
         .then((inf: Cloud.JsonScript) => {
             h.pubId = inf.id
             h.pubCurrent = h.saveId === saveId
-            console.log(`published; id /${inf.id}`)
+            pxt.debug(`published; id /${inf.id}`)
             return saveAsync(h)
                 .then(() => inf)
         })

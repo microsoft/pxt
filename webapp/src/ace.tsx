@@ -720,7 +720,7 @@ export class Editor extends srceditor.Editor {
         let langTools = acequire("ace/ext/language_tools");
 
         this.editor.commands.on("exec", (e: any) => {
-            console.info("beforeExec", e.command.name)
+            pxt.debug("beforeExec", e.command.name)
             if (!this.isTypescript) return;
 
             let insString: string = e.command.name == "insertstring" ? e.args : null
@@ -739,7 +739,7 @@ export class Editor extends srceditor.Editor {
         }
 
         this.editor.commands.on("afterExec", (e: any) => {
-            console.info("afterExec", e.command.name)
+            pxt.debug("afterExec", e.command.name)
             if (!this.isTypescript) return;
 
             let insString: string = e.command.name == "insertstring" ? e.args : null

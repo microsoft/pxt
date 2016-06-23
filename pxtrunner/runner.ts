@@ -231,7 +231,7 @@ namespace pxt.runner {
 
     export function setLanguageMode(mode: LanguageMode) {
         if (mode != languageMode) {
-            console.log('language: ' + mode);
+            pxt.debug('language: ' + mode);
             languageMode = mode;
             if (onLanguageModeChanged) onLanguageModeChanged(languageMode);
         }
@@ -253,7 +253,7 @@ namespace pxt.runner {
         $(loading).hide()
 
         function render(docid: string) {
-            console.log(`rendering ${docid}`);
+            pxt.debug(`rendering ${docid}`);
             $(content).hide()
             $(loading).show()
             Promise.delay(100) // allow UI to update
@@ -419,7 +419,7 @@ ${ts}
                     bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!bresp.success)
                     return { compileJS: resp, compileBlocks: bresp };
-                console.log(bresp.outfiles["main.blocks"])
+                pxt.debug(bresp.outfiles["main.blocks"])
                 return {
                     compileJS: resp,
                     compileBlocks: bresp,

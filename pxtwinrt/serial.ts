@@ -23,7 +23,7 @@ namespace pxtwinrt {
         watcher.addEventListener("added", (dis: any) => {
             toArray(dis.detail).forEach((di: any) => {
                 if (!filter.test(di.name)) return;
-                console.log(`serial port added ${di.name} - ${di.id}`);
+                pxt.debug(`serial port added ${di.name} - ${di.id}`);
                 ports[di.id] = {
                     info: di
                 };
@@ -48,7 +48,7 @@ namespace pxtwinrt {
         if (!port) return;
         if (!port.device) {
             let status = (Windows.Devices as any).Enumeration.DeviceAccessInformation.createFromId(id).currentStatus;
-            console.log(`device issue: ${status}`);
+            pxt.debug(`device issue: ${status}`);
             return;
         }
 
