@@ -69,6 +69,16 @@ a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs when enough parameters are detected
 * A block type `=type` can be specified optionaly for each parameter. It will be used to populate the shadow type.
 
+## Supported types
+
+The following types are supported in function signatures that are meant to be exported:
+
+* ``number` (TypeScript) or ``int`` (C++)
+* ``string`` (TypeScript) or [ManagedString](https://github.com/lancaster-university/microbit-dal/blob/master/inc/types/ManagedString.h)
+* enums (see below)
+* custom classes that are also exported
+* arrays of the above
+
 ## Enums
 
 Enum are supported and will automatically be represented by a dropdown in blocks.
@@ -77,13 +87,45 @@ Enum are supported and will automatically be represented by a dropdown in blocks
 enum Button {
     A = 1,
     B = 2,
-    //% blockId="A+B"
+    //% blockId="ApB" block="A+B"
     AB = 3,
 }
 ```
 
 * the initializer can be used to map the value
 * the `blockId` attribute can be used to override the block id
+* the `block` attribute can be used to override the rendered string
+
+### Tip: dropdown for non-enum parameters
+
+It's possible to provide a drop-down for a parameter that is not an enum. It involves the following step:
+* create an enum with desired drop down entry
+```
+enum Delimiters {
+    //% block="new line"
+    NewLine = 1,
+    //% block=","
+    Comma = 2
+}
+```
+* a function that takes the enum as parameter and returns the according value
+```
+//% blockId="delimiter_conv" block="%del"
+export function delimiters(del : Delimiters) : string {
+    switch(del) {
+        case Delimiters.NewLine: return "\n";
+        case Delimiters.Comma:  return ",";
+        ...
+    }
+}
+```
+* use the enum conversion function block id (``delimiter_conv``) as the value in the ``block`` parameter of your function
+```
+//% blockId="read_until" block="read until %del=delimiter_conv"
+export function readUntil(del: string) : string {
+    ...
+}
+```
 
 ## Docs and default values
 
