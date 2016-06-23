@@ -1290,7 +1290,7 @@ namespace ts.pxt.thumb {
         b.disablePeepHole = true;
         b.emit(asm);
         if (b.errors.length > 0) {
-            pxt.debug(b.errors[0].message)
+            console.debug(b.errors[0].message)
             oops("ASMTEST: not expecting errors")
         }
 
