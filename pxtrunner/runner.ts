@@ -282,10 +282,11 @@ namespace pxt.runner {
     }
 
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
-        return Cloud.privateGetTextAsync(projectid + "/main.ts")
-            .then(ts => {
+        return Cloud.privateGetTextAsync(projectid + "/text")
+            .then(txt => JSON.parse(txt))
+            .then((files: U.Map<string>) => {
                 let md = `\`\`\`${template}
-${ts}
+${files["main.ts"]}
 \`\`\``;
                 return renderMarkdownAsync(content, md);
             })
