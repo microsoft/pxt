@@ -303,6 +303,15 @@ ${files["main.ts"]}
     }
 
     const template = `
+<aside id=button>
+   <a class="ui button" href="@ARGS@">@BODY@</a>
+</aside>   
+
+<aside id=vimeo>
+    <div class="ui embed mdvid" data-source="vimeo" data-id="@ARGS@" data-placeholder="/thumbnail/1024/vimeo/@ARGS@" data-icon="video play">
+    </div>
+</aside>
+    
 <aside id=youtube>
     <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
     </div>
