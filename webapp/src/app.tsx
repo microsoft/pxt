@@ -267,10 +267,10 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Embed Project") }>
             <div className={`ui ${formState} form`}>
                 <div className="ui warning message">
-                    <sui.Button class={"left floated blue " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish") } onClick={publish} />
                     <div className="header">{lf("Almost there!") }</div>
                     <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
                         lf("You acknowledge having consent to publish this content.") }</p>
+                    <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
                 </div>
                 <div className="ui success message">
                     <div className="header">{lf("Your project is ready!") }</div>
