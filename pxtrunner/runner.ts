@@ -303,8 +303,8 @@ ${files["main.ts"]}
     }
 
     const template = `
-<aside id=button>
-   <a class="ui button" href="@ARGS@">@BODY@</a>
+<aside id=button class=box>
+   <a class="ui primary button" href="@ARGS@">@BODY@</a>
 </aside>   
 
 <aside id=vimeo>
