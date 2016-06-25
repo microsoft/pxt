@@ -305,6 +305,8 @@ namespace pxsim {
         export var ldglbRef: any;
         export var stglb: any;
         export var stglbRef: any;
+        export var getNumGlobals: any;
+        export var getGlobalsPtr: any;
     }
 
 
