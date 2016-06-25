@@ -225,6 +225,76 @@ namespace pxsim {
     }
 
     export namespace BufferMethods {
+        // keep in sync with C++!
+        export enum NumberFormat {
+            Int8LE = 1,
+            UInt8LE,
+            Int16LE,
+            UInt16LE,
+            Int32LE,
+            Int8BE,
+            UInt8BE,
+            Int16BE,
+            UInt16BE,
+            Int32BE,
+            // UInt32,
+        };
+
+        function fmtInfoCore(fmt: NumberFormat) {
+            switch (fmt) {
+                case NumberFormat.Int8LE: return -1;
+                case NumberFormat.UInt8LE: return 1;
+                case NumberFormat.Int16LE: return -2;
+                case NumberFormat.UInt16LE: return 2;
+                case NumberFormat.Int32LE: return -4;
+                case NumberFormat.Int8BE: return -10;
+                case NumberFormat.UInt8BE: return 10;
+                case NumberFormat.Int16BE: return -20;
+                case NumberFormat.UInt16BE: return 20;
+                case NumberFormat.Int32BE: return -40;
+                default: throw U.userError("bad format");
+            }
+        }
+
+        function fmtInfo(fmt: NumberFormat) {
+            let size = fmtInfoCore(fmt)
+            let signed = false
+            if (size < 0) {
+                signed = true
+                size = -size
+            }
+            let swap = false
+            if (size >= 10) {
+                swap = true
+                size /= 10
+            }
+            return { size, signed, swap }
+        }
+
+        export function getNumber(buf: RefBuffer, fmt: NumberFormat, offset: number) {
+            let inf = fmtInfo(fmt)
+            let r = 0
+            for (let i = 0; i < inf.size; ++i) {
+                r <<= 8
+                let off = inf.swap ? offset + i : offset + inf.size - i - 1
+                r |= buf.data[off]
+            }
+            if (inf.signed) {
+                let missingBits = 32 - (inf.size * 8)
+                r = (r << missingBits) >> missingBits;
+            }
+            return r
+        }
+
+        export function setNumber(buf: RefBuffer, fmt: NumberFormat, offset: number, r:number) {
+            let inf = fmtInfo(fmt)
+            for (let i = 0; i < inf.size; ++i) {
+                let off = !inf.swap ? offset + i : offset + inf.size - i - 1
+                buf.data[off] = (r & 0xff)
+                r >>= 8
+            }
+        }
+
         export function createBuffer(size: number) {
             return new RefBuffer(new Uint8Array(size));
         }
