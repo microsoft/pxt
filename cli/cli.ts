@@ -272,14 +272,6 @@ function pxtFileList(pref: string) {
 
 }
 
-export function uploadrelAsync(label?: string) {
-    return uploadCoreAsync({
-        label: label,
-        pkgversion: pkgVersion(),
-        fileList: pxtFileList("")
-    })
-}
-
 function semverCmp(a: string, b: string) {
     let parse = (s: string) => {
         let v = s.split(/\./).map(parseInt)
@@ -311,10 +303,9 @@ function travisAsync() {
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
         if (rel)
-            return uploadrelAsync("release/" + rel)
-                .then(() => runNpmAsync("publish"))
+            return runNpmAsync("publish")
         else
-            return uploadrelAsync("release/" + latest)
+            return Promise.resolve()
     } else {
         return buildTargetAsync()
             .then(() => {
@@ -323,7 +314,7 @@ function travisAsync() {
                     return uploadtrgAsync(trg.id + "/" + rel)
                         .then(() => runNpmAsync("publish"))
                 else
-                    return uploadtrgAsync(trg.id + "/" + latest, "release/latest")
+                    return uploadtrgAsync(trg.id + "/" + latest)
             })
     }
 }
@@ -410,37 +401,30 @@ function targetFileList() {
     return lst.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
 }
 
-export function uploadtrgAsync(label?: string, apprel?: string) {
-    if (!apprel) {
-        let pkg = readJson("node_modules/pxt-core/package.json")
-        apprel = "release/v" + pkg.version
-    }
+export function staticpkgAsync(label?: string) {
+    let dir = label ? "/" + label + "/" : "/"
     return Promise.resolve()
-        .then(() => Cloud.privateGetAsync(apprel))
-        .then(r => r.kind == "release" ? r : null, e => null)
-        .then(r => r || Cloud.privateGetAsync(nodeutil.pathToPtr(apprel))
-            .then(ptr => Cloud.privateGetAsync(ptr.releaseid)))
-        .then(r => r.kind == "release" ? r : null)
-        .then<pxt.Cloud.JsonRelease>(r => r, e => {
-            console.log("Cannot find release: " + apprel)
-            process.exit(1)
-        })
-        .then(r => {
-            console.log(`Uploading target against: ${apprel} /${r.id}`);
-            return uploadCoreAsync({
-                label: label,
-                fileList: targetFileList(),
-                pkgversion: pkgVersion(),
-                baserelease: r.id,
-                fileContent: {}
-            })
-        })
+        .then(() => uploadCoreAsync({
+            label: label || "main",
+            pkgversion: "0.0.0",
+            fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+            localDir: dir
+        }))
+        .then(() => renderDocs(dir))
+}
+
+export function uploadtrgAsync(label?: string) {
+    return uploadCoreAsync({
+        label: label,
+        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+        pkgversion: pkgVersion(),
+        fileContent: {}
+    })
 }
 
 interface UploadOptions {
     fileList: string[];
     pkgversion: string;
-    baserelease?: string;
     fileContent?: U.Map<string>;
     label?: string
     legacyLabel?: boolean;
@@ -527,6 +511,21 @@ function uploadCoreAsync(opts: UploadOptions) {
 
                 if (isText) {
                     content = data.toString("utf8")
+                    if (fileName == "index.html") {
+                        content = content
+                            .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
+                            (full, fn) => {
+                                let cont = ""
+                                try {
+                                    cont = fs.readFileSync("includes/" + fn, "utf8")
+                                } catch (e) { }
+                                return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
+                            })
+                            .replace(/@(\w+)@/g, (full, varname) => {
+                                return (pxt.appTarget.appTheme as any)[varname] || ""
+                            })
+                    }
+
                     if (replFiles.indexOf(fileName) >= 0) {
                         for (let from of Object.keys(replacements)) {
                             content = U.replaceAll(content, from, replacements[from])
@@ -577,13 +576,12 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     let info = travisInfo()
     return Cloud.privatePostAsync("releases", {
-        baserelease: opts.baserelease,
         pkgversion: opts.pkgversion,
         commit: info.commitUrl,
         branch: info.tag || info.branch,
         buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
         target: pxt.appTarget ? pxt.appTarget.id : "",
-        type: opts.baserelease ? "target" : "base",
+        type: "fulltarget"
     })
         .then(resp => {
             console.log(resp)
@@ -602,7 +600,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                     let beta = opts.label.replace(/\/v\d.*/, "/beta")
                     if (beta == opts.label) return Promise.resolve()
                     else {
-                        console.log("Alos tagging with " + beta)
+                        console.log("Also tagging with " + beta)
                         return Cloud.privatePostAsync("pointers", {
                             path: nodeutil.sanitizePath(beta),
                             releaseid: liteId
@@ -1034,18 +1032,6 @@ function renderDocs(localDir: string) {
         fs.writeFileSync(dd, buf)
     }
     console.log("Docs written.")
-}
-
-export function staticpkgAsync(label?: string) {
-    let dir = label ? "/" + label + "/" : "/"
-    return Promise.resolve()
-        .then(() => uploadCoreAsync({
-            label: label || "main",
-            pkgversion: "0.0.0",
-            fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-            localDir: dir
-        }))
-        .then(() => renderDocs(dir))
 }
 
 export function serveAsync(arg?: string) {
@@ -1925,7 +1911,7 @@ cmd("update                       - update pxt-core reference and install update
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("bump                         - bump target patch version", bumpAsync, 1)
-cmd("uploadrel [LABEL]            - upload web app release", uploadrelAsync, 1)
+cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
