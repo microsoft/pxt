@@ -286,7 +286,7 @@ namespace pxsim {
             return r
         }
 
-        export function setNumber(buf: RefBuffer, fmt: NumberFormat, offset: number, r:number) {
+        export function setNumber(buf: RefBuffer, fmt: NumberFormat, offset: number, r: number) {
             let inf = fmtInfo(fmt)
             for (let i = 0; i < inf.size; ++i) {
                 let off = !inf.swap ? offset + i : offset + inf.size - i - 1
