@@ -18,3 +18,4 @@ pxtwapp/pxtwapp/bld
 *.suo
 *.user
 *.log
+update-settings.sh
