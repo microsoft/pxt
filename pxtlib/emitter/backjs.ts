@@ -111,13 +111,11 @@ switch (step) {
         }
 
         function locref(cell: ir.Cell) {
-            if (cell.iscap)
+            if (cell.isGlobal())
+                return "globals." + cell.uniqueName()
+            else if (cell.iscap)
                 return `s.caps[${cell.index}]`
             return "s." + cell.uniqueName()
-        }
-
-        function glbref(cell: ir.Cell) {
-            return "globals." + cell.uniqueName()
         }
 
         function emitJmp(jmp: ir.Stmt) {
@@ -162,14 +160,7 @@ switch (step) {
                     return "s.tmp_" + idx
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
-                    if (cell.isGlobal()) {
-                        if (refCounting && cell.isRef())
-                            return `pxtrt.incr(${glbref(cell)})`
-                        else
-                            return glbref(cell)
-                    } else {
-                        return locref(cell)
-                    }
+                    return locref(cell)
                 default: throw oops();
             }
         }
@@ -298,13 +289,7 @@ switch (step) {
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
                     emitExpr(src)
-                    if (cell.isGlobal()) {
-                        if (refCounting && cell.isRef())
-                            write(`pxtrt.decr(${glbref(cell)});`)
-                        write(`${glbref(cell)} = r0;`)
-                    } else {
-                        write(`${locref(cell)} = r0;`)
-                    }
+                    write(`${locref(cell)} = r0;`)
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo

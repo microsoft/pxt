@@ -1,4 +1,8 @@
 namespace ts.pxt {
+    // testBit(R0, k)
+    //    lsls R0, R0, (31-k)
+    //    bmi .bitSet  (or bpl .bitClear)
+
     export var decodeBase64 = function (s: string) { return atob(s); }
 
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
@@ -6,11 +10,16 @@ namespace ts.pxt {
         let write = (s: string) => { resText += asmline(s); }
         let EK = ir.EK;
 
-
         write(`
 ;
 ; Function ${proc.getName()}
 ;
+`)
+
+        if (proc.args.length <= 2)
+            emitLambdaWrapper(proc.isRoot)
+
+        write(`
 .section code
 ${getFunctionLabel(proc.action)}:
     @stackmark func
@@ -66,9 +75,6 @@ ${getFunctionLabel(proc.action)}:
         write("pop {pc}");
         write("@stackempty func");
         write("@stackempty args")
-
-        if (proc.args.length <= 2)
-            emitLambdaWrapper()
 
         return resText
 
@@ -152,7 +158,6 @@ ${getFunctionLabel(proc.action)}:
                     break;
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
-                    U.assert(!cell.isGlobal())
                     write(`ldr ${reg}, ${cellref(cell)}`)
                     break;
                 default: oops();
@@ -189,12 +194,6 @@ ${getFunctionLabel(proc.action)}:
                     return emitSharedDef(e)
                 case EK.Sequence:
                     return e.args.forEach(emitExpr)
-                case EK.CellRef:
-                    let cell = e.data as ir.Cell;
-                    if (cell.isGlobal())
-                        return emitExpr(ir.rtcall(withRef("pxtrt::ldglb", cell.isRef()), [ir.numlit(cell.index)]))
-                    else
-                        return emitExprInto(e, "r0")
                 default:
                     return emitExprInto(e, "r0")
             }
@@ -261,12 +260,8 @@ ${getFunctionLabel(proc.action)}:
             switch (trg.exprKind) {
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
-                    if (cell.isGlobal()) {
-                        emitExpr(ir.rtcall(withRef("pxtrt::stglb", cell.isRef()), [src, ir.numlit(cell.index)]))
-                    } else {
-                        emitExpr(src)
-                        write("str r0, " + cellref(cell))
-                    }
+                    emitExpr(src)
+                    write("str r0, " + cellref(cell))
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
@@ -278,8 +273,9 @@ ${getFunctionLabel(proc.action)}:
         }
 
         function cellref(cell: ir.Cell) {
-            U.assert(!cell.isGlobal())
-            if (cell.iscap) {
+            if (cell.isGlobal()) {
+                return "[r6, #4*" + cell.index + "]"
+            } else if (cell.iscap) {
                 assert(0 <= cell.index && cell.index < 32)
                 return "[r5, #4*" + cell.index + "]"
             } else if (cell.isarg) {
@@ -290,15 +286,19 @@ ${getFunctionLabel(proc.action)}:
             }
         }
 
-        function emitLambdaWrapper() {
+        function emitLambdaWrapper(isMain: boolean) {
             let node = proc.action
             write("")
             write(".section code");
+            if (isMain)
+                write("b .themain")
             write(".balign 4");
             write(getFunctionLabel(node) + "_Lit:");
             write(".short 0xffff, 0x0000   ; action literal");
             write("@stackmark litfunc");
-            write("push {r5, lr}");
+            if (isMain)
+                write(".themain:")
+            write("push {r5, r6, lr}");
             write("mov r5, r1");
 
             let parms = proc.args.map(a => a.def)
@@ -309,12 +309,15 @@ ${getFunctionLabel(proc.action)}:
             })
             write("@stackmark args");
 
+            write(`bl pxtrt::getGlobalsPtr`)
+            write(`mov r6, r0`)
+
             write(`bl ${getFunctionLabel(node)}`)
 
             write("@stackempty args")
             if (parms.length)
                 write("add sp, #4*" + parms.length + " ; pop args")
-            write("pop {r5, pc}");
+            write("pop {r5, r6, pc}");
             write("@stackempty litfunc");
         }
 

@@ -266,7 +266,7 @@ namespace ts.pxt.ir {
         }
 
         refCountingHandledHere() {
-            return this.isRef() && !this.isGlobal() && !this.isByRefLocal()
+            return this.isRef() && !this.isByRefLocal()
         }
 
         isByRefLocal() {
@@ -564,7 +564,7 @@ namespace ts.pxt.ir {
         let complexArgs: ir.Expr[] = []
         for (let a of U.reversed(topExpr.args)) {
             if (a.isStateless()) continue
-            if (a.exprKind == EK.CellRef && !(a.data as ir.Cell).isGlobal() && !didStateUpdate) continue
+            if (a.exprKind == EK.CellRef && !didStateUpdate) continue
             if (a.canUpdateCells()) didStateUpdate = true
             complexArgs.push(a)
         }
