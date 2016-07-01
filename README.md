@@ -16,6 +16,10 @@ The main features of PXT are:
 * an ARM Thumb machine code emitter
 * a command-line package manager
 
+More info:
+* [About PXT](https://www.pxt.io/about)
+* [Documentation](https://www.pxt.io/docs)
+
 ## Running a target from localhost
 
 Install the `pxt` command line tool (only need to do it once):
