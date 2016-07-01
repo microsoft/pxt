@@ -1,8 +1,4 @@
 namespace ts.pxt {
-    // testBit(R0, k)
-    //    lsls R0, R0, (31-k)
-    //    bmi .bitSet  (or bpl .bitClear)
-
     export var decodeBase64 = function (s: string) { return atob(s); }
 
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
@@ -19,8 +15,11 @@ namespace ts.pxt {
         if (proc.args.length <= 2)
             emitLambdaWrapper(proc.isRoot)
 
+        let bkptLabel = getFunctionLabel(proc.action) + "_bkpt"
         write(`
 .section code
+${bkptLabel}:
+    bkpt 1
 ${getFunctionLabel(proc.action)}:
     @stackmark func
     @stackmark args
@@ -37,6 +36,14 @@ ${getFunctionLabel(proc.action)}:
         //console.log(proc.toString())
         proc.resolve()
         //console.log("OPT", proc.toString())
+
+        // debugger hook - bit #1 of global #0 determines break on function entry
+        // we could have put the 'bkpt' inline, and used `bpl`, but that would 2 cycles slower
+        write(`
+    ldr r0, [r6, #0]
+    lsls r0, r0, #30
+    bmi ${bkptLabel}
+`)
 
         let exprStack: ir.Expr[] = []
 
@@ -64,6 +71,17 @@ ${getFunctionLabel(proc.action)}:
                     write(s.lblName + ":")
                     break;
                 case ir.SK.Breakpoint:
+                    if (s.breakpointInfo.isDebuggerStmt) {
+                        let lbl = mkLbl("debugger")
+                        // bit #0 of debugger register is set when debugger is attached
+                        write("ldr r0, [r6, #0]")
+                        write("lsls r0, r0, #31")
+                        write(`bpl ${lbl}`)
+                        write(`bkpt 2`)
+                        write(`${lbl}:`)
+                    } else {
+                        // do nothing
+                    }
                     break;
                 default: oops();
             }
@@ -592,7 +610,7 @@ ${getFunctionLabel(proc.action)}:
                 return bytes
             }
 
-            let hd = [0x4208, bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
+            let hd = [0x4208, numReservedGlobals + bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
             let tmp = hexTemplateHash()
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))

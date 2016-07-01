@@ -1,6 +1,6 @@
 namespace ts.pxt {
-    export var assert = Util.assert;
-    export var oops = Util.oops;
+    export const assert = Util.assert;
+    export const oops = Util.oops;
     export type StringMap<T> = Util.Map<T>;
     export import U = ts.pxt.Util;
 
@@ -9,7 +9,9 @@ namespace ts.pxt {
     export const BINARY_ASM = "binary.asm";
 
     let EK = ir.EK;
-    export var SK = SyntaxKind;
+    export const SK = SyntaxKind;
+
+    export const numReservedGlobals = 1;
 
     export function stringKind(n: Node) {
         if (!n) return "<null>"
@@ -511,7 +513,7 @@ namespace ts.pxt {
                 typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
-                    ex = new ir.Cell(bin.globals.length, decl, getVarInfo(decl))
+                    ex = new ir.Cell(bin.globals.length + numReservedGlobals, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
                 return ex
