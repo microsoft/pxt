@@ -245,8 +245,9 @@ export function ptrAsync(path: string, target?: string) {
         })
 }
 
-function allFiles(top: string, maxDepth = 4): string[] {
+function allFiles(top: string, maxDepth = 4, allowMissing = false): string[] {
     let res: string[] = []
+    if (allowMissing && !fs.existsSync(top)) return res
     for (let p of fs.readdirSync(top)) {
         if (p[0] == ".") continue;
         let inner = top + "/" + p
@@ -864,6 +865,16 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
             if (mimeType) logos[k] = `data:${mimeType};base64,${b.toString('base64')}`;
             else logos[k] = b.toString('utf8');
         })
+
+    if (!cfg.appTheme.htmlDocIncludes)
+        cfg.appTheme.htmlDocIncludes = {}
+
+    for (let fn of allFiles("node_modules/pxt-core/includes", 1, true).concat(allFiles("includes"))) {
+        let m = /docs-(.*)\.html$/.exec(fn)
+        if (m) {
+            cfg.appTheme.htmlDocIncludes[m[1]] = fs.readFileSync(fn, "utf8")
+        }
+    }
 
     cfg.appTheme.locales = {}
 
