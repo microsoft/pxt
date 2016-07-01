@@ -114,8 +114,10 @@ export function getHwStateAsync() {
                 Promise.resolve([] as number[]))
         .then(g => {
             res.globals = g
-            return res
         })
+        .then(() => restoreAsync(res.machineState))
+        .then(() => workerOpAsync("resume"))
+        .then(() => res)
 }
 
 let devPath: Promise<string>;

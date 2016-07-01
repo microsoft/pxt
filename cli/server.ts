@@ -295,7 +295,7 @@ function initSocketServer() {
                         }))
                     })
             } catch (e) {
-                console.log("ws debug error", e)
+                console.log("ws debug error", e.stack)
             }
         });
         ws.on('close', function (event: any) {

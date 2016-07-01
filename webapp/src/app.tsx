@@ -1232,6 +1232,9 @@ function assembleCurrent() {
         })
 }
 
+function log(v: any) {
+    console.log(v)
+}
 
 // This is for usage from JS console
 let myexports: any = {
@@ -1247,7 +1250,8 @@ let myexports: any = {
     apiAsync: core.apiAsync,
     showIcons,
     hwdbg,
-    assembleCurrent
+    assembleCurrent,
+    log
 };
 (window as any).E = myexports;
 

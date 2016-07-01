@@ -1345,6 +1345,8 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
+            //proc.emitLblDirect("_stmt_" + getNodeId(node))
+
             if (!opts.breakpoints) return
             let brk = U.lookup(brkMap, nodeKey(node))
             if (!brk) {
