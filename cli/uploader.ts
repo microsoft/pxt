@@ -50,7 +50,9 @@ let uploadDir = "docs"
 export function uploadArtFileAsync(fn: string) {
     uploadDir = ""
     return uploadArtAsync(fn, true)
-        .then(() => { })
+        .then(id => {
+            console.log(id)
+         })
 }
 
 function uploadArtAsync(fn: string, noRepl = false): Promise<string> {

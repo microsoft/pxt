@@ -872,6 +872,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     for (let fn of allFiles("node_modules/pxt-core/includes", 1, true).concat(allFiles("includes"))) {
         let m = /docs-(.*)\.html$/.exec(fn)
         if (m) {
+            console.log("embed: " + fn)
             cfg.appTheme.htmlDocIncludes[m[1]] = fs.readFileSync(fn, "utf8")
         }
     }
@@ -1875,8 +1876,7 @@ export function testAsync() {
 
 export function uploadDocsAsync(...args: string[]): Promise<void> {
     let cfg = readLocalPxTarget()
-    if (cfg.id == "core")
-        saveThemeJson(cfg)
+    saveThemeJson(cfg)
     return uploader.uploadDocsAsync(...args)
 }
 
@@ -1902,7 +1902,7 @@ function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 
     })
 }
 
-cmd("help                         - display this message", helpAsync)
+cmd("help     [all]               - display this message", helpAsync)
 
 cmd("init     PACKAGE_NAME        - start new package for a given target", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
@@ -1934,6 +1934,7 @@ cmd("ghppush                      - build static package and push to GitHub Page
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
+cmd("pokecloud                    - same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"), 2)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
