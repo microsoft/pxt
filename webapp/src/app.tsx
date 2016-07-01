@@ -1347,6 +1347,10 @@ $(document).ready(() => {
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
+            if (localStorage["noAutoRun"] && pxt.appTarget.simulator)
+                pxt.appTarget.simulator.autoRun = false
+        })
+        .then(() => {
             return compiler.init();
         })
         .then(() => workspace.initAsync())
