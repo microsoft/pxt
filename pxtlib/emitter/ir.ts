@@ -179,6 +179,8 @@ namespace ts.pxt.ir {
         public jmpMode: JmpMode;
         public lblId: number;
         public breakpointInfo: Breakpoint;
+        public stmtNo: number;
+        public findIdx: number;
 
         constructor(
             public stmtKind: SK,
@@ -479,6 +481,9 @@ namespace ts.pxt.ir {
 
             let lbls = U.toDictionary(this.body.filter(s => s.stmtKind == ir.SK.Label), s => s.lblName)
 
+            for (let i = 0; i < this.body.length; ++i)
+                this.body[i].stmtNo = i
+
             for (let s of this.body) {
                 if (s.expr) {
                     //console.log("CNT", s.expr.toString())
@@ -499,6 +504,62 @@ namespace ts.pxt.ir {
                         break;
                     default: oops();
                 }
+            }
+
+            let findIdx = 1
+            let findNext = (i: number) => {
+                let res: Breakpoint[] = []
+                let loop = (i: number) => {
+                    while (i < this.body.length) {
+                        let s = this.body[i]
+                        if (s.findIdx === findIdx)
+                            return
+                        s.findIdx = findIdx
+                        switch (s.stmtKind) {
+                            case ir.SK.Jmp:
+                                if (s.jmpMode == ir.JmpMode.Always)
+                                    i = s.lbl.stmtNo - 1
+                                else
+                                    loop(s.lbl.stmtNo) // fork
+                                break;
+                            case ir.SK.Breakpoint:
+                                res.push(s.breakpointInfo)
+                                return
+                        }
+                        i++;
+                    }
+                }
+
+                findIdx++
+                loop(i)
+                return res
+            }
+
+            let allBrkp: Breakpoint[] = []
+
+            for (let s of this.body) {
+                if (s.stmtKind == ir.SK.Breakpoint) {
+                    s.breakpointInfo.successors = findNext(s.stmtNo + 1).map(b => b.id)
+                    allBrkp[s.breakpointInfo.id] = s.breakpointInfo
+                }
+            }
+
+            let debugSucc = false
+            if (debugSucc) {
+                let s = "BRKP: " + this.getName() + ":\n"
+                for (let i = 0; i < allBrkp.length; ++i) {
+                    let b = allBrkp[i]
+                    if(!b) continue
+
+                    s += `${b.line + 1}: `
+                    let n = allBrkp[i + 1]
+                    if (n && b.successors.length == 1 && b.successors[0] == n.id)
+                        s += "."
+                    else
+                        s += b.successors.map(b => `${allBrkp[b].line + 1}`).join(", ")
+                    s += "\n"
+                }
+                console.log(s)
             }
         }
     }

@@ -348,7 +348,7 @@ namespace ts.pxt {
                 // we may have not been able to compile or download the hex file
                 return {
                     diagnostics: [{
-                        file:  program.getSourceFiles()[0],
+                        file: program.getSourceFiles()[0],
                         start: 0,
                         length: 0,
                         category: DiagnosticCategory.Error,
@@ -361,6 +361,8 @@ namespace ts.pxt {
 
             hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
+
+            opts.breakpoints = true
         }
 
         if (opts.breakpoints)
@@ -371,7 +373,8 @@ namespace ts.pxt {
                 start: 0,
                 length: 0,
                 line: 0,
-                character: 0
+                character: 0,
+                successors: null
             }]
 
         let bin: Binary;
@@ -1347,8 +1350,6 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
-            //proc.emitLblDirect("_stmt_" + getNodeId(node))
-
             if (!opts.breakpoints) return
             let brk = U.lookup(brkMap, nodeKey(node))
             if (!brk) {
@@ -1366,7 +1367,8 @@ ${lbl}: .short 0xffff
                     start: pos,
                     length: node.end - pos,
                     line: p.line,
-                    character: p.character
+                    character: p.character,
+                    successors: null
                 }
                 brkMap[nodeKey(node)] = brk
                 res.breakpoints.push(brk)

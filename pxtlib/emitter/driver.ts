@@ -41,8 +41,7 @@ namespace ts.pxt {
     export interface Breakpoint extends LocationInfo {
         id: number;
         isDebuggerStmt: boolean;
-        // TODO: this would be useful for step-over support
-        // prevBrkId?:number;
+        successors: number[]; // ids of all breakpoints that we could hit next
     }
 
     export interface CompileResult {
