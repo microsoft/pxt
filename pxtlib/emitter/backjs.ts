@@ -173,6 +173,9 @@ switch (step) {
                 case EK.JmpValue:
                     write("// jmp value (already in r0)")
                     break;
+                case EK.Nop:
+                    write("// nop")
+                    break
                 case EK.Incr:
                     emitExpr(e.args[0])
                     if (refCounting)

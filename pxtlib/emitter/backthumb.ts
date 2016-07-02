@@ -190,6 +190,10 @@ ${getFunctionLabel(proc.action)}:
                 case EK.JmpValue:
                     write("; jmp value (already in r0)")
                     break;
+                case EK.Nop:
+                    // this is there because we need different addresses for breakpoints
+                    write("nop")
+                    break;
                 case EK.Incr:
                     emitExpr(e.args[0])
                     emitCallRaw("pxt::incr")

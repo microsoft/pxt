@@ -17,6 +17,7 @@ namespace ts.pxt.ir {
         Decr,
         Sequence,
         JmpValue,
+        Nop,
     }
 
     export enum CallingConvention {
@@ -91,6 +92,8 @@ namespace ts.pxt.ir {
                     return (this.data as Cell).toString()
                 case EK.JmpValue:
                     return "JMPVALUE"
+                case EK.Nop:
+                    return "NOP"
 
                 case EK.SharedRef:
                     return `SHARED_REF(${this.args[0].toString()})`
@@ -130,6 +133,7 @@ namespace ts.pxt.ir {
                 case EK.CellRef:
                 case EK.JmpValue:
                 case EK.SharedRef:
+                case EK.Nop:
                     return false;
 
                 case EK.SharedDef:
