@@ -83,6 +83,8 @@ export function getTextAsync(id: string): Promise<ScriptText> {
 export interface ScriptMeta {
     description: string;
     islibrary: boolean;
+    blocksWidth?: number;
+    blocksHeight?: number;
 }
 
 export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
@@ -98,7 +100,11 @@ export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
         userplatform: ["pxt-web"],
         target: h.target,
         editor: h.editor,
-        text: stext
+        text: stext,
+        meta: {
+            blocksHeight: meta.blocksHeight,
+            blocksWidth: meta.blocksWidth
+        }
     }
     pxt.debug(`publishing script; ${stext.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq)

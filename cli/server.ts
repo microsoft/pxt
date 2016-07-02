@@ -15,6 +15,7 @@ import Cloud = pxt.Cloud;
 let root = ""
 let dirs = [""]
 let simdirs = [""]
+let docfilesdirs = [""]
 let fileDir = process.cwd()
 let docsDir = ""
 let tempDir = ""
@@ -25,6 +26,7 @@ function setupRootDir() {
     console.log("Starting server in", root)
     dirs = ["node_modules/pxt-core/built/web", "node_modules/pxt-core/webapp/public"].map(p => path.join(root, p))
     simdirs = ["built", "sim/public"].map(p => path.join(root, p))
+    docfilesdirs = ["docfiles", "node_modules/pxt-core/docfiles"].map(p => path.join(root, p))
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
     packagedDir = path.join(root, "built/packaged")
@@ -206,32 +208,19 @@ function fileExistsSync(p: string): boolean {
 let docsTemplate: string = "@body@"
 
 function setupTemplate() {
-    let templatePath = path.join(tempDir, "template-override.html")
+    let templatePath = "docfiles/template.html"
     if (fs.existsSync(templatePath)) {
         docsTemplate = fs.readFileSync(templatePath, "utf8")
-        console.log("Using template override.")
+        console.log("Using local template override.")
         return
     }
 
-    templatePath = path.join(tempDir, "template.html")
+    templatePath = path.join("node_modules/pxt-core", templatePath)
     if (fs.existsSync(templatePath)) {
         docsTemplate = fs.readFileSync(templatePath, "utf8")
+    } else {
+        console.error("Cannot find docfiles/template.html")
     }
-
-    let url = "https://www.pxt.io/templates/docs"
-    U.requestAsync({ url })
-        .then(resp => {
-            if (resp.text != docsTemplate) {
-                console.log(`${url} updated`)
-                docsTemplate = resp.text
-                fs.writeFileSync(templatePath, docsTemplate)
-            } else {
-                console.log(`${url} unchanged`)
-            }
-        }, err => {
-            console.log(`error downloading ${url}: ${err.message}`)
-        })
-        .done()
 }
 
 interface SerialPortInfo {
@@ -533,6 +522,9 @@ export function serveAsync(options: ServeOptions) {
             } else if (U.startsWith(pathname, "/cdn/")) {
                 pathname = pathname.slice(4)
                 dd = dirs
+            } else if (U.startsWith(pathname, "/docfiles/")) {
+                pathname = pathname.slice(10)
+                dd = docfilesdirs
             }
             for (let dir of dd) {
                 let filename = path.resolve(path.join(dir, pathname))

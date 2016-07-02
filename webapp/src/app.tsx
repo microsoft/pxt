@@ -904,6 +904,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     description: mpkg.config.description,
                     islibrary: false
                 }
+                // TODO pass blocks workspace size here
                 return workspace.publishAsync(epkg.header, files, meta)
                     .then(inf => inf.id)
             }).finally(() => {

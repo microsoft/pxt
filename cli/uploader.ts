@@ -47,7 +47,15 @@ export function sha256buffer(b: Buffer): string {
 
 let uploadDir = "docs"
 
-function uploadArtAsync(fn: string): Promise<string> {
+export function uploadArtFileAsync(fn: string) {
+    uploadDir = ""
+    return uploadArtAsync(fn, true)
+        .then(id => {
+            console.log(id)
+         })
+}
+
+function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
     let contentType = U.getMime(fn)
     if (!contentType || contentType == "application/octet-stream")
         error("content type not understood: " + fn)
@@ -56,7 +64,7 @@ function uploadArtAsync(fn: string): Promise<string> {
 
     return Promise.resolve()
         .then(() => {
-            if (/^text/.test(contentType)) {
+            if (!noRepl && /^text/.test(contentType)) {
                 let str = buf.toString("utf8");
                 let waitFor: Promise<any>[] = [];
                 replContent(str, waitFor);
@@ -227,10 +235,10 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
 
         // extract all snippets
         let snipIndex = 0;
-        text.replace(/^`{3}([\S]+)?\n([\s\S]+?)\n`{3}$/gm, (m,type,code) => {
+        text.replace(/^`{3}([\S]+)?\n([\s\S]+?)\n`{3}$/gm, (m, type, code) => {
             type = type || "pre"
             let dir = "built/docs/snippets/" + type;
-            let fn = `${dir}/${f.replace(/^\//,'').replace(/\//g, '-').replace(/\.\w+$/,'')}-${snipIndex++}.ts`;
+            let fn = `${dir}/${f.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex++}.ts`;
             nodeutil.mkdirP(dir);
             fs.writeFileSync(fn, code);
             snipCount++;

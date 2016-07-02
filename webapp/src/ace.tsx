@@ -540,6 +540,12 @@ export class Editor extends srceditor.Editor {
     completer: AceCompleter;
     isTypescript = false;
 
+    hasBlocks() {
+        if (!this.currFile) return true
+        let blockFile = this.currFile.getVirtualFileName();
+        return (blockFile && pkg.mainEditorPkg().files[blockFile] != null)
+    }
+
     openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
 
@@ -553,6 +559,9 @@ export class Editor extends srceditor.Editor {
 
         // needed to test roundtrip
         this.formatCode();
+
+        if (!this.hasBlocks())
+            return
 
         // might be undefined
         let mainPkg = pkg.mainEditorPkg();
@@ -635,7 +644,8 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        return <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Show Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
+        if (!this.hasBlocks()) return null
+        return <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
     }
 
     undo() {

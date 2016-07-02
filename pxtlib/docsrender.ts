@@ -22,9 +22,9 @@ namespace pxt {
         contactUrl?: string;
         accentColor?: string;
         locales?: ts.pxt.Util.Map<AppTheme>;
-
-        appInsightsId?: string;
-        mixPanelId?: string;
+        cardLogo?: string;
+        appLogo?: string;
+        htmlDocIncludes?: ts.pxt.Util.Map<string>;
     }
 
     export interface DocMenuEntry {
@@ -136,6 +136,13 @@ namespace pxt.docs {
 
         let error = (s: string) =>
             `<div class='ui negative message'>${htmlQuote(s)}</div>`
+
+        template = template
+            .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
+            (full, fn) => {
+                let cont = (theme.htmlDocIncludes || {})[fn] || ""
+                return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
+            })
 
         template = template.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
             let attrs = parseHtmlAttrs(attrsStr)
