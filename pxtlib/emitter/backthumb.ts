@@ -71,6 +71,7 @@ ${getFunctionLabel(proc.action)}:
                     write(s.lblName + ":")
                     break;
                 case ir.SK.Breakpoint:
+                    write(`__brkp_${s.breakpointInfo.id}:`)
                     if (s.breakpointInfo.isDebuggerStmt) {
                         let lbl = mkLbl("debugger")
                         // bit #0 of debugger register is set when debugger is attached
@@ -781,6 +782,7 @@ ${hex.hexPrelude()}
 
         return {
             src: src,
+            labels: b.computeLabels(),
             buf: b.buf
         }
     }
@@ -820,7 +822,7 @@ _stored_program: .string "`
         return str
     }
 
-    export function thumbEmit(bin: Binary, opts: CompileOptions) {
+    export function thumbEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let src = serialize(bin)
         src = patchSrcHash(src)
         if (opts.embedBlob)
@@ -832,6 +834,12 @@ _stored_program: .string "`
         if (res.buf) {
             const myhex = hex.patchHex(bin, res.buf, false).join("\r\n") + "\r\n"
             bin.writeFile(ts.pxt.BINARY_HEX, myhex)
+        }
+
+        for (let bkpt of cres.breakpoints) {
+            let lbl = U.lookup(res.labels, "__brkp_" + bkpt.id)
+            if (lbl != null)
+                bkpt.binAddr = lbl
         }
     }
 

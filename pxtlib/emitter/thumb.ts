@@ -938,6 +938,10 @@ namespace ts.pxt.thumb {
             this.stats += lf("; peep hole pass: {0} instructions removed and {1} updated\n", this.peepDel, this.peepOps - this.peepDel)
         }
 
+        public computeLabels() {
+            return U.mapStringMap(this.labels, (k, v) => v + this.baseOffset)
+        }
+
         public emit(text: string) {
             init();
 

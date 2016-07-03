@@ -42,6 +42,7 @@ namespace ts.pxt {
         id: number;
         isDebuggerStmt: boolean;
         successors: number[]; // ids of all breakpoints that we could hit next
+        binAddr?: number;
     }
 
     export interface CompileResult {

@@ -497,9 +497,9 @@ namespace ts.pxt {
 
             bin.writeFile = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null);
-
+            
             if (opts.target.isNative) {
-                thumbEmit(bin, opts)
+                thumbEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
@@ -2027,7 +2027,6 @@ ${lbl}: .short 0xffff
             proc.seqNo = this.procs.length
             //proc.binary = this
         }
-
 
         emitString(s: string): string {
             if (this.strings.hasOwnProperty(s))
