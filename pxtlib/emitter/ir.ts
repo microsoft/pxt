@@ -549,7 +549,7 @@ namespace ts.pxt.ir {
                 let s = "BRKP: " + this.getName() + ":\n"
                 for (let i = 0; i < allBrkp.length; ++i) {
                     let b = allBrkp[i]
-                    if(!b) continue
+                    if (!b) continue
 
                     s += `${b.line + 1}: `
                     let n = allBrkp[i + 1]

@@ -497,7 +497,7 @@ namespace ts.pxt {
 
             bin.writeFile = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null);
-            
+
             if (opts.target.isNative) {
                 thumbEmit(bin, opts, res)
             } else {
