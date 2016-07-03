@@ -9,7 +9,16 @@ import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
 let iface: workeriface.Iface
+let isHalted = false
+let lastCompileResult: ts.pxt.CompileResult;
+let haltCheckRunning = false
+let onHalted = Promise.resolve();
+let haltHandler: () => void;
+let cachedStateInfo: StateInfo
+let nextBreakpoints: number[] = []
+let currBreakpoint: ts.pxt.Breakpoint;
 
+export var postMessage: (msg: pxsim.DebuggerMessage) => void;
 
 export interface MachineState {
     registers: number[];
@@ -28,6 +37,11 @@ function init() {
 export function readMemAsync(addr: number, numwords: number) {
     return workerOpAsync("mem", { addr: addr, words: numwords })
         .then(resp => resp.data as number[])
+}
+
+export function writeMemAsync(addr: number, words: number[]) {
+    return workerOpAsync("wrmem", { addr: addr, words: words })
+        .then(() => { })
 }
 
 let asm = ""
@@ -50,12 +64,15 @@ let stateProcs = [
     "pxtrt::getGlobalsPtr/globalsPtr",
 ]
 
+
 interface StateInfo {
     numGlobals: number;
     globalsPtr: number;
 }
 
-function callForStateAsync() {
+function callForStateAsync(st: MachineState) {
+    if (cachedStateInfo) return Promise.resolve(cachedStateInfo)
+
     asm = ""
 
     for (let p of stateProcs) {
@@ -67,8 +84,7 @@ function callForStateAsync() {
     @nostackcheck
 `
 
-    return compiler.compileAsync({ native: true })
-        .then(() => compiler.assembleAsync(asm))
+    return compiler.assembleAsync(asm)
         .then(res => workerOpAsync("exec", { code: res.words, args: [] }))
         .then(() => snapshotAsync())
         .then(st => {
@@ -78,8 +94,113 @@ function callForStateAsync() {
             fields.forEach((f, i) => {
                 r[f] = st.stack[i]
             })
-            return r as StateInfo
+            cachedStateInfo = r
         })
+        .then(() => restoreAsync(st))
+        .then(() => cachedStateInfo)
+}
+
+function clearAsync() {
+    isHalted = false
+    lastCompileResult = null
+    cachedStateInfo = null
+    return Promise.resolve()
+}
+
+function coreHalted() {
+    return getHwStateAsync()
+        .then(st => {
+            nextBreakpoints = []
+            let globals: pxsim.Variables = {}
+            st.globals.forEach((v, i) => globals["g" + i] = v)
+            let bb = lastCompileResult.breakpoints
+            let brkMatch = bb[0]
+            let pc = st.machineState.registers[15]
+            let bestDelta = Infinity
+            for (let b of bb) {
+                let delta = pc - b.binAddr
+                if (delta >= 0 && delta < bestDelta) {
+                    bestDelta = delta
+                    brkMatch = b
+                }
+            }
+            currBreakpoint = brkMatch
+            lastCompileResult.breakpoints
+            let msg: pxsim.DebuggerBreakpointMessage = {
+                type: 'debugger',
+                subtype: 'breakpoint',
+                breakpointId: brkMatch.id,
+                globals: globals,
+                stackframes: []
+            }
+            postMessage(msg)
+        })
+        .then(haltHandler)
+}
+
+function haltCheckAsync(): Promise<void> {
+    if (isHalted)
+        return Promise.delay(100).then(haltCheckAsync)
+    return workerOpAsync("status")
+        .then(res => {
+            if (res.isHalted) {
+                isHalted = true
+                coreHalted()
+            }
+            return Promise.delay(300)
+        })
+        .then(haltCheckAsync)
+}
+
+function clearHalted() {
+    isHalted = false
+    onHalted = new Promise<void>((resolve, reject) => {
+        haltHandler = resolve
+    })
+    if (!haltCheckRunning) {
+        haltCheckRunning = true
+        haltCheckAsync()
+    }
+}
+
+function writeDebugStatusAsync(v: number) {
+    return writeMemAsync(cachedStateInfo.globalsPtr, [v])
+}
+
+function setBreakpointsAsync(addrs: number[]) {
+    return workerOpAsync("breakpoints", { addrs: addrs })
+}
+
+export function startDebugAsync() {
+    return clearAsync()
+        .then(() => compiler.compileAsync({ native: true }))
+        .then(res => {
+            lastCompileResult = res
+            let bb = lastCompileResult.breakpoints
+            let entry = bb[1]
+            for (let b of bb) {
+                if (b.binAddr && b.binAddr < entry.binAddr)
+                    entry = b
+            }
+            return setBreakpointsAsync([entry.binAddr])
+        })
+        .then(() => workerOpAsync("reset"))
+        .then(clearHalted)
+        .then(waitForHaltAsync)
+        .then(res => writeDebugStatusAsync(1).then(() => res))
+}
+
+export function handleMessage(msg: pxsim.DebuggerMessage) {
+    console.log("HWDBGMSG", msg)
+    if (msg.type != "debugger")
+        return
+    switch (msg.subtype) {
+        case 'stepover':
+        case 'stepinto':
+            nextBreakpoints = currBreakpoint.successors.map(id => lastCompileResult.breakpoints[id].binAddr)
+            resumeAsync()
+            break
+    }
 }
 
 export function snapshotAsync(): Promise<MachineState> {
@@ -92,9 +213,21 @@ export function restoreAsync(st: MachineState): Promise<void> {
         .then(() => { })
 }
 
+export function resumeAsync() {
+    return Promise.resolve()
+        .then(() => setBreakpointsAsync(nextBreakpoints))
+        .then(() => workerOpAsync("resume"))
+        .then(clearHalted)
+}
+
 export interface HwState {
     machineState: MachineState;
     globals: number[];
+}
+
+export function waitForHaltAsync() {
+    U.assert(haltCheckRunning)
+    return onHalted
 }
 
 export function getHwStateAsync() {
@@ -102,22 +235,16 @@ export function getHwStateAsync() {
         machineState: null,
         globals: []
     }
-    return workerOpAsync("halt")
-        .then(() => workerOpAsync("snapshot"))
+    return snapshotAsync()
         .then(v => {
-            res.machineState = v.state
-            return callForStateAsync()
+            res.machineState = v
+            return callForStateAsync(v)
         })
-        .then(info =>
-            info.numGlobals > 0 ?
-                readMemAsync(info.globalsPtr, info.numGlobals) :
-                Promise.resolve([] as number[]))
+        .then(info => readMemAsync(info.globalsPtr, info.numGlobals))
         .then(g => {
             res.globals = g
+            return res
         })
-        .then(() => restoreAsync(res.machineState))
-        .then(() => workerOpAsync("resume"))
-        .then(() => res)
 }
 
 let devPath: Promise<string>;
