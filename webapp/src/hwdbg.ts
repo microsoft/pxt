@@ -17,6 +17,7 @@ let haltHandler: () => void;
 let cachedStateInfo: StateInfo
 let nextBreakpoints: number[] = []
 let currBreakpoint: ts.pxt.Breakpoint;
+let lastDebugStatus: number;
 
 export var postMessage: (msg: pxsim.DebuggerMessage) => void;
 
@@ -104,6 +105,7 @@ function clearAsync() {
     isHalted = false
     lastCompileResult = null
     cachedStateInfo = null
+    lastDebugStatus = null
     return Promise.resolve()
 }
 
@@ -164,6 +166,8 @@ function clearHalted() {
 }
 
 function writeDebugStatusAsync(v: number) {
+    if (v === lastDebugStatus) return Promise.resolve()
+    lastDebugStatus = v
     return writeMemAsync(cachedStateInfo.globalsPtr, [v])
 }
 
@@ -194,11 +198,13 @@ export function handleMessage(msg: pxsim.DebuggerMessage) {
     console.log("HWDBGMSG", msg)
     if (msg.type != "debugger")
         return
+    let stepInto = false
     switch (msg.subtype) {
-        case 'stepover':
         case 'stepinto':
+            stepInto = true
+        case 'stepover':
             nextBreakpoints = currBreakpoint.successors.map(id => lastCompileResult.breakpoints[id].binAddr)
-            resumeAsync()
+            resumeAsync(stepInto)
             break
     }
 }
@@ -213,8 +219,9 @@ export function restoreAsync(st: MachineState): Promise<void> {
         .then(() => { })
 }
 
-export function resumeAsync() {
+export function resumeAsync(into = false) {
     return Promise.resolve()
+        .then(() => writeDebugStatusAsync(into ? 3 : 1))
         .then(() => setBreakpointsAsync(nextBreakpoints))
         .then(() => workerOpAsync("resume"))
         .then(clearHalted)

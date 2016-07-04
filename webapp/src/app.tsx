@@ -838,13 +838,18 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     hwDebug() {
-        simulator.driver.setHwDebugger({
-            postMessage: (msg) => {
-                hwdbg.handleMessage(msg as pxsim.DebuggerMessage)
-            }
+        let start = Promise.resolve()
+        if (!this.state.running || !simulator.driver.debug)
+            start = this.runSimulator({ debug: true })
+        return start.then(() => {
+            simulator.driver.setHwDebugger({
+                postMessage: (msg) => {
+                    hwdbg.handleMessage(msg as pxsim.DebuggerMessage)
+                }
+            })
+            hwdbg.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
+            return hwdbg.startDebugAsync()
         })
-        hwdbg.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
-        hwdbg.startDebugAsync()
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
@@ -859,7 +864,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({ simulatorCompilation: undefined })
 
         let state = this.editor.snapshotState()
-        compiler.compileAsync(opts)
+        return compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[ts.pxt.BINARY_JS]) {
@@ -869,8 +874,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
             })
-            .done()
-
     }
 
     editText() {

@@ -48,7 +48,9 @@ namespace pxsim {
                 // in future the simulator frame could reflect changes in the hardware
                 this.hwdbg = hw
                 this.setState(SimulatorState.Running)
+                this.container.style.opacity = "0.3"
             } else {
+                delete this.container.style.opacity
                 this.hwdbg = null
                 this.setState(SimulatorState.Running)
                 this.stop()
@@ -246,6 +248,7 @@ namespace pxsim {
         private addEventListeners() {
             if (!this.listener) {
                 this.listener = (ev: MessageEvent) => {
+                    if (this.hwdbg) return
                     this.handleMessage(ev.data, ev.source)
                 }
                 window.addEventListener('message', this.listener, false);
