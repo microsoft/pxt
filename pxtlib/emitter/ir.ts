@@ -310,6 +310,7 @@ namespace ts.pxt.ir {
         captured: Cell[] = [];
         args: Cell[] = [];
         parent: Procedure;
+        debugInfo: ProcDebugInfo;
 
         body: Stmt[] = [];
         lblNo = 0;

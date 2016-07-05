@@ -38,11 +38,12 @@ ${getFunctionLabel(proc.action)}:
         //console.log("OPT", proc.toString())
 
         // debugger hook - bit #1 of global #0 determines break on function entry
-        // we could have put the 'bkpt' inline, and used `bpl`, but that would 2 cycles slower
+        // we could have put the 'bkpt' inline, and used `bpl`, but that would be 2 cycles slower
         write(`
     ldr r0, [r6, #0]
     lsls r0, r0, #30
     bmi ${bkptLabel}
+${bkptLabel + "_after"}:
 `)
 
         let exprStack: ir.Expr[] = []
@@ -823,6 +824,14 @@ _stored_program: .string "`
     }
 
     export function thumbEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
+        for (let proc of bin.procs) {
+            proc.debugInfo = {
+                name: proc.getName(),
+                codeStartLoc: 0,
+                bkptLoc: 0,
+            }
+        }
+
         let src = serialize(bin)
         src = patchSrcHash(src)
         if (opts.embedBlob)
@@ -841,6 +850,14 @@ _stored_program: .string "`
             if (lbl != null)
                 bkpt.binAddr = lbl
         }
+
+        for (let proc of bin.procs) {
+            let bkptLabel = getFunctionLabel(proc.action) + "_bkpt"
+            proc.debugInfo.codeStartLoc = U.lookup(res.labels, bkptLabel + "_after")
+            proc.debugInfo.bkptLoc = U.lookup(res.labels, bkptLabel)
+        }
+
+        cres.procDebugInfo = bin.procs.map(p => p.debugInfo)
     }
 
     export let validateShim = hex.validateShim;

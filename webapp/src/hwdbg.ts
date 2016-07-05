@@ -115,9 +115,19 @@ function coreHalted() {
             nextBreakpoints = []
             let globals: pxsim.Variables = {}
             st.globals.forEach((v, i) => globals["g" + i] = v)
+            let pc = st.machineState.registers[15]
+
+            let final = () => Promise.resolve()
+            
+            let stepInBkp = lastCompileResult.procDebugInfo.filter(p => p.bkptLoc == pc)[0]
+            if (stepInBkp) {
+                pc = stepInBkp.codeStartLoc
+                st.machineState.registers[15] = pc
+                final = () => restoreAsync(st.machineState)
+            }
+
             let bb = lastCompileResult.breakpoints
             let brkMatch = bb[0]
-            let pc = st.machineState.registers[15]
             let bestDelta = Infinity
             for (let b of bb) {
                 let delta = pc - b.binAddr
@@ -127,7 +137,6 @@ function coreHalted() {
                 }
             }
             currBreakpoint = brkMatch
-            lastCompileResult.breakpoints
             let msg: pxsim.DebuggerBreakpointMessage = {
                 type: 'debugger',
                 subtype: 'breakpoint',
@@ -136,6 +145,7 @@ function coreHalted() {
                 stackframes: []
             }
             postMessage(msg)
+            return final()
         })
         .then(haltHandler)
 }

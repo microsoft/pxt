@@ -45,6 +45,12 @@ namespace ts.pxt {
         binAddr?: number;
     }
 
+    export interface ProcDebugInfo {
+        name: string;
+        bkptLoc: number;
+        codeStartLoc: number;
+    }
+
     export interface CompileResult {
         outfiles: StringMap<string>;
         diagnostics: KsDiagnostic[];
@@ -52,6 +58,7 @@ namespace ts.pxt {
         times: U.Map<number>;
         ast?: Program;
         breakpoints?: Breakpoint[];
+        procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
     }
 
