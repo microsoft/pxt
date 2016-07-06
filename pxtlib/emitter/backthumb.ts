@@ -30,8 +30,10 @@ ${getFunctionLabel(proc.action)}:
         let calls:ProcCallInfo[] = []
         proc.fillDebugInfo = th => {
             let labels = th.getLabels()
+            
             proc.debugInfo = {
-                locals: proc.locals.map(l => ({ name: l.getName(), type: "TODO" })),
+                locals: (proc.seqNo == 1 ? bin.globals : proc.locals).map(l => l.getDebugInfo()),
+                args: proc.args.map(l => l.getDebugInfo()),
                 name: proc.getName(),
                 codeStartLoc: U.lookup(labels, bkptLabel + "_after"),
                 bkptLoc: U.lookup(labels, bkptLabel),

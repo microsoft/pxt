@@ -63,6 +63,7 @@ namespace ts.pxt {
         bkptLoc: number;
         codeStartLoc: number;
         locals: CellInfo[];
+        args: CellInfo[];
         localsMark: number;
         calls: ProcCallInfo[];
     }

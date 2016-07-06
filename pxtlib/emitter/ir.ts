@@ -237,6 +237,13 @@ namespace ts.pxt.ir {
             return getDeclName(this.def)
         }
 
+        getDebugInfo():CellInfo {
+            return {
+                name: this.getName(),
+                type: "TODO"
+            }
+        }
+
         toString() {
             let n = ""
             if (this.def) n += (<any>this.def.name).text || "?"
