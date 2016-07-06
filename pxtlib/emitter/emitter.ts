@@ -302,7 +302,7 @@ namespace ts.pxt {
         let text = node && node.name ? (<Identifier>node.name).text : null
         if (!text && node.kind == SK.Constructor)
             text = "constructor"
-        if (node.parent && node.parent.kind == SK.ClassDeclaration)
+        if (node && node.parent && node.parent.kind == SK.ClassDeclaration)
             text = (<ClassDeclaration>node.parent).name.text + "." + text
         text = text || "inline"
         return text;

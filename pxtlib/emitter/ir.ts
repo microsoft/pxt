@@ -233,6 +233,10 @@ namespace ts.pxt.ir {
             setCellProps(this)
         }
 
+        getName() {
+            return getDeclName(this.def)
+        }
+
         toString() {
             let n = ""
             if (this.def) n += (<any>this.def.name).text || "?"
@@ -311,6 +315,7 @@ namespace ts.pxt.ir {
         args: Cell[] = [];
         parent: Procedure;
         debugInfo: ProcDebugInfo;
+        fillDebugInfo: (th:thumb.File) => void;
 
         body: Stmt[] = [];
         lblNo = 0;

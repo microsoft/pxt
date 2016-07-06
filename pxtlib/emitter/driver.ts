@@ -45,10 +45,26 @@ namespace ts.pxt {
         binAddr?: number;
     }
 
+    export interface CellInfo {
+        name: string;
+        type: string;
+    }
+
+    export interface ProcCallInfo {
+        procIndex: number;
+        callLabel: string;
+        addr: number;
+        stack: number;
+    }
+
     export interface ProcDebugInfo {
         name: string;
+        idx: number;
         bkptLoc: number;
         codeStartLoc: number;
+        locals: CellInfo[];
+        localsMark: number;
+        calls: ProcCallInfo[];
     }
 
     export interface CompileResult {

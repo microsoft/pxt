@@ -272,6 +272,7 @@ namespace ts.pxt.thumb {
         public errors: InlineError[] = [];
         public buf: number[];
         private labels: StringMap<number> = {};
+        private userLabelsCache: StringMap<number>;
         private stackpointers: StringMap<number> = {};
         private stack = 0;
         public peepOps = 0;
@@ -279,6 +280,8 @@ namespace ts.pxt.thumb {
         private stats = "";
         public throwOnError = false;
         public disablePeepHole = false;
+        public stackAtLabel: StringMap<number> = {};
+        private prevLabel: string;
 
         private emitShort(op: number) {
             assert(0 <= op && op <= 0xffff);
@@ -789,11 +792,15 @@ namespace ts.pxt.thumb {
 
                 if (l.type == "label") {
                     let lblname = this.scopedName(l.words[0])
+                    this.prevLabel = lblname
                     if (this.finalEmit) {
                         let curr = this.labels[lblname]
                         if (curr == null)
                             oops()
                         assert(this.errors.length > 0 || curr == this.location())
+                        if (this.reallyFinalEmit) {
+                            this.stackAtLabel[lblname] = this.stack
+                        }
                     } else {
                         if (this.labels.hasOwnProperty(lblname))
                             this.directiveError(lf("label redefinition"))
@@ -938,8 +945,10 @@ namespace ts.pxt.thumb {
             this.stats += lf("; peep hole pass: {0} instructions removed and {1} updated\n", this.peepDel, this.peepOps - this.peepDel)
         }
 
-        public computeLabels() {
-            return U.mapStringMap(this.labels, (k, v) => v + this.baseOffset)
+        public getLabels() {
+            if (!this.userLabelsCache)
+                this.userLabelsCache = U.mapStringMap(this.labels, (k, v) => v + this.baseOffset)
+            return this.userLabelsCache
         }
 
         public emit(text: string) {

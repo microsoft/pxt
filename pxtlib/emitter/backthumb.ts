@@ -16,6 +16,7 @@ namespace ts.pxt {
             emitLambdaWrapper(proc.isRoot)
 
         let bkptLabel = getFunctionLabel(proc.action) + "_bkpt"
+        let locLabel = getFunctionLabel(proc.action) + "_locals"
         write(`
 .section code
 ${bkptLabel}:
@@ -26,12 +27,41 @@ ${getFunctionLabel(proc.action)}:
     push {lr}
 `)
 
+        let calls:ProcCallInfo[] = []
+        proc.fillDebugInfo = th => {
+            let labels = th.getLabels()
+            proc.debugInfo = {
+                locals: proc.locals.map(l => ({ name: l.getName(), type: "TODO" })),
+                name: proc.getName(),
+                codeStartLoc: U.lookup(labels, bkptLabel + "_after"),
+                bkptLoc: U.lookup(labels, bkptLabel),
+                localsMark: U.lookup(th.stackAtLabel, locLabel),
+                idx: proc.seqNo,
+                calls: calls
+            }
+
+            for (let ci of calls) {
+                ci.addr = U.lookup(labels, ci.callLabel)
+                ci.stack = U.lookup(th.stackAtLabel, ci.callLabel)
+                ci.callLabel = undefined // don't waste space
+            }
+
+            for (let i = 0; i < proc.body.length; ++i) {
+                let bi = proc.body[i].breakpointInfo
+                if (bi) {
+                    let off = U.lookup(th.stackAtLabel, `__brkp_${bi.id}`)
+                    assert(off === proc.debugInfo.localsMark)
+                }
+            }
+        }
+
         let numlocals = proc.locals.length
         if (numlocals > 0) write("movs r0, #0")
         proc.locals.forEach(l => {
             write("push {r0} ; loc")
         })
         write("@stackmark locals")
+        write(`${locLabel}:`)
 
         //console.log(proc.toString())
         proc.resolve()
@@ -271,7 +301,14 @@ ${bkptLabel + "_after"}:
             })
 
             let proc = bin.procs.filter(p => p.action == topExpr.data)[0]
-
+            let lbl = mkLbl("proccall")
+            calls.push({
+                procIndex: proc.seqNo,
+                stack: 0,
+                addr: 0,
+                callLabel: lbl,
+            })
+            write(lbl + ":")
             write("bl " + getFunctionLabel(proc.action))
 
             for (let a of argStmts) {
@@ -783,8 +820,8 @@ ${hex.hexPrelude()}
 
         return {
             src: src,
-            labels: b.computeLabels(),
-            buf: b.buf
+            buf: b.buf,
+            thumbFile: b
         }
     }
 
@@ -824,14 +861,6 @@ _stored_program: .string "`
     }
 
     export function thumbEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
-        for (let proc of bin.procs) {
-            proc.debugInfo = {
-                name: proc.getName(),
-                codeStartLoc: 0,
-                bkptLoc: 0,
-            }
-        }
-
         let src = serialize(bin)
         src = patchSrcHash(src)
         if (opts.embedBlob)
@@ -846,15 +875,13 @@ _stored_program: .string "`
         }
 
         for (let bkpt of cres.breakpoints) {
-            let lbl = U.lookup(res.labels, "__brkp_" + bkpt.id)
+            let lbl = U.lookup(res.thumbFile.getLabels(), "__brkp_" + bkpt.id)
             if (lbl != null)
                 bkpt.binAddr = lbl
         }
 
         for (let proc of bin.procs) {
-            let bkptLabel = getFunctionLabel(proc.action) + "_bkpt"
-            proc.debugInfo.codeStartLoc = U.lookup(res.labels, bkptLabel + "_after")
-            proc.debugInfo.bkptLoc = U.lookup(res.labels, bkptLabel)
+            proc.fillDebugInfo(res.thumbFile)
         }
 
         cres.procDebugInfo = bin.procs.map(p => p.debugInfo)
