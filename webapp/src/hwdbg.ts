@@ -121,8 +121,16 @@ function coreHalted() {
     return getHwStateAsync()
         .then(st => {
             nextBreakpoints = []
+
             let globals: pxsim.Variables = {}
-            st.globals.forEach((v, i) => globals["g" + i] = v)
+            st.globals.slice(1).forEach((v, i) => {
+                let loc = lastCompileResult.procDebugInfo[0].locals[i]
+                if (loc)
+                    globals[loc.name] = v
+                else
+                    globals["?" + i] = v
+            })
+            
             let pc = st.machineState.registers[15]
 
             let final = () => Promise.resolve()
@@ -200,7 +208,7 @@ export function startDebugAsync() {
             lastCompileResult = res
             callInfos = {}
 
-            let procLookup:ts.pxt.ProcDebugInfo[] = []
+            let procLookup: ts.pxt.ProcDebugInfo[] = []
             for (let pdi of res.procDebugInfo) {
                 procLookup[pdi.idx] = pdi
             }
