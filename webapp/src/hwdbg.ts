@@ -18,6 +18,14 @@ let cachedStateInfo: StateInfo
 let nextBreakpoints: number[] = []
 let currBreakpoint: ts.pxt.Breakpoint;
 let lastDebugStatus: number;
+let callInfos: U.Map<ExtCallInfo>;
+
+interface ExtCallInfo {
+    from: ts.pxt.ProcDebugInfo;
+    to: ts.pxt.ProcDebugInfo;
+    stack: number;
+}
+
 
 export var postMessage: (msg: pxsim.DebuggerMessage) => void;
 
@@ -118,7 +126,7 @@ function coreHalted() {
             let pc = st.machineState.registers[15]
 
             let final = () => Promise.resolve()
-            
+
             let stepInBkp = lastCompileResult.procDebugInfo.filter(p => p.bkptLoc == pc)[0]
             if (stepInBkp) {
                 pc = stepInBkp.codeStartLoc
@@ -190,6 +198,22 @@ export function startDebugAsync() {
         .then(() => compiler.compileAsync({ native: true }))
         .then(res => {
             lastCompileResult = res
+            callInfos = {}
+
+            let procLookup:ts.pxt.ProcDebugInfo[] = []
+            for (let pdi of res.procDebugInfo) {
+                procLookup[pdi.idx] = pdi
+            }
+            for (let pdi of res.procDebugInfo) {
+                for (let ci of pdi.calls) {
+                    callInfos[ci.addr + ""] = {
+                        from: pdi,
+                        to: procLookup[ci.procIndex],
+                        stack: ci.stack
+                    }
+                }
+            }
+
             let bb = lastCompileResult.breakpoints
             let entry = bb[1]
             for (let b of bb) {
