@@ -45,14 +45,18 @@ function setDiagnostics(diagnostics: ts.pxt.KsDiagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error).length
 }
 
-function catchUserErrorAndSetDiags(v: any) {
-    if (v.isUserError) {
-        core.errorNotification(v.message)
-        let mainPkg = pkg.mainEditorPkg();
-        let f = mainPkg.outputPkg.setFile("output.txt", v.message)
-        f.numDiagnosticsOverride = 1
-        return new Promise<any>(() => { }) // hang forever
-    } else return Promise.reject(v)
+let hang = new Promise<any>(() => { })
+
+function catchUserErrorAndSetDiags(r: any) {
+    return (v: any) => {
+        if (v.isUserError) {
+            core.errorNotification(v.message)
+            let mainPkg = pkg.mainEditorPkg();
+            let f = mainPkg.outputPkg.setFile("output.txt", v.message)
+            f.numDiagnosticsOverride = 1
+            return r
+        } else return Promise.reject(v)
+    }
 }
 
 export interface CompileOptions {
@@ -79,7 +83,7 @@ export function compileAsync(options: CompileOptions = {}) {
             setDiagnostics(resp.diagnostics)
             return resp
         })
-        .catch(catchUserErrorAndSetDiags)
+        .catch(catchUserErrorAndSetDiags(hang))
 }
 
 function assembleCore(src: string): Promise<{ words: number[] }> {
@@ -167,7 +171,7 @@ export function typecheckAsync() {
                     })
             else return Promise.resolve()
         })
-        .catch(catchUserErrorAndSetDiags)
+        .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;
     return p;
 }
