@@ -423,6 +423,9 @@ namespace pxt.cpp {
             return outp
         }
 
+        let currSettings: U.Map<any> = {}
+        let settingSrc: U.Map<Package> = {}
+
         function parseJson(pkg: Package) {
             let json = pkg.config.yotta
             if (!json) return;
@@ -432,9 +435,25 @@ namespace pxt.cpp {
                 U.jsonCopyFrom(res.yotta.dependencies, json.dependencies)
             }
 
-            if (json.config)
-                U.jsonMergeFrom(res.yotta.config, json.config);
+            if (json.config) {
+                let cfg = U.jsonFlatten(json.config)
+                for (let settingName of Object.keys(cfg)) {
+                    let prev = U.lookup(settingSrc, settingName)
+                    let settingValue = cfg[settingName]
+                    if (!prev || prev.config.yotta.configIsJustDefaults) {
+                        settingSrc[settingName] = pkg
+                        currSettings[settingName] = settingValue
+                    } else if (currSettings[settingName] === settingValue) {
+                        // OK
+                    } else {
+                        thisErrors += "    "
+                            + lf("conflict on yotta setting {0} between packages {1} and {2}",
+                                settingName, pkg.id, prev.id) + "\n"
+                    }
+                }
+            }
         }
+
 
         // This is overridden on the build server, but we need it for command line build
         if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
@@ -446,6 +465,7 @@ namespace pxt.cpp {
 
         if (mainPkg) {
             let seenMain = false
+
             // TODO computeReachableNodes(pkg, true)
             for (let pkg of mainPkg.sortedDeps()) {
                 thisErrors = ""
@@ -485,6 +505,7 @@ namespace pxt.cpp {
         if (res.errors)
             return res;
 
+        res.yotta.config = U.jsonUnFlatten(currSettings)
         let configJson = res.yotta.config
         let moduleJson = {
             "name": "pxt-microbit-app",

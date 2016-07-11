@@ -1963,6 +1963,7 @@ ${lbl}: .short 0xffff
     export interface YottaConfig {
         dependencies?: U.Map<string>;
         config?: any;
+        configIsJustDefaults?: boolean;
     }
 
     export interface ExtensionInfo {
