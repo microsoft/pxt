@@ -374,7 +374,8 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                 header: lf("Remove {0} package", p.getPkgId()),
                 body: lf("You are about to remove a package from your project. Are you sure?", p.getPkgId()),
                 agreeClass: "red",
-                agreeIcon: "trash"
+                agreeIcon: "trash",
+                agreeLbl: lf("Remove it"),
             }).done(res => {
                 if (res) {
                     pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
