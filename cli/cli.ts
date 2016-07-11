@@ -177,6 +177,54 @@ function uploadFileAsync(path: string) {
         })
 }
 
+function ptrcheckAsync() {
+    let path = "pointers"
+    let isCore = pxt.appTarget.id == "core"
+    if (!isCore)
+        path += "/" + pxt.appTarget.id
+    let elts: Cloud.JsonPointer[] = []
+    let targets: U.Map<boolean> = {}
+    let next = (cont: string): Promise<void> =>
+        Cloud.privateGetAsync(path + "?count=500&continuation=" + cont)
+            .then((resp: Cloud.JsonList) => {
+                console.log("Query:", cont)
+                for (let e of resp.items as Cloud.JsonPointer[]) {
+                    if (/^ptr-([a-z]+)$/.exec(e.id) && e.releaseid) {
+                        targets[e.id.slice(4)] = true
+                        console.log("Target: " + e.id)
+                    }
+                    elts.push(e)
+                }
+                if (resp.continuation) return next(resp.continuation)
+                else return Promise.resolve()
+            })
+
+
+    let files = U.toDictionary(allFiles("docs", 8)
+        .filter(e => /\.md$/.test(e))
+        .map(e => e.slice(5).replace(/\//g, "-").replace(/\.md$/, "")), x => x)
+
+    targets["pkg"] = true
+    targets["signin"] = true
+    targets["templates"] = true
+
+    return next("")
+        .then(() => {
+            console.log(targets)
+            let c0 = elts.length
+            elts = elts.filter(e => !(e.releaseid && /ptr-[a-z]+-v\d+-\d+-\d+$/.test(e.id)))
+            if (isCore)
+                elts = elts.filter(e => !U.lookup(targets, e.id.split("-")[1]))
+            console.log(`Got ${c0} pointers; have ${elts.length} after filtering. Core=${isCore}`)
+            for (let e of elts) {
+                let fn = e.id.slice(4)
+                if (!isCore) fn = fn.replace(/^[a-z]+-/, "")
+                if (!U.lookup(files, fn))
+                    console.log("missing", e.id)
+            }
+        })
+}
+
 export function ptrAsync(path: string, target?: string) {
     // in MinGW when you say 'pxt ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
     let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
@@ -1936,6 +1984,7 @@ cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsyn
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("pokecloud                    - same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"), 2)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
+cmd("ptrcheck                     - check pointers in the cloud against ones in the repo", ptrcheckAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
