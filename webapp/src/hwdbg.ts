@@ -130,7 +130,7 @@ function coreHalted() {
                 else
                     globals["?" + i] = v
             })
-            
+
             let pc = st.machineState.registers[15]
 
             let final = () => Promise.resolve()

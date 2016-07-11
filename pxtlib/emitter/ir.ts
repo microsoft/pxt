@@ -237,7 +237,7 @@ namespace ts.pxt.ir {
             return getDeclName(this.def)
         }
 
-        getDebugInfo():CellInfo {
+        getDebugInfo(): CellInfo {
             return {
                 name: this.getName(),
                 type: "TODO"
@@ -322,7 +322,7 @@ namespace ts.pxt.ir {
         args: Cell[] = [];
         parent: Procedure;
         debugInfo: ProcDebugInfo;
-        fillDebugInfo: (th:thumb.File) => void;
+        fillDebugInfo: (th: thumb.File) => void;
 
         body: Stmt[] = [];
         lblNo = 0;

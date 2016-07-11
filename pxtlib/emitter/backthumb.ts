@@ -27,10 +27,10 @@ ${getFunctionLabel(proc.action)}:
     push {lr}
 `)
 
-        let calls:ProcCallInfo[] = []
+        let calls: ProcCallInfo[] = []
         proc.fillDebugInfo = th => {
             let labels = th.getLabels()
-            
+
             proc.debugInfo = {
                 locals: (proc.seqNo == 1 ? bin.globals : proc.locals).map(l => l.getDebugInfo()),
                 args: proc.args.map(l => l.getDebugInfo()),
