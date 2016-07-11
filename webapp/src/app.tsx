@@ -161,7 +161,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.modal) this.modal.hide();
             let p = pkg.mainEditorPkg();
             p.addDepAsync(scr.name, "*")
-                .then(r => this.props.parent.loadHeaderAsync(this.props.parent.state.header))
+                .then(r => this.props.parent.reloadHeaderAsync())
                 .done();
         }
         let upd = (v: any) => {
@@ -172,7 +172,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
                 p.addDepAsync(scr.scriptname, "*")
-                    .then(r => this.props.parent.loadHeaderAsync(this.props.parent.state.header))
+                    .then(r => this.props.parent.reloadHeaderAsync())
                     .done();
             } else {
                 workspace.installByIdAsync(scr.scriptid)
@@ -374,11 +374,12 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                 header: lf("Remove {0} package", p.getPkgId()),
                 body: lf("You are about to remove a package from your project. Are you sure?", p.getPkgId()),
                 agreeClass: "red",
-                agreeIcon: "trash"
+                agreeIcon: "trash",
+                agreeLbl: lf("Remove it"),
             }).done(res => {
                 if (res) {
                     pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
-                        .done(() => this.props.parent.loadHeaderAsync(this.props.parent.state.header));
+                        .done(() => this.props.parent.reloadHeaderAsync());
                 }
             })
         }
@@ -624,6 +625,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({ sideDocsCollapsed: false });
     }
 
+    reloadHeaderAsync() {
+        return this.loadHeaderAsync(this.state.header)
+    }
+
     loadHeaderAsync(h: Header): Promise<void> {
         if (!h)
             return Promise.resolve()
@@ -654,6 +659,34 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
                 }
+
+                pkg.mainPkg.getCompileOptionsAsync()
+                    .catch(e => {
+                        if (e instanceof pxt.cpp.PkgConflictError) {
+                            let confl = e as pxt.cpp.PkgConflictError
+                            let remove = (lib: pxt.Package) => ({
+                                label: lf("Remove {0}", lib.id),
+                                class: "pink", // don't make them red and scary
+                                icon: "trash",
+                                onclick: () => {
+                                    pkg.mainEditorPkg().removeDepAsync(lib.id)
+                                        .then(() => this.reloadHeaderAsync())
+                                        .done()
+                                }
+                            })
+                            core.dialogAsync({
+                                disagreeLbl: lf("Do nothing"),
+                                buttons: [
+                                    remove(confl.pkg0),
+                                    remove(confl.pkg1),
+                                ],
+                                header: lf("Packages cannot be used together"),
+                                body: lf("Packages '{0}' and '{1}' cannot be used together, because they use a differnet value for setting '{2}'.",
+                                    confl.pkg0.id, confl.pkg0.id, confl.settingName)
+                            })
+                        }
+                    })
+                    .done()
             })
     }
 

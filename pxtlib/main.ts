@@ -489,8 +489,6 @@ namespace pxt {
                 .then(() => {
                     pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
-                    if (ext.errors)
-                        U.userError(ext.errors)
                     if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
                     if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
                     return (target.isNative ? this.host().getHexInfoAsync(ext) : Promise.resolve(null))

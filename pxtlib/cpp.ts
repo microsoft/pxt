@@ -110,6 +110,19 @@ namespace pxt.cpp {
     let prevExtInfo: Y.ExtensionInfo;
     let prevSnapshot: U.Map<string>;
 
+    export class PkgConflictError extends Error {
+        pkg0: Package;
+        pkg1: Package;
+        settingName: string;
+        isUserError: boolean;
+
+        constructor(msg: string) {
+            super(msg)
+            this.isUserError = true
+            this.message = msg
+        }
+    }
+
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         let pkgSnapshot: U.Map<string> = {}
         let constsName = "dal.d.ts"
@@ -136,6 +149,7 @@ namespace pxt.cpp {
         let protos = nsWriter("namespace")
         let shimsDTS = nsWriter("declare namespace")
         let enumsDTS = nsWriter("declare namespace")
+        let allErrors = ""
 
         let compileService = appTarget.compileService;
         if (!compileService)
@@ -423,6 +437,9 @@ namespace pxt.cpp {
             return outp
         }
 
+        let currSettings: U.Map<any> = {}
+        let settingSrc: U.Map<Package> = {}
+
         function parseJson(pkg: Package) {
             let json = pkg.config.yotta
             if (!json) return;
@@ -432,9 +449,28 @@ namespace pxt.cpp {
                 U.jsonCopyFrom(res.yotta.dependencies, json.dependencies)
             }
 
-            if (json.config)
-                U.jsonMergeFrom(res.yotta.config, json.config);
+            if (json.config) {
+                let cfg = U.jsonFlatten(json.config)
+                for (let settingName of Object.keys(cfg)) {
+                    let prev = U.lookup(settingSrc, settingName)
+                    let settingValue = cfg[settingName]
+                    if (!prev || prev.config.yotta.configIsJustDefaults) {
+                        settingSrc[settingName] = pkg
+                        currSettings[settingName] = settingValue
+                    } else if (currSettings[settingName] === settingValue) {
+                        // OK
+                    } else {
+                        let err = new PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}",
+                            settingName, pkg.id, prev.id))
+                        err.pkg0 = prev
+                        err.pkg1 = pkg
+                        err.settingName = settingName
+                        throw err;
+                    }
+                }
+            }
         }
+
 
         // This is overridden on the build server, but we need it for command line build
         if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
@@ -446,6 +482,7 @@ namespace pxt.cpp {
 
         if (mainPkg) {
             let seenMain = false
+
             // TODO computeReachableNodes(pkg, true)
             for (let pkg of mainPkg.sortedDeps()) {
                 thisErrors = ""
@@ -477,14 +514,15 @@ namespace pxt.cpp {
                     }
                 }
                 if (thisErrors) {
-                    res.errors += lf("Package {0}:\n", pkg.id) + thisErrors
+                    allErrors += lf("Package {0}:\n", pkg.id) + thisErrors
                 }
             }
         }
 
-        if (res.errors)
-            return res;
+        if (allErrors)
+            U.userError(allErrors)
 
+        res.yotta.config = U.jsonUnFlatten(currSettings)
         let configJson = res.yotta.config
         let moduleJson = {
             "name": "pxt-microbit-app",

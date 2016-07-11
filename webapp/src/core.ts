@@ -86,22 +86,33 @@ export function handleNetworkError(e: any) {
     }
 }
 
-export interface ConfirmOptions {
+export interface ButtonConfig {
+    label: string;
+    icon?: string; // defaults to "checkmark"
+    class?: string; // defaults "positive"
+    onclick?: () => (Promise<void> | void);
+}
+
+export interface ConfirmOptions extends DialogOptions {
+    agreeLbl?: string;
+    agreeIcon?: string;
+    agreeClass?: string;
+    hideAgree?: boolean;
+    deleteLbl?: string;
+}
+
+export interface DialogOptions {
+    hideCancel?: boolean;
+    disagreeLbl?: string;
     logos?: string[];
     header: string;
     body?: string;
     htmlBody?: string;
-    agreeLbl?: string;
-    disagreeLbl?: string;
-    agreeIcon?: string;
-    agreeClass?: string;
-    hideCancel?: boolean;
-    hideAgree?: boolean;
-    deleteLbl?: string;
     onLoaded?: (_: JQuery) => void;
+    buttons?: ButtonConfig[];
 }
 
-export function confirmAsync(options: ConfirmOptions): Promise<boolean> {
+export function dialogAsync(options: DialogOptions): Promise<void> {
     let logos = (options.logos || [])
         .filter(logo => !!logo)
         .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
@@ -118,24 +129,20 @@ export function confirmAsync(options: ConfirmOptions): Promise<boolean> {
     html += `<div class="actions">`
     html += logos
 
-    if (options.deleteLbl) {
-        html += `<button class="ui delete red right labeled icon button">
-        ${Util.htmlEscape(options.deleteLbl)}
-        <i class="delete icon"></i>
-      </button>`
+    if (!options.hideCancel) {
+        options.buttons.push({
+            label: options.disagreeLbl || lf("Cancel"),
+            class: "cancel",
+            icon: "cancel"
+        })
     }
 
-    if (!options.hideCancel) {
-        html += `<button class="ui cancel right labeled icon button">
-        ${Util.htmlEscape(options.disagreeLbl || lf("Cancel"))}
-        <i class="cancel icon"></i>
-      </button>`
-    }
-    if (!options.hideAgree) {
+    let btnno = 0
+    for (let b of options.buttons) {
         html += `
-      <button class="ui approve right labeled icon button ${options.agreeClass || "positive"}">
-        ${Util.htmlEscape(options.agreeLbl || lf("Go ahead!"))}
-        <i class="${options.agreeIcon || "checkmark"} icon"></i>
+      <button class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}">
+        ${Util.htmlEscape(b.label)}
+        <i class="${b.icon || "checkmark"} icon"></i>
       </button>`
     }
 
@@ -151,26 +158,63 @@ export function confirmAsync(options: ConfirmOptions): Promise<boolean> {
         modal.modal('refresh')
     })
 
-    return new Promise<boolean>((resolve, reject) =>
+    return new Promise<void>((resolve, reject) => {
+        let onfinish = (elt: JQuery) => {
+            if (!done) {
+                done = true
+                let id = elt.attr("data-btnid")
+                if (id) {
+                    let btn = options.buttons[+id]
+                    if (btn.onclick)
+                        return resolve(btn.onclick())
+                }
+                return resolve()
+            }
+        }
         modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
             onHidden: () => {
                 modal.remove()
             },
-            onApprove: () => {
-                if (!done) {
-                    done = true
-                    resolve(true)
-                }
-            },
+            onApprove: onfinish,
+            onDeny: onfinish,
             onHide: () => {
                 if (!done) {
                     done = true
-                    resolve(false)
+                    resolve()
                 }
             },
-        }).modal("show"))
+        }).modal("show")
+    })
+}
+
+export function confirmAsync(options: ConfirmOptions): Promise<boolean> {
+    if (!options.buttons) options.buttons = []
+
+    let result = false
+
+    if (options.deleteLbl) {
+        options.buttons.push({
+            label: options.deleteLbl,
+            class: "delete red",
+            icon: "delete"
+        })
+    }
+
+    if (!options.hideAgree) {
+        options.buttons.push({
+            label: options.agreeLbl || lf("Go ahead!"),
+            class: options.agreeClass,
+            icon: options.agreeIcon,
+            onclick: () => {
+                result = true
+            }
+        })
+    }
+
+    return dialogAsync(options)
+        .then(() => result)
 }
 
 export function confirmDelete(what: string, cb: () => Promise<void>) {
