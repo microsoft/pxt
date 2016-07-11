@@ -1971,7 +1971,6 @@ ${lbl}: .short 0xffff
         generatedFiles: U.Map<string>;
         extensionFiles: U.Map<string>;
         yotta: YottaConfig;
-        errors: string;
         sha: string;
         compileData: string;
         shimsDTS: string;
@@ -1984,7 +1983,6 @@ ${lbl}: .short 0xffff
             functions: [],
             generatedFiles: {},
             extensionFiles: {},
-            errors: "",
             sha: "",
             compileData: "",
             shimsDTS: "",

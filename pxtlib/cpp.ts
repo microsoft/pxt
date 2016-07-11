@@ -110,6 +110,19 @@ namespace pxt.cpp {
     let prevExtInfo: Y.ExtensionInfo;
     let prevSnapshot: U.Map<string>;
 
+    export class PkgConflictError extends Error {
+        pkg0: Package;
+        pkg1: Package;
+        settingName: string;
+        isUserError: boolean;
+
+        constructor(msg: string) {
+            super(msg)
+            this.isUserError = true
+            this.message = msg
+        }
+    }
+
     export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
         let pkgSnapshot: U.Map<string> = {}
         let constsName = "dal.d.ts"
@@ -136,6 +149,7 @@ namespace pxt.cpp {
         let protos = nsWriter("namespace")
         let shimsDTS = nsWriter("declare namespace")
         let enumsDTS = nsWriter("declare namespace")
+        let allErrors = ""
 
         let compileService = appTarget.compileService;
         if (!compileService)
@@ -446,9 +460,12 @@ namespace pxt.cpp {
                     } else if (currSettings[settingName] === settingValue) {
                         // OK
                     } else {
-                        thisErrors += "    "
-                            + lf("conflict on yotta setting {0} between packages {1} and {2}",
-                                settingName, pkg.id, prev.id) + "\n"
+                        let err = new PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}",
+                            settingName, pkg.id, prev.id))
+                        err.pkg0 = prev
+                        err.pkg1 = pkg
+                        err.settingName = settingName
+                        throw err;
                     }
                 }
             }
@@ -497,13 +514,13 @@ namespace pxt.cpp {
                     }
                 }
                 if (thisErrors) {
-                    res.errors += lf("Package {0}:\n", pkg.id) + thisErrors
+                    allErrors += lf("Package {0}:\n", pkg.id) + thisErrors
                 }
             }
         }
 
-        if (res.errors)
-            return res;
+        if (allErrors)
+            U.userError(allErrors)
 
         res.yotta.config = U.jsonUnFlatten(currSettings)
         let configJson = res.yotta.config
