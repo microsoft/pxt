@@ -241,7 +241,13 @@ function ptrcheckAsync(cmd: string) {
 
     let files = U.toDictionary(allFiles("docs", 8)
         .filter(e => /\.md$/.test(e))
-        .map(e => e.slice(5).replace(/\//g, "-").replace(/\.md$/, "")), x => x)
+        .map(e => {
+            let s = e.slice(5).replace(/\.md$/, "")
+            let m = /^_locales\/([a-z]+)\/(.*)/.exec(s)
+            if (m) s = m[2] + "@" + m[1]
+            s = s.replace(/\//g, "-")
+            return s
+        }), x => x)
 
     return next("")
         .then(() => {
@@ -282,10 +288,10 @@ function ptrcheckAsync(cmd: string) {
             console.log(`Absent in docs/ ${toDel.length} items:`)
             for (let e of toDel)
                 console.log(e.slice(4))
-            
+
             if (cmd != "delete") {
                 console.log("Use 'pxt ptrcheck delete' to delete these; you will be prompted")
-                return Promise.resolve()                
+                return Promise.resolve()
             }
 
             return promptAsync("Delete all these pointers?")
