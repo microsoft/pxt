@@ -1,0 +1,17 @@
+pkg-*
+signin-*
+templates-*
+codemicrobit-appx
+codemicrobit-appx-zip
+error-template
+home
+microbituploader
+microbituploader-exe
+microbituploader-zip
+release-*
+signout
+thank-you
+theme-json
+touchdevelopmod-zip
+windows10
+worker-js
