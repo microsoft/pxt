@@ -572,7 +572,7 @@ export class Editor extends srceditor.Editor {
             this.forceDiagnosticsUpdate();
             let bf = pkg.mainEditorPkg().files[blockFile];
             return core.confirmAsync({
-                header: lf("Oops, there is a program converting your code."),
+                header: lf("Oops, there is a problem converting your code."),
                 body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
                 agreeLbl: lf("Stay in JavaScript"),
                 hideCancel: !bf,
