@@ -112,6 +112,18 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
     return Promise.map(data.files, f =>
         readFileAsync(path.join(dirname, f.name))
             .then(buf => {
+                if (f.name == pxt.configName) {
+                    try {
+                        let cfg: pxt.PackageConfig = JSON.parse(f.content)
+                        if (!cfg.name) {
+                            console.log("Trying to save invalid JSON config")
+                            throwError(410)
+                        }
+                    } catch (e) {
+                        console.log("Trying to save invalid format JSON config")
+                        throwError(410)
+                    }
+                }
                 if (buf.toString("utf8") !== f.prevContent) {
                     console.log(`merge error for ${f.name}: previous content changed...`);
                     throwError(409)
