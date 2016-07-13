@@ -616,19 +616,25 @@ ${lbl}: .short 0xffff
             return r
         }
 
+        function emitFunLiteral(f: FunctionDeclaration) {
+            let attrs = parseComments(f);
+            if (attrs.shim)
+                userError(lf("built-in functions cannot be yet used as values; did you forget ()?"))
+            let info = getFunctionInfo(f)
+            if (info.location) {
+                return info.location.load()
+            } else {
+                assert(!bin.finalPass || info.capturedVars.length == 0)
+                return emitFunLitCore(f)
+            }
+        }
+
         function emitIdentifier(node: Identifier): ir.Expr {
             let decl = getDecl(node)
             if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
                 return emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
-                let f = <FunctionDeclaration>decl
-                let info = getFunctionInfo(f)
-                if (info.location) {
-                    return info.location.load()
-                } else {
-                    assert(!bin.finalPass || info.capturedVars.length == 0)
-                    return emitFunLit(f)
-                }
+                return emitFunLiteral(decl as FunctionDeclaration)
             } else {
                 throw unhandled(node, "id")
             }
@@ -757,6 +763,8 @@ ${lbl}: .short 0xffff
                 return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
             } else if (decl.kind == SK.MethodDeclaration || decl.kind == SK.MethodSignature) {
                 throw userError(lf("cannot use method as lambda; did you forget '()' ?"))
+            } else if (decl.kind == SK.FunctionDeclaration) {
+                return emitFunLiteral(decl as FunctionDeclaration)
             } else {
                 throw unhandled(node, stringKind(decl));
             }
@@ -1061,7 +1069,7 @@ ${lbl}: .short 0xffff
             return res
         }
 
-        function emitFunLit(node: FunctionLikeDeclaration, raw = false) {
+        function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node)
             let r = ir.ptrlit(lbl + "_Lit", lbl)
             if (!raw) {
@@ -1115,7 +1123,7 @@ ${lbl}: .short 0xffff
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null)
-                lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLit(node, true)]))
+                lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLitCore(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
@@ -1132,7 +1140,7 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 if (isExpression) {
-                    lit = emitFunLit(node)
+                    lit = emitFunLitCore(node)
                 }
             }
 
