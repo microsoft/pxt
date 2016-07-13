@@ -28,7 +28,7 @@ namespace ts.pxt {
                 lastSecondaryError = msg
             return e
         }
-        debugger;        
+        debugger;
         throw e;
     }
 
@@ -174,7 +174,7 @@ namespace ts.pxt {
 
     let lf = thumb.lf;
     let checker: TypeChecker;
-    let lastSecondaryError:string
+    let lastSecondaryError: string
     let inCatchErrors = 0
 
     export function getComments(node: Node) {
@@ -986,6 +986,13 @@ ${lbl}: .short 0xffff
                 callInfo.args.unshift(node.expression)
 
                 return rtcallMask("pxt::runAction" + suff, args, ir.CallingConvention.Async)
+            }
+
+            if (decl.kind == SK.ModuleDeclaration) {
+                if (getName(decl) == "String")
+                    userError(lf("to convert X to string use: X + \"\""))
+                else
+                    userError(lf("namespaces cannot be called directly"))
             }
 
             throw unhandled(node, stringKind(decl))
