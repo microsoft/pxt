@@ -96,12 +96,8 @@ namespace pxt.docs {
             cmd: "### @vimeo $1"
         },
         {
-            rx: /^youtu\.be\/(\w+)/,
-            cmd: "### @youtube $1"
-        },
-        {
-            rx: /www\.youtube\.com\/watch\?v=(\w+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/,
-            cmd: "### @youtube $1"
+            rx: /^(www\.youtube\.com\/watch\?v=|youtu.be\/)(\w+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/,
+            cmd: "### @youtube $2"
         }
     ]
 
