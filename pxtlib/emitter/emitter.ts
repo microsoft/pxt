@@ -490,7 +490,7 @@ namespace ts.pxt {
         }
 
         function finalEmit() {
-            if (diagnostics.getModificationCount() || opts.noEmit)
+            if (diagnostics.getModificationCount() || opts.noEmit || !host)
                 return;
 
             bin.writeFile = (fn: string, data: string) =>
