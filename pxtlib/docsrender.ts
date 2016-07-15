@@ -88,19 +88,17 @@ namespace pxt.docs {
         cmd: string;
     }
 
+    //The extra YouTube macros are in case there is a timestamp on the YouTube URL.
+    //TODO: Add equivalent support for youtu.be links
     let links: CmdLink[] = [
         {
             rx: /^vimeo\.com\/(\d+)/,
             cmd: "### @vimeo $1"
         },
         {
-            rx: /^youtu\.be\/(\w+)/,
-            cmd: "### @youtube $1"
-        },
-        {
-            rx: /^www\.youtube\.com\/watch\?v=(\w+)/,
-            cmd: "### @youtube $1"
-        },
+            rx: /^(www\.youtube\.com\/watch\?v=|youtu.be\/)(\w+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/,
+            cmd: "### @youtube $2"
+        }
     ]
 
     export interface BreadcrumbEntry {
@@ -186,6 +184,7 @@ namespace pxt.docs {
             })
         };
 
+        //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
         src = src.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
