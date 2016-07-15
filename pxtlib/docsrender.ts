@@ -119,7 +119,7 @@ namespace pxt.docs {
         function parseHtmlAttrs(s: string) {
             let attrs: U.Map<string> = {};
             while (s.trim()) {
-                let m = /^\s*([^=\s]+)=("([^"]*)"|'([^']*)'|(\S*))/.exec(s)
+                let m = /\s*([^=\s]+)=("([^"]*)"|'([^']*)'|(\S*))/.exec(s)
                 if (m) {
                     let v = m[3] || m[4] || m[5] || ""
                     attrs[m[1].toLowerCase()] = v
@@ -145,6 +145,7 @@ namespace pxt.docs {
         template = template.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
             let attrs = parseHtmlAttrs(attrsStr)
             let name = attrs["data-name"] || attrs["id"]
+            console.log(`Compiling box ${name}`);
             if (!name)
                 return error("id or data-name missing on macro")
             if (/box/.test(attrs["class"])) {
