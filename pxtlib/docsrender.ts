@@ -181,7 +181,10 @@ namespace pxt.docs {
                 pedantic: false,
                 sanitize: true,
                 smartLists: true,
-                smartypants: true
+                smartypants: true,
+                highlight: function(code, lang) {
+                    return require('highlight.js').highlightAuto(code, [lang]).value;
+                }
             })
         };
 
