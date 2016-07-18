@@ -124,6 +124,8 @@ namespace pxt {
 
         target?: string;
         className?: string;
+
+        updateDescription?: () => void;
     }
 
     export interface TargetVersions {

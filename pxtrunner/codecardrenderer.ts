@@ -118,10 +118,22 @@ namespace pxt.docs.codeCard {
             let m = div(meta, "date", "span");
             m.appendChild(document.createTextNode(pxt.Util.timeSince(card.time)));
         }
-        if (card.description) {
+        // if (card.description) {
+            console.log(`Rendering card for ${card.description}`);
             let descr = div(ct, 'ui description');
-            descr.appendChild(document.createTextNode(card.description.split('.')[0] + '.'));
-        }
+            let descrNode = document.createTextNode('');
+            descr.appendChild(descrNode);
+            let updateDescription = () => {
+                if (card.description) {
+                    descrNode.textContent = card.description.split('.')[0] + '.';
+                }
+                else {
+                    descrNode.textContent = '';
+                }
+            }
+            updateDescription();
+            card.updateDescription = updateDescription;
+        // }
 
         return r;
     }
