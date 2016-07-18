@@ -1,5 +1,4 @@
 ///<reference path='blockly.d.ts'/>
-///<reference path='touchdevelop.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
 
@@ -7,7 +6,6 @@
 //                A compiler from Blocky to TouchDevelop                     //
 ///////////////////////////////////////////////////////////////////////////////
 
-import J = TDev.AST.Json;
 import B = Blockly;
 
 namespace pxt.blocks {
@@ -15,7 +13,7 @@ namespace pxt.blocks {
         Prefix, // op + map(children)
         Infix, // children.length == 2, child[0] op child[1]
         Block, // { } are implicit
-        CommaSep,
+        CommaSep,  // children.join(", ")
         NewLine
     }
 
@@ -24,6 +22,7 @@ namespace pxt.blocks {
         children: Node[];
         op: string;
         id?: string;
+        glueToBlock?: boolean;
     }
 
 
@@ -52,8 +51,12 @@ namespace pxt.blocks {
     function mkInfix(child0: Node, op: string, child1: Node) {
         return mkNode(NT.Infix, op, [child0, child1])
     }
+
     function mkText(s: string) {
         return mkPrefix(s, [])
+    }
+    function mkBlock(nodes: Node[]) {
+        return mkNode(NT.Block, "", nodes)
     }
 
     function mkGroup(nodes: Node[]) {
@@ -141,7 +144,7 @@ namespace pxt.blocks {
                 mkText("while ("),
                 condition,
                 mkText(")"),
-                mkNode(NT.Block, "", body)
+                mkBlock(body)
             ])
         }
 
@@ -716,107 +719,81 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function compileControlsIf(e: Environment, b: B.IfBlock): Node[] {
-        let stmts: J.JIf[] = [];
+        let stmts: Node[] = [];
         // Notice the <= (if there's no else-if, we still compile the primary if).
         for (let i = 0; i <= b.elseifCount_; ++i) {
             let cond = compileExpression(e, b.getInputTargetBlock("IF" + i));
             let thenBranch = compileStatements(e, b.getInputTargetBlock("DO" + i));
-            stmts.push(H.mkSimpleIf(H.mkExprHolder([], cond), thenBranch));
-            if (i > 0)
-                stmts[stmts.length - 1].isElseIf = true;
+            let startNode = mkText("if (")
+            if (i > 0) {
+                startNode = mkText("else if (")
+                startNode.glueToBlock = true
+            }
+            append(stmts, [
+                startNode,
+                cond,
+                mkText(")"),
+                thenBranch
+            ])
         }
         if (b.elseCount_) {
-            stmts[stmts.length - 1].elseBody = compileStatements(e, b.getInputTargetBlock("ELSE"));
+            let elseNode = mkText("else")
+            elseNode.glueToBlock = true
+            append(stmts, [
+                elseNode,
+                compileStatements(e, b.getInputTargetBlock("ELSE"))
+            ])
         }
         return stmts;
-    }
-
-    function isClassicForLoop(b: B.Block) {
-        if (b.type == "controls_simple_for") {
-            return true;
-        } else if (b.type == "controls_for") {
-            let bBy = b.getInputTargetBlock("BY");
-            let bFrom = b.getInputTargetBlock("FROM");
-            return bBy.type.match(/^math_number/) && extractNumber(bBy) == 1 &&
-                bFrom.type.match(/^math_number/) && extractNumber(bFrom) == 0;
-        } else {
-            throw new Error("Invalid argument: isClassicForLoop");
-        }
     }
 
     function compileControlsFor(e: Environment, b: B.Block): Node[] {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bTo = b.getInputTargetBlock("TO");
         let bDo = b.getInputTargetBlock("DO");
+        let bBy = b.getInputTargetBlock("BY");
+        let bFrom = b.getInputTargetBlock("FROM");
+        let incOne = bBy.type.match(/^math_number/) && extractNumber(bBy) == 1
 
         let binding = lookup(e, bVar);
         assert(binding.usedAsForIndex > 0);
 
-        if (isClassicForLoop(b) && !binding.incompatibleWithFor) {
-            let bToExpr = compileExpression(e, bTo);
-            if (bToExpr.nodeType == "numberLiteral")
-                bToExpr = H.mkNumberLiteral((bToExpr as J.JNumberLiteral).value + 1)
-            else
-                bToExpr = H.mkSimpleCall("+", [bToExpr, H.mkNumberLiteral(1)]);
-            // In the perfect case, we can do a local binding that declares a local
-            // variable. The code that generates global variable declarations is in sync
-            // and won't generate a global binding.
-            return [
-                // FOR 0 <= VAR
-                H.mkFor(bVar,
-                    // < TO + 1 DO
-                    H.mkExprHolder([], bToExpr),
-                    compileStatements(e, bDo))
-            ];
-        }
-        else {
-            // Evaluate the bound first, and store it in b (bound may change over
-            // several loop iterations).
-            let local = fresh(e, "bound");
-            e = extend(e, local, pNumber.type);
-            let eLocal = H.mkLocalRef(local);
-            let eTo = compileExpression(e, bTo);
-            let eVar = H.mkLocalRef(bVar);
-            let eBy = H.mkNumberLiteral(1);
-            let eFrom = H.mkNumberLiteral(0);
-            // Fallback to a while loop followed by an assignment to
-            // make sure we don't overshoot the loop variable above the "to" field
-            // (since Blockly allows someone to read it afterwards).
-            return [
-                // LOCAL = TO
-                H.mkAssign(eLocal, eTo),
-                // let = FROM
-                H.mkAssign(eVar, eFrom),
-                // while
-                H.mkWhile(
-                    // let <= B
-                    H.mkExprHolder([], H.mkSimpleCall("<=", [eVar, eLocal])),
-                    // DO
-                    compileStatements(e, bDo).concat([
-                        H.mkExprStmt(
-                            H.mkExprHolder([],
-                                // let =
-                                H.mkSimpleCall("=", [eVar,
-                                    // let + BY
-                                    H.mkSimpleCall("+", [eVar, eBy])])))])),
-            ];
-        }
+        return [
+            mkText("for (let " + bVar + " = "),
+            compileExpression(e, bFrom),
+            mkText("; "),
+            mkInfix(mkText(bVar), "<=", compileExpression(e, bTo)),
+            mkText("; "),
+            incOne ? mkText(bVar + "++") : mkInfix(mkText(bVar), "+=", compileExpression(e, bBy)),
+            mkText(")"),
+            compileStatements(e, bDo)
+        ]
     }
 
-    function compileControlsRepeat(e: Environment, b: B.Block): Node {
+    function compileControlsRepeat(e: Environment, b: B.Block): Node[] {
         let bound = compileExpression(e, b.getInputTargetBlock("TIMES"));
         let body = compileStatements(e, b.getInputTargetBlock("DO"));
-        let valid = (x: string) => !lookup(e, x) || !isCompiledAsForIndex(lookup(e, x));
+        let valid = (x: string) => !lookup(e, x)
         let name = "i";
         for (let i = 0; !valid(name); i++)
             name = "i" + i;
-        return H.mkFor(name, H.mkExprHolder([], bound), body);
+        return [
+            mkText("for (let " + name + " = 0; "),
+            mkInfix(mkText(name), "<", bound),
+            mkText("; " + name + "++)"),
+            body
+        ]
     }
 
-    function compileWhile(e: Environment, b: B.Block): Node {
+    function compileWhile(e: Environment, b: B.Block): Node[] {
         let cond = compileExpression(e, b.getInputTargetBlock("COND"));
         let body = compileStatements(e, b.getInputTargetBlock("DO"));
-        return H.mkWhile(H.mkExprHolder([], cond), body);
+        return [
+            mkText("while ("),
+            cond,
+            mkText(")"),
+            body
+        ]
     }
 
     function compileForever(e: Environment, b: B.Block): Node {
@@ -840,7 +817,7 @@ namespace pxt.blocks {
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
         assert(binding != null && binding.type != null);
-        return H.mkLocalRef(name);
+        return mkText(name);
     }
 
     function compileSet(e: Environment, b: B.Block): Node {
@@ -850,8 +827,8 @@ namespace pxt.blocks {
         if (!binding.assigned && !findParent(b))
             binding.assigned = VarUsage.Assign;
         let expr = compileExpression(e, bExpr);
-        let ref = H.mkLocalRef(bVar);
-        return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, expr])));
+        let ref = mkText(bVar);
+        return mkStmt(mkInfix(ref, "=", expr))
     }
 
     function compileChange(e: Environment, b: B.Block): Node {
@@ -861,16 +838,18 @@ namespace pxt.blocks {
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
         let expr = compileExpression(e, bExpr);
-        let ref = H.mkLocalRef(bVar);
-        return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, H.mkSimpleCall("+", [ref, expr])])));
+        let ref = mkText(bVar);
+        return mkStmt(mkInfix(ref, "+=", expr))
     }
 
     function compileCall(e: Environment, b: B.Block): Node {
         let call = e.stdCallTable[b.type];
-        return call.imageLiteral
-            ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))))
-            : call.hasHandler ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
-                : H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, e.stdCallTable[b.type])));
+        if (call.imageLiteral)
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar))))
+        else if (call.hasHandler)
+            return compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
+        else
+            return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type]))
     }
 
     function compileArgument(e: Environment, b: B.Block, p: StdArg): Node {
@@ -879,7 +858,7 @@ namespace pxt.blocks {
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
         let f = b.getFieldValue(p.field);
         if (f)
-            return H.mkLocalRef(f);
+            return mkText(f);
         else
             return compileExpression(e, b.getInputTargetBlock(p.field))
     }
@@ -896,25 +875,22 @@ namespace pxt.blocks {
     }
 
     function compileStdBlock(e: Environment, b: B.Block, f: StdFunc) {
-        return H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, f)));
+        return mkStmt(compileStdCall(e, b, f))
     }
 
-    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node[]): Node {
-        let def = H.mkDef("_body_", H.mkGTypeRef("Action"));
-        return H.mkInlineActions(
-            [H.mkInlineAction(body, true, def)],
-            H.mkExprHolder(
-                [def],
-                H.namespaceCall(n, f, args)));
+    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node): Node {
+        return H.namespaceCall(n, f, args.concat([
+            mkGroup([mkText("() =>"), body])
+        ]))
     }
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): Node {
         let bBody = b.getInputTargetBlock("HANDLER");
-        let compiledArgs: J.JNode[] = args.map((arg: string) => {
+        let compiledArgs: Node[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
             let argb = b.getInputTargetBlock(arg);
             if (argb) return compileExpression(e, argb);
-            return H.mkLocalRef(b.getFieldValue(arg))
+            return mkText(b.getFieldValue(arg))
         });
         let body = compileStatements(e, bBody);
         return mkCallWithCallback(e, ns, event, compiledArgs, body);
@@ -986,31 +962,30 @@ namespace pxt.blocks {
                 break;
 
             case 'controls_repeat_ext':
-                r = [compileControlsRepeat(e, b)];
+                r = compileControlsRepeat(e, b);
                 break;
 
             case 'device_while':
-                r = [compileWhile(e, b)];
+                r = compileWhile(e, b);
                 break;
+
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b)];
-                else r = [H.mkExprStmt(H.mkExprHolder([], compileExpression(e, b)))];
+                else r = [mkStmt(compileExpression(e, b))];
                 break;
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
         return r;
     }
 
-    function compileStatements(e: Environment, b: B.Block): Node[] {
-        if (!b) return [];
-
+    function compileStatements(e: Environment, b: B.Block): Node {
         let stmts: Node[] = [];
         while (b) {
             if (!b.disabled) append(stmts, compileStatementBlock(e, b));
             b = b.getNextBlock();
         }
-        return stmts;
+        return mkBlock(stmts);
     }
 
     // Find the parent (as in "scope" parent) of a Block. The [parentNode_] property
@@ -1090,11 +1065,10 @@ namespace pxt.blocks {
                 if (lookup(e, x) == null)
                     e = extend(e, x, pNumber.type);
                 lookup(e, x).usedAsForIndex++;
-                // Unless the loop starts at 0 and and increments by one, we can't compile
-                // as a TouchDevelop for loop. Also, if multiple loops share the same
+                // If multiple loops share the same
                 // variable, that means there's potential race conditions in concurrent
                 // code, so faithfully compile this as a global variable.
-                if (!isClassicForLoop(b) || lookup(e, x).usedAsForIndex > 1)
+                if (lookup(e, x).usedAsForIndex > 1)
                     lookup(e, x).incompatibleWithFor = true;
             }
         });
@@ -1117,8 +1091,7 @@ namespace pxt.blocks {
         return e;
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): J.JApp {
-        let decls: J.JDecl[] = [];
+    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): Node[] {
         try {
             let e = mkEnv(w, blockInfo);
             infer(e, w);
@@ -1128,23 +1101,26 @@ namespace pxt.blocks {
             // code may block, and prevent the event handler from being registered.
             let stmtsMain: Node[] = [];
             w.getTopBlocks(true).map(b => {
-                append(stmtsMain, compileStatements(e, b));
+                let compiled = compileStatements(e, b)
+                if (compiled.type == NT.Block)
+                    append(stmtsMain, compiled.children);
+                else stmtsMain.push(compiled)
             });
 
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
             let stmtsVariables = e.bindings.filter(b => !isCompiledAsForIndex(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
-                    let btype = find(b.type);
-                    return H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type)));
+                    // let btype = find(b.type);
+                    // Not sure we need the type here - is is always number or boolean?
+                    return mkStmt(mkText("let " + b.name + " = " + defaultValueForType(find(b.type))))
                 });
 
-            decls.push(H.mkAction("main",
-                stmtsVariables.concat(stmtsMain), [], []));
+            return stmtsVariables.concat(stmtsMain)
         } finally {
             removeAllPlaceholders(w);
         }
 
-        return H.mkApp('untitled', '', decls);
+        return [] // unreachable
     }
 
     export interface SourceInterval {
@@ -1327,125 +1303,8 @@ namespace pxt.blocks {
                 sourceMap.push({ id: id, start: start, end: end })
         }
 
-        let byNodeType: Util.StringMap<(n: J.JNode) => void> = {
-            app: (n: J.JApp) => {
-                Util.assert(n.decls.length == 1)
-                Util.assert(n.decls[0].nodeType == "action");
-                (n.decls[0] as J.JAction).body.forEach(emit)
-            },
-
-            exprStmt: (n: NodeStmt) => emitAndMap(n.id, () => {
-                emit(n.expr)
-                write(";\n")
-            }),
-
-            inlineAction: (n: J.JInlineAction) => {
-                Util.assert(n.inParameters.length == 0)
-                write("() => ")
-                emitBlock(n.body)
-            },
-
-            inlineActions: (n: J.JInlineActions) => {
-                Util.assert(n.actions.length == 1)
-                currInlineAction = n.actions[0]
-                emit(n.expr)
-                if (currInlineAction.isImplicit) {
-                    output = output.replace(/\)\s*$/, "")
-                    if (!/\($/.test(output))
-                        write(", ")
-                    emit(currInlineAction)
-                    output = output.replace(/\s*$/, "")
-                    write(")")
-                }
-                write(";\n")
-            },
-
-            exprHolder: (n: Node) => {
-                let toks = flatten(n.tree)
-                toks.forEach(emit)
-            },
-
-            localRef: (n: J.JLocalRef) => {
-                if (n.name == "_body_")
-                    emit(currInlineAction)
-                else
-                    localRef(n.name)
-            },
-
-            operator: (n: J.JOperator) => {
-                if (n.op == "let")
-                    write(n.op + " ");
-                else if (/^[\d()]/.test(n.op))
-                    write(n.op)
-                else if (n.op == ",")
-                    write(n.op + " ")
-                else
-                    write(" " + n.op + " ")
-            },
-
-            singletonRef: (n: J.JSingletonRef) => {
-                write(jsName(n.name))
-            },
-
-            propertyRef: (n: J.JPropertyRef) => {
-                write("." + jsName(n.name))
-            },
-
-            stringLiteral: (n: J.JStringLiteral) => {
-                output += stringLit(n.value)
-            },
-
-            booleanLiteral: (n: J.JBooleanLiteral) => {
-                write(n.value ? "true" : "false")
-            },
-
-            arrayLiteral: (n: J.JArrayLiteral) => {
-                write("[");
-                if (n.values)
-                    n.values.forEach((a, i) => {
-                        if (i > 0) write(', ');
-                        let toks = flatten(a)
-                        toks.forEach(emit)
-                    })
-                write("]");
-            },
-
-            "if": (n: J.JIf) => {
-                if (n.isElseIf) write("else ")
-                write("if (")
-                emitAndMap(n.id, () => emit(n.condition))
-                write(") ")
-                emitBlock(n.thenBody)
-                if (n.elseBody) {
-                    write("else ")
-                    emitBlock(n.elseBody)
-                }
-            },
-
-            "for": (n: J.JFor) => {
-                write("for (let ")
-                localRef(n.index.name)
-                write(" = 0; ")
-                localRef(n.index.name)
-                write(" < ")
-                emitAndMap(n.id, () => emit(n.bound));
-                write("; ")
-                localRef(n.index.name)
-                write("++) ")
-                emitBlock(n.body)
-            },
-
-            "while": (n: J.JWhile) => {
-                write("while (")
-                emitAndMap(n.id, () => emit(n.condition))
-                write(") ")
-                emitBlock(n.body)
-            },
-        }
-
         emit(app)
 
-        output = output.replace(/^\s*\n/mg, "").replace(/\s+;$/mg, ";")
 
         // never return empty string - TS compiler service thinks it's an error
         output += "\n"
@@ -1454,16 +1313,6 @@ namespace pxt.blocks {
             source: output,
             sourceMap: sourceMap
         };
-
-        function localRef(n: string) {
-            write(jsName(n))
-        }
-
-        function emitBlock(s: Node[]) {
-            block(() => {
-                s.forEach(emit)
-            })
-        }
 
         function jsName(s: string) {
             return s.replace(/ (.)/g, (f: string, m: string) => m.toUpperCase())
