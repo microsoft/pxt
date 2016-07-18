@@ -140,6 +140,7 @@ declare namespace Blockly {
         element?: string;
         oldValue?: string;
         newValue?: string;
+        name?: string;
     }
 
     class Workspace {

@@ -107,11 +107,41 @@ export class Editor extends srceditor.Editor {
         return true;
     }
 
-    updateHelpCard() {
+    updateHelpCard(fieldName?: string, newValue?: string) {
         let selected = Blockly.selected;
         if (selected && selected.codeCard) {
             let card: pxt.CodeCard = selected.codeCard;
             card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
+            if (fieldName != undefined && newValue != undefined) {
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(card.blocksXml, "application/xml");
+                let blocks = doc.getElementsByTagName("block");
+                if (blocks.length >= 1) {
+                    let setInnerText = (c: any) => {
+                        //Remove any existing children
+                        while (c.firstChild) {
+                            c.removeChild(c.firstChild);
+                        }
+                        let tn = doc.createTextNode(newValue);
+                        c.appendChild(tn)
+                    };
+
+                    let block = blocks[0];
+                    let fieldNodes = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'field' && c.getAttribute('name') == fieldName);
+                    if (fieldNodes.length > 0) {
+                        setInnerText(fieldNodes[0]);
+                    }
+                    else {
+                        let c = doc.createElement('field');
+                        c.setAttribute('name', fieldName);
+                        setInnerText(c);
+                        block.appendChild(c);
+                    }
+
+                    let serializer = new XMLSerializer();
+                    card.blocksXml = serializer.serializeToString(doc);
+                }
+            }
             this.parent.setHelpCard(card);
         }
         else {
@@ -148,7 +178,7 @@ export class Editor extends srceditor.Editor {
                 this.parent.setState({ hideEditorFloats: toolboxVisible });
             }
             if (ev.element == 'field') {
-                this.updateHelpCard();
+                this.updateHelpCard(ev.name, ev.newValue);
             }
         })
         Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
