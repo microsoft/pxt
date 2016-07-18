@@ -480,7 +480,7 @@ namespace pxt.blocks {
                 // The magic of dynamic this-binding.
                 old.call(this);
                 this.setHelpUrl(/*"/blocks/" + */url);
-                // if (!this.codeCard) {
+                if (!this.codeCard) {
                     let tb = document.getElementById('blocklyToolboxDefinition');
                     let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
                     this.codeCard = <pxt.CodeCard>{
@@ -491,18 +491,7 @@ namespace pxt.blocks {
                         blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"</block>`) + "</xml>") : undefined,
                         url: url
                     }
-
-                    if (id == "logic_compare") {
-                        this.mutationToDom = () => {
-                            console.log(this);
-                            let card = this.codeCard;
-                            card.description = goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip;
-                            if (card.updateDescription) {
-                                card.updateDescription();
-                            }
-                        };
-                    }
-                // }
+                }
             };
         }
 
@@ -514,7 +503,6 @@ namespace pxt.blocks {
         monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change");
 
         monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "blocks/logic/boolean");
-
         monkeyPatchBlock("logic_operation", lf("boolean operation"), "blocks/logic/boolean");
         monkeyPatchBlock("logic_negate", lf("logical negation"), "blocks/logic/boolean");
         monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "blocks/logic/boolean");

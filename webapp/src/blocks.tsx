@@ -109,7 +109,8 @@ export class Editor extends srceditor.Editor {
 
     updateHelpCard() {
         let selected = Blockly.selected;
-        let card = selected ? selected.codeCard : undefined;
+        let card: pxt.CodeCard = selected ? selected.codeCard : undefined;
+        card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
         this.parent.setHelpCard(card);
     }
 
@@ -141,6 +142,10 @@ export class Editor extends srceditor.Editor {
                 let toolboxVisible = !!ev.newValue;
                 this.parent.setState({ hideEditorFloats: toolboxVisible });
             }
+            if (ev.element == 'field') {
+                this.updateHelpCard();
+            }
+            console.log(ev);
         })
         Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
             this.updateHelpCard();
