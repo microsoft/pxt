@@ -183,7 +183,13 @@ namespace pxt.docs {
                 smartLists: true,
                 smartypants: true,
                 highlight: function(code, lang) {
-                    return require('highlight.js').highlightAuto(code, [lang]).value;
+                    try {
+                        let hljs = require('highlight.js');
+                        return hljs.highlightAuto(code, [lang]).value;
+                    }
+                    catch (e) {
+                        return code;
+                    }
                 }
             })
         };
