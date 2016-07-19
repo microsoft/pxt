@@ -258,19 +258,21 @@ ${output}</xml>`;
             if (c.kind == ts.SyntaxKind.BinaryExpression) {
                 let bs = c as ts.BinaryExpression;
                 if (bs.left.kind == ts.SyntaxKind.Identifier &&
-                    (bs.left as ts.Identifier).text == id.text &&
-                    bs.operatorToken.getText() == "<") {
-                    write('<block type="math_number">')
-                    if (bs.right.kind == ts.SyntaxKind.NumericLiteral)
-                        write(`<field name="NUM">${parseInt((bs.right as ts.LiteralExpression).text) - 1}</field>`)
-                    else {
-                        write(`<block type="math_arithmetic">
+                    (bs.left as ts.Identifier).text == id.text)
+                    if (bs.operatorToken.getText() == "<=") {
+                        emit(bs.right)
+                    } else if (bs.operatorToken.getText() == "<") {
+                        write('<block type="math_number">')
+                        if (bs.right.kind == ts.SyntaxKind.NumericLiteral)
+                            write(`<field name="NUM">${parseInt((bs.right as ts.LiteralExpression).text) - 1}</field>`)
+                        else {
+                            write(`<block type="math_arithmetic">
         <field name="OP">MINUS</field>
         <value name="A">
           <block type="math_number">
             <field name="NUM">`)
-                        emit(bs.right)
-                        write(`</field>
+                            emit(bs.right)
+                            write(`</field>
           </block>
         </value>
         <value name="B">
@@ -279,9 +281,9 @@ ${output}</xml>`;
           </block>
         </value>
       </block>`)
+                        }
+                        write('</block>')
                     }
-                    write('</block>')
-                }
             }
             write('</value>');
             write('<statement name="DO">')
