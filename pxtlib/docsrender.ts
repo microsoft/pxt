@@ -145,7 +145,7 @@ namespace pxt.docs {
         template = template.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
             let attrs = parseHtmlAttrs(attrsStr)
             let name = attrs["data-name"] || attrs["id"]
-            console.log(`Compiling box ${name}`);
+
             if (!name)
                 return error("id or data-name missing on macro")
             if (/box/.test(attrs["class"])) {
