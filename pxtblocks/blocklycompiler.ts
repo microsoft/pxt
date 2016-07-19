@@ -22,6 +22,7 @@ namespace pxt.blocks {
         op: string;
         id?: string;
         glueToBlock?: boolean;
+        canIndentInside?: boolean;
     }
 
 
@@ -647,8 +648,11 @@ namespace pxt.blocks {
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
-                    if (call.imageLiteral) expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))
-                    else expr = compileStdCall(e, b, call);
+                    if (call.imageLiteral)
+                        expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f,
+                            call.args.map(ar => compileArgument(e, b, ar)))
+                    else
+                        expr = compileStdCall(e, b, call);
                 }
                 else {
                     pxt.reportError("Unable to compile expression: " + b.type, null);
@@ -911,15 +915,16 @@ namespace pxt.blocks {
         let rows = 5;
         let columns = frames * 5;
         for (let i = 0; i < rows; ++i) {
-            if (i > 0)
-                state += '\n';
             for (let j = 0; j < columns; ++j) {
                 if (j > 0)
                     state += ' ';
                 state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "#" : ".";
             }
+            state += '\n';
         }
-        return H.namespaceCall(n, f, [<Node>H.mkStringLiteral(state)].concat(args));
+        let lit = H.mkStringLiteral(state)
+        lit.canIndentInside = true
+        return H.namespaceCall(n, f, [lit].concat(args));
     }
 
     // A standard function argument may be a field name (see below)
@@ -1121,7 +1126,7 @@ namespace pxt.blocks {
                 .map(b => {
                     // let btype = find(b.type);
                     // Not sure we need the type here - is is always number or boolean?
-                    return mkStmt(mkText("let " + b.name + " = " + defaultValueForType(find(b.type))))
+                    return mkStmt(mkText("let " + b.name + " = "), defaultValueForType(find(b.type)))
                 });
 
             return stmtsVariables.concat(stmtsMain)
@@ -1278,7 +1283,10 @@ namespace pxt.blocks {
                     block(n)
                     break
                 case NT.Prefix:
-                    output += n.op
+                    if (n.canIndentInside)
+                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
+                    else
+                        output += n.op
                     n.children.forEach(emit)
                     break
                 default:
@@ -1302,6 +1310,11 @@ namespace pxt.blocks {
         }
 
         function block(n: Node) {
+            if (n.children.length == 0) {
+                write(" { }\n")
+                return
+            }
+            
             let vars = U.clone<U.Map<string>>(variables[variables.length - 1] || {});
             variables.push(vars);
             indent += "    "
