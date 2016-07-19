@@ -547,7 +547,7 @@ namespace pxt.blocks {
         let op = b.getFieldValue("op");
         let x = compileExpression(e, b.getInputTargetBlock("x"));
         let y = compileExpression(e, b.getInputTargetBlock("y"));
-        return H.mkSimpleCall(op, [x, y]);
+        return H.mathCall(op, [x, y])
     }
 
     function compileMathOp3(e: Environment, b: B.Block): Node {
@@ -762,14 +762,14 @@ namespace pxt.blocks {
         let bDo = b.getInputTargetBlock("DO");
         let bBy = b.getInputTargetBlock("BY");
         let bFrom = b.getInputTargetBlock("FROM");
-        let incOne = bBy.type.match(/^math_number/) && extractNumber(bBy) == 1
+        let incOne = !bBy || (bBy.type.match(/^math_number/) && extractNumber(bBy) == 1)
 
         let binding = lookup(e, bVar);
         assert(binding.usedAsForIndex > 0);
 
         return [
             mkText("for (let " + bVar + " = "),
-            compileExpression(e, bFrom),
+            bFrom ? compileExpression(e, bFrom) : mkText("0"),
             mkText("; "),
             mkInfix(mkText(bVar), "<=", compileExpression(e, bTo)),
             mkText("; "),
@@ -1227,12 +1227,14 @@ namespace pxt.blocks {
                     }
                     */
                     rec(e.children[0], bindLeft ? infixPri : infixPri + 0.1)
+                    r.push(e.children[0])
                     if (letType && letType != "number") {
-                        pushOp(":")
+                        pushOp(": ")
                         pushOp(letType)
                     }
-                    pushOp(e.op)
+                    pushOp(" " + e.op + " ")
                     rec(e.children[1], !bindLeft ? infixPri : infixPri + 0.1)
+                    r.push(e.children[1])
                 }
                 if (infixPri < outPrio) pushOp(")");
 
@@ -1249,7 +1251,8 @@ namespace pxt.blocks {
         emit(root)
 
         // never return empty string - TS compiler service thinks it's an error
-        output += "\n"
+        if (!output)
+            output += "\n"
 
         return {
             source: output,

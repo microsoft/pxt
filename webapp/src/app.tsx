@@ -818,7 +818,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         if (!src) return Promise.resolve();
         // format before saving
-        src = ts.pxt.format(src, 0).formatted;
+        //src = ts.pxt.format(src, 0).formatted;
 
         let mainPkg = pkg.mainEditorPkg();
         let tsName = this.editorFile.getVirtualFileName();

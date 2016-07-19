@@ -1,5 +1,4 @@
 ///<reference path='blockly.d.ts'/>
-///<reference path='touchdevelop.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
