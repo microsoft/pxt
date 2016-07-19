@@ -23,6 +23,7 @@ namespace pxt.blocks {
         id?: string;
         glueToBlock?: boolean;
         canIndentInside?: boolean;
+        noFinalNewline?: boolean;
     }
 
 
@@ -901,9 +902,10 @@ namespace pxt.blocks {
     }
 
     function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node): Node {
-        return H.namespaceCall(n, f, args.concat([
+        body.noFinalNewline = true
+        return mkStmt(H.namespaceCall(n, f, args.concat([
             mkGroup([mkText("() =>"), body])
-        ]))
+        ])))
     }
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): Node {
@@ -1312,8 +1314,10 @@ namespace pxt.blocks {
         }
 
         function block(n: Node) {
+            let finalNl = n.noFinalNewline ? "" : "\n"
+            
             if (n.children.length == 0) {
-                write(" { }\n")
+                write(" { }" + finalNl)
                 return
             }
 
@@ -1325,7 +1329,7 @@ namespace pxt.blocks {
                 emit(nn)
             indent = indent.slice(4)
             removeLastIndent()
-            write("\n}\n")
+            write("\n}" + finalNl)
             variables.pop();
         }
     }
