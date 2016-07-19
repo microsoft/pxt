@@ -839,7 +839,7 @@ namespace pxt.blocks {
         let binding = lookup(e, bVar);
         let isDef = false
         if (!binding.assigned)
-            if (findParent(b)) {
+            if (b.getSurroundParent()) {
                 // need to define this variable in the top-scope
                 binding.assigned = VarUsage.Read
             } else {
@@ -1011,21 +1011,6 @@ namespace pxt.blocks {
         return mkBlock(stmts);
     }
 
-    // Find the parent (as in "scope" parent) of a Block. The [parentNode_] property
-    // will return the visual parent, that is, the one connected to the top of the
-    // block.
-    function findParent(b: B.Block) {
-        let candidate = b.parentBlock_;
-        if (!candidate)
-            return null;
-        let isActualInput = false;
-        candidate.inputList.forEach((i: B.Input) => {
-            if (i.name && candidate.getInputTargetBlock(i.name) == b)
-                isActualInput = true;
-        });
-        return isActualInput && candidate || null;
-    }
-
     function isTopBlock(b: B.Block): boolean {
         if (!b.parentBlock_) return true;
         return isTopBlock(b.parentBlock_);
@@ -1077,7 +1062,7 @@ namespace pxt.blocks {
                 && escapeVarName(b.getFieldValue("VAR")) == name)
                 return true;
             else
-                return variableIsScoped(findParent(b), name);
+                return variableIsScoped(b.getSurroundParent(), name);
         };
 
         // collect loop variables.
