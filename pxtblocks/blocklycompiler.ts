@@ -126,8 +126,8 @@ namespace pxt.blocks {
         }
 
         // Call extension method [name] on the first argument
-        export function extensionCall(name: string, args: Node[], property: boolean) {
-            return mkCall(name, args, property);
+        export function extensionCall(name: string, args: Node[]) {
+            return mkCall(name, args, true);
         }
 
         // Call function [name] from the specified [namespace] in the micro:bit
@@ -687,7 +687,7 @@ namespace pxt.blocks {
         name: string;
         type: Point;
         usedAsForIndex: number;
-        assigned?: VarUsage;
+        assigned?: VarUsage; // records the first usage of this variable (read/assign)
         incompatibleWithFor?: boolean;
     }
 
@@ -837,11 +837,20 @@ namespace pxt.blocks {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
-        if (!binding.assigned && !findParent(b))
-            binding.assigned = VarUsage.Assign;
+        let isDef = false
+        if (!binding.assigned)
+            if (findParent(b)) {
+                // need to define this variable in the top-scope
+                binding.assigned = VarUsage.Read
+            } else {
+                binding.assigned = VarUsage.Assign;
+                isDef = true
+            }
         let expr = compileExpression(e, bExpr);
-        let ref = mkText(bVar);
-        return mkStmt(mkInfix(ref, "=", expr))
+        return mkStmt(
+            mkText(isDef ? "let " : ""),
+            mkText(bVar + " = "),
+            expr)
     }
 
     function compileChange(e: Environment, b: B.Block): Node {
@@ -879,7 +888,7 @@ namespace pxt.blocks {
     function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
         let args = func.args.map((p: StdArg) => compileArgument(e, b, p));
         if (func.isExtensionMethod) {
-            return H.extensionCall(func.f, args, !!func.property);
+            return H.extensionCall(func.f, args);
         } else if (func.namespace) {
             return H.namespaceCall(func.namespace, func.f, args);
         } else {
@@ -1193,6 +1202,7 @@ namespace pxt.blocks {
             "/": 14,
             "%": 14,
             "!": 15,
+            ".": 18,
         }
 
 
@@ -1237,7 +1247,10 @@ namespace pxt.blocks {
                         pushOp(": ")
                         pushOp(letType)
                     }
-                    pushOp(" " + e.op + " ")
+                    if (e.op == ".")
+                        pushOp(".")
+                    else
+                        pushOp(" " + e.op + " ")
                     rec(e.children[1], !bindLeft ? infixPri : infixPri + 0.1)
                     r.push(e.children[1])
                 }
@@ -1314,7 +1327,7 @@ namespace pxt.blocks {
                 write(" { }\n")
                 return
             }
-            
+
             let vars = U.clone<U.Map<string>>(variables[variables.length - 1] || {});
             variables.push(vars);
             indent += "    "
