@@ -13,7 +13,6 @@ namespace pxt.blocks {
         Prefix, // op + map(children)
         Infix, // children.length == 2, child[0] op child[1]
         Block, // { } are implicit
-        CommaSep,  // children.join(", ")
         NewLine
     }
 
@@ -68,13 +67,23 @@ namespace pxt.blocks {
         return mkGroup(nodes)
     }
 
+    function mkCommaSep(nodes: Node[]) {
+        let r: Node[] = []
+        for (let n of nodes) {
+            if (r.length > 0)
+                r.push(mkText(", "))
+            r.push(n)
+        }
+        return mkGroup(r)
+    }
+
     // A series of utility functions for constructing various J* AST nodes.
     namespace Helpers {
 
         export function mkArrayLiteral(args: Node[]) {
             return mkGroup([
                 mkText("["),
-                mkNode(NT.CommaSep, "", args),
+                mkCommaSep(args),
                 mkText("]")
             ])
         }
@@ -96,14 +105,14 @@ namespace pxt.blocks {
                 return mkGroup([
                     mkInfix(args[0], ".", mkText(name)),
                     mkText("("),
-                    mkNode(NT.CommaSep, "", args.slice(1)),
+                    mkCommaSep(args.slice(1)),
                     mkText(")")
                 ])
             else
                 return mkGroup([
                     mkText(name),
                     mkText("("),
-                    mkNode(NT.CommaSep, "", args),
+                    mkCommaSep(args),
                     mkText(")")
                 ])
 
@@ -1149,12 +1158,11 @@ namespace pxt.blocks {
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
-    function tdASTtoTS(app: J.JApp): BlockCompilationResult {
+    function tdASTtoTS(app: Node[]): BlockCompilationResult {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
         let variables: U.Map<string>[] = [{}];
-        let currInlineAction: J.JInlineAction = null
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
         let infixPriTable: Util.StringMap<number> = {
             "=": 3,
@@ -1184,127 +1192,61 @@ namespace pxt.blocks {
 
 
         function flatten(e0: Node) {
-            let r: J.JToken[] = []
+            function rec(e: Node, outPrio: number) {
+                if (e.type != NT.Infix) {
+                    for (let c of e.children)
+                        rec(c, -1)
+                    return
+                }
 
-            function pushOp(c: string) {
-                r.push(<J.JOperator>{
-                    nodeType: "operator",
-                    id: "",
-                    op: c
-                })
-            }
+                let r: Node[] = []
 
-            function call(e: J.JCall, outPrio: number) {
-                let infixPri = 0
-                if (infixPriTable.hasOwnProperty(e.name))
-                    infixPri = infixPriTable[e.name]
+                function pushOp(c: string) {
+                    r.push(mkText(c))
+                }
 
-                if (infixPri) {
-                    // This seems wrong
-                    if (e.name == "-" &&
-                        (e.args[0].nodeType == "numberLiteral") &&
-                        ((<J.JNumberLiteral>e.args[0]).value === 0.0) &&
-                        (!(<J.JNumberLiteral>e.args[0]).stringForm)) {
-                        pushOp(e.name)
-                        rec(e.args[1], 98)
-                        return
-                    }
+                let infixPri = U.lookup(infixPriTable, e.op)
+                if (infixPri == null) U.oops("bad infix op: " + e.op)
 
-                    if (infixPri < outPrio) pushOp("(");
-                    if (e.args.length == 1) {
-                        pushOp(e.name)
-                        rec(e.args[0], infixPri)
-                    } else {
-                        let bindLeft = infixPri != 3 && e.name != "**"
-                        let letType: string = undefined;
-                        if (e.name == "=" && e.args[0].nodeType == 'localRef') {
-                            let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
-                            let varname = varloc.name;
-                            if (!variables[variables.length - 1][varname]) {
-                                variables[variables.length - 1][varname] = "1";
-                                pushOp("let")
-                                letType = varloc.type as any as string;
-                            }
-                        }
-                        rec(e.args[0], bindLeft ? infixPri : infixPri + 0.1)
-                        if (letType && letType != "number") {
-                            pushOp(":")
-                            pushOp(letType)
-                        }
-                        pushOp(e.name)
-                        rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)
-                    }
-                    if (infixPri < outPrio) pushOp(")");
+                if (infixPri < outPrio) pushOp("(");
+                if (e.children.length == 1) {
+                    pushOp(e.op)
+                    rec(e.children[0], infixPri)
                 } else {
-                    rec(e.args[0], 1000)
-                    r.push(<J.JPropertyRef><any>{
-                        nodeType: "propertyRef",
-                        name: e.name,
-                        parent: e.parent,
-                        declId: e.declId,
-                    })
-                    if (!e.property) {
-                        pushOp("(")
-                        e.args.slice(1).forEach((ee, i) => {
-                            if (i > 0) pushOp(",")
-                            rec(ee, -1)
-                        })
-                        pushOp(")")
+                    let bindLeft = infixPri != 3 && e.op != "**"
+                    let letType: string = undefined;
+                    /*
+                    if (e.name == "=" && e.args[0].nodeType == 'localRef') {
+                        let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
+                        let varname = varloc.name;
+                        if (!variables[variables.length - 1][varname]) {
+                            variables[variables.length - 1][varname] = "1";
+                            pushOp("let")
+                            letType = varloc.type as any as string;
+                        }
                     }
+                    */
+                    rec(e.children[0], bindLeft ? infixPri : infixPri + 0.1)
+                    if (letType && letType != "number") {
+                        pushOp(":")
+                        pushOp(letType)
+                    }
+                    pushOp(e.op)
+                    rec(e.children[1], !bindLeft ? infixPri : infixPri + 0.1)
                 }
-            }
+                if (infixPri < outPrio) pushOp(")");
 
-            function rec(e: Node, prio: number) {
-                switch (e.nodeType) {
-                    case "call":
-                        emitAndMap(e.id, () => call(<J.JCall>e, prio))
-                        break;
-                    case "numberLiteral":
-                        pushOp((<J.JNumberLiteral>e).value.toString())
-                        break;
-                    case "arrayLiteral":
-                    case "stringLiteral":
-                    case "booleanLiteral":
-                    case "localRef":
-                    case "placeholder":
-                    case "singletonRef":
-                        r.push(e);
-                        break;
-                    case "show":
-                    case "break":
-                    case "return":
-                    case "continue":
-                        pushOp(e.nodeType)
-                        let ee = (<J.JReturn>e).expr
-                        if (ee)
-                            rec(ee, prio)
-                        break
-                    default:
-                        pxt.reportError("invalid nodeType when flattening: " + e.nodeType, null);
-                        Util.oops("invalid nodeType when flattening: " + e.nodeType)
-                }
+                e.type = NT.Prefix
+                e.op = ""
+                e.children = r
             }
 
             rec(e0, -1)
-
-            return r
         }
 
-        function emitAndMap(id: string, f: () => void) {
-            if (!id) {
-                f();
-                return;
-            }
-
-            let start = output.length;
-            f();
-            let end = output.length;
-            if (start != end)
-                sourceMap.push({ id: id, start: start, end: end })
-        }
-
-        emit(app)
-
+        let root = mkGroup(app)
+        flatten(root)
+        emit(root)
 
         // never return empty string - TS compiler service thinks it's an error
         output += "\n"
@@ -1314,31 +1256,58 @@ namespace pxt.blocks {
             sourceMap: sourceMap
         };
 
-        function jsName(s: string) {
-            return s.replace(/ (.)/g, (f: string, m: string) => m.toUpperCase())
-        }
+        function emit(n: Node) {
+            if (n.glueToBlock) {
+                removeLastIndent()
+                output += " "
+            }
 
-        function emit(n: J.JNode) {
-            let f = byNodeType[n.nodeType]
-            if (!f) Util.oops("unsupported node type " + n.nodeType)
-            f(n)
+            let start = output.length
+
+            switch (n.type) {
+                case NT.Infix:
+                    U.oops("no infix should be left")
+                    break
+                case NT.NewLine:
+                    output += "\n" + indent
+                    break
+                case NT.Block:
+                    block(n)
+                    break
+                case NT.Prefix:
+                    output += n.op
+                    n.children.forEach(emit)
+                    break
+                default:
+                    break
+            }
+
+            let end = output.length
+
+            if (n.id && start != end) {
+                sourceMap.push({ id: n.id, start: start, end: end })
+
+            }
         }
 
         function write(s: string) {
             output += s.replace(/\n/g, "\n" + indent)
         }
 
+        function removeLastIndent() {
+            output = output.replace(/\n *$/, "")
+        }
 
-        function block(f: () => void) {
+        function block(n: Node) {
             let vars = U.clone<U.Map<string>>(variables[variables.length - 1] || {});
             variables.push(vars);
-
             indent += "    "
-            write("{\n")
-            f()
+            write(" {\n")
+            for (let nn of n.children)
+                emit(nn)
             indent = indent.slice(4)
+            removeLastIndent()
             write("\n}\n")
-
             variables.pop();
         }
     }
