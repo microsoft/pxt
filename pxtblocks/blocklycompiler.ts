@@ -489,7 +489,7 @@ namespace pxt.blocks {
 
     function extractNumber(b: B.Block): number {
         let v = b.getFieldValue("NUM");
-        if (!v.match(/\d+/)) {
+        if (!v.match(/^\d+$/)) {
             Errors.report(v + " is not a valid numeric value", b);
             return 0;
         } else {
@@ -1120,7 +1120,11 @@ namespace pxt.blocks {
                 .map(b => {
                     // let btype = find(b.type);
                     // Not sure we need the type here - is is always number or boolean?
-                    return mkStmt(mkText("let " + b.name + " = "), defaultValueForType(find(b.type)))
+                    let defl = defaultValueForType(find(b.type))
+                    let tp = ""
+                    if (defl.op == "null")
+                        tp = ": " + find(b.type).type
+                    return mkStmt(mkText("let " + b.name + tp + " = "), defaultValueForType(find(b.type)))
                 });
 
             return stmtsVariables.concat(stmtsMain)
