@@ -2131,6 +2131,11 @@ function errorHandler(reason: any) {
         process.exit(1)
     }
 
+    if (!Cloud.accessToken && reason.statusCode == 403) {
+        console.error("Got HTTP 403. Did you forget to 'pxt login' ?")
+        process.exit(1)
+    }
+
     let msg = reason.stack || reason.message || (reason + "")
     console.error("INTERNAL ERROR:", msg)
     process.exit(20)

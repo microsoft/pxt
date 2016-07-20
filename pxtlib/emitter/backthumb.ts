@@ -531,24 +531,30 @@ ${bkptLabel + "_after"}:
                     upperAddr = m[1]
                 }
                 m = /^:..(....)00/.exec(hex[i])
+                let isFinal = false
                 if (m) {
                     let newAddr = parseInt(upperAddr + m[1], 16)
-                    if (!bytecodeStartAddr && newAddr >= 0x3C000) {
-                        let bytes = parseHexBytes(hex[lastIdx])
-                        if (bytes[0] != 0x10) {
-                            bytes.pop() // checksum
-                            bytes[0] = 0x10;
-                            while (bytes.length < 20)
-                                bytes.push(0x00)
-                            hex[lastIdx] = hexBytes(bytes)
-                        }
-                        assert((bytes[2] & 0xf) == 0)
-
-                        bytecodeStartAddr = lastAddr + 16
-                        bytecodeStartIdx = lastIdx + 1
+                    if (newAddr >= 0x3C000) {
+                        isFinal = true
                     }
                     lastIdx = i
                     lastAddr = newAddr
+                }
+                if (/^:00000001/.test(hex[i]))
+                    isFinal = true
+                if (!bytecodeStartAddr && isFinal) {
+                    let bytes = parseHexBytes(hex[lastIdx])
+                    if (bytes[0] != 0x10) {
+                        bytes.pop() // checksum
+                        bytes[0] = 0x10;
+                        while (bytes.length < 20)
+                            bytes.push(0x00)
+                        hex[lastIdx] = hexBytes(bytes)
+                    }
+                    assert((bytes[2] & 0xf) == 0)
+
+                    bytecodeStartAddr = lastAddr + 16
+                    bytecodeStartIdx = lastIdx + 1
                 }
                 m = /^:10....000108010842424242010801083ED8E98D/.exec(hex[i])
                 if (m) {
@@ -559,6 +565,9 @@ ${bkptLabel + "_after"}:
 
             if (!jmpStartAddr)
                 oops("No hex start")
+
+            if (!bytecodeStartAddr)
+                oops("No hex end")
 
             funcInfo = {};
             let funs: FuncInfo[] = hexinfo.functions.concat(extInfo.functions);

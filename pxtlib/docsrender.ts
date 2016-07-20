@@ -88,19 +88,17 @@ namespace pxt.docs {
         cmd: string;
     }
 
+    //The extra YouTube macros are in case there is a timestamp on the YouTube URL.
+    //TODO: Add equivalent support for youtu.be links
     let links: CmdLink[] = [
         {
             rx: /^vimeo\.com\/(\d+)/,
             cmd: "### @vimeo $1"
         },
         {
-            rx: /^youtu\.be\/(\w+)/,
-            cmd: "### @youtube $1"
-        },
-        {
-            rx: /^www\.youtube\.com\/watch\?v=(\w+)/,
-            cmd: "### @youtube $1"
-        },
+            rx: /^(www\.youtube\.com\/watch\?v=|youtu.be\/)(\w+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/,
+            cmd: "### @youtube $2"
+        }
     ]
 
     export interface BreadcrumbEntry {
@@ -121,7 +119,7 @@ namespace pxt.docs {
         function parseHtmlAttrs(s: string) {
             let attrs: U.Map<string> = {};
             while (s.trim()) {
-                let m = /^\s*([^=\s]+)=("([^"]*)"|'([^']*)'|(\S*))/.exec(s)
+                let m = /\s*([^=\s]+)=("([^"]*)"|'([^']*)'|(\S*))/.exec(s)
                 if (m) {
                     let v = m[3] || m[4] || m[5] || ""
                     attrs[m[1].toLowerCase()] = v
@@ -147,6 +145,7 @@ namespace pxt.docs {
         template = template.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
             let attrs = parseHtmlAttrs(attrsStr)
             let name = attrs["data-name"] || attrs["id"]
+            console.log(`Compiling box ${name}`);
             if (!name)
                 return error("id or data-name missing on macro")
             if (/box/.test(attrs["class"])) {
@@ -182,10 +181,14 @@ namespace pxt.docs {
                 pedantic: false,
                 sanitize: true,
                 smartLists: true,
-                smartypants: true
+                smartypants: true,
+                highlight: function(code, lang) {
+                    return require('highlight.js').highlightAuto(code, [lang]).value;
+                }
             })
         };
 
+        //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
         src = src.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
