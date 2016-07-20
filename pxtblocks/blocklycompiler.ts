@@ -1170,20 +1170,30 @@ namespace pxt.blocks {
         let variables: U.Map<string>[] = [{}];
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
         let infixPriTable: Util.StringMap<number> = {
+            // 0 = comma/sequence
+            // 1 = spread (...)
+            // 2 = yield, yield*
+            // 3 = assignment
             "=": 3,
+            "+=": 3,
+            "-=": 3,
+            // 4 = conditional (?:)
             "||": 5,
             "&&": 6,
             "|": 7,
             "^": 8,
             "&": 9,
+            // 10 = equality
             "==": 10,
             "!=": 10,
             "===": 10,
             "!==": 10,
+            // 11 = comparison (excludes in, instanceof)
             "<": 11,
             ">": 11,
             "<=": 11,
             ">=": 11,
+            // 12 = bitise shift
             ">>": 12,
             ">>>": 12,
             "<<": 12,
