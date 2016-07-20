@@ -17,6 +17,7 @@ namespace ts.pxt.ir {
         Decr,
         Sequence,
         JmpValue,
+        Nop,
     }
 
     export enum CallingConvention {
@@ -91,6 +92,8 @@ namespace ts.pxt.ir {
                     return (this.data as Cell).toString()
                 case EK.JmpValue:
                     return "JMPVALUE"
+                case EK.Nop:
+                    return "NOP"
 
                 case EK.SharedRef:
                     return `SHARED_REF(${this.args[0].toString()})`
@@ -130,6 +133,7 @@ namespace ts.pxt.ir {
                 case EK.CellRef:
                 case EK.JmpValue:
                 case EK.SharedRef:
+                case EK.Nop:
                     return false;
 
                 case EK.SharedDef:
@@ -175,6 +179,8 @@ namespace ts.pxt.ir {
         public jmpMode: JmpMode;
         public lblId: number;
         public breakpointInfo: Breakpoint;
+        public stmtNo: number;
+        public findIdx: number;
 
         constructor(
             public stmtKind: SK,
@@ -227,6 +233,17 @@ namespace ts.pxt.ir {
             setCellProps(this)
         }
 
+        getName() {
+            return getDeclName(this.def)
+        }
+
+        getDebugInfo(): CellInfo {
+            return {
+                name: this.getName(),
+                type: "TODO"
+            }
+        }
+
         toString() {
             let n = ""
             if (this.def) n += (<any>this.def.name).text || "?"
@@ -266,7 +283,7 @@ namespace ts.pxt.ir {
         }
 
         refCountingHandledHere() {
-            return this.isRef() && !this.isGlobal() && !this.isByRefLocal()
+            return this.isRef() && !this.isByRefLocal()
         }
 
         isByRefLocal() {
@@ -304,6 +321,8 @@ namespace ts.pxt.ir {
         captured: Cell[] = [];
         args: Cell[] = [];
         parent: Procedure;
+        debugInfo: ProcDebugInfo;
+        fillDebugInfo: (th: thumb.File) => void;
 
         body: Stmt[] = [];
         lblNo = 0;
@@ -475,6 +494,9 @@ namespace ts.pxt.ir {
 
             let lbls = U.toDictionary(this.body.filter(s => s.stmtKind == ir.SK.Label), s => s.lblName)
 
+            for (let i = 0; i < this.body.length; ++i)
+                this.body[i].stmtNo = i
+
             for (let s of this.body) {
                 if (s.expr) {
                     //console.log("CNT", s.expr.toString())
@@ -495,6 +517,62 @@ namespace ts.pxt.ir {
                         break;
                     default: oops();
                 }
+            }
+
+            let findIdx = 1
+            let findNext = (i: number) => {
+                let res: Breakpoint[] = []
+                let loop = (i: number) => {
+                    while (i < this.body.length) {
+                        let s = this.body[i]
+                        if (s.findIdx === findIdx)
+                            return
+                        s.findIdx = findIdx
+                        switch (s.stmtKind) {
+                            case ir.SK.Jmp:
+                                if (s.jmpMode == ir.JmpMode.Always)
+                                    i = s.lbl.stmtNo - 1
+                                else
+                                    loop(s.lbl.stmtNo) // fork
+                                break;
+                            case ir.SK.Breakpoint:
+                                res.push(s.breakpointInfo)
+                                return
+                        }
+                        i++;
+                    }
+                }
+
+                findIdx++
+                loop(i)
+                return res
+            }
+
+            let allBrkp: Breakpoint[] = []
+
+            for (let s of this.body) {
+                if (s.stmtKind == ir.SK.Breakpoint) {
+                    s.breakpointInfo.successors = findNext(s.stmtNo + 1).map(b => b.id)
+                    allBrkp[s.breakpointInfo.id] = s.breakpointInfo
+                }
+            }
+
+            let debugSucc = false
+            if (debugSucc) {
+                let s = "BRKP: " + this.getName() + ":\n"
+                for (let i = 0; i < allBrkp.length; ++i) {
+                    let b = allBrkp[i]
+                    if (!b) continue
+
+                    s += `${b.line + 1}: `
+                    let n = allBrkp[i + 1]
+                    if (n && b.successors.length == 1 && b.successors[0] == n.id)
+                        s += "."
+                    else
+                        s += b.successors.map(b => `${allBrkp[b].line + 1}`).join(", ")
+                    s += "\n"
+                }
+                console.log(s)
             }
         }
     }
@@ -564,7 +642,7 @@ namespace ts.pxt.ir {
         let complexArgs: ir.Expr[] = []
         for (let a of U.reversed(topExpr.args)) {
             if (a.isStateless()) continue
-            if (a.exprKind == EK.CellRef && !(a.data as ir.Cell).isGlobal() && !didStateUpdate) continue
+            if (a.exprKind == EK.CellRef && !didStateUpdate) continue
             if (a.canUpdateCells()) didStateUpdate = true
             complexArgs.push(a)
         }

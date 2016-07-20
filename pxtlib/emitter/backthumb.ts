@@ -6,17 +6,56 @@ namespace ts.pxt {
         let write = (s: string) => { resText += asmline(s); }
         let EK = ir.EK;
 
-
         write(`
 ;
 ; Function ${proc.getName()}
 ;
+`)
+
+        if (proc.args.length <= 2)
+            emitLambdaWrapper(proc.isRoot)
+
+        let bkptLabel = getFunctionLabel(proc.action) + "_bkpt"
+        let locLabel = getFunctionLabel(proc.action) + "_locals"
+        write(`
 .section code
+${bkptLabel}:
+    bkpt 1
 ${getFunctionLabel(proc.action)}:
     @stackmark func
     @stackmark args
     push {lr}
 `)
+
+        let calls: ProcCallInfo[] = []
+        proc.fillDebugInfo = th => {
+            let labels = th.getLabels()
+
+            proc.debugInfo = {
+                locals: (proc.seqNo == 1 ? bin.globals : proc.locals).map(l => l.getDebugInfo()),
+                args: proc.args.map(l => l.getDebugInfo()),
+                name: proc.getName(),
+                codeStartLoc: U.lookup(labels, bkptLabel + "_after"),
+                bkptLoc: U.lookup(labels, bkptLabel),
+                localsMark: U.lookup(th.stackAtLabel, locLabel),
+                idx: proc.seqNo,
+                calls: calls
+            }
+
+            for (let ci of calls) {
+                ci.addr = U.lookup(labels, ci.callLabel)
+                ci.stack = U.lookup(th.stackAtLabel, ci.callLabel)
+                ci.callLabel = undefined // don't waste space
+            }
+
+            for (let i = 0; i < proc.body.length; ++i) {
+                let bi = proc.body[i].breakpointInfo
+                if (bi) {
+                    let off = U.lookup(th.stackAtLabel, `__brkp_${bi.id}`)
+                    assert(off === proc.debugInfo.localsMark)
+                }
+            }
+        }
 
         let numlocals = proc.locals.length
         if (numlocals > 0) write("movs r0, #0")
@@ -24,10 +63,20 @@ ${getFunctionLabel(proc.action)}:
             write("push {r0} ; loc")
         })
         write("@stackmark locals")
+        write(`${locLabel}:`)
 
         //console.log(proc.toString())
         proc.resolve()
         //console.log("OPT", proc.toString())
+
+        // debugger hook - bit #1 of global #0 determines break on function entry
+        // we could have put the 'bkpt' inline, and used `bpl`, but that would be 2 cycles slower
+        write(`
+    ldr r0, [r6, #0]
+    lsls r0, r0, #30
+    bmi ${bkptLabel}
+${bkptLabel + "_after"}:
+`)
 
         let exprStack: ir.Expr[] = []
 
@@ -55,6 +104,18 @@ ${getFunctionLabel(proc.action)}:
                     write(s.lblName + ":")
                     break;
                 case ir.SK.Breakpoint:
+                    write(`__brkp_${s.breakpointInfo.id}:`)
+                    if (s.breakpointInfo.isDebuggerStmt) {
+                        let lbl = mkLbl("debugger")
+                        // bit #0 of debugger register is set when debugger is attached
+                        write("ldr r0, [r6, #0]")
+                        write("lsls r0, r0, #31")
+                        write(`bpl ${lbl}`)
+                        write(`bkpt 2`)
+                        write(`${lbl}:`)
+                    } else {
+                        // do nothing
+                    }
                     break;
                 default: oops();
             }
@@ -66,9 +127,6 @@ ${getFunctionLabel(proc.action)}:
         write("pop {pc}");
         write("@stackempty func");
         write("@stackempty args")
-
-        if (proc.args.length <= 2)
-            emitLambdaWrapper()
 
         return resText
 
@@ -152,7 +210,6 @@ ${getFunctionLabel(proc.action)}:
                     break;
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
-                    U.assert(!cell.isGlobal())
                     write(`ldr ${reg}, ${cellref(cell)}`)
                     break;
                 default: oops();
@@ -166,6 +223,10 @@ ${getFunctionLabel(proc.action)}:
             switch (e.exprKind) {
                 case EK.JmpValue:
                     write("; jmp value (already in r0)")
+                    break;
+                case EK.Nop:
+                    // this is there because we need different addresses for breakpoints
+                    write("nop")
                     break;
                 case EK.Incr:
                     emitExpr(e.args[0])
@@ -189,12 +250,6 @@ ${getFunctionLabel(proc.action)}:
                     return emitSharedDef(e)
                 case EK.Sequence:
                     return e.args.forEach(emitExpr)
-                case EK.CellRef:
-                    let cell = e.data as ir.Cell;
-                    if (cell.isGlobal())
-                        return emitExpr(ir.rtcall(withRef("pxtrt::ldglb", cell.isRef()), [ir.numlit(cell.index)]))
-                    else
-                        return emitExprInto(e, "r0")
                 default:
                     return emitExprInto(e, "r0")
             }
@@ -248,7 +303,14 @@ ${getFunctionLabel(proc.action)}:
             })
 
             let proc = bin.procs.filter(p => p.action == topExpr.data)[0]
-
+            let lbl = mkLbl("proccall")
+            calls.push({
+                procIndex: proc.seqNo,
+                stack: 0,
+                addr: 0,
+                callLabel: lbl,
+            })
+            write(lbl + ":")
             write("bl " + getFunctionLabel(proc.action))
 
             for (let a of argStmts) {
@@ -261,12 +323,8 @@ ${getFunctionLabel(proc.action)}:
             switch (trg.exprKind) {
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
-                    if (cell.isGlobal()) {
-                        emitExpr(ir.rtcall(withRef("pxtrt::stglb", cell.isRef()), [src, ir.numlit(cell.index)]))
-                    } else {
-                        emitExpr(src)
-                        write("str r0, " + cellref(cell))
-                    }
+                    emitExpr(src)
+                    write("str r0, " + cellref(cell))
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
@@ -278,8 +336,9 @@ ${getFunctionLabel(proc.action)}:
         }
 
         function cellref(cell: ir.Cell) {
-            U.assert(!cell.isGlobal())
-            if (cell.iscap) {
+            if (cell.isGlobal()) {
+                return "[r6, #4*" + cell.index + "]"
+            } else if (cell.iscap) {
                 assert(0 <= cell.index && cell.index < 32)
                 return "[r5, #4*" + cell.index + "]"
             } else if (cell.isarg) {
@@ -290,15 +349,19 @@ ${getFunctionLabel(proc.action)}:
             }
         }
 
-        function emitLambdaWrapper() {
+        function emitLambdaWrapper(isMain: boolean) {
             let node = proc.action
             write("")
             write(".section code");
+            if (isMain)
+                write("b .themain")
             write(".balign 4");
             write(getFunctionLabel(node) + "_Lit:");
             write(".short 0xffff, 0x0000   ; action literal");
             write("@stackmark litfunc");
-            write("push {r5, lr}");
+            if (isMain)
+                write(".themain:")
+            write("push {r5, r6, lr}");
             write("mov r5, r1");
 
             let parms = proc.args.map(a => a.def)
@@ -309,12 +372,15 @@ ${getFunctionLabel(proc.action)}:
             })
             write("@stackmark args");
 
+            write(`bl pxtrt::getGlobalsPtr`)
+            write(`mov r6, r0`)
+
             write(`bl ${getFunctionLabel(node)}`)
 
             write("@stackempty args")
             if (parms.length)
                 write("add sp, #4*" + parms.length + " ; pop args")
-            write("pop {r5, pc}");
+            write("pop {r5, r6, pc}");
             write("@stackempty litfunc");
         }
 
@@ -598,7 +664,7 @@ ${getFunctionLabel(proc.action)}:
                 return bytes
             }
 
-            let hd = [0x4208, bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
+            let hd = [0x4208, numReservedGlobals + bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
             let tmp = hexTemplateHash()
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
@@ -765,7 +831,8 @@ ${hex.hexPrelude()}
 
         return {
             src: src,
-            buf: b.buf
+            buf: b.buf,
+            thumbFile: b
         }
     }
 
@@ -804,7 +871,7 @@ _stored_program: .string "`
         return str
     }
 
-    export function thumbEmit(bin: Binary, opts: CompileOptions) {
+    export function thumbEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let src = serialize(bin)
         src = patchSrcHash(src)
         if (opts.embedBlob)
@@ -817,6 +884,18 @@ _stored_program: .string "`
             const myhex = hex.patchHex(bin, res.buf, false).join("\r\n") + "\r\n"
             bin.writeFile(ts.pxt.BINARY_HEX, myhex)
         }
+
+        for (let bkpt of cres.breakpoints) {
+            let lbl = U.lookup(res.thumbFile.getLabels(), "__brkp_" + bkpt.id)
+            if (lbl != null)
+                bkpt.binAddr = lbl
+        }
+
+        for (let proc of bin.procs) {
+            proc.fillDebugInfo(res.thumbFile)
+        }
+
+        cres.procDebugInfo = bin.procs.map(p => p.debugInfo)
     }
 
     export let validateShim = hex.validateShim;

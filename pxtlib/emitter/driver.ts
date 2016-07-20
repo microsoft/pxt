@@ -41,8 +41,31 @@ namespace ts.pxt {
     export interface Breakpoint extends LocationInfo {
         id: number;
         isDebuggerStmt: boolean;
-        // TODO: this would be useful for step-over support
-        // prevBrkId?:number;
+        successors: number[]; // ids of all breakpoints that we could hit next
+        binAddr?: number;
+    }
+
+    export interface CellInfo {
+        name: string;
+        type: string;
+    }
+
+    export interface ProcCallInfo {
+        procIndex: number;
+        callLabel: string;
+        addr: number;
+        stack: number;
+    }
+
+    export interface ProcDebugInfo {
+        name: string;
+        idx: number;
+        bkptLoc: number;
+        codeStartLoc: number;
+        locals: CellInfo[];
+        args: CellInfo[];
+        localsMark: number;
+        calls: ProcCallInfo[];
     }
 
     export interface CompileResult {
@@ -52,6 +75,7 @@ namespace ts.pxt {
         times: U.Map<number>;
         ast?: Program;
         breakpoints?: Breakpoint[];
+        procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
     }
 

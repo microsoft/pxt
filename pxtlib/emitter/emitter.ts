@@ -1,6 +1,6 @@
 namespace ts.pxt {
-    export var assert = Util.assert;
-    export var oops = Util.oops;
+    export const assert = Util.assert;
+    export const oops = Util.oops;
     export type StringMap<T> = Util.Map<T>;
     export import U = ts.pxt.Util;
 
@@ -9,7 +9,9 @@ namespace ts.pxt {
     export const BINARY_ASM = "binary.asm";
 
     let EK = ir.EK;
-    export var SK = SyntaxKind;
+    export const SK = SyntaxKind;
+
+    export const numReservedGlobals = 1;
 
     export function stringKind(n: Node) {
         if (!n) return "<null>"
@@ -307,7 +309,7 @@ namespace ts.pxt {
         let text = node && node.name ? (<Identifier>node.name).text : null
         if (!text && node.kind == SK.Constructor)
             text = "constructor"
-        if (node.parent && node.parent.kind == SK.ClassDeclaration)
+        if (node && node.parent && node.parent.kind == SK.ClassDeclaration)
             text = (<ClassDeclaration>node.parent).name.text + "." + text
         text = text || "inline"
         return text;
@@ -366,6 +368,8 @@ namespace ts.pxt {
 
             hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
+
+            opts.breakpoints = true
         }
 
         if (opts.breakpoints)
@@ -376,7 +380,8 @@ namespace ts.pxt {
                 start: 0,
                 length: 0,
                 line: 0,
-                character: 0
+                character: 0,
+                successors: null
             }]
 
         let bin: Binary;
@@ -497,7 +502,7 @@ namespace ts.pxt {
                 host.writeFile(fn, data, false, null);
 
             if (opts.target.isNative) {
-                thumbEmit(bin, opts)
+                thumbEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
@@ -514,7 +519,7 @@ namespace ts.pxt {
                 typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
-                    ex = new ir.Cell(bin.globals.length, decl, getVarInfo(decl))
+                    ex = new ir.Cell(bin.globals.length + numReservedGlobals, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
                 return ex
@@ -1380,7 +1385,8 @@ ${lbl}: .short 0xffff
                     start: pos,
                     length: node.end - pos,
                     line: p.line,
-                    character: p.character
+                    character: p.character,
+                    successors: null
                 }
                 brkMap[nodeKey(node)] = brk
                 res.breakpoints.push(brk)
@@ -2047,7 +2053,6 @@ ${lbl}: .short 0xffff
             proc.seqNo = this.procs.length
             //proc.binary = this
         }
-
 
         emitString(s: string): string {
             if (this.strings.hasOwnProperty(s))
