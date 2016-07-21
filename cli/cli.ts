@@ -1874,10 +1874,14 @@ function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
     opts2.sourceFiles = opts.sourceFiles.slice()
     opts2.sourceFiles.push(fn)
     opts2.fileSystem[fn] = content
+    opts2.embedBlob = null
+    opts2.embedMeta = null
     let res = ts.pxt.compile(opts2)
     reportDiagnostics(res.diagnostics);
     if (!res.success) {
         console.log("ERRORS", fn)
+    } else {
+        fs.writeFileSync("./built/" + fn.replace(/\.ts$/, ".hex"), res.outfiles["binary.hex"])
     }
 
     return res.success
@@ -1905,18 +1909,77 @@ function prepTestOptionsAsync() {
         })
 }
 
+interface TestInfo {
+    filename: string;
+    base: string;
+    text: string;
+}
+
 function testDirAsync(dir: string) {
     forceCloudBuild = true
-    return prepTestOptionsAsync()
-        .then(opts => {
-            let errors: string[] = []
+    let tests: TestInfo[] = []
 
-            for (let fn of fs.readdirSync(dir)) {
-                if (!U.endsWith(fn, ".ts") || fn[0] == ".") continue;
-                if (!compilesOK(opts, fn, fs.readFileSync(dir + "/" + fn, "utf8")))
-                    errors.push(fn)
+    dir = path.resolve(dir || ".")
+
+    for (let fn of fs.readdirSync(dir)) {
+        if (fn[0] == ".") continue;
+        let full = dir + "/" + fn
+        if (U.endsWith(fn, ".ts")) {
+            let text = fs.readFileSync(full, "utf8")
+            let m = /^\s*\/\/\s*base:\s*(\S+)/m.exec(text)
+            let base = m ? m[1] : "base"
+            tests.push({
+                filename: full,
+                base: base,
+                text: text
+            })
+        } else {
+            let st = fs.statSync(full)
+            if (st.isDirectory()) {
+                tests.push({
+                    filename: full,
+                    base: fn,
+                    text: null
+                })
             }
+        }
+    }
 
+    tests.sort((a, b) => {
+        let r = U.strcmp(a.base, b.base)
+        if (r == 0)
+            if (a.text == null) return -1
+            else if (b.text == null) return 1
+            else return U.strcmp(a.filename, b.filename)
+        else return r
+    })
+
+    let currBase = ""
+    let currOptions: ts.pxt.CompileOptions = null
+    let errors: string[] = []
+
+    return Promise.mapSeries(tests, (ti) => {
+        if (ti.text == null) {
+            currBase = ti.base
+            currOptions = null
+            process.chdir(ti.filename)
+            mainPkg = new pxt.MainPackage(new Host())
+            return installAsync()
+                .then(testAsync)
+        } else {
+            if (currBase != ti.base)
+                throw U.userError("Base directory: " + ti.base + " not found.")
+            else return (currOptions
+                ? Promise.resolve(currOptions)
+                : prepTestOptionsAsync().then(v => currOptions = v))
+                .then(opts => {
+                    let fn = path.basename(ti.filename)
+                    if (!compilesOK(opts, fn, ti.text))
+                        errors.push(fn)
+                })
+        }
+    })
+        .then(() => {
             if (errors.length) {
                 console.log("Errors: " + errors.join(", "))
                 process.exit(1)
@@ -2130,7 +2193,7 @@ cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file or stdin
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
-cmd("testdir  DIR                 - compile files from DIR one-by-one replacing the main file of current package", testDirAsync, 1)
+cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONCONFIG          - test TD->TS converter", testConverterAsync, 2)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
