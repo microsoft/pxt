@@ -260,6 +260,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         }
 
         let publish = () => {
+            pxt.tickEvent("menu.embed.publish");
             this.props.parent.publishAsync().done();
         }
         let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
