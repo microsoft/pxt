@@ -525,24 +525,9 @@ ${bkptLabel + "_after"}:
             let lastAddr = 0
             let lastIdx = 0
             bytecodeStartAddr = 0
-            for (; i < hex.length; ++i) {
-                let m = /:02000004(....)/.exec(hex[i])
-                if (m) {
-                    upperAddr = m[1]
-                }
-                m = /^:..(....)00/.exec(hex[i])
-                let isFinal = false
-                if (m) {
-                    let newAddr = parseInt(upperAddr + m[1], 16)
-                    if (newAddr >= 0x3C000) {
-                        isFinal = true
-                    }
-                    lastIdx = i
-                    lastAddr = newAddr
-                }
-                if (/^:00000001/.test(hex[i]))
-                    isFinal = true
-                if (!bytecodeStartAddr && isFinal) {
+
+            let hitEnd = () => {
+                if (!bytecodeStartAddr) {
                     let bytes = parseHexBytes(hex[lastIdx])
                     if (bytes[0] != 0x10) {
                         bytes.pop() // checksum
@@ -556,6 +541,25 @@ ${bkptLabel + "_after"}:
                     bytecodeStartAddr = lastAddr + 16
                     bytecodeStartIdx = lastIdx + 1
                 }
+            }
+
+            for (; i < hex.length; ++i) {
+                let m = /:02000004(....)/.exec(hex[i])
+                if (m) {
+                    upperAddr = m[1]
+                }
+                m = /^:..(....)00/.exec(hex[i])
+                if (m) {
+                    let newAddr = parseInt(upperAddr + m[1], 16)
+                    if (newAddr >= 0x3C000)
+                        hitEnd()
+                    lastIdx = i
+                    lastAddr = newAddr
+                }
+                
+                if (/^:00000001/.test(hex[i]))
+                    hitEnd()
+
                 m = /^:10....000108010842424242010801083ED8E98D/.exec(hex[i])
                 if (m) {
                     jmpStartAddr = lastAddr
