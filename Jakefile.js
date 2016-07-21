@@ -281,6 +281,9 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
             css = css.replace(/^\s*src:[^;]+;/m,
                 "    src: url(data:application/x-font-woff;charset=utf-8;base64," + data + ") format(\"woff\");")
             css = css.replace(/line-height:\s*1;/, "")
+            // SUI css file would override our icons without !important;
+            // our icons have xicon class so it never happens the other way around
+            css = css.replace(/(content:.*);/g, (f, m) => m + " !important;")
             console.log("Generated icons.css -", css.length, "bytes")
             let html = "<!doctype html>\n<html><body style='font-size: 30px'><style>@import './icons.css';</style>\n"
             css.replace(/\.(\w+):before /g, (f, n) => {

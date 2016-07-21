@@ -26,7 +26,7 @@ function setDiagnostics(diagnostics: ts.pxt.KsDiagnostic[]) {
 
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
-            output += `${diagnostic.category == ts.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.DiagnosticCategory.Warning ? lf("warning") : lf("message") }: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.character + 1}): `;
+            output += `${diagnostic.category == ts.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.character + 1}): `;
             let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
             if (f)
                 f.diagnostics.push(diagnostic)
@@ -43,6 +43,20 @@ function setDiagnostics(diagnostics: ts.pxt.KsDiagnostic[]) {
     let f = mainPkg.outputPkg.setFile("output.txt", output)
     // display total number of errors on the output file
     f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error).length
+}
+
+let hang = new Promise<any>(() => { })
+
+function catchUserErrorAndSetDiags(r: any) {
+    return (v: any) => {
+        if (v.isUserError) {
+            core.errorNotification(v.message)
+            let mainPkg = pkg.mainEditorPkg();
+            let f = mainPkg.outputPkg.setFile("output.txt", v.message)
+            f.numDiagnosticsOverride = 1
+            return r
+        } else return Promise.reject(v)
+    }
 }
 
 export interface CompileOptions {
@@ -69,6 +83,7 @@ export function compileAsync(options: CompileOptions = {}) {
             setDiagnostics(resp.diagnostics)
             return resp
         })
+        .catch(catchUserErrorAndSetDiags(hang))
 }
 
 function assembleCore(src: string): Promise<{ words: number[] }> {
@@ -156,6 +171,7 @@ export function typecheckAsync() {
                     })
             else return Promise.resolve()
         })
+        .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;
     return p;
 }

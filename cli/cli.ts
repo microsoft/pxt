@@ -177,6 +177,137 @@ function uploadFileAsync(path: string) {
         })
 }
 
+function readlineAsync() {
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    return new Promise<string>((resolve, reject) => {
+        process.stdin.once('data', (text: string) => {
+            resolve(text)
+        })
+    })
+}
+
+export function promptAsync(msg: string): Promise<boolean> {
+    process.stdout.write(msg + " (y/n): ")
+    return readlineAsync()
+        .then(text => {
+            if (text.trim().toLowerCase() == "y")
+                return Promise.resolve(true)
+            else if (text.trim().toLowerCase() == "n")
+                return Promise.resolve(false)
+            else return promptAsync(msg)
+        })
+}
+
+function ptrcheckAsync(cmd: string) {
+    let prefixIgnore: string[] = []
+    let exactIgnore: U.Map<boolean> = {}
+
+    if (fs.existsSync("ptrcheck-ignore")) {
+        let ign = fs.readFileSync("ptrcheck-ignore", "utf8").split(/\r?\n/)
+        for (let line of ign) {
+            line = line.trim()
+            if (line[0] == "#") continue
+            if (line[line.length - 1] == "*") {
+                prefixIgnore.push(line.slice(0, line.length - 1))
+            } else {
+                exactIgnore[line] = true
+            }
+        }
+    }
+
+    let path = "pointers"
+    let isCore = pxt.appTarget.id == "core"
+    if (!isCore)
+        path += "/" + pxt.appTarget.id
+    let elts: Cloud.JsonPointer[] = []
+    let next = (cont: string): Promise<void> =>
+        Cloud.privateGetAsync(path + "?count=500&continuation=" + cont)
+            .then((resp: Cloud.JsonList) => {
+                console.log("Query:", cont)
+                for (let e of resp.items as Cloud.JsonPointer[]) {
+                    if (isCore && /^ptr-([a-z]+)$/.exec(e.id) && e.releaseid) {
+                        let tname = e.id.slice(4)
+                        prefixIgnore.push(tname + "-")
+                        exactIgnore[tname] = true
+                        console.log("Target: " + e.id)
+                    }
+                    elts.push(e)
+                }
+                if (resp.continuation) return next(resp.continuation)
+                else return Promise.resolve()
+            })
+
+
+    let files = U.toDictionary(allFiles("docs", 8)
+        .filter(e => /\.md$/.test(e))
+        .map(e => {
+            let s = e.slice(5).replace(/\.md$/, "")
+            let m = /^_locales\/([a-z]+)\/(.*)/.exec(s)
+            if (m) s = m[2] + "@" + m[1]
+            s = s.replace(/\//g, "-")
+            return s
+        }), x => x)
+
+    return next("")
+        .then(() => {
+            let c0 = elts.length
+            elts = elts.filter(e => {
+                if (e.releaseid && /ptr-[a-z]+-v\d+-\d+-\d+$/.test(e.id))
+                    return false
+                let ename = e.id.slice(4)
+                if (U.lookup(exactIgnore, ename))
+                    return false
+                for (let pref of prefixIgnore) {
+                    if (pref == ename.slice(0, pref.length))
+                        return false
+                }
+                if (e.redirect)
+                    return false
+                return true
+            })
+
+            console.log(`Got ${c0} pointers; have ${elts.length} after filtering. Core=${isCore}`)
+            elts.sort((a, b) => U.strcmp(a.id, b.id))
+
+
+            let toDel: string[] = []
+            for (let e of elts) {
+                let fn = e.id.slice(4)
+                if (!isCore) fn = fn.replace(/^[a-z]+-/, "")
+                if (!U.lookup(files, fn)) {
+                    toDel.push(e.id)
+                }
+            }
+
+            if (toDel.length == 0) {
+                console.log("All OK, nothing excessive.")
+                return Promise.resolve()
+            }
+
+            console.log(`Absent in docs/ ${toDel.length} items:`)
+            for (let e of toDel)
+                console.log(e.slice(4))
+
+            if (cmd != "delete") {
+                console.log("Use 'pxt ptrcheck delete' to delete these; you will be prompted")
+                return Promise.resolve()
+            }
+
+            return promptAsync("Delete all these pointers?")
+                .then(y => {
+                    if (!y) return Promise.resolve()
+                    return Promise.map(toDel,
+                        e => Cloud.privateDeleteAsync(e)
+                            .then(() => {
+                                console.log("DELETE", e)
+                            }),
+                        { concurrency: 5 })
+                        .then(() => { })
+                })
+        })
+}
+
 export function ptrAsync(path: string, target?: string) {
     // in MinGW when you say 'pxt ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
     let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
@@ -1880,6 +2011,90 @@ export function uploadDocsAsync(...args: string[]): Promise<void> {
     return uploader.uploadDocsAsync(...args)
 }
 
+export interface SavedProject {
+    name: string;
+    files: U.Map<string>;
+}
+
+export function extractAsync(filename: string) {
+    let oneFile = (src: string, editor: string) => {
+        let files: any = {}
+        files["main." + (editor || "td")] = src || ""
+        return files
+    }
+
+    return (filename == "-" || !filename
+        ? nodeutil.readResAsync(process.stdin)
+        : readFileAsync(filename) as Promise<Buffer>)
+        .then(buf => {
+            let str = buf.toString("utf8")
+            if (str[0] == ":") {
+                console.log("Detected .hex file.")
+                return pxt.cpp.unpackSourceFromHexAsync(buf)
+                    .then(data => {
+                        if (!data) return null
+                        if (!data.meta) data.meta = {} as any
+                        let id = data.meta.cloudId || "?"
+                        console.log(`.hex cloudId: ${id}`)
+                        let files: U.Map<string> = null
+                        try {
+                            files = JSON.parse(data.source)
+                        } catch (e) {
+                            files = oneFile(data.source, data.meta.editor)
+                        }
+                        return {
+                            projects: [
+                                {
+                                    name: data.meta.name,
+                                    files: files
+                                }
+                            ]
+                        }
+                    })
+            } else if (str[0] == "{") {  // JSON
+                console.log("Detected .json file.")
+                return JSON.parse(str)
+            } else if (buf[0] == 0x5d) { // JSZ
+                console.log("Detected .jsz file.")
+                return pxt.lzmaDecompressAsync(buf as any)
+                    .then(str => JSON.parse(str))
+            } else
+                return Promise.resolve(null)
+        })
+        .then(json => {
+            if (!json) {
+                console.log("Couldn't extract.")
+                return
+            }
+            if (Array.isArray(json.scripts)) {
+                console.log("Legacy TD workspace.")
+                json.projects = json.scripts.map((scr: any) => ({
+                    name: scr.header.name,
+                    files: oneFile(scr.source, scr.header.editor)
+                }))
+                delete json.scripts
+            }
+
+            let prjs: SavedProject[] = json.projects
+
+            if (!prjs) {
+                console.log("No projects found.")
+                return
+            }
+
+            for (let prj of prjs) {
+                let dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
+                nodeutil.mkdirP(dirname)
+                for (let fn of Object.keys(prj.files)) {
+                    fn = fn.replace(/[\/]/g, "-")
+                    let fullname = dirname + "/" + fn
+                    fs.writeFileSync(fullname, prj.files[fn])
+                    console.log("Wrote " + fullname)
+                }
+            }
+        })
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -1911,6 +2126,7 @@ cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("publish                      - publish current package", publishAsync)
+cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file or stdin", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
@@ -1936,6 +2152,7 @@ cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsyn
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("pokecloud                    - same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"), 2)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
+cmd("ptrcheck                     - check pointers in the cloud against ones in the repo", ptrcheckAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
@@ -1996,6 +2213,11 @@ function ensurePkgDir() {
 function errorHandler(reason: any) {
     if (reason.isUserError) {
         console.error("ERROR:", reason.message)
+        process.exit(1)
+    }
+
+    if (!Cloud.accessToken && reason.statusCode == 403) {
+        console.error("Got HTTP 403. Did you forget to 'pxt login' ?")
         process.exit(1)
     }
 

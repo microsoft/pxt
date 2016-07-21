@@ -99,6 +99,42 @@ namespace ts.pxt.Util {
         }
     }
 
+    // { a: { b: 1 }, c: 2} => { "a.b": 1, c: 2 }
+    export function jsonFlatten(v: any) {
+        let res: Map<any> = {}
+        let loop = (pref: string, v: any) => {
+            if (typeof v == "object") {
+                assert(!Array.isArray(v))
+                if (pref) pref += "."
+                for (let k of Object.keys(v)) {
+                    loop(pref + k, v[k])
+                }
+            } else {
+                res[pref] = v
+            }
+        }
+        loop("", v)
+        return res
+    }
+
+    export function jsonUnFlatten(v: Map<any>) {
+        let res: any = {}
+        for (let k of Object.keys(v)) {
+            let ptr = res
+            let parts = k.split(".")
+            for (let i = 0; i < parts.length; ++i) {
+                let part = parts[i]
+                if (i == parts.length - 1)
+                    ptr[part] = v[k]
+                else {
+                    if (typeof ptr[part] != "object") ptr[part] = {}
+                    ptr = ptr[part]
+                }
+            }
+        }
+        return res
+    }
+
     export function strcmp(a: string, b: string) {
         if (a == b) return 0;
         if (a < b) return -1;

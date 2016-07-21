@@ -534,7 +534,20 @@ namespace ts.pxt.service {
         allDiags: () => {
             let global = service.getCompilerOptionsDiagnostics() || []
             let byFile = host.getScriptFileNames().map(fileDiags)
-            return patchUpDiagnostics(global.concat(Util.concat(byFile)))
+            let allD = global.concat(Util.concat(byFile))
+
+            if (allD.length == 0) {
+                let res: CompileResult = {
+                    outfiles: {},
+                    diagnostics: [],
+                    success: true,
+                    times: {}
+                }
+                const binOutput = compileBinary(service.getProgram(), null, host.opts, res);
+                allD = binOutput.diagnostics
+            }
+
+            return patchUpDiagnostics(allD)
         },
 
         apiInfo: () => {

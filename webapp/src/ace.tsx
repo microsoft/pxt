@@ -558,21 +558,20 @@ export class Editor extends srceditor.Editor {
         }
 
         // needed to test roundtrip
-        this.formatCode();
+        let js = this.formatCode();
 
         if (!this.hasBlocks())
             return
 
         // might be undefined
         let mainPkg = pkg.mainEditorPkg();
-        let js = this.currFile.content;
         let xml: string;
 
         const failedAsync = () => {
             this.forceDiagnosticsUpdate();
             let bf = pkg.mainEditorPkg().files[blockFile];
             return core.confirmAsync({
-                header: lf("Oops, there is a program converting your code."),
+                header: lf("Oops, there is a problem converting your code."),
                 body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
                 agreeLbl: lf("Stay in JavaScript"),
                 hideCancel: !bf,
@@ -681,7 +680,7 @@ export class Editor extends srceditor.Editor {
         this.formatCode()
     }
 
-    formatCode(isAutomatic = false) {
+    formatCode(isAutomatic = false): string {
         if (!this.isTypescript) return;
 
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
@@ -711,6 +710,8 @@ export class Editor extends srceditor.Editor {
         }
         this.editor.setValue(formatted, -1)
         this.editor.gotoLine(line, col - 1, false)
+
+        return formatted
     }
 
     getCurrLinePrefix() {
