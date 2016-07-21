@@ -556,7 +556,7 @@ ${bkptLabel + "_after"}:
                     lastIdx = i
                     lastAddr = newAddr
                 }
-                
+
                 if (/^:00000001/.test(hex[i]))
                     hitEnd()
 
