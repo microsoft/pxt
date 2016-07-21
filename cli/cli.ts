@@ -2011,6 +2011,90 @@ export function uploadDocsAsync(...args: string[]): Promise<void> {
     return uploader.uploadDocsAsync(...args)
 }
 
+export interface SavedProject {
+    name: string;
+    files: U.Map<string>;
+}
+
+export function extractAsync(filename: string) {
+    let oneFile = (src: string, editor: string) => {
+        let files: any = {}
+        files["main." + (editor || "td")] = src || ""
+        return files
+    }
+
+    return (filename == "-" || !filename
+        ? nodeutil.readResAsync(process.stdin)
+        : readFileAsync(filename) as Promise<Buffer>)
+        .then(buf => {
+            let str = buf.toString("utf8")
+            if (str[0] == ":") {
+                console.log("Detected .hex file.")
+                return pxt.cpp.unpackSourceFromHexAsync(buf)
+                    .then(data => {
+                        if (!data) return null
+                        if (!data.meta) data.meta = {} as any
+                        let id = data.meta.cloudId || "?"
+                        console.log(`.hex cloudId: ${id}`)
+                        let files: U.Map<string> = null
+                        try {
+                            files = JSON.parse(data.source)
+                        } catch (e) {
+                            files = oneFile(data.source, data.meta.editor)
+                        }
+                        return {
+                            projects: [
+                                {
+                                    name: data.meta.name,
+                                    files: files
+                                }
+                            ]
+                        }
+                    })
+            } else if (str[0] == "{") {  // JSON
+                console.log("Detected .json file.")
+                return JSON.parse(str)
+            } else if (buf[0] == 0x5d) { // JSZ
+                console.log("Detected .jsz file.")
+                return pxt.lzmaDecompressAsync(buf as any)
+                    .then(str => JSON.parse(str))
+            } else
+                return Promise.resolve(null)
+        })
+        .then(json => {
+            if (!json) {
+                console.log("Couldn't extract.")
+                return
+            }
+            if (Array.isArray(json.scripts)) {
+                console.log("Legacy TD workspace.")
+                json.projects = json.scripts.map((scr: any) => ({
+                    name: scr.header.name,
+                    files: oneFile(scr.source, scr.header.editor)
+                }))
+                delete json.scripts
+            }
+
+            let prjs: SavedProject[] = json.projects
+
+            if (!prjs) {
+                console.log("No projects found.")
+                return
+            }
+
+            for (let prj of prjs) {
+                let dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
+                nodeutil.mkdirP(dirname)
+                for (let fn of Object.keys(prj.files)) {
+                    fn = fn.replace(/[\/]/g, "-")
+                    let fullname = dirname + "/" + fn
+                    fs.writeFileSync(fullname, prj.files[fn])
+                    console.log("Wrote " + fullname)
+                }
+            }
+        })
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -2042,6 +2126,7 @@ cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("publish                      - publish current package", publishAsync)
+cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file or stdin", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)

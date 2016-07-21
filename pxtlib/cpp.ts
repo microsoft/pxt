@@ -581,7 +581,7 @@ int main() {
         }
     }
 
-    function fromUTF8Bytes(binstr: Uint8Array): string {
+    function fromUTF8Bytes(binstr: ArrayLike<number>): string {
         if (!binstr) return ""
 
         // escape function is deprecated
@@ -668,7 +668,7 @@ int main() {
         });
     }
 
-    export function unpackSourceFromHexAsync(dat: Uint8Array): Promise<HexFile> { // string[] (guid)
+    export function unpackSourceFromHexAsync(dat: ArrayLike<number>): Promise<HexFile> { // string[] (guid)
         let str = fromUTF8Bytes(dat);
         let tmp = extractSource(str || "")
         if (!tmp) return undefined
