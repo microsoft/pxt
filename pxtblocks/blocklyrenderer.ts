@@ -90,4 +90,26 @@ namespace pxt.blocks {
             return undefined;
         }
     }
+
+    export function blocksMetrics(ws: Blockly.Workspace): { width: number; height: number; } {
+        const blocks = ws.getTopBlocks(false);
+        if (!blocks.length) return { width: 0, height: 0 };
+
+        let m: { l: number, r: number, t: number, b: number } = undefined;
+        blocks.forEach(b => {
+            const r = b.getBoundingRectangle();
+            if (!m) m = { l: r.topLeft.x, r: r.bottomRight.x, t: r.topLeft.y, b: r.bottomRight.y }
+            else {
+                m.l = Math.min(m.l, r.topLeft.x);
+                m.r = Math.max(m.r, r.bottomRight.y);
+                m.t = Math.min(m.t, r.topLeft.y);
+                m.b = Math.min(m.b, r.bottomRight.y);
+            }
+        })
+
+        return {
+            width: m.r - m.l,
+            height: m.b - m.t
+        };
+    }
 }
