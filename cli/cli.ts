@@ -1243,7 +1243,8 @@ let execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Pr
 let readDirAsync = Promise.promisify(fs.readdir)
 let statAsync = Promise.promisify(fs.stat)
 
-let commonfiles: U.Map<string> = {};
+let commonfiles: U.Map<string> = {}
+let fileoverrides: U.Map<string> = {}
 
 class Host
     implements pxt.Host {
@@ -1260,6 +1261,10 @@ class Host
     readFile(module: pxt.Package, filename: string): string {
         let commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
+
+        let overFile = U.lookup(fileoverrides, filename)
+        if (module.level == 0 && overFile != null)
+            return overFile
 
         let resolved = this.resolve(module, filename)
         try {
@@ -1817,12 +1822,20 @@ function copyCommonFiles() {
     }
 }
 
-function testConverterAsync(configFile: string) {
+function getCachedAsync(url: string, path: string) {
+    return (readFileAsync(path, "utf8") as Promise<string>)
+        .then(v => v, (e: any) => {
+            //console.log(`^^^ fetch ${id} ${Date.now() - start}ms`)
+            return null
+        })
+        .then<string>(v => v ? Promise.resolve(v) :
+            U.httpGetTextAsync(url)
+                .then(v => writeFileAsync(path, v)
+                    .then(() => v)))
+}
+
+function testConverterAsync(url: string) {
     forceCloudBuild = true
-    let cfg: {
-        apiUrl: string,
-        ids: string[]
-    } = readJson(configFile)
     let cachePath = "built/cache/"
     nodeutil.mkdirP(cachePath)
     let tdev = require("./web/tdast")
@@ -1831,41 +1844,26 @@ function testConverterAsync(configFile: string) {
         .then(astinfo => prepTestOptionsAsync()
             .then(opts => {
                 fs.writeFileSync("built/apiinfo.json", JSON.stringify(astinfo, null, 1))
-                return Promise.map(cfg.ids, (id) => {
-                    let start = Date.now()
-                    console.log("--> start " + id)
-                    return (readFileAsync(cachePath + id, "utf8") as Promise<string>)
-                        .then(v => v, (e: any) => {
-                            console.log(`^^^ fetch ${id} ${Date.now() - start}ms`)
-                            return ""
-                        })
-                        .then<string>(v => v ? Promise.resolve(v) :
-                            U.httpGetTextAsync(cfg.apiUrl + id + "/text")
-                                .then(v => writeFileAsync(cachePath + id, v)
-                                    .then(() => v)))
-                        .then(v => {
+                return getCachedAsync(url, cachePath + url.replace(/[^a-z0-9A-Z\.]/g, "-"))
+                    .then(text => {
+                        let srcs = JSON.parse(text)
+                        for (let id of Object.keys(srcs)) {
+                            let v = srcs[id]
                             let tdopts = {
                                 text: v,
                                 useExtensions: true,
                                 apiInfo: astinfo
                             }
 
-                            console.log(`%%% TD AST ${id} ${Date.now() - start}ms`)
                             let r = tdev.AST.td2ts(tdopts)
-                            console.log(`%%% COMPILE ${id} ${Date.now() - start}ms`)
                             let src: string = r.text
                             U.assert(!!src.trim(), "source is empty")
                             if (!compilesOK(opts, id + ".ts", src)) {
                                 errors.push(id)
                                 fs.writeFileSync("built/" + id + ".ts.fail", src)
                             }
-                            console.log(`<-- stop ${id} ${Date.now() - start}ms`)
-                        })
-                        .then(() => { }, err => {
-                            console.log(`ERROR ${id}: ${err.message}`)
-                            errors.push(id)
-                        })
-                }, { concurrency: 1 })
+                        }
+                    })
             }))
         .then(() => {
             if (errors.length) {
@@ -1907,14 +1905,17 @@ function getApiInfoAsync() {
         })
 }
 
+function findTestFile() {
+    let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
+    if (tsFiles.length != 1)
+        U.userError("need exactly one .ts file in package to 'testdir'")
+    return tsFiles[0]
+}
+
 function prepTestOptionsAsync() {
     return prepBuildOptionsAsync(BuildOption.Test)
         .then(opts => {
-            let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
-            if (tsFiles.length != 1)
-                U.userError("need exactly one .ts file in package to 'testdir'")
-
-            let tsFile = tsFiles[0]
+            let tsFile = findTestFile()
             delete opts.fileSystem[tsFile]
             opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
             return opts
@@ -1932,6 +1933,9 @@ function testDirAsync(dir: string) {
     let tests: TestInfo[] = []
 
     dir = path.resolve(dir || ".")
+    let outdir = dir + "/built/"
+
+    nodeutil.mkdirP(outdir)
 
     for (let fn of fs.readdirSync(dir)) {
         if (fn[0] == ".") continue;
@@ -1945,15 +1949,12 @@ function testDirAsync(dir: string) {
                 base: base,
                 text: text
             })
-        } else {
-            let st = fs.statSync(full)
-            if (st.isDirectory()) {
-                tests.push({
-                    filename: full,
-                    base: fn,
-                    text: null
-                })
-            }
+        } else if (fs.existsSync(full + "/" + pxt.configName)) {
+            tests.push({
+                filename: full,
+                base: fn,
+                text: null
+            })
         }
     }
 
@@ -1967,28 +1968,75 @@ function testDirAsync(dir: string) {
     })
 
     let currBase = ""
-    let currOptions: ts.pxt.CompileOptions = null
     let errors: string[] = []
 
     return Promise.mapSeries(tests, (ti) => {
+        let fn = path.basename(ti.filename)
+        console.log(`--- ${fn}`)
+        let hexPath = outdir + fn.replace(/\.ts$/, "") + ".hex"
         if (ti.text == null) {
             currBase = ti.base
-            currOptions = null
             process.chdir(ti.filename)
             mainPkg = new pxt.MainPackage(new Host())
             return installAsync()
                 .then(testAsync)
-        } else {
-            if (currBase != ti.base)
-                throw U.userError("Base directory: " + ti.base + " not found.")
-            else return (currOptions
-                ? Promise.resolve(currOptions)
-                : prepTestOptionsAsync().then(v => currOptions = v))
-                .then(opts => {
-                    let fn = path.basename(ti.filename)
-                    if (!compilesOK(opts, fn, ti.text))
-                        errors.push(fn)
+                .then(() => {
+                    if (pxt.appTarget.compile.hasHex)
+                        fs.writeFileSync(hexPath, fs.readFileSync("built/binary.hex"))
                 })
+        } else {
+            let start = Date.now()
+            if (currBase != ti.base) {
+                throw U.userError("Base directory: " + ti.base + " not found.")
+            } else {
+                let tsf = findTestFile()
+                let files = mainPkg.config.files
+                let idx = files.indexOf(tsf)
+                U.assert(idx >= 0)
+                files[idx] = fn
+                mainPkg.config.name = fn.replace(/\.ts$/, "")
+                mainPkg.config.description = `Generated from ${ti.base} with ${fn}`
+                fileoverrides = {}
+                fileoverrides[fn] = ti.text
+                return prepBuildOptionsAsync(BuildOption.Test, true)
+                    .then(opts => {
+                        let res = ts.pxt.compile(opts)
+                        let lines = ti.text.split(/\r?\n/)
+                        let errCode = (s: string) => {
+                            if (!s) return 0
+                            let m = /\/\/\s*TS(\d\d\d\d\d?)/.exec(s)
+                            if (m) return parseInt(m[1])
+                            else return 0
+                        }
+                        let numErr = 0
+                        for (let diag of res.diagnostics) {
+                            if (!errCode(lines[diag.line])) {
+                                reportDiagnostics(res.diagnostics);
+                                numErr++
+                            }
+                        }
+                        let lineNo = 0
+                        for (let line of lines) {
+                            let code = errCode(line)
+                            if (code && res.diagnostics.filter(d => d.line == lineNo && d.code == code).length == 0) {
+                                numErr++
+                                console.log(`${fn}(${lineNo + 1}): expecting error TS${code}`)
+                            }
+                            lineNo++                            
+                        }
+                        if (numErr) {
+                            console.log("ERRORS", fn)
+                            errors.push(fn)
+                            fs.unlink(hexPath) // ignore errors
+                        } else {
+                            let hex = res.outfiles["binary.hex"]
+                            if (hex) {
+                                fs.writeFileSync(hexPath, hex)
+                                console.log(`wrote hex: ${hexPath} ${hex.length} bytes; ${Date.now() - start}ms`)
+                            }
+                        }
+                    })
+            }
         }
     })
         .then(() => {
@@ -2001,12 +2049,15 @@ function testDirAsync(dir: string) {
         })
 }
 
-function prepBuildOptionsAsync(mode: BuildOption) {
+function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
     ensurePkgDir();
     return mainPkg.loadAsync()
         .then(() => {
-            buildDalConst();
-            copyCommonFiles();
+            if (!quick) {
+                buildDalConst();
+                copyCommonFiles();
+            }
+            // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
             if (target.hasHex && mode != BuildOption.Run)
                 target.isNative = true
@@ -2206,7 +2257,7 @@ cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
-cmd("testconv JSONCONFIG          - test TD->TS converter", testConverterAsync, 2)
+cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)

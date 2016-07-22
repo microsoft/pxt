@@ -100,6 +100,8 @@ declare namespace Blockly {
         }
         outputConnection: Connection;
 
+        getSurroundParent():Block;
+
         svgGroup_: SVGElement;
         parentBlock_: Block;
         inputList: Input[];

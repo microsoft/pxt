@@ -1,5 +1,4 @@
 ///<reference path='blockly.d.ts'/>
-///<reference path='touchdevelop.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
 
@@ -7,382 +6,167 @@
 //                A compiler from Blocky to TouchDevelop                     //
 ///////////////////////////////////////////////////////////////////////////////
 
-import J = TDev.AST.Json;
 import B = Blockly;
 
 namespace pxt.blocks {
+    enum NT {
+        Prefix, // op + map(children)
+        Infix, // children.length == 2, child[0] op child[1]
+        Block, // { } are implicit
+        NewLine
+    }
+
+    interface Node {
+        type: NT;
+        children: Node[];
+        op: string;
+        id?: string;
+        glueToBlock?: boolean;
+        canIndentInside?: boolean;
+        noFinalNewline?: boolean;
+    }
+
+
+    function stringLit(s: string) {
+        if (s.length > 20 && /\n/.test(s))
+            return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
+        else return JSON.stringify(s)
+    }
+
+    function mkNode(tp: NT, pref: string, children: Node[]): Node {
+        return {
+            type: tp,
+            op: pref,
+            children: children
+        }
+    }
+
+    function mkNewLine() {
+        return mkNode(NT.NewLine, "", [])
+    }
+
+    function mkPrefix(pref: string, children: Node[]) {
+        return mkNode(NT.Prefix, pref, children)
+    }
+
+    function mkInfix(child0: Node, op: string, child1: Node) {
+        return mkNode(NT.Infix, op, [child0, child1])
+    }
+
+    function mkText(s: string) {
+        return mkPrefix(s, [])
+    }
+    function mkBlock(nodes: Node[]) {
+        return mkNode(NT.Block, "", nodes)
+    }
+
+    function mkGroup(nodes: Node[]) {
+        return mkPrefix("", nodes)
+    }
+
+    function mkStmt(...nodes: Node[]) {
+        nodes.push(mkNewLine())
+        return mkGroup(nodes)
+    }
+
+    function mkCommaSep(nodes: Node[]) {
+        let r: Node[] = []
+        for (let n of nodes) {
+            if (r.length > 0)
+                r.push(mkText(", "))
+            r.push(n)
+        }
+        return mkGroup(r)
+    }
 
     // A series of utility functions for constructing various J* AST nodes.
     namespace Helpers {
-        // Digits are operators...
-        export function mkDigit(x: string): J.JOperator {
-            return mkOp(x);
+
+        export function mkArrayLiteral(args: Node[]) {
+            return mkGroup([
+                mkText("["),
+                mkCommaSep(args),
+                mkText("]")
+            ])
         }
 
-        export function mkArrayLiteral(args: J.JExpr[]): J.JArrayLiteral {
-            return {
-                nodeType: "arrayLiteral",
-                id: null,
-                values: args
-            };
+        export function mkNumberLiteral(x: number) {
+            return mkText(x.toString())
         }
 
-        export function mkNumberLiteral(x: number): J.JNumberLiteral {
-            return {
-                nodeType: "numberLiteral",
-                id: null,
-                value: x
-            };
+        export function mkBooleanLiteral(x: boolean) {
+            return mkText(x ? "true" : "false")
         }
 
-        export function mkBooleanLiteral(x: boolean): J.JBooleanLiteral {
-            return {
-                nodeType: "booleanLiteral",
-                id: null,
-                value: x
-            };
+        export function mkStringLiteral(x: string) {
+            return mkText(stringLit(x))
         }
 
-        export function mkStringLiteral(x: string): J.JStringLiteral {
-            return {
-                nodeType: "stringLiteral",
-                id: null,
-                value: x
-            };
-        }
+        export function mkCall(name: string, args: Node[], property = false) {
+            if (property)
+                return mkGroup([
+                    mkInfix(args[0], ".", mkText(name)),
+                    mkText("("),
+                    mkCommaSep(args.slice(1)),
+                    mkText(")")
+                ])
+            else
+                return mkGroup([
+                    mkText(name),
+                    mkText("("),
+                    mkCommaSep(args),
+                    mkText(")")
+                ])
 
-        export function mkOp(x: string): J.JOperator {
-            return {
-                nodeType: "operator",
-                id: null,
-                op: x
-            };
-        }
-
-        // A map from "classic" [JPropertyRef]s to their proper [parent].
-        let knownPropertyRefs: { [index: string]: string } = {
-            "=": "Unknown",
-        };
-        ["==", "!=", "<", "<=", ">", ">=", "+", "-", "/", "*"].forEach(x => knownPropertyRefs[x] = "Number");
-        ["&&", "||", "!"].forEach(x => knownPropertyRefs[x] = "Boolean");
-
-        export function mkPropertyRef(x: string, p: string): J.JPropertyRef {
-            return {
-                nodeType: "propertyRef",
-                id: null,
-                name: x,
-                parent: mkTypeRef(p),
-            };
-        }
-
-        export function mkCall(name: string, parent: J.JTypeRef, args: J.JExpr[], property = false): J.JCall {
-            return {
-                nodeType: "call",
-                id: null,
-                name: name,
-                parent: parent,
-                args: args,
-                property: property
-            };
-        }
-
-        let librarySymbol = "♻";
-        let libraryName = "micro:bit";
-        let librarySingleton = mkSingletonRef(librarySymbol);
-
-        function mkSingletonRef(name: string): J.JSingletonRef {
-            return {
-                nodeType: "singletonRef",
-                id: null,
-                name: name,
-                type: mkTypeRef(name)
-            };
-        }
-
-        // A library "♻ foobar" is actually a call to the method "foobar" of the
-        // global singleton object "♻".
-        export function mkLibrary(name: string): J.JCall {
-            return mkCall(name, mkTypeRef(librarySymbol), [librarySingleton]);
         }
 
         // Call function [name] from the standard device library with arguments
         // [args].
-        export function stdCall(name: string, args: J.JExpr[]): J.JCall {
-            return mkCall(name, mkTypeRef(libraryName), [<J.JExpr>mkLibrary(libraryName)].concat(args));
+        export function stdCall(name: string, args: Node[]) {
+            return mkCall(name, args);
         }
 
         // Call extension method [name] on the first argument
-        export function extensionCall(name: string, args: J.JExpr[], property: boolean) {
-            return mkCall(name, mkTypeRef("call"), args, property);
-        }
-
-        function mkNamespaceRef(lib: string, namespace: string): J.JSingletonRef {
-            return {
-                nodeType: "singletonRef",
-                id: null,
-                libraryName: lib,
-                name: namespace,
-                type: mkTypeRef(namespace)
-            };
+        export function extensionCall(name: string, args: Node[]) {
+            return mkCall(name, args, true);
         }
 
         // Call function [name] from the specified [namespace] in the micro:bit
         // library.
-        export function namespaceCall(namespace: string, name: string, args: J.JExpr[]) {
-            return mkCall(name, mkTypeRef(libraryName),
-                [<J.JExpr>mkNamespaceRef(libraryName, namespace)].concat(args));
+        export function namespaceCall(namespace: string, name: string, args: Node[]) {
+            return mkCall(namespace + "." + name, args);
         }
 
-        // Call a function from the Math library. Apparently, the Math library is a
-        // different object than other libraries, so its AST typeesentation is not the
-        // same. Go figure.
-        export function mathCall(name: string, args: J.JExpr[]): J.JCall {
-            return mkCall(name, mkTypeRef("Math"), [<J.JExpr>mkSingletonRef("Math")].concat(args));
+        export function mathCall(name: string, args: Node[]) {
+            return namespaceCall("Math", name, args)
         }
 
-        export function stringCall(name: string, args: J.JExpr[]): J.JCall {
-            return mkCall(name, mkTypeRef("String"), args);
+        export function mkGlobalRef(name: string) {
+            return mkText(name)
         }
 
-        export function booleanCall(name: string, args: J.JExpr[]): J.JCall {
-            return mkCall(name, mkTypeRef("Boolean"), args);
+        export function mkSimpleCall(p: string, args: Node[]): Node {
+            assert(args.length == 2);
+            return mkInfix(args[0], p, args[1])
         }
 
-        export function mkGlobalRef(name: string): J.JCall {
-            return mkCall(name, mkTypeRef("data"), [mkSingletonRef("data")]);
+        export function mkWhile(condition: Node, body: Node[]): Node {
+            return mkGroup([
+                mkText("while ("),
+                condition,
+                mkText(")"),
+                mkBlock(body)
+            ])
         }
 
-        // Assumes its parameter [p] is in the [knownPropertyRefs] table.
-        export function mkSimpleCall(p: string, args: J.JExpr[]): J.JExpr {
-            assert(knownPropertyRefs[p] != undefined);
-            return mkCall(p, mkTypeRef(knownPropertyRefs[p]), args);
+        export function mkComment(text: string) {
+            return mkStmt(mkText("// " + text))
         }
 
-        export function mkTypeRef(t: string): J.JTypeRef {
-            // The interface is a lie -- actually, this type is just string.
-            return <any>t;
+        export function mkAssign(x: Node, e: Node): Node {
+            return mkStmt(mkSimpleCall("=", [x, e]))
         }
 
-        export function mkLTypeRef(t: string): J.JTypeRef {
-            return <any>JSON.stringify(<J.JLibraryType>{ o: t, l: <any>libraryName });
-        }
-
-        export function mkGTypeRef(t: string): J.JTypeRef {
-            return <any>JSON.stringify(<J.JGenericTypeInstance>{ g: t });
-        }
-
-        export function mkVarDecl(x: string, t: J.JTypeRef): J.JData {
-            return {
-                nodeType: "data",
-                id: null,
-                name: x,
-                type: t,
-                comment: "",
-                isReadonly: false,
-                isTransient: true,
-                isCloudEnabled: false,
-            };
-        }
-
-        // Generates a local definition for [x] at type [t]; this is not enough to
-        // properly define a variable, though (see [mkDefAndAssign]).
-        export function mkDef(x: string, t: J.JTypeRef): J.JLocalDef {
-            assert(!!x)
-            return {
-                nodeType: "localDef",
-                id: null,
-                name: x,
-                type: t,
-                isByRef: false,
-            };
-        }
-
-        // Generates a reference to bound variable [x]
-        export function mkLocalRef(x: string, t?: J.JTypeRef): J.JLocalRef {
-            assert(!!x);
-            return {
-                nodeType: "localRef",
-                id: null,
-                name: x,
-                localId: null, // same here
-                type: t
-            }
-        }
-
-        // [defs] are the variables that this expression binds; this means that this
-        // expression *introduces* new variables, whose scope runs until the end of
-        // the parent block (see comments for [JExprHolder]).
-        export function mkExprHolder(defs: J.JLocalDef[], tree: J.JExpr): J.JExprHolder {
-            return {
-                nodeType: "exprHolder",
-                id: null,
-                tokens: null,
-                tree: tree,
-                locals: defs,
-            };
-        }
-
-        // Injection of expressions into statements is explicit in TouchDevelop.
-        export function mkExprStmt(expr: J.JExprHolder): J.JExprStmt {
-            return {
-                nodeType: "exprStmt",
-                id: null,
-                expr: expr,
-            };
-        }
-
-        // Refinement of the above function for [J.JInlineActions], a subclass of
-        // [J.JExprStmt]
-        export function mkInlineActions(actions: J.JInlineAction[], expr: J.JExprHolder): J.JInlineActions {
-            return {
-                nodeType: "inlineActions",
-                id: null,
-                actions: actions,
-                expr: expr,
-            };
-        }
-
-        export function mkWhile(condition: J.JExprHolder, body: J.JStmt[]): J.JWhile {
-            return {
-                nodeType: "while",
-                id: null,
-                condition: condition,
-                body: body
-            };
-        }
-
-        export function mkFor(index: string, bound: J.JExprHolder, body: J.JStmt[]): J.JFor {
-            return {
-                nodeType: "for",
-                id: null,
-                index: mkDef(index, mkTypeRef("Number")),
-                body: body,
-                bound: bound
-            };
-        }
-
-        export function mkComment(text: string): J.JComment {
-            return {
-                nodeType: "comment",
-                id: null,
-                text: text || ""
-            };
-        }
-
-        // An if-statement that has no [else] branch.
-        export function mkSimpleIf(condition: J.JExprHolder, thenBranch: J.JStmt[]): J.JIf {
-            return {
-                nodeType: "if",
-                id: null,
-                condition: condition,
-                thenBody: thenBranch,
-                elseBody: null,
-                isElseIf: false,
-            };
-        }
-
-        // This function takes care of generating an if node *and* de-constructing the
-        // else branch to abide by the TouchDevelop typeesentation (see comments in
-        // [jsonInterfaces.ts]).
-        export function mkIf(condition: J.JExprHolder, thenBranch: J.JStmt[], elseBranch: J.JStmt[]): J.JIf[] {
-            let ifNode = mkSimpleIf(condition, thenBranch)
-
-            // The transformation into a "flat" if / else if / else sequence is only
-            // valid if the else branch it itself such a sequence.
-            let fitForFlattening = elseBranch.length && elseBranch.every((s: J.JStmt, i: number) =>
-                s.nodeType == "if" && (i == 0 || (<J.JIf>s).isElseIf)
-            );
-            if (fitForFlattening) {
-                let first = <J.JIf>elseBranch[0];
-                assert(!first.isElseIf);
-                first.isElseIf = true;
-                return [ifNode].concat(<J.JIf[]>elseBranch);
-            } else {
-                ifNode.elseBody = elseBranch;
-                return [ifNode];
-            }
-        }
-
-        export function mkAssign(x: J.JExpr, e: J.JExpr): J.JStmt {
-            let assign = mkSimpleCall("=", [x, e]);
-            let expr = mkExprHolder([], assign);
-            return mkExprStmt(expr);
-        }
-
-        // Generate the AST for:
-        //   [var x: t := e]
-        export function mkDefAndAssign(x: string, t: J.JTypeRef, e: J.JExpr): J.JStmt {
-            let def: J.JLocalDef = mkDef(x, t);
-            let assign = mkSimpleCall("=", [mkLocalRef(x, t), e]);
-            let expr = mkExprHolder([def], assign);
-            return mkExprStmt(expr);
-        }
-
-        export function mkInlineAction(
-            body: J.JStmt[],
-            isImplicit: boolean,
-            reference: J.JLocalDef,
-            inParams: J.JLocalDef[] = [],
-            outParams: J.JLocalDef[] = []): J.JInlineAction {
-            return {
-                nodeType: "inlineAction",
-                id: null,
-                body: body,
-                inParameters: inParams,
-                outParameters: outParams,
-                locals: null,
-                reference: reference,
-                isImplicit: isImplicit,
-                isOptional: false,
-                capturedLocals: [],
-                allLocals: [],
-            }
-        }
-
-        export function mkAction(
-            name: string,
-            body: J.JStmt[],
-            inParams: J.JLocalDef[] = [],
-            outParams: J.JLocalDef[] = []): J.JAction {
-            return {
-                nodeType: "action",
-                id: null,
-                name: name,
-                body: body,
-                inParameters: inParams,
-                outParameters: outParams,
-                isPrivate: false,
-                isOffline: false,
-                isQuery: false,
-                isTest: false,
-                isAsync: true,
-                description: "Action converted from a Blockly script",
-            };
-        }
-
-        export function mkApp(name: string, description: string, decls: J.JDecl[]): J.JApp {
-            return {
-                nodeType: "app",
-                id: null,
-
-                textVersion: "v2.2,js,ctx,refs,localcloud,unicodemodel,allasync,upperplex",
-                jsonVersion: "v0.1,resolved",
-
-                name: name,
-                comment: description,
-                autoIcon: "",
-                autoColor: "",
-
-                platform: "current",
-                isLibrary: false,
-                useCppCompiler: false,
-                showAd: false,
-                hasIds: false,
-                rootId: "TODO",
-                decls: decls,
-                deletedDecls: <any>[],
-            };
-        }
     }
 
     import H = Helpers;
@@ -706,7 +490,7 @@ namespace pxt.blocks {
 
     function extractNumber(b: B.Block): number {
         let v = b.getFieldValue("NUM");
-        if (!v.match(/\d+/)) {
+        if (!v.match(/^\d+$/)) {
             Errors.report(v + " is not a valid numeric value", b);
             return 0;
         } else {
@@ -719,7 +503,7 @@ namespace pxt.blocks {
         }
     }
 
-    function compileNumber(e: Environment, b: B.Block): J.JExpr {
+    function compileNumber(e: Environment, b: B.Block): Node {
         return H.mkNumberLiteral(extractNumber(b));
     }
 
@@ -740,7 +524,7 @@ namespace pxt.blocks {
         "NEQ": "!=",
     };
 
-    function compileArithmetic(e: Environment, b: B.Block): J.JExpr {
+    function compileArithmetic(e: Environment, b: B.Block): Node {
         let bOp = b.getFieldValue("OP");
         let left = b.getInputTargetBlock("A");
         let right = b.getInputTargetBlock("B");
@@ -748,8 +532,8 @@ namespace pxt.blocks {
         let t = returnType(e, left).type;
 
         if (t == pString.type) {
-            if (bOp == "EQ") return H.stringCall("==", args);
-            else if (bOp == "NEQ") return H.stringCall("!=", args);
+            if (bOp == "EQ") return H.mkSimpleCall("==", args);
+            else if (bOp == "NEQ") return H.mkSimpleCall("!=", args);
         } else if (t == pBoolean.type)
             return H.mkSimpleCall(opToTok[bOp], args);
 
@@ -761,40 +545,47 @@ namespace pxt.blocks {
         }
     }
 
-    function compileMathOp2(e: Environment, b: B.Block): J.JExpr {
+    function compileMathOp2(e: Environment, b: B.Block): Node {
         let op = b.getFieldValue("op");
         let x = compileExpression(e, b.getInputTargetBlock("x"));
         let y = compileExpression(e, b.getInputTargetBlock("y"));
-        return H.mathCall(op, [x, y]);
+        return H.mathCall(op, [x, y])
     }
 
-    function compileMathOp3(e: Environment, b: B.Block): J.JExpr {
+    function compileMathOp3(e: Environment, b: B.Block): Node {
         let x = compileExpression(e, b.getInputTargetBlock("x"));
         return H.mathCall("abs", [x]);
     }
 
-    function compileText(e: Environment, b: B.Block): J.JExpr {
+    function compileText(e: Environment, b: B.Block): Node {
         return H.mkStringLiteral(b.getFieldValue("TEXT"));
     }
 
-    function compileBoolean(e: Environment, b: B.Block): J.JExpr {
+    function compileBoolean(e: Environment, b: B.Block): Node {
         return H.mkBooleanLiteral(b.getFieldValue("BOOL") == "TRUE");
     }
 
-    function compileNot(e: Environment, b: B.Block): J.JExpr {
+    function compileNot(e: Environment, b: B.Block): Node {
         let expr = compileExpression(e, b.getInputTargetBlock("BOOL"));
         return H.mkSimpleCall("!", [expr]);
     }
 
-    function compileRandom(e: Environment, b: B.Block): J.JExpr {
+    function extractNumberLit(e: Node): number {
+        if (e.type != NT.Prefix || !/^-?\d+$/.test(e.op))
+            return null
+        return parseInt(e.op)
+    }
+
+    function compileRandom(e: Environment, b: B.Block): Node {
         let expr = compileExpression(e, b.getInputTargetBlock("limit"));
-        if (expr.nodeType == "numberLiteral")
-            return H.mathCall("random", [H.mkNumberLiteral((expr as J.JNumberLiteral).value + 1)]);
+        let v = extractNumberLit(expr)
+        if (v != null)
+            return H.mathCall("random", [H.mkNumberLiteral(v + 1)]);
         else
             return H.mathCall("random", [H.mkSimpleCall(opToTok["ADD"], [expr, H.mkNumberLiteral(1)])])
     }
 
-    function compileCreateList(e: Environment, b: B.Block): J.JExpr {
+    function compileCreateList(e: Environment, b: B.Block): Node {
         // collect argument
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock()) : undefined)
             .filter(e => !!e);
@@ -806,7 +597,7 @@ namespace pxt.blocks {
         return H.mkArrayLiteral(args);
     }
 
-    function defaultValueForType(t: Point): J.JExpr {
+    function defaultValueForType(t: Point): Node {
         if (t.type == null) {
             union(t, ground(pNumber.type));
             t = find(t);
@@ -820,16 +611,16 @@ namespace pxt.blocks {
             case "string":
                 return H.mkStringLiteral("");
             default:
-                return H.mkLocalRef("null");
+                return mkText("null");
         }
     }
 
     // [t] is the expected type; we assume that we never null block children
     // (because placeholder blocks have been inserted by the type-checking phase
     // whenever a block was actually missing).
-    function compileExpression(e: Environment, b: B.Block): J.JExpr {
+    function compileExpression(e: Environment, b: B.Block): Node {
         assert(b != null);
-        let expr: J.JExpr;
+        let expr: Node;
         if (b.disabled || b.type == "placeholder")
             expr = defaultValueForType(returnType(e, b));
         else switch (b.type) {
@@ -858,8 +649,11 @@ namespace pxt.blocks {
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
-                    if (call.imageLiteral) expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))
-                    else expr = compileStdCall(e, b, call);
+                    if (call.imageLiteral)
+                        expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f,
+                            call.args.map(ar => compileArgument(e, b, ar)))
+                    else
+                        expr = compileStdCall(e, b, call);
                 }
                 else {
                     pxt.reportError("Unable to compile expression: " + b.type, null);
@@ -894,7 +688,7 @@ namespace pxt.blocks {
         name: string;
         type: Point;
         usedAsForIndex: number;
-        assigned?: VarUsage;
+        assigned?: VarUsage; // records the first usage of this variable (read/assign)
         incompatibleWithFor?: boolean;
     }
 
@@ -938,111 +732,85 @@ namespace pxt.blocks {
     // Statements
     ///////////////////////////////////////////////////////////////////////////////
 
-    function compileControlsIf(e: Environment, b: B.IfBlock): J.JStmt[] {
-        let stmts: J.JIf[] = [];
+    function compileControlsIf(e: Environment, b: B.IfBlock): Node[] {
+        let stmts: Node[] = [];
         // Notice the <= (if there's no else-if, we still compile the primary if).
         for (let i = 0; i <= b.elseifCount_; ++i) {
             let cond = compileExpression(e, b.getInputTargetBlock("IF" + i));
             let thenBranch = compileStatements(e, b.getInputTargetBlock("DO" + i));
-            stmts.push(H.mkSimpleIf(H.mkExprHolder([], cond), thenBranch));
-            if (i > 0)
-                stmts[stmts.length - 1].isElseIf = true;
+            let startNode = mkText("if (")
+            if (i > 0) {
+                startNode = mkText("else if (")
+                startNode.glueToBlock = true
+            }
+            append(stmts, [
+                startNode,
+                cond,
+                mkText(")"),
+                thenBranch
+            ])
         }
         if (b.elseCount_) {
-            stmts[stmts.length - 1].elseBody = compileStatements(e, b.getInputTargetBlock("ELSE"));
+            let elseNode = mkText("else")
+            elseNode.glueToBlock = true
+            append(stmts, [
+                elseNode,
+                compileStatements(e, b.getInputTargetBlock("ELSE"))
+            ])
         }
         return stmts;
     }
 
-    function isClassicForLoop(b: B.Block) {
-        if (b.type == "controls_simple_for") {
-            return true;
-        } else if (b.type == "controls_for") {
-            let bBy = b.getInputTargetBlock("BY");
-            let bFrom = b.getInputTargetBlock("FROM");
-            return bBy.type.match(/^math_number/) && extractNumber(bBy) == 1 &&
-                bFrom.type.match(/^math_number/) && extractNumber(bFrom) == 0;
-        } else {
-            throw new Error("Invalid argument: isClassicForLoop");
-        }
-    }
-
-    function compileControlsFor(e: Environment, b: B.Block): J.JStmt[] {
+    function compileControlsFor(e: Environment, b: B.Block): Node[] {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bTo = b.getInputTargetBlock("TO");
         let bDo = b.getInputTargetBlock("DO");
+        let bBy = b.getInputTargetBlock("BY");
+        let bFrom = b.getInputTargetBlock("FROM");
+        let incOne = !bBy || (bBy.type.match(/^math_number/) && extractNumber(bBy) == 1)
 
         let binding = lookup(e, bVar);
         assert(binding.usedAsForIndex > 0);
 
-        if (isClassicForLoop(b) && !binding.incompatibleWithFor) {
-            let bToExpr = compileExpression(e, bTo);
-            if (bToExpr.nodeType == "numberLiteral")
-                bToExpr = H.mkNumberLiteral((bToExpr as J.JNumberLiteral).value + 1)
-            else
-                bToExpr = H.mkSimpleCall("+", [bToExpr, H.mkNumberLiteral(1)]);
-            // In the perfect case, we can do a local binding that declares a local
-            // variable. The code that generates global variable declarations is in sync
-            // and won't generate a global binding.
-            return [
-                // FOR 0 <= VAR
-                H.mkFor(bVar,
-                    // < TO + 1 DO
-                    H.mkExprHolder([], bToExpr),
-                    compileStatements(e, bDo))
-            ];
-        }
-        else {
-            // Evaluate the bound first, and store it in b (bound may change over
-            // several loop iterations).
-            let local = fresh(e, "bound");
-            e = extend(e, local, pNumber.type);
-            let eLocal = H.mkLocalRef(local);
-            let eTo = compileExpression(e, bTo);
-            let eVar = H.mkLocalRef(bVar);
-            let eBy = H.mkNumberLiteral(1);
-            let eFrom = H.mkNumberLiteral(0);
-            // Fallback to a while loop followed by an assignment to
-            // make sure we don't overshoot the loop variable above the "to" field
-            // (since Blockly allows someone to read it afterwards).
-            return [
-                // LOCAL = TO
-                H.mkAssign(eLocal, eTo),
-                // let = FROM
-                H.mkAssign(eVar, eFrom),
-                // while
-                H.mkWhile(
-                    // let <= B
-                    H.mkExprHolder([], H.mkSimpleCall("<=", [eVar, eLocal])),
-                    // DO
-                    compileStatements(e, bDo).concat([
-                        H.mkExprStmt(
-                            H.mkExprHolder([],
-                                // let =
-                                H.mkSimpleCall("=", [eVar,
-                                    // let + BY
-                                    H.mkSimpleCall("+", [eVar, eBy])])))])),
-            ];
-        }
+        return [
+            mkText("for (let " + bVar + " = "),
+            bFrom ? compileExpression(e, bFrom) : mkText("0"),
+            mkText("; "),
+            mkInfix(mkText(bVar), "<=", compileExpression(e, bTo)),
+            mkText("; "),
+            incOne ? mkText(bVar + "++") : mkInfix(mkText(bVar), "+=", compileExpression(e, bBy)),
+            mkText(")"),
+            compileStatements(e, bDo)
+        ]
     }
 
-    function compileControlsRepeat(e: Environment, b: B.Block): J.JStmt {
+    function compileControlsRepeat(e: Environment, b: B.Block): Node[] {
         let bound = compileExpression(e, b.getInputTargetBlock("TIMES"));
         let body = compileStatements(e, b.getInputTargetBlock("DO"));
-        let valid = (x: string) => !lookup(e, x) || !isCompiledAsForIndex(lookup(e, x));
+        let valid = (x: string) => !lookup(e, x)
         let name = "i";
         for (let i = 0; !valid(name); i++)
             name = "i" + i;
-        return H.mkFor(name, H.mkExprHolder([], bound), body);
+        return [
+            mkText("for (let " + name + " = 0; "),
+            mkInfix(mkText(name), "<", bound),
+            mkText("; " + name + "++)"),
+            body
+        ]
     }
 
-    function compileWhile(e: Environment, b: B.Block): J.JStmt {
+    function compileWhile(e: Environment, b: B.Block): Node[] {
         let cond = compileExpression(e, b.getInputTargetBlock("COND"));
         let body = compileStatements(e, b.getInputTargetBlock("DO"));
-        return H.mkWhile(H.mkExprHolder([], cond), body);
+        return [
+            mkText("while ("),
+            cond,
+            mkText(")"),
+            body
+        ]
     }
 
-    function compileForever(e: Environment, b: B.Block): J.JStmt {
+    function compileForever(e: Environment, b: B.Block): Node {
         let bBody = b.getInputTargetBlock("HANDLER");
         let body = compileStatements(e, bBody);
         return mkCallWithCallback(e, "basic", "forever", [], body);
@@ -1057,52 +825,63 @@ namespace pxt.blocks {
         return n;
     }
 
-    function compileVariableGet(e: Environment, b: B.Block): J.JExpr {
+    function compileVariableGet(e: Environment, b: B.Block): Node {
         let name = escapeVarName(b.getFieldValue("VAR"));
         let binding = lookup(e, name);
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
         assert(binding != null && binding.type != null);
-        return H.mkLocalRef(name);
+        return mkText(name);
     }
 
-    function compileSet(e: Environment, b: B.Block): J.JStmt {
+    function compileSet(e: Environment, b: B.Block): Node {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
-        if (!binding.assigned && !findParent(b))
-            binding.assigned = VarUsage.Assign;
+        let isDef = false
+        if (!binding.assigned)
+            if (b.getSurroundParent()) {
+                // need to define this variable in the top-scope
+                binding.assigned = VarUsage.Read
+            } else {
+                binding.assigned = VarUsage.Assign;
+                isDef = true
+            }
         let expr = compileExpression(e, bExpr);
-        let ref = H.mkLocalRef(bVar);
-        return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, expr])));
+        return mkStmt(
+            mkText(isDef ? "let " : ""),
+            mkText(bVar + " = "),
+            expr)
     }
 
-    function compileChange(e: Environment, b: B.Block): J.JStmt {
+    function compileChange(e: Environment, b: B.Block): Node {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
         let expr = compileExpression(e, bExpr);
-        let ref = H.mkLocalRef(bVar);
-        return H.mkExprStmt(H.mkExprHolder([], H.mkSimpleCall("=", [ref, H.mkSimpleCall("+", [ref, expr])])));
+        let ref = mkText(bVar);
+        return mkStmt(mkInfix(ref, "+=", expr))
     }
 
-    function compileCall(e: Environment, b: B.Block): J.JStmt {
+    function compileCall(e: Environment, b: B.Block): Node {
         let call = e.stdCallTable[b.type];
-        return call.imageLiteral
-            ? H.mkExprStmt(H.mkExprHolder([], compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar)))))
-            : call.hasHandler ? compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
-                : H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, e.stdCallTable[b.type])));
+        if (call.imageLiteral)
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar))))
+        else if (call.hasHandler)
+            return compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
+        else
+            return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type]))
     }
 
-    function compileArgument(e: Environment, b: B.Block, p: StdArg): J.JExpr {
+    function compileArgument(e: Environment, b: B.Block, p: StdArg): Node {
         let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
         let f = b.getFieldValue(p.field);
         if (f)
-            return H.mkLocalRef(f);
+            return mkText(f);
         else
             return compileExpression(e, b.getInputTargetBlock(p.field))
     }
@@ -1110,7 +889,7 @@ namespace pxt.blocks {
     function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
         let args = func.args.map((p: StdArg) => compileArgument(e, b, p));
         if (func.isExtensionMethod) {
-            return H.extensionCall(func.f, args, !!func.property);
+            return H.extensionCall(func.f, args);
         } else if (func.namespace) {
             return H.namespaceCall(func.namespace, func.f, args);
         } else {
@@ -1119,45 +898,44 @@ namespace pxt.blocks {
     }
 
     function compileStdBlock(e: Environment, b: B.Block, f: StdFunc) {
-        return H.mkExprStmt(H.mkExprHolder([], compileStdCall(e, b, f)));
+        return mkStmt(compileStdCall(e, b, f))
     }
 
-    function mkCallWithCallback(e: Environment, n: string, f: string, args: J.JExpr[], body: J.JStmt[]): J.JStmt {
-        let def = H.mkDef("_body_", H.mkGTypeRef("Action"));
-        return H.mkInlineActions(
-            [H.mkInlineAction(body, true, def)],
-            H.mkExprHolder(
-                [def],
-                H.namespaceCall(n, f, args)));
+    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node): Node {
+        body.noFinalNewline = true
+        return mkStmt(H.namespaceCall(n, f, args.concat([
+            mkGroup([mkText("() =>"), body])
+        ])))
     }
 
-    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): J.JStmt {
+    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): Node {
         let bBody = b.getInputTargetBlock("HANDLER");
-        let compiledArgs: J.JNode[] = args.map((arg: string) => {
+        let compiledArgs: Node[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
             let argb = b.getInputTargetBlock(arg);
             if (argb) return compileExpression(e, argb);
-            return H.mkLocalRef(b.getFieldValue(arg))
+            return mkText(b.getFieldValue(arg))
         });
         let body = compileStatements(e, bBody);
         return mkCallWithCallback(e, ns, event, compiledArgs, body);
     }
 
-    function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: J.JExpr[]): J.JCall {
+    function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: Node[]): Node {
         args = args === undefined ? [] : args;
         let state = "\n";
         let rows = 5;
         let columns = frames * 5;
         for (let i = 0; i < rows; ++i) {
-            if (i > 0)
-                state += '\n';
             for (let j = 0; j < columns; ++j) {
                 if (j > 0)
                     state += ' ';
                 state += /TRUE/.test(b.getFieldValue("LED" + j + i)) ? "#" : ".";
             }
+            state += '\n';
         }
-        return H.namespaceCall(n, f, [<J.JExpr>H.mkStringLiteral(state)].concat(args));
+        let lit = H.mkStringLiteral(state)
+        lit.canIndentInside = true
+        return H.namespaceCall(n, f, [lit].concat(args));
     }
 
     // A standard function argument may be a field name (see below)
@@ -1190,8 +968,8 @@ namespace pxt.blocks {
         namespace?: string;
     }
 
-    function compileStatementBlock(e: Environment, b: B.Block): J.JStmt[] {
-        let r: J.JStmt[];
+    function compileStatementBlock(e: Environment, b: B.Block): Node[] {
+        let r: Node[];
         switch (b.type) {
             case 'controls_if':
                 r = compileControlsIf(e, <B.IfBlock>b);
@@ -1209,46 +987,30 @@ namespace pxt.blocks {
                 break;
 
             case 'controls_repeat_ext':
-                r = [compileControlsRepeat(e, b)];
+                r = compileControlsRepeat(e, b);
                 break;
 
             case 'device_while':
-                r = [compileWhile(e, b)];
+                r = compileWhile(e, b);
                 break;
+
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b)];
-                else r = [H.mkExprStmt(H.mkExprHolder([], compileExpression(e, b)))];
+                else r = [mkStmt(compileExpression(e, b))];
                 break;
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
         return r;
     }
 
-    function compileStatements(e: Environment, b: B.Block): J.JStmt[] {
-        if (!b) return [];
-
-        let stmts: J.JStmt[] = [];
+    function compileStatements(e: Environment, b: B.Block): Node {
+        let stmts: Node[] = [];
         while (b) {
             if (!b.disabled) append(stmts, compileStatementBlock(e, b));
             b = b.getNextBlock();
         }
-        return stmts;
-    }
-
-    // Find the parent (as in "scope" parent) of a Block. The [parentNode_] property
-    // will return the visual parent, that is, the one connected to the top of the
-    // block.
-    function findParent(b: B.Block) {
-        let candidate = b.parentBlock_;
-        if (!candidate)
-            return null;
-        let isActualInput = false;
-        candidate.inputList.forEach((i: B.Input) => {
-            if (i.name && candidate.getInputTargetBlock(i.name) == b)
-                isActualInput = true;
-        });
-        return isActualInput && candidate || null;
+        return mkBlock(stmts);
     }
 
     function isTopBlock(b: B.Block): boolean {
@@ -1302,7 +1064,7 @@ namespace pxt.blocks {
                 && escapeVarName(b.getFieldValue("VAR")) == name)
                 return true;
             else
-                return variableIsScoped(findParent(b), name);
+                return variableIsScoped(b.getSurroundParent(), name);
         };
 
         // collect loop variables.
@@ -1313,11 +1075,10 @@ namespace pxt.blocks {
                 if (lookup(e, x) == null)
                     e = extend(e, x, pNumber.type);
                 lookup(e, x).usedAsForIndex++;
-                // Unless the loop starts at 0 and and increments by one, we can't compile
-                // as a TouchDevelop for loop. Also, if multiple loops share the same
+                // If multiple loops share the same
                 // variable, that means there's potential race conditions in concurrent
                 // code, so faithfully compile this as a global variable.
-                if (!isClassicForLoop(b) || lookup(e, x).usedAsForIndex > 1)
+                if (lookup(e, x).usedAsForIndex > 1)
                     lookup(e, x).incompatibleWithFor = true;
             }
         });
@@ -1340,8 +1101,7 @@ namespace pxt.blocks {
         return e;
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): J.JApp {
-        let decls: J.JDecl[] = [];
+    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): Node[] {
         try {
             let e = mkEnv(w, blockInfo);
             infer(e, w);
@@ -1349,25 +1109,32 @@ namespace pxt.blocks {
             // [stmtsHandlers] contains calls to register event handlers. They must be
             // executed before the code that goes in the main function, as that latter
             // code may block, and prevent the event handler from being registered.
-            let stmtsMain: J.JStmt[] = [];
+            let stmtsMain: Node[] = [];
             w.getTopBlocks(true).map(b => {
-                append(stmtsMain, compileStatements(e, b));
+                let compiled = compileStatements(e, b)
+                if (compiled.type == NT.Block)
+                    append(stmtsMain, compiled.children);
+                else stmtsMain.push(compiled)
             });
 
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
             let stmtsVariables = e.bindings.filter(b => !isCompiledAsForIndex(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
-                    let btype = find(b.type);
-                    return H.mkDefAndAssign(b.name, H.mkTypeRef(find(b.type).type), defaultValueForType(find(b.type)));
+                    // let btype = find(b.type);
+                    // Not sure we need the type here - is is always number or boolean?
+                    let defl = defaultValueForType(find(b.type))
+                    let tp = ""
+                    if (defl.op == "null")
+                        tp = ": " + find(b.type).type
+                    return mkStmt(mkText("let " + b.name + tp + " = "), defaultValueForType(find(b.type)))
                 });
 
-            decls.push(H.mkAction("main",
-                stmtsVariables.concat(stmtsMain), [], []));
+            return stmtsVariables.concat(stmtsMain)
         } finally {
             removeAllPlaceholders(w);
         }
 
-        return H.mkApp('untitled', '', decls);
+        return [] // unreachable
     }
 
     export interface SourceInterval {
@@ -1396,28 +1163,37 @@ namespace pxt.blocks {
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
-    function tdASTtoTS(app: J.JApp): BlockCompilationResult {
+    function tdASTtoTS(app: Node[]): BlockCompilationResult {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
         let variables: U.Map<string>[] = [{}];
-        let currInlineAction: J.JInlineAction = null
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
         let infixPriTable: Util.StringMap<number> = {
+            // 0 = comma/sequence
+            // 1 = spread (...)
+            // 2 = yield, yield*
+            // 3 = assignment
             "=": 3,
+            "+=": 3,
+            "-=": 3,
+            // 4 = conditional (?:)
             "||": 5,
             "&&": 6,
             "|": 7,
             "^": 8,
             "&": 9,
+            // 10 = equality
             "==": 10,
             "!=": 10,
             "===": 10,
             "!==": 10,
+            // 11 = comparison (excludes in, instanceof)
             "<": 11,
             ">": 11,
             "<=": 11,
             ">=": 11,
+            // 12 = bitise shift
             ">>": 12,
             ">>>": 12,
             "<<": 12,
@@ -1427,298 +1203,143 @@ namespace pxt.blocks {
             "/": 14,
             "%": 14,
             "!": 15,
+            ".": 18,
         }
 
 
-        function flatten(e0: J.JExpr) {
-            let r: J.JToken[] = []
+        function flatten(e0: Node) {
+            function rec(e: Node, outPrio: number) {
+                if (e.type != NT.Infix) {
+                    for (let c of e.children)
+                        rec(c, -1)
+                    return
+                }
 
-            function pushOp(c: string) {
-                r.push(<J.JOperator>{
-                    nodeType: "operator",
-                    id: "",
-                    op: c
-                })
-            }
+                let r: Node[] = []
 
-            function call(e: J.JCall, outPrio: number) {
-                let infixPri = 0
-                if (infixPriTable.hasOwnProperty(e.name))
-                    infixPri = infixPriTable[e.name]
+                function pushOp(c: string) {
+                    r.push(mkText(c))
+                }
 
-                if (infixPri) {
-                    // This seems wrong
-                    if (e.name == "-" &&
-                        (e.args[0].nodeType == "numberLiteral") &&
-                        ((<J.JNumberLiteral>e.args[0]).value === 0.0) &&
-                        (!(<J.JNumberLiteral>e.args[0]).stringForm)) {
-                        pushOp(e.name)
-                        rec(e.args[1], 98)
-                        return
-                    }
+                let infixPri = U.lookup(infixPriTable, e.op)
+                if (infixPri == null) U.oops("bad infix op: " + e.op)
 
-                    if (infixPri < outPrio) pushOp("(");
-                    if (e.args.length == 1) {
-                        pushOp(e.name)
-                        rec(e.args[0], infixPri)
-                    } else {
-                        let bindLeft = infixPri != 3 && e.name != "**"
-                        let letType: string = undefined;
-                        if (e.name == "=" && e.args[0].nodeType == 'localRef') {
-                            let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
-                            let varname = varloc.name;
-                            if (!variables[variables.length - 1][varname]) {
-                                variables[variables.length - 1][varname] = "1";
-                                pushOp("let")
-                                letType = varloc.type as any as string;
-                            }
-                        }
-                        rec(e.args[0], bindLeft ? infixPri : infixPri + 0.1)
-                        if (letType && letType != "number") {
-                            pushOp(":")
-                            pushOp(letType)
-                        }
-                        pushOp(e.name)
-                        rec(e.args[1], !bindLeft ? infixPri : infixPri + 0.1)
-                    }
-                    if (infixPri < outPrio) pushOp(")");
+                if (infixPri < outPrio) pushOp("(");
+                if (e.children.length == 1) {
+                    pushOp(e.op)
+                    rec(e.children[0], infixPri)
                 } else {
-                    rec(e.args[0], 1000)
-                    r.push(<J.JPropertyRef><any>{
-                        nodeType: "propertyRef",
-                        name: e.name,
-                        parent: e.parent,
-                        declId: e.declId,
-                    })
-                    if (!e.property) {
-                        pushOp("(")
-                        e.args.slice(1).forEach((ee, i) => {
-                            if (i > 0) pushOp(",")
-                            rec(ee, -1)
-                        })
-                        pushOp(")")
+                    let bindLeft = infixPri != 3 && e.op != "**"
+                    let letType: string = undefined;
+                    /*
+                    if (e.name == "=" && e.args[0].nodeType == 'localRef') {
+                        let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
+                        let varname = varloc.name;
+                        if (!variables[variables.length - 1][varname]) {
+                            variables[variables.length - 1][varname] = "1";
+                            pushOp("let")
+                            letType = varloc.type as any as string;
+                        }
                     }
+                    */
+                    rec(e.children[0], bindLeft ? infixPri : infixPri + 0.1)
+                    r.push(e.children[0])
+                    if (letType && letType != "number") {
+                        pushOp(": ")
+                        pushOp(letType)
+                    }
+                    if (e.op == ".")
+                        pushOp(".")
+                    else
+                        pushOp(" " + e.op + " ")
+                    rec(e.children[1], !bindLeft ? infixPri : infixPri + 0.1)
+                    r.push(e.children[1])
                 }
-            }
+                if (infixPri < outPrio) pushOp(")");
 
-            function rec(e: J.JExpr, prio: number) {
-                switch (e.nodeType) {
-                    case "call":
-                        emitAndMap(e.id, () => call(<J.JCall>e, prio))
-                        break;
-                    case "numberLiteral":
-                        pushOp((<J.JNumberLiteral>e).value.toString())
-                        break;
-                    case "arrayLiteral":
-                    case "stringLiteral":
-                    case "booleanLiteral":
-                    case "localRef":
-                    case "placeholder":
-                    case "singletonRef":
-                        r.push(e);
-                        break;
-                    case "show":
-                    case "break":
-                    case "return":
-                    case "continue":
-                        pushOp(e.nodeType)
-                        let ee = (<J.JReturn>e).expr
-                        if (ee)
-                            rec(ee, prio)
-                        break
-                    default:
-                        pxt.reportError("invalid nodeType when flattening: " + e.nodeType, null);
-                        Util.oops("invalid nodeType when flattening: " + e.nodeType)
-                }
+                e.type = NT.Prefix
+                e.op = ""
+                e.children = r
             }
 
             rec(e0, -1)
-
-            return r
         }
 
-        function stringLit(s: string) {
-            if (s.length > 20 && /\n/.test(s))
-                return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
-            else return JSON.stringify(s)
-        }
-
-        function emitAndMap(id: string, f: () => void) {
-            if (!id) {
-                f();
-                return;
-            }
-
-            let start = output.length;
-            f();
-            let end = output.length;
-            if (start != end)
-                sourceMap.push({ id: id, start: start, end: end })
-        }
-
-        let byNodeType: Util.StringMap<(n: J.JNode) => void> = {
-            app: (n: J.JApp) => {
-                Util.assert(n.decls.length == 1)
-                Util.assert(n.decls[0].nodeType == "action");
-                (n.decls[0] as J.JAction).body.forEach(emit)
-            },
-
-            exprStmt: (n: J.JExprStmt) => emitAndMap(n.id, () => {
-                emit(n.expr)
-                write(";\n")
-            }),
-
-            inlineAction: (n: J.JInlineAction) => {
-                Util.assert(n.inParameters.length == 0)
-                write("() => ")
-                emitBlock(n.body)
-            },
-
-            inlineActions: (n: J.JInlineActions) => {
-                Util.assert(n.actions.length == 1)
-                currInlineAction = n.actions[0]
-                emit(n.expr)
-                if (currInlineAction.isImplicit) {
-                    output = output.replace(/\)\s*$/, "")
-                    if (!/\($/.test(output))
-                        write(", ")
-                    emit(currInlineAction)
-                    output = output.replace(/\s*$/, "")
-                    write(")")
-                }
-                write(";\n")
-            },
-
-            exprHolder: (n: J.JExprHolder) => {
-                let toks = flatten(n.tree)
-                toks.forEach(emit)
-            },
-
-            localRef: (n: J.JLocalRef) => {
-                if (n.name == "_body_")
-                    emit(currInlineAction)
-                else
-                    localRef(n.name)
-            },
-
-            operator: (n: J.JOperator) => {
-                if (n.op == "let")
-                    write(n.op + " ");
-                else if (/^[\d()]/.test(n.op))
-                    write(n.op)
-                else if (n.op == ",")
-                    write(n.op + " ")
-                else
-                    write(" " + n.op + " ")
-            },
-
-            singletonRef: (n: J.JSingletonRef) => {
-                write(jsName(n.name))
-            },
-
-            propertyRef: (n: J.JPropertyRef) => {
-                write("." + jsName(n.name))
-            },
-
-            stringLiteral: (n: J.JStringLiteral) => {
-                output += stringLit(n.value)
-            },
-
-            booleanLiteral: (n: J.JBooleanLiteral) => {
-                write(n.value ? "true" : "false")
-            },
-
-            arrayLiteral: (n: J.JArrayLiteral) => {
-                write("[");
-                if (n.values)
-                    n.values.forEach((a, i) => {
-                        if (i > 0) write(', ');
-                        let toks = flatten(a)
-                        toks.forEach(emit)
-                    })
-                write("]");
-            },
-
-            "if": (n: J.JIf) => {
-                if (n.isElseIf) write("else ")
-                write("if (")
-                emitAndMap(n.id, () => emit(n.condition))
-                write(") ")
-                emitBlock(n.thenBody)
-                if (n.elseBody) {
-                    write("else ")
-                    emitBlock(n.elseBody)
-                }
-            },
-
-            "for": (n: J.JFor) => {
-                write("for (let ")
-                localRef(n.index.name)
-                write(" = 0; ")
-                localRef(n.index.name)
-                write(" < ")
-                emitAndMap(n.id, () => emit(n.bound));
-                write("; ")
-                localRef(n.index.name)
-                write("++) ")
-                emitBlock(n.body)
-            },
-
-            "while": (n: J.JWhile) => {
-                write("while (")
-                emitAndMap(n.id, () => emit(n.condition))
-                write(") ")
-                emitBlock(n.body)
-            },
-        }
-
-        emit(app)
-
-        output = output.replace(/^\s*\n/mg, "").replace(/\s+;$/mg, ";")
+        let root = mkGroup(app)
+        flatten(root)
+        emit(root)
 
         // never return empty string - TS compiler service thinks it's an error
-        output += "\n"
+        if (!output)
+            output += "\n"
 
         return {
             source: output,
             sourceMap: sourceMap
         };
 
-        function localRef(n: string) {
-            write(jsName(n))
-        }
+        function emit(n: Node) {
+            if (n.glueToBlock) {
+                removeLastIndent()
+                output += " "
+            }
 
-        function emitBlock(s: J.JStmt[]) {
-            block(() => {
-                s.forEach(emit)
-            })
-        }
+            let start = output.length
 
-        function jsName(s: string) {
-            return s.replace(/ (.)/g, (f: string, m: string) => m.toUpperCase())
-        }
+            switch (n.type) {
+                case NT.Infix:
+                    U.oops("no infix should be left")
+                    break
+                case NT.NewLine:
+                    output += "\n" + indent
+                    break
+                case NT.Block:
+                    block(n)
+                    break
+                case NT.Prefix:
+                    if (n.canIndentInside)
+                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
+                    else
+                        output += n.op
+                    n.children.forEach(emit)
+                    break
+                default:
+                    break
+            }
 
-        function emit(n: J.JNode) {
-            let f = byNodeType[n.nodeType]
-            if (!f) Util.oops("unsupported node type " + n.nodeType)
-            f(n)
+            let end = output.length
+
+            if (n.id && start != end) {
+                sourceMap.push({ id: n.id, start: start, end: end })
+
+            }
         }
 
         function write(s: string) {
             output += s.replace(/\n/g, "\n" + indent)
         }
 
+        function removeLastIndent() {
+            output = output.replace(/\n *$/, "")
+        }
 
-        function block(f: () => void) {
+        function block(n: Node) {
+            let finalNl = n.noFinalNewline ? "" : "\n"
+            
+            if (n.children.length == 0) {
+                write(" { }" + finalNl)
+                return
+            }
+
             let vars = U.clone<U.Map<string>>(variables[variables.length - 1] || {});
             variables.push(vars);
-
             indent += "    "
-            write("{\n")
-            f()
+            write(" {\n")
+            for (let nn of n.children)
+                emit(nn)
             indent = indent.slice(4)
-            write("\n}\n")
-
+            removeLastIndent()
+            write("\n}" + finalNl)
             variables.pop();
         }
     }
