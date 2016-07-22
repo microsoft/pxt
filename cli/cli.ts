@@ -1246,6 +1246,104 @@ let statAsync = Promise.promisify(fs.stat)
 let commonfiles: U.Map<string> = {}
 let fileoverrides: U.Map<string> = {}
 
+class SnippetHost implements pxt.Host {
+    name: string
+    main: string
+    //Global cache of module files
+    static files: U.Map<U.Map<string>> = {}
+
+    constructor(name: string, main: string) {
+        this.name = name
+        this.main = main
+    }
+
+    resolve(module: pxt.Package, filename: string): string {
+        return ""
+    }
+
+    readFile(module: pxt.Package, filename: string): string {
+        if (SnippetHost.files[module.id] && SnippetHost.files[module.id][filename]) {
+            return SnippetHost.files[module.id][filename]
+        }
+        if (module.id == "this") {
+            if (filename == "pxt.json") {
+                return JSON.stringify({
+                    "name": this.name,
+                    "dependencies": {
+                        "microbit": "file:../microbit",
+                        "microbit-radio": "file:../microbit-radio"
+                    },
+                    "description": "",
+                    "files": [
+                        "main.blocks", //TODO: Probably don't want this
+                        "main.ts"
+                    ]
+                })
+            }
+            else if (filename == "main.ts") {
+                return this.main
+            }
+        }
+        else {
+            let p1 = path.join('libs', module.id, filename)
+            let p2 = path.join('libs', module.id, 'built', filename)
+
+            let contents: string = null
+
+            try {
+                contents = fs.readFileSync(p1, 'utf8')
+            }
+            catch (e) {
+                //console.log(e)
+                 try {
+                    contents = fs.readFileSync(p2, 'utf8')
+                }
+                catch (e) {
+                    //console.log(e)
+                }
+            }
+
+            if (contents) {
+                if (!SnippetHost.files[module.id]) {
+                    SnippetHost.files[module.id] = {}
+                }
+                SnippetHost.files[module.id][filename] = contents
+                return contents
+            }
+        }
+        return ""
+    }
+
+    writeFile(module: pxt.Package, filename: string, contents: string) {
+        SnippetHost.files[module.id][filename] = contents
+    }
+
+    getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+        //console.log(`getHexInfoAsync(${extInfo})`);
+        return Promise.resolve()
+    }
+
+    cacheStoreAsync(id: string, val: string): Promise<void> {
+        //console.log(`cacheStoreAsync(${id}, ${val})`)
+        return Promise.resolve()
+    }
+
+    cacheGetAsync(id: string): Promise<string> {
+        //console.log(`cacheGetAsync(${id})`)
+        return Promise.resolve("")
+    }
+
+    downloadPackageAsync(pkg: pxt.Package): Promise<void> {
+        //console.log(`downloadPackageAsync(${pkg.id})`)
+        return Promise.resolve()
+    }
+
+    resolveVersionAsync(pkg: pxt.Package): Promise<string> {
+        //console.log(`resolveVersionAsync(${pkg.id})`)
+        return Promise.resolve("*")
+    }
+}
+
 class Host
     implements pxt.Host {
     resolve(module: pxt.Package, filename: string) {
@@ -2065,13 +2163,54 @@ function testSnippetsAsync(): Promise<void> {
     searchFolder('built/docs/snippets', allSnippets)
 
     allSnippets = allSnippets.filter(p => path.extname(p) == ".ts")
+    //allSnippets = allSnippets.slice(0, 25) //For testing
 
-    for (let p of allSnippets) {
-        //let originalTs = fs.readFileSync(p, 'utf8')
-        console.log(p)
+    let successes: string[] = []
+    let failures: string[] = []
+
+    let addSuccess = (s: string) => {
+        successes.push(s)
+        //console.log(`SUCCESS\t${s}`)
     }
 
-    return null;
+    let addFailure = (f: string) => {
+        failures.push(f)
+        console.log(`ERROR\t${f}`)
+    }
+
+    return Promise.map(allSnippets, p => {
+        let originalTs = fs.readFileSync(p, 'utf8')
+        let pkg = new pxt.MainPackage(new SnippetHost(path.basename(p).replace('.ts', ''), originalTs))
+
+        return pkg.getCompileOptionsAsync().then((opts: ts.pxt.CompileOptions) => {
+            opts.ast = true
+            let resp = ts.pxt.compile(opts)
+
+            if (resp.success) {
+                //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
+                let file = resp.ast.getSourceFile('main.ts');
+                let apis = ts.pxt.getApiInfo(resp.ast);
+                let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
+
+                let success = !!bresp.outfiles['main.blocks']
+
+                if (success) {
+                    addSuccess(p)
+                }
+                else {
+                    addFailure(p)
+                }
+            }
+            else {
+                addFailure(p)
+                //TODO: Log error
+            }
+        })
+    }).then((a: any) => {
+        console.log(`${successes.length} snippets compiled to blocks`)
+        console.log(`${failures.length} snippets did not compile to blocks`)
+    })
 }
 
 function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
