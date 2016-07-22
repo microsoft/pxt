@@ -1867,7 +1867,7 @@ function testConverterAsync(configFile: string) {
         })
 }
 
-function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
+function patchOpts(opts: ts.pxt.CompileOptions, fn: string, content: string) {
     console.log(`*** ${fn}, size=${content.length}`)
     let opts2 = U.flatClone(opts)
     opts2.fileSystem = U.flatClone(opts.fileSystem)
@@ -1876,14 +1876,16 @@ function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
     opts2.fileSystem[fn] = content
     opts2.embedBlob = null
     opts2.embedMeta = null
+    return opts2
+}
+
+function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
+    let opts2 = patchOpts(opts, fn, content)
     let res = ts.pxt.compile(opts2)
     reportDiagnostics(res.diagnostics);
     if (!res.success) {
         console.log("ERRORS", fn)
-    } else {
-        fs.writeFileSync("./built/" + fn.replace(/\.ts$/, ".hex"), res.outfiles["binary.hex"])
     }
-
     return res.success
 }
 
