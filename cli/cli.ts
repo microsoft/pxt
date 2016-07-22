@@ -1865,7 +1865,7 @@ function testConverterAsync(configFile: string) {
                             console.log(`ERROR ${id}: ${err.message}`)
                             errors.push(id)
                         })
-                }, { concurrency: 5 })
+                }, { concurrency: 1 })
             }))
         .then(() => {
             if (errors.length) {
