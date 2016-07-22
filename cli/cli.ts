@@ -1867,6 +1867,35 @@ function testConverterAsync(configFile: string) {
         })
 }
 
+
+function testSnippetsAsync(): Promise<void> {
+    let paths: Array<string> = []
+    let searchFolder = (dir: string) => {
+        let ls = fs.readdirSync(dir)
+        for (let f of ls) {
+            let fullPath = path.join(dir, f)
+            let stats = fs.lstatSync(fullPath)
+            if (stats.isDirectory()) {
+                searchFolder(fullPath)
+            }
+            else if (path.extname(fullPath) == ".ts") {
+                paths.push(fullPath)
+            }
+        }
+    }
+    searchFolder('built/docs/snippets')
+
+    for (let p of paths) {
+        let originalTs = fs.readFileSync(p, 'utf8')
+        console.log("----------------------------------------")
+        console.log(p)
+        console.log("----------------------------------------")
+        console.log(originalTs)
+    }
+
+    return null
+}
+
 function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
     console.log(`*** ${fn}, size=${content.length}`)
     let opts2 = U.flatClone(opts)
@@ -2047,6 +2076,7 @@ cmd("gendocs                      - build current package and its docs", gendocs
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one replacing the main file of current package", testDirAsync, 1)
 cmd("testconv JSONCONFIG          - test TD->TS converter", testConverterAsync, 2)
+cmd("roundtrip                    - test TS->blockly->TS conversions on all documentation snippets", testSnippetsAsync)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
