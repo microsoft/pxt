@@ -1817,12 +1817,20 @@ function copyCommonFiles() {
     }
 }
 
-function testConverterAsync(configFile: string) {
+function getCachedAsync(url: string, path: string) {
+    return (readFileAsync(path, "utf8") as Promise<string>)
+        .then(v => v, (e: any) => {
+            //console.log(`^^^ fetch ${id} ${Date.now() - start}ms`)
+            return null
+        })
+        .then<string>(v => v ? Promise.resolve(v) :
+            U.httpGetTextAsync(url)
+                .then(v => writeFileAsync(path, v)
+                    .then(() => v)))
+}
+
+function testConverterAsync(url: string) {
     forceCloudBuild = true
-    let cfg: {
-        apiUrl: string,
-        ids: string[]
-    } = readJson(configFile)
     let cachePath = "built/cache/"
     nodeutil.mkdirP(cachePath)
     let tdev = require("./web/tdast")
@@ -1831,41 +1839,26 @@ function testConverterAsync(configFile: string) {
         .then(astinfo => prepTestOptionsAsync()
             .then(opts => {
                 fs.writeFileSync("built/apiinfo.json", JSON.stringify(astinfo, null, 1))
-                return Promise.map(cfg.ids, (id) => {
-                    let start = Date.now()
-                    console.log("--> start " + id)
-                    return (readFileAsync(cachePath + id, "utf8") as Promise<string>)
-                        .then(v => v, (e: any) => {
-                            console.log(`^^^ fetch ${id} ${Date.now() - start}ms`)
-                            return ""
-                        })
-                        .then<string>(v => v ? Promise.resolve(v) :
-                            U.httpGetTextAsync(cfg.apiUrl + id + "/text")
-                                .then(v => writeFileAsync(cachePath + id, v)
-                                    .then(() => v)))
-                        .then(v => {
+                return getCachedAsync(url, cachePath + url.replace(/[^a-z0-9A-Z\.]/g, "-"))
+                    .then(text => {
+                        let srcs = JSON.parse(text)
+                        for (let id of Object.keys(srcs)) {
+                            let v = srcs[id]
                             let tdopts = {
                                 text: v,
                                 useExtensions: true,
                                 apiInfo: astinfo
                             }
 
-                            console.log(`%%% TD AST ${id} ${Date.now() - start}ms`)
                             let r = tdev.AST.td2ts(tdopts)
-                            console.log(`%%% COMPILE ${id} ${Date.now() - start}ms`)
                             let src: string = r.text
                             U.assert(!!src.trim(), "source is empty")
                             if (!compilesOK(opts, id + ".ts", src)) {
                                 errors.push(id)
                                 fs.writeFileSync("built/" + id + ".ts.fail", src)
                             }
-                            console.log(`<-- stop ${id} ${Date.now() - start}ms`)
-                        })
-                        .then(() => { }, err => {
-                            console.log(`ERROR ${id}: ${err.message}`)
-                            errors.push(id)
-                        })
-                }, { concurrency: 1 })
+                        }
+                    })
             }))
         .then(() => {
             if (errors.length) {
@@ -2206,7 +2199,7 @@ cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
-cmd("testconv JSONCONFIG          - test TD->TS converter", testConverterAsync, 2)
+cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
