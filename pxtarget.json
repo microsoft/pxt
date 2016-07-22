@@ -3,6 +3,7 @@
     "name": "PXT",
     "title": "Programming Experience Toolkit",
     "bundleddirs": [],
+    "compile": {},
     "appTheme": {
         "logoUrl": "https://www.pxt.io/",
         "logo": "./static/logo.svg",

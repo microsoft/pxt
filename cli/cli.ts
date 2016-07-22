@@ -1981,7 +1981,8 @@ function testDirAsync(dir: string) {
             return installAsync()
                 .then(testAsync)
                 .then(() => {
-                    fs.writeFileSync(hexPath, fs.readFileSync("built/binary.hex"))
+                    if (pxt.appTarget.compile.hasHex)
+                        fs.writeFileSync(hexPath, fs.readFileSync("built/binary.hex"))
                 })
         } else {
             let start = Date.now()
@@ -2000,15 +2001,39 @@ function testDirAsync(dir: string) {
                 return prepBuildOptionsAsync(BuildOption.Test, true)
                     .then(opts => {
                         let res = ts.pxt.compile(opts)
-                        reportDiagnostics(res.diagnostics);
-                        if (!res.success) {
+                        let lines = ti.text.split(/\r?\n/)
+                        let errCode = (s: string) => {
+                            if (!s) return 0
+                            let m = /\/\/\s*TS(\d\d\d\d\d?)/.exec(s)
+                            if (m) return parseInt(m[1])
+                            else return 0
+                        }
+                        let numErr = 0
+                        for (let diag of res.diagnostics) {
+                            if (!errCode(lines[diag.line])) {
+                                reportDiagnostics(res.diagnostics);
+                                numErr++
+                            }
+                        }
+                        let lineNo = 0
+                        for (let line of lines) {
+                            let code = errCode(line)
+                            if (code && res.diagnostics.filter(d => d.line == lineNo && d.code == code).length == 0) {
+                                numErr++
+                                console.log(`${fn}(${lineNo + 1}): expecting error TS${code}`)
+                            }
+                            lineNo++                            
+                        }
+                        if (numErr) {
                             console.log("ERRORS", fn)
                             errors.push(fn)
                             fs.unlink(hexPath) // ignore errors
                         } else {
                             let hex = res.outfiles["binary.hex"]
-                            fs.writeFileSync(hexPath, hex)
-                            console.log(`wrote hex: ${hexPath} ${hex.length} bytes; ${Date.now() - start}ms`)
+                            if (hex) {
+                                fs.writeFileSync(hexPath, hex)
+                                console.log(`wrote hex: ${hexPath} ${hex.length} bytes; ${Date.now() - start}ms`)
+                            }
                         }
                     })
             }
