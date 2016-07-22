@@ -1831,31 +1831,38 @@ function testConverterAsync(configFile: string) {
         .then(astinfo => prepTestOptionsAsync()
             .then(opts => {
                 fs.writeFileSync("built/apiinfo.json", JSON.stringify(astinfo, null, 1))
-                return Promise.map(cfg.ids, (id) => (readFileAsync(cachePath + id, "utf8") as Promise<string>)
-                    .then(v => v, (e: any) => "")
-                    .then<string>(v => v ? Promise.resolve(v) :
-                        U.httpGetTextAsync(cfg.apiUrl + id + "/text")
-                            .then(v => writeFileAsync(cachePath + id, v)
-                                .then(() => v)))
-                    .then(v => {
-                        let tdopts = {
-                            text: v,
-                            useExtensions: true,
-                            apiInfo: astinfo
-                        }
-                        let r = tdev.AST.td2ts(tdopts)
-                        let src: string = r.text
-                        U.assert(!!src.trim(), "source is empty")
-                        if (!compilesOK(opts, id + ".ts", src)) {
+                return Promise.map(cfg.ids, (id) => {
+                    let start = Date.now()
+                    console.log("--> start " + id)
+                    return (readFileAsync(cachePath + id, "utf8") as Promise<string>)
+                        .then(v => v, (e: any) => {
+                            console.log(`^^^ fetch ${id}`)
+                            return ""
+                        })
+                        .then<string>(v => v ? Promise.resolve(v) :
+                            U.httpGetTextAsync(cfg.apiUrl + id + "/text")
+                                .then(v => writeFileAsync(cachePath + id, v)
+                                    .then(() => v)))
+                        .then(v => {
+                            let tdopts = {
+                                text: v,
+                                useExtensions: true,
+                                apiInfo: astinfo
+                            }
+                            let r = tdev.AST.td2ts(tdopts)
+                            let src: string = r.text
+                            U.assert(!!src.trim(), "source is empty")
+                            if (!compilesOK(opts, id + ".ts", src)) {
+                                errors.push(id)
+                                fs.writeFileSync("built/" + id + ".ts.fail", src)
+                            }
+                            console.log(`<-- stop ${id} ${Date.now() - start}ms`)
+                        })
+                        .then(() => { }, err => {
+                            console.log(`ERROR ${id}: ${err.message}`)
                             errors.push(id)
-                            fs.writeFileSync("built/" + id + ".ts.fail", src)
-                        }
-                    })
-                    .then(() => { }, err => {
-                        console.log(`ERROR ${id}: ${err.message}`)
-                        errors.push(id)
-                    })
-                    , { concurrency: 5 })
+                        })
+                }, { concurrency: 5 })
             }))
         .then(() => {
             if (errors.length) {
