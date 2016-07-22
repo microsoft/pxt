@@ -947,11 +947,15 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then(files => {
                 if (epkg.header.pubCurrent)
                     return Promise.resolve(epkg.header.pubId)
-                let meta = {
+                let meta: workspace.ScriptMeta = {
                     description: mpkg.config.description,
-                    islibrary: false
+                    islibrary: false,
                 }
-                // TODO pass blocks workspace size here
+                let blocksSize = this.blocksEditor.contentSize();
+                if (blocksSize) {
+                    meta.blocksHeight = blocksSize.height;
+                    meta.blocksWidth = blocksSize.width;
+                }
                 return workspace.publishAsync(epkg.header, files, meta)
                     .then(inf => inf.id)
             }).finally(() => {

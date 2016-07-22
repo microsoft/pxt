@@ -132,11 +132,18 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    contentSize(): { height: number; width: number } {
+        if (this.editor) {
+            return pxt.blocks.blocksMetrics(this.editor);
+        }
+        return undefined;
+    }
+
     /**
      * Takes the XML definition of the block that will be shown on the help card and modifies the XML
      * so that the field names are updated to match any field names of dropdowns on the selected block
      */
-    private updateFields(originalXML: string, newFieldValues: any): string  {
+    private updateFields(originalXML: string, newFieldValues: any): string {
         let parser = new DOMParser();
         let doc = parser.parseFromString(originalXML, "application/xml");
         let blocks = doc.getElementsByTagName("block");
