@@ -114,8 +114,12 @@ namespace pxt.runner {
             $menu.append($hexBtn);
         }
 
+        let r = [$c];
+        // don't add menu if empty
+        if ($menu.children().length) r.push($h);
+
         // inject container
-        $container.replaceWith([$c, $h]);
+        $container.replaceWith(r);
     }
 
     function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void, options?: pxt.blocks.BlocksRenderOptions): Promise<void> {

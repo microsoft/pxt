@@ -227,7 +227,7 @@ export class Input extends data.Component<{
 
     renderCore() {
         let p = this.props
-        let copyBtn = p.copy
+        let copyBtn = p.copy && document.queryCommandSupported('copy')
             ? <Button class="ui right labeled teal icon button" text={lf("Copy") } icon="copy" onClick={() => this.copy() } />
             : null;
 

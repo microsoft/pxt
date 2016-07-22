@@ -24,6 +24,10 @@ namespace pxsim {
         Pause
     }
 
+    export interface HwDebugger {
+        postMessage: (msg: pxsim.SimulatorMessage) => void;
+    }
+
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
         private runId = '';
@@ -33,8 +37,29 @@ namespace pxsim {
         private listener: (ev: MessageEvent) => void;
         public debug = false;
         public state = SimulatorState.Unloaded;
+        public hwdbg: HwDebugger;
 
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
+        }
+
+        public setHwDebugger(hw: HwDebugger) {
+            if (hw) {
+                // TODO set some visual on the simulator frame
+                // in future the simulator frame could reflect changes in the hardware
+                this.hwdbg = hw
+                this.setState(SimulatorState.Running)
+                this.container.style.opacity = "0.3"
+            } else {
+                delete this.container.style.opacity
+                this.hwdbg = null
+                this.setState(SimulatorState.Running)
+                this.stop()
+            }
+        }
+
+        public handleHwDebuggerMsg(msg: pxsim.SimulatorMessage) {
+            if (!this.hwdbg) return
+            this.handleMessage(msg)
         }
 
         public setThemes(themes: string[]) {
@@ -52,6 +77,10 @@ namespace pxsim {
         }
 
         private postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
+            if (this.hwdbg) {
+                this.hwdbg.postMessage(msg)
+                return
+            }
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
             if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket')) {
@@ -187,36 +216,40 @@ namespace pxsim {
             }
         }
 
+        private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
+            switch (msg.type || '') {
+                case 'ready':
+                    let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
+                    console.debug(`frame ${frameid} ready`)
+                    let frame = document.getElementById(frameid) as HTMLIFrameElement;
+                    if (frame) {
+                        this.startFrame(frame);
+                        if (this.options.revealElement)
+                            this.options.revealElement(frame);
+                    }
+                    break;
+                case 'serial': break; //handled elsewhere
+                case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
+                case 'compile':
+                    let cmp = msg as pxsim.SimulatorCompilationMessage;
+                    if (this.options.onCompile)
+                        this.options.onCompile(cmp.name, cmp.content, cmp.contentType);
+                    break;
+                default:
+                    if (msg.type == 'radiopacket') {
+                        // assign rssi noisy?
+                        (msg as pxsim.SimulatorRadioPacketMessage).rssi = 10;
+                    }
+                    this.postMessage(msg, source);
+                    break;
+            }
+        }
+
         private addEventListeners() {
             if (!this.listener) {
                 this.listener = (ev: MessageEvent) => {
-                    let msg = ev.data;
-                    switch (msg.type || '') {
-                        case 'ready':
-                            let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
-                            console.debug(`frame ${frameid} ready`)
-                            let frame = document.getElementById(frameid) as HTMLIFrameElement;
-                            if (frame) {
-                                this.startFrame(frame);
-                                if (this.options.revealElement)
-                                    this.options.revealElement(frame);
-                            }
-                            break;
-                        case 'serial': break; //handled elsewhere
-                        case 'debugger': this.handleDebuggerMessage(msg); break;
-                        case 'compile':
-                            let cmp = msg as pxsim.SimulatorCompilationMessage;
-                            if (this.options.onCompile)
-                                this.options.onCompile(cmp.name, cmp.content, cmp.contentType);
-                            break;
-                        default:
-                            if (msg.type == 'radiopacket') {
-                                // assign rssi noisy?
-                                (msg as pxsim.SimulatorRadioPacketMessage).rssi = 10;
-                            }
-                            this.postMessage(ev.data, ev.source);
-                            break;
-                    }
+                    if (this.hwdbg) return
+                    this.handleMessage(ev.data, ev.source)
                 }
                 window.addEventListener('message', this.listener, false);
             }

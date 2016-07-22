@@ -558,14 +558,13 @@ export class Editor extends srceditor.Editor {
         }
 
         // needed to test roundtrip
-        this.formatCode();
+        let js = this.formatCode();
 
         if (!this.hasBlocks())
             return
 
         // might be undefined
         let mainPkg = pkg.mainEditorPkg();
-        let js = this.currFile.content;
         let xml: string;
 
         const failedAsync = () => {
@@ -681,7 +680,7 @@ export class Editor extends srceditor.Editor {
         this.formatCode()
     }
 
-    formatCode(isAutomatic = false) {
+    formatCode(isAutomatic = false): string {
         if (!this.isTypescript) return;
 
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
@@ -711,6 +710,8 @@ export class Editor extends srceditor.Editor {
         }
         this.editor.setValue(formatted, -1)
         this.editor.gotoLine(line, col - 1, false)
+
+        return formatted
     }
 
     getCurrLinePrefix() {

@@ -1,7 +1,7 @@
 /// <reference path="../typings/node/node.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
-/// <reference path="../built/pxtblocks.d.ts" />
+
 
 (global as any).pxt = pxt;
 
@@ -1243,7 +1243,8 @@ let execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Pr
 let readDirAsync = Promise.promisify(fs.readdir)
 let statAsync = Promise.promisify(fs.stat)
 
-let commonfiles: U.Map<string> = {};
+let commonfiles: U.Map<string> = {}
+let fileoverrides: U.Map<string> = {}
 
 class Host
     implements pxt.Host {
@@ -1260,6 +1261,10 @@ class Host
     readFile(module: pxt.Package, filename: string): string {
         let commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
+
+        let overFile = U.lookup(fileoverrides, filename)
+        if (module.level == 0 && overFile != null)
+            return overFile
 
         let resolved = this.resolve(module, filename)
         try {
@@ -1817,12 +1822,20 @@ function copyCommonFiles() {
     }
 }
 
-function testConverterAsync(configFile: string) {
+function getCachedAsync(url: string, path: string) {
+    return (readFileAsync(path, "utf8") as Promise<string>)
+        .then(v => v, (e: any) => {
+            //console.log(`^^^ fetch ${id} ${Date.now() - start}ms`)
+            return null
+        })
+        .then<string>(v => v ? Promise.resolve(v) :
+            U.httpGetTextAsync(url)
+                .then(v => writeFileAsync(path, v)
+                    .then(() => v)))
+}
+
+function testConverterAsync(url: string) {
     forceCloudBuild = true
-    let cfg: {
-        apiUrl: string,
-        ids: string[]
-    } = readJson(configFile)
     let cachePath = "built/cache/"
     nodeutil.mkdirP(cachePath)
     let tdev = require("./web/tdast")
@@ -1831,31 +1844,26 @@ function testConverterAsync(configFile: string) {
         .then(astinfo => prepTestOptionsAsync()
             .then(opts => {
                 fs.writeFileSync("built/apiinfo.json", JSON.stringify(astinfo, null, 1))
-                return Promise.map(cfg.ids, (id) => (readFileAsync(cachePath + id, "utf8") as Promise<string>)
-                    .then(v => v, (e: any) => "")
-                    .then<string>(v => v ? Promise.resolve(v) :
-                        U.httpGetTextAsync(cfg.apiUrl + id + "/text")
-                            .then(v => writeFileAsync(cachePath + id, v)
-                                .then(() => v)))
-                    .then(v => {
-                        let tdopts = {
-                            text: v,
-                            useExtensions: true,
-                            apiInfo: astinfo
-                        }
-                        let r = tdev.AST.td2ts(tdopts)
-                        let src: string = r.text
-                        U.assert(!!src.trim(), "source is empty")
-                        if (!compilesOK(opts, id + ".ts", src)) {
-                            errors.push(id)
-                            fs.writeFileSync("built/" + id + ".ts.fail", src)
+                return getCachedAsync(url, cachePath + url.replace(/[^a-z0-9A-Z\.]/g, "-"))
+                    .then(text => {
+                        let srcs = JSON.parse(text)
+                        for (let id of Object.keys(srcs)) {
+                            let v = srcs[id]
+                            let tdopts = {
+                                text: v,
+                                useExtensions: true,
+                                apiInfo: astinfo
+                            }
+
+                            let r = tdev.AST.td2ts(tdopts)
+                            let src: string = r.text
+                            U.assert(!!src.trim(), "source is empty")
+                            if (!compilesOK(opts, id + ".ts", src)) {
+                                errors.push(id)
+                                fs.writeFileSync("built/" + id + ".ts.fail", src)
+                            }
                         }
                     })
-                    .then(() => { }, err => {
-                        console.log(`ERROR ${id}: ${err.message}`)
-                        errors.push(id)
-                    })
-                    , { concurrency: 5 })
             }))
         .then(() => {
             if (errors.length) {
@@ -1867,1096 +1875,25 @@ function testConverterAsync(configFile: string) {
         })
 }
 
-
-function testSnippetsAsync(): Promise<void> {
-    let allSnippets: Array<string> = []
-    let searchFolder = (dir: string, paths: Array<string>) => {
-        let ls = fs.readdirSync(dir)
-        for (let f of ls) {
-            let fullPath = path.join(dir, f)
-            let stats = fs.lstatSync(fullPath)
-            if (stats.isDirectory()) {
-                searchFolder(fullPath, paths)
-            }
-            paths.push(fullPath)
-        }
-    }
-    searchFolder('built/docs/snippets', allSnippets)
-
-    allSnippets = allSnippets.filter(p => path.extname(p) == ".ts")
-
-    let target = (): ts.pxt.CompileTarget => {
-        return { 
-            deployDrives: "^MICROBIT",
-            driveName: "MICROBIT",
-            hasHex: false,
-            hexMimeType: "application/x-microbit-hex",
-            isNative: false, //Maybe???
-            jsRefCounting: true
-        }
-    }
-
-    let opts = (basename: string, source: string) => {
-        let opts: ts.pxt.CompileOptions = {
-            ast: true,
-            fileSystem: {},
-            target: target(),
-            hexinfo: null,
-            sourceFiles: []
-        }
-
-        let sourcePaths: Array<string> = []
-        searchFolder('libs/microbit-radio', sourcePaths)
-        searchFolder('libs/microbit', sourcePaths)
-        sourcePaths = sourcePaths.filter(p => path.extname(p) == ".ts" ||
-                                              path.extname(p) == ".d.ts")
-
-        //This file doesn't seem to get used locally
-        sourcePaths = sourcePaths.filter(p => path.basename(p) != 'messages.ts')
-        
-        let fakePath = (p: string): string => {
-            return p.replace('libs/', 'pxt_modules/').replace('built/', '')
-        }
-
-        for (let p of sourcePaths) {
-            let fp = fakePath(p)
-            opts.sourceFiles.push(fp)
-            let src = fs.readFileSync(p, 'utf8')
-            opts.fileSystem[fp] = src
-        }
-
-        opts.fileSystem[basename] = source
-        opts.sourceFiles.push(basename)
-
-        opts.sourceFiles = [
-            "pxt_modules/microbit/dal.d.ts", 
-            "pxt_modules/microbit/enums.d.ts",
-            "pxt_modules/microbit/shims.d.ts",
-            "pxt_modules/microbit/pxt-core.d.ts",
-            "pxt_modules/microbit/pxt-helpers.ts",
-            "pxt_modules/microbit/helpers.ts",
-            "pxt_modules/microbit/input.ts",
-            "pxt_modules/microbit/control.ts", 
-            "pxt_modules/microbit/game.ts",
-            "pxt_modules/microbit/led.ts",
-            "pxt_modules/microbit/music.ts",
-            "pxt_modules/microbit/pins.ts",
-            "pxt_modules/microbit/serial.ts",
-            "pxt_modules/microbit-radio/shims.d.ts",
-            "pxt_modules/microbit-radio/enums.d.ts",
-            "pxt_modules/microbit-radio/radio.ts",
-            "main.ts"
-        ]
-
-        opts.extinfo = {
-            "enumsDTS": "",
-            "generatedFiles": {},
-            "extensionFiles": {},
-            "functions": [
-                {
-                    "args": 2,
-                    "name": "String_::charAt",
-                    "type": "F",
-                    "value": 164928
-                },
-                {
-                    "args": 2,
-                    "name": "String_::charCodeAt",
-                    "type": "F",
-                    "value": 164980
-                },
-                {
-                    "args": 2,
-                    "name": "String_::concat",
-                    "type": "F",
-                    "value": 165012
-                },
-                {
-                    "args": 2,
-                    "name": "String_::compare",
-                    "type": "F",
-                    "value": 165074
-                },
-                {
-                    "args": 1,
-                    "name": "String_::length",
-                    "type": "F",
-                    "value": 165086
-                },
-                {
-                    "args": 1,
-                    "name": "String_::fromCharCode",
-                    "type": "F",
-                    "value": 165090
-                },
-                {
-                    "args": 1,
-                    "name": "String_::toNumber",
-                    "type": "F",
-                    "value": 165118
-                },
-                {
-                    "args": 0,
-                    "name": "String_::mkEmpty",
-                    "type": "F",
-                    "value": 98820
-                },
-                {
-                    "args": 3,
-                    "name": "String_::substr",
-                    "type": "F",
-                    "value": 165128
-                },
-                {
-                    "args": 1,
-                    "name": "Boolean_::toString",
-                    "type": "F",
-                    "value": 98836
-                },
-                {
-                    "args": 1,
-                    "name": "Boolean_::bang",
-                    "type": "F",
-                    "value": 165210
-                },
-                {
-                    "args": 1,
-                    "name": "Number_::toString",
-                    "type": "F",
-                    "value": 165216
-                },
-                {
-                    "args": 2,
-                    "name": "Number_::lt",
-                    "type": "F",
-                    "value": 165244
-                },
-                {
-                    "args": 2,
-                    "name": "Number_::le",
-                    "type": "F",
-                    "value": 165256
-                },
-                {
-                    "args": 2,
-                    "name": "Number_::neq",
-                    "type": "F",
-                    "value": 165270
-                },
-                {
-                    "args": 2,
-                    "name": "Number_::eq",
-                    "type": "F",
-                    "value": 165280
-                },
-                {
-                    "args": 2,
-                    "name": "Number_::gt",
-                    "type": "F",
-                    "value": 165290
-                },
-                {
-                    "args": 2,
-                    "name": "Number_::ge",
-                    "type": "F",
-                    "value": 165302
-                },
-                {
-                    "args": 2,
-                    "name": "Number_::div",
-                    "type": "F",
-                    "value": 165316
-                },
-                {
-                    "args": 2,
-                    "name": "Number_::mod",
-                    "type": "F",
-                    "value": 165324
-                },
-                {
-                    "args": 2,
-                    "name": "Math_::pow",
-                    "type": "F",
-                    "value": 165334
-                },
-                {
-                    "args": 1,
-                    "name": "Math_::random",
-                    "type": "F",
-                    "value": 98856
-                },
-                {
-                    "args": 1,
-                    "name": "Math_::sqrt",
-                    "type": "F",
-                    "value": 165364
-                },
-                {
-                    "args": 1,
-                    "name": "Array_::mk",
-                    "type": "F",
-                    "value": 98904
-                },
-                {
-                    "args": 1,
-                    "name": "Array_::length",
-                    "type": "F",
-                    "value": 165380
-                },
-                {
-                    "args": 2,
-                    "name": "Array_::push",
-                    "type": "P",
-                    "value": 165390
-                },
-                {
-                    "args": 2,
-                    "name": "Array_::getAt",
-                    "type": "F",
-                    "value": 165398
-                },
-                {
-                    "args": 2,
-                    "name": "Array_::removeAt",
-                    "type": "P",
-                    "value": 165406
-                },
-                {
-                    "args": 3,
-                    "name": "Array_::setAt",
-                    "type": "P",
-                    "value": 165414
-                },
-                {
-                    "args": 3,
-                    "name": "Array_::indexOf",
-                    "type": "F",
-                    "value": 165422
-                },
-                {
-                    "args": 2,
-                    "name": "Array_::removeElement",
-                    "type": "F",
-                    "value": 165430
-                },
-                {
-                    "args": 3,
-                    "name": "pxt::registerWithDal",
-                    "type": "P",
-                    "value": 103672
-                },
-                {
-                    "args": 1,
-                    "name": "pxt::runAction0",
-                    "type": "P",
-                    "value": 167252
-                },
-                {
-                    "args": 2,
-                    "name": "pxt::runAction1",
-                    "type": "P",
-                    "value": 102688
-                },
-                {
-                    "args": 3,
-                    "name": "pxt::mkAction",
-                    "type": "F",
-                    "value": 102392
-                },
-                {
-                    "args": 2,
-                    "name": "pxt::mkRecord",
-                    "type": "F",
-                    "value": 102576
-                },
-                {
-                    "args": 0,
-                    "name": "pxt::debugMemLeaks",
-                    "type": "P",
-                    "value": 167008
-                },
-                {
-                    "args": 1,
-                    "name": "pxt::incr",
-                    "type": "F",
-                    "value": 167028
-                },
-                {
-                    "args": 1,
-                    "name": "pxt::decr",
-                    "type": "P",
-                    "value": 166906
-                },
-                {
-                    "args": 1,
-                    "name": "pxt::allocate",
-                    "type": "F",
-                    "value": 167262
-                },
-                {
-                    "args": 0,
-                    "name": "pxt::templateHash",
-                    "type": "F",
-                    "value": 102844
-                },
-                {
-                    "args": 0,
-                    "name": "pxt::programHash",
-                    "type": "F",
-                    "value": 102856
-                },
-                {
-                    "args": 1,
-                    "name": "pxt::ptrOfLiteral",
-                    "type": "F",
-                    "value": 101408
-                },
-                {
-                    "args": 1,
-                    "name": "pxtrt::ldloc",
-                    "type": "F",
-                    "value": 165438
-                },
-                {
-                    "args": 1,
-                    "name": "pxtrt::ldlocRef",
-                    "type": "F",
-                    "value": 165442
-                },
-                {
-                    "args": 2,
-                    "name": "pxtrt::stloc",
-                    "type": "P",
-                    "value": 165456
-                },
-                {
-                    "args": 2,
-                    "name": "pxtrt::stlocRef",
-                    "type": "P",
-                    "value": 165460
-                },
-                {
-                    "args": 0,
-                    "name": "pxtrt::mkloc",
-                    "type": "F",
-                    "value": 98940
-                },
-                {
-                    "args": 0,
-                    "name": "pxtrt::mklocRef",
-                    "type": "F",
-                    "value": 98968
-                },
-                {
-                    "args": 2,
-                    "name": "pxtrt::ldfld",
-                    "type": "F",
-                    "value": 165476
-                },
-                {
-                    "args": 2,
-                    "name": "pxtrt::ldfldRef",
-                    "type": "F",
-                    "value": 165496
-                },
-                {
-                    "args": 3,
-                    "name": "pxtrt::stfld",
-                    "type": "P",
-                    "value": 165516
-                },
-                {
-                    "args": 3,
-                    "name": "pxtrt::stfldRef",
-                    "type": "P",
-                    "value": 165532
-                },
-                {
-                    "args": 1,
-                    "name": "pxtrt::ldglb",
-                    "type": "F",
-                    "value": 98996
-                },
-                {
-                    "args": 1,
-                    "name": "pxtrt::ldglbRef",
-                    "type": "F",
-                    "value": 99036
-                },
-                {
-                    "args": 2,
-                    "name": "pxtrt::stglb",
-                    "type": "P",
-                    "value": 99084
-                },
-                {
-                    "args": 2,
-                    "name": "pxtrt::stglbRef",
-                    "type": "P",
-                    "value": 99128
-                },
-                {
-                    "args": 3,
-                    "name": "pxtrt::stclo",
-                    "type": "F",
-                    "value": 165548
-                },
-                {
-                    "args": 1,
-                    "name": "pxtrt::panic",
-                    "type": "P",
-                    "value": 165602
-                },
-                {
-                    "args": 0,
-                    "name": "pxtrt::getNumGlobals",
-                    "type": "F",
-                    "value": 99180
-                },
-                {
-                    "args": 0,
-                    "name": "pxtrt::getGlobalsPtr",
-                    "type": "F",
-                    "value": 99192
-                },
-                {
-                    "args": 1,
-                    "name": "images::createImage",
-                    "type": "F",
-                    "value": 101584
-                },
-                {
-                    "args": 1,
-                    "name": "images::createBigImage",
-                    "type": "F",
-                    "value": 165736
-                },
-                {
-                    "args": 2,
-                    "name": "ImageMethods::plotImage",
-                    "type": "P",
-                    "value": 165744
-                },
-                {
-                    "args": 2,
-                    "name": "ImageMethods::showImage",
-                    "type": "P",
-                    "value": 101636
-                },
-                {
-                    "args": 2,
-                    "name": "ImageMethods::plotFrame",
-                    "type": "P",
-                    "value": 165902
-                },
-                {
-                    "args": 3,
-                    "name": "ImageMethods::scrollImage",
-                    "type": "P",
-                    "value": 101676
-                },
-                {
-                    "args": 1,
-                    "name": "ImageMethods::clear",
-                    "type": "P",
-                    "value": 165752
-                },
-                {
-                    "args": 4,
-                    "name": "ImageMethods::setPixelBrightness",
-                    "type": "P",
-                    "value": 165776
-                },
-                {
-                    "args": 3,
-                    "name": "ImageMethods::pixelBrightness",
-                    "type": "F",
-                    "value": 165812
-                },
-                {
-                    "args": 1,
-                    "name": "ImageMethods::width",
-                    "type": "F",
-                    "value": 165852
-                },
-                {
-                    "args": 1,
-                    "name": "ImageMethods::height",
-                    "type": "F",
-                    "value": 165856
-                },
-                {
-                    "args": 4,
-                    "name": "ImageMethods::setPixel",
-                    "type": "P",
-                    "value": 165860
-                },
-                {
-                    "args": 3,
-                    "name": "ImageMethods::pixel",
-                    "type": "F",
-                    "value": 165876
-                },
-                {
-                    "args": 2,
-                    "name": "ImageMethods::showFrame",
-                    "type": "P",
-                    "value": 165890
-                },
-                {
-                    "args": 2,
-                    "name": "basic::showNumber",
-                    "type": "P",
-                    "value": 99204
-                },
-                {
-                    "args": 2,
-                    "name": "basic::showLeds",
-                    "type": "P",
-                    "value": 99292
-                },
-                {
-                    "args": 2,
-                    "name": "basic::showString",
-                    "type": "P",
-                    "value": 99344
-                },
-                {
-                    "args": 0,
-                    "name": "basic::clearScreen",
-                    "type": "P",
-                    "value": 99456
-                },
-                {
-                    "args": 2,
-                    "name": "basic::showAnimation",
-                    "type": "P",
-                    "value": 99472
-                },
-                {
-                    "args": 1,
-                    "name": "basic::plotLeds",
-                    "type": "P",
-                    "value": 99528
-                },
-                {
-                    "args": 1,
-                    "name": "basic::forever",
-                    "type": "P",
-                    "value": 99592
-                },
-                {
-                    "args": 1,
-                    "name": "basic::pause",
-                    "type": "P",
-                    "value": 165628
-                },
-                {
-                    "args": 2,
-                    "name": "input::onButtonPressed",
-                    "type": "P",
-                    "value": 165660
-                },
-                {
-                    "args": 2,
-                    "name": "input::onGesture",
-                    "type": "P",
-                    "value": 100900
-                },
-                {
-                    "args": 2,
-                    "name": "input::onPinPressed",
-                    "type": "P",
-                    "value": 165672
-                },
-                {
-                    "args": 1,
-                    "name": "input::buttonIsPressed",
-                    "type": "F",
-                    "value": 100972
-                },
-                {
-                    "args": 0,
-                    "name": "input::compassHeading",
-                    "type": "F",
-                    "value": 101028
-                },
-                {
-                    "args": 0,
-                    "name": "input::temperature",
-                    "type": "F",
-                    "value": 101044
-                },
-                {
-                    "args": 1,
-                    "name": "input::acceleration",
-                    "type": "F",
-                    "value": 101192
-                },
-                {
-                    "args": 0,
-                    "name": "input::lightLevel",
-                    "type": "F",
-                    "value": 101252
-                },
-                {
-                    "args": 1,
-                    "name": "input::rotation",
-                    "type": "F",
-                    "value": 101268
-                },
-                {
-                    "args": 1,
-                    "name": "input::magneticForce",
-                    "type": "F",
-                    "value": 101304
-                },
-                {
-                    "args": 0,
-                    "name": "input::runningTime",
-                    "type": "F",
-                    "value": 165702
-                },
-                {
-                    "args": 0,
-                    "name": "input::calibrate",
-                    "type": "P",
-                    "value": 165710
-                },
-                {
-                    "args": 1,
-                    "name": "input::pinIsPressed",
-                    "type": "F",
-                    "value": 165712
-                },
-                {
-                    "args": 1,
-                    "name": "input::setAccelerometerRange",
-                    "type": "P",
-                    "value": 101392
-                },
-                {
-                    "args": 1,
-                    "name": "control::inBackground",
-                    "type": "P",
-                    "value": 164824
-                },
-                {
-                    "args": 0,
-                    "name": "control::reset",
-                    "type": "P",
-                    "value": 164832
-                },
-                {
-                    "args": 3,
-                    "name": "control::raiseEvent",
-                    "type": "P",
-                    "value": 164840
-                },
-                {
-                    "args": 3,
-                    "name": "control::onEvent",
-                    "type": "P",
-                    "value": 164858
-                },
-                {
-                    "args": 0,
-                    "name": "control::eventValue",
-                    "type": "F",
-                    "value": 98796
-                },
-                {
-                    "args": 0,
-                    "name": "control::eventTimestamp",
-                    "type": "F",
-                    "value": 98808
-                },
-                {
-                    "args": 0,
-                    "name": "control::deviceName",
-                    "type": "F",
-                    "value": 164866
-                },
-                {
-                    "args": 0,
-                    "name": "control::deviceSerialNumber",
-                    "type": "F",
-                    "value": 164898
-                },
-                {
-                    "args": 2,
-                    "name": "led::plot",
-                    "type": "P",
-                    "value": 101424
-                },
-                {
-                    "args": 2,
-                    "name": "led::unplot",
-                    "type": "P",
-                    "value": 101444
-                },
-                {
-                    "args": 2,
-                    "name": "led::point",
-                    "type": "F",
-                    "value": 101464
-                },
-                {
-                    "args": 0,
-                    "name": "led::brightness",
-                    "type": "F",
-                    "value": 101488
-                },
-                {
-                    "args": 1,
-                    "name": "led::setBrightness",
-                    "type": "P",
-                    "value": 101504
-                },
-                {
-                    "args": 0,
-                    "name": "led::stopAnimation",
-                    "type": "P",
-                    "value": 101520
-                },
-                {
-                    "args": 1,
-                    "name": "led::setDisplayMode",
-                    "type": "P",
-                    "value": 101536
-                },
-                {
-                    "args": 0,
-                    "name": "led::screenshot",
-                    "type": "F",
-                    "value": 101552
-                },
-                {
-                    "args": 1,
-                    "name": "pins::getPinAddress",
-                    "type": "F",
-                    "value": 165910
-                },
-                {
-                    "args": 1,
-                    "name": "pins::digitalReadPin",
-                    "type": "F",
-                    "value": 165918
-                },
-                {
-                    "args": 2,
-                    "name": "pins::digitalWritePin",
-                    "type": "P",
-                    "value": 165934
-                },
-                {
-                    "args": 1,
-                    "name": "pins::analogReadPin",
-                    "type": "F",
-                    "value": 165954
-                },
-                {
-                    "args": 2,
-                    "name": "pins::analogWritePin",
-                    "type": "P",
-                    "value": 165970
-                },
-                {
-                    "args": 2,
-                    "name": "pins::analogSetPeriod",
-                    "type": "P",
-                    "value": 165990
-                },
-                {
-                    "args": 3,
-                    "name": "pins::onPulsed",
-                    "type": "P",
-                    "value": 166010
-                },
-                {
-                    "args": 0,
-                    "name": "pins::pulseDuration",
-                    "type": "F",
-                    "value": 101776
-                },
-                {
-                    "args": 2,
-                    "name": "pins::servoWritePin",
-                    "type": "P",
-                    "value": 101788
-                },
-                {
-                    "args": 2,
-                    "name": "pins::servoSetPulse",
-                    "type": "P",
-                    "value": 166044
-                },
-                {
-                    "args": 1,
-                    "name": "pins::analogSetPitchPin",
-                    "type": "P",
-                    "value": 101820
-                },
-                {
-                    "args": 2,
-                    "name": "pins::analogPitch",
-                    "type": "P",
-                    "value": 101836
-                },
-                {
-                    "args": 2,
-                    "name": "pins::setPull",
-                    "type": "P",
-                    "value": 166064
-                },
-                {
-                    "args": 1,
-                    "name": "pins::createBuffer",
-                    "type": "F",
-                    "value": 166096
-                },
-                {
-                    "args": 3,
-                    "name": "pins::i2cReadBuffer",
-                    "type": "F",
-                    "value": 101920
-                },
-                {
-                    "args": 3,
-                    "name": "pins::i2cWriteBuffer",
-                    "type": "P",
-                    "value": 101960
-                },
-                {
-                    "args": 0,
-                    "name": "serial::readLine",
-                    "type": "F",
-                    "value": 99624
-                },
-                {
-                    "args": 1,
-                    "name": "serial::writeString",
-                    "type": "P",
-                    "value": 99680
-                },
-                {
-                    "args": 3,
-                    "name": "serial::redirect",
-                    "type": "P",
-                    "value": 99712
-                },
-                {
-                    "args": 2,
-                    "name": "BufferMethods::getByte",
-                    "type": "F",
-                    "value": 166124
-                },
-                {
-                    "args": 3,
-                    "name": "BufferMethods::setByte",
-                    "type": "P",
-                    "value": 166160
-                },
-                {
-                    "args": 1,
-                    "name": "BufferMethods::getBytes",
-                    "type": "F",
-                    "value": 166192
-                },
-                {
-                    "args": 4,
-                    "name": "BufferMethods::setNumber",
-                    "type": "P",
-                    "value": 166196
-                },
-                {
-                    "args": 3,
-                    "name": "BufferMethods::getNumber",
-                    "type": "F",
-                    "value": 166342
-                },
-                {
-                    "args": 1,
-                    "name": "BufferMethods::length",
-                    "type": "F",
-                    "value": 166558
-                },
-                {
-                    "args": 4,
-                    "name": "BufferMethods::fill",
-                    "type": "P",
-                    "value": 166562
-                },
-                {
-                    "args": 3,
-                    "name": "BufferMethods::slice",
-                    "type": "F",
-                    "value": 166598
-                },
-                {
-                    "args": 2,
-                    "name": "BufferMethods::shift",
-                    "type": "P",
-                    "value": 166648
-                },
-                {
-                    "args": 2,
-                    "name": "BufferMethods::rotate",
-                    "type": "P",
-                    "value": 166676
-                },
-                {
-                    "args": 3,
-                    "name": "BufferMethods::write",
-                    "type": "P",
-                    "value": 166704
-                },
-                {
-                    "args": 1,
-                    "name": "radio::sendNumber",
-                    "type": "P",
-                    "value": 99832
-                },
-                {
-                    "args": 2,
-                    "name": "radio::sendValue",
-                    "type": "P",
-                    "value": 99892
-                },
-                {
-                    "args": 1,
-                    "name": "radio::sendString",
-                    "type": "P",
-                    "value": 100020
-                },
-                {
-                    "args": 0,
-                    "name": "radio::writeValueToSerial",
-                    "type": "P",
-                    "value": 100112
-                },
-                {
-                    "args": 1,
-                    "name": "radio::onDataReceived",
-                    "type": "P",
-                    "value": 165636
-                },
-                {
-                    "args": 1,
-                    "name": "radio::receivedNumberAt",
-                    "type": "F",
-                    "value": 100540
-                },
-                {
-                    "args": 0,
-                    "name": "radio::receiveNumber",
-                    "type": "F",
-                    "value": 100608
-                },
-                {
-                    "args": 0,
-                    "name": "radio::receiveString",
-                    "type": "F",
-                    "value": 100664
-                },
-                {
-                    "args": 0,
-                    "name": "radio::receivedSignalStrength",
-                    "type": "F",
-                    "value": 100768
-                },
-                {
-                    "args": 1,
-                    "name": "radio::setGroup",
-                    "type": "P",
-                    "value": 100796
-                },
-                {
-                    "args": 1,
-                    "name": "radio::setTransmitPower",
-                    "type": "P",
-                    "value": 100824
-                },
-                {
-                    "args": 1,
-                    "name": "radio::setTransmitSerialNumber",
-                    "type": "P",
-                    "value": 100852
-                }
-            ],
-            "compileData": null,
-            "onlyPublic": true,
-            "sha": "70b705be8463c9802ec28b1c94cdcc67e8ba4d792fd91903eb836931a1f9df59",
-            "shimsDTS": "",
-            "yotta": {
-                "config": {
-                    "microbit-dal": {
-                        "bluetooth": {
-                            "enabled": 0
-                        }
-                    }
-                },
-                "dependencies": {
-                    "pxt-microbit-core": "microsoft/pxt-microbit-core#v0.1.11"
-                }
-            }
-        }
-
-        return opts
-    }
-
-    let printErrors = (res: ts.pxt.CompileResult) => {
-        for (let diag of res.diagnostics) {
-            console.log(`${diag.category}: ${diag.code} ${diag.messageText}`)
-        }
-    }
-
-    let decompile = (source: string) => {
-        let res = ts.pxt.decompile(opts('main.ts', source), 'main.ts')
-        if (!res.success) {
-            printErrors(res)
-            return null
-        }
-
-        return res.outfiles["main.blocks"]
-    }
-
-    let successCount = 0
-
-    for (let p of allSnippets) {
-        let basename = path.basename(p)
-        basename = "main.ts"
-        let originalTs = fs.readFileSync(p, 'utf8')
-        let blocks = decompile(originalTs)
-        if (blocks) {
-            successCount++
-            console.log(p)
-        }
-        //let ws = pxt.blocks.loadWorkspaceXml(blocks)
-        //console.log(ws)
-
-        //No point doing them all at the moment
-        break
-    }
-
-    console.log(`Success rate: ${successCount}/${allSnippets.length}`)
-
-    return null
-}
-
-function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
+function patchOpts(opts: ts.pxt.CompileOptions, fn: string, content: string) {
     console.log(`*** ${fn}, size=${content.length}`)
     let opts2 = U.flatClone(opts)
     opts2.fileSystem = U.flatClone(opts.fileSystem)
     opts2.sourceFiles = opts.sourceFiles.slice()
     opts2.sourceFiles.push(fn)
     opts2.fileSystem[fn] = content
+    opts2.embedBlob = null
+    opts2.embedMeta = null
+    return opts2
+}
+
+function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
+    let opts2 = patchOpts(opts, fn, content)
     let res = ts.pxt.compile(opts2)
     reportDiagnostics(res.diagnostics);
     if (!res.success) {
         console.log("ERRORS", fn)
     }
-
     return res.success
 }
 
@@ -2968,32 +1905,141 @@ function getApiInfoAsync() {
         })
 }
 
+function findTestFile() {
+    let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
+    if (tsFiles.length != 1)
+        U.userError("need exactly one .ts file in package to 'testdir'")
+    return tsFiles[0]
+}
+
 function prepTestOptionsAsync() {
     return prepBuildOptionsAsync(BuildOption.Test)
         .then(opts => {
-            let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
-            if (tsFiles.length != 1)
-                U.userError("need exactly one .ts file in package to 'testdir'")
-
-            let tsFile = tsFiles[0]
+            let tsFile = findTestFile()
             delete opts.fileSystem[tsFile]
             opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
             return opts
         })
 }
 
+interface TestInfo {
+    filename: string;
+    base: string;
+    text: string;
+}
+
 function testDirAsync(dir: string) {
     forceCloudBuild = true
-    return prepTestOptionsAsync()
-        .then(opts => {
-            let errors: string[] = []
+    let tests: TestInfo[] = []
 
-            for (let fn of fs.readdirSync(dir)) {
-                if (!U.endsWith(fn, ".ts") || fn[0] == ".") continue;
-                if (!compilesOK(opts, fn, fs.readFileSync(dir + "/" + fn, "utf8")))
-                    errors.push(fn)
+    dir = path.resolve(dir || ".")
+    let outdir = dir + "/built/"
+
+    nodeutil.mkdirP(outdir)
+
+    for (let fn of fs.readdirSync(dir)) {
+        if (fn[0] == ".") continue;
+        let full = dir + "/" + fn
+        if (U.endsWith(fn, ".ts")) {
+            let text = fs.readFileSync(full, "utf8")
+            let m = /^\s*\/\/\s*base:\s*(\S+)/m.exec(text)
+            let base = m ? m[1] : "base"
+            tests.push({
+                filename: full,
+                base: base,
+                text: text
+            })
+        } else if (fs.existsSync(full + "/" + pxt.configName)) {
+            tests.push({
+                filename: full,
+                base: fn,
+                text: null
+            })
+        }
+    }
+
+    tests.sort((a, b) => {
+        let r = U.strcmp(a.base, b.base)
+        if (r == 0)
+            if (a.text == null) return -1
+            else if (b.text == null) return 1
+            else return U.strcmp(a.filename, b.filename)
+        else return r
+    })
+
+    let currBase = ""
+    let errors: string[] = []
+
+    return Promise.mapSeries(tests, (ti) => {
+        let fn = path.basename(ti.filename)
+        console.log(`--- ${fn}`)
+        let hexPath = outdir + fn.replace(/\.ts$/, "") + ".hex"
+        if (ti.text == null) {
+            currBase = ti.base
+            process.chdir(ti.filename)
+            mainPkg = new pxt.MainPackage(new Host())
+            return installAsync()
+                .then(testAsync)
+                .then(() => {
+                    if (pxt.appTarget.compile.hasHex)
+                        fs.writeFileSync(hexPath, fs.readFileSync("built/binary.hex"))
+                })
+        } else {
+            let start = Date.now()
+            if (currBase != ti.base) {
+                throw U.userError("Base directory: " + ti.base + " not found.")
+            } else {
+                let tsf = findTestFile()
+                let files = mainPkg.config.files
+                let idx = files.indexOf(tsf)
+                U.assert(idx >= 0)
+                files[idx] = fn
+                mainPkg.config.name = fn.replace(/\.ts$/, "")
+                mainPkg.config.description = `Generated from ${ti.base} with ${fn}`
+                fileoverrides = {}
+                fileoverrides[fn] = ti.text
+                return prepBuildOptionsAsync(BuildOption.Test, true)
+                    .then(opts => {
+                        let res = ts.pxt.compile(opts)
+                        let lines = ti.text.split(/\r?\n/)
+                        let errCode = (s: string) => {
+                            if (!s) return 0
+                            let m = /\/\/\s*TS(\d\d\d\d\d?)/.exec(s)
+                            if (m) return parseInt(m[1])
+                            else return 0
+                        }
+                        let numErr = 0
+                        for (let diag of res.diagnostics) {
+                            if (!errCode(lines[diag.line])) {
+                                reportDiagnostics(res.diagnostics);
+                                numErr++
+                            }
+                        }
+                        let lineNo = 0
+                        for (let line of lines) {
+                            let code = errCode(line)
+                            if (code && res.diagnostics.filter(d => d.line == lineNo && d.code == code).length == 0) {
+                                numErr++
+                                console.log(`${fn}(${lineNo + 1}): expecting error TS${code}`)
+                            }
+                            lineNo++                            
+                        }
+                        if (numErr) {
+                            console.log("ERRORS", fn)
+                            errors.push(fn)
+                            fs.unlink(hexPath) // ignore errors
+                        } else {
+                            let hex = res.outfiles["binary.hex"]
+                            if (hex) {
+                                fs.writeFileSync(hexPath, hex)
+                                console.log(`wrote hex: ${hexPath} ${hex.length} bytes; ${Date.now() - start}ms`)
+                            }
+                        }
+                    })
             }
-
+        }
+    })
+        .then(() => {
             if (errors.length) {
                 console.log("Errors: " + errors.join(", "))
                 process.exit(1)
@@ -3003,12 +2049,15 @@ function testDirAsync(dir: string) {
         })
 }
 
-function prepBuildOptionsAsync(mode: BuildOption) {
+function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
     ensurePkgDir();
     return mainPkg.loadAsync()
         .then(() => {
-            buildDalConst();
-            copyCommonFiles();
+            if (!quick) {
+                buildDalConst();
+                copyCommonFiles();
+            }
+            // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
             if (target.hasHex && mode != BuildOption.Run)
                 target.isNative = true
@@ -3088,6 +2137,90 @@ export function uploadDocsAsync(...args: string[]): Promise<void> {
     return uploader.uploadDocsAsync(...args)
 }
 
+export interface SavedProject {
+    name: string;
+    files: U.Map<string>;
+}
+
+export function extractAsync(filename: string) {
+    let oneFile = (src: string, editor: string) => {
+        let files: any = {}
+        files["main." + (editor || "td")] = src || ""
+        return files
+    }
+
+    return (filename == "-" || !filename
+        ? nodeutil.readResAsync(process.stdin)
+        : readFileAsync(filename) as Promise<Buffer>)
+        .then(buf => {
+            let str = buf.toString("utf8")
+            if (str[0] == ":") {
+                console.log("Detected .hex file.")
+                return pxt.cpp.unpackSourceFromHexAsync(buf)
+                    .then(data => {
+                        if (!data) return null
+                        if (!data.meta) data.meta = {} as any
+                        let id = data.meta.cloudId || "?"
+                        console.log(`.hex cloudId: ${id}`)
+                        let files: U.Map<string> = null
+                        try {
+                            files = JSON.parse(data.source)
+                        } catch (e) {
+                            files = oneFile(data.source, data.meta.editor)
+                        }
+                        return {
+                            projects: [
+                                {
+                                    name: data.meta.name,
+                                    files: files
+                                }
+                            ]
+                        }
+                    })
+            } else if (str[0] == "{") {  // JSON
+                console.log("Detected .json file.")
+                return JSON.parse(str)
+            } else if (buf[0] == 0x5d) { // JSZ
+                console.log("Detected .jsz file.")
+                return pxt.lzmaDecompressAsync(buf as any)
+                    .then(str => JSON.parse(str))
+            } else
+                return Promise.resolve(null)
+        })
+        .then(json => {
+            if (!json) {
+                console.log("Couldn't extract.")
+                return
+            }
+            if (Array.isArray(json.scripts)) {
+                console.log("Legacy TD workspace.")
+                json.projects = json.scripts.map((scr: any) => ({
+                    name: scr.header.name,
+                    files: oneFile(scr.source, scr.header.editor)
+                }))
+                delete json.scripts
+            }
+
+            let prjs: SavedProject[] = json.projects
+
+            if (!prjs) {
+                console.log("No projects found.")
+                return
+            }
+
+            for (let prj of prjs) {
+                let dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
+                nodeutil.mkdirP(dirname)
+                for (let fn of Object.keys(prj.files)) {
+                    fn = fn.replace(/[\/]/g, "-")
+                    let fullname = dirname + "/" + fn
+                    fs.writeFileSync(fullname, prj.files[fn])
+                    console.log("Wrote " + fullname)
+                }
+            }
+        })
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -3119,12 +2252,12 @@ cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("publish                      - publish current package", publishAsync)
+cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file or stdin", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
-cmd("testdir  DIR                 - compile files from DIR one-by-one replacing the main file of current package", testDirAsync, 1)
-cmd("testconv JSONCONFIG          - test TD->TS converter", testConverterAsync, 2)
-cmd("roundtrip                    - test TS->blockly->TS conversions on all documentation snippets", testSnippetsAsync)
+cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
+cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
@@ -3206,6 +2339,11 @@ function ensurePkgDir() {
 function errorHandler(reason: any) {
     if (reason.isUserError) {
         console.error("ERROR:", reason.message)
+        process.exit(1)
+    }
+
+    if (!Cloud.accessToken && reason.statusCode == 403) {
+        console.error("Got HTTP 403. Did you forget to 'pxt login' ?")
         process.exit(1)
     }
 

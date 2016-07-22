@@ -582,7 +582,7 @@ namespace pxt.blocks {
         if (v != null)
             return H.mathCall("random", [H.mkNumberLiteral(v + 1)]);
         else
-            return H.mathCall("random", [H.mkSimpleCall(opToTok["+"], [expr, H.mkNumberLiteral(1)])])
+            return H.mathCall("random", [H.mkSimpleCall(opToTok["ADD"], [expr, H.mkNumberLiteral(1)])])
     }
 
     function compileCreateList(e: Environment, b: B.Block): Node {

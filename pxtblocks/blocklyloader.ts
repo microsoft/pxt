@@ -479,7 +479,7 @@ namespace pxt.blocks {
             Blockly.Blocks[id].init = function () {
                 // The magic of dynamic this-binding.
                 old.call(this);
-                this.setHelpUrl("/blocks/" + url);
+                this.setHelpUrl(/*"/blocks/" + */url);
                 if (!this.codeCard) {
                     let tb = document.getElementById('blocklyToolboxDefinition');
                     let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
@@ -500,21 +500,21 @@ namespace pxt.blocks {
         monkeyPatchBlock("device_while", lf("a loop that repeats while the condition is true"), "blocks/loops/while");
 
         monkeyPatchBlock("variables_set", lf("assign the value of a variable"), "blocks/variables/assign");
-        monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change");
+        monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change-var");
 
         monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "blocks/logic/boolean");
         monkeyPatchBlock("logic_operation", lf("boolean operation"), "blocks/logic/boolean");
         monkeyPatchBlock("logic_negate", lf("logical negation"), "blocks/logic/boolean");
         monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "blocks/logic/boolean");
 
-        monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("a integer number") : lf("a decimal number"), "types/number");
+        monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("a integer number") : lf("a decimal number"), "reference/types/number");
         monkeyPatchBlock("math_arithmetic", lf("arithmetic operation"), "blocks/math");
         monkeyPatchBlock("math_op2", lf("minimum or maximum of 2 numbers"), "blocks/math");
         monkeyPatchBlock("math_op3", lf("absolute value of a number"), "blocks/math");
         monkeyPatchBlock("device_random", lf("pick random number"), "blocks/math");
 
-        monkeyPatchBlock("text", lf("a piece of text"), "text");
-        monkeyPatchBlock("text_length", lf("number of characters in the string"), "text/length");
+        monkeyPatchBlock("text", lf("a piece of text"), "reference/types/string");
+        monkeyPatchBlock("text_length", lf("number of characters in the string"), "reference/types/string-functions");
     }
 
     function initLoops() {

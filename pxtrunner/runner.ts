@@ -308,13 +308,19 @@ ${files["main.ts"]}
 </aside>   
 
 <aside id=vimeo>
+<div class="ui two column stackable grid container">
+<div class="column">
     <div class="ui embed mdvid" data-source="vimeo" data-id="@ARGS@" data-placeholder="/thumbnail/1024/vimeo/@ARGS@" data-icon="video play">
     </div>
+</div></div>    
 </aside>
-    
+
 <aside id=youtube>
+<div class="ui two column stackable grid container">
+<div class="column">
     <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
     </div>
+</div></div>    
 </aside>
 
 <aside id=section>

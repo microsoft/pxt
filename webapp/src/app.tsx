@@ -260,6 +260,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         }
 
         let publish = () => {
+            pxt.tickEvent("menu.embed.publish");
             this.props.parent.publishAsync().done();
         }
         let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
@@ -870,6 +871,21 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         logs.clear();
     }
 
+    hwDebug() {
+        let start = Promise.resolve()
+        if (!this.state.running || !simulator.driver.debug)
+            start = this.runSimulator({ debug: true })
+        return start.then(() => {
+            simulator.driver.setHwDebugger({
+                postMessage: (msg) => {
+                    hwdbg.handleMessage(msg as pxsim.DebuggerMessage)
+                }
+            })
+            hwdbg.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
+            return hwdbg.startDebugAsync()
+        })
+    }
+
     runSimulator(opts: compiler.CompileOptions = {}) {
         pxt.tickEvent(opts.background ? "autorun" :
             opts.debug ? "debug" : "run");
@@ -882,7 +898,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({ simulatorCompilation: undefined })
 
         let state = this.editor.snapshotState()
-        compiler.compileAsync(opts)
+        return compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[ts.pxt.BINARY_JS]) {
@@ -892,8 +908,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
             })
-            .done()
-
     }
 
     editText() {
@@ -1103,7 +1117,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="blue" text={lf("Compile") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
                         <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                        {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="play" text={lf("Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
+                    </div>
+                    <div className="ui item landscape only">
+                        {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
+                        {pxt.debugMode() ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={lf("Dev Debug") } onClick={() => this.hwDebug() } /> : ''}
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
@@ -1265,6 +1282,9 @@ function assembleCurrent() {
         })
 }
 
+function log(v: any) {
+    console.log(v)
+}
 
 // This is for usage from JS console
 let myexports: any = {
@@ -1280,7 +1300,8 @@ let myexports: any = {
     apiAsync: core.apiAsync,
     showIcons,
     hwdbg,
-    assembleCurrent
+    assembleCurrent,
+    log
 };
 (window as any).E = myexports;
 
@@ -1375,6 +1396,10 @@ $(document).ready(() => {
         .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
+        .then(() => {
+            if (localStorage["noAutoRun"] && pxt.appTarget.simulator)
+                pxt.appTarget.simulator.autoRun = false
+        })
         .then(() => {
             return compiler.init();
         })

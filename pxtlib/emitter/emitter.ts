@@ -1,6 +1,6 @@
 namespace ts.pxt {
-    export var assert = Util.assert;
-    export var oops = Util.oops;
+    export const assert = Util.assert;
+    export const oops = Util.oops;
     export type StringMap<T> = Util.Map<T>;
     export import U = ts.pxt.Util;
 
@@ -9,7 +9,9 @@ namespace ts.pxt {
     export const BINARY_ASM = "binary.asm";
 
     let EK = ir.EK;
-    export var SK = SyntaxKind;
+    export const SK = SyntaxKind;
+
+    export const numReservedGlobals = 1;
 
     export function stringKind(n: Node) {
         if (!n) return "<null>"
@@ -20,12 +22,16 @@ namespace ts.pxt {
         console.log(stringKind(n))
     }
 
-    function userError(msg: string, secondary = false): Error {
+    // next free error 9232
+    function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
+        (<any>e).ksErrorCode = code;
         if (secondary && inCatchErrors) {
-            if (!lastSecondaryError)
+            if (!lastSecondaryError) {
                 lastSecondaryError = msg
+                lastSecondaryErrorCode = code
+            }
             return e
         }
         debugger;
@@ -82,7 +88,7 @@ namespace ts.pxt {
         while (true) {
             node = node.parent
             if (!node)
-                userError(lf("cannot determine parent of {0}", stringKind(node0)))
+                userError(9229, lf("cannot determine parent of {0}", stringKind(node0)))
             if (node.kind == SK.FunctionDeclaration ||
                 node.kind == SK.ArrowFunction ||
                 node.kind == SK.FunctionExpression ||
@@ -175,6 +181,7 @@ namespace ts.pxt {
     let lf = thumb.lf;
     let checker: TypeChecker;
     let lastSecondaryError: string
+    let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
 
     export function getComments(node: Node) {
@@ -284,7 +291,7 @@ namespace ts.pxt {
             if (isClassType(t)) return t;
             if (isInterfaceType(t)) return t;
             if (deconstructFunctionType(t)) return t;
-            userError(lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)), true)
+            userError(9201, lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)), true)
         }
         return t
     }
@@ -307,7 +314,7 @@ namespace ts.pxt {
         let text = node && node.name ? (<Identifier>node.name).text : null
         if (!text && node.kind == SK.Constructor)
             text = "constructor"
-        if (node.parent && node.parent.kind == SK.ClassDeclaration)
+        if (node && node.parent && node.parent.kind == SK.ClassDeclaration)
             text = (<ClassDeclaration>node.parent).name.text + "." + text
         text = text || "inline"
         return text;
@@ -366,6 +373,8 @@ namespace ts.pxt {
 
             hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
+
+            opts.breakpoints = true
         }
 
         if (opts.breakpoints)
@@ -376,7 +385,8 @@ namespace ts.pxt {
                 start: 0,
                 length: 0,
                 line: 0,
-                character: 0
+                character: 0,
+                successors: null
             }]
 
         let bin: Binary;
@@ -429,9 +439,9 @@ namespace ts.pxt {
             emitSkipped: !!opts.noEmit
         }
 
-        function error(node: Node, msg: string, arg0?: any, arg1?: any, arg2?: any) {
+        function error(node: Node, code:number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
             diagnostics.add(createDiagnosticForNode(node, <any>{
-                code: 9042,
+                code: code,
                 message: msg,
                 key: msg.replace(/^[a-zA-Z]+/g, "_"),
                 category: DiagnosticCategory.Error,
@@ -441,7 +451,7 @@ namespace ts.pxt {
         function unhandled(n: Node, addInfo = "") {
             if (addInfo)
                 addInfo = " (" + addInfo + ")"
-            return userError(lf("Unsupported syntax node: {0}", stringKind(n)) + addInfo);
+            return userError(9202, lf("Unsupported syntax node: {0}", stringKind(n)) + addInfo);
         }
 
         function nodeKey(f: Node) {
@@ -497,7 +507,7 @@ namespace ts.pxt {
                 host.writeFile(fn, data, false, null);
 
             if (opts.target.isNative) {
-                thumbEmit(bin, opts)
+                thumbEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
@@ -505,7 +515,7 @@ namespace ts.pxt {
 
         function typeCheckVar(decl: Declaration) {
             if (typeOf(decl).flags & TypeFlags.Void)
-                userError("void-typed variables not supported")
+                userError(9203, lf("void-typed variables not supported"))
         }
 
         function lookupCell(decl: Declaration): ir.Cell {
@@ -514,7 +524,7 @@ namespace ts.pxt {
                 typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
-                    ex = new ir.Cell(bin.globals.length, decl, getVarInfo(decl))
+                    ex = new ir.Cell(bin.globals.length + numReservedGlobals, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
                 return ex
@@ -522,7 +532,7 @@ namespace ts.pxt {
                 let res = proc.localIndex(decl)
                 if (!res) {
                     if (bin.finalPass)
-                        userError(lf("cannot locate identifer"))
+                        userError(9204, lf("cannot locate identifer"))
                     else
                         res = proc.mkLocal(decl, getVarInfo(decl))
                 }
@@ -579,13 +589,13 @@ namespace ts.pxt {
                             if (w == 0)
                                 w = x;
                             else if (x != w)
-                                userError(lf("lines in image literal have to have the same width (got {0} and then {1} pixels)", w, x))
+                                userError(9205, lf("lines in image literal have to have the same width (got {0} and then {1} pixels)", w, x))
                             x = 0;
                             h++;
                         }
                         break;
                     default:
-                        userError(lf("Only 0 . _ (off) and 1 # * (on) are allowed in image literals"))
+                        userError(9206, lf("Only 0 . _ (off) and 1 # * (on) are allowed in image literals"))
                 }
             }
 
@@ -619,7 +629,7 @@ ${lbl}: .short 0xffff
         function emitFunLiteral(f: FunctionDeclaration) {
             let attrs = parseComments(f);
             if (attrs.shim)
-                userError(lf("built-in functions cannot be yet used as values; did you forget ()?"))
+                userError(9207, lf("built-in functions cannot be yet used as values; did you forget ()?"))
             let info = getFunctionInfo(f)
             if (info.location) {
                 return info.location.load()
@@ -645,7 +655,7 @@ ${lbl}: .short 0xffff
         function emitThis(node: Node) {
             let meth = getEnclosingMethod(node)
             if (!meth)
-                userError("'this' used outside of a method")
+                userError(9208, lf("'this' used outside of a method"))
             let inf = getFunctionInfo(meth)
             if (!inf.thisParameter) {
                 //console.log("get this param,", meth.kind, nodeKey(meth))
@@ -721,7 +731,7 @@ ${lbl}: .short 0xffff
         function emitObjectLiteral(node: ObjectLiteralExpression) { }
         function emitPropertyAssignment(node: PropertyDeclaration) {
             if (node.initializer)
-                userError(lf("class field initializers not supported"))
+                userError(9209, lf("class field initializers not supported"))
             // do nothing
         }
         function emitShorthandPropertyAssignment(node: ShorthandPropertyAssignment) { }
@@ -743,7 +753,7 @@ ${lbl}: .short 0xffff
                     if (val == null) {
                         if ((decl as EnumMember).initializer)
                             return emitExpr((decl as EnumMember).initializer)
-                        userError(lf("Cannot compute enum value"))
+                        userError(9210, lf("Cannot compute enum value"))
                     }
                     ev = val + ""
                 }
@@ -762,7 +772,7 @@ ${lbl}: .short 0xffff
                 callInfo.args.push(node.expression)
                 return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
             } else if (decl.kind == SK.MethodDeclaration || decl.kind == SK.MethodSignature) {
-                throw userError(lf("cannot use method as lambda; did you forget '()' ?"))
+                throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
@@ -899,19 +909,19 @@ ${lbl}: .short 0xffff
                             })
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
-                                userError("only numbers, null, true and false supported as default arguments")
+                                userError(9212, lf("only numbers, null, true and false supported as default arguments"))
                             }
                             args.push(prm.initializer)
                         }
                     } else {
-                        userError("unsupported default argument (shouldn't happen)")
+                        userError(9213, lf("unsupported default argument (shouldn't happen)"))
                     }
                 })
             }
 
             if (attrs.imageLiteral) {
                 if (!isStringLiteral(args[0])) {
-                    userError(lf("Only image literals (string literals) supported here; {0}", stringKind(args[0])))
+                    userError(9214, lf("Only image literals (string literals) supported here; {0}", stringKind(args[0])))
                 }
 
                 args[0] = emitImageLiteral((args[0] as StringLiteral).text)
@@ -967,9 +977,9 @@ ${lbl}: .short 0xffff
                     let helpersModule = <ModuleDeclaration>syms.filter(s => s.name == "helpers")[0].valueDeclaration;
                     let helperStmt = (<ModuleBlock>helpersModule.body).statements.filter(s => s.symbol.name == attrs.helper)[0]
                     if (!helperStmt)
-                        userError(lf("helpers.{0} not found", attrs.helper))
+                        userError(9215, lf("helpers.{0} not found", attrs.helper))
                     if (helperStmt.kind != SK.FunctionDeclaration)
-                        userError(lf("helpers.{0} isn't a function", attrs.helper))
+                        userError(9216, lf("helpers.{0} isn't a function", attrs.helper))
                     decl = <FunctionDeclaration>helperStmt;
                     markUsed(decl)
                     return emitPlain();
@@ -983,10 +993,10 @@ ${lbl}: .short 0xffff
                 decl.kind == SK.FunctionDeclaration || // this is lambda
                 decl.kind == SK.Parameter) {
                 if (args.length > 1)
-                    userError("lambda functions with more than 1 argument not supported")
+                    userError(9217, lf("lambda functions with more than 1 argument not supported"))
 
                 if (hasRet)
-                    userError("lambda functions cannot yet return values")
+                    userError(9218, lf("lambda functions cannot yet return values"))
 
                 let suff = args.length + ""
 
@@ -998,9 +1008,9 @@ ${lbl}: .short 0xffff
 
             if (decl.kind == SK.ModuleDeclaration) {
                 if (getName(decl) == "String")
-                    userError(lf("to convert X to string use: X + \"\""))
+                    userError(9219, lf("to convert X to string use: X + \"\""))
                 else
-                    userError(lf("namespaces cannot be called directly"))
+                    userError(9220, lf("namespaces cannot be called directly"))
             }
 
             throw unhandled(node, stringKind(decl))
@@ -1013,7 +1023,7 @@ ${lbl}: .short 0xffff
             } else if (isClassType(t)) {
                 let classDecl = <ClassDeclaration>getDecl(node.expression)
                 if (classDecl.kind != SK.ClassDeclaration) {
-                    userError("new expression only supported on class types")
+                    userError(9221, lf("new expression only supported on class types"))
                 }
                 let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
                 let info = getClassInfo(t)
@@ -1034,7 +1044,7 @@ ${lbl}: .short 0xffff
                     return obj
                 } else {
                     if (node.arguments && node.arguments.length)
-                        userError(lf("constructor with arguments not found"));
+                        userError(9222, lf("constructor with arguments not found"));
                     return obj;
                 }
             } else {
@@ -1127,7 +1137,7 @@ ${lbl}: .short 0xffff
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
-                        userError("cannot find captured value: " + checker.symbolToString(l.symbol))
+                        userError(9223, lf("cannot find captured value: {0}", checker.symbolToString(l.symbol)))
                     let v = loc.loadCore()
                     if (loc.isRef() || loc.isByRefLocal())
                         v = ir.op(EK.Incr, [v])
@@ -1270,7 +1280,7 @@ ${lbl}: .short 0xffff
                 let info = getClassInfo(tp)
                 let fld = info.allfields.filter(f => (<Identifier>f.name).text == pacc.name.text)[0]
                 if (!fld)
-                    userError(lf("field {0} not found", pacc.name.text))
+                    userError(9224, lf("field {0} not found", pacc.name.text))
                 let attrs = parseComments(fld)
                 return {
                     idx: info.allfields.indexOf(fld),
@@ -1380,7 +1390,8 @@ ${lbl}: .short 0xffff
                     start: pos,
                     length: node.end - pos,
                     line: p.line,
-                    character: p.character
+                    character: p.character,
+                    successors: null
                 }
                 brkMap[nodeKey(node)] = brk
                 res.breakpoints.push(brk)
@@ -1507,7 +1518,7 @@ ${lbl}: .short 0xffff
             else if (tp.flags & TypeFlags.String)
                 return r // OK
             else
-                throw userError(lf("don't know how to convert to string"))
+                throw userError(9225, lf("don't know how to convert to string"))
         }
 
         function emitConditionalExpression(node: ConditionalExpression) {
@@ -1636,12 +1647,12 @@ ${lbl}: .short 0xffff
             }
             let stmt = findOuter(node)
             if (!stmt)
-                error(node, lf("cannot find outer loop"))
+                error(node, 9230, lf("cannot find outer loop"))
             else {
                 let l = getLabels(stmt)
                 if (node.kind == SK.ContinueStatement) {
                     if (!isIterationStatement(stmt, false))
-                        error(node, lf("continue on non-loop"));
+                        error(node, 9231, lf("continue on non-loop"));
                     else proc.emitJmp(l.cont)
                 } else if (node.kind == SK.BreakStatement) {
                     proc.emitJmp(l.brk)
@@ -1667,7 +1678,7 @@ ${lbl}: .short 0xffff
         function emitSwitchStatement(node: SwitchStatement) {
             emitBrk(node)
             if (!(typeOf(node.expression).flags & (TypeFlags.Number | TypeFlags.Enum))) {
-                userError(lf("switch() only supported over numbers or enums"))
+                userError(9226, lf("switch() only supported over numbers or enums"))
             }
 
             let l = getLabels(node)
@@ -1728,9 +1739,9 @@ ${lbl}: .short 0xffff
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
             if (node.typeParameters)
-                userError(lf("generic classes not supported"))
+                userError(9227, lf("generic classes not supported"))
             if (node.heritageClauses)
-                userError(lf("inheritance not supported"))
+                userError(9228, lf("inheritance not supported"))
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
@@ -1759,7 +1770,7 @@ ${lbl}: .short 0xffff
                 lastSecondaryError = null
                 let res = f(node)
                 if (lastSecondaryError)
-                    userError(lastSecondaryError)
+                    userError(lastSecondaryErrorCode, lastSecondaryError)
                 lastSecondaryError = prevErr
                 inCatchErrors--
                 return res
@@ -1768,7 +1779,8 @@ ${lbl}: .short 0xffff
                 lastSecondaryError = null
                 if (!e.ksEmitterUserError)
                     console.log(e.stack)
-                error(node, e.message)
+                let code = e.ksErrorCode || 9200
+                error(node, code, e.message)
                 return null
             }
         }
@@ -2048,7 +2060,6 @@ ${lbl}: .short 0xffff
             //proc.binary = this
         }
 
-
         emitString(s: string): string {
             if (this.strings.hasOwnProperty(s))
                 return this.strings[s]
@@ -2058,3 +2069,4 @@ ${lbl}: .short 0xffff
         }
     }
 }
+

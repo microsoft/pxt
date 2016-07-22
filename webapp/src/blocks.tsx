@@ -109,8 +109,73 @@ export class Editor extends srceditor.Editor {
 
     updateHelpCard() {
         let selected = Blockly.selected;
-        let card = selected ? selected.codeCard : undefined;
-        this.parent.setHelpCard(card);
+        if (selected && selected.inputList && selected.codeCard) {
+            //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
+            let props: any = {};
+            for (let i = 0; i < selected.inputList.length; i++) {
+                let input = selected.inputList[i];
+                for (let j = 0; j < input.fieldRow.length; j++) {
+                    let field = input.fieldRow[j];
+                    if (field.name != undefined && field.value_ != undefined) {
+                        props[field.name] = field.value_;
+                    }
+                }
+            }
+
+            let card: pxt.CodeCard = selected.codeCard;
+            card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
+            card.blocksXml = this.updateFields(card.blocksXml, props);
+            this.parent.setHelpCard(card);
+        }
+        else {
+            this.parent.setHelpCard(null);
+        }
+    }
+
+    /**
+     * Takes the XML definition of the block that will be shown on the help card and modifies the XML
+     * so that the field names are updated to match any field names of dropdowns on the selected block
+     */
+    private updateFields(originalXML: string, newFieldValues: any): string  {
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(originalXML, "application/xml");
+        let blocks = doc.getElementsByTagName("block");
+        if (blocks.length >= 1) {
+            //Setting innerText doesn't work if there are no children on the node
+            let setInnerText = (c: any, newValue: string) => {
+                //Remove any existing children
+                while (c.firstChild) {
+                    c.removeChild(c.firstChild);
+                }
+                let tn = doc.createTextNode(newValue);
+                c.appendChild(tn)
+            };
+
+            let block = blocks[0];
+            //Depending on the source, the nodeName may be capitalised
+            let fieldNodes = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'field' || c.nodeName == 'FIELD');
+
+            for (let i = 0; i < fieldNodes.length; i++) {
+                if (newFieldValues.hasOwnProperty(fieldNodes[i].getAttribute('name'))) {
+                    setInnerText(fieldNodes[i], newFieldValues[fieldNodes[i].getAttribute('name')]);
+                    delete newFieldValues[fieldNodes[i].getAttribute('name')];
+                }
+            }
+
+            //Now that existing field values have been reset, we can create new field values as appropriate
+            for (let p in newFieldValues) {
+                let c = doc.createElement('field');
+                c.setAttribute('name', p);
+                setInnerText(c, newFieldValues[p]);
+                block.appendChild(c);
+            }
+
+            let serializer = new XMLSerializer();
+            return serializer.serializeToString(doc);
+        }
+        else {
+            return originalXML;
+        }
     }
 
     prepare() {
@@ -140,6 +205,9 @@ export class Editor extends srceditor.Editor {
             if (ev.type == 'ui' && ev.element == 'category') {
                 let toolboxVisible = !!ev.newValue;
                 this.parent.setState({ hideEditorFloats: toolboxVisible });
+            }
+            if (ev.element == 'field' && ev.type == Blockly.Events.CHANGE) {
+                this.updateHelpCard();
             }
         })
         Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {

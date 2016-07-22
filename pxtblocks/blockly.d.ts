@@ -142,6 +142,8 @@ declare namespace Blockly {
         element?: string;
         oldValue?: string;
         newValue?: string;
+        name?: string;
+        xml?: any;
     }
 
     class Workspace {
@@ -256,7 +258,11 @@ declare namespace Blockly {
     }
 
     namespace Events {
+        const CREATE: string;
         const DELETE: string;
+        const CHANGE: string;
+        const MOVE: string;
+        const UI: string;
         function setGroup(group: any): void;
     }
 }

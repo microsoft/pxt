@@ -22,7 +22,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt'])
+task('test', ['default', 'testfmt', 'testerr'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -37,6 +37,10 @@ task('clean', function () {
 
 task('testfmt', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "libs/format-test", 'node ../../built/pxt.js format -t')
+})
+
+task('testerr', ['built/pxt.js'], { async: true }, function () {
+    cmdIn(this, "test-errors", 'node ../built/pxt.js testdir')
 })
 
 ju.catFiles('built/pxt.js', [
@@ -281,6 +285,9 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
             css = css.replace(/^\s*src:[^;]+;/m,
                 "    src: url(data:application/x-font-woff;charset=utf-8;base64," + data + ") format(\"woff\");")
             css = css.replace(/line-height:\s*1;/, "")
+            // SUI css file would override our icons without !important;
+            // our icons have xicon class so it never happens the other way around
+            css = css.replace(/(content:.*);/g, (f, m) => m + " !important;")
             console.log("Generated icons.css -", css.length, "bytes")
             let html = "<!doctype html>\n<html><body style='font-size: 30px'><style>@import './icons.css';</style>\n"
             css.replace(/\.(\w+):before /g, (f, n) => {
