@@ -1243,7 +1243,8 @@ let execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Pr
 let readDirAsync = Promise.promisify(fs.readdir)
 let statAsync = Promise.promisify(fs.stat)
 
-let commonfiles: U.Map<string> = {};
+let commonfiles: U.Map<string> = {}
+let fileoverrides: U.Map<string> = {}
 
 class Host
     implements pxt.Host {
@@ -1260,6 +1261,10 @@ class Host
     readFile(module: pxt.Package, filename: string): string {
         let commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
+
+        let overFile = U.lookup(fileoverrides, filename)
+        if (module.level == 0 && overFile != null)
+            return overFile
 
         let resolved = this.resolve(module, filename)
         try {
@@ -1900,14 +1905,17 @@ function getApiInfoAsync() {
         })
 }
 
+function findTestFile() {
+    let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
+    if (tsFiles.length != 1)
+        U.userError("need exactly one .ts file in package to 'testdir'")
+    return tsFiles[0]
+}
+
 function prepTestOptionsAsync() {
     return prepBuildOptionsAsync(BuildOption.Test)
         .then(opts => {
-            let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
-            if (tsFiles.length != 1)
-                U.userError("need exactly one .ts file in package to 'testdir'")
-
-            let tsFile = tsFiles[0]
+            let tsFile = findTestFile()
             delete opts.fileSystem[tsFile]
             opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
             return opts
@@ -1925,6 +1933,9 @@ function testDirAsync(dir: string) {
     let tests: TestInfo[] = []
 
     dir = path.resolve(dir || ".")
+    let outdir = dir + "/built/"
+
+    nodeutil.mkdirP(outdir)
 
     for (let fn of fs.readdirSync(dir)) {
         if (fn[0] == ".") continue;
@@ -1938,15 +1949,12 @@ function testDirAsync(dir: string) {
                 base: base,
                 text: text
             })
-        } else {
-            let st = fs.statSync(full)
-            if (st.isDirectory()) {
-                tests.push({
-                    filename: full,
-                    base: fn,
-                    text: null
-                })
-            }
+        } else if (fs.existsSync(full + "/" + pxt.configName)) {
+            tests.push({
+                filename: full,
+                base: fn,
+                text: null
+            })
         }
     }
 
@@ -1960,28 +1968,50 @@ function testDirAsync(dir: string) {
     })
 
     let currBase = ""
-    let currOptions: ts.pxt.CompileOptions = null
     let errors: string[] = []
 
     return Promise.mapSeries(tests, (ti) => {
+        let fn = path.basename(ti.filename)
+        console.log(`--- ${fn}`)
+        let hexPath = outdir + fn.replace(/\.ts$/, "") + ".hex"
         if (ti.text == null) {
             currBase = ti.base
-            currOptions = null
             process.chdir(ti.filename)
             mainPkg = new pxt.MainPackage(new Host())
             return installAsync()
                 .then(testAsync)
-        } else {
-            if (currBase != ti.base)
-                throw U.userError("Base directory: " + ti.base + " not found.")
-            else return (currOptions
-                ? Promise.resolve(currOptions)
-                : prepTestOptionsAsync().then(v => currOptions = v))
-                .then(opts => {
-                    let fn = path.basename(ti.filename)
-                    if (!compilesOK(opts, fn, ti.text))
-                        errors.push(fn)
+                .then(() => {
+                    fs.writeFileSync(hexPath, fs.readFileSync("built/binary.hex"))
                 })
+        } else {
+            let start = Date.now()
+            if (currBase != ti.base) {
+                throw U.userError("Base directory: " + ti.base + " not found.")
+            } else {
+                let tsf = findTestFile()
+                let files = mainPkg.config.files
+                let idx = files.indexOf(tsf)
+                U.assert(idx >= 0)
+                files[idx] = fn
+                mainPkg.config.name = fn.replace(/\.ts$/, "")
+                mainPkg.config.description = `Generated from ${ti.base} with ${fn}`
+                fileoverrides = {}
+                fileoverrides[fn] = ti.text
+                return prepBuildOptionsAsync(BuildOption.Test, true)
+                    .then(opts => {
+                        let res = ts.pxt.compile(opts)
+                        reportDiagnostics(res.diagnostics);
+                        if (!res.success) {
+                            console.log("ERRORS", fn)
+                            errors.push(fn)
+                            fs.unlink(hexPath) // ignore errors
+                        } else {
+                            let hex = res.outfiles["binary.hex"]
+                            fs.writeFileSync(hexPath, hex)
+                            console.log(`wrote hex: ${hexPath} ${hex.length} bytes; ${Date.now() - start}ms`)
+                        }
+                    })
+            }
         }
     })
         .then(() => {
@@ -1994,12 +2024,15 @@ function testDirAsync(dir: string) {
         })
 }
 
-function prepBuildOptionsAsync(mode: BuildOption) {
+function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
     ensurePkgDir();
     return mainPkg.loadAsync()
         .then(() => {
-            buildDalConst();
-            copyCommonFiles();
+            if (!quick) {
+                buildDalConst();
+                copyCommonFiles();
+            }
+            // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
             if (target.hasHex && mode != BuildOption.Run)
                 target.isNative = true
