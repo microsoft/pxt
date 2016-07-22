@@ -1836,7 +1836,7 @@ function testConverterAsync(configFile: string) {
                     console.log("--> start " + id)
                     return (readFileAsync(cachePath + id, "utf8") as Promise<string>)
                         .then(v => v, (e: any) => {
-                            console.log(`^^^ fetch ${id}`)
+                            console.log(`^^^ fetch ${id} ${Date.now() - start}ms`)
                             return ""
                         })
                         .then<string>(v => v ? Promise.resolve(v) :
@@ -1849,7 +1849,10 @@ function testConverterAsync(configFile: string) {
                                 useExtensions: true,
                                 apiInfo: astinfo
                             }
+                            
+                            console.log(`%%% TD AST ${id} ${Date.now() - start}ms`)
                             let r = tdev.AST.td2ts(tdopts)
+                            console.log(`%%% COMPILE ${id} ${Date.now() - start}ms`)
                             let src: string = r.text
                             U.assert(!!src.trim(), "source is empty")
                             if (!compilesOK(opts, id + ".ts", src)) {
