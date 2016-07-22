@@ -1,7 +1,7 @@
 /// <reference path="../typings/node/node.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
-
+/// <reference path="../built/pxtblocks.d.ts" />
 
 (global as any).pxt = pxt;
 
@@ -1869,29 +1869,1077 @@ function testConverterAsync(configFile: string) {
 
 
 function testSnippetsAsync(): Promise<void> {
-    let paths: Array<string> = []
-    let searchFolder = (dir: string) => {
+    let allSnippets: Array<string> = []
+    let searchFolder = (dir: string, paths: Array<string>) => {
         let ls = fs.readdirSync(dir)
         for (let f of ls) {
             let fullPath = path.join(dir, f)
             let stats = fs.lstatSync(fullPath)
             if (stats.isDirectory()) {
-                searchFolder(fullPath)
+                searchFolder(fullPath, paths)
             }
-            else if (path.extname(fullPath) == ".ts") {
-                paths.push(fullPath)
-            }
+            paths.push(fullPath)
         }
     }
-    searchFolder('built/docs/snippets')
+    searchFolder('built/docs/snippets', allSnippets)
 
-    for (let p of paths) {
-        let originalTs = fs.readFileSync(p, 'utf8')
-        console.log("----------------------------------------")
-        console.log(p)
-        console.log("----------------------------------------")
-        console.log(originalTs)
+    allSnippets = allSnippets.filter(p => path.extname(p) == ".ts")
+
+    let target = (): ts.pxt.CompileTarget => {
+        return { 
+            deployDrives: "^MICROBIT",
+            driveName: "MICROBIT",
+            hasHex: false,
+            hexMimeType: "application/x-microbit-hex",
+            isNative: false, //Maybe???
+            jsRefCounting: true
+        }
     }
+
+    let opts = (basename: string, source: string) => {
+        let opts: ts.pxt.CompileOptions = {
+            ast: true,
+            fileSystem: {},
+            target: target(),
+            hexinfo: null,
+            sourceFiles: []
+        }
+
+        let sourcePaths: Array<string> = []
+        searchFolder('libs/microbit-radio', sourcePaths)
+        searchFolder('libs/microbit', sourcePaths)
+        sourcePaths = sourcePaths.filter(p => path.extname(p) == ".ts" ||
+                                              path.extname(p) == ".d.ts")
+
+        //This file doesn't seem to get used locally
+        sourcePaths = sourcePaths.filter(p => path.basename(p) != 'messages.ts')
+        
+        let fakePath = (p: string): string => {
+            return p.replace('libs/', 'pxt_modules/').replace('built/', '')
+        }
+
+        for (let p of sourcePaths) {
+            let fp = fakePath(p)
+            opts.sourceFiles.push(fp)
+            let src = fs.readFileSync(p, 'utf8')
+            opts.fileSystem[fp] = src
+        }
+
+        opts.fileSystem[basename] = source
+        opts.sourceFiles.push(basename)
+
+        opts.sourceFiles = [
+            "pxt_modules/microbit/dal.d.ts", 
+            "pxt_modules/microbit/enums.d.ts",
+            "pxt_modules/microbit/shims.d.ts",
+            "pxt_modules/microbit/pxt-core.d.ts",
+            "pxt_modules/microbit/pxt-helpers.ts",
+            "pxt_modules/microbit/helpers.ts",
+            "pxt_modules/microbit/input.ts",
+            "pxt_modules/microbit/control.ts", 
+            "pxt_modules/microbit/game.ts",
+            "pxt_modules/microbit/led.ts",
+            "pxt_modules/microbit/music.ts",
+            "pxt_modules/microbit/pins.ts",
+            "pxt_modules/microbit/serial.ts",
+            "pxt_modules/microbit-radio/shims.d.ts",
+            "pxt_modules/microbit-radio/enums.d.ts",
+            "pxt_modules/microbit-radio/radio.ts",
+            "main.ts"
+        ]
+
+        opts.extinfo = {
+            "enumsDTS": "",
+            "generatedFiles": {},
+            "extensionFiles": {},
+            "functions": [
+                {
+                    "args": 2,
+                    "name": "String_::charAt",
+                    "type": "F",
+                    "value": 164928
+                },
+                {
+                    "args": 2,
+                    "name": "String_::charCodeAt",
+                    "type": "F",
+                    "value": 164980
+                },
+                {
+                    "args": 2,
+                    "name": "String_::concat",
+                    "type": "F",
+                    "value": 165012
+                },
+                {
+                    "args": 2,
+                    "name": "String_::compare",
+                    "type": "F",
+                    "value": 165074
+                },
+                {
+                    "args": 1,
+                    "name": "String_::length",
+                    "type": "F",
+                    "value": 165086
+                },
+                {
+                    "args": 1,
+                    "name": "String_::fromCharCode",
+                    "type": "F",
+                    "value": 165090
+                },
+                {
+                    "args": 1,
+                    "name": "String_::toNumber",
+                    "type": "F",
+                    "value": 165118
+                },
+                {
+                    "args": 0,
+                    "name": "String_::mkEmpty",
+                    "type": "F",
+                    "value": 98820
+                },
+                {
+                    "args": 3,
+                    "name": "String_::substr",
+                    "type": "F",
+                    "value": 165128
+                },
+                {
+                    "args": 1,
+                    "name": "Boolean_::toString",
+                    "type": "F",
+                    "value": 98836
+                },
+                {
+                    "args": 1,
+                    "name": "Boolean_::bang",
+                    "type": "F",
+                    "value": 165210
+                },
+                {
+                    "args": 1,
+                    "name": "Number_::toString",
+                    "type": "F",
+                    "value": 165216
+                },
+                {
+                    "args": 2,
+                    "name": "Number_::lt",
+                    "type": "F",
+                    "value": 165244
+                },
+                {
+                    "args": 2,
+                    "name": "Number_::le",
+                    "type": "F",
+                    "value": 165256
+                },
+                {
+                    "args": 2,
+                    "name": "Number_::neq",
+                    "type": "F",
+                    "value": 165270
+                },
+                {
+                    "args": 2,
+                    "name": "Number_::eq",
+                    "type": "F",
+                    "value": 165280
+                },
+                {
+                    "args": 2,
+                    "name": "Number_::gt",
+                    "type": "F",
+                    "value": 165290
+                },
+                {
+                    "args": 2,
+                    "name": "Number_::ge",
+                    "type": "F",
+                    "value": 165302
+                },
+                {
+                    "args": 2,
+                    "name": "Number_::div",
+                    "type": "F",
+                    "value": 165316
+                },
+                {
+                    "args": 2,
+                    "name": "Number_::mod",
+                    "type": "F",
+                    "value": 165324
+                },
+                {
+                    "args": 2,
+                    "name": "Math_::pow",
+                    "type": "F",
+                    "value": 165334
+                },
+                {
+                    "args": 1,
+                    "name": "Math_::random",
+                    "type": "F",
+                    "value": 98856
+                },
+                {
+                    "args": 1,
+                    "name": "Math_::sqrt",
+                    "type": "F",
+                    "value": 165364
+                },
+                {
+                    "args": 1,
+                    "name": "Array_::mk",
+                    "type": "F",
+                    "value": 98904
+                },
+                {
+                    "args": 1,
+                    "name": "Array_::length",
+                    "type": "F",
+                    "value": 165380
+                },
+                {
+                    "args": 2,
+                    "name": "Array_::push",
+                    "type": "P",
+                    "value": 165390
+                },
+                {
+                    "args": 2,
+                    "name": "Array_::getAt",
+                    "type": "F",
+                    "value": 165398
+                },
+                {
+                    "args": 2,
+                    "name": "Array_::removeAt",
+                    "type": "P",
+                    "value": 165406
+                },
+                {
+                    "args": 3,
+                    "name": "Array_::setAt",
+                    "type": "P",
+                    "value": 165414
+                },
+                {
+                    "args": 3,
+                    "name": "Array_::indexOf",
+                    "type": "F",
+                    "value": 165422
+                },
+                {
+                    "args": 2,
+                    "name": "Array_::removeElement",
+                    "type": "F",
+                    "value": 165430
+                },
+                {
+                    "args": 3,
+                    "name": "pxt::registerWithDal",
+                    "type": "P",
+                    "value": 103672
+                },
+                {
+                    "args": 1,
+                    "name": "pxt::runAction0",
+                    "type": "P",
+                    "value": 167252
+                },
+                {
+                    "args": 2,
+                    "name": "pxt::runAction1",
+                    "type": "P",
+                    "value": 102688
+                },
+                {
+                    "args": 3,
+                    "name": "pxt::mkAction",
+                    "type": "F",
+                    "value": 102392
+                },
+                {
+                    "args": 2,
+                    "name": "pxt::mkRecord",
+                    "type": "F",
+                    "value": 102576
+                },
+                {
+                    "args": 0,
+                    "name": "pxt::debugMemLeaks",
+                    "type": "P",
+                    "value": 167008
+                },
+                {
+                    "args": 1,
+                    "name": "pxt::incr",
+                    "type": "F",
+                    "value": 167028
+                },
+                {
+                    "args": 1,
+                    "name": "pxt::decr",
+                    "type": "P",
+                    "value": 166906
+                },
+                {
+                    "args": 1,
+                    "name": "pxt::allocate",
+                    "type": "F",
+                    "value": 167262
+                },
+                {
+                    "args": 0,
+                    "name": "pxt::templateHash",
+                    "type": "F",
+                    "value": 102844
+                },
+                {
+                    "args": 0,
+                    "name": "pxt::programHash",
+                    "type": "F",
+                    "value": 102856
+                },
+                {
+                    "args": 1,
+                    "name": "pxt::ptrOfLiteral",
+                    "type": "F",
+                    "value": 101408
+                },
+                {
+                    "args": 1,
+                    "name": "pxtrt::ldloc",
+                    "type": "F",
+                    "value": 165438
+                },
+                {
+                    "args": 1,
+                    "name": "pxtrt::ldlocRef",
+                    "type": "F",
+                    "value": 165442
+                },
+                {
+                    "args": 2,
+                    "name": "pxtrt::stloc",
+                    "type": "P",
+                    "value": 165456
+                },
+                {
+                    "args": 2,
+                    "name": "pxtrt::stlocRef",
+                    "type": "P",
+                    "value": 165460
+                },
+                {
+                    "args": 0,
+                    "name": "pxtrt::mkloc",
+                    "type": "F",
+                    "value": 98940
+                },
+                {
+                    "args": 0,
+                    "name": "pxtrt::mklocRef",
+                    "type": "F",
+                    "value": 98968
+                },
+                {
+                    "args": 2,
+                    "name": "pxtrt::ldfld",
+                    "type": "F",
+                    "value": 165476
+                },
+                {
+                    "args": 2,
+                    "name": "pxtrt::ldfldRef",
+                    "type": "F",
+                    "value": 165496
+                },
+                {
+                    "args": 3,
+                    "name": "pxtrt::stfld",
+                    "type": "P",
+                    "value": 165516
+                },
+                {
+                    "args": 3,
+                    "name": "pxtrt::stfldRef",
+                    "type": "P",
+                    "value": 165532
+                },
+                {
+                    "args": 1,
+                    "name": "pxtrt::ldglb",
+                    "type": "F",
+                    "value": 98996
+                },
+                {
+                    "args": 1,
+                    "name": "pxtrt::ldglbRef",
+                    "type": "F",
+                    "value": 99036
+                },
+                {
+                    "args": 2,
+                    "name": "pxtrt::stglb",
+                    "type": "P",
+                    "value": 99084
+                },
+                {
+                    "args": 2,
+                    "name": "pxtrt::stglbRef",
+                    "type": "P",
+                    "value": 99128
+                },
+                {
+                    "args": 3,
+                    "name": "pxtrt::stclo",
+                    "type": "F",
+                    "value": 165548
+                },
+                {
+                    "args": 1,
+                    "name": "pxtrt::panic",
+                    "type": "P",
+                    "value": 165602
+                },
+                {
+                    "args": 0,
+                    "name": "pxtrt::getNumGlobals",
+                    "type": "F",
+                    "value": 99180
+                },
+                {
+                    "args": 0,
+                    "name": "pxtrt::getGlobalsPtr",
+                    "type": "F",
+                    "value": 99192
+                },
+                {
+                    "args": 1,
+                    "name": "images::createImage",
+                    "type": "F",
+                    "value": 101584
+                },
+                {
+                    "args": 1,
+                    "name": "images::createBigImage",
+                    "type": "F",
+                    "value": 165736
+                },
+                {
+                    "args": 2,
+                    "name": "ImageMethods::plotImage",
+                    "type": "P",
+                    "value": 165744
+                },
+                {
+                    "args": 2,
+                    "name": "ImageMethods::showImage",
+                    "type": "P",
+                    "value": 101636
+                },
+                {
+                    "args": 2,
+                    "name": "ImageMethods::plotFrame",
+                    "type": "P",
+                    "value": 165902
+                },
+                {
+                    "args": 3,
+                    "name": "ImageMethods::scrollImage",
+                    "type": "P",
+                    "value": 101676
+                },
+                {
+                    "args": 1,
+                    "name": "ImageMethods::clear",
+                    "type": "P",
+                    "value": 165752
+                },
+                {
+                    "args": 4,
+                    "name": "ImageMethods::setPixelBrightness",
+                    "type": "P",
+                    "value": 165776
+                },
+                {
+                    "args": 3,
+                    "name": "ImageMethods::pixelBrightness",
+                    "type": "F",
+                    "value": 165812
+                },
+                {
+                    "args": 1,
+                    "name": "ImageMethods::width",
+                    "type": "F",
+                    "value": 165852
+                },
+                {
+                    "args": 1,
+                    "name": "ImageMethods::height",
+                    "type": "F",
+                    "value": 165856
+                },
+                {
+                    "args": 4,
+                    "name": "ImageMethods::setPixel",
+                    "type": "P",
+                    "value": 165860
+                },
+                {
+                    "args": 3,
+                    "name": "ImageMethods::pixel",
+                    "type": "F",
+                    "value": 165876
+                },
+                {
+                    "args": 2,
+                    "name": "ImageMethods::showFrame",
+                    "type": "P",
+                    "value": 165890
+                },
+                {
+                    "args": 2,
+                    "name": "basic::showNumber",
+                    "type": "P",
+                    "value": 99204
+                },
+                {
+                    "args": 2,
+                    "name": "basic::showLeds",
+                    "type": "P",
+                    "value": 99292
+                },
+                {
+                    "args": 2,
+                    "name": "basic::showString",
+                    "type": "P",
+                    "value": 99344
+                },
+                {
+                    "args": 0,
+                    "name": "basic::clearScreen",
+                    "type": "P",
+                    "value": 99456
+                },
+                {
+                    "args": 2,
+                    "name": "basic::showAnimation",
+                    "type": "P",
+                    "value": 99472
+                },
+                {
+                    "args": 1,
+                    "name": "basic::plotLeds",
+                    "type": "P",
+                    "value": 99528
+                },
+                {
+                    "args": 1,
+                    "name": "basic::forever",
+                    "type": "P",
+                    "value": 99592
+                },
+                {
+                    "args": 1,
+                    "name": "basic::pause",
+                    "type": "P",
+                    "value": 165628
+                },
+                {
+                    "args": 2,
+                    "name": "input::onButtonPressed",
+                    "type": "P",
+                    "value": 165660
+                },
+                {
+                    "args": 2,
+                    "name": "input::onGesture",
+                    "type": "P",
+                    "value": 100900
+                },
+                {
+                    "args": 2,
+                    "name": "input::onPinPressed",
+                    "type": "P",
+                    "value": 165672
+                },
+                {
+                    "args": 1,
+                    "name": "input::buttonIsPressed",
+                    "type": "F",
+                    "value": 100972
+                },
+                {
+                    "args": 0,
+                    "name": "input::compassHeading",
+                    "type": "F",
+                    "value": 101028
+                },
+                {
+                    "args": 0,
+                    "name": "input::temperature",
+                    "type": "F",
+                    "value": 101044
+                },
+                {
+                    "args": 1,
+                    "name": "input::acceleration",
+                    "type": "F",
+                    "value": 101192
+                },
+                {
+                    "args": 0,
+                    "name": "input::lightLevel",
+                    "type": "F",
+                    "value": 101252
+                },
+                {
+                    "args": 1,
+                    "name": "input::rotation",
+                    "type": "F",
+                    "value": 101268
+                },
+                {
+                    "args": 1,
+                    "name": "input::magneticForce",
+                    "type": "F",
+                    "value": 101304
+                },
+                {
+                    "args": 0,
+                    "name": "input::runningTime",
+                    "type": "F",
+                    "value": 165702
+                },
+                {
+                    "args": 0,
+                    "name": "input::calibrate",
+                    "type": "P",
+                    "value": 165710
+                },
+                {
+                    "args": 1,
+                    "name": "input::pinIsPressed",
+                    "type": "F",
+                    "value": 165712
+                },
+                {
+                    "args": 1,
+                    "name": "input::setAccelerometerRange",
+                    "type": "P",
+                    "value": 101392
+                },
+                {
+                    "args": 1,
+                    "name": "control::inBackground",
+                    "type": "P",
+                    "value": 164824
+                },
+                {
+                    "args": 0,
+                    "name": "control::reset",
+                    "type": "P",
+                    "value": 164832
+                },
+                {
+                    "args": 3,
+                    "name": "control::raiseEvent",
+                    "type": "P",
+                    "value": 164840
+                },
+                {
+                    "args": 3,
+                    "name": "control::onEvent",
+                    "type": "P",
+                    "value": 164858
+                },
+                {
+                    "args": 0,
+                    "name": "control::eventValue",
+                    "type": "F",
+                    "value": 98796
+                },
+                {
+                    "args": 0,
+                    "name": "control::eventTimestamp",
+                    "type": "F",
+                    "value": 98808
+                },
+                {
+                    "args": 0,
+                    "name": "control::deviceName",
+                    "type": "F",
+                    "value": 164866
+                },
+                {
+                    "args": 0,
+                    "name": "control::deviceSerialNumber",
+                    "type": "F",
+                    "value": 164898
+                },
+                {
+                    "args": 2,
+                    "name": "led::plot",
+                    "type": "P",
+                    "value": 101424
+                },
+                {
+                    "args": 2,
+                    "name": "led::unplot",
+                    "type": "P",
+                    "value": 101444
+                },
+                {
+                    "args": 2,
+                    "name": "led::point",
+                    "type": "F",
+                    "value": 101464
+                },
+                {
+                    "args": 0,
+                    "name": "led::brightness",
+                    "type": "F",
+                    "value": 101488
+                },
+                {
+                    "args": 1,
+                    "name": "led::setBrightness",
+                    "type": "P",
+                    "value": 101504
+                },
+                {
+                    "args": 0,
+                    "name": "led::stopAnimation",
+                    "type": "P",
+                    "value": 101520
+                },
+                {
+                    "args": 1,
+                    "name": "led::setDisplayMode",
+                    "type": "P",
+                    "value": 101536
+                },
+                {
+                    "args": 0,
+                    "name": "led::screenshot",
+                    "type": "F",
+                    "value": 101552
+                },
+                {
+                    "args": 1,
+                    "name": "pins::getPinAddress",
+                    "type": "F",
+                    "value": 165910
+                },
+                {
+                    "args": 1,
+                    "name": "pins::digitalReadPin",
+                    "type": "F",
+                    "value": 165918
+                },
+                {
+                    "args": 2,
+                    "name": "pins::digitalWritePin",
+                    "type": "P",
+                    "value": 165934
+                },
+                {
+                    "args": 1,
+                    "name": "pins::analogReadPin",
+                    "type": "F",
+                    "value": 165954
+                },
+                {
+                    "args": 2,
+                    "name": "pins::analogWritePin",
+                    "type": "P",
+                    "value": 165970
+                },
+                {
+                    "args": 2,
+                    "name": "pins::analogSetPeriod",
+                    "type": "P",
+                    "value": 165990
+                },
+                {
+                    "args": 3,
+                    "name": "pins::onPulsed",
+                    "type": "P",
+                    "value": 166010
+                },
+                {
+                    "args": 0,
+                    "name": "pins::pulseDuration",
+                    "type": "F",
+                    "value": 101776
+                },
+                {
+                    "args": 2,
+                    "name": "pins::servoWritePin",
+                    "type": "P",
+                    "value": 101788
+                },
+                {
+                    "args": 2,
+                    "name": "pins::servoSetPulse",
+                    "type": "P",
+                    "value": 166044
+                },
+                {
+                    "args": 1,
+                    "name": "pins::analogSetPitchPin",
+                    "type": "P",
+                    "value": 101820
+                },
+                {
+                    "args": 2,
+                    "name": "pins::analogPitch",
+                    "type": "P",
+                    "value": 101836
+                },
+                {
+                    "args": 2,
+                    "name": "pins::setPull",
+                    "type": "P",
+                    "value": 166064
+                },
+                {
+                    "args": 1,
+                    "name": "pins::createBuffer",
+                    "type": "F",
+                    "value": 166096
+                },
+                {
+                    "args": 3,
+                    "name": "pins::i2cReadBuffer",
+                    "type": "F",
+                    "value": 101920
+                },
+                {
+                    "args": 3,
+                    "name": "pins::i2cWriteBuffer",
+                    "type": "P",
+                    "value": 101960
+                },
+                {
+                    "args": 0,
+                    "name": "serial::readLine",
+                    "type": "F",
+                    "value": 99624
+                },
+                {
+                    "args": 1,
+                    "name": "serial::writeString",
+                    "type": "P",
+                    "value": 99680
+                },
+                {
+                    "args": 3,
+                    "name": "serial::redirect",
+                    "type": "P",
+                    "value": 99712
+                },
+                {
+                    "args": 2,
+                    "name": "BufferMethods::getByte",
+                    "type": "F",
+                    "value": 166124
+                },
+                {
+                    "args": 3,
+                    "name": "BufferMethods::setByte",
+                    "type": "P",
+                    "value": 166160
+                },
+                {
+                    "args": 1,
+                    "name": "BufferMethods::getBytes",
+                    "type": "F",
+                    "value": 166192
+                },
+                {
+                    "args": 4,
+                    "name": "BufferMethods::setNumber",
+                    "type": "P",
+                    "value": 166196
+                },
+                {
+                    "args": 3,
+                    "name": "BufferMethods::getNumber",
+                    "type": "F",
+                    "value": 166342
+                },
+                {
+                    "args": 1,
+                    "name": "BufferMethods::length",
+                    "type": "F",
+                    "value": 166558
+                },
+                {
+                    "args": 4,
+                    "name": "BufferMethods::fill",
+                    "type": "P",
+                    "value": 166562
+                },
+                {
+                    "args": 3,
+                    "name": "BufferMethods::slice",
+                    "type": "F",
+                    "value": 166598
+                },
+                {
+                    "args": 2,
+                    "name": "BufferMethods::shift",
+                    "type": "P",
+                    "value": 166648
+                },
+                {
+                    "args": 2,
+                    "name": "BufferMethods::rotate",
+                    "type": "P",
+                    "value": 166676
+                },
+                {
+                    "args": 3,
+                    "name": "BufferMethods::write",
+                    "type": "P",
+                    "value": 166704
+                },
+                {
+                    "args": 1,
+                    "name": "radio::sendNumber",
+                    "type": "P",
+                    "value": 99832
+                },
+                {
+                    "args": 2,
+                    "name": "radio::sendValue",
+                    "type": "P",
+                    "value": 99892
+                },
+                {
+                    "args": 1,
+                    "name": "radio::sendString",
+                    "type": "P",
+                    "value": 100020
+                },
+                {
+                    "args": 0,
+                    "name": "radio::writeValueToSerial",
+                    "type": "P",
+                    "value": 100112
+                },
+                {
+                    "args": 1,
+                    "name": "radio::onDataReceived",
+                    "type": "P",
+                    "value": 165636
+                },
+                {
+                    "args": 1,
+                    "name": "radio::receivedNumberAt",
+                    "type": "F",
+                    "value": 100540
+                },
+                {
+                    "args": 0,
+                    "name": "radio::receiveNumber",
+                    "type": "F",
+                    "value": 100608
+                },
+                {
+                    "args": 0,
+                    "name": "radio::receiveString",
+                    "type": "F",
+                    "value": 100664
+                },
+                {
+                    "args": 0,
+                    "name": "radio::receivedSignalStrength",
+                    "type": "F",
+                    "value": 100768
+                },
+                {
+                    "args": 1,
+                    "name": "radio::setGroup",
+                    "type": "P",
+                    "value": 100796
+                },
+                {
+                    "args": 1,
+                    "name": "radio::setTransmitPower",
+                    "type": "P",
+                    "value": 100824
+                },
+                {
+                    "args": 1,
+                    "name": "radio::setTransmitSerialNumber",
+                    "type": "P",
+                    "value": 100852
+                }
+            ],
+            "compileData": null,
+            "onlyPublic": true,
+            "sha": "70b705be8463c9802ec28b1c94cdcc67e8ba4d792fd91903eb836931a1f9df59",
+            "shimsDTS": "",
+            "yotta": {
+                "config": {
+                    "microbit-dal": {
+                        "bluetooth": {
+                            "enabled": 0
+                        }
+                    }
+                },
+                "dependencies": {
+                    "pxt-microbit-core": "microsoft/pxt-microbit-core#v0.1.11"
+                }
+            }
+        }
+
+        return opts
+    }
+
+    let printErrors = (res: ts.pxt.CompileResult) => {
+        for (let diag of res.diagnostics) {
+            console.log(`${diag.category}: ${diag.code} ${diag.messageText}`)
+        }
+    }
+
+    let decompile = (source: string) => {
+        let res = ts.pxt.decompile(opts('main.ts', source), 'main.ts')
+        if (!res.success) {
+            printErrors(res)
+            return null
+        }
+
+        return res.outfiles["main.blocks"]
+    }
+
+    let successCount = 0
+
+    for (let p of allSnippets) {
+        let basename = path.basename(p)
+        basename = "main.ts"
+        let originalTs = fs.readFileSync(p, 'utf8')
+        let blocks = decompile(originalTs)
+        if (blocks) {
+            successCount++
+            console.log(p)
+        }
+        //let ws = pxt.blocks.loadWorkspaceXml(blocks)
+        //console.log(ws)
+
+        //No point doing them all at the moment
+        break
+    }
+
+    console.log(`Success rate: ${successCount}/${allSnippets.length}`)
 
     return null
 }
