@@ -290,6 +290,9 @@ class Host
             // make sure it sits in cache
             return workspace.getPublishedScriptAsync(pkg.verArgument())
                 .then(files => epkg.setFiles(files))
+        } else if (proto == "github") {
+            return workspace.getPublishedScriptAsync(pkg.version())
+                .then(files => epkg.setFiles(files))
         } else if (proto == "workspace") {
             return workspace.getTextAsync(pkg.verArgument())
                 .then(scr => epkg.setFiles(scr))

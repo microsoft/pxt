@@ -66,25 +66,26 @@ namespace pxt.runner {
             let proto = pkg.verProtocol()
             let epkg = getEditorPkg(pkg)
 
-            if (proto == "pub") {
-                return Cloud.downloadScriptFilesAsync(pkg.verArgument())
-                    .then(files => epkg.setFiles(files))
-            } else if (proto == "embed") {
-                epkg.setFiles(getEmbeddedScript(pkg.verArgument()))
-                return Promise.resolve()
-            } else if (proto == "empty") {
-                epkg.setFiles(emptyPrjFiles())
-                return Promise.resolve()
-            } else if (proto == "docs") {
-                let files = emptyPrjFiles();
-                let cfg = JSON.parse(files[pxt.configName]) as pxt.PackageConfig;
-                pkg.verArgument().split(',').forEach(d => cfg.dependencies[d] = "*");
-                files[pxt.configName] = JSON.stringify(cfg, null, 4);
-                epkg.setFiles(files);
-                return Promise.resolve();
-            } else {
-                return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
-            }
+            return pkg.commonDownloadAsync()
+                .then(resp => {
+                    if (resp) {
+                        epkg.setFiles(resp)
+                        return Promise.resolve()
+                    }
+                    if (proto == "empty") {
+                        epkg.setFiles(emptyPrjFiles())
+                        return Promise.resolve()
+                    } else if (proto == "docs") {
+                        let files = emptyPrjFiles();
+                        let cfg = JSON.parse(files[pxt.configName]) as pxt.PackageConfig;
+                        pkg.verArgument().split(',').forEach(d => cfg.dependencies[d] = "*");
+                        files[pxt.configName] = JSON.stringify(cfg, null, 4);
+                        epkg.setFiles(files);
+                        return Promise.resolve();
+                    } else {
+                        return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
+                    }
+                })
         }
 
         resolveVersionAsync(pkg: pxt.Package) {

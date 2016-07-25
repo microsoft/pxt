@@ -33,6 +33,20 @@ mountVirtualApi("td-cloud", {
     expirationTime: p => 60 * 1000,
 })
 
+mountVirtualApi("gh-search", {
+    getAsync: query =>
+        pxt.github.searchAsync(stripProtocol(query)).catch(core.handleNetworkError),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+mountVirtualApi("gh-pkgcfg", {
+    getAsync: query =>
+        pxt.github.pkgConfigAsync(stripProtocol(query)).catch(core.handleNetworkError),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
 let cachedData: Util.StringMap<CacheEntry> = {};
 
 function subscribe(component: AnyComponent, path: string) {

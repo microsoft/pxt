@@ -271,6 +271,20 @@ namespace pxt {
             return this.version()
         }
 
+        commonDownloadAsync(): Promise<U.Map<string>> {
+            let proto = this.verProtocol()
+            if (proto == "pub") {
+                return Cloud.downloadScriptFilesAsync(this.verArgument())
+            } else if (proto == "github") {
+                return pxt.github.downloadPackageAsync(this.verArgument())
+                    .then(resp => resp.files)
+            } else if (proto == "embed") {
+                let resp = pxt.getEmbeddedScript(this.verArgument())
+                return Promise.resolve(resp)
+            } else
+                return Promise.resolve(null as U.Map<string>)
+        }
+
         host() { return this.parent._host }
 
         readFile(fn: string) {

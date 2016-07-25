@@ -135,6 +135,44 @@ export function loginAsync(access_token: string) {
     return Promise.resolve()
 }
 
+function searchAsync(...query: string[]) {
+    return pxt.github.searchAsync(query.join(" "))
+        .then(res => {
+            for (let r of res.items) {
+                console.log(`${r.full_name}: ${r.description}`)
+            }
+        })
+}
+
+function pkginfoAsync(repopath: string) {
+    let parsed = pxt.github.parseRepoId(repopath)
+    let pkgInfo = (cfg: pxt.PackageConfig) => {
+        console.log(`Name: ${cfg.name}`)
+        console.log(`Description: ${cfg.description}`)
+    }
+
+    if (parsed.tag)
+        return pxt.github.downloadPackageAsync(repopath)
+            .then(pkg => {
+                let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.configName])
+                pkgInfo(cfg)
+                console.log(`Size: ${JSON.stringify(pkg.files).length}`)
+            })
+
+    return pxt.github.pkgConfigAsync(parsed.repo)
+        .then(cfg => {
+            pkgInfo(cfg)
+            return pxt.github.listRefsAsync(repopath)
+                .then(tags => {
+                    console.log("Tags: " + tags.join(", "))
+                    return pxt.github.listRefsAsync(repopath, "heads")
+                })
+                .then(heads => {
+                    console.log("Branches: " + heads.join(", "))
+                })
+        })
+}
+
 export function apiAsync(path: string, postArguments?: string): Promise<void> {
     if (postArguments == "delete") {
         return Cloud.privateDeleteAsync(path)
@@ -1406,33 +1444,29 @@ class Host
     }
 
     downloadPackageAsync(pkg: pxt.Package) {
-        let proto = pkg.verProtocol()
-
-        if (proto == "pub") {
-            return Cloud.downloadScriptFilesAsync(pkg.verArgument())
-                .then(resp =>
+        return pkg.commonDownloadAsync()
+            .then(resp => {
+                if (resp) {
                     U.iterStringMap(resp, (fn: string, cont: string) => {
                         pkg.host().writeFile(pkg, fn, cont)
-                    }))
-        } else if (proto == "embed") {
-            let resp = pxt.getEmbeddedScript(pkg.verArgument())
-            U.iterStringMap(resp, (fn: string, cont: string) => {
-                pkg.host().writeFile(pkg, fn, cont)
+                    })
+                    return Promise.resolve()
+                }
+                let proto = pkg.verProtocol()
+                if (proto == "file") {
+                    console.log(`skip download of local pkg: ${pkg.version()}`)
+                    return Promise.resolve()
+                } else {
+                    return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
+                }
             })
-            return Promise.resolve()
-        } else if (proto == "file") {
-            console.log(`skip download of local pkg: ${pkg.version()}`)
-            return Promise.resolve()
-        } else {
-            return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
-        }
     }
 
     resolveVersionAsync(pkg: pxt.Package) {
         return Cloud.privateGetAsync(pxt.pkgPrefix + pkg.id).then(r => {
             let id = r["scriptid"]
             if (!id) {
-                U.userError("scriptid no set on ptr for pkg " + pkg.id)
+                U.userError("scriptid not set on ptr for pkg " + pkg.id)
             }
             return id
         })
@@ -2453,6 +2487,9 @@ cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) 
 cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
+
+cmd("search   QUERY...            - search GitHub for a published package", searchAsync)
+cmd("pkginfo  USER/REPO           - show info about named GitHub packge", pkginfoAsync)
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("pokecloud                    - same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"), 2)
