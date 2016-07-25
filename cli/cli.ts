@@ -2166,16 +2166,25 @@ function testSnippetsAsync(): Promise<void> {
     //allSnippets = allSnippets.slice(0, 25) //For testing
 
     let successes: string[] = []
-    let failures: string[] = []
+
+    interface FailureInfo {
+        filename: string
+        diagnostics: ts.pxt.KsDiagnostic[]
+    }
+
+    let failures: FailureInfo[] = []
 
     let addSuccess = (s: string) => {
         successes.push(s)
         //console.log(`SUCCESS\t${s}`)
     }
 
-    let addFailure = (f: string) => {
-        failures.push(f)
-        console.log(`ERROR\t${f}`)
+    let addFailure = (f: string, info: ts.pxt.KsDiagnostic[]) => {
+        failures.push({
+            filename: f,
+            diagnostics: info
+        })
+        //console.log(`ERROR\t${f}`)
     }
 
     return Promise.map(allSnippets, p => {
@@ -2199,17 +2208,22 @@ function testSnippetsAsync(): Promise<void> {
                     addSuccess(p)
                 }
                 else {
-                    addFailure(p)
+                    addFailure(p, bresp.diagnostics)
                 }
             }
             else {
-                addFailure(p)
-                //TODO: Log error
+                addFailure(p, resp.diagnostics)
             }
         })
     }).then((a: any) => {
         console.log(`${successes.length} snippets compiled to blocks`)
-        console.log(`${failures.length} snippets did not compile to blocks`)
+        console.log(`${failures.length} snippets did not compile to blocks:`)
+        for (let f of failures) {
+            console.log(f.filename)
+            for (let diag of f.diagnostics) {
+                console.log(`  ${diag.messageText}`)
+            }
+        }
     })
 }
 
