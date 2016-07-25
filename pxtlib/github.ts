@@ -11,7 +11,7 @@ namespace pxt.github {
 
     export function listRefsAsync(repopath: string, namespace = "tags") {
         return U.httpGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100")
-            .then((resp: GHRef[]) => {
+            .then<string[]>((resp: GHRef[]) => {
                 let tagnames = resp
                     .map(x => x.ref.replace(/^refs\/[^\/]+\//, ""))
                 tagnames.sort(semver.strcmp)

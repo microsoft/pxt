@@ -196,10 +196,19 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
-                // TODO add tag selection
-                pxt.github.pkgConfigAsync(scr.full_name)
-                    .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + scr.default_branch))
-                    .then(r => this.props.parent.reloadHeaderAsync())
+                pxt.github.listRefsAsync(scr.full_name, "tags")
+                    .then((tags: string[]) => {
+                        tags.sort(pxt.semver.strcmp)
+                        tags.reverse()
+                        if (tags[0])
+                            return Promise.resolve(tags[0])
+                        else
+                            return pxt.github.tagToShaAsync(scr.full_name, scr.default_branch)
+                    })
+                    .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
+                        .then(cfg =>
+                            p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
+                        .then(r => this.props.parent.reloadHeaderAsync()))
                     .done();
             } else {
                 Util.oops()
