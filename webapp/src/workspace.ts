@@ -149,14 +149,20 @@ let scriptDlQ = new U.PromiseQueue();
 //let scriptCache:any = {}
 export function getPublishedScriptAsync(id: string) {
     checkSession();
-    //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])   
-    return scriptDlQ.enqueue(id, () => scripts.getAsync(id)
-        .then(v => v.files, e => Cloud.downloadScriptFilesAsync(id)
-            .then(files => scripts.setAsync({ id: id, files: files })
-                .then(() => {
-                    //return (scriptCache[id] = files)
-                    return files
-                })))
+    //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])
+    if (pxt.github.isGithubId(id))
+        id = pxt.github.noramlizeRepoId(id)
+    let eid = encodeURIComponent(id)
+    return scriptDlQ.enqueue(id, () => scripts.getAsync(eid)
+        .then(v => v.files, e =>
+            (pxt.github.isGithubId(id) ?
+                pxt.github.downloadPackageAsync(id).then(v => v.files) :
+                Cloud.downloadScriptFilesAsync(id))
+                .then(files => scripts.setAsync({ id: eid, files: files })
+                    .then(() => {
+                        //return (scriptCache[id] = files)
+                        return files
+                    })))
         .then(fixupFileNames))
 }
 

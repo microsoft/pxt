@@ -152,7 +152,7 @@ function pkginfoAsync(repopath: string) {
     }
 
     if (parsed.tag)
-        return pxt.github.downloadPackageAsync(parsed.repo, parsed.tag)
+        return pxt.github.downloadPackageAsync(repopath)
             .then(pkg => {
                 let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.configName])
                 pkgInfo(cfg)
@@ -1346,26 +1346,22 @@ class Host
     }
 
     downloadPackageAsync(pkg: pxt.Package) {
-        let proto = pkg.verProtocol()
-
-        if (proto == "pub") {
-            return Cloud.downloadScriptFilesAsync(pkg.verArgument())
-                .then(resp =>
+        return pkg.commonDownloadAsync()
+            .then(resp => {
+                if (resp) {
                     U.iterStringMap(resp, (fn: string, cont: string) => {
                         pkg.host().writeFile(pkg, fn, cont)
-                    }))
-        } else if (proto == "embed") {
-            let resp = pxt.getEmbeddedScript(pkg.verArgument())
-            U.iterStringMap(resp, (fn: string, cont: string) => {
-                pkg.host().writeFile(pkg, fn, cont)
+                    })
+                    return Promise.resolve()
+                }
+                let proto = pkg.verProtocol()
+                if (proto == "file") {
+                    console.log(`skip download of local pkg: ${pkg.version()}`)
+                    return Promise.resolve()
+                } else {
+                    return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
+                }
             })
-            return Promise.resolve()
-        } else if (proto == "file") {
-            console.log(`skip download of local pkg: ${pkg.version()}`)
-            return Promise.resolve()
-        } else {
-            return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
-        }
     }
 
     resolveVersionAsync(pkg: pxt.Package) {

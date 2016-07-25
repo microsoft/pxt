@@ -54,14 +54,15 @@ namespace pxt.github {
             .then(v => JSON.parse(v) as pxt.PackageConfig)
     }
 
-    export function downloadPackageAsync(repopath: string, tag: string, current: CachedPackage = null) {
-        return tagToShaAsync(repopath, tag)
+    export function downloadPackageAsync(repoWithTag: string, current: CachedPackage = null) {
+        let p = parseRepoId(repoWithTag)
+        return tagToShaAsync(p.repo, p.tag)
             .then(sha => {
-                let pref = "https://raw.githubusercontent.com/" + repopath + "/" + sha + "/"
+                let pref = "https://raw.githubusercontent.com/" + p.repo + "/" + sha + "/"
                 if (!current) current = { sha: "", files: {} }
                 if (current.sha === sha) return Promise.resolve(current)
                 else {
-                    console.log(`Downloading ${repopath}#${tag} -> ${sha}`)
+                    console.log(`Downloading ${repoWithTag} -> ${sha}`)
                     return U.httpGetTextAsync(pref + pxt.configName)
                         .then(pkg => {
                             current.files = {}
@@ -127,11 +128,20 @@ namespace pxt.github {
     }
 
     export function parseRepoId(repo: string) {
-        repo = repo.replace(/^(gh|github):/i, "")
+        repo = repo.replace(/^github:/i, "")
         let m = /([^#]+)#(.*)/.exec(repo)
         return {
             repo: m ? m[1].toLowerCase() : repo.toLowerCase(),
             tag: m ? m[2] : null
         }
+    }
+
+    export function isGithubId(id: string) {
+        return id.slice(0, 7) == "github:"
+    }
+
+    export function noramlizeRepoId(id: string) {
+        let p = parseRepoId(id)
+        return "github:" + p.repo.toLowerCase() + "#" + (p.tag || "master")
     }
 }
