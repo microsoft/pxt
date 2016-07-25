@@ -448,10 +448,38 @@ namespace ts.pxt {
             }, arg0, arg1, arg2));
         }
 
-        function unhandled(n: Node, addInfo = "") {
-            if (addInfo)
-                addInfo = " (" + addInfo + ")"
-            return userError(9202, lf("Unsupported syntax node: {0}", stringKind(n)) + addInfo);
+        function unhandled(n: Node, info?: string) {
+            //If we info then we may as well present that instead
+            if (info) {
+                return userError(9202, `Unsupported syntax: ${info}`)
+            }
+
+            if (!n) {
+                return userError(9202, "Unsupported syntax")
+            }
+
+            let syntax = stringKind(n)
+            switch (n.kind) {
+                case ts.SyntaxKind.ForInStatement:
+                    syntax = "for in loops"
+                    break
+                case ts.SyntaxKind.ForOfStatement:
+                    syntax = "for of loops"
+                    break
+                case ts.SyntaxKind.PropertyAccessExpression:
+                    syntax = "property access"
+                    break
+                case ts.SyntaxKind.DeleteExpression:
+                    syntax = "delete"
+                    break
+                case ts.SyntaxKind.TaggedTemplateExpression:
+                    syntax = "tagged templates"
+                    break
+                default:
+                    break
+            }
+
+            return userError(9202, `${syntax} not supported`)
         }
 
         function nodeKey(f: Node) {
