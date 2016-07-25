@@ -1372,7 +1372,7 @@ class Host
         return Cloud.privateGetAsync(pxt.pkgPrefix + pkg.id).then(r => {
             let id = r["scriptid"]
             if (!id) {
-                U.userError("scriptid no set on ptr for pkg " + pkg.id)
+                U.userError("scriptid not set on ptr for pkg " + pkg.id)
             }
             return id
         })

@@ -9,36 +9,12 @@ namespace pxt.github {
         }
     }
 
-    function cmpTags(a: string, b: string) {
-        let max = 10000000
-        function parseTag(s: string) {
-            s = s.replace(/^v(er)?/i, "")
-            let l = s.split(/[.-]/).map(k => /^\d+$/.test(k) ? parseInt(k) : max)
-            if (l[0] < max) return l
-            else return null
-        }
-        let aa = parseTag(a)
-        let bb = parseTag(b)
-        if (!aa) {
-            if (!bb) return U.strcmp(a.toLowerCase(), b.toLowerCase())
-            else return 1
-        } else if (!bb) {
-            return -1
-        } else {
-            for (let i = 0; i < aa.length + 1; ++i) {
-                let d = (aa[i] || 0) - (bb[i] || 0)
-                if (d) return -d
-            }
-            return 0
-        }
-    }
-
     export function listRefsAsync(repopath: string, namespace = "tags") {
         return U.httpGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100")
             .then((resp: GHRef[]) => {
                 let tagnames = resp
                     .map(x => x.ref.replace(/^refs\/[^\/]+\//, ""))
-                tagnames.sort(cmpTags)
+                tagnames.sort(semver.strcmp)
                 return tagnames
             }, err => {
                 if (err.statusCode == 404) return []
@@ -58,7 +34,7 @@ namespace pxt.github {
             return Promise.reject(new Error("Bad type " + r.object.type))
     }
 
-    function tagToShaAsync(repopath: string, tag: string) {
+    export function tagToShaAsync(repopath: string, tag: string) {
         if (/^[a-f0-9]{40}$/.test(tag))
             return Promise.resolve(tag)
         return U.httpGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/tags/" + tag)
@@ -150,7 +126,7 @@ namespace pxt.github {
             .then(r => r as SearchResults)
     }
 
-    export function parseRepoId(repo:string) {
+    export function parseRepoId(repo: string) {
         repo = repo.replace(/^(gh|github):/i, "")
         let m = /([^#]+)#(.*)/.exec(repo)
         return {
