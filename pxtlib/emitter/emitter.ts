@@ -439,7 +439,7 @@ namespace ts.pxt {
             emitSkipped: !!opts.noEmit
         }
 
-        function error(node: Node, code:number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
+        function error(node: Node, code: number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
             diagnostics.add(createDiagnosticForNode(node, <any>{
                 code: code,
                 message: msg,
