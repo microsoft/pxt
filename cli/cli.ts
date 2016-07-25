@@ -2221,7 +2221,7 @@ function testSnippetsAsync(): Promise<void> {
         for (let f of failures) {
             console.log(f.filename)
             for (let diag of f.diagnostics) {
-                console.log(`  ${diag.messageText}`)
+                console.log(`  L ${diag.line}\t${diag.messageText}`)
             }
         }
     })
