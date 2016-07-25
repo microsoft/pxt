@@ -135,6 +135,44 @@ export function loginAsync(access_token: string) {
     return Promise.resolve()
 }
 
+function searchAsync(...query: string[]) {
+    return pxt.github.searchAsync(query.join(" "))
+        .then(res => {
+            for (let r of res.items) {
+                console.log(`${r.full_name}: ${r.description}`)
+            }
+        })
+}
+
+function pkginfoAsync(repopath: string) {
+    let parsed = pxt.github.parseRepoId(repopath)
+    let pkgInfo = (cfg: pxt.PackageConfig) => {
+        console.log(`Name: ${cfg.name}`)
+        console.log(`Description: ${cfg.description}`)
+    }
+
+    if (parsed.tag)
+        return pxt.github.downloadPackageAsync(parsed.repo, parsed.tag)
+            .then(pkg => {
+                let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.configName])
+                pkgInfo(cfg)
+                console.log(`Size: ${JSON.stringify(pkg.files).length}`)
+            })
+
+    return pxt.github.pkgConfigAsync(parsed.repo)
+        .then(cfg => {
+            pkgInfo(cfg)
+            return pxt.github.listRefsAsync(repopath)
+                .then(tags => {
+                    console.log("Tags: " + tags.join(", "))
+                    return pxt.github.listRefsAsync(repopath, "heads")
+                })
+                .then(heads => {
+                    console.log("Branches: " + heads.join(", "))
+                })
+        })
+}
+
 export function apiAsync(path: string, postArguments?: string): Promise<void> {
     if (postArguments == "delete") {
         return Cloud.privateDeleteAsync(path)
@@ -2022,7 +2060,7 @@ function testDirAsync(dir: string) {
                                 numErr++
                                 console.log(`${fn}(${lineNo + 1}): expecting error TS${code}`)
                             }
-                            lineNo++                            
+                            lineNo++
                         }
                         if (numErr) {
                             console.log("ERRORS", fn)
@@ -2274,6 +2312,9 @@ cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) 
 cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
+
+cmd("search   QUERY...            - search GitHub for a published package", searchAsync)
+cmd("pkginfo  USER/REPO           - show info about named GitHub packge", pkginfoAsync)
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("pokecloud                    - same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"), 2)
