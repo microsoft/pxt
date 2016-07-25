@@ -2120,7 +2120,7 @@ function testDirAsync(dir: string) {
                                 numErr++
                                 console.log(`${fn}(${lineNo + 1}): expecting error TS${code}`)
                             }
-                            lineNo++                            
+                            lineNo++
                         }
                         if (numErr) {
                             console.log("ERRORS", fn)
