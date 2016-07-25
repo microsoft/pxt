@@ -48,6 +48,7 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     let buf: Buffer = null;
 
     u.headers["accept-encoding"] = "gzip"
+    u.headers["user-agent"] = "PXT-CLI"
 
     if (data != null) {
         if (Buffer.isBuffer(data)) {
