@@ -3,4 +3,4 @@ function sum(a: number, b: number, c: number): number {
 }
 
 let args = [1, 2, 3]
-let s = sum(...args)
+let s = sum(...args) //TS2346
