@@ -589,7 +589,15 @@ namespace pxt {
                 files[f] = prj.files[f];
             for (let f in defaultFiles)
                 files[f] = defaultFiles[f];
-            delete files["README.md"]; // override existing readme files
+            files["README.md"] =
+                `# ${name}
+
+Some description goes here.
+
+## Supported targets
+* for PXT/${pxt.appTarget.id}
+(The metadata above is needed for package search.)
+`
             delete files["pxt.json"];
 
             this.config.files = Object.keys(files).filter(s => !/test/.test(s));
