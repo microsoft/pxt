@@ -110,6 +110,7 @@ interface ScriptSearchState {
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     prevData: Cloud.JsonPointer[] = [];
+    prevGhData: pxt.github.Repo[] = [];
     modal: sui.Modal;
 
     constructor(props: ISettingsProps) {
@@ -117,6 +118,17 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         this.state = {
             searchFor: ''
         }
+    }
+
+    fetchGhData(): pxt.github.Repo[] {
+        let cloud = pxt.appTarget.cloud || {};
+        if (!cloud.packages) return [];
+        let res: pxt.github.SearchResults =
+            this.state.searchFor
+                ? this.getData(`gh-search:${this.state.searchFor}`)
+                : null
+        if (res) this.prevGhData = res.items
+        return this.prevGhData
     }
 
     fetchCloudData(): Cloud.JsonPointer[] {
@@ -127,8 +139,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${pxt.appTarget.id}`)
             : null
         if (res) this.prevData = res.items
-        let data = this.prevData
-        return data;
+        return this.prevData
     }
 
     fetchBundled(): pxt.PackageConfig[] {
@@ -152,6 +163,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const headers = this.fetchLocalData();
         const data = this.fetchCloudData();
         const bundles = this.fetchBundled();
+        const ghdata = this.fetchGhData();
 
         let chgHeader = (hdr: Header) => {
             if (this.modal) this.modal.hide();
@@ -178,6 +190,19 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 workspace.installByIdAsync(scr.scriptid)
                     .then(r => this.props.parent.loadHeaderAsync(r))
                     .done()
+            }
+        }
+        let installGh = (scr: pxt.github.Repo) => {
+            if (this.modal) this.modal.hide();
+            if (this.state.packages) {
+                let p = pkg.mainEditorPkg();
+                // TODO add tag selection
+                pxt.github.pkgConfigAsync(scr.full_name)
+                    .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + scr.default_branch))
+                    .then(r => this.props.parent.reloadHeaderAsync())
+                    .done();
+            } else {
+                Util.oops()
             }
         }
         let importHex = () => {
@@ -229,6 +254,18 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             key={'cloud' + scr.id}
                             onClick={() => install(scr) }
                             url={'/' + scr.scriptid}
+                            color="blue"
+                            />
+                    ) }
+                    {ghdata.map(scr =>
+                        <codecard.CodeCardView
+                            name={scr.name.replace(/^pxt-/, "") }
+                            time={new Date(scr.updated_at).getTime() / 1000}
+                            header={scr.full_name}
+                            description={scr.description}
+                            key={'gh' + scr.full_name}
+                            onClick={() => installGh(scr) }
+                            url={'github:' + scr.full_name}
                             color="blue"
                             />
                     ) }
