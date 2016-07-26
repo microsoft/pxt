@@ -1564,10 +1564,39 @@ export function initAsync() {
             for (let f in prj.files)
                 files[f] = prj.files[f];
 
-            config.files = Object.keys(files).filter(s => !/test/.test(s));
-            config.testFiles = Object.keys(files).filter(s => /test/.test(s));
-            files["pxt.json"] = JSON.stringify(config, null, 4) + "\n"
+            let pkgFiles = Object.keys(files).filter(s =>
+                /\.(md|ts|asm|cpp|h)$/.test(s))
 
+            let fieldsOrder = [
+                "name",
+                "version",
+                "description",
+                "license",
+                "dependencies",
+                "files",
+                "testFiles",
+                "public"
+            ]
+
+            config.files = pkgFiles.filter(s => !/test/.test(s));
+            config.testFiles = pkgFiles.filter(s => /test/.test(s));
+
+            // make it look nice
+            let newCfg:any = {}
+            for (let f of fieldsOrder) {
+                if (configMap.hasOwnProperty(f))
+                    newCfg[f] = configMap[f]
+            }
+            for (let f of Object.keys(configMap)) {
+                if (!newCfg.hasOwnProperty(f))
+                    newCfg[f] = configMap[f]
+            }
+
+            files["pxt.json"] = JSON.stringify(newCfg, null, 4) + "\n"
+
+            configMap = U.clone(configMap)
+            configMap["target"] = pxt.appTarget.id
+            
             U.iterStringMap(files, (k, v) => {
                 v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
                 nodeutil.mkdirP(path.dirname(k))
