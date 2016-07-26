@@ -300,7 +300,14 @@ namespace ts.pxt {
         let r: Type;
         if (isExpression(node))
             r = checker.getContextualType(<Expression>node)
-        if (!r) r = checker.getTypeAtLocation(node);
+        if (!r) {
+            try {
+                r = checker.getTypeAtLocation(node);
+            }
+            catch (e) {
+                userError(9203, "Unknown type for expression")
+            }
+        }
         return checkType(r)
     }
 
@@ -455,16 +462,19 @@ namespace ts.pxt {
             }
 
             if (!n) {
-                return userError(9202, "Unsupported syntax")
+                return userError(9202, `Unsupported syntax ${getName(n)}`)
             }
 
             let syntax = stringKind(n)
+            let maybeSupportInFuture = false
+            let alternative: string = null
             switch (n.kind) {
                 case ts.SyntaxKind.ForInStatement:
                     syntax = "for in loops"
                     break
                 case ts.SyntaxKind.ForOfStatement:
                     syntax = "for of loops"
+                    maybeSupportInFuture = true
                     break
                 case ts.SyntaxKind.PropertyAccessExpression:
                     syntax = "property access"
@@ -472,14 +482,42 @@ namespace ts.pxt {
                 case ts.SyntaxKind.DeleteExpression:
                     syntax = "delete"
                     break
+                case ts.SyntaxKind.GetAccessor:
+                    syntax = "get accessor method"
+                    maybeSupportInFuture = true
+                    break
+                case ts.SyntaxKind.SetAccessor:
+                    syntax = "set accessor method"
+                    maybeSupportInFuture = true
+                    break
                 case ts.SyntaxKind.TaggedTemplateExpression:
                     syntax = "tagged templates"
+                    break
+                case ts.SyntaxKind.ObjectLiteralExpression:
+                    syntax = "object literals"
+                    alternative = "define a class instead"
+                    break
+                case ts.SyntaxKind.TypeOfExpression:
+                    syntax = "typeof"
+                    break
+                case ts.SyntaxKind.SpreadElementExpression:
+                    syntax = "spread"
+                    break
+                case ts.SyntaxKind.TryStatement:
+                case ts.SyntaxKind.CatchClause:
+                case ts.SyntaxKind.FinallyKeyword:
+                case ts.SyntaxKind.ThrowStatement:
+                    syntax =  "throwing and catching exceptions"
+                    break
+                case ts.SyntaxKind.ClassExpression:
+                    syntax = "class expressions"
+                    alternative = "declare a class as class C {} not let C = class {}"
                     break
                 default:
                     break
             }
 
-            return userError(9202, `${syntax} not supported`)
+            return userError(9202, `${syntax} not ${maybeSupportInFuture ? "currently" : ""}supported${alternative ? ` - ${alternative}`  : ""}`)
         }
 
         function nodeKey(f: Node) {
@@ -542,8 +580,12 @@ namespace ts.pxt {
         }
 
         function typeCheckVar(decl: Declaration) {
-            if (typeOf(decl).flags & TypeFlags.Void)
+            if (!decl) {
+                userError(9203, "variable has unknown type")
+            }
+            if (typeOf(decl).flags & TypeFlags.Void) {
                 userError(9203, lf("void-typed variables not supported"))
+            }
         }
 
         function lookupCell(decl: Declaration): ir.Cell {
