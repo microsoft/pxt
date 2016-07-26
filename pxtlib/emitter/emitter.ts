@@ -458,11 +458,12 @@ namespace ts.pxt {
         function unhandled(n: Node, info?: string) {
             //If we info then we may as well present that instead
             if (info) {
-                return userError(9202, `Unsupported syntax: ${info}`)
+                return userError(9202, `Unsupported feature: ${info}`)
             }
 
             if (!n) {
-                return userError(9202, `Unsupported syntax ${getName(n)}`)
+                console.log(`Error: ${getName(n)} is not a supported syntax feature`)
+                userError(9202, `Unsupported JavaScript feature`)
             }
 
             let syntax = stringKind(n)
