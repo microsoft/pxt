@@ -225,7 +225,17 @@ function readlineAsync() {
     })
 }
 
-export function promptAsync(msg: string): Promise<boolean> {
+export function queryAsync(msg: string, defl: string) {
+    process.stdout.write(`${msg} [${defl}]: `)
+    return readlineAsync()
+        .then(text => {
+            text = text.trim()
+            if (!text) return defl
+            else return text
+        })
+}
+
+export function yesNoAsync(msg: string): Promise<boolean> {
     process.stdout.write(msg + " (y/n): ")
     return readlineAsync()
         .then(text => {
@@ -233,7 +243,7 @@ export function promptAsync(msg: string): Promise<boolean> {
                 return Promise.resolve(true)
             else if (text.trim().toLowerCase() == "n")
                 return Promise.resolve(false)
-            else return promptAsync(msg)
+            else return yesNoAsync(msg)
         })
 }
 
@@ -332,8 +342,9 @@ function ptrcheckAsync(cmd: string) {
                 return Promise.resolve()
             }
 
-            return promptAsync("Delete all these pointers?")
+            return yesNoAsync("Delete all these pointers?")
                 .then(y => {
+                    (process.stdin as any).unref();
                     if (!y) return Promise.resolve()
                     return Promise.map(toDel,
                         e => Cloud.privateDeleteAsync(e)
@@ -1387,9 +1398,132 @@ export function installAsync(packageName?: string) {
     }
 }
 
-export function initAsync(packageName: string) {
-    return mainPkg.initAsync(packageName || "")
-        .then(() => mainPkg.installAllAsync())
+const defaultFiles: U.Map<string> = {
+    "tsconfig.json":
+    `{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "outDir": "built",
+        "rootDir": "."
+    }
+}
+`,
+
+    "README.md": `# @NAME@
+@DESCRIPTION@
+
+## License
+@LICENSE@
+
+## Supported targets
+* for PXT/@TARGET@
+(The metadata above is needed for package search.)
+`,
+
+    ".gitignore":
+    `built
+node_modules
+yotta_modules
+yotta_targets
+pxt_modules
+*.db
+*.tgz
+`,
+    ".vscode/settings.json":
+    `{
+    "editor.formatOnType": true,
+    "files.autoSave": "afterDelay",
+    "search.exclude": {
+        "**/built": true,
+        "**/node_modules": true,
+        "**/yotta_modules": true,
+        "**/yotta_targets": true,
+        "**/pxt_modules": true
+    }
+}`,
+    ".vscode/tasks.json":
+    `
+// A task runner that calls the PXT compiler and
+{
+    "version": "0.1.0",
+
+    // The command is pxt. Assumes that PXT has been installed using npm install -g pxt
+    "command": "pxt",
+
+    // The command is a shell script
+    "isShellCommand": true,
+
+    // Show the output window always.
+    "showOutput": "always",
+
+    "tasks": [{
+        "taskName": "deploy",
+        "isBuildCommand": true,
+        "problemMatcher": "$tsc",
+        "args": ["deploy"]
+    }, {
+        "taskName": "build",
+        "isTestCommand": true,
+        "problemMatcher": "$tsc",
+        "args": ["build"]
+    }, {
+        "taskName": "publish",
+        "problemMatcher": "$tsc",
+        "args": ["publish"]
+    }]
+}
+`
+}
+
+export function initAsync() {
+    if (fs.existsSync(pxt.configName))
+        U.userError(`${pxt.configName} already present`)
+
+    let prj = pxt.appTarget.tsprj;
+    let config = U.clone(prj.config);
+
+    let askFieldAsync = (fld: string, deflt: string, prompt: string = "") =>
+        queryAsync(prompt || fld, deflt)
+            .then(r => {
+                (config as any)[fld] = r
+            })
+
+    config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
+    config.public = true
+
+    let configMap: U.Map<string> = config as any
+
+    if (!config.license)
+        config.license = "MIT"
+    if (!config.version)
+        config.version = "0.0.0"
+
+    return Promise.mapSeries(["name", "description", "license"], f =>
+        queryAsync(f, configMap[f])
+            .then(r => {
+                configMap[f] = r
+            }))
+        .then(() => {
+            let files: U.Map<string> = {};
+            for (let f in defaultFiles)
+                files[f] = defaultFiles[f];
+            for (let f in prj.files)
+                files[f] = prj.files[f];
+
+            config.files = Object.keys(files).filter(s => !/test/.test(s));
+            config.testFiles = Object.keys(files).filter(s => /test/.test(s));
+            files["pxt.json"] = JSON.stringify(config, null, 4) + "\n"
+
+            U.iterStringMap(files, (k, v) => {
+                v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
+                nodeutil.mkdirP(path.dirname(k))
+                fs.writeFileSync(k, v)
+            })
+
+            console.log("package initialized");
+            (process.stdin as any).unref()
+        })
 }
 
 export function publishAsync() {
@@ -2279,7 +2413,7 @@ function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 
 
 cmd("help     [all]               - display this message", helpAsync)
 
-cmd("init     PACKAGE_NAME        - start new package for a given target", initAsync)
+cmd("init                         - start new package in current directory", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 
 cmd("build                        - build current package", buildAsync)
