@@ -2381,6 +2381,9 @@ export function testAsync() {
 }
 
 export function uploadDocsAsync(...args: string[]): Promise<void> {
+    let info = travisInfo()
+    if (info.tag || (info.branch && info.branch != "master"))
+        return Promise.resolve()
     let cfg = readLocalPxTarget()
     saveThemeJson(cfg)
     return uploader.uploadDocsAsync(...args)
