@@ -1628,6 +1628,38 @@ ${lbl}: .short 0xffff
             proc.emitLblDirect(l.brk);
         }
 
+        //Transforms the for of statement into a for statement
+        function emitForOfStatement(node: ForOfStatement) {
+            if (node.initializer && node.initializer.kind == SK.VariableDeclarationList) {
+                //TODO: Get cell for iteration variable
+                (<VariableDeclarationList>node.initializer).declarations.forEach(emit);
+            }
+            else if (node.initializer && node.initializer.kind == SK.ExpressionStatement) {} // More awkward
+            //Declaration of iterating variable
+            let iterVariable = proc.mkLocalTemporary();
+            proc.emitExpr(iterVariable.storeByRef(ir.numlit(0)))
+            proc.stackEmpty();
+
+            emitBrk(node);
+
+            let l = getLabels(node);
+
+            proc.emitLblDirect(l.fortop);
+            //TODO: Emit loop condition, call length 
+
+            //TODO: Emit element access
+
+            //Loop body 
+            emit(node.statement);
+
+            proc.emitLblDirect(l.cont);
+            //TODO: Emit increment expression
+
+            //Return to the top
+            proc.emitJmp(l.fortop);
+            proc.emitLblDirect(l.brk);
+        }
+
         function emitForInOrForOfStatement(node: ForInStatement) { }
 
         function emitBreakOrContinueStatement(node: BreakOrContinueStatement) {
@@ -1736,6 +1768,7 @@ ${lbl}: .short 0xffff
                 proc.stackEmpty();
             }
         }
+
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
             if (node.typeParameters)
@@ -1832,6 +1865,8 @@ ${lbl}: .short 0xffff
                     return emitDoStatement(<DoStatement>node);
                 case SK.ForStatement:
                     return emitForStatement(<ForStatement>node);
+                case SK.ForOfStatement:
+                    return emitForOfStatement(<ForOfStatement>node);
                 case SK.ContinueStatement:
                 case SK.BreakStatement:
                     return emitBreakOrContinueStatement(<BreakOrContinueStatement>node);
