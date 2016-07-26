@@ -1397,7 +1397,7 @@ class SnippetHost implements pxt.Host {
             }
             catch (e) {
                 //console.log(e)
-                 try {
+                try {
                     contents = fs.readFileSync(p2, 'utf8')
                 }
                 catch (e) {
@@ -2515,6 +2515,12 @@ function buildCoreAsync(mode: BuildOption) {
 
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.pxt.getApiInfo(res.ast)
+                // keeps apis from this module only
+                for (let infok in apiInfo.byQName) {
+                    let info = apiInfo.byQName[infok];
+                    if (info.pkg &&
+                        info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
+                }
                 let md = ts.pxt.genMarkdown(mainPkg.config.name, apiInfo)
                 mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
