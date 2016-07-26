@@ -71,31 +71,28 @@ debugger is another major one).
 
 ## Implementing async functions
 
-Currently, to implement an async function, you first need to add `//% async`
+Currently, to implement an async function, you first need to add `//% promise`
 attribute to the declaration:
 
 ```typescript
 //? Downloads data from remote site.
-//% async shim=basic::downloadData
+//% promise shim=basic::downloadData
 export function downloadData(url:string) { return "" }
 ```
 
-In the simulator you use `getResume()` function:
+In the simulator you return a promise:
 
 ```typescript
-export function downloadData(url:string) {
-    let cb = getResume()
-    $.get(url, (data, status) => {
-        cb(data)
-    })
+export function downloadDataAsync(url:string) {
+    return new Promise<string>((resolve, reject) =>
+        $.get(url, (data, status) => {
+            resolve(data)
+        }))
 }
 ```
 
-You should call `getResume()` in the main function, not one of the callbacks,
-as to not intercept the resume of some other thread.
+It is also possible to use `//% async` and use `getResume()` function
+to get a callback. You can see some older code do that.
 
-If you forget `//% async` annotation, or add one and don't use `getResume()`
-the simulator will crash.
-
-In future we expect to automatically support regular promise-returning
-`downloadDataAsync`, and also generate the TypeScript declaration automatically.
+Note, that you can [generate TypeScript definition](/simshim) from the
+simulator files, which will take care of the `//% promise` and `//% shim=...` annotations.
