@@ -1815,9 +1815,10 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            // nothing
+            userError(9228, "interfaces are not currently supported")
         }
         function emitEnumDeclaration(node: EnumDeclaration) {
+            //No code needs to be generated, enum names are replaced by constant values in generated code
         }
         function emitEnumMember(node: EnumMember) { }
         function emitModuleDeclaration(node: ModuleDeclaration) {
