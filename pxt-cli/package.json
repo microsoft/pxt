@@ -1,6 +1,6 @@
 {
   "name": "pxt",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Programming Experience Toolkit - command line interface",
   "keywords": [
     "TypeScript",
@@ -23,6 +23,9 @@
   "preferGlobal": true,
   "bin": {
     "pxt": "./pxt"
+  },
+  "engines": {
+    "node": ">= 4.4.5"
   },
   "dependencies": {}
 }

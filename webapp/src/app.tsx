@@ -112,6 +112,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     prevData: Cloud.JsonPointer[] = [];
     prevGhData: pxt.github.Repo[] = [];
     modal: sui.Modal;
+    textUpdatePending: number;
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -178,7 +179,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 .done();
         }
         let upd = (v: any) => {
-            this.setState({ searchFor: (v.target as any).value })
+            // make it a bit slower - GH has low rate limit for search
+            window.clearTimeout(this.textUpdatePending)
+            let str = (v.target as any).value
+            this.textUpdatePending = setTimeout(() => {
+                this.setState({ searchFor: str })
+            }, 1000)
         };
         let install = (scr: Cloud.JsonPointer) => {
             if (this.modal) this.modal.hide();
