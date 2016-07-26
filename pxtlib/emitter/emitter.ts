@@ -462,7 +462,7 @@ namespace ts.pxt {
             }
 
             if (!n) {
-                pxt.log(`Error: ${getName(n)} is not a supported syntax feature`)
+                console.log(`Error: ${getName(n)} is not a supported syntax feature`)
                 userError(9202, lf("Sorry, this language feature isn't supported"))
             }
 
