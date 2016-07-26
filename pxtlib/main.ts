@@ -183,9 +183,12 @@ namespace pxt {
 
     export interface PackageConfig {
         name: string;
+        version?: string;
         installedVersion?: string;
         description?: string;
         dependencies: U.Map<string>;
+        license?: string;
+        authors?: string[];
         files: string[];
         simFiles?: string[];
         testFiles?: string[];
@@ -571,50 +574,6 @@ namespace pxt {
                 })
         }
 
-        initAsync(name: string) {
-            if (!name)
-                U.userError("missing project name")
-
-            let str = this.readFile(configName)
-            if (str)
-                U.userError("config already present")
-
-            pxt.debug(`initializing ${name} for target ${pxt.appTarget.id}`);
-            let prj = pxt.appTarget.tsprj;
-            this.config = pxt.U.clone(prj.config);
-            this.config.name = name;
-
-            let files: U.Map<string> = {};
-            for (let f in prj.files)
-                files[f] = prj.files[f];
-            for (let f in defaultFiles)
-                files[f] = defaultFiles[f];
-            files["README.md"] =
-                `# ${name}
-
-Some description goes here.
-
-## Supported targets
-* for PXT/${pxt.appTarget.id}
-(The metadata above is needed for package search.)
-`
-            delete files["pxt.json"];
-
-            this.config.files = Object.keys(files).filter(s => !/test/.test(s));
-            this.config.testFiles = Object.keys(files).filter(s => /test/.test(s));
-
-            this.validateConfig();
-            this.saveConfig()
-
-            U.iterStringMap(files, (k, v) => {
-                if (v != null)
-                    this.host().writeFile(this, k, v.replace(/@NAME@/g, name))
-            })
-            pxt.log("package initialized")
-
-            return Promise.resolve()
-        }
-
         filesToBePublishedAsync(allowPrivate = false) {
             let files: U.Map<string> = {};
 
@@ -710,69 +669,4 @@ Some description goes here.
     export const configName = "pxt.json"
     export const blocksProjectName = "blocksprj";
     export const javaScriptProjectName = "tsprj";
-    const defaultFiles: U.Map<string> = {
-        "tsconfig.json":
-        `{
-    "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "outDir": "built",
-        "rootDir": "."
-    }
-}
-`,
-        ".gitignore":
-        `built
-node_modules
-yotta_modules
-yotta_targets
-pxt_modules
-*.db
-*.tgz
-`,
-        ".vscode/settings.json":
-        `{
-    "editor.formatOnType": true,
-    "files.autoSave": "afterDelay",
-    "search.exclude": {
-        "**/built": true,
-        "**/node_modules": true,
-        "**/yotta_modules": true,
-        "**/yotta_targets": true,
-        "**/pxt_modules": true
-    }
-}`,
-        ".vscode/tasks.json":
-        `
-// A task runner that calls the PXT compiler and
-{
-    "version": "0.1.0",
-
-    // The command is pxt. Assumes that PXT has been installed using npm install -g pxt
-    "command": "pxt",
-
-    // The command is a shell script
-    "isShellCommand": true,
-
-    // Show the output window always.
-    "showOutput": "always",
-
-    "tasks": [{
-        "taskName": "deploy",
-        "isBuildCommand": true,
-        "problemMatcher": "$tsc",
-        "args": ["deploy"]
-    }, {
-        "taskName": "build",
-        "isTestCommand": true,
-        "problemMatcher": "$tsc",
-        "args": ["build"]
-    }, {
-        "taskName": "publish",
-        "problemMatcher": "$tsc",
-        "args": ["publish"]
-    }]
-}
-`
-    }
 }

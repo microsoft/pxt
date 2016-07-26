@@ -1748,9 +1748,9 @@ ${lbl}: .short 0xffff
             emitBrk(node)
         }
         function emitVariableDeclaration(node: VariableDeclaration) {
+            typeCheckVar(node)
             if (!isUsed(node))
                 return;
-            typeCheckVar(node)
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
