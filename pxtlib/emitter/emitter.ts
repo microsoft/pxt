@@ -305,7 +305,7 @@ namespace ts.pxt {
                 r = checker.getTypeAtLocation(node);
             }
             catch (e) {
-                userError(9203, "Unknown type for expression")
+                userError(9203, lf("Unknown type for expression"))
             }
         }
         return checkType(r)
@@ -458,12 +458,12 @@ namespace ts.pxt {
         function unhandled(n: Node, info?: string) {
             //If we info then we may as well present that instead
             if (info) {
-                return userError(9202, `Unsupported feature: ${info}`)
+                return userError(9202, lf("Sorry, this language feature isn't supported(${0})", info))
             }
 
             if (!n) {
-                console.log(`Error: ${getName(n)} is not a supported syntax feature`)
-                userError(9202, `Unsupported JavaScript feature`)
+                pxt.log(`Error: ${getName(n)} is not a supported syntax feature`)
+                userError(9202, lf("Sorry, this language feature isn't supported"))
             }
 
             let syntax = stringKind(n)
@@ -518,7 +518,13 @@ namespace ts.pxt {
                     break
             }
 
-            return userError(9202, `${syntax} not ${maybeSupportInFuture ? "currently" : ""}supported${alternative ? ` - ${alternative}`  : ""}`)
+            let formatStr = maybeSupportInFuture ? "{0} syntax not currently supported" : "{0} syntax not supported"
+            let msg = lf(formatStr, lf(syntax))
+            if (alternative) {
+                msg += lf(" - ") + lf(alternative)
+            }
+
+            return userError(9202, msg)
         }
 
         function nodeKey(f: Node) {
@@ -582,7 +588,7 @@ namespace ts.pxt {
 
         function typeCheckVar(decl: Declaration) {
             if (!decl) {
-                userError(9203, "variable has unknown type")
+                userError(9203, lf("variable has unknown type"))
             }
             if (typeOf(decl).flags & TypeFlags.Void) {
                 userError(9203, lf("void-typed variables not supported"))
@@ -1816,7 +1822,7 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            //userError(9228, "interfaces are not currently supported")
+            //userError(9228, lf("interfaces are not currently supported"))
         }
         function emitEnumDeclaration(node: EnumDeclaration) {
             //No code needs to be generated, enum names are replaced by constant values in generated code
