@@ -1582,7 +1582,7 @@ export function initAsync() {
             config.testFiles = pkgFiles.filter(s => /test/.test(s));
 
             // make it look nice
-            let newCfg:any = {}
+            let newCfg: any = {}
             for (let f of fieldsOrder) {
                 if (configMap.hasOwnProperty(f))
                     newCfg[f] = configMap[f]
@@ -1596,7 +1596,7 @@ export function initAsync() {
 
             configMap = U.clone(configMap)
             configMap["target"] = pxt.appTarget.id
-            
+
             U.iterStringMap(files, (k, v) => {
                 v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
                 nodeutil.mkdirP(path.dirname(k))
