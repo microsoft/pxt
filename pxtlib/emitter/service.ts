@@ -27,6 +27,7 @@ namespace ts.pxt {
         retType: string;
         isContextual?: boolean;
         qName?: string;
+        package?: string;
     }
 
     export interface ApisInfo {
@@ -174,11 +175,21 @@ namespace ts.pxt {
             let m = /^(.*)\.(.*)/.exec(qName)
             let hasParams = kind == SymbolKind.Function || kind == SymbolKind.Method
 
+            let package: string = null
+
+            let src = getSourceFileOfNode(stmt)
+            if (src) {
+                let m = /^pxt_modules\/([^\/]+)/.exec(src.fileName)
+                if (m)
+                    package = m[1]
+            }
+
             return {
                 kind,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
                 attributes,
+                package,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
                 parameters: !hasParams ? null : (decl.parameters || []).map(p => {
                     let n = getName(p)
