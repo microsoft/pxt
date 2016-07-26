@@ -133,6 +133,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
     fetchCloudData(): Cloud.JsonPointer[] {
         let cloud = pxt.appTarget.cloud || {};
+        if (cloud.packages) return [] // now handled on GitHub
         if (!cloud.workspaces && !cloud.packages) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
         let res = this.state.searchFor

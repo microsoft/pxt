@@ -2500,7 +2500,7 @@ cmd("install  [PACKAGE...]        - install new packages, or all packages", inst
 cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
-cmd("publish                      - publish current package", publishAsync)
+cmd("publish                      - publish current package", publishAsync, 1)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file or stdin", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
@@ -2522,7 +2522,7 @@ cmd("checkdocs                    - check docs for broken links, typing errors, 
 cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) hosting for target", ghpInitAsync, 1)
 cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
 
-cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
+cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
 
 cmd("search   QUERY...            - search GitHub for a published package", searchAsync)
 cmd("pkginfo  USER/REPO           - show info about named GitHub packge", pkginfoAsync)
