@@ -52,6 +52,13 @@ namespace pxt.semver {
     }
 
     export function parse(v: string): Version {
+        let r = tryParse(v)
+        if (!r)
+            U.userError(U.lf("'{0}' doesn't look like a semantic version number", v))
+        return r
+    }
+
+    export function tryParse(v: string): Version {
         if (/^v\d/i.test(v)) v = v.slice(1)
         let m = /^(\d+)\.(\d+)\.(\d+)(-([0-9a-zA-Z\-\.]+))?(\+([0-9a-zA-Z\-\.]+))?$/.exec(v)
         if (m)
@@ -75,8 +82,8 @@ namespace pxt.semver {
     }
 
     export function strcmp(a: string, b: string) {
-        let aa = parse(a)
-        let bb = parse(b)
+        let aa = tryParse(a)
+        let bb = tryParse(b)
         if (!aa && !bb)
             return U.strcmp(a, b)
         else return cmp(aa, bb)

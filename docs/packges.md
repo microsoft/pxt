@@ -40,7 +40,5 @@ If there are no tags, PXT will pick the latest commit from the default branch
 In both cases, the specific version is hard-coded into the user's package.
 To update, the user has to take explicit action (currently remove and re-add the package).
 
-## Future work
-
-* `pxt bump` will soon support bumping version of `pxt.json`
-* `pxt init` will be interactive
+You can use `pxt bump` to bump version of a package. It will `git pull`, update the patch
+version level (but will ask you for an override), create a git tag and push.

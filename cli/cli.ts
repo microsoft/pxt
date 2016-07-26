@@ -215,9 +215,11 @@ function uploadFileAsync(path: string) {
         })
 }
 
+let readlineCount = 0
 function readlineAsync() {
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
+    readlineCount++
     return new Promise<string>((resolve, reject) => {
         process.stdin.once('data', (text: string) => {
             resolve(text)
@@ -344,7 +346,6 @@ function ptrcheckAsync(cmd: string) {
 
             return yesNoAsync("Delete all these pointers?")
                 .then(y => {
-                    (process.stdin as any).unref();
                     if (!y) return Promise.resolve()
                     return Promise.map(toDel,
                         e => Cloud.privateDeleteAsync(e)
@@ -525,7 +526,7 @@ function bumpKsDepAsync() {
             }
 
             console.log(`Bumping pxt-core dep version: ${currVer} -> ${newVer}`)
-            if (currVer != "*" && semverCmp(currVer, newVer) > 0) {
+            if (currVer != "*" && pxt.semver.strcmp(currVer, newVer) > 0) {
                 U.userError("Trying to downgrade pxt-core.")
             }
             pkg["dependencies"]["pxt-core"] = newVer
@@ -542,13 +543,49 @@ function updateAsync() {
         .then(() => runNpmAsync("install"));
 }
 
-function bumpAsync() {
+function justBumpPkgAsync() {
+    ensurePkgDir()
     return Promise.resolve()
-        .then(() => runGitAsync("pull"))
-        .then(() => bumpKsDepAsync())
-        .then(() => runNpmAsync("version", "patch"))
-        .then(() => runGitAsync("push", "--tags"))
-        .then(() => runGitAsync("push"))
+        .then(() => spawnWithPipeAsync({
+            cmd: "git",
+            args: ["status", "--porcelain", "--untracked-files=no"]
+        }))
+        .then(buf => {
+            if (buf.length)
+                U.userError("Please commit all files to git before running 'pxt bump'")
+            return mainPkg.loadAsync()
+        })
+        .then(() => {
+            let v = pxt.semver.parse(mainPkg.config.version)
+            v.patch++
+            return queryAsync("New version", pxt.semver.stringify(v))
+        })
+        .then(nv => {
+            let v = pxt.semver.parse(nv)
+            mainPkg.config.version = pxt.semver.stringify(v)
+            mainPkg.saveConfig()
+        })
+        .then(() => runGitAsync("commit", "-a", "-m", mainPkg.config.version))
+        .then(() => runGitAsync("tag", "v" + mainPkg.config.version))
+}
+
+function bumpAsync() {
+    if (fs.existsSync(pxt.configName))
+        return Promise.resolve()
+            .then(() => runGitAsync("pull"))
+            .then(() => justBumpPkgAsync())
+            .then(() => runGitAsync("push", "--tags"))
+            .then(() => runGitAsync("push"))
+    else if (fs.existsSync("pxtarget.json"))
+        return Promise.resolve()
+            .then(() => runGitAsync("pull"))
+            .then(() => bumpKsDepAsync())
+            .then(() => runNpmAsync("version", "patch"))
+            .then(() => runGitAsync("push", "--tags"))
+            .then(() => runGitAsync("push"))
+    else {
+        throw U.userError("Couldn't find package or target JSON file; nothing to bump")
+    }
 }
 
 function runGitAsync(...args: string[]) {
@@ -823,26 +860,42 @@ export function publishTargetAsync() {
     })
 }
 
-export function spawnAsync(opts: {
-    cmd: string,
-    args: string[],
-    cwd?: string,
-    shell?: boolean
-}) {
+export interface SpawnOptions {
+    cmd: string;
+    args: string[];
+    cwd?: string;
+    shell?: boolean;
+    pipe?: boolean;
+}
+
+export function spawnAsync(opts: SpawnOptions) {
+    opts.pipe = false
+    return spawnWithPipeAsync(opts)
+        .then(() => { })
+}
+
+export function spawnWithPipeAsync(opts: SpawnOptions) {
+    if (opts.pipe === undefined) opts.pipe = true
     let info = opts.cmd + " " + opts.args.join(" ")
     if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
     console.log("[run] " + info)
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<Buffer>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
             env: process.env,
-            stdio: "inherit",
+            stdio: opts.pipe ? [process.stdin, "pipe", process.stderr] : "inherit",
             shell: opts.shell || false
         } as any)
+        let bufs: Buffer[] = []
+        if (opts.pipe)
+            ch.stdout.on('data', (buf: Buffer) => {
+                bufs.push(buf)
+                process.stdout.write(buf)
+            })
         ch.on('close', (code: number) => {
             if (code != 0)
                 reject(new Error("Exit code: " + code + " from " + info))
-            resolve()
+            resolve(Buffer.concat(bufs))
         });
     })
 }
@@ -1521,8 +1574,7 @@ export function initAsync() {
                 fs.writeFileSync(k, v)
             })
 
-            console.log("package initialized");
-            (process.stdin as any).unref()
+            console.log("package initialized")
         })
 }
 
@@ -2431,7 +2483,7 @@ cmd("serve    [-yt]               - start web server for your local target; -yt 
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
-cmd("bump                         - bump target patch version", bumpAsync, 1)
+cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
@@ -2567,7 +2619,12 @@ export function mainCli(targetDir: string) {
         helpAsync()
             .then(() => process.exit(1))
     } else {
-        cc.fn.apply(null, args.slice(1))
+        let r = cc.fn.apply(null, args.slice(1))
+        if (r)
+            r.then(() => {
+                if (readlineCount)
+                    (process.stdin as any).unref();
+            })
     }
 }
 

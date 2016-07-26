@@ -300,7 +300,7 @@ namespace pxt {
             return null
         }
 
-        protected saveConfig() {
+        saveConfig() {
             let cfg = JSON.stringify(this.config, null, 4) + "\n"
             this.host().writeFile(this, configName, cfg)
         }
@@ -331,7 +331,8 @@ namespace pxt {
                             if (!confStr)
                                 U.userError(`package ${this.id} is missing ${configName}`)
                             this.parseConfig(confStr)
-                            this.config.installedVersion = this.version()
+                            if (this.level != 0)
+                                this.config.installedVersion = this.version()
                             this.saveConfig()
                         })
                         .then(() => {
