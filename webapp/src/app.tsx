@@ -1087,7 +1087,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const compile = pxt.appTarget.compile;
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
-        const devSignin = !pxtwinrt.isWinRT();
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${this.state.sideDocsCollapsed ? "" : "sideDocs"}` }>
@@ -1126,11 +1125,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                         <i className="help icon"></i>
                                         {lf("Help") }
                                     </a>
-                                    { devSignin ? <LoginBox /> : undefined }
                                     {
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
-                                    <sui.Item role="menuitem" icon='sign out' text={devSignin ? lf("Sign out / Reset") : lf("Reset") } onClick={() => LoginBox.signout() } />
+                                    <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
                                     <div className="ui divider"></div>
                                     { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                                     { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }
