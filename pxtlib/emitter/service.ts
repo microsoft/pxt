@@ -65,6 +65,7 @@ namespace ts.pxt {
         if (p.initializer) return p.initializer
         if (p.defaults) return p.defaults[0]
         if (p.type == "number") return "0"
+        if (p.type == "boolean") return "false"
         else if (p.type == "string") {
             if (imgLit) {
                 imgLit = false
