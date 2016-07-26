@@ -230,7 +230,9 @@ namespace ts.pxt.ir {
         _isGlobal = false;
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
-            setCellProps(this)
+            if (def && info) {
+                setCellProps(this)
+            }
         }
 
         getName() {
@@ -246,7 +248,7 @@ namespace ts.pxt.ir {
 
         toString() {
             let n = ""
-            if (this.def) n += (<any>this.def.name).text || "?"
+            if (this.def) n += this.getName() || "?"
             if (this.isarg) n = "ARG " + n
             if (this.isRef()) n = "REF " + n
             //if (this.isByRefLocal()) n = "BYREF " + n
@@ -254,7 +256,7 @@ namespace ts.pxt.ir {
         }
 
         uniqueName() {
-            return getDeclName(this.def) + "___" + getNodeId(this.def)
+            return this.getName() + "___" + getNodeId(this.def)
         }
 
         refSuff() {
@@ -312,6 +314,30 @@ namespace ts.pxt.ir {
         }
     }
 
+    //Used for generating code for variables that are not part of the JS
+    export class TemporaryCell extends Cell {
+        constructor(public index: number) {
+            super(index, null, null)
+        }
+
+        getName() {
+            return "!temporary" //Can't start JS names with !, so this will be unique
+        }
+
+        uniqueName() {
+            return this.getName() + "___" + this.index
+        }
+
+        refSuff() {
+            if (this.isRef()) return "Ref"
+            else return ""
+        }
+
+        isByRefLocal() {
+            return false
+        }
+    }
+
     export class Procedure extends Node {
         numArgs = 0;
         info: FunctionAddInfo;
@@ -363,6 +389,12 @@ namespace ts.pxt.ir {
 
         mkLocal(def: Declaration, info: VariableAddInfo) {
             let l = new Cell(this.locals.length, def, info)
+            this.locals.push(l)
+            return l
+        }
+
+        mkLocalTemporary() {
+            let l = new TemporaryCell(this.locals.length);
             this.locals.push(l)
             return l
         }
