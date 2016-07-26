@@ -13,7 +13,7 @@ called `neopixel` for target `microbit`.
 * clone this repository into `pxt-neopixel` folder
 * go to the folder and run `pxt target microbit`; you can alternatively place the folder under 
   your target workspace where the target is already installed
-* go to the cloned folder and run `pxt init neopixel`
+* go to the cloned folder and run `pxt init`; follow the prompts
 * edit `pxt.json` and `README.md` with the right descriptions
 * checkin and push
 
@@ -31,13 +31,13 @@ When someone references your package from the web UI they will get
 a specific version.
 
 If you have any tags, PXT will pick the one with
-the highest [semver](https://semver.org) precedence (the biggest version
+the highest [Semantic Version](http://semver.org) precedence (the biggest version
 number). Thus, it's good to have tags like `v0.0.0`, `v0.1.7-rc.4` etc.
 
 If there are no tags, PXT will pick the latest commit from the default branch
 (usually `master`).
 
-In both cases, the specific version is hardcoded into the user's package.
+In both cases, the specific version is hard-coded into the user's package.
 To update, the user has to take explicit action (currently remove and re-add the package).
 
 ## Future work
