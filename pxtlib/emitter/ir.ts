@@ -321,7 +321,8 @@ namespace ts.pxt.ir {
         }
 
         getName() {
-            return "temporary" //Can't start JS names with !, so this will be unique
+            //TODO: This needs to be *way* more unique
+            return "temporary"
         }
 
         uniqueName() {
