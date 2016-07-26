@@ -42,3 +42,11 @@ To update, the user has to take explicit action (currently remove and re-add the
 
 You can use `pxt bump` to bump version of a package. It will `git pull`, update the patch
 version level (but will ask you for an override), create a git tag and push.
+
+## Samples
+
+* https://github.com/Microsoft/pxt-neopixel
+* https://github.com/Microsoft/pxt-i2c-fram
+
+Be aware that if you just fork one of these, the **fork won't show up in search**.
+You have to create a new repo.
