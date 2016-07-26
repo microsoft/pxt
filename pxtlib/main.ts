@@ -271,6 +271,20 @@ namespace pxt {
             return this.version()
         }
 
+        commonDownloadAsync(): Promise<U.Map<string>> {
+            let proto = this.verProtocol()
+            if (proto == "pub") {
+                return Cloud.downloadScriptFilesAsync(this.verArgument())
+            } else if (proto == "github") {
+                return pxt.github.downloadPackageAsync(this.verArgument())
+                    .then(resp => resp.files)
+            } else if (proto == "embed") {
+                let resp = pxt.getEmbeddedScript(this.verArgument())
+                return Promise.resolve(resp)
+            } else
+                return Promise.resolve(null as U.Map<string>)
+        }
+
         host() { return this.parent._host }
 
         readFile(fn: string) {
@@ -575,7 +589,15 @@ namespace pxt {
                 files[f] = prj.files[f];
             for (let f in defaultFiles)
                 files[f] = defaultFiles[f];
-            delete files["README.md"]; // override existing readme files
+            files["README.md"] =
+                `# ${name}
+
+Some description goes here.
+
+## Supported targets
+* for PXT/${pxt.appTarget.id}
+(The metadata above is needed for package search.)
+`
             delete files["pxt.json"];
 
             this.config.files = Object.keys(files).filter(s => !/test/.test(s));
