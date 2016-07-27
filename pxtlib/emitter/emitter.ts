@@ -1666,11 +1666,11 @@ ${lbl}: .short 0xffff
             proc.stackEmpty()
 
             //Store the expression (it could be a string literal, for example) for the collection being iterated over
-            let collectionVar = proc.mkLocalTemporary(); // a
+            let collectionVar = proc.mkLocalUnnamed(); // a
             proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
 
             //Declaration of iterating variable
-            let intVarIter = proc.mkLocalTemporary(); // i
+            let intVarIter = proc.mkLocalUnnamed(); // i
             proc.emitExpr(intVarIter.storeByRef(ir.numlit(0)))
             proc.stackEmpty();
 
