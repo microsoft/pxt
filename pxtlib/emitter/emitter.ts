@@ -425,7 +425,6 @@ namespace ts.pxt {
         let usedWorkList: Declaration[] = []
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
-        let brkMap: U.Map<Breakpoint> = {}
 
         if (opts.target.isNative) {
             if (!opts.hexinfo) {
@@ -449,17 +448,6 @@ namespace ts.pxt {
             opts.breakpoints = true
         }
 
-        if (opts.breakpoints)
-            res.breakpoints = [{
-                id: 0,
-                isDebuggerStmt: false,
-                fileName: "bogus",
-                start: 0,
-                length: 0,
-                line: 0,
-                character: 0,
-                successors: null
-            }]
 
         let bin: Binary;
         let proc: ir.Procedure;
@@ -469,6 +457,17 @@ namespace ts.pxt {
             bin.res = res;
             bin.target = opts.target;
             proc = null
+            if (opts.breakpoints)
+                res.breakpoints = [{
+                    id: 0,
+                    isDebuggerStmt: false,
+                    fileName: "bogus",
+                    start: 0,
+                    length: 0,
+                    line: 0,
+                    character: 0,
+                    successors: null
+                }]
         }
 
         let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
@@ -1514,28 +1513,24 @@ ${lbl}: .short 0xffff
 
         function emitBrk(node: Node) {
             if (!opts.breakpoints) return
-            let brk = U.lookup(brkMap, nodeKey(node))
-            if (!brk) {
-                let src = getSourceFileOfNode(node)
-                if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
-                    return;
-                let pos = node.pos
-                while (/^\s$/.exec(src.text[pos]))
-                    pos++;
-                let p = ts.getLineAndCharacterOfPosition(src, pos)
-                brk = {
-                    id: res.breakpoints.length,
-                    isDebuggerStmt: node.kind == SK.DebuggerStatement,
-                    fileName: src.fileName,
-                    start: pos,
-                    length: node.end - pos,
-                    line: p.line,
-                    character: p.character,
-                    successors: null
-                }
-                brkMap[nodeKey(node)] = brk
-                res.breakpoints.push(brk)
+            let src = getSourceFileOfNode(node)
+            if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
+                return;
+            let pos = node.pos
+            while (/^\s$/.exec(src.text[pos]))
+                pos++;
+            let p = ts.getLineAndCharacterOfPosition(src, pos)
+            let brk: Breakpoint = {
+                id: res.breakpoints.length,
+                isDebuggerStmt: node.kind == SK.DebuggerStatement,
+                fileName: src.fileName,
+                start: pos,
+                length: node.end - pos,
+                line: p.line,
+                character: p.character,
+                successors: null
             }
+            res.breakpoints.push(brk)
             let st = ir.stmt(ir.SK.Breakpoint, null)
             st.breakpointInfo = brk
             proc.emit(st)
