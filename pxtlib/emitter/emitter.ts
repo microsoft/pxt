@@ -285,7 +285,9 @@ namespace ts.pxt {
 
     function genericRoot(t: Type) {
         if (t.flags & TypeFlags.Reference) {
-            return (t as TypeReference).target
+            let r = t as TypeReference
+            if (r.typeArguments && r.typeArguments.length)
+                return r.target
         }
         return null
     }
@@ -1086,6 +1088,13 @@ ${lbl}: .short 0xffff
                     if (helperStmt.kind != SK.FunctionDeclaration)
                         userError(9216, lf("helpers.{0} isn't a function", attrs.helper))
                     decl = <FunctionDeclaration>helperStmt;
+                    let sig = checker.getSignatureFromDeclaration(decl)
+                    let tp = sig.getTypeParameters() || []
+                    if (tp.length != bindings.length)
+                        U.oops("helpers type parameter mismatch") // can it happen?
+                    bindings.forEach((b, i) => {
+                        b.tp = tp[i]
+                    })
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
                 } else {
