@@ -113,6 +113,9 @@ namespace pxt.github {
         watchers: number;
         default_branch: string; // "master",
         score: number; // 6.7371006
+
+        // non-github, added to track search request
+        tag?: string;
     }
 
     export interface SearchResults {
@@ -121,10 +124,31 @@ namespace pxt.github {
         items: Repo[];
     }
 
-    export function searchAsync(query: string) {
+    export function searchAsync(query: string): Promise<SearchResults> {
+        let id = parseRepoUrl(query);
+        if (id && id.repo)
+            return U.httpGetJsonAsync("https://api.github.com/repos/" + id.repo)
+                .then(r => {
+                    let repo = r as Repo;
+                    repo.tag = id.tag;
+                    return <SearchResults>{
+                        total_count: 1,
+                        incomplete_results: false,
+                        items: [repo]
+                    }
+                })
+
         query += ` in:name,description,readme "for PXT/${appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
             .then(r => r as SearchResults)
+    }
+
+    export function parseRepoUrl(url: string) {
+        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/]+)(#(\w+))?$/i.exec(url.trim());
+        return {
+            repo: m ? m[3].toLowerCase() : null,
+            tag: m ? m[5] : null
+        }
     }
 
     export function parseRepoId(repo: string) {
