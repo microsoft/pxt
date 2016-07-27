@@ -1634,27 +1634,43 @@ ${lbl}: .short 0xffff
                 return
             }
 
-            //Currently only going to support a single variable for iterating a collection
             let declList = <VariableDeclarationList>node.initializer;
             if (declList.declarations.length != 1) {
                 unhandled(node, "only a single variable may be used to iterate a collection")
                 return
             }
 
-            //The variable used for storing the contents of each item in the collection during iteration
+            //Typecheck the expression being iterated over
+            let t = typeOf(node.expression)
+
+            let indexer = ""
+            let length = ""
+            if (t.flags & TypeFlags.String) {
+                indexer = "String_::charAt"
+                length = "String_::length"
+            }
+            else if (isArrayType(t)) {
+                indexer = "Array_::getAt"
+                length = "Array_::length"
+            }
+            else {
+                unhandled(node.expression, "cannot use for...of with this expression")
+                return
+            }
+
+            //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it 
             markUsed(declList.declarations[0])
-            let iterVar = emitVariableDeclaration(declList.declarations[0])
-            //Start with null
+            let iterVar = emitVariableDeclaration(declList.declarations[0]) // c
+            //Start with null, TODO: Is this necessary
             proc.emitExpr(iterVar.storeByRef(ir.numlit(0)))
             proc.stackEmpty()
 
-            //As we could be iterating through an expression we need to store it somewhere
-            let collectionVar = proc.mkLocalTemporary();
+            //Store the expression (it could be a string literal, for example) for the collection being iterated over
+            let collectionVar = proc.mkLocalTemporary(); // a
             proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
 
-
             //Declaration of iterating variable
-            let intVarIter = proc.mkLocalTemporary();
+            let intVarIter = proc.mkLocalTemporary(); // i
             proc.emitExpr(intVarIter.storeByRef(ir.numlit(0)))
             proc.stackEmpty();
 
@@ -1662,41 +1678,20 @@ ${lbl}: .short 0xffff
 
             let l = getLabels(node);
 
-            //Top of loop
             proc.emitLblDirect(l.fortop);
-            //Conditional branch 
-            //TODO: Support arrays as well
-            proc.emitJmpZ(l.brk, ir.rtcall("Number_::lt", [intVarIter.load(), ir.rtcall("String_::length", [collectionVar.load()])]))
+            //i < a.length()
+            proc.emitJmpZ(l.brk, ir.rtcall("Number_::lt", [intVarIter.load(), ir.rtcall(length, [collectionVar.load()])]))
 
-            //Emit element access
-            let t = typeOf(node.expression)
-
-            let indexer = ""
-            if (t.flags & TypeFlags.String) {
-                indexer = "String_::charAt"
-            }
-            else if (isArrayType(t)) {
-                indexer = "Array_::getAt"
-            }
-            else {
-                unhandled(node.expression, "cannot use for...of with this expression")
-                return
-            }
-
+            //c = a[i]
             proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.load(), intVarIter.load()])))
 
-            //Loop body 
             emit(node.statement);
-
             proc.emitLblDirect(l.cont);
 
-            //Emit increment expression
+            //i = i + 1
             proc.emitExpr(intVarIter.storeByRef(ir.rtcall("thumb::adds", [intVarIter.load(), ir.numlit(1)])))
 
-            //Return to the top
             proc.emitJmp(l.fortop);
-
-            //End of loop
             proc.emitLblDirect(l.brk);
         }
 
@@ -1793,9 +1788,7 @@ ${lbl}: .short 0xffff
         }
         function emitVariableDeclaration(node: VariableDeclaration): ir.Cell {
             typeCheckVar(node)
-            console.log(`Possibly going to declare ${node.getText()}`)
             if (!isUsed(node)) {
-                console.log(`The variable ${node.getText()} is not used, therefore not emitting location`);
                 return null;
             }
             let loc = isGlobalVar(node) ?
