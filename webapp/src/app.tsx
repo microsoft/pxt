@@ -112,6 +112,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     prevData: Cloud.JsonPointer[] = [];
     prevGhData: pxt.github.Repo[] = [];
     modal: sui.Modal;
+    textUpdatePending: number;
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -178,7 +179,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 .done();
         }
         let upd = (v: any) => {
-            this.setState({ searchFor: (v.target as any).value })
+            // make it a bit slower - GH has low rate limit for search
+            window.clearTimeout(this.textUpdatePending)
+            let str = (v.target as any).value
+            this.textUpdatePending = setTimeout(() => {
+                this.setState({ searchFor: str })
+            }, 1000)
         };
         let install = (scr: Cloud.JsonPointer) => {
             if (this.modal) this.modal.hide();
@@ -417,10 +423,25 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             return null;
 
         let expands = this.state.expands;
+        let removeFile = (f: pkg.File) => {
+            core.confirmAsync({
+                header: lf("Remove {0}", f.name),
+                body: lf("You are about to remove a file from your project. Are you sure?"),
+                agreeClass: "red",
+                agreeIcon: "trash",
+                agreeLbl: lf("Remove it"),
+            }).done(res => {
+                if (res) {
+                    pkg.mainEditorPkg().removeFileAsync(f.name)
+                        .then(() => pkg.mainEditorPkg().saveFilesAsync())
+                        .done(() => this.props.parent.reloadHeaderAsync());
+                }
+            })
+        }
         let removePkg = (p: pkg.EditorPackage) => {
             core.confirmAsync({
                 header: lf("Remove {0} package", p.getPkgId()),
-                body: lf("You are about to remove a package from your project. Are you sure?", p.getPkgId()),
+                body: lf("You are about to remove a package from your project. Are you sure?"),
                 agreeClass: "red",
                 agreeIcon: "trash",
                 agreeLbl: lf("Remove it"),
@@ -432,12 +453,12 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             })
         }
 
-        let filesOf = (pkg: pkg.EditorPackage) =>
-            pkg.sortedFiles().map(file => {
+        let filesOf = (pkg: pkg.EditorPackage) : JSX.Element[] => {
+            const deleteFiles = pkg.getPkgId() == "this";
+            return pkg.sortedFiles().map(file => {
                 let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
                 return (
-                    <a
-                        key={file.getName() }
+                    <a key={file.getName() }
                         onClick={() => parent.setFile(file) }
                         className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
@@ -445,8 +466,10 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                         {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                         {meta.isReadonly ? <i className="lock icon"></i> : null}
                         {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+                        {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={() => removeFile(file) } /> : ''}
                     </a>);
             })
+        }
 
         let togglePkg = (p: pkg.EditorPackage) => {
             expands[p.getPkgId()] = !expands[p.getPkgId()];
@@ -1087,7 +1110,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const compile = pxt.appTarget.compile;
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
-        const devSignin = !pxtwinrt.isWinRT();
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${this.state.sideDocsCollapsed ? "" : "sideDocs"}` }>
@@ -1126,11 +1148,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                         <i className="help icon"></i>
                                         {lf("Help") }
                                     </a>
-                                    { devSignin ? <LoginBox /> : undefined }
                                     {
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
-                                    <sui.Item role="menuitem" icon='sign out' text={devSignin ? lf("Sign out / Reset") : lf("Reset") } onClick={() => LoginBox.signout() } />
+                                    <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
                                     <div className="ui divider"></div>
                                     { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                                     { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }
