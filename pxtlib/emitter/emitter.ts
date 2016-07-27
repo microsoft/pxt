@@ -1175,8 +1175,8 @@ ${lbl}: .short 0xffff
                     //console.log(l.toString(), l.info)
                     if (l.isByRefLocal()) {
                         // TODO add C++ support function to do this
-                        let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refStuff(), []))
-                        proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refStuff(), [tmp, l.loadCore()]))
+                        let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuffix(), []))
+                        proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuffix(), [tmp, l.loadCore()]))
                         proc.emitExpr(l.storeDirect(tmp))
                     }
                 })
@@ -1795,7 +1795,7 @@ ${lbl}: .short 0xffff
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 proc.emitClrIfRef(loc) // we might be in a loop
-                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refStuff(), [])))
+                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuffix(), [])))
             }
             // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {

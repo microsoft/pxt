@@ -259,7 +259,7 @@ namespace ts.pxt.ir {
             return this.getName() + "___" + getNodeId(this.def)
         }
 
-        refStuff() {
+        refSuffix() {
             if (this.isRef()) return "Ref"
             else return ""
         }
@@ -276,7 +276,7 @@ namespace ts.pxt.ir {
             let r = this.loadCore()
 
             if (this.isByRefLocal())
-                return rtcall("pxtrt::ldloc" + this.refStuff(), [r])
+                return rtcall("pxtrt::ldloc" + this.refSuffix(), [r])
 
             if (this.refCountingHandledHere())
                 return op(EK.Incr, [r])
@@ -298,7 +298,7 @@ namespace ts.pxt.ir {
 
         storeByRef(src: Expr) {
             if (this.isByRefLocal()) {
-                return rtcall("pxtrt::stloc" + this.refStuff(), [this.loadCore(), src])
+                return rtcall("pxtrt::stloc" + this.refSuffix(), [this.loadCore(), src])
             } else {
                 if (this.refCountingHandledHere()) {
                     let tmp = shared(src)
