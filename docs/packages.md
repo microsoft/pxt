@@ -1,29 +1,33 @@
 # Publishing packages
 
-PXT packages contain functions and types and can be used by PXT projects.
+PXT packages contain functions and types and can be used by PXT projects. 
+Packages can be searched by the users and added in their projects. 
+Packages may contain a combination of JavaScript and C++ and expose their APIs as blocks and/or JavaScript functions.
 
-PXT [targets](/target-creation) come with bundled packages, typically covering
-core features of the target platform. 
+## Getting started.
 
-You can also publish your own packages on GitHub. You will need to get a GitHub
-account and create a GitHub repository. Let's say you want to create a package
-called `neopixel` for target `microbit`.
+You will need to get a [GitHub](https://github.com) account and create a GitHub repository. 
 
-* create GitHub repository `pxt-neopixel`
-* clone this repository into `pxt-neopixel` folder
+Let's say you want to create a package
+called `banana` for target `microbit`.
+
+* create GitHub repository `pxt-banana`
+* clone this repository into `pxt-banana` folder
 * go to the folder and run `pxt target microbit`; you can alternatively place the folder under 
   your target workspace where the target is already installed
 * go to the cloned folder and run `pxt init`; follow the prompts
 * edit `pxt.json` and `README.md` with the right descriptions
 * checkin and push
 
-Now, searching for `neopixel` after selecting `More -> Add package...` should bring up your
+Now, searching for `banana` after selecting `More -> Add package...` should bring up your
 package.
 
 ## Meta-data
 
-Make sure you keep the line `for PXT/microbit` in `README.md`. Otherwise
-the package will not show up in search.
+**Make sure you keep the line `for PXT/microbit` in `README.md`. Otherwise
+the package will not show up in search.**
+
+Read more an [defining-blocks](/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
 
 ## Versioning
 
