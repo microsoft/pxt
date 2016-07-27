@@ -423,10 +423,25 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             return null;
 
         let expands = this.state.expands;
+        let removeFile = (f: pkg.File) => {
+            core.confirmAsync({
+                header: lf("Remove {0}", f.name),
+                body: lf("You are about to remove a file from your project. Are you sure?"),
+                agreeClass: "red",
+                agreeIcon: "trash",
+                agreeLbl: lf("Remove it"),
+            }).done(res => {
+                if (res) {
+                    pkg.mainEditorPkg().removeFileAsync(f.name)
+                        .then(() => pkg.mainEditorPkg().saveFilesAsync())
+                        .done(() => this.props.parent.reloadHeaderAsync());
+                }
+            })
+        }
         let removePkg = (p: pkg.EditorPackage) => {
             core.confirmAsync({
                 header: lf("Remove {0} package", p.getPkgId()),
-                body: lf("You are about to remove a package from your project. Are you sure?", p.getPkgId()),
+                body: lf("You are about to remove a package from your project. Are you sure?"),
                 agreeClass: "red",
                 agreeIcon: "trash",
                 agreeLbl: lf("Remove it"),
@@ -438,12 +453,12 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             })
         }
 
-        let filesOf = (pkg: pkg.EditorPackage) =>
-            pkg.sortedFiles().map(file => {
+        let filesOf = (pkg: pkg.EditorPackage) : JSX.Element[] => {
+            const deleteFiles = pkg.getPkgId() == "this";
+            return pkg.sortedFiles().map(file => {
                 let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
                 return (
-                    <a
-                        key={file.getName() }
+                    <a key={file.getName() }
                         onClick={() => parent.setFile(file) }
                         className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
@@ -451,8 +466,10 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                         {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                         {meta.isReadonly ? <i className="lock icon"></i> : null}
                         {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+                        {deleteFiles && /\.(ts|blocks)$/.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={() => removeFile(file) } /> : ''}
                     </a>);
             })
+        }
 
         let togglePkg = (p: pkg.EditorPackage) => {
             expands[p.getPkgId()] = !expands[p.getPkgId()];
