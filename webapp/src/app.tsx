@@ -466,7 +466,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                         {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                         {meta.isReadonly ? <i className="lock icon"></i> : null}
                         {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-                        {deleteFiles && /\.(ts|blocks)$/.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={() => removeFile(file) } /> : ''}
+                        {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={() => removeFile(file) } /> : ''}
                     </a>);
             })
         }
