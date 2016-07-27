@@ -265,22 +265,9 @@ namespace ts.pxt {
         return t.flags & TypeFlags.Interface;
     }
 
-    function genericRoot(t: Type) {
-        if (t.flags & TypeFlags.Reference) {
-            return (t as TypeReference).target
-        }
-        return null
-    }
-
     function isClassType(t: Type) {
         // check if we like the class?
-        return !!(t.flags & TypeFlags.Class) || !!(t.flags & TypeFlags.ThisType)
-    }
-
-    function isPossiblyGenericClassType(t: Type) {
-        let g = genericRoot(t)
-        if (g) return isClassType(g)
-        return isClassType(t)
+        return (t.flags & TypeFlags.Class) || (t.flags & TypeFlags.ThisType)
     }
 
     function arrayElementType(t: Type): Type {
@@ -304,14 +291,6 @@ namespace ts.pxt {
             if (isClassType(t)) return t;
             if (isInterfaceType(t)) return t;
             if (deconstructFunctionType(t)) return t;
-
-            let g = genericRoot(t)
-            if (g) {
-                checkType(g);
-                (t as TypeReference).typeArguments.forEach(checkType)
-                return t
-            }
-
             userError(9201, lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)), true)
         }
         return t
@@ -561,16 +540,10 @@ namespace ts.pxt {
             }
         }
 
-        function refMask(types: Type[]) {
-            return "_" + types.map(t => isRefType(t) ? "R" : "P").join("")
-        }
-
         function getClassInfo(t: Type) {
             let decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let id = getNodeId(decl) + ""
-            if (genericRoot(t))
-                id += refMask((t as TypeReference).typeArguments)
-            let info = classInfos[id]
+            let id = getNodeId(decl)
+            let info = classInfos[id + ""]
             if (!info) {
                 info = {
                     reffields: [],
@@ -578,7 +551,7 @@ namespace ts.pxt {
                     allfields: null,
                     attrs: parseComments(decl)
                 }
-                classInfos[id] = info;
+                classInfos[id + ""] = info;
                 for (let mem of decl.members) {
                     if (mem.kind == SK.PropertyDeclaration) {
                         let pdecl = <PropertyDeclaration>mem
@@ -1047,7 +1020,7 @@ ${lbl}: .short 0xffff
             let t = typeOf(node)
             if (isArrayType(t)) {
                 throw oops();
-            } else if (isPossiblyGenericClassType(t)) {
+            } else if (isClassType(t)) {
                 let classDecl = <ClassDeclaration>getDecl(node.expression)
                 if (classDecl.kind != SK.ClassDeclaration) {
                     userError(9221, lf("new expression only supported on class types"))
@@ -1303,7 +1276,7 @@ ${lbl}: .short 0xffff
 
         function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
             let tp = typeOf(pacc.expression)
-            if (isPossiblyGenericClassType(tp)) {
+            if (isClassType(tp)) {
                 let info = getClassInfo(tp)
                 let fld = info.allfields.filter(f => (<Identifier>f.name).text == pacc.name.text)[0]
                 if (!fld)
@@ -1765,8 +1738,8 @@ ${lbl}: .short 0xffff
         }
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
-            //if (node.typeParameters)
-            //    userError(9227, lf("generic classes not supported"))
+            if (node.typeParameters)
+                userError(9227, lf("generic classes not supported"))
             if (node.heritageClauses)
                 userError(9228, lf("inheritance not supported"))
             node.members.forEach(emit)
