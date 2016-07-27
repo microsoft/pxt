@@ -40,6 +40,8 @@ namespace ts.pxt {
 
     function isRefType(t: Type) {
         checkType(t);
+        if (t.flags & TypeFlags.ThisType)
+            return true
         if (t.flags & TypeFlags.TypeParameter) {
             let b = lookupTypeParameter(t)
             if (b) return b.isRef
@@ -1345,10 +1347,18 @@ ${lbl}: .short 0xffff
 
             if (isGenericFunction(node)) {
                 if (!info.usages) {
-                    U.assert(!bin.finalPass)
-                    return null
+                    if (bin.finalPass && !usedDecls[nodeKey(node)]) {
+                        // test mode - make fake binding
+                        let sig = checker.getSignatureFromDeclaration(node)
+                        let bindings = sig.getTypeParameters().map(t => ({ tp: t, isRef: true }))
+                        U.assert(bindings.length > 0)
+                        info.usages = [bindings]
+                    } else {
+                        U.assert(!bin.finalPass)
+                        return null
+                    }
                 }
-                U.assert(info.usages.length > 0)
+                U.assert(info.usages.length > 0, "no generic usages recorded")
                 let todo = info.usages
                 if (!bin.finalPass) {
                     todo = info.usages.slice(info.prePassUsagesEmitted)
