@@ -398,7 +398,6 @@ namespace ts.pxt.ir {
         mkLocal(def: Declaration, info: VariableAddInfo) {
             let l = new Cell(this.locals.length, def, info)
             this.locals.push(l)
-            this._prefixForUnnamedCells = null //Invalidate prefix
             return l
         }
 
