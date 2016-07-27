@@ -65,7 +65,7 @@ function reportDiagnosticSimply(diagnostic: ts.pxt.KsDiagnostic): void {
 }
 
 function fatal(msg: string): Promise<any> {
-    pxt.log("Fatal error:", msg)
+    pxt.log("Fatal error: " + msg)
     throw new Error(msg)
 }
 
@@ -2521,7 +2521,7 @@ function buildCoreAsync(mode: BuildOption) {
                     if (info.pkg &&
                         info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                 }
-                let md = ts.pxt.genMarkdown(mainPkg.config.name, apiInfo)
+                let md = ts.pxt.genMarkdown(mainPkg.config.name, apiInfo, { package: mainPkg.config.name != pxt.appTarget.corepkg })
                 mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
                     let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
