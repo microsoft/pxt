@@ -355,6 +355,12 @@ namespace ts.pxt {
         // TODO add check for methods of generic classes
         if (fun.typeParameters && fun.typeParameters.length)
             return true
+        if (fun.kind == SK.MethodDeclaration || fun.kind == SK.MethodSignature) {
+            if (fun.parent.kind == SK.ClassDeclaration || fun.parent.kind == SK.InterfaceDeclaration) {
+                let tp = (fun.parent as ClassLikeDeclaration).typeParameters
+                return !!tp && !!tp.length
+            }
+        }
         return false
     }
 
@@ -1038,7 +1044,7 @@ ${lbl}: .short 0xffff
 
             let sig = checker.getResolvedSignature(node)
             let trg: Signature = (sig as any).target
-            let typeParams = sig.typeParameters || (trg ? trg.typeParameters : [])
+            let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
             let bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
 
             function emitPlain() {
@@ -1066,6 +1072,7 @@ ${lbl}: .short 0xffff
                     let recv = (<PropertyAccessExpression>node.expression).expression
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
+                    bindings = getTypeBindings(typeOf(recv)).concat(bindings)
                 } else
                     unhandled(node, "strange method call")
                 if (attrs.shim) {
