@@ -165,7 +165,7 @@ namespace pxsim {
         strings[""] = 1
         strings["true"] = 1
         strings["false"] = 1
-        
+
         // comment out next line to disable string ref counting
         stringLiterals = strings
     }
