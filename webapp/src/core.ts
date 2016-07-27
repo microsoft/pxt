@@ -68,7 +68,7 @@ export function errorNotification(msg: string) {
 }
 
 export function warningNotification(msg: string) {
-    pxt.log("warning: ", msg)
+    pxt.log("warning: " + msg)
     htmlmsg("warn", msg)
 }
 

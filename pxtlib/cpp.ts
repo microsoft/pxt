@@ -693,7 +693,7 @@ int main() {
                     return { meta: metajs, source: text }
                 })
         } else if (hd.compression) {
-            pxt.debug("Compression type {0} not supported.", hd.compression)
+            pxt.debug(lf("Compression type {0} not supported.", hd.compression))
             return undefined
         } else {
             return Promise.resolve({ source: fromUTF8Bytes(tmp.text) });

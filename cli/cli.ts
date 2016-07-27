@@ -65,7 +65,7 @@ function reportDiagnosticSimply(diagnostic: ts.pxt.KsDiagnostic): void {
 }
 
 function fatal(msg: string): Promise<any> {
-    pxt.log("Fatal error:", msg)
+    pxt.log("Fatal error: " + msg)
     throw new Error(msg)
 }
 
