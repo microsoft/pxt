@@ -1628,35 +1628,75 @@ ${lbl}: .short 0xffff
             proc.emitLblDirect(l.brk);
         }
 
-        //Transforms the for of statement into a for statement
         function emitForOfStatement(node: ForOfStatement) {
-            if (node.initializer && node.initializer.kind == SK.VariableDeclarationList) {
-                //TODO: Get cell for iteration variable
-                (<VariableDeclarationList>node.initializer).declarations.forEach(emit);
+            if (!(node.initializer && node.initializer.kind == SK.VariableDeclarationList)) {
+                unhandled(node, "only a single variable may be used to iterate a collection")
+                return
             }
-            else if (node.initializer && node.initializer.kind == SK.ExpressionStatement) {} // More awkward
+
+            //Currently only going to support a single variable for iterating a collection
+            let declList = <VariableDeclarationList>node.initializer;
+            if (declList.declarations.length != 1) {
+                unhandled(node, "only a single variable may be used to iterate a collection")
+                return
+            }
+
+            //The variable used for storing the contents of each item in the collection during iteration
+            markUsed(declList.declarations[0])
+            let iterVar = emitVariableDeclaration(declList.declarations[0])
+            //Start with null
+            proc.emitExpr(iterVar.storeByRef(ir.numlit(0)))
+            proc.stackEmpty()
+
+            //As we could be iterating through an expression we need to store it somewhere
+            let collectionVar = proc.mkLocalTemporary();
+            proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
+
+
             //Declaration of iterating variable
-            let iterVariable = proc.mkLocalTemporary();
-            proc.emitExpr(iterVariable.storeByRef(ir.numlit(0)))
+            let intVarIter = proc.mkLocalTemporary();
+            proc.emitExpr(intVarIter.storeByRef(ir.numlit(0)))
             proc.stackEmpty();
 
             emitBrk(node);
 
             let l = getLabels(node);
 
+            //Top of loop
             proc.emitLblDirect(l.fortop);
-            //TODO: Emit loop condition, call length 
+            //Conditional branch 
+            //TODO: Support arrays as well
+            proc.emitJmpZ(l.brk, ir.rtcall("Number_::lt", [intVarIter.load(), ir.rtcall("String_::length", [collectionVar.load()])]))
 
-            //TODO: Emit element access
+            //Emit element access
+            let t = typeOf(node.expression)
+
+            let indexer = ""
+            if (t.flags & TypeFlags.String) {
+                indexer = "String_::charAt"
+            }
+            else if (isArrayType(t)) {
+                indexer = "Array_::getAt"
+            }
+            else {
+                unhandled(node.expression, "cannot use for...of with this expression")
+                return
+            }
+
+            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.load(), intVarIter.load()])))
 
             //Loop body 
             emit(node.statement);
 
             proc.emitLblDirect(l.cont);
-            //TODO: Emit increment expression
+
+            //Emit increment expression
+            proc.emitExpr(intVarIter.storeByRef(ir.rtcall("thumb::adds", [intVarIter.load(), ir.numlit(1)])))
 
             //Return to the top
             proc.emitJmp(l.fortop);
+
+            //End of loop
             proc.emitLblDirect(l.brk);
         }
 
@@ -1751,10 +1791,13 @@ ${lbl}: .short 0xffff
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
         }
-        function emitVariableDeclaration(node: VariableDeclaration) {
+        function emitVariableDeclaration(node: VariableDeclaration): ir.Cell {
             typeCheckVar(node)
-            if (!isUsed(node))
-                return;
+            console.log(`Possibly going to declare ${node.getText()}`)
+            if (!isUsed(node)) {
+                console.log(`The variable ${node.getText()} is not used, therefore not emitting location`);
+                return null;
+            }
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
@@ -1767,6 +1810,7 @@ ${lbl}: .short 0xffff
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
+            return loc;
         }
 
         function emitClassExpression(node: ClassExpression) { }
@@ -1856,7 +1900,8 @@ ${lbl}: .short 0xffff
                 case SK.ModuleBlock:
                     return emitBlock(<Block>node);
                 case SK.VariableDeclaration:
-                    return emitVariableDeclaration(<VariableDeclaration>node);
+                    emitVariableDeclaration(<VariableDeclaration>node);
+                    return
                 case SK.IfStatement:
                     return emitIfStatement(<IfStatement>node);
                 case SK.WhileStatement:
