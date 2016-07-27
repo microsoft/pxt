@@ -112,7 +112,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     prevData: Cloud.JsonPointer[] = [];
     prevGhData: pxt.github.Repo[] = [];
     modal: sui.Modal;
-    textUpdatePending: number;
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -167,26 +166,25 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
 
-        let chgHeader = (hdr: Header) => {
+        const chgHeader = (hdr: Header) => {
             if (this.modal) this.modal.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
-        let chgBundle = (scr: pxt.PackageConfig) => {
+        const chgBundle = (scr: pxt.PackageConfig) => {
             if (this.modal) this.modal.hide();
             let p = pkg.mainEditorPkg();
             p.addDepAsync(scr.name, "*")
                 .then(r => this.props.parent.reloadHeaderAsync())
                 .done();
         }
-        let upd = (v: any) => {
-            // make it a bit slower - GH has low rate limit for search
-            window.clearTimeout(this.textUpdatePending)
-            let str = (v.target as any).value
-            this.textUpdatePending = setTimeout(() => {
-                this.setState({ searchFor: str })
-            }, 1000)
+        const upd = (v: any) => {
+            let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
+            this.setState({ searchFor: str })
         };
-        let install = (scr: Cloud.JsonPointer) => {
+        const kupd = (ev: __React.KeyboardEvent) => {
+            if (ev.keyCode == 13) upd(ev);
+        }
+        const install = (scr: Cloud.JsonPointer) => {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
@@ -199,7 +197,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     .done()
             }
         }
-        let installGh = (scr: pxt.github.Repo) => {
+        const installGh = (scr: pxt.github.Repo) => {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
@@ -221,7 +219,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 Util.oops()
             }
         }
-        let importHex = () => {
+        const importHex = () => {
             if (this.modal) this.modal.hide();
             this.props.parent.importHexFileDialog();
         }
@@ -229,9 +227,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
                 <div className="ui search">
-                    <div className="ui fluid icon input">
-                        <input type="text" placeholder={lf("Search...") } onChange={upd} />
-                        <i className="search icon"></i>
+                    <div className="ui fluid action input">
+                        <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
+                        <button className="ui right primary labeled icon button" onClick={upd}>
+                            <i className="search icon"></i>
+                            {lf("Search") }
+                        </button>
                     </div>
                 </div>
                 <div className="ui cards">
@@ -453,7 +454,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             })
         }
 
-        let filesOf = (pkg: pkg.EditorPackage) : JSX.Element[] => {
+        let filesOf = (pkg: pkg.EditorPackage): JSX.Element[] => {
             const deleteFiles = pkg.getPkgId() == "this";
             return pkg.sortedFiles().map(file => {
                 let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
