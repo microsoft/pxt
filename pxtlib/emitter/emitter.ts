@@ -458,7 +458,7 @@ namespace ts.pxt {
         function unhandled(n: Node, info?: string) {
             //If we info then we may as well present that instead
             if (info) {
-                return userError(9202, lf("Sorry, this language feature isn't supported(${0})", info))
+                return userError(9202, lf("Sorry, this language feature isn't supported (${0})", info))
             }
 
             if (!n) {
@@ -518,10 +518,10 @@ namespace ts.pxt {
                     break
             }
 
-            let formatStr = maybeSupportInFuture ? "{0} syntax not currently supported" : "{0} syntax not supported"
+            let formatStr = maybeSupportInFuture ? "{0} not currently supported" : "{0} not supported"
             let msg = lf(formatStr, lf(syntax))
             if (alternative) {
-                msg += lf(" - ") + lf(alternative)
+                msg += " - " + lf(alternative)
             }
 
             return userError(9202, msg)
