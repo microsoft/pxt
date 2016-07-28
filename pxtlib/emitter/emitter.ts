@@ -22,7 +22,7 @@ namespace ts.pxt {
         console.log(stringKind(n))
     }
 
-    // next free error 9235
+    // next free error 9253
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -536,16 +536,16 @@ namespace ts.pxt {
             }, arg0, arg1, arg2));
         }
 
-        function unhandled(n: Node, info?: string) {
+        function unhandled(n: Node, info?: string, code: number = 9202) {
             //If we info then we may as well present that instead
             if (info) {
-                return userError(9202, lf("Sorry, this language feature isn't supported (${0})", info))
+                return userError(code, lf("Sorry, this language feature isn't supported (${0})", info))
             }
 
             if (!n) {
                 //Not displayed to the user, therefore no need for lf on this
                 console.log(`Error: ${getName(n)} is not a supported syntax feature`)
-                userError(9202, lf("Sorry, this language feature isn't supported"))
+                userError(code, lf("Sorry, this language feature isn't supported"))
             }
 
             let syntax = stringKind(n)
@@ -612,7 +612,7 @@ namespace ts.pxt {
                 msg += " - " + alternative
             }
 
-            return userError(9202, msg)
+            return userError(code, msg)
         }
 
         function nodeKey(f: Node) {
@@ -819,7 +819,7 @@ ${lbl}: .short 0xffff
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
-                throw unhandled(node, "id")
+                throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
             }
         }
 
@@ -938,7 +938,7 @@ ${lbl}: .short 0xffff
                     callInfo.args.push(node.expression)
                     return emitShim(decl, node, [node.expression])
                 } else {
-                    throw unhandled(node, "no {shim:...}");
+                    throw unhandled(node, lf("no {shim:...}"), 9236);
                 }
             } else if (decl.kind == SK.PropertyDeclaration) {
                 let idx = fieldIndex(node)
@@ -949,14 +949,14 @@ ${lbl}: .short 0xffff
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
-                throw unhandled(node, stringKind(decl));
+                throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
             }
         }
 
         function emitIndexedAccess(node: ElementAccessExpression, assign: ir.Expr = null): ir.Expr {
             let t = typeOf(node.expression)
 
-            let indexer = ""
+            let indexer: string = null
             if (!assign && t.flags & TypeFlags.String)
                 indexer = "String_::charAt"
             else if (isArrayType(t))
@@ -973,10 +973,10 @@ ${lbl}: .short 0xffff
                     let args = [node.expression, node.argumentExpression]
                     return rtcallMask(indexer, args, ir.CallingConvention.Plain, assign ? [assign] : [])
                 } else {
-                    throw unhandled(node, lf("non-numeric indexer on {0}", indexer))
+                    throw unhandled(node, lf("non-numeric indexer on {0}", indexer), 9238)
                 }
             } else {
-                throw unhandled(node, "unsupported indexer")
+                throw unhandled(node, lf("unsupported indexer"), 9239)
             }
         }
 
@@ -1128,7 +1128,7 @@ ${lbl}: .short 0xffff
             (node as any).callInfo = callInfo
 
             if (!decl)
-                unhandled(node, "no declaration")
+                unhandled(node, lf("no declaration"), 9240)
 
             let sig = checker.getResolvedSignature(node)
             let trg: Signature = (sig as any).target
@@ -1162,7 +1162,7 @@ ${lbl}: .short 0xffff
                     callInfo.args.unshift(recv)
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
                 } else
-                    unhandled(node, "strange method call")
+                    unhandled(node, lf("strange method call"), 9241)
                 if (attrs.shim) {
                     return emitShim(decl, node, args);
                 } else if (attrs.helper) {
@@ -1216,7 +1216,7 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            throw unhandled(node, stringKind(decl))
+            throw unhandled(node, stringKind(decl), 9242)
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
@@ -1258,7 +1258,7 @@ ${lbl}: .short 0xffff
                     return obj;
                 }
             } else {
-                throw unhandled(node)
+                throw unhandled(node, lf("unknown type for new"), 9243)
             }
         }
         function emitTaggedTemplateExpression(node: TaggedTemplateExpression) { }
@@ -1485,11 +1485,12 @@ ${lbl}: .short 0xffff
                         return ir.rtcall("thumb::subs", [ir.numlit(0), emitExpr(node.operand)])
                     case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
-                    default: unhandled(node, "postfix unary number")
+                    default: 
+                        break
                 }
             }
 
-            throw unhandled(node, "prefix unary");
+            throw unhandled(node, lf("unsupported prefix unary operation"), 9245)
         }
 
         function prepForAssignment(trg: Expression) {
@@ -1522,10 +1523,11 @@ ${lbl}: .short 0xffff
                         return emitIncrement(node.operand, "thumb::adds", true)
                     case SK.MinusMinusToken:
                         return emitIncrement(node.operand, "thumb::subs", true)
-                    default: unhandled(node, "postfix unary number")
+                    default: 
+                        break
                 }
             }
-            throw unhandled(node)
+            throw unhandled(node, lf("unsupported postfix unary operation"), 9246)
         }
 
         function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
@@ -1543,7 +1545,7 @@ ${lbl}: .short 0xffff
                     shimName: attrs.shim
                 }
             } else {
-                throw unhandled(pacc, "bad field access")
+                throw unhandled(pacc, lf("bad field access"), 9247)
             }
         }
 
@@ -1555,14 +1557,14 @@ ${lbl}: .short 0xffff
                     recordUse(<VarOrParam>decl, true)
                     proc.emitExpr(l.storeByRef(src))
                 } else {
-                    unhandled(trg, "target identifier")
+                    unhandled(trg, lf("bad target identifier"), 9248)
                 }
             } else if (trg.kind == SK.PropertyAccessExpression) {
                 proc.emitExpr(ir.op(EK.Store, [cachedTrg || emitExpr(trg), src]))
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
             } else {
-                unhandled(trg, "assignment target")
+                unhandled(trg, lf("bad assignment target"), 9249)
             }
         }
 
@@ -1691,7 +1693,7 @@ ${lbl}: .short 0xffff
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
                 if (!shimName)
-                    unhandled(node.operatorToken, "numeric operator")
+                    unhandled(node.operatorToken, lf("unsupported numeric operator"), 9250)
                 if (noEq)
                     return emitIncrement(node.left, shimName, false, node.right)
                 return shim(shimName)
@@ -1731,7 +1733,7 @@ ${lbl}: .short 0xffff
                             simpleInstruction(node.operatorToken.kind),
                             [shim("String_::compare"), ir.numlit(0)])
                     default:
-                        unhandled(node.operatorToken, "numeric operator")
+                        unhandled(node.operatorToken, lf("unknown numeric operator"), 9251)
                 }
             }
 
@@ -1746,7 +1748,7 @@ ${lbl}: .short 0xffff
                 case SK.AmpersandAmpersandToken:
                     return emitLazyBinaryExpression(node);
                 default:
-                    throw unhandled(node.operatorToken, "generic operator")
+                    throw unhandled(node.operatorToken, lf("unknown generic operator"), 9252)
             }
         }
 
