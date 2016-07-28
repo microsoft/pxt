@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.3.6",
+  "version": "0.3.8",
   "description": "A kinder JavaScript experience",
   "keywords": [
     "TypeScript",
@@ -31,6 +31,8 @@
     "built/web/*.js",
     "built/web/*.css",
     "built/web/*.html",
+    "libs/lang-test0/*.ts",
+    "libs/lang-test0/pxt.json",
     "webapp/public",
     "typings/bluebird",
     "typings/node",
