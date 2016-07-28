@@ -114,7 +114,7 @@ namespace ts.pxt.ir {
                     return this.data + "(" + this.args.map(a => a.toString()).join(", ") + ")"
 
                 case EK.ProcCall:
-                    return getDeclName(this.data) + "(" + this.args.map(a => a.toString()).join(", ") + ")"
+                    return getDeclName(this.data.action) + "(" + this.args.map(a => a.toString()).join(", ") + ")"
 
                 case EK.Sequence:
                     return "(" + this.args.map(a => a.toString()).join("; ") + ")"
@@ -346,6 +346,11 @@ namespace ts.pxt.ir {
         }
     }
 
+    export interface ProcId {
+        action: ts.FunctionLikeDeclaration;
+        bindings: TypeBinding[];
+    }
+
     export class Procedure extends Node {
         numArgs = 0;
         info: FunctionAddInfo;
@@ -356,11 +361,27 @@ namespace ts.pxt.ir {
         args: Cell[] = [];
         parent: Procedure;
         debugInfo: ProcDebugInfo;
+        bindings: TypeBinding[];
         fillDebugInfo: (th: thumb.File) => void;
 
         body: Stmt[] = [];
         lblNo = 0;
         action: ts.FunctionLikeDeclaration;
+
+        label() {
+            return getFunctionLabel(this.action, this.bindings)
+        }
+
+        matches(id: ProcId) {
+            if (this.action == id.action) {
+                U.assert(this.bindings.length == id.bindings.length)
+                for (let i = 0; i < this.bindings.length; ++i)
+                    if (this.bindings[i].isRef != id.bindings[i].isRef)
+                        return false
+                return true
+            }
+            return false
+        }
 
         toString(): string {
             return `\nPROC ${getDeclName(this.action)}\n${this.body.map(s => s.toString()).join("")}\n`

@@ -269,6 +269,7 @@ namespace ts.pxt.thumb {
         private realCurrLineNo: number;
         private currLine: Line;
         private scope = "";
+        private scopeId = 0;
         public errors: InlineError[] = [];
         public buf: number[];
         private labels: StringMap<number> = {};
@@ -648,6 +649,7 @@ namespace ts.pxt.thumb {
                 case ".global":
                     this.stackpointers = {};
                     this.stack = 0;
+                    this.scope = "$S" + this.scopeId++
                     break;
 
                 case ".file":
@@ -781,6 +783,7 @@ namespace ts.pxt.thumb {
         private iterLines() {
             this.stack = 0;
             this.buf = [];
+            this.scopeId = 0;
 
             this.lines.forEach(l => {
                 if (this.errors.length > 10)

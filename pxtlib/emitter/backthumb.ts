@@ -15,13 +15,14 @@ namespace ts.pxt {
         if (proc.args.length <= 2)
             emitLambdaWrapper(proc.isRoot)
 
-        let bkptLabel = getFunctionLabel(proc.action) + "_bkpt"
-        let locLabel = getFunctionLabel(proc.action) + "_locals"
+        let baseLabel = proc.label()
+        let bkptLabel = baseLabel + "_bkpt"
+        let locLabel = baseLabel + "_locals"
         write(`
 .section code
 ${bkptLabel}:
     bkpt 1
-${getFunctionLabel(proc.action)}:
+${baseLabel}:
     @stackmark func
     @stackmark args
     push {lr}
@@ -302,7 +303,7 @@ ${bkptLabel + "_after"}:
                 return a
             })
 
-            let proc = bin.procs.filter(p => p.action == topExpr.data)[0]
+            let proc = bin.procs.filter(p => p.matches(topExpr.data))[0]
             let lbl = mkLbl("proccall")
             calls.push({
                 procIndex: proc.seqNo,
@@ -311,7 +312,7 @@ ${bkptLabel + "_after"}:
                 callLabel: lbl,
             })
             write(lbl + ":")
-            write("bl " + getFunctionLabel(proc.action))
+            write("bl " + proc.label())
 
             for (let a of argStmts) {
                 a.currUses = 1
@@ -356,7 +357,7 @@ ${bkptLabel + "_after"}:
             if (isMain)
                 write("b .themain")
             write(".balign 4");
-            write(getFunctionLabel(node) + "_Lit:");
+            write(proc.label() + "_Lit:");
             write(".short 0xffff, 0x0000   ; action literal");
             write("@stackmark litfunc");
             if (isMain)
@@ -375,7 +376,7 @@ ${bkptLabel + "_after"}:
             write(`bl pxtrt::getGlobalsPtr`)
             write(`mov r6, r0`)
 
-            write(`bl ${getFunctionLabel(node)}`)
+            write(`bl ${proc.label()}`)
 
             write("@stackempty args")
             if (parms.length)

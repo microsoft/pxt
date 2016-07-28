@@ -30,7 +30,7 @@ namespace ts.pxt {
         let refCounting = !!bin.target.jsRefCounting
 
         writeRaw(`
-var ${getFunctionLabel(proc.action)} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
+var ${proc.label()} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
 var r0 = s.r0, step = s.pc;
 s.pc = -1;
 while (true) { 
@@ -95,7 +95,7 @@ switch (step) {
         writeRaw(`} } }`)
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
-        writeRaw(`${getFunctionLabel(proc.action)}.info = ${JSON.stringify(info)}`)
+        writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
 
         return resText
 
@@ -268,10 +268,10 @@ switch (step) {
             let frameIdx = exprStack.length
             exprStack.push(frameExpr)
 
-            let proc = bin.procs.filter(p => p.action == topExpr.data)[0]
+            let proc = bin.procs.filter(p => p.matches(topExpr.data))[0]
             let frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
-            write(`${frameRef} = { fn: ${getFunctionLabel(proc.action)}, parent: s };`)
+            write(`${frameRef} = { fn: ${proc.label()}, parent: s };`)
 
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
