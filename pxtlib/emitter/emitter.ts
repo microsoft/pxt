@@ -1485,7 +1485,7 @@ ${lbl}: .short 0xffff
                         return ir.rtcall("thumb::subs", [ir.numlit(0), emitExpr(node.operand)])
                     case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
-                    default: 
+                    default:
                         break
                 }
             }
@@ -1523,7 +1523,7 @@ ${lbl}: .short 0xffff
                         return emitIncrement(node.operand, "thumb::adds", true)
                     case SK.MinusMinusToken:
                         return emitIncrement(node.operand, "thumb::subs", true)
-                    default: 
+                    default:
                         break
                 }
             }
