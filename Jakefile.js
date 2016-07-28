@@ -134,7 +134,11 @@ task('updatestrings', ['built/localization.json'])
 
 
 
-file('built/localization.json', ju.expand1(["webapp/src"]), function () {
+file('built/localization.json', ju.expand1(
+    [   "pxtlib",
+        "pxtblocks",
+        "webapp/src"]
+    ), function () {
     var errCnt = 0;
     var translationStrings = {}
     var translationHelpStrings = {}
