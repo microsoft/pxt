@@ -69,15 +69,26 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
     }
 
     static signout() {
-        LoginBox.signingOut = true;
-        core.showLoading(lf("Signing out..."))
-        workspace.resetAsync()
-            .then(() => Cloud.privatePostAsync("logout", {}))
-            .catch((e: any) => { })
-            .then(() => {
-                window.location.reload()
-            })
-            .done()
+        core.confirmAsync({
+            header: lf("Reset"),
+            body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
+            agreeLbl: lf("Reset"),
+            agreeClass: "red",
+            agreeIcon: "sign out",
+            disagreeLbl: lf("Cancel")
+        }).then(r => {
+            if (!r) return;
+
+            LoginBox.signingOut = true;
+            core.showLoading(lf("Signing out..."))
+            workspace.resetAsync()
+                .then(() => Cloud.privatePostAsync("logout", {}))
+                .catch((e: any) => { })
+                .then(() => {
+                    window.location.reload()
+                })
+                .done()
+        });
     }
 
     options() {
