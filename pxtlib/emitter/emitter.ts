@@ -462,6 +462,7 @@ namespace ts.pxt {
             }
 
             if (!n) {
+                //Not displayed to the user, therefore no need for lf on this
                 console.log(`Error: ${getName(n)} is not a supported syntax feature`)
                 userError(9202, lf("Sorry, this language feature isn't supported"))
             }
@@ -471,57 +472,63 @@ namespace ts.pxt {
             let alternative: string = null
             switch (n.kind) {
                 case ts.SyntaxKind.ForInStatement:
-                    syntax = "for in loops"
+                    syntax = lf("for in loops")
                     break
                 case ts.SyntaxKind.ForOfStatement:
-                    syntax = "for of loops"
+                    syntax = lf("for of loops")
                     maybeSupportInFuture = true
                     break
                 case ts.SyntaxKind.PropertyAccessExpression:
-                    syntax = "property access"
+                    syntax = lf("property access")
                     break
                 case ts.SyntaxKind.DeleteExpression:
-                    syntax = "delete"
+                    syntax = lf("delete")
                     break
                 case ts.SyntaxKind.GetAccessor:
-                    syntax = "get accessor method"
+                    syntax = lf("get accessor method")
                     maybeSupportInFuture = true
                     break
                 case ts.SyntaxKind.SetAccessor:
-                    syntax = "set accessor method"
+                    syntax = lf("set accessor method")
                     maybeSupportInFuture = true
                     break
                 case ts.SyntaxKind.TaggedTemplateExpression:
-                    syntax = "tagged templates"
+                    syntax = lf("tagged templates")
                     break
                 case ts.SyntaxKind.ObjectLiteralExpression:
-                    syntax = "object literals"
-                    alternative = "define a class instead"
+                    syntax = lf("object literals")
+                    alternative = lf("define a class instead")
                     break
                 case ts.SyntaxKind.TypeOfExpression:
-                    syntax = "typeof"
+                    syntax = lf("typeof")
                     break
                 case ts.SyntaxKind.SpreadElementExpression:
-                    syntax = "spread"
+                    syntax = lf("spread")
                     break
                 case ts.SyntaxKind.TryStatement:
                 case ts.SyntaxKind.CatchClause:
                 case ts.SyntaxKind.FinallyKeyword:
                 case ts.SyntaxKind.ThrowStatement:
-                    syntax =  "throwing and catching exceptions"
+                    syntax =  lf("throwing and catching exceptions")
                     break
                 case ts.SyntaxKind.ClassExpression:
-                    syntax = "class expressions"
-                    alternative = "declare a class as class C {} not let C = class {}"
+                    syntax = lf("class expressions")
+                    alternative = lf("declare a class as class C {} not let C = class {}")
                     break
                 default:
                     break
             }
 
-            let formatStr = maybeSupportInFuture ? "{0} not currently supported" : "{0} not supported"
-            let msg = lf(formatStr, lf(syntax))
+            let msg = ""
+            if (maybeSupportInFuture) {
+                msg = lf("{0} not currently supported", syntax)
+            }
+            else {
+                msg = lf("{0} not supported", syntax)
+            }
+
             if (alternative) {
-                msg += " - " + lf(alternative)
+                msg += " - " + alternative
             }
 
             return userError(9202, msg)
