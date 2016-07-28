@@ -1285,27 +1285,15 @@ ${lbl}: .short 0xffff
                 return l
             })
 
-<<<<<<< HEAD
-                proc.args.forEach(l => {
-                    //console.log(l.toString(), l.info)
-                    if (l.isByRefLocal()) {
-                        // TODO add C++ support function to do this
-                        let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuffix(), []))
-                        proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuffix(), [tmp, l.loadCore()]))
-                        proc.emitExpr(l.storeDirect(tmp))
-                    }
-                })
-=======
             proc.args.forEach(l => {
                 //console.log(l.toString(), l.info)
                 if (l.isByRefLocal()) {
                     // TODO add C++ support function to do this
-                    let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuff(), []))
-                    proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuff(), [tmp, l.loadCore()]))
+                    let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuffix(), []))
+                    proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuffix(), [tmp, l.loadCore()]))
                     proc.emitExpr(l.storeDirect(tmp))
                 }
             })
->>>>>>> master
 
             emit(node.body);
 
