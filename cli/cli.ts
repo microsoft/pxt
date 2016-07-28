@@ -65,7 +65,7 @@ function reportDiagnosticSimply(diagnostic: ts.pxt.KsDiagnostic): void {
 }
 
 function fatal(msg: string): Promise<any> {
-    pxt.log("Fatal error:", msg)
+    pxt.log("Fatal error: " + msg)
     throw new Error(msg)
 }
 
@@ -215,9 +215,11 @@ function uploadFileAsync(path: string) {
         })
 }
 
+let readlineCount = 0
 function readlineAsync() {
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
+    readlineCount++
     return new Promise<string>((resolve, reject) => {
         process.stdin.once('data', (text: string) => {
             resolve(text)
@@ -344,7 +346,6 @@ function ptrcheckAsync(cmd: string) {
 
             return yesNoAsync("Delete all these pointers?")
                 .then(y => {
-                    (process.stdin as any).unref();
                     if (!y) return Promise.resolve()
                     return Promise.map(toDel,
                         e => Cloud.privateDeleteAsync(e)
@@ -525,7 +526,7 @@ function bumpKsDepAsync() {
             }
 
             console.log(`Bumping pxt-core dep version: ${currVer} -> ${newVer}`)
-            if (currVer != "*" && semverCmp(currVer, newVer) > 0) {
+            if (currVer != "*" && pxt.semver.strcmp(currVer, newVer) > 0) {
                 U.userError("Trying to downgrade pxt-core.")
             }
             pkg["dependencies"]["pxt-core"] = newVer
@@ -542,13 +543,49 @@ function updateAsync() {
         .then(() => runNpmAsync("install"));
 }
 
-function bumpAsync() {
+function justBumpPkgAsync() {
+    ensurePkgDir()
     return Promise.resolve()
-        .then(() => runGitAsync("pull"))
-        .then(() => bumpKsDepAsync())
-        .then(() => runNpmAsync("version", "patch"))
-        .then(() => runGitAsync("push", "--tags"))
-        .then(() => runGitAsync("push"))
+        .then(() => spawnWithPipeAsync({
+            cmd: "git",
+            args: ["status", "--porcelain", "--untracked-files=no"]
+        }))
+        .then(buf => {
+            if (buf.length)
+                U.userError("Please commit all files to git before running 'pxt bump'")
+            return mainPkg.loadAsync()
+        })
+        .then(() => {
+            let v = pxt.semver.parse(mainPkg.config.version)
+            v.patch++
+            return queryAsync("New version", pxt.semver.stringify(v))
+        })
+        .then(nv => {
+            let v = pxt.semver.parse(nv)
+            mainPkg.config.version = pxt.semver.stringify(v)
+            mainPkg.saveConfig()
+        })
+        .then(() => runGitAsync("commit", "-a", "-m", mainPkg.config.version))
+        .then(() => runGitAsync("tag", "v" + mainPkg.config.version))
+}
+
+function bumpAsync() {
+    if (fs.existsSync(pxt.configName))
+        return Promise.resolve()
+            .then(() => runGitAsync("pull"))
+            .then(() => justBumpPkgAsync())
+            .then(() => runGitAsync("push", "--tags"))
+            .then(() => runGitAsync("push"))
+    else if (fs.existsSync("pxtarget.json"))
+        return Promise.resolve()
+            .then(() => runGitAsync("pull"))
+            .then(() => bumpKsDepAsync())
+            .then(() => runNpmAsync("version", "patch"))
+            .then(() => runGitAsync("push", "--tags"))
+            .then(() => runGitAsync("push"))
+    else {
+        throw U.userError("Couldn't find package or target JSON file; nothing to bump")
+    }
 }
 
 function runGitAsync(...args: string[]) {
@@ -823,26 +860,42 @@ export function publishTargetAsync() {
     })
 }
 
-export function spawnAsync(opts: {
-    cmd: string,
-    args: string[],
-    cwd?: string,
-    shell?: boolean
-}) {
+export interface SpawnOptions {
+    cmd: string;
+    args: string[];
+    cwd?: string;
+    shell?: boolean;
+    pipe?: boolean;
+}
+
+export function spawnAsync(opts: SpawnOptions) {
+    opts.pipe = false
+    return spawnWithPipeAsync(opts)
+        .then(() => { })
+}
+
+export function spawnWithPipeAsync(opts: SpawnOptions) {
+    if (opts.pipe === undefined) opts.pipe = true
     let info = opts.cmd + " " + opts.args.join(" ")
     if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
     console.log("[run] " + info)
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<Buffer>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
             env: process.env,
-            stdio: "inherit",
+            stdio: opts.pipe ? [process.stdin, "pipe", process.stderr] : "inherit",
             shell: opts.shell || false
         } as any)
+        let bufs: Buffer[] = []
+        if (opts.pipe)
+            ch.stdout.on('data', (buf: Buffer) => {
+                bufs.push(buf)
+                process.stdout.write(buf)
+            })
         ch.on('close', (code: number) => {
             if (code != 0)
                 reject(new Error("Exit code: " + code + " from " + info))
-            resolve()
+            resolve(Buffer.concat(bufs))
         });
     })
 }
@@ -1295,6 +1348,104 @@ let statAsync = Promise.promisify(fs.stat)
 let commonfiles: U.Map<string> = {}
 let fileoverrides: U.Map<string> = {}
 
+class SnippetHost implements pxt.Host {
+    name: string
+    main: string
+    //Global cache of module files
+    static files: U.Map<U.Map<string>> = {}
+
+    constructor(name: string, main: string) {
+        this.name = name
+        this.main = main
+    }
+
+    resolve(module: pxt.Package, filename: string): string {
+        return ""
+    }
+
+    readFile(module: pxt.Package, filename: string): string {
+        if (SnippetHost.files[module.id] && SnippetHost.files[module.id][filename]) {
+            return SnippetHost.files[module.id][filename]
+        }
+        if (module.id == "this") {
+            if (filename == "pxt.json") {
+                return JSON.stringify({
+                    "name": this.name,
+                    "dependencies": {
+                        "microbit": "file:../microbit",
+                        "microbit-radio": "file:../microbit-radio"
+                    },
+                    "description": "",
+                    "files": [
+                        "main.blocks", //TODO: Probably don't want this
+                        "main.ts"
+                    ]
+                })
+            }
+            else if (filename == "main.ts") {
+                return this.main
+            }
+        }
+        else {
+            let p1 = path.join('libs', module.id, filename)
+            let p2 = path.join('libs', module.id, 'built', filename)
+
+            let contents: string = null
+
+            try {
+                contents = fs.readFileSync(p1, 'utf8')
+            }
+            catch (e) {
+                //console.log(e)
+                try {
+                    contents = fs.readFileSync(p2, 'utf8')
+                }
+                catch (e) {
+                    //console.log(e)
+                }
+            }
+
+            if (contents) {
+                if (!SnippetHost.files[module.id]) {
+                    SnippetHost.files[module.id] = {}
+                }
+                SnippetHost.files[module.id][filename] = contents
+                return contents
+            }
+        }
+        return ""
+    }
+
+    writeFile(module: pxt.Package, filename: string, contents: string) {
+        SnippetHost.files[module.id][filename] = contents
+    }
+
+    getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+        //console.log(`getHexInfoAsync(${extInfo})`);
+        return Promise.resolve()
+    }
+
+    cacheStoreAsync(id: string, val: string): Promise<void> {
+        //console.log(`cacheStoreAsync(${id}, ${val})`)
+        return Promise.resolve()
+    }
+
+    cacheGetAsync(id: string): Promise<string> {
+        //console.log(`cacheGetAsync(${id})`)
+        return Promise.resolve("")
+    }
+
+    downloadPackageAsync(pkg: pxt.Package): Promise<void> {
+        //console.log(`downloadPackageAsync(${pkg.id})`)
+        return Promise.resolve()
+    }
+
+    resolveVersionAsync(pkg: pxt.Package): Promise<string> {
+        //console.log(`resolveVersionAsync(${pkg.id})`)
+        return Promise.resolve("*")
+    }
+}
+
 class Host
     implements pxt.Host {
     resolve(module: pxt.Package, filename: string) {
@@ -1511,9 +1662,38 @@ export function initAsync() {
             for (let f in prj.files)
                 files[f] = prj.files[f];
 
-            config.files = Object.keys(files).filter(s => !/test/.test(s));
-            config.testFiles = Object.keys(files).filter(s => /test/.test(s));
-            files["pxt.json"] = JSON.stringify(config, null, 4) + "\n"
+            let pkgFiles = Object.keys(files).filter(s =>
+                /\.(md|ts|asm|cpp|h)$/.test(s))
+
+            let fieldsOrder = [
+                "name",
+                "version",
+                "description",
+                "license",
+                "dependencies",
+                "files",
+                "testFiles",
+                "public"
+            ]
+
+            config.files = pkgFiles.filter(s => !/test/.test(s));
+            config.testFiles = pkgFiles.filter(s => /test/.test(s));
+
+            // make it look nice
+            let newCfg: any = {}
+            for (let f of fieldsOrder) {
+                if (configMap.hasOwnProperty(f))
+                    newCfg[f] = configMap[f]
+            }
+            for (let f of Object.keys(configMap)) {
+                if (!newCfg.hasOwnProperty(f))
+                    newCfg[f] = configMap[f]
+            }
+
+            files["pxt.json"] = JSON.stringify(newCfg, null, 4) + "\n"
+
+            configMap = U.clone(configMap)
+            configMap["target"] = pxt.appTarget.id
 
             U.iterStringMap(files, (k, v) => {
                 v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
@@ -1521,8 +1701,7 @@ export function initAsync() {
                 fs.writeFileSync(k, v)
             })
 
-            console.log("package initialized");
-            (process.stdin as any).unref()
+            console.log("package initialized")
         })
 }
 
@@ -2217,6 +2396,86 @@ function testDirAsync(dir: string) {
         })
 }
 
+function testSnippetsAsync(): Promise<void> {
+    let allSnippets: Array<string> = []
+    let searchFolder = (dir: string, paths: Array<string>) => {
+        let ls = fs.readdirSync(dir)
+        for (let f of ls) {
+            let fullPath = path.join(dir, f)
+            let stats = fs.lstatSync(fullPath)
+            if (stats.isDirectory()) {
+                searchFolder(fullPath, paths)
+            }
+            paths.push(fullPath)
+        }
+    }
+    searchFolder('built/docs/snippets', allSnippets)
+
+    allSnippets = allSnippets.filter(p => path.extname(p) == ".ts")
+    //allSnippets = allSnippets.slice(0, 25) //For testing
+
+    let successes: string[] = []
+
+    interface FailureInfo {
+        filename: string
+        diagnostics: ts.pxt.KsDiagnostic[]
+    }
+
+    let failures: FailureInfo[] = []
+
+    let addSuccess = (s: string) => {
+        successes.push(s)
+        //console.log(`SUCCESS\t${s}`)
+    }
+
+    let addFailure = (f: string, info: ts.pxt.KsDiagnostic[]) => {
+        failures.push({
+            filename: f,
+            diagnostics: info
+        })
+        //console.log(`ERROR\t${f}`)
+    }
+
+    return Promise.map(allSnippets, p => {
+        let originalTs = fs.readFileSync(p, 'utf8')
+        let pkg = new pxt.MainPackage(new SnippetHost(path.basename(p).replace('.ts', ''), originalTs))
+
+        return pkg.getCompileOptionsAsync().then((opts: ts.pxt.CompileOptions) => {
+            opts.ast = true
+            let resp = ts.pxt.compile(opts)
+
+            if (resp.success) {
+                //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
+                let file = resp.ast.getSourceFile('main.ts');
+                let apis = ts.pxt.getApiInfo(resp.ast);
+                let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
+
+                let success = !!bresp.outfiles['main.blocks']
+
+                if (success) {
+                    addSuccess(p)
+                }
+                else {
+                    addFailure(p, bresp.diagnostics)
+                }
+            }
+            else {
+                addFailure(p, resp.diagnostics)
+            }
+        })
+    }).then((a: any) => {
+        console.log(`${successes.length} snippets compiled to blocks`)
+        console.log(`${failures.length} snippets did not compile to blocks:`)
+        for (let f of failures) {
+            console.log(f.filename)
+            for (let diag of f.diagnostics) {
+                console.log(`  L ${diag.line}\t${diag.messageText}`)
+            }
+        }
+    })
+}
+
 function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
     ensurePkgDir();
     return mainPkg.loadAsync()
@@ -2256,7 +2515,13 @@ function buildCoreAsync(mode: BuildOption) {
 
             if (mode == BuildOption.GenDocs) {
                 let apiInfo = ts.pxt.getApiInfo(res.ast)
-                let md = ts.pxt.genMarkdown(mainPkg.config.name, apiInfo)
+                // keeps apis from this module only
+                for (let infok in apiInfo.byQName) {
+                    let info = apiInfo.byQName[infok];
+                    if (info.pkg &&
+                        info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
+                }
+                let md = ts.pxt.genMarkdown(mainPkg.config.name, apiInfo, { package: mainPkg.config.name != pxt.appTarget.corepkg })
                 mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
                     let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
@@ -2300,6 +2565,9 @@ export function testAsync() {
 }
 
 export function uploadDocsAsync(...args: string[]): Promise<void> {
+    let info = travisInfo()
+    if (info.tag || (info.branch && info.branch != "master"))
+        return Promise.resolve()
     let cfg = readLocalPxTarget()
     saveThemeJson(cfg)
     return uploader.uploadDocsAsync(...args)
@@ -2419,19 +2687,20 @@ cmd("install  [PACKAGE...]        - install new packages, or all packages", inst
 cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
-cmd("publish                      - publish current package", publishAsync)
+cmd("publish                      - publish current package", publishAsync, 1)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file or stdin", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
+cmd("testsnippets                 - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
-cmd("bump                         - bump target patch version", bumpAsync, 1)
+cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
@@ -2441,7 +2710,7 @@ cmd("checkdocs                    - check docs for broken links, typing errors, 
 cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) hosting for target", ghpInitAsync, 1)
 cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
 
-cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync)
+cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
 
 cmd("search   QUERY...            - search GitHub for a published package", searchAsync)
 cmd("pkginfo  USER/REPO           - show info about named GitHub packge", pkginfoAsync)
@@ -2567,7 +2836,12 @@ export function mainCli(targetDir: string) {
         helpAsync()
             .then(() => process.exit(1))
     } else {
-        cc.fn.apply(null, args.slice(1))
+        let r = cc.fn.apply(null, args.slice(1))
+        if (r)
+            r.then(() => {
+                if (readlineCount)
+                    (process.stdin as any).unref();
+            })
     }
 }
 

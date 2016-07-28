@@ -101,19 +101,20 @@ function mkSnippet(name: string, desc: string, code: string) {
 let block = `{\n ${cursorMarker}\n}`
 // TODO auto-rename of locals
 let snippets = [
-    mkSnippet("if", "Do something depending on condition", `if (${cursorMarker}) ${block}`),
-    mkSnippet("if else", "Do something or something else depending on condition", `if (${cursorMarker}) ${block} else ${block}`),
-    mkSnippet("else", "What to do if the condition is not satisfied", `else ${block}`),
-    mkSnippet("else if", "Check the alternative condition", `else if (${cursorMarker}) ${block}`),
-    mkSnippet("while", "Loop while condition is true", `while (true) {\n ${cursorMarker}\nbasic.pause(20)\n}`),
-    mkSnippet("for", "Repeat a given number of times", `for (let i = 0; i < 5; i++) ${block}`),
-    mkSnippet("function", "Define a new procedure", `function doSomething() ${block}`),
-    mkSnippet("class", "Define a new object type", `class Thing ${block}`),
-    mkSnippet("let", "Define a new variable", `let x = ${cursorMarker}`),
+    mkSnippet("if", lf("Do something depending on condition"), `if (${cursorMarker}) ${block}`),
+    mkSnippet("if else", lf("Do something or something else depending on condition"), `if (${cursorMarker}) ${block} else ${block}`),
+    mkSnippet("else", lf("What to do if the condition is not satisfied"), `else ${block}`),
+    mkSnippet("else if", lf("Check the alternative condition"), `else if (${cursorMarker}) ${block}`),
+    mkSnippet("while", lf("Repeat while condition is true"), `while (true) {\n ${cursorMarker}\nbasic.pause(20)\n}`),
+    mkSnippet("for", lf("Repeat a given number of times"), `for (let i = 0; i < 5; i++) ${block}`),
+    mkSnippet("function", lf("Define a new function"), `function doSomething() ${block}`),
+    mkSnippet("class", lf("Define a new object type"), `class Thing ${block}`),
+    mkSnippet("let", lf("Define a new variable"), `let x = ${cursorMarker}`),
+    mkSnippet("const", lf("Define a new constant variable"), `const x = ${cursorMarker}`),
     // TODO proper text formatting for switch missing
-    mkSnippet("switch", "Branch on a number or enum", `switch (${cursorMarker}) {\ncase 0:\nbreak\n}`),
-    mkSnippet("true", "True boolean value", `true`),
-    mkSnippet("false", "False boolean value", `false`),
+    mkSnippet("switch", lf("Branch on a number or enum"), `switch (${cursorMarker}) {\ncase 0:\nbreak\n}`),
+    mkSnippet("true", lf("True boolean value"), `true`),
+    mkSnippet("false", lf("False boolean value"), `false`),
     // for each not supported at the moment in the compiler
     //mkSnippet("for each", "Do something for all elements of an array", `for (let e of ${placeholderChar}) ${block}`),
 ]
@@ -418,7 +419,7 @@ export class AceCompleter extends data.Component<{ parent: Editor; }, {
         let textPos = editor.getCursorPosition();
         let line = editor.session.getLine(textPos.row);
         let linepref = line.slice(0, textPos.column)
-        let m = /((\w+\s*)*)$/.exec(linepref)
+        let m = /([\w\s]*)$/.exec(linepref)
         let pref = (m ? m[1] : "")
         let before = linepref.slice(0, linepref.length - pref.length).trim()
         let isTopLevel = !before || Util.endsWith(before, "{")  // }
@@ -731,7 +732,7 @@ export class Editor extends srceditor.Editor {
         let langTools = acequire("ace/ext/language_tools");
 
         this.editor.commands.on("exec", (e: any) => {
-            pxt.debug("beforeExec", e.command.name)
+            pxt.debug("beforeExec: " + e.command.name)
             if (!this.isTypescript) return;
 
             let insString: string = e.command.name == "insertstring" ? e.args : null
@@ -750,7 +751,7 @@ export class Editor extends srceditor.Editor {
         }
 
         this.editor.commands.on("afterExec", (e: any) => {
-            pxt.debug("afterExec", e.command.name)
+            pxt.debug("afterExec: " + e.command.name)
             if (!this.isTypescript) return;
 
             let insString: string = e.command.name == "insertstring" ? e.args : null

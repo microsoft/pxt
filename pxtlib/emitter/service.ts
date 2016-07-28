@@ -27,6 +27,7 @@ namespace ts.pxt {
         retType: string;
         isContextual?: boolean;
         qName?: string;
+        pkg?: string;
     }
 
     export interface ApisInfo {
@@ -64,6 +65,7 @@ namespace ts.pxt {
         if (p.initializer) return p.initializer
         if (p.defaults) return p.defaults[0]
         if (p.type == "number") return "0"
+        if (p.type == "boolean") return "false"
         else if (p.type == "string") {
             if (imgLit) {
                 imgLit = false
@@ -174,11 +176,21 @@ namespace ts.pxt {
             let m = /^(.*)\.(.*)/.exec(qName)
             let hasParams = kind == SymbolKind.Function || kind == SymbolKind.Method
 
+            let pkg: string = null
+
+            let src = getSourceFileOfNode(stmt)
+            if (src) {
+                let m = /^pxt_modules\/([^\/]+)/.exec(src.fileName)
+                if (m)
+                    pkg = m[1]
+            }
+
             return {
                 kind,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
                 attributes,
+                pkg,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
                 parameters: !hasParams ? null : (decl.parameters || []).map(p => {
                     let n = getName(p)
@@ -205,7 +217,11 @@ namespace ts.pxt {
         }
     }
 
-    export function genMarkdown(pkg: string, apiInfo: ApisInfo): U.Map<string> {
+    export interface GenMarkdownOptions {
+        package?: boolean;
+    }
+
+    export function genMarkdown(pkg: string, apiInfo: ApisInfo, options: GenMarkdownOptions = {}): U.Map<string> {
         let files: U.Map<string> = {};
         let infos = Util.values(apiInfo.byQName);
         let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
@@ -229,6 +245,15 @@ namespace ts.pxt {
             let locs: U.Map<string> = {};
             Object.keys(m).sort().forEach(l => locs[l] = m[l]);
             files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
+        }
+        const writePackage = (w: (s: string) => void) => {
+
+            if (options.package) {
+                w("");
+                w("```package");
+                w(pkg);
+                w("```");
+            }
         }
 
         writeRef(`# ${pkg} Reference`)
@@ -265,11 +290,12 @@ namespace ts.pxt {
                 writeNs(call)
             })
             writeNs('```')
-
+            writePackage(writeNs);
             files["reference/" + ns.name + '.md'] = nsmd;
         }
         writeRef('```');
 
+        writePackage(writeRef);
         files[pkg + "-reference.md"] = reference;
         mapLocs(locStrings, "");
         return files;

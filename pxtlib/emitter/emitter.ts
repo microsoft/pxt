@@ -22,7 +22,7 @@ namespace ts.pxt {
         console.log(stringKind(n))
     }
 
-    // next free error 9232
+    // next free error 9235
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -40,6 +40,13 @@ namespace ts.pxt {
 
     function isRefType(t: Type) {
         checkType(t);
+        if (t.flags & TypeFlags.ThisType)
+            return true
+        if (t.flags & TypeFlags.TypeParameter) {
+            let b = lookupTypeParameter(t)
+            if (b) return b.isRef
+            U.oops("unbound type parameter: " + checker.typeToString(t))
+        }
         return !(t.flags & (TypeFlags.Number | TypeFlags.Boolean | TypeFlags.Enum))
     }
 
@@ -81,6 +88,13 @@ namespace ts.pxt {
         if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor)
             return <MethodDeclaration>node;
         return getEnclosingMethod(node.parent)
+    }
+
+    function hasGenericParent(node: Node): boolean {
+        let par = getEnclosingFunction(node)
+        if (par)
+            return isGenericFunction(par) || hasGenericParent(par)
+        return false
     }
 
     function getEnclosingFunction(node0: Node) {
@@ -184,6 +198,12 @@ namespace ts.pxt {
     let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
 
+    export interface TypeBinding {
+        tp: Type;
+        isRef: boolean;
+    }
+    let typeBindings: TypeBinding[] = []
+
     export function getComments(node: Node) {
         let src = getSourceFileOfNode(node)
         let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
@@ -265,9 +285,24 @@ namespace ts.pxt {
         return t.flags & TypeFlags.Interface;
     }
 
+    function genericRoot(t: Type) {
+        if (t.flags & TypeFlags.Reference) {
+            let r = t as TypeReference
+            if (r.typeArguments && r.typeArguments.length)
+                return r.target
+        }
+        return null
+    }
+
     function isClassType(t: Type) {
         // check if we like the class?
-        return (t.flags & TypeFlags.Class) || (t.flags & TypeFlags.ThisType)
+        return !!(t.flags & TypeFlags.Class) || !!(t.flags & TypeFlags.ThisType)
+    }
+
+    function isPossiblyGenericClassType(t: Type) {
+        let g = genericRoot(t)
+        if (g) return isClassType(g)
+        return isClassType(t)
     }
 
     function arrayElementType(t: Type): Type {
@@ -283,6 +318,13 @@ namespace ts.pxt {
         return null
     }
 
+    function lookupTypeParameter(t: Type) {
+        if (!(t.flags & TypeFlags.TypeParameter)) return null
+        for (let i = typeBindings.length - 1; i >= 0; --i)
+            if (typeBindings[i].tp == t) return typeBindings[i]
+        return null
+    }
+
     function checkType(t: Type) {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null
@@ -291,6 +333,15 @@ namespace ts.pxt {
             if (isClassType(t)) return t;
             if (isInterfaceType(t)) return t;
             if (deconstructFunctionType(t)) return t;
+            if (lookupTypeParameter(t)) return t;
+
+            let g = genericRoot(t)
+            if (g) {
+                checkType(g);
+                (t as TypeReference).typeArguments.forEach(checkType)
+                return t
+            }
+
             userError(9201, lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)), true)
         }
         return t
@@ -311,6 +362,19 @@ namespace ts.pxt {
         return checkType(r)
     }
 
+    function isGenericFunction(fun: FunctionLikeDeclaration) {
+        // TODO add check for methods of generic classes
+        if (fun.typeParameters && fun.typeParameters.length)
+            return true
+        if (fun.kind == SK.MethodDeclaration || fun.kind == SK.MethodSignature) {
+            if (fun.parent.kind == SK.ClassDeclaration || fun.parent.kind == SK.InterfaceDeclaration) {
+                let tp = (fun.parent as ClassLikeDeclaration).typeParameters
+                return !!tp && !!tp.length
+            }
+        }
+        return false
+    }
+
     function funcHasReturn(fun: FunctionLikeDeclaration) {
         let sig = checker.getSignatureFromDeclaration(fun)
         let rettp = checker.getReturnTypeOfSignature(sig)
@@ -327,9 +391,25 @@ namespace ts.pxt {
         return text;
     }
 
-    export function getFunctionLabel(node: FunctionLikeDeclaration) {
+    function getTypeBindings(t: Type) {
+        let g = genericRoot(t)
+        if (!g) return []
+        return getTypeBindingsCore(g.typeParameters, (t as TypeReference).typeArguments)
+    }
+
+    function getTypeBindingsCore(typeParameters: TypeParameter[], args: Type[]): TypeBinding[] {
+        U.assert(typeParameters.length == args.length)
+        return typeParameters.map((tp, i) => ({ tp: tp, isRef: isRefType(args[i]) }))
+    }
+
+    function refMask(types: TypeBinding[]) {
+        if (!types || !types.length) return ""
+        return "_" + types.map(t => t.isRef ? "R" : "P").join("")
+    }
+
+    export function getFunctionLabel(node: FunctionLikeDeclaration, bindings: TypeBinding[]) {
         let text = getDeclName(node)
-        return "_" + text.replace(/[^\w]+/g, "_") + "_" + getNodeId(node)
+        return "_" + text.replace(/[^\w]+/g, "_") + "_" + getNodeId(node) + refMask(bindings)
     }
 
     export interface FieldAccessInfo {
@@ -350,6 +430,8 @@ namespace ts.pxt {
         capturedVars: VarOrParam[];
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
+        usages?: TypeBinding[][];
+        prePassUsagesEmitted?: number;
     }
 
     export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
@@ -360,7 +442,6 @@ namespace ts.pxt {
         let usedWorkList: Declaration[] = []
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
-        let brkMap: U.Map<Breakpoint> = {}
 
         if (opts.target.isNative) {
             if (!opts.hexinfo) {
@@ -384,17 +465,6 @@ namespace ts.pxt {
             opts.breakpoints = true
         }
 
-        if (opts.breakpoints)
-            res.breakpoints = [{
-                id: 0,
-                isDebuggerStmt: false,
-                fileName: "bogus",
-                start: 0,
-                length: 0,
-                line: 0,
-                character: 0,
-                successors: null
-            }]
 
         let bin: Binary;
         let proc: ir.Procedure;
@@ -404,6 +474,17 @@ namespace ts.pxt {
             bin.res = res;
             bin.target = opts.target;
             proc = null
+            if (opts.breakpoints)
+                res.breakpoints = [{
+                    id: 0,
+                    isDebuggerStmt: false,
+                    fileName: "bogus",
+                    start: 0,
+                    length: 0,
+                    line: 0,
+                    character: 0,
+                    successors: null
+                }]
         }
 
         let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
@@ -572,10 +653,12 @@ namespace ts.pxt {
 
         function scope(f: () => void) {
             let prevProc = proc;
+            let prevBindings = typeBindings.slice()
             try {
                 f();
             } finally {
                 proc = prevProc;
+                typeBindings = prevBindings
             }
         }
 
@@ -626,8 +709,9 @@ namespace ts.pxt {
 
         function getClassInfo(t: Type) {
             let decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let id = getNodeId(decl)
-            let info = classInfos[id + ""]
+            let bindings = getTypeBindings(t)
+            let id = getNodeId(decl) + refMask(bindings)
+            let info = classInfos[id]
             if (!info) {
                 info = {
                     reffields: [],
@@ -635,15 +719,18 @@ namespace ts.pxt {
                     allfields: null,
                     attrs: parseComments(decl)
                 }
-                classInfos[id + ""] = info;
-                for (let mem of decl.members) {
-                    if (mem.kind == SK.PropertyDeclaration) {
-                        let pdecl = <PropertyDeclaration>mem
-                        if (isRefType(typeOf(pdecl)))
-                            info.reffields.push(pdecl)
-                        else info.primitivefields.push(pdecl)
+                classInfos[id] = info;
+                scope(() => {
+                    U.pushRange(typeBindings, bindings)
+                    for (let mem of decl.members) {
+                        if (mem.kind == SK.PropertyDeclaration) {
+                            let pdecl = <PropertyDeclaration>mem
+                            if (isRefType(typeOf(pdecl)))
+                                info.reffields.push(pdecl)
+                            else info.primitivefields.push(pdecl)
+                        }
                     }
-                }
+                })
                 info.allfields = info.reffields.concat(info.primitivefields)
             }
             return info;
@@ -714,6 +801,8 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(f);
             if (attrs.shim)
                 userError(9207, lf("built-in functions cannot be yet used as values; did you forget ()?"))
+            if (isGenericFunction(f))
+                userError(9232, lf("generic functions cannot be yet used as values; did you forget ()?"))
             let info = getFunctionInfo(f)
             if (info.location) {
                 return info.location.load()
@@ -905,6 +994,23 @@ ${lbl}: .short 0xffff
             return !isOnDemandDecl(decl) || usedDecls.hasOwnProperty(nodeKey(decl))
         }
 
+        function markFunctionUsed(decl: FunctionLikeDeclaration, bindings: TypeBinding[]) {
+            if (!bindings || !bindings.length) markUsed(decl)
+            else {
+                let info = getFunctionInfo(decl)
+                if (!info.usages) {
+                    usedDecls[nodeKey(decl)] = true
+                    info.usages = []
+                    info.prePassUsagesEmitted = 0
+                }
+                let mask = refMask(bindings)
+                if (!info.usages.some(u => refMask(u) == mask)) {
+                    info.usages.push(bindings)
+                    usedWorkList.push(decl)
+                }
+            }
+        }
+
         function markUsed(decl: Declaration) {
             if (!isUsed(decl)) {
                 usedDecls[nodeKey(decl)] = true
@@ -973,10 +1079,6 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitPlainCall(decl: Declaration, args: Expression[], hasRet = false) {
-            return ir.op(EK.ProcCall, args.map(emitExpr), decl)
-        }
-
         function addDefaultParameters(sig: Signature, args: Expression[], attrs: CommentAttrs) {
             if (!sig) return;
             let parms = sig.getParameters();
@@ -1013,7 +1115,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitCallExpression(node: CallExpression): ir.Expr {
-            let decl = getDecl(node.expression)
+            let decl = getDecl(node.expression) as FunctionLikeDeclaration
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = node.arguments.slice(0)
@@ -1028,11 +1130,16 @@ ${lbl}: .short 0xffff
             if (!decl)
                 unhandled(node, "no declaration")
 
+            let sig = checker.getResolvedSignature(node)
+            let trg: Signature = (sig as any).target
+            let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
+            let bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
+
             function emitPlain() {
-                return emitPlainCall(decl, args, hasRet)
+                return mkProcCall(decl, args.map(emitExpr), bindings)
             }
 
-            addDefaultParameters(checker.getResolvedSignature(node), args, attrs);
+            addDefaultParameters(sig, args, attrs);
 
             if (decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
@@ -1042,6 +1149,7 @@ ${lbl}: .short 0xffff
                         return emitShim(decl, node, args);
                     }
 
+                    markFunctionUsed(decl, bindings)
                     return emitPlain();
                 }
             }
@@ -1052,6 +1160,7 @@ ${lbl}: .short 0xffff
                     let recv = (<PropertyAccessExpression>node.expression).expression
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
+                    bindings = getTypeBindings(typeOf(recv)).concat(bindings)
                 } else
                     unhandled(node, "strange method call")
                 if (attrs.shim) {
@@ -1065,13 +1174,23 @@ ${lbl}: .short 0xffff
                     if (helperStmt.kind != SK.FunctionDeclaration)
                         userError(9216, lf("helpers.{0} isn't a function", attrs.helper))
                     decl = <FunctionDeclaration>helperStmt;
-                    markUsed(decl)
+                    let sig = checker.getSignatureFromDeclaration(decl)
+                    let tp = sig.getTypeParameters() || []
+                    if (tp.length != bindings.length)
+                        U.oops("helpers type parameter mismatch") // can it happen?
+                    bindings.forEach((b, i) => {
+                        b.tp = tp[i]
+                    })
+                    markFunctionUsed(decl, bindings)
                     return emitPlain();
                 } else {
-                    markUsed(decl)
+                    markFunctionUsed(decl, bindings)
                     return emitPlain();
                 }
             }
+
+            if (bindings.length)
+                U.oops("invalid generic call")
 
             if (decl.kind == SK.VariableDeclaration ||
                 decl.kind == SK.FunctionDeclaration || // this is lambda
@@ -1100,11 +1219,18 @@ ${lbl}: .short 0xffff
             throw unhandled(node, stringKind(decl))
         }
 
+        function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
+            return ir.op(EK.ProcCall, args, {
+                action: decl,
+                bindings: bindings
+            })
+        }
+
         function emitNewExpression(node: NewExpression) {
             let t = typeOf(node)
             if (isArrayType(t)) {
                 throw oops();
-            } else if (isClassType(t)) {
+            } else if (isPossiblyGenericClassType(t)) {
                 let classDecl = <ClassDeclaration>getDecl(node.expression)
                 if (classDecl.kind != SK.ClassDeclaration) {
                     userError(9221, lf("new expression only supported on class types"))
@@ -1124,7 +1250,7 @@ ${lbl}: .short 0xffff
                         // we drop 'obj' variable
                         return ir.rtcall(ctorAttrs.shim, compiled)
                     compiled.unshift(ir.op(EK.Incr, [obj]))
-                    proc.emitExpr(ir.op(EK.ProcCall, compiled, ctor))
+                    proc.emitExpr(mkProcCall(ctor, compiled, []))
                     return obj
                 } else {
                     if (node.arguments && node.arguments.length)
@@ -1164,7 +1290,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
-            let lbl = getFunctionLabel(node)
+            let lbl = getFunctionLabel(node, [])
             let r = ir.ptrlit(lbl + "_Lit", lbl)
             if (!raw) {
                 r = ir.rtcall("pxt::ptrOfLiteral", [r])
@@ -1172,28 +1298,9 @@ ${lbl}: .short 0xffff
             return r
         }
 
-        function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
-            if (!isUsed(node))
-                return;
-
-            let attrs = parseComments(node)
-            if (attrs.shim != null) {
-                if (opts.target.isNative) {
-                    hex.validateShim(getDeclName(node),
-                        attrs,
-                        funcHasReturn(node),
-                        getParameters(node).length);
-                }
-                return
-            }
-
-            if (node.flags & NodeFlags.Ambient)
-                return;
-
-            if (!node.body)
-                return;
-
+        function emitFuncCore(node: FunctionLikeDeclaration, bindings: TypeBinding[]) {
             let info = getFunctionInfo(node)
+            let lit: ir.Expr = null
 
             let isExpression = node.kind == SK.ArrowFunction || node.kind == SK.FunctionExpression
 
@@ -1212,7 +1319,12 @@ ${lbl}: .short 0xffff
                 return l;
             })
 
-            let lit: ir.Expr = null
+            // forbid: let x = function<T>(a:T) { }
+            if (isExpression && isGenericFunction(node))
+                userError(9233, lf("function expressions cannot be generic"))
+
+            if (caps.length > 0 && isGenericFunction(node))
+                userError(9234, lf("nested functions cannot be generic yet"))
 
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
@@ -1240,55 +1352,113 @@ ${lbl}: .short 0xffff
 
             assert(!!lit == isExpression)
 
-            scope(() => {
-                let isRoot = proc == null
-                proc = new ir.Procedure();
-                proc.isRoot = isRoot
-                proc.action = node;
-                proc.info = info;
-                proc.captured = locals;
-                bin.addProc(proc);
+            let isRoot = proc == null
+            proc = new ir.Procedure();
+            proc.isRoot = isRoot
+            proc.action = node;
+            proc.info = info;
+            proc.captured = locals;
+            proc.bindings = bindings;
+            bin.addProc(proc);
 
-                proc.args = getParameters(node).map((p, i) => {
-                    let l = new ir.Cell(i, p, getVarInfo(p))
-                    l.isarg = true
-                    return l
-                })
+            U.pushRange(typeBindings, bindings)
 
-                proc.args.forEach(l => {
-                    //console.log(l.toString(), l.info)
-                    if (l.isByRefLocal()) {
-                        // TODO add C++ support function to do this
-                        let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuff(), []))
-                        proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuff(), [tmp, l.loadCore()]))
-                        proc.emitExpr(l.storeDirect(tmp))
-                    }
-                })
-
-                emit(node.body);
-
-                proc.emitLblDirect(getLabels(node).ret)
-
-                proc.stackEmpty();
-
-                if (funcHasReturn(proc.action)) {
-                    let v = ir.shared(ir.op(EK.JmpValue, []))
-                    proc.emitExpr(v) // make sure we save it
-                    proc.emitClrs();
-                    let lbl = proc.mkLabel("final")
-                    proc.emitJmp(lbl, v, ir.JmpMode.Always)
-                    proc.emitLbl(lbl)
-                } else {
-                    proc.emitClrs();
-                }
-
-                assert(!bin.finalPass || usedWorkList.length == 0)
-                while (usedWorkList.length > 0) {
-                    let f = usedWorkList.pop()
-                    emit(f)
-                }
-
+            proc.args = getParameters(node).map((p, i) => {
+                let l = new ir.Cell(i, p, getVarInfo(p))
+                l.isarg = true
+                return l
             })
+
+            proc.args.forEach(l => {
+                //console.log(l.toString(), l.info)
+                if (l.isByRefLocal()) {
+                    // TODO add C++ support function to do this
+                    let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuff(), []))
+                    proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuff(), [tmp, l.loadCore()]))
+                    proc.emitExpr(l.storeDirect(tmp))
+                }
+            })
+
+            emit(node.body);
+
+            proc.emitLblDirect(getLabels(node).ret)
+
+            proc.stackEmpty();
+
+            if (funcHasReturn(proc.action)) {
+                let v = ir.shared(ir.op(EK.JmpValue, []))
+                proc.emitExpr(v) // make sure we save it
+                proc.emitClrs();
+                let lbl = proc.mkLabel("final")
+                proc.emitJmp(lbl, v, ir.JmpMode.Always)
+                proc.emitLbl(lbl)
+            } else {
+                proc.emitClrs();
+            }
+
+            assert(!bin.finalPass || usedWorkList.length == 0)
+            while (usedWorkList.length > 0) {
+                let f = usedWorkList.pop()
+                emit(f)
+            }
+
+            return lit
+        }
+
+        function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
+            if (!isUsed(node))
+                return;
+
+            let attrs = parseComments(node)
+            if (attrs.shim != null) {
+                if (opts.target.isNative) {
+                    hex.validateShim(getDeclName(node),
+                        attrs,
+                        funcHasReturn(node),
+                        getParameters(node).length);
+                }
+                return
+            }
+
+            if (node.flags & NodeFlags.Ambient)
+                return;
+
+            if (!node.body)
+                return;
+
+            let info = getFunctionInfo(node)
+            let lit: ir.Expr = null
+
+            if (isGenericFunction(node)) {
+                if (!info.usages) {
+                    if (bin.finalPass && !usedDecls[nodeKey(node)]) {
+                        // test mode - make fake binding
+                        let sig = checker.getSignatureFromDeclaration(node)
+                        let bindings = sig.getTypeParameters().map(t => ({ tp: t, isRef: true }))
+                        U.assert(bindings.length > 0)
+                        info.usages = [bindings]
+                    } else {
+                        U.assert(!bin.finalPass)
+                        return null
+                    }
+                }
+                U.assert(info.usages.length > 0, "no generic usages recorded")
+                let todo = info.usages
+                if (!bin.finalPass) {
+                    todo = info.usages.slice(info.prePassUsagesEmitted)
+                    info.prePassUsagesEmitted = info.usages.length
+                }
+                for (let bindings of todo) {
+                    scope(() => {
+                        let nolit = emitFuncCore(node, bindings)
+                        U.assert(nolit == null)
+                    })
+                }
+            } else {
+                scope(() => {
+                    lit = emitFuncCore(node, [])
+                })
+            }
 
             return lit
         }
@@ -1360,7 +1530,7 @@ ${lbl}: .short 0xffff
 
         function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
             let tp = typeOf(pacc.expression)
-            if (isClassType(tp)) {
+            if (isPossiblyGenericClassType(tp)) {
                 let info = getClassInfo(tp)
                 let fld = info.allfields.filter(f => (<Identifier>f.name).text == pacc.name.text)[0]
                 if (!fld)
@@ -1375,11 +1545,6 @@ ${lbl}: .short 0xffff
             } else {
                 throw unhandled(pacc, "bad field access")
             }
-        }
-
-        function refSuff(e: Expression) {
-            if (isRefType(typeOf(e))) return "Ref"
-            else return ""
         }
 
         function emitStore(trg: Expression, src: ir.Expr, cachedTrg: ir.Expr = null) {
@@ -1458,28 +1623,24 @@ ${lbl}: .short 0xffff
 
         function emitBrk(node: Node) {
             if (!opts.breakpoints) return
-            let brk = U.lookup(brkMap, nodeKey(node))
-            if (!brk) {
-                let src = getSourceFileOfNode(node)
-                if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
-                    return;
-                let pos = node.pos
-                while (/^\s$/.exec(src.text[pos]))
-                    pos++;
-                let p = ts.getLineAndCharacterOfPosition(src, pos)
-                brk = {
-                    id: res.breakpoints.length,
-                    isDebuggerStmt: node.kind == SK.DebuggerStatement,
-                    fileName: src.fileName,
-                    start: pos,
-                    length: node.end - pos,
-                    line: p.line,
-                    character: p.character,
-                    successors: null
-                }
-                brkMap[nodeKey(node)] = brk
-                res.breakpoints.push(brk)
+            let src = getSourceFileOfNode(node)
+            if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
+                return;
+            let pos = node.pos
+            while (/^\s$/.exec(src.text[pos]))
+                pos++;
+            let p = ts.getLineAndCharacterOfPosition(src, pos)
+            let brk: Breakpoint = {
+                id: res.breakpoints.length,
+                isDebuggerStmt: node.kind == SK.DebuggerStatement,
+                fileName: src.fileName,
+                start: pos,
+                length: node.end - pos,
+                line: p.line,
+                character: p.character,
+                successors: null
             }
+            res.breakpoints.push(brk)
             let st = ir.stmt(ir.SK.Breakpoint, null)
             st.breakpointInfo = brk
             proc.emit(st)
@@ -1822,8 +1983,8 @@ ${lbl}: .short 0xffff
         }
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
-            if (node.typeParameters)
-                userError(9227, lf("generic classes not supported"))
+            //if (node.typeParameters)
+            //    userError(9227, lf("generic classes not supported"))
             if (node.heritageClauses)
                 userError(9228, lf("inheritance not supported"))
             node.members.forEach(emit)

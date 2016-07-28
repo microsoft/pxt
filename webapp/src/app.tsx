@@ -133,6 +133,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
     fetchCloudData(): Cloud.JsonPointer[] {
         let cloud = pxt.appTarget.cloud || {};
+        if (cloud.packages) return [] // now handled on GitHub
         if (!cloud.workspaces && !cloud.packages) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
         let res = this.state.searchFor
@@ -165,21 +166,25 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
 
-        let chgHeader = (hdr: Header) => {
+        const chgHeader = (hdr: Header) => {
             if (this.modal) this.modal.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
-        let chgBundle = (scr: pxt.PackageConfig) => {
+        const chgBundle = (scr: pxt.PackageConfig) => {
             if (this.modal) this.modal.hide();
             let p = pkg.mainEditorPkg();
             p.addDepAsync(scr.name, "*")
                 .then(r => this.props.parent.reloadHeaderAsync())
                 .done();
         }
-        let upd = (v: any) => {
-            this.setState({ searchFor: (v.target as any).value })
+        const upd = (v: any) => {
+            let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
+            this.setState({ searchFor: str })
         };
-        let install = (scr: Cloud.JsonPointer) => {
+        const kupd = (ev: __React.KeyboardEvent) => {
+            if (ev.keyCode == 13) upd(ev);
+        }
+        const install = (scr: Cloud.JsonPointer) => {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
@@ -192,7 +197,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     .done()
             }
         }
-        let installGh = (scr: pxt.github.Repo) => {
+        const installGh = (scr: pxt.github.Repo) => {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
@@ -214,7 +219,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 Util.oops()
             }
         }
-        let importHex = () => {
+        const importHex = () => {
             if (this.modal) this.modal.hide();
             this.props.parent.importHexFileDialog();
         }
@@ -222,9 +227,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
                 <div className="ui search">
-                    <div className="ui fluid icon input">
-                        <input type="text" placeholder={lf("Search...") } onChange={upd} />
-                        <i className="search icon"></i>
+                    <div className="ui fluid action input">
+                        <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
+                        <button className="ui right primary labeled icon button" onClick={upd}>
+                            <i className="search icon"></i>
+                            {lf("Search") }
+                        </button>
                     </div>
                 </div>
                 <div className="ui cards">
@@ -416,10 +424,25 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             return null;
 
         let expands = this.state.expands;
+        let removeFile = (f: pkg.File) => {
+            core.confirmAsync({
+                header: lf("Remove {0}", f.name),
+                body: lf("You are about to remove a file from your project. Are you sure?"),
+                agreeClass: "red",
+                agreeIcon: "trash",
+                agreeLbl: lf("Remove it"),
+            }).done(res => {
+                if (res) {
+                    pkg.mainEditorPkg().removeFileAsync(f.name)
+                        .then(() => pkg.mainEditorPkg().saveFilesAsync())
+                        .done(() => this.props.parent.reloadHeaderAsync());
+                }
+            })
+        }
         let removePkg = (p: pkg.EditorPackage) => {
             core.confirmAsync({
                 header: lf("Remove {0} package", p.getPkgId()),
-                body: lf("You are about to remove a package from your project. Are you sure?", p.getPkgId()),
+                body: lf("You are about to remove a package from your project. Are you sure?"),
                 agreeClass: "red",
                 agreeIcon: "trash",
                 agreeLbl: lf("Remove it"),
@@ -431,12 +454,12 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             })
         }
 
-        let filesOf = (pkg: pkg.EditorPackage) =>
-            pkg.sortedFiles().map(file => {
+        let filesOf = (pkg: pkg.EditorPackage): JSX.Element[] => {
+            const deleteFiles = pkg.getPkgId() == "this";
+            return pkg.sortedFiles().map(file => {
                 let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
                 return (
-                    <a
-                        key={file.getName() }
+                    <a key={file.getName() }
                         onClick={() => parent.setFile(file) }
                         className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
@@ -444,8 +467,10 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                         {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                         {meta.isReadonly ? <i className="lock icon"></i> : null}
                         {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+                        {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={() => removeFile(file) } /> : ''}
                     </a>);
             })
+        }
 
         let togglePkg = (p: pkg.EditorPackage) => {
             expands[p.getPkgId()] = !expands[p.getPkgId()];
@@ -1086,7 +1111,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const compile = pxt.appTarget.compile;
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
-        const devSignin = !pxtwinrt.isWinRT();
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${this.state.sideDocsCollapsed ? "" : "sideDocs"}` }>
@@ -1125,11 +1149,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                         <i className="help icon"></i>
                                         {lf("Help") }
                                     </a>
-                                    { devSignin ? <LoginBox /> : undefined }
                                     {
                                         // we always need a way to clear local storage, regardless if signed in or not 
                                     }
-                                    <sui.Item role="menuitem" icon='sign out' text={devSignin ? lf("Sign out / Reset") : lf("Reset") } onClick={() => LoginBox.signout() } />
+                                    <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
                                     <div className="ui divider"></div>
                                     { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                                     { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }

@@ -13,15 +13,15 @@ namespace pxt {
     }
 
     // general error reported
-    export var debug: (msg: any, ...args: any[]) => void = typeof console !== "undefined" && !!console.debug
-        ? (msg, args) => {
+    export var debug: (msg: any) => void = typeof console !== "undefined" && !!console.debug
+        ? (msg) => {
             if (ts.pxt.Util.debug)
-                console.debug(msg, args);
-        } : (msg, args) => { };
-    export var log: (msg: any, ...args: any[]) => void = typeof console !== "undefined" && !!console.log
-        ? (msg, args) => {
-            console.log(msg, args);
-        } : (msg, args) => { };
+                console.debug(msg);
+        } : () => { };
+    export var log: (msg: any) => void = typeof console !== "undefined" && !!console.log
+        ? (msg) => {
+            console.log(msg);
+        } : () => { };
 
     export var reportException: (err: any, data: any) => void = function (e, d) {
         if (console) {
@@ -300,7 +300,7 @@ namespace pxt {
             return null
         }
 
-        protected saveConfig() {
+        saveConfig() {
             let cfg = JSON.stringify(this.config, null, 4) + "\n"
             this.host().writeFile(this, configName, cfg)
         }
@@ -331,7 +331,8 @@ namespace pxt {
                             if (!confStr)
                                 U.userError(`package ${this.id} is missing ${configName}`)
                             this.parseConfig(confStr)
-                            this.config.installedVersion = this.version()
+                            if (this.level != 0)
+                                this.config.installedVersion = this.version()
                             this.saveConfig()
                         })
                         .then(() => {
