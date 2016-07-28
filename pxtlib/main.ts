@@ -196,6 +196,7 @@ namespace pxt {
         binaryonly?: boolean;
         yotta?: ts.pxt.YottaConfig;
         card?: CodeCard;
+        additionalFilePath?: string;
     }
 
     // this is for remote file interface to packages
