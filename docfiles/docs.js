@@ -56,6 +56,7 @@ function renderSnippets() {
             linksClass: 'lang-cards',     
             namespacesClass: 'lang-namespaces',       
             codeCardClass: 'lang-codecard',
+            packageClass: 'lang-package',
             snippetReplaceParent: true,
             simulator: true,
             hex: true,
