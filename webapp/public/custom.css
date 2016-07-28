@@ -481,6 +481,7 @@ html {
 #filelist {
   left: 0;
   min-width: 23rem;
+  max-width: 23rem;
 }
 .rtl #filelist {
     left: auto;
@@ -556,6 +557,7 @@ html {
     #filelist {
         bottom:3rem;
         min-width:20rem;
+        max-width:20rem;
     }
     #maineditor {
         left:20rem;
@@ -630,6 +632,7 @@ html {
         top:auto;      
         width:auto;  
         min-width: inherit;   
+        max-width: inherit;   
     }
     .rtl #filelist {
         left:auto;
@@ -699,7 +702,8 @@ html {
         top:0.5rem;
         right:0.5rem;
         left:auto;
-        min-width: inherit;   
+        min-width: inherit;  
+        max-width: inherit;  
     }    
     .rtl #filelist {
         left:0.5rem;
