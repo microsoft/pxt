@@ -1470,6 +1470,14 @@ class Host
         try {
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
+            let addPath = module.config.additionalFilePath
+            if (addPath) {
+                try {
+                    return fs.readFileSync(path.join(addPath, resolved), "utf8")
+                } catch (e) {
+                    return null
+                }
+            }
             return null
         }
     }
@@ -2373,8 +2381,8 @@ function testDirAsync(dir: string) {
                         }
                         if (numErr) {
                             console.log("ERRORS", fn)
-                            errors.push(fn) 
-                            fs.unlink(hexPath, (err) => {}) // ignore errors
+                            errors.push(fn)
+                            fs.unlink(hexPath, (err) => { }) // ignore errors
                         } else {
                             let hex = res.outfiles["binary.hex"]
                             if (hex) {
