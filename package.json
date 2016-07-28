@@ -31,6 +31,8 @@
     "built/web/*.js",
     "built/web/*.css",
     "built/web/*.html",
+    "libs/lang-test0/*.ts",
+    "libs/lang-test0/pxt.json",
     "webapp/public",
     "typings/bluebird",
     "typings/node",
