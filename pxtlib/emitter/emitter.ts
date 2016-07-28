@@ -539,7 +539,7 @@ namespace ts.pxt {
         function unhandled(n: Node, info?: string, code: number = 9202) {
             //If we info then we may as well present that instead
             if (info) {
-                return userError(code, lf("Sorry, this language feature isn't supported (${0})", info))
+                return userError(code, info)
             }
 
             if (!n) {
