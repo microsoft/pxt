@@ -490,6 +490,7 @@ function travisAsync() {
             return Promise.resolve()
     } else {
         return buildTargetAsync()
+            .then(() => uploader.checkDocsAsync())
             .then(() => {
                 let trg = readLocalPxTarget()
                 if (rel)
