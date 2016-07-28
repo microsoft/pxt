@@ -1213,7 +1213,6 @@ function buildAndWatchTargetAsync() {
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
-        .then(() => uploader.checkDocsAsync())
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
