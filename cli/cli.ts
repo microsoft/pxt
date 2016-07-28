@@ -2597,7 +2597,16 @@ export function extractAsync(filename: string) {
 
     return (filename == "-" || !filename
         ? nodeutil.readResAsync(process.stdin)
-        : readFileAsync(filename) as Promise<Buffer>)
+        : /^https?:/.test(filename) ?
+            U.requestAsync({ url: filename })
+                .then(resp => {
+                    let m = /^(https:\/\/[^\/]+\/)([a-z]+)$/.exec(filename)
+                    if (m && /^<!doctype/i.test(resp.text))
+                        return U.requestAsync({ url: m[1] + "api/" + m[2] + "/text" })
+                    else return resp
+                })
+                .then(resp => resp.buffer)
+            : readFileAsync(filename) as Promise<Buffer>)
         .then(buf => {
             let str = buf.toString("utf8")
             if (str[0] == ":") {
@@ -2645,6 +2654,18 @@ export function extractAsync(filename: string) {
                     files: oneFile(scr.source, scr.header.editor)
                 }))
                 delete json.scripts
+            }
+
+            if (json[pxt.configName]) {
+                console.log("Raw JSON files.")
+                let cfg: pxt.PackageConfig = JSON.parse(json[pxt.configName])
+                let files = json
+                json = {
+                    projects: [{
+                        name: cfg.name,
+                        files: files
+                    }]
+                }
             }
 
             let prjs: SavedProject[] = json.projects
@@ -2698,7 +2719,7 @@ cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("publish                      - publish current package", publishAsync, 1)
-cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file or stdin", extractAsync)
+cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)

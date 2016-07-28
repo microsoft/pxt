@@ -9,5 +9,5 @@ class S {
     public static x: number
     public static m() { }
 }
-S.x = 42 // TS9202 - can be removed if static field support is added
-S.m() // TS9202 - can be removed if static method support is added
+S.x = 42 // TS9247 - can be removed if static field support is added
+S.m() // TS9235 - can be removed if static method support is added

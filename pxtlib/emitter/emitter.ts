@@ -22,7 +22,7 @@ namespace ts.pxt {
         console.log(stringKind(n))
     }
 
-    // next free error 9235
+    // next free error 9253
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -351,7 +351,14 @@ namespace ts.pxt {
         let r: Type;
         if (isExpression(node))
             r = checker.getContextualType(<Expression>node)
-        if (!r) r = checker.getTypeAtLocation(node);
+        if (!r) {
+            try {
+                r = checker.getTypeAtLocation(node);
+            }
+            catch (e) {
+                userError(9203, lf("Unknown type for expression"))
+            }
+        }
         return checkType(r)
     }
 
@@ -529,10 +536,83 @@ namespace ts.pxt {
             }, arg0, arg1, arg2));
         }
 
-        function unhandled(n: Node, addInfo = "") {
-            if (addInfo)
-                addInfo = " (" + addInfo + ")"
-            return userError(9202, lf("Unsupported syntax node: {0}", stringKind(n)) + addInfo);
+        function unhandled(n: Node, info?: string, code: number = 9202) {
+            //If we info then we may as well present that instead
+            if (info) {
+                return userError(code, info)
+            }
+
+            if (!n) {
+                //Not displayed to the user, therefore no need for lf on this
+                console.log(`Error: ${getName(n)} is not a supported syntax feature`)
+                userError(code, lf("Sorry, this language feature isn't supported"))
+            }
+
+            let syntax = stringKind(n)
+            let maybeSupportInFuture = false
+            let alternative: string = null
+            switch (n.kind) {
+                case ts.SyntaxKind.ForInStatement:
+                    syntax = lf("for in loops")
+                    break
+                case ts.SyntaxKind.ForOfStatement:
+                    syntax = lf("for of loops")
+                    maybeSupportInFuture = true
+                    break
+                case ts.SyntaxKind.PropertyAccessExpression:
+                    syntax = lf("property access")
+                    break
+                case ts.SyntaxKind.DeleteExpression:
+                    syntax = lf("delete")
+                    break
+                case ts.SyntaxKind.GetAccessor:
+                    syntax = lf("get accessor method")
+                    maybeSupportInFuture = true
+                    break
+                case ts.SyntaxKind.SetAccessor:
+                    syntax = lf("set accessor method")
+                    maybeSupportInFuture = true
+                    break
+                case ts.SyntaxKind.TaggedTemplateExpression:
+                    syntax = lf("tagged templates")
+                    break
+                case ts.SyntaxKind.ObjectLiteralExpression:
+                    syntax = lf("object literals")
+                    alternative = lf("define a class instead")
+                    break
+                case ts.SyntaxKind.TypeOfExpression:
+                    syntax = lf("typeof")
+                    break
+                case ts.SyntaxKind.SpreadElementExpression:
+                    syntax = lf("spread")
+                    break
+                case ts.SyntaxKind.TryStatement:
+                case ts.SyntaxKind.CatchClause:
+                case ts.SyntaxKind.FinallyKeyword:
+                case ts.SyntaxKind.ThrowStatement:
+                    syntax =  lf("throwing and catching exceptions")
+                    break
+                case ts.SyntaxKind.ClassExpression:
+                    syntax = lf("class expressions")
+                    alternative = lf("declare a class as class C {} not let C = class {}")
+                    break
+                default:
+                    break
+            }
+
+            let msg = ""
+            if (maybeSupportInFuture) {
+                msg = lf("{0} not currently supported", syntax)
+            }
+            else {
+                msg = lf("{0} not supported", syntax)
+            }
+
+            if (alternative) {
+                msg += " - " + alternative
+            }
+
+            return userError(code, msg)
         }
 
         function nodeKey(f: Node) {
@@ -597,8 +677,12 @@ namespace ts.pxt {
         }
 
         function typeCheckVar(decl: Declaration) {
-            if (typeOf(decl).flags & TypeFlags.Void)
+            if (!decl) {
+                userError(9203, lf("variable has unknown type"))
+            }
+            if (typeOf(decl).flags & TypeFlags.Void) {
                 userError(9203, lf("void-typed variables not supported"))
+            }
         }
 
         function lookupCell(decl: Declaration): ir.Cell {
@@ -735,7 +819,7 @@ ${lbl}: .short 0xffff
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
-                throw unhandled(node, "id")
+                throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
             }
         }
 
@@ -854,7 +938,7 @@ ${lbl}: .short 0xffff
                     callInfo.args.push(node.expression)
                     return emitShim(decl, node, [node.expression])
                 } else {
-                    throw unhandled(node, "no {shim:...}");
+                    throw unhandled(node, lf("no {shim:...}"), 9236);
                 }
             } else if (decl.kind == SK.PropertyDeclaration) {
                 let idx = fieldIndex(node)
@@ -865,14 +949,14 @@ ${lbl}: .short 0xffff
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
-                throw unhandled(node, stringKind(decl));
+                throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
             }
         }
 
         function emitIndexedAccess(node: ElementAccessExpression, assign: ir.Expr = null): ir.Expr {
             let t = typeOf(node.expression)
 
-            let indexer = ""
+            let indexer: string = null
             if (!assign && t.flags & TypeFlags.String)
                 indexer = "String_::charAt"
             else if (isArrayType(t))
@@ -889,10 +973,10 @@ ${lbl}: .short 0xffff
                     let args = [node.expression, node.argumentExpression]
                     return rtcallMask(indexer, args, ir.CallingConvention.Plain, assign ? [assign] : [])
                 } else {
-                    throw unhandled(node, lf("non-numeric indexer on {0}", indexer))
+                    throw unhandled(node, lf("non-numeric indexer on {0}", indexer), 9238)
                 }
             } else {
-                throw unhandled(node, "unsupported indexer")
+                throw unhandled(node, lf("unsupported indexer"), 9239)
             }
         }
 
@@ -1044,7 +1128,7 @@ ${lbl}: .short 0xffff
             (node as any).callInfo = callInfo
 
             if (!decl)
-                unhandled(node, "no declaration")
+                unhandled(node, lf("no declaration"), 9240)
 
             let sig = checker.getResolvedSignature(node)
             let trg: Signature = (sig as any).target
@@ -1078,7 +1162,7 @@ ${lbl}: .short 0xffff
                     callInfo.args.unshift(recv)
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
                 } else
-                    unhandled(node, "strange method call")
+                    unhandled(node, lf("strange method call"), 9241)
                 if (attrs.shim) {
                     return emitShim(decl, node, args);
                 } else if (attrs.helper) {
@@ -1132,7 +1216,7 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            throw unhandled(node, stringKind(decl))
+            throw unhandled(node, stringKind(decl), 9242)
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
@@ -1174,7 +1258,7 @@ ${lbl}: .short 0xffff
                     return obj;
                 }
             } else {
-                throw unhandled(node)
+                throw unhandled(node, lf("unknown type for new"), 9243)
             }
         }
         function emitTaggedTemplateExpression(node: TaggedTemplateExpression) { }
@@ -1289,8 +1373,8 @@ ${lbl}: .short 0xffff
                 //console.log(l.toString(), l.info)
                 if (l.isByRefLocal()) {
                     // TODO add C++ support function to do this
-                    let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuff(), []))
-                    proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuff(), [tmp, l.loadCore()]))
+                    let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuffix(), []))
+                    proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuffix(), [tmp, l.loadCore()]))
                     proc.emitExpr(l.storeDirect(tmp))
                 }
             })
@@ -1401,11 +1485,12 @@ ${lbl}: .short 0xffff
                         return ir.rtcall("thumb::subs", [ir.numlit(0), emitExpr(node.operand)])
                     case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
-                    default: unhandled(node, "postfix unary number")
+                    default:
+                        break
                 }
             }
 
-            throw unhandled(node, "prefix unary");
+            throw unhandled(node, lf("unsupported prefix unary operation"), 9245)
         }
 
         function prepForAssignment(trg: Expression) {
@@ -1438,10 +1523,11 @@ ${lbl}: .short 0xffff
                         return emitIncrement(node.operand, "thumb::adds", true)
                     case SK.MinusMinusToken:
                         return emitIncrement(node.operand, "thumb::subs", true)
-                    default: unhandled(node, "postfix unary number")
+                    default:
+                        break
                 }
             }
-            throw unhandled(node)
+            throw unhandled(node, lf("unsupported postfix unary operation"), 9246)
         }
 
         function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
@@ -1459,7 +1545,7 @@ ${lbl}: .short 0xffff
                     shimName: attrs.shim
                 }
             } else {
-                throw unhandled(pacc, "bad field access")
+                throw unhandled(pacc, lf("bad field access"), 9247)
             }
         }
 
@@ -1471,14 +1557,14 @@ ${lbl}: .short 0xffff
                     recordUse(<VarOrParam>decl, true)
                     proc.emitExpr(l.storeByRef(src))
                 } else {
-                    unhandled(trg, "target identifier")
+                    unhandled(trg, lf("bad target identifier"), 9248)
                 }
             } else if (trg.kind == SK.PropertyAccessExpression) {
                 proc.emitExpr(ir.op(EK.Store, [cachedTrg || emitExpr(trg), src]))
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
             } else {
-                unhandled(trg, "assignment target")
+                unhandled(trg, lf("bad assignment target"), 9249)
             }
         }
 
@@ -1607,7 +1693,7 @@ ${lbl}: .short 0xffff
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
                 if (!shimName)
-                    unhandled(node.operatorToken, "numeric operator")
+                    unhandled(node.operatorToken, lf("unsupported numeric operator"), 9250)
                 if (noEq)
                     return emitIncrement(node.left, shimName, false, node.right)
                 return shim(shimName)
@@ -1647,7 +1733,7 @@ ${lbl}: .short 0xffff
                             simpleInstruction(node.operatorToken.kind),
                             [shim("String_::compare"), ir.numlit(0)])
                     default:
-                        unhandled(node.operatorToken, "numeric operator")
+                        unhandled(node.operatorToken, lf("unknown numeric operator"), 9251)
                 }
             }
 
@@ -1662,7 +1748,7 @@ ${lbl}: .short 0xffff
                 case SK.AmpersandAmpersandToken:
                     return emitLazyBinaryExpression(node);
                 default:
-                    throw unhandled(node.operatorToken, "generic operator")
+                    throw unhandled(node.operatorToken, lf("unknown generic operator"), 9252)
             }
         }
 
@@ -1789,6 +1875,78 @@ ${lbl}: .short 0xffff
             proc.emitLblDirect(l.brk);
         }
 
+        function emitForOfStatement(node: ForOfStatement) {
+            if (!(node.initializer && node.initializer.kind == SK.VariableDeclarationList)) {
+                unhandled(node, "only a single variable may be used to iterate a collection")
+                return
+            }
+
+            let declList = <VariableDeclarationList>node.initializer;
+            if (declList.declarations.length != 1) {
+                unhandled(node, "only a single variable may be used to iterate a collection")
+                return
+            }
+
+            //Typecheck the expression being iterated over
+            let t = typeOf(node.expression)
+
+            let indexer = ""
+            let length = ""
+            if (t.flags & TypeFlags.String) {
+                indexer = "String_::charAt"
+                length = "String_::length"
+            }
+            else if (isArrayType(t)) {
+                indexer = "Array_::getAt"
+                length = "Array_::length"
+            }
+            else {
+                unhandled(node.expression, "cannot use for...of with this expression")
+                return
+            }
+
+            //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it 
+            markUsed(declList.declarations[0])
+            let iterVar = emitVariableDeclaration(declList.declarations[0]) // c
+            //Start with null, TODO: Is this necessary
+            proc.emitExpr(iterVar.storeByRef(ir.numlit(0)))
+            proc.stackEmpty()
+
+            // Store the expression (it could be a string literal, for example) for the collection being iterated over
+            // Note that it's alaways a ref-counted type
+            let collectionVar = proc.mkLocalUnnamed(true); // a
+            proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
+
+            // Declaration of iterating variable
+            let intVarIter = proc.mkLocalUnnamed(); // i
+            proc.emitExpr(intVarIter.storeByRef(ir.numlit(0)))
+            proc.stackEmpty();
+
+            emitBrk(node);
+
+            let l = getLabels(node);
+
+            proc.emitLblDirect(l.fortop);
+            // i < a.length()
+            // we use loadCore() on collection variable so that it doesn't get incr()ed
+            // we could have used load() and rtcallMask to be more regular
+            proc.emitJmpZ(l.brk, ir.rtcall("Number_::lt", [intVarIter.load(), ir.rtcall(length, [collectionVar.loadCore()])]))
+
+            // c = a[i]
+            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), intVarIter.load()])))
+
+            emit(node.statement);
+            proc.emitLblDirect(l.cont);
+
+            // i = i + 1
+            proc.emitExpr(intVarIter.storeByRef(ir.rtcall("thumb::adds", [intVarIter.load(), ir.numlit(1)])))
+
+            proc.emitJmp(l.fortop);
+            proc.emitLblDirect(l.brk);
+
+            proc.emitExpr(collectionVar.storeByRef(ir.numlit(0))) // clear it, so it gets GCed
+        }
+
         function emitForInOrForOfStatement(node: ForInStatement) { }
 
         function emitBreakOrContinueStatement(node: BreakOrContinueStatement) {
@@ -1880,15 +2038,16 @@ ${lbl}: .short 0xffff
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
         }
-        function emitVariableDeclaration(node: VariableDeclaration) {
+        function emitVariableDeclaration(node: VariableDeclaration): ir.Cell {
             typeCheckVar(node)
-            if (!isUsed(node))
-                return;
+            if (!isUsed(node)) {
+                return null;
+            }
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 proc.emitClrIfRef(loc) // we might be in a loop
-                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuff(), [])))
+                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuffix(), [])))
             }
             // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {
@@ -1896,7 +2055,9 @@ ${lbl}: .short 0xffff
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
+            return loc;
         }
+
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
             //if (node.typeParameters)
@@ -1906,9 +2067,10 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            // nothing
+            //userError(9228, lf("interfaces are not currently supported"))
         }
         function emitEnumDeclaration(node: EnumDeclaration) {
+            //No code needs to be generated, enum names are replaced by constant values in generated code
         }
         function emitEnumMember(node: EnumMember) { }
         function emitModuleDeclaration(node: ModuleDeclaration) {
@@ -1984,7 +2146,8 @@ ${lbl}: .short 0xffff
                 case SK.ModuleBlock:
                     return emitBlock(<Block>node);
                 case SK.VariableDeclaration:
-                    return emitVariableDeclaration(<VariableDeclaration>node);
+                    emitVariableDeclaration(<VariableDeclaration>node);
+                    return
                 case SK.IfStatement:
                     return emitIfStatement(<IfStatement>node);
                 case SK.WhileStatement:
@@ -1993,6 +2156,8 @@ ${lbl}: .short 0xffff
                     return emitDoStatement(<DoStatement>node);
                 case SK.ForStatement:
                     return emitForStatement(<ForStatement>node);
+                case SK.ForOfStatement:
+                    return emitForOfStatement(<ForOfStatement>node);
                 case SK.ContinueStatement:
                 case SK.BreakStatement:
                     return emitBreakOrContinueStatement(<BreakOrContinueStatement>node);
