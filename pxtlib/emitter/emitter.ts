@@ -1826,11 +1826,12 @@ ${lbl}: .short 0xffff
             proc.emitExpr(iterVar.storeByRef(ir.numlit(0)))
             proc.stackEmpty()
 
-            //Store the expression (it could be a string literal, for example) for the collection being iterated over
-            let collectionVar = proc.mkLocalUnnamed(); // a
+            // Store the expression (it could be a string literal, for example) for the collection being iterated over
+            // Note that it's alaways a ref-counted type
+            let collectionVar = proc.mkLocalUnnamed(true); // a
             proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
 
-            //Declaration of iterating variable
+            // Declaration of iterating variable
             let intVarIter = proc.mkLocalUnnamed(); // i
             proc.emitExpr(intVarIter.storeByRef(ir.numlit(0)))
             proc.stackEmpty();
@@ -1840,20 +1841,24 @@ ${lbl}: .short 0xffff
             let l = getLabels(node);
 
             proc.emitLblDirect(l.fortop);
-            //i < a.length()
-            proc.emitJmpZ(l.brk, ir.rtcall("Number_::lt", [intVarIter.load(), ir.rtcall(length, [collectionVar.load()])]))
+            // i < a.length()
+            // we use loadCore() on collection variable so that it doesn't get incr()ed
+            // we could have used load() and rtcallMask to be more regular
+            proc.emitJmpZ(l.brk, ir.rtcall("Number_::lt", [intVarIter.load(), ir.rtcall(length, [collectionVar.loadCore()])]))
 
-            //c = a[i]
-            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.load(), intVarIter.load()])))
+            // c = a[i]
+            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), intVarIter.load()])))
 
             emit(node.statement);
             proc.emitLblDirect(l.cont);
 
-            //i = i + 1
+            // i = i + 1
             proc.emitExpr(intVarIter.storeByRef(ir.rtcall("thumb::adds", [intVarIter.load(), ir.numlit(1)])))
 
             proc.emitJmp(l.fortop);
             proc.emitLblDirect(l.brk);
+
+            proc.emitExpr(collectionVar.storeByRef(ir.numlit(0))) // clear it, so it gets GCed
         }
 
         function emitForInOrForOfStatement(node: ForInStatement) { }

@@ -59,6 +59,7 @@ testMemoryFreeHOF();
 postPreFix()
 eqOp()
 testEnums()
+testForOf()
 testMaps()
 
 // test some top-level code
@@ -722,6 +723,19 @@ function switchB(e: En) {
         default: return 17;
     }
     return r;
+}
+
+function testForOf() {
+    let arr = [1, 7, 8]
+    let sum = 0
+    for (let e of arr)
+        sum += (e - 1)
+    assert(sum == 13, "fo1")
+
+    // make sure we incr reference count of the array during the loop execution
+    for (let q of [3, 4, 12])
+        sum += (q - 2)
+    assert(sum == 26, "fo2")
 }
 
 

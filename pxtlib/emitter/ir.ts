@@ -422,8 +422,9 @@ namespace ts.pxt.ir {
             return l
         }
 
-        mkLocalUnnamed() {
+        mkLocalUnnamed(isRef = false) {
             let uc = new UnnamedCell(this.locals.length, this);
+            uc._isRef = isRef
             this.locals.push(uc)
             return uc
         }
