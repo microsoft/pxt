@@ -22,7 +22,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr'])
+task('test', ['default', 'testfmt', 'testerr', 'testlang'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -41,6 +41,10 @@ task('testfmt', ['built/pxt.js'], { async: true }, function () {
 
 task('testerr', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "test-errors", 'node ../built/pxt.js testdir')
+})
+
+task('testlang', ['built/pxt.js'], { async: true }, function () {
+    cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js run')
 })
 
 ju.catFiles('built/pxt.js', [

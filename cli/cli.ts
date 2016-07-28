@@ -2373,8 +2373,8 @@ function testDirAsync(dir: string) {
                         }
                         if (numErr) {
                             console.log("ERRORS", fn)
-                            errors.push(fn)
-                            fs.unlink(hexPath) // ignore errors
+                            errors.push(fn) 
+                            fs.unlink(hexPath, (err) => {}) // ignore errors
                         } else {
                             let hex = res.outfiles["binary.hex"]
                             if (hex) {

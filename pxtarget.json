@@ -3,12 +3,16 @@
     "name": "PXT",
     "title": "Programming Experience Toolkit",
     "bundleddirs": [],
-    "compile": {},
+    "compile": {
+        "hasHex": false,
+        "jsRefCounting": true,
+        "floatingPoint": false
+    },
     "appTheme": {
         "logoUrl": "https://www.pxt.io/",
         "logo": "./static/logo.svg",
         "docsLogo": "./static/logo.svg",
-        "portraitLogo":"./static/logo.svg",
+        "portraitLogo": "./static/logo.svg",
         "homeUrl": "https://www.pxt.io/",
         "cardLogo": "https://az851932.vo.msecnd.net/pub/hlngunfh",
         "appLogo": "https://az851932.vo.msecnd.net/pub/hbcabbim",
