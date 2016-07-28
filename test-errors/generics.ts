@@ -1,5 +1,5 @@
-class G<T> {} // TS9227
+class G<T> {} // Now supported
 
-function id<T>(x: T): T { // TS9201 - unsupported type, could be better message
+function id<T>(x: T): T { // Now supported
     return x
 }
