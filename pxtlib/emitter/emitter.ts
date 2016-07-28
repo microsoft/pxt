@@ -2164,6 +2164,7 @@ ${lbl}: .short 0xffff
         dependencies?: U.Map<string>;
         config?: any;
         configIsJustDefaults?: boolean;
+        ignoreConflicts?: boolean;
     }
 
     export interface ExtensionInfo {
