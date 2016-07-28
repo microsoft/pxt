@@ -334,11 +334,11 @@ namespace ts.pxt.ir {
         }
 
         uniqueName() {
-            return this.getName() + "___" + this.index
+            return this.getName() + "___U" + this.index
         }
 
         isByRefLocal() {
-            return this.isLocal()
+            return false
         }
 
         get isTemporary(): boolean {
