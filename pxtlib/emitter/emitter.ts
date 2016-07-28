@@ -1289,8 +1289,8 @@ ${lbl}: .short 0xffff
                 //console.log(l.toString(), l.info)
                 if (l.isByRefLocal()) {
                     // TODO add C++ support function to do this
-                    let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuff(), []))
-                    proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuff(), [tmp, l.loadCore()]))
+                    let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuffix(), []))
+                    proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuffix(), [tmp, l.loadCore()]))
                     proc.emitExpr(l.storeDirect(tmp))
                 }
             })
@@ -1789,6 +1789,78 @@ ${lbl}: .short 0xffff
             proc.emitLblDirect(l.brk);
         }
 
+        function emitForOfStatement(node: ForOfStatement) {
+            if (!(node.initializer && node.initializer.kind == SK.VariableDeclarationList)) {
+                unhandled(node, "only a single variable may be used to iterate a collection")
+                return
+            }
+
+            let declList = <VariableDeclarationList>node.initializer;
+            if (declList.declarations.length != 1) {
+                unhandled(node, "only a single variable may be used to iterate a collection")
+                return
+            }
+
+            //Typecheck the expression being iterated over
+            let t = typeOf(node.expression)
+
+            let indexer = ""
+            let length = ""
+            if (t.flags & TypeFlags.String) {
+                indexer = "String_::charAt"
+                length = "String_::length"
+            }
+            else if (isArrayType(t)) {
+                indexer = "Array_::getAt"
+                length = "Array_::length"
+            }
+            else {
+                unhandled(node.expression, "cannot use for...of with this expression")
+                return
+            }
+
+            //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it 
+            markUsed(declList.declarations[0])
+            let iterVar = emitVariableDeclaration(declList.declarations[0]) // c
+            //Start with null, TODO: Is this necessary
+            proc.emitExpr(iterVar.storeByRef(ir.numlit(0)))
+            proc.stackEmpty()
+
+            // Store the expression (it could be a string literal, for example) for the collection being iterated over
+            // Note that it's alaways a ref-counted type
+            let collectionVar = proc.mkLocalUnnamed(true); // a
+            proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
+
+            // Declaration of iterating variable
+            let intVarIter = proc.mkLocalUnnamed(); // i
+            proc.emitExpr(intVarIter.storeByRef(ir.numlit(0)))
+            proc.stackEmpty();
+
+            emitBrk(node);
+
+            let l = getLabels(node);
+
+            proc.emitLblDirect(l.fortop);
+            // i < a.length()
+            // we use loadCore() on collection variable so that it doesn't get incr()ed
+            // we could have used load() and rtcallMask to be more regular
+            proc.emitJmpZ(l.brk, ir.rtcall("Number_::lt", [intVarIter.load(), ir.rtcall(length, [collectionVar.loadCore()])]))
+
+            // c = a[i]
+            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), intVarIter.load()])))
+
+            emit(node.statement);
+            proc.emitLblDirect(l.cont);
+
+            // i = i + 1
+            proc.emitExpr(intVarIter.storeByRef(ir.rtcall("thumb::adds", [intVarIter.load(), ir.numlit(1)])))
+
+            proc.emitJmp(l.fortop);
+            proc.emitLblDirect(l.brk);
+
+            proc.emitExpr(collectionVar.storeByRef(ir.numlit(0))) // clear it, so it gets GCed
+        }
+
         function emitForInOrForOfStatement(node: ForInStatement) { }
 
         function emitBreakOrContinueStatement(node: BreakOrContinueStatement) {
@@ -1880,15 +1952,16 @@ ${lbl}: .short 0xffff
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
         }
-        function emitVariableDeclaration(node: VariableDeclaration) {
+        function emitVariableDeclaration(node: VariableDeclaration): ir.Cell {
             typeCheckVar(node)
-            if (!isUsed(node))
-                return;
+            if (!isUsed(node)) {
+                return null;
+            }
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 proc.emitClrIfRef(loc) // we might be in a loop
-                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuff(), [])))
+                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuffix(), [])))
             }
             // TODO make sure we don't emit code for top-level globals being initialized to zero
             if (node.initializer) {
@@ -1896,7 +1969,9 @@ ${lbl}: .short 0xffff
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
+            return loc;
         }
+
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
             //if (node.typeParameters)
@@ -1984,7 +2059,8 @@ ${lbl}: .short 0xffff
                 case SK.ModuleBlock:
                     return emitBlock(<Block>node);
                 case SK.VariableDeclaration:
-                    return emitVariableDeclaration(<VariableDeclaration>node);
+                    emitVariableDeclaration(<VariableDeclaration>node);
+                    return
                 case SK.IfStatement:
                     return emitIfStatement(<IfStatement>node);
                 case SK.WhileStatement:
@@ -1993,6 +2069,8 @@ ${lbl}: .short 0xffff
                     return emitDoStatement(<DoStatement>node);
                 case SK.ForStatement:
                     return emitForStatement(<ForStatement>node);
+                case SK.ForOfStatement:
+                    return emitForOfStatement(<ForOfStatement>node);
                 case SK.ContinueStatement:
                 case SK.BreakStatement:
                     return emitBreakOrContinueStatement(<BreakOrContinueStatement>node);
