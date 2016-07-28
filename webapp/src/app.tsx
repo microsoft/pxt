@@ -998,7 +998,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             htmlBody: `<div class="ui form">
   <div class="ui field">
     <label>${lf("Select an .hex file to import.")}</label>
-    <input type="file" style="width:100%"></input>
+    <input type="file" class="ui button blue fluid"></input>
   </div>
 </div>`,
         }).done(res => {
