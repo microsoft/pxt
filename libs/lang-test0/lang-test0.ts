@@ -59,6 +59,7 @@ testMemoryFreeHOF();
 postPreFix()
 eqOp()
 testEnums()
+testMaps()
 
 // test some top-level code
 let xsum = 0;
@@ -721,4 +722,69 @@ function switchB(e: En) {
         default: return 17;
     }
     return r;
+}
+
+
+class Node<T> {
+    v: T;
+    k: string;
+    next: Node<T>;
+}
+
+class Map<T> {
+    head: Node<T>;
+
+    getElt(k: string): T {
+        return mapGet(this, k)
+    }
+
+    setElt(k: string, v: T) {
+        mapSet(this, k, v)
+    }
+}
+
+function mapSet<T>(m: Map<T>, k: string, v: T) {
+    for (let p = m.head; p != null; p = p.next) {
+        if (p.k == k) {
+            p.v = v
+            return
+        }
+    }
+    let n = new Node<T>()
+    n.next = m.head
+    n.k = k
+    n.v = v
+    m.head = n
+}
+
+function mapGet<T>(m: Map<T>, k: string): T {
+    for (let p = m.head; p != null; p = p.next) {
+        if (p.k == k) {
+            return p.v
+        }
+    }
+    return null
+}
+
+function testMaps() {
+    let m = new Map<number>();
+    let q = new Map<string>();
+
+    mapSet(q, "one", "foo" + "bar")
+    control.assert(mapGet(q, "one").length == 6, "")
+
+    mapSet(q, "one", "foo2" + "bar")
+    control.assert(mapGet(q, "one").length == 7, "")
+    q.setElt("two", "x" + "y")
+    control.assert(q.getElt("two").length == 2, "")
+    q.setElt("two", "x" + "yz")
+    control.assert(q.getElt("two").length == 3, "thr")
+
+
+    mapSet(m, "one", 1)
+    control.assert(mapGet(m, "one") == 1, "1")
+
+    mapSet(m, "two", 2)
+    control.assert(m.getElt("two") == 2, "2")
+    //control.assert(mapGet(m, "zzzz") == null, "0")
 }
