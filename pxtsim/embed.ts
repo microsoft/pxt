@@ -47,6 +47,7 @@ namespace pxsim {
     export interface SimulatorSerialMessage extends SimulatorMessage {
         id: string;
         data: string;
+        sim?: boolean;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
         data: number[];

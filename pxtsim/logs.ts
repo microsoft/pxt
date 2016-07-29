@@ -63,6 +63,7 @@ namespace pxsim.logs {
         private shouldScroll = false;
         private entries: ILogEntryElement[] = [];
         private serialBuffers: pxsim.Map<string> = {};
+        private dropSim = false; // drop simulator events
         public element: HTMLDivElement;
         private labelElement: HTMLElement;
 
@@ -148,7 +149,10 @@ namespace pxsim.logs {
                 let port = chrome.runtime.connect("cihhkhnngbjlhahcfmhekmbnnjcjdbge", { name: "micro:bit" });
                 port.onMessage.addListener((msg: { type: string; id: string; data: string; }) => {
                     if (msg.type == "serial") {
-
+                        if (!this.dropSim) {
+                            this.clear();
+                            this.dropSim = true;
+                        }
                         let buf = (buffers[msg.id] || "") + msg.data;
                         let i = buf.lastIndexOf("\n");
                         if (i >= 0) {
@@ -168,8 +172,17 @@ namespace pxsim.logs {
                 let msg = ev.data;
                 switch (msg.type || '') {
                     case 'serial':
-                        let value = (msg.data as string) || '';
-                        let source = msg.id || '?';
+                        const smsg = msg as pxsim.SimulatorSerialMessage;
+                        if (this.dropSim && smsg.sim) {
+                            // drop simulated event since we are receiving real events
+                            return;
+                        } else if (!this.dropSim && !smsg.sim) {
+                            // first non-simulator serial event, drop all previous events
+                            this.clear();
+                            this.dropSim = true;
+                        }
+                        const value = smsg.data || '';
+                        const source = smsg.id || '?';
                         let theme = source.split('-')[0] || '';
                         if (!/^[a-z]+$/.test(theme)) theme = 'black';
                         let buffer = this.serialBuffers[source] || '';
@@ -277,6 +290,7 @@ namespace pxsim.logs {
                 this.labelElement.parentElement.removeChild(this.labelElement);
             this.element.innerHTML = '';
             this.serialBuffers = {};
+            this.dropSim = false;
         }
 
         private render() {

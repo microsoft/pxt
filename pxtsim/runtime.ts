@@ -89,7 +89,8 @@ namespace pxsim {
                         Runtime.postMessage(<SimulatorSerialMessage>{
                             type: 'serial',
                             data: this.serialOutBuffer,
-                            id: runtime.id
+                            id: runtime.id,
+                            sim: true
                         })
                         this.serialOutBuffer = ''
                         break;
