@@ -459,7 +459,7 @@ namespace pxt.cpp {
                         currSettings[settingName] = settingValue
                     } else if (currSettings[settingName] === settingValue) {
                         // OK
-                    } else if (!pkg.parent.config.yotta.ignoreConflicts) {
+                    } else if (!pkg.parent.config.yotta || !pkg.parent.config.yotta.ignoreConflicts) {
                         let err = new PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}",
                             settingName, pkg.id, prev.id))
                         err.pkg0 = prev

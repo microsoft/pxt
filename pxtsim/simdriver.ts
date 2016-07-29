@@ -69,7 +69,6 @@ namespace pxsim {
 
         private setState(state: SimulatorState) {
             if (this.state != state) {
-                console.debug(`simulator: ${this.state} -> ${state}`);
                 this.state = state;
                 if (this.options.onStateChanged)
                     this.options.onStateChanged(this.state);
