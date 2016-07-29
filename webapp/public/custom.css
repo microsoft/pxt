@@ -197,6 +197,10 @@ div.simframe > iframe {
     margin-top:0.5rem; 
 }
 
+.ui.card > .content > a.header {
+    word-break: break-all;
+}
+
 .ui.top.attached.label .link.icon {
     position: absolute;
     top: 9px;
