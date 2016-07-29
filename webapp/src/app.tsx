@@ -720,7 +720,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
                 let file = main.getMainFile()
-                if (e && main.header.editor != "blocksprj")
+                if (e)
                     file = main.lookupFile(e.name) || file
                 this.setState({
                     header: h,
