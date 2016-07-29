@@ -9,6 +9,7 @@ const STREAM_INTERVAL = 30000;
 
 export interface LogViewState {
     stream?: pxt.streams.JsonStream;
+    trends?: boolean;
 }
 
 export class LogView extends React.Component<{}, LogViewState> {
@@ -19,7 +20,8 @@ export class LogView extends React.Component<{}, LogViewState> {
         this.view = new pxsim.logs.LogViewElement({
             maxEntries: 80,
             maxAccValues: 500,
-            onClick: (es) => this.onClick(es)
+            onClick: (es) => this.onClick(es),
+            onTrendChartChanged: () => this.setState({ trends: this.view.hasTrends() })
         })
         this.state = {};
     }
@@ -38,7 +40,9 @@ export class LogView extends React.Component<{}, LogViewState> {
     }
 
     componentDidUpdate() {
-        this.view.setLabel(this.state.stream ? lf("streaming to cloud") : undefined);
+        if (this.state.stream) this.view.setLabel(lf("streaming to cloud"), "green cloudflash");
+        else if (this.state.trends) this.view.setLabel(lf("streaming off"), "gray");
+        else this.view.setLabel(undefined);
         if (this.state.stream)
             this.scheduleStreamData();
     }

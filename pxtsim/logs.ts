@@ -3,6 +3,7 @@ namespace pxsim.logs {
         maxEntries?: number;
         maxAccValues?: number;
         onClick?: (entries: ILogEntry[]) => void;
+        onTrendChartChanged?: () => void;
         onTrendChartClick?: (entry: ILogEntry) => void;
     }
 
@@ -76,7 +77,7 @@ namespace pxsim.logs {
                 this.element.onclick = () => this.props.onClick(this.rows());
         }
 
-        public setLabel(text: string) {
+        public setLabel(text: string, theme?: string) {
             if (this.labelElement && this.labelElement.innerText == text) return;
 
             if (this.labelElement) {
@@ -85,9 +86,13 @@ namespace pxsim.logs {
             }
             if (text) {
                 this.labelElement = document.createElement("a");
-                this.labelElement.className = "ui green top right attached mini label cloudflash";
+                this.labelElement.className = `ui ${theme} top right attached mini label`;
                 this.labelElement.appendChild(document.createTextNode(text));
             }
+        }
+
+        public hasTrends(): boolean {
+            return this.entries.some(entry => !!entry.chartElement);
         }
 
         // creates a deep clone of the log entries
@@ -260,6 +265,7 @@ namespace pxsim.logs {
                     valueElement: document.createTextNode('')
                 };
                 e.element.className = "ui log " + e.theme;
+                let raiseTrends = false;
                 if (e.accvalues) {
                     e.accvaluesElement = document.createElement('span');
                     e.accvaluesElement.className = "ui log " + e.theme + " gauge"
@@ -270,11 +276,16 @@ namespace pxsim.logs {
                     }
                     e.element.appendChild(e.accvaluesElement);
                     e.element.appendChild(e.chartElement.element);
+
+                    raiseTrends = true;
                 }
                 e.element.appendChild(e.valueElement);
                 ens.push(e);
                 this.element.appendChild(e.element);
                 this.scheduleRender(e);
+
+                if (raiseTrends && this.props.onTrendChartChanged)
+                    this.props.onTrendChartChanged();
             }
         }
 
@@ -291,6 +302,8 @@ namespace pxsim.logs {
             this.element.innerHTML = '';
             this.serialBuffers = {};
             this.dropSim = false;
+            if (this.props.onTrendChartChanged)
+                this.props.onTrendChartChanged();
         }
 
         private render() {
