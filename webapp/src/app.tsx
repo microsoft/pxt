@@ -747,13 +747,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 }
                             })
                             core.dialogAsync({
-                                disagreeLbl: lf("Do nothing"),
+                                hideCancel: true,
                                 buttons: [
                                     remove(confl.pkg0),
                                     remove(confl.pkg1),
                                 ],
                                 header: lf("Packages cannot be used together"),
-                                body: lf("Packages '{0}' and '{1}' cannot be used together, because they use a differnet value for setting '{2}'.",
+                                body: lf("Packages '{0}' and '{1}' cannot be used together, because they use incompatible settings ({2}).",
                                     confl.pkg0.id, confl.pkg0.id, confl.settingName)
                             })
                         }
