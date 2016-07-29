@@ -30,13 +30,16 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: () => void): void;
-    function fireUiEvent(node: any, eventName: string): void;
     function genUid(): string;
 
     let ALIGN_RIGHT: number;
 
     class FieldImage {
         constructor(url: string, width: number, height: number, def: string);
+    }
+    
+    class FieldNumber {
+        constructor(text: string, validator : (t: string) => string);
     }
 
     interface BlockDefinition {
@@ -178,7 +181,7 @@ declare namespace Blockly {
     namespace Xml {
         function domToText(dom: Element): string;
         function domToPrettyText(dom: Element): string;
-        function domToWorkspace(workspace: Workspace, dom: Element): void;
+        function domToWorkspace(dom: Element, workspace: Workspace): void;
         function textToDom(text: string): Element;
         function workspaceToDom(workspace: Workspace): Element;
     }
