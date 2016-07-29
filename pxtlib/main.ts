@@ -585,6 +585,11 @@ namespace pxt {
                         U.userError('Only packages with "public":true can be published')
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
+                    U.iterStringMap(cfg.dependencies, (k, v) => {
+                        if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
+                            cfg.dependencies[k] = "*"
+                        }
+                    })
                     files[configName] = JSON.stringify(cfg, null, 4)
                     for (let f of this.getFiles()) {
                         let str = this.readFile(f)
