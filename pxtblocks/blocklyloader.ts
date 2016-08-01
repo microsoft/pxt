@@ -498,6 +498,7 @@ namespace pxt.blocks {
         monkeyPatchBlock("controls_if", lf("a conditional statement"), "blocks/logic/if");
         monkeyPatchBlock("controls_repeat_ext", lf("a loop that repeats and increments an index"), "blocks/loops/repeat");
         monkeyPatchBlock("device_while", lf("a loop that repeats while the condition is true"), "blocks/loops/while");
+        monkeyPatchBlock("controls_simple_for", lf("a loop that repeats the number of times you say"), "blocks/loops/for");
 
         monkeyPatchBlock("variables_set", lf("assign the value of a variable"), "blocks/variables/assign");
         monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change-var");
@@ -556,7 +557,7 @@ namespace pxt.blocks {
                 // Assign 'this' to a variable for use in the tooltip closure below.
                 let thisBlock = this;
                 this.setTooltip(function () {
-                    return Blockly.Msg.CONTROLS_FOR_TOOLTIP.replace('%1',
+                    return "Have the variable '%1' take on the values from 0 to the end number, counting by 1, and do the specified blocks.".replace('%1',
                         thisBlock.getFieldValue('VAR'));
                 });
             },
