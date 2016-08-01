@@ -489,17 +489,22 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function extractNumber(b: B.Block): number {
+        const isFloatingPoint = pxt.appTarget.compile.floatingPoint;
         let v = b.getFieldValue("NUM");
-        if (!v.match(/^\d+$/)) {
-            Errors.report(v + " is not a valid numeric value", b);
-            return 0;
+        if (isFloatingPoint) {
+            let f = parseFloat(v);
+            if (f >> 0 != f) {
+                Errors.report(v + " is either too big or too small", b);
+                return 0;
+            }
+            return f;
         } else {
             let i = parseInt(v);
             if (i >> 0 != i) {
                 Errors.report(v + " is either too big or too small", b);
                 return 0;
             }
-            return parseInt(v);
+            return i;
         }
     }
 
