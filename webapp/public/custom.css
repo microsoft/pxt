@@ -251,7 +251,7 @@ div.simframe > iframe {
 .blocklyCheckbox {
     fill: #ff3030 !important;
     text-shadow: 0px 0px 6px #f00;
-    font-size: 24px;
+    font-size: 17pt !important;
 }
 
 .blocklyPreview {
