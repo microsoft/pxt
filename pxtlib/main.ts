@@ -159,6 +159,11 @@ namespace pxt {
         }[]
     }
 
+    export interface AppAnalytics {
+        userVoiceApiKey?: string;
+        userVoiceForumId?: number;
+    }
+
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
@@ -173,6 +178,7 @@ namespace pxt {
         serial?: AppSerial;
         appTheme: AppTheme;
         compileService?: TargetCompileService;
+        analytics?: AppAnalytics;
     }
 
     export interface TargetBundle extends AppTarget {

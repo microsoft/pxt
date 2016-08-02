@@ -1276,6 +1276,30 @@ function getsrc() {
     pxt.log(theEditor.editor.getCurrentSource())
 }
 
+function enableUserVoice(version: string) {
+    const analytics = (pxt.appTarget.analytics || {} as pxt.AppAnalytics);
+    if (!analytics.userVoiceApiKey) return;
+
+    let userVoice = (window as any).UserVoice = (window as any).UserVoice || []; (function () {
+        let uv = document.createElement('script'); uv.type = 'text/javascript'; uv.async = true; uv.src = `//widget.uservoice.com/${analytics.userVoiceApiKey}.js`;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(uv, s)
+    })();
+
+    userVoice.push(['set', {
+        accent_color: '#B4009E',
+        trigger_color: 'white',
+        trigger_background_color: '#B4009E',
+        forum_id: analytics.userVoiceForumId || undefined,
+        screenshot_enabled: true
+    }]);
+    userVoice.push(['addTrigger', { trigger_position: 'bottom-right' }]);
+    userVoice.push(['autoprompt', {}]);
+}
+
+function enableFeedback(version: string) {
+    enableUserVoice(version);
+}
+
 function enableAnalytics(version: string) {
     enableAppInsights(version);
     enableMixPanel(version);
@@ -1506,7 +1530,9 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd)
             else theEditor.newProject();
             return Promise.resolve();
-        }).done();
+        }).done(() => {
+            enableFeedback(ksVersion);
+        });
 
     document.addEventListener("visibilitychange", ev => {
         theEditor.updateVisibility();
