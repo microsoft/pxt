@@ -30,7 +30,7 @@ Let's say you want to create a package called `banana` for target `microbit`.
 * go to the cloned folder and run `pxt init`; follow the prompts
 * edit `pxt.json` and `README.md` with the right descriptions
 
-> **Make sure you keep the line `for PXT/microbit` in `README.md`. Otherwise
+> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise
 the package will not show up in search.**
 
 Now, searching for `banana` after selecting `More -> Add package...` should bring up your
@@ -64,7 +64,7 @@ Once your changes are ready, publish them to GitHub. Users will be able to searc
 
 ## Meta-data
 
-**Make sure you keep the line `for PXT/microbit` in `README.md`. Otherwise
+**Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise
 the package will not show up in search.**
 
 Read more an [defining-blocks](/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
