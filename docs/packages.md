@@ -28,12 +28,13 @@ Let's say you want to create a package called `banana` for target `microbit`.
 
 * clone this repository into `pxt-banana` folder **under the `projects`**
 * go to the cloned folder and run `pxt init`; follow the prompts
+* still in the cloned folder, run `pxt install` to install dependent packages
 * edit `pxt.json` and `README.md` with the right descriptions
 
 > **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise
 the package will not show up in search.**
 
-Now, searching for `banana` after selecting `More -> Add package...` should bring up your
+In the editor, searching for `banana` after selecting `More -> Add package...` should bring up your
 package.
 
 ### Step 3: Testing
