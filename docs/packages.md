@@ -1,26 +1,66 @@
-# Publishing packages
+# Packages
 
 PXT packages contain functions and types and can be used by PXT projects. 
 Packages can be searched by the users and added in their projects. 
 Packages may contain a combination of JavaScript and C++ and expose their APIs as blocks and/or JavaScript functions.
 
-## Getting started.
+## Using packages
+
+In the web editor, click on ``More`` then ``Add Package`` to search and add packages to the project.
+The Blocks and JavaScript definitions will be automatically loaded in the editor.
+
+## Building packages
+
+This is a section for advanced users who want to publish their own package.
+
+### Step 1: Local server setup
+
+In order to build and test your package locally, you need to setup PXT to run locally.
+Follow the instructions on [PXT README.md](https://github.com/microsoft/pxt) file.
+
+### Step 2: GitHub setup
 
 You will need to get a [GitHub](https://github.com) account and create a GitHub repository. 
 
-Let's say you want to create a package
-called `banana` for target `microbit`.
+Let's say you want to create a package called `banana` for target `microbit`.
 
 * create GitHub repository `pxt-banana`
-* clone this repository into `pxt-banana` folder
-* go to the folder and run `pxt target microbit`; you can alternatively place the folder under 
-  your target workspace where the target is already installed
+
+* clone this repository into `pxt-banana` folder **under the `projects`**
 * go to the cloned folder and run `pxt init`; follow the prompts
 * edit `pxt.json` and `README.md` with the right descriptions
-* checkin and push
+
+> **Make sure you keep the line `for PXT/microbit` in `README.md`. Otherwise
+the package will not show up in search.**
 
 Now, searching for `banana` after selecting `More -> Add package...` should bring up your
 package.
+
+### Step 3: Testing
+
+In order to test your package, you will manually add a reference to the package on disk.
+
+* Open the local editor and create a new project.
+* Open the project properties (``More`` -> ``Project Properties``)
+* Click on ``Edit Settings As Text``
+* Add an entry under ``dependencies`` that points to your package folder:
+
+```
+{
+    "name": "banana test",
+    "dependencies": {
+        ...
+        "banana": "file:../pxt-banana"
+    },
+    ...
+}
+```
+
+* Reload the editor and your package blocks will be loaded.
+
+### Step 4: publish
+
+Once your changes are ready, publish them to GitHub. Users will be able to search for your package.
 
 ## Meta-data
 
