@@ -129,7 +129,7 @@ export class Item extends data.Component<ItemProps, {}> {
 }
 
 export interface ButtonProps extends WithPopupProps {
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent) => void;
     disabled?: boolean;
 }
 

@@ -424,7 +424,8 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             return null;
 
         let expands = this.state.expands;
-        let removeFile = (f: pkg.File) => {
+        let removeFile = (e: React.MouseEvent, f: pkg.File) => {
+            e.stopPropagation();
             core.confirmAsync({
                 header: lf("Remove {0}", f.name),
                 body: lf("You are about to remove a file from your project. Are you sure?"),
@@ -439,7 +440,8 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                 }
             })
         }
-        let removePkg = (p: pkg.EditorPackage) => {
+        let removePkg = (e: React.MouseEvent, p: pkg.EditorPackage) => {
+            e.stopPropagation();
             core.confirmAsync({
                 header: lf("Remove {0} package", p.getPkgId()),
                 body: lf("You are about to remove a package from your project. Are you sure?"),
@@ -467,7 +469,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                         {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                         {meta.isReadonly ? <i className="lock icon"></i> : null}
                         {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-                        {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={() => removeFile(file) } /> : ''}
+                        {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={(e) => removeFile(e, file) } /> : ''}
                     </a>);
             })
         }
@@ -480,7 +482,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
         let filesWithHeader = (p: pkg.EditorPackage) =>
             p.isTopLevel() ? filesOf(p) : [
                 <div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p) }>
-                    {p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={() => removePkg(p) } /> : ''}
+                    {p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={(e) => removePkg(e, p) } /> : ''}
                     {p.getPkgId() }
                 </div>
             ].concat(expands[p.getPkgId()] ? filesOf(p) : [])
