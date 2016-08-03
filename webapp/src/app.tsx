@@ -147,9 +147,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     fetchUrlData(): Cloud.JsonScript[] {
         if (this.state.packages) return []
         
-        if (this.state.searchFor) {
-            let m = /^((https:\/\/)?codethemicrobit.com\/)?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$/i.exec(this.state.searchFor.trim());
-            let scriptid = m && (m[4] || m[5]) ? (m[4] ? m[4].toLowerCase() : m[5].toLowerCase()) : null
+        let embedUrl = pxt.appTarget.appTheme.embedUrl;
+        if (this.state.searchFor && embedUrl) {
+            let m = new RegExp(`^(${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(this.state.searchFor.trim());
+            let scriptid = m && (m[3] || m[4]) ? (m[3] ? m[3].toLowerCase() : m[4].toLowerCase()) : null
             let res = this.getData(`cloud:${scriptid}`)
             if (res) {
                 if (!this.prevUrlData) this.prevUrlData = [res]
@@ -217,9 +218,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const installScript = (scr: Cloud.JsonScript) => {
             if (this.modal) this.modal.hide();
             if (!this.state.packages) {
+                core.showLoading(lf("loading project..."));
                 workspace.installByIdAsync(scr.id)
                     .then(r => this.props.parent.loadHeaderAsync(r))
-                    .done()
+                    .done(() => core.hideLoading())
             }
         }
         const installGh = (scr: pxt.github.Repo) => {
