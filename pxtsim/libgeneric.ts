@@ -350,28 +350,32 @@ namespace pxsim {
 
         const INT_MIN = -0x80000000;
 
-        export function shift(buf: RefBuffer, offset: number) {
-            if (buf.data.length == 0 || offset == 0 || offset == INT_MIN) return;
-            if (offset <= -buf.data.length || offset >= buf.data.length) {
+        export function shift(buf: RefBuffer, offset: number, start: number, len: number) {
+            if (len < 0) len = buf.data.length - start;
+            if (start < 0 || start + len > buf.data.length || start + len < start
+                || len == 0 || offset == 0 || offset == INT_MIN) return;
+            if (len == 0 || offset == 0 || offset == INT_MIN) return;
+            if (offset <= -len || offset >= len) {
                 fill(buf, 0);
                 return;
             }
 
             if (offset < 0) {
                 offset = -offset;
-                memmove(buf.data, offset, buf.data, 0, buf.data.length - offset);
+                memmove(buf.data, offset, buf.data, 0, len - offset);
                 buf.data.fill(0, 0, offset)
             } else {
-                let len = buf.data.length - offset;
-                memmove(buf.data, 0, buf.data, offset, len);
-                buf.data.fill(0, len, len + offset)
+                len = len - offset;
+                memmove(buf.data, start, buf.data, start + offset, len);
+                buf.data.fill(0, start + len, start + len + offset)
             }
         }
 
-        export function rotate(buf: RefBuffer, offset: number) {
-            let len = buf.data.length;
+        export function rotate(buf: RefBuffer, offset: number, start: number, len: number) {
+            if (len < 0) len = buf.data.length - start;
 
-            if (len == 0 || offset == 0 || offset == INT_MIN) return;
+            if (start < 0 || start + len > buf.data.length || start + len < start
+                || len == 0 || offset == 0 || offset == INT_MIN) return;
 
             if (offset < 0)
                 offset += len << 8; // try to make it positive
@@ -386,9 +390,9 @@ namespace pxsim {
             let last = len
 
             while (first != next) {
-                let tmp = data[first]
-                data[first++] = data[next]
-                data[next++] = tmp
+                let tmp = data[first + start]
+                data[first++ + start] = data[next + start]
+                data[next++ + start] = tmp
                 if (next == last) {
                     next = n_first;
                 } else if (first == n_first) {
