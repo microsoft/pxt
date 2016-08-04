@@ -135,6 +135,27 @@ export class EditorPackage {
         return null;
     }
 
+    updateDepAsync(pkgid: string): Promise<void> {
+        let p = this.ksPkg.resolveDep(pkgid);
+        if (!p || p.verProtocol() != "github") return Promise.resolve();
+        let scr: pxt.github.Repo;
+        return pxt.github.repoAsync(p.verArgument())
+            .then(scr => {
+                if (!scr) return undefined;
+                return pxt.github.listRefsAsync(scr.full_name, "tags")
+                    .then((tags: string[]) => {
+                        tags.sort(pxt.semver.strcmp)
+                        tags.reverse()
+                        if (tags[0])
+                            return Promise.resolve(tags[0])
+                        else
+                            return pxt.github.tagToShaAsync(scr.full_name, scr.default_branch)
+                    })
+                    .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
+                        .then(cfg => this.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag)));
+            });
+    }
+
     removeDepAsync(pkgid: string) {
         return this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid])
             .then(() => this.saveFilesAsync());

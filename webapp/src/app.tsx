@@ -436,7 +436,8 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                 if (res) {
                     pkg.mainEditorPkg().removeFileAsync(f.name)
                         .then(() => pkg.mainEditorPkg().saveFilesAsync())
-                        .done(() => this.props.parent.reloadHeaderAsync());
+                        .then(() => this.props.parent.reloadHeaderAsync())
+                        .done();
                 }
             })
         }
@@ -451,9 +452,16 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             }).done(res => {
                 if (res) {
                     pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
-                        .done(() => this.props.parent.reloadHeaderAsync());
+                        .then(() => this.props.parent.reloadHeaderAsync())
+                        .done()
                 }
             })
+        }
+        let updatePkg = (e: React.MouseEvent, p: pkg.EditorPackage) => {
+            e.stopPropagation();
+            pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
+                .then(() => this.props.parent.reloadHeaderAsync())
+                .done()
         }
 
         let filesOf = (pkg: pkg.EditorPackage): JSX.Element[] => {
@@ -474,18 +482,23 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
             })
         }
 
+        let packageOf = (p: pkg.EditorPackage) => {
+            let del = p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built";
+            let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
+            return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p) }>
+                {upd ? <sui.Button class="primary label" icon="refresh" onClick={(e) => updatePkg(e, p) } /> : ''}
+                {del ? <sui.Button class="primary label" icon="trash" onClick={(e) => removePkg(e, p) } /> : ''}
+                {p.getPkgId() }
+            </div>
+            ].concat(expands[p.getPkgId()] ? filesOf(p) : [])
+        }
+
         let togglePkg = (p: pkg.EditorPackage) => {
             expands[p.getPkgId()] = !expands[p.getPkgId()];
             this.forceUpdate();
         }
 
-        let filesWithHeader = (p: pkg.EditorPackage) =>
-            p.isTopLevel() ? filesOf(p) : [
-                <div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p) }>
-                    {p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built" ? <sui.Button class="primary label" icon="trash" onClick={(e) => removePkg(e, p) } /> : ''}
-                    {p.getPkgId() }
-                </div>
-            ].concat(expands[p.getPkgId()] ? filesOf(p) : [])
+        let filesWithHeader = (p: pkg.EditorPackage) => p.isTopLevel() ? filesOf(p) : packageOf(p);
 
         return (
             <div className={"ui vertical menu filemenu landscape only"}>

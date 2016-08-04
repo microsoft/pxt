@@ -124,12 +124,19 @@ namespace pxt.github {
         items: Repo[];
     }
 
+    export function repoAsync(id: string): Promise<Repo> {
+        let rid = parseRepoId(id);
+        if (rid && rid.repo)
+            return U.httpGetJsonAsync("https://api.github.com/repos/" + rid.repo)
+                .then(r => r as Repo);
+        return undefined;
+    }
+
     export function searchAsync(query: string): Promise<SearchResults> {
         let id = parseRepoUrl(query);
         if (id && id.repo)
-            return U.httpGetJsonAsync("https://api.github.com/repos/" + id.repo)
-                .then(r => {
-                    let repo = r as Repo;
+            return repoAsync(id.repo)
+                .then(repo => {
                     repo.tag = id.tag;
                     return <SearchResults>{
                         total_count: 1,
