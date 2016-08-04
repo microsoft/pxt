@@ -362,8 +362,8 @@ namespace pxsim {
 
             if (offset < 0) {
                 offset = -offset;
-                memmove(buf.data, offset, buf.data, 0, len - offset);
-                buf.data.fill(0, 0, offset)
+                memmove(buf.data, start + offset, buf.data, start, len - offset);
+                buf.data.fill(0, start, start + offset)
             } else {
                 len = len - offset;
                 memmove(buf.data, start, buf.data, start + offset, len);
