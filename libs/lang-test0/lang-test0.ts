@@ -61,6 +61,7 @@ eqOp()
 testEnums()
 testForOf()
 testMaps()
+testBufferShiftRotate();
 
 // test some top-level code
 let xsum = 0;
@@ -836,4 +837,67 @@ function testMaps() {
     mapSet(m, "two", 2)
     control.assert(m.getElt("two") == 2, "2")
     //control.assert(mapGet(m, "zzzz") == null, "0")
+}
+
+function testBufferShiftRotate() {
+    /* TODO: create buffer?
+    let b = new Buffer(5);
+
+    function initb() {
+        for (let i = 0; i < b.length; ++i) {
+            b[i] = i;
+        }
+    }
+    function assertb(ex: number[]) {
+        control.assert(b.length == ex.length)
+        for (let i = 0; i < 5; i++) {
+            control.assert(b[i] == ex[i]);
+        }
+    }
+
+    initb()
+    assertb([0, 1, 2, 3, 4])
+
+    //shifting
+    initb()
+    b.shift(-1);
+    assertb([0, 0, 1, 2, 3])
+
+    initb()
+    b.shift(-1, 0, 3);
+    assertb([0, 0, 1, 3, 4])
+
+    initb()
+    b.shift(-1, 1, 3);
+    assertb([0, 0, 1, 2, 4])
+
+    initb()
+    b.shift(1)
+    assertb([1, 2, 3, 4, 0])
+
+    initb()
+    b.shift(1, 1, 3)
+    assertb([0, 2, 3, 0, 4])
+
+    //rotating
+    initb()
+    b.rotate(-1);
+    assertb([4, 0, 1, 2, 3])
+
+    initb()
+    b.rotate(-1, 0, 3);
+    assertb([2, 0, 1, 3, 4])
+
+    initb()
+    b.rotate(-1, 1, 3);
+    assertb([0, 3, 1, 2, 4])
+
+    initb()
+    b.rotate(2)
+    assertb([2, 3, 4, 0, 1])
+
+    initb()
+    b.rotate(1, 1, 3)
+    assertb([0, 2, 3, 1, 4])
+    */
 }
