@@ -732,13 +732,27 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setSideFile(fn: pkg.File) {
-        let currFile = this.state.currFile.getVirtualFileName()
-        let toFile = fn.getVirtualFileName();
-        if (currFile == "main.ts" && toFile == "main.blocks") {
+        let virtualFile = this.state.currFile.getVirtualFileName()
+        let fileName = fn.name;
+        if (!virtualFile && pkg.File.blocksFileNameRx.test(fileName)) {
+            // Going from a random file to the blocks file, lets first go to the Javascript and run the round trip
+            pxt.tickEvent("sideBar.showBlocksRt");
+            virtualFile = fn.getVirtualFileName() //main.ts
+            let file = pkg.mainEditorPkg().lookupFile("this/" + virtualFile)
+            if (file) {
+                this.setFile(file)
+                this.aceEditor.openBlocks()
+            }
+        } else if (virtualFile == fileName && pkg.File.blocksFileNameRx.test(fileName)) {
+            // Going from ts -> blocks
+            pxt.tickEvent("sidebar.showBlocks");
             this.aceEditor.openBlocks()
-        } else if (currFile == "main.blocks" && toFile == "main.ts") {
+        } else if (virtualFile == fileName && pkg.File.tsFileNameRx.test(fileName)) {
+            pxt.tickEvent("sidebar.showTypescript");
+            // Going from blocks -> ts
             this.blocksEditor.openTypeScript()
         } else {
+            // Other files
             this.setFile(fn)
         }
     }
