@@ -362,7 +362,7 @@ namespace ts.pxt.ir {
         parent: Procedure;
         debugInfo: ProcDebugInfo;
         bindings: TypeBinding[];
-        fillDebugInfo: (th: thumb.File) => void;
+        fillDebugInfo: (th: assembler.File) => void;
 
         body: Stmt[] = [];
         lblNo = 0;

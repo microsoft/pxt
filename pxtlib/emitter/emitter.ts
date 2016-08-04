@@ -192,7 +192,7 @@ namespace ts.pxt {
         attrs: CommentAttrs;
     }
 
-    let lf = thumb.lf;
+    let lf = assembler.lf;
     let checker: TypeChecker;
     let lastSecondaryError: string
     let lastSecondaryErrorCode = 0

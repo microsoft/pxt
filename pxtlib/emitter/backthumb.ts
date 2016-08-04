@@ -786,9 +786,10 @@ ${hex.hexPrelude()}
     }
 
     function mkThumbFile() {
-        thumb.test(); // just in case
+        let tp = new thumb.ThumbProcessor()
+        thumb.testThumb(tp); // just in case
 
-        let b = new thumb.File();
+        let b = new assembler.File(tp);
         b.lookupExternalLabel = hex.lookupFunctionAddr;
         b.normalizeExternalLabel = s => {
             let inf = hex.lookupFunc(s)
@@ -800,7 +801,7 @@ ${hex.hexPrelude()}
         return b
     }
 
-    function throwThumbErrors(b: thumb.File) {
+    function throwThumbErrors(b: assembler.File) {
         if (b.errors.length > 0) {
             let userErrors = ""
             b.errors.forEach(e => {
