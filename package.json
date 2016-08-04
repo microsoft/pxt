@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "description": "A kinder JavaScript experience",
   "keywords": [
     "TypeScript",
