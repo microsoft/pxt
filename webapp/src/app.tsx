@@ -501,7 +501,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                 let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
                 return (
                     <a key={file.getName() }
-                        onClick={() => parent.setFile(file) }
+                        onClick={() => parent.setSideFile(file) }
                         className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
                         {file.name} {meta.isSaved ? "" : "*"}
@@ -729,6 +729,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             errorCard: undefined
         })
+    }
+
+    setSideFile(fn: pkg.File) {
+        if (fn.name == "main.blocks") {
+            this.aceEditor.openBlocks()
+        } else if (fn.name == "main.ts") {
+            this.blocksEditor.openTypeScript()
+        } else {
+            this.setFile(fn)
+        }
     }
 
     setSideDoc(path: string) {
