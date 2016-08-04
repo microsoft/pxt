@@ -151,7 +151,7 @@ namespace pxt.github {
     }
 
     export function parseRepoUrl(url: string) {
-        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/]+)(#(\w+))?$/i.exec(url.trim());
+        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)(#(\w+))?$/i.exec(url.trim());
         return {
             repo: m ? m[3].toLowerCase() : null,
             tag: m ? m[5] : null

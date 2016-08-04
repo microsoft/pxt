@@ -111,6 +111,7 @@ interface ScriptSearchState {
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     prevData: Cloud.JsonPointer[] = [];
     prevGhData: pxt.github.Repo[] = [];
+    prevUrlData: Cloud.JsonScript[] = [];
     modal: sui.Modal;
 
     constructor(props: ISettingsProps) {
@@ -143,6 +144,22 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return this.prevData
     }
 
+    fetchUrlData(): Cloud.JsonScript[] {
+        if (this.state.packages) return []
+        
+        let embedUrl = pxt.appTarget.appTheme.embedUrl;
+        if (this.state.searchFor && embedUrl) {
+            let m = new RegExp(`^(${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(this.state.searchFor.trim());
+            let scriptid = m && (m[3] || m[4]) ? (m[3] ? m[3].toLowerCase() : m[4].toLowerCase()) : null
+            let res = this.getData(`cloud:${scriptid}`)
+            if (res) {
+                if (!this.prevUrlData) this.prevUrlData = [res]
+                else this.prevUrlData.push(res)
+            }
+        }
+        return this.prevUrlData;
+    }
+
     fetchBundled(): pxt.PackageConfig[] {
         if (!this.state.packages || !!this.state.searchFor) return [];
 
@@ -165,6 +182,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const data = this.fetchCloudData();
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
+        const urldata = this.fetchUrlData();
 
         const chgHeader = (hdr: Header) => {
             if (this.modal) this.modal.hide();
@@ -195,6 +213,15 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 workspace.installByIdAsync(scr.scriptid)
                     .then(r => this.props.parent.loadHeaderAsync(r))
                     .done()
+            }
+        }
+        const installScript = (scr: Cloud.JsonScript) => {
+            if (this.modal) this.modal.hide();
+            if (!this.state.packages) {
+                core.showLoading(lf("loading project..."));
+                workspace.installByIdAsync(scr.id)
+                    .then(r => this.props.parent.loadHeaderAsync(r))
+                    .done(() => core.hideLoading())
             }
         }
         const installGh = (scr: pxt.github.Repo) => {
@@ -283,6 +310,18 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             key={'gh' + scr.full_name}
                             onClick={() => installGh(scr) }
                             url={'github:' + scr.full_name}
+                            color="blue"
+                            />
+                    ) }
+                    {urldata.map(scr =>
+                        <codecard.CodeCardView
+                            name={scr.name}
+                            time={scr.time}
+                            header={'/' + scr.id}
+                            description={scr.description}
+                            key={'cloud' + scr.id}
+                            onClick={() => installScript(scr) }
+                            url={'/' + scr.id}
                             color="blue"
                             />
                     ) }
