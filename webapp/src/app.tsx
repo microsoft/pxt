@@ -732,9 +732,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setSideFile(fn: pkg.File) {
-        if (fn.name == "main.blocks") {
+        if (this.state.currFile.name == "main.ts" && fn.name == "main.blocks") {
             this.aceEditor.openBlocks()
-        } else if (fn.name == "main.ts") {
+        } else if (this.state.currFile.name == "main.blocks" && fn.name == "main.ts") {
             this.blocksEditor.openTypeScript()
         } else {
             this.setFile(fn)
