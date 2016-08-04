@@ -371,8 +371,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                     <p>{lf("Share this URL or copy the HTML to embed your project in web pages.") }</p>
                 </div>
                 { url ?
-                    <sui.Field label={lf("URL") }>
-                        <p>{lf("Share this link to access your project.") }</p>
+                    <sui.Field>
                         <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
                 { pxt.debugMode() && docembed ?
