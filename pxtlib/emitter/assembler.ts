@@ -1017,15 +1017,15 @@ namespace ts.pxt.assembler {
         public encoders: StringMap<Encoder>;
         public instructions: StringMap<Instruction[]>;
 
-         constructor() {
+        constructor() {
             this.encoders = {};
             this.instructions = {}
         }
 
-        public is32bit(name: string) { 
+        public is32bit(name: string) {
             return false;
         }
-        
+
         public emit32(v: number, actual: string): EmitResult {
             return null;
         }
@@ -1058,7 +1058,7 @@ namespace ts.pxt.assembler {
             return e;
         }
 
-        protected inseq = (seq : number[], v:number) => {
+        protected inseq = (seq: number[], v: number) => {
             let ind = seq.indexOf(v);
             if (ind < 0) return null
             return ind;
