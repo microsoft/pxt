@@ -1,20 +1,20 @@
-    /* Docs:
-     *
-     * Thumb 16-bit Instruction Set Quick Reference Card
-     *   http://infocenter.arm.com/help/topic/com.arm.doc.qrc0006e/QRC0006_UAL16.pdf 
-     *
-     * ARMv6-M Architecture Reference Manual (bit encoding of instructions)
-     *   http://ecee.colorado.edu/ecen3000/labs/lab3/files/DDI0419C_arm_architecture_v6m_reference_manual.pdf
-     *
-     * The ARM-THUMB Procedure Call Standard
-     *   http://www.cs.cornell.edu/courses/cs414/2001fa/armcallconvention.pdf
-     *
-     * Cortex-M0 Technical Reference Manual: 3.3. Instruction set summary (cycle counts)
-     *   http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0432c/CHDCICDF.html
-     */
+/* Docs:
+ *
+ * Thumb 16-bit Instruction Set Quick Reference Card
+ *   http://infocenter.arm.com/help/topic/com.arm.doc.qrc0006e/QRC0006_UAL16.pdf 
+ *
+ * ARMv6-M Architecture Reference Manual (bit encoding of instructions)
+ *   http://ecee.colorado.edu/ecen3000/labs/lab3/files/DDI0419C_arm_architecture_v6m_reference_manual.pdf
+ *
+ * The ARM-THUMB Procedure Call Standard
+ *   http://www.cs.cornell.edu/courses/cs414/2001fa/armcallconvention.pdf
+ *
+ * Cortex-M0 Technical Reference Manual: 3.3. Instruction set summary (cycle counts)
+ *   http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0432c/CHDCICDF.html
+ */
 
 namespace ts.pxt.thumb {
-  
+
     export class ThumbProcessor extends ts.pxt.assembler.EncodersInstructions {
 
         public is32bit(name: string) {
@@ -209,18 +209,18 @@ namespace ts.pxt.thumb {
     }
 
     export function testThumb(t: ThumbProcessor) {
-        assembler.expectError(t,"lsl r0, r0, #8");
-        assembler.expectError(t,"push {pc,lr}");
-        assembler.expectError(t,"push {r17}");
-        assembler.expectError(t,"mov r0, r1 foo");
-        assembler.expectError(t,"movs r14, #100");
-        assembler.expectError(t,"push {r0");
-        assembler.expectError(t,"push lr,r0}");
-        assembler.expectError(t,"pop {lr,r0}");
-        assembler.expectError(t,"b #+11");
-        assembler.expectError(t,"b #+102400");
-        assembler.expectError(t,"bne undefined_label");
-        assembler.expectError(t,".foobar");
+        assembler.expectError(t, "lsl r0, r0, #8");
+        assembler.expectError(t, "push {pc,lr}");
+        assembler.expectError(t, "push {r17}");
+        assembler.expectError(t, "mov r0, r1 foo");
+        assembler.expectError(t, "movs r14, #100");
+        assembler.expectError(t, "push {r0");
+        assembler.expectError(t, "push lr,r0}");
+        assembler.expectError(t, "pop {lr,r0}");
+        assembler.expectError(t, "b #+11");
+        assembler.expectError(t, "b #+102400");
+        assembler.expectError(t, "bne undefined_label");
+        assembler.expectError(t, ".foobar");
 
         assembler.expect(t,
             "0200      lsls    r0, r0, #8\n" +

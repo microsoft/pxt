@@ -464,20 +464,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
         let expands = this.state.expands;
         let removeFile = (e: React.MouseEvent, f: pkg.File) => {
             e.stopPropagation();
-            core.confirmAsync({
-                header: lf("Remove {0}", f.name),
-                body: lf("You are about to remove a file from your project. Are you sure?"),
-                agreeClass: "red",
-                agreeIcon: "trash",
-                agreeLbl: lf("Remove it"),
-            }).done(res => {
-                if (res) {
-                    pkg.mainEditorPkg().removeFileAsync(f.name)
-                        .then(() => pkg.mainEditorPkg().saveFilesAsync())
-                        .then(() => this.props.parent.reloadHeaderAsync())
-                        .done();
-                }
-            })
+            parent.removeFile(f);
         }
         let removePkg = (e: React.MouseEvent, p: pkg.EditorPackage) => {
             e.stopPropagation();
@@ -508,7 +495,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                 let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
                 return (
                     <a key={file.getName() }
-                        onClick={() => parent.setFile(file) }
+                        onClick={() => parent.setSideFile(file) }
                         className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
                         {file.name} {meta.isSaved ? "" : "*"}
@@ -743,6 +730,49 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
+    setSideFile(fn: pkg.File) {
+        let virtualFile = this.state.currFile.getVirtualFileName()
+        let fileName = fn.name;
+        if (!virtualFile && pkg.File.blocksFileNameRx.test(fileName)) {
+            // Going from a random file to the blocks file, lets first go to the Javascript and run the round trip
+            pxt.tickEvent("sideBar.showBlocksRt");
+            virtualFile = fn.getVirtualFileName() //main.ts
+            let file = pkg.mainEditorPkg().lookupFile("this/" + virtualFile)
+            if (file) {
+                this.setFile(file)
+                this.aceEditor.openBlocks()
+            }
+        } else if (virtualFile == fileName && pkg.File.blocksFileNameRx.test(fileName)) {
+            // Going from ts -> blocks
+            pxt.tickEvent("sidebar.showBlocks");
+            this.aceEditor.openBlocks()
+        } else if (virtualFile == fileName && pkg.File.tsFileNameRx.test(fileName)) {
+            pxt.tickEvent("sidebar.showTypescript");
+            // Going from blocks -> ts
+            this.blocksEditor.openTypeScript()
+        } else {
+            // Other files
+            this.setFile(fn)
+        }
+    }
+    
+    removeFile(fn: pkg.File) {
+        core.confirmAsync({
+                header: lf("Remove {0}", fn.name),
+                body: lf("You are about to remove a file from your project. Are you sure?"),
+                agreeClass: "red",
+                agreeIcon: "trash",
+                agreeLbl: lf("Remove it"),
+            }).done(res => {
+                if (res) {
+                    pkg.mainEditorPkg().removeFileAsync(fn.name)
+                        .then(() => pkg.mainEditorPkg().saveFilesAsync())
+                        .then(() => this.reloadHeaderAsync())
+                        .done();
+                }
+            })
+    }
+
     setSideDoc(path: string) {
         let sd = this.refs["sidedoc"] as SideDocs;
         if (!sd) return;
@@ -823,9 +853,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             curr.isDeleted = true
             return workspace.saveAsync(curr, {})
                 .then(() => {
-                    if (workspace.getHeaders().length > 0)
+                    if (workspace.getHeaders().length > 0) {
+                        this.scriptSearch.setState({ packages: false, searchFor: '' })
                         this.scriptSearch.modal.show();
-                    else this.newProject();
+                    } else {
+                        this.newProject();
+                    }
                 })
         })
     }
