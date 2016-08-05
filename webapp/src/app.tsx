@@ -464,20 +464,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
         let expands = this.state.expands;
         let removeFile = (e: React.MouseEvent, f: pkg.File) => {
             e.stopPropagation();
-            core.confirmAsync({
-                header: lf("Remove {0}", f.name),
-                body: lf("You are about to remove a file from your project. Are you sure?"),
-                agreeClass: "red",
-                agreeIcon: "trash",
-                agreeLbl: lf("Remove it"),
-            }).done(res => {
-                if (res) {
-                    pkg.mainEditorPkg().removeFileAsync(f.name)
-                        .then(() => pkg.mainEditorPkg().saveFilesAsync())
-                        .then(() => this.props.parent.reloadHeaderAsync())
-                        .done();
-                }
-            })
+            parent.removeFile(f);
         }
         let removePkg = (e: React.MouseEvent, p: pkg.EditorPackage) => {
             e.stopPropagation();
@@ -768,6 +755,23 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             this.setFile(fn)
         }
     }
+    
+    removeFile(fn: pkg.File) {
+        core.confirmAsync({
+                header: lf("Remove {0}", fn.name),
+                body: lf("You are about to remove a file from your project. Are you sure?"),
+                agreeClass: "red",
+                agreeIcon: "trash",
+                agreeLbl: lf("Remove it"),
+            }).done(res => {
+                if (res) {
+                    pkg.mainEditorPkg().removeFileAsync(fn.name)
+                        .then(() => pkg.mainEditorPkg().saveFilesAsync())
+                        .then(() => this.reloadHeaderAsync())
+                        .done();
+                }
+            })
+    }
 
     setSideDoc(path: string) {
         let sd = this.refs["sidedoc"] as SideDocs;
@@ -849,9 +853,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             curr.isDeleted = true
             return workspace.saveAsync(curr, {})
                 .then(() => {
-                    if (workspace.getHeaders().length > 0)
+                    if (workspace.getHeaders().length > 0) {
+                        this.scriptSearch.setState({ packages: false, searchFor: '' })
                         this.scriptSearch.modal.show();
-                    else this.newProject();
+                    } else {
+                        this.newProject();
+                    }
                 })
         })
     }

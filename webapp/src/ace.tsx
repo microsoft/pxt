@@ -575,6 +575,8 @@ export class Editor extends srceditor.Editor {
                 header: lf("Oops, there is a problem converting your code."),
                 body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
                 agreeLbl: lf("Stay in JavaScript"),
+                deleteLbl: lf("Remove Blocks file"),
+                size: "medium",
                 hideCancel: !bf,
                 disagreeLbl: lf("Discard and go to Blocks")
             }).then(b => {
@@ -582,6 +584,9 @@ export class Editor extends srceditor.Editor {
                 if (!b) {
                     pxt.tickEvent("typescript.discardText");
                     this.parent.setFile(bf);
+                } else if (b == 2) {
+                    pxt.tickEvent("typescript.removeBlocksFile");
+                    this.parent.removeFile(bf);
                 } else {
                     pxt.tickEvent("typescript.keepText");
                 }

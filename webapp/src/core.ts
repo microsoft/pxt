@@ -108,6 +108,7 @@ export interface DialogOptions {
     header: string;
     body?: string;
     htmlBody?: string;
+    size?: string; // defaults to "small"
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
 }
@@ -118,7 +119,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
         .join(' ');
     let html = `
-  <div class="ui small modal">
+  <div class="ui ${options.size || "small"} modal">
     <div class="header">
         ${Util.htmlEscape(options.header)}      
     </div>
@@ -189,18 +190,10 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     })
 }
 
-export function confirmAsync(options: ConfirmOptions): Promise<boolean> {
+export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (!options.buttons) options.buttons = []
 
-    let result = false
-
-    if (options.deleteLbl) {
-        options.buttons.push({
-            label: options.deleteLbl,
-            class: "delete red",
-            icon: "delete"
-        })
-    }
+    let result = 0
 
     if (!options.hideAgree) {
         options.buttons.push({
@@ -208,7 +201,18 @@ export function confirmAsync(options: ConfirmOptions): Promise<boolean> {
             class: options.agreeClass,
             icon: options.agreeIcon,
             onclick: () => {
-                result = true
+                result = 1
+            }
+        })
+    }
+
+    if (options.deleteLbl) {
+        options.buttons.push({
+            label: options.deleteLbl,
+            class: "delete red",
+            icon: "trash",
+            onclick: () => {
+                result = 2
             }
         })
     }
