@@ -508,7 +508,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                 let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
                 return (
                     <a key={file.getName() }
-                        onClick={() => parent.setFile(file) }
+                        onClick={() => parent.setSideFile(file) }
                         className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                         >
                         {file.name} {meta.isSaved ? "" : "*"}
@@ -741,6 +741,32 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             errorCard: undefined
         })
+    }
+
+    setSideFile(fn: pkg.File) {
+        let virtualFile = this.state.currFile.getVirtualFileName()
+        let fileName = fn.name;
+        if (!virtualFile && pkg.File.blocksFileNameRx.test(fileName)) {
+            // Going from a random file to the blocks file, lets first go to the Javascript and run the round trip
+            pxt.tickEvent("sideBar.showBlocksRt");
+            virtualFile = fn.getVirtualFileName() //main.ts
+            let file = pkg.mainEditorPkg().lookupFile("this/" + virtualFile)
+            if (file) {
+                this.setFile(file)
+                this.aceEditor.openBlocks()
+            }
+        } else if (virtualFile == fileName && pkg.File.blocksFileNameRx.test(fileName)) {
+            // Going from ts -> blocks
+            pxt.tickEvent("sidebar.showBlocks");
+            this.aceEditor.openBlocks()
+        } else if (virtualFile == fileName && pkg.File.tsFileNameRx.test(fileName)) {
+            pxt.tickEvent("sidebar.showTypescript");
+            // Going from blocks -> ts
+            this.blocksEditor.openTypeScript()
+        } else {
+            // Other files
+            this.setFile(fn)
+        }
     }
 
     setSideDoc(path: string) {
