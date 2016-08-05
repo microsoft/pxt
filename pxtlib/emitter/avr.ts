@@ -198,36 +198,17 @@ namespace ts.pxt.avr {
 
     export function test() {
         let avr = new AVRProcessor();
-        assembler.expectError(avr,"lsl r0, r0, #8");
-        assembler.expectError(avr,"push {pc,lr}");
-        assembler.expectError(avr,"push {r17}");
-        assembler.expectError(avr,"mov r0, r1 foo");
-        assembler.expectError(avr,"movs r14, #100");
-        assembler.expectError(avr,"push {r0");
-        assembler.expectError(avr,"push lr,r0}");
-        assembler.expectError(avr,"pop {lr,r0}");
-        assembler.expectError(avr,"b #+11");
-        assembler.expectError(avr,"b #+102400");
-        assembler.expectError(avr,"bne undefined_label");
-        assembler.expectError(avr,".foobar");
-    }
 
-/*
-    export function testARM() {
-        expect(
-            "0200      lsls    r0, r0, #8\n" +
-            "b500      push    {lr}\n" +
-            "2064      movs    r0, #100        ; 0x64\n" +
-            "b401      push    {r0}\n" +
-            "bc08      pop     {r3}\n" +
-            "b501      push    {r0, lr}\n" +
-            "bd20      pop {r5, pc}\n" +
-            "bc01      pop {r0}\n" +
-            "4770      bx      lr\n" +
+        assembler.expect(avr,
+            "0c00      lsl     r0\n" +
+            "920f      push    r0\n" +
+            "e604      ldi     r16, #100        ; 0x64\n" +
+            "903f      pop     r3\n" +
             "0000      .balign 4\n" +
             "e6c0      .word   -72000\n" +
             "fffe\n")
 
+/*
         expect(
             "4291      cmp     r1, r2\n" +
             "d100      bne     l6\n" +
@@ -289,7 +270,6 @@ namespace ts.pxt.avr {
             "bc08      pop {r3}\n" +
             "bd20      pop {r5, pc}\n" +
             "9003      str r0, [sp, #4*3]\n")
+            */
     }
-*/
-
 }
