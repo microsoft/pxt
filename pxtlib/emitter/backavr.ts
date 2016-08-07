@@ -452,7 +452,7 @@ ${bkptLabel + "_after"}:
     }
 
     // TODO should be internal
-    export namespace hex {
+    export namespace hexAVR {
         let funcInfo: StringMap<FuncInfo>;
         let hex: string[];
         let jmpStartAddr: number;
@@ -701,7 +701,7 @@ ${bkptLabel + "_after"}:
 
     }
 
-    export function asmline(s: string) {
+    export function asmlineAVR(s: string) {
         if (!/(^[\s;])|(:$)/.test(s))
             s = "    " + s
         return s + "\n"
@@ -773,10 +773,10 @@ ${hex.hexPrelude()}
         return src.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + sha.slice(0, 16).toUpperCase() + " ; program hash\n")
     }
 
-    export function thumbInlineAssemble(src: string) {
-        let b = mkThumbFile()
+    export function AVRInlineAssemble(src: string) {
+        let b = mkAVRFile()
         b.emit(src)
-        throwThumbErrors(b)
+        throwAVRErrors(b)
 
         let res: number[] = []
         for (let i = 0; i < b.buf.length; i += 2) {
@@ -785,7 +785,7 @@ ${hex.hexPrelude()}
         return res
     }
 
-    function mkThumbFile() {
+    function mkAVRFile() {
         let tp = new thumb.ThumbProcessor()
         thumb.testThumb(tp); // just in case
 
@@ -801,7 +801,7 @@ ${hex.hexPrelude()}
         return b
     }
 
-    function throwThumbErrors(b: assembler.File) {
+    function throwAVRErrors(b: assembler.File) {
         if (b.errors.length > 0) {
             let userErrors = ""
             b.errors.forEach(e => {
@@ -828,12 +828,12 @@ ${hex.hexPrelude()}
 
     let peepDbg = false
     function assemble(bin: Binary, src: string) {
-        let b = mkThumbFile()
+        let b = mkAVRFile()
         b.emit(src);
 
         src = b.getSource(!peepDbg);
 
-        throwThumbErrors(b)
+        throwAVRErrors(b)
 
         return {
             src: src,
@@ -877,7 +877,7 @@ _stored_program: .string "`
         return str
     }
 
-    export function thumbEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
+    export function AVREmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let src = serialize(bin)
         src = patchSrcHash(src)
         if (opts.embedBlob)
@@ -904,5 +904,5 @@ _stored_program: .string "`
         cres.procDebugInfo = bin.procs.map(p => p.debugInfo)
     }
 
-    export let validateShim = hex.validateShim;
+    export let validateAVRshim = hexAVR.validateShim;
 }
