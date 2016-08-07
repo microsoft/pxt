@@ -17,32 +17,6 @@ namespace ts.pxt.thumb {
 
     export class ThumbProcessor extends ts.pxt.assembler.EncodersInstructions {
 
-        public is32bit(name: string) {
-            return name == "bl" || name == "bb";
-        }
-
-        public emit32(v: number, actual: string): ts.pxt.assembler.EmitResult {
-            if (v % 2) return ts.pxt.assembler.emitErr("uneven BL?", actual);
-            let off = v / 2
-            assert(off != null)
-            if ((off | 0) != off ||
-                // we can actually support more but the board has 256k (128k instructions)
-                !(-128 * 1024 <= off && off <= 128 * 1024))
-                return ts.pxt.assembler.emitErr("jump out of range", actual);
-
-            // note that off is already in instructions, not bytes
-            let imm11 = off & 0x7ff
-            let imm10 = (off >> 11) & 0x3ff
-
-            return {
-                opcode: (off & 0xf0000000) ? (0xf400 | imm10) : (0xf000 | imm10),
-                opcode2: (0xf800 | imm11),
-                stack: 0,
-                numArgs: [v],
-                labelName: actual
-            }
-        }
-
         constructor() {
             super();
 
@@ -201,7 +175,96 @@ namespace ts.pxt.thumb {
             // this is normally emitted as 'b' but will be emitted as 'bl' if needed
             this.addInst("bb    $lb", 0xe000, 0xf800, "B");
         }
+
+
+        public is32bit(name: string) {
+            return name == "bl" || name == "bb";
+        }
+
+        public emit32(v: number, actual: string): ts.pxt.assembler.EmitResult {
+            if (v % 2) return ts.pxt.assembler.emitErr("uneven BL?", actual);
+            let off = v / 2
+            assert(off != null)
+            if ((off | 0) != off ||
+                // we can actually support more but the board has 256k (128k instructions)
+                !(-128 * 1024 <= off && off <= 128 * 1024))
+                return ts.pxt.assembler.emitErr("jump out of range", actual);
+
+            // note that off is already in instructions, not bytes
+            let imm11 = off & 0x7ff
+            let imm10 = (off >> 11) & 0x3ff
+
+            return {
+                opcode: (off & 0xf0000000) ? (0xf400 | imm10) : (0xf000 | imm10),
+                opcode2: (0xf800 | imm11),
+                stack: 0,
+                numArgs: [v],
+                labelName: actual
+            }
+        }
+
+        public peephole(ln: ts.pxt.assembler.Line, lnNext: ts.pxt.assembler.Line, lnNext2: ts.pxt.assembler.Line) {
+
+            let lb11 = this.encoders["$lb11"]
+            let lb = this.encoders["$lb"]
+
+            // TODO: this is an ARM-specific function over
+            // ln, lnNext, lnNext2
+            let lnop = ln.getOp()
+            let isSkipBranch = false
+            if (lnop == "bne" || lnop == "beq") {
+                if (lnNext.getOp() == "b" && ln.numArgs[0] == 0)
+                    isSkipBranch = true;
+                if (lnNext.getOp() == "bb" && ln.numArgs[0] == 2)
+                    isSkipBranch = true;
+            }
+
+            if (lnop == "bb" && lb11.encode(ln.numArgs[0]) != null) {
+                // RULE: bb .somewhere -> b .somewhere (if fits)
+                ln.update("b " + ln.words[1])
+            } else if (lnop == "b" && ln.numArgs[0] == -2) {
+                // RULE: b .somewhere; .somewhere: -> .somewhere:
+                ln.update("")
+            } else if (lnop == "bne" && isSkipBranch && lb.encode(lnNext.numArgs[0]) != null) {
+                // RULE: bne .next; b .somewhere; .next: -> beq .somewhere
+                ln.update("beq " + lnNext.words[1])
+                lnNext.update("")
+            } else if (lnop == "beq" && isSkipBranch && lb.encode(lnNext.numArgs[0]) != null) {
+                // RULE: beq .next; b .somewhere; .next: -> bne .somewhere
+                ln.update("bne " + lnNext.words[1])
+                lnNext.update("")
+            } else if (lnop == "push" && lnNext.getOp() == "pop" && ln.numArgs[0] == lnNext.numArgs[0]) {
+                // RULE: push {X}; pop {X} -> nothing
+                assert(ln.numArgs[0] > 0)
+                ln.update("")
+                lnNext.update("")
+            } else if (lnop == "push" && lnNext.getOp() == "pop" &&
+                ln.words.length == 4 &&
+                lnNext.words.length == 4) {
+                // RULE: push {rX}; pop {rY} -> mov rY, rX
+                assert(ln.words[1] == "{")
+                ln.update("mov " + lnNext.words[2] + ", " + ln.words[2])
+                lnNext.update("")
+            } else if (lnNext2 && ln.getOpExt() == "movs $r5, $i0" && lnNext.getOpExt() == "mov $r0, $r1" &&
+                ln.numArgs[0] == lnNext.numArgs[1] &&
+                lnNext2.clobbersReg(ln.numArgs[0])) {
+                // RULE: movs rX, #V; mov rY, rX; clobber rX -> movs rY, #V
+                ln.update("movs r" + lnNext.numArgs[0] + ", #" + ln.numArgs[1])
+                lnNext.update("")
+            } else if (lnop == "pop" && ln.singleReg() >= 0 && lnNext.getOp() == "push" &&
+                ln.singleReg() == lnNext.singleReg()) {
+                // RULE: pop {rX}; push {rX} -> ldr rX, [sp, #0]
+                ln.update("ldr r" + ln.singleReg() + ", [sp, #0]")
+                lnNext.update("")
+            } else if (lnNext2 && lnop == "push" && ln.singleReg() >= 0 && lnNext.preservesReg(ln.singleReg()) &&
+                lnNext2.getOp() == "pop" && ln.singleReg() == lnNext2.singleReg()) {
+                // RULE: push {rX}; movs rY, #V; pop {rX} -> movs rY, #V (when X != Y)
+                ln.update("")
+                lnNext2.update("")
+            }
+        }
     }
+
 
     export function test() {
         let t = new ThumbProcessor();

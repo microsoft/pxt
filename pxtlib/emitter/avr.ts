@@ -196,7 +196,7 @@ namespace ts.pxt.avr {
 
     }
 
-    export function test() {
+    export function testAVR() {
         let avr = new AVRProcessor();
 
         assembler.expect(avr,
