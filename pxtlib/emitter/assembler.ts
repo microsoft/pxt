@@ -79,12 +79,14 @@ namespace ts.pxt.assembler {
                         if (v == null) {
                             return emitErr("expecting number", actual)
                         } else {
-                            // ARM-specific
+                            // ARM-specific - we are modifying the stack
+                            // if the instruction is changing the SP register
                             if (this.opcode == 0xb000) // add sp, #imm
                                 stack = -(v / 4);
                             else if (this.opcode == 0xb080) // sub sp, #imm
                                 stack = (v / 4);
                         }
+                    // ARM-specific??? We don't use RegList for AVR (yet)
                     } else if (enc.isRegList) {
                         if (actual != "{") return emitErr("expecting {", actual);
                         v = 0;
