@@ -208,8 +208,6 @@ namespace ts.pxt.thumb {
             let lb11 = this.encoders["$lb11"]
             let lb = this.encoders["$lb"]
 
-            // TODO: this is an ARM-specific function over
-            // ln, lnNext, lnNext2
             let lnop = ln.getOp()
             let isSkipBranch = false
             if (lnop == "bne" || lnop == "beq") {
@@ -247,24 +245,72 @@ namespace ts.pxt.thumb {
                 lnNext.update("")
             } else if (lnNext2 && ln.getOpExt() == "movs $r5, $i0" && lnNext.getOpExt() == "mov $r0, $r1" &&
                 ln.numArgs[0] == lnNext.numArgs[1] &&
-                lnNext2.clobbersReg(ln.numArgs[0])) {
+                clobbersReg(lnNext2,ln.numArgs[0])) {
                 // RULE: movs rX, #V; mov rY, rX; clobber rX -> movs rY, #V
                 ln.update("movs r" + lnNext.numArgs[0] + ", #" + ln.numArgs[1])
                 lnNext.update("")
-            } else if (lnop == "pop" && ln.singleReg() >= 0 && lnNext.getOp() == "push" &&
-                ln.singleReg() == lnNext.singleReg()) {
+            } else if (lnop == "pop" && singleReg(ln) >= 0 && lnNext.getOp() == "push" &&
+                singleReg(ln) == singleReg(lnNext)) {
                 // RULE: pop {rX}; push {rX} -> ldr rX, [sp, #0]
-                ln.update("ldr r" + ln.singleReg() + ", [sp, #0]")
+                ln.update("ldr r" + singleReg(ln) + ", [sp, #0]")
                 lnNext.update("")
-            } else if (lnNext2 && lnop == "push" && ln.singleReg() >= 0 && lnNext.preservesReg(ln.singleReg()) &&
-                lnNext2.getOp() == "pop" && ln.singleReg() == lnNext2.singleReg()) {
+            } else if (lnNext2 && lnop == "push" && singleReg(ln) >= 0 && preservesReg(lnNext, singleReg(ln)) &&
+                lnNext2.getOp() == "pop" && singleReg(ln) == singleReg(lnNext2)) {
                 // RULE: push {rX}; movs rY, #V; pop {rX} -> movs rY, #V (when X != Y)
                 ln.update("")
                 lnNext2.update("")
             }
         }
+
+        public registerNo(actual: string) {
+            if (!actual) return null;
+            actual = actual.toLowerCase()
+            switch (actual) {
+                case "pc": actual = "r15"; break;
+                case "lr": actual = "r14"; break;
+                case "sp": actual = "r13"; break;
+            }
+            let m = /^r(\d+)$/.exec(actual)
+            if (m) {
+                let r = parseInt(m[1], 10)
+                if (0 <= r && r < 16)
+                    return r;
+            }
+            return null;
+        }
     }
 
+
+    // if true then instruction doesn't write r<n> and doesn't read/write memory
+    function preservesReg(ln: pxt.assembler.Line, n: number) {
+        if (this.getOpExt() == "movs $r5, $i0" && this.numArgs[0] != n)
+            return true;
+        return false;
+    }
+
+    function clobbersReg(ln: pxt.assembler.Line, n: number) {
+        // TODO add some more
+        if (this.getOp() == "pop" && this.numArgs[0] & (1 << n))
+            return true;
+        return false;
+    }
+
+    function singleReg(ln: pxt.assembler.Line) {
+        assert(ln.getOp() == "push" || ln.getOp() == "pop")
+        let k = 0;
+        let ret = -1;
+        let v = ln.numArgs[0]
+        while (v > 0) {
+            if (v & 1) {
+                if (ret == -1) ret = k;
+                else ret = -2;
+            }
+            v >>= 1;
+            k++;
+        }
+        if (ret >= 0) return ret;
+        else return -1;
+    }
 
     export function test() {
         let t = new ThumbProcessor();

@@ -71,7 +71,7 @@ namespace ts.pxt.assembler {
                     let enc = this.ei.encoders[formal]
                     let v: number = null
                     if (enc.isRegister) {
-                        v = registerNo(actual);
+                        v = this.ei.registerNo(actual);
                         if (v == null) return emitErr("expecting register name", actual)
                     } else if (enc.isImmediate) {
                         actual = actual.replace(/^#/, "")
@@ -92,7 +92,7 @@ namespace ts.pxt.assembler {
                             actual = tokens[j++];
                             if (!actual)
                                 return emitErr("expecting }", tokens[j - 2])
-                            let no = registerNo(actual);
+                            let no = this.ei.registerNo(actual);
                             if (no == null) return emitErr("expecting register name", actual)
                             if (v & (1 << no)) return emitErr("duplicate register name", actual)
                             v |= (1 << no);
@@ -177,39 +177,6 @@ namespace ts.pxt.assembler {
 
         public getOp() {
             return this.instruction ? this.instruction.name : "";
-        }
-
-        // ARM-specific?
-        public singleReg() {
-            assert(this.getOp() == "push" || this.getOp() == "pop")
-            let k = 0;
-            let ret = -1;
-            let v = this.numArgs[0]
-            while (v > 0) {
-                if (v & 1) {
-                    if (ret == -1) ret = k;
-                    else ret = -2;
-                }
-                v >>= 1;
-                k++;
-            }
-            if (ret >= 0) return ret;
-            else return -1;
-        }
-
-        // ARM-specific
-        // if true then instruction doesn't write r<n> and doesn't read/write memory
-        public preservesReg(n: number) {
-            if (this.getOpExt() == "movs $r5, $i0" && this.numArgs[0] != n)
-                return true;
-            return false;
-        }
-
-        public clobbersReg(n: number) {
-            // TODO add some more
-            if (this.getOp() == "pop" && this.numArgs[0] & (1 << n))
-                return true;
-            return false;
         }
 
         public update(s: string) {
@@ -815,10 +782,12 @@ namespace ts.pxt.assembler {
             })
         }
 
+
         public getSource(clean: boolean) {
             let lenTotal = this.buf ? this.buf.length * 2 : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
             let res =
+                // ARM-specific
                 lf("; thumb size: {0} bytes; src size {1} bytes\n", lenThumb, lenTotal - lenThumb) +
                 lf("; assembly: {0} lines\n", this.lines.length) +
                 this.stats + "\n\n"
@@ -846,10 +815,6 @@ namespace ts.pxt.assembler {
 
         private peepHole() {
             // TODO add: str X; ldr X -> str X ?
-
-            let lb11 = this.ei.encoders["$lb11"]
-            let lb = this.ei.encoders["$lb"]
-
             let mylines = this.lines.filter(l => l.type != "empty")
 
             for (let i = 0; i < mylines.length; ++i) {
@@ -924,25 +889,6 @@ namespace ts.pxt.assembler {
         }
     }
 
-    function registerNo(actual: string) {
-        if (!actual) return null;
-        actual = actual.toLowerCase()
-        switch (actual) {
-            // ARM-specific
-            case "pc": actual = "r15"; break;
-            case "lr": actual = "r14"; break;
-            case "sp": actual = "r13"; break;
-        }
-        let m = /^r(\d+)$/.exec(actual)
-        if (m) {
-            let r = parseInt(m[1], 10)
-            // ARM-specific (16 registers)
-            if (0 <= r && r < 16)
-                return r;
-        }
-        return null;
-    }
-
     // describes the encodings of various parts of an instruction
     // (registers, immediates, register lists, labels)
     export interface Encoder {
@@ -980,6 +926,10 @@ namespace ts.pxt.assembler {
 
         public peephole(ln: Line, lnNext: Line, lnNext2: Line) {
 
+        }
+
+        public registerNo(actual: string): number {
+            return null;
         }
 
         protected addEnc = (n: string, p: string, e: (v: number) => number) => {
