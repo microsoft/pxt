@@ -418,17 +418,22 @@ namespace pxt {
          * Returns localized strings qName -> translation
          */
         packageLocalizationStrings(lang: string): U.Map<string> {
+            let r: U.Map<string> = {};
             let files = this.config.files;
-            let fn = `_locales/${lang.toLowerCase()}/${this.id}-strings.json`;
-            if (files.indexOf(fn) > -1)
-                return JSON.parse(this.readFile(fn)) as U.Map<string>;
 
-            lang = lang.substring(0, 2);
-            fn = `_locales/${lang.toLowerCase()}/${this.id}-strings.json`;
-            if (files.indexOf(fn) > -1)
-                return JSON.parse(this.readFile(fn)) as U.Map<string>;
+            [this.id + "-jsdoc", this.id].map(name => {
+                let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
+                if (files.indexOf(fn) > -1)
+                    return JSON.parse(this.readFile(fn)) as U.Map<string>;
+                if (lang.length > 2) {
+                    fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
+                    if (files.indexOf(fn) > -1)
+                        return JSON.parse(this.readFile(fn)) as U.Map<string>;
+                }
+                return undefined;
+            }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
 
-            return undefined;
+            return r;
         }
     }
 
