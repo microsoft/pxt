@@ -104,6 +104,8 @@ export interface ConfirmOptions extends DialogOptions {
 export interface DialogOptions {
     hideCancel?: boolean;
     disagreeLbl?: string;
+    disagreeClass?: string;
+    disagreeIcon?: string;
     logos?: string[];
     header: string;
     body?: string;
@@ -133,8 +135,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.hideCancel) {
         options.buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            class: "cancel",
-            icon: "cancel"
+            class: options.disagreeClass || "cancel",
+            icon: options.disagreeIcon || "cancel"
         })
     }
 
