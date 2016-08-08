@@ -72,13 +72,19 @@ export function setState(editor: string) {
     }
 }
 
+export function makeDirty() { // running outdated code
+    pxsim.U.addClass(driver.container, "sepia");
+}
+
 export function run(debug: boolean, res: ts.pxt.CompileResult) {
+    pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[ts.pxt.BINARY_JS]
     lastCompileResult = res
     driver.run(js, debug)
 }
 
 export function stop(unload?: boolean) {
+    pxsim.U.removeClass(driver.container, "sepia");
     driver.stop(unload);
     $debugger.empty();
 }

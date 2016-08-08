@@ -463,6 +463,11 @@ svg.ui.trend.black polyline {
     filter: grayscale(1);
 }
 
+.sepia {
+    -webkit-filter: sepia(1);
+    filter: sepia(1);
+}
+
 .blur {    
     -moz-filter: blur(1);
     -webkit-filter: blur(1);
