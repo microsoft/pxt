@@ -804,13 +804,20 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
                 let file = main.getMainFile()
+                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
+                    file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                 if (e)
-                    file = main.lookupFile(e.name) || file
+                    file = main.lookupFile("this/" + e.name) || file
                 this.setState({
                     header: h,
                     projectName: h.name,
                     currFile: file
                 })
+                if (!e && pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
+                    this.aceEditor.checkRoundTrip(file.getVirtualFileName(), () => {
+                        return Promise.resolve()
+                    })
+                }
                 core.infoNotification(lf("Project loaded: {0}", h.name))
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
