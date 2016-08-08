@@ -76,14 +76,23 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
                 </div>
                 <div className="content">
-                    {card.name ? card.onClick || !url ? <div className="header">{card.name}</div> : <a href={url} target="docs" className="ui widedesktop hidden header">{card.name}</a> : null}
-                    {card.name && !card.onClick  && url ? <a href={sideUrl} className="ui widedesktop only header">{card.name}</a> : null}
+                    {card.name ? <div className="header">{card.name}</div> : null}
                     <div className="meta">
                         {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
                     </div>
                     {card.description ? <div className="description">{card.description}</div> : null}
                 </div>
-            </div>
-        )
+            </div>;
+
+        if (!card.onClick && url) {
+            return (
+                <div>
+                    <a href={url} target="docs" className="ui widedesktop hidden">{cardDiv}</a>
+                    <a href={sideUrl} className="ui widedesktop only">{cardDiv}</a>
+                </div>
+            )
+        } else {
+            return (cardDiv)
+        }
     }
 }
