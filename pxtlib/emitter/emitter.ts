@@ -819,7 +819,10 @@ ${lbl}: .short 0xffff
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
-                throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
+                if (node.text == "undefined")
+                    throw unhandled(node, lf("undefined not supported"), 9200)
+                else
+                    throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
             }
         }
 
