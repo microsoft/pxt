@@ -235,7 +235,7 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
 
         // extract all snippets
         let snipIndex = 0;
-        text.replace(/^`{3}([\S]+)?\n([\s\S]+?)\n`{3}\s*?$/gm, (m, type, code) => {
+        text.replace(/^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm, (m, type, code) => {
             type = type || "pre"
             let dir = "built/docs/snippets/" + type;
             let fn = `${dir}/${f.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex++}.ts`;
