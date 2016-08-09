@@ -54,8 +54,13 @@ namespace pxt.github {
             .then(v => JSON.parse(v) as pxt.PackageConfig)
     }
 
-    export function downloadPackageAsync(repoWithTag: string, current: CachedPackage = null) {
+    export function downloadPackageAsync(repoWithTag: string, current: CachedPackage = null) : Promise<CachedPackage> {
         let p = parseRepoId(repoWithTag)
+        if (!p) {
+            pxt.log('Unknown github syntax');
+            return Promise.resolve<CachedPackage>(undefined);
+        }
+
         return tagToShaAsync(p.repo, p.tag)
             .then(sha => {
                 let pref = "https://raw.githubusercontent.com/" + p.repo + "/" + sha + "/"
@@ -128,20 +133,24 @@ namespace pxt.github {
         let rid = parseRepoId(id);
         if (rid && rid.repo)
             return U.httpGetJsonAsync("https://api.github.com/repos/" + rid.repo)
-                .then(r => r as Repo);
+                .then(r => {
+                    let rr = r as Repo
+                    if (rr && rid.tag) rr.tag = rid.tag;
+                    return rr;
+                });
         return undefined;
     }
 
     export function searchAsync(query: string): Promise<SearchResults> {
-        let id = parseRepoUrl(query);
-        if (id && id.repo)
-            return repoAsync(id.repo)
-                .then(repo => {
-                    repo.tag = id.tag;
+        let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
+        if (repos.length > 0)
+            return Promise.all(repos.map(id => repoAsync(id.path)))
+                .then(rs => {
+                    rs = rs.filter(r => !!r);
                     return <SearchResults>{
-                        total_count: 1,
+                        total_count: rs.length,
                         incomplete_results: false,
-                        items: [repo]
+                        items: rs
                     }
                 })
 
@@ -150,15 +159,23 @@ namespace pxt.github {
             .then(r => r as SearchResults)
     }
 
-    export function parseRepoUrl(url: string) {
+    export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
+        if (!url) return undefined;
+
         let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)(#(\w+))?$/i.exec(url.trim());
-        return {
+        if (!m) return;
+
+        let r: { repo: string; tag?: string; path?: string; } = {
             repo: m ? m[3].toLowerCase() : null,
             tag: m ? m[5] : null
         }
+        r.path = r.repo + (r.tag ? '#' + r.tag : '');
+        return r;
     }
 
     export function parseRepoId(repo: string) {
+        if (!repo) return undefined;
+
         repo = repo.replace(/^github:/i, "")
         let m = /([^#]+)#(.*)/.exec(repo)
         return {
@@ -173,6 +190,6 @@ namespace pxt.github {
 
     export function noramlizeRepoId(id: string) {
         let p = parseRepoId(id)
-        return "github:" + p.repo.toLowerCase() + "#" + (p.tag || "master")
+        return p ? "github:" + p.repo.toLowerCase() + "#" + (p.tag || "master") : undefined;
     }
 }

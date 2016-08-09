@@ -239,6 +239,7 @@ namespace pxt {
     export interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
+        preferredPackages?: string[]; // list of company/project(#tag) of packages
     }
 
     export interface AppSimulator {
