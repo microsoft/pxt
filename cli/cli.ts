@@ -1354,7 +1354,7 @@ class SnippetHost implements pxt.Host {
     //Global cache of module files
     static files: U.Map<U.Map<string>> = {}
 
-    constructor(name: string, main: string) {
+    constructor(name: string, main: string, public extraDependencies: string[]) {
         this.name = name
         this.main = main
     }
@@ -1371,10 +1371,7 @@ class SnippetHost implements pxt.Host {
             if (filename == "pxt.json") {
                 return JSON.stringify({
                     "name": this.name,
-                    "dependencies": {
-                        "microbit": "file:../microbit",
-                        "microbit-radio": "file:../microbit-radio"
-                    },
+                    "dependencies": this.dependencies,
                     "description": "",
                     "files": [
                         "main.blocks", //TODO: Probably don't want this
@@ -1443,6 +1440,14 @@ class SnippetHost implements pxt.Host {
     resolveVersionAsync(pkg: pxt.Package): Promise<string> {
         //console.log(`resolveVersionAsync(${pkg.id})`)
         return Promise.resolve("*")
+    }
+
+    private get dependencies(): { [key: string]: string} {
+        let stdDeps: { [key: string]: string } = { "microbit": "file:../microbit" }
+        for (let extraDep of this.extraDependencies) {
+            stdDeps[extraDep] = `file:../${extraDep}`
+        }
+        return stdDeps
     }
 }
 
@@ -2406,22 +2411,54 @@ function testDirAsync(dir: string) {
         })
 }
 
-function testSnippetsAsync(): Promise<void> {
-    let allSnippets: Array<string> = []
-    let searchFolder = (dir: string, paths: Array<string>) => {
+function testSnippetsAsync(...args: string[]): Promise<void> {
+    let requiredPackages: { [key: string]: string[]} = {}
+    let filenameMatch = new RegExp('.*');
+    if (args.length > 0) {
+        try {
+            filenameMatch = new RegExp(args[0])
+        }
+        catch (e) {
+            console.log(`"${args[0]}" could not be compiled as a regular expression, ignoring`);
+            filenameMatch = new RegExp('.*')
+        }
+    }
+
+    let searchFolder = (dir: string, paths: string[], ignoreDirs: string[]): string[] => {
         let ls = fs.readdirSync(dir)
         for (let f of ls) {
             let fullPath = path.join(dir, f)
             let stats = fs.lstatSync(fullPath)
             if (stats.isDirectory()) {
-                searchFolder(fullPath, paths)
+                if (ignoreDirs.indexOf(f) < 0) {
+                    searchFolder(fullPath, paths, ignoreDirs)
+                }
             }
-            paths.push(fullPath)
+            else {
+                paths.push(fullPath)
+            }
         }
+        return paths
     }
-    searchFolder('built/docs/snippets', allSnippets)
 
-    allSnippets = allSnippets.filter(p => path.extname(p) == ".ts")
+    let rootPath = (filename: string) => path.basename(filename).replace(/-[0-9]*.ts$/, '');
+
+    if (!fs.existsSync('built/docs/snippets')) {
+        console.log("Please run pxt checkdocs first")
+        return
+    }
+
+    let packageFileNames = searchFolder('built/docs/snippets/package', [], [])
+    for (let packageFile of packageFileNames) {
+        let snippetName = rootPath(packageFile)
+        let dependencies = fs.readFileSync(packageFile, 'utf8').split('\n')
+        requiredPackages[snippetName] = dependencies
+    }
+
+    let allSnippets = searchFolder('built/docs/snippets', [], ["package", "Text", "sig", "pre", "codecard"])
+
+    allSnippets = allSnippets.filter(p => path.extname(p) == ".ts" && filenameMatch.test(path.basename(p)))
+    console.log(`Will check ${allSnippets.length} snippets`);
     //allSnippets = allSnippets.slice(0, 25) //For testing
 
     let successes: string[] = []
@@ -2448,7 +2485,9 @@ function testSnippetsAsync(): Promise<void> {
 
     return Promise.map(allSnippets, p => {
         let originalTs = fs.readFileSync(p, 'utf8')
-        let pkg = new pxt.MainPackage(new SnippetHost(path.basename(p).replace('.ts', ''), originalTs))
+        let r = rootPath(p)
+        let extraDeps: string[] = r in requiredPackages ? requiredPackages[r] : []
+        let pkg = new pxt.MainPackage(new SnippetHost(path.basename(p).replace('.ts', ''), originalTs, extraDeps))
 
         return pkg.getCompileOptionsAsync().then((opts: ts.pxt.CompileOptions) => {
             opts.ast = true
