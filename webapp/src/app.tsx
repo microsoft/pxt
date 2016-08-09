@@ -806,7 +806,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
                     file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                 if (e)
-                    file = main.lookupFile("this/" + e.name) || file
+                    file = main.lookupFile(e.name) || file
                 this.setState({
                     header: h,
                     projectName: h.name,
