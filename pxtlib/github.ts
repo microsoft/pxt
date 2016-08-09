@@ -54,7 +54,7 @@ namespace pxt.github {
             .then(v => JSON.parse(v) as pxt.PackageConfig)
     }
 
-    export function downloadPackageAsync(repoWithTag: string, current: CachedPackage = null) : Promise<CachedPackage> {
+    export function downloadPackageAsync(repoWithTag: string, current: CachedPackage = null): Promise<CachedPackage> {
         let p = parseRepoId(repoWithTag)
         if (!p) {
             pxt.log('Unknown github syntax');
