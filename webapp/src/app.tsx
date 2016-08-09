@@ -304,7 +304,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     {ghdata.map(scr =>
                         <codecard.CodeCardView
                             name={scr.name.replace(/^pxt-/, "") }
-                            time={new Date(scr.updated_at).getTime() / 1000}
                             header={scr.full_name}
                             description={scr.description}
                             key={'gh' + scr.full_name}
