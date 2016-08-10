@@ -2486,7 +2486,6 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                 return addSuccess(name)
             }
             let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
-            console.log(`testing ${name}`)
             return pkg.getCompileOptionsAsync().then(opts => {
                 opts.ast = true
                 let resp = ts.pxt.compile(opts)
@@ -2531,7 +2530,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
             })
         })
     }, { concurrency: 4 }).then((a: any) => {
-        console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks`)
+        console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
         if (ignoreCount > 0) {
             console.log(`Skipped ${ignoreCount} snippets`)
         }
