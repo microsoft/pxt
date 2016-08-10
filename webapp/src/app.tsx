@@ -122,11 +122,11 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchGhData(): pxt.github.Repo[] {
-        let cloud = pxt.appTarget.cloud || {};
+        const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
         let res: pxt.github.SearchResults =
-            this.state.searchFor
-                ? this.getData(`gh-search:${this.state.searchFor}`)
+            this.state.searchFor || cloud.preferredPackages
+                ? this.getData(`gh-search:${this.state.searchFor || cloud.preferredPackages.join('|') }`)
                 : null
         if (res) this.prevGhData = res.items
         return this.prevGhData
@@ -146,7 +146,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
     fetchUrlData(): Cloud.JsonScript[] {
         if (this.state.packages) return []
-        
+
         let embedUrl = pxt.appTarget.appTheme.embedUrl;
         if (this.state.searchFor && embedUrl) {
             let m = new RegExp(`^(${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(this.state.searchFor.trim());
@@ -304,7 +304,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     {ghdata.map(scr =>
                         <codecard.CodeCardView
                             name={scr.name.replace(/^pxt-/, "") }
-                            time={new Date(scr.updated_at).getTime() / 1000}
                             header={scr.full_name}
                             description={scr.description}
                             key={'gh' + scr.full_name}
@@ -600,6 +599,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     saveFile() {
+        simulator.makeDirty();
         this.saveFileAsync().done()
     }
 
@@ -755,22 +755,22 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             this.setFile(fn)
         }
     }
-    
+
     removeFile(fn: pkg.File) {
         core.confirmAsync({
-                header: lf("Remove {0}", fn.name),
-                body: lf("You are about to remove a file from your project. Are you sure?"),
-                agreeClass: "red",
-                agreeIcon: "trash",
-                agreeLbl: lf("Remove it"),
-            }).done(res => {
-                if (res) {
-                    pkg.mainEditorPkg().removeFileAsync(fn.name)
-                        .then(() => pkg.mainEditorPkg().saveFilesAsync())
-                        .then(() => this.reloadHeaderAsync())
-                        .done();
-                }
-            })
+            header: lf("Remove {0}", fn.name),
+            body: lf("You are about to remove a file from your project. Are you sure?"),
+            agreeClass: "red",
+            agreeIcon: "trash",
+            agreeLbl: lf("Remove it"),
+        }).done(res => {
+            if (res) {
+                pkg.mainEditorPkg().removeFileAsync(fn.name)
+                    .then(() => pkg.mainEditorPkg().saveFilesAsync())
+                    .then(() => this.reloadHeaderAsync())
+                    .done();
+            }
+        })
     }
 
     setSideDoc(path: string) {
@@ -803,6 +803,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
                 let file = main.getMainFile()
+                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
+                    file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                 if (e)
                     file = main.lookupFile(e.name) || file
                 this.setState({
@@ -810,6 +812,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     projectName: h.name,
                     currFile: file
                 })
+                if (!e && pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
+                    this.aceEditor.checkRoundTrip(file.getVirtualFileName(), () => {
+                        return Promise.resolve()
+                    })
+                }
                 core.infoNotification(lf("Project loaded: {0}", h.name))
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
@@ -1252,7 +1259,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div>
                         <div className="ui item wide only">
                             <div className="ui massive transparent input">
-                                <input
+                                <input id="fileNameInput"
                                     type="text"
                                     placeholder={lf("Pick a name...") }
                                     value={this.state.projectName || ''}
@@ -1502,9 +1509,11 @@ function initTheme() {
     // RTL languages
     if (/^ar/i.test(Util.userLanguage())) {
         pxt.debug("rtl layout");
-        document.body.classList.add("rtl");
+        pxsim.U.addClass(document.body, "rtl");
         document.body.style.direction = "rtl";
     }
+
+    pxt.blocks.updateUserLanguage();
 }
 
 function parseHash(): { cmd: string; arg: string } {

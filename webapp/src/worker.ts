@@ -51,7 +51,7 @@ onmessage = ev => {
     pm({
         op: ev.data.op,
         id: ev.data.id,
-        result: res
+        result: JSON.parse(JSON.stringify(res))
     })
 }
 

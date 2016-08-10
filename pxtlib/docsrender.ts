@@ -185,7 +185,8 @@ namespace pxt.docs {
                 highlight: function(code, lang) {
                     try {
                         let hljs = require('highlight.js');
-                        return hljs.highlightAuto(code, [lang]).value;
+                        if (!hljs) return code;
+                        return hljs.highlightAuto(code, [lang.replace('-ignore', '')]).value;
                     }
                     catch (e) {
                         return code;

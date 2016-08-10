@@ -819,7 +819,10 @@ ${lbl}: .short 0xffff
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
-                throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
+                if (node.text == "undefined")
+                    throw unhandled(node, lf("undefined not supported"), 9200)
+                else
+                    throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
             }
         }
 
@@ -1012,7 +1015,7 @@ ${lbl}: .short 0xffff
         }
 
         function markUsed(decl: Declaration) {
-            if (!isUsed(decl)) {
+            if (decl && !isUsed(decl)) {
                 usedDecls[nodeKey(decl)] = true
                 usedWorkList.push(decl)
             }
@@ -1116,6 +1119,9 @@ ${lbl}: .short 0xffff
 
         function emitCallExpression(node: CallExpression): ir.Expr {
             let decl = getDecl(node.expression) as FunctionLikeDeclaration
+            if (!decl)
+                unhandled(node, lf("no declaration"), 9240)
+
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = node.arguments.slice(0)
@@ -1127,8 +1133,6 @@ ${lbl}: .short 0xffff
             };
             (node as any).callInfo = callInfo
 
-            if (!decl)
-                unhandled(node, lf("no declaration"), 9240)
 
             let sig = checker.getResolvedSignature(node)
             let trg: Signature = (sig as any).target

@@ -146,7 +146,7 @@ function uploadFileAsync(fn: string) {
     return uploadPromises[fn]
 }
 
-function getFiles() {
+export function getFiles(): string[] {
     let res: string[] = []
     function loop(path: string) {
         for (let fn of fs.readdirSync(path)) {
@@ -233,19 +233,40 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
             return '';
         })
 
-        // extract all snippets
-        let snipIndex = 0;
-        text.replace(/^`{3}([\S]+)?\n([\s\S]+?)\n`{3}$/gm, (m, type, code) => {
-            type = type || "pre"
-            let dir = "built/docs/snippets/" + type;
-            let fn = `${dir}/${f.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex++}.ts`;
+        let snippets = getSnippets(text)
+        snipCount += snippets.length
+        for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
+            let dir = "built/docs/snippets/" + snippets[snipIndex].type;
+            let fn = `${dir}/${f.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
             nodeutil.mkdirP(dir);
-            fs.writeFileSync(fn, code);
-            snipCount++;
-            return '';
-        });
+            fs.writeFileSync(fn, snippets[snipIndex].code);
+        }
     });
 
     console.log(`checked ${checked} files: ${broken} broken links, ${snipCount} snippets`);
     return Promise.resolve();
+}
+
+export interface SnippetInfo {
+    type: string
+    code: string
+    ignore: boolean
+    index: number
+}
+
+export function getSnippets(source: string): SnippetInfo[] {
+    let snippets: SnippetInfo[] = []
+    let re = /^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
+    let index = 0
+    source.replace(re, (match, type, code) => {
+        snippets.push({
+            type: type ? type.replace("-ignore", "") : "pre",
+            code: code,
+            ignore: type ? /-ignore/g.test(type) : false,
+            index: index
+        })
+        index++
+        return ''
+    })
+    return snippets
 }

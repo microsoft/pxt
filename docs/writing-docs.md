@@ -105,9 +105,9 @@ The **block** language renders a JavaScript snippet into blocks without any simu
 
 ### javascript
 
-If you need a rendering of typescript, javascript code, do not specify the language
+If you need a rendering of typescript, javascript code, specify the language as typescript
 
-    ```
+    ```typescript
     let x = 0;
     ```
 
@@ -136,3 +136,21 @@ Renders one or more codecards as JSON into cards
     }]
     ```
   
+### ignore
+
+Append `-ignore` to any of the above to ignore a snippet in automated testing:
+
+    ```typescript-ignore
+    // You can include illegal TS in here, e.g. to document syntax errors
+    callFunction(;
+    ```
+
+## Automated testing
+
+Run `pxt snippets` in the project's root directory. This will automatically check that all code
+snippets in your documentation can be compiled, and it will check that no typescript features 
+that cannot be represented as blocks are used in block snippets.
+
+If you use an additional dependencies, make sure you refernece them (see [above](#dependencies)). 
+
+To ensure that a snippet isn't checked, add `-ignore` after the snippet type.

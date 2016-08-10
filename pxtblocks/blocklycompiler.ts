@@ -825,7 +825,7 @@ namespace pxt.blocks {
     function escapeVarName(name: string): string {
         if (!name) return '_';
         let n = name.split(/[^a-zA-Z0-9_$]+/)
-            .map((c, i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1))
+            //.map((c, i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1)) breaks roundtrip...
             .join('');
         return n;
     }

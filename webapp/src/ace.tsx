@@ -558,15 +558,8 @@ export class Editor extends srceditor.Editor {
             return;
         }
 
-        // needed to test roundtrip
-        let js = this.formatCode();
-
         if (!this.hasBlocks())
             return
-
-        // might be undefined
-        let mainPkg = pkg.mainEditorPkg();
-        let xml: string;
 
         const failedAsync = () => {
             this.forceDiagnosticsUpdate();
@@ -574,25 +567,40 @@ export class Editor extends srceditor.Editor {
             return core.confirmAsync({
                 header: lf("Oops, there is a problem converting your code."),
                 body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
-                agreeLbl: lf("Stay in JavaScript"),
+                agreeLbl: lf("Discard and go to Blocks"),
+                agreeClass: "cancel",
+                agreeIcon: "cancel",
+                disagreeLbl: lf("Stay in JavaScript"),
+                disagreeClass: "positive",
+                disagreeIcon: "checkmark", 
                 deleteLbl: lf("Remove Blocks file"),
                 size: "medium",
-                hideCancel: !bf,
-                disagreeLbl: lf("Discard and go to Blocks")
+                hideCancel: !bf
             }).then(b => {
                 // discard                
                 if (!b) {
-                    pxt.tickEvent("typescript.discardText");
-                    this.parent.setFile(bf);
+                    pxt.tickEvent("typescript.keepText");
                 } else if (b == 2) {
                     pxt.tickEvent("typescript.removeBlocksFile");
                     this.parent.removeFile(bf);
                 } else {
-                    pxt.tickEvent("typescript.keepText");
+                    pxt.tickEvent("typescript.discardText");
+                    this.parent.setFile(bf);
                 }
             })
         }
 
+        this.checkRoundTrip(blockFile, failedAsync)
+    }
+
+    checkRoundTrip(blockFile: string, failedAsync: () => Promise<void>) {
+        // needed to test roundtrip
+        let js = this.formatCode();
+
+        // might be undefined
+        let mainPkg = pkg.mainEditorPkg();
+        let xml: string;
+        
         // it's a bit for a wild round trip:
         // 1) convert blocks to js to see if any changes happened, otherwise, just reload blocks
         // 2) decompile js -> blocks then take the decompiled blocks -> js

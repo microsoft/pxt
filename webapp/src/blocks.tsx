@@ -201,8 +201,8 @@ export class Editor extends srceditor.Editor {
                 controls: true,
                 wheel: true,
                 maxScale: 2.5,
-                minScale: .1,
-                scaleSpeed: 1.1
+                minScale: .2,
+                scaleSpeed: 1.05
             },
             rtl: Util.userLanguageRtl()
         });

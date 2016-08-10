@@ -44,6 +44,13 @@ function dirAuto($el) {
 }
 
 function renderSnippets() {
+    var codeElems = $('code')
+    for (var i = 0; i < codeElems.length; i++) {
+        console.log("Previously " + codeElems[i].className)
+        codeElems[i].className = codeElems[i].className.replace('-ignore', '')
+        console.log("Now " + codeElems[i].className)
+    }
+
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     console.log(path)
     ksRunnerReady(function() {        
