@@ -2785,10 +2785,12 @@ export function helpAsync(all?: string) {
     } else {
         console.log("Common commands (use 'pxt help all' to show all):")
     }
+    let commandWidth = Math.max(10, 1 + Math.max(...cmds.map(cmd => cmd.name.length)))
+    let argWidth = Math.max(20, 1 + Math.max(...cmds.map(cmd => cmd.argDesc.length)))
     cmds.forEach(cmd => {
         if (cmd.priority >= 10) return;
         if (showAll || !cmd.priority) {
-            console.log(f(cmd.name, 10) + f(cmd.argDesc, 20) + cmd.desc);
+            console.log(f(cmd.name, commandWidth) + f(cmd.argDesc, argWidth) + cmd.desc);
         }
     })
     return Promise.resolve()
