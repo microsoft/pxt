@@ -2446,6 +2446,8 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
     let files = uploader.getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
     console.log(`There are ${files.length} documentation files to check`)
 
+    let ignoreCount = 0
+
     let successes: string[] = []
 
     interface FailureInfo {
@@ -2473,11 +2475,13 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
         let ignoredTypes = ["Text", "sig", "pre", "codecard", "package", "namespaces"]
-        let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0)
+        let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0 && !s.ignore)
+        ignoreCount += snippets.length - snippetsToCheck.length
 
-        return Promise.map(snippetsToCheck, (snippet, i) => {
-            let name = `${pkgName}-${i}`
+        return Promise.map(snippetsToCheck, (snippet) => {
+            let name = `${pkgName}-${snippet.index}`
             if (name in ignoreSnippets && ignoreSnippets[name]) {
+                ignoreCount++
                 return addSuccess(name)
             }
             let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
@@ -2513,6 +2517,9 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         })
     }, { concurrency: 4 }).then((a: any) => {
         console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks`)
+        if (ignoreCount > 0) {
+            console.log(`Skipped ${ignoreCount} snippets`)
+        }
         console.log('--------------------------------------------------------------------------------')
         for (let f of failures) {
             console.log(f.filename)

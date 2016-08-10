@@ -248,18 +248,24 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
 }
 
 export interface SnippetInfo {
-    type: string;
-    code: string;
+    type: string
+    code: string
+    ignore: boolean
+    index: number
 }
 
 export function getSnippets(source: string): SnippetInfo[] {
     let snippets: SnippetInfo[] = []
     let re = /^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
+    let index = 0
     source.replace(re, (match, type, code) => {
         snippets.push({
-            type: type || "pre",
-            code: code
+            type: type ? type.replace("-ignore", "") : "pre",
+            code: code,
+            ignore: type ? /-ignore/g.test(type) : false,
+            index: index
         })
+        index++
         return ''
     })
     return snippets
