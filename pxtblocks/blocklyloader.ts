@@ -511,6 +511,7 @@ namespace pxt.blocks {
 
         monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("a integer number") : lf("a decimal number"), "reference/types/number");
         monkeyPatchBlock("math_arithmetic", lf("arithmetic operation"), "blocks/math");
+        monkeyPatchBlock("math_modulo", lf("division remainder"), "blocks/math");
         monkeyPatchBlock("math_op2", lf("minimum or maximum of 2 numbers"), "blocks/math");
         monkeyPatchBlock("math_op3", lf("absolute value of a number"), "blocks/math");
         monkeyPatchBlock("device_random", lf("pick random number"), "blocks/math");

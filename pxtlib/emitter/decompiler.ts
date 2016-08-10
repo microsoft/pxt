@@ -6,11 +6,12 @@ namespace ts.pxt.decompiler {
         top: number; current: number;
     }
 
-    const ops: U.Map<{ type: string; op: string; }> = {
+    const ops: U.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
         "-": { type: "math_arithmetic", op: "MINUS" },
         "/": { type: "math_arithmetic", op: "DIVIDE" },
         "*": { type: "math_arithmetic", op: "MULTIPLY" },
+        "%": { type: "math_modulo", leftName: "DIVIDEND", rightName: "DIVISOR" },
         "<": { type: "logic_compare", op: "LT" },
         "<=": { type: "logic_compare", op: "LTE" },
         ">": { type: "logic_compare", op: "GT" },
@@ -226,13 +227,13 @@ ${output}</xml>`;
             let npp = ops[op];
             if (!npp) return error(n);
             writeBeginBlock(npp.type)
-            write(`<field name="OP">${npp.op}</field>`)
-            write('<value name="A">')
+            if (npp.op) write(`<field name="OP">${npp.op}</field>`)
+            write(`<value name="${npp.leftName || "A"}">`)
             pushBlocks();
             emit(n.left);
             flushBlocks();
             write('</value>')
-            write('<value name="B">')
+            write(`<value name="${npp.rightName || "B"}">`)
             pushBlocks();
             emit(n.right)
             flushBlocks();
