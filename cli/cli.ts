@@ -2474,7 +2474,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         let snippets = uploader.getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
-        let ignoredTypes = ["Text", "sig", "pre", "codecard", "package", "namespaces"]
+        let ignoredTypes = ["Text", "sig", "pre", "codecard", "cards", "package", "namespaces"]
         let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0 && !s.ignore)
         ignoreCount += snippets.length - snippetsToCheck.length
 
