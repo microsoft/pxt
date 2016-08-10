@@ -160,7 +160,7 @@ namespace ts.pxt.avr {
             this.addInst("sbiw  $r2, $i0", 0x9700, 0xff00);
             this.addInst("sbr   $r3  $i1", 0x6000, 0xf000);
             this.addInst("sbrc  $r0, $r5", 0xfc00, 0xfe08);
-            this.addInst("sbrs  $r0, $r5", 0xfe00, 0xfe08)
+            this.addInst("sbrs  $r0, $r5", 0xfe00, 0xfe08);
             this.addInst("sec",            0x9408, 0xffff);
             this.addInst("seh",            0x9458, 0xffff);
             this.addInst("sei",            0x9478, 0xffff);
@@ -189,7 +189,7 @@ namespace ts.pxt.avr {
             this.addInst("sub   $r0, $r1", 0x1800, 0xfC00);
             this.addInst("subi  $r3  $i1", 0x5000, 0xf000);
             this.addInst("swap  $r0",      0x9402, 0xfe0f);
-            this.addInst("tst   $r6",      0x2004, 0xfc00);
+            this.addInst("tst   $r6",      0x2000, 0xfc00);
             this.addInst("wdr",            0x95a8, 0xffff);
             this.addInst("xch   Z, $r0",   0x9204, 0xfe0F);
         }

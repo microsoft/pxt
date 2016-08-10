@@ -2125,6 +2125,12 @@ function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.
     */
 }
 
+function testAVR(): Promise<void>  {
+    ts.pxt.avr.testAVR();
+    return Promise.resolve();
+}
+
+
 function testForBuildTargetAsync() {
     let opts: ts.pxt.CompileOptions
     return mainPkg.loadAsync()
@@ -2723,6 +2729,7 @@ cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
+cmd("testavr                      - test the AVR assembler", testAVR)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 cmd("testsnippets                 - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
