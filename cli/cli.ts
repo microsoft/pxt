@@ -1354,15 +1354,10 @@ let commonfiles: U.Map<string> = {}
 let fileoverrides: U.Map<string> = {}
 
 class SnippetHost implements pxt.Host {
-    name: string
-    main: string
     //Global cache of module files
     static files: U.Map<U.Map<string>> = {}
 
-    constructor(name: string, main: string) {
-        this.name = name
-        this.main = main
-    }
+    constructor(public name: string, public main: string, public extraDependencies: string[]) {}
 
     resolve(module: pxt.Package, filename: string): string {
         return ""
@@ -1376,10 +1371,7 @@ class SnippetHost implements pxt.Host {
             if (filename == "pxt.json") {
                 return JSON.stringify({
                     "name": this.name,
-                    "dependencies": {
-                        "microbit": "file:../microbit",
-                        "microbit-radio": "file:../microbit-radio"
-                    },
+                    "dependencies": this.dependencies,
                     "description": "",
                     "files": [
                         "main.blocks", //TODO: Probably don't want this
@@ -1448,6 +1440,14 @@ class SnippetHost implements pxt.Host {
     resolveVersionAsync(pkg: pxt.Package): Promise<string> {
         //console.log(`resolveVersionAsync(${pkg.id})`)
         return Promise.resolve("*")
+    }
+
+    private get dependencies(): { [key: string]: string} {
+        let stdDeps: { [key: string]: string } = { "microbit": "file:../microbit" }
+        for (let extraDep of this.extraDependencies) {
+            stdDeps[extraDep] = `file:../${extraDep}`
+        }
+        return stdDeps
     }
 }
 
@@ -2411,23 +2411,42 @@ function testDirAsync(dir: string) {
         })
 }
 
-function testSnippetsAsync(): Promise<void> {
-    let allSnippets: Array<string> = []
-    let searchFolder = (dir: string, paths: Array<string>) => {
-        let ls = fs.readdirSync(dir)
-        for (let f of ls) {
-            let fullPath = path.join(dir, f)
-            let stats = fs.lstatSync(fullPath)
-            if (stats.isDirectory()) {
-                searchFolder(fullPath, paths)
+function testSnippetsAsync(...args: string[]): Promise<void> {
+    let filenameMatch = new RegExp('.*')
+    let ignorePreviousSuccesses = false
+
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] == "-i") {
+            ignorePreviousSuccesses = true
+        }
+        else if (args[i] == "-re" && i < args.length - 1) {
+            try {
+                filenameMatch = new RegExp(args[i + 1])
+                i++
             }
-            paths.push(fullPath)
+            catch (e) {
+                console.log(`"${args[0]}" could not be compiled as a regular expression, ignoring`);
+                filenameMatch = new RegExp('.*')
+            }
         }
     }
-    searchFolder('built/docs/snippets', allSnippets)
 
-    allSnippets = allSnippets.filter(p => path.extname(p) == ".ts")
-    //allSnippets = allSnippets.slice(0, 25) //For testing
+    let ignoreSnippets: { [k: string]: boolean } = {} //NodeJS doesn't yet support sets
+    const ignorePath = "built/docs/snippets/goodsnippets.txt"
+
+    if (ignorePreviousSuccesses && fs.existsSync(ignorePath)) {
+        let numberOfIgnoreSnippets = 0
+        for (let line of fs.readFileSync(ignorePath, "utf8").split("\n")) {
+            ignoreSnippets[line] = true
+            numberOfIgnoreSnippets++
+        }
+        console.log(`Ignoring ${numberOfIgnoreSnippets} snippets previously believed to be good`)
+    }
+
+    let files = uploader.getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
+    console.log(`There are ${files.length} documentation files to check`)
+
+    let ignoreCount = 0
 
     let successes: string[] = []
 
@@ -2440,7 +2459,6 @@ function testSnippetsAsync(): Promise<void> {
 
     let addSuccess = (s: string) => {
         successes.push(s)
-        //console.log(`SUCCESS\t${s}`)
     }
 
     let addFailure = (f: string, info: ts.pxt.KsDiagnostic[]) => {
@@ -2448,45 +2466,76 @@ function testSnippetsAsync(): Promise<void> {
             filename: f,
             diagnostics: info
         })
-        //console.log(`ERROR\t${f}`)
     }
 
-    return Promise.map(allSnippets, p => {
-        let originalTs = fs.readFileSync(p, 'utf8')
-        let pkg = new pxt.MainPackage(new SnippetHost(path.basename(p).replace('.ts', ''), originalTs))
+    return Promise.map(files, (fname: string) => {
+        let pkgName = fname.replace(/\\/g, '-').replace('.md', '')
+        let source = fs.readFileSync(fname, 'utf8')
+        let snippets = uploader.getSnippets(source)
+        // [].concat.apply([], ...) takes an array of arrays and flattens it
+        let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
+        let ignoredTypes = ["Text", "sig", "pre", "codecard", "cards", "package", "namespaces"]
+        let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0 && !s.ignore)
+        ignoreCount += snippets.length - snippetsToCheck.length
 
-        return pkg.getCompileOptionsAsync().then((opts: ts.pxt.CompileOptions) => {
-            opts.ast = true
-            let resp = ts.pxt.compile(opts)
+        return Promise.map(snippetsToCheck, (snippet) => {
+            let name = `${pkgName}-${snippet.index}`
+            if (name in ignoreSnippets && ignoreSnippets[name]) {
+                ignoreCount++
+                return addSuccess(name)
+            }
+            let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
+            return pkg.getCompileOptionsAsync().then(opts => {
+                opts.ast = true
+                let resp = ts.pxt.compile(opts)
 
-            if (resp.success) {
-                //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
-                let file = resp.ast.getSourceFile('main.ts');
-                let apis = ts.pxt.getApiInfo(resp.ast);
-                let blocksInfo = ts.pxt.getBlocksInfo(apis);
-                let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
+                if (resp.success) {
+                    if (/block/.test(snippet.type)) {
+                        //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
+                        let file = resp.ast.getSourceFile('main.ts');
+                        let apis = ts.pxt.getApiInfo(resp.ast);
+                        let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                        let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
 
-                let success = !!bresp.outfiles['main.blocks']
+                        let success = !!bresp.outfiles['main.blocks']
 
-                if (success) {
-                    addSuccess(p)
+                        if (success) {
+                            return addSuccess(name)
+                        }
+                        else {
+                            return addFailure(name, bresp.diagnostics)
+                        }
+                    }
+                    else {
+                        return addSuccess(name)
+                    }
                 }
                 else {
-                    addFailure(p, bresp.diagnostics)
+                    return addFailure(name, resp.diagnostics)
                 }
-            }
-            else {
-                addFailure(p, resp.diagnostics)
-            }
+            })
         })
-    }).then((a: any) => {
-        console.log(`${successes.length} snippets compiled to blocks`)
-        console.log(`${failures.length} snippets did not compile to blocks:`)
+    }, { concurrency: 4 }).then((a: any) => {
+        console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks`)
+        if (ignoreCount > 0) {
+            console.log(`Skipped ${ignoreCount} snippets`)
+        }
+        console.log('--------------------------------------------------------------------------------')
         for (let f of failures) {
             console.log(f.filename)
             for (let diag of f.diagnostics) {
                 console.log(`  L ${diag.line}\t${diag.messageText}`)
             }
+        }
+        if (filenameMatch.source == '.*' && !ignorePreviousSuccesses) {
+            let successData = successes.join("\n")
+            if (!fs.existsSync(path.dirname(ignorePath))) {
+                fs.mkdirSync(path.dirname(ignorePath))
+            }
+            fs.writeFileSync(ignorePath, successData)
+        }
+        else {
+            console.log("Some files were ignored, therefore won't write success log")
         }
     })
 }
@@ -2730,7 +2779,7 @@ cmd("gendocs                      - build current package and its docs", gendocs
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
-cmd("testsnippets                 - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
+cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
@@ -2776,10 +2825,12 @@ export function helpAsync(all?: string) {
     } else {
         console.log("Common commands (use 'pxt help all' to show all):")
     }
+    let commandWidth = Math.max(10, 1 + Math.max(...cmds.map(cmd => cmd.name.length)))
+    let argWidth = Math.max(20, 1 + Math.max(...cmds.map(cmd => cmd.argDesc.length)))
     cmds.forEach(cmd => {
         if (cmd.priority >= 10) return;
         if (showAll || !cmd.priority) {
-            console.log(f(cmd.name, 10) + f(cmd.argDesc, 20) + cmd.desc);
+            console.log(f(cmd.name, commandWidth) + f(cmd.argDesc, argWidth) + cmd.desc);
         }
     })
     return Promise.resolve()
