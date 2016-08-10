@@ -122,11 +122,11 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchGhData(): pxt.github.Repo[] {
-        let cloud = pxt.appTarget.cloud || {};
+        const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
         let res: pxt.github.SearchResults =
-            this.state.searchFor
-                ? this.getData(`gh-search:${this.state.searchFor}`)
+            this.state.searchFor || cloud.preferredPackages
+                ? this.getData(`gh-search:${this.state.searchFor || cloud.preferredPackages.join('|') }`)
                 : null
         if (res) this.prevGhData = res.items
         return this.prevGhData
@@ -304,7 +304,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     {ghdata.map(scr =>
                         <codecard.CodeCardView
                             name={scr.name.replace(/^pxt-/, "") }
-                            time={new Date(scr.updated_at).getTime() / 1000}
                             header={scr.full_name}
                             description={scr.description}
                             key={'gh' + scr.full_name}
@@ -807,7 +806,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
                     file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                 if (e)
-                    file = main.lookupFile("this/" + e.name) || file
+                    file = main.lookupFile(e.name) || file
                 this.setState({
                     header: h,
                     projectName: h.name,
@@ -1513,6 +1512,8 @@ function initTheme() {
         pxsim.U.addClass(document.body, "rtl");
         document.body.style.direction = "rtl";
     }
+
+    pxt.blocks.updateUserLanguage();
 }
 
 function parseHash(): { cmd: string; arg: string } {

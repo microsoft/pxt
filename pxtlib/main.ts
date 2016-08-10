@@ -167,6 +167,7 @@ namespace pxt {
     export interface AppTarget {
         id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
         name: string;
+        description?: string;
         corepkg: string;
         title?: string;
         cloud?: AppCloud;
@@ -238,6 +239,7 @@ namespace pxt {
     export interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
+        preferredPackages?: string[]; // list of company/project(#tag) of packages
     }
 
     export interface AppSimulator {

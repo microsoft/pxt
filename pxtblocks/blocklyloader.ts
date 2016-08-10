@@ -444,7 +444,8 @@ namespace pxt.blocks {
 
     let blocklyInitialized = false;
     function init() {
-        if (blocklyInitialized) blocklyInitialized = true;
+        if (blocklyInitialized) return;
+        blocklyInitialized = true;
 
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
@@ -516,6 +517,20 @@ namespace pxt.blocks {
 
         monkeyPatchBlock("text", lf("a piece of text"), "reference/types/string");
         monkeyPatchBlock("text_length", lf("number of characters in the string"), "reference/types/string-functions");
+
+        updateUserLanguage();
+    }
+
+    export function updateUserLanguage() {
+        if (ts.pxt.Util.userLanguage() != "en") {
+            let src = pxt.webConfig.pxtCdnUrl + "blockly/msg/js/" + ts.pxt.Util.userLanguage() + ".js";
+            if (!document.head.querySelector(`script[src='${src}']`)) {
+                let script = document.createElement("script")
+                script.type = "text/javascript";
+                script.src = src;
+                document.head.appendChild(script);
+            }
+        }
     }
 
     function initLoops() {

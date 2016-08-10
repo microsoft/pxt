@@ -146,6 +146,11 @@ function searchAsync(...query: string[]) {
 
 function pkginfoAsync(repopath: string) {
     let parsed = pxt.github.parseRepoId(repopath)
+    if (!parsed) {
+        console.log('Unknown repo');
+        return Promise.resolve();
+    }
+
     let pkgInfo = (cfg: pxt.PackageConfig) => {
         console.log(`Name: ${cfg.name}`)
         console.log(`Description: ${cfg.description}`)

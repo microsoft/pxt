@@ -6,11 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>@title@</title>
+    <meta name="description" content="@description@" />
+
     <link rel="manifest" href="/sim/sim.webmanifest">
     
     <link rel="apple-touch-icon" href="@appLogo@">
     <link rel="icon" href="@appLogo@">
-    <link rel="mask-icon" href="/static/icons/safari-pinned-tab.svg" color="#000000">
     <link rel="shortcut icon" href="@appLogo@">
     <meta name="apple-mobile-web-app-title" content="@title@">
     <meta name="application-name" content="@title@">
@@ -51,6 +52,8 @@
         var pxtConfig = null;
     </script>
 
+    <!-- patch to load JS in electron -->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
     <script type="text/javascript" src="/cdn/lzma/lzma_worker-min.js"></script>
     <script type="text/javascript" src="/cdn/jquery.js"></script>
     <script type="text/javascript" src="/cdn/typescript.js"></script>
@@ -58,12 +61,15 @@
     <script type="text/javascript" src="/cdn/blockly/blocks_compressed.js"></script>
     <script type="text/javascript" src="/cdn/blockly/msg/js/en.js"></script>
     <script type="text/javascript" src="/cdn/fuse/fuse.min.js"></script>
+    <script type="text/javascript" src="/cdn/semantic.js"></script>
+    <!-- unpatch to load JS in electron -->
+    <script>if (window.module) module = window.module;</script>
+
     <script type="text/javascript" src="/cdn/pxtlib.js"></script>
     <script type="text/javascript" src="/cdn/pxtblocks.js"></script>
     <script type="text/javascript" src="/cdn/pxtwinrt.js"></script>
     <script type="text/javascript" src="/cdn/pxteditor.js"></script>
     <script type="text/javascript" src="/cdn/pxtsim.js"></script>
-    <script type="text/javascript" src="/cdn/semantic.js"></script>
     <script id="mainscript" type="text/javascript" src="/cdn/main.js"></script>
     <xml id="blocklyToolboxDefinition" style="display: none">
         <category name="Loops" colour="120" category="50">
