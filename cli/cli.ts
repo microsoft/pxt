@@ -2412,7 +2412,7 @@ function testDirAsync(dir: string) {
 }
 
 function testSnippetsAsync(...args: string[]): Promise<void> {
-    let filenameMatch = new RegExp('.*');
+    let filenameMatch = new RegExp('.*')
     if (args.length > 0) {
         try {
             filenameMatch = new RegExp(args[0])
@@ -2447,38 +2447,44 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
     }
 
     return Promise.map(files, (fname: string) => {
+        let pkgName = fname.replace(/\\/g, '-').replace('.md', '')
         let source = fs.readFileSync(fname, 'utf8')
         let snippets = uploader.getSnippets(source)
-        let extraDeps = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
-        let ignoredTypes = ["Text", "sig", "pre", "codecard"]
+        // [].concat.apply([], ...) takes an array of arrays and flattens it
+        let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
+        let ignoredTypes = ["Text", "sig", "pre", "codecard", "package"]
         let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0)
 
-        return Promise.map(snippetsToCheck, (snippet, snippetIndex) => {
-            let name = fname.replace(/\\/g, '-').replace('.md', '') + `-${snippetIndex}`
+        return Promise.map(snippetsToCheck, (snippet, i) => {
+            let name = `${pkgName}-${i}`
             let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
-
-            return pkg.getCompileOptionsAsync().then((opts: ts.pxt.CompileOptions) => {
+            return pkg.getCompileOptionsAsync().then(opts => {
                 opts.ast = true
                 let resp = ts.pxt.compile(opts)
 
                 if (resp.success) {
-                    //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
-                    let file = resp.ast.getSourceFile('main.ts');
-                    let apis = ts.pxt.getApiInfo(resp.ast);
-                    let blocksInfo = ts.pxt.getBlocksInfo(apis);
-                    let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
+                    if (/block/.test(snippet.type)) {
+                        //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
+                        let file = resp.ast.getSourceFile('main.ts');
+                        let apis = ts.pxt.getApiInfo(resp.ast);
+                        let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                        let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
 
-                    let success = !!bresp.outfiles['main.blocks']
+                        let success = !!bresp.outfiles['main.blocks']
 
-                    if (success) {
-                        addSuccess(name)
+                        if (success) {
+                            return addSuccess(name)
+                        }
+                        else {
+                            return addFailure(name, bresp.diagnostics)
+                        }
                     }
                     else {
-                        addFailure(name, bresp.diagnostics)
+                        return addSuccess(name)
                     }
                 }
                 else {
-                    addFailure(name, resp.diagnostics)
+                    return addFailure(name, resp.diagnostics)
                 }
             })
         })
