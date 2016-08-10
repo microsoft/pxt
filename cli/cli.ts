@@ -1357,7 +1357,7 @@ class SnippetHost implements pxt.Host {
     //Global cache of module files
     static files: U.Map<U.Map<string>> = {}
 
-    constructor(public name: string, public main: string, public extraDependencies: string[]) {}
+    constructor(public name: string, public main: string, public extraDependencies: string[]) { }
 
     resolve(module: pxt.Package, filename: string): string {
         return ""
@@ -1442,7 +1442,7 @@ class SnippetHost implements pxt.Host {
         return Promise.resolve("*")
     }
 
-    private get dependencies(): { [key: string]: string} {
+    private get dependencies(): { [key: string]: string } {
         let stdDeps: { [key: string]: string } = { "microbit": "file:../microbit" }
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
@@ -2444,7 +2444,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
     }
 
     let files = uploader.getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
-    console.log(`There are ${files.length} documentation files to check`)
+    console.log(`checking ${files.length} documentation files`)
 
     let ignoreCount = 0
 
@@ -2461,11 +2461,12 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         successes.push(s)
     }
 
-    let addFailure = (f: string, info: ts.pxt.KsDiagnostic[]) => {
+    let addFailure = (f: string, infos: ts.pxt.KsDiagnostic[]) => {
         failures.push({
             filename: f,
-            diagnostics: info
+            diagnostics: infos
         })
+        infos.forEach(info => console.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
 
     return Promise.map(files, (fname: string) => {
@@ -2485,6 +2486,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                 return addSuccess(name)
             }
             let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
+            console.log(`testing ${name}`)
             return pkg.getCompileOptionsAsync().then(opts => {
                 opts.ast = true
                 let resp = ts.pxt.compile(opts)
@@ -2513,6 +2515,19 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                 else {
                     return addFailure(name, resp.diagnostics)
                 }
+            }).catch((e: Error) => {
+                addFailure(name, [
+                    {
+                        code: 4242,
+                        category: ts.DiagnosticCategory.Error,
+                        messageText: e.message,
+                        fileName: name,
+                        start: 1,
+                        line: 1,
+                        length: 1,
+                        character: 1
+                    }
+                ])
             })
         })
     }, { concurrency: 4 }).then((a: any) => {
