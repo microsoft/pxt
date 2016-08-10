@@ -2527,11 +2527,16 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                 console.log(`  L ${diag.line}\t${diag.messageText}`)
             }
         }
-        let successData = successes.join("\n")
-        if (!fs.existsSync(path.dirname(ignorePath))) {
-            fs.mkdirSync(path.dirname(ignorePath))
+        if (filenameMatch.source == '.*' && !ignorePreviousSuccesses) {
+            let successData = successes.join("\n")
+            if (!fs.existsSync(path.dirname(ignorePath))) {
+                fs.mkdirSync(path.dirname(ignorePath))
+            }
+            fs.writeFileSync(ignorePath, successData)
         }
-        fs.writeFileSync(ignorePath, successData)
+        else {
+            console.log("Some files were ignored, therefore won't write success log")
+        }
     })
 }
 
