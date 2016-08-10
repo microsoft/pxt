@@ -146,7 +146,7 @@ function uploadFileAsync(fn: string) {
     return uploadPromises[fn]
 }
 
-export function getFiles() {
+export function getFiles(): string[] {
     let res: string[] = []
     function loop(path: string) {
         for (let fn of fs.readdirSync(path)) {

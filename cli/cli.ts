@@ -1354,15 +1354,10 @@ let commonfiles: U.Map<string> = {}
 let fileoverrides: U.Map<string> = {}
 
 class SnippetHost implements pxt.Host {
-    name: string
-    main: string
     //Global cache of module files
     static files: U.Map<U.Map<string>> = {}
 
-    constructor(name: string, main: string, public extraDependencies: string[]) {
-        this.name = name
-        this.main = main
-    }
+    constructor(public name: string, public main: string, public extraDependencies: string[]) {}
 
     resolve(module: pxt.Package, filename: string): string {
         return ""
@@ -2417,7 +2412,6 @@ function testDirAsync(dir: string) {
 }
 
 function testSnippetsAsync(...args: string[]): Promise<void> {
-    let requiredPackages: { [key: string]: string[]} = {}
     let filenameMatch = new RegExp('.*');
     if (args.length > 0) {
         try {
@@ -2429,42 +2423,8 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         }
     }
 
-    let searchFolder = (dir: string, paths: string[], ignoreDirs: string[]): string[] => {
-        let ls = fs.readdirSync(dir)
-        for (let f of ls) {
-            let fullPath = path.join(dir, f)
-            let stats = fs.lstatSync(fullPath)
-            if (stats.isDirectory()) {
-                if (ignoreDirs.indexOf(f) < 0) {
-                    searchFolder(fullPath, paths, ignoreDirs)
-                }
-            }
-            else {
-                paths.push(fullPath)
-            }
-        }
-        return paths
-    }
-
-    let rootPath = (filename: string) => path.basename(filename).replace(/-[0-9]*.ts$/, '');
-
-    if (!fs.existsSync('built/docs/snippets')) {
-        console.log("Please run pxt checkdocs first")
-        return
-    }
-
-    let packageFileNames = searchFolder('built/docs/snippets/package', [], [])
-    for (let packageFile of packageFileNames) {
-        let snippetName = rootPath(packageFile)
-        let dependencies = fs.readFileSync(packageFile, 'utf8').split('\n')
-        requiredPackages[snippetName] = dependencies
-    }
-
-    let allSnippets = searchFolder('built/docs/snippets', [], ["package", "Text", "sig", "pre", "codecard"])
-
-    allSnippets = allSnippets.filter(p => path.extname(p) == ".ts" && filenameMatch.test(path.basename(p)))
-    console.log(`Will check ${allSnippets.length} snippets`);
-    //allSnippets = allSnippets.slice(0, 25) //For testing
+    let files = uploader.getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
+    console.log(`There are ${files.length} documentation files to check`)
 
     let successes: string[] = []
 
@@ -2477,7 +2437,6 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
 
     let addSuccess = (s: string) => {
         successes.push(s)
-        //console.log(`SUCCESS\t${s}`)
     }
 
     let addFailure = (f: string, info: ts.pxt.KsDiagnostic[]) => {
@@ -2485,42 +2444,47 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
             filename: f,
             diagnostics: info
         })
-        //console.log(`ERROR\t${f}`)
     }
 
-    return Promise.map(allSnippets, p => {
-        let originalTs = fs.readFileSync(p, 'utf8')
-        let r = rootPath(p)
-        let extraDeps: string[] = r in requiredPackages ? requiredPackages[r] : []
-        let pkg = new pxt.MainPackage(new SnippetHost(path.basename(p).replace('.ts', ''), originalTs, extraDeps))
+    return Promise.map(files, (fname: string) => {
+        let source = fs.readFileSync(fname, 'utf8')
+        let snippets = uploader.getSnippets(source)
+        let extraDeps = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
+        let ignoredTypes = ["Text", "sig", "pre", "codecard"]
+        let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0)
 
-        return pkg.getCompileOptionsAsync().then((opts: ts.pxt.CompileOptions) => {
-            opts.ast = true
-            let resp = ts.pxt.compile(opts)
+        return Promise.map(snippetsToCheck, (snippet, snippetIndex) => {
+            let name = fname.replace(/\\/g, '-').replace('.md', '') + `-${snippetIndex}`
+            let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
 
-            if (resp.success) {
-                //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
-                let file = resp.ast.getSourceFile('main.ts');
-                let apis = ts.pxt.getApiInfo(resp.ast);
-                let blocksInfo = ts.pxt.getBlocksInfo(apis);
-                let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
+            return pkg.getCompileOptionsAsync().then((opts: ts.pxt.CompileOptions) => {
+                opts.ast = true
+                let resp = ts.pxt.compile(opts)
 
-                let success = !!bresp.outfiles['main.blocks']
+                if (resp.success) {
+                    //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
+                    let file = resp.ast.getSourceFile('main.ts');
+                    let apis = ts.pxt.getApiInfo(resp.ast);
+                    let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                    let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
 
-                if (success) {
-                    addSuccess(p)
+                    let success = !!bresp.outfiles['main.blocks']
+
+                    if (success) {
+                        addSuccess(name)
+                    }
+                    else {
+                        addFailure(name, bresp.diagnostics)
+                    }
                 }
                 else {
-                    addFailure(p, bresp.diagnostics)
+                    addFailure(name, resp.diagnostics)
                 }
-            }
-            else {
-                addFailure(p, resp.diagnostics)
-            }
+            })
         })
-    }).then((a: any) => {
-        console.log(`${successes.length} snippets compiled to blocks`)
-        console.log(`${failures.length} snippets did not compile to blocks:`)
+    }, { concurrency: 4 }).then((a: any) => {
+        console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks`)
+        console.log('--------------------------------------------------------------------------------')
         for (let f of failures) {
             console.log(f.filename)
             for (let diag of f.diagnostics) {
