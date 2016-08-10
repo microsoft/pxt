@@ -2413,14 +2413,34 @@ function testDirAsync(dir: string) {
 
 function testSnippetsAsync(...args: string[]): Promise<void> {
     let filenameMatch = new RegExp('.*')
-    if (args.length > 0) {
-        try {
-            filenameMatch = new RegExp(args[0])
+    let ignorePreviousSuccesses = false
+
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] == "-i") {
+            ignorePreviousSuccesses = true
         }
-        catch (e) {
-            console.log(`"${args[0]}" could not be compiled as a regular expression, ignoring`);
-            filenameMatch = new RegExp('.*')
+        else if (args[i] == "-re" && i < args.length - 1) {
+            try {
+                filenameMatch = new RegExp(args[i + 1])
+                i++
+            }
+            catch (e) {
+                console.log(`"${args[0]}" could not be compiled as a regular expression, ignoring`);
+                filenameMatch = new RegExp('.*')
+            }
         }
+    }
+
+    let ignoreSnippets: { [k: string]: boolean } = {} //NodeJS doesn't yet support sets
+    const ignorePath = "built/docs/snippets/goodsnippets.txt"
+
+    if (ignorePreviousSuccesses && fs.existsSync(ignorePath)) {
+        let numberOfIgnoreSnippets = 0
+        for (let line of fs.readFileSync(ignorePath, "utf8").split("\n")) {
+            ignoreSnippets[line] = true
+            numberOfIgnoreSnippets++
+        }
+        console.log(`Ignoring ${numberOfIgnoreSnippets} snippets previously believed to be good`)
     }
 
     let files = uploader.getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
@@ -2452,11 +2472,14 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         let snippets = uploader.getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
-        let ignoredTypes = ["Text", "sig", "pre", "codecard", "package"]
+        let ignoredTypes = ["Text", "sig", "pre", "codecard", "package", "namespaces"]
         let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0)
 
         return Promise.map(snippetsToCheck, (snippet, i) => {
             let name = `${pkgName}-${i}`
+            if (name in ignoreSnippets && ignoreSnippets[name]) {
+                return addSuccess(name)
+            }
             let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
             return pkg.getCompileOptionsAsync().then(opts => {
                 opts.ast = true
@@ -2497,6 +2520,11 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                 console.log(`  L ${diag.line}\t${diag.messageText}`)
             }
         }
+        let successData = successes.join("\n")
+        if (!fs.existsSync(path.dirname(ignorePath))) {
+            fs.mkdirSync(path.dirname(ignorePath))
+        }
+        fs.writeFileSync(ignorePath, successData)
     })
 }
 
@@ -2739,7 +2767,7 @@ cmd("gendocs                      - build current package and its docs", gendocs
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
-cmd("testsnippets                 - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
+cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
