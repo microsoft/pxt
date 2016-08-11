@@ -19,6 +19,7 @@ import * as appcache from "./appcache";
 import {LoginBox} from "./login"
 
 import * as ace from "./ace"
+import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
@@ -535,7 +536,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
-    aceEditor: ace.Editor;
+    aceEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
@@ -641,7 +642,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     private initEditors() {
-        this.aceEditor = new ace.Editor(this);
+        this.aceEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 

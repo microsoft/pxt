@@ -39,6 +39,7 @@
         <div id='compilemsg' class="ui ignored info message"></div>
     </div>
 
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="/cdn/vs/editor/editor.main.css">
     <style type="text/css">
         @import "/cdn/semantic.css";
         @import "/cdn/custom.css";
@@ -288,6 +289,10 @@
             <block type="lists_length"></block>
         </category>
     </xml>
+    <script>var require = { paths: { 'vs': '/cdn/vs' } };</script>
+    <script src="/cdn/vs/loader.js"></script>
+    <script src="/cdn/vs/editor/editor.main.nls.js"></script>
+    <script src="/cdn/vs/editor/editor.main.js"></script>
 </body>
 
 </html>
