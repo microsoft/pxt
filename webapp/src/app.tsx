@@ -536,7 +536,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
-    aceEditor: monaco.Editor;
+    textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
@@ -642,7 +642,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     private initEditors() {
-        this.aceEditor = new monaco.Editor(this);
+        this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
@@ -660,7 +660,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }
         }
 
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.aceEditor]
+        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -741,12 +741,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             let file = pkg.mainEditorPkg().lookupFile("this/" + virtualFile)
             if (file) {
                 this.setFile(file)
-                this.aceEditor.openBlocks()
+                this.textEditor.openBlocks()
             }
         } else if (virtualFile == fileName && pkg.File.blocksFileNameRx.test(fileName)) {
             // Going from ts -> blocks
             pxt.tickEvent("sidebar.showBlocks");
-            this.aceEditor.openBlocks()
+            this.textEditor.openBlocks()
         } else if (virtualFile == fileName && pkg.File.tsFileNameRx.test(fileName)) {
             pxt.tickEvent("sidebar.showTypescript");
             // Going from blocks -> ts
@@ -814,7 +814,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     currFile: file
                 })
                 if (!e && pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
-                    this.aceEditor.checkRoundTrip(file.getVirtualFileName(), () => {
+                    this.textEditor.checkRoundTrip(file.getVirtualFileName(), () => {
                         return Promise.resolve()
                     })
                 }
@@ -896,8 +896,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
                     // this is somewhat hacky...
-                    this.aceEditor.overrideFile(text)
-                    this.aceEditor.formatCode()
+                    this.textEditor.overrideFile(text)
+                    this.textEditor.formatCode()
                 })
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == "pxt/" + targetId) {
@@ -1076,8 +1076,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     editText() {
-        if (this.editor != this.aceEditor) {
-            this.updateEditorFile(this.aceEditor)
+        if (this.editor != this.textEditor) {
+            this.updateEditorFile(this.textEditor)
             this.forceUpdate();
         }
     }
