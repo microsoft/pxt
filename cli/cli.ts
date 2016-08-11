@@ -675,6 +675,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "relprefix": opts.localDir,
             "workerjs": opts.localDir + "worker.js",
             "tdworkerjs": opts.localDir + "tdworker.js",
+            "monacoworkerjs": opts.localDir + "monacoworker.js",
             "pxtVersion": opts.pkgversion,
             "pxtRelId": "",
             "pxtCdnUrl": opts.localDir,
