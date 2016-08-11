@@ -1,6 +1,7 @@
-/// <reference path="../../typings/monaco-editor/monaco.d.ts" />
+/// <reference path="../../node_modules/monaco-editor/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
 /// <reference path="fuse.d.ts" />
+
 
 import * as React from "react";
 import * as pkg from "./package";
@@ -43,7 +44,6 @@ export class Editor extends srceditor.Editor {
             return
 
         const failedAsync = () => {
-            this.forceDiagnosticsUpdate();
             let bf = pkg.mainEditorPkg().files[blockFile];
             return core.confirmAsync({
                 header: lf("Oops, there is a problem converting your code."),
@@ -174,7 +174,6 @@ export class Editor extends srceditor.Editor {
     }
 
     formatCode(isAutomatic = false): string {
-        console.log("Formatting code..")
         if (!this.isTypescript) return;
 
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
@@ -213,11 +212,9 @@ export class Editor extends srceditor.Editor {
         return line.slice(0, pos.lineNumber)
     }
 
-/*
     isIncomplete() {
-        return this.incomplete
+        return false;
     }
-*/
 
     prepare() {
         this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
@@ -229,7 +226,6 @@ export class Editor extends srceditor.Editor {
                                     "editor.action.referenceSearch.trigger"]
 
         this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._shouldShowInContextMenu = false : null );
-        //this.editor.getActions().forEach(action => (action as any)._shouldShowInContextMenu ? console.log(action.id) : null);
 
         this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
             .run = () => Promise.resolve(this.formatCode());
@@ -266,63 +262,18 @@ export class Editor extends srceditor.Editor {
             });
         }
 
-        /*
+        this.editor.onDidFocusEditorText(() => {
+            pxt.vs.syncModels(pkg.mainPkg);
+        })
+
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
-            console.log("content changed");
             if (this.lastSet != null) {
                 this.lastSet = null
             } else {
-                this.updateDiagnostics();
+                pxt.log("change call back ")
                 this.changeCallback();
             }
-        });*/
-
-        /*
-        let langTools = acequire("ace/ext/language_tools");
-
-        this.editor.commands.on("exec", (e: any) => {
-            pxt.debug("beforeExec: " + e.command.name)
-            if (!this.isTypescript) return;
-
-            let insString: string = e.command.name == "insertstring" ? e.args : null
-
-            //if (insString == "\n") needsFormat = true
-            //if (insString && insString.trim() && insString.length == 1) {
-            //    if (!this.getCurrLinePrefix().trim()) {}
-            //}
         });
-
-        let approvedCommands = {
-            insertstring: 1,
-            backspace: 1,
-            Down: 1,
-            Up: 1,
-        }
-        */
-
-        /*
-        this.editor.on("afterExec", (e: any) => {
-            pxt.debug("afterExec: " + e.command.name)
-            if (!this.isTypescript) return;
-
-            let insString: string = e.command.name == "insertstring" ? e.args : null
-            if (this.completer.activated) {
-                if (insString && !/^[\w]$/.test(insString)) {
-                    this.completer.detach();
-                    if (e.args == ".")
-                        this.completer.showPopup();
-                } else if (!approvedCommands.hasOwnProperty(e.command.name)) {
-                    this.completer.detach();
-                } else {
-                    this.completer.forceUpdate();
-                }
-            } else {
-                if (/^[a-zA-Z\.]$/.test(insString)) {
-                    this.completer.showPopup();
-                }
-            }
-        });
-        */
 
         this.isReady = true
     }
@@ -385,95 +336,6 @@ export class Editor extends srceditor.Editor {
 
     snapshotState() {
         return this.editor.getModel() ? this.editor.getModel().getLinesContent() : []
-    }
-
-    private diagSnapshot: string[];
-    private annotationLines: number[];
-
-    updateDiagnostics() {
-        if (this.needsDiagUpdate())
-            this.forceDiagnosticsUpdate();
-    }
-
-    private needsDiagUpdate() {
-        if (!this.annotationLines) return false
-        let lines: string[] = this.editor.getModel().getLinesContent()
-        for (let line of this.annotationLines) {
-            if (this.diagSnapshot[line] !== lines[line])
-                return true;
-        }
-        return false;
-    }
-
-    highlightStatement(brk: ts.pxt.LocationInfo) {
-        this.forceDiagnosticsUpdate()
-        if (!brk) return
-        /*
-        let sess = this.editor.getSession();
-        sess.addMarker(new Range(brk.line, brk.character, brk.line, brk.character + brk.length),
-            "ace_highlight-marker", "ts-highlight", true)
-            */
-    }
-
-    forceDiagnosticsUpdate() {
-        /*let sess = this.editor.getSession();
-        Object.keys(sess.getMarkers(true) || {}).forEach(m => sess.removeMarker(parseInt(m)))
-        sess.clearAnnotations()
-*/
-        let model = this.editor.getModel();
-        let ann: monaco.editor.IModelDecoration[]
-        let file = this.currFile
-
-        let lines: string[] = model.getLinesContent()
-        this.annotationLines = []
-
-        if (file && file.diagnostics)
-            for (let d of file.diagnostics) {
-                /*
-                ann.push({
-                    
-                    lineNumber: d.line,
-                    column: d.character,
-                    text: ts.flattenDiagnosticMessageText(d.messageText, "\n"),
-                    type: "error"
-                })
-
-                if (lines[d.line] === this.diagSnapshot[d.line]) {
-                    this.annotationLines.push(d.line)
-                    sess.addMarker(new Range(d.line, d.character, d.line, d.character + d.length),
-                        "ace_error-marker", "ts-error", true)
-                }
-                */
-            }
-        //model.deltaDecorations(lines, ann)
-
-        //this.setAnnotationHelpCard(ann[0]);
-    }
-
-
-    private setAnnotationHelpCard(annotation: monaco.editor.IModelDecoration): void {
-        if (!annotation) {
-            this.parent.setErrorCard(undefined);
-            return undefined;
-        }
-
-        this.parent.setErrorCard({
-            header: lf("line {0}", annotation.range.startLineNumber + 1),
-            name: lf("error"),
-            description: annotation.id,
-            color: 'red'
-        }, (e) => {
-            this.setViewState(annotation.range.getStartPosition());
-            //this.editor.setHighlightActiveLine(true);
-            e.preventDefault();
-            return false;
-        })
-    }
-
-    setDiagnostics(file: pkg.File, snapshot: string[]) {
-        Util.assert(this.currFile == file)
-        this.diagSnapshot = snapshot
-        this.forceDiagnosticsUpdate()
     }
 
     setViewState(pos: monaco.IPosition) {

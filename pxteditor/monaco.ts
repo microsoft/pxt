@@ -1,4 +1,4 @@
-/// <reference path="../typings/monaco-editor/monaco.d.ts" />
+/// <reference path="../node_modules/monaco-editor/monaco.d.ts" />
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 
