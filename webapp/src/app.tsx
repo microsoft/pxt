@@ -18,7 +18,6 @@ import * as cmds from "./cmds"
 import * as appcache from "./appcache";
 import {LoginBox} from "./login"
 
-import * as ace from "./ace"
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
 import * as blocks from "./blocks"
@@ -127,7 +126,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         if (!cloud.packages) return [];
         let res: pxt.github.SearchResults =
             this.state.searchFor || cloud.preferredPackages
-                ? this.getData(`gh-search:${this.state.searchFor || cloud.preferredPackages.join('|') }`)
+                ? this.getData(`gh-search:${this.state.searchFor || cloud.preferredPackages.join('|')}`)
                 : null
         if (res) this.prevGhData = res.items
         return this.prevGhData
@@ -1483,7 +1482,8 @@ let myexports: any = {
     require,
     core,
     getEditor,
-    ace,
+    monaco,
+    blocks,
     compiler,
     pkg,
     getsrc,

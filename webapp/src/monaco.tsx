@@ -1,6 +1,5 @@
 /// <reference path="../../node_modules/monaco-editor/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
-/// <reference path="fuse.d.ts" />
 
 
 import * as React from "react";
@@ -272,7 +271,6 @@ export class Editor extends srceditor.Editor {
             if (this.lastSet != null) {
                 this.lastSet = null
             } else {
-                pxt.log("change call back ")
                 this.changeCallback();
             }
         });
