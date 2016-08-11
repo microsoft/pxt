@@ -706,6 +706,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "release.manifest",
         "worker.js",
         "tdworker.js",
+        "monacoworker.js",
         "simulator.html",
         "sim.manifest",
         "sim.webmanifest",
