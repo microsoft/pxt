@@ -204,7 +204,6 @@ export class Editor extends srceditor.Editor {
         }
         this.editor.setValue(formatted)
         this.editor.setScrollPosition(line)
-        //this.editor.gotoLine(line, col - 1, false)
         return formatted
     }
 
@@ -216,15 +215,67 @@ export class Editor extends srceditor.Editor {
 
 /*
     isIncomplete() {
-        return this.completer.activated
+        return this.incomplete
     }
 */
 
     prepare() {
-        console.log("Prepare called");
-        this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"), "typescript", false);
+        this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
 
-        //this.editor.setShowPrintMargin(false);
+        let removeFromContextMenu = ["editor.action.changeAll",
+                                    "editor.action.quickOutline",
+                                    "editor.action.goToDeclaration",
+                                    "editor.action.previewDeclaration",
+                                    "editor.action.referenceSearch.trigger"]
+
+        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._shouldShowInContextMenu = false : null );
+        //this.editor.getActions().forEach(action => (action as any)._shouldShowInContextMenu ? console.log(action.id) : null);
+
+        this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
+            .run = () => Promise.resolve(this.formatCode());
+
+        this.editor.getActions().filter(action => action.id == "editor.action.quickCommand")[0]
+            .label = lf("Show Commands");
+
+        this.editor.addAction({
+            id: "save",
+            label: lf("Save"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+            enablement: {writeableEditor: true},
+            contextMenuGroupId: "4_tools/*",
+            run: () => Promise.resolve(this.parent.saveFile())
+        });
+
+        this.editor.addAction({
+            id: "runSimulator",
+            label: lf("Run Simulator"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+            enablement: {writeableEditor: true},
+            contextMenuGroupId: "4_tools/*",
+            run: () => Promise.resolve(this.parent.runSimulator())
+        });
+
+        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+            this.editor.addAction({
+                id: "compileHex",
+                label: lf("Compile Hex"),
+                enablement: {writeableEditor: true},
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
+                contextMenuGroupId: "4_tools/*",
+                run: () => Promise.resolve(this.parent.compile())
+            });
+        }
+
+        /*
+        this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
+            console.log("content changed");
+            if (this.lastSet != null) {
+                this.lastSet = null
+            } else {
+                this.updateDiagnostics();
+                this.changeCallback();
+            }
+        });*/
 
         /*
         let langTools = acequire("ace/ext/language_tools");
@@ -273,74 +324,6 @@ export class Editor extends srceditor.Editor {
         });
         */
 
-        /*
-        this.editor.commands.addCommand({
-            name: "showKeyboardShortcuts",
-            bindKey: { win: "Ctrl-Alt-h", mac: "Command-Alt-h" },
-            exec: () => {
-                let module = acequire("ace/ext/keybinding_menu")
-                module.init(this.editor);
-                (this.editor as any).showKeyboardShortcuts()
-            }
-        })
-        */
-
-        this.editor.createContextKey("save", true);
-        this.editor.createContextKey("formatCode", true);
-        this.editor.createContextKey("runSimulator", true);
-        this.editor.createContextKey("compileHex", true);
-
-        this.editor.addCommand(
-            monaco.KeyMod.Alt | monaco.KeyMod.Shift + monaco.KeyCode.KEY_F,
-            () => this.formatCode(),
-            "formatCode")
-
-        this.editor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S,
-            () => this.parent.saveFile(),
-            "save")
-
-        this.editor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            () => this.parent.runSimulator(),
-            "runSimulator")
-
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-            this.editor.addCommand(
-                monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter,
-                () => this.parent.runSimulator(),
-                "compileHex")
-        }
-
-/*
-        let sess = this.editor.getSession()
-        sess.setNewLineMode("unix");
-        sess.setTabSize(4);
-        sess.setUseSoftTabs(true);
-        this.editor.$blockScrolling = Infinity;
-
-        //this.editor.setTheme("ace/theme/textmate")
-
-        sess.on("change", () => {
-            if (this.lastSet != null) {
-                this.lastSet = null
-            } else {
-                this.updateDiagnostics();
-                this.changeCallback();
-            }
-        })
-*/
-
-        this.editor.getModel().onDidChangeContent((e: monaco.editor.IModelContentChangedEvent2) => {
-            console.log("content changed");
-            if (this.lastSet != null) {
-                this.lastSet = null
-            } else {
-                this.updateDiagnostics();
-                this.changeCallback();
-            }
-        });
-
         this.isReady = true
     }
 
@@ -375,25 +358,25 @@ export class Editor extends srceditor.Editor {
 
         let ext = file.getExtension()
         let modeMap: any = {
-            "cpp": "c_cpp",
+            "cpp": "cpp",
             "json": "json",
-            "md": "markdown",
+            "md": "text",
             "ts": "typescript",
             "js": "javascript",
             "blocks": "xml",
-            "asm": "assembly_armthumb"
+            "asm": "bat"
         }
         let mode = "text"
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
 
-        if (!this.editor || mode != "typescript" && file.isReadonly() != false) {
-            this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"), mode, file.isReadonly());
-        }
+        this.editor.updateOptions({readOnly: file.isReadonly()});
 
         this.currFile = file;
-        let model = monaco.editor.getModels().filter((model) => model.uri.toString() == "pkg:" + this.currFile.getName())[0];
-        //if (model) 
-        this.editor.setModel(model);
+        let proto = "pkg:" + this.currFile.getName();
+        let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
+        if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()),mode,monaco.Uri.parse(proto));
+        if (model) this.editor.setModel(model);
+
         this.setValue(file.content)
         this.setDiagnostics(file, this.snapshotState())
 
@@ -401,7 +384,7 @@ export class Editor extends srceditor.Editor {
     }
 
     snapshotState() {
-        return this.editor.getModel().getLinesContent()
+        return this.editor.getModel() ? this.editor.getModel().getLinesContent() : []
     }
 
     private diagSnapshot: string[];
@@ -494,7 +477,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setViewState(pos: monaco.IPosition) {
-        if (pos == {}) return;
+        if (Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
         this.editor.setScrollPosition(pos)
     }

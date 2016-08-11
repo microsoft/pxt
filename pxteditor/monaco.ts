@@ -28,11 +28,11 @@ namespace pxt.vs {
         });
 
         models
-            .filter(model => !modelMap[model.uri.toString()])
+            .filter(model => /\.(ts)$/.test(model.uri.toString()) && !modelMap[model.uri.toString()])
             .forEach(model => model.dispose());
     }
 
-    export function initMonacoAsync(element: HTMLElement, mode: string, readonly: boolean): monaco.editor.IStandaloneCodeEditor {
+    export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         let compilerOptions = monaco.languages.typescript.typescriptDefaults.compilerOptions;
         compilerOptions.allowUnreachableCode = true;
         compilerOptions.noImplicitAny = true;
@@ -46,16 +46,16 @@ namespace pxt.vs {
         let editor = monaco.editor.create(element, {
             value: "",
             //ariaLabel: lf("JavaScript Editor"),
-            readOnly: readonly,
+            readOnly: false,
             contextmenu: true,
             fontSize: 25,
             folding: true,
-            formatOnType: true,
+            //formatOnType: true,
             outlineMarkers: true,
             parameterHints: true,
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
             scrollBeyondLastLine: false,
-            language: mode,
+            language: "typescript",
         });
 
         window.addEventListener('resize', function () {
