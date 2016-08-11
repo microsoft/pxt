@@ -267,6 +267,8 @@ export class Editor extends srceditor.Editor {
         })
 
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
+            if (!this.isTypescript) return;
+
             if (this.lastSet != null) {
                 this.lastSet = null
             } else {
