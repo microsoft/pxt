@@ -33,16 +33,6 @@ namespace pxt.vs {
     }
 
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
-        pxt.log('loading monaco');
-        pxt.log('worker: ' + pxt.webConfig.monacoworkerjs);
-
-        // CORS support: https://github.com/Microsoft/monaco-editor
-        (<any>window).MonacoEnvironment = {
-            getWorkerUrl: function (workerId: any, label: any) {
-                return pxt.webConfig.monacoworkerjs;
-            }
-        };
-
         let compilerOptions = monaco.languages.typescript.typescriptDefaults.compilerOptions;
         compilerOptions.allowUnreachableCode = true;
         compilerOptions.noImplicitAny = true;

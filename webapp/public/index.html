@@ -289,7 +289,14 @@
             <block type="lists_length"></block>
         </category>
     </xml>
-    <script>var require = { paths: { 'vs': '/cdn/vs' } };</script>
+    <script>
+        var require = { paths: { 'vs': '/cdn/vs' } };
+        window.MonacoEnvironment = {
+            getWorkerUrl: function (workerId, label) {
+                return pxt.webConfig.monacoworkerjs;
+            }
+        };        
+    </script>
     <script src="/cdn/vs/loader.js"></script>
     <script src="/cdn/vs/editor/editor.main.nls.js"></script>
     <script src="/cdn/vs/editor/editor.main.js"></script>
