@@ -239,7 +239,7 @@ export class Editor extends srceditor.Editor {
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
             enablement: {writeableEditor: true},
             contextMenuGroupId: "4_tools/*",
-            run: () => Promise.resolve(this.parent.saveFile())
+            run: () => Promise.resolve(this.parent.typecheckNow())
         });
 
         this.editor.addAction({

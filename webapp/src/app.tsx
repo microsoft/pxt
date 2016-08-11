@@ -148,9 +148,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     fetchUrlData(): Cloud.JsonScript[] {
         if (this.state.packages) return []
 
-        let embedUrl = pxt.appTarget.appTheme.embedUrl;
+        let embedUrl = Util.escapeForRegex(Util.stripUrlProtocol(pxt.appTarget.appTheme.homeUrl));
         if (this.state.searchFor && embedUrl) {
-            let m = new RegExp(`^(${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(this.state.searchFor.trim());
+            let m = new RegExp(`^((https:\/\/)?${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(this.state.searchFor.trim());
             let scriptid = m && (m[3] || m[4]) ? (m[3] ? m[3].toLowerCase() : m[4].toLowerCase()) : null
             let res = this.getData(`cloud:${scriptid}`)
             if (res) {

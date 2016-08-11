@@ -331,6 +331,13 @@ namespace ts.pxt.Util {
         }
     }
 
+    export function escapeForRegex(str: string) {
+        return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+    }
+
+    export function stripUrlProtocol(str: string) {
+        return str.replace(/.*?:\/\//g, "");
+    }
     export let isNodeJS = false;
 
     export interface HttpRequestOptions {
