@@ -431,7 +431,7 @@ export function ptrAsync(path: string, target?: string) {
         })
 }
 
-function allFiles(top: string, maxDepth = 4, allowMissing = false): string[] {
+function allFiles(top: string, maxDepth = 8, allowMissing = false): string[] {
     let res: string[] = []
     if (allowMissing && !fs.existsSync(top)) return res
     for (let p of fs.readdirSync(top)) {
