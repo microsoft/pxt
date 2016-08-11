@@ -35,7 +35,7 @@ CACHE:
 /cdn/vs/base/common/worker/workerServer.js
 /cdn/vs/base/common/worker/workerServer.nls.js
 /cdn/vs/base/worker/workerMain.js
-/cdn/vs/base/worker/workerMainCcompatibility.html
+/cdn/vs/base/worker/workerMainCompatibility.html
 /cdn/vs/basic-languages/src/bat.js
 /cdn/vs/basic-languages/src/cpp.js
 /cdn/vs/editor/editor.main.css
