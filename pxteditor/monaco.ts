@@ -16,11 +16,13 @@ namespace pxt.vs {
                         sn = "pxt_modules/" + fp
                     let proto = "pkg:" + fp;
                     let currModel = models.filter(model => model.uri.toString() == proto)[0];
+                    // TypeScript casts the content of the file to a boolean, thus 'empty' files look as if they are missing
+                    let content = pkg.readFile(f) || " ";
                     if (!currModel) {
                         let uri: monaco.Uri = monaco.Uri.parse(proto);
-                        monaco.editor.createModel(pkg.readFile(f), "typescript", uri);
+                        monaco.editor.createModel(content, "typescript", uri);
                     } else {
-                        currModel.setValue(pkg.readFile(f))
+                        currModel.setValue(content)
                     }
                     modelMap[proto] = "1";
                 }
