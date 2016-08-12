@@ -1,10 +1,11 @@
 {
   "name": "pxt-core",
   "version": "0.3.30",
-  "description": "A kinder JavaScript experience",
+  "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
     "JavaScript",
+    "Blockly",
     "education",
     "microbit"
   ],

@@ -2,6 +2,7 @@
     "id": "core",
     "name": "PXT",
     "title": "Programming Experience Toolkit",
+    "description": "PXT provides Blocks / JavaScript tools and editors.",
     "bundleddirs": [],
     "compile": {
         "hasHex": false,
