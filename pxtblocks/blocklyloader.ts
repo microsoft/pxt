@@ -11,7 +11,9 @@ namespace pxt.blocks {
         images: 45,
         variables: 330,
         text: 160,
-        lists: 260
+        lists: 260,
+	math: 230,
+	logic: 210
     }
 
     // list of built-in blocks, should be touched.
@@ -392,6 +394,24 @@ namespace pxt.blocks {
         if (!config.logicBlocks) removeCategory(tb, "Logic");
         if (!config.loopsBlocks) removeCategory(tb, "Loops");
 
+        // Load localized names for default categories
+        if (tb) {
+            let cats = tb.querySelectorAll('category');
+            for (var i = 0; i < cats.length; i++) {
+                cats[i].setAttribute('name',
+                    Util._localize(cats[i].getAttribute('name')));
+            }
+        }
+
+        // Do not remove this comment.
+	// These are used for category names.
+        // lf("Loops")
+        // lf("Logic")
+        // lf("Variables")
+        // lf("Lists")
+        // lf("Text")
+        // lf("Math")
+
         // add extra blocks
         if (tb && pxt.appTarget.runtime && pxt.appTarget.runtime.extraBlocks) {
             pxt.appTarget.runtime.extraBlocks.forEach(eb => {
@@ -470,60 +490,12 @@ namespace pxt.blocks {
         initMath();
         initVariables();
         initLoops();
+	initLogic();
+	initText();
 
         // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
         // we're taking off hats.
         // Blockly.BlockSvg.START_HAT = true;
-
-        // Here's a helper to override the help URL for a block that's *already defined
-        // by Blockly*. For blocks that we define ourselves, just change the call to
-        // setHelpUrl in the corresponding definition above.
-        function monkeyPatchBlock(id: string, name: string, url: string) {
-            let old = Blockly.Blocks[id].init;
-            if (!old) return;
-            // fix sethelpurl
-            Blockly.Blocks[id].init = function () {
-                // The magic of dynamic this-binding.
-                old.call(this);
-                this.setHelpUrl(/*"/blocks/" + */url);
-                if (!this.codeCard) {
-                    let tb = document.getElementById('blocklyToolboxDefinition');
-                    let xml: HTMLElement = tb ? tb.querySelector("category block[type~='" + id + "']") as HTMLElement : undefined;
-                    this.codeCard = <pxt.CodeCard>{
-                        header: name,
-                        name: name,
-                        software: 1,
-                        description: goog.isFunction(this.tooltip) ? this.tooltip() : this.tooltip,
-                        blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"</block>`) + "</xml>") : undefined,
-                        url: url
-                    }
-                }
-            };
-        }
-
-        monkeyPatchBlock("controls_if", lf("a conditional statement"), "blocks/logic/if");
-        monkeyPatchBlock("controls_repeat_ext", lf("a loop that repeats and increments an index"), "blocks/loops/repeat");
-        monkeyPatchBlock("device_while", lf("a loop that repeats while the condition is true"), "blocks/loops/while");
-        monkeyPatchBlock("controls_simple_for", lf("a loop that repeats the number of times you say"), "blocks/loops/for");
-
-        monkeyPatchBlock("variables_set", lf("assign the value of a variable"), "blocks/variables/assign");
-        monkeyPatchBlock("variables_get", lf("get the value of a variable"), "blocks/variables");
-        monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change-var");
-
-        monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "blocks/logic/boolean");
-        monkeyPatchBlock("logic_operation", lf("boolean operation"), "blocks/logic/boolean");
-        monkeyPatchBlock("logic_negate", lf("logical negation"), "blocks/logic/boolean");
-        monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "blocks/logic/boolean");
-
-        monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("an integer number") : lf("a decimal number"), "reference/types/number");
-        monkeyPatchBlock("math_arithmetic", lf("arithmetic operation"), "blocks/math");
-        monkeyPatchBlock("math_modulo", lf("division remainder"), "blocks/math");
-        monkeyPatchBlock("math_op2", lf("minimum or maximum of 2 numbers"), "blocks/math");
-        monkeyPatchBlock("math_op3", lf("absolute value of a number"), "blocks/math");
-        monkeyPatchBlock("device_random", lf("pick random number"), "blocks/math");
-
-        monkeyPatchBlock("text", lf("a piece of text"), "reference/types/string");
-        monkeyPatchBlock("text_length", lf("number of characters in the string"), "reference/types/string-functions");
 
         updateUserLanguage();
     }
@@ -540,48 +512,113 @@ namespace pxt.blocks {
         }
     }
 
+    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
+	if (tooltip) block.setTooltip(tooltip);
+	if (url) block.setHelpUrl(url);
+
+	let tb = document.getElementById('blocklyToolboxDefinition');
+        let xml: HTMLElement = tb ? tb.querySelector(`category block[type~='${id}']`) as HTMLElement : undefined;
+	block.codeCard = <pxt.CodeCard>{
+	    header: name,
+	    name: name,
+	    software: 1,
+	    description: goog.isFunction(tooltip) ? tooltip() : tooltip,
+	    blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"</block>`) + "</xml>") : undefined,
+	    url: url
+	};
+    }
+
+    function installHelpResources(id: string, name: string, tooltip: any, url: string) {
+        let block = Blockly.Blocks[id];
+        let old = block.init;
+        if (!old) return;
+
+        block.init = function () {
+            old.call(this);
+            let block = this;
+            setHelpResources(this, id, name, goog.isFunction(tooltip) ? function() { return tooltip(block); } : tooltip, url);
+        }
+    }
+
     function initLoops() {
+        let msg:any = Blockly.Msg;
+
+        // builtin controls_repeat_ext
+        msg.CONTROLS_REPEAT_TITLE = lf("repeat %1 times");
+        msg.CONTROLS_REPEAT_INPUT_DO = lf("_repeat_do"); // "do" in English
+        installHelpResources(
+            'controls_repeat_ext',
+            lf("a loop that repeats and increments an index"),
+            lf("Do some statements several times."),
+            '/blocks/loops/repeat'
+        );
+
+        // pxt device_while
         Blockly.Blocks['device_while'] = {
             init: function () {
-                this.setHelpUrl('/blocks/loops/while');
-                this.setColour(blockColors['loops']);
-                this.appendValueInput("COND")
-                    .setCheck("Boolean")
-                    .appendField("while");
+                this.jsonInit({
+                  "message0": lf("while %1"),
+                  "args0": [
+                    {
+                      "type": "input_value",
+                      "name": "COND",
+                      "check": "Boolean"
+                    }
+                  ],
+                  "previousStatement": null,
+                  "nextStatement": null,
+                  "colour": blockColors['loops']
+                });
                 this.appendStatementInput("DO")
-                    .appendField("do");
-                this.setPreviousStatement(true);
-                this.setNextStatement(true);
-                this.setTooltip(lf("Run the same sequence of actions while the condition is met."));
+                    .appendField(lf("_while_do")); // "do" in English
+
+		setHelpResources(this,
+		    'device_while',
+		    lf("a loop that repeats while the condition is true"),
+		    lf("Run the same sequence of actions while the condition is met."),
+		    '/blocks/loops/while'
+		);
             }
         };
 
+        // pxt controls_simple_for
         Blockly.Blocks['controls_simple_for'] = {
             /**
              * Block for 'for' loop.
              * @this Blockly.Block
              */
             init: function () {
-                this.setHelpUrl("/blocks/loops/for");
-                this.setColour((<any>Blockly.Blocks).loops.HUE);
-                this.appendDummyInput()
-                    .appendField("for")
-                    .appendField(new Blockly.FieldVariable(null), 'VAR')
-                    .appendField("from 0 to");
-                this.appendValueInput("TO")
-                    .setCheck("Number")
-                    .setAlign(Blockly.ALIGN_RIGHT);
-                this.appendStatementInput('DO')
-                    .appendField(Blockly.Msg.CONTROLS_FOR_INPUT_DO);
-                this.setPreviousStatement(true);
-                this.setNextStatement(true);
-                this.setInputsInline(true);
-                // Assign 'this' to a variable for use in the tooltip closure below.
-                let thisBlock = this;
-                this.setTooltip(function () {
-                    return "Have the variable '%1' take on the values from 0 to the end number, counting by 1, and do the specified blocks.".replace('%1',
-                        thisBlock.getFieldValue('VAR'));
+                this.jsonInit({
+                  "message0": lf("for %1 from 0 to %2"),
+                  "args0": [
+                    {
+                      "type": "field_variable",
+                      "name": "VAR",
+                      "variable": "item"
+                    },
+                    {
+                      "type": "input_value",
+                      "name": "TO",
+                      "check": "Number"
+                    }
+                  ],
+                  "previousStatement": null,
+                  "nextStatement": null,
+                  "colour": blockColors['loops'],
+                  "inputsInline": true
                 });
+                this.appendStatementInput('DO')
+                    .appendField(lf("_for_do")); // "do" in English
+
+                let thisBlock = this;
+		setHelpResources(this,
+		    'controls_simple_for',
+		    lf("a loop that repeats the number of times you say"),
+		    function () {
+			return lf("Have the variable '%1' take on the values from 0 to the end number, counting by 1, and do the specified blocks.").replace('%1', thisBlock.getFieldValue('VAR'));
+		    },
+		    '/blocks/loops/for'
+		);
             },
             /**
              * Return all variables referenced by this block.
@@ -612,7 +649,7 @@ namespace pxt.blocks {
                 if (!this.isCollapsed()) {
                     let option: any = { enabled: true };
                     let name = this.getFieldValue('VAR');
-                    option.text = Blockly.Msg.VARIABLES_SET_CREATE_GET.replace('%1', name);
+                    option.text = lf("Create 'get %1'").replace('%1', name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
                     let xmlBlock = goog.dom.createDom('block', null, xmlField);
@@ -662,12 +699,12 @@ namespace pxt.blocks {
 
             // Options to undo/redo previous action.
             let undoOption: any = {};
-            undoOption.text = Blockly.Msg.UNDO;
+            undoOption.text = lf("Undo");
             undoOption.enabled = this.undoStack_.length > 0;
             undoOption.callback = this.undo.bind(this, false);
             menuOptions.push(undoOption);
             let redoOption: any = {};
-            redoOption.text = Blockly.Msg.REDO;
+            redoOption.text = lf("Redo");
             redoOption.enabled = this.redoStack_.length > 0;
             redoOption.callback = this.undo.bind(this, true);
             menuOptions.push(redoOption);
@@ -708,7 +745,7 @@ namespace pxt.blocks {
 
                 // Option to collapse top blocks.
                 let collapseOption: any = { enabled: hasExpandedBlocks };
-                collapseOption.text = Blockly.Msg.COLLAPSE_ALL;
+                collapseOption.text = lf("Collapse Blocks");
                 collapseOption.callback = function () {
                     toggleOption(true);
                 };
@@ -716,7 +753,7 @@ namespace pxt.blocks {
 
                 // Option to expand top blocks.
                 let expandOption: any = { enabled: hasCollapsedBlocks };
-                expandOption.text = Blockly.Msg.EXPAND_ALL;
+                expandOption.text = lf("Expand Blocks");
                 expandOption.callback = function () {
                     toggleOption(false);
                 };
@@ -755,12 +792,12 @@ namespace pxt.blocks {
             }
 
             let deleteOption = {
-                text: deleteList.length == 1 ? Blockly.Msg.DELETE_BLOCK :
-                    Blockly.Msg.DELETE_X_BLOCKS.replace('%1', String(deleteList.length)),
+                text: deleteList.length == 1 ? lf("Delete Block") :
+                    lf("Delete %1 Blocks").replace('%1', String(deleteList.length)),
                 enabled: deleteList.length > 0,
                 callback: function () {
                     if (deleteList.length < 2 ||
-                        window.confirm(Blockly.Msg.DELETE_ALL_BLOCKS.replace('%1',
+                        window.confirm(lf("Delete all %1 blocks?").replace('%1',
                             String(deleteList.length)))) {
                         deleteNext();
                     }
@@ -788,51 +825,141 @@ namespace pxt.blocks {
     }
 
     function initMath() {
+        // pxt math_op2
         Blockly.Blocks['math_op2'] = {
             init: function () {
-                this.setHelpUrl('/blocks/math');
-                this.setColour(230);
-                this.appendValueInput("x")
-                    .setCheck("Number")
-                    .appendField(new Blockly.FieldDropdown([["min", "min"], ["max", "max"]]), "op")
-                    .appendField("of");
-                this.appendValueInput("y")
-                    .setCheck("Number")
-                    .appendField("and");
-                this.setInputsInline(true);
-                this.setOutput(true, "Number");
-                this.setTooltip(lf("Math operators."));
+                this.jsonInit({
+                  "message0": lf("%1 of %2 and %3"),
+                  "args0": [
+                    {
+                      "type": "field_dropdown",
+                      "name": "op",
+                      "options": [
+                        [lf("min"), "min"],
+                        [lf("max"), "max"]
+                      ]
+                    },
+                    {
+                      "type": "input_value",
+                      "name": "x",
+                      "check": "Number"
+                    },
+                    {
+                      "type": "input_value",
+                      "name": "y",
+                      "check": "Number"
+                    }
+                  ],
+                  "inputsInline": true,
+                  "output": "Number",
+                  "colour": blockColors['math']
+                });
+
+                let thisBlock = this;
+		setHelpResources(this,
+		    'math_op2',
+                    lf("minimum or maximum of 2 numbers"),
+                    function () {
+			return thisBlock.getFieldValue('op') == 'min' ? lf("smaller value of 2 numbers") : lf("larger value of 2 numbers");
+                    },
+                    '/blocks/math'
+		);
             }
         };
 
+        // pxt math_op3
         Blockly.Blocks['math_op3'] = {
             init: function () {
-                this.setHelpUrl('/blocks/math/abs');
-                this.setColour(230);
-                this.appendDummyInput()
-                    .appendField("absolute of");
-                this.appendValueInput("x")
-                    .setCheck("Number")
-                this.setInputsInline(true);
-                this.setOutput(true, "Number");
-                this.setTooltip(lf("Math operators."));
+                this.jsonInit({
+                  "message0": lf("absolute of %1"),
+                  "args0": [
+                    {
+                      "type": "input_value",
+                      "name": "x",
+                      "check": "Number"
+                    }
+                  ],
+                  "inputsInline": true,
+                  "output": "Number",
+                  "colour": blockColors['math']
+                });
+
+		setHelpResources(this,
+		    'math_op3',
+                    lf("absolute number"),
+                    lf("absolute value of a number"),
+                    '/blocks/math/abs'
+		);
             }
         };
 
+        // pxt device_random
         Blockly.Blocks['device_random'] = {
             init: function () {
-                this.setHelpUrl('/blocks/math/random');
-                this.setColour(230);
-                this.appendDummyInput()
-                    .appendField("pick random 0 to");
-                this.appendValueInput("limit")
-                    .setCheck("Number")
-                    .setAlign(Blockly.ALIGN_RIGHT);
-                this.setInputsInline(true);
-                this.setOutput(true, "Number");
-                this.setTooltip(lf("Returns a random integer between 0 and the specified bound (inclusive)."));
+                this.jsonInit({
+                  "message0": lf("pick random 0 to %1"),
+                  "args0": [
+                    {
+                      "type": "input_value",
+                      "name": "limit",
+                      "check": "Number"
+                    }
+                  ],
+                  "inputsInline": true,
+                  "output": "Number",
+                  "colour": blockColors['math']
+                });
+
+		setHelpResources(this,
+		    'device_random',
+                    lf("pick random number"),
+                    lf("Returns a random integer between 0 and the specified bound (inclusive)."),
+                    '/blocks/math/random'
+		);
             }
         };
+
+        // builtin math_number
+        //XXX Integer validation needed.
+        installHelpResources(
+            'math_number',
+            lf("number"),
+	    (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
+            '/blocks/math/random'
+        );
+
+        // builtin math_arithmetic
+        let msg:any = Blockly.Msg;
+        msg.MATH_ADDITION_SYMBOL = lf("_op_add");
+        msg.MATH_SUBTRACTION_SYMBOL = lf("_op_sub");
+        msg.MATH_MULTIPLICATION_SYMBOL = lf("_op_mul");
+        msg.MATH_DIVISION_SYMBOL = lf("_op_div");
+        msg.MATH_POWER_SYMBOL = lf("_op_pow");
+
+        let TOOLTIPS:any = {
+            'ADD': lf("Return the sum of the two numbers."),
+            'MINUS': lf("Return the difference of the two numbers."),
+            'MULTIPLY': lf("Return the product of the two numbers."),
+            'DIVIDE': lf("Return the quotient of the two numbers."),
+            'POWER': lf("Return the first number raised to the power of the second number."),
+        };
+        installHelpResources(
+            'math_arithmetic',
+            lf("arithmetic operation"),
+            function(block:any) {
+                return TOOLTIPS[block.getFieldValue('OP')];
+            },
+            '/blocks/math'
+        );
+
+        // builtin math_modulo
+        msg.MATH_MODULO_TITLE = lf("remainder of %1 ÷ %2");
+        installHelpResources(
+            'math_modulo',
+            lf("division remainder"),
+            lf("Return the remainder from dividing the two numbers."),
+            '/blocks/math'
+        );
     }
 
     function initVariables() {
@@ -842,8 +969,8 @@ namespace pxt.blocks {
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
             // user has created a variable of the same name.
-            goog.array.remove(variableList, Blockly.Msg.VARIABLES_DEFAULT_NAME);
-            variableList.unshift(Blockly.Msg.VARIABLES_DEFAULT_NAME);
+            goog.array.remove(variableList, "item");
+            variableList.unshift("item");
 
             let xmlList: HTMLElement[] = [];
             // variables getters first
@@ -913,21 +1040,168 @@ namespace pxt.blocks {
             return xmlList;
         };
 
+        // builtin variables_get
+        let msg:any = Blockly.Msg;
+        msg.VARIABLES_GET_CREATE_SET = lf("Create 'set %1'");
+        installHelpResources(
+            'variables_get',
+            lf("get the value of a variable"),
+            lf("Returns the value of this variable."),
+            '/blocks/variables'
+        );
+
+        // builtin variables_set
+        msg.VARIABLES_SET = lf("set %1 to %2");
+        msg.VARIABLES_DEFAULT_NAME = "item";
+        //XXX Do not translate the default variable name.
+        //XXX Variable names with Unicode character are harmful at this point.
+        msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
+        installHelpResources(
+            'variables_set',
+            lf("assign the value of a variable"),
+            lf("Sets this variable to be equal to the input."),
+            '/blocks/variables/assign'
+        );
+
+        // pxt variables_change
         Blockly.Blocks['variables_change'] = {
-            init: function () {
-                this.appendDummyInput()
-                    .appendField("change")
-                    .appendField(new Blockly.FieldVariable("item"), "VAR");
-                this.appendValueInput("VALUE")
-                    .setCheck("Number")
-                    .appendField("by");
-                this.setInputsInline(true);
-                this.setPreviousStatement(true);
-                this.setNextStatement(true);
-                this.setTooltip(lf("Changes the value of the variable by this amount"));
-                this.setHelpUrl('/reference/assign');
-                this.setColour(blockColors['variables']);
-            }
-        };
+	    init: function () {
+		this.jsonInit({
+		  "message0": lf("change %1 by %2"),
+		  "args0": [
+		    {
+		      "type": "field_variable",
+		      "name": "VAR",
+		      "variable": "item"
+		    },
+		    {
+		      "type": "input_value",
+		      "name": "VALUE",
+		      "check": "Number"
+		    }
+		  ],
+		  "inputsInline": true,
+		  "previousStatement": null,
+		  "nextStatement": null,
+		  "colour": blockColors['variables']
+		});
+
+		setHelpResources(this,
+		    'variables_change',
+		    lf("update the value of a number variable"),
+		    lf("Changes the value of the variable by this amount"),
+		    '/blocks/variables/change-var'
+		);
+	    }
+	};
+    }
+
+    function initLogic() {
+        let msg:any = Blockly.Msg;
+
+        // builtin controls_if
+        msg.CONTROLS_IF_MSG_IF = lf("_logic_if");
+        msg.CONTROLS_IF_MSG_THEN = lf("_logic_then");
+        msg.CONTROLS_IF_MSG_ELSE = lf("_logic_else");
+        msg.CONTROLS_IF_MSG_ELSEIF = lf("_logic_elseif");
+        msg.CONTROLS_IF_TOOLTIP_1 = lf("If a value is true, then do some statements.");
+        msg.CONTROLS_IF_TOOLTIP_2 = lf("If a value is true, then do the first block of statements. Otherwise, do the second block of statements.");
+        msg.CONTROLS_IF_TOOLTIP_3 = lf("If the first value is true, then do the first block of statements. Otherwise, if the second value is true, do the second block of statements.");
+        msg.CONTROLS_IF_TOOLTIP_4 = lf("If the first value is true, then do the first block of statements. Otherwise, if the second value is true, do the second block of statements. If none of the values are true, do the last block of statements.");
+        installHelpResources(
+            'controls_if',
+            lf("a conditional statement"),
+            undefined,
+            "blocks/logic/if"
+        );
+
+        // builtin logic_compare
+	Blockly.Blocks['logic_compare'].init = function() {
+	    let OPERATORS = [
+		[lf("_op_eq"),  'EQ'],  // =
+		[lf("_op_neq"), 'NEQ'], // ≠
+		[lf("_op_lt"),  'LT'],  // <  (ltr)
+		[lf("_op_lte"), 'LTE'], // ≦ (ltr)
+		[lf("_op_gt"),  'GT'],  // >  (ltr)
+		[lf("_op_gte"), 'GTE']  // ≧ (ltr)
+	    ];
+	    this.setColour(blockColors['logic']);
+	    this.setOutput(true, 'Boolean');
+	    this.appendValueInput('A');
+	    this.appendValueInput('B')
+		.appendField(new Blockly.FieldDropdown(OPERATORS), 'OP');
+	    this.setInputsInline(true);
+	    this.prevBlocks_ = [null, null];
+
+	    let TOOLTIPS:any = {
+		'EQ': lf("Return true if both inputs equal each other."),
+		'NEQ': lf("Return true if both inputs are not equal to each other."),
+		'LT': lf("Return true if the first input is smaller than the second input."),
+		'LTE': lf("Return true if the first input is smaller than or equal to the second input."),
+		'GT': lf("Return true if the first input is greater than the second input."),
+		'GTE': lf("Return true if the first input is greater than or equal to the second input.")
+	    };
+
+	    var thisBlock = this;
+	    setHelpResources(this,
+		'logic_compare',
+		lf("comparing two numbers"),
+		function() {
+		    return TOOLTIPS[thisBlock.getFieldValue('OP')];
+		},
+		'/blocks/logic/boolean'
+	    );
+	};
+
+	// builtin logic_operation
+	msg.LOGIC_OPERATION_AND = lf("_op_and");
+	msg.LOGIC_OPERATION_OR = lf("_op_or");
+	msg.LOGIC_OPERATION_TOOLTIP_AND = lf("Return true if both inputs are true."),
+	msg.LOGIC_OPERATION_TOOLTIP_OR = lf("Return true if at least one of the inputs is true."),
+        installHelpResources(
+	    'logic_operation',
+	    lf("boolean operation"),
+	    undefined,
+	    '/blocks/logic/boolean'
+        );
+
+	// builtin logic_negate
+	msg.LOGIC_NEGATE_TITLE = lf("not %1");
+	installHelpResources(
+	    'logic_negate',
+	    lf("logical negation"),
+	    lf("Returns true if the input is false. Returns false if the input is true."),
+	    '/blocks/logic/boolean'
+	);
+
+	// builtin logic_boolean
+	msg.LOGIC_BOOLEAN_TRUE = lf("_logic_true");
+	msg.LOGIC_BOOLEAN_FALSE = lf("_logic_false");
+	installHelpResources(
+	    'logic_boolean',
+	    lf("a `true` or `false` value"),
+	    lf("Returns either true or false."),
+	    '/blocks/logic/boolean'
+	);
+    }
+
+    function initText() {
+	// builtin text
+	installHelpResources(
+	    'text',
+	    lf("a piece of text"),
+	    lf("A letter, word, or line of text."),
+	    "reference/types/string"
+	);
+
+	// builtin text_length
+        let msg:any = Blockly.Msg;
+	msg.TEXT_LENGTH_TITLE = lf("length of %1");
+	installHelpResources(
+	    'text_length',
+	    lf("number of characters in the string"),
+	    lf("Returns the number of letters (including spaces) in the provided text."),
+	    "reference/types/string-functions"
+	);
     }
 }
