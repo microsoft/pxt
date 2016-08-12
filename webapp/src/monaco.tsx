@@ -48,6 +48,7 @@ export class Editor extends srceditor.Editor {
             return
 
         const failedAsync = () => {
+            this.forceDiagnosticsUpdate();
             let bf = pkg.mainEditorPkg().files[blockFile];
             return core.confirmAsync({
                 header: lf("Oops, there is a problem converting your code."),
@@ -276,10 +277,12 @@ export class Editor extends srceditor.Editor {
             if (this.lastSet != null) {
                 this.lastSet = null
             } else {
+                this.updateDiagnostics();
                 this.changeCallback();
             }
         });
 
+        this.editorViewZones = []
         this.isReady = true
     }
 
@@ -340,12 +343,76 @@ export class Editor extends srceditor.Editor {
     }
 
     snapshotState() {
-        return this.editor.getModel() ? this.editor.getModel().getLinesContent() : []
+        return this.editor.getModel().getLinesContent()
     }
 
     setViewState(pos: monaco.IPosition) {
         if (Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
         this.editor.setScrollPosition(pos)
+    }
+
+    setDiagnostics(file: pkg.File, snapshot: string[]) {
+        Util.assert(this.currFile == file)
+        this.diagSnapshot = snapshot
+        this.forceDiagnosticsUpdate()
+    }
+
+    private diagSnapshot: string[];
+    private annotationLines: number[];
+    private editorViewZones: number[];
+
+    updateDiagnostics() {
+        if (this.needsDiagUpdate())
+            this.forceDiagnosticsUpdate();
+    }
+
+    private needsDiagUpdate() {
+        if (!this.annotationLines) return false
+        let lines: string[] = this.editor.getModel().getLinesContent()
+        for (let line of this.annotationLines) {
+            if (this.diagSnapshot[line] !== lines[line])
+                return true;
+        }
+        return false;
+    }
+
+    forceDiagnosticsUpdate() {
+        if (!this.isTypescript) return
+        let file = this.currFile
+        let lines: string[] = this.editor.getModel().getLinesContent();
+
+        let viewZones = this.editorViewZones || [];
+        this.annotationLines = [];
+
+        (this.editor as any).changeViewZones(function(changeAccessor: any) {
+            viewZones.forEach(id => {
+                changeAccessor.removeZone(id);
+            });
+        });
+
+        if (file && file.diagnostics) {
+            for (let d of file.diagnostics) {
+                let viewZoneId: any = null;
+                (this.editor as any).changeViewZones(function(changeAccessor: any) {
+                        let domNode = document.createElement('div');
+                        domNode.className = "error-view-zone";
+                        domNode.click = () => {
+
+                        }
+                        domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
+                        viewZoneId = changeAccessor.addZone({
+                                    afterLineNumber: d.line + 1,
+                                    heightInLines: 1,
+                                    domNode: domNode
+                        });
+                });
+                this.editorViewZones.push(viewZoneId);
+
+                if (lines[d.line] === this.diagSnapshot[d.line]) {
+                    this.annotationLines.push(d.line)
+                }
+            }
+        }
     }
 }

@@ -668,3 +668,17 @@ html {
     border-radius: 6px;
     border: 1px solid #565656;
 }
+
+.monaco-editor .current-line {
+	background: rgba(0, 0, 255, 0.1);
+}
+
+
+.monaco-editor .error-view-zone {
+    color:white;
+    padding:10px;
+    border-radius: 6px;
+    padding: 3px 9px 3px 9px;
+    margin:2px;
+    background-color: #008272;
+}
