@@ -661,3 +661,10 @@ html {
         right:auto;
     }
 }
+
+/* monaco editor */
+
+.monaco-editor.vs .token.ts.identifier:hover {
+    border-radius: 6px;
+    border: 1px solid #565656;
+}
