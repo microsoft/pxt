@@ -34,9 +34,14 @@ export class Editor extends srceditor.Editor {
         let blockFile = this.currFile.getVirtualFileName();
         if (!blockFile) {
             let mainPkg = pkg.mainEditorPkg();
-            if (mainPkg)
-                this.parent.setFile(mainPkg.files["main.blocks"] || mainPkg.files["main.ts"]);
-            return;
+            if (!mainPkg || !mainPkg.files["main.blocks"]) {
+                if (mainPkg) {
+                    this.parent.setFile(mainPkg.files["main.ts"]);
+                }
+                return;
+            }
+            this.currFile = mainPkg.files["main.ts"];
+            blockFile = this.currFile.getVirtualFileName();
         }
 
         if (!this.hasBlocks())

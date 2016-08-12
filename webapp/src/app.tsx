@@ -63,6 +63,7 @@ interface IAppState {
     running?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
+    showBlocks?: boolean;
 
     simulatorCompilation?: {
         name: string;
@@ -715,6 +716,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             type: "fileloaded",
             name: this.editorFile.getName()
         } as pxsim.SimulatorFileLoadedMessage)
+
+        if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
     }
 
     notifySideDocs(message: pxsim.SimulatorMessage) {
@@ -726,32 +729,27 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({
             currFile: fn,
             helpCard: undefined,
-            errorCard: undefined
+            errorCard: undefined,
+            showBlocks: false
         })
     }
 
     setSideFile(fn: pkg.File) {
-        let virtualFile = this.state.currFile.getVirtualFileName()
         let fileName = fn.name;
-        if (!virtualFile && pkg.File.blocksFileNameRx.test(fileName)) {
-            // Going from a random file to the blocks file, lets first go to the Javascript and run the round trip
-            pxt.tickEvent("sideBar.showBlocksRt");
-            virtualFile = fn.getVirtualFileName() //main.ts
-            let file = pkg.mainEditorPkg().lookupFile("this/" + virtualFile)
-            if (file) {
-                this.setFile(file)
-                this.textEditor.openBlocks()
-            }
-        } else if (virtualFile == fileName && pkg.File.blocksFileNameRx.test(fileName)) {
+        let currFile = this.state.currFile.name;
+        if (fileName != currFile && pkg.File.blocksFileNameRx.test(fileName)) {
             // Going from ts -> blocks
             pxt.tickEvent("sidebar.showBlocks");
-            this.textEditor.openBlocks()
-        } else if (virtualFile == fileName && pkg.File.tsFileNameRx.test(fileName)) {
-            pxt.tickEvent("sidebar.showTypescript");
-            // Going from blocks -> ts
-            this.blocksEditor.openTypeScript()
+            let tsFileName = fn.getVirtualFileName();
+            let file = pkg.mainEditorPkg().lookupFile("this/" + tsFileName)
+            if (currFile == tsFileName) {
+                // current file is the ts file, so just switch
+                this.textEditor.openBlocks();
+            } else if (file) {
+                this.setFile(file)
+                this.setState({showBlocks: true})
+            }
         } else {
-            // Other files
             this.setFile(fn)
         }
     }

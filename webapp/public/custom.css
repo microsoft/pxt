@@ -64,7 +64,7 @@ body {
 #logo img, #rightlogo img {
     height: 2.5rem;    
 }
-.ace_content, .completer {
+#monacoEditor {
     direction:ltr;
 }
 .organization {
@@ -289,69 +289,6 @@ div.simframe > iframe {
     }
 }
 
-/* ACE */
-#aceEditor, #aceEditor .ace_editor {
-    font: 1.5rem/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-}
-
-#aceEditor .ace_search .ace_search_field {
-    height: 1.4rem;
-}
-
-#aceEditor .ace_search .ace_searchbtn,
-#aceEditor .ace_search .ace_replacebtn,
-#aceEditor .ace_search .ace_button {
-    height: 1.4rem;
-    min-width: 1.4rem;
-    width: auto;
-}
-
-#aceEditor .ace_search {
-    max-width: 30rem;
-}
-
-#content .completer {
-    position: absolute;
-    z-index: 10;
-    left: 10px;
-    width: 30em;
-    max-height: 26em;
-    overflow-y: auto;
-    margin-top: 0.4em;
-    margin-left: -1.1em;
-}
-
-#content .completer .item {
-    padding: 0.8em 0em 0.4em 1.14em;
-}
-
-
-#content .completer .item .name,
-#content .completer .item .doc {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    height: 1.5em;
-}
-
-#content .completer .item .name {
-    font-size: 1.2em;
-    margin-bottom: 0em;
-}
-
-#content .completer .item .doc {
-    font-size: 0.9em;
-    opacity: 0.7;
-}
-
-#content .completer .item .name .funname {
-    font-weight: bold;
-}
-
-#content .completer .item .name .args {
-    opacity: 0.7;
-}
-
 .modal img.ui.logo {    
     max-width: 10em;
     max-height: 3em;
@@ -494,11 +431,6 @@ html {
     margin-top:0.5em !important;
 }
 
-/* ace */
-.ace_gutter-layer {
-    min-width: 2.8em !important;
-}
-
 /* default layout */
 #filelist {
   left: 0;
@@ -626,9 +558,6 @@ html {
         left:0.5rem;
         right: auto;
     }    
-    #aceEditor, #aceEditor .ace_editor {
-        font-size: 1rem;
-    }
     #errorcard {
         display:none;
     }

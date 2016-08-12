@@ -44,17 +44,11 @@ namespace pxt.vs {
         compilerOptions.noLib = true;
 
         let editor = monaco.editor.create(element, {
-            value: "",
+            model: null,
             //ariaLabel: lf("JavaScript Editor"),
-            readOnly: false,
-            contextmenu: true,
             fontSize: 25,
-            folding: true,
-            //formatOnType: true,
-            outlineMarkers: true,
-            parameterHints: true,
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
-            scrollBeyondLastLine: false,
+            scrollBeyondLastLine: true,
             language: "typescript",
         });
 
