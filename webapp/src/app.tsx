@@ -346,7 +346,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let docembed: string;
         if (ready) {
             let runurl = `${rootUrl}--run?id=${header.pubId}`;
-            let docurl = `${rootUrl}--docs?id=${header.pubId}`;
+            let docurl = `${rootUrl}--docs?projectid=${header.pubId}`;
             url = `${rootUrl}${header.pubId}`
             embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
             docembed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
