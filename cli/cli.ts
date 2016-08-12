@@ -2752,7 +2752,15 @@ export function extractAsync(filename: string) {
                     fn = fn.replace(/[\/]/g, "-")
                     let fullname = dirname + "/" + fn
                     fs.writeFileSync(fullname, prj.files[fn])
-                    console.log("Wrote " + fullname)
+                    console.log("wrote " + fullname)
+                }
+                // add default files if not present
+                for (let f in defaultFiles) {
+                    if (prj.files[f]) continue;
+                    let fullname = dirname + "/" + f
+                    nodeutil.mkdirP(path.dirname(fullname))
+                    fs.writeFileSync(fullname, defaultFiles[f])
+                    console.log("wrote " + fullname)
                 }
             }
         })
