@@ -203,6 +203,22 @@ namespace ts.pxt.thumb {
             }
         }
 
+        public getRelativeLabel(f: assembler.File, s: string, wordAligned = false) : number {
+            let l = f.lookupLabel(s);
+            if (l == null) return null;
+            let pc = f.location() + 4
+            if (wordAligned) pc = pc & 0xfffffffc
+            return l - pc;
+        }
+
+        public isPop(opcode: number) : boolean {
+            return opcode == 0xbc00;
+        }
+
+        public isPush(opcode: number) : boolean {
+            return opcode == 0xb400;
+        }
+
         public peephole(ln: ts.pxt.assembler.Line, lnNext: ts.pxt.assembler.Line, lnNext2: ts.pxt.assembler.Line) {
 
             let lb11 = this.encoders["$lb11"]

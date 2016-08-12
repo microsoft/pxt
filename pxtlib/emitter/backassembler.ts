@@ -3,8 +3,9 @@
 namespace ts.pxt {
 
 abstract class AssemblySnippets {
-    public r0_gets_0() : string { return "TBD"}
-    public push_r0() {  return "TBD" }
+    public reg_gets_imm(reg: string, imm: number) { return "TBD"}
+    public push(reg: string) {  return "TBD" } 
+    public pop(reg: string) {  return "TBD" }
     public debugger_hook(lbl: string) { return "TBD" }
     public debugger_bkpt(lbl: string) { return "TBD" }
     public pop_locals(n: number) { return "TBD" }
@@ -13,12 +14,16 @@ abstract class AssemblySnippets {
     public beq(){ return "TBD" }
     public bne(){ return "TBD" }
     public cmp(o1: string, o2: string) { return "TBD" }
+    public load_reg_sp_off(reg: string, off:number) { return "TBD"; }
 }
 
 // we have a very simple code generation strategy
 class ThumbSnippets extends AssemblySnippets {
-    public r0_gets_0() { return "movs r0, #0" }
-    public push_r0() {  return "push {r0} ; loc" }
+    public reg_gets_imm(reg:string, imm:number) { 
+        return `movs ${reg}, #${imm}` 
+    }
+    public push(reg: string) {  return `push {${reg}} ` }
+    public pop(reg: string) {  return `pop {${reg}} ` }
 
     public debugger_hook(lbl: string) {
         return `
@@ -38,12 +43,15 @@ ${lbl + "_after"}:
 ${lbl}:`
     }
     
-    public pop_locals(n: number) { return "add sp, #4*" + n + " ; pop locals " + n }
+    public pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
     public pop_pc() { return "pop {pc}" }
     public unconditional_branch() { return "bb "; }
     public beq(){ return "beq " }
     public bne(){ return "bne " }
     public cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
+    public load_reg_sp_off(reg: string, off:number) {
+        return `ldr ${reg}, [sp, #4*${off}]`
+    }
 }
 
 
@@ -92,6 +100,7 @@ ${baseLabel}:
     @stackmark args
     push {lr}
 `)
+//TODO: push{lr} above needs to be generalized
 
         proc.fillDebugInfo = th => {
             let labels = th.getLabels()
@@ -124,9 +133,9 @@ ${baseLabel}:
 
         let numlocals = proc.locals.length
         // ARM-specific
-        if (numlocals > 0) this.write(this.t.r0_gets_0());
+        if (numlocals > 0) this.write(this.t.reg_gets_imm("r0",0));
         proc.locals.forEach(l => {
-            this.write(this.t.push_r0())
+            this.write(this.t.push("r0"))
         });
         this.write("@stackmark locals")
         this.write(`${locLabel}:`)
@@ -257,16 +266,16 @@ ${baseLabel}:
                 let idx = this.exprStack.indexOf(arg)
                 U.assert(idx >= 0)
                 if (idx == 0 && arg.totalUses == arg.currUses) {
-                    // HERE
-                    this.write(`pop {${reg}}  ; tmpref @${this.exprStack.length}`)
+                    this.write(this.t.pop(reg) + `; tmpref @${this.exprStack.length}`)
                     this.exprStack.shift()
                     this.clearStack()
                 } else {
-                    this.write(`ldr ${reg}, [sp, #4*${idx}]   ; tmpref @${this.exprStack.length - idx}`)
+                    this.write(this.t.load_reg_sp_off(reg,idx) + `; tmpref @${this.exprStack.length - idx}`)
                 }
                 break;
             case ir.EK.CellRef:
                 let cell = e.data as ir.Cell;
+                // HERE: what is a cellref yield?
                 this.write(`ldr ${reg}, ${this.cellref(cell)}`)
                 break;
             default: oops();

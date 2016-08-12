@@ -1,3 +1,5 @@
+// TODO: add a macro facility to make 8-bit assembly easier
+
 namespace ts.pxt.assembler {
 
     export interface InlineError {
@@ -73,6 +75,12 @@ namespace ts.pxt.assembler {
                     if (enc.isRegister) {
                         v = this.ei.registerNo(actual);
                         if (v == null) return emitErr("expecting register name", actual)
+                        // AVR specific code : check for pop/push instruction 
+                        // this doesn't apply in the ARM case 
+                        if (this.ei.isPush(this.opcode)) // push
+                            stack++;
+                        else if (this.ei.isPop(this.opcode)) // pop
+                            stack--;
                     } else if (enc.isImmediate) {
                         actual = actual.replace(/^#/, "")
                         v = ln.bin.parseOneInt(actual);
@@ -86,8 +94,8 @@ namespace ts.pxt.assembler {
                             else if (this.opcode == 0xb080) // sub sp, #imm
                                 stack = (v / 4);
                         }
-                    // ARM-specific??? We don't use RegList for AVR (yet)
                     } else if (enc.isRegList) {
+                        // register lists are ARM-specific - this code not used in AVR 
                         if (actual != "{") return emitErr("expecting {", actual);
                         v = 0;
                         while (tokens[j] != "}") {
@@ -98,10 +106,9 @@ namespace ts.pxt.assembler {
                             if (no == null) return emitErr("expecting register name", actual)
                             if (v & (1 << no)) return emitErr("duplicate register name", actual)
                             v |= (1 << no);
-                            // ARM-specific 
-                            if (this.opcode == 0xb400) // push
+                            if (this.ei.isPush(this.opcode)) // push
                                 stack++;
-                            else if (this.opcode == 0xbc00) // pop
+                            else if (this.ei.isPop(this.opcode)) // pop
                                 stack--;
                             if (tokens[j] == ",") j++;
                         }
@@ -134,7 +141,9 @@ namespace ts.pxt.assembler {
 
                     numArgs.push(v)
 
+                    console.log("v = ",v)
                     v = enc.encode(v)
+                    console.log("enc(v) = ",v)
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
                     assert((r & v) == 0)
                     r |= v;
@@ -240,7 +249,8 @@ namespace ts.pxt.assembler {
             this.buf.push(op);
         }
 
-        private location() {
+        public location() {
+            // store one short (2 bytes) per buf location
             return this.buf.length * 2;
         }
 
@@ -359,17 +369,14 @@ namespace ts.pxt.assembler {
                 if (this.finalEmit)
                     this.directiveError(lf("unknown label: {0}", name));
                 else
+                    // Is this a joke?
                     v = 42;
             }
             return v;
         }
 
         public getRelativeLabel(s: string, wordAligned = false) {
-            let l = this.lookupLabel(s);
-            if (l == null) return null;
-            let pc = this.location() + 4
-            if (wordAligned) pc = pc & 0xfffffffc
-            return l - pc;
+            return this.ei.getRelativeLabel(this,s,wordAligned)
         }
 
         private align(n: number) {
@@ -933,6 +940,19 @@ namespace ts.pxt.assembler {
         public registerNo(actual: string): number {
             return null;
         }
+
+        public getRelativeLabel(f: File, s: string, wordAligned = false): number {
+            return null;
+        }
+
+        public isPop(opcode: number) : boolean {
+            return null;
+        }
+
+        public isPush(opcode: number) : boolean {
+            return null;
+        }
+
 
         protected addEnc = (n: string, p: string, e: (v: number) => number) => {
             let ee: Encoder = {

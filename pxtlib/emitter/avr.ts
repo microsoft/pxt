@@ -8,27 +8,63 @@
 namespace ts.pxt.avr {
    
     export class AVRProcessor extends assembler.EncodersInstructions {
+        
+        public registerNo(actual: string) {
+            if (!actual) return null;
+            actual = actual.toLowerCase()
+            switch (actual) {
+                // case "pc": actual = "r15"; break;
+                // case "lr": actual = "r14"; break;
+                // case "sp": actual = "r13"; break;
+            }
+            let m = /^r(\d+)$/.exec(actual)
+            if (m) {
+                let r = parseInt(m[1], 10)
+                if (0 <= r && r < 32)
+                    return r;
+            }
+            return null;
+        }
+
+        public getRelativeLabel(f: assembler.File, s: string, wordAligned = false): number {
+            let l = f.lookupLabel(s);
+            if (l == null) return null;
+            // assumes this instruction is 16-bit  
+            let pc = f.location() + 2;
+            // if (wordAligned) pc = pc & 0xfffffffc
+            return l - pc;
+        }
+
+
+        public isPop(opcode: number) : boolean {
+            return opcode == 0x900f;
+        }
+
+        public isPush(opcode: number) : boolean {
+            return opcode == 0x920f;
+        }
+
         constructor() {
             super();
 
             // Registers
             // $Rd - bits 8:7:6:5:4 (r0)
             // $Rr - bits 9:3:2:1:0 (r1)
-            this.addEnc("$r0", "R0-31", v => this.inrange(31, v, v<<4))
+            this.addEnc("$r0", "R0-31", v => this.inrange(31, v, v << 4))
             this.addEnc("$r1", "R0-31", v => this.inrange(31, v, (v & 15) | ((v & 16) << 5)))
             this.addEnc("$r2", "R0-4", 
                 (v:number) => { let r = this.inseq([24,26,28,30],v)
                                 return r == null ? null : r << 4 })
-            this.addEnc("$r3", "R0-16-31", v => this.inminmax(16, 31, v, (v-16) << 4))
-            this.addEnc("$r4", "R0-7", v => this.inrange(7,v,v<<4))
+            this.addEnc("$r3", "R0-16-31", v => this.inminmax(16, 31, v, (v - 16) << 4))
+            this.addEnc("$r4", "R0-7", v => this.inrange(7,v,v << 4))
             this.addEnc("$r5", "R0-7", v => this.inrange(7,v,v))
-            this.addEnc("$r6", "R0-31", v => this.inrange(31,v,v<<5|v))
-            this.addEnc("$r7", "R0-31", v => this.inrange(31, v, v<<3))
-            this.addEnc("$r8", "Reven", (v:number) => v&0x1 ? null : (v >> 1)<<4)
+            this.addEnc("$r6", "R0-31", v => this.inrange(31,v, v << 5 | v))
+            this.addEnc("$r7", "R0-31", v => this.inrange(31, v, v << 3))
+            this.addEnc("$r8", "Reven", (v:number) => v&0x1 ? null : (v >> 1) << 4)
             this.addEnc("$r9", "Reven", (v:number) => v&0x1 ? null : (v >> 1))
-            this.addEnc("$r10", "R0-16-23", v => this.inminmax(16, 23, v, (v-16) << 4))
-            this.addEnc("$r11", "R0-16-23", v => this.inminmax(16, 23, v, v-16))
-            this.addEnc("$r12", "R0-16-31", v => this.inminmax(16, 31, v, v-16))
+            this.addEnc("$r10", "R0-16-23", v => this.inminmax(16, 23, v, (v - 16) << 4))
+            this.addEnc("$r11", "R0-16-23", v => this.inminmax(16, 23, v, v - 16))
+            this.addEnc("$r12", "R0-16-31", v => this.inminmax(16, 31, v, v - 16))
 
             // Immediates:
             this.addEnc("$i0", "#0-63", v => this.inrange(63, v,  (v & 0x0f) | (v & 0x30) << 2))
@@ -40,48 +76,47 @@ namespace ts.pxt.avr {
             this.addEnc("$i6", "#0-127", v => this.inrange(127, v,  (v & 0x0f) | (v &0x70) << 4))
             this.addEnc("$i7", "#0-4095", v => this.inrange(4095, v,  v))
 
-            this.addEnc("$la", "LABEL", v => this.inrange(255, v / 4, v >> 2)).isWordAligned = true;
-            this.addEnc("$lb", "LABEL", v => this.inrangeSigned(127, v / 2, v >> 1))
-            this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(1023, v / 2, v >> 1))
-
+            //this.addEnc("$la", "LABEL", v => this.inrange(255, v / 4, v >> 2)).isWordAligned = true;
+            this.addEnc("$lb", "LABEL", v => this.inrangeSigned(63, v / 2, (v >> 1) << 3))
+            this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(2047, v / 2, v >> 1))
 
             this.addInst("adc   $r0, $r1", 0x1C00, 0xfC00);
             this.addInst("add   $r0, $r1", 0x0C00, 0xfC00);
-            // deviates from broken syntax in PDF
+            // adiw deviates from broken syntax in PDF
             this.addInst("adiw  $r2, $i0", 0x9600, 0xff00);
             this.addInst("and   $r0, $r1", 0x2000, 0xfC00);
-            this.addInst("andi  $r3  $i1", 0x7000, 0xf000);
+            this.addInst("andi  $r3, $i1", 0x7000, 0xf000);
             this.addInst("asr   $r0",      0x9405, 0xfe0f);
             this.addInst("bclr  $r4",      0x9488, 0xff8f);
-            this.addInst("bld   $r0  $r5", 0xf800, 0xfe08); 
-            this.addInst("brbc  $r5  $i2", 0xf400, 0xfc00);
-            this.addInst("brbs  $r5  $i2", 0xf000, 0xfc00);
-            this.addInst("brcc  $i2",      0xf400, 0xfc07);
-            this.addInst("brcs  $i2",      0xf000, 0xfc07);
+            this.addInst("bld   $r0, $r5", 0xf800, 0xfe08); 
+            this.addInst("brbc  $r5, $lb", 0xf400, 0xfc00);
+            this.addInst("brbs  $r5, $lb", 0xf000, 0xfc00);
+            this.addInst("brcc  $lb",      0xf400, 0xfc07);
+            this.addInst("brcs  $lb",      0xf000, 0xfc07);
             this.addInst("break",          0x9598, 0xffff);
-            this.addInst("breq  $i2",      0xf001, 0xfc07);
-            this.addInst("brge  $i2",      0xf404, 0xfc07);
-            this.addInst("brhc  $i2",      0xf405, 0xfc07);
-            this.addInst("brhs  $i2",      0xf005, 0xfc07);
-            this.addInst("brid  $i2",      0xf407, 0xfc07);
-            this.addInst("brie  $i2",      0xf007, 0xfc07);
+            this.addInst("breq  $lb",      0xf001, 0xfc07);
+            this.addInst("brge  $lb",      0xf404, 0xfc07);
+            this.addInst("brhc  $lb",      0xf405, 0xfc07);
+            this.addInst("brhs  $lb",      0xf005, 0xfc07);
+            this.addInst("brid  $lb",      0xf407, 0xfc07);
+            this.addInst("brie  $lb",      0xf007, 0xfc07);
             // conflict with brbs?
-            this.addInst("brlo  $i2",      0xf000, 0xfc07);
-            this.addInst("brlt  $i2",      0xf004, 0xfc07);
-            this.addInst("brmi  $i2",      0xf002, 0xfc07);
-            this.addInst("brne  $i2",      0xf401, 0xfc07);
-            this.addInst("brpl  $i2",      0xf402, 0xfc07);
+            this.addInst("brlo  $lb",      0xf000, 0xfc07);
+            this.addInst("brlt  $lb",      0xf004, 0xfc07);
+            this.addInst("brmi  $lb",      0xf002, 0xfc07);
+            this.addInst("brne  $lb",      0xf401, 0xfc07);
+            this.addInst("brpl  $lb",      0xf402, 0xfc07);
             // error in doc? - this has same opcode as brcc
-            this.addInst("brsh  $i2",      0xf400, 0xfc07);
-            this.addInst("brtc  $i2",      0xf406, 0xfc07);
-            this.addInst("brts  $i2",      0xf006, 0xfc07);
-            this.addInst("brvc  $i2",      0xf403, 0xfc07);
-            this.addInst("brvs  $i2",      0xf003, 0xfc07);
+            this.addInst("brsh  $lb",      0xf400, 0xfc07);
+            this.addInst("brtc  $lb",      0xf406, 0xfc07);
+            this.addInst("brts  $lb",      0xf006, 0xfc07);
+            this.addInst("brvc  $lb",      0xf403, 0xfc07);
+            this.addInst("brvs  $lb",      0xf003, 0xfc07);
             this.addInst("bset  $r4",      0x9408, 0xff8f);
-            this.addInst("bst   $r0 $r5",  0xfa00, 0xfe08);
+            this.addInst("bst   $r0, $r5",  0xfa00, 0xfe08);
             // call - 32 bit
-            this.addInst("cbi   $r7 $r5",  0x9800, 0xff00);
-            this.addInst("cbr   $r3 $i3",  0x7000, 0xf000);
+            this.addInst("cbi   $r7, $r5",  0x9800, 0xff00);
+            this.addInst("cbr   $r3, $i3",  0x7000, 0xf000);
             this.addInst("clc",            0x9488, 0xffff);
             this.addInst("clh",            0x94d8, 0xffff);
             this.addInst("cli",            0x94f8, 0xffff);
@@ -94,7 +129,7 @@ namespace ts.pxt.avr {
             this.addInst("com   $r0",      0x9400, 0xfe0f);
             this.addInst("cp    $r0, $r1", 0x1400, 0xfC00);
             this.addInst("cpc   $r0, $r1", 0x0400, 0xfC00);
-            this.addInst("cpi   $r3  $i1", 0x3000, 0xf000);
+            this.addInst("cpi   $r3, $i1", 0x3000, 0xf000);
             this.addInst("cpse  $r0, $r1", 0x1000, 0xfC00);
             this.addInst("dec   $r0",      0x940a, 0xfe0f);
             this.addInst("des   $i4",      0x940b, 0xff0f);
@@ -126,14 +161,14 @@ namespace ts.pxt.avr {
             this.addInst("ld    $r0, Z+",  0x9001, 0xfe0f);
             this.addInst("ld    $r0, -Z",  0x9002, 0xfe0f);
             // ldz(iv)
-            this.addInst("ldi   $r3  $i1", 0xe000, 0xf000);
+            this.addInst("ldi   $r3, $i1", 0xe000, 0xf000);
             // lds - 32 bit
-            this.addInst("lds   $r3  $i6", 0xa000, 0xf800);
+            this.addInst("lds   $r3, $i6", 0xa000, 0xf800);
             this.addInst("lpm",            0x95a8, 0xffff);
             this.addInst("lpm2  $r0",      0x9004, 0xfe0f);
             this.addInst("lpm3  $r0",      0x9005, 0xfe0f);
-            this.addInst("lsl $r6",        0x0c00, 0xfc00);
-            this.addInst("lsr $r0",        0x9406, 0xfe0f);
+            this.addInst("lsl   $r6",      0x0c00, 0xfc00);
+            this.addInst("lsr   $r0",      0x9406, 0xfe0f);
             this.addInst("mov   $r0, $r1", 0x2C00, 0xfC00);
             this.addInst("movw  $r8, $r9", 0x0100, 0xff00);
             this.addInst("mul   $r0, $r1", 0x9400, 0xfC00);
@@ -142,23 +177,23 @@ namespace ts.pxt.avr {
             this.addInst("neg $r0",        0x9401, 0xfe0f);
             this.addInst("nop",            0x0000, 0xffff);
             this.addInst("or    $r0, $r1", 0x2800, 0xfC00);  
-            this.addInst("ori   $r3  $i1", 0x6000, 0xf000);
+            this.addInst("ori   $r3, $i1", 0x6000, 0xf000);
             this.addInst("out   $r0, $i5", 0xb800, 0xf800);
             this.addInst("pop $r0",        0x900f, 0xfe0f);
             this.addInst("push $r0",       0x920f, 0xfe0f);  
-            this.addInst("rcall $i7",      0xd000, 0xf000); 
+            this.addInst("rcall $lbl11",   0xd000, 0xf000); 
             this.addInst("ret",            0x9508, 0xffff);
             this.addInst("reti",           0x9518, 0xffff);
-            this.addInst("rjmp $i7",       0xc000, 0xf000); 
+            this.addInst("rjmp $lb11",      0xc000, 0xf000); 
             this.addInst("rol $r6",        0x1c00, 0xfc00);
             this.addInst("lor $r0",        0x9407, 0xfe0f);
             this.addInst("sbc   $r0, $r1", 0x0800, 0xfC00);
-            this.addInst("sbci  $r3  $i1", 0x4000, 0xf000);
-            this.addInst("sbi   $r7 $r5",  0x9a00, 0xff00);
-            this.addInst("sbic  $r7 $r5",  0x9900, 0xff00);
-            this.addInst("sbis  $r7 $r5",  0x9b00, 0xff00);
+            this.addInst("sbci  $r3, $i1", 0x4000, 0xf000);
+            this.addInst("sbi   $r7, $r5",  0x9a00, 0xff00);
+            this.addInst("sbic  $r7, $r5",  0x9900, 0xff00);
+            this.addInst("sbis  $r7, $r5",  0x9b00, 0xff00);
             this.addInst("sbiw  $r2, $i0", 0x9700, 0xff00);
-            this.addInst("sbr   $r3  $i1", 0x6000, 0xf000);
+            this.addInst("sbr   $r3, $i1", 0x6000, 0xf000);
             this.addInst("sbrc  $r0, $r5", 0xfc00, 0xfe08);
             this.addInst("sbrs  $r0, $r5", 0xfe00, 0xfe08);
             this.addInst("sec",            0x9408, 0xffff);
@@ -187,7 +222,7 @@ namespace ts.pxt.avr {
             // std - 32 bit
             this.addInst("sts   $i6, $r3", 0xa800, 0xf800);
             this.addInst("sub   $r0, $r1", 0x1800, 0xfC00);
-            this.addInst("subi  $r3  $i1", 0x5000, 0xf000);
+            this.addInst("subi  $r3, $i1", 0x5000, 0xf000);
             this.addInst("swap  $r0",      0x9402, 0xfe0f);
             this.addInst("tst   $r6",      0x2000, 0xfc00);
             this.addInst("wdr",            0x95a8, 0xffff);
@@ -203,27 +238,29 @@ namespace ts.pxt.avr {
             "0c00      lsl     r0\n" +
             "920f      push    r0\n" +
             "e604      ldi     r16, #100        ; 0x64\n" +
-            "903f      pop     r3\n" +
-            "0000      .balign 4\n" +
-            "e6c0      .word   -72000\n" +
-            "fffe\n")
+            "903f      pop     r3\n")
 
-/*
-        expect(
-            "4291      cmp     r1, r2\n" +
-            "d100      bne     l6\n" +
-            "e000      b       l8\n" +
-            "1840  l6: adds    r0, r0, r1\n" +
-            "4718  l8: bx      r3\n")
+            // had problems with .word
+            // "          .balign 4\n" +
+            //           "e6c0      .word   -72000\n")
 
-        expect(
+        assembler.expect(avr,
+            "1412      cp      r1, r2\n" +
+            "f409      brne    l6\n" +
+            "c001      rjmp    l8\n" +
+            "0e01  l6: add     r0, r17\n" +
+            "0000  l8: nop     \n")
+
+// TODO
+        assembler.expect(avr,
             "          @stackmark base\n" +
-            "b403      push    {r0, r1}\n" +
+            "920f      push    r0\n" +
+            "921f      push    r1\n" +
             "          @stackmark locals\n" +
             "9801      ldr     r0, [sp, locals@1]\n" +
-            "b401      push    {r0}\n" +
+            "920f      push    r0\n" +
             "9802      ldr     r0, [sp, locals@1]\n" +
-            "bc01      pop     {r0}\n" +
+            "900f      pop     r0\n" +
             "          @stackempty locals\n" +
             "9901      ldr     r1, [sp, locals@1]\n" +
             "9102      str     r1, [sp, base@0]\n" +
@@ -231,6 +268,7 @@ namespace ts.pxt.avr {
             "b002      add     sp, #8\n" +
             "          @stackempty base\n")
 
+/* 
         expect(
             "b090      sub sp, #4*16\n" +
             "b010      add sp, #4*16\n"
