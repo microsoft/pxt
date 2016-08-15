@@ -676,9 +676,10 @@ html {
 
 .monaco-editor .error-view-zone {
     color:white;
-    padding:10px;
     border-radius: 6px;
-    padding: 3px 9px 3px 9px;
+    padding: 1px 9px 1px 9px;
     margin:2px;
-    background-color: #008272;
+    width: initial !important; 
+    height:20px !important;
+    background-color: #B4009E;
 }
