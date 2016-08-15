@@ -2,7 +2,18 @@
     *
     * Atmel AVR 8-bit Instruction Set Manual
     *  http://www.atmel.com/Images/Atmel-0856-AVR-Instruction-Set-Manual.pdf
-    *  
+    * 
+
+__SP_H__ 
+ 
+Stack pointer high byte at address 0x3E 
+ 
+
+__SP_L__ 
+ 
+Stack pointer low byte at address 0x3D 
+ 
+
     */
 
 namespace ts.pxt.avr {
@@ -259,12 +270,14 @@ namespace ts.pxt.avr {
             "          @stackmark locals\n" +
             "9801      ldr     r0, [sp, locals@1]\n" +
             "920f      push    r0\n" +
-            "9802      ldr     r0, [sp, locals@1]\n" +
+            //"9802      ldr     r0, [sp, locals@1]\n" +
             "900f      pop     r0\n" +
             "          @stackempty locals\n" +
-            "9901      ldr     r1, [sp, locals@1]\n" +
-            "9102      str     r1, [sp, base@0]\n" +
+            //"9901      ldr     r1, [sp, locals@1]\n" +
+            //"9102      str     r1, [sp, base@0]\n" +
             "          @stackempty locals\n" +
+            // AVR - does it have explicit access to SP?
+            // SP is in I/O space 
             "b002      add     sp, #8\n" +
             "          @stackempty base\n")
 

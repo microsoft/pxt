@@ -1,4 +1,4 @@
-// TODO: add a macro facility to make 8-bit assembly easier
+// TODO: add a macro facility to make 8-bit assembly easier?
 
 namespace ts.pxt.assembler {
 
@@ -141,9 +141,9 @@ namespace ts.pxt.assembler {
 
                     numArgs.push(v)
 
-                    console.log("v = ",v)
+                    // console.log("v = ",v)
                     v = enc.encode(v)
-                    console.log("enc(v) = ",v)
+                    // console.log("enc(v) = ",v)
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
                     assert((r & v) == 0)
                     r |= v;

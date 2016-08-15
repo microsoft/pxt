@@ -2125,8 +2125,13 @@ function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.
     */
 }
 
-function testAVR(): Promise<void>  {
+function testAssemblers(): Promise<void>  {
+    console.log("- testing Thumb")
+    ts.pxt.thumb.test();
+    console.log("- done testing Thumb");
+    console.log("- testing AVR")
     ts.pxt.avr.testAVR();
+    console.log("- done testing AVR");
     return Promise.resolve();
 }
 
@@ -2799,7 +2804,7 @@ cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
-cmd("testavr                      - test the AVR assembler", testAVR)
+cmd("testassembler                - test the assemblers", testAssemblers)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)

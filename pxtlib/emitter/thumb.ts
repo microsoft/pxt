@@ -299,14 +299,14 @@ namespace ts.pxt.thumb {
 
     // if true then instruction doesn't write r<n> and doesn't read/write memory
     function preservesReg(ln: pxt.assembler.Line, n: number) {
-        if (this.getOpExt() == "movs $r5, $i0" && this.numArgs[0] != n)
+        if (ln.getOpExt() == "movs $r5, $i0" && ln.numArgs[0] != n)
             return true;
         return false;
     }
 
     function clobbersReg(ln: pxt.assembler.Line, n: number) {
         // TODO add some more
-        if (this.getOp() == "pop" && this.numArgs[0] & (1 << n))
+        if (ln.getOp() == "pop" && ln.numArgs[0] & (1 << n))
             return true;
         return false;
     }
