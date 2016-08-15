@@ -138,22 +138,11 @@ export class EditorPackage {
     updateDepAsync(pkgid: string): Promise<void> {
         let p = this.ksPkg.resolveDep(pkgid);
         if (!p || p.verProtocol() != "github") return Promise.resolve();
-        let scr: pxt.github.Repo;
-        return pxt.github.repoAsync(p.verArgument())
-            .then(scr => {
-                if (!scr) return undefined;
-                return pxt.github.listRefsAsync(scr.full_name, "tags")
-                    .then((tags: string[]) => {
-                        tags.sort(pxt.semver.strcmp)
-                        tags.reverse()
-                        if (tags[0])
-                            return Promise.resolve(tags[0])
-                        else
-                            return pxt.github.tagToShaAsync(scr.full_name, scr.default_branch)
-                    })
-                    .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
-                        .then(cfg => this.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag)));
-            });
+        let parsed = pxt.github.parseRepoId(p.verArgument())
+        return pxt.github.latestVersionAsync(parsed.repo)
+                    .then(tag => { parsed.tag = tag })
+                    .then(() => pxt.github.pkgConfigAsync(parsed.repo, parsed.tag))
+                        .then(cfg => this.addDepAsync(cfg.name, pxt.github.stringifyRepo(parsed)));
     }
 
     removeDepAsync(pkgid: string) {
@@ -334,15 +323,6 @@ class Host
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
-    }
-
-    resolveVersionAsync(pkg: pxt.Package) {
-        return data.getAsync("cloud:" + pxt.pkgPrefix + pkg.id).then(r => {
-            let id = (r || {})["scriptid"]
-            if (!id)
-                Util.userError(lf("cannot resolve package {0}", pkg.id))
-            return id
-        })
     }
 }
 

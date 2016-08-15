@@ -89,16 +89,6 @@ namespace pxt.runner {
                     }
                 })
         }
-
-        resolveVersionAsync(pkg: pxt.Package) {
-            return Cloud.privateGetAsync(pxt.pkgPrefix + pkg.id)
-                .then(r => {
-                    let id = (r || {})["scriptid"]
-                    if (!id)
-                        Util.userError(lf("cannot resolve package {0}", pkg.id))
-                    return id
-                })
-        }
     }
 
     export var mainPkg: pxt.MainPackage;

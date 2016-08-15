@@ -173,7 +173,12 @@ namespace pxt.github {
         return r;
     }
 
-    export function parseRepoId(repo: string) {
+    export interface ParsedRepo {
+        repo: string;
+        tag: string;
+    }
+
+    export function parseRepoId(repo: string): ParsedRepo {
         if (!repo) return undefined;
 
         repo = repo.replace(/^github:/i, "")
@@ -188,8 +193,32 @@ namespace pxt.github {
         return id.slice(0, 7) == "github:"
     }
 
-    export function noramlizeRepoId(id: string) {
-        let p = parseRepoId(id)
+    export function stringifyRepo(p: ParsedRepo) {
         return p ? "github:" + p.repo.toLowerCase() + "#" + (p.tag || "master") : undefined;
     }
+
+    export function noramlizeRepoId(id: string) {
+        return stringifyRepo(parseRepoId(id))
+    }
+
+    export function latestVersionAsync(path: string): Promise<string> {
+        let parsed = parseRepoId(path)
+
+        if (!parsed) return Promise.resolve<string>(null);
+
+        return repoAsync(parsed.repo)
+            .then(scr => {
+                if (!scr) return undefined;
+                return listRefsAsync(scr.full_name, "tags")
+                    .then((tags: string[]) => {
+                        tags.sort(pxt.semver.strcmp)
+                        tags.reverse()
+                        if (tags[0])
+                            return Promise.resolve(tags[0])
+                        else
+                            return tagToShaAsync(scr.full_name, scr.default_branch)
+                    })
+            });
+    }
+
 }

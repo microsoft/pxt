@@ -862,12 +862,6 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage) => Promise<void>) {
         .then(() => { })
 }
 
-export function publishTargetAsync() {
-    return forEachBundledPkgAsync((pkg) => {
-        return pkg.publishAsync()
-    })
-}
-
 export interface SpawnOptions {
     cmd: string;
     args: string[];
@@ -1543,16 +1537,6 @@ class Host
             })
     }
 
-    resolveVersionAsync(pkg: pxt.Package) {
-        return Cloud.privateGetAsync(pxt.pkgPrefix + pkg.id).then(r => {
-            let id = r["scriptid"]
-            if (!id) {
-                U.userError("scriptid not set on ptr for pkg " + pkg.id)
-            }
-            return id
-        })
-    }
-
 }
 
 let mainPkg = new pxt.MainPackage(new Host())
@@ -1560,7 +1544,21 @@ let mainPkg = new pxt.MainPackage(new Host())
 export function installAsync(packageName?: string) {
     ensurePkgDir();
     if (packageName) {
-        return mainPkg.installPkgAsync(packageName)
+        let parsed = pxt.github.parseRepoId(packageName)
+        return (parsed.tag
+            ? Promise.resolve(parsed.tag)
+            : pxt.github.latestVersionAsync(parsed.repo))
+            .then(tag => { parsed.tag = tag })
+            .then(() => pxt.github.pkgConfigAsync(parsed.repo, parsed.tag))
+            .then(cfg => mainPkg.loadAsync()
+                .then(() => {
+                    let ver = pxt.github.stringifyRepo(parsed)
+                    console.log(U.lf("Adding: {0}: {1}", cfg.name, ver))
+                    mainPkg.config.dependencies[cfg.name] = ver
+                    mainPkg.saveConfig()
+                    mainPkg = new pxt.MainPackage(new Host())
+                    return mainPkg.installAllAsync()
+                }))
     } else {
         return mainPkg.installAllAsync()
     }
@@ -1720,11 +1718,6 @@ export function initAsync() {
 
             console.log("package initialized")
         })
-}
-
-export function publishAsync() {
-    ensurePkgDir();
-    return mainPkg.publishAsync()
 }
 
 enum BuildOption {
@@ -2796,7 +2789,6 @@ cmd("install  [PACKAGE...]        - install new packages, or all packages", inst
 cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
-cmd("publish                      - publish current package", publishAsync, 1)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
@@ -2808,7 +2800,6 @@ cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets com
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
-cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)

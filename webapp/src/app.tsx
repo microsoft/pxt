@@ -229,15 +229,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
-                pxt.github.listRefsAsync(scr.full_name, "tags")
-                    .then((tags: string[]) => {
-                        tags.sort(pxt.semver.strcmp)
-                        tags.reverse()
-                        if (tags[0])
-                            return Promise.resolve(tags[0])
-                        else
-                            return pxt.github.tagToShaAsync(scr.full_name, scr.default_branch)
-                    })
+                pxt.github.latestVersionAsync(scr.full_name)
                     .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
                         .then(cfg =>
                             p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
@@ -747,7 +739,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 this.textEditor.openBlocks();
             } else if (file) {
                 this.setFile(file)
-                this.setState({showBlocks: true})
+                this.setState({ showBlocks: true })
             }
         } else {
             this.setFile(fn)
