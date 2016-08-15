@@ -43,6 +43,7 @@ export interface FileHistoryEntry {
 
 export interface EditorSettings {
     showFiles?: boolean;
+    editorFontSize: number;
     fileHistory: FileHistoryEntry[];
 }
 
@@ -542,6 +543,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             showFiles: !!this.settings.showFiles,
             active: document.visibilityState == 'visible'
         };
+        if (!this.settings.editorFontSize) this.settings.editorFontSize = 25;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
     }
 

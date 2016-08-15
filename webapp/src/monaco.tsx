@@ -224,6 +224,8 @@ export class Editor extends srceditor.Editor {
     prepare() {
         this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
 
+        this.editor.updateOptions({fontSize: this.parent.settings.editorFontSize});
+
         let removeFromContextMenu = ["editor.action.changeAll",
                                     "editor.action.quickOutline",
                                     "editor.action.goToDeclaration",
@@ -256,6 +258,20 @@ export class Editor extends srceditor.Editor {
             run: () => Promise.resolve(this.parent.runSimulator())
         });
 
+        this.editor.addAction({
+            id: "zoomIn",
+            label: lf("Zoom In"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_ADD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL],
+            run: () => Promise.resolve(this.zoomIn())
+        });
+
+        this.editor.addAction({
+            id: "zoomOut",
+            label: lf("Zoom Out"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_SUBTRACT, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS],
+            run: () => Promise.resolve(this.zoomOut())
+        });
+
         if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             this.editor.addAction({
                 id: "compileHex",
@@ -284,6 +300,18 @@ export class Editor extends srceditor.Editor {
 
         this.editorViewZones = []
         this.isReady = true
+    }
+
+    zoomIn() {
+        console.log("zoomIn");
+        this.parent.settings.editorFontSize++;
+        this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
+    }
+
+    zoomOut() {
+        console.log("zoomOut");
+        this.parent.settings.editorFontSize--;
+        this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
     }
 
     getId() {
