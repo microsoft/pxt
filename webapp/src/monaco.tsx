@@ -397,9 +397,6 @@ export class Editor extends srceditor.Editor {
                 (this.editor as any).changeViewZones(function(changeAccessor: any) {
                         let domNode = document.createElement('div');
                         domNode.className = "error-view-zone";
-                        domNode.click = () => {
-
-                        }
                         domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
                         viewZoneId = changeAccessor.addZone({
                                     afterLineNumber: d.line + 1,
