@@ -431,7 +431,7 @@ export function ptrAsync(path: string, target?: string) {
         })
 }
 
-function allFiles(top: string, maxDepth = 4, allowMissing = false): string[] {
+function allFiles(top: string, maxDepth = 8, allowMissing = false): string[] {
     let res: string[] = []
     if (allowMissing && !fs.existsSync(top)) return res
     for (let p of fs.readdirSync(top)) {
@@ -675,6 +675,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "relprefix": opts.localDir,
             "workerjs": opts.localDir + "worker.js",
             "tdworkerjs": opts.localDir + "tdworker.js",
+            "monacoworkerjs": opts.localDir + "monacoworker.js",
             "pxtVersion": opts.pkgversion,
             "pxtRelId": "",
             "pxtCdnUrl": opts.localDir,
@@ -705,6 +706,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "release.manifest",
         "worker.js",
         "tdworker.js",
+        "monacoworker.js",
         "simulator.html",
         "sim.manifest",
         "sim.webmanifest",
@@ -858,12 +860,6 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage) => Promise<void>) {
     })
         .finally(() => process.chdir(prev))
         .then(() => { })
-}
-
-export function publishTargetAsync() {
-    return forEachBundledPkgAsync((pkg) => {
-        return pkg.publishAsync()
-    })
 }
 
 export interface SpawnOptions {
@@ -1357,7 +1353,7 @@ class SnippetHost implements pxt.Host {
     //Global cache of module files
     static files: U.Map<U.Map<string>> = {}
 
-    constructor(public name: string, public main: string, public extraDependencies: string[]) {}
+    constructor(public name: string, public main: string, public extraDependencies: string[]) { }
 
     resolve(module: pxt.Package, filename: string): string {
         return ""
@@ -1442,7 +1438,7 @@ class SnippetHost implements pxt.Host {
         return Promise.resolve("*")
     }
 
-    private get dependencies(): { [key: string]: string} {
+    private get dependencies(): { [key: string]: string } {
         let stdDeps: { [key: string]: string } = { "microbit": "file:../microbit" }
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
@@ -1541,16 +1537,6 @@ class Host
             })
     }
 
-    resolveVersionAsync(pkg: pxt.Package) {
-        return Cloud.privateGetAsync(pxt.pkgPrefix + pkg.id).then(r => {
-            let id = r["scriptid"]
-            if (!id) {
-                U.userError("scriptid not set on ptr for pkg " + pkg.id)
-            }
-            return id
-        })
-    }
-
 }
 
 let mainPkg = new pxt.MainPackage(new Host())
@@ -1558,7 +1544,21 @@ let mainPkg = new pxt.MainPackage(new Host())
 export function installAsync(packageName?: string) {
     ensurePkgDir();
     if (packageName) {
-        return mainPkg.installPkgAsync(packageName)
+        let parsed = pxt.github.parseRepoId(packageName)
+        return (parsed.tag
+            ? Promise.resolve(parsed.tag)
+            : pxt.github.latestVersionAsync(parsed.repo))
+            .then(tag => { parsed.tag = tag })
+            .then(() => pxt.github.pkgConfigAsync(parsed.repo, parsed.tag))
+            .then(cfg => mainPkg.loadAsync()
+                .then(() => {
+                    let ver = pxt.github.stringifyRepo(parsed)
+                    console.log(U.lf("Adding: {0}: {1}", cfg.name, ver))
+                    mainPkg.config.dependencies[cfg.name] = ver
+                    mainPkg.saveConfig()
+                    mainPkg = new pxt.MainPackage(new Host())
+                    return mainPkg.installAllAsync()
+                }))
     } else {
         return mainPkg.installAllAsync()
     }
@@ -1718,11 +1718,6 @@ export function initAsync() {
 
             console.log("package initialized")
         })
-}
-
-export function publishAsync() {
-    ensurePkgDir();
-    return mainPkg.publishAsync()
 }
 
 enum BuildOption {
@@ -2450,7 +2445,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
     }
 
     let files = uploader.getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
-    console.log(`There are ${files.length} documentation files to check`)
+    console.log(`checking ${files.length} documentation files`)
 
     let ignoreCount = 0
 
@@ -2467,11 +2462,12 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         successes.push(s)
     }
 
-    let addFailure = (f: string, info: ts.pxt.KsDiagnostic[]) => {
+    let addFailure = (f: string, infos: ts.pxt.KsDiagnostic[]) => {
         failures.push({
             filename: f,
-            diagnostics: info
+            diagnostics: infos
         })
+        infos.forEach(info => console.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
 
     return Promise.map(files, (fname: string) => {
@@ -2519,10 +2515,23 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                 else {
                     return addFailure(name, resp.diagnostics)
                 }
+            }).catch((e: Error) => {
+                addFailure(name, [
+                    {
+                        code: 4242,
+                        category: ts.DiagnosticCategory.Error,
+                        messageText: e.message,
+                        fileName: name,
+                        start: 1,
+                        line: 1,
+                        length: 1,
+                        character: 1
+                    }
+                ])
             })
         })
     }, { concurrency: 4 }).then((a: any) => {
-        console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks`)
+        console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
         if (ignoreCount > 0) {
             console.log(`Skipped ${ignoreCount} snippets`)
         }
@@ -2742,7 +2751,15 @@ export function extractAsync(filename: string) {
                     fn = fn.replace(/[\/]/g, "-")
                     let fullname = dirname + "/" + fn
                     fs.writeFileSync(fullname, prj.files[fn])
-                    console.log("Wrote " + fullname)
+                    console.log("wrote " + fullname)
+                }
+                // add default files if not present
+                for (let f in defaultFiles) {
+                    if (prj.files[f]) continue;
+                    let fullname = dirname + "/" + f
+                    nodeutil.mkdirP(path.dirname(fullname))
+                    fs.writeFileSync(fullname, defaultFiles[f])
+                    console.log("wrote " + fullname)
                 }
             }
         })
@@ -2778,7 +2795,6 @@ cmd("install  [PACKAGE...]        - install new packages, or all packages", inst
 cmd("build                        - build current package", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
-cmd("publish                      - publish current package", publishAsync, 1)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
@@ -2791,7 +2807,6 @@ cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets com
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
-cmd("pubtarget                    - publish all bundled target libraries", publishTargetAsync, 1)
 cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)

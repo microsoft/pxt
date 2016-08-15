@@ -39,6 +39,7 @@
         <div id='compilemsg' class="ui ignored info message"></div>
     </div>
 
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="/cdn/vs/editor/editor.main.css">
     <style type="text/css">
         @import "/cdn/semantic.css";
         @import "/cdn/custom.css";
@@ -60,7 +61,6 @@
     <script type="text/javascript" src="/cdn/blockly/blockly_compressed.js"></script>
     <script type="text/javascript" src="/cdn/blockly/blocks_compressed.js"></script>
     <script type="text/javascript" src="/cdn/blockly/msg/js/en.js"></script>
-    <script type="text/javascript" src="/cdn/fuse/fuse.min.js"></script>
     <script type="text/javascript" src="/cdn/semantic.js"></script>
     <!-- unpatch to load JS in electron -->
     <script>if (window.module) module = window.module;</script>
@@ -198,7 +198,7 @@
                 </value>
                 <field name="OP">MULTIPLY</field>
             </block>
-            <block type="math_arithmetic">
+            <block type="math_arithmetic" gap="8">
                 <value name="A">
                     <shadow type="math_number">
                         <field name="NUM">0</field>
@@ -210,6 +210,18 @@
                     </shadow>
                 </value>
                 <field name="OP">DIVIDE</field>
+            </block>
+            <block type="math_modulo">
+                <value name="DIVIDEND">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="DIVISOR">
+                    <shadow type="math_number">
+                        <field name="NUM">1</field>
+                    </shadow>
+                </value>
             </block>
             <block type="math_op2" gap="8">
                 <value name="x">
@@ -276,6 +288,17 @@
             <block type="lists_length"></block>
         </category>
     </xml>
+    <script>
+        var require = { paths: { 'vs': '/cdn/vs' } };
+        window.MonacoEnvironment = {
+            getWorkerUrl: function (workerId, label) {
+                return pxt.webConfig.monacoworkerjs;
+            }
+        };        
+    </script>
+    <script src="/cdn/vs/loader.js"></script>
+    <script src="/cdn/vs/editor/editor.main.nls.js"></script>
+    <script src="/cdn/vs/editor/editor.main.js"></script>
 </body>
 
 </html>

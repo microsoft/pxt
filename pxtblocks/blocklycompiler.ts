@@ -550,6 +550,13 @@ namespace pxt.blocks {
         }
     }
 
+    function compileModulo(e: Environment, b: B.Block): Node {
+        let left = b.getInputTargetBlock("DIVIDEND");
+        let right = b.getInputTargetBlock("DIVISOR");
+        let args = [compileExpression(e, left), compileExpression(e, right)];
+        return H.mkSimpleCall("%", args);
+    }
+
     function compileMathOp2(e: Environment, b: B.Block): Node {
         let op = b.getFieldValue("op");
         let x = compileExpression(e, b.getInputTargetBlock("x"));
@@ -641,6 +648,8 @@ namespace pxt.blocks {
             case "logic_compare":
             case "logic_operation":
                 expr = compileArithmetic(e, b); break;
+            case "math_modulo":
+                expr = compileModulo(e, b); break;
             case "logic_boolean":
                 expr = compileBoolean(e, b); break;
             case "logic_negate":

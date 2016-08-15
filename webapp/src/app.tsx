@@ -18,7 +18,7 @@ import * as cmds from "./cmds"
 import * as appcache from "./appcache";
 import {LoginBox} from "./login"
 
-import * as ace from "./ace"
+import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
 import * as blocks from "./blocks"
 import * as codecard from "./codecard"
@@ -63,6 +63,7 @@ interface IAppState {
     running?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
+    showBlocks?: boolean;
 
     simulatorCompilation?: {
         name: string;
@@ -126,7 +127,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         if (!cloud.packages) return [];
         let res: pxt.github.SearchResults =
             this.state.searchFor || cloud.preferredPackages
-                ? this.getData(`gh-search:${this.state.searchFor || cloud.preferredPackages.join('|') }`)
+                ? this.getData(`gh-search:${this.state.searchFor || cloud.preferredPackages.join('|')}`)
                 : null
         if (res) this.prevGhData = res.items
         return this.prevGhData
@@ -147,9 +148,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     fetchUrlData(): Cloud.JsonScript[] {
         if (this.state.packages) return []
 
-        let embedUrl = pxt.appTarget.appTheme.embedUrl;
+        let embedUrl = Util.escapeForRegex(Util.stripUrlProtocol(pxt.appTarget.appTheme.homeUrl));
         if (this.state.searchFor && embedUrl) {
-            let m = new RegExp(`^(${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(this.state.searchFor.trim());
+            let m = new RegExp(`^((https:\/\/)?${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(this.state.searchFor.trim());
             let scriptid = m && (m[3] || m[4]) ? (m[3] ? m[3].toLowerCase() : m[4].toLowerCase()) : null
             let res = this.getData(`cloud:${scriptid}`)
             if (res) {
@@ -228,15 +229,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
-                pxt.github.listRefsAsync(scr.full_name, "tags")
-                    .then((tags: string[]) => {
-                        tags.sort(pxt.semver.strcmp)
-                        tags.reverse()
-                        if (tags[0])
-                            return Promise.resolve(tags[0])
-                        else
-                            return pxt.github.tagToShaAsync(scr.full_name, scr.default_branch)
-                    })
+                pxt.github.latestVersionAsync(scr.full_name)
                     .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
                         .then(cfg =>
                             p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
@@ -345,7 +338,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let docembed: string;
         if (ready) {
             let runurl = `${rootUrl}--run?id=${header.pubId}`;
-            let docurl = `${rootUrl}--docs?id=${header.pubId}`;
+            let docurl = `${rootUrl}--docs?projectid=${header.pubId}`;
             url = `${rootUrl}${header.pubId}`
             embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
             docembed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
@@ -535,7 +528,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
     editorFile: pkg.File;
-    aceEditor: ace.Editor;
+    textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
@@ -641,7 +634,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     private initEditors() {
-        this.aceEditor = new ace.Editor(this);
+        this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
@@ -659,7 +652,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }
         }
 
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.aceEditor]
+        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -715,6 +708,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             type: "fileloaded",
             name: this.editorFile.getName()
         } as pxsim.SimulatorFileLoadedMessage)
+
+        if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
     }
 
     notifySideDocs(message: pxsim.SimulatorMessage) {
@@ -726,32 +721,27 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({
             currFile: fn,
             helpCard: undefined,
-            errorCard: undefined
+            errorCard: undefined,
+            showBlocks: false
         })
     }
 
     setSideFile(fn: pkg.File) {
-        let virtualFile = this.state.currFile.getVirtualFileName()
         let fileName = fn.name;
-        if (!virtualFile && pkg.File.blocksFileNameRx.test(fileName)) {
-            // Going from a random file to the blocks file, lets first go to the Javascript and run the round trip
-            pxt.tickEvent("sideBar.showBlocksRt");
-            virtualFile = fn.getVirtualFileName() //main.ts
-            let file = pkg.mainEditorPkg().lookupFile("this/" + virtualFile)
-            if (file) {
-                this.setFile(file)
-                this.aceEditor.openBlocks()
-            }
-        } else if (virtualFile == fileName && pkg.File.blocksFileNameRx.test(fileName)) {
+        let currFile = this.state.currFile.name;
+        if (fileName != currFile && pkg.File.blocksFileNameRx.test(fileName)) {
             // Going from ts -> blocks
             pxt.tickEvent("sidebar.showBlocks");
-            this.aceEditor.openBlocks()
-        } else if (virtualFile == fileName && pkg.File.tsFileNameRx.test(fileName)) {
-            pxt.tickEvent("sidebar.showTypescript");
-            // Going from blocks -> ts
-            this.blocksEditor.openTypeScript()
+            let tsFileName = fn.getVirtualFileName();
+            let file = pkg.mainEditorPkg().lookupFile("this/" + tsFileName)
+            if (currFile == tsFileName) {
+                // current file is the ts file, so just switch
+                this.textEditor.openBlocks();
+            } else if (file) {
+                this.setFile(file)
+                this.setState({ showBlocks: true })
+            }
         } else {
-            // Other files
             this.setFile(fn)
         }
     }
@@ -813,7 +803,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     currFile: file
                 })
                 if (!e && pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
-                    this.aceEditor.checkRoundTrip(file.getVirtualFileName(), () => {
+                    this.textEditor.checkRoundTrip(file.getVirtualFileName(), () => {
                         return Promise.resolve()
                     })
                 }
@@ -895,8 +885,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
                     // this is somewhat hacky...
-                    this.aceEditor.overrideFile(text)
-                    this.aceEditor.formatCode()
+                    this.textEditor.overrideFile(text)
+                    this.textEditor.formatCode()
                 })
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == "pxt/" + targetId) {
@@ -1075,8 +1065,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     editText() {
-        if (this.editor != this.aceEditor) {
-            this.updateEditorFile(this.aceEditor)
+        if (this.editor != this.textEditor) {
+            this.updateEditorFile(this.textEditor)
             this.forceUpdate();
         }
     }
@@ -1482,7 +1472,8 @@ let myexports: any = {
     require,
     core,
     getEditor,
-    ace,
+    monaco,
+    blocks,
     compiler,
     pkg,
     getsrc,

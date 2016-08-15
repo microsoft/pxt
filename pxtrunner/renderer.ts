@@ -1,4 +1,3 @@
-/// <reference path="../typings/ace/ace.d.ts" />
 
 namespace pxt.runner {
 
@@ -30,27 +29,7 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        if (typeof ace !== "undefined") {
-            const src = $js.text() || '';
-            let $c = $('<div class="ui content js"></div>').text(src);
-            let editor = ace.edit($c[0]);
-            editor.setTheme("ace/theme/textmate");
-            editor.getSession().setMode("ace/mode/typescript");
-            editor.setReadOnly(true);
-            editor.setShowPrintMargin(false);
-            editor.renderer.setShowGutter(!woptions.hideGutter && src.split('\n').length > 5);
-            editor.setHighlightActiveLine(false);
-            editor.getSession().setUseWrapMode(true);
-            editor.clearSelection();
-            editor.$blockScrolling = Infinity;
-            (editor.renderer as any).$cursorLayer.element.style.display = "none"
-            editor.setOptions({
-                maxLines: 1024
-            });
-            $parent.append($c);
-            editor.resize(true);
-        } else
-            $parent.append($('<div class="ui content js"/>').append($js));
+        $parent.append($('<div class="ui content js"/>').append($js));
     }
 
     function fillWithWidget(

@@ -20,9 +20,6 @@
     "react/react-dom.d.ts": {
       "commit": "717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf"
     },
-    "ace/ace.d.ts": {
-      "commit": "717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf"
-    },
     "marked/marked.d.ts": {
       "commit": "418e6719c3d9444629dea0d27bebf9cfda9c6c45"
     },

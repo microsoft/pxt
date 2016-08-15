@@ -51,6 +51,7 @@ namespace pxt {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",
         tdworkerjs: string;  // "/beta---tdworker",
+        monacoworkerjs: string; // "/beta---monacoworker",
         pxtVersion: string; // "0.3.8",
         pxtRelId: string; // "zstad",
         pxtCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zstad/c/",
@@ -69,6 +70,7 @@ namespace pxt {
             relprefix: "/--",
             workerjs: "/worker.js",
             tdworkerjs: "/tdworker.js",
+            monacoworkerjs: "/monacoworker.js",
             pxtVersion: "local",
             pxtRelId: "",
             pxtCdnUrl: "/cdn/",
@@ -95,7 +97,6 @@ namespace pxt {
         writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any>;
-        resolveVersionAsync(pkg: Package): Promise<string>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
@@ -319,11 +320,9 @@ namespace pxt {
 
             if (getEmbeddedScript(this.id)) {
                 this.resolvedVersion = v = "embed:" + this.id
-            } else if (!v || v == "*")
-                return this.host().resolveVersionAsync(this).then(id => {
-                    if (!/:/.test(id)) id = "pub:" + id
-                    return (this.resolvedVersion = id);
-                })
+            } else if (!v || v == "*") {
+                U.userError(lf("version not specified for {0}", v))
+            }
             return Promise.resolve(v)
         }
 
@@ -452,15 +451,6 @@ namespace pxt {
 
         installAllAsync() {
             return this.loadAsync(true)
-        }
-
-        installPkgAsync(name: string) {
-            return Cloud.privateGetAsync(pkgPrefix + name)
-                .then(ptrinfo => {
-                    this.config.dependencies[name] = "*"
-                })
-                .then(() => this.installAllAsync())
-                .then(() => this.saveConfig())
         }
 
         sortedDeps() {
@@ -614,71 +604,8 @@ namespace pxt {
                     return U.sortObjectFields(files)
                 })
         }
-
-        publishAsync() {
-            let text: string;
-            let scrInfo: { id: string; } = null;
-
-            return this.filesToBePublishedAsync()
-                .then(files => {
-                    text = JSON.stringify(files, null, 2)
-                    let hash = U.sha256(text).substr(0, 32)
-                    pxt.log(`checking for pre-existing script at ${hash}`)
-                    return Cloud.privateGetAsync("scripthash/" + hash)
-                        .then(resp => {
-                            if (resp.items && resp.items[0])
-                                return resp.items[0]
-                            else return null
-                        })
-                })
-                .then(sinfo => {
-                    scrInfo = sinfo;
-                    if (scrInfo) {
-                        pxt.log(`found existing script at /${scrInfo.id}`)
-                        return Promise.resolve();
-                    }
-                    let scrReq = {
-                        baseid: "",
-                        name: this.config.name,
-                        description: this.config.description || "",
-                        islibrary: true,
-                        ishidden: false,
-                        userplatform: ["pxt"],
-                        editor: javaScriptProjectName,
-                        target: appTarget.id,
-                        text: text
-                    }
-                    pxt.log(`publishing script; ${text.length} bytes; target=${scrReq.target}`)
-                    return Cloud.privatePostAsync("scripts", scrReq)
-                        .then(inf => {
-                            scrInfo = inf
-                            pxt.log(`published; id /${scrInfo.id}`)
-                        })
-                })
-                .then(() => Cloud.privateGetAsync(pkgPrefix + this.config.name)
-                    .then(res => res.scriptid == scrInfo.id, e => false))
-                .then(alreadySet => {
-                    if (alreadySet) {
-                        pxt.log(`package already published`)
-                        return
-                    }
-                    return Cloud.privatePostAsync("pointers", {
-                        path: pkgPrefix.replace(/^ptr-/, "").replace(/-$/, "") + "/" + this.config.name,
-                        scriptid: scrInfo.id
-                    }).then(() => {
-                        pxt.log(`package published`)
-                    })
-                })
-                .then(() => {
-                    if (this.config.installedVersion != scrInfo.id) {
-                        this.config.installedVersion = scrInfo.id
-                        this.saveConfig();
-                    }
-                })
-        }
     }
 
-    export const pkgPrefix = "ptr-pkg-"
     export const configName = "pxt.json"
     export const blocksProjectName = "blocksprj";
     export const javaScriptProjectName = "tsprj";

@@ -1,10 +1,11 @@
 {
   "name": "pxt-core",
-  "version": "0.3.22",
-  "description": "A kinder JavaScript experience",
+  "version": "0.3.32",
+  "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
     "JavaScript",
+    "Blockly",
     "education",
     "microbit"
   ],
@@ -49,7 +50,7 @@
     "serialport": "^2.0.6"
   },
   "devDependencies": {
-    "brace": "^0.7.0",
+    "monaco-editor": "^0.5.3",
     "browserify": "^13.0.0",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",

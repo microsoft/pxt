@@ -212,7 +212,6 @@ task('wapp', [
 ])
 
 file("built/web/pxtlib.js", [
-    "webapp/ace/mode/assembly_armthumb.js",
     "built/pxtlib.js",
     "built/pxtblocks.js",
     "built/pxtsim.js",
@@ -223,7 +222,7 @@ file("built/web/pxtlib.js", [
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
-    jake.cpR("webapp/ace/mode/assembly_armthumb.js", "node_modules/brace/mode/")
+    jake.cpR("node_modules/monaco-editor/min/vs/", "webapp/public/")
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtblocks.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
