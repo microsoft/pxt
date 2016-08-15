@@ -205,7 +205,15 @@ namespace pxt.runner {
 
             let id = pxt.Cloud.parseScriptId(e.innerText);
             if (id) {
-                if (options.snippetReplaceParent) e = e.parentElement;
+                if (options.snippetReplaceParent) {
+                    e = e.parentElement;
+                    // create a new div to host the rendered code
+                    let d = document.createElement("div");
+                    e.parentElement.insertBefore(d, e);
+                    e.parentElement.removeChild(e);
+
+                    e = d;
+                }
                 return pxt.runner.renderProjectAsync(e, id)
                     .then(() => render());
             }
