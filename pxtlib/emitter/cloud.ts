@@ -81,6 +81,15 @@ namespace pxt.Cloud {
         return null
     }
 
+    export function parseScriptId(uri: string): string {
+        const target = pxt.appTarget;
+        if (!uri || !target.appTheme || !target.appTheme.embedUrl) return undefined;
+
+        let embedUrl = Util.escapeForRegex(Util.stripUrlProtocol(target.appTheme.embedUrl));
+        let m = new RegExp(`^((https:\/\/)?${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(uri.trim());
+        let scriptid = m && (m[3] || m[4]) ? (m[3] ? m[3].toLowerCase() : m[4].toLowerCase()) : null
+        return scriptid;
+    }
 
     //
     // Interfaces used by the cloud

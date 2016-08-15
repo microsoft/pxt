@@ -6,6 +6,7 @@ namespace pxt.runner {
         signatureClass?: string;
         blocksClass?: string;
         shuffleClass?: string;
+        projectClass?: string;
         blocksAspectRatio?: number;
         simulatorClass?: string;
         linksClass?: string;
@@ -179,7 +180,7 @@ namespace pxt.runner {
             let segment = $('<div class="ui segment"/>').append(s);
             c.replaceWith(segment);
         }, {
-            emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio,
+                emPixels: 14, layout: pxt.blocks.BlockLayout.Shuffle, aspectRatio: options.blocksAspectRatio,
                 package: options.package
             });
     }
@@ -190,6 +191,28 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             c.replaceWith(s);
         }, { package: options.package });
+    }
+
+    function renderProjectAsync(options: ClientRenderOptions): Promise<void> {
+        if (!options.projectClass) return Promise.resolve();
+
+        function render(): Promise<void> {
+            let $el = $("." + options.projectClass).first();
+            let e = $el[0];
+            if (!e) return Promise.resolve();
+
+            $el.removeClass(options.projectClass);
+
+            let id = pxt.Cloud.parseScriptId(e.innerText);
+            if (id) {
+                if (options.snippetReplaceParent) e = e.parentElement;
+                return pxt.runner.renderProjectAsync(e, id)
+                    .then(() => render());
+            }
+            else return render();
+        }
+
+        return render();
     }
 
     function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
@@ -374,6 +397,7 @@ namespace pxt.runner {
             .then(() => renderSignaturesAsync(options))
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderSnippetsAsync(options))
-            .then(() => renderBlocksAsync(options));
+            .then(() => renderBlocksAsync(options))
+            .then(() => renderProjectAsync(options))
     }
 }

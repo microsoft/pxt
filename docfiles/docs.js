@@ -61,6 +61,7 @@ function renderSnippets() {
             namespacesClass: 'lang-namespaces',       
             codeCardClass: 'lang-codecard',
             packageClass: 'lang-package',
+            projectClass: 'lang-project',
             snippetReplaceParent: true,
             simulator: true,
             hex: true,
