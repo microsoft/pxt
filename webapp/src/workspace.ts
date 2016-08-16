@@ -111,6 +111,7 @@ export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
         .then((inf: Cloud.JsonScript) => {
             h.pubId = inf.id
             h.pubCurrent = h.saveId === saveId
+            h.meta = inf.meta;
             pxt.debug(`published; id /${inf.id}`)
             return saveAsync(h)
                 .then(() => inf)
