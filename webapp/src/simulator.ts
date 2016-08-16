@@ -76,6 +76,10 @@ export function makeDirty() { // running outdated code
     pxsim.U.addClass(driver.container, "sepia");
 }
 
+export function isDirty(): boolean { // in need of a restart?
+    return /sepia/.test(driver.container.className);
+}
+
 export function run(debug: boolean, res: ts.pxt.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[ts.pxt.BINARY_JS]

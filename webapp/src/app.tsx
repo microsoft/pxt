@@ -617,7 +617,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 return;
             this.runSimulator({ background: true });
         },
-        3000, false);
+        2000, false);
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
@@ -1044,8 +1044,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent(opts.background ? "autorun" :
             opts.debug ? "debug" : "run");
 
-        if (!opts.background)
+        if (opts.background) {
+            if (!simulator.isDirty()) {
+                pxt.debug('auto-run cancelled');
+                return;
+            }
+        } else {
             this.editor.beforeCompile();
+        }
 
         this.stopSimulator();
         this.clearLog();
