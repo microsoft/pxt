@@ -62,6 +62,7 @@ testEnums()
 testForOf()
 testMaps()
 testBufferShiftRotate();
+testComma();
 
 // test some top-level code
 let xsum = 0;
@@ -838,6 +839,17 @@ function testMaps() {
     control.assert(m.getElt("two") == 2, "2")
     //control.assert(mapGet(m, "zzzz") == null, "0")
 }
+
+function testComma() {
+    glb1 = 0
+    let x = (incrBy_2(), 77)
+    assert(x == 77, "x")
+    assert(glb1 == 2, "g")
+    // make sure there are no leaks
+    let y = ("aaa" + "zz", "x" + "yyy")
+    assert(y.length == 4, "y")
+}
+
 
 function testBufferShiftRotate() {
     /* TODO: create buffer?

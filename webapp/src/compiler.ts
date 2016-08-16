@@ -65,7 +65,7 @@ export interface CompileOptions {
     background?: boolean; // not explicitely requested by user (hint for simulator)
 }
 
-export function compileAsync(options: CompileOptions = {}) {
+export function compileAsync(options: CompileOptions = {}): Promise<ts.pxt.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
     return pkg.mainPkg.getCompileOptionsAsync(trg)
@@ -74,6 +74,7 @@ export function compileAsync(options: CompileOptions = {}) {
                 opts.breakpoints = true
                 opts.justMyCode = true
             }
+            opts.computeUsedSymbols = true
             return opts
         })
         .then(compileCoreAsync)
@@ -81,7 +82,14 @@ export function compileAsync(options: CompileOptions = {}) {
             // TODO remove this
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
-            return resp
+
+            return ensureApisInfoAsync()
+                .then(() => {
+                    for (let k of Object.keys(resp.usedSymbols)) {
+                        resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
+                    }
+                    return resp
+                })
         })
         .catch(catchUserErrorAndSetDiags(hang))
 }
@@ -156,21 +164,23 @@ function localizeApis(apis: ts.pxt.ApisInfo) {
     }
 }
 
+function ensureApisInfoAsync() {
+    if (refreshApis || !cachedApis)
+        return workerOpAsync("apiInfo", {})
+            .then(apis => {
+                refreshApis = false;
+                localizeApis(apis);
+                cachedApis = apis;
+            })
+    else return Promise.resolve()
+}
+
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => workerOpAsync("setOptions", { options: opts }))
         .then(() => workerOpAsync("allDiags", {}))
         .then(setDiagnostics)
-        .then(() => {
-            if (refreshApis || !cachedApis)
-                return workerOpAsync("apiInfo", {})
-                    .then(apis => {
-                        refreshApis = false;
-                        localizeApis(apis);
-                        cachedApis = apis;
-                    })
-            else return Promise.resolve()
-        })
+        .then(ensureApisInfoAsync)
         .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;
     return p;

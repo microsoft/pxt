@@ -35,6 +35,7 @@ namespace ts.pxt {
         ast?: boolean;
         breakpoints?: boolean;
         justMyCode?: boolean;
+        computeUsedSymbols?: boolean;
 
         embedMeta?: string;
         embedBlob?: string; // base64
@@ -79,6 +80,7 @@ namespace ts.pxt {
         breakpoints?: Breakpoint[];
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
+        usedSymbols?: U.Map<SymbolInfo>; // q-names of symbols used
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {

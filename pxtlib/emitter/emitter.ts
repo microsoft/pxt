@@ -487,6 +487,9 @@ namespace ts.pxt {
                 }]
         }
 
+        if (opts.computeUsedSymbols)
+            res.usedSymbols = {}
+
         let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
 
         let src = program.getSourceFiles()[0]
@@ -590,7 +593,7 @@ namespace ts.pxt {
                 case ts.SyntaxKind.CatchClause:
                 case ts.SyntaxKind.FinallyKeyword:
                 case ts.SyntaxKind.ThrowStatement:
-                    syntax =  lf("throwing and catching exceptions")
+                    syntax = lf("throwing and catching exceptions")
                     break
                 case ts.SyntaxKind.ClassExpression:
                     syntax = lf("class expressions")
@@ -1005,6 +1008,9 @@ ${lbl}: .short 0xffff
                     usedDecls[nodeKey(decl)] = true
                     info.usages = []
                     info.prePassUsagesEmitted = 0
+
+                    if (opts.computeUsedSymbols && decl && decl.symbol)
+                        res.usedSymbols[getFullName(checker, decl.symbol)] = null
                 }
                 let mask = refMask(bindings)
                 if (!info.usages.some(u => refMask(u) == mask)) {
@@ -1015,6 +1021,9 @@ ${lbl}: .short 0xffff
         }
 
         function markUsed(decl: Declaration) {
+            if (opts.computeUsedSymbols && decl && decl.symbol)
+                res.usedSymbols[getFullName(checker, decl.symbol)] = null
+
             if (decl && !isUsed(decl)) {
                 usedDecls[nodeKey(decl)] = true
                 usedWorkList.push(decl)
@@ -1132,7 +1141,6 @@ ${lbl}: .short 0xffff
                 args: args.slice(0)
             };
             (node as any).callInfo = callInfo
-
 
             let sig = checker.getResolvedSignature(node)
             let trg: Signature = (sig as any).target
@@ -1693,6 +1701,14 @@ ${lbl}: .short 0xffff
 
             let shim = (n: string) => rtcallMask(n, [node.left, node.right]);
 
+            if (node.operatorToken.kind == SK.CommaToken) {
+                let v = emitIgnored(node.left)
+                if (v)
+                    return ir.op(EK.Sequence, [v, emitExpr(node.right)])
+                else
+                    return emitExpr(node.right)
+            }
+
             if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
@@ -1737,7 +1753,7 @@ ${lbl}: .short 0xffff
                             simpleInstruction(node.operatorToken.kind),
                             [shim("String_::compare"), ir.numlit(0)])
                     default:
-                        unhandled(node.operatorToken, lf("unknown numeric operator"), 9251)
+                        unhandled(node.operatorToken, lf("unknown string operator"), 9251)
                 }
             }
 
@@ -1840,16 +1856,15 @@ ${lbl}: .short 0xffff
             proc.emitLblDirect(l.brk);
         }
 
-        function emitExprAsStmt(node: Expression) {
-            if (!node) return;
+        function emitIgnored(node: Expression) {
+            if (!node) return null;
             switch (node.kind) {
                 case SK.Identifier:
                 case SK.StringLiteral:
                 case SK.NumericLiteral:
                 case SK.NullKeyword:
-                    return; // no-op
+                    return null; // no-op
             }
-            emitBrk(node)
             let v = emitExpr(node);
             let a = typeOf(node)
             if (!(a.flags & TypeFlags.Void)) {
@@ -1858,6 +1873,13 @@ ${lbl}: .short 0xffff
                     v = ir.op(EK.Decr, [v])
                 }
             }
+            return v
+        }
+
+        function emitExprAsStmt(node: Expression) {
+            let v = emitIgnored(node)
+            if (!v) return
+            emitBrk(node)
             proc.emitExpr(v)
             proc.stackEmpty();
         }
