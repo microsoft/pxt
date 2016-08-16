@@ -106,7 +106,11 @@ namespace pxt.docs {
         href: string;
     }
 
-    export var requireMarked = () => require("marked");
+    export var requireMarked = () =>  {
+        if (typeof marked !== "undefined") return marked;
+        if (typeof require === "undefined") return undefined;
+        return require("marked");
+    }
 
     export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null, breadcrumb: BreadcrumbEntry[] = []): string {
         let params: U.Map<string> = pubinfo || {}

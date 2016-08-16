@@ -56,6 +56,14 @@ The **blocks** language renders a JavaScript snippet into blocks and provide a s
 See [forever docs](https://m.pxt.io/reference/basic/show-string) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
 
+### project
+
+The **project** language is simular to blocks but render a published project.
+
+    ```project
+    twejlyucio
+    ```
+
 ### sig
 
 The **sig** displays a signature of the first function call in the snippet.
