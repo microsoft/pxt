@@ -487,6 +487,9 @@ namespace ts.pxt {
                 }]
         }
 
+        if (opts.computeUsedSymbols)
+            res.usedSymbols = {}
+
         let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
 
         let src = program.getSourceFiles()[0]
@@ -1005,6 +1008,9 @@ ${lbl}: .short 0xffff
                     usedDecls[nodeKey(decl)] = true
                     info.usages = []
                     info.prePassUsagesEmitted = 0
+
+                    if (opts.computeUsedSymbols && decl && decl.symbol)
+                        res.usedSymbols[getFullName(checker, decl.symbol)] = null
                 }
                 let mask = refMask(bindings)
                 if (!info.usages.some(u => refMask(u) == mask)) {
@@ -1015,6 +1021,9 @@ ${lbl}: .short 0xffff
         }
 
         function markUsed(decl: Declaration) {
+            if (opts.computeUsedSymbols && decl && decl.symbol)
+                res.usedSymbols[getFullName(checker, decl.symbol)] = null
+
             if (decl && !isUsed(decl)) {
                 usedDecls[nodeKey(decl)] = true
                 usedWorkList.push(decl)
@@ -1132,7 +1141,6 @@ ${lbl}: .short 0xffff
                 args: args.slice(0)
             };
             (node as any).callInfo = callInfo
-
 
             let sig = checker.getResolvedSignature(node)
             let trg: Signature = (sig as any).target
