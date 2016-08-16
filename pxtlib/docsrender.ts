@@ -267,7 +267,7 @@ namespace pxt.docs {
         }
 
         if (!params["description"]) {
-            let descM = /<p>(.+?)<\/p>/.exec(html)
+            let descM = /<p>([^]+?)<\/p>/.exec(html)
             if (descM)
                 params["description"] = html2Quote(descM[1])
         }
