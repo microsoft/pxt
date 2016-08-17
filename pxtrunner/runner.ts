@@ -243,15 +243,28 @@ namespace pxt.runner {
     }
 
     export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
-        $(loading).hide()
-
         function render(docid: string) {
             pxt.debug(`rendering ${docid}`);
             $(content).hide()
             $(loading).show()
             Promise.delay(100) // allow UI to update
                 .then(() => renderDocAsync(content, docid))
-                .finally(() => {
+                .catch(e => {
+                    $(content).html(`
+                    <img style="height:4em;" src="${pxt.appTarget.appTheme.docsLogo}" />
+                    <h1>${lf("Oops")}</h1>
+                    <h3>${lf("We could not load the documentation, please check your internet connection.")}</h3>
+                    <button class="ui button primary" id="tryagain">${lf("Try Again")}</button>`);
+                    $(content).find('#tryagain').click(() => {
+                        render(docid);
+                    })
+                    // notify parent iframe that docs weren't loaded
+                    if (window.parent)
+                        window.parent.postMessage(<pxsim.SimulatorDocMessage>{
+                            type: "docfailed",
+                            docid: docid
+                        }, "*");
+                }).finally(() => {
                     $(loading).hide()
                     $(content).show()
                 })
@@ -271,7 +284,8 @@ namespace pxt.runner {
             renderHash();
         }, false);
 
-        renderHash();
+        // delay load doc page to allow simulator to load first
+        setTimeout(() => renderHash(), 5000);
     }
 
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
@@ -289,10 +303,6 @@ ${files["main.ts"]}
         docid = docid.replace(/^\//, "");
         return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
             .then(md => renderMarkdownAsync(content, md, docid))
-            .catch(e => {
-                pxt.reportException(e, { docid: docid });
-                $(content).html(lf("<h3>Something wrong happened, please check your internet connection."));
-            })
     }
 
     const template = `
