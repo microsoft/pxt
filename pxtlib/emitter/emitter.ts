@@ -1699,11 +1699,12 @@ ${lbl}: .short 0xffff
             let shim = (n: string) => rtcallMask(n, [node.left, node.right]);
 
             if (node.operatorToken.kind == SK.CommaToken) {
-                let v = emitIgnored(node.left)
-                if (v)
-                    return ir.op(EK.Sequence, [v, emitExpr(node.right)])
-                else
+                if (isNoopExpr(node.left))
                     return emitExpr(node.right)
+                else {
+                    let v = emitIgnored(node.left)
+                    return ir.op(EK.Sequence, [v, emitExpr(node.right)])
+                }
             }
 
             if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
@@ -1853,15 +1854,19 @@ ${lbl}: .short 0xffff
             proc.emitLblDirect(l.brk);
         }
 
-        function emitIgnored(node: Expression) {
-            if (!node) return null;
+        function isNoopExpr(node: Expression) {
+            if (!node) return true;
             switch (node.kind) {
                 case SK.Identifier:
                 case SK.StringLiteral:
                 case SK.NumericLiteral:
                 case SK.NullKeyword:
-                    return null; // no-op
+                    return true; // no-op
             }
+            return false
+        }
+
+        function emitIgnored(node: Expression) {
             let v = emitExpr(node);
             let a = typeOf(node)
             if (!(a.flags & TypeFlags.Void)) {
@@ -1874,9 +1879,9 @@ ${lbl}: .short 0xffff
         }
 
         function emitExprAsStmt(node: Expression) {
-            let v = emitIgnored(node)
-            if (!v) return
+            if (isNoopExpr(node)) return
             emitBrk(node)
+            let v = emitIgnored(node)
             proc.emitExpr(v)
             proc.stackEmpty();
         }

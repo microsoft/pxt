@@ -100,7 +100,7 @@ function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
                         console.log(`upload: ${fn} -> ${id}`)
                         return id
                     }, err => {
-                        error(`cannot upload ${fn} - ${err.message}`)
+                        error(`cannot upload ${fn} - ${err.message}, len=${buf.length}`)
                         return ""
                     })
             }
