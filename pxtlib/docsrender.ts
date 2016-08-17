@@ -267,7 +267,7 @@ namespace pxt.docs {
         }
 
         if (!params["description"]) {
-            let descM = /<p>(.+?)<\/p>/.exec(html)
+            let descM = /<p>([^]+?)<\/p>/.exec(html)
             if (descM)
                 params["description"] = html2Quote(descM[1])
         }
@@ -291,6 +291,9 @@ namespace pxt.docs {
             registers[nam] = (s || "") + cont
             return "<!-- aside -->"
         })
+
+        // fix up spourious newlines at the end of code blocks
+        html = html.replace(/\n<\/code>/g, "</code>")
 
         registers["main"] = html
 

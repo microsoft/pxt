@@ -62,6 +62,8 @@ testEnums()
 testForOf()
 testMaps()
 testBufferShiftRotate();
+testComma();
+testLambdas();
 
 // test some top-level code
 let xsum = 0;
@@ -837,6 +839,48 @@ function testMaps() {
     mapSet(m, "two", 2)
     control.assert(m.getElt("two") == 2, "2")
     //control.assert(mapGet(m, "zzzz") == null, "0")
+}
+
+function testComma() {
+    glb1 = 0
+    let x = (incrBy_2(), 77)
+    assert(x == 77, "x")
+    assert(glb1 == 2, "g")
+    // make sure there are no leaks
+    let y = ("aaa" + "zz", "x" + "yyy")
+    assert(y.length == 4, "y")
+}
+
+function doubleIt(f: (x: number) => number) {
+    return f(1) - f(2)
+}
+
+function triple(f: (x: number, y: number, z: number) => number) {
+    return f(5, 20, 8)
+}
+
+function checkLen(f: (x: string) => string, k: number) {
+    // make sure strings are GCed
+    f("baz")
+    let s = f("foo")
+    assert(s.length == k, "len")
+}
+
+function testLambdas() {
+    let x = doubleIt(k => {
+        return k * 108
+    })
+    assert(x == -108, "l0")
+    x = triple((x, y, z) => {
+        return x * y + z
+    })
+    assert(x == 108, "l1")
+    checkLen((s) => {
+        return s + "XY1"
+    }, 6)
+    checkLen((s) => {
+        return s + "1212"
+    }, 7)
 }
 
 function testBufferShiftRotate() {

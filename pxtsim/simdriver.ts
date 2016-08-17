@@ -193,7 +193,6 @@ namespace pxsim {
         }
 
         private startFrame(frame: HTMLIFrameElement) {
-            console.debug(`starting frame ${frame.id}`);
             let msg = JSON.parse(JSON.stringify(this.currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
@@ -219,7 +218,6 @@ namespace pxsim {
             switch (msg.type || '') {
                 case 'ready':
                     let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
-                    console.debug(`frame ${frameid} ready`)
                     let frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
                         this.startFrame(frame);

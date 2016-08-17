@@ -15,6 +15,7 @@ let uploadPromises: U.Map<Promise<string>> = {};
 let usedPromises: U.Map<boolean> = {};
 let ptrPrefix = ""
 let showVerbose = false
+let sitemap: U.Map<string>;
 
 function error(msg: string) {
     U.userError(msg)
@@ -52,7 +53,7 @@ export function uploadArtFileAsync(fn: string) {
     return uploadArtAsync(fn, true)
         .then(id => {
             console.log(id)
-         })
+        })
 }
 
 function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
@@ -99,7 +100,7 @@ function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
                         console.log(`upload: ${fn} -> ${id}`)
                         return id
                     }, err => {
-                        error(`cannot upload ${fn} - ${err.message}`)
+                        error(`cannot upload ${fn} - ${err.message}, len=${buf.length}`)
                         return ""
                     })
             }
@@ -112,10 +113,12 @@ function uploadFileAsync(fn: string) {
     let path = fn.replace(/\.md$/, "")
     let mm = /^\/_locales\/([A-Za-z\-]+)(\/.*)/.exec(path)
     if (mm) path = mm[2] + "@" + mm[1].toLowerCase()
+    let isStatic = U.startsWith(fn, "/static/")
+    if (!isStatic && sitemap) sitemap[path] = ""
     path = ptrPrefix + path
     uploadPromises[fn] = uploadArtAsync(fn)
         .then(bloburl => {
-            if (U.startsWith(fn, "/static/"))
+            if (isStatic)
                 return Promise.resolve(bloburl)
 
             let m = /\/pub\/([a-z]+)/.exec(bloburl)
@@ -166,6 +169,27 @@ export function getFiles(): string[] {
 function uploadJsonAsync() {
     uploadDir = "built"
     return uploadFileAsync("/theme.json")
+        .then(uploadSitemapAsync)
+}
+
+function uploadSitemapAsync() {
+    if (!sitemap) return Promise.resolve()
+    let k = Object.keys(sitemap)
+    k.sort(U.strcmp)
+    let urls = k.map(u => `  <url><loc>${pxt.appTarget.appTheme.homeUrl + u.slice(1)}</loc></url>\n`)
+    let map = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("")}
+</urlset>
+`
+    fs.writeFileSync("built/sitemap.xml", map)
+    return uploadFileAsync("/sitemap.xml")
+        .then(bloburl => {
+            let robots = "Sitemap: " + pxt.appTarget.appTheme.homeUrl + "sitemap.xml\n"
+            fs.writeFileSync("built/robots.txt", robots)
+            return uploadFileAsync("/robots.txt")
+        })
+        .then(() => { })
 }
 
 function getDocsFiles(args: string[]): string[] {
@@ -182,8 +206,10 @@ function getDocsFiles(args: string[]): string[] {
         if (U.startsWith(a, "docs/")) return a.slice(4)
         else throw error("File name has to start with docs/: " + a)
     })
-    if (files.length == 0)
+    if (files.length == 0) {
         files = getFiles()
+        sitemap = {} // only build sitemap 
+    }
     return files;
 }
 

@@ -243,6 +243,8 @@ namespace pxt.Cloud {
     export interface JsonScriptMeta {
         youtube?: string;
         instagram?: string;
+        blocksWidth?: number;
+        blocksHeight?: number;
     }
 
     export interface JsonScript extends JsonPublication {

@@ -276,7 +276,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             key={'local' + scr.id}
                             name={scr.name}
                             time={scr.recentUse}
-                            description={scr.meta ? scr.meta.description || "" : ""}
                             url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                             onClick={() => chgHeader(scr) }
                             />
@@ -338,9 +337,10 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         if (ready) {
             let runurl = `${rootUrl}--run?id=${header.pubId}`;
             let docurl = `${rootUrl}--docs?projectid=${header.pubId}`;
+            let blocksHeight = Math.ceil(header.meta.blocksHeight || 300);
             url = `${rootUrl}${header.pubId}`
             embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
-            docembed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
+            docembed = `<div style="position:relative;height:calc(${blocksHeight}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
         }
 
         let publish = () => {
@@ -365,15 +365,15 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                     <sui.Field>
                         <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
-                { pxt.debugMode() && docembed ?
+                { docembed ?
                     <sui.Field label={lf("Embed The Code") }>
-                        <p>{lf("Embed the code of this project in your website or blog by pasting this code into your web page.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={3} value={docembed} copy={ready} disabled={!ready} />
+                        <p>{lf("Copy this code to your website or blog.") }</p>
+                        <sui.Input class="mini" readOnly={true} lines={1} value={docembed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
                 { embed ?
-                    <sui.Field label={lf("Embed This Project") }>
-                        <p>{lf("Embed this project in your website or blog by pasting this code into your web page.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={3} value={embed} copy={ready} disabled={!ready} />
+                    <sui.Field label={lf("Embed The Simulator") }>
+                        <p>{lf("Copy this code to your website or blog.") }</p>
+                        <sui.Input class="mini" readOnly={true} lines={1} value={embed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
             </div>
         </sui.Modal>
@@ -617,7 +617,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 return;
             this.runSimulator({ background: true });
         },
-        3000, false);
+        2000, false);
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
@@ -1044,8 +1044,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent(opts.background ? "autorun" :
             opts.debug ? "debug" : "run");
 
-        if (!opts.background)
+        if (opts.background) {
+            if (!simulator.isDirty()) {
+                pxt.debug('auto-run cancelled');
+                return;
+            }
+        } else {
             this.editor.beforeCompile();
+        }
 
         this.stopSimulator();
         this.clearLog();
