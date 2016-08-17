@@ -292,6 +292,9 @@ namespace pxt.docs {
             return "<!-- aside -->"
         })
 
+        // fix up spourious newlines at the end of code blocks
+        html = html.replace(/\n<\/code>/g, "</code>")
+
         registers["main"] = html
 
         let injectBody = (tmpl: string, body: string) =>
