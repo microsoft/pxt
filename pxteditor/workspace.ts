@@ -5,7 +5,7 @@ namespace pxt.workspace {
 
     export interface InstallHeader {
         name: string;
-        meta: any;
+        meta: pxt.Cloud.JsonScriptMeta;
         editor: string;
         // older script might miss this
         target: string;
