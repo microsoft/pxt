@@ -859,6 +859,13 @@ function triple(f: (x: number, y: number, z: number) => number) {
     return f(5, 20, 8)
 }
 
+function checkLen(f: (x: string) => string, k: number) {
+    // make sure strings are GCed
+    f("baz")
+    let s = f("foo")
+    assert(s.length == k, "len")
+}
+
 function testLambdas() {
     let x = doubleIt(k => {
         return k * 108
@@ -868,7 +875,12 @@ function testLambdas() {
         return x * y + z
     })
     assert(x == 108, "l1")
-
+    checkLen((s) => {
+        return s + "XY1"
+    }, 6)
+    checkLen((s) => {
+        return s + "1212"
+    }, 7)
 }
 
 function testBufferShiftRotate() {
