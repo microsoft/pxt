@@ -12,7 +12,7 @@ namespace ts.pxt {
 ;
 `)
 
-        if (proc.args.length <= 2)
+        if (proc.args.length <= 3)
             emitLambdaWrapper(proc.isRoot)
 
         let baseLabel = proc.label()
@@ -363,13 +363,13 @@ ${bkptLabel + "_after"}:
             if (isMain)
                 write(".themain:")
             write("push {r5, r6, lr}");
-            write("mov r5, r1");
+            write("mov r5, r0");
 
             let parms = proc.args.map(a => a.def)
             parms.forEach((p, i) => {
-                if (i >= 2)
-                    U.userError(U.lf("only up to two parameters supported in lambdas"))
-                write(`push {r${i + 2}}`)
+                if (i >= 3)
+                    U.userError(U.lf("only up to three parameters supported in lambdas"))
+                write(`push {r${i + 1}}`)
             })
             write("@stackmark args");
 

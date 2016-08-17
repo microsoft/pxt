@@ -177,13 +177,13 @@ namespace pxsim {
             return U.now() - this.startTime;
         }
 
-        runFiberAsync(a: RefAction, arg0?: any, arg1?: any) {
+        runFiberAsync(a: RefAction, arg0?: any, arg1?: any, arg2?: any) {
             incr(a)
             return new Promise<any>((resolve, reject) =>
                 U.nextTick(() => {
                     runtime = this;
                     this.setupTop(resolve)
-                    pxt.runAction2(a, arg0, arg1)
+                    pxt.runAction3(a, arg0, arg1, arg2)
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
@@ -441,7 +441,7 @@ namespace pxsim {
                         let frame: StackFrame = {
                             parent: s,
                             fn: w.func,
-                            lambdaArgs: [w.a0, w.a1],
+                            lambdaArgs: [w.a0, w.a1, w.a2],
                             pc: 0,
                             caps: w.caps,
                             depth: s.depth + 1,

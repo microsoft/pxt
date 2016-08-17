@@ -1207,11 +1207,8 @@ ${lbl}: .short 0xffff
             if (decl.kind == SK.VariableDeclaration ||
                 decl.kind == SK.FunctionDeclaration || // this is lambda
                 decl.kind == SK.Parameter) {
-                if (args.length > 1)
-                    userError(9217, lf("lambda functions with more than 1 argument not supported"))
-
-                if (hasRet)
-                    userError(9218, lf("lambda functions cannot yet return values"))
+                if (args.length > 3)
+                    userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
                 let suff = args.length + ""
 

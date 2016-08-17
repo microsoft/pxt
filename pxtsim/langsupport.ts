@@ -34,7 +34,13 @@ namespace pxsim {
     }
 
     export class FnWrapper {
-        constructor(public func: LabelFn, public caps: any[], public a0: any, public a1: any, public cb: ResumeFn) { }
+        constructor(
+            public func: LabelFn,
+            public caps: any[],
+            public a0: any,
+            public a1: any,
+            public a2: any,
+            public cb: ResumeFn) { }
     }
 
     export class RefRecord extends RefObject {
@@ -81,26 +87,30 @@ namespace pxsim {
             return r
         }
 
-        export function runAction2(a: RefAction, a0: any, a1: any) {
+        export function runAction3(a: RefAction, a0: any, a1: any, a2: any) {
             let cb = getResume();
 
             if (a instanceof RefAction) {
                 pxtrt.incr(a)
-                cb(new FnWrapper(a.func, a.fields, a0, a1, () => {
+                cb(new FnWrapper(a.func, a.fields, a0, a1, a2, () => {
                     pxtrt.decr(a)
                 }))
             } else {
                 // no-closure case
-                cb(new FnWrapper(<any>a, null, a0, a1, null))
+                cb(new FnWrapper(<any>a, null, a0, a1, a2, null))
             }
         }
 
+        export function runAction2(a: RefAction, a0: any, a1: any) {
+            runAction3(a, a0, a1, null)
+        }
+
         export function runAction1(a: RefAction, v: any) {
-            runAction2(a, v, null)
+            runAction3(a, v, null, null)
         }
 
         export function runAction0(a: RefAction) {
-            runAction2(a, null, null)
+            runAction3(a, null, null, null)
         }
     }
 
