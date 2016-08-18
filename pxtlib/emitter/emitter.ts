@@ -1215,7 +1215,9 @@ ${lbl}: .short 0xffff
                 args.unshift(node.expression)
                 callInfo.args.unshift(node.expression)
 
-                return rtcallMask("pxt::runAction" + suff, args, ir.CallingConvention.Async)
+                // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
+                // because what we're calling is ultimately a procedure which will do it itself
+                return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
             }
 
             if (decl.kind == SK.ModuleDeclaration) {

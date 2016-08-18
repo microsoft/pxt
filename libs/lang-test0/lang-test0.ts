@@ -63,6 +63,7 @@ testForOf()
 testMaps()
 testComma();
 testLambdas();
+testLambdaDecrCapture();
 
 // test some top-level code
 let xsum = 0;
@@ -880,4 +881,12 @@ function testLambdas() {
     checkLen((s) => {
         return s + "1212"
     }, 7)
+}
+
+function testLambdaDecrCapture() {
+    let x = 6
+    function b(s: string) {
+        control.assert(s.length == x)
+    }
+    b("fo0" + "bAr")
 }
