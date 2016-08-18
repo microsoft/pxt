@@ -6,6 +6,7 @@ namespace pxt {
         id?: string;
         name?: string;
         title?: string;
+        description?: string;
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
