@@ -62,6 +62,29 @@ interface Array<T> {
     //% helper=arraySplice weight=40
     splice(start: number, deleteCount: number): void;
 
+    /**
+      * Calls a defined callback function on each element of an array, and returns an array that contains the results.
+      * @param callbackfn A function that accepts up to two arguments. The map method calls the callbackfn function one time for each element in the array. 
+      */
+    //% helper=arrayMap weight=40
+    map<U>(callbackfn: (value: T, index: number) => U): U[];
+
+    /**
+      * Returns the elements of an array that meet the condition specified in a callback function. 
+      * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array. 
+      */
+    //% helper=arrayFilter weight=40
+    filter(callbackfn: (value: T, index: number) => boolean): T[];
+
+    /**
+      * Calls the specified callback function for all the elements in an array. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
+      * @param callbackfn A function that accepts up to three arguments. The reduce method calls the callbackfn function one time for each element in the array.
+      * @param initialValue Initial value to start the accumulation. The first call to the callbackfn function provides this value as an argument instead of an array value.
+      */
+    //% helper=arrayReduce weight=40
+    reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number) => U, initialValue: U): U;
+
+
     /** Removes the first occurence of an object. Returns true if removed. */
     //% shim=Array_::removeElement weight=48
     removeElement(element:T) : boolean;
