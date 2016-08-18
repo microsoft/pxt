@@ -283,7 +283,7 @@ export class Editor extends srceditor.Editor {
         if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             this.editor.addAction({
                 id: "compileHex",
-                label: lf("Compile Hex"),
+                label: lf("Download"),
                 enablement: {writeableEditor: true},
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
                 contextMenuGroupId: "4_tools/*",
