@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "module": "amd",
+        "target": "es5",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "declaration": true,
+        "outDir": "../built/monacots",
+        "rootDir": ".",
+        "newLine": "LF",
+        "sourceMap": false
+    },
+    "filesGlob": [
+        "src/*.ts",
+        "lib/*.d.ts",
+        "../node_modules/monaco-editor-core/monaco.d.ts"
+    ],
+    "files": [
+        "src/languageFeatures.ts",
+        "src/mode.ts",
+        "src/monaco.contribution.ts",
+        "src/monaco.d.ts",
+        "src/tokenization.ts",
+        "src/worker.ts",
+        "src/workerManager.ts",
+        "lib/lib-es6-ts.d.ts",
+        "lib/lib-ts.d.ts",
+        "lib/typescriptServices.d.ts",
+        "../node_modules/monaco-editor-core/monaco.d.ts"
+    ]
+}
