@@ -332,15 +332,15 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
         const ready = !!header.pubId && header.pubCurrent;
         let url: string;
-        let embed: string;
         let docembed: string;
+        let vscode: string;
         if (ready) {
             let runurl = `${rootUrl}--run?id=${header.pubId}`;
             let docurl = `${rootUrl}--docs?projectid=${header.pubId}`;
             let blocksHeight = Math.ceil(header.meta.blocksHeight || 300);
             url = `${rootUrl}${header.pubId}`
-            embed = `<div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${runurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
             docembed = `<div style="position:relative;height:calc(${blocksHeight}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
+            vscode = `pxt extract ${header.pubId}`
         }
 
         let publish = () => {
@@ -358,22 +358,18 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                     <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
                 </div>
                 <div className="ui success message">
-                    <div className="header">{lf("Your project is ready!") }</div>
-                    <p>{lf("Share this URL or copy the HTML to embed your project in web pages.") }</p>
+                    <h3>{lf("Project URL") }</h3>
+                    <div className="header">{ url ? <a target="_blank" href={url}>{url}</a> : undefined }</div>
                 </div>
-                { url ?
-                    <sui.Field>
-                        <sui.Input class="mini" readOnly={true} value={url} copy={ready} disabled={!ready} />
-                    </sui.Field> : null }
                 { docembed ?
-                    <sui.Field label={lf("Embed The Code") }>
-                        <p>{lf("Copy this code to your website or blog.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={1} value={docembed} copy={ready} disabled={!ready} />
+                    <sui.Field label={lf("Embed the code and simulator") }>
+                        <p>{lf("Copy this HTML to your website or blog.") }</p>
+                        <sui.Input class="mini" readOnly={true} lines={2} value={docembed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
-                { embed ?
-                    <sui.Field label={lf("Embed The Simulator") }>
-                        <p>{lf("Copy this code to your website or blog.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={1} value={embed} copy={ready} disabled={!ready} />
+                { vscode ?
+                    <sui.Field label={lf("Edit JavaScript in Visual Studio Code") }>
+                        <p><a href="/code">{lf("Run this command from a shell.") }</a></p>
+                        <sui.Input class="mini" readOnly={true} lines={1} value={vscode} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
             </div>
         </sui.Modal>
@@ -802,7 +798,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 if (e)
                     file = main.lookupFile(e.name) || file
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
-                    this.textEditor.decompile(file.getVirtualFileName()).then( (success) => {
+                    this.textEditor.decompile(file.getVirtualFileName()).then((success) => {
                         if (!success)
                             file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                     });
