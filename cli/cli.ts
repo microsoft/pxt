@@ -456,6 +456,7 @@ function pxtFileList(pref: string) {
     return allFiles(pref + "webapp/public")
         .concat(onlyExts(allFiles(pref + "built/web", 1), [".js", ".css"]))
         .concat(allFiles(pref + "built/web/fonts", 1))
+        .concat(allFiles(pref + "built/web/vs", 4))
 
 }
 
