@@ -387,7 +387,7 @@ namespace ts.pxt {
         // store qName in symbols
         for (let qName in res.byQName)
             res.byQName[qName].qName = qName;
-        
+
         if (legacyOnly) {
             // conflicts with pins.map()
             delete res.byQName["Array.map"]
