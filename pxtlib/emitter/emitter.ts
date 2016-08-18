@@ -1216,7 +1216,7 @@ ${lbl}: .short 0xffff
                 callInfo.args.unshift(node.expression)
 
                 // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
-                // because what we're calling is ultimately a procedure which will do it itself
+                // because what we're calling is ultimately a procedure which will decr arguments itself
                 return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
             }
 
@@ -1390,7 +1390,12 @@ ${lbl}: .short 0xffff
                 }
             })
 
-            emit(node.body);
+            if (node.body.kind == SK.Block) {
+                emit(node.body);
+            } else {
+                let v = emitExpr(node.body)
+                proc.emitJmp(getLabels(node).ret, v, ir.JmpMode.Always)
+            }
 
             proc.emitLblDirect(getLabels(node).ret)
 

@@ -878,9 +878,7 @@ function testLambdas() {
     checkLen((s) => {
         return s + "XY1"
     }, 6)
-    checkLen((s) => {
-        return s + "1212"
-    }, 7)
+    checkLen((s) => s + "1212", 7)
 }
 
 function testLambdaDecrCapture() {
