@@ -667,7 +667,6 @@ html {
 }
 
 /* monaco editor */
-
 .monaco-editor.vs .token.ts.identifier:hover {
     border-radius: 6px;
     border: 1px solid #565656;
@@ -677,13 +676,20 @@ html {
 	background: rgba(0, 0, 255, 0.1);
 }
 
-
 .monaco-editor .error-view-zone {
     color:white;
     border-radius: 6px;
-    padding: 1px 9px 1px 9px;
-    margin:2px;
-    width: initial !important; 
-    height:20px !important;
+    padding-left: .5em;
+    padding-right: .5em;
+    width: initial !important;
     background-color: #B4009E;
+}
+
+.monaco-editor .warning-view-zone {
+    color:white;
+    border-radius: 6px;
+    padding-left: .5em;
+    padding-right: .5em;
+    width: initial !important;
+    background-color: #FFB900;
 }

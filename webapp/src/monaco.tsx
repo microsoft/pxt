@@ -314,11 +314,13 @@ export class Editor extends srceditor.Editor {
     zoomIn() {
         this.parent.settings.editorFontSize++;
         this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
+        this.forceDiagnosticsUpdate();
     }
 
     zoomOut() {
         this.parent.settings.editorFontSize--;
         this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
+        this.forceDiagnosticsUpdate();
     }
 
     getId() {
@@ -417,6 +419,8 @@ export class Editor extends srceditor.Editor {
         if (!this.isTypescript) return
         let file = this.currFile
         let lines: string[] = this.editor.getModel().getLinesContent();
+        let fontSize = this.parent.settings.editorFontSize;
+        let lineHeight = (this.editor as any)._configuration.editor.lineHeight;
 
         let viewZones = this.editorViewZones || [];
         this.annotationLines = [];
@@ -436,6 +440,8 @@ export class Editor extends srceditor.Editor {
                 (this.editor as any).changeViewZones(function(changeAccessor: any) {
                         let domNode = document.createElement('div');
                         domNode.className = d.category == ts.DiagnosticCategory.Error ? "error-view-zone" : "warning-view-zone";
+                        domNode.style.setProperty("font-size", fontSize.toString() + "px");
+                        domNode.style.setProperty("line-height", lineHeight.toString() + "px");
                         domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
                         viewZoneId = changeAccessor.addZone({
                                     afterLineNumber: d.line + 1,
