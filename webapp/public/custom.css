@@ -662,6 +662,10 @@ html {
     }
 }
 
+.ui.fluid.button.half{
+    width:50% !important;
+}
+
 /* monaco editor */
 
 .monaco-editor.vs .token.ts.identifier:hover {
