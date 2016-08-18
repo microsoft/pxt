@@ -306,18 +306,17 @@ export class Editor extends srceditor.Editor {
             }
         });
 
-        this.editorViewZones = []
+        this.editorViewZones = [];
+
         this.isReady = true
     }
 
     zoomIn() {
-        console.log("zoomIn");
         this.parent.settings.editorFontSize++;
         this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
     }
 
     zoomOut() {
-        console.log("zoomOut");
         this.parent.settings.editorFontSize--;
         this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
     }
@@ -397,6 +396,7 @@ export class Editor extends srceditor.Editor {
     private diagSnapshot: string[];
     private annotationLines: number[];
     private editorViewZones: number[];
+    private errorLines: number[];
 
     updateDiagnostics() {
         if (this.needsDiagUpdate())
@@ -426,13 +426,16 @@ export class Editor extends srceditor.Editor {
                 changeAccessor.removeZone(id);
             });
         });
+        this.editorViewZones = [];
+        this.errorLines = [];
 
         if (file && file.diagnostics) {
             for (let d of file.diagnostics) {
+                if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0) continue;
                 let viewZoneId: any = null;
                 (this.editor as any).changeViewZones(function(changeAccessor: any) {
                         let domNode = document.createElement('div');
-                        domNode.className = "error-view-zone";
+                        domNode.className = d.category == ts.DiagnosticCategory.Error ? "error-view-zone" : "warning-view-zone";
                         domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
                         viewZoneId = changeAccessor.addZone({
                                     afterLineNumber: d.line + 1,
@@ -441,7 +444,7 @@ export class Editor extends srceditor.Editor {
                         });
                 });
                 this.editorViewZones.push(viewZoneId);
-
+                this.errorLines.push(d.line);
                 if (lines[d.line] === this.diagSnapshot[d.line]) {
                     this.annotationLines.push(d.line)
                 }
