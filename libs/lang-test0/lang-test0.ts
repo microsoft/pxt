@@ -64,6 +64,7 @@ testMaps()
 testComma();
 testLambdas();
 testLambdaDecrCapture();
+testGenRefOuter()
 
 // test some top-level code
 let xsum = 0;
@@ -887,4 +888,18 @@ function testLambdaDecrCapture() {
         control.assert(s.length == x)
     }
     b("fo0" + "bAr")
+}
+
+function testGenRef<T>(v: T) {
+    let x = v
+    // test that clear() also gets generalized
+    function clear() {
+        x = null
+    }
+    clear()
+}
+
+function testGenRefOuter() {
+    testGenRef(12)
+    testGenRef("fXa" + "baa")
 }

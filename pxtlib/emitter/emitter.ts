@@ -42,6 +42,10 @@ namespace ts.pxt {
         checkType(t);
         if (t.flags & TypeFlags.ThisType)
             return true
+        if (t.flags & TypeFlags.Null)
+            return false
+        if (t.flags & TypeFlags.Undefined)
+            return false
         if (t.flags & TypeFlags.TypeParameter) {
             let b = lookupTypeParameter(t)
             if (b) return b.isRef
@@ -88,6 +92,10 @@ namespace ts.pxt {
         if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor)
             return <MethodDeclaration>node;
         return getEnclosingMethod(node.parent)
+    }
+
+    function isInAnyWayGeneric(node: FunctionLikeDeclaration) {
+        return isGenericFunction(node) || hasGenericParent(node)
     }
 
     function hasGenericParent(node: Node): boolean {
@@ -363,16 +371,20 @@ namespace ts.pxt {
     }
 
     function isGenericFunction(fun: FunctionLikeDeclaration) {
+        return getTypeParameters(fun).length > 0
+    }
+
+    function getTypeParameters(fun: FunctionLikeDeclaration) {
         // TODO add check for methods of generic classes
         if (fun.typeParameters && fun.typeParameters.length)
-            return true
+            return fun.typeParameters
         if (fun.kind == SK.MethodDeclaration || fun.kind == SK.MethodSignature) {
             if (fun.parent.kind == SK.ClassDeclaration || fun.parent.kind == SK.InterfaceDeclaration) {
-                let tp = (fun.parent as ClassLikeDeclaration).typeParameters
-                return !!tp && !!tp.length
+                let tp: TypeParameterDeclaration[] = (fun.parent as ClassLikeDeclaration).typeParameters
+                return tp || []
             }
         }
-        return false
+        return []
     }
 
     function funcHasReturn(fun: FunctionLikeDeclaration) {
@@ -400,6 +412,25 @@ namespace ts.pxt {
     function getTypeBindingsCore(typeParameters: TypeParameter[], args: Type[]): TypeBinding[] {
         U.assert(typeParameters.length == args.length)
         return typeParameters.map((tp, i) => ({ tp: tp, isRef: isRefType(args[i]) }))
+    }
+
+    function getEnclosingTypeBindings(func: Declaration) {
+        let bindings: TypeBinding[] = []
+        addEnclosingTypeBindings(bindings, func)
+        return bindings
+    }
+
+    function addEnclosingTypeBindings(bindings: TypeBinding[], func: Declaration) {
+        for (let outer = getEnclosingFunction(func); outer; outer = getEnclosingFunction(outer)) {
+            for (let tp of getTypeParameters(outer)) {
+                let res = checker.getTypeAtLocation(tp)
+                let binding = typeBindings.filter(b => b.tp == res)[0]
+                if (!binding) {
+                    U.oops("cannot find binding for: " + checker.typeToString(res))
+                }
+                bindings.push(binding)
+            }
+        }
     }
 
     function refMask(types: TypeBinding[]) {
@@ -1146,6 +1177,8 @@ ${lbl}: .short 0xffff
             let trg: Signature = (sig as any).target
             let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
             let bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
+            let isSelfGeneric = bindings.length > 0
+            addEnclosingTypeBindings(bindings, decl)
 
             function emitPlain() {
                 return mkProcCall(decl, args.map(emitExpr), bindings)
@@ -1201,7 +1234,7 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            if (bindings.length)
+            if (isSelfGeneric)
                 U.oops("invalid generic call")
 
             if (decl.kind == SK.VariableDeclaration ||
@@ -1301,7 +1334,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
-            let lbl = getFunctionLabel(node, [])
+            let lbl = getFunctionLabel(node, getEnclosingTypeBindings(node))
             let r = ir.ptrlit(lbl + "_Lit", lbl)
             if (!raw) {
                 r = ir.rtcall("pxt::ptrOfLiteral", [r])
@@ -1451,6 +1484,7 @@ ${lbl}: .short 0xffff
                         // test mode - make fake binding
                         let sig = checker.getSignatureFromDeclaration(node)
                         let bindings = sig.getTypeParameters().map(t => ({ tp: t, isRef: true }))
+                        addEnclosingTypeBindings(bindings, node)
                         U.assert(bindings.length > 0)
                         info.usages = [bindings]
                     } else {
@@ -1472,7 +1506,7 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 scope(() => {
-                    lit = emitFuncCore(node, [])
+                    lit = emitFuncCore(node, getEnclosingTypeBindings(node))
                 })
             }
 
