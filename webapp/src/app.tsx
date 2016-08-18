@@ -733,13 +733,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             // Going from ts -> blocks
             pxt.tickEvent("sidebar.showBlocks");
             let tsFileName = fn.getVirtualFileName();
-            let file = pkg.mainEditorPkg().lookupFile("this/" + tsFileName)
+            let tsFile = pkg.mainEditorPkg().lookupFile("this/" + tsFileName)
             if (currFile == tsFileName) {
                 // current file is the ts file, so just switch
                 this.textEditor.openBlocks();
-            } else if (file) {
-                this.setFile(file)
-                this.setState({ showBlocks: true })
+            } else if (tsFile) {
+                this.textEditor.decompile(tsFile.name).then((success) => {
+                    if (!success) {
+                        this.setFile(tsFile)
+                        this.textEditor.showConversionFailedDialog(fn.name)
+                    } else {
+                        this.setFile(fn)
+                    }
+                });
             }
         } else {
             this.setFile(fn)
@@ -793,20 +799,18 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
                 let file = main.getMainFile()
-                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
-                    file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                 if (e)
                     file = main.lookupFile(e.name) || file
+                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
+                    this.textEditor.decompile(file.getVirtualFileName()).then( (success) => {
+                        if (!success)
+                            file = main.lookupFile("this/" + file.getVirtualFileName()) || file
+                    });
                 this.setState({
                     header: h,
                     projectName: h.name,
                     currFile: file
                 })
-                if (!e && pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
-                    this.textEditor.checkRoundTrip(file.getVirtualFileName(), () => {
-                        return Promise.resolve()
-                    })
-                }
                 core.infoNotification(lf("Project loaded: {0}", h.name))
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()

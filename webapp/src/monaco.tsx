@@ -44,42 +44,14 @@ export class Editor extends srceditor.Editor {
             blockFile = this.currFile.getVirtualFileName();
         }
 
+        const failedAsync = (file: string) => {
+            this.forceDiagnosticsUpdate();
+            return this.showConversionFailedDialog(file);
+        }
+
         if (!this.hasBlocks())
             return
 
-        const failedAsync = () => {
-            this.forceDiagnosticsUpdate();
-            let bf = pkg.mainEditorPkg().files[blockFile];
-            return core.confirmAsync({
-                header: lf("Oops, there is a problem converting your code."),
-                body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
-                agreeLbl: lf("Discard and go to Blocks"),
-                agreeClass: "cancel",
-                agreeIcon: "cancel",
-                disagreeLbl: lf("Stay in JavaScript"),
-                disagreeClass: "positive",
-                disagreeIcon: "checkmark", 
-                deleteLbl: lf("Remove Blocks file"),
-                size: "medium",
-                hideCancel: !bf
-            }).then(b => {
-                // discard                
-                if (!b) {
-                    pxt.tickEvent("typescript.keepText");
-                } else if (b == 2) {
-                    pxt.tickEvent("typescript.removeBlocksFile");
-                    this.parent.removeFile(bf);
-                } else {
-                    pxt.tickEvent("typescript.discardText");
-                    this.parent.setFile(bf);
-                }
-            })
-        }
-
-        this.checkRoundTrip(blockFile, failedAsync)
-    }
-
-    checkRoundTrip(blockFile: string, failedAsync: () => Promise<void>) {
         // needed to test roundtrip
         let js = this.formatCode();
 
@@ -108,12 +80,12 @@ export class Editor extends srceditor.Editor {
                 }
                 return compiler.decompileAsync(this.currFile.name)
                     .then(resp => {
-                        if (!resp.success) return failedAsync();
+                        if (!resp.success) return failedAsync(blockFile);
                         xml = resp.outfiles[blockFile];
                         Util.assert(!!xml);
                         // try to convert back to typescript
                         let workspace = pxt.blocks.loadWorkspaceXml(xml);
-                        if (!workspace) return failedAsync();
+                        if (!workspace) return failedAsync(blockFile);
 
                         let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
 
@@ -130,7 +102,7 @@ export class Editor extends srceditor.Editor {
                                 blockly: xml,
                                 jsroundtrip: b2jsr.source
                             })
-                            return failedAsync();
+                            return failedAsync(blockFile);
                         }
 
                         return mainPkg.setContentAsync(blockFile, xml)
@@ -140,6 +112,42 @@ export class Editor extends srceditor.Editor {
                 pxt.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
             }).done()
+    }
+
+    showConversionFailedDialog(blockFile: string): Promise<void> {
+        let bf = pkg.mainEditorPkg().files[blockFile];
+        return core.confirmAsync({
+            header: lf("Oops, there is a problem converting your code."),
+            body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
+            agreeLbl: lf("Discard and go to Blocks"),
+            agreeClass: "cancel",
+            agreeIcon: "cancel",
+            disagreeLbl: lf("Stay in JavaScript"),
+            disagreeClass: "positive",
+            disagreeIcon: "checkmark", 
+            deleteLbl: lf("Remove Blocks file"),
+            size: "medium",
+            hideCancel: !bf
+        }).then(b => {
+            // discard                
+            if (!b) {
+                pxt.tickEvent("typescript.keepText");
+            } else if (b == 2) {
+                pxt.tickEvent("typescript.removeBlocksFile");
+                this.parent.removeFile(bf);
+            } else {
+                pxt.tickEvent("typescript.discardText");
+                this.parent.setFile(bf);
+            }
+        })
+    }
+
+    decompile(blockFile: string): Promise<boolean> {
+        let xml: string;
+        return compiler.decompileAsync(blockFile)
+            .then(resp => {
+                return Promise.resolve(resp.success);
+            })
     }
 
     menu(): JSX.Element {
