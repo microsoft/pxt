@@ -48,10 +48,9 @@ namespace pxt.vs {
         let editor = monaco.editor.create(element, {
             model: null,
             //ariaLabel: lf("JavaScript Editor"),
-            fontSize: 25,
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
             scrollBeyondLastLine: true,
-            language: "typescript",
+            language: "typescript"
         });
 
         window.addEventListener('resize', function () {

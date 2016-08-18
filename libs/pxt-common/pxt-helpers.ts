@@ -9,6 +9,33 @@ namespace helpers {
             arr.removeAt(start)
         }
     }
+
+    export function arrayMap<T, U>(arr: T[], callbackfn: (value: T, index: number) => U): U[] {
+        let res: U[] = []
+        let len = arr.length // caching this seems to match V8
+        for (let i = 0; i < len; ++i) {
+            res.push(callbackfn(arr[i], i))
+        }
+        return res
+    }
+
+    export function arrayFilter<T>(arr: T[], callbackfn: (value: T, index: number) => boolean): T[] {
+        let res: T[] = []
+        let len = arr.length
+        for (let i = 0; i < len; ++i) {
+            let v = arr[i] // need to cache
+            if (callbackfn(v, i)) res.push(v)
+        }
+        return res
+    }
+
+    export function arrayReduce<T, U>(arr: T[], callbackfn: (previousValue: U, currentValue: T, currentIndex: number) => U, initialValue: U): U {
+        let len = arr.length
+        for (let i = 0; i < len; ++i) {
+            initialValue = callbackfn(initialValue, arr[i], i)
+        }
+        return initialValue
+    }
 }
 
 namespace Math {

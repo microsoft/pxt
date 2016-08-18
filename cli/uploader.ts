@@ -176,6 +176,8 @@ function uploadSitemapAsync() {
     if (!sitemap) return Promise.resolve()
     let k = Object.keys(sitemap)
     k.sort(U.strcmp)
+    k.unshift(pxt.appTarget.appTheme.homeUrl + "beta")
+    k.unshift(pxt.appTarget.appTheme.homeUrl)
     let urls = k.map(u => `  <url><loc>${pxt.appTarget.appTheme.homeUrl + u.slice(1)}</loc></url>\n`)
     let map = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

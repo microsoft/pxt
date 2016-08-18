@@ -1084,6 +1084,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
+    cfg.appTheme.description = cfg.description
 
     // expand logo
     let logos = (cfg.appTheme as any as U.Map<string>);
