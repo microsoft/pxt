@@ -32,34 +32,26 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let boardName = pxt.appTarget.appTheme.boardName || "???";
     let boardDriveName = pxt.appTarget.compile.driveName || "???";
     return core.confirmAsync({
-        header: lf("Move your code to the {0}...  ", boardName),
+        header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
 <div class="ui fluid vertical steps">
   <div class="step">
-    <i class="ui violet plug icon landscape only"></i>
     <div class="content">
-      <div class="ui title landscape only">${lf("Connect")}</div>
       <div class="description">${lf("Connect your {0} to your computer using the USB cable.", boardName)}</div>
     </div>
   </div>
   <div class="step">
-    <i class="ui violet save icon landscape only"></i>
     <div class="content">
-      <div class="ui title landscape only">${lf("Save")}</div>
       <div class="description">${lf("Save the <code>.hex</code> file to your computer.")}</div>
     </div>
   </div>
   <a href='${encodeURI(url)}' download='${Util.htmlEscape(fn)}' target='_blank' class="step">
-    <i class="ui violet copy icon landscape only"></i>
     <div class="content">
-      <div class="ui title landscape only">${lf("Copy")}</div>
       <div class="description">${lf("Move the saved <code>.hex</code> file to the <code>{0}</code> drive.", boardDriveName)}</div>
     </div>
   </a>
   <div class="step">
-    <i class="ui yellow flash circle icon landscape only"></i>
     <div class="content">
-      <div class="ui title landscape only">${lf("Almost done...")}</div>
       <div class="description">${lf("Wait till the yellow LED is done blinking.")}</div>
     </div>
   </div>
@@ -72,7 +64,8 @@ ${pxtwinrt.isWindows() ? `
     ` : ""}
 `,
         hideCancel: true,
-        agreeLbl: lf("Done!")
+        agreeLbl: lf("Done!"),
+        timeout: 5000
     }).then(() => { });
 }
 

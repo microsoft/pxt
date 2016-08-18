@@ -113,6 +113,7 @@ export interface DialogOptions {
     size?: string; // defaults to "small"
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
+    timeout?: number;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -162,9 +163,16 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     })
 
     return new Promise<void>((resolve, reject) => {
+        let mo: any;
+        let timer = options.timeout ? setTimeout(() => {
+            timer = 0;
+            mo.modal("hide");
+        }, options.timeout) : 0;
+
         let onfinish = (elt: JQuery) => {
             if (!done) {
                 done = true
+                if (timer) clearTimeout(timer);
                 let id = elt.attr("data-btnid")
                 if (id) {
                     let btn = options.buttons[+id]
@@ -174,7 +182,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                 return resolve()
             }
         }
-        modal.modal({
+        mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
             onHidden: () => {
@@ -185,10 +193,12 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             onHide: () => {
                 if (!done) {
                     done = true
+                    if (timer) clearTimeout(timer);
                     resolve()
                 }
             },
-        }).modal("show")
+        });
+        mo.modal("show")
     })
 }
 
