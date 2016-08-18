@@ -2259,7 +2259,7 @@ function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
         .then(ts.pxt.compile)
         .then(res => {
-            return ts.pxt.getApiInfo(res.ast)
+            return ts.pxt.getApiInfo(res.ast, true)
         })
 }
 
