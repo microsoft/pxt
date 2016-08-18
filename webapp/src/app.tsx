@@ -1277,8 +1277,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""} ${this.state.errorCard ? "errored " : ""}`}>
                     </div>
                     <div className="ui item landscape only">
-                        {compile ? <sui.Button icon='icon download' class="blue" text={lf("Compile") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
-                        <sui.Button key='runbtn' class={this.state.running ? "teal" : "orange"} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
+                        <sui.Button key='runbtn' class={`fluid half ${this.state.running ? "" : "orange"}`} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                     </div>
                     <div className="ui item landscape only">
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
