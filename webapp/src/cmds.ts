@@ -25,7 +25,14 @@ function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<voi
         pxt.appTarget.compile.hexMimeType,
         e => core.errorNotification(lf("saving file failed..."))
     );
-    return showUploadInstructionsAsync(fn, url);
+
+    let uploader = !!pxt.storage.getLocal("uploader");
+    if (uploader) {
+        core.infoNotification(lf("Save the .hex file to your Downloads folder and make sure the uploader is running."))
+        return Promise.resolve();
+    }
+    else
+        return showUploadInstructionsAsync(fn, url);
 }
 
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {

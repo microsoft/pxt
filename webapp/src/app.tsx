@@ -1546,6 +1546,9 @@ function handleHash(hash: { cmd: string; arg: string }) {
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
             break;
+        case "uploader": // editor launched by the uploader
+            pxt.storage.setLocal("uploader", "1");
+            break;
     }
 }
 
