@@ -135,13 +135,13 @@ div.simframe > iframe {
 
 #helpcard {
     position: absolute;
-    right: 2rem;
+    right: 7rem;
     bottom: 2.2rem;
     margin: 0;
     z-index: 5;
 }
 .rtl #helpcard {
-    left:2rem;
+    left:7rem;
     right:auto;
 }
 
