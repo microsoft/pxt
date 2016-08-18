@@ -604,6 +604,7 @@ function runGitAsync(...args: string[]) {
 }
 
 function runNpmAsync(...args: string[]) {
+    console.log("npm",args);
     return spawnAsync({
         cmd: addCmd("npm"),
         args: args,
