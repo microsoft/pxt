@@ -399,6 +399,7 @@ export class Editor extends srceditor.Editor {
     private errorLines: number[];
 
     updateDiagnostics() {
+        console.log("Updating diagnostics: " + this.needsDiagUpdate())
         if (this.needsDiagUpdate())
             this.forceDiagnosticsUpdate();
     }
