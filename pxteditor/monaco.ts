@@ -35,6 +35,12 @@ namespace pxt.vs {
     }
 
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
+        // validation settings
+        let diagnosticOptions = monaco.languages.typescript.typescriptDefaults.diagnosticsOptions;
+        diagnosticOptions.noSyntaxValidation = false;
+        diagnosticOptions.noSemanticValidation = false;
+
+        // compiler options
         let compilerOptions = monaco.languages.typescript.typescriptDefaults.compilerOptions;
         compilerOptions.allowUnreachableCode = true;
         compilerOptions.noImplicitAny = true;

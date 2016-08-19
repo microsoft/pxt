@@ -18,6 +18,48 @@ import Promise = monaco.Promise;
 import CancellationToken = monaco.CancellationToken;
 import IDisposable = monaco.IDisposable;
 
+
+let snippets = {
+	"For Loop": {
+		"prefix": "for",
+		"body": [
+			"for (let ${index} = 0; ${index} < {{4}}; ${index}++) {",
+			"\t$0",
+			"}"
+		],
+		"description": "For Loop"
+	},
+	"If Statement": {
+		"prefix": "if",
+		"body": [
+			"if (${condition}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "If Statement"
+	},
+	"If-Else Statement": {
+		"prefix": "ifelse",
+		"body": [
+			"if (${condition}) {",
+			"\t$0",
+			"} else {",
+			"\t",
+			"}"
+		],
+		"description": "If-Else Statement"
+	},
+	"While Statement": {
+		"prefix": "while",
+		"body": [
+			"while (${condition}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "While Statement"
+	}
+}
+
 export abstract class Adapter {
 
     constructor(protected _worker: (first: Uri, ...more: Uri[]) => Promise<TypeScriptWorker>) {
@@ -139,7 +181,34 @@ interface MyCompletionItem extends monaco.languages.CompletionItem {
     position: Position;
 }
 
+interface TypescriptSnippet {
+    prefix: string;
+    body: string;
+    description?: string;
+}
+
 export class SuggestAdapter extends Adapter implements monaco.languages.CompletionItemProvider {
+
+    private typescriptSnippets: TypescriptSnippet[] = [];
+
+    constructor(worker: (first: Uri, ...more: Uri[]) => Promise<TypeScriptWorker>) {
+        super(worker);
+
+        Object.keys(snippets).forEach((snippetKey) => {
+            let snippet = (snippets as any)[snippetKey];
+            let prefix = (snippet as any).prefix;
+            let body: string = "";
+            (snippet as any).body.forEach((element: string) => {
+                body += element.replace("$0","{{}}").replace(/\${(.*?)}/gi, "{{$1}}") + "\n";
+            });;
+            let description = (snippet as any).description;
+            this.typescriptSnippets.push({
+                prefix: prefix,
+                body: body,
+                description: description
+            })
+        });
+    }
 
     public get triggerCharacters(): string[] {
         return ['.'];
@@ -166,6 +235,21 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                     kind: SuggestAdapter.convertKind(entry.kind)
                 };
             });
+            // Add Typescript snippets
+            this.typescriptSnippets
+                .filter(entry => entry.prefix.indexOf(wordInfo.word,0) > -1)
+                .forEach(entry => {
+                let completionItem: MyCompletionItem = 
+                {
+                    model: model,
+                    uri: resource,
+                    position: position,
+                    label: entry.prefix,
+                    sortText: "-1",
+                    kind: monaco.languages.CompletionItemKind.Snippet
+                };
+                suggestions.push(completionItem);
+            });
             return suggestions;
         }));
     }
@@ -175,6 +259,15 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
         const resource = myItem.uri;
         const position = myItem.position;
         const model = myItem.model;
+
+        let entry: TypescriptSnippet = this.typescriptSnippets.filter(snippet => snippet.prefix == myItem.label)[0];
+        if (entry) {
+            return new Promise<monaco.languages.CompletionItem>((resolve, reject) => {
+                myItem.insertText = entry.body;
+                myItem.documentation = entry.description;
+                resolve(myItem);
+            })
+        }
 
         return wireCancellationToken(token, this._worker(resource).then(worker => {
             return worker.getCompletionEntryDetails(resource.toString(),
