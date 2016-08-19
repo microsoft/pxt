@@ -675,12 +675,17 @@ namespace ts.pxt {
             let info = getVarInfo(v)
             if (written)
                 info.written = true;
-            let outer = getEnclosingFunction(v)
-            if (outer == null || outer == proc.action) {
+            let varParent = getEnclosingFunction(v)
+            if (varParent == null || varParent == proc.action) {
                 // not captured
             } else {
-                if (proc.info.capturedVars.indexOf(v) < 0)
-                    proc.info.capturedVars.push(v);
+                let curr = proc.action
+                while (curr && curr != varParent) {
+                    let info2 = getFunctionInfo(curr)
+                    if (info2.capturedVars.indexOf(v) < 0)
+                        info2.capturedVars.push(v);
+                    curr = getEnclosingFunction(curr)
+                }
                 info.captured = true;
             }
         }

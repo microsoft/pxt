@@ -66,6 +66,8 @@ testLambdas();
 testLambdaDecrCapture();
 testGenRefOuter()
 testArrayMap()
+testInnerLambdaCapture()
+
 
 // test some top-level code
 let xsum = 0;
@@ -922,4 +924,17 @@ function testArrayMap() {
 
     let x = ["A" + "12", "B" + "3"].map((k, i) => k.length + i).reduce((c, n) => c * n, 1)
     assert(x == 9, "9")
+}
+
+function testInnerLambdaCapture() {
+    glb1 = 0
+    let a = 7
+    let g = () => {
+        let h = () => {
+            glb1 += a
+        }
+        h()
+    }
+    g()
+    assert(glb1 == 7, "7")
 }
