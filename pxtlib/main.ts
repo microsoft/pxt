@@ -330,7 +330,8 @@ namespace pxt {
             let kindCfg = ""
             return this.resolveVersionAsync()
                 .then(verNo => {
-                    if (this.config && this.config.installedVersion == verNo)
+                    if (!/^embed:/.test(verNo) &&
+                        this.config && this.config.installedVersion == verNo)
                         return
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
