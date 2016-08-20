@@ -133,8 +133,9 @@ namespace ts.pxt.assembler {
                     }
                     if (v == null) return emitErr("didn't understand it", actual); // shouldn't happen
 
-                    // special handling for long branch instruction (32-bit)
-                    if (this.ei.is32bit(this.name)) {
+                    // special handling for ARM long branch instruction (32-bit)
+                    // TODO: we may need to generalize this for AVR 32-bit instructions
+                    if (this.ei.is32bit(this)) {
                         if (tokens[j]) return emitErr("trailing tokens", tokens[j])
                         return this.ei.emit32(v, ln.bin.normalizeExternalLabel(actual));
                     }
@@ -376,7 +377,7 @@ namespace ts.pxt.assembler {
         }
 
         public getRelativeLabel(s: string, wordAligned = false) {
-            return this.ei.getRelativeLabel(this,s,wordAligned)
+            return this.ei.getRelativeLabel(this, s, wordAligned)
         }
 
         private align(n: number) {
@@ -925,7 +926,7 @@ namespace ts.pxt.assembler {
             this.instructions = {}
         }
 
-        public is32bit(name: string) {
+        public is32bit(i: Instruction) {
             return false;
         }
 
@@ -945,11 +946,11 @@ namespace ts.pxt.assembler {
             return null;
         }
 
-        public isPop(opcode: number) : boolean {
+        public isPop(opcode: number): boolean {
             return null;
         }
 
-        public isPush(opcode: number) : boolean {
+        public isPush(opcode: number): boolean {
             return null;
         }
 

@@ -177,8 +177,8 @@ namespace ts.pxt.thumb {
         }
 
 
-        public is32bit(name: string) {
-            return name == "bl" || name == "bb";
+        public is32bit(i: assembler.Instruction) {
+            return i.name == "bl" || i.name == "bb";
         }
 
         public emit32(v: number, actual: string): ts.pxt.assembler.EmitResult {
@@ -203,7 +203,7 @@ namespace ts.pxt.thumb {
             }
         }
 
-        public getRelativeLabel(f: assembler.File, s: string, wordAligned = false) : number {
+        public getRelativeLabel(f: assembler.File, s: string, wordAligned = false): number {
             let l = f.lookupLabel(s);
             if (l == null) return null;
             let pc = f.location() + 4
@@ -211,11 +211,11 @@ namespace ts.pxt.thumb {
             return l - pc;
         }
 
-        public isPop(opcode: number) : boolean {
+        public isPop(opcode: number): boolean {
             return opcode == 0xbc00;
         }
 
-        public isPush(opcode: number) : boolean {
+        public isPush(opcode: number): boolean {
             return opcode == 0xb400;
         }
 
@@ -261,7 +261,7 @@ namespace ts.pxt.thumb {
                 lnNext.update("")
             } else if (lnNext2 && ln.getOpExt() == "movs $r5, $i0" && lnNext.getOpExt() == "mov $r0, $r1" &&
                 ln.numArgs[0] == lnNext.numArgs[1] &&
-                clobbersReg(lnNext2,ln.numArgs[0])) {
+                clobbersReg(lnNext2, ln.numArgs[0])) {
                 // RULE: movs rX, #V; mov rY, rX; clobber rX -> movs rY, #V
                 ln.update("movs r" + lnNext.numArgs[0] + ", #" + ln.numArgs[1])
                 lnNext.update("")
