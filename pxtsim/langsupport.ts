@@ -4,8 +4,10 @@ namespace pxsim {
     export var quiet = false;
 
     export function check(cond: boolean) {
-        if (!cond)
+        if (!cond) {
+            debugger
             throw new Error("sim: check failed")
+        }
     }
 
     let refObjId = 1;

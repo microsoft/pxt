@@ -14,7 +14,7 @@ export function td2tsAsync(td: string) {
         .then(opts => {
             opts.ast = true
             let res = ts.pxt.compile(opts)
-            let apiinfo = ts.pxt.getApiInfo(res.ast)
+            let apiinfo = ts.pxt.getApiInfo(res.ast, true)
             let arg = {
                 text: td,
                 useExtensions: true,

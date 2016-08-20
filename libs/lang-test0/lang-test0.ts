@@ -61,9 +61,13 @@ eqOp()
 testEnums()
 testForOf()
 testMaps()
-testBufferShiftRotate();
 testComma();
 testLambdas();
+testLambdaDecrCapture();
+testGenRefOuter()
+testArrayMap()
+testInnerLambdaCapture()
+
 
 // test some top-level code
 let xsum = 0;
@@ -878,70 +882,59 @@ function testLambdas() {
     checkLen((s) => {
         return s + "XY1"
     }, 6)
-    checkLen((s) => {
-        return s + "1212"
-    }, 7)
+    checkLen((s) => s + "1212", 7)
 }
 
-function testBufferShiftRotate() {
-    /* TODO: create buffer?
-    let b = new Buffer(5);
-
-    function initb() {
-        for (let i = 0; i < b.length; ++i) {
-            b[i] = i;
-        }
+function testLambdaDecrCapture() {
+    let x = 6
+    function b(s: string) {
+        control.assert(s.length == x)
     }
-    function assertb(ex: number[]) {
-        control.assert(b.length == ex.length)
-        for (let i = 0; i < 5; i++) {
-            control.assert(b[i] == ex[i]);
-        }
+    b("fo0" + "bAr")
+}
+
+function testGenRef<T>(v: T) {
+    let x = v
+    // test that clear() also gets generalized
+    function clear() {
+        x = null
     }
+    clear()
+}
 
-    initb()
-    assertb([0, 1, 2, 3, 4])
+function testGenRefOuter() {
+    testGenRef(12)
+    testGenRef("fXa" + "baa")
+}
 
-    //shifting
-    initb()
-    b.shift(-1);
-    assertb([0, 0, 1, 2, 3])
+function testArrayMap() {
+    let strs = [1, 2, 3].map(x => "X" + x)
+    let r = "A"
+    for (let s of strs) {
+        r += s
+    }
+    assert(r == "AX1X2X3", "map")
 
-    initb()
-    b.shift(-1, 0, 3);
-    assertb([0, 0, 1, 3, 4])
+    let flt = [17, 8, 2, 3, 100].filter((x, i) => x == i)
+    assert(flt.length == 2, "flt")
+    assert(flt[1] == 3, "flt")
 
-    initb()
-    b.shift(-1, 1, 3);
-    assertb([0, 0, 1, 2, 4])
+    let sum = [1, 2, 3].reduce((s, v) => s + v, 0)
+    assert(sum == 6, "red")
 
-    initb()
-    b.shift(1)
-    assertb([1, 2, 3, 4, 0])
+    let x = ["A" + "12", "B" + "3"].map((k, i) => k.length + i).reduce((c, n) => c * n, 1)
+    assert(x == 9, "9")
+}
 
-    initb()
-    b.shift(1, 1, 3)
-    assertb([0, 2, 3, 0, 4])
-
-    //rotating
-    initb()
-    b.rotate(-1);
-    assertb([4, 0, 1, 2, 3])
-
-    initb()
-    b.rotate(-1, 0, 3);
-    assertb([2, 0, 1, 3, 4])
-
-    initb()
-    b.rotate(-1, 1, 3);
-    assertb([0, 3, 1, 2, 4])
-
-    initb()
-    b.rotate(2)
-    assertb([2, 3, 4, 0, 1])
-
-    initb()
-    b.rotate(1, 1, 3)
-    assertb([0, 2, 3, 1, 4])
-    */
+function testInnerLambdaCapture() {
+    glb1 = 0
+    let a = 7
+    let g = () => {
+        let h = () => {
+            glb1 += a
+        }
+        h()
+    }
+    g()
+    assert(glb1 == 7, "7")
 }

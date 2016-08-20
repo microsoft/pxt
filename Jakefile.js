@@ -20,7 +20,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'compilemonaco'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testlang'])
 
@@ -108,7 +108,8 @@ task("lint", [], { async: true }, function () {
         "pxtrunner",
         "pxtsim",
         "pxtwinrt",
-        "webapp/src"]
+        "webapp/src",
+        "monacots"]
         .map(function (d) { return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts" })
         , { printStdout: true }, function () {
             console.log('linted.');
@@ -131,7 +132,6 @@ task('update', function () {
 })
 
 task('updatestrings', ['built/localization.json'])
-
 
 
 file('built/localization.json', ju.expand1(
@@ -222,7 +222,19 @@ file("built/web/pxtlib.js", [
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
-    jake.cpR("node_modules/monaco-editor/min/vs/", "webapp/public/")
+
+    jake.mkdirP("webapp/public/vs")
+    jake.cpR("node_modules/monaco-editor/dev/vs/base", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/editor", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/css.js", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/loader.js", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/nls.js", "webapp/public/vs/")
+    jake.mkdirP("webapp/public/vs/basic-languages/src")
+    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/bat.js", "webapp/public/vs/basic-languages/src/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/cpp.js", "webapp/public/vs/basic-languages/src/")
+    jake.mkdirP("webapp/public/vs/language/json")
+    jake.cpR("node_modules/monaco-editor/dev/vs/language/json/", "webapp/public/vs/language/")
+
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtblocks.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
@@ -239,6 +251,58 @@ file("built/web/pxtlib.js", [
     ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/,
         f => f + " " + additionalExports.map(s => s + ": " + s + ",").join(" "))
     fs.writeFileSync("built/web/typescript.js", ts)
+})
+
+
+task('compilemonaco', [
+    "built/web/vs/language/typescript/lib/typescriptServices.js",
+    "built/web/vs/language/typescript/lib/lib-es6-ts.js",
+    "built/web/vs/language/typescript/lib/lib-ts.js",
+    "built/web/vs/language/typescript/src/mode.js",
+    "built/web/vs/language/typescript/src/languageFeatures.js",
+    "built/web/vs/language/typescript/src/monaco.contribution.js",
+    "built/web/vs/language/typescript/src/tokenization.js",
+    "built/web/vs/language/typescript/src/worker.js",
+    "built/web/vs/language/typescript/src/workerManager.js"
+])
+
+file('built/monacots', expand([
+    "monacots",
+    "built/pxtlib.js"
+    ]), { async: true }, 
+    function () {
+     tscIn(this, "monacots")
+     jake.mkdirP("built/web/vs/language/typescript/src")
+     jake.mkdirP("built/web/vs/language/typescript/lib")
+})
+
+file('built/web/vs/language/typescript/lib/typescriptServices.js', ['built/monacots'], function () {
+    jake.cpR("monacots/lib/typescriptServices.js", "built/web/vs/language/typescript/lib/")
+});
+file('built/web/vs/language/typescript/lib/lib-es6-ts.js', ['built/monacots'], function () {
+    jake.cpR("monacots/lib/lib-es6-ts.js", "built/web/vs/language/typescript/lib/")
+});
+file('built/web/vs/language/typescript/lib/lib-ts.js', ['built/monacots'], function () {
+    jake.cpR("monacots/lib/lib-ts.js", "built/web/vs/language/typescript/lib/")
+});
+
+file('built/web/vs/language/typescript/src/mode.js', ['built/monacots', 'built/pxtlib.js'], function () {
+    jake.cpR("built/monacots/src/mode.js", "built/web/vs/language/typescript/src/")
+})
+file('built/web/vs/language/typescript/src/languageFeatures.js', ['built/monacots', 'built/pxtlib.js'], function () {
+    jake.cpR("built/monacots/src/languageFeatures.js", "built/web/vs/language/typescript/src/")
+})
+file('built/web/vs/language/typescript/src/monaco.contribution.js', ['built/monacots'], function () {
+    jake.cpR("built/monacots/src/monaco.contribution.js", "built/web/vs/language/typescript/src/")
+})
+file('built/web/vs/language/typescript/src/tokenization.js', ['built/monacots'], function () {
+    jake.cpR("built/monacots/src/tokenization.js", "built/web/vs/language/typescript/src/")
+})
+file('built/web/vs/language/typescript/src/worker.js', ['built/monacots'], function () {
+    jake.cpR("built/monacots/src/worker.js", "built/web/vs/language/typescript/src/")
+})
+file('built/web/vs/language/typescript/src/workerManager.js', ['built/monacots'], function () {
+    jake.cpR("built/monacots/src/workerManager.js", "built/web/vs/language/typescript/src/")
 })
 
 file('built/webapp/src/app.js', expand([
@@ -313,4 +377,3 @@ ju.catFiles("built/web/semantic.js",
         "node_modules/semantic-ui-less/definitions/modules",
         "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
     "")
-

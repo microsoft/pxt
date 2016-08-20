@@ -44,42 +44,14 @@ export class Editor extends srceditor.Editor {
             blockFile = this.currFile.getVirtualFileName();
         }
 
+        const failedAsync = (file: string) => {
+            this.forceDiagnosticsUpdate();
+            return this.showConversionFailedDialog(file);
+        }
+
         if (!this.hasBlocks())
             return
 
-        const failedAsync = () => {
-            this.forceDiagnosticsUpdate();
-            let bf = pkg.mainEditorPkg().files[blockFile];
-            return core.confirmAsync({
-                header: lf("Oops, there is a problem converting your code."),
-                body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
-                agreeLbl: lf("Discard and go to Blocks"),
-                agreeClass: "cancel",
-                agreeIcon: "cancel",
-                disagreeLbl: lf("Stay in JavaScript"),
-                disagreeClass: "positive",
-                disagreeIcon: "checkmark", 
-                deleteLbl: lf("Remove Blocks file"),
-                size: "medium",
-                hideCancel: !bf
-            }).then(b => {
-                // discard                
-                if (!b) {
-                    pxt.tickEvent("typescript.keepText");
-                } else if (b == 2) {
-                    pxt.tickEvent("typescript.removeBlocksFile");
-                    this.parent.removeFile(bf);
-                } else {
-                    pxt.tickEvent("typescript.discardText");
-                    this.parent.setFile(bf);
-                }
-            })
-        }
-
-        this.checkRoundTrip(blockFile, failedAsync)
-    }
-
-    checkRoundTrip(blockFile: string, failedAsync: () => Promise<void>) {
         // needed to test roundtrip
         let js = this.formatCode();
 
@@ -108,12 +80,12 @@ export class Editor extends srceditor.Editor {
                 }
                 return compiler.decompileAsync(this.currFile.name)
                     .then(resp => {
-                        if (!resp.success) return failedAsync();
+                        if (!resp.success) return failedAsync(blockFile);
                         xml = resp.outfiles[blockFile];
                         Util.assert(!!xml);
                         // try to convert back to typescript
                         let workspace = pxt.blocks.loadWorkspaceXml(xml);
-                        if (!workspace) return failedAsync();
+                        if (!workspace) return failedAsync(blockFile);
 
                         let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
 
@@ -130,7 +102,7 @@ export class Editor extends srceditor.Editor {
                                 blockly: xml,
                                 jsroundtrip: b2jsr.source
                             })
-                            return failedAsync();
+                            return failedAsync(blockFile);
                         }
 
                         return mainPkg.setContentAsync(blockFile, xml)
@@ -140,6 +112,42 @@ export class Editor extends srceditor.Editor {
                 pxt.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
             }).done()
+    }
+
+    showConversionFailedDialog(blockFile: string): Promise<void> {
+        let bf = pkg.mainEditorPkg().files[blockFile];
+        return core.confirmAsync({
+            header: lf("Oops, there is a problem converting your code."),
+            body: lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
+            agreeLbl: lf("Discard and go to Blocks"),
+            agreeClass: "cancel",
+            agreeIcon: "cancel",
+            disagreeLbl: lf("Stay in JavaScript"),
+            disagreeClass: "positive",
+            disagreeIcon: "checkmark", 
+            deleteLbl: lf("Remove Blocks file"),
+            size: "medium",
+            hideCancel: !bf
+        }).then(b => {
+            // discard                
+            if (!b) {
+                pxt.tickEvent("typescript.keepText");
+            } else if (b == 2) {
+                pxt.tickEvent("typescript.removeBlocksFile");
+                this.parent.removeFile(bf);
+            } else {
+                pxt.tickEvent("typescript.discardText");
+                this.parent.setFile(bf);
+            }
+        })
+    }
+
+    decompile(blockFile: string): Promise<boolean> {
+        let xml: string;
+        return compiler.decompileAsync(blockFile)
+            .then(resp => {
+                return Promise.resolve(resp.success);
+            })
     }
 
     menu(): JSX.Element {
@@ -275,7 +283,7 @@ export class Editor extends srceditor.Editor {
         if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             this.editor.addAction({
                 id: "compileHex",
-                label: lf("Compile Hex"),
+                label: lf("Download"),
                 enablement: {writeableEditor: true},
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
                 contextMenuGroupId: "4_tools/*",
@@ -298,20 +306,21 @@ export class Editor extends srceditor.Editor {
             }
         });
 
-        this.editorViewZones = []
+        this.editorViewZones = [];
+
         this.isReady = true
     }
 
     zoomIn() {
-        console.log("zoomIn");
         this.parent.settings.editorFontSize++;
         this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
+        this.forceDiagnosticsUpdate();
     }
 
     zoomOut() {
-        console.log("zoomOut");
         this.parent.settings.editorFontSize--;
         this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
+        this.forceDiagnosticsUpdate();
     }
 
     getId() {
@@ -389,6 +398,7 @@ export class Editor extends srceditor.Editor {
     private diagSnapshot: string[];
     private annotationLines: number[];
     private editorViewZones: number[];
+    private errorLines: number[];
 
     updateDiagnostics() {
         if (this.needsDiagUpdate())
@@ -409,6 +419,8 @@ export class Editor extends srceditor.Editor {
         if (!this.isTypescript) return
         let file = this.currFile
         let lines: string[] = this.editor.getModel().getLinesContent();
+        let fontSize = this.parent.settings.editorFontSize;
+        let lineHeight = (this.editor as any)._configuration.editor.lineHeight;
 
         let viewZones = this.editorViewZones || [];
         this.annotationLines = [];
@@ -418,13 +430,18 @@ export class Editor extends srceditor.Editor {
                 changeAccessor.removeZone(id);
             });
         });
+        this.editorViewZones = [];
+        this.errorLines = [];
 
         if (file && file.diagnostics) {
             for (let d of file.diagnostics) {
+                if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0) continue;
                 let viewZoneId: any = null;
                 (this.editor as any).changeViewZones(function(changeAccessor: any) {
                         let domNode = document.createElement('div');
-                        domNode.className = "error-view-zone";
+                        domNode.className = d.category == ts.DiagnosticCategory.Error ? "error-view-zone" : "warning-view-zone";
+                        domNode.style.setProperty("font-size", fontSize.toString() + "px");
+                        domNode.style.setProperty("line-height", lineHeight.toString() + "px");
                         domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
                         viewZoneId = changeAccessor.addZone({
                                     afterLineNumber: d.line + 1,
@@ -433,7 +450,7 @@ export class Editor extends srceditor.Editor {
                         });
                 });
                 this.editorViewZones.push(viewZoneId);
-
+                this.errorLines.push(d.line);
                 if (lines[d.line] === this.diagSnapshot[d.line]) {
                     this.annotationLines.push(d.line)
                 }

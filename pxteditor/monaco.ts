@@ -35,6 +35,12 @@ namespace pxt.vs {
     }
 
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
+        // validation settings
+        let diagnosticOptions = monaco.languages.typescript.typescriptDefaults.diagnosticsOptions;
+        diagnosticOptions.noSyntaxValidation = false;
+        diagnosticOptions.noSemanticValidation = false;
+
+        // compiler options
         let compilerOptions = monaco.languages.typescript.typescriptDefaults.compilerOptions;
         compilerOptions.allowUnreachableCode = true;
         compilerOptions.noImplicitAny = true;
@@ -48,10 +54,9 @@ namespace pxt.vs {
         let editor = monaco.editor.create(element, {
             model: null,
             //ariaLabel: lf("JavaScript Editor"),
-            fontSize: 25,
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
             scrollBeyondLastLine: true,
-            language: "typescript",
+            language: "typescript"
         });
 
         window.addEventListener('resize', function () {

@@ -205,6 +205,7 @@ namespace pxt {
         yotta?: ts.pxt.YottaConfig;
         card?: CodeCard;
         additionalFilePath?: string;
+        minTargetVersion?: string;
     }
 
     // this is for remote file interface to packages
@@ -330,7 +331,8 @@ namespace pxt {
             let kindCfg = ""
             return this.resolveVersionAsync()
                 .then(verNo => {
-                    if (this.config && this.config.installedVersion == verNo)
+                    if (!/^embed:/.test(verNo) &&
+                        this.config && this.config.installedVersion == verNo)
                         return
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
@@ -358,6 +360,10 @@ namespace pxt {
             if (typeof this.config.name != "string" || !this.config.name ||
                 (this.config.public && !/^[a-z][a-z0-9\-]+$/.test(this.config.name)))
                 U.userError("Invalid package name: " + this.config.name)
+            let minVer = this.config.minTargetVersion
+            if (minVer && semver.strcmp(minVer, appTarget.versions.target) > 0)
+                U.userError(lf("Package {0} requires target version {1} (you are running {2})",
+                    this.config.name, minVer, appTarget.versions.target))
         }
 
         private parseConfig(str: string) {
@@ -371,16 +377,22 @@ namespace pxt {
 
         loadAsync(isInstall = false): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
+
+            let initPromise = Promise.resolve()
+
             this.isLoaded = true
             let str = this.readFile(configName)
             if (str == null) {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id)
             } else {
-                this.parseConfig(str)
+                initPromise = initPromise.then(() => this.parseConfig(str))
             }
 
-            return (isInstall ? this.downloadAsync() : Promise.resolve())
+            if (isInstall)
+                initPromise = initPromise.then(() => this.downloadAsync())
+
+            return initPromise
                 .then(() =>
                     U.mapStringMapAsync(this.config.dependencies, (id, ver) => {
                         let mod = this.resolveDep(id)

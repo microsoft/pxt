@@ -456,6 +456,7 @@ function pxtFileList(pref: string) {
     return allFiles(pref + "webapp/public")
         .concat(onlyExts(allFiles(pref + "built/web", 1), [".js", ".css"]))
         .concat(allFiles(pref + "built/web/fonts", 1))
+        .concat(allFiles(pref + "built/web/vs", 4))
 
 }
 
@@ -603,6 +604,7 @@ function runGitAsync(...args: string[]) {
 }
 
 function runNpmAsync(...args: string[]) {
+    console.log("npm",args);
     return spawnAsync({
         cmd: addCmd("npm"),
         args: args,
@@ -1084,6 +1086,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
     cfg.appTheme.name = cfg.name
+    cfg.appTheme.description = cfg.description
 
     // expand logo
     let logos = (cfg.appTheme as any as U.Map<string>);
@@ -2269,7 +2272,7 @@ function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
         .then(ts.pxt.compile)
         .then(res => {
-            return ts.pxt.getApiInfo(res.ast)
+            return ts.pxt.getApiInfo(res.ast, true)
         })
 }
 

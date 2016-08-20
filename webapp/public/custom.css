@@ -135,13 +135,13 @@ div.simframe > iframe {
 
 #helpcard {
     position: absolute;
-    right: 2rem;
+    right: 7rem;
     bottom: 2.2rem;
     margin: 0;
     z-index: 5;
 }
 .rtl #helpcard {
-    left:2rem;
+    left:7rem;
     right:auto;
 }
 
@@ -164,7 +164,7 @@ div.simframe > iframe {
 
 #msg {
     position: absolute;
-    bottom: 2rem;
+    bottom: 4rem;
     left: 0;
     right: 0;
     text-align: center;
@@ -662,8 +662,11 @@ html {
     }
 }
 
-/* monaco editor */
+.ui.fluid.button.half{
+    width:50% !important;
+}
 
+/* monaco editor */
 .monaco-editor.vs .token.ts.identifier:hover {
     border-radius: 6px;
     border: 1px solid #565656;
@@ -673,13 +676,22 @@ html {
 	background: rgba(0, 0, 255, 0.1);
 }
 
-
 .monaco-editor .error-view-zone {
     color:white;
     border-radius: 6px;
-    padding: 1px 9px 1px 9px;
-    margin:2px;
-    width: initial !important; 
-    height:20px !important;
+    padding-left: .5em;
+    padding-right: .5em;
+    width: initial !important;
     background-color: #B4009E;
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro;
+}
+
+.monaco-editor .warning-view-zone {
+    color:white;
+    border-radius: 6px;
+    padding-left: .5em;
+    padding-right: .5em;
+    width: initial !important;
+    background-color: #FFB900;
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro;
 }

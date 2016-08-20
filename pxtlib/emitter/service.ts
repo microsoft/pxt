@@ -335,7 +335,7 @@ namespace ts.pxt {
         }
     }
 
-    export function getApiInfo(program: Program): ApisInfo {
+    export function getApiInfo(program: Program, legacyOnly = false): ApisInfo {
         let res: ApisInfo = {
             byQName: {}
         }
@@ -387,6 +387,11 @@ namespace ts.pxt {
         // store qName in symbols
         for (let qName in res.byQName)
             res.byQName[qName].qName = qName;
+
+        if (legacyOnly) {
+            // conflicts with pins.map()
+            delete res.byQName["Array.map"]
+        }
 
         return res
     }
