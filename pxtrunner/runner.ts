@@ -194,7 +194,7 @@ namespace pxt.runner {
             });
     }
 
-    export function computeUsedParts(usedSymbols: U.Map<ts.pxt.SymbolInfo>): string[] { 
+    export function computeUsedParts(usedSymbols: U.Map<ts.pxt.SymbolInfo>): string[] {
         let parts: string[] = [];
         for (let symbol in usedSymbols) {
             let info = usedSymbols[symbol]
