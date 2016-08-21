@@ -167,7 +167,7 @@ namespace pxsim {
             }
         }
 
-        public run(js: string, debug?: boolean) {
+        public run(js: string, parts?: string[], debug?: boolean) {
             this.debug = debug;
             this.runId = this.nextId();
             this.addEventListeners();
@@ -175,6 +175,7 @@ namespace pxsim {
             // store information
             this.currentRuntime = {
                 type: 'run',
+                parts: parts,
                 code: js
             }
 

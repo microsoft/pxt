@@ -194,6 +194,23 @@ namespace pxt.runner {
             });
     }
 
+    export function computeUsedParts(usedSymbols: U.Map<ts.pxt.SymbolInfo>): string[] { 
+        let parts: string[] = [];
+        for (let symbol in usedSymbols) {
+            let info = usedSymbols[symbol]
+            if (info && info.attributes && (<any>info.attributes)["parts"]) {
+                let partsStr = <string>(<any>info.attributes)["parts"];
+                if (partsStr) {
+                    partsStr
+                        .split(" ")
+                        .filter(p => 0 < p.length && parts.indexOf(p) < 0)
+                        .forEach(p => parts.push(p));
+                }
+            }
+        }
+        return parts;
+    }
+
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
         return loadPackageAsync(simOptions.id)
             .then(() => compileAsync(false, opts => {
@@ -209,7 +226,10 @@ namespace pxt.runner {
                     if (pxt.appTarget.simulator)
                         options.aspectRatio = pxt.appTarget.simulator.aspectRatio;
                     let driver = new pxsim.SimulatorDriver(container, options);
-                    driver.run(js);
+                    let parts: string[] = null;
+                    if (resp.usedSymbols)
+                        parts = computeUsedParts(resp.usedSymbols);
+                    driver.run(js, parts);
                 }
             })
     }

@@ -1,4 +1,5 @@
 /// <reference path="../../built/pxtsim.d.ts" />
+/// <reference path="../../built/pxtrunner.d.ts" />
 
 import U = pxt.U
 
@@ -83,8 +84,11 @@ export function isDirty(): boolean { // in need of a restart?
 export function run(debug: boolean, res: ts.pxt.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[ts.pxt.BINARY_JS]
-    lastCompileResult = res
-    driver.run(js, debug)
+    let parts: string[] = null;
+    if (res.usedSymbols)
+        parts = pxt.runner.computeUsedParts(res.usedSymbols);
+    lastCompileResult = res;
+    driver.run(js, parts, debug);
 }
 
 export function stop(unload?: boolean) {
