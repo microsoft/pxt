@@ -172,7 +172,7 @@ namespace pxsim {
             }
         }
 
-        public run(js: string, opts: SimulatorRunOptions) {
+        public run(js: string, opts: SimulatorRunOptions = {}) {
             this.debug = opts.debug;
             this.runId = this.nextId();
             this.addEventListeners();
