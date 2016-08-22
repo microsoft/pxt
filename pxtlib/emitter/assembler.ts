@@ -57,6 +57,7 @@ namespace ts.pxt.assembler {
             this.name = words[0]
             this.args = words.slice(1)
             // a bit of a hack here...
+            this.is32bit = (jsFormat != undefined)
         }
 
         emit(ln: Line): EmitResult {
