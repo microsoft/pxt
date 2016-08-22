@@ -43,11 +43,20 @@ namespace pxsim.svg {
         return el;
     }
 
-    export function path(parent: Element, cls: string, data: string, title?: string): SVGElement {
+    export function mkPath(cls: string, data: string, title?: string): SVGPathElement {
         let p: any = { class: cls, d: data };
         if (title) p["title"] = title;
-        return svg.child(parent, "path", p);
+        let el = <SVGPathElement>svg.elt("path");
+        svg.hydrate(el, p);
+        return el;
     }
+
+    export function path(parent: Element, cls: string, data: string, title?: string): SVGPathElement {
+        let el = mkPath(cls, data, title);
+        parent.appendChild(el);
+        return el;
+    }
+
 
     export function fill(el: SVGElement, c: string) {
         (<SVGStylable><any>el).style.fill = c;
@@ -85,13 +94,20 @@ namespace pxsim.svg {
         });
     }
 
-    export function linearGradient(defs: SVGDefsElement, id: string): SVGLinearGradientElement {
-        let gradient = <SVGLinearGradientElement>svg.child(defs, "linearGradient", { id: id, x1: "0%", y1: "0%", x2: "0%", y2: "100%" });
+    export function mkLinearGradient(id: string): SVGLinearGradientElement {
+        let gradient = <SVGLinearGradientElement>svg.elt("linearGradient");
+        svg.hydrate(gradient, { id: id, x1: "0%", y1: "0%", x2: "0%", y2: "100%" });
         let stop1 = svg.child(gradient, "stop", { offset: "0%" })
         let stop2 = svg.child(gradient, "stop", { offset: "100%" })
         let stop3 = svg.child(gradient, "stop", { offset: "100%" })
         let stop4 = svg.child(gradient, "stop", { offset: "100%" })
         return gradient;
+    }
+
+    export function linearGradient(defs: SVGDefsElement, id: string): SVGLinearGradientElement {
+        let lg = mkLinearGradient(id);
+        defs.appendChild(lg);
+        return lg;
     }
 
     export function setGradientColors(lg: SVGLinearGradientElement, start: string, end: string) {
@@ -115,8 +131,15 @@ namespace pxsim.svg {
         p.appendChild(el)
     }
 
-    export function title(el: SVGElement, txt: string) {
-        let t = svg.child(el, "title", {});
+    export function mkTitle(txt: string): SVGTitleElement {
+        let t = <SVGTitleElement>svg.elt("title");
         t.textContent = txt;
+        return t;
+    }
+
+    export function title(el: SVGElement, txt: string): SVGTitleElement {
+        let t = mkTitle(txt);
+        el.appendChild(t);
+        return t;
     }
 }
