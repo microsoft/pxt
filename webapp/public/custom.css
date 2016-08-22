@@ -683,6 +683,7 @@ html {
     padding-right: .5em;
     width: initial !important;
     background-color: #B4009E;
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro;
 }
 
 .monaco-editor .warning-view-zone {
@@ -692,4 +693,5 @@ html {
     padding-right: .5em;
     width: initial !important;
     background-color: #FFB900;
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro;
 }
