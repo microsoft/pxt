@@ -39,6 +39,7 @@ namespace ts.pxt.assembler {
         public friendlyFmt: string;
         public code: string;
         private ei: EncodersInstructions;
+        public is32bit: boolean;
 
         constructor(ei: EncodersInstructions, format: string, public opcode: number, public mask: number, public jsFormat: string) {
             assert((opcode & mask) == opcode)
@@ -55,6 +56,7 @@ namespace ts.pxt.assembler {
             let words = tokenize(format)
             this.name = words[0]
             this.args = words.slice(1)
+            // a bit of a hack here...
         }
 
         emit(ln: Line): EmitResult {
@@ -137,7 +139,7 @@ namespace ts.pxt.assembler {
                     // TODO: we may need to generalize this for AVR 32-bit instructions
                     if (this.ei.is32bit(this)) {
                         if (tokens[j]) return emitErr("trailing tokens", tokens[j])
-                        return this.ei.emit32(v, ln.bin.normalizeExternalLabel(actual));
+                        return this.ei.emit32(this, v, ln.bin.normalizeExternalLabel(actual));
                     }
 
                     numArgs.push(v)
@@ -930,7 +932,7 @@ namespace ts.pxt.assembler {
             return false;
         }
 
-        public emit32(v: number, actual: string): EmitResult {
+        public emit32(i: Instruction, v: number, actual: string): EmitResult {
             return null;
         }
 

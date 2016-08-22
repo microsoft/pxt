@@ -21,10 +21,31 @@ namespace ts.pxt.avr {
     export class AVRProcessor extends assembler.EncodersInstructions {
 
         public is32bit(i: assembler.Instruction) {
-            return i.name == "call" || i.name == "jmp"
-            // TODO
-            // lds and sts have 32-bit and 16-bit varieties
-            // name == "lds" || name == "sts";
+            return i.is32bit;
+        }
+
+        // - the call and jmp instructions have both 16-bit and 22-bit varieties
+        // - lds and sts are both 16-bit
+        // for now, we only support only 16-bit
+        public emit32(i: assembler.Instruction, v: number, actual: string): ts.pxt.assembler.EmitResult {
+            if (v % 2) return ts.pxt.assembler.emitErr("uneven target label?", actual);
+            let off = v / 2
+            assert(off != null)
+            if ((off | 0) != off ||
+                // 16-bit only for now (so, can address 128k)
+                !(0 <= off && off < 65536))
+                return ts.pxt.assembler.emitErr("jump out of range", actual);
+
+            // note that off is already in instructions, not bytes
+            let imm = off & 0xffff
+
+            return {
+                opcode: i.opcode,
+                opcode2: imm,
+                stack: 0,
+                numArgs: [v],
+                labelName: actual
+            }
         }
 
         public registerNo(actual: string) {
@@ -139,7 +160,7 @@ namespace ts.pxt.avr {
             this.addInst("bset  $r4", 0x9408, 0xff8f);
             this.addInst("bst   $r0, $r5", 0xfa00, 0xfe08);
             // call - 32 bit - special handling
-            this.addInst("call  $lb", 0x940e, 0xfe0e, "CALL");
+            this.addInst("call  $lb", 0x940e, 0xffff, "CALL");
             this.addInst("cbi   $r7, $r5", 0x9800, 0xff00);
             this.addInst("cbr   $r3, $i3", 0x7000, 0xf000);
             this.addInst("clc", 0x9488, 0xffff);
@@ -172,7 +193,7 @@ namespace ts.pxt.avr {
             this.addInst("in    $r0, $i5", 0xb000, 0xf800);
             this.addInst("inc   $r0", 0x9403, 0xfe0f);
             // jmp - 32 bit - special handling
-            this.addInst("jmp  $lb", 0x940c, 0xfe0e, "JMP")
+            this.addInst("jmp  $lb", 0x940c, 0xffff, "JMP")
             this.addInst("lac   Z, $r0", 0x9206, 0xfe0f);
             this.addInst("las   Z, $r0", 0x9205, 0xfe0f);
             this.addInst("lat   Z, $r0", 0x9207, 0xfe0f);
