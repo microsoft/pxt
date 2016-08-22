@@ -15,6 +15,9 @@ import * as codecard from "./codecard";
 import Util = pxt.Util;
 const lf = Util.lf
 
+const MIN_EDITOR_FONT_SIZE = 10
+const MAX_EDITOR_FONT_SIZE = 40
+
 export const cursorMarker = "\uE108"
 
 export class Editor extends srceditor.Editor {
@@ -312,12 +315,14 @@ export class Editor extends srceditor.Editor {
     }
 
     zoomIn() {
+        if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
         this.parent.settings.editorFontSize++;
         this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
         this.forceDiagnosticsUpdate();
     }
 
     zoomOut() {
+        if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
         this.parent.settings.editorFontSize--;
         this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
         this.forceDiagnosticsUpdate();
@@ -419,7 +424,7 @@ export class Editor extends srceditor.Editor {
         if (!this.isTypescript) return
         let file = this.currFile
         let lines: string[] = this.editor.getModel().getLinesContent();
-        let fontSize = this.parent.settings.editorFontSize;
+        let fontSize = this.parent.settings.editorFontSize - 3;
         let lineHeight = (this.editor as any)._configuration.editor.lineHeight;
 
         let viewZones = this.editorViewZones || [];
