@@ -226,7 +226,7 @@ export class Editor extends srceditor.Editor {
     }
 
     isIncomplete() {
-        return false;
+        return (this.editor as any)._keybindingService.getContextValue('suggestWidgetVisible');
     }
 
     prepare() {
