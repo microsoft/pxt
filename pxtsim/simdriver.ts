@@ -24,6 +24,11 @@ namespace pxsim {
         Pause
     }
 
+    export interface SimulatorRunOptions {
+        debug?: boolean;
+        parts?: string[];
+    }
+
     export interface HwDebugger {
         postMessage: (msg: pxsim.SimulatorMessage) => void;
     }
@@ -167,15 +172,15 @@ namespace pxsim {
             }
         }
 
-        public run(js: string, parts?: string[], debug?: boolean) {
-            this.debug = debug;
+        public run(js: string, opts: SimulatorRunOptions) {
+            this.debug = opts.debug;
             this.runId = this.nextId();
             this.addEventListeners();
 
             // store information
             this.currentRuntime = {
                 type: 'run',
-                parts: parts,
+                parts: opts.parts,
                 code: js
             }
 

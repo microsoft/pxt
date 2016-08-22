@@ -85,7 +85,7 @@ export function run(debug: boolean, res: ts.pxt.CompileResult) {
     let js = res.outfiles[ts.pxt.BINARY_JS]
     let parts = ts.pxt.computeUsedParts(res);
     lastCompileResult = res;
-    driver.run(js, parts, debug);
+    driver.run(js, {parts: parts, debug: debug});
 }
 
 export function stop(unload?: boolean) {
