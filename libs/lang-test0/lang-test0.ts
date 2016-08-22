@@ -34,9 +34,7 @@ var xyz = 12;
 
 console.log("Starting...")
 
-//lib.print_17(3);
 basic.showNumber(0);
-//assert(lib3.getX() == 17 * 3, "");
 
 testNums();
 testStrings();
@@ -67,6 +65,7 @@ testLambdaDecrCapture();
 testGenRefOuter()
 testArrayMap()
 testInnerLambdaCapture()
+testStatic()
 
 
 // test some top-level code
@@ -937,4 +936,24 @@ function testInnerLambdaCapture() {
     }
     g()
     assert(glb1 == 7, "7")
+}
+
+class StaticCl {
+    static x = 12;
+    static foo() {
+        glb1 += StaticCl.x
+    }
+    static bar() {
+        StaticCl.x = 13
+    }
+}
+
+function testStatic() {
+    glb1 = 0
+    StaticCl.foo()
+    console.log("G:"+glb1)
+    assert(glb1 == 12, "s0")
+    StaticCl.bar()
+    StaticCl.foo()
+    assert(glb1 == 25, "s1")
 }
