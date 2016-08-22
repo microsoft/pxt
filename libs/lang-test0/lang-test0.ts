@@ -36,69 +36,6 @@ console.log("Starting...")
 
 basic.showNumber(0);
 
-testNums();
-testStrings();
-testNumCollection();
-testStringCollection();
-testStringOps();
-testReccoll();
-inBg();
-testAction(1);
-testAction(7);
-testIter();
-testActionSave();
-testLazyOps();
-testRefLocals();
-testByRefParams();
-testFunDecl();
-testDefaultArgs();
-testMemoryFree();
-testMemoryFreeHOF();
-postPreFix()
-eqOp()
-testEnums()
-testForOf()
-testMaps()
-testComma();
-testLambdas();
-testLambdaDecrCapture();
-testGenRefOuter()
-testArrayMap()
-testInnerLambdaCapture()
-testStatic()
-
-
-// test some top-level code
-let xsum = 0;
-for (let i = 0; i < 11; ++i) {
-    xsum = xsum + i;
-}
-assert(xsum == 55, "mainfor")
-
-control.inBackground(() => {
-    xsum = xsum + 10;
-})
-
-basic.pause(20)
-assert(xsum == 65, "mainforBg")
-
-assert(xyz == 12, "init")
-
-function incrXyz() {
-    xyz++;
-    return 0;
-}
-var unusedInit = incrXyz();
-
-assert(xyz == 13, "init2")
-
-
-testClass()
-
-basic.showNumber(1)
-
-
-console.log("ALL TESTS OK")
 
 
 function defaultArgs(x: number, y = 3, z = 7) {
@@ -951,9 +888,78 @@ class StaticCl {
 function testStatic() {
     glb1 = 0
     StaticCl.foo()
-    console.log("G:"+glb1)
     assert(glb1 == 12, "s0")
     StaticCl.bar()
     StaticCl.foo()
     assert(glb1 == 25, "s1")
 }
+
+
+
+// ---------------------------------------------------------------------------
+// Driver starts
+// ---------------------------------------------------------------------------
+
+testNums();
+testStrings();
+testNumCollection();
+testStringCollection();
+testStringOps();
+testReccoll();
+inBg();
+testAction(1);
+testAction(7);
+testIter();
+testActionSave();
+testLazyOps();
+testRefLocals();
+testByRefParams();
+testFunDecl();
+testDefaultArgs();
+testMemoryFree();
+testMemoryFreeHOF();
+postPreFix()
+eqOp()
+testEnums()
+testForOf()
+testMaps()
+testComma();
+testLambdas();
+testLambdaDecrCapture();
+testGenRefOuter()
+testArrayMap()
+testInnerLambdaCapture()
+testStatic()
+
+
+// test some top-level code
+let xsum = 0;
+for (let i = 0; i < 11; ++i) {
+    xsum = xsum + i;
+}
+assert(xsum == 55, "mainfor")
+
+control.inBackground(() => {
+    xsum = xsum + 10;
+})
+
+basic.pause(20)
+assert(xsum == 65, "mainforBg")
+
+assert(xyz == 12, "init")
+
+function incrXyz() {
+    xyz++;
+    return 0;
+}
+var unusedInit = incrXyz();
+
+assert(xyz == 13, "init2")
+
+
+testClass()
+
+basic.showNumber(1)
+
+
+console.log("ALL TESTS OK")
