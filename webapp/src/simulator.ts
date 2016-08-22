@@ -83,7 +83,7 @@ export function isDirty(): boolean { // in need of a restart?
 export function run(debug: boolean, res: ts.pxt.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[ts.pxt.BINARY_JS]
-    let parts = resp.computeUsedParts();
+    let parts = ts.pxt.computeUsedParts(res);
     lastCompileResult = res;
     driver.run(js, parts, debug);
 }
