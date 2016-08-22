@@ -83,6 +83,26 @@ namespace ts.pxt {
         usedSymbols?: U.Map<SymbolInfo>; // q-names of symbols used
     }
 
+    export function computeUsedParts(resp: CompileResult): string[] {
+        if (!resp.usedSymbols)
+            return null;
+
+        let parts: string[] = [];
+        for (let symbol in resp.usedSymbols) {
+            let info = resp.usedSymbols[symbol]
+            if (info && info.attributes && (<any>info.attributes)["parts"]) {
+                let partsStr = <string>(<any>info.attributes)["parts"];
+                if (partsStr) {
+                    partsStr
+                        .split(" ")
+                        .filter(p => 0 < p.length && parts.indexOf(p) < 0)
+                        .forEach(p => parts.push(p));
+                }
+            }
+        }
+        return parts;
+    }
+
     export function getTsCompilerOptions(opts: CompileOptions) {
         let options = ts.getDefaultCompilerOptions()
 

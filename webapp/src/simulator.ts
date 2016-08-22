@@ -80,29 +80,10 @@ export function isDirty(): boolean { // in need of a restart?
     return /sepia/.test(driver.container.className);
 }
 
-export function computeUsedParts(usedSymbols: U.Map<ts.pxt.SymbolInfo>): string[] {
-    let parts: string[] = [];
-    for (let symbol in usedSymbols) {
-        let info = usedSymbols[symbol]
-        if (info && info.attributes && (<any>info.attributes)["parts"]) {
-            let partsStr = <string>(<any>info.attributes)["parts"];
-            if (partsStr) {
-                partsStr
-                    .split(" ")
-                    .filter(p => 0 < p.length && parts.indexOf(p) < 0)
-                    .forEach(p => parts.push(p));
-            }
-        }
-    }
-    return parts;
-}
-
 export function run(debug: boolean, res: ts.pxt.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[ts.pxt.BINARY_JS]
-    let parts: string[] = null;
-    if (res.usedSymbols)
-        parts = computeUsedParts(res.usedSymbols);
+    let parts = resp.computeUsedParts();
     lastCompileResult = res;
     driver.run(js, parts, debug);
 }
