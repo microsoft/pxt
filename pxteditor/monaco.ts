@@ -55,7 +55,7 @@ namespace pxt.vs {
             model: null,
             //ariaLabel: lf("JavaScript Editor"),
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
-            scrollBeyondLastLine: true,
+            scrollBeyondLastLine: false,
             language: "typescript"
         });
 
