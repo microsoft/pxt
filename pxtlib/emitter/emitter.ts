@@ -174,6 +174,7 @@ namespace ts.pxt {
         icon?: string;
         imageLiteral?: number;
         weight?: number;
+        parts?: string;
 
         // on interfaces
         indexerGet?: string;

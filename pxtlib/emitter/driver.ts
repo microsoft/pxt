@@ -90,13 +90,15 @@ namespace ts.pxt {
         let parts: string[] = [];
         for (let symbol in resp.usedSymbols) {
             let info = resp.usedSymbols[symbol]
-            if (info && info.attributes && (<any>info.attributes)["parts"]) {
-                let partsStr = <string>(<any>info.attributes)["parts"];
-                if (partsStr) {
-                    partsStr
-                        .split(" ")
-                        .filter(p => 0 < p.length && parts.indexOf(p) < 0)
-                        .forEach(p => parts.push(p));
+            if (info && info.attributes.parts) {
+                let partsRaw = info.attributes.parts;
+                if (partsRaw) {
+                    let partsSplit = partsRaw.split(/[ ,]+/);
+                    partsSplit.forEach(p => {
+                        if (0 < p.length && parts.indexOf(p) < 0) {
+                            parts.push(p);
+                        }
+                    });
                 }
             }
         }
