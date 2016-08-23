@@ -711,7 +711,7 @@ html {
 }
 
 .monaco-editor .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
-    color: #004C8A;
+    color: #E2008C;
 }
 
 .monaco-editor .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
