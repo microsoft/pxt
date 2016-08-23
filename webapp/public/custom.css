@@ -665,7 +665,8 @@ html {
     width:50% !important;
 }
 
-/* monaco editor */
+/* monaco: Editor */
+
 .monaco-editor.vs .token.ts.identifier:hover {
     border-radius: 6px;
     border: 1px solid #565656;
@@ -674,6 +675,8 @@ html {
 .monaco-editor .current-line {
 	background: rgba(0, 0, 255, 0.1);
 }
+
+/* monaco: Error View Zone */
 
 .monaco-editor .error-view-zone {
     color:white;
@@ -691,6 +694,30 @@ html {
     padding-left: .5em;
     padding-right: .5em;
     width: initial !important;
-    background-color: #FFB900;
+    background-color: #D83B01;
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro;
+}
+
+/* monaco: Suggest Widget */
+
+.monaco-editor .suggest-widget {
+    border-radius:5px;
+    font-size: 15px;
+}
+
+.monaco-list-row.focused {
+    background-color:#0078D7;
+    color:white;
+}
+
+.monaco-editor .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
+    color: #004C8A;
+}
+
+.monaco-editor .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
+    color: #FFB900;
+}
+
+.monaco-editor .suggest-widget .details > .monaco-scrollable-element > .body > .docs, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .docs {
+    color: white;
 }
