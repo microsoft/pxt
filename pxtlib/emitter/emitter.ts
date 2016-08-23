@@ -91,9 +91,22 @@ namespace ts.pxt {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
+    function isClassFunction(node: Node) {
+        if (!node) return false;
+        switch (node.kind) {
+            case SK.MethodDeclaration:
+            case SK.Constructor:
+            case SK.GetAccessor:
+            case SK.SetAccessor:
+                return true
+            default:
+                return false
+        }
+    }
+
     function getEnclosingMethod(node: Node): MethodDeclaration {
         if (!node) return null;
-        if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor)
+        if (isClassFunction(node))
             return <MethodDeclaration>node;
         return getEnclosingMethod(node.parent)
     }
@@ -115,13 +128,18 @@ namespace ts.pxt {
             node = node.parent
             if (!node)
                 userError(9229, lf("cannot determine parent of {0}", stringKind(node0)))
-            if (node.kind == SK.FunctionDeclaration ||
-                node.kind == SK.ArrowFunction ||
-                node.kind == SK.FunctionExpression ||
-                node.kind == SK.MethodDeclaration ||
-                node.kind == SK.Constructor)
-                return <FunctionLikeDeclaration>node
-            if (node.kind == SK.SourceFile) return null
+            switch (node.kind) {
+                case SK.MethodDeclaration:
+                case SK.Constructor:
+                case SK.GetAccessor:
+                case SK.SetAccessor:
+                case SK.FunctionDeclaration:
+                case SK.ArrowFunction:
+                case SK.FunctionExpression:
+                    return <FunctionLikeDeclaration>node
+                case SK.SourceFile:
+                    return null
+            }
         }
     }
 
@@ -140,8 +158,7 @@ namespace ts.pxt {
 
     function isTopLevelFunctionDecl(decl: Declaration) {
         return (decl.kind == SK.FunctionDeclaration && !getEnclosingFunction(decl)) ||
-            decl.kind == SK.MethodDeclaration ||
-            decl.kind == SK.Constructor
+            isClassFunction(decl)
     }
 
     function isSideEffectfulInitializer(init: Expression) {
@@ -383,7 +400,7 @@ namespace ts.pxt {
         // TODO add check for methods of generic classes
         if (fun.typeParameters && fun.typeParameters.length)
             return fun.typeParameters
-        if (fun.kind == SK.MethodDeclaration || fun.kind == SK.MethodSignature) {
+        if (isClassFunction(fun) || fun.kind == SK.MethodSignature) {
             if (fun.parent.kind == SK.ClassDeclaration || fun.parent.kind == SK.InterfaceDeclaration) {
                 let tp: TypeParameterDeclaration[] = (fun.parent as ClassLikeDeclaration).typeParameters
                 return tp || []
@@ -871,7 +888,9 @@ ${lbl}: .short 0xffff
         }
 
         function emitParameter(node: ParameterDeclaration) { }
-        function emitAccessor(node: AccessorDeclaration) { }
+        function emitAccessor(node: AccessorDeclaration) {
+            emitFunctionDeclaration(node)
+        }
         function emitThis(node: Node) {
             let meth = getEnclosingMethod(node)
             if (!meth)
@@ -998,7 +1017,7 @@ ${lbl}: .short 0xffff
                 let idx = fieldIndex(node)
                 callInfo.args.push(node.expression)
                 return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
-            } else if (decl.kind == SK.MethodDeclaration || decl.kind == SK.MethodSignature) {
+            } else if (isClassFunction(decl) || decl.kind == SK.MethodSignature) {
                 throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
@@ -1219,7 +1238,7 @@ ${lbl}: .short 0xffff
             if (decl.kind == SK.MethodSignature ||
                 decl.kind == SK.MethodDeclaration) {
                 if (isStatic(decl)) {
-                    // nothing to do?
+                    // no additional arguments
                 } else if (node.expression.kind == SK.PropertyAccessExpression) {
                     let recv = (<PropertyAccessExpression>node.expression).expression
                     args.unshift(recv)
@@ -1337,7 +1356,7 @@ ${lbl}: .short 0xffff
 
         function getParameters(node: FunctionLikeDeclaration) {
             let res = node.parameters.slice(0)
-            if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor) {
+            if (isClassFunction(node)) {
                 let info = getFunctionInfo(node)
                 if (!info.thisParameter) {
                     info.thisParameter = <any>{
@@ -2266,6 +2285,9 @@ ${lbl}: .short 0xffff
                     return
                 case SK.DebuggerStatement:
                     return emitDebuggerStatement(node);
+                case SK.GetAccessor:
+                case SK.SetAccessor:
+                    return emitAccessor(<AccessorDeclaration>node);
                 default:
                     unhandled(node);
             }
@@ -2331,9 +2353,6 @@ ${lbl}: .short 0xffff
                     return emitTemplateSpan(<TemplateSpan>node);
                 case SyntaxKind.Parameter:
                     return emitParameter(<ParameterDeclaration>node);
-                case SyntaxKind.GetAccessor:
-                case SyntaxKind.SetAccessor:
-                    return emitAccessor(<AccessorDeclaration>node);
                 case SyntaxKind.SuperKeyword:
                     return emitSuper(node);
                 case SyntaxKind.JsxElement:
