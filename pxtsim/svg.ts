@@ -23,10 +23,6 @@ namespace pxsim.svg {
         else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
     }
 
-    export function elt(name: string): SVGElement {
-        return document.createElementNS("http://www.w3.org/2000/svg", name)
-    }
-
     export function hydrate(el: SVGElement, props: any) {
         for (let k in props) {
             if (k == "title") {
@@ -35,10 +31,15 @@ namespace pxsim.svg {
         }
     }
 
-    export function child(parent: Element, name: string, props?: any): SVGElement {
-        let el = <SVGElement>svg.elt(name);
+    export function elt(name: string, props?: any): SVGElement {
+        let el = document.createElementNS("http://www.w3.org/2000/svg", name)
         if (props)
             svg.hydrate(el, props);
+        return el;
+    }
+
+    export function child(parent: Element, name: string, props?: any): SVGElement {
+        let el = svg.elt(name, props);
         parent.appendChild(el);
         return el;
     }
