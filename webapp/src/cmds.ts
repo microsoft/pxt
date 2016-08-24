@@ -17,7 +17,8 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 
 function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
     let hex = resp.outfiles[ts.pxt.BINARY_HEX]
-    let fn = pxt.appTarget.id + "-" + pkg.mainEditorPkg().header.name.replace(/[^a-zA-Z0-9]+/, "-") + ".hex"
+    let sanitizedName = pkg.mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
+    let fn = pxt.appTarget.id + "-" + sanitizedName + ".hex"
     pxt.debug('saving ' + fn)
     let url = pxt.BrowserUtils.browserDownloadText(
         hex,
@@ -98,7 +99,7 @@ export function initCommandsAsync(): Promise<void> {
                 })
         }
         pxt.commands.browserDownloadAsync = pxtwinrt.browserDownloadAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken) { // local node.js
+    } else if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
         pxt.commands.browserDownloadAsync = browserDownloadAsync;
     } else { // in browser
