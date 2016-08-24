@@ -1365,7 +1365,7 @@ ${lbl}: .short 0xffff
 
         function getParameters(node: FunctionLikeDeclaration) {
             let res = node.parameters.slice(0)
-            if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor) {
+            if (!isStatic(node) && node.kind == SK.MethodDeclaration || node.kind == SK.Constructor) {
                 let info = getFunctionInfo(node)
                 if (!info.thisParameter) {
                     info.thisParameter = <any>{
