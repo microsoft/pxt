@@ -126,6 +126,7 @@ namespace ts.pxt {
     }
 
     function isGlobalVar(d: Declaration) {
+        if (!d) return false
         return (d.kind == SK.VariableDeclaration && !getEnclosingFunction(d)) ||
             (d.kind == SK.PropertyDeclaration && isStatic(d))
     }
