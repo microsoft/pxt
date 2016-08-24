@@ -18,6 +18,11 @@ namespace ts.pxt {
         return (<any>ts).SyntaxKind[n.kind]
     }
 
+    interface NodeWithCache extends Node {
+        cachedIR: ir.Expr;
+        needsIRCache: boolean;
+    }
+
     function inspect(n: Node) {
         console.log(stringKind(n))
     }
@@ -506,6 +511,7 @@ namespace ts.pxt {
         let usedWorkList: Declaration[] = []
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
+        let irCachesToClear: NodeWithCache[] = []
 
         if (opts.target.isNative) {
             if (!opts.hexinfo) {
@@ -994,6 +1000,9 @@ ${lbl}: .short 0xffff
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
+            if (decl.kind == SK.GetAccessor) {
+                return emitCallCore(node, node, [], null)
+            }
             let attrs = parseComments(decl);
             let callInfo: CallInfo = {
                 decl,
@@ -1207,13 +1216,22 @@ ${lbl}: .short 0xffff
         }
 
         function emitCallExpression(node: CallExpression): ir.Expr {
-            let decl = getDecl(node.expression) as FunctionLikeDeclaration
+            let sig = checker.getResolvedSignature(node)
+            return emitCallCore(node, node.expression, node.arguments, sig)
+        }
+
+        function emitCallCore(
+            node: Expression,
+            funcExpr: Expression,
+            callArgs: Expression[],
+            sig: Signature
+        ): ir.Expr {
+            let decl = getDecl(funcExpr) as FunctionLikeDeclaration
             if (!decl)
                 unhandled(node, lf("no declaration"), 9240)
-
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
-            let args = node.arguments.slice(0)
+            let args = callArgs.slice(0)
             let callInfo: CallInfo = {
                 decl,
                 qName: getFullName(checker, decl.symbol),
@@ -1222,10 +1240,13 @@ ${lbl}: .short 0xffff
             };
             (node as any).callInfo = callInfo
 
-            let sig = checker.getResolvedSignature(node)
-            let trg: Signature = (sig as any).target
-            let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
-            let bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
+            let bindings: TypeBinding[] = []
+
+            if (sig) {
+                let trg: Signature = (sig as any).target
+                let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
+                bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
+            }
             let isSelfGeneric = bindings.length > 0
             addEnclosingTypeBindings(bindings, decl)
 
@@ -1265,11 +1286,13 @@ ${lbl}: .short 0xffff
             }
 
             if (decl.kind == SK.MethodSignature ||
+                decl.kind == SK.GetAccessor ||
+                decl.kind == SK.SetAccessor ||
                 decl.kind == SK.MethodDeclaration) {
                 if (isStatic(decl)) {
                     // no additional arguments
-                } else if (node.expression.kind == SK.PropertyAccessExpression) {
-                    let recv = (<PropertyAccessExpression>node.expression).expression
+                } else if (funcExpr.kind == SK.PropertyAccessExpression) {
+                    let recv = (<PropertyAccessExpression>funcExpr).expression
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
@@ -1312,8 +1335,8 @@ ${lbl}: .short 0xffff
 
                 let suff = args.length + ""
 
-                args.unshift(node.expression)
-                callInfo.args.unshift(node.expression)
+                args.unshift(funcExpr)
+                callInfo.args.unshift(funcExpr)
 
                 // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
                 // because what we're calling is ultimately a procedure which will decr arguments itself
@@ -1611,6 +1634,9 @@ ${lbl}: .short 0xffff
         }
 
         function prepForAssignment(trg: Expression) {
+            if (trg.kind == SK.PropertyAccessExpression) {
+                ((trg as PropertyAccessExpression).expression as Node as NodeWithCache).needsIRCache = true
+            }
             let left = emitExpr(trg)
             let storeCache: ir.Expr = null
             if (left.exprKind == EK.FieldAccess) {
@@ -1687,6 +1713,13 @@ ${lbl}: .short 0xffff
         }
 
         function handleAssignment(node: BinaryExpression) {
+            if (node.left.kind == SK.PropertyAccessExpression) {
+                let decl = getDecl(node.left)
+                if (decl && decl.kind == SK.GetAccessor) {
+
+                }
+            }
+
             let src = ir.shared(emitExpr(node.right))
             emitStore(node.left, src)
             if (isRefType(typeOf(node.right)))
@@ -2245,8 +2278,16 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitExpr(node: Node) {
-            return catchErrors(node, emitExprInner) || ir.numlit(0)
+        function emitExpr(node0: Node) {
+            let node = node0 as NodeWithCache
+            if (node.cachedIR) return node.cachedIR
+            let res = catchErrors(node, emitExprInner) || ir.numlit(0)
+            if (node.needsIRCache) {
+                node.cachedIR = ir.shared(res)
+                irCachesToClear.push(node)
+                return node.cachedIR
+            }
+            return res
         }
 
         function emitExprInner(node: Node): ir.Expr {
