@@ -35,6 +35,10 @@ namespace pxsim {
         }
     }
 
+    export function noLeakTracking(r: RefObject) {
+        delete liveRefObjs[r.id + ""]
+    }
+
     export class FnWrapper {
         constructor(
             public func: LabelFn,
