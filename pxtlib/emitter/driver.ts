@@ -81,6 +81,7 @@ namespace ts.pxt {
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
         usedSymbols?: U.Map<SymbolInfo>; // q-names of symbols used
+        usedArguments?: U.Map<string[]>;
     }
 
     export function computeUsedParts(resp: CompileResult): string[] {

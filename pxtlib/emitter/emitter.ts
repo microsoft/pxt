@@ -180,6 +180,7 @@ namespace ts.pxt {
         imageLiteral?: number;
         weight?: number;
         parts?: string;
+        trackArgs?: number[];
 
         // on interfaces
         indexerGet?: string;
@@ -191,6 +192,8 @@ namespace ts.pxt {
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: Util.Map<string>;
     }
+
+    var numberAttributes = ["weight", "imageLiteral"]
 
     export interface CallInfo {
         decl: Declaration;
@@ -245,8 +248,14 @@ namespace ts.pxt {
                 })
         }
 
-        if (typeof res.weight == "string")
-            res.weight = parseInt(res.weight as any)
+        for (let n of numberAttributes) {
+            if (typeof (res as any)[n] == "string")
+                (res as any)[n] = parseInt((res as any)[n])
+        }
+
+        if (res.trackArgs) {
+            res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
+        }
 
         res.paramHelp = {}
         res.jsDoc = ""
@@ -524,8 +533,10 @@ namespace ts.pxt {
                 }]
         }
 
-        if (opts.computeUsedSymbols)
+        if (opts.computeUsedSymbols) {
             res.usedSymbols = {}
+            res.usedArguments = {}
+        }
 
         let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
 
@@ -1197,6 +1208,22 @@ ${lbl}: .short 0xffff
             let bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
             let isSelfGeneric = bindings.length > 0
             addEnclosingTypeBindings(bindings, decl)
+
+            if (res.usedArguments && attrs.trackArgs) {
+                let tracked = attrs.trackArgs.map(n => args[n]).map(e => {
+                    let d = getDecl(e)
+                    if (d && d.kind == SK.EnumMember)
+                        return getFullName(checker, d.symbol)
+                    else return "*"
+                }).join(",")
+                let fn = getFullName(checker, decl.symbol)
+                let lst = res.usedArguments[fn]
+                if (!lst) {
+                    lst = res.usedArguments[fn] = []
+                }
+                if (lst.indexOf(tracked) < 0)
+                    lst.push(tracked)
+            }
 
             function emitPlain() {
                 return mkProcCall(decl, args.map(emitExpr), bindings)
