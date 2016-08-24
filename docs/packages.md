@@ -16,7 +16,7 @@ This is a section for advanced users who want to publish their own package.
 ### Step 1: Local server setup
 
 In order to build and test your package locally, you need to setup PXT to run locally.
-Follow the instructions on [PXT README.md](https://github.com/microsoft/pxt) file.
+Follow the instructions on [PXT README.md](https://github.com/Microsoft/pxt/blob/master/README.md#running-a-target-from-localhost) file.
 
 ### Step 2: GitHub setup
 
@@ -24,8 +24,7 @@ You will need to get a [GitHub](https://github.com) account and create a GitHub 
 
 Let's say you want to create a package called `banana` for target `microbit`.
 
-* create GitHub repository `pxt-banana`
-
+* create GitHub repository `pxt-banana`; do not clone an existing package, as it will not show up in search
 * clone this repository into `pxt-banana` folder **under the `projects`**
 * go to the cloned folder and run `pxt init`; follow the prompts
 * still in the cloned folder, run `pxt install` to install dependent packages
