@@ -81,6 +81,29 @@ namespace ts.pxt {
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
         usedSymbols?: U.Map<SymbolInfo>; // q-names of symbols used
+        usedArguments?: U.Map<string[]>;
+    }
+
+    export function computeUsedParts(resp: CompileResult): string[] {
+        if (!resp.usedSymbols)
+            return null;
+
+        let parts: string[] = [];
+        for (let symbol in resp.usedSymbols) {
+            let info = resp.usedSymbols[symbol]
+            if (info && info.attributes.parts) {
+                let partsRaw = info.attributes.parts;
+                if (partsRaw) {
+                    let partsSplit = partsRaw.split(/[ ,]+/);
+                    partsSplit.forEach(p => {
+                        if (0 < p.length && parts.indexOf(p) < 0) {
+                            parts.push(p);
+                        }
+                    });
+                }
+            }
+        }
+        return parts;
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {

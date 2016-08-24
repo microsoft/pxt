@@ -839,11 +839,13 @@ function testGenRef<T>(v: T) {
 }
 
 function testGenRefOuter() {
+    msg("testGenRefOuter");
     testGenRef(12)
     testGenRef("fXa" + "baa")
 }
 
 function testArrayMap() {
+    msg("testArrayMap");
     let strs = [1, 2, 3].map(x => "X" + x)
     let r = "A"
     for (let s of strs) {
@@ -863,6 +865,7 @@ function testArrayMap() {
 }
 
 function testInnerLambdaCapture() {
+    msg("testInnerLambdaCapture");
     glb1 = 0
     let a = 7
     let g = () => {
@@ -880,16 +883,17 @@ class StaticCl {
     static foo() {
         glb1 += StaticCl.x
     }
-    static bar() {
-        StaticCl.x = 13
+    static bar(k: number) {
+        StaticCl.x = k
     }
 }
 
 function testStatic() {
+    msg("testStatic");
     glb1 = 0
     StaticCl.foo()
     assert(glb1 == 12, "s0")
-    StaticCl.bar()
+    StaticCl.bar(13)
     StaticCl.foo()
     assert(glb1 == 25, "s1")
 }
@@ -931,8 +935,7 @@ testArrayMap()
 testInnerLambdaCapture()
 testStatic()
 
-
-// test some top-level code
+msg("test top level code")
 let xsum = 0;
 for (let i = 0; i < 11; ++i) {
     xsum = xsum + i;

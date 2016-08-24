@@ -75430,8 +75430,8 @@ define(__m[486], __M([0,1,362,10,2,8,3,11,122,266,87,15,19,36,22,119,81,241]), f
         ], Renderer);
         return Renderer;
     }());
-    var FocusHeight = 35;
-    var UnfocusedHeight = 19;
+    var FocusHeight = 45;
+    var UnfocusedHeight = 29;
     var Delegate = (function () {
         function Delegate(listProvider) {
             this.listProvider = listProvider;
