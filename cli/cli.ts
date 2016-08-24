@@ -604,7 +604,7 @@ function runGitAsync(...args: string[]) {
 }
 
 function runNpmAsync(...args: string[]) {
-    console.log("npm",args);
+    console.log("npm", args);
     return spawnAsync({
         cmd: addCmd("npm"),
         args: args,
@@ -983,6 +983,10 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
         return Promise.resolve()
     }
 
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
+    }
+
     console.log(`building ${p}...`)
     dirsToWatch.push(p)
     return spawnAsync({
@@ -1310,9 +1314,6 @@ export function serveAsync(arg?: string) {
         } else {
             U.userError("Cannot find pxtarget.json to serve.")
         }
-    }
-    if (!fs.existsSync("node_modules/typescript")) {
-        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
     }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
         .then(() => server.serveAsync({
