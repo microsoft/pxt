@@ -707,7 +707,7 @@ html {
 
 .monaco-list-row.focused {
     background-color:#0078D7;
-    color:white;
+    color: #fff;
 }
 
 .monaco-editor .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
@@ -719,5 +719,20 @@ html {
 }
 
 .monaco-editor .suggest-widget .details > .monaco-scrollable-element > .body > .docs, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .docs {
-    color: white;
+    color: #fff;
+}
+
+.monaco-editor-hover {
+    padding-left:40px;
+    background-color: #fff; 
+    background-image: 
+    linear-gradient(90deg, transparent 29px, #abced4 29px, #abced4 31px, transparent 31px),
+    linear-gradient(#eee .1em, transparent .1em);
+    background-size: 100% 1.2em;
+    color: #0078D7;
+}
+
+
+.monaco-editor-hover > div > div > div > div:last-child {
+    color: #107C10;
 }

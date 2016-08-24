@@ -178,38 +178,6 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost {
         return Promise.as(this._languageService.getEmitOutput(fileName));
     }
 
-    getSignatureHelpItem(fileName: string, position: number, name: string, codeSnippet: string, textSpan: typescript.TextSpan): Promise<string> {
-        const program = this._languageService.getProgram();
-        const typeChecker = program.getTypeChecker();
-        let sourceFile = program.getSourceFile(fileName);
-        let start = position;
-        let end = position + name.length;
-
-        sourceFile.update(name, (typescript as any).createTextChangeRange(typescript.createTextSpanFromBounds(start, end), name.length));
-
-        const token = (typescript as any).findTokenOnLeftOfPosition(sourceFile, position);
-
-        const resolvedSignature = typeChecker.getResolvedSignature(token);
-
-        return Promise.as(resolvedSignature.toString());
-
-        /*
-
-        //sourceFile = sourceFile.update(name + "()", )
-        const argumentInfo = (typescript as any).SignatureHelp.getContainingArgumentInfo(token);
-        // Semantic filtering of signature help
-        if (!argumentInfo) {
-            return undefined;
-        }
-        const call = argumentInfo.invocation;
-        const candidates = <typescript.Signature[]>[];
-        const resolvedSignature = typeChecker.getResolvedSignature(call, candidates);
-        return Promise.as((typescript as any).createSignatureHelpItems(candidates, resolvedSignature, argumentInfo));
-        */
-        
-        //return Promise.as(this._languageService.getSignatureHelpItems(fileName, position));
-    }
-
     getEncodedSyntacticClassifications(fileName: string, textSpan: typescript.TextSpan): Promise<typescript.Classifications> {
         return Promise.as(this._languageService.getEncodedSyntacticClassifications(fileName, textSpan));
     }

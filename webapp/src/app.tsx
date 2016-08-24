@@ -539,7 +539,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             showFiles: !!this.settings.showFiles,
             active: document.visibilityState == 'visible'
         };
-        if (!this.settings.editorFontSize) this.settings.editorFontSize = 25;
+        if (!this.settings.editorFontSize) this.settings.editorFontSize = 27;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
     }
 
