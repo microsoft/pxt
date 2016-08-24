@@ -385,7 +385,7 @@ function initSerialMonitor() {
         });
     }
 
-    let manufacturerRx = pxt.appTarget.serial.manufacturerFilter ? new RegExp(pxt.appTarget.serial.manufacturerFilter) : undefined;
+    let manufacturerRx = pxt.appTarget.serial.manufacturerFilter ? new RegExp(pxt.appTarget.serial.manufacturerFilter, "i") : undefined;
     function filterPort(info: SerialPortInfo): boolean {
         return manufacturerRx ? manufacturerRx.test(info.manufacturer) : true;
     }

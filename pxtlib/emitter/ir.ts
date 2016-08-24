@@ -256,7 +256,7 @@ namespace ts.pxt.ir {
         }
 
         uniqueName() {
-            return this.getName() + "___" + getNodeId(this.def)
+            return this.getName().replace(/[^\w]/g, "_") + "___" + getNodeId(this.def)
         }
 
         refSuffix() {

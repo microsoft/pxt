@@ -190,6 +190,8 @@ interface TypescriptSnippet {
 export class SuggestAdapter extends Adapter implements monaco.languages.CompletionItemProvider {
 
     private typescriptSnippets: TypescriptSnippet[] = [];
+    private referenceModel: monaco.editor.IModel;
+    private referenceModelUri: Uri;
 
     constructor(worker: (first: Uri, ...more: Uri[]) => Promise<TypeScriptWorker>) {
         super(worker);
@@ -208,6 +210,8 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 description: description
             })
         });
+        this.referenceModelUri = Uri.parse("/REFERENCE/AUTOCOMPLETE");
+        this.referenceModel = monaco.editor.createModel("", "typescript", this.referenceModelUri);
     }
 
     public get triggerCharacters(): string[] {
@@ -235,21 +239,6 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                     kind: SuggestAdapter.convertKind(entry.kind)
                 };
             });
-            // Add Typescript snippets
-            this.typescriptSnippets
-                .filter(entry => entry.prefix.indexOf(wordInfo.word,0) > -1)
-                .forEach(entry => {
-                let completionItem: MyCompletionItem = 
-                {
-                    model: model,
-                    uri: resource,
-                    position: position,
-                    label: entry.prefix,
-                    sortText: "-1",
-                    kind: monaco.languages.CompletionItemKind.Snippet
-                };
-                suggestions.push(completionItem);
-            });
             return suggestions;
         }));
     }
@@ -269,11 +258,29 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
             })
         }
 
+        let word = myItem.label;
+        let currWord = model.getWordAtPosition(position);
+        let refPosition = 0;
+        if (currWord) {
+            let prevWordPos = position.clone(); prevWordPos.column -= currWord.word.length + 1;
+            let prevWord = model.getWordAtPosition(prevWordPos);
+            if (prevWord) {
+                this.referenceModel.setValue(prevWord.word + "." + word + "()");
+                refPosition = prevWord.word.length + word.length + 2;
+            } else {
+                this.referenceModel.setValue(word + "()");
+                refPosition = word.length + 1;
+            }
+        }
+
         return wireCancellationToken(token, this._worker(resource).then(worker => {
-            return worker.getCompletionEntryDetails(resource.toString(),
-                this._positionToOffset(resource, position),
-                myItem.label);
-        }).then(details => {
+            let promises: Promise<any>[] = [];
+            promises.push(worker.getCompletionEntryDetails(resource.toString(), this._positionToOffset(resource, position), myItem.label));
+            promises.push(worker.getSignatureHelpItems(this.referenceModelUri.toString(), refPosition));
+            return Promise.join(promises);
+        }).then(values => {
+            let details: typescript.CompletionEntryDetails = values[0];
+            let signature: typescript.SignatureHelpItems = values[1];
             if (!details) {
                 return myItem;
             }
@@ -305,7 +312,42 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
             }
             let hasParams = myItem.kind == monaco.languages.CompletionItemKind.Function || myItem.kind == monaco.languages.CompletionItemKind.Method;
 
-            if (hasParams) {
+            if (signature) {
+                let codeSnippet = details.name;
+                let suggestionArgumentNames: string[] = [];
+                let parameters = signature.items[0].parameters;
+                parameters.forEach(parameter => {
+                    if (!parameter.isOptional) {
+                        let parameterDoc = ts.displayPartsToString(parameter.documentation);
+                        let paramExamples = /.*eg:(.*)/i.exec(parameterDoc);
+                        let defaultVal: string;
+                        if (paramExamples) {
+                            let reg: RegExp = /(([^, ]+)[, ]*)/gi;
+                            let match: RegExpExecArray;
+                            let examples: string[] = []
+                            while ((match = reg.exec(paramExamples[1])) != null) {
+                                examples.push(match[1]);
+                            }
+                            if (examples.length > 0) {
+                                defaultVal = examples[Math.floor(Math.random() * examples.length)];
+                            }
+                        }
+                        if (!defaultVal) {
+                            let parameterSpec = ts.displayPartsToString(parameter.displayParts);
+                            let paramParts = /((.*?)([\?]+)?: ([^,]*)[, ]*)/i.exec(parameterSpec);
+                            defaultVal = renderDefaultVal(parameter.name, paramParts[4]);
+                        }
+                        suggestionArgumentNames.push(defaultVal);
+                    }
+                });
+
+                if (suggestionArgumentNames.length > 0) {
+                    codeSnippet += '(' + suggestionArgumentNames.join(', ') + ')';
+                } else {
+                    codeSnippet += '()';
+                }
+                myItem.insertText = codeSnippet;
+            } else if (hasParams) {
                 let codeSnippet = details.name;
                 let suggestionArgumentNames: string[] = [];
                 let decl = ts.displayPartsToString(details.displayParts);
@@ -420,19 +462,50 @@ export class SignatureHelpAdapter extends Adapter implements monaco.languages.Si
 export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverProvider {
 
     provideHover(model: monaco.editor.IReadOnlyModel, position: Position, token: CancellationToken): Thenable<monaco.languages.Hover> {
+        const wordInfo = model.getWordAtPosition(position);
         let resource = model.uri;
 
         return wireCancellationToken(token, this._worker(resource).then(worker => {
-            return worker.getQuickInfoAtPosition(resource.toString(), this._positionToOffset(resource, position));
-        }).then(info => {
-            if (!info) {
-                return;
+            let promises: Promise<any>[] = [];
+            promises.push(worker.getQuickInfoAtPosition(resource.toString(), this._positionToOffset(resource, position)));
+            promises.push(worker.getSignatureHelpItems(resource.toString(), this._positionToOffset(resource, position)));
+            if (wordInfo)
+                promises.push(worker.getCompletionEntryDetails(resource.toString(), this._positionToOffset(resource, position), wordInfo.word));
+            return Promise.join(promises);
+        }).then(values => {
+            let info: typescript.QuickInfo = values[0];
+            let signature: typescript.SignatureHelpItems = values[1];
+            let completion: typescript.CompletionEntryDetails = values[2];
+            if (info && completion) {
+                let contents = typescript.displayPartsToString(completion.documentation);
+                let infoContents = typescript.displayPartsToString(info.displayParts);
+                return {
+                    range: this._textSpanToRange(resource, info.textSpan),
+                    contents: [contents, infoContents]
+                };
+            } else if (signature && signature.items[0]) {
+                let activeParameter = signature.argumentIndex;
+                let contents = `Parameter ${activeParameter + 1}: ` + typescript.displayPartsToString(signature.items[0].parameters[activeParameter].documentation);
+                let display = typescript.displayPartsToString(signature.items[0].parameters[activeParameter].displayParts);
+                let parameterSpan = signature.applicableSpan;
+                if (signature.argumentCount > 1) {
+                    let parametersStr = model.getValue().substr(signature.applicableSpan.start, signature.applicableSpan.length);
+                    let parametersSplit = parametersStr.split(',');
+                    parameterSpan.start = parameterSpan.start + parametersStr.indexOf(parametersSplit[activeParameter]);
+                    parameterSpan.length = parametersSplit[activeParameter].length;
+                }
+                return {
+                    range: this._textSpanToRange(resource, parameterSpan),
+                    contents: [contents, display]
+                };
+            } else if (info) {
+                let contents = typescript.displayPartsToString(info.displayParts);
+                return {
+                    range: this._textSpanToRange(resource, info.textSpan),
+                    contents: [contents]
+                };
             }
-            let contents = typescript.displayPartsToString(info.displayParts);
-            return {
-                range: this._textSpanToRange(resource, info.textSpan),
-                contents: [contents]
-            };
+            return;
         }));
     }
 }

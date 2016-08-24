@@ -155,7 +155,6 @@ div.simframe > iframe {
     top: 0;
     bottom: 0;
     right: 0;
-    overflow: hidden;
 }
 
 #root.inverted {
@@ -666,7 +665,8 @@ html {
     width:50% !important;
 }
 
-/* monaco editor */
+/* monaco: Editor */
+
 .monaco-editor.vs .token.ts.identifier:hover {
     border-radius: 6px;
     border: 1px solid #565656;
@@ -675,6 +675,8 @@ html {
 .monaco-editor .current-line {
 	background: rgba(0, 0, 255, 0.1);
 }
+
+/* monaco: Error View Zone */
 
 .monaco-editor .error-view-zone {
     color:white;
@@ -692,6 +694,45 @@ html {
     padding-left: .5em;
     padding-right: .5em;
     width: initial !important;
-    background-color: #FFB900;
+    background-color: #D83B01;
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro;
+}
+
+/* monaco: Suggest Widget */
+
+.monaco-editor .suggest-widget {
+    border-radius:5px;
+    font-size: 15px;
+}
+
+.monaco-list-row.focused {
+    background-color:#0078D7;
+    color: #fff;
+}
+
+.monaco-editor .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
+    color: #E2008C;
+}
+
+.monaco-editor .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
+    color: #FFB900;
+}
+
+.monaco-editor .suggest-widget .details > .monaco-scrollable-element > .body > .docs, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .docs {
+    color: #fff;
+}
+
+.monaco-editor-hover {
+    padding-left:40px;
+    background-color: #fff; 
+    background-image: 
+    linear-gradient(90deg, transparent 29px, #abced4 29px, #abced4 31px, transparent 31px),
+    linear-gradient(#eee .1em, transparent .1em);
+    background-size: 100% 1.2em;
+    color: #0078D7;
+}
+
+
+.monaco-editor-hover > div > div > div > div:last-child {
+    color: #107C10;
 }

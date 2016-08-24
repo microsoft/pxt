@@ -34,72 +34,8 @@ var xyz = 12;
 
 console.log("Starting...")
 
-//lib.print_17(3);
 basic.showNumber(0);
-//assert(lib3.getX() == 17 * 3, "");
 
-testNums();
-testStrings();
-testNumCollection();
-testStringCollection();
-testStringOps();
-testReccoll();
-inBg();
-testAction(1);
-testAction(7);
-testIter();
-testActionSave();
-testLazyOps();
-testRefLocals();
-testByRefParams();
-testFunDecl();
-testDefaultArgs();
-testMemoryFree();
-testMemoryFreeHOF();
-postPreFix()
-eqOp()
-testEnums()
-testForOf()
-testMaps()
-testComma();
-testLambdas();
-testLambdaDecrCapture();
-testGenRefOuter()
-testArrayMap()
-testInnerLambdaCapture()
-
-
-// test some top-level code
-let xsum = 0;
-for (let i = 0; i < 11; ++i) {
-    xsum = xsum + i;
-}
-assert(xsum == 55, "mainfor")
-
-control.inBackground(() => {
-    xsum = xsum + 10;
-})
-
-basic.pause(20)
-assert(xsum == 65, "mainforBg")
-
-assert(xyz == 12, "init")
-
-function incrXyz() {
-    xyz++;
-    return 0;
-}
-var unusedInit = incrXyz();
-
-assert(xyz == 13, "init2")
-
-
-testClass()
-
-basic.showNumber(1)
-
-
-console.log("ALL TESTS OK")
 
 
 function defaultArgs(x: number, y = 3, z = 7) {
@@ -903,11 +839,13 @@ function testGenRef<T>(v: T) {
 }
 
 function testGenRefOuter() {
+    msg("testGenRefOuter");
     testGenRef(12)
     testGenRef("fXa" + "baa")
 }
 
 function testArrayMap() {
+    msg("testArrayMap");
     let strs = [1, 2, 3].map(x => "X" + x)
     let r = "A"
     for (let s of strs) {
@@ -927,6 +865,7 @@ function testArrayMap() {
 }
 
 function testInnerLambdaCapture() {
+    msg("testInnerLambdaCapture");
     glb1 = 0
     let a = 7
     let g = () => {
@@ -938,3 +877,92 @@ function testInnerLambdaCapture() {
     g()
     assert(glb1 == 7, "7")
 }
+
+class StaticCl {
+    static x = 12;
+    static foo() {
+        glb1 += StaticCl.x
+    }
+    static bar(k: number) {
+        StaticCl.x = k
+    }
+}
+
+function testStatic() {
+    msg("testStatic");
+    glb1 = 0
+    StaticCl.foo()
+    assert(glb1 == 12, "s0")
+    StaticCl.bar(13)
+    StaticCl.foo()
+    assert(glb1 == 25, "s1")
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Driver starts
+// ---------------------------------------------------------------------------
+
+testNums();
+testStrings();
+testNumCollection();
+testStringCollection();
+testStringOps();
+testReccoll();
+inBg();
+testAction(1);
+testAction(7);
+testIter();
+testActionSave();
+testLazyOps();
+testRefLocals();
+testByRefParams();
+testFunDecl();
+testDefaultArgs();
+testMemoryFree();
+testMemoryFreeHOF();
+postPreFix()
+eqOp()
+testEnums()
+testForOf()
+testMaps()
+testComma();
+testLambdas();
+testLambdaDecrCapture();
+testGenRefOuter()
+testArrayMap()
+testInnerLambdaCapture()
+testStatic()
+
+msg("test top level code")
+let xsum = 0;
+for (let i = 0; i < 11; ++i) {
+    xsum = xsum + i;
+}
+assert(xsum == 55, "mainfor")
+
+control.inBackground(() => {
+    xsum = xsum + 10;
+})
+
+basic.pause(20)
+assert(xsum == 65, "mainforBg")
+
+assert(xyz == 12, "init")
+
+function incrXyz() {
+    xyz++;
+    return 0;
+}
+var unusedInit = incrXyz();
+
+assert(xyz == 13, "init2")
+
+
+testClass()
+
+basic.showNumber(1)
+
+
+console.log("ALL TESTS OK")

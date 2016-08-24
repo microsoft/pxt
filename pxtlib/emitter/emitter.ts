@@ -87,6 +87,10 @@ namespace ts.pxt {
         return isStringLiteral(e) && (e as LiteralExpression).text == ""
     }
 
+    function isStatic(node: Declaration) {
+        return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
+    }
+
     function getEnclosingMethod(node: Node): MethodDeclaration {
         if (!node) return null;
         if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor)
@@ -122,7 +126,9 @@ namespace ts.pxt {
     }
 
     function isGlobalVar(d: Declaration) {
-        return d.kind == SK.VariableDeclaration && !getEnclosingFunction(d)
+        if (!d) return false
+        return (d.kind == SK.VariableDeclaration && !getEnclosingFunction(d)) ||
+            (d.kind == SK.PropertyDeclaration && isStatic(d))
     }
 
     function isLocalVar(d: Declaration) {
@@ -174,6 +180,8 @@ namespace ts.pxt {
         icon?: string;
         imageLiteral?: number;
         weight?: number;
+        parts?: string;
+        trackArgs?: number[];
 
         // on interfaces
         indexerGet?: string;
@@ -185,6 +193,8 @@ namespace ts.pxt {
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: Util.Map<string>;
     }
+
+    const numberAttributes = ["weight", "imageLiteral"]
 
     export interface CallInfo {
         decl: Declaration;
@@ -239,8 +249,14 @@ namespace ts.pxt {
                 })
         }
 
-        if (typeof res.weight == "string")
-            res.weight = parseInt(res.weight as any)
+        for (let n of numberAttributes) {
+            if (typeof (res as any)[n] == "string")
+                (res as any)[n] = parseInt((res as any)[n])
+        }
+
+        if (res.trackArgs) {
+            res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
+        }
 
         res.paramHelp = {}
         res.jsDoc = ""
@@ -450,7 +466,7 @@ namespace ts.pxt {
         shimName: string;
     }
 
-    export type VarOrParam = VariableDeclaration | ParameterDeclaration;
+    export type VarOrParam = VariableDeclaration | ParameterDeclaration | PropertyDeclaration;
 
     export interface VariableAddInfo {
         captured?: boolean;
@@ -518,8 +534,10 @@ namespace ts.pxt {
                 }]
         }
 
-        if (opts.computeUsedSymbols)
+        if (opts.computeUsedSymbols) {
             res.usedSymbols = {}
+            res.usedArguments = {}
+        }
 
         let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
 
@@ -945,6 +963,10 @@ ${lbl}: .short 0xffff
         }
         function emitObjectLiteral(node: ObjectLiteralExpression) { }
         function emitPropertyAssignment(node: PropertyDeclaration) {
+            if (isStatic(node)) {
+                emitVariableDeclaration(node)
+                return
+            }
             if (node.initializer)
                 userError(9209, lf("class field initializers not supported"))
             // do nothing
@@ -983,6 +1005,9 @@ ${lbl}: .short 0xffff
                     throw unhandled(node, lf("no {shim:...}"), 9236);
                 }
             } else if (decl.kind == SK.PropertyDeclaration) {
+                if (isStatic(decl)) {
+                    return emitLocalLoad(decl as PropertyDeclaration)
+                }
                 let idx = fieldIndex(node)
                 callInfo.args.push(node.expression)
                 return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
@@ -1185,6 +1210,22 @@ ${lbl}: .short 0xffff
             let isSelfGeneric = bindings.length > 0
             addEnclosingTypeBindings(bindings, decl)
 
+            if (res.usedArguments && attrs.trackArgs) {
+                let tracked = attrs.trackArgs.map(n => args[n]).map(e => {
+                    let d = getDecl(e)
+                    if (d && d.kind == SK.EnumMember)
+                        return getFullName(checker, d.symbol)
+                    else return "*"
+                }).join(",")
+                let fn = getFullName(checker, decl.symbol)
+                let lst = res.usedArguments[fn]
+                if (!lst) {
+                    lst = res.usedArguments[fn] = []
+                }
+                if (lst.indexOf(tracked) < 0)
+                    lst.push(tracked)
+            }
+
             function emitPlain() {
                 return mkProcCall(decl, args.map(emitExpr), bindings)
             }
@@ -1206,7 +1247,9 @@ ${lbl}: .short 0xffff
 
             if (decl.kind == SK.MethodSignature ||
                 decl.kind == SK.MethodDeclaration) {
-                if (node.expression.kind == SK.PropertyAccessExpression) {
+                if (isStatic(decl)) {
+                    // nothing to do?
+                } else if (node.expression.kind == SK.PropertyAccessExpression) {
                     let recv = (<PropertyAccessExpression>node.expression).expression
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
@@ -1323,7 +1366,7 @@ ${lbl}: .short 0xffff
 
         function getParameters(node: FunctionLikeDeclaration) {
             let res = node.parameters.slice(0)
-            if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor) {
+            if (!isStatic(node) && node.kind == SK.MethodDeclaration || node.kind == SK.Constructor) {
                 let info = getFunctionInfo(node)
                 if (!info.thisParameter) {
                     info.thisParameter = <any>{
@@ -1605,9 +1648,10 @@ ${lbl}: .short 0xffff
         }
 
         function emitStore(trg: Expression, src: ir.Expr, cachedTrg: ir.Expr = null) {
-            if (trg.kind == SK.Identifier) {
-                let decl = getDecl(trg)
-                if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
+            let decl = getDecl(trg)
+            let isGlobal = isGlobalVar(decl)
+            if (trg.kind == SK.Identifier || isGlobal) {
+                if (decl && (isGlobal || decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
                     let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
                     proc.emitExpr(l.storeByRef(src))
@@ -2112,7 +2156,7 @@ ${lbl}: .short 0xffff
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
         }
-        function emitVariableDeclaration(node: VariableDeclaration): ir.Cell {
+        function emitVariableDeclaration(node: VarOrParam): ir.Cell {
             typeCheckVar(node)
             if (!isUsed(node)) {
                 return null;

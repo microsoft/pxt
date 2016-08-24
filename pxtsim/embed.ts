@@ -7,7 +7,7 @@ namespace pxsim {
         id?: string;
         frameCounter?: number;
         options?: any;
-
+        parts?: string[];
         code: string;
     }
 
