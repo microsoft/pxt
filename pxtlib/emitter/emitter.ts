@@ -193,7 +193,7 @@ namespace ts.pxt {
         paramDefl: Util.Map<string>;
     }
 
-    var numberAttributes = ["weight", "imageLiteral"]
+    const numberAttributes = ["weight", "imageLiteral"]
 
     export interface CallInfo {
         decl: Declaration;
