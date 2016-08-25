@@ -85,6 +85,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<ts.pxt.Compi
 
             return ensureApisInfoAsync()
                 .then(() => {
+                    if (!resp.usedSymbols) return resp
                     for (let k of Object.keys(resp.usedSymbols)) {
                         resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
                     }

@@ -192,9 +192,13 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
     private typescriptSnippets: TypescriptSnippet[] = [];
     private referenceModel: monaco.editor.IModel;
     private referenceModelUri: Uri;
+    private exclusionMap: { [keyword: string]: number } = Object.create(null);
 
     constructor(worker: (first: Uri, ...more: Uri[]) => Promise<TypeScriptWorker>) {
         super(worker);
+
+        this.exclusionMap['from'] = 1;
+        this.exclusionMap['import'] = 1;
 
         Object.keys(snippets).forEach((snippetKey) => {
             let snippet = (snippets as any)[snippetKey];
@@ -229,15 +233,17 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
             if (!info) {
                 return;
             }
-            let suggestions: MyCompletionItem[] = info.entries.map(entry => {
-                return {
-                    model: model,
-                    uri: resource,
-                    position: position,
-                    label: entry.name,
-                    sortText: entry.sortText,
-                    kind: SuggestAdapter.convertKind(entry.kind)
-                };
+            let suggestions: MyCompletionItem[] = info.entries
+                .filter(entry => !this.exclusionMap[entry.name])
+                .map(entry => {
+                    return {
+                        model: model,
+                        uri: resource,
+                        position: position,
+                        label: entry.name,
+                        sortText: entry.sortText,
+                        kind: SuggestAdapter.convertKind(entry.kind)
+                    };
             });
             return suggestions;
         }));
@@ -273,14 +279,51 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
             }
         }
 
+        if (!this.referenceModel) this.referenceModel = monaco.editor.createModel("", "typescript", this.referenceModelUri);
+
         return wireCancellationToken(token, this._worker(resource).then(worker => {
             let promises: Promise<any>[] = [];
             promises.push(worker.getCompletionEntryDetails(resource.toString(), this._positionToOffset(resource, position), myItem.label));
             promises.push(worker.getSignatureHelpItems(this.referenceModelUri.toString(), refPosition));
+            promises.push(worker.getSignatureHelpItems(this.referenceModelUri.toString(), refPosition).then((signature) => {
+                if (!signature) return;
+                let parameterPromises: Promise<monaco.languages.SymbolInformation[]>[] = [];
+                signature.items[0].parameters.forEach(parameter => {
+                    // Find a default Enum value for each Enum parameter
+                    parameter.displayParts.forEach(displayPart => {
+                        if (displayPart.kind == "enumName") {
+                            let parameterType = displayPart.text;
+                            let promise = worker.getNavigateToItems(parameterType, 1).then(navigation => {
+                                if (!navigation || !navigation[0]) return;
+                                return worker.getNavigationBarItems(navigation[0].fileName).then(navigationItems => {
+                                    function convert(bucket: monaco.languages.SymbolInformation[], item: typescript.NavigationBarItem, containerLabel?: string): void {
+                                        let result: any = {
+                                            name: item.text,
+                                            containerName: containerLabel
+                                        };
+                                        if (item.childItems && item.childItems.length > 0) {
+                                            for (let child of item.childItems) {
+                                                convert(bucket, child, result.name);
+                                            }
+                                        }
+                                        bucket.push(result);
+                                    }
+                                    let result: monaco.languages.SymbolInformation[] = [];
+                                    navigationItems.forEach(item => convert(result, item));
+                                    return result.filter(item => item.containerName == parameterType);
+                                })
+                            })
+                            parameterPromises.push(promise);
+                        }
+                    });
+                });
+                return Promise.join(parameterPromises);
+            }));
             return Promise.join(promises);
         }).then(values => {
             let details: typescript.CompletionEntryDetails = values[0];
             let signature: typescript.SignatureHelpItems = values[1];
+            let enumDefinitions: monaco.languages.SymbolInformation[][] = values[2];
             if (!details) {
                 return myItem;
             }
@@ -299,11 +342,19 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
     . . . . .
     . . . . .
     `
-            let renderDefaultVal = function (name: string, type: string): string {
+            let renderDefaultVal = function (name: string, type: string, enumDefinitions?: monaco.languages.SymbolInformation[][]): string {
                 switch (type) {
                     case "number": return "{{0}}";
                     case "boolean": return "{{false}}";
                     case "string": return (name == "leds" ? "`" + defaultImgLit + "`" : "\"{{}}\"");
+                }
+                if (enumDefinitions) {
+                    let enumValue: string;
+                    enumDefinitions.forEach(elements => {
+                        let filtered = elements.filter(enumDef => enumDef.containerName == type);
+                        if (filtered && filtered.length > 0) enumValue = filtered[0].name;
+                    });
+                    if (enumValue) return `${type}.${enumValue}`;
                 }
                 let m = /^\((.*)\) => (.*)$/.exec(type)
                 if (m)
@@ -318,6 +369,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 let parameters = signature.items[0].parameters;
                 parameters.forEach(parameter => {
                     if (!parameter.isOptional) {
+                        // Get parameter defaults from jsdoc
                         let parameterDoc = ts.displayPartsToString(parameter.documentation);
                         let paramExamples = /.*eg:(.*)/i.exec(parameterDoc);
                         let defaultVal: string;
@@ -329,13 +381,13 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                                 examples.push(match[1]);
                             }
                             if (examples.length > 0) {
-                                defaultVal = examples[Math.floor(Math.random() * examples.length)];
+                                defaultVal = examples[0];
                             }
                         }
                         if (!defaultVal) {
                             let parameterSpec = ts.displayPartsToString(parameter.displayParts);
                             let paramParts = /((.*?)([\?]+)?: ([^,]*)[, ]*)/i.exec(parameterSpec);
-                            defaultVal = renderDefaultVal(parameter.name, paramParts[4]);
+                            defaultVal = renderDefaultVal(parameter.name, paramParts[4], enumDefinitions);
                         }
                         suggestionArgumentNames.push(defaultVal);
                     }
@@ -351,11 +403,11 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 let codeSnippet = details.name;
                 let suggestionArgumentNames: string[] = [];
                 let decl = ts.displayPartsToString(details.displayParts);
-                let parameterString = /function .+\..+?\((.*)\):.*/i.exec(decl)[1];
-                if (parameterString) {
+                let parameterString = /function .+\..+?\((.*)\):.*/i.exec(decl);
+                if (parameterString && parameterString[1]) {
                     let reg: RegExp = /((.*?)([\?]+)?: ([^,]*)[, ]*)/gi;
                     let match: RegExpExecArray;
-                    while ((match = reg.exec(parameterString)) !== null) {
+                    while ((match = reg.exec(parameterString[1])) !== null) {
                         if (match[3] == '?') {
                             // optional parameter, do nothing
                         } else {
@@ -481,7 +533,7 @@ export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverP
                 let infoContents = typescript.displayPartsToString(info.displayParts);
                 return {
                     range: this._textSpanToRange(resource, info.textSpan),
-                    contents: [contents, infoContents]
+                    contents: [contents]
                 };
             } else if (signature && signature.items[0]) {
                 let activeParameter = signature.argumentIndex;

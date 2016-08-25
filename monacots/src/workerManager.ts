@@ -19,9 +19,7 @@ export class WorkerManager {
     private _worker: monaco.editor.MonacoWebWorker<TypeScriptWorker>;
     private _client: Promise<TypeScriptWorker>;
 
-    private _stopWhenIdleFor: number;
-
-    constructor(defaults: LanguageServiceDefaultsImpl, stopWhenIdleFor?: number) {
+    constructor(defaults: LanguageServiceDefaultsImpl) {
         this._defaults = defaults;
         this._worker = null;
         this._configChangeListener = this._defaults.onDidChange(() => this._stopWorker());
