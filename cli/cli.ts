@@ -1580,6 +1580,9 @@ const defaultFiles: U.Map<string> = {
 }
 `,
 
+    "tests.ts": `// tests go here; this will not be compiled when this package is used as a library
+`,
+
     "README.md": `# @NAME@
 @DESCRIPTION@
 
@@ -1668,6 +1671,9 @@ export function initAsync() {
         config.license = "MIT"
     if (!config.version)
         config.version = "0.0.0"
+
+    // hack: remove microbit-radio, as we don't want it in all libraries
+    delete config.dependencies["microbit-radio"]
 
     return Promise.mapSeries(["name", "description", "license"], f =>
         queryAsync(f, configMap[f])
@@ -2788,7 +2794,7 @@ function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 
 
 cmd("help     [all]               - display this message", helpAsync)
 
-cmd("init                         - start new package in current directory", initAsync)
+cmd("init                         - start new package (library) in current directory", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 
 cmd("build                        - build current package", buildAsync)
