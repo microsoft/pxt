@@ -1565,6 +1565,12 @@ export function installAsync(packageName?: string) {
                 }))
     } else {
         return mainPkg.installAllAsync()
+            .then(() => {
+                let tscfg = "tsconfig.json"
+                if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
+                    fs.writeFileSync(tscfg, defaultFiles[tscfg])
+                }
+            })
     }
 }
 
@@ -1728,7 +1734,7 @@ export function initAsync() {
 
             console.log("package initialized")
         })
-        .then(() => mainPkg.installAllAsync())
+        .then(() => installAsync())
 }
 
 enum BuildOption {
