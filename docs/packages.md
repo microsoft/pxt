@@ -13,28 +13,34 @@ The Blocks and JavaScript definitions will be automatically loaded in the editor
 
 This is a section for advanced users who want to publish their own package.
 
-### Step 1: Local server setup
+### Step 0: Local server setup
 
 In order to build and test your package locally, you need to setup PXT to run locally.
-Follow the instructions on [PXT README.md](https://github.com/Microsoft/pxt/blob/master/README.md#running-a-target-from-localhost) file.
+Follow the [instructions on setting up workspace](/cli#setting-up-workspace).
 
-### Step 2: GitHub setup
+### Step 1: GitHub setup
 
 You will need to get a [GitHub](https://github.com) account and create a GitHub repository. 
 
 Let's say you want to create a package called `banana` for target `microbit`.
 
-* create GitHub repository `pxt-banana`; do not clone an existing package, as it will not show up in search
-* clone this repository into `pxt-banana` folder **under the `projects`**
+* create (do not clone) a fresh GitHub repository `pxt-banana`
+* clone this repository into `pxt-banana` folder under the `myworkspace` or subfolder thereof
 * go to the cloned folder and run `pxt init`; follow the prompts
-* still in the cloned folder, run `pxt install` to install dependent packages
 * edit `pxt.json` and `README.md` with the right descriptions
+* commit files to git: `git add .`, and commit them: `git commit -m "Initial"`
 
 > **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise
 the package will not show up in search.**
 
-In the editor, searching for `banana` after selecting `More -> Add package...` should bring up your
-package.
+### Step 2: Developing package
+
+Now, you're ready to develop your package. You can do it with [VSCode](https://code.visualstudio.com/)
+or from the web editor at http://localhost:3232/ hosted from `pxt serve`.
+
+* put the contents of your package in `main.ts`
+* add sample program using the package in `tests.ts`
+* use `pxt` to build and deploy the package with tests; use the web editor to test in the simulator
 
 ### Step 3: Testing
 
@@ -58,9 +64,21 @@ In order to test your package, you will manually add a reference to the package 
 
 * Reload the editor and your package blocks will be loaded.
 
-### Step 4: publish
+### Step 4: Publishing your package
 
-Once your changes are ready, publish them to GitHub. Users will be able to search for your package.
+When you're happy with the first version of your package commit the changes and
+bump the version and push to github:
+
+```
+git commit -a -m "Amazing flying bananas"
+pxt bump
+```
+
+The `pxt bump` will make sure there are no uncommited changes, bump the version number,
+create a git tag, and push everything to github.
+
+In the editor, searching for `banana` after selecting `More -> Add package...` should bring up your
+package.
 
 ## Meta-data
 

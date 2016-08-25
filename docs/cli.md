@@ -1,48 +1,46 @@
 # Command Line Tool
 
-PXT comes with a command line tool called, surprise, surprise, `pxt`.
+PXT comes with a command line tool called, surprise, surprise, `pxt`. To use it, you need 
+to first install [node.js](https://nodejs.org). Then, you can install `pxt` with `npm`
+(you may need to use `sudo` on Linux or macOS):
 
-## Modifying server config
-
-Get current server config:
-
-```bash
-pxt api config/settings > settings.json
+```
+npm install -g pxt
 ```
 
-Next, edit `settings.json`. When you're done, run:
+## Setting up workspace
 
-```bash
-pxt api config/settings - < settings.json
+For every PXT target you will need to create a directory for your projects.
+Let's say you want to install `microbit` target, and name the directory `myworkspace`:
+
+```
+mkdir myworkspace
+cd myworkspace
+pxt target microbit
+pxt serve
 ```
 
-It's best to now remove `settings.json`, so that you're sure you'll be getting
-the latest server version next time you edit it.
+The last command will open default browser and point it to http://localhost:3232/
 
-There is also `config/compile` in addition to `config/settings`.
+The `pxt target microbit` is conceptually the same as ``npm install pxt-microbit``
+plus some housekeeping, like setting up `pxtcli.json` file to point to the target.
 
-## Cleaning up cloud pointers
+In future, you just need to run `pxt serve`. You can also run `npm update` to upgrade 
+the target and PXT.
 
-Pointers in the cloud backend correspond to URLs on the website.
-They can point to a `.md` file uploaded from `docs/`, to a different web address (redirect), or
-to an uploaded release of a PXT target.
+## Using the CLI
 
-The `.md` files are uploaded with `pxt uploaddoc` command. However, this command
-doesn't delete pointers that are no longer under `docs/` so it's easy to end
-up with a little mess. To cleanup it up use:
+If you have created a PXT project from the web browser, you can go to its
+folder (it will sit under `myworkspace/projects` but feel free to move it up one level)
+and use the CLI to build and deploy it. 
+* start with `pxt install`, which will install all required PXT packages
+* use `pxt deploy` (or just `pxt`) to build and deploy the package to the device
 
-```bash
-pxt ptrcheck
-```
+You can edit the package using [VSCode](https://code.visualstudio.com/).
 
-This will ask the cloud for list of all pointers for the current target (or all pointers
-in the main `pxt` repo) and compare it against files in `docs/`. Then all pointers missing from `docs/` will
-be shown. If you want to delete them, run `pxt ptrcheck delete`. This will again list all the pointers
-missing from `docs/` and ask you if you really want to delete them. Make sure to review the list
-very carefully before agreeing.
+You can also [publish your own packages on GitHub](/packages).
 
-It's often the case that you want to save some pointers even though they are not in `docs/`.
-You can add them to `ptrcheck-ignore` file. It supports simple pointer names (with `-` instead of `/`),
-and also prefix-patterns of the format `foo*` or `bar-*` matching everything starting with the
-string. Stars in the middle of the string will **not** work.
+## Cloud-keeping
 
+The CLI tool is also used for configuring the PXT cloud service. Unless you have your
+own PXT cloud you don't need to worry about it, otherwise [here are the docs](/cloudkeeping).
