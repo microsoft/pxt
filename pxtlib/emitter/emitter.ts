@@ -18,7 +18,7 @@ namespace ts.pxt {
         return (<any>ts).SyntaxKind[n.kind]
     }
 
-    interface NodeWithCache extends Node {
+    interface NodeWithCache extends Expression {
         cachedIR: ir.Expr;
         needsIRCache: boolean;
     }
@@ -1063,8 +1063,6 @@ ${lbl}: .short 0xffff
 
             if (indexer) {
                 if (typeOf(node.argumentExpression).flags & TypeFlags.Number) {
-                    let arr = emitExpr(node.expression)
-                    let idx = emitExpr(node.argumentExpression)
                     let args = [node.expression, node.argumentExpression]
                     return rtcallMask(indexer, args, ir.CallingConvention.Plain, assign ? [assign] : [])
                 } else {
@@ -1130,7 +1128,7 @@ ${lbl}: .short 0xffff
             // we generate a fake NULL expression for default arguments
             // we also generate a fake numeric literal for image literals
             if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
-                return false
+                return !!(e as any).isRefOverride
             // no point doing the incr/decr for these - they are statically allocated anyways
             if (isStringLiteral(e))
                 return false
@@ -1190,10 +1188,7 @@ ${lbl}: .short 0xffff
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
                             let defl = attrs.paramDefl[getName(prm)]
-                            args.push(<any>{
-                                kind: SK.NullKeyword,
-                                valueOverride: defl ? parseInt(defl) : undefined
-                            })
+                            args.push(irToNode(defl ? ir.numlit(parseInt(defl)) : null))
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
                                 userError(9212, lf("only numbers, null, true and false supported as default arguments"))
@@ -1633,28 +1628,49 @@ ${lbl}: .short 0xffff
             throw unhandled(node, lf("unsupported prefix unary operation"), 9245)
         }
 
-        function prepForAssignment(trg: Expression) {
-            if (trg.kind == SK.PropertyAccessExpression) {
-                ((trg as PropertyAccessExpression).expression as Node as NodeWithCache).needsIRCache = true
+        function doNothing() { }
+
+        function needsCache(e: Expression) {
+            let c = e as NodeWithCache
+            c.needsIRCache = true
+            irCachesToClear.push(c)
+        }
+
+        function prepForAssignment(trg: Expression, src: Expression = null) {
+            let prev = irCachesToClear.length
+            if (trg.kind == SK.PropertyAccessExpression || trg.kind == SK.ElementAccessExpression) {
+                needsCache((trg as PropertyAccessExpression).expression)
             }
-            let left = emitExpr(trg)
-            let storeCache: ir.Expr = null
-            if (left.exprKind == EK.FieldAccess) {
-                left.args[0] = ir.shared(left.args[0])
-                storeCache = emitExpr(trg) // clone
-                storeCache.args[0] = ir.op(EK.Incr, [left.args[0]])
-                proc.emitExpr(left.args[0])
-            }
-            left = ir.shared(left)
-            return { left, storeCache }
+            if (src)
+                needsCache(src)
+            if (irCachesToClear.length == prev)
+                return doNothing
+            else
+                return () => {
+                    for (let i = prev; i < irCachesToClear.length; ++i) {
+                        irCachesToClear[i].cachedIR = null
+                        irCachesToClear[i].needsIRCache = false
+                    }
+                    irCachesToClear.splice(prev, irCachesToClear.length - prev)
+                }
+        }
+
+        function irToNode(expr: ir.Expr, isRef = false): Expression {
+            return {
+                kind: SK.NullKeyword,
+                isRefOverride: isRef,
+                valueOverride: expr
+            } as any
         }
 
         function emitIncrement(trg: Expression, meth: string, isPost: boolean, one: Expression = null) {
-            let tmp = prepForAssignment(trg)
+            let cleanup = prepForAssignment(trg)
             let oneExpr = one ? emitExpr(one) : ir.numlit(1)
-            let result = ir.shared(ir.rtcall(meth, [tmp.left, oneExpr]))
-            emitStore(trg, result, tmp.storeCache)
-            return isPost ? tmp.left : result
+            let prev = ir.shared(emitExpr(trg))
+            let result = ir.shared(ir.rtcall(meth, [prev, oneExpr]))
+            emitStore(trg, irToNode(result))
+            cleanup()
+            return isPost ? prev : result
         }
 
         function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
@@ -1692,39 +1708,36 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitStore(trg: Expression, src: ir.Expr, cachedTrg: ir.Expr = null) {
+        function emitStore(trg: Expression, src: Expression) {
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
             if (trg.kind == SK.Identifier || isGlobal) {
                 if (decl && (isGlobal || decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
                     let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
-                    proc.emitExpr(l.storeByRef(src))
+                    proc.emitExpr(l.storeByRef(emitExpr(src)))
                 } else {
                     unhandled(trg, lf("bad target identifier"), 9248)
                 }
             } else if (trg.kind == SK.PropertyAccessExpression) {
-                proc.emitExpr(ir.op(EK.Store, [cachedTrg || emitExpr(trg), src]))
+                let decl = getDecl(trg)
+                if (decl && decl.kind == SK.GetAccessor) {
+                    // TODO
+                }
+                proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
             } else if (trg.kind == SK.ElementAccessExpression) {
-                proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
+                proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, emitExpr(src)))
             } else {
                 unhandled(trg, lf("bad assignment target"), 9249)
             }
         }
 
         function handleAssignment(node: BinaryExpression) {
-            if (node.left.kind == SK.PropertyAccessExpression) {
-                let decl = getDecl(node.left)
-                if (decl && decl.kind == SK.GetAccessor) {
-
-                }
-            }
-
-            let src = ir.shared(emitExpr(node.right))
-            emitStore(node.left, src)
-            if (isRefType(typeOf(node.right)))
-                src = ir.op(EK.Incr, [src])
-            return src
+            let cleanup = prepForAssignment(node.left, node.right)
+            emitStore(node.left, node.right)
+            let res = emitExpr(node.right)
+            cleanup()
+            return res
         }
 
         function rtcallMask(name: string, args: Expression[], callingConv = ir.CallingConvention.Plain, append: ir.Expr[] = null) {
@@ -1870,11 +1883,12 @@ ${lbl}: .short 0xffff
             if (node.operatorToken.kind == SK.PlusEqualsToken &&
                 (lt.flags & TypeFlags.String)) {
 
-                let tmp = prepForAssignment(node.left)
+                let cleanup = prepForAssignment(node.left)
                 let post = ir.shared(ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
-                    tmp.left,
+                    emitExpr(node.left),
                     emitAsString(node.right)]))
-                emitStore(node.left, post, tmp.storeCache)
+                emitStore(node.left, irToNode(post))
+                cleanup();
                 return ir.op(EK.Incr, [post])
             }
 
@@ -2278,13 +2292,16 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitExpr(node0: Node) {
+        function emitExpr(node0: Node): ir.Expr {
             let node = node0 as NodeWithCache
-            if (node.cachedIR) return node.cachedIR
+            if (node.cachedIR) {
+                if (isRefCountedExpr(node0 as Expression))
+                    return ir.op(EK.Incr, [node.cachedIR])
+                return node.cachedIR
+            }
             let res = catchErrors(node, emitExprInner) || ir.numlit(0)
             if (node.needsIRCache) {
                 node.cachedIR = ir.shared(res)
-                irCachesToClear.push(node)
                 return node.cachedIR
             }
             return res
@@ -2367,7 +2384,8 @@ ${lbl}: .short 0xffff
             switch (node.kind) {
                 case SK.NullKeyword:
                     let v = (node as any).valueOverride;
-                    return ir.numlit(v || null);
+                    if (v) return v
+                    return ir.numlit(null);
                 case SK.TrueKeyword:
                     return ir.numlit(true);
                 case SK.FalseKeyword:
