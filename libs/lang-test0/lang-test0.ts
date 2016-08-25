@@ -273,8 +273,8 @@ function testArrIncr() {
     getarr()[0]++
     control.assert(glb1 == 1)
     assert(arr[0] == 2, "t")
-    function getarr2() { 
-        return [1] 
+    function getarr2() {
+        return [1]
     }
     getarr2()[0]++ // make sure it doesn't crash
 }
@@ -914,6 +914,34 @@ function testStatic() {
     assert(glb1 == 25, "s1")
 }
 
+class GetSet {
+    _x: number;
+
+    get x() {
+        glb1++
+        return this._x
+    }
+
+    set x(v: number) {
+        glb1 += 4
+        this._x = v
+    }
+}
+
+function testAccessors() {
+    glb1 = 0
+    let f = new GetSet()
+    f.x = 12
+    assert(glb1 == 4, "s")
+    assert(f.x == 12, "s12")
+    function getf() {
+        glb1 += 100
+        return f
+    }
+    getf().x++
+    assert(glb1 == 110, "s10")
+    assert(f.x == 13, "s13")
+}
 
 
 // ---------------------------------------------------------------------------
@@ -951,6 +979,7 @@ testGenRefOuter()
 testArrayMap()
 testInnerLambdaCapture()
 testStatic()
+testAccessors()
 
 msg("test top level code")
 let xsum = 0;

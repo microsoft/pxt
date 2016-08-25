@@ -27,7 +27,7 @@ namespace ts.pxt {
         console.log(stringKind(n))
     }
 
-    // next free error 9253
+    // next free error 9254
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -1219,9 +1219,11 @@ ${lbl}: .short 0xffff
             node: Expression,
             funcExpr: Expression,
             callArgs: Expression[],
-            sig: Signature
+            sig: Signature,
+            decl: FunctionLikeDeclaration = null
         ): ir.Expr {
-            let decl = getDecl(funcExpr) as FunctionLikeDeclaration
+            if (!decl)
+                decl = getDecl(funcExpr) as FunctionLikeDeclaration
             if (!decl)
                 unhandled(node, lf("no declaration"), 9240)
             let attrs = parseComments(decl)
@@ -1722,9 +1724,14 @@ ${lbl}: .short 0xffff
             } else if (trg.kind == SK.PropertyAccessExpression) {
                 let decl = getDecl(trg)
                 if (decl && decl.kind == SK.GetAccessor) {
-                    // TODO
+                    decl = getDeclarationOfKind(decl.symbol, SK.SetAccessor)
+                    if (!decl) {
+                        unhandled(trg, lf("setter not available"), 9253)
+                    }
+                    proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
+                } else {
+                    proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
                 }
-                proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, emitExpr(src)))
             } else {
