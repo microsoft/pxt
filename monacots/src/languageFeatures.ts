@@ -537,7 +537,7 @@ export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverP
                 };
             } else if (signature && signature.items[0]) {
                 let activeParameter = signature.argumentIndex;
-                let contents = `Parameter ${activeParameter + 1}: ` + typescript.displayPartsToString(signature.items[0].parameters[activeParameter].documentation);
+                let contents = typescript.displayPartsToString(signature.items[0].parameters[activeParameter].documentation);
                 let display = typescript.displayPartsToString(signature.items[0].parameters[activeParameter].displayParts);
                 let parameterSpan = signature.applicableSpan;
                 if (signature.argumentCount > 1) {
