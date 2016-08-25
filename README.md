@@ -22,27 +22,7 @@ More info:
 
 ## Running a target from localhost
 
-Install the `pxt` command line tool (only need to do it once):
-
-```
-npm install -g pxt
-```
-
-Now, let's say you want to install `microbit` target:
-```
-mkdir mymicrobit
-cd mymicrobit
-pxt target microbit
-pxt serve
-```
-
-The last command will open default browser and point it to http://localhost:3232/
-
-The `pxt target microbit` is essentially the same as ``mkdir node_modules; npm install pxt-microbit``
-plus setting up `pxtcli.json` file to point to the target.
-
-In future, you just need to run `pxt serve`. You can also run `npm update` to upgrade 
-the target and PXT.
+Please follow [instructions here](https://www.pxt.io/cli).
 
 ## Build
 

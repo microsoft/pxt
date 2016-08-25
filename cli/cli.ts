@@ -604,7 +604,7 @@ function runGitAsync(...args: string[]) {
 }
 
 function runNpmAsync(...args: string[]) {
-    console.log("npm",args);
+    console.log("npm", args);
     return spawnAsync({
         cmd: addCmd("npm"),
         args: args,
@@ -983,6 +983,10 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
         return Promise.resolve()
     }
 
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
+    }
+
     console.log(`building ${p}...`)
     dirsToWatch.push(p)
     return spawnAsync({
@@ -1311,9 +1315,6 @@ export function serveAsync(arg?: string) {
             U.userError("Cannot find pxtarget.json to serve.")
         }
     }
-    if (!fs.existsSync("node_modules/typescript")) {
-        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
-    }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
         .then(() => server.serveAsync({
             localToken: localToken,
@@ -1564,6 +1565,12 @@ export function installAsync(packageName?: string) {
                 }))
     } else {
         return mainPkg.installAllAsync()
+            .then(() => {
+                let tscfg = "tsconfig.json"
+                if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
+                    fs.writeFileSync(tscfg, defaultFiles[tscfg])
+                }
+            })
     }
 }
 
@@ -1577,6 +1584,9 @@ const defaultFiles: U.Map<string> = {
         "rootDir": "."
     }
 }
+`,
+
+    "tests.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
 
     "README.md": `# @NAME@
@@ -1668,6 +1678,9 @@ export function initAsync() {
     if (!config.version)
         config.version = "0.0.0"
 
+    // hack: remove microbit-radio, as we don't want it in all libraries
+    delete config.dependencies["microbit-radio"]
+
     return Promise.mapSeries(["name", "description", "license"], f =>
         queryAsync(f, configMap[f])
             .then(r => {
@@ -1721,6 +1734,7 @@ export function initAsync() {
 
             console.log("package initialized")
         })
+        .then(() => installAsync())
 }
 
 enum BuildOption {
@@ -2797,7 +2811,7 @@ function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 
 
 cmd("help     [all]               - display this message", helpAsync)
 
-cmd("init                         - start new package in current directory", initAsync)
+cmd("init                         - start new package (library) in current directory", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 
 cmd("build                        - build current package", buildAsync)

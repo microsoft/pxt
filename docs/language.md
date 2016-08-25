@@ -43,7 +43,8 @@ See also [issue #51](https://github.com/Microsoft/pxt/issues/51).
 * top-level code in the file; hello world really is `console.log("Hello world")`
 * `if ... else if ... else` statements
 * `while` and `do ... while` loops
-* `for(;;)` loops (see below about `for ... in/of`)
+* `for(;;)` loops
+* `for ... of` statements (see below about `for ... in`)
 * `break/continue`; also with labeled loops
 * `switch` statement (on numbers only)
 * `debugger` statement for breakpoints
@@ -54,10 +55,13 @@ See also [issue #51](https://github.com/Microsoft/pxt/issues/51).
 * strings (with a few common methods)
 * [string templates](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) (`` `x is ${x}` ``)
 * arrow functions `() => ...`
-* classes with fields, methods and constructors; `new` keyword
+* passing functions (with up to 3 arguments) as values
+* classes with static and instance fields, methods and constructors; `new` keyword
 * array literals `[1, 2, 3]`
 * enums
 * asynchronous functions that look [synchronous to the user](/async)
+* method-like properties (get/set accessors)
+* basic generic classes, methods, and functions
 
 ## Unsupported language features
 
@@ -66,15 +70,15 @@ We generally stay away from the more dynamic parts of JavaScript.
 Things you may miss and we may implement:
 
 * exceptions (`throw`, `try ... catch`, `try ... finally`)
-* `for ... of` statements
 * object literals `{ foo: 1, bar: "two" }`
-* method-like properties (get/set accessors)
 * class inheritance
+* classes implementing interfaces
+* using generic functions as values
+* nested generic functions
 
 For JS-only targets we may implement the following:
 
 * regular expressions
-* classes implementing interfaces
 
 Things that we are not very likely to implement due to the scope of the project
 or other constraints (note that if you don't know what a given feature is, you're
@@ -90,8 +94,23 @@ unlikely to miss it):
 * `with` statement
 * `eval`
 * `delete` statement
-* `for ... in` statements
+* `for ... in` statements (`for ... of` is supported)
 * JSX (HTML as part of JavaScript)
+* prototype-based inheritance; `this` pointer outside classes
+* `arguments` keyword; `.apply` method
 
 Note, that you can use all of these while implementing your runtime environment
 (simulator), they just cannot be used in user's programs.
+
+## Semantic differences against JavaScript
+
+As such, it isn't really feasible to run a full JavaScript virtual machine
+in 3k of RAM, and thus PXT programs are statically compiled to native code to run efficiently.
+This causes some semantic differences:
+
+* numbers are 32 bit signed integers with wrap-around semantics; 
+  in JavaScript they are 64 bit floating points
+* JavaScript doesn't have types, and therefore every value can be `undefined` or `null` 
+  (which are two different values, distinct from `0` or `false`); 
+  in PXT `0`, `false`, `null`, and `undefined` all have the same underlying
+  representation (32 zero bits) and thus will test as equal
