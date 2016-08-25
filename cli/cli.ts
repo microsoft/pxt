@@ -1722,6 +1722,7 @@ export function initAsync() {
 
             console.log("package initialized")
         })
+        .then(() => mainPkg.installAllAsync())
 }
 
 enum BuildOption {
