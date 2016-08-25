@@ -548,6 +548,7 @@ namespace ts.pxt.ir {
                 if (s.expr) {
                     //console.log("OPT", s.expr.toString())
                     s.expr = opt(refdef(s.expr))
+                    //console.log("INTO", s.expr.toString())
                     if (s.stmtKind == ir.SK.Expr && s.expr.isPure())
                         return false;
                 }
