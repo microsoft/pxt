@@ -101,3 +101,16 @@ unlikely to miss it):
 
 Note, that you can use all of these while implementing your runtime environment
 (simulator), they just cannot be used in user's programs.
+
+## Semantic differences against JavaScript
+
+As such, it isn't really feasible to run a full JavaScript virtual machine
+in 3k of RAM, and thus PXT programs are statically compiled to native code to run efficiently.
+This causes some semantic differences:
+
+* numbers are 32 bit signed integers with wrap-around semantics; 
+  in JavaScript they are 64 bit floating points
+* JavaScript doesn't have types, and therefore every value can be `undefined` or `null` 
+  (which are two different values, distinct from `0` or `false`); 
+  in PXT `0`, `false`, `null`, and `undefined` all have the same underlying
+  representation (32 zero bits) and thus will test as equal
