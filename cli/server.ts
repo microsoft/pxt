@@ -512,17 +512,17 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (pathname == "/--embed") {
-            sendFile(path.join(fileDir, 'node_modules/pxt-core/webapp/public/embed.js'));
+            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/embed.js'));
             return
         }
 
         if (pathname == "/--run") {
-            sendFile(path.join(fileDir, 'node_modules/pxt-core/webapp/public/run.html'));
+            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/run.html'));
             return
         }
 
         if (pathname == "/--docs") {
-            sendFile(path.join(fileDir, 'node_modules/pxt-core/webapp/public/docs.html'));
+            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/docs.html'));
             return
         }
 
