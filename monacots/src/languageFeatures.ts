@@ -239,21 +239,6 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                     kind: SuggestAdapter.convertKind(entry.kind)
                 };
             });
-            // Add Typescript snippets
-            this.typescriptSnippets
-                .filter(entry => entry.prefix.indexOf(wordInfo.word, 0) == 0)
-                .forEach(entry => {
-                let completionItem: MyCompletionItem =
-                {
-                    model: model,
-                    uri: resource,
-                    position: position,
-                    label: entry.prefix,
-                    sortText: "-1",
-                    kind: monaco.languages.CompletionItemKind.Snippet
-                };
-                suggestions.push(completionItem);
-            });
             return suggestions;
         }));
     }
