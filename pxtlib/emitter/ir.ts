@@ -1,5 +1,5 @@
-namespace ts.pxt.ir {
-    let U = ts.pxt.Util;
+namespace ts.pxtc.ir {
+    let U = pxtc.Util;
     let assert = U.assert;
 
     export enum EK {
@@ -548,6 +548,7 @@ namespace ts.pxt.ir {
                 if (s.expr) {
                     //console.log("OPT", s.expr.toString())
                     s.expr = opt(refdef(s.expr))
+                    //console.log("INTO", s.expr.toString())
                     if (s.stmtKind == ir.SK.Expr && s.expr.isPure())
                         return false;
                 }

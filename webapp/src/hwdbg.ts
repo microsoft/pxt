@@ -10,19 +10,19 @@ import U = pxt.Util;
 
 let iface: workeriface.Iface
 let isHalted = false
-let lastCompileResult: ts.pxt.CompileResult;
+let lastCompileResult: pxtc.CompileResult;
 let haltCheckRunning = false
 let onHalted = Promise.resolve();
 let haltHandler: () => void;
 let cachedStateInfo: StateInfo
 let nextBreakpoints: number[] = []
-let currBreakpoint: ts.pxt.Breakpoint;
+let currBreakpoint: pxtc.Breakpoint;
 let lastDebugStatus: number;
 let callInfos: U.Map<ExtCallInfo>;
 
 interface ExtCallInfo {
-    from: ts.pxt.ProcDebugInfo;
-    to: ts.pxt.ProcDebugInfo;
+    from: pxtc.ProcDebugInfo;
+    to: pxtc.ProcDebugInfo;
     stack: number;
 }
 
@@ -208,7 +208,7 @@ export function startDebugAsync() {
             lastCompileResult = res
             callInfos = {}
 
-            let procLookup: ts.pxt.ProcDebugInfo[] = []
+            let procLookup: pxtc.ProcDebugInfo[] = []
             for (let pdi of res.procDebugInfo) {
                 procLookup[pdi.idx] = pdi
             }

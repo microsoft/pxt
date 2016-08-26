@@ -5,7 +5,7 @@
     *  
     */
 
-namespace ts.pxt.avr {
+namespace ts.pxtc.avr {
 
     export class AVRProcessor extends assembler.EncodersInstructions {
         constructor() {

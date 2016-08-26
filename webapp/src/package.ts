@@ -24,7 +24,7 @@ export function setupAppTarget(trgbundle: pxt.TargetBundle) {
 export class File {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
-    diagnostics: ts.pxt.KsDiagnostic[];
+    diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
     virtualSource: File;
 
@@ -282,7 +282,7 @@ class Host
         throw Util.oops("trying to write " + module + " / " + filename)
     }
 
-    getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
         return pxt.hex.getHexInfoAsync(this, extInfo)
     }
 

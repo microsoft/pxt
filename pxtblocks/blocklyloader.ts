@@ -17,7 +17,7 @@ namespace pxt.blocks {
     // list of built-in blocks, should be touched.
     const builtinBlocks: Util.StringMap<{
         block: B.BlockDefinition;
-        symbol?: ts.pxt.SymbolInfo;
+        symbol?: pxtc.SymbolInfo;
     }> = {};
     Object.keys(Blockly.Blocks)
         .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
@@ -25,13 +25,13 @@ namespace pxt.blocks {
     // blocks cached
     interface CachedBlock {
         hash: string;
-        fn: ts.pxt.SymbolInfo;
+        fn: pxtc.SymbolInfo;
         block: Blockly.BlockDefinition;
     }
     let cachedBlocks: Util.StringMap<CachedBlock> = {};
     let cachedToolbox: string = "";
 
-    export function blockSymbol(type: string): ts.pxt.SymbolInfo {
+    export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
         return b ? b.fn : undefined;
     }
@@ -67,9 +67,9 @@ namespace pxt.blocks {
         shadowValue?: string;
     }
 
-    export function parameterNames(fn: ts.pxt.SymbolInfo): Util.StringMap<BlockParameter> {
+    export function parameterNames(fn: pxtc.SymbolInfo): Util.StringMap<BlockParameter> {
         // collect blockly parameter name mapping
-        const instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
+        const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         let attrNames: Util.StringMap<BlockParameter> = {};
 
         if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
@@ -99,7 +99,7 @@ namespace pxt.blocks {
         return attrNames;
     }
 
-    function createToolboxBlock(info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
+    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
         //
         // toolbox update
         //
@@ -107,7 +107,7 @@ namespace pxt.blocks {
         block.setAttribute("type", fn.attributes.blockId);
         if (fn.attributes.blockGap)
             block.setAttribute("gap", fn.attributes.blockGap);
-        if ((fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property)
+        if ((fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property)
             && attrNames["this"]) {
             let attr = attrNames["this"];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue || attr.name, attr.shadowType || "variables_get"));
@@ -124,7 +124,7 @@ namespace pxt.blocks {
         return block;
     }
 
-    function injectToolbox(tb: Element, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, block: HTMLElement) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement) {
         let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         let nsn = info.apis.byQName[ns];
         if (nsn) ns = nsn.attributes.block || ns;
@@ -170,7 +170,7 @@ namespace pxt.blocks {
         return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
     }
 
-    function injectBlockDefinition(info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
+    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
@@ -203,7 +203,7 @@ namespace pxt.blocks {
         return true;
     }
 
-    function initField(i: any, ni: number, fn: ts.pxt.SymbolInfo, pre: string, right?: boolean, type?: string): any {
+    function initField(i: any, ni: number, fn: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string): any {
         if (ni == 0 && fn.attributes.icon)
             i.appendField(iconToFieldImage(fn.attributes.icon))
         if (pre)
@@ -221,7 +221,7 @@ namespace pxt.blocks {
         return el.outerHTML.replace(/^<\?[^>]*>/, '');
     }
 
-    function mkCard(fn: ts.pxt.SymbolInfo, blockXml: HTMLElement): pxt.CodeCard {
+    function mkCard(fn: pxtc.SymbolInfo, blockXml: HTMLElement): pxt.CodeCard {
         let xml = blockXml.outerHTML
             // remove IE11
             .replace(/^<\?[^>]*>/, '');
@@ -233,9 +233,9 @@ namespace pxt.blocks {
         }
     }
 
-    function initBlock(block: any, info: ts.pxt.BlocksInfo, fn: ts.pxt.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+    function initBlock(block: any, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-        const instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
+        const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
 
         if (fn.attributes.help)
@@ -281,7 +281,7 @@ namespace pxt.blocks {
                     i = initField(block.appendValueInput(p), ni, fn, pre, true, "String");
                 } else {
                     let prtype = Util.lookup(info.apis.byQName, pr.type);
-                    if (prtype && prtype.kind == ts.pxt.SymbolKind.Enum) {
+                    if (prtype && prtype.kind == pxtc.SymbolKind.Enum) {
                         let dd = Util.values(info.apis.byQName)
                             .filter(e => e.namespace == pr.type)
                             .map(v => [v.attributes.block || v.attributes.blockId || v.name, v.namespace + "." + v.name]);
@@ -335,7 +335,7 @@ namespace pxt.blocks {
             e.parentElement.removeChild(e);
     }
 
-    export function initBlocks(blockInfo: ts.pxt.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
         init();
 
         // create new toolbox and update block definitions
@@ -437,7 +437,7 @@ namespace pxt.blocks {
             removeBlock(cachedBlocks[b].fn);
     }
 
-    function removeBlock(fn: ts.pxt.SymbolInfo) {
+    function removeBlock(fn: pxtc.SymbolInfo) {
         delete Blockly.Blocks[fn.attributes.blockId];
         delete cachedBlocks[fn.attributes.blockId];
     }
@@ -523,8 +523,8 @@ namespace pxt.blocks {
     }
 
     export function updateUserLanguage() {
-        if (ts.pxt.Util.userLanguage() != "en") {
-            let src = pxt.webConfig.pxtCdnUrl + "blockly/msg/js/" + ts.pxt.Util.userLanguage() + ".js";
+        if (pxtc.Util.userLanguage() != "en") {
+            let src = pxt.webConfig.pxtCdnUrl + "blockly/msg/js/" + pxtc.Util.userLanguage() + ".js";
             if (!document.head.querySelector(`script[src='${src}']`)) {
                 let script = document.createElement("script")
                 script.type = "text/javascript";

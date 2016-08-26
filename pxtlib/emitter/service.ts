@@ -1,4 +1,4 @@
-namespace ts.pxt {
+namespace ts.pxtc {
     export interface ParameterDesc {
         name: string;
         description: string;
@@ -61,7 +61,7 @@ namespace ts.pxt {
 . . . . .
 `
 
-    function renderDefaultVal(apis: ts.pxt.ApisInfo, p: ts.pxt.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
+    function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
         if (p.defaults) return p.defaults[0]
         if (p.type == "number") return "0"
@@ -85,7 +85,7 @@ namespace ts.pxt {
         return placeholderChar;
     }
 
-    export function renderParameters(apis: ts.pxt.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
+    export function renderParameters(apis: pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
         if (si.parameters) {
             let imgLit = !!si.attributes.imageLiteral
             return "(" + si.parameters
@@ -212,8 +212,8 @@ namespace ts.pxt {
     export function getBlocksInfo(info: ApisInfo) {
         return {
             apis: info,
-            blocks: pxt.Util.values(info.byQName)
-                .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != ts.pxt.SymbolKind.EnumMember))
+            blocks: pxtc.Util.values(info.byQName)
+                .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != pxtc.SymbolKind.EnumMember))
         }
     }
 
@@ -429,7 +429,7 @@ namespace ts.pxt {
 }
 
 
-namespace ts.pxt.service {
+namespace ts.pxtc.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],

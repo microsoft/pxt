@@ -1,4 +1,4 @@
-namespace ts.pxt {
+namespace ts.pxtc {
 
     enum TokenKind {
         None,

@@ -263,6 +263,22 @@ function postPreFix() {
     assert(lazyAcc == 4, "X4")
 }
 
+function testArrIncr() {
+    let arr = [1]
+    glb1 = 0
+    function getarr() {
+        glb1++
+        return arr
+    }
+    getarr()[0]++
+    control.assert(glb1 == 1)
+    assert(arr[0] == 2, "t")
+    function getarr2() {
+        return [1]
+    }
+    getarr2()[0]++ // make sure it doesn't crash
+}
+
 function eqOp() {
     msg("eqOp")
     let x = 12
@@ -590,6 +606,10 @@ class Foo {
     init() {
         this.buf = [1, 2]
     }
+
+    toString() {
+        return `Foo${this.getPin()}`
+    }
 }
 
 function testClass() {
@@ -898,7 +918,108 @@ function testStatic() {
     assert(glb1 == 25, "s1")
 }
 
+class GetSet {
+    _x: number;
 
+    get x() {
+        glb1++
+        return this._x
+    }
+
+    set x(v: number) {
+        glb1 += 4
+        this._x = v
+    }
+}
+
+function testAccessors() {
+    glb1 = 0
+    let f = new GetSet()
+    f.x = 12
+    assert(glb1 == 4, "s")
+    assert(f.x == 12, "s12")
+    function getf() {
+        glb1 += 100
+        return f
+    }
+    getf().x++
+    assert(glb1 == 110, "s10")
+    assert(f.x == 13, "s13")
+}
+
+class BazClass { }
+function testBoolCasts() {
+    function boolDie() {
+        control.assert(false, "bool casts")
+    }
+    let x = "Xy" + "Z"
+
+    if (x) { } else {
+        boolDie()
+    }
+
+    if ("") {
+        boolDie()
+    }
+
+    let v = new BazClass()
+    if (v) { } else {
+        boolDie()
+    }
+    if (!v) {
+        boolDie()
+    }
+    v = null
+    if (v) {
+        boolDie()
+    }
+    if (!v) { } else {
+        boolDie()
+    }
+}
+
+function testLazyRef() {
+    let x = ("x" + "Y") || "foo"
+    let y = "" || "bXr" + "2"
+    assert(x.length == 2, "two")
+    assert(y.length == 4, "emp")
+    y = null || "foo"
+    assert(y == "foo", "ln")
+
+    x = "x" + "12x" && "7" + "xx"
+    assert(x.length == 3, "and")
+
+    x = "" && "blah"
+    assert(x == "", "andemp")
+    x = "foo" && "x" + "Y"
+    assert(x.length == 2, "twoand")
+    x = "x" + "Y" && "bar"
+    assert(x.length == 3, "threeand")
+
+    let z = 0 || 12
+    assert(z == 12, "12")
+    z = 12 || 13
+    assert(z == 12, "12.2")
+    z = 12 && 13
+    assert(z == 13, "13")
+}
+
+function testNull() {
+    let x = 0
+    let y = 0
+    x = null
+    assert(x == y, "null")
+    x = undefined
+    assert(x == y, "undef")
+    y = 1
+    assert(x != y, "null")
+}
+
+function testToString() {
+    let f = new Foo(44, 2)
+    let s = "" + f
+    assert(s == "Foo42", "ts")
+}
 
 // ---------------------------------------------------------------------------
 // Driver starts
@@ -923,6 +1044,7 @@ testDefaultArgs();
 testMemoryFree();
 testMemoryFreeHOF();
 postPreFix()
+testArrIncr()
 eqOp()
 testEnums()
 testForOf()
@@ -934,6 +1056,12 @@ testGenRefOuter()
 testArrayMap()
 testInnerLambdaCapture()
 testStatic()
+testAccessors()
+testBoolCasts()
+testLazyRef()
+testNull()
+testToString()
+
 
 msg("test top level code")
 let xsum = 0;

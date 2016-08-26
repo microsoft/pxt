@@ -23,7 +23,7 @@ namespace pxsim {
         globals: Variables;
         stackframes: {
             locals: Variables;
-            funcInfo: any; // ts.pxt.FunctionLocationInfo
+            funcInfo: any; // pxtc.FunctionLocationInfo
         }[];
     }
 

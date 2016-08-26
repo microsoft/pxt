@@ -4,34 +4,29 @@
 
 namespace pxt.vs {
 
-    export function syncModels(mainPkg: MainPackage): void {
-        let models = monaco.editor.getModels();
+    export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): void {
+        let extraLibs = monaco.languages.typescript.typescriptDefaults.extraLibs;
         let modelMap: U.Map<string> = {}
-        mainPkg.sortedDeps().forEach(pkg => {
-            pkg.getFiles().forEach(f => {
-                let fp = pkg.id + "/" + f;
-                if (/\.(ts)$/.test(f)) {
-                    let sn = f;
-                    if (pkg.level > 0)
-                        sn = "pxt_modules/" + fp
-                    let proto = "pkg:" + fp;
-                    let currModel = models.filter(model => model.uri.toString() == proto)[0];
-                    // TypeScript casts the content of the file to a boolean, thus 'empty' files look as if they are missing
-                    let content = pkg.readFile(f) || " ";
-                    if (!currModel) {
-                        let uri: monaco.Uri = monaco.Uri.parse(proto);
-                        monaco.editor.createModel(content, "typescript", uri);
-                    } else {
-                        currModel.setValue(content)
+        if (!readOnly) {
+            mainPkg.sortedDeps().forEach(pkg => {
+                pkg.getFiles().forEach(f => {
+                    let fp = pkg.id + "/" + f;
+                    if (/\.(ts)$/.test(f) && fp != currFile) {
+                        let proto = "pkg:" + fp;
+                        if (!monaco.languages.typescript.typescriptDefaults.extraLibs[fp]) {
+                            let content = pkg.readFile(f) || " ";
+                            libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
+                        }
+                        modelMap[fp] = "1";
                     }
-                    modelMap[proto] = "1";
-                }
+                });
             });
-        });
-
-        models
-            .filter(model => /\.(ts)$/.test(model.uri.toString()) && !modelMap[model.uri.toString()])
-            .forEach(model => model.dispose());
+        }
+        Object.keys(extraLibs)
+            .filter(lib => /\.(ts)$/.test(lib) && !modelMap[lib])
+            .forEach(lib => {
+                libs[lib].dispose();
+            });
     }
 
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
@@ -56,7 +51,8 @@ namespace pxt.vs {
             //ariaLabel: lf("JavaScript Editor"),
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
             scrollBeyondLastLine: false,
-            language: "typescript"
+            language: "typescript",
+            experimentalScreenReader: true
         });
 
         window.addEventListener('resize', function () {

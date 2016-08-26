@@ -17,7 +17,7 @@ export function init() {
     }
 }
 
-function setDiagnostics(diagnostics: ts.pxt.KsDiagnostic[]) {
+function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -65,7 +65,7 @@ export interface CompileOptions {
     background?: boolean; // not explicitely requested by user (hint for simulator)
 }
 
-export function compileAsync(options: CompileOptions = {}): Promise<ts.pxt.CompileResult> {
+export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
     return pkg.mainPkg.getCompileOptionsAsync(trg)
@@ -85,6 +85,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<ts.pxt.Compi
 
             return ensureApisInfoAsync()
                 .then(() => {
+                    if (!resp.usedSymbols) return resp
                     for (let k of Object.keys(resp.usedSymbols)) {
                         resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
                     }
@@ -110,7 +111,7 @@ export function assembleAsync(src: string) {
         })
 }
 
-function compileCoreAsync(opts: ts.pxt.CompileOptions): Promise<ts.pxt.CompileResult> {
+function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult> {
     return workerOpAsync("compile", { options: opts })
 }
 
@@ -129,17 +130,17 @@ export function decompileAsync(fileName: string) {
         })
 }
 
-function decompileCoreAsync(opts: ts.pxt.CompileOptions, fileName: string): Promise<ts.pxt.CompileResult> {
+function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
 
-export function workerOpAsync(op: string, arg: ts.pxt.service.OpArg) {
+export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
     init()
     return iface.opAsync(op, arg)
 }
 
 let firstTypecheck: Promise<void>;
-let cachedApis: ts.pxt.ApisInfo;
+let cachedApis: pxtc.ApisInfo;
 let refreshApis = false;
 
 function waitForFirstTypecheckAsync() {
@@ -147,10 +148,10 @@ function waitForFirstTypecheckAsync() {
     else return typecheckAsync();
 }
 
-function localizeApis(apis: ts.pxt.ApisInfo) {
+function localizeApis(apis: pxtc.ApisInfo) {
 
-    const lang = ts.pxt.Util.userLanguage();
-    if (ts.pxt.Util.userLanguage() != "en") {
+    const lang = pxtc.Util.userLanguage();
+    if (pxtc.Util.userLanguage() != "en") {
         let loc = pkg.mainPkg.localizationStrings(lang);
         Util.values(apis.byQName).forEach(fn => {
             const jsDoc = loc[fn.qName]
@@ -191,9 +192,9 @@ export function getApisInfoAsync() {
         .then(() => cachedApis)
 }
 
-export function getBlocksAsync(): Promise<ts.pxt.BlocksInfo> {
+export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     return getApisInfoAsync()
-        .then(info => ts.pxt.getBlocksInfo(info));
+        .then(info => pxtc.getBlocksInfo(info));
 }
 
 export function newProject() {

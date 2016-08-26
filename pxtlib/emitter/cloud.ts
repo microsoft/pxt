@@ -1,5 +1,5 @@
 namespace pxt.Cloud {
-    import Util = ts.pxt.Util;
+    import Util = pxtc.Util;
 
     export var apiRoot = "https://www.pxt.io/api/";
     export var accessToken = "";

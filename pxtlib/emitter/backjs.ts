@@ -1,4 +1,4 @@
-namespace ts.pxt {
+namespace ts.pxtc {
     const jsOpMap: U.Map<string> = {
         "thumb::adds": "+",
         "thumb::subs": "-",
@@ -143,9 +143,9 @@ switch (step) {
         function emitExprInto(e: ir.Expr): string {
             switch (e.exprKind) {
                 case EK.NumberLiteral:
-                    if (e.data === true) return "true"
-                    else if (e.data === false) return "false"
-                    else if (e.data === null) return "null"
+                    if (e.data === true) return "1"
+                    else if (e.data === false) return "0"
+                    else if (e.data === null) return "0"
                     else if (typeof e.data == "number") return e.data + ""
                     else throw oops();
                 case EK.PointerLiteral:

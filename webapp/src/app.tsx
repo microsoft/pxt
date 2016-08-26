@@ -335,11 +335,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let docembed: string;
         let vscode: string;
         if (ready) {
-            let runurl = `${rootUrl}--run?id=${header.pubId}`;
-            let docurl = `${rootUrl}--docs?projectid=${header.pubId}`;
-            let blocksHeight = Math.ceil(header.meta.blocksHeight || 300);
-            url = `${rootUrl}${header.pubId}`
-            docembed = `<div style="position:relative;height:calc(${blocksHeight}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
+            docembed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
             vscode = `pxt extract ${header.pubId}`
         }
 
@@ -406,6 +402,13 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         let el = document.getElementById("sidedocs") as HTMLIFrameElement;
         if (el)
             el.src = `${docsUrl}#doc:${path}`;
+    }
+
+    setMarkdown(md: string) {
+        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
+        if (el)
+            el.src = `${docsUrl}#md:${encodeURIComponent(md)}`;
     }
 
     toggleVisibility() {
@@ -607,7 +610,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.typecheck()
     }
 
-    private autoRunSimulator = ts.pxt.Util.debounce(
+    private autoRunSimulator = pxtc.Util.debounce(
         () => {
             if (!this.state.active)
                 return;
@@ -644,6 +647,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.saveFile();
                     if (!this.editor.isIncomplete())
                         this.typecheck();
+                    if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
+                        this.setSideMarkdown(this.editor.getCurrentSource());
                 }, 1000);
             }
         }
@@ -659,7 +664,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     public componentDidMount() {
-        this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
             highlightStatement: stmt => {
@@ -765,6 +769,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
+    setSideMarkdown(md: string) {
+        let sd = this.refs["sidedoc"] as SideDocs;
+        if (!sd) return;
+        sd.setMarkdown(md);
+        this.setState({ sideDocsCollapsed: false });
+    }
+
     setSideDoc(path: string) {
         let sd = this.refs["sidedoc"] as SideDocs;
         if (!sd) return;
@@ -839,6 +850,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         }
                     })
                     .done()
+
+                let readme = main.lookupFile("this/README.md");
+                if (readme && readme.content && readme.content.trim())
+                    this.setSideMarkdown(readme.content);
+                else this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
             })
     }
 
@@ -950,10 +966,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let files: ScriptText = Util.clone(prj.files)
         if (fileOverrides)
             Util.jsonCopyFrom(files, fileOverrides)
-        // remove markdown files
-        cfg.files = cfg.files.filter(f => !/\.md$/i.test(f));
-        for (let fk in files)
-            if (/\.md$/i.test(fk)) delete files[fk];
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
         return workspace.installAsync({
             name: cfg.name,
@@ -973,7 +985,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         if (!src) return Promise.resolve();
         // format before saving
-        //src = ts.pxt.format(src, 0).formatted;
+        //src = pxtc.format(src, 0).formatted;
 
         let mainPkg = pkg.mainEditorPkg();
         let tsName = this.editorFile.getVirtualFileName();
@@ -1003,7 +1015,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         compiler.compileAsync({ native: true })
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (!resp.outfiles[ts.pxt.BINARY_HEX]) {
+                if (!resp.outfiles[pxtc.BINARY_HEX]) {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
@@ -1079,7 +1091,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (resp.outfiles[ts.pxt.BINARY_JS]) {
+                if (resp.outfiles[pxtc.BINARY_JS]) {
                     simulator.run(opts.debug, resp)
                     this.setState({ running: true })
                 } else if (!opts.background) {

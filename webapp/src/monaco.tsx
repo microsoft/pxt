@@ -20,10 +20,17 @@ const MAX_EDITOR_FONT_SIZE = 40
 
 export const cursorMarker = "\uE108"
 
+enum FileType {
+    Unknown,
+    TypeScript,
+    Markdown
+}
+
 export class Editor extends srceditor.Editor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
-    isTypescript = false;
+    fileType: FileType = FileType.Unknown;
+    extraLibs: { [path: string]: monaco.IDisposable };
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -66,7 +73,7 @@ export class Editor extends srceditor.Editor {
         // 1) convert blocks to js to see if any changes happened, otherwise, just reload blocks
         // 2) decompile js -> blocks then take the decompiled blocks -> js
         // 3) check that decompiled js == current js % white space
-        let blocksInfo: ts.pxt.BlocksInfo;
+        let blocksInfo: pxtc.BlocksInfo;
         this.parent.saveFileAsync()
             .then(() => compiler.getBlocksAsync())
             .then((bi) => {
@@ -127,7 +134,7 @@ export class Editor extends srceditor.Editor {
             agreeIcon: "cancel",
             disagreeLbl: lf("Stay in JavaScript"),
             disagreeClass: "positive",
-            disagreeIcon: "checkmark", 
+            disagreeIcon: "checkmark",
             deleteLbl: lf("Remove Blocks file"),
             size: "medium",
             hideCancel: !bf
@@ -190,7 +197,7 @@ export class Editor extends srceditor.Editor {
     }
 
     formatCode(isAutomatic = false): string {
-        if (!this.isTypescript) return;
+        if (this.fileType != FileType.TypeScript) return;
 
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
             return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
@@ -203,7 +210,7 @@ export class Editor extends srceditor.Editor {
             data.programText = Util.replaceAll(data.programText, cursorMarker, "")
             data.charNo = cursorOverride
         }
-        let tmp = ts.pxt.format(data.programText, data.charNo)
+        let tmp = pxtc.format(data.programText, data.charNo)
         if (isAutomatic && tmp.formatted == data.programText)
             return;
         let formatted = tmp.formatted
@@ -233,17 +240,32 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
+        this.extraLibs = Object.create(null);
         this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
 
-        this.editor.updateOptions({fontSize: this.parent.settings.editorFontSize});
+        this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
         let removeFromContextMenu = ["editor.action.changeAll",
-                                    "editor.action.quickOutline",
-                                    "editor.action.goToDeclaration",
-                                    "editor.action.previewDeclaration",
-                                    "editor.action.referenceSearch.trigger"]
+            "editor.action.quickOutline",
+            "editor.action.goToDeclaration",
+            "editor.action.previewDeclaration",
+            "editor.action.referenceSearch.trigger"]
 
-        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._shouldShowInContextMenu = false : null );
+        let disabledFromCommands = ["editor.unfold",
+            "editor.unFoldRecursively",
+            "editor.fold",
+            "editor.foldRecursively",
+            "editor.foldAll",
+            "editor.unFoldAll",
+            "editor.foldLevel1",
+            "editor.foldLevel2",
+            "editor.foldLevel3",
+            "editor.foldLevel4",
+            "editor.foldLevel5"]
+
+        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._shouldShowInContextMenu = false : null);
+
+        this.editor.getActions().forEach(action => disabledFromCommands.indexOf(action.id) > -1 ? (action as any)._enabled = false : null);
 
         this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
             .run = () => Promise.resolve(this.formatCode());
@@ -255,7 +277,7 @@ export class Editor extends srceditor.Editor {
             id: "save",
             label: lf("Save"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-            enablement: {writeableEditor: true},
+            enablement: { writeableEditor: true },
             contextMenuGroupId: "4_tools/*",
             run: () => Promise.resolve(this.parent.typecheckNow())
         });
@@ -264,7 +286,7 @@ export class Editor extends srceditor.Editor {
             id: "runSimulator",
             label: lf("Run Simulator"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-            enablement: {writeableEditor: true},
+            enablement: { writeableEditor: true },
             contextMenuGroupId: "4_tools/*",
             run: () => Promise.resolve(this.parent.runSimulator())
         });
@@ -287,23 +309,22 @@ export class Editor extends srceditor.Editor {
             this.editor.addAction({
                 id: "compileHex",
                 label: lf("Download"),
-                enablement: {writeableEditor: true},
+                enablement: { writeableEditor: true },
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
                 contextMenuGroupId: "4_tools/*",
                 run: () => Promise.resolve(this.parent.compile())
             });
         }
 
-        this.editor.onDidFocusEditorText(() => {
-            pxt.vs.syncModels(pkg.mainPkg);
-        })
-
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
-            if (!this.isTypescript || this.currFile.isReadonly()) return;
+            if (this.fileType == FileType.Unknown || this.currFile.isReadonly()) return;
 
             if (this.lastSet != null) {
                 this.lastSet = null
             } else {
+                if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
+                    this.editor.setValue(" ");
+                }
                 this.updateDiagnostics();
                 this.changeCallback();
             }
@@ -317,14 +338,14 @@ export class Editor extends srceditor.Editor {
     zoomIn() {
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
         this.parent.settings.editorFontSize++;
-        this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
+        this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
 
     zoomOut() {
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
         this.parent.settings.editorFontSize--;
-        this.editor.updateOptions( {fontSize: this.parent.settings.editorFontSize});
+        this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
 
@@ -347,7 +368,8 @@ export class Editor extends srceditor.Editor {
     private lastSet: string;
     private setValue(v: string) {
         this.lastSet = v;
-        this.editor.setValue(v);
+        if (v) this.editor.setValue(v);
+        else this.editor.setValue(" ");
     }
 
     overrideFile(content: string) {
@@ -355,7 +377,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadFile(file: pkg.File) {
-        pxt.vs.syncModels(pkg.mainPkg);
+        pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly());
 
         let ext = file.getExtension()
         let modeMap: any = {
@@ -370,18 +392,21 @@ export class Editor extends srceditor.Editor {
         let mode = "text"
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
 
-        this.editor.updateOptions({readOnly: file.isReadonly()});
+        this.editor.updateOptions({ readOnly: file.isReadonly() });
 
         this.currFile = file;
         let proto = "pkg:" + this.currFile.getName();
         let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
-        if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()),mode,monaco.Uri.parse(proto));
+        if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()), mode, monaco.Uri.parse(proto));
         if (model) this.editor.setModel(model);
 
         this.setValue(file.content)
         this.setDiagnostics(file, this.snapshotState())
 
-        this.isTypescript = mode == "typescript";
+        this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
+
+        if (this.fileType == FileType.Markdown)
+            this.parent.setSideMarkdown(file.content);
     }
 
     snapshotState() {
@@ -389,7 +414,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setViewState(pos: monaco.IPosition) {
-        if (Object.keys(pos).length === 0) return;
+        if (!pos || Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
         this.editor.setScrollPosition(pos)
     }
@@ -421,7 +446,8 @@ export class Editor extends srceditor.Editor {
     }
 
     forceDiagnosticsUpdate() {
-        if (!this.isTypescript) return
+        if (this.fileType != FileType.TypeScript) return
+
         let file = this.currFile
         let lines: string[] = this.editor.getModel().getLinesContent();
         let fontSize = this.parent.settings.editorFontSize - 3;
@@ -430,7 +456,7 @@ export class Editor extends srceditor.Editor {
         let viewZones = this.editorViewZones || [];
         this.annotationLines = [];
 
-        (this.editor as any).changeViewZones(function(changeAccessor: any) {
+        (this.editor as any).changeViewZones(function (changeAccessor: any) {
             viewZones.forEach(id => {
                 changeAccessor.removeZone(id);
             });
@@ -442,17 +468,17 @@ export class Editor extends srceditor.Editor {
             for (let d of file.diagnostics) {
                 if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0) continue;
                 let viewZoneId: any = null;
-                (this.editor as any).changeViewZones(function(changeAccessor: any) {
-                        let domNode = document.createElement('div');
-                        domNode.className = d.category == ts.DiagnosticCategory.Error ? "error-view-zone" : "warning-view-zone";
-                        domNode.style.setProperty("font-size", fontSize.toString() + "px");
-                        domNode.style.setProperty("line-height", lineHeight.toString() + "px");
-                        domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
-                        viewZoneId = changeAccessor.addZone({
-                                    afterLineNumber: d.line + 1,
-                                    heightInLines: 1,
-                                    domNode: domNode
-                        });
+                (this.editor as any).changeViewZones(function (changeAccessor: any) {
+                    let domNode = document.createElement('div');
+                    domNode.className = d.category == ts.DiagnosticCategory.Error ? "error-view-zone" : "warning-view-zone";
+                    domNode.style.setProperty("font-size", fontSize.toString() + "px");
+                    domNode.style.setProperty("line-height", lineHeight.toString() + "px");
+                    domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
+                    viewZoneId = changeAccessor.addZone({
+                        afterLineNumber: d.line + 1,
+                        heightInLines: 1,
+                        domNode: domNode
+                    });
                 });
                 this.editorViewZones.push(viewZoneId);
                 this.errorLines.push(d.line);

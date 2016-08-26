@@ -1,8 +1,8 @@
-namespace ts.pxt {
+namespace ts.pxtc {
     export const assert = Util.assert;
     export const oops = Util.oops;
     export type StringMap<T> = Util.Map<T>;
-    export import U = ts.pxt.Util;
+    export import U = pxtc.Util;
 
     export const BINARY_JS = "binary.js";
     export const BINARY_HEX = "binary.hex";
@@ -18,11 +18,16 @@ namespace ts.pxt {
         return (<any>ts).SyntaxKind[n.kind]
     }
 
+    interface NodeWithCache extends Expression {
+        cachedIR: ir.Expr;
+        needsIRCache: boolean;
+    }
+
     function inspect(n: Node) {
         console.log(stringKind(n))
     }
 
-    // next free error 9253
+    // next free error 9255
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -91,9 +96,22 @@ namespace ts.pxt {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
+    function isClassFunction(node: Node) {
+        if (!node) return false;
+        switch (node.kind) {
+            case SK.MethodDeclaration:
+            case SK.Constructor:
+            case SK.GetAccessor:
+            case SK.SetAccessor:
+                return true
+            default:
+                return false
+        }
+    }
+
     function getEnclosingMethod(node: Node): MethodDeclaration {
         if (!node) return null;
-        if (node.kind == SK.MethodDeclaration || node.kind == SK.Constructor)
+        if (isClassFunction(node))
             return <MethodDeclaration>node;
         return getEnclosingMethod(node.parent)
     }
@@ -115,13 +133,18 @@ namespace ts.pxt {
             node = node.parent
             if (!node)
                 userError(9229, lf("cannot determine parent of {0}", stringKind(node0)))
-            if (node.kind == SK.FunctionDeclaration ||
-                node.kind == SK.ArrowFunction ||
-                node.kind == SK.FunctionExpression ||
-                node.kind == SK.MethodDeclaration ||
-                node.kind == SK.Constructor)
-                return <FunctionLikeDeclaration>node
-            if (node.kind == SK.SourceFile) return null
+            switch (node.kind) {
+                case SK.MethodDeclaration:
+                case SK.Constructor:
+                case SK.GetAccessor:
+                case SK.SetAccessor:
+                case SK.FunctionDeclaration:
+                case SK.ArrowFunction:
+                case SK.FunctionExpression:
+                    return <FunctionLikeDeclaration>node
+                case SK.SourceFile:
+                    return null
+            }
         }
     }
 
@@ -141,8 +164,7 @@ namespace ts.pxt {
 
     function isTopLevelFunctionDecl(decl: Declaration) {
         return (decl.kind == SK.FunctionDeclaration && !getEnclosingFunction(decl)) ||
-            decl.kind == SK.MethodDeclaration ||
-            decl.kind == SK.Constructor
+            isClassFunction(decl)
     }
 
     function isSideEffectfulInitializer(init: Expression) {
@@ -351,7 +373,7 @@ namespace ts.pxt {
 
     function checkType(t: Type) {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
-            TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null
+            TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null | TypeFlags.Undefined
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
@@ -394,7 +416,7 @@ namespace ts.pxt {
         // TODO add check for methods of generic classes
         if (fun.typeParameters && fun.typeParameters.length)
             return fun.typeParameters
-        if (fun.kind == SK.MethodDeclaration || fun.kind == SK.MethodSignature) {
+        if (isClassFunction(fun) || fun.kind == SK.MethodSignature) {
             if (fun.parent.kind == SK.ClassDeclaration || fun.parent.kind == SK.InterfaceDeclaration) {
                 let tp: TypeParameterDeclaration[] = (fun.parent as ClassLikeDeclaration).typeParameters
                 return tp || []
@@ -489,6 +511,7 @@ namespace ts.pxt {
         let usedWorkList: Declaration[] = []
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
+        let irCachesToClear: NodeWithCache[] = []
 
         if (opts.target.isNative) {
             if (!opts.hexinfo) {
@@ -877,14 +900,16 @@ ${lbl}: .short 0xffff
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
                 if (node.text == "undefined")
-                    throw unhandled(node, lf("undefined not supported"), 9200)
+                    return ir.numlit(null)
                 else
                     throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
             }
         }
 
         function emitParameter(node: ParameterDeclaration) { }
-        function emitAccessor(node: AccessorDeclaration) { }
+        function emitAccessor(node: AccessorDeclaration) {
+            emitFunctionDeclaration(node)
+        }
         function emitThis(node: Node) {
             let meth = getEnclosingMethod(node)
             if (!meth)
@@ -898,6 +923,15 @@ ${lbl}: .short 0xffff
             return emitLocalLoad(inf.thisParameter)
         }
         function emitSuper(node: Node) { }
+        function emitStringLiteral(str: string) {
+            if (str == "") {
+                return ir.rtcall("String_::mkEmpty", [])
+            } else {
+                let lbl = bin.emitString(str)
+                let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(str))
+                return ir.rtcall("pxt::ptrOfLiteral", [ptr])
+            }
+        }
         function emitLiteral(node: LiteralExpression) {
             if (node.kind == SK.NumericLiteral) {
                 if ((<any>node).imageLiteral) {
@@ -906,13 +940,7 @@ ${lbl}: .short 0xffff
                     return ir.numlit(parseInt(node.text))
                 }
             } else if (isStringLiteral(node)) {
-                if (node.text == "") {
-                    return ir.rtcall("String_::mkEmpty", [])
-                } else {
-                    let lbl = bin.emitString(node.text)
-                    let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(node.text))
-                    return ir.rtcall("pxt::ptrOfLiteral", [ptr])
-                }
+                return emitStringLiteral(node.text)
             } else {
                 throw oops();
             }
@@ -975,6 +1003,9 @@ ${lbl}: .short 0xffff
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
+            if (decl.kind == SK.GetAccessor) {
+                return emitCallCore(node, node, [], null)
+            }
             let attrs = parseComments(decl);
             let callInfo: CallInfo = {
                 decl,
@@ -1011,7 +1042,7 @@ ${lbl}: .short 0xffff
                 let idx = fieldIndex(node)
                 callInfo.args.push(node.expression)
                 return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
-            } else if (decl.kind == SK.MethodDeclaration || decl.kind == SK.MethodSignature) {
+            } else if (isClassFunction(decl) || decl.kind == SK.MethodSignature) {
                 throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
@@ -1035,8 +1066,6 @@ ${lbl}: .short 0xffff
 
             if (indexer) {
                 if (typeOf(node.argumentExpression).flags & TypeFlags.Number) {
-                    let arr = emitExpr(node.expression)
-                    let idx = emitExpr(node.argumentExpression)
                     let args = [node.expression, node.argumentExpression]
                     return rtcallMask(indexer, args, ir.CallingConvention.Plain, assign ? [assign] : [])
                 } else {
@@ -1102,7 +1131,7 @@ ${lbl}: .short 0xffff
             // we generate a fake NULL expression for default arguments
             // we also generate a fake numeric literal for image literals
             if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
-                return false
+                return !!(e as any).isRefOverride
             // no point doing the incr/decr for these - they are statically allocated anyways
             if (isStringLiteral(e))
                 return false
@@ -1162,10 +1191,7 @@ ${lbl}: .short 0xffff
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
                             let defl = attrs.paramDefl[getName(prm)]
-                            args.push(<any>{
-                                kind: SK.NullKeyword,
-                                valueOverride: defl ? parseInt(defl) : undefined
-                            })
+                            args.push(irToNode(defl ? ir.numlit(parseInt(defl)) : null))
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
                                 userError(9212, lf("only numbers, null, true and false supported as default arguments"))
@@ -1188,13 +1214,25 @@ ${lbl}: .short 0xffff
         }
 
         function emitCallExpression(node: CallExpression): ir.Expr {
-            let decl = getDecl(node.expression) as FunctionLikeDeclaration
+            let sig = checker.getResolvedSignature(node)
+            return emitCallCore(node, node.expression, node.arguments, sig)
+        }
+
+        function emitCallCore(
+            node: Expression,
+            funcExpr: Expression,
+            callArgs: Expression[],
+            sig: Signature,
+            decl: FunctionLikeDeclaration = null,
+            recv: Expression = null
+        ): ir.Expr {
+            if (!decl)
+                decl = getDecl(funcExpr) as FunctionLikeDeclaration
             if (!decl)
                 unhandled(node, lf("no declaration"), 9240)
-
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
-            let args = node.arguments.slice(0)
+            let args = callArgs.slice(0)
             let callInfo: CallInfo = {
                 decl,
                 qName: getFullName(checker, decl.symbol),
@@ -1203,10 +1241,13 @@ ${lbl}: .short 0xffff
             };
             (node as any).callInfo = callInfo
 
-            let sig = checker.getResolvedSignature(node)
-            let trg: Signature = (sig as any).target
-            let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
-            let bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
+            let bindings: TypeBinding[] = []
+
+            if (sig) {
+                let trg: Signature = (sig as any).target
+                let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
+                bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
+            }
             let isSelfGeneric = bindings.length > 0
             addEnclosingTypeBindings(bindings, decl)
 
@@ -1246,11 +1287,14 @@ ${lbl}: .short 0xffff
             }
 
             if (decl.kind == SK.MethodSignature ||
+                decl.kind == SK.GetAccessor ||
+                decl.kind == SK.SetAccessor ||
                 decl.kind == SK.MethodDeclaration) {
                 if (isStatic(decl)) {
-                    // nothing to do?
-                } else if (node.expression.kind == SK.PropertyAccessExpression) {
-                    let recv = (<PropertyAccessExpression>node.expression).expression
+                    // no additional arguments
+                } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
+                    if (!recv)
+                        recv = (<PropertyAccessExpression>funcExpr).expression
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
@@ -1293,8 +1337,8 @@ ${lbl}: .short 0xffff
 
                 let suff = args.length + ""
 
-                args.unshift(node.expression)
-                callInfo.args.unshift(node.expression)
+                args.unshift(funcExpr)
+                callInfo.args.unshift(funcExpr)
 
                 // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
                 // because what we're calling is ultimately a procedure which will decr arguments itself
@@ -1366,7 +1410,7 @@ ${lbl}: .short 0xffff
 
         function getParameters(node: FunctionLikeDeclaration) {
             let res = node.parameters.slice(0)
-            if (!isStatic(node) && node.kind == SK.MethodDeclaration || node.kind == SK.Constructor) {
+            if (!isStatic(node) && isClassFunction(node)) {
                 let info = getFunctionInfo(node)
                 if (!info.thisParameter) {
                     info.thisParameter = <any>{
@@ -1567,10 +1611,8 @@ ${lbl}: .short 0xffff
         function emitAwaitExpression(node: AwaitExpression) { }
         function emitPrefixUnaryExpression(node: PrefixUnaryExpression): ir.Expr {
             let tp = typeOf(node.operand)
-            if (tp.flags & TypeFlags.Boolean) {
-                if (node.operator == SK.ExclamationToken) {
-                    return rtcallMask("Boolean_::bang", [node.operand])
-                }
+            if (node.operator == SK.ExclamationToken) {
+                return ir.rtcall("Boolean_::bang", [emitCondition(node.operand)])
             }
 
             if (tp.flags & TypeFlags.Number) {
@@ -1591,25 +1633,49 @@ ${lbl}: .short 0xffff
             throw unhandled(node, lf("unsupported prefix unary operation"), 9245)
         }
 
-        function prepForAssignment(trg: Expression) {
-            let left = emitExpr(trg)
-            let storeCache: ir.Expr = null
-            if (left.exprKind == EK.FieldAccess) {
-                left.args[0] = ir.shared(left.args[0])
-                storeCache = emitExpr(trg) // clone
-                storeCache.args[0] = ir.op(EK.Incr, [left.args[0]])
-                proc.emitExpr(left.args[0])
+        function doNothing() { }
+
+        function needsCache(e: Expression) {
+            let c = e as NodeWithCache
+            c.needsIRCache = true
+            irCachesToClear.push(c)
+        }
+
+        function prepForAssignment(trg: Expression, src: Expression = null) {
+            let prev = irCachesToClear.length
+            if (trg.kind == SK.PropertyAccessExpression || trg.kind == SK.ElementAccessExpression) {
+                needsCache((trg as PropertyAccessExpression).expression)
             }
-            left = ir.shared(left)
-            return { left, storeCache }
+            if (src)
+                needsCache(src)
+            if (irCachesToClear.length == prev)
+                return doNothing
+            else
+                return () => {
+                    for (let i = prev; i < irCachesToClear.length; ++i) {
+                        irCachesToClear[i].cachedIR = null
+                        irCachesToClear[i].needsIRCache = false
+                    }
+                    irCachesToClear.splice(prev, irCachesToClear.length - prev)
+                }
+        }
+
+        function irToNode(expr: ir.Expr, isRef = false): Expression {
+            return {
+                kind: SK.NullKeyword,
+                isRefOverride: isRef,
+                valueOverride: expr
+            } as any
         }
 
         function emitIncrement(trg: Expression, meth: string, isPost: boolean, one: Expression = null) {
-            let tmp = prepForAssignment(trg)
+            let cleanup = prepForAssignment(trg)
             let oneExpr = one ? emitExpr(one) : ir.numlit(1)
-            let result = ir.shared(ir.rtcall(meth, [tmp.left, oneExpr]))
-            emitStore(trg, result, tmp.storeCache)
-            return isPost ? tmp.left : result
+            let prev = ir.shared(emitExpr(trg))
+            let result = ir.shared(ir.rtcall(meth, [prev, oneExpr]))
+            emitStore(trg, irToNode(result))
+            cleanup()
+            return isPost ? prev : result
         }
 
         function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
@@ -1647,32 +1713,41 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitStore(trg: Expression, src: ir.Expr, cachedTrg: ir.Expr = null) {
+        function emitStore(trg: Expression, src: Expression) {
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
             if (trg.kind == SK.Identifier || isGlobal) {
                 if (decl && (isGlobal || decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
                     let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
-                    proc.emitExpr(l.storeByRef(src))
+                    proc.emitExpr(l.storeByRef(emitExpr(src)))
                 } else {
                     unhandled(trg, lf("bad target identifier"), 9248)
                 }
             } else if (trg.kind == SK.PropertyAccessExpression) {
-                proc.emitExpr(ir.op(EK.Store, [cachedTrg || emitExpr(trg), src]))
+                let decl = getDecl(trg)
+                if (decl && decl.kind == SK.GetAccessor) {
+                    decl = getDeclarationOfKind(decl.symbol, SK.SetAccessor)
+                    if (!decl) {
+                        unhandled(trg, lf("setter not available"), 9253)
+                    }
+                    proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
+                } else {
+                    proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
+                }
             } else if (trg.kind == SK.ElementAccessExpression) {
-                proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
+                proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, emitExpr(src)))
             } else {
                 unhandled(trg, lf("bad assignment target"), 9249)
             }
         }
 
         function handleAssignment(node: BinaryExpression) {
-            let src = ir.shared(emitExpr(node.right))
-            emitStore(node.left, src)
-            if (isRefType(typeOf(node.right)))
-                src = ir.op(EK.Incr, [src])
-            return src
+            let cleanup = prepForAssignment(node.left, node.right)
+            emitStore(node.left, node.right)
+            let res = emitExpr(node.right)
+            cleanup()
+            return res
         }
 
         function rtcallMask(name: string, args: Expression[], callingConv = ir.CallingConvention.Plain, append: ir.Expr[] = null) {
@@ -1689,11 +1764,24 @@ ${lbl}: .short 0xffff
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let lbl = proc.mkLabel("lazy")
-            // TODO what if the value is of ref type?
+            let left = emitExpr(node.left)
+            let isString = typeOf(node.left).flags & TypeFlags.String
             if (node.operatorToken.kind == SK.BarBarToken) {
-                proc.emitJmp(lbl, emitExpr(node.left), ir.JmpMode.IfNotZero)
+                if (isString)
+                    left = ir.rtcall("pxtrt::emptyToNull", [left])
+                proc.emitJmp(lbl, left, ir.JmpMode.IfNotZero)
             } else if (node.operatorToken.kind == SK.AmpersandAmpersandToken) {
-                proc.emitJmpZ(lbl, emitExpr(node.left))
+                left = ir.shared(left)
+                if (isString) {
+                    let slbl = proc.mkLabel("lazyStr")
+                    proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
+                    proc.emitJmp(lbl, left, ir.JmpMode.Always)
+                    proc.emitLbl(slbl)
+                } else {
+                    proc.emitJmpZ(lbl, left)
+                }
+                if (isRefCountedExpr(node.left))
+                    proc.emitExpr(ir.op(EK.Decr, [left]))
             } else {
                 oops()
             }
@@ -1797,6 +1885,12 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            switch (node.operatorToken.kind) {
+                case SK.BarBarToken:
+                case SK.AmpersandAmpersandToken:
+                    return emitLazyBinaryExpression(node);
+            }
+
             if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
@@ -1818,11 +1912,12 @@ ${lbl}: .short 0xffff
             if (node.operatorToken.kind == SK.PlusEqualsToken &&
                 (lt.flags & TypeFlags.String)) {
 
-                let tmp = prepForAssignment(node.left)
+                let cleanup = prepForAssignment(node.left)
                 let post = ir.shared(ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
-                    tmp.left,
+                    emitExpr(node.left),
                     emitAsString(node.right)]))
-                emitStore(node.left, post, tmp.storeCache)
+                emitStore(node.left, irToNode(post))
+                cleanup();
                 return ir.op(EK.Incr, [post])
             }
 
@@ -1852,9 +1947,6 @@ ${lbl}: .short 0xffff
                 case SK.ExclamationEqualsEqualsToken:
                 case SK.ExclamationEqualsToken:
                     return shim("Number_::neq");
-                case SK.BarBarToken:
-                case SK.AmpersandAmpersandToken:
-                    return emitLazyBinaryExpression(node);
                 default:
                     throw unhandled(node.operatorToken, lf("unknown generic operator"), 9252)
             }
@@ -1872,15 +1964,30 @@ ${lbl}: .short 0xffff
                 return ir.rtcall("Boolean_::toString", [r])
             else if (tp.flags & TypeFlags.String)
                 return r // OK
-            else
+            else {
+                let decl = tp.symbol ? tp.symbol.valueDeclaration : null
+                if (decl && (decl.kind == SK.ClassDeclaration || decl.kind == SK.InterfaceDeclaration)) {
+                    let classDecl = decl as ClassDeclaration
+                    let toString = classDecl.members.filter(m =>
+                        (m.kind == SK.MethodDeclaration || m.kind == SK.MethodSignature) &&
+                        (m as MethodDeclaration).parameters.length == 0 &&
+                        getName(m) == "toString")[0] as MethodDeclaration
+                    if (toString) {
+                        let ee = e as Expression
+                        return emitCallCore(ee, ee, [], null, toString, ee)
+                    } else {
+                        throw userError(9254, lf("type {0} lacks toString() method", getName(decl)))
+                        //return emitStringLiteral("[" + getName(decl) + "]")
+                    }
+                }
                 throw userError(9225, lf("don't know how to convert to string"))
+            }
         }
 
         function emitConditionalExpression(node: ConditionalExpression) {
             let els = proc.mkLabel("condexprz")
             let fin = proc.mkLabel("condexprfin")
-            // TODO what if the value is of ref type?
-            proc.emitJmp(els, emitExpr(node.condition), ir.JmpMode.IfZero)
+            proc.emitJmp(els, emitCondition(node.condition), ir.JmpMode.IfZero)
             proc.emitJmp(fin, emitExpr(node.whenTrue), ir.JmpMode.Always)
             proc.emitLbl(els)
             proc.emitJmp(fin, emitExpr(node.whenFalse), ir.JmpMode.Always)
@@ -1901,10 +2008,21 @@ ${lbl}: .short 0xffff
         function emitExpressionStatement(node: ExpressionStatement) {
             emitExprAsStmt(node.expression)
         }
+        function emitCondition(expr: Expression) {
+            let inner = emitExpr(expr)
+            // in both cases unref is internal, so no mask
+            if (typeOf(expr).flags & TypeFlags.String) {
+                return ir.rtcall("pxtrt::stringToBool", [inner])
+            } else if (isRefCountedExpr(expr)) {
+                return ir.rtcall("pxtrt::ptrToBool", [inner])
+            } else {
+                return inner
+            }
+        }
         function emitIfStatement(node: IfStatement) {
             emitBrk(node)
             let elseLbl = proc.mkLabel("else")
-            proc.emitJmpZ(elseLbl, emitExpr(node.expression))
+            proc.emitJmpZ(elseLbl, emitCondition(node.expression))
             emit(node.thenStatement)
             let afterAll = proc.mkLabel("afterif")
             proc.emitJmp(afterAll)
@@ -1929,7 +2047,7 @@ ${lbl}: .short 0xffff
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
             emit(node.statement)
-            proc.emitJmpZ(l.brk, emitExpr(node.expression));
+            proc.emitJmpZ(l.brk, emitCondition(node.expression));
             proc.emitJmp(l.cont);
             proc.emitLblDirect(l.brk);
         }
@@ -1938,7 +2056,7 @@ ${lbl}: .short 0xffff
             emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
-            proc.emitJmpZ(l.brk, emitExpr(node.expression));
+            proc.emitJmpZ(l.brk, emitCondition(node.expression));
             emit(node.statement)
             proc.emitJmp(l.cont);
             proc.emitLblDirect(l.brk);
@@ -1985,7 +2103,7 @@ ${lbl}: .short 0xffff
             let l = getLabels(node)
             proc.emitLblDirect(l.fortop);
             if (node.condition)
-                proc.emitJmpZ(l.brk, emitExpr(node.condition));
+                proc.emitJmpZ(l.brk, emitCondition(node.condition));
             emit(node.statement)
             proc.emitLblDirect(l.cont);
             emitExprAsStmt(node.incrementor);
@@ -2226,8 +2344,19 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitExpr(node: Node) {
-            return catchErrors(node, emitExprInner) || ir.numlit(0)
+        function emitExpr(node0: Node): ir.Expr {
+            let node = node0 as NodeWithCache
+            if (node.cachedIR) {
+                if (isRefCountedExpr(node0 as Expression))
+                    return ir.op(EK.Incr, [node.cachedIR])
+                return node.cachedIR
+            }
+            let res = catchErrors(node, emitExprInner) || ir.numlit(0)
+            if (node.needsIRCache) {
+                node.cachedIR = ir.shared(res)
+                return node.cachedIR
+            }
+            return res
         }
 
         function emitExprInner(node: Node): ir.Expr {
@@ -2295,6 +2424,9 @@ ${lbl}: .short 0xffff
                     return
                 case SK.DebuggerStatement:
                     return emitDebuggerStatement(node);
+                case SK.GetAccessor:
+                case SK.SetAccessor:
+                    return emitAccessor(<AccessorDeclaration>node);
                 default:
                     unhandled(node);
             }
@@ -2304,7 +2436,8 @@ ${lbl}: .short 0xffff
             switch (node.kind) {
                 case SK.NullKeyword:
                     let v = (node as any).valueOverride;
-                    return ir.numlit(v || null);
+                    if (v) return v
+                    return ir.numlit(null);
                 case SK.TrueKeyword:
                     return ir.numlit(true);
                 case SK.FalseKeyword:
@@ -2360,9 +2493,6 @@ ${lbl}: .short 0xffff
                     return emitTemplateSpan(<TemplateSpan>node);
                 case SyntaxKind.Parameter:
                     return emitParameter(<ParameterDeclaration>node);
-                case SyntaxKind.GetAccessor:
-                case SyntaxKind.SetAccessor:
-                    return emitAccessor(<AccessorDeclaration>node);
                 case SyntaxKind.SuperKeyword:
                     return emitSuper(node);
                 case SyntaxKind.JsxElement:
