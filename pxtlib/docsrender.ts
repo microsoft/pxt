@@ -356,4 +356,10 @@ namespace pxt.docs {
             return res;
         });
     }
+
+    export function embedUrl(rootUrl: string, id: string, height?: number) : string {
+        const docurl = `${rootUrl}--docs?projectid=${id}`;
+        height = Math.ceil(height || 300);
+        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
+    }
 }
