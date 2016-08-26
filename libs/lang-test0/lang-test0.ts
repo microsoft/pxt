@@ -1000,6 +1000,15 @@ function testLazyRef() {
     assert(z == 13, "13")
 }
 
+function testNull() {
+    let x = 0
+    let y = 0
+    x = null
+    assert(x == y, "null")
+    y = 1
+    assert(x != y, "null")
+}
+
 
 // ---------------------------------------------------------------------------
 // Driver starts
@@ -1039,6 +1048,7 @@ testStatic()
 testAccessors()
 testBoolCasts()
 testLazyRef()
+testNull()
 
 
 msg("test top level code")

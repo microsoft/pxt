@@ -257,6 +257,14 @@ namespace pxsim {
         export var incr = pxsim.incr;
         export var decr = pxsim.decr;
 
+        export function nullFix(v: any) {
+            if (v === null || v === undefined || v === false)
+                return 0
+            if (v === true)
+                return 1
+            return v
+        }
+
         export function panic(code: number) {
             U.userError("PANIC! Code " + code)
         }
