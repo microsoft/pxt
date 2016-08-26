@@ -358,7 +358,7 @@ namespace pxt {
             if (!Array.isArray(this.config.files))
                 U.userError("Missing files in config of: " + this.id)
             if (typeof this.config.name != "string" || !this.config.name ||
-                (this.config.public && !/^[a-z][a-z0-9\-]+$/.test(this.config.name)))
+                (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
                 U.userError("Invalid package name: " + this.config.name)
             let minVer = this.config.minTargetVersion
             if (minVer && semver.strcmp(minVer, appTarget.versions.target) > 0)
