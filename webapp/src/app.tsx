@@ -335,11 +335,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let docembed: string;
         let vscode: string;
         if (ready) {
-            let runurl = `${rootUrl}--run?id=${header.pubId}`;
-            let docurl = `${rootUrl}--docs?projectid=${header.pubId}`;
-            let blocksHeight = Math.ceil(header.meta.blocksHeight || 300);
-            url = `${rootUrl}${header.pubId}`
-            docembed = `<div style="position:relative;height:calc(${blocksHeight}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div>`
+            docembed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
             vscode = `pxt extract ${header.pubId}`
         }
 
@@ -950,10 +946,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let files: ScriptText = Util.clone(prj.files)
         if (fileOverrides)
             Util.jsonCopyFrom(files, fileOverrides)
-        // remove markdown files
-        cfg.files = cfg.files.filter(f => !/\.md$/i.test(f));
-        for (let fk in files)
-            if (/\.md$/i.test(fk)) delete files[fk];
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
         return workspace.installAsync({
             name: cfg.name,
