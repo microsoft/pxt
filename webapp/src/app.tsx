@@ -664,7 +664,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     public componentDidMount() {
-        this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
         this.allEditors.forEach(e => e.prepare())
         simulator.init($("#boardview")[0], {
             highlightStatement: stmt => {
@@ -851,6 +850,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         }
                     })
                     .done()
+
+                let readme = main.lookupFile("this/README.md");
+                if (readme && readme.content && readme.content.trim())
+                    this.setSideMarkdown(readme.content);
+                else this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
             })
     }
 
