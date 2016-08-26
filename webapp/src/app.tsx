@@ -1041,7 +1041,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     name: p.header.name || "Untitled",
                     code: code ? code.content : "basic.showString('Hello!');",
                 };
-                let parts = ts.pxt.computeUsedParts(resp);
+                let parts = ts.pxtc.computeUsedParts(resp);
                 if (parts)
                     data.parts = parts.join(" ");
                 let urlData = $.param(data);
