@@ -404,6 +404,9 @@ export class Editor extends srceditor.Editor {
         this.setDiagnostics(file, this.snapshotState())
 
         this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
+
+        if (this.fileType == FileType.Markdown)
+            this.parent.setSideMarkdown(file.content);
     }
 
     snapshotState() {
