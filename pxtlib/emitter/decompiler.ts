@@ -29,9 +29,9 @@ namespace ts.pxtc.decompiler {
         "Math.max": { blockId: "math_op2", block: "of %x|and %y", fields: `<field name="op">max</field>` }
     }
 
-    export function decompileToBlocks(blocksInfo: ts.pxtc.BlocksInfo, file: ts.SourceFile): ts.pxtc.CompileResult {
+    export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile): pxtc.CompileResult {
         let stmts: ts.Statement[] = file.statements;
-        let result: ts.pxtc.CompileResult = {
+        let result: pxtc.CompileResult = {
             blocksInfo: blocksInfo,
             outfiles: {}, diagnostics: [], success: true, times: {}
         }
@@ -98,7 +98,7 @@ ${output}</xml>`;
         }
 
         function error(n: ts.Node, msg?: string) {
-            let diags = ts.pxtc.patchUpDiagnostics([{
+            let diags = pxtc.patchUpDiagnostics([{
                 file: file,
                 start: n.getFullStart(),
                 length: n.getFullWidth(),
@@ -315,7 +315,7 @@ ${output}</xml>`;
         }
 
         function emitPropertyAccessExpression(n: ts.PropertyAccessExpression): void {
-            let callInfo = (n as any).callInfo as ts.pxtc.CallInfo;
+            let callInfo = (n as any).callInfo as pxtc.CallInfo;
             if (!callInfo) {
                 error(n);
                 return;
@@ -448,7 +448,7 @@ ${output}</xml>`;
             write(`<block type="logic_boolean"><field name="BOOL">${U.htmlEscape(n.kind == ts.SyntaxKind.TrueKeyword ? 'TRUE' : 'FALSE')}</field></block>`)
         }
 
-        function emitCallImageLiteralExpression(node: ts.CallExpression, info: ts.pxtc.CallInfo) {
+        function emitCallImageLiteralExpression(node: ts.CallExpression, info: pxtc.CallInfo) {
             let arg = node.arguments[0];
             if (arg.kind != ts.SyntaxKind.StringLiteral && arg.kind != ts.SyntaxKind.NoSubstitutionTemplateLiteral) {
                 error(node)
@@ -467,7 +467,7 @@ ${output}</xml>`;
 
         function emitCallExpression(node: ts.CallExpression) {
             let extraArgs = '';
-            let info: ts.pxtc.CallInfo = (node as any).callInfo
+            let info: pxtc.CallInfo = (node as any).callInfo
             if (!info) {
                 error(node);
                 return;

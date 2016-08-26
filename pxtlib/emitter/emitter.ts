@@ -2,7 +2,7 @@ namespace ts.pxtc {
     export const assert = Util.assert;
     export const oops = Util.oops;
     export type StringMap<T> = Util.Map<T>;
-    export import U = ts.pxtc.Util;
+    export import U = pxtc.Util;
 
     export const BINARY_JS = "binary.js";
     export const BINARY_HEX = "binary.hex";

@@ -270,8 +270,8 @@ namespace ts.pxtc {
 
         let file = resp.ast.getSourceFile(fileName);
         let apis = getApiInfo(resp.ast);
-        let blocksInfo = ts.pxtc.getBlocksInfo(apis);
-        let bresp = ts.pxtc.decompiler.decompileToBlocks(blocksInfo, file)
+        let blocksInfo = pxtc.getBlocksInfo(apis);
+        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file)
         return bresp;
     }
 }

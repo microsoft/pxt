@@ -61,7 +61,7 @@ namespace ts.pxtc {
 . . . . .
 `
 
-    function renderDefaultVal(apis: ts.pxtc.ApisInfo, p: ts.pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
+    function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
         if (p.defaults) return p.defaults[0]
         if (p.type == "number") return "0"
@@ -85,7 +85,7 @@ namespace ts.pxtc {
         return placeholderChar;
     }
 
-    export function renderParameters(apis: ts.pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
+    export function renderParameters(apis: pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
         if (si.parameters) {
             let imgLit = !!si.attributes.imageLiteral
             return "(" + si.parameters
@@ -213,7 +213,7 @@ namespace ts.pxtc {
         return {
             apis: info,
             blocks: pxtc.Util.values(info.byQName)
-                .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != ts.pxtc.SymbolKind.EnumMember))
+                .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != pxtc.SymbolKind.EnumMember))
         }
     }
 
