@@ -119,8 +119,8 @@ namespace pxsim {
     export namespace Number_ {
         export function lt(x: number, y: number) { return x < y; }
         export function le(x: number, y: number) { return x <= y; }
-        export function neq(x: number, y: number) { return x != y; }
-        export function eq(x: number, y: number) { return x == y; }
+        export function neq(x: number, y: number) { return !eq(x, y); }
+        export function eq(x: number, y: number) { return pxtrt.nullFix(x) == pxtrt.nullFix(y); }
         export function gt(x: number, y: number) { return x > y; }
         export function ge(x: number, y: number) { return x >= y; }
         export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
@@ -142,8 +142,8 @@ namespace pxsim {
 
         export function cmp_lt(x: number, y: number) { return x < y; }
         export function cmp_le(x: number, y: number) { return x <= y; }
-        export function cmp_ne(x: number, y: number) { return x != y; }
-        export function cmp_eq(x: number, y: number) { return x == y; }
+        export function cmp_ne(x: number, y: number) { return !cmp_eq(x, y); }
+        export function cmp_eq(x: number, y: number) { return pxtrt.nullFix(x) == pxtrt.nullFix(y); }
         export function cmp_gt(x: number, y: number) { return x > y; }
         export function cmp_ge(x: number, y: number) { return x >= y; }
     }

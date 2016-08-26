@@ -373,7 +373,7 @@ namespace ts.pxt {
 
     function checkType(t: Type) {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
-            TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null
+            TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null | TypeFlags.Undefined
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
@@ -900,7 +900,7 @@ ${lbl}: .short 0xffff
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
                 if (node.text == "undefined")
-                    throw unhandled(node, lf("undefined not supported"), 9200)
+                    return ir.numlit(null)
                 else
                     throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
             }
@@ -1606,10 +1606,8 @@ ${lbl}: .short 0xffff
         function emitAwaitExpression(node: AwaitExpression) { }
         function emitPrefixUnaryExpression(node: PrefixUnaryExpression): ir.Expr {
             let tp = typeOf(node.operand)
-            if (tp.flags & TypeFlags.Boolean) {
-                if (node.operator == SK.ExclamationToken) {
-                    return rtcallMask("Boolean_::bang", [node.operand])
-                }
+            if (node.operator == SK.ExclamationToken) {
+                return ir.rtcall("Boolean_::bang", [emitCondition(node.operand)])
             }
 
             if (tp.flags & TypeFlags.Number) {
@@ -1761,11 +1759,24 @@ ${lbl}: .short 0xffff
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let lbl = proc.mkLabel("lazy")
-            // TODO what if the value is of ref type?
+            let left = emitExpr(node.left)
+            let isString = typeOf(node.left).flags & TypeFlags.String
             if (node.operatorToken.kind == SK.BarBarToken) {
-                proc.emitJmp(lbl, emitExpr(node.left), ir.JmpMode.IfNotZero)
+                if (isString)
+                    left = ir.rtcall("pxtrt::emptyToNull", [left])
+                proc.emitJmp(lbl, left, ir.JmpMode.IfNotZero)
             } else if (node.operatorToken.kind == SK.AmpersandAmpersandToken) {
-                proc.emitJmpZ(lbl, emitExpr(node.left))
+                left = ir.shared(left)
+                if (isString) {
+                    let slbl = proc.mkLabel("lazyStr")
+                    proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
+                    proc.emitJmp(lbl, left, ir.JmpMode.Always)
+                    proc.emitLbl(slbl)
+                } else {
+                    proc.emitJmpZ(lbl, left)
+                }
+                if (isRefCountedExpr(node.left))
+                    proc.emitExpr(ir.op(EK.Decr, [left]))
             } else {
                 oops()
             }
@@ -1869,6 +1880,12 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            switch (node.operatorToken.kind) {
+                case SK.BarBarToken:
+                case SK.AmpersandAmpersandToken:
+                    return emitLazyBinaryExpression(node);
+            }
+
             if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
@@ -1925,9 +1942,6 @@ ${lbl}: .short 0xffff
                 case SK.ExclamationEqualsEqualsToken:
                 case SK.ExclamationEqualsToken:
                     return shim("Number_::neq");
-                case SK.BarBarToken:
-                case SK.AmpersandAmpersandToken:
-                    return emitLazyBinaryExpression(node);
                 default:
                     throw unhandled(node.operatorToken, lf("unknown generic operator"), 9252)
             }
@@ -1952,8 +1966,7 @@ ${lbl}: .short 0xffff
         function emitConditionalExpression(node: ConditionalExpression) {
             let els = proc.mkLabel("condexprz")
             let fin = proc.mkLabel("condexprfin")
-            // TODO what if the value is of ref type?
-            proc.emitJmp(els, emitExpr(node.condition), ir.JmpMode.IfZero)
+            proc.emitJmp(els, emitCondition(node.condition), ir.JmpMode.IfZero)
             proc.emitJmp(fin, emitExpr(node.whenTrue), ir.JmpMode.Always)
             proc.emitLbl(els)
             proc.emitJmp(fin, emitExpr(node.whenFalse), ir.JmpMode.Always)
@@ -1974,10 +1987,21 @@ ${lbl}: .short 0xffff
         function emitExpressionStatement(node: ExpressionStatement) {
             emitExprAsStmt(node.expression)
         }
+        function emitCondition(expr: Expression) {
+            let inner = emitExpr(expr)
+            // in both cases unref is internal, so no mask
+            if (typeOf(expr).flags & TypeFlags.String) {
+                return ir.rtcall("pxtrt::stringToBool", [inner])
+            } else if (isRefCountedExpr(expr)) {
+                return ir.rtcall("pxtrt::ptrToBool", [inner])
+            } else {
+                return inner
+            }
+        }
         function emitIfStatement(node: IfStatement) {
             emitBrk(node)
             let elseLbl = proc.mkLabel("else")
-            proc.emitJmpZ(elseLbl, emitExpr(node.expression))
+            proc.emitJmpZ(elseLbl, emitCondition(node.expression))
             emit(node.thenStatement)
             let afterAll = proc.mkLabel("afterif")
             proc.emitJmp(afterAll)
@@ -2002,7 +2026,7 @@ ${lbl}: .short 0xffff
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
             emit(node.statement)
-            proc.emitJmpZ(l.brk, emitExpr(node.expression));
+            proc.emitJmpZ(l.brk, emitCondition(node.expression));
             proc.emitJmp(l.cont);
             proc.emitLblDirect(l.brk);
         }
@@ -2011,7 +2035,7 @@ ${lbl}: .short 0xffff
             emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
-            proc.emitJmpZ(l.brk, emitExpr(node.expression));
+            proc.emitJmpZ(l.brk, emitCondition(node.expression));
             emit(node.statement)
             proc.emitJmp(l.cont);
             proc.emitLblDirect(l.brk);
@@ -2058,7 +2082,7 @@ ${lbl}: .short 0xffff
             let l = getLabels(node)
             proc.emitLblDirect(l.fortop);
             if (node.condition)
-                proc.emitJmpZ(l.brk, emitExpr(node.condition));
+                proc.emitJmpZ(l.brk, emitCondition(node.condition));
             emit(node.statement)
             proc.emitLblDirect(l.cont);
             emitExprAsStmt(node.incrementor);
