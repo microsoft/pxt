@@ -60,6 +60,8 @@ interface IAppState {
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
     sideDocsCollapsed?: boolean;
+    sideDocsPath?: string;
+    sideDocsMarkdown?: string;
 
     running?: boolean;
     publishing?: boolean;
@@ -397,20 +399,6 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    setPath(path: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el)
-            el.src = `${docsUrl}#doc:${path}`;
-    }
-
-    setMarkdown(md: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el)
-            el.src = `${docsUrl}#md:${encodeURIComponent(md)}`;
-    }
-
     toggleVisibility() {
         const state = this.props.parent.state;
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
@@ -423,10 +411,20 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     renderCore() {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const state = this.props.parent.state;
+        const path = state.sideDocsPath;
+        const md = state.sideDocsMarkdown;
         const icon = state.sideDocsCollapsed ? "expand" : "compress";
+
+        const popUrl = path ? `${path}`
+            : md ? `${docsUrl}?md=${encodeURIComponent(md)}` : undefined;
+        const sideUrl = path ? `${docsUrl}#doc:${encodeURIComponent(path)}`
+            : md ? `${docsUrl}#md:${encodeURIComponent(md)}` : docsUrl;
         return <div>
-            <iframe id="sidedocs" src={docsUrl} role="complementary" />
-            <button id="sidedocsbutton" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
+            <iframe id="sidedocs" src={sideUrl} role="complementary" />
+            {popUrl ? <a target="_blank" id="sidedocspopout" className="circular ui icon button" href={popUrl}>
+                <i className={`external icon`}></i>
+            </a> : undefined}
+            <button id="sidedocsexpand" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`${icon} icon`}></i>
             </button>
         </div>
@@ -770,17 +768,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setSideMarkdown(md: string) {
-        let sd = this.refs["sidedoc"] as SideDocs;
-        if (!sd) return;
-        sd.setMarkdown(md);
-        this.setState({ sideDocsCollapsed: false });
+        this.setState({ 
+            sideDocsMarkdown: md,
+            sideDocsPath: undefined,
+            sideDocsCollapsed: false });
     }
 
     setSideDoc(path: string) {
-        let sd = this.refs["sidedoc"] as SideDocs;
-        if (!sd) return;
-        sd.setPath(path);
-        this.setState({ sideDocsCollapsed: false });
+        this.setState({ 
+            sideDocsMarkdown: undefined,
+            sideDocsPath: path,
+            sideDocsCollapsed: false });
     }
 
     reloadHeaderAsync() {
