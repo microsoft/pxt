@@ -39,7 +39,6 @@ namespace pxt {
 
 namespace pxt.cpp {
     import U = pxtc.Util;
-    import Y = ts.pxtc;
     let lf = U.lf;
 
     function parseExpr(e: string): number {
@@ -107,7 +106,7 @@ namespace pxt.cpp {
         return null
     }
 
-    let prevExtInfo: Y.ExtensionInfo;
+    let prevExtInfo: pxtc.ExtensionInfo;
     let prevSnapshot: U.Map<string>;
 
     export class PkgConflictError extends Error {
@@ -123,7 +122,7 @@ namespace pxt.cpp {
         }
     }
 
-    export function getExtensionInfo(mainPkg: MainPackage): Y.ExtensionInfo {
+    export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
         let pkgSnapshot: U.Map<string> = {}
         let constsName = "dal.d.ts"
 
@@ -138,7 +137,7 @@ namespace pxt.cpp {
 
         pxt.debug("Generating new extinfo")
 
-        let res = Y.emptyExtInfo();
+        let res = pxtc.emptyExtInfo();
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
@@ -385,7 +384,7 @@ namespace pxt.cpp {
                         return `${argName}${qm}: ${mapType(m[1])}`
                     })
                     let numArgs = args.length
-                    let fi: Y.FuncInfo = {
+                    let fi: pxtc.FuncInfo = {
                         name: currNs + "::" + funName,
                         type: retTp == "void" ? "P" : "F",
                         args: numArgs,
