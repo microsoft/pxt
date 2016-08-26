@@ -229,6 +229,7 @@ file("built/web/pxtlib.js", [
     let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
     monacoeditor = monacoeditor.replace("var FocusHeight = 35", "var FocusHeight = 45");
     monacoeditor = monacoeditor.replace("var UnfocusedHeight = 19", "var UnfocusedHeight = 29");
+    monacoeditor = monacoeditor.replace("define(\"vs/language/typescript/src/monaco.contribution\",", "/*define(\"vs/language/typescript/src/monaco.contribution\",")
     fs.writeFileSync("webapp/public/vs/editor/editor.main.js", monacoeditor)
 
     jake.cpR("node_modules/monaco-editor/dev/vs/css.js", "webapp/public/vs/")

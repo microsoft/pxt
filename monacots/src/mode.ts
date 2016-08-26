@@ -17,21 +17,19 @@ import IDisposable = monaco.IDisposable;
 let javaScriptWorker: (first: Uri, ...more: Uri[]) => Promise<TypeScriptWorker>;
 let typeScriptWorker: (first: Uri, ...more: Uri[]) => Promise<TypeScriptWorker>;
 
-export function setupTypeScript(defaults: LanguageServiceDefaultsImpl, stopWorkerWhenIdleFor?: number): void {
+export function setupTypeScript(defaults: LanguageServiceDefaultsImpl): void {
     typeScriptWorker = setupMode(
         defaults,
         'typescript',
-        Language.TypeScript,
-        stopWorkerWhenIdleFor
+        Language.TypeScript
     );
 }
 
-export function setupJavaScript(defaults: LanguageServiceDefaultsImpl, stopWorkerWhenIdleFor?: number): void {
+export function setupJavaScript(defaults: LanguageServiceDefaultsImpl): void {
     javaScriptWorker = setupMode(
         defaults,
         'javascript',
-        Language.EcmaScript5,
-        stopWorkerWhenIdleFor
+        Language.EcmaScript5
     );
 }
 
@@ -55,11 +53,11 @@ export function getTypeScriptWorker(): Promise<TypeScriptWorker> {
     });
 }
 
-function setupMode(defaults: LanguageServiceDefaultsImpl, modeId: string, language: Language, stopWorkerWhenIdleFor?: number): (first: Uri, ...more: Uri[]) => Promise<TypeScriptWorker> {
+function setupMode(defaults: LanguageServiceDefaultsImpl, modeId: string, language: Language): (first: Uri, ...more: Uri[]) => Promise<TypeScriptWorker> {
 
     let disposables: IDisposable[] = [];
 
-    const client = new WorkerManager(defaults, stopWorkerWhenIdleFor);
+    const client = new WorkerManager(defaults);
     disposables.push(client);
 
     const worker = (first: Uri, ...more: Uri[]): Promise<TypeScriptWorker> => {
