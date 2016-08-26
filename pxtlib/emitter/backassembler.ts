@@ -1,6 +1,6 @@
 // base class for generating assembly code 
 
-namespace ts.pxt {
+namespace ts.pxtc {
 
     abstract class AssemblySnippets {
         public reg_gets_imm(reg: string, imm: number) { return "TBD" }

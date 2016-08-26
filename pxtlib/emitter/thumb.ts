@@ -17,32 +17,6 @@ namespace ts.pxtc.thumb {
 
     export class ThumbProcessor extends pxtc.assembler.EncodersInstructions {
 
-        public is32bit(name: string) {
-            return name == "bl" || name == "bb";
-        }
-
-        public emit32(v: number, actual: string): pxtc.assembler.EmitResult {
-            if (v % 2) return pxtc.assembler.emitErr("uneven BL?", actual);
-            let off = v / 2
-            assert(off != null)
-            if ((off | 0) != off ||
-                // we can actually support more but the board has 256k (128k instructions)
-                !(-128 * 1024 <= off && off <= 128 * 1024))
-                return pxtc.assembler.emitErr("jump out of range", actual);
-
-            // note that off is already in instructions, not bytes
-            let imm11 = off & 0x7ff
-            let imm10 = (off >> 11) & 0x3ff
-
-            return {
-                opcode: (off & 0xf0000000) ? (0xf400 | imm10) : (0xf000 | imm10),
-                opcode2: (0xf800 | imm11),
-                stack: 0,
-                numArgs: [v],
-                labelName: actual
-            }
-        }
-
         constructor() {
             super();
 
@@ -207,14 +181,14 @@ namespace ts.pxtc.thumb {
             return i.name == "bl" || i.name == "bb";
         }
 
-        public emit32(i: ts.pxt.assembler.Instruction, v: number, actual: string): ts.pxt.assembler.EmitResult {
-            if (v % 2) return ts.pxt.assembler.emitErr("uneven BL?", actual);
+        public emit32(i: pxtc.assembler.Instruction, v: number, actual: string): pxtc.assembler.EmitResult {
+            if (v % 2) return pxtc.assembler.emitErr("uneven BL?", actual);
             let off = v / 2
             assert(off != null)
             if ((off | 0) != off ||
                 // we can actually support more but the board has 256k (128k instructions)
                 !(-128 * 1024 <= off && off <= 128 * 1024))
-                return ts.pxt.assembler.emitErr("jump out of range", actual);
+                return pxtc.assembler.emitErr("jump out of range", actual);
 
             // note that off is already in instructions, not bytes
             let imm11 = off & 0x7ff
@@ -245,7 +219,7 @@ namespace ts.pxtc.thumb {
             return opcode == 0xb400;
         }
 
-        public peephole(ln: ts.pxt.assembler.Line, lnNext: ts.pxt.assembler.Line, lnNext2: ts.pxt.assembler.Line) {
+        public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
 
             let lb11 = this.encoders["$lb11"]
             let lb = this.encoders["$lb"]
@@ -324,20 +298,20 @@ namespace ts.pxtc.thumb {
 
 
     // if true then instruction doesn't write r<n> and doesn't read/write memory
-    function preservesReg(ln: pxt.assembler.Line, n: number) {
+    function preservesReg(ln: pxtc.assembler.Line, n: number) {
         if (ln.getOpExt() == "movs $r5, $i0" && ln.numArgs[0] != n)
             return true;
         return false;
     }
 
-    function clobbersReg(ln: pxt.assembler.Line, n: number) {
+    function clobbersReg(ln: pxtc.assembler.Line, n: number) {
         // TODO add some more
         if (ln.getOp() == "pop" && ln.numArgs[0] & (1 << n))
             return true;
         return false;
     }
 
-    function singleReg(ln: pxt.assembler.Line) {
+    function singleReg(ln: pxtc.assembler.Line) {
         assert(ln.getOp() == "push" || ln.getOp() == "pop")
         let k = 0;
         let ret = -1;
