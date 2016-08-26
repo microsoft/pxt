@@ -1759,11 +1759,24 @@ ${lbl}: .short 0xffff
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let lbl = proc.mkLabel("lazy")
-            // TODO what if the value is of ref type?
+            let left = emitExpr(node.left)
+            let isString = typeOf(node.left).flags & TypeFlags.String
             if (node.operatorToken.kind == SK.BarBarToken) {
-                proc.emitJmp(lbl, emitExpr(node.left), ir.JmpMode.IfNotZero)
+                if (isString)
+                    left = ir.rtcall("pxtrt::emptyToNull", [left])
+                proc.emitJmp(lbl, left, ir.JmpMode.IfNotZero)
             } else if (node.operatorToken.kind == SK.AmpersandAmpersandToken) {
-                proc.emitJmpZ(lbl, emitExpr(node.left))
+                left = ir.shared(left)
+                if (isString) {
+                    let slbl = proc.mkLabel("lazyStr")
+                    proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
+                    proc.emitJmp(lbl, left, ir.JmpMode.Always)
+                    proc.emitLbl(slbl)
+                } else {
+                    proc.emitJmpZ(lbl, left)
+                }
+                if (isRefCountedExpr(node.left))
+                    proc.emitExpr(ir.op(EK.Decr, [left]))
             } else {
                 oops()
             }
@@ -1867,6 +1880,12 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            switch (node.operatorToken.kind) {
+                case SK.BarBarToken:
+                case SK.AmpersandAmpersandToken:
+                    return emitLazyBinaryExpression(node);
+            }
+
             if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
@@ -1923,9 +1942,6 @@ ${lbl}: .short 0xffff
                 case SK.ExclamationEqualsEqualsToken:
                 case SK.ExclamationEqualsToken:
                     return shim("Number_::neq");
-                case SK.BarBarToken:
-                case SK.AmpersandAmpersandToken:
-                    return emitLazyBinaryExpression(node);
                 default:
                     throw unhandled(node.operatorToken, lf("unknown generic operator"), 9252)
             }
@@ -1971,7 +1987,7 @@ ${lbl}: .short 0xffff
         function emitExpressionStatement(node: ExpressionStatement) {
             emitExprAsStmt(node.expression)
         }
-        function emitCondition(expr:Expression) {
+        function emitCondition(expr: Expression) {
             let inner = emitExpr(expr)
             // in both cases unref is internal, so no mask
             if (typeOf(expr).flags & TypeFlags.String) {

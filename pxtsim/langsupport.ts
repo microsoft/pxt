@@ -261,7 +261,7 @@ namespace pxsim {
             U.userError("PANIC! Code " + code)
         }
 
-        export function stringToBool(s:string) {
+        export function stringToBool(s: string) {
             decr(s)
             return s ? 1 : 0
         }
@@ -269,6 +269,11 @@ namespace pxsim {
         export function ptrToBool(v: any) {
             decr(v)
             return v ? 1 : 0
+        }
+
+        export function emptyToNull(s: string): any {
+            if (s == "") return 0
+            return s
         }
 
         export function ldfld(r: RefRecord, idx: number) {
