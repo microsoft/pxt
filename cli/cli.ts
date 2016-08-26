@@ -1588,6 +1588,9 @@ const defaultFiles: U.Map<string> = {
 
     "tests.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
+    "enums.d.ts": ``,
+
+    "shims.d.ts": ``,
 
     "README.md": `# @NAME@
 @DESCRIPTION@
@@ -1613,6 +1616,14 @@ pxt_modules
     `{
     "editor.formatOnType": true,
     "files.autoSave": "afterDelay",
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/built/**": true,
+        "**/node_modules/**": true,
+        "**/yotta_modules/**": true,
+        "**/yotta_targets": true,
+        "**/pxt_modules/**": true
+    },    
     "search.exclude": {
         "**/built": true,
         "**/node_modules": true,
