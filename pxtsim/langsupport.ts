@@ -261,6 +261,16 @@ namespace pxsim {
             U.userError("PANIC! Code " + code)
         }
 
+        export function stringToBool(s:string) {
+            decr(s)
+            return s ? 1 : 0
+        }
+
+        export function ptrToBool(v: any) {
+            decr(v)
+            return v ? 1 : 0
+        }
+
         export function ldfld(r: RefRecord, idx: number) {
             check(r.reflen <= idx && idx < r.len)
             let v = num(r.fields[idx])
@@ -323,10 +333,6 @@ namespace pxsim {
         }
 
         // these are never used in simulator; silence the warnings
-        export var ldglb: any;
-        export var ldglbRef: any;
-        export var stglb: any;
-        export var stglbRef: any;
         export var getNumGlobals: any;
         export var getGlobalsPtr: any;
     }
