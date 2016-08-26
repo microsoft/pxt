@@ -606,6 +606,10 @@ class Foo {
     init() {
         this.buf = [1, 2]
     }
+
+    toString() {
+        return `Foo${this.getPin()}`
+    }
 }
 
 function testClass() {
@@ -1011,6 +1015,11 @@ function testNull() {
     assert(x != y, "null")
 }
 
+function testToString() {
+    let f = new Foo(44, 2)
+    let s = "" + f
+    assert(s == "Foo42", "ts")
+}
 
 // ---------------------------------------------------------------------------
 // Driver starts
@@ -1051,6 +1060,7 @@ testAccessors()
 testBoolCasts()
 testLazyRef()
 testNull()
+testToString()
 
 
 msg("test top level code")

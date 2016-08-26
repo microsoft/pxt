@@ -27,7 +27,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9254
+    // next free error 9255
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -923,6 +923,15 @@ ${lbl}: .short 0xffff
             return emitLocalLoad(inf.thisParameter)
         }
         function emitSuper(node: Node) { }
+        function emitStringLiteral(str: string) {
+            if (str == "") {
+                return ir.rtcall("String_::mkEmpty", [])
+            } else {
+                let lbl = bin.emitString(str)
+                let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(str))
+                return ir.rtcall("pxt::ptrOfLiteral", [ptr])
+            }
+        }
         function emitLiteral(node: LiteralExpression) {
             if (node.kind == SK.NumericLiteral) {
                 if ((<any>node).imageLiteral) {
@@ -931,13 +940,7 @@ ${lbl}: .short 0xffff
                     return ir.numlit(parseInt(node.text))
                 }
             } else if (isStringLiteral(node)) {
-                if (node.text == "") {
-                    return ir.rtcall("String_::mkEmpty", [])
-                } else {
-                    let lbl = bin.emitString(node.text)
-                    let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(node.text))
-                    return ir.rtcall("pxt::ptrOfLiteral", [ptr])
-                }
+                return emitStringLiteral(node.text)
             } else {
                 throw oops();
             }
@@ -1220,7 +1223,8 @@ ${lbl}: .short 0xffff
             funcExpr: Expression,
             callArgs: Expression[],
             sig: Signature,
-            decl: FunctionLikeDeclaration = null
+            decl: FunctionLikeDeclaration = null,
+            recv: Expression = null
         ): ir.Expr {
             if (!decl)
                 decl = getDecl(funcExpr) as FunctionLikeDeclaration
@@ -1288,8 +1292,9 @@ ${lbl}: .short 0xffff
                 decl.kind == SK.MethodDeclaration) {
                 if (isStatic(decl)) {
                     // no additional arguments
-                } else if (funcExpr.kind == SK.PropertyAccessExpression) {
-                    let recv = (<PropertyAccessExpression>funcExpr).expression
+                } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
+                    if (!recv)
+                        recv = (<PropertyAccessExpression>funcExpr).expression
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
@@ -1959,8 +1964,24 @@ ${lbl}: .short 0xffff
                 return ir.rtcall("Boolean_::toString", [r])
             else if (tp.flags & TypeFlags.String)
                 return r // OK
-            else
+            else {
+                let decl = tp.symbol ? tp.symbol.valueDeclaration : null
+                if (decl && (decl.kind == SK.ClassDeclaration || decl.kind == SK.InterfaceDeclaration)) {
+                    let classDecl = decl as ClassDeclaration
+                    let toString = classDecl.members.filter(m =>
+                        (m.kind == SK.MethodDeclaration || m.kind == SK.MethodSignature) &&
+                        (m as MethodDeclaration).parameters.length == 0 &&
+                        getName(m) == "toString")[0] as MethodDeclaration
+                    if (toString) {
+                        let ee = e as Expression
+                        return emitCallCore(ee, ee, [], null, toString, ee)
+                    } else {
+                        throw userError(9254, lf("type {0} lacks toString() method", getName(decl)))
+                        //return emitStringLiteral("[" + getName(decl) + "]")
+                    }
+                }
                 throw userError(9225, lf("don't know how to convert to string"))
+            }
         }
 
         function emitConditionalExpression(node: ConditionalExpression) {

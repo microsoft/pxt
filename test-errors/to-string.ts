@@ -4,8 +4,14 @@ class A {
     }
 }
 
+class X {
+    // no toString
+}
 let a = new A()
 
-let b = "Hello " + a // TS9225
+let b = "Hello " + a // ok
 let c = "Hello " + a.toString()
 let d = (10 + 1) + "" // Should compile fine
+
+let x = new X()
+let dd = x + "" // TS9254
