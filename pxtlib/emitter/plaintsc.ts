@@ -1,4 +1,4 @@
-namespace ts.pxt {
+namespace ts.pxtc {
     let reportDiagnostic = reportDiagnosticSimply;
 
     function reportDiagnostics(diagnostics: Diagnostic[], host: CompilerHost): void {

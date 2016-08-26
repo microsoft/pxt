@@ -1,6 +1,12 @@
 /// <reference path="../../typings/bluebird/bluebird.d.ts"/>
 
-namespace ts.pxt.Util {
+namespace ts.pxtc {
+    export var __dummy = 42;    
+}
+
+import pxtc = ts.pxtc
+
+namespace ts.pxtc.Util {
     export var debug = false;
 
     export interface Map<T> {
@@ -664,7 +670,7 @@ namespace ts.pxt.Util {
     }
 }
 
-namespace ts.pxt.BrowserImpl {
+namespace ts.pxtc.BrowserImpl {
     Util.httpRequestCoreAsync = httpRequestCoreAsync;
     Util.sha256 = sha256string;
     Util.getRandomBuf = buf => {

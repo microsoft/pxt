@@ -67,7 +67,7 @@ export class Editor extends srceditor.Editor {
         // 1) convert blocks to js to see if any changes happened, otherwise, just reload blocks
         // 2) decompile js -> blocks then take the decompiled blocks -> js
         // 3) check that decompiled js == current js % white space
-        let blocksInfo: ts.pxt.BlocksInfo;
+        let blocksInfo: pxtc.BlocksInfo;
         this.parent.saveFileAsync()
             .then(() => compiler.getBlocksAsync())
             .then((bi) => {
@@ -204,7 +204,7 @@ export class Editor extends srceditor.Editor {
             data.programText = Util.replaceAll(data.programText, cursorMarker, "")
             data.charNo = cursorOverride
         }
-        let tmp = ts.pxt.format(data.programText, data.charNo)
+        let tmp = pxtc.format(data.programText, data.charNo)
         if (isAutomatic && tmp.formatted == data.programText)
             return;
         let formatted = tmp.formatted

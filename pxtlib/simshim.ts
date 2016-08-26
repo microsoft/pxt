@@ -33,7 +33,7 @@ namespace pxt {
             if (sym.getFlags() & ts.SymbolFlags.HasExports) {
                 typechecker.getExportsOfModule(sym).forEach(doSymbol)
             }
-            decls[ts.pxt.getFullName(typechecker, sym)] = sym
+            decls[pxtc.getFullName(typechecker, sym)] = sym
         }
         */
 
@@ -96,7 +96,7 @@ namespace pxt {
         }
 
         function getExportComments(n: ts.Node) {
-            let cmts = ts.pxt.getComments(n)
+            let cmts = pxtc.getComments(n)
             if (!/^\s*\/\/%/m.test(cmts)) return null
             return cmts
         }
@@ -165,7 +165,7 @@ namespace pxt {
                 case SK.ClassDeclaration:
                     return emitClassDeclaration(stmt as ts.ClassDeclaration)
             }
-            //console.log("SKIP", ts.pxt.stringKind(stmt))
+            //console.log("SKIP", pxtc.stringKind(stmt))
             //let mod = stmt as ts.ModuleDeclaration
             //if (mod.name) console.log(mod.name.text)
             /*

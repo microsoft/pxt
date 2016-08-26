@@ -1,6 +1,6 @@
 // TODO: add a macro facility to make 8-bit assembly easier?
 
-namespace ts.pxt.assembler {
+namespace ts.pxtc.assembler {
 
     export interface InlineError {
         scope: string;

@@ -38,7 +38,7 @@ let readFileAsync = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
 
 // provided by target
-let deployCoreAsync: (r: ts.pxt.CompileResult) => void = undefined;
+let deployCoreAsync: (r: pxtc.CompileResult) => void = undefined;
 
 function initTargetCommands() {
     let cmdsjs = path.resolve('built/cmds.js');

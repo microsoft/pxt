@@ -13,8 +13,8 @@ export function td2tsAsync(td: string) {
     return pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => {
             opts.ast = true
-            let res = ts.pxt.compile(opts)
-            let apiinfo = ts.pxt.getApiInfo(res.ast, true)
+            let res = pxtc.compile(opts)
+            let apiinfo = pxtc.getApiInfo(res.ast, true)
             let arg = {
                 text: td,
                 useExtensions: true,

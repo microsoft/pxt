@@ -3,7 +3,7 @@
 import U = pxt.U
 
 interface SimulatorConfig {
-    highlightStatement(stmt: ts.pxt.LocationInfo): void;
+    highlightStatement(stmt: pxtc.LocationInfo): void;
     editor: string;
     onCompile(name: string, content: string, contentType: string): void;
 }
@@ -13,7 +13,7 @@ let nextFrameId: number = 0;
 const themes = ["blue", "red", "green", "yellow"];
 let currentRuntime: pxsim.SimulatorRunMessage;
 let config: SimulatorConfig;
-let lastCompileResult: ts.pxt.CompileResult;
+let lastCompileResult: pxtc.CompileResult;
 
 let $debugger: JQuery;
 
@@ -80,10 +80,10 @@ export function isDirty(): boolean { // in need of a restart?
     return /sepia/.test(driver.container.className);
 }
 
-export function run(debug: boolean, res: ts.pxt.CompileResult) {
+export function run(debug: boolean, res: pxtc.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
-    let js = res.outfiles[ts.pxt.BINARY_JS]
-    let parts = ts.pxt.computeUsedParts(res);
+    let js = res.outfiles[pxtc.BINARY_JS]
+    let parts = pxtc.computeUsedParts(res);
     lastCompileResult = res;
     driver.run(js, {parts: parts, debug: debug});
 }
@@ -145,7 +145,7 @@ function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
     let dbgView = $(`<div class="ui segment debuggerview"></div>`)
     dbgView.append(vars(U.lf("globals"), brk.globals))
     brk.stackframes.forEach(sf => {
-        let info = sf.funcInfo as ts.pxt.FunctionLocationInfo
+        let info = sf.funcInfo as pxtc.FunctionLocationInfo
         dbgView.append(vars(info.functionName, sf.locals))
     })
     $('#debugger').append(dbgView)

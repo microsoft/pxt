@@ -50,7 +50,7 @@ namespace pxt.runner {
             throw Util.oops("trying to write " + module + " / " + filename)
         }
 
-        getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
             return pxt.hex.getHexInfoAsync(this, extInfo)
         }
 
@@ -167,11 +167,11 @@ namespace pxt.runner {
         return mainPkg.getCompileOptionsAsync(trg)
     }
 
-    function compileAsync(hex: boolean, updateOptions?: (ops: ts.pxt.CompileOptions) => void) {
+    function compileAsync(hex: boolean, updateOptions?: (ops: pxtc.CompileOptions) => void) {
         return getCompileOptionsAsync()
             .then(opts => {
                 if (updateOptions) updateOptions(opts);
-                let resp = ts.pxt.compile(opts)
+                let resp = pxtc.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     resp.diagnostics.forEach(diag => {
                         console.error(diag.messageText)
@@ -190,7 +190,7 @@ namespace pxt.runner {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
                 }
-                return resp.outfiles[ts.pxt.BINARY_HEX];
+                return resp.outfiles[pxtc.BINARY_HEX];
             });
     }
 
@@ -203,12 +203,12 @@ namespace pxt.runner {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
                 }
-                let js = resp.outfiles[ts.pxt.BINARY_JS];
+                let js = resp.outfiles[pxtc.BINARY_JS];
                 if (js) {
                     let options: pxsim.SimulatorDriverOptions = {};
                     if (pxt.appTarget.simulator)
                         options.aspectRatio = pxt.appTarget.simulator.aspectRatio;
-                    let parts = ts.pxt.computeUsedParts(resp);
+                    let parts = pxtc.computeUsedParts(resp);
                     let driver = new pxsim.SimulatorDriver(container, options);
                     driver.run(js, {parts: parts});
                 }
@@ -413,8 +413,8 @@ ${files["main.ts"]}
     }
 
     export interface DecompileResult {
-        compileJS?: ts.pxt.CompileResult;
-        compileBlocks?: ts.pxt.CompileResult;
+        compileJS?: pxtc.CompileResult;
+        compileBlocks?: pxtc.CompileResult;
         blocksSvg?: JQuery;
     }
 
@@ -425,17 +425,17 @@ ${files["main.ts"]}
                 // compile
                 opts.fileSystem["main.ts"] = code
                 opts.ast = true
-                let resp = ts.pxt.compile(opts)
+                let resp = pxtc.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
                     return { compileJS: resp };
 
                 // decompile to blocks
-                let apis = ts.pxt.getApiInfo(resp.ast);
-                let blocksInfo = ts.pxt.getBlocksInfo(apis);
+                let apis = pxtc.getApiInfo(resp.ast);
+                let blocksInfo = pxtc.getBlocksInfo(apis);
                 pxt.blocks.initBlocks(blocksInfo);
-                let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
                 if (bresp.diagnostics && bresp.diagnostics.length > 0)
                     bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!bresp.success)

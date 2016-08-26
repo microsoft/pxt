@@ -11,7 +11,7 @@
 /// <reference path="backthumb.ts"/>
 /// <reference path="decompiler.ts"/>
 
-namespace ts.pxt {
+namespace ts.pxtc {
     export interface CompileTarget {
         simulatorPostMessage?: boolean; // provided by simulator as a post command message
         isNative: boolean; // false -> JavaScript for simulator
@@ -270,8 +270,8 @@ namespace ts.pxt {
 
         let file = resp.ast.getSourceFile(fileName);
         let apis = getApiInfo(resp.ast);
-        let blocksInfo = ts.pxt.getBlocksInfo(apis);
-        let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
+        let blocksInfo = pxtc.getBlocksInfo(apis);
+        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file)
         return bresp;
     }
 }

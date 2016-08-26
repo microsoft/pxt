@@ -22,10 +22,10 @@ namespace pxt {
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
-        locales?: ts.pxt.Util.Map<AppTheme>;
+        locales?: pxtc.Util.Map<AppTheme>;
         cardLogo?: string;
         appLogo?: string;
-        htmlDocIncludes?: ts.pxt.Util.Map<string>;
+        htmlDocIncludes?: pxtc.Util.Map<string>;
     }
 
     export interface DocMenuEntry {
@@ -39,7 +39,7 @@ namespace pxt {
 namespace pxt.docs {
     declare var require: any;
     let marked: MarkedStatic;
-    import U = ts.pxt.Util;
+    import U = pxtc.Util;
 
     let stdboxes: U.Map<string> = {
     }

@@ -2,14 +2,14 @@
 /// <reference path="../typings/winrt/winrt.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 namespace pxtwinrt {
-    export function deployCoreAsync(res: ts.pxt.CompileResult): Promise<void> {
+    export function deployCoreAsync(res: pxtc.CompileResult): Promise<void> {
 
         let drives = pxt.appTarget.compile.deployDrives;
         pxt.Util.assert(!!drives);
         pxt.log(`deploying to drives ${drives}`)
 
         let drx = new RegExp(drives);
-        let r = res.outfiles[ts.pxt.BINARY_HEX];
+        let r = res.outfiles[pxtc.BINARY_HEX];
 
         function writeAsync(folder: Windows.Storage.StorageFolder): Promise<void> {
             pxt.log(`writing .hex to ${folder.displayName}`)
