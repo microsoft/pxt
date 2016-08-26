@@ -1,7 +1,7 @@
 /// <reference path="../../typings/bluebird/bluebird.d.ts"/>
 
 namespace ts.pxtc {
-    export var __dummy = 42;    
+    export var __dummy = 42;
 }
 
 import pxtc = ts.pxtc
