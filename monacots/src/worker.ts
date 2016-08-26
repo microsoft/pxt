@@ -162,6 +162,10 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost {
         return Promise.as(this._languageService.getNavigationBarItems(fileName));
     }
 
+    getNavigateToItems(searchValue: string, maxResultCount?: number): Promise<typescript.NavigateToItem[]> {
+        return Promise.as(this._languageService.getNavigateToItems(searchValue, maxResultCount));
+    }
+
     getFormattingEditsForDocument(fileName: string, options: typescript.FormatCodeOptions): Promise<typescript.TextChange[]> {
         return Promise.as(this._languageService.getFormattingEditsForDocument(fileName, options));
     }

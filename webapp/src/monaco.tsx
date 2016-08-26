@@ -24,6 +24,7 @@ export class Editor extends srceditor.Editor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
     isTypescript = false;
+    extraLibs: { [path: string]: monaco.IDisposable };
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -127,7 +128,7 @@ export class Editor extends srceditor.Editor {
             agreeIcon: "cancel",
             disagreeLbl: lf("Stay in JavaScript"),
             disagreeClass: "positive",
-            disagreeIcon: "checkmark", 
+            disagreeIcon: "checkmark",
             deleteLbl: lf("Remove Blocks file"),
             size: "medium",
             hideCancel: !bf
@@ -233,6 +234,7 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
+        this.extraLibs = Object.create(null);
         this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
 
         this.editor.updateOptions({fontSize: this.parent.settings.editorFontSize});
@@ -243,7 +245,21 @@ export class Editor extends srceditor.Editor {
                                     "editor.action.previewDeclaration",
                                     "editor.action.referenceSearch.trigger"]
 
+        let disabledFromCommands = ["editor.unfold",
+                                    "editor.unFoldRecursively",
+                                    "editor.fold",
+                                    "editor.foldRecursively",
+                                    "editor.foldAll",
+                                    "editor.unFoldAll",
+                                    "editor.foldLevel1",
+                                    "editor.foldLevel2",
+                                    "editor.foldLevel3",
+                                    "editor.foldLevel4",
+                                    "editor.foldLevel5"]
+
         this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._shouldShowInContextMenu = false : null );
+
+        this.editor.getActions().forEach(action => disabledFromCommands.indexOf(action.id) > -1 ? (action as any)._enabled = false : null );
 
         this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
             .run = () => Promise.resolve(this.formatCode());
@@ -294,16 +310,15 @@ export class Editor extends srceditor.Editor {
             });
         }
 
-        this.editor.onDidFocusEditorText(() => {
-            pxt.vs.syncModels(pkg.mainPkg);
-        })
-
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
             if (!this.isTypescript || this.currFile.isReadonly()) return;
 
             if (this.lastSet != null) {
                 this.lastSet = null
             } else {
+                if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
+                    this.editor.setValue(" ");
+                }
                 this.updateDiagnostics();
                 this.changeCallback();
             }
@@ -347,7 +362,8 @@ export class Editor extends srceditor.Editor {
     private lastSet: string;
     private setValue(v: string) {
         this.lastSet = v;
-        this.editor.setValue(v);
+        if (v) this.editor.setValue(v);
+        else this.editor.setValue(" ");
     }
 
     overrideFile(content: string) {
@@ -355,7 +371,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadFile(file: pkg.File) {
-        pxt.vs.syncModels(pkg.mainPkg);
+        pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly());
 
         let ext = file.getExtension()
         let modeMap: any = {
@@ -389,7 +405,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setViewState(pos: monaco.IPosition) {
-        if (Object.keys(pos).length === 0) return;
+        if (!pos || Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
         this.editor.setScrollPosition(pos)
     }
