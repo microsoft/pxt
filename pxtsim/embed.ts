@@ -12,7 +12,8 @@ namespace pxsim {
     }
 
     export interface SimulatorDocMessage extends SimulatorMessage {
-        docid?: string;
+        docType?: string;
+        src?: string;
     }
 
     export interface SimulatorFileLoadedMessage extends SimulatorMessage {

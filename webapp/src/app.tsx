@@ -404,6 +404,13 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
             el.src = `${docsUrl}#doc:${path}`;
     }
 
+    setMarkdown(md: string) {
+        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
+        if (el)
+            el.src = `${docsUrl}#md:${encodeURIComponent(md)}`;
+    }
+
     toggleVisibility() {
         const state = this.props.parent.state;
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
@@ -640,6 +647,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.saveFile();
                     if (!this.editor.isIncomplete())
                         this.typecheck();
+                    if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
+                        this.setSideMarkdown(this.editor.getCurrentSource());
                 }, 1000);
             }
         }
@@ -759,6 +768,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     .done();
             }
         })
+    }
+
+    setSideMarkdown(md: string) {
+        let sd = this.refs["sidedoc"] as SideDocs;
+        if (!sd) return;
+        sd.setMarkdown(md);
+        this.setState({ sideDocsCollapsed: false });
     }
 
     setSideDoc(path: string) {

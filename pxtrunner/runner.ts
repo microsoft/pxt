@@ -210,7 +210,7 @@ namespace pxt.runner {
                         options.aspectRatio = pxt.appTarget.simulator.aspectRatio;
                     let parts = pxtc.computeUsedParts(resp);
                     let driver = new pxsim.SimulatorDriver(container, options);
-                    driver.run(js, {parts: parts});
+                    driver.run(js, { parts: parts });
                 }
             })
     }
@@ -244,12 +244,19 @@ namespace pxt.runner {
     }
 
     export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
-        function render(docid: string) {
-            pxt.debug(`rendering ${docid}`);
+        function render(doctype: string, src: string) {
+            pxt.debug(`rendering ${doctype}`);
             $(content).hide()
             $(loading).show()
             Promise.delay(100) // allow UI to update
-                .then(() => renderDocAsync(content, docid))
+                .then(() => {
+                    switch (doctype) {
+                        case "doc":
+                            return renderDocAsync(content, src);
+                        default:
+                            return renderMarkdownAsync(content, src);
+                    }
+                })
                 .catch(e => {
                     $(content).html(`
                     <img style="height:4em;" src="${pxt.appTarget.appTheme.docsLogo}" />
@@ -257,13 +264,14 @@ namespace pxt.runner {
                     <h3>${lf("We could not load the documentation, please check your internet connection.")}</h3>
                     <button class="ui button primary" id="tryagain">${lf("Try Again")}</button>`);
                     $(content).find('#tryagain').click(() => {
-                        render(docid);
+                        render(doctype, src);
                     })
                     // notify parent iframe that docs weren't loaded
                     if (window.parent)
                         window.parent.postMessage(<pxsim.SimulatorDocMessage>{
                             type: "docfailed",
-                            docid: docid
+                            docType: doctype,
+                            src: src
                         }, "*");
                 }).finally(() => {
                     $(loading).hide()
@@ -273,10 +281,10 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#doc:([^&?:]+)/i.exec(window.location.hash);
+            let m = /^#(doc|md):([^&?:]+)/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
-                render(m[1]);
+                render(m[1], decodeURIComponent(m[2]));
             }
         }
 
