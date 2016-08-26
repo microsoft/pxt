@@ -1005,6 +1005,8 @@ function testNull() {
     let y = 0
     x = null
     assert(x == y, "null")
+    x = undefined
+    assert(x == y, "undef")
     y = 1
     assert(x != y, "null")
 }

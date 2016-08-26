@@ -373,7 +373,7 @@ namespace ts.pxt {
 
     function checkType(t: Type) {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
-            TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null
+            TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null | TypeFlags.Undefined
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
@@ -900,7 +900,7 @@ ${lbl}: .short 0xffff
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
                 if (node.text == "undefined")
-                    throw unhandled(node, lf("undefined not supported"), 9200)
+                    return ir.numlit(null)
                 else
                     throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
             }
