@@ -1,5 +1,5 @@
-namespace ts.pxt.ir {
-    let U = ts.pxt.Util;
+namespace ts.pxtc.ir {
+    let U = ts.pxtc.Util;
     let assert = U.assert;
 
     export enum EK {

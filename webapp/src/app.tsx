@@ -607,7 +607,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.typecheck()
     }
 
-    private autoRunSimulator = ts.pxt.Util.debounce(
+    private autoRunSimulator = pxtc.Util.debounce(
         () => {
             if (!this.state.active)
                 return;
@@ -973,7 +973,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         if (!src) return Promise.resolve();
         // format before saving
-        //src = ts.pxt.format(src, 0).formatted;
+        //src = pxtc.format(src, 0).formatted;
 
         let mainPkg = pkg.mainEditorPkg();
         let tsName = this.editorFile.getVirtualFileName();
@@ -1003,7 +1003,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         compiler.compileAsync({ native: true })
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (!resp.outfiles[ts.pxt.BINARY_HEX]) {
+                if (!resp.outfiles[pxtc.BINARY_HEX]) {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
@@ -1061,7 +1061,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return compiler.compileAsync(opts)
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (resp.outfiles[ts.pxt.BINARY_JS]) {
+                if (resp.outfiles[pxtc.BINARY_JS]) {
                     simulator.run(opts.debug, resp)
                     this.setState({ running: true })
                 } else if (!opts.background) {

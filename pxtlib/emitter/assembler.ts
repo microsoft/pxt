@@ -1,4 +1,4 @@
-namespace ts.pxt.assembler {
+namespace ts.pxtc.assembler {
 
     export interface InlineError {
         scope: string;

@@ -2,20 +2,20 @@
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
-    export import U = ts.pxt.Util;
-    export import Util = ts.pxt.Util;
+    export import U = pxtc.Util;
+    export import Util = pxtc.Util;
     let lf = U.lf;
 
     export var appTarget: TargetBundle;
-    export function debugMode() { return ts.pxt.Util.debug; }
+    export function debugMode() { return pxtc.Util.debug; }
     export function setDebugMode(debug: boolean) {
-        ts.pxt.Util.debug = !!debug;
+        pxtc.Util.debug = !!debug;
     }
 
     // general error reported
     export var debug: (msg: any) => void = typeof console !== "undefined" && !!console.debug
         ? (msg) => {
-            if (ts.pxt.Util.debug)
+            if (pxtc.Util.debug)
                 console.debug(msg);
         } : () => { };
     export var log: (msg: any) => void = typeof console !== "undefined" && !!console.log
@@ -90,13 +90,13 @@ namespace pxt {
         else if (!webConfig) webConfig = localWebConfig()
     }
 
-    export type CompileTarget = ts.pxt.CompileTarget;
+    export type CompileTarget = pxtc.CompileTarget;
 
     export interface Host {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
-        getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any>;
+        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
@@ -202,7 +202,7 @@ namespace pxt {
         testFiles?: string[];
         public?: boolean;
         binaryonly?: boolean;
-        yotta?: ts.pxt.YottaConfig;
+        yotta?: pxtc.YottaConfig;
         card?: CodeCard;
         additionalFilePath?: string;
         minTargetVersion?: string;
@@ -502,7 +502,7 @@ namespace pxt {
         }
 
         getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()) {
-            let opts: ts.pxt.CompileOptions = {
+            let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
                 target: target,
@@ -577,17 +577,17 @@ namespace pxt {
                 })
         }
 
-        buildAsync(target: ts.pxt.CompileTarget) {
+        buildAsync(target: pxtc.CompileTarget) {
             return this.getCompileOptionsAsync(target)
-                .then(opts => ts.pxt.compile(opts))
+                .then(opts => pxtc.compile(opts))
         }
 
         serviceAsync(op: string) {
             return this.getCompileOptionsAsync()
                 .then(opts => {
-                    ts.pxt.service.performOperation("reset", {})
-                    ts.pxt.service.performOperation("setOpts", { options: opts })
-                    return ts.pxt.service.performOperation(op, {})
+                    pxtc.service.performOperation("reset", {})
+                    pxtc.service.performOperation("setOpts", { options: opts })
+                    return pxtc.service.performOperation(op, {})
                 })
         }
 

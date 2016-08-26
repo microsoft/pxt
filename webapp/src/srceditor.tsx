@@ -70,5 +70,5 @@ export class Editor {
 
     beforeCompile() { }
 
-    highlightStatement(brk: ts.pxt.LocationInfo) { }
+    highlightStatement(brk: pxtc.LocationInfo) { }
 }

@@ -1,4 +1,4 @@
-namespace ts.pxt {
+namespace ts.pxtc {
     export var decodeBase64 = function (s: string) { return atob(s); }
 
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
@@ -882,13 +882,13 @@ _stored_program: .string "`
         src = patchSrcHash(src)
         if (opts.embedBlob)
             src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
-        bin.writeFile(ts.pxt.BINARY_ASM, src)
+        bin.writeFile(ts.pxtc.BINARY_ASM, src)
         let res = assemble(bin, src)
         if (res.src)
-            bin.writeFile(ts.pxt.BINARY_ASM, res.src)
+            bin.writeFile(ts.pxtc.BINARY_ASM, res.src)
         if (res.buf) {
             const myhex = hex.patchHex(bin, res.buf, false).join("\r\n") + "\r\n"
-            bin.writeFile(ts.pxt.BINARY_HEX, myhex)
+            bin.writeFile(ts.pxtc.BINARY_HEX, myhex)
         }
 
         for (let bkpt of cres.breakpoints) {

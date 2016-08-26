@@ -38,8 +38,8 @@ namespace pxt {
 }
 
 namespace pxt.cpp {
-    import U = ts.pxt.Util;
-    import Y = ts.pxt;
+    import U = pxtc.Util;
+    import Y = ts.pxtc;
     let lf = U.lf;
 
     function parseExpr(e: string): number {
@@ -343,7 +343,7 @@ namespace pxt.cpp {
 
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
-                    let parsedAttrs = ts.pxt.parseCommentString(currAttrs)
+                    let parsedAttrs = pxtc.parseCommentString(currAttrs)
                     if (!currNs) err("missing namespace declaration");
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
                     let funName = m[3]
@@ -705,7 +705,7 @@ namespace pxt.hex {
     let downloadCache: U.Map<Promise<any>> = {};
     let cdnUrlPromise: Promise<string>;
 
-    function downloadHexInfoAsync(extInfo: ts.pxt.ExtensionInfo) {
+    function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
         if (downloadCache.hasOwnProperty(extInfo.sha))
             return downloadCache[extInfo.sha]
         return (downloadCache[extInfo.sha] = downloadHexInfoCoreAsync(extInfo))
@@ -716,7 +716,7 @@ namespace pxt.hex {
         else return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig").then(r => r.primaryCdnUrl));
     }
 
-    function downloadHexInfoCoreAsync(extInfo: ts.pxt.ExtensionInfo) {
+    function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo) {
         let hexurl = ""
         return getCdnUrlAsync()
             .then(url => {
@@ -775,12 +775,12 @@ namespace pxt.hex {
             })
     }
 
-    export function getHexInfoAsync(host: Host, extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+    export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo): Promise<any> {
         if (!extInfo.sha)
             return Promise.resolve(null)
 
-        if (ts.pxt.hex.isSetupFor(extInfo))
-            return Promise.resolve(ts.pxt.hex.currentHexInfo)
+        if (pxtc.hex.isSetupFor(extInfo))
+            return Promise.resolve(pxtc.hex.currentHexInfo)
 
         pxt.debug("get hex info: " + extInfo.sha)
 
@@ -832,7 +832,7 @@ namespace pxt.hex {
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
                 }
             } else {
-                buf = ts.pxt.decodeBase64(nxt)
+                buf = pxtc.decodeBase64(nxt)
             }
 
             Util.assert(buf.length > 0)

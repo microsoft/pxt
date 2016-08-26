@@ -1,4 +1,4 @@
-namespace ts.pxt {
+namespace ts.pxtc {
     const jsOpMap: U.Map<string> = {
         "thumb::adds": "+",
         "thumb::subs": "-",

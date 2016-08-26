@@ -15,8 +15,8 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
     return Promise.resolve();
 }
 
-function browserDownloadDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
-    let hex = resp.outfiles[ts.pxt.BINARY_HEX]
+function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    let hex = resp.outfiles[pxtc.BINARY_HEX]
     let sanitizedName = pkg.mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
     let fn = pxt.appTarget.id + "-" + sanitizedName + ".hex"
     pxt.debug('saving ' + fn)
@@ -77,7 +77,7 @@ ${pxtwinrt.isWindows() ? `
     }).then(() => { });
 }
 
-function localhostDeployCoreAsync(resp: ts.pxt.CompileResult): Promise<void> {
+function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
     return Util.requestAsync({

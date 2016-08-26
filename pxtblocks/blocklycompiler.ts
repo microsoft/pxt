@@ -1037,7 +1037,7 @@ namespace pxt.blocks {
     // - All variables have been assigned an initial [Point] in the union-find.
     // - Variables have been marked to indicate if they are compatible with the
     //   TouchDevelop for-loop model.
-    function mkEnv(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): Environment {
+    function mkEnv(w: B.Workspace, blockInfo: pxtc.BlocksInfo): Environment {
         // The to-be-returned environment.
         let e = emptyEnv(w);
 
@@ -1050,7 +1050,7 @@ namespace pxt.blocks {
                         return;
                     }
                     let fieldMap = pxt.blocks.parameterNames(fn);
-                    let instance = fn.kind == ts.pxt.SymbolKind.Method || fn.kind == ts.pxt.SymbolKind.Property;
+                    let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
                     let args = (fn.parameters || []).map(p => {
                         if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
                         else return null;
@@ -1115,7 +1115,7 @@ namespace pxt.blocks {
         return e;
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: ts.pxt.BlocksInfo): Node[] {
+    function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): Node[] {
         try {
             let e = mkEnv(w, blockInfo);
             infer(e, w);
@@ -1172,7 +1172,7 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: ts.pxt.BlocksInfo): BlockCompilationResult {
+    export function compile(b: B.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
         Errors.clear();
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }

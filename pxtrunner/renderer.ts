@@ -131,8 +131,8 @@ namespace pxt.runner {
             let js = $('<code/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             let compiled = r.compileJS && r.compileJS.success;
-            let hex = options.hex && compiled && r.compileJS.outfiles[ts.pxt.BINARY_HEX]
-                ? r.compileJS.outfiles[ts.pxt.BINARY_HEX] : undefined;
+            let hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
+                ? r.compileJS.outfiles[pxtc.BINARY_HEX] : undefined;
             let hexname = `${appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
             fillWithWidget(options, c, js, s, {
                 run: options.simulator && compiled,
@@ -142,7 +142,7 @@ namespace pxt.runner {
         }, { package: options.package });
     }
 
-    function decompileCallInfo(stmt: ts.Statement): ts.pxt.CallInfo {
+    function decompileCallInfo(stmt: ts.Statement): pxtc.CallInfo {
         if (!stmt || stmt.kind != ts.SyntaxKind.ExpressionStatement)
             return null;
 
@@ -151,7 +151,7 @@ namespace pxt.runner {
             return null;
 
         let call = estmt.expression as ts.CallExpression;
-        let info = (<any>call).callInfo as ts.pxt.CallInfo;
+        let info = (<any>call).callInfo as pxtc.CallInfo;
 
         return info;
     }

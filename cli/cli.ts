@@ -46,13 +46,13 @@ export interface UserConfig {
 
 let reportDiagnostic = reportDiagnosticSimply;
 
-function reportDiagnostics(diagnostics: ts.pxt.KsDiagnostic[]): void {
+function reportDiagnostics(diagnostics: pxtc.KsDiagnostic[]): void {
     for (const diagnostic of diagnostics) {
         reportDiagnostic(diagnostic);
     }
 }
 
-function reportDiagnosticSimply(diagnostic: ts.pxt.KsDiagnostic): void {
+function reportDiagnosticSimply(diagnostic: pxtc.KsDiagnostic): void {
     let output = "";
 
     if (diagnostic.fileName) {
@@ -1417,7 +1417,7 @@ class SnippetHost implements pxt.Host {
         SnippetHost.files[module.id][filename] = contents
     }
 
-    getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
         //console.log(`getHexInfoAsync(${extInfo})`);
         return Promise.resolve()
     }
@@ -1504,7 +1504,7 @@ class Host
         fs.writeFileSync(p, contents, "utf8")
     }
 
-    getHexInfoAsync(extInfo: ts.pxt.ExtensionInfo): Promise<any> {
+    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
         if (extInfo.onlyPublic || forceCloudBuild)
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
@@ -1827,7 +1827,7 @@ function runYottaAsync(args: string[]) {
     })
 }
 
-function patchHexInfo(extInfo: ts.pxt.ExtensionInfo) {
+function patchHexInfo(extInfo: pxtc.ExtensionInfo) {
     let infopath = ytPath + "/yotta_modules/" + pxt.appTarget.compileService.yottaCorePackage + "/generated/metainfo.json"
 
     let hexPath = ytPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
@@ -1838,7 +1838,7 @@ function patchHexInfo(extInfo: ts.pxt.ExtensionInfo) {
     return hexinfo
 }
 
-function buildHexAsync(extInfo: ts.pxt.ExtensionInfo) {
+function buildHexAsync(extInfo: pxtc.ExtensionInfo) {
     let yottaTasks = Promise.resolve()
     let buildCachePath = ytPath + "/buildcache.json"
     let buildCache: BuildCache = {}
@@ -2020,7 +2020,7 @@ export function formatAsync(...fileNames: string[]) {
             let numErr = 0
             for (let f of fileNames) {
                 let input = fs.readFileSync(f, "utf8")
-                let tmp = ts.pxt.format(input, 0)
+                let tmp = pxtc.format(input, 0)
                 let formatted = tmp.formatted
                 let expected = testMode && fs.existsSync(f + ".exp") ? fs.readFileSync(f + ".exp", "utf8") : null
                 let fn = f + ".new"
@@ -2059,8 +2059,8 @@ export function formatAsync(...fileNames: string[]) {
         })
 }
 
-function runCoreAsync(res: ts.pxt.CompileResult) {
-    let f = res.outfiles[ts.pxt.BINARY_JS]
+function runCoreAsync(res: pxtc.CompileResult) {
+    let f = res.outfiles[pxtc.BINARY_JS]
     if (f) {
         // TODO: non-microbit specific load
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
@@ -2080,12 +2080,12 @@ function runCoreAsync(res: ts.pxt.CompileResult) {
     return Promise.resolve()
 }
 
-function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.CompileOptions) {
+function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
     let decls: U.Map<ts.Symbol> = {}
 
     if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
 
-    let opts: ts.pxt.CompileOptions = {
+    let opts: pxtc.CompileOptions = {
         fileSystem: {},
         sourceFiles: ["built/sim.d.ts", "node_modules/pxt-core/built/pxtsim.d.ts"],
         target: mainPkg.getTargetOptions(),
@@ -2098,14 +2098,14 @@ function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.
         opts.fileSystem[fn] = fs.readFileSync(path.join(nodeutil.targetDir, fn), "utf8")
     }
 
-    let simDeclRes = ts.pxt.compile(opts)
+    let simDeclRes = pxtc.compile(opts)
     reportDiagnostics(simDeclRes.diagnostics);
     let typechecker = simDeclRes.ast.getTypeChecker()
     let doSymbol = (sym: ts.Symbol) => {
         if (sym.getFlags() & ts.SymbolFlags.HasExports) {
             typechecker.getExportsOfModule(sym).forEach(doSymbol)
         }
-        decls[ts.pxt.getFullName(typechecker, sym)] = sym
+        decls[pxtc.getFullName(typechecker, sym)] = sym
     }
     let doStmt = (stmt: ts.Statement) => {
         let mod = stmt as ts.ModuleDeclaration
@@ -2128,7 +2128,7 @@ function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.
     }
 
     /*
-    let apiInfo = ts.pxt.getApiInfo(pkgCompileRes.ast)
+    let apiInfo = pxtc.getApiInfo(pkgCompileRes.ast)
     for (let ent of U.values(apiInfo.byQName)) {
         let shim = ent.attributes.shim
         if (shim) {
@@ -2143,7 +2143,7 @@ function simulatorCoverage(pkgCompileRes: ts.pxt.CompileResult, pkgOpts: ts.pxt.
 }
 
 function testForBuildTargetAsync() {
-    let opts: ts.pxt.CompileOptions
+    let opts: pxtc.CompileOptions
     return mainPkg.loadAsync()
         .then(() => {
             copyCommonFiles();
@@ -2156,7 +2156,7 @@ function testForBuildTargetAsync() {
             opts = o
             opts.testMode = true
             opts.ast = true
-            return ts.pxt.compile(opts)
+            return pxtc.compile(opts)
         })
         .then(res => {
             reportDiagnostics(res.diagnostics);
@@ -2167,7 +2167,7 @@ function testForBuildTargetAsync() {
 
 function simshimAsync() {
     console.log("Looking for shim annotations in the simulator.")
-    let prog = ts.pxt.plainTsc("sim")
+    let prog = pxtc.plainTsc("sim")
     let shims = pxt.simshim(prog)
     let filename = "sims.d.ts"
     for (let s of Object.keys(shims)) {
@@ -2249,7 +2249,7 @@ function testConverterAsync(url: string) {
         })
 }
 
-function patchOpts(opts: ts.pxt.CompileOptions, fn: string, content: string) {
+function patchOpts(opts: pxtc.CompileOptions, fn: string, content: string) {
     console.log(`*** ${fn}, size=${content.length}`)
     let opts2 = U.flatClone(opts)
     opts2.fileSystem = U.flatClone(opts.fileSystem)
@@ -2261,9 +2261,9 @@ function patchOpts(opts: ts.pxt.CompileOptions, fn: string, content: string) {
     return opts2
 }
 
-function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
+function compilesOK(opts: pxtc.CompileOptions, fn: string, content: string) {
     let opts2 = patchOpts(opts, fn, content)
-    let res = ts.pxt.compile(opts2)
+    let res = pxtc.compile(opts2)
     reportDiagnostics(res.diagnostics);
     if (!res.success) {
         console.log("ERRORS", fn)
@@ -2273,9 +2273,9 @@ function compilesOK(opts: ts.pxt.CompileOptions, fn: string, content: string) {
 
 function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
-        .then(ts.pxt.compile)
+        .then(pxtc.compile)
         .then(res => {
-            return ts.pxt.getApiInfo(res.ast, true)
+            return pxtc.getApiInfo(res.ast, true)
         })
 }
 
@@ -2374,7 +2374,7 @@ function testDirAsync(dir: string) {
                 fileoverrides[fn] = ti.text
                 return prepBuildOptionsAsync(BuildOption.Test, true)
                     .then(opts => {
-                        let res = ts.pxt.compile(opts)
+                        let res = pxtc.compile(opts)
                         let lines = ti.text.split(/\r?\n/)
                         let errCode = (s: string) => {
                             if (!s) return 0
@@ -2464,7 +2464,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
 
     interface FailureInfo {
         filename: string
-        diagnostics: ts.pxt.KsDiagnostic[]
+        diagnostics: pxtc.KsDiagnostic[]
     }
 
     let failures: FailureInfo[] = []
@@ -2473,7 +2473,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         successes.push(s)
     }
 
-    let addFailure = (f: string, infos: ts.pxt.KsDiagnostic[]) => {
+    let addFailure = (f: string, infos: pxtc.KsDiagnostic[]) => {
         failures.push({
             filename: f,
             diagnostics: infos
@@ -2500,15 +2500,15 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
             let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
             return pkg.getCompileOptionsAsync().then(opts => {
                 opts.ast = true
-                let resp = ts.pxt.compile(opts)
+                let resp = pxtc.compile(opts)
 
                 if (resp.success) {
                     if (/block/.test(snippet.type)) {
-                        //Similar to ts.pxt.decompile but allows us to get blocksInfo for round trip
+                        //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         let file = resp.ast.getSourceFile('main.ts');
-                        let apis = ts.pxt.getApiInfo(resp.ast);
-                        let blocksInfo = ts.pxt.getBlocksInfo(apis);
-                        let bresp = ts.pxt.decompiler.decompileToBlocks(blocksInfo, file)
+                        let apis = pxtc.getApiInfo(resp.ast);
+                        let blocksInfo = pxtc.getBlocksInfo(apis);
+                        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file)
 
                         let success = !!bresp.outfiles['main.blocks']
 
@@ -2592,7 +2592,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
 function buildCoreAsync(mode: BuildOption) {
     ensurePkgDir();
     return prepBuildOptionsAsync(mode)
-        .then(ts.pxt.compile)
+        .then(pxtc.compile)
         .then(res => {
             U.iterStringMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
@@ -2601,17 +2601,17 @@ function buildCoreAsync(mode: BuildOption) {
                 process.exit(1)
             }
 
-            console.log("Package built; hexsize=" + (res.outfiles[ts.pxt.BINARY_HEX] || "").length)
+            console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
 
             if (mode == BuildOption.GenDocs) {
-                let apiInfo = ts.pxt.getApiInfo(res.ast)
+                let apiInfo = pxtc.getApiInfo(res.ast)
                 // keeps apis from this module only
                 for (let infok in apiInfo.byQName) {
                     let info = apiInfo.byQName[infok];
                     if (info.pkg &&
                         info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                 }
-                let md = ts.pxt.genMarkdown(mainPkg.config.name, apiInfo, { package: mainPkg.config.name != pxt.appTarget.corepkg })
+                let md = pxtc.genMarkdown(mainPkg.config.name, apiInfo, { package: mainPkg.config.name != pxt.appTarget.corepkg })
                 mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
                 for (let fn in md) {
                     let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";

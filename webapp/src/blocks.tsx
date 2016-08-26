@@ -15,7 +15,7 @@ export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
     loadingXml: boolean;
-    blockInfo: ts.pxt.BlocksInfo;
+    blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
 
     setVisible(v: boolean) {
@@ -279,7 +279,7 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    highlightStatement(brk: ts.pxt.LocationInfo) {
+    highlightStatement(brk: pxtc.LocationInfo) {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
         let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, brk);

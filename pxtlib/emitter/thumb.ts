@@ -13,22 +13,22 @@
  *   http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0432c/CHDCICDF.html
  */
 
-namespace ts.pxt.thumb {
+namespace ts.pxtc.thumb {
 
-    export class ThumbProcessor extends ts.pxt.assembler.EncodersInstructions {
+    export class ThumbProcessor extends ts.pxtc.assembler.EncodersInstructions {
 
         public is32bit(name: string) {
             return name == "bl" || name == "bb";
         }
 
-        public emit32(v: number, actual: string): ts.pxt.assembler.EmitResult {
-            if (v % 2) return ts.pxt.assembler.emitErr("uneven BL?", actual);
+        public emit32(v: number, actual: string): ts.pxtc.assembler.EmitResult {
+            if (v % 2) return ts.pxtc.assembler.emitErr("uneven BL?", actual);
             let off = v / 2
             assert(off != null)
             if ((off | 0) != off ||
                 // we can actually support more but the board has 256k (128k instructions)
                 !(-128 * 1024 <= off && off <= 128 * 1024))
-                return ts.pxt.assembler.emitErr("jump out of range", actual);
+                return ts.pxtc.assembler.emitErr("jump out of range", actual);
 
             // note that off is already in instructions, not bytes
             let imm11 = off & 0x7ff
