@@ -84,8 +84,9 @@ export function run(debug: boolean, res: pxtc.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[pxtc.BINARY_JS]
     let parts = pxtc.computeUsedParts(res);
+    let fnArgs = res.usedArguments;
     lastCompileResult = res;
-    driver.run(js, {parts: parts, debug: debug});
+    driver.run(js, {parts: parts, debug: debug, fnArgs: fnArgs});
 }
 
 export function stop(unload?: boolean) {

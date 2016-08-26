@@ -1044,6 +1044,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let parts = ts.pxtc.computeUsedParts(resp);
                 if (parts)
                     data.parts = parts.join(" ");
+                let fnArgs = resp.usedArguments;
+                if (fnArgs)
+                    data.fnArgs = JSON.stringify(fnArgs);
                 let urlData = $.param(data);
                 let url = `/sim/instructions.html?${urlData}`
                 window.open(url, '_blank')
