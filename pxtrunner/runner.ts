@@ -240,6 +240,15 @@ namespace pxt.runner {
                 let name = fm.name;
                 if (/\.ts$/i.test(name)) setLanguageMode(LanguageMode.TypeScript);
                 else if (/\.blocks/i.test(name)) setLanguageMode(LanguageMode.Blocks);
+                break;
+            case "popout":
+                let mp = /#(doc|md):([^&?:]+)/i.exec(window.location.href);
+                if (mp) {
+                    const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+                    let url = mp[1] == "doc" ? `${mp[2]}` : `${docsUrl}?md=${mp[2]}`;
+                    window.open(url, "_blank");
+                }
+                break;
         }
     }
 
