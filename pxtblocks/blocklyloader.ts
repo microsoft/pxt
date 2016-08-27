@@ -509,7 +509,7 @@ namespace pxt.blocks {
         monkeyPatchBlock("logic_negate", lf("logical negation"), "blocks/logic/boolean");
         monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "blocks/logic/boolean");
 
-        monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("a integer number") : lf("a decimal number"), "reference/types/number");
+        monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("an integer number") : lf("a decimal number"), "reference/types/number");
         monkeyPatchBlock("math_arithmetic", lf("arithmetic operation"), "blocks/math");
         monkeyPatchBlock("math_modulo", lf("division remainder"), "blocks/math");
         monkeyPatchBlock("math_op2", lf("minimum or maximum of 2 numbers"), "blocks/math");
