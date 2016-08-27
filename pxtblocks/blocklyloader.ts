@@ -502,6 +502,7 @@ namespace pxt.blocks {
         monkeyPatchBlock("controls_simple_for", lf("a loop that repeats the number of times you say"), "blocks/loops/for");
 
         monkeyPatchBlock("variables_set", lf("assign the value of a variable"), "blocks/variables/assign");
+        monkeyPatchBlock("variables_get", lf("get the value of a variable"), "blocks/variables");
         monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change-var");
 
         monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "blocks/logic/boolean");
