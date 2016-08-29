@@ -333,6 +333,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let docembed: string;
         let vscode: string;
         if (ready) {
+            url = `${rootUrl}/${header.pubId}`;
             docembed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
             vscode = `pxt extract ${header.pubId}`
         }
@@ -348,15 +349,15 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                 <div className="ui warning message">
                     <div className="header">{lf("Almost there!") }</div>
                     <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
-                        lf("You acknowledge having consent to publish this content.") }</p>
+                        lf("You acknowledge having consent to publish this project.") }</p>
                     <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
                 </div>
-                <div className="ui success message">
+                { url ? <div className="ui success message">
                     <h3>{lf("Project URL") }</h3>
-                    <div className="header">{ url ? <a target="_blank" href={url}>{url}</a> : undefined }</div>
-                </div>
+                    <div className="header"><a target="_blank" href={url}>{url}</a></div>
+                </div> : undefined }
                 { docembed ?
-                    <sui.Field label={lf("Embed the code and simulator") }>
+                    <sui.Field label={lf("Embed the web editor") }>
                         <p>{lf("Copy this HTML to your website or blog.") }</p>
                         <sui.Input class="mini" readOnly={true} lines={2} value={docembed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
@@ -823,7 +824,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     projectName: h.name,
                     currFile: file
                 })
-                core.infoNotification(lf("Project loaded: {0}", h.name))
+                if (!sandbox)
+                    core.infoNotification(lf("Project loaded: {0}", h.name))
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
                 }
