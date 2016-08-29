@@ -642,27 +642,25 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             });
     }
 
+    private markdownChangeHandler = Util.debounce(() => {
+        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
+            this.setSideMarkdown(this.editor.getCurrentSource());
+    }, 2000, false);
+    private editorChangeHandler = Util.debounce(() => {
+        this.saveFile();
+        if (!this.editor.isIncomplete())
+            this.typecheck();
+        this.markdownChangeHandler();
+    }, 1000, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
-        let hasChangeTimer = false
         let changeHandler = () => {
             if (this.editorFile) this.editorFile.markDirty();
-            if (!hasChangeTimer) {
-                hasChangeTimer = true
-                setTimeout(() => {
-                    hasChangeTimer = false;
-                    this.saveFile();
-                    if (!this.editor.isIncomplete())
-                        this.typecheck();
-                    if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
-                        this.setSideMarkdown(this.editor.getCurrentSource());
-                }, 1000);
-            }
+            this.editorChangeHandler();
         }
-
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
