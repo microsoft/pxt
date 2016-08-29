@@ -259,6 +259,13 @@ namespace pxt.runner {
                             card.link = true;
                             addItem(card);
                         }
+                    } else {
+                        // no block available here
+                        addItem({
+                            name: info.qName,
+                            description: info.attrs.jsDoc,
+                            url: info.attrs.help || undefined
+                        })
                     }
                 } else
                     switch (stmt.kind) {
