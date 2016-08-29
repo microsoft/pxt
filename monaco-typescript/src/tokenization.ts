@@ -114,7 +114,7 @@ function tokenize(bracketTypeTable: { [i: number]: string }, tokenTypeTable: { [
         } else {
             // everything else
             appendFn(offset,
-                tokenTypeTable[entry.classification] || '', text);
+                tokenTypeTable[entry.classification] || '', text.substr(offset, entry.length));
         }
 
         offset += entry.length;

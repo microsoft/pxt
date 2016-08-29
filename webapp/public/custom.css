@@ -673,11 +673,6 @@ html {
 
 /* monaco: Editor */
 
-.monaco-editor.vs .token.ts.identifier:hover {
-    border-radius: 6px;
-    border: 1px solid #565656;
-}
-
 .monaco-editor .current-line {
 	background: rgba(0, 0, 255, 0.1);
 }
@@ -732,3 +727,24 @@ html {
     color: #fff;
 }
 
+/* monaco: Tokens */
+
+.monaco-editor.vs .token.ts.identifier:hover {
+    border-radius: 6px;
+    border: 1px solid #565656;
+}
+
+.token.ts {
+    padding-left: 0.1em;
+    padding-right: 0.1em;
+}
+
+.token.ts.keyword.if, .token.ts.keyword.else {
+    color: #5B80A5;
+    border-radius: 3px;
+}
+
+.token.ts.keyword.while:not(.true), .token.ts.keyword.for {
+    color: #5BA55B;
+    border-radius: 3px;
+}

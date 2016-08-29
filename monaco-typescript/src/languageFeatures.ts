@@ -22,7 +22,7 @@ let snippets = {
 	"For Loop": {
 		"prefix": "for",
 		"body": [
-			"for (let ${index} = 0; ${index} < {{4}}; ${index}++) {",
+			"for (let ${index} = 0; ${index} <= {{4}}; ${index}++) {",
 			"\t$0",
 			"}"
 		],
@@ -318,15 +318,12 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 });
                 return Promise.join(parameterPromises);
             }));
-            //promises.push(worker.getSymbolAtLocation(resource.toString(), this._positionToOffset(resource, position), myItem.label));
             return Promise.join(promises);
         }).then(values => {
             let details: typescript.CompletionEntryDetails = values[0];
             let signature: typescript.SignatureHelpItems = values[1];
             let enumDefinitions: monaco.languages.SymbolInformation[][] = values[2];
             let example: any = values[3];
-            console.log("EXAMPLE");
-            console.log(example);
             if (!details) {
                 return myItem;
             }
@@ -543,7 +540,8 @@ export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverP
             let completion: typescript.CompletionEntryDetails = values[2];
             if (info && completion) {
                 let contents = typescript.displayPartsToString(completion.documentation);
-                let infoContents = typescript.displayPartsToString(info.displayParts);
+                if (!contents)
+                    contents = typescript.displayPartsToString(info.displayParts);
                 return {
                     range: this._textSpanToRange(resource, info.textSpan),
                     contents: [contents]

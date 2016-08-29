@@ -22,6 +22,7 @@ function loadText(filename) {
 }
 
 function bundleOne(task, moduleId, exclude) {
+    console.log("bundling: " + moduleId);
     var opts = {
         baseUrl: '/built/monaco-typescript/',
         name: 'vs/language/typescript/' + moduleId,
@@ -296,7 +297,7 @@ file('built/monaco-typescript', expand([
      tscIn(this, "monaco-typescript");
 })
 
-file('built/web/vs/language/typescript/src/monaco.contribution.js', ['built/monaco-typescript'], { async: true }, function () {
+file('built/web/vs/language/typescript/src/monaco.contribution.js', ['built/monaco-typescript', 'built/monaco-typescript/src/monaco.contribution.js'], { async: true }, function () {
     bundleOne(this, 'src/monaco.contribution');
 })
 
@@ -305,11 +306,18 @@ file('built/web/vs/language/typescript/lib/typescriptServices.js', ['built/monac
     bundleOne(this, 'lib/typescriptServices');
 });
 			
-file('built/web/vs/language/typescript/src/mode.js', ['built/monaco-typescript', 'built/web/vs/language/typescript/lib/typescriptServices.js'], { async: true }, function () {
+file('built/web/vs/language/typescript/src/mode.js', ['built/monaco-typescript', 
+                                                      'built/web/vs/language/typescript/lib/typescriptServices.js', 
+                                                      'built/monaco-typescript/src/mode.js', 
+                                                      'built/monaco-typescript/src/languageFeatures.js',
+                                                      'built/monaco-typescript/src/tokenization.js'], { async: true }, function () {
     bundleOne(this, 'src/mode', ['vs/language/typescript/lib/typescriptServices']);
 })
 
-file('built/web/vs/language/typescript/src/worker.js', ['built/monaco-typescript', 'built/web/vs/language/typescript/lib/typescriptServices.js'], { async: true }, function () {
+file('built/web/vs/language/typescript/src/worker.js', ['built/monaco-typescript', 
+                                                        'built/web/vs/language/typescript/lib/typescriptServices.js',
+                                                        'built/monaco-typescript/src/worker.js', 
+                                                        'built/monaco-typescript/src/workerManager.js'], { async: true }, function () {
     bundleOne(this, 'src/worker', ['vs/language/typescript/lib/typescriptServices']);
 })
 

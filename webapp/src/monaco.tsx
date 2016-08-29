@@ -177,6 +177,46 @@ export class Editor extends srceditor.Editor {
         )
     }
 
+    initEditorCss() {
+        let colorDict: { [ns: string]: { color: string, fns: string[] } } = { };
+        let head = document.head || document.getElementsByTagName('head')[0],
+            style = (document.getElementById('monacoeditorStyles') as HTMLStyleElement) || document.createElement('style');
+        style.id = "monacoeditorStyles";
+        style.type = 'text/css';
+
+        compiler.getBlocksAsync()
+            .then((blockInfo: pxtc.BlocksInfo) => {
+                if (!blockInfo) return;
+                blockInfo.blocks
+                .forEach(fn => {
+                    let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                    let nsn = blockInfo.apis.byQName[ns];
+                    if (nsn) ns = nsn.attributes.block || ns;
+                    if (nsn && nsn.attributes.color) {
+                        if (!colorDict[ns])
+                            colorDict[ns] = { color: nsn.attributes.color, fns: [] };
+                        colorDict[ns].fns.push(fn.name);
+                    }
+                });
+            }).then(() => {
+                let cssContent = "";
+                Object.keys(colorDict).forEach(function (ns) {
+                    let element = colorDict[ns];
+                    let color = element.color;
+                    let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.` + element.fns.join(', .token.ts.identifier.');
+                    cssContent += `${cssTag} { color: ${color}; border-radius: 3px; }`;
+                })
+                return cssContent;
+            }).done((cssContent: string) => {
+                if (style.sheet) {
+                    style.textContent = cssContent;
+                } else {
+                    style.appendChild(document.createTextNode(cssContent));
+                }
+                head.appendChild(style);
+            });
+    }
+
     textAndPosition(pos: monaco.IPosition) {
         let programText = this.editor.getValue()
         let lines = pos.lineNumber
@@ -242,7 +282,10 @@ export class Editor extends srceditor.Editor {
     prepare() {
         this.extraLibs = Object.create(null);
         this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
-        if (!this.editor) return;
+        if (!this.editor) {
+            // Todo: create a text area if we weren't able to load the monaco editor correctly.
+            return;
+        };
 
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
@@ -378,7 +421,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadFile(file: pkg.File) {
-        pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly());
+        this.initEditorCss();
 
         let ext = file.getExtension()
         let modeMap: any = {
@@ -400,6 +443,9 @@ export class Editor extends srceditor.Editor {
         let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
         if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()), mode, monaco.Uri.parse(proto));
         if (model) this.editor.setModel(model);
+
+        if (mode == "typescript")
+            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly());
 
         this.setValue(file.content)
         this.setDiagnostics(file, this.snapshotState())
