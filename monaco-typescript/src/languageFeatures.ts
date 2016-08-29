@@ -18,7 +18,6 @@ import Promise = monaco.Promise;
 import CancellationToken = monaco.CancellationToken;
 import IDisposable = monaco.IDisposable;
 
-
 let snippets = {
 	"For Loop": {
 		"prefix": "for",
@@ -319,11 +318,15 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 });
                 return Promise.join(parameterPromises);
             }));
+            //promises.push(worker.getSymbolAtLocation(resource.toString(), this._positionToOffset(resource, position), myItem.label));
             return Promise.join(promises);
         }).then(values => {
             let details: typescript.CompletionEntryDetails = values[0];
             let signature: typescript.SignatureHelpItems = values[1];
             let enumDefinitions: monaco.languages.SymbolInformation[][] = values[2];
+            let example: any = values[3];
+            console.log("EXAMPLE");
+            console.log(example);
             if (!details) {
                 return myItem;
             }
@@ -506,6 +509,16 @@ export class SignatureHelpAdapter extends Adapter implements monaco.languages.Si
             return ret;
 
         }));
+    }
+}
+
+
+// --- code fix ------
+
+export class CodeActionAdapter extends Adapter implements monaco.languages.CodeActionProvider {
+
+    provideCodeActions(model: monaco.editor.IReadOnlyModel, range: Range, context: monaco.languages.CodeActionContext, token: CancellationToken): Thenable<monaco.languages.CodeAction[]> {
+        return;
     }
 }
 

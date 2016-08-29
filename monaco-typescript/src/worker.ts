@@ -189,6 +189,12 @@ export class TypeScriptWorker implements typescript.LanguageServiceHost {
     getEncodedSemanticClassifications(fileName: string, textSpan: typescript.TextSpan): Promise<typescript.Classifications> {
         return Promise.as(this._languageService.getEncodedSemanticClassifications(fileName, textSpan));
     }
+
+    getSymbolAtLocation(fileName: string, position: number, item: string): Promise<typescript.Symbol> {
+        let node: typescript.Node = (typescript as any).getTouchingPropertyName(fileName, position);
+        let symbol = this._languageService.getProgram().getTypeChecker().getSymbolAtLocation(node);
+        return Promise.as(symbol);
+    }
 }
 
 export interface ICreateData {
