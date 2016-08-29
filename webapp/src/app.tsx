@@ -432,7 +432,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         const icon = state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
             <iframe id="sidedocs" src={docsUrl} role="complementary" />
-            <button id="sidedocspopout" className="circular ui icon button" onClick={() => this.popOut() }>
+            <button id="sidedocspopout" className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
                 <i className={`external icon`}></i>
             </button>
             <button id="sidedocsexpand" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
