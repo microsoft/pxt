@@ -333,7 +333,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let docembed: string;
         let vscode: string;
         if (ready) {
-            url = `${rootUrl}/${header.pubId}`;
+            url = `${rootUrl}${header.pubId}`;
             docembed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
             vscode = `pxt extract ${header.pubId}`
         }
