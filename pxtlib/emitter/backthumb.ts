@@ -459,10 +459,11 @@ ${bkptLabel + "_after"}:
         let jmpStartIdx: number;
         let bytecodePaddingSize: number;
         let bytecodeStartAddr: number;
-        let bytecodeStartAddrPadded: number;
+        export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
         let asmLabels: StringMap<boolean> = {};
         export let asmTotalSource: string = "";
+        export const pageSize = 0x400;
 
         function swapBytes(str: string) {
             let r = ""
@@ -543,7 +544,7 @@ ${bkptLabel + "_after"}:
 
                     bytecodeStartAddr = lastAddr + 16
                     bytecodeStartIdx = lastIdx + 1
-                    bytecodeStartAddrPadded = (bytecodeStartAddr & ~0x3ff) + 0x400
+                    bytecodeStartAddrPadded = (bytecodeStartAddr & ~(pageSize - 1)) + pageSize
                     let paddingBytes = bytecodeStartAddrPadded - bytecodeStartAddr
                     assert((paddingBytes & 0xf) == 0)
                     bytecodePaddingSize = paddingBytes
@@ -893,6 +894,15 @@ _stored_program: .string "`
         if (res.buf) {
             const myhex = hex.patchHex(bin, res.buf, false).join("\r\n") + "\r\n"
             bin.writeFile(pxtc.BINARY_HEX, myhex)
+            cres.quickFlash = {
+                startAddr: hex.bytecodeStartAddrPadded,
+                words: []
+            }
+            for (let i = 0; i < res.buf.length; i += 2) {
+                cres.quickFlash.words.push(res.buf[i] | (res.buf[i + 1] << 16))
+            }
+            while (cres.quickFlash.words.length & ((hex.pageSize >> 2) - 1))
+                cres.quickFlash.words.push(0)
         }
 
         for (let bkpt of cres.breakpoints) {

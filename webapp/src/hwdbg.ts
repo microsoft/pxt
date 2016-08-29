@@ -314,3 +314,177 @@ export function workerOpAsync(op: string, arg: any = {}) {
         })
 }
 
+export function flashDeviceAsync(startAddr: number, words: number[]) {
+    let cfg = {
+        words: words,
+        bufAddr: 0x20000000 + 0x400,
+        numBuffers: 2
+    }
+    let asm = compiler.assembleAsync(nrfFlashAsm)
+    return workerOpAsync("halt", {})
+        .then(() => writeMemAsync(cfg.bufAddr - cfg.numBuffers * 4, [2, 2]))
+        .then(() => asm)
+        .then(res => workerOpAsync("bgexec", { code: res.words, args: [startAddr] }))
+        .then(res => workerOpAsync("wrpages", cfg))
+        .then(() => workerOpAsync("reset", {}))
+}
+
+export function testFlash() {
+    compiler.compileAsync({ native: true })
+        .then(resp => {
+            console.log(resp)
+            return flashDeviceAsync(resp.quickFlash.startAddr, resp.quickFlash.words)
+        })
+        .then(() => {
+            console.log("flashed")
+        })
+}
+
+
+/*
+#define PAGE_SIZE 0x400
+#define SIZE_IN_WORDS (PAGE_SIZE/4)
+#define NUM_BUFFERS 2
+#define PAGE_BUFFER ((uint32_t*)(0x20000000 + PAGE_SIZE))
+#define CONTROL_REGS ((uint32_t volatile*)(PAGE_BUFFER - 4*NUM_BUFFERS))
+
+void setConfig(uint32_t v) {
+    NRF_NVMC->CONFIG = v;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy);    
+}
+
+void overwriteFlashPage(uint32_t* to, uint32_t* from)
+{
+    // Turn on flash erase enable and wait until the NVMC is ready:
+    setConfig(NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos);
+
+    // Erase page:
+    NRF_NVMC->ERASEPAGE = (uint32_t)to;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy);    
+
+    // Turn off flash erase enable and wait until the NVMC is ready:
+    setConfig(NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+
+    // Turn on flash write enable and wait until the NVMC is ready:
+    setConfig(NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
+
+    for(int i = 0; i <= (SIZE_IN_WORDS - 1); i++) {
+        *(to + i) = *(from + i);
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);    
+    }
+
+    // Turn off flash write enable and wait until the NVMC is ready:
+    setConfig(NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+}
+
+// control values:
+//   1 - ready to write
+//   2 - written
+//   3 - stop writing
+
+void overwritePages(uint32_t *dst) {
+  int pageIdx = 0;
+  while (true) {
+    while ((CONTROL_REGS[pageIdx] & 1) == 0);
+    if (CONTROL_REGS[pageIdx] & 2) {
+      CONTROL_REGS[pageIdx] = 2;
+      break;
+    }
+    overwriteFlashPage(dst, PAGE_BUFFER + pageIdx * SIZE_IN_WORDS);
+    CONTROL_REGS[pageIdx] = 2;
+    pageIdx++;
+    if (pageIdx == NUM_BUFFERS) pageIdx = 0;
+  }
+}
+*/
+
+let nrfFlashAsm = `
+_start:
+      push    {r3, r4, r5, r6, r7, lr}
+      movs    r7, r0
+      movs    r4, #0
+      movs    r6, #2
+.again:
+      ldr     r3, .control
+      lsls    r5, r4, #2
+      adds    r5, r5, r3
+      movs    r2, #1
+.wait:
+      ldr     r3, [r5, #0]
+      tst     r3, r2
+      beq     .wait
+      tst     r3, r6
+      bne     .ret
+      ldr     r3, .data
+      lsls    r1, r4, #10
+      adds    r1, r1, r3
+      movs    r0, r7
+      subs    r4, #1
+      bl      .overwriteFlashPage
+      negs    r4, r4
+      str     r6, [r5, #0]
+      b         .again
+.ret:
+      str     r6, [r5, #0]
+      pop     {r3, r4, r5, r6, r7, pc}
+
+                .balign 4
+.control:       .word   0x200003e0
+.data:          .word   0x20000400
+
+.setConfig:
+        movs    r1, #128
+        ldr     r3, .NRF_NVMC
+        ldr     r2, .v504
+        lsls    r1, r1, #3
+        str     r0, [r3, r2]
+.cfgLoop:
+        ldr     r2, [r3, r1]
+        cmp     r2, #0
+        beq     .cfgLoop
+        bx      lr
+
+.overwriteFlashPage:
+        push    {r4, r5, r6, lr}
+        movs    r5, r0
+        movs    r0, #2
+        movs    r6, r1
+        bl      .setConfig
+        movs    r3, #161        ; 0xa1
+        movs    r2, #128        ; 0x80
+        ldr     r4, .NRF_NVMC
+        lsls    r3, r3, #3
+        str     r5, [r4, r3]
+        lsls    r2, r2, #3
+.overLoop:
+        ldr     r3, [r4, r2]
+        cmp     r3, #0
+        beq     .overLoop
+        movs    r0, #0
+        bl      .setConfig
+        movs    r0, #1
+        bl      .setConfig
+        movs    r2, #128
+        lsls    r2, r2, #3
+        movs    r3, #0
+        movs    r1, r2
+.overOuterLoop:
+        ldr     r0, [r6, r3]
+        str     r0, [r5, r3]
+.overLoop2:
+        ldr     r0, [r4, r2]
+        cmp     r0, #0
+        beq     .overLoop2
+        adds    r3, #4
+        cmp     r3, r1
+        bne     .overOuterLoop
+        movs    r0, #0
+        bl      .setConfig
+        pop     {r4, r5, r6, pc}
+
+
+                .balign 4
+.NRF_NVMC:      .word   0x4001e000
+.v504:          .word   0x504
+`
+
