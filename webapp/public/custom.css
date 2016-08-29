@@ -570,6 +570,8 @@ html {
     #maineditor, .rtl #maineditor {     
         left: 0;
         right:0;
+    }            
+    #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {     
         bottom:2rem;
     }            
     .ui.landscape.only {

@@ -1214,7 +1214,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || this.state.sideDocsCollapsed ? "" : "sideDocs"}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless small menu`} role="menubar">
                         <span id="logo" className="ui item">
@@ -1276,7 +1276,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
                             </div>
                         </div>}
-                        {targetTheme.rightLogo ?
+                        {targetTheme.rightLogo && !sandbox ?
                             <div className="ui item right wide only">
                                 <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
                             </div> : null }
@@ -1298,12 +1298,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                     <FileList parent={this} />
                 </div>
-                <div id="maineditor" role="main">
+                <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 {sandbox ? undefined : <SideDocs ref="sidedoc" parent={this} />}
-                {targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
+                {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
             </div>
@@ -1375,6 +1375,8 @@ function getsrc() {
 }
 
 function enableUserVoice(version: string) {
+    if (sandbox) return;
+
     const analytics = (pxt.appTarget.analytics || {} as pxt.AppAnalytics);
     if (!analytics.userVoiceApiKey) return;
 
