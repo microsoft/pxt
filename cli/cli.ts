@@ -2979,6 +2979,7 @@ function initGlobals() {
     let g = global as any
     g.pxt = pxt;
     g.ts = ts;
+    g.pxtc = pxtc;
 }
 
 initGlobals();
