@@ -622,6 +622,25 @@ namespace pxt.blocks {
     export var onShowContextMenu: (workspace: Blockly.Workspace,
         items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
 
+    // TODO: port changes to blockly 
+    export function initMouse(ws: Blockly.Workspace) {
+        Blockly.bindEvent_(ws.svgGroup_, 'wheel', ws, ev => {
+            let e = ev as WheelEvent;
+            Blockly.terminateDrag_();
+            const delta = e.deltaY > 0 ? -1 : 1;
+            const position = Blockly.mouseToSvg(e, ws.getParentSvg());
+            if (e.ctrlKey)
+                ws.zoom(position.x, position.y, delta);
+            else if (ws.scrollbar) {
+                let y = parseFloat(ws.scrollbar.vScroll.svgKnob_.getAttribute("y") || "0");
+                y /= ws.scrollbar.vScroll.ratio_;
+                ws.scrollbar.vScroll.set(y + e.deltaY);
+                ws.scrollbar.resize();
+            }
+            e.preventDefault();
+        });
+    }
+
     function initContextMenu() {
         /**
          * Show the context menu for the workspace.

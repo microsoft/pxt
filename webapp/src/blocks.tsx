@@ -206,6 +206,7 @@ export class Editor extends srceditor.Editor {
             },
             rtl: Util.userLanguageRtl()
         });
+        pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
             if (ev.recordUndo)
                 this.changeCallback();
