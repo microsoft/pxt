@@ -32,16 +32,26 @@ body {
     right:auto;
     left:0;
 }
-#sidedocsbutton {
+#sidedocspopout {
+  position: absolute;
+  top:4.75rem;
+  right:4.25rem;
+}
+.rtl #sidedocspopout {
+    right:auto;
+    left:4.25rem;
+}
+
+#sidedocsexpand {
   position: absolute;
   top:4.75rem;
   right:1.25rem;
-  display:none;
 }
-.rtl #sidedocsbutton {
+.rtl #sidedocsexpand {
     right:auto;
     left:1.25rem;
 }
+
 #logo {
     font-size: 2.8rem;
     margin: 0;

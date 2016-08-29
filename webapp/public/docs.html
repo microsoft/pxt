@@ -113,11 +113,12 @@ mixpanel.init("762fef19c053a0ea4cec43d2fecae76e");</script><!-- end Mixpanel -->
             pxt.docs.requireMarked = function() { return marked; }
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href); 
             var code = /code=([^&?]+)/i.exec(window.location.href);
-            if (code) {
-                var md = "```blocks\n" + decodeURIComponent(code[1]) + "```"
+            var md = /md=([^&?]+)/i.exec(window.location.href);
+            var markdown = code ? "```blocks\n" + decodeURIComponent(code[1]) + "```" : md ? decodeURIComponent(md[1]) : undefined;
+            if (markdown) {
                 console.log('rendering code:')
-                console.log(md);
-                pxt.runner.renderMarkdownAsync(content, md).done(function() {
+                console.log(markdown);
+                pxt.runner.renderMarkdownAsync(content, markdown).done(function() {
                     $(loading).hide();
                     $(content).show();
                 });

@@ -402,6 +402,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         let el = document.getElementById("sidedocs") as HTMLIFrameElement;
         if (el)
             el.src = `${docsUrl}#doc:${path}`;
+        this.props.parent.setState({ sideDocsCollapsed: false });
     }
 
     setMarkdown(md: string) {
@@ -409,6 +410,13 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         let el = document.getElementById("sidedocs") as HTMLIFrameElement;
         if (el)
             el.src = `${docsUrl}#md:${encodeURIComponent(md)}`;
+        this.props.parent.setState({ sideDocsCollapsed: false });
+    }
+
+    popOut() {
+        this.props.parent.notifySideDocs({
+            type: "popout"
+        })
     }
 
     toggleVisibility() {
@@ -426,7 +434,10 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         const icon = state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
             <iframe id="sidedocs" src={docsUrl} role="complementary" />
-            <button id="sidedocsbutton" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
+            <button id="sidedocspopout" className="circular ui icon button" onClick={() => this.popOut() }>
+                <i className={`external icon`}></i>
+            </button>
+            <button id="sidedocsexpand" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`${icon} icon`}></i>
             </button>
         </div>
@@ -773,14 +784,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let sd = this.refs["sidedoc"] as SideDocs;
         if (!sd) return;
         sd.setMarkdown(md);
-        this.setState({ sideDocsCollapsed: false });
     }
 
     setSideDoc(path: string) {
         let sd = this.refs["sidedoc"] as SideDocs;
         if (!sd) return;
         sd.setPath(path);
-        this.setState({ sideDocsCollapsed: false });
     }
 
     reloadHeaderAsync() {
@@ -1230,13 +1239,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
                                 <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
                                 {this.editor.menu() }
-                                { this.state.header && packages ? <sui.Button role="menuitem" class="landscape only" text={lf("Embed") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             <div className="ui buttons">
                                 <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
+                                    {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
                                         pxt.tickEvent("menu.showfiles");
