@@ -567,17 +567,11 @@ html {
         left:0.5rem;
         right: auto;
     }    
-    #errorcard {
-        display:none;
-    }
     #maineditor, .rtl #maineditor {     
         left: 0;
         right:0;
         bottom:2rem;
     }            
-    #boardview.errored {
-        display:none !important;
-    }
     .ui.landscape.only {
         display:none !important;
     }

@@ -55,8 +55,6 @@ interface IAppState {
     currFile?: pkg.File;
     fileState?: string;
     showFiles?: boolean;
-    errorCard?: pxt.CodeCard;
-    errorCardClick?: (e: React.MouseEvent) => boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
     sideDocsCollapsed?: boolean;
@@ -732,7 +730,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({
             currFile: fn,
             helpCard: undefined,
-            errorCard: undefined,
             showBlocks: false
         })
     }
@@ -806,7 +803,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         logs.clear();
         this.setState({
             helpCard: undefined,
-            errorCard: undefined,
             showFiles: h.editor == pxt.javaScriptProjectName
         })
         return pkg.loadPkgAsync(h.id)
@@ -1148,13 +1144,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             })
     }
 
-    setErrorCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
-        this.setState({
-            errorCard: card,
-            errorCardClick: onClick
-        })
-    }
-
     setHelpCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
         this.setState({
             helpCard: card,
@@ -1292,10 +1281,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                 </div>
                 <div id="filelist" className="ui items" role="complementary">
-                    {this.state.errorCard ? <div id="errorcard" className="ui item">
-                        <codecard.CodeCardView className="fluid top-margin" responsive={true} onClick={this.state.errorCardClick} {...this.state.errorCard} target={pxt.appTarget.id} />
-                    </div> : null }
-                    <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""} ${this.state.errorCard ? "errored " : ""}`}>
+                    <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
