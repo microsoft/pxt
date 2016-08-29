@@ -457,7 +457,9 @@ ${bkptLabel + "_after"}:
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;
+        let bytecodePaddingSize: number;
         let bytecodeStartAddr: number;
+        let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
         let asmLabels: StringMap<boolean> = {};
         export let asmTotalSource: string = "";
@@ -541,6 +543,10 @@ ${bkptLabel + "_after"}:
 
                     bytecodeStartAddr = lastAddr + 16
                     bytecodeStartIdx = lastIdx + 1
+                    bytecodeStartAddrPadded = (bytecodeStartAddr & ~0x3ff) + 0x400
+                    let paddingBytes = bytecodeStartAddrPadded - bytecodeStartAddr
+                    assert((paddingBytes & 0xf) == 0)
+                    bytecodePaddingSize = paddingBytes
                 }
             }
 
@@ -640,7 +646,7 @@ ${bkptLabel + "_after"}:
         }
 
         export function hexPrelude() {
-            return `    .startaddr 0x${bytecodeStartAddr.toString(16)}\n`
+            return `    .startaddr 0x${bytecodeStartAddrPadded.toString(16)}\n`
         }
 
         function hexBytes(bytes: number[]) {
@@ -657,6 +663,11 @@ ${bkptLabel + "_after"}:
 
             assert(buf.length < 32000)
 
+            let zeros: number[] = []
+            for (let i = 0; i < bytecodePaddingSize >> 1; ++i)
+                zeros.push(0)
+            buf = zeros.concat(buf)
+
             let ptr = 0
 
             function nextLine(buf: number[], addr: number) {
@@ -669,7 +680,7 @@ ${bkptLabel + "_after"}:
                 return bytes
             }
 
-            let hd = [0x4208, numReservedGlobals + bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
+            let hd = [0x4208, numReservedGlobals + bin.globals.length, bytecodeStartAddrPadded & 0xffff, bytecodeStartAddrPadded >>> 16]
             let tmp = hexTemplateHash()
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
@@ -705,13 +716,6 @@ ${bkptLabel + "_after"}:
         if (!/(^[\s;])|(:$)/.test(s))
             s = "    " + s
         return s + "\n"
-    }
-
-    function isDataRecord(s: string) {
-        if (!s) return false
-        let m = /^:......(..)/.exec(s)
-        assert(!!m)
-        return m[1] == "00"
     }
 
     function stringLiteral(s: string) {
