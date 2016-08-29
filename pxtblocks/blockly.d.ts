@@ -151,14 +151,14 @@ declare namespace Blockly {
     class ScrollbarPair {
         hScroll: Scrollbar;
         vScroll: Scrollbar;
-        resize() : void;
+        resize(): void;
     }
 
     class Scrollbar {
         svgKnob_: Element;
         ratio_: number;
         set(x: number): void;
-    } 
+    }
 
     class Workspace {
         svgGroup_: any;
@@ -180,7 +180,7 @@ declare namespace Blockly {
         highlightBlock(id: string): void;
         undo(): void;
         redo(): void;
-        clearUndo(): void;        
+        clearUndo(): void;
         getMetrics(): {
             absoluteLeft: number;
             absoluteTop: number;
