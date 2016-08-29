@@ -1235,13 +1235,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
-                                <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                                <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
-                                <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
+                                {sandbox ? undefined : <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />}
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />}
                                 {this.editor.menu() }
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
-                            <div className="ui buttons">
+                            {sandbox ? undefined : <div className="ui buttons">
                                 <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
@@ -1268,13 +1268,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }
                                     <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                 </sui.DropdownMenu>
-                            </div>
+                            </div>}
                             <div className="ui">
                                 {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync(settings).done() } /> : undefined}
                             </div>
-                            <DocsMenu parent={this} />
+                            {sandbox ? undefined : <DocsMenu parent={this} />}
                         </div>
-                        <div className="ui item wide only">
+                        {sandbox ? undefined : <div className="ui item wide only">
                             <div className="ui massive transparent input">
                                 <input id="fileNameInput"
                                     type="text"
@@ -1284,7 +1284,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 </input>
                                 <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
                             </div>
-                        </div>
+                        </div>}
                         {targetTheme.rightLogo ?
                             <div className="ui item right wide only">
                                 <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
@@ -1299,7 +1299,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
-                        <sui.Button key='runbtn' class={`fluid half`} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        {sandbox ? undefined : <sui.Button key='runbtn' class={`fluid half`} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -1314,10 +1314,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                <SideDocs ref="sidedoc" parent={this} />
+                {sandbox ? undefined : <SideDocs ref="sidedoc" parent={this} />}
                 {targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
-                <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
-                <ShareEditor parent={this} ref={v => this.shareEditor = v} />
+                {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
+                {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
             </div>
         );
     }
@@ -1515,6 +1515,7 @@ let myexports: any = {
 
 export var ksVersion: string;
 export var targetVersion: string;
+export var sandbox = false;
 
 function initTheme() {
     if (pxt.appTarget.appTheme.accentColor) {
@@ -1584,8 +1585,9 @@ $(document).ready(() => {
     let config = pxt.webConfig
     ksVersion = config.pxtVersion;
     targetVersion = config.targetVersion;
-    let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    sandbox = /sandbox=1/i.test(window.location.href);
     pxt.setDebugMode(/dbg=1/i.test(window.location.href));
+    let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
     enableAnalytics(ksVersion)
     appcache.init();
@@ -1597,7 +1599,8 @@ $(document).ready(() => {
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
 
     let ws = /ws=(\w+)/.exec(window.location.href)
-    if (ws) workspace.setupWorkspace(ws[1])
+    if (ws) workspace.setupWorkspace(ws[1]);
+    else if (sandbox) workspace.setupWorkspace("mem");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     pxt.docs.requireMarked = () => require("marked");

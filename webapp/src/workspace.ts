@@ -7,6 +7,7 @@ import * as pkg from "./package";
 import * as data from "./data";
 import * as cloudworkspace from "./cloudworkspace"
 import * as fileworkspace from "./fileworkspace"
+import * as memoryworkspace from "./memoryworkspace"
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -27,6 +28,10 @@ export function setupWorkspace(id: string) {
         case "fs":
         case "file":
             impl = fileworkspace.provider;
+            break;
+        case "mem":
+        case "memory":
+            impl = memoryworkspace.provider;
             break;
         case "cloud":
         default:
