@@ -242,6 +242,7 @@ export class Editor extends srceditor.Editor {
     prepare() {
         this.extraLibs = Object.create(null);
         this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
+        if (!this.editor) return;
 
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 

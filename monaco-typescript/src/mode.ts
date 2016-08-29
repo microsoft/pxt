@@ -73,6 +73,7 @@ function setupMode(defaults: LanguageServiceDefaultsImpl, modeId: string, langua
     disposables.push(monaco.languages.registerDocumentSymbolProvider(modeId, new languageFeatures.OutlineAdapter(worker)));
     disposables.push(monaco.languages.registerDocumentRangeFormattingEditProvider(modeId, new languageFeatures.FormatAdapter(worker)));
     disposables.push(monaco.languages.registerOnTypeFormattingEditProvider(modeId, new languageFeatures.FormatOnTypeAdapter(worker)));
+    disposables.push(monaco.languages.registerCodeActionProvider(modeId, new languageFeatures.CodeActionAdapter(worker)));
     disposables.push(new languageFeatures.DiagnostcsAdapter(defaults, modeId, worker));
     disposables.push(monaco.languages.setLanguageConfiguration(modeId, richEditConfiguration));
     disposables.push(monaco.languages.setTokensProvider(modeId, createTokenizationSupport(language)));
