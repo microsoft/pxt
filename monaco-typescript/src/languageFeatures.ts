@@ -266,6 +266,8 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
         let word = myItem.label;
         let currWord = model.getWordAtPosition(position);
         let refPosition = 0;
+        let lookupSig = true;
+
         if (currWord) {
             let prevWordPos = position.clone(); prevWordPos.column -= currWord.word.length + 1;
             let prevWord = model.getWordAtPosition(prevWordPos);
@@ -276,6 +278,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 this.referenceModel.setValue(word + "()");
                 refPosition = word.length + 1;
             }
+            lookupSig = model.getValue().charAt(this._positionToOffset(resource, position) + currWord.word.length - 1) != '(';
         }
 
         if (!this.referenceModel) this.referenceModel = monaco.editor.createModel("", "typescript", this.referenceModelUri);
@@ -323,7 +326,6 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
             let details: typescript.CompletionEntryDetails = values[0];
             let signature: typescript.SignatureHelpItems = values[1];
             let enumDefinitions: monaco.languages.SymbolInformation[][] = values[2];
-            let example: any = values[3];
             if (!details) {
                 return myItem;
             }
@@ -422,6 +424,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 }
                 myItem.insertText = codeSnippet;
             }
+            if (!lookupSig) myItem.insertText = null;
             return myItem;
         }));
     }
