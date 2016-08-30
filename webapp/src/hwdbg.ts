@@ -346,7 +346,7 @@ export function testFlash() {
 #define SIZE_IN_WORDS (PAGE_SIZE/4)
 #define NUM_BUFFERS 2
 #define PAGE_BUFFER ((uint32_t*)(0x20000000 + PAGE_SIZE))
-#define CONTROL_REGS ((uint32_t volatile*)(PAGE_BUFFER - 4*NUM_BUFFERS))
+#define CONTROL_REGS ((uint32_t volatile*)(PAGE_BUFFER - NUM_BUFFERS))
 
 void setConfig(uint32_t v) {
     NRF_NVMC->CONFIG = v;
@@ -394,6 +394,7 @@ void overwritePages(uint32_t *dst) {
     CONTROL_REGS[pageIdx] = 2;
     pageIdx++;
     if (pageIdx == NUM_BUFFERS) pageIdx = 0;
+    dst += SIZE_IN_WORDS;
   }
 }
 */
@@ -421,6 +422,8 @@ _start:
       movs    r0, r7
       subs    r4, #1
       bl      .overwriteFlashPage
+      adds    r7, #128
+      adds    r7, #128
       negs    r4, r4
       str     r6, [r5, #0]
       b         .again
@@ -429,7 +432,7 @@ _start:
       pop     {r3, r4, r5, r6, r7, pc}
 
                 .balign 4
-.control:       .word   0x200003e0
+.control:       .word   0x200003f8
 .data:          .word   0x20000400
 
 .setConfig:
