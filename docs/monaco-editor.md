@@ -72,10 +72,6 @@ You can get to the Find and Replace widget with ```Ctrl and f```, or you can als
 
 ![](/static/images/monaco-find-replace.png)
 
-### Parameter Editing Support 
-
-Parameter editing mode: For loop 
-
 ### Context Menu
 
 Right clicking anywhere within the editor will bring up the context menu. 
