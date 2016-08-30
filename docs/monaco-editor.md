@@ -18,10 +18,10 @@ If the language service knows possible completions, the IntelliSense suggestions
 
 ### Auto completion
 
-Pressing ```Enter``` to any of the functions suggested by IntelliSense will automatically insert a snippet of the function decleration prefilling default values for each of the function parameters.
+Pressing ```Enter``` to any of the functions suggested by IntelliSense will automatically insert a snippet of the function declaration prefilling default values for each of the function parameters.
 
 The default value is populated in one of the following ways: 
- - The default value in a @param JSdoc in the function decleration. 
+ - The default value in a @param JSdoc in the function declaration. 
  - Default values for primitive types. ```number: 0```, ```string: ""```, ```boolean: false```
  - If a parameter is an Enum, the first value of the Enum is inserted
 
@@ -33,7 +33,7 @@ Parameter hints will pop up as you're typing a function invocation.
 
 ### Quick Info
 
-Hovering over namespaces, functions and function parameters will show useful information describing the purposes of the function, namespace, or paramteter. 
+Hovering over namespaces, functions and function parameters will show useful information describing the purposes of the function, namespace, or parameter. 
 
 ![](/static/images/monaco-quick-info.png)
 
