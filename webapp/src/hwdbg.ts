@@ -327,14 +327,19 @@ export function flashDeviceAsync(startAddr: number, words: number[]) {
         .then(res => workerOpAsync("wrpages", cfg))
 }
 
-export function testFlash() {
-    compiler.compileAsync({ native: true })
-        .then(resp => {
-            console.log(resp)
-            return flashDeviceAsync(resp.quickFlash.startAddr, resp.quickFlash.words)
+export function partialFlashAsync(resp: pxtc.CompileResult, fallback: () => Promise<void>) {
+    return readMemAsync(resp.quickFlash.startAddr, 8)
+        .then(words => {
+            for (let i = 0; i < 6; ++i)
+                if ((resp.quickFlash.words[i] | 0) != (words[i] | 0))
+                    return false
+            return true
         })
-        .then(() => {
-            console.log("flashed")
+        .then(same => {
+            if (same)
+                return flashDeviceAsync(resp.quickFlash.startAddr, resp.quickFlash.words)
+            else
+                return fallback()
         })
 }
 

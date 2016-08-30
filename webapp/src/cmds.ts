@@ -2,6 +2,7 @@
 /// <reference path="../../built/pxtwinrt.d.ts"/>
 import * as core from "./core";
 import * as pkg from "./package";
+import * as hwdbg from "./hwdbg";
 import Cloud = pxt.Cloud;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
@@ -80,12 +81,16 @@ ${pxtwinrt.isWindows() ? `
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
-    return Util.requestAsync({
+    let deploy = () => Util.requestAsync({
         url: "http://localhost:3232/api/deploy",
         headers: { "Authorization": Cloud.localToken },
         method: "POST",
         data: resp
     }).then(r => { });
+    if (/quickflash/i.test(window.location.href))
+        return hwdbg.partialFlashAsync(resp, deploy)
+    else
+        return deploy()
 }
 
 export function initCommandsAsync(): Promise<void> {
