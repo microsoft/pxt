@@ -459,6 +459,7 @@ namespace ts.pxtc {
     }
 
     function addEnclosingTypeBindings(bindings: TypeBinding[], func: Declaration) {
+        if (!func) return
         for (let outer = getEnclosingFunction(func); outer; outer = getEnclosingFunction(outer)) {
             for (let tp of getTypeParameters(outer)) {
                 let res = checker.getTypeAtLocation(tp)
@@ -612,14 +613,12 @@ namespace ts.pxtc {
         }
 
         function unhandled(n: Node, info?: string, code: number = 9202) {
-            //If we info then we may as well present that instead
+            // If we have info then we may as well present that instead
             if (info) {
                 return userError(code, info)
             }
 
             if (!n) {
-                //Not displayed to the user, therefore no need for lf on this
-                console.log(`Error: ${getName(n)} is not a supported syntax feature`)
                 userError(code, lf("Sorry, this language feature isn't supported"))
             }
 
@@ -1228,14 +1227,30 @@ ${lbl}: .short 0xffff
         ): ir.Expr {
             if (!decl)
                 decl = getDecl(funcExpr) as FunctionLikeDeclaration
-            if (!decl)
-                unhandled(node, lf("no declaration"), 9240)
+            let isMethod = false
+            if (decl)
+                switch (decl.kind) {
+                    case SK.MethodDeclaration:
+                    case SK.MethodSignature:
+                    case SK.GetAccessor:
+                    case SK.SetAccessor:
+                        isMethod = true
+                        break;
+                    case SK.ModuleDeclaration:
+                    case SK.FunctionDeclaration:
+                        // has special handling
+                        break;
+                    default:
+                        decl = null; // no special handling
+                        break;
+                }
+
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
             let callInfo: CallInfo = {
                 decl,
-                qName: getFullName(checker, decl.symbol),
+                qName: decl ? getFullName(checker, decl.symbol) : "?",
                 attrs,
                 args: args.slice(0)
             };
@@ -1273,7 +1288,7 @@ ${lbl}: .short 0xffff
 
             addDefaultParameters(sig, args, attrs);
 
-            if (decl.kind == SK.FunctionDeclaration) {
+            if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
                 if (!info.location) {
@@ -1286,10 +1301,7 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            if (decl.kind == SK.MethodSignature ||
-                decl.kind == SK.GetAccessor ||
-                decl.kind == SK.SetAccessor ||
-                decl.kind == SK.MethodDeclaration) {
+            if (isMethod) {
                 if (isStatic(decl)) {
                     // no additional arguments
                 } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
@@ -1329,30 +1341,26 @@ ${lbl}: .short 0xffff
             if (isSelfGeneric)
                 U.oops("invalid generic call")
 
-            if (decl.kind == SK.VariableDeclaration ||
-                decl.kind == SK.FunctionDeclaration || // this is lambda
-                decl.kind == SK.Parameter) {
-                if (args.length > 3)
-                    userError(9217, lf("lambda functions with more than 3 arguments not supported"))
-
-                let suff = args.length + ""
-
-                args.unshift(funcExpr)
-                callInfo.args.unshift(funcExpr)
-
-                // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
-                // because what we're calling is ultimately a procedure which will decr arguments itself
-                return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
-            }
-
-            if (decl.kind == SK.ModuleDeclaration) {
+            if (decl && decl.kind == SK.ModuleDeclaration) {
                 if (getName(decl) == "String")
                     userError(9219, lf("to convert X to string use: X + \"\""))
                 else
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            throw unhandled(node, stringKind(decl), 9242)
+            // otherwise we assume a lambda
+
+            if (args.length > 3)
+                userError(9217, lf("lambda functions with more than 3 arguments not supported"))
+
+            let suff = args.length + ""
+
+            args.unshift(funcExpr)
+            callInfo.args.unshift(funcExpr)
+
+            // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
+            // because what we're calling is ultimately a procedure which will decr arguments itself
+            return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
@@ -1766,6 +1774,7 @@ ${lbl}: .short 0xffff
             let lbl = proc.mkLabel("lazy")
             let left = emitExpr(node.left)
             let isString = typeOf(node.left).flags & TypeFlags.String
+            let needsFinalFakeRef = false
             if (node.operatorToken.kind == SK.BarBarToken) {
                 if (isString)
                     left = ir.rtcall("pxtrt::emptyToNull", [left])
@@ -1777,17 +1786,23 @@ ${lbl}: .short 0xffff
                     proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
                     proc.emitJmp(lbl, left, ir.JmpMode.Always)
                     proc.emitLbl(slbl)
+                    if (isRefCountedExpr(node.left))
+                        proc.emitExpr(ir.op(EK.Decr, [left]))
+                    needsFinalFakeRef = true
                 } else {
+                    if (isRefCountedExpr(node.left))
+                        proc.emitExpr(ir.op(EK.Decr, [left]))
                     proc.emitJmpZ(lbl, left)
                 }
-                if (isRefCountedExpr(node.left))
-                    proc.emitExpr(ir.op(EK.Decr, [left]))
             } else {
                 oops()
             }
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
+
+            if (needsFinalFakeRef)
+                proc.emitExpr(ir.rtcall("thumb::ignore", [ir.op(EK.JmpValue, []), left]))
 
             return ir.op(EK.JmpValue, [])
         }
@@ -2621,13 +2636,6 @@ ${lbl}: .short 0xffff
         strings: StringMap<string> = {};
         otherLiterals: string[] = [];
         lblNo = 0;
-
-        isDataRecord(s: string) {
-            if (!s) return false
-            let m = /^:......(..)/.exec(s)
-            assert(!!m)
-            return m[1] == "00"
-        }
 
         addProc(proc: ir.Procedure) {
             this.procs.push(proc)

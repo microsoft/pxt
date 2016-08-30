@@ -5,6 +5,7 @@ var ju = require("./jakeutil")
 var path = require("path")
 var expand = ju.expand;
 var cmdIn = ju.cmdIn;
+var rjs = require("requirejs")
 
 function tscIn(task, dir) {
     cmdIn(task, dir, 'node ../node_modules/typescript/bin/tsc')
@@ -18,6 +19,22 @@ function compileDir(name, deps) {
 
 function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
+}
+
+function bundleOne(task, moduleId, exclude) {
+    console.log("bundling: " + moduleId);
+    var opts = {
+        baseUrl: '/built/monaco-typescript/',
+        name: 'vs/language/typescript/' + moduleId,
+        out: 'built/web/vs/language/typescript/' + moduleId + '.js',
+        exclude: exclude,
+        paths: {
+            'vs/language/typescript': __dirname + '/built/monaco-typescript/'
+        }
+    };
+    rjs.optimize(opts, function () {
+        task.complete();
+    });
 }
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'compilemonaco'], { parallelLimit: 10 })
@@ -217,7 +234,8 @@ file("built/web/pxtlib.js", [
     "built/pxtsim.js",
     "built/pxtrunner.js",
     "built/pxtwinrt.js",
-    "built/pxteditor.js"
+    "built/pxteditor.js", 
+    "built/web/vs/language/typescript/src/monaco.contribution.js"
 ], function () {
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
@@ -226,10 +244,14 @@ file("built/web/pxtlib.js", [
     jake.mkdirP("webapp/public/vs")
     jake.cpR("node_modules/monaco-editor/dev/vs/base", "webapp/public/vs/")
     jake.cpR("node_modules/monaco-editor/dev/vs/editor", "webapp/public/vs/")
+
+    let monacotypescriptcontribution = fs.readFileSync("built/web/vs/language/typescript/src/monaco.contribution.js", "utf8")
+    monacotypescriptcontribution.replace('["require","exports"]', '["require","exports","vs/editor/edcore.main"]')
+
     let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
     monacoeditor = monacoeditor.replace("var FocusHeight = 35", "var FocusHeight = 45");
     monacoeditor = monacoeditor.replace("var UnfocusedHeight = 19", "var UnfocusedHeight = 29");
-    monacoeditor = monacoeditor.replace("define(\"vs/language/typescript/src/monaco.contribution\",", "/*define(\"vs/language/typescript/src/monaco.contribution\",")
+    monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
     fs.writeFileSync("webapp/public/vs/editor/editor.main.js", monacoeditor)
 
     jake.cpR("node_modules/monaco-editor/dev/vs/css.js", "webapp/public/vs/")
@@ -261,54 +283,42 @@ file("built/web/pxtlib.js", [
 
 
 task('compilemonaco', [
-    "built/web/vs/language/typescript/lib/typescriptServices.js",
-    "built/web/vs/language/typescript/lib/lib-es6-ts.js",
-    "built/web/vs/language/typescript/lib/lib-ts.js",
-    "built/web/vs/language/typescript/src/mode.js",
-    "built/web/vs/language/typescript/src/languageFeatures.js",
     "built/web/vs/language/typescript/src/monaco.contribution.js",
-    "built/web/vs/language/typescript/src/tokenization.js",
-    "built/web/vs/language/typescript/src/worker.js",
-    "built/web/vs/language/typescript/src/workerManager.js"
+    "built/web/vs/language/typescript/lib/typescriptServices.js",
+    "built/web/vs/language/typescript/src/mode.js",
+    "built/web/vs/language/typescript/src/worker.js"
 ])
 
-file('built/monacots', expand([
-    "monacots",
+file('built/monaco-typescript', expand([
+    "monaco-typescript",
     "built/pxtlib.js"
     ]), { async: true }, 
     function () {
-     tscIn(this, "monacots")
-     jake.mkdirP("built/web/vs/language/typescript/src")
-     jake.mkdirP("built/web/vs/language/typescript/lib")
+     tscIn(this, "monaco-typescript");
 })
 
-file('built/web/vs/language/typescript/lib/typescriptServices.js', ['built/monacots'], function () {
-    jake.cpR("monacots/lib/typescriptServices.js", "built/web/vs/language/typescript/lib/")
-});
-file('built/web/vs/language/typescript/lib/lib-es6-ts.js', ['built/monacots'], function () {
-    jake.cpR("monacots/lib/lib-es6-ts.js", "built/web/vs/language/typescript/lib/")
-});
-file('built/web/vs/language/typescript/lib/lib-ts.js', ['built/monacots'], function () {
-    jake.cpR("monacots/lib/lib-ts.js", "built/web/vs/language/typescript/lib/")
-});
+file('built/web/vs/language/typescript/src/monaco.contribution.js', ['built/monaco-typescript', 'built/monaco-typescript/src/monaco.contribution.js'], { async: true }, function () {
+    bundleOne(this, 'src/monaco.contribution');
+})
 
-file('built/web/vs/language/typescript/src/mode.js', ['built/monacots', 'built/pxtlib.js'], function () {
-    jake.cpR("built/monacots/src/mode.js", "built/web/vs/language/typescript/src/")
+file('built/web/vs/language/typescript/lib/typescriptServices.js', ['built/monaco-typescript'], { async: true } , function () {
+    jake.cpR("monaco-typescript/lib", "built/monaco-typescript/lib/");
+    bundleOne(this, 'lib/typescriptServices');
+});
+			
+file('built/web/vs/language/typescript/src/mode.js', ['built/monaco-typescript', 
+                                                      'built/web/vs/language/typescript/lib/typescriptServices.js', 
+                                                      'built/monaco-typescript/src/mode.js', 
+                                                      'built/monaco-typescript/src/languageFeatures.js',
+                                                      'built/monaco-typescript/src/tokenization.js'], { async: true }, function () {
+    bundleOne(this, 'src/mode', ['vs/language/typescript/lib/typescriptServices']);
 })
-file('built/web/vs/language/typescript/src/languageFeatures.js', ['built/monacots', 'built/pxtlib.js'], function () {
-    jake.cpR("built/monacots/src/languageFeatures.js", "built/web/vs/language/typescript/src/")
-})
-file('built/web/vs/language/typescript/src/monaco.contribution.js', ['built/monacots'], function () {
-    jake.cpR("built/monacots/src/monaco.contribution.js", "built/web/vs/language/typescript/src/")
-})
-file('built/web/vs/language/typescript/src/tokenization.js', ['built/monacots'], function () {
-    jake.cpR("built/monacots/src/tokenization.js", "built/web/vs/language/typescript/src/")
-})
-file('built/web/vs/language/typescript/src/worker.js', ['built/monacots'], function () {
-    jake.cpR("built/monacots/src/worker.js", "built/web/vs/language/typescript/src/")
-})
-file('built/web/vs/language/typescript/src/workerManager.js', ['built/monacots'], function () {
-    jake.cpR("built/monacots/src/workerManager.js", "built/web/vs/language/typescript/src/")
+
+file('built/web/vs/language/typescript/src/worker.js', ['built/monaco-typescript', 
+                                                        'built/web/vs/language/typescript/lib/typescriptServices.js',
+                                                        'built/monaco-typescript/src/worker.js', 
+                                                        'built/monaco-typescript/src/workerManager.js'], { async: true }, function () {
+    bundleOne(this, 'src/worker', ['vs/language/typescript/lib/typescriptServices']);
 })
 
 file('built/webapp/src/app.js', expand([

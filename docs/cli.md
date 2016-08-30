@@ -11,11 +11,11 @@ npm install -g pxt
 ## Setting up workspace
 
 For every PXT target you will need to create a directory for your projects.
-Let's say you want to install `microbit` target, and name the directory `myworkspace`:
+Let's say you want to install `microbit` target, and name the directory `microbit`:
 
 ```
-mkdir myworkspace
-cd myworkspace
+mkdir microbit
+cd microbit
 pxt target microbit
 pxt serve
 ```
@@ -39,6 +39,31 @@ and use the CLI to build and deploy it.
 You can edit the package using [VSCode](https://code.visualstudio.com/).
 
 You can also [publish your own packages on GitHub](/packages).
+
+## Creating a new project
+
+Open a shell to your ``microbit`` folder.
+
+```
+# create a new subfolder for your project
+cd projects
+mkdir blink
+cd blink
+# start the project set
+pxt init
+# open code
+code .
+```
+
+## Opening an existing project 
+
+You can extract a project from the embedded URL or .hex file. Open a shell to your projects folder
+
+```
+# extract the project from the URL
+pxt extract EMBEDURL
+```
+where ``EMBEDURL`` is the published project URL.
 
 ## Cloud-keeping
 

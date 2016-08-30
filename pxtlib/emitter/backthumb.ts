@@ -282,6 +282,9 @@ ${bkptLabel + "_after"}:
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
 
+            if (name == "thumb::ignore")
+                return
+
             if (U.startsWith(name, "thumb::")) {
                 write(`${name.slice(7)} r0, r1`)
             } else {
@@ -457,10 +460,13 @@ ${bkptLabel + "_after"}:
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;
+        let bytecodePaddingSize: number;
         let bytecodeStartAddr: number;
+        export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
         let asmLabels: StringMap<boolean> = {};
         export let asmTotalSource: string = "";
+        export const pageSize = 0x400;
 
         function swapBytes(str: string) {
             let r = ""
@@ -541,6 +547,10 @@ ${bkptLabel + "_after"}:
 
                     bytecodeStartAddr = lastAddr + 16
                     bytecodeStartIdx = lastIdx + 1
+                    bytecodeStartAddrPadded = (bytecodeStartAddr & ~(pageSize - 1)) + pageSize
+                    let paddingBytes = bytecodeStartAddrPadded - bytecodeStartAddr
+                    assert((paddingBytes & 0xf) == 0)
+                    bytecodePaddingSize = paddingBytes
                 }
             }
 
@@ -640,7 +650,7 @@ ${bkptLabel + "_after"}:
         }
 
         export function hexPrelude() {
-            return `    .startaddr 0x${bytecodeStartAddr.toString(16)}\n`
+            return `    .startaddr 0x${bytecodeStartAddrPadded.toString(16)}\n`
         }
 
         function hexBytes(bytes: number[]) {
@@ -657,6 +667,11 @@ ${bkptLabel + "_after"}:
 
             assert(buf.length < 32000)
 
+            let zeros: number[] = []
+            for (let i = 0; i < bytecodePaddingSize >> 1; ++i)
+                zeros.push(0)
+            buf = zeros.concat(buf)
+
             let ptr = 0
 
             function nextLine(buf: number[], addr: number) {
@@ -669,7 +684,7 @@ ${bkptLabel + "_after"}:
                 return bytes
             }
 
-            let hd = [0x4208, numReservedGlobals + bin.globals.length, bytecodeStartAddr & 0xffff, bytecodeStartAddr >>> 16]
+            let hd = [0x4209, 0, bytecodeStartAddrPadded & 0xffff, bytecodeStartAddrPadded >>> 16]
             let tmp = hexTemplateHash()
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
@@ -705,13 +720,6 @@ ${bkptLabel + "_after"}:
         if (!/(^[\s;])|(:$)/.test(s))
             s = "    " + s
         return s + "\n"
-    }
-
-    function isDataRecord(s: string) {
-        if (!s) return false
-        let m = /^:......(..)/.exec(s)
-        assert(!!m)
-        return m[1] == "00"
     }
 
     function stringLiteral(s: string) {
@@ -752,7 +760,8 @@ ${hex.hexPrelude()}
     .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
-    .space 16 ; reserved
+    .short ${numReservedGlobals + bin.globals.length}   ; num. globals
+    .space 14 ; reserved
 `
         bin.procs.forEach(p => {
             asmsource += "\n" + irToAssembly(bin, p) + "\n"
@@ -775,6 +784,7 @@ ${hex.hexPrelude()}
 
     export function thumbInlineAssemble(src: string) {
         let b = mkThumbFile()
+        b.disablePeepHole = true
         b.emit(src)
         throwThumbErrors(b)
 
@@ -889,6 +899,15 @@ _stored_program: .string "`
         if (res.buf) {
             const myhex = hex.patchHex(bin, res.buf, false).join("\r\n") + "\r\n"
             bin.writeFile(pxtc.BINARY_HEX, myhex)
+            cres.quickFlash = {
+                startAddr: hex.bytecodeStartAddrPadded,
+                words: []
+            }
+            for (let i = 0; i < res.buf.length; i += 2) {
+                cres.quickFlash.words.push(res.buf[i] | (res.buf[i + 1] << 16))
+            }
+            while (cres.quickFlash.words.length & ((hex.pageSize >> 2) - 1))
+                cres.quickFlash.words.push(0)
         }
 
         for (let bkpt of cres.breakpoints) {

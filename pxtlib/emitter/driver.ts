@@ -82,6 +82,10 @@ namespace ts.pxtc {
         blocksInfo?: BlocksInfo;
         usedSymbols?: U.Map<SymbolInfo>; // q-names of symbols used
         usedArguments?: U.Map<string[]>;
+        quickFlash?: {
+            words: number[];
+            startAddr: number;
+        }
     }
 
     export function computeUsedParts(resp: CompileResult): string[] {

@@ -32,16 +32,26 @@ body {
     right:auto;
     left:0;
 }
-#sidedocsbutton {
+#sidedocspopout {
+  position: absolute;
+  top:4.75rem;
+  right:4.25rem;
+}
+.rtl #sidedocspopout {
+    right:auto;
+    left:4.25rem;
+}
+
+#sidedocsexpand {
   position: absolute;
   top:4.75rem;
   right:1.25rem;
-  display:none;
 }
-.rtl #sidedocsbutton {
+.rtl #sidedocsexpand {
     right:auto;
     left:1.25rem;
 }
+
 #logo {
     font-size: 2.8rem;
     margin: 0;
@@ -557,17 +567,13 @@ html {
         left:0.5rem;
         right: auto;
     }    
-    #errorcard {
-        display:none;
-    }
     #maineditor, .rtl #maineditor {     
         left: 0;
         right:0;
+    }            
+    #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {     
         bottom:2rem;
     }            
-    #boardview.errored {
-        display:none !important;
-    }
     .ui.landscape.only {
         display:none !important;
     }
@@ -667,11 +673,6 @@ html {
 
 /* monaco: Editor */
 
-.monaco-editor.vs .token.ts.identifier:hover {
-    border-radius: 6px;
-    border: 1px solid #565656;
-}
-
 .monaco-editor .current-line {
 	background: rgba(0, 0, 255, 0.1);
 }
@@ -726,3 +727,24 @@ html {
     color: #fff;
 }
 
+/* monaco: Tokens */
+
+.monaco-editor.vs .token.ts.identifier:hover {
+    border-radius: 6px;
+    border: 1px solid #565656;
+}
+
+.token.ts {
+    padding-left: 0.1em;
+    padding-right: 0.1em;
+}
+
+.token.ts.keyword.if, .token.ts.keyword.else {
+    color: #5B80A5;
+    border-radius: 3px;
+}
+
+.token.ts.keyword.while:not(.true), .token.ts.keyword.for {
+    color: #5BA55B;
+    border-radius: 3px;
+}

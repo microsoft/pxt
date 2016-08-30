@@ -65,19 +65,26 @@ function tokenize(bracketTypeTable: { [i: number]: string }, tokenTypeTable: { [
         endState: new State(state.language, ts.EndOfLineState.None, false)
     };
 
-    function appendFn(startIndex: number, type: string): void {
+    function appendFn(startIndex: number, type: string, text: string): void {
         if (ret.tokens.length === 0 || ret.tokens[ret.tokens.length - 1].scopes !== type) {
-            ret.tokens.push({
-                startIndex: startIndex,
-                scopes: type
-            });
+            if (text && (type.indexOf("identifier") > -1 || type.indexOf("keyword") > -1)) {
+                ret.tokens.push({
+                    startIndex: startIndex,
+                    scopes: [type + " " + text]
+                });
+            } else {
+                ret.tokens.push({
+                    startIndex: startIndex,
+                    scopes: [type]
+                });
+            }
         }
     }
 
     let isTypeScript = state.language === Language.TypeScript;
 
     // shebang statement, #! /bin/node
-    if (!isTypeScript && checkSheBang(0, text, appendFn)) {
+    if (!isTypeScript && checkSheBang(0, text, null, appendFn)) {
         return ret;
     }
 
@@ -95,19 +102,19 @@ function tokenize(bracketTypeTable: { [i: number]: string }, tokenTypeTable: { [
             // punctions: check for brackets: (){}[]
             let ch = text.charCodeAt(offset);
             type = bracketTypeTable[ch] || tokenTypeTable[entry.classification];
-            appendFn(offset, type);
+            appendFn(offset, type, null);
 
         } else if (entry.classification === ts.TokenClass.Comment) {
             // comments: check for JSDoc, block, and line comments
             if (ret.endState.inJsDocComment || /\/\*\*.*\*\//.test(text.substr(offset, entry.length))) {
-                appendFn(offset, isTypeScript ? 'comment.doc.ts' : 'comment.doc.js');
+                appendFn(offset, isTypeScript ? 'comment.doc.ts' : 'comment.doc.js', null);
             } else {
-                appendFn(offset, isTypeScript ? 'comment.ts' : 'comment.js');
+                appendFn(offset, isTypeScript ? 'comment.ts' : 'comment.js', null);
             }
         } else {
             // everything else
             appendFn(offset,
-                tokenTypeTable[entry.classification] || '');
+                tokenTypeTable[entry.classification] || '', text.substr(offset, entry.length));
         }
 
         offset += entry.length;
@@ -155,9 +162,9 @@ jsTokenTypeTable[ts.TokenClass.RegExpLiteral] = 'regexp.js';
 jsTokenTypeTable[ts.TokenClass.StringLiteral] = 'string.js';
 
 
-function checkSheBang(deltaOffset: number, line: string, appendFn: (startIndex: number, type: string) => void): boolean {
+function checkSheBang(deltaOffset: number, line: string, text: string, appendFn: (startIndex: number, type: string, text: string) => void): boolean {
     if (line.indexOf('#!') === 0) {
-        appendFn(deltaOffset, 'comment.shebang');
+        appendFn(deltaOffset, 'comment.shebang', text);
         return true;
     }
     return false;

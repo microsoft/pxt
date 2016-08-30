@@ -18,12 +18,11 @@ import Promise = monaco.Promise;
 import CancellationToken = monaco.CancellationToken;
 import IDisposable = monaco.IDisposable;
 
-
 let snippets = {
 	"For Loop": {
 		"prefix": "for",
 		"body": [
-			"for (let ${index} = 0; ${index} < {{4}}; ${index}++) {",
+			"for (let ${index} = 0; ${index} <= {{4}}; ${index}++) {",
 			"\t$0",
 			"}"
 		],
@@ -267,6 +266,8 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
         let word = myItem.label;
         let currWord = model.getWordAtPosition(position);
         let refPosition = 0;
+        let lookupSig = true;
+
         if (currWord) {
             let prevWordPos = position.clone(); prevWordPos.column -= currWord.word.length + 1;
             let prevWord = model.getWordAtPosition(prevWordPos);
@@ -277,6 +278,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 this.referenceModel.setValue(word + "()");
                 refPosition = word.length + 1;
             }
+            lookupSig = model.getValue().charAt(this._positionToOffset(resource, position) + currWord.word.length - 1) != '(';
         }
 
         if (!this.referenceModel) this.referenceModel = monaco.editor.createModel("", "typescript", this.referenceModelUri);
@@ -422,6 +424,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 }
                 myItem.insertText = codeSnippet;
             }
+            if (!lookupSig) myItem.insertText = null;
             return myItem;
         }));
     }
@@ -509,6 +512,16 @@ export class SignatureHelpAdapter extends Adapter implements monaco.languages.Si
     }
 }
 
+
+// --- code fix ------
+
+export class CodeActionAdapter extends Adapter implements monaco.languages.CodeActionProvider {
+
+    provideCodeActions(model: monaco.editor.IReadOnlyModel, range: Range, context: monaco.languages.CodeActionContext, token: CancellationToken): Thenable<monaco.languages.CodeAction[]> {
+        return;
+    }
+}
+
 // --- hover ------
 
 export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverProvider {
@@ -530,7 +543,8 @@ export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverP
             let completion: typescript.CompletionEntryDetails = values[2];
             if (info && completion) {
                 let contents = typescript.displayPartsToString(completion.documentation);
-                let infoContents = typescript.displayPartsToString(info.displayParts);
+                if (!contents)
+                    contents = typescript.displayPartsToString(info.displayParts);
                 return {
                     range: this._textSpanToRange(resource, info.textSpan),
                     contents: [contents]

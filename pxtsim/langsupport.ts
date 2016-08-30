@@ -346,7 +346,6 @@ namespace pxsim {
         }
 
         // these are never used in simulator; silence the warnings
-        export var getNumGlobals: any;
         export var getGlobalsPtr: any;
     }
 
@@ -362,6 +361,9 @@ namespace pxsim {
                 r.fields.push(i < reflen ? null : 0)
             return r
         }
+
+        // these are never used in simulator; silence the warnings
+        export var getNumGlobals: any;
     }
 
     export namespace thread {

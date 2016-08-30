@@ -69,7 +69,7 @@ function callAndPush(prc: string) {
 }
 
 let stateProcs = [
-    "pxtrt::getNumGlobals/numGlobals",
+    "pxt::getNumGlobals/numGlobals",
     "pxtrt::getGlobalsPtr/globalsPtr",
 ]
 
@@ -313,4 +313,134 @@ export function workerOpAsync(op: string, arg: any = {}) {
             return iface.opAsync(op, arg)
         })
 }
+
+export function flashDeviceAsync(startAddr: number, words: number[]) {
+    let cfg: FlashData = {
+        flashWords: words,
+        flashCode: [],
+        bufferAddr: 0x20000400,
+        numBuffers: 2,
+        flashAddr: startAddr
+    }
+    return compiler.assembleAsync(nrfFlashAsm)
+        .then(res => { cfg.flashCode = res.words })
+        .then(res => workerOpAsync("wrpages", cfg))
+}
+
+export function partialFlashAsync(resp: pxtc.CompileResult, fallback: () => Promise<void>) {
+    return readMemAsync(resp.quickFlash.startAddr, 8)
+        .then(words => {
+            for (let i = 0; i < 6; ++i)
+                if ((resp.quickFlash.words[i] | 0) != (words[i] | 0))
+                    return false
+            return true
+        })
+        .then(same => {
+            if (same)
+                return flashDeviceAsync(resp.quickFlash.startAddr, resp.quickFlash.words)
+            else
+                return fallback()
+        })
+}
+
+
+export interface FlashData {
+    flashCode: number[];
+    flashWords: number[];
+    numBuffers: number;
+    bufferAddr: number;
+    flashAddr: number;
+}
+
+/*
+#define PAGE_SIZE 0x400
+#define SIZE_IN_WORDS (PAGE_SIZE/4)
+
+void setConfig(uint32_t v) {
+    NRF_NVMC->CONFIG = v;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy);    
+}
+
+void overwriteFlashPage(uint32_t* to, uint32_t* from)
+{
+    // Turn on flash erase enable and wait until the NVMC is ready:
+    setConfig(NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos);
+
+    // Erase page:
+    NRF_NVMC->ERASEPAGE = (uint32_t)to;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy);    
+
+    // Turn off flash erase enable and wait until the NVMC is ready:
+    setConfig(NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+
+    // Turn on flash write enable and wait until the NVMC is ready:
+    setConfig(NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
+
+    for(int i = 0; i <= (SIZE_IN_WORDS - 1); i++) {
+        *(to + i) = *(from + i);
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);    
+    }
+
+    // Turn off flash write enable and wait until the NVMC is ready:
+    setConfig(NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+}
+*/
+
+let nrfFlashAsm = `
+overwriteFlashPage:
+        cpsid i
+        push    {r4, r5, r6, lr}
+        movs    r5, r0
+        movs    r0, #2
+        movs    r6, r1
+        bl      .setConfig
+        movs    r3, #161        ; 0xa1
+        movs    r2, #128        ; 0x80
+        ldr     r4, .NRF_NVMC
+        lsls    r3, r3, #3
+        str     r5, [r4, r3]
+        lsls    r2, r2, #3
+.overLoop:
+        ldr     r3, [r4, r2]
+        cmp     r3, #0
+        beq     .overLoop
+        movs    r0, #0
+        bl      .setConfig
+        movs    r0, #1
+        bl      .setConfig
+        movs    r2, #128
+        lsls    r2, r2, #3
+        movs    r3, #0
+        movs    r1, r2
+.overOuterLoop:
+        ldr     r0, [r6, r3]
+        str     r0, [r5, r3]
+.overLoop2:
+        ldr     r0, [r4, r2]
+        cmp     r0, #0
+        beq     .overLoop2
+        adds    r3, #4
+        cmp     r3, r1
+        bne     .overOuterLoop
+        movs    r0, #0
+        bl      .setConfig
+        pop     {r4, r5, r6, pc}
+
+.setConfig:
+        movs    r1, #128
+        ldr     r3, .NRF_NVMC
+        ldr     r2, .v504
+        lsls    r1, r1, #3
+        str     r0, [r3, r2]
+.cfgLoop:
+        ldr     r2, [r3, r1]
+        cmp     r2, #0
+        beq     .cfgLoop
+        bx      lr
+
+
+                .balign 4
+.NRF_NVMC:      .word   0x4001e000
+.v504:          .word   0x504
+`
 

@@ -502,6 +502,7 @@ namespace pxt.blocks {
         monkeyPatchBlock("controls_simple_for", lf("a loop that repeats the number of times you say"), "blocks/loops/for");
 
         monkeyPatchBlock("variables_set", lf("assign the value of a variable"), "blocks/variables/assign");
+        monkeyPatchBlock("variables_get", lf("get the value of a variable"), "blocks/variables");
         monkeyPatchBlock("variables_change", lf("update the value of a number variable"), "blocks/variables/change-var");
 
         monkeyPatchBlock("logic_compare", lf("comparing two numbers"), "blocks/logic/boolean");
@@ -509,7 +510,7 @@ namespace pxt.blocks {
         monkeyPatchBlock("logic_negate", lf("logical negation"), "blocks/logic/boolean");
         monkeyPatchBlock("logic_boolean", lf("a `true` or `false` value"), "blocks/logic/boolean");
 
-        monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("a integer number") : lf("a decimal number"), "reference/types/number");
+        monkeyPatchBlock("math_number", !pxt.appTarget.compile || !pxt.appTarget.compile.floatingPoint ? lf("an integer number") : lf("a decimal number"), "reference/types/number");
         monkeyPatchBlock("math_arithmetic", lf("arithmetic operation"), "blocks/math");
         monkeyPatchBlock("math_modulo", lf("division remainder"), "blocks/math");
         monkeyPatchBlock("math_op2", lf("minimum or maximum of 2 numbers"), "blocks/math");
@@ -620,6 +621,25 @@ namespace pxt.blocks {
 
     export var onShowContextMenu: (workspace: Blockly.Workspace,
         items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
+
+    // TODO: port changes to blockly 
+    export function initMouse(ws: Blockly.Workspace) {
+        Blockly.bindEvent_(ws.svgGroup_, 'wheel', ws, ev => {
+            let e = ev as WheelEvent;
+            Blockly.terminateDrag_();
+            const delta = e.deltaY > 0 ? -1 : 1;
+            const position = Blockly.mouseToSvg(e, ws.getParentSvg());
+            if (e.ctrlKey)
+                ws.zoom(position.x, position.y, delta);
+            else if (ws.scrollbar) {
+                let y = parseFloat(ws.scrollbar.vScroll.svgKnob_.getAttribute("y") || "0");
+                y /= ws.scrollbar.vScroll.ratio_;
+                ws.scrollbar.vScroll.set(y + e.deltaY);
+                ws.scrollbar.resize();
+            }
+            e.preventDefault();
+        });
+    }
 
     function initContextMenu() {
         /**
