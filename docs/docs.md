@@ -7,7 +7,7 @@ They are meant for people creating PXT targets (experiences).
 * [defining blocks](/defining-blocks), expose your APIs as blocks
 * [async functions and threads](/async)
 * [auto-generation of library files](/simshim), from either C++ or TypeScript simulator sources
-* [JavaScript Editor features](/JavaScript/editor) -- a comprehensive list of features supported by the JavaScript Editor
+* [JavaScript Editor features](/js/editor) -- a comprehensive list of features supported by the JavaScript Editor
 
 * [custom packages](/packages), define your own packages
 * [custom targets](/target-creation), create your own targets
