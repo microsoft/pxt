@@ -1766,6 +1766,7 @@ ${lbl}: .short 0xffff
             let lbl = proc.mkLabel("lazy")
             let left = emitExpr(node.left)
             let isString = typeOf(node.left).flags & TypeFlags.String
+            let needsFinalFakeRef = false
             if (node.operatorToken.kind == SK.BarBarToken) {
                 if (isString)
                     left = ir.rtcall("pxtrt::emptyToNull", [left])
@@ -1777,17 +1778,23 @@ ${lbl}: .short 0xffff
                     proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
                     proc.emitJmp(lbl, left, ir.JmpMode.Always)
                     proc.emitLbl(slbl)
+                    if (isRefCountedExpr(node.left))
+                        proc.emitExpr(ir.op(EK.Decr, [left]))
+                    needsFinalFakeRef = true
                 } else {
+                    if (isRefCountedExpr(node.left))
+                        proc.emitExpr(ir.op(EK.Decr, [left]))
                     proc.emitJmpZ(lbl, left)
                 }
-                if (isRefCountedExpr(node.left))
-                    proc.emitExpr(ir.op(EK.Decr, [left]))
             } else {
                 oops()
             }
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
+
+            if (needsFinalFakeRef)
+                proc.emitExpr(ir.rtcall("thumb::ignore", [ir.op(EK.JmpValue, []), left]))
 
             return ir.op(EK.JmpValue, [])
         }

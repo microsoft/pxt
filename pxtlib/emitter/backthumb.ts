@@ -282,6 +282,9 @@ ${bkptLabel + "_after"}:
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
 
+            if (name == "thumb::ignore")
+                return
+
             if (U.startsWith(name, "thumb::")) {
                 write(`${name.slice(7)} r0, r1`)
             } else {
