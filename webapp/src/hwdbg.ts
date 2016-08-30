@@ -315,18 +315,16 @@ export function workerOpAsync(op: string, arg: any = {}) {
 }
 
 export function flashDeviceAsync(startAddr: number, words: number[]) {
-    let cfg = {
-        words: words,
-        bufAddr: 0x20000000 + 0x400,
-        numBuffers: 2
+    let cfg: FlashData = {
+        flashWords: words,
+        flashCode: [],
+        bufferAddr: 0x20000400,
+        numBuffers: 2,
+        flashAddr: startAddr
     }
-    let asm = compiler.assembleAsync(nrfFlashAsm)
-    return workerOpAsync("halt", {})
-        .then(() => writeMemAsync(cfg.bufAddr - cfg.numBuffers * 4, [2, 2]))
-        .then(() => asm)
-        .then(res => workerOpAsync("bgexec", { code: res.words, args: [startAddr] }))
+    return compiler.assembleAsync(nrfFlashAsm)
+        .then(res => { cfg.flashCode = res.words })
         .then(res => workerOpAsync("wrpages", cfg))
-        .then(() => workerOpAsync("reset", {}))
 }
 
 export function testFlash() {
@@ -341,12 +339,17 @@ export function testFlash() {
 }
 
 
+export interface FlashData {
+    flashCode: number[];
+    flashWords: number[];
+    numBuffers: number;
+    bufferAddr: number;
+    flashAddr: number;
+}
+
 /*
 #define PAGE_SIZE 0x400
 #define SIZE_IN_WORDS (PAGE_SIZE/4)
-#define NUM_BUFFERS 2
-#define PAGE_BUFFER ((uint32_t*)(0x20000000 + PAGE_SIZE))
-#define CONTROL_REGS ((uint32_t volatile*)(PAGE_BUFFER - NUM_BUFFERS))
 
 void setConfig(uint32_t v) {
     NRF_NVMC->CONFIG = v;
@@ -376,78 +379,10 @@ void overwriteFlashPage(uint32_t* to, uint32_t* from)
     // Turn off flash write enable and wait until the NVMC is ready:
     setConfig(NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
 }
-
-// control values:
-//   1 - ready to write
-//   2 - written
-//   3 - stop writing
-
-void overwritePages(uint32_t *dst) {
-  int pageIdx = 0;
-  while (true) {
-    while ((CONTROL_REGS[pageIdx] & 1) == 0);
-    if (CONTROL_REGS[pageIdx] & 2) {
-      CONTROL_REGS[pageIdx] = 2;
-      break;
-    }
-    overwriteFlashPage(dst, PAGE_BUFFER + pageIdx * SIZE_IN_WORDS);
-    CONTROL_REGS[pageIdx] = 2;
-    pageIdx++;
-    if (pageIdx == NUM_BUFFERS) pageIdx = 0;
-    dst += SIZE_IN_WORDS;
-  }
-}
 */
 
 let nrfFlashAsm = `
-_start:
-      push    {r3, r4, r5, r6, r7, lr}
-      movs    r7, r0
-      movs    r4, #0
-      movs    r6, #2
-.again:
-      ldr     r3, .control
-      lsls    r5, r4, #2
-      adds    r5, r5, r3
-      movs    r2, #1
-.wait:
-      ldr     r3, [r5, #0]
-      tst     r3, r2
-      beq     .wait
-      tst     r3, r6
-      bne     .ret
-      ldr     r3, .data
-      lsls    r1, r4, #10
-      adds    r1, r1, r3
-      movs    r0, r7
-      subs    r4, #1
-      bl      .overwriteFlashPage
-      adds    r7, #128
-      adds    r7, #128
-      negs    r4, r4
-      str     r6, [r5, #0]
-      b         .again
-.ret:
-      str     r6, [r5, #0]
-      pop     {r3, r4, r5, r6, r7, pc}
-
-                .balign 4
-.control:       .word   0x200003f8
-.data:          .word   0x20000400
-
-.setConfig:
-        movs    r1, #128
-        ldr     r3, .NRF_NVMC
-        ldr     r2, .v504
-        lsls    r1, r1, #3
-        str     r0, [r3, r2]
-.cfgLoop:
-        ldr     r2, [r3, r1]
-        cmp     r2, #0
-        beq     .cfgLoop
-        bx      lr
-
-.overwriteFlashPage:
+overwriteFlashPage:
         push    {r4, r5, r6, lr}
         movs    r5, r0
         movs    r0, #2
@@ -484,6 +419,18 @@ _start:
         movs    r0, #0
         bl      .setConfig
         pop     {r4, r5, r6, pc}
+
+.setConfig:
+        movs    r1, #128
+        ldr     r3, .NRF_NVMC
+        ldr     r2, .v504
+        lsls    r1, r1, #3
+        str     r0, [r3, r2]
+.cfgLoop:
+        ldr     r2, [r3, r1]
+        cmp     r2, #0
+        beq     .cfgLoop
+        bx      lr
 
 
                 .balign 4
