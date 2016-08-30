@@ -5,7 +5,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "outDir": "../built/monacots",
+        "outDir": "../built/monaco-typescript",
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false

@@ -2622,13 +2622,6 @@ ${lbl}: .short 0xffff
         otherLiterals: string[] = [];
         lblNo = 0;
 
-        isDataRecord(s: string) {
-            if (!s) return false
-            let m = /^:......(..)/.exec(s)
-            assert(!!m)
-            return m[1] == "00"
-        }
-
         addProc(proc: ir.Procedure) {
             this.procs.push(proc)
             proc.seqNo = this.procs.length

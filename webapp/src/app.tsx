@@ -55,8 +55,6 @@ interface IAppState {
     currFile?: pkg.File;
     fileState?: string;
     showFiles?: boolean;
-    errorCard?: pxt.CodeCard;
-    errorCardClick?: (e: React.MouseEvent) => boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
     sideDocsCollapsed?: boolean;
@@ -335,6 +333,7 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
         let docembed: string;
         let vscode: string;
         if (ready) {
+            url = `${rootUrl}${header.pubId}`;
             docembed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
             vscode = `pxt extract ${header.pubId}`
         }
@@ -350,15 +349,15 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                 <div className="ui warning message">
                     <div className="header">{lf("Almost there!") }</div>
                     <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
-                        lf("You acknowledge having consent to publish this content.") }</p>
+                        lf("You acknowledge having consent to publish this project.") }</p>
                     <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
                 </div>
-                <div className="ui success message">
+                { url ? <div className="ui success message">
                     <h3>{lf("Project URL") }</h3>
-                    <div className="header">{ url ? <a target="_blank" href={url}>{url}</a> : undefined }</div>
-                </div>
+                    <div className="header"><a target="_blank" href={url}>{url}</a></div>
+                </div> : undefined }
                 { docembed ?
-                    <sui.Field label={lf("Embed the code and simulator") }>
+                    <sui.Field label={lf("Embed the web editor") }>
                         <p>{lf("Copy this HTML to your website or blog.") }</p>
                         <sui.Input class="mini" readOnly={true} lines={2} value={docembed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
@@ -434,7 +433,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         const icon = state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
             <iframe id="sidedocs" src={docsUrl} role="complementary" />
-            <button id="sidedocspopout" className="circular ui icon button" onClick={() => this.popOut() }>
+            <button id="sidedocspopout" className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
                 <i className={`external icon`}></i>
             </button>
             <button id="sidedocsexpand" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
@@ -643,27 +642,25 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             });
     }
 
+    private markdownChangeHandler = Util.debounce(() => {
+        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
+            this.setSideMarkdown(this.editor.getCurrentSource());
+    }, 2000, false);
+    private editorChangeHandler = Util.debounce(() => {
+        this.saveFile();
+        if (!this.editor.isIncomplete())
+            this.typecheck();
+        this.markdownChangeHandler();
+    }, 1000, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
 
-        let hasChangeTimer = false
         let changeHandler = () => {
             if (this.editorFile) this.editorFile.markDirty();
-            if (!hasChangeTimer) {
-                hasChangeTimer = true
-                setTimeout(() => {
-                    hasChangeTimer = false;
-                    this.saveFile();
-                    if (!this.editor.isIncomplete())
-                        this.typecheck();
-                    if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
-                        this.setSideMarkdown(this.editor.getCurrentSource());
-                }, 1000);
-            }
+            this.editorChangeHandler();
         }
-
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
@@ -732,7 +729,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({
             currFile: fn,
             helpCard: undefined,
-            errorCard: undefined,
             showBlocks: false
         })
     }
@@ -806,7 +802,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         logs.clear();
         this.setState({
             helpCard: undefined,
-            errorCard: undefined,
             showFiles: h.editor == pxt.javaScriptProjectName
         })
         return pkg.loadPkgAsync(h.id)
@@ -827,7 +822,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     projectName: h.name,
                     currFile: file
                 })
-                core.infoNotification(lf("Project loaded: {0}", h.name))
+                if (!sandbox)
+                    core.infoNotification(lf("Project loaded: {0}", h.name))
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
                 }
@@ -1148,13 +1144,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             })
     }
 
-    setErrorCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
-        this.setState({
-            errorCard: card,
-            errorCardClick: onClick
-        })
-    }
-
     setHelpCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
         this.setState({
             helpCard: card,
@@ -1223,7 +1212,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${this.state.sideDocsCollapsed ? "" : "sideDocs"}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless small menu`} role="menubar">
                         <span id="logo" className="ui item">
@@ -1235,13 +1224,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
-                                <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                                <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />
-                                <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />
+                                {sandbox ? undefined : <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />}
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />}
                                 {this.editor.menu() }
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
-                            <div className="ui buttons">
+                            {sandbox ? undefined : <div className="ui buttons">
                                 <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
@@ -1268,13 +1257,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }
                                     <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                 </sui.DropdownMenu>
-                            </div>
+                            </div>}
                             <div className="ui">
                                 {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync(settings).done() } /> : undefined}
                             </div>
-                            <DocsMenu parent={this} />
+                            {sandbox ? undefined : <DocsMenu parent={this} />}
                         </div>
-                        <div className="ui item wide only">
+                        {sandbox ? undefined : <div className="ui item wide only">
                             <div className="ui massive transparent input">
                                 <input id="fileNameInput"
                                     type="text"
@@ -1284,22 +1273,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 </input>
                                 <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
                             </div>
-                        </div>
-                        {targetTheme.rightLogo ?
+                        </div>}
+                        {targetTheme.rightLogo && !sandbox ?
                             <div className="ui item right wide only">
                                 <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
                             </div> : null }
                     </div>
                 </div>
                 <div id="filelist" className="ui items" role="complementary">
-                    {this.state.errorCard ? <div id="errorcard" className="ui item">
-                        <codecard.CodeCardView className="fluid top-margin" responsive={true} onClick={this.state.errorCardClick} {...this.state.errorCard} target={pxt.appTarget.id} />
-                    </div> : null }
-                    <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""} ${this.state.errorCard ? "errored " : ""}`}>
+                    <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
-                        <sui.Button key='runbtn' class={`fluid half`} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        {sandbox ? undefined : <sui.Button key='runbtn' class={`fluid half`} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -1310,14 +1296,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                     <FileList parent={this} />
                 </div>
-                <div id="maineditor" role="main">
+                <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                <SideDocs ref="sidedoc" parent={this} />
-                {targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
-                <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />
-                <ShareEditor parent={this} ref={v => this.shareEditor = v} />
+                {sandbox ? undefined : <SideDocs ref="sidedoc" parent={this} />}
+                {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
+                {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
+                {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
             </div>
         );
     }
@@ -1387,6 +1373,8 @@ function getsrc() {
 }
 
 function enableUserVoice(version: string) {
+    if (sandbox) return;
+
     const analytics = (pxt.appTarget.analytics || {} as pxt.AppAnalytics);
     if (!analytics.userVoiceApiKey) return;
 
@@ -1515,6 +1503,7 @@ let myexports: any = {
 
 export var ksVersion: string;
 export var targetVersion: string;
+export var sandbox = false;
 
 function initTheme() {
     if (pxt.appTarget.appTheme.accentColor) {
@@ -1584,8 +1573,9 @@ $(document).ready(() => {
     let config = pxt.webConfig
     ksVersion = config.pxtVersion;
     targetVersion = config.targetVersion;
-    let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    sandbox = /sandbox=1/i.test(window.location.href);
     pxt.setDebugMode(/dbg=1/i.test(window.location.href));
+    let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
     enableAnalytics(ksVersion)
     appcache.init();
@@ -1597,7 +1587,8 @@ $(document).ready(() => {
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
 
     let ws = /ws=(\w+)/.exec(window.location.href)
-    if (ws) workspace.setupWorkspace(ws[1])
+    if (ws) workspace.setupWorkspace(ws[1]);
+    else if (sandbox) workspace.setupWorkspace("mem");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     pxt.docs.requireMarked = () => require("marked");
