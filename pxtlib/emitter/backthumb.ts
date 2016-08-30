@@ -780,6 +780,7 @@ ${hex.hexPrelude()}
 
     export function thumbInlineAssemble(src: string) {
         let b = mkThumbFile()
+        b.disablePeepHole = true
         b.emit(src)
         throwThumbErrors(b)
 
