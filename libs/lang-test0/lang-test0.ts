@@ -1032,6 +1032,22 @@ function testToString() {
     assert(s == "Foo42", "ts")
 }
 
+class NestedFun {
+    f: () => number;
+}
+
+function testComplexCallExpr() {
+    let a = new NestedFun()
+    a.f = () => 12;
+
+    function bar() {
+        return () => 17;
+    }
+
+    assert(a.f() == 12, "af")
+    assert(bar()() == 17, "ff")
+}
+
 // ---------------------------------------------------------------------------
 // Driver starts
 // ---------------------------------------------------------------------------
@@ -1072,6 +1088,7 @@ testBoolCasts()
 testLazyRef()
 testNull()
 testToString()
+testComplexCallExpr()
 
 
 msg("test top level code")

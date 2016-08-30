@@ -459,6 +459,7 @@ namespace ts.pxtc {
     }
 
     function addEnclosingTypeBindings(bindings: TypeBinding[], func: Declaration) {
+        if (!func) return
         for (let outer = getEnclosingFunction(func); outer; outer = getEnclosingFunction(outer)) {
             for (let tp of getTypeParameters(outer)) {
                 let res = checker.getTypeAtLocation(tp)
@@ -1226,14 +1227,30 @@ ${lbl}: .short 0xffff
         ): ir.Expr {
             if (!decl)
                 decl = getDecl(funcExpr) as FunctionLikeDeclaration
-            if (!decl)
-                unhandled(node, lf("no declaration"), 9240)
+            let isMethod = false
+            if (decl)
+                switch (decl.kind) {
+                    case SK.MethodDeclaration:
+                    case SK.MethodSignature:
+                    case SK.GetAccessor:
+                    case SK.SetAccessor:
+                        isMethod = true
+                        break;
+                    case SK.ModuleDeclaration:
+                    case SK.FunctionDeclaration:
+                        // has special handling
+                        break;
+                    default:
+                        decl = null; // no special handling
+                        break;
+                }
+
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
             let callInfo: CallInfo = {
                 decl,
-                qName: getFullName(checker, decl.symbol),
+                qName: decl ? getFullName(checker, decl.symbol) : "?",
                 attrs,
                 args: args.slice(0)
             };
@@ -1271,7 +1288,7 @@ ${lbl}: .short 0xffff
 
             addDefaultParameters(sig, args, attrs);
 
-            if (decl.kind == SK.FunctionDeclaration) {
+            if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
                 if (!info.location) {
@@ -1284,10 +1301,7 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            if (decl.kind == SK.MethodSignature ||
-                decl.kind == SK.GetAccessor ||
-                decl.kind == SK.SetAccessor ||
-                decl.kind == SK.MethodDeclaration) {
+            if (isMethod) {
                 if (isStatic(decl)) {
                     // no additional arguments
                 } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
@@ -1327,30 +1341,26 @@ ${lbl}: .short 0xffff
             if (isSelfGeneric)
                 U.oops("invalid generic call")
 
-            if (decl.kind == SK.VariableDeclaration ||
-                decl.kind == SK.FunctionDeclaration || // this is lambda
-                decl.kind == SK.Parameter) {
-                if (args.length > 3)
-                    userError(9217, lf("lambda functions with more than 3 arguments not supported"))
-
-                let suff = args.length + ""
-
-                args.unshift(funcExpr)
-                callInfo.args.unshift(funcExpr)
-
-                // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
-                // because what we're calling is ultimately a procedure which will decr arguments itself
-                return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
-            }
-
-            if (decl.kind == SK.ModuleDeclaration) {
+            if (decl && decl.kind == SK.ModuleDeclaration) {
                 if (getName(decl) == "String")
                     userError(9219, lf("to convert X to string use: X + \"\""))
                 else
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            throw unhandled(node, null, 9242)
+            // otherwise we assume a lambda
+
+            if (args.length > 3)
+                userError(9217, lf("lambda functions with more than 3 arguments not supported"))
+
+            let suff = args.length + ""
+
+            args.unshift(funcExpr)
+            callInfo.args.unshift(funcExpr)
+
+            // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
+            // because what we're calling is ultimately a procedure which will decr arguments itself
+            return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
