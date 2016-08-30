@@ -209,8 +209,9 @@ namespace pxt.runner {
                     if (pxt.appTarget.simulator)
                         options.aspectRatio = pxt.appTarget.simulator.aspectRatio;
                     let parts = pxtc.computeUsedParts(resp);
+                    let fnArgs = resp.usedArguments;
                     let driver = new pxsim.SimulatorDriver(container, options);
-                    driver.run(js, { parts: parts });
+                    driver.run(js, { parts: parts, fnArgs: fnArgs });
                 }
             })
     }

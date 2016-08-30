@@ -27,6 +27,7 @@ namespace pxsim {
     export interface SimulatorRunOptions {
         debug?: boolean;
         parts?: string[];
+        fnArgs?: any;
     }
 
     export interface HwDebugger {
@@ -181,6 +182,7 @@ namespace pxsim {
             this.currentRuntime = {
                 type: 'run',
                 parts: opts.parts,
+                fnArgs: opts.fnArgs,
                 code: js
             }
 

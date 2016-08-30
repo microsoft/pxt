@@ -63,6 +63,7 @@ interface IAppState {
     publishing?: boolean;
     hideEditorFloats?: boolean;
     showBlocks?: boolean;
+    showParts?: boolean;
 
     simulatorCompilation?: {
         name: string;
@@ -1037,6 +1038,27 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({ running: false })
     }
 
+    openInstructions() {
+        compiler.compileAsync({ native: true })
+            .done(resp => {
+                let p = pkg.mainEditorPkg();
+                let code = p.files["main.ts"];
+                let data: any = {
+                    name: p.header.name || lf("Untitled"),
+                    code: code ? code.content : "basic.showString('Hello!');",
+                };
+                let parts = ts.pxtc.computeUsedParts(resp);
+                if (parts)
+                    data.parts = parts.join(" ");
+                let fnArgs = resp.usedArguments;
+                if (fnArgs)
+                    data.fnArgs = JSON.stringify(fnArgs);
+                let urlData = $.param(data);
+                let url = `/sim/instructions.html?${urlData}`
+                window.open(url, '_blank')
+            });
+    }
+
     clearLog() {
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
@@ -1225,6 +1247,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
                                 {sandbox ? undefined : <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                                {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='shopping cart' class="violet portrait only" onClick={() => this.openInstructions() } /> : undefined }
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />}
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />}
                                 {this.editor.menu() }
@@ -1291,6 +1314,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                         {pxt.debugMode() ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={lf("Dev Debug") } onClick={() => this.hwDebug() } /> : ''}
                     </div>
+                    {!sandbox && this.state.showParts ?
+                    <div className="ui item landscape only">
+                        <sui.Button icon='shopping cart' class="violet" text="Parts" onClick={() => this.openInstructions() } />
+                    </div> : undefined }
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
                     </div>
@@ -1459,7 +1486,7 @@ function showIcons() {
         "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle",
         "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
         "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
-        "user", "wizard",
+        "user", "wizard", "shopping cart",
     ]
     core.confirmAsync({
         header: "Icons",
