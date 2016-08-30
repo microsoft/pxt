@@ -30,6 +30,8 @@ namespace pxt.vs {
     }
 
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
+        if (!monaco.languages.typescript) return;
+
         // validation settings
         let diagnosticOptions = monaco.languages.typescript.typescriptDefaults.diagnosticsOptions;
         diagnosticOptions.noSyntaxValidation = false;
