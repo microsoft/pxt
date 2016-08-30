@@ -69,7 +69,7 @@ function callAndPush(prc: string) {
 }
 
 let stateProcs = [
-    "pxtrt::getNumGlobals/numGlobals",
+    "pxt::getNumGlobals/numGlobals",
     "pxtrt::getGlobalsPtr/globalsPtr",
 ]
 
@@ -383,6 +383,7 @@ void overwriteFlashPage(uint32_t* to, uint32_t* from)
 
 let nrfFlashAsm = `
 overwriteFlashPage:
+        cpsid i
         push    {r4, r5, r6, lr}
         movs    r5, r0
         movs    r0, #2
