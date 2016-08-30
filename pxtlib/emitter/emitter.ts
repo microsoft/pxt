@@ -612,14 +612,12 @@ namespace ts.pxtc {
         }
 
         function unhandled(n: Node, info?: string, code: number = 9202) {
-            //If we info then we may as well present that instead
+            // If we have info then we may as well present that instead
             if (info) {
                 return userError(code, info)
             }
 
             if (!n) {
-                //Not displayed to the user, therefore no need for lf on this
-                console.log(`Error: ${getName(n)} is not a supported syntax feature`)
                 userError(code, lf("Sorry, this language feature isn't supported"))
             }
 
@@ -1352,7 +1350,7 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            throw unhandled(node, stringKind(decl), 9242)
+            throw unhandled(node, null, 9242)
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
