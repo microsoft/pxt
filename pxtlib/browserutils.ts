@@ -1,12 +1,7 @@
-/// <reference path="../typings/winrt/winrt.d.ts"/>
 
 namespace pxt.BrowserUtils {
     export function isWindows(): boolean {
         return !!navigator && /Win32/i.test(navigator.platform);
-    }
-
-    export function isWinRT(): boolean {
-        return typeof Windows !== "undefined";
     }
 
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
