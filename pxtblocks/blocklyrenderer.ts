@@ -1,4 +1,4 @@
-/// <reference path="./blockly.d.ts" />
+/// <reference path="../built/blockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../typings/jquery/jquery.d.ts" />
 
