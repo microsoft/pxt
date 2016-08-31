@@ -12,4 +12,7 @@ cache:
   directories:
     - node_modules
     - typings
-
+addons:
+  apt:
+    packages:
+      - libusb-1.0-0-dev
