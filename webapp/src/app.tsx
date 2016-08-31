@@ -176,6 +176,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return headers;
     }
 
+    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
+        return this.state.searchFor != nextState.searchFor || this.state.packages != nextState.packages;
+    }
+
     renderCore() {
         const headers = this.fetchLocalData();
         const data = this.fetchCloudData();
@@ -327,14 +331,16 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             color="blue"
                             />
                     ) }
-                    { isEmpty() ?
-                        <div className="ui card">
+                </div>
+                { isEmpty() ?
+                    <div className="ui items">
+                        <div className="ui item">
                             {this.state.packages ?
                                 lf("We couldn't find any packages matching '{0}'", this.state.searchFor) :
                                 lf("We couldn't find any projects matching '{0}'", this.state.searchFor)}
                         </div>
-                        : undefined }
-                </div>
+                    </div>
+                    : undefined }
             </sui.Modal >
         );
     }
