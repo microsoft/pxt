@@ -41,8 +41,7 @@ namespace pxsim {
         private frameCounter = 0;
         private currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
-        public debug = false;
-        public aspectRatio = 0;
+        public runOptions: SimulatorRunOptions = { };
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
 
@@ -115,8 +114,8 @@ namespace pxsim {
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
-            if (this.aspectRatio)
-                wrapper.style.paddingBottom = (100 / this.aspectRatio) + "%";
+            if (this.runOptions.aspectRatio)
+                wrapper.style.paddingBottom = (100 / this.runOptions.aspectRatio) + "%";
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
@@ -166,7 +165,7 @@ namespace pxsim {
             let frames = this.container.getElementsByTagName("iframe");
             for (let i = 0; i < frames.length; ++i) {
                 frames[i].parentElement.style.paddingBottom =
-                    (100 / this.aspectRatio) + "%";
+                    (100 / this.runOptions.aspectRatio) + "%";
             }
         }
 
@@ -184,8 +183,7 @@ namespace pxsim {
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
-            this.debug = opts.debug;
-            this.aspectRatio = opts.aspectRatio; // restart as needed
+            this.runOptions = opts;
             this.runId = this.nextId();
             this.addEventListeners();
 

@@ -636,7 +636,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
-                        && !simulator.driver.debug
+                        && !simulator.driver.runOptions.debug
                         && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
                         this.autoRunSimulator();
                 }
@@ -1066,7 +1066,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     hwDebug() {
         let start = Promise.resolve()
-        if (!this.state.running || !simulator.driver.debug)
+        if (!this.state.running || !simulator.driver.runOptions.debug)
             start = this.runSimulator({ debug: true })
         return start.then(() => {
             simulator.driver.setHwDebugger({
@@ -1102,7 +1102,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
                     simulator.run(opts.debug, resp)
-                    this.setState({ running: true })
+                    this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
@@ -1308,16 +1308,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
-                        {sandbox ? undefined : <sui.Button key='runbtn' class={`fluid half`} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                        {!sandbox && this.state.showParts ? <sui.Button icon='shopping cart' class="fluid sixty violet" text={lf("Parts")} onClick={() => this.openInstructions() } /> : undefined }
+                        {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                         {pxt.debugMode() ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={lf("Dev Debug") } onClick={() => this.hwDebug() } /> : ''}
                     </div>
-                    {!sandbox && this.state.showParts ?
-                    <div className="ui item landscape only">
-                        <sui.Button icon='shopping cart' class="violet" text="Parts" onClick={() => this.openInstructions() } />
-                    </div> : undefined }
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
                     </div>

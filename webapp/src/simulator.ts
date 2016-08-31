@@ -110,7 +110,7 @@ function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
     }
 
     $debugger.empty();
-    if (!driver.debug) return;
+    if (!driver.runOptions.debug) return;
     let advanced = config.editor == 'tsprj';
 
     if (driver.state == pxsim.SimulatorState.Paused) {

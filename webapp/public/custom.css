@@ -672,6 +672,9 @@ html {
 .ui.fluid.button.half{
     width:50% !important;
 }
+.ui.fluid.button.sixty{
+    width:60% !important;
+}
 
 /* monaco: Editor */
 
