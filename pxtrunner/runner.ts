@@ -78,7 +78,13 @@ namespace pxt.runner {
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
                         let cfg = JSON.parse(files[pxt.configName]) as pxt.PackageConfig;
-                        pkg.verArgument().split(',').forEach(d => cfg.dependencies[d] = "*");
+                        pkg.verArgument().split(',').forEach(d => {
+                            let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(d);
+                            if (m)
+                                cfg.dependencies[m[1]] = m[3] || "*"
+                            else
+                                console.warn(`unknown package syntax ${d}`)
+                        });
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
                         files[pxt.configName] = JSON.stringify(cfg, null, 4);

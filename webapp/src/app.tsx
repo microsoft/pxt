@@ -1053,6 +1053,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let fnArgs = resp.usedArguments;
                 if (fnArgs)
                     data.fnArgs = JSON.stringify(fnArgs);
+                data.package = Util.values(pkg.mainPkg.deps).filter(p => p.id != "this").map(p => `${p.id}=${p._verspec}`).join('\n')
                 let urlData = $.param(data);
                 let url = `${pxt.webConfig.partsUrl}?${urlData}`
                 window.open(url, '_blank')
