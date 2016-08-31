@@ -8,6 +8,7 @@ import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';
 import * as os from 'os';
+import * as util from 'util';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -269,6 +270,19 @@ function initSocketServer() {
         })
     }
 
+    function objToString(obj: any) {
+        let r = "{\n"
+        for (let k of Object.keys(obj)) {
+            r += "   " + k + ": "
+            let s = JSON.stringify(obj[k])
+            if (!s) s = "(null)"
+            if (s.length > 60) s = s.slice(0, 60) + "..."
+            r += s + "\n"
+        }
+        r += "}"
+        return r
+    }
+
     function startDebug(request: any, socket: any, body: any) {
         let ws = new WebSocket(request, socket, body);
         let dapjs: any
@@ -281,15 +295,15 @@ function initSocketServer() {
             try {
                 let msg = JSON.parse(event.data);
                 if (!dapjs) dapjs = require("dapjs")
-                console.log("DEBUGMSG", msg)
                 let toHandle = msg.arg
                 toHandle.op = msg.op
+                console.log("DEBUGMSG", objToString(toHandle))
                 Promise.resolve()
                     .then(() => dapjs.handleMessageAsync(toHandle))
                     .then(resp => {
                         if (resp == null || typeof resp != "object")
                             resp = { response: resp }
-                        console.log("DEBUGRESP", resp)
+                        console.log("DEBUGRESP", objToString(resp))
                         ws.send(JSON.stringify({
                             op: msg.op,
                             id: msg.id,

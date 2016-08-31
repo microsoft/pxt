@@ -57,8 +57,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onCompile: cfg.onCompile
     };
-    if (pxt.appTarget.simulator)
-        options.aspectRatio = pxt.appTarget.simulator.aspectRatio;
     driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
     config = cfg
     updateDebuggerButtons();
@@ -83,9 +81,18 @@ export function isDirty(): boolean { // in need of a restart?
 export function run(debug: boolean, res: pxtc.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[pxtc.BINARY_JS]
-    let parts = pxtc.computeUsedParts(res);
+    let parts = pxtc.computeUsedParts(res, true);
+    let fnArgs = res.usedArguments;
     lastCompileResult = res;
-    driver.run(js, {parts: parts, debug: debug});
+
+    let opts: pxsim.SimulatorRunOptions = {
+        parts: parts,
+        debug: debug,
+        fnArgs: fnArgs,
+        aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio
+    }
+
+    driver.run(js, opts);
 }
 
 export function stop(unload?: boolean) {

@@ -99,7 +99,6 @@ compileDir("pxtlib", ["built/typescriptServices.d.ts"])
 compileDir("pxtblocks", ["built/pxtlib.js"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
 compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
-compileDir("pxtwinrt", ["built/pxtlib.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ['pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
@@ -124,7 +123,6 @@ task("lint", [], { async: true }, function () {
         "pxtlib/emitter",
         "pxtrunner",
         "pxtsim",
-        "pxtwinrt",
         "webapp/src",
         "monacots"]
         .map(function (d) { return "node node_modules/tslint/bin/tslint ./" + d + "/*.ts" })
@@ -216,7 +214,6 @@ file('built/localization.json', ju.expand1(
 
 task('wapp', [
     "built/web/pxtlib.js",
-    "built/web/pxtwinrt.js",
     "built/web/pxtsim.js",
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js",
@@ -233,7 +230,6 @@ file("built/web/pxtlib.js", [
     "built/pxtblocks.js",
     "built/pxtsim.js",
     "built/pxtrunner.js",
-    "built/pxtwinrt.js",
     "built/pxteditor.js", 
     "built/web/vs/language/typescript/src/monaco.contribution.js"
 ], function () {
@@ -267,7 +263,6 @@ file("built/web/pxtlib.js", [
     jake.cpR("built/pxtblocks.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
     jake.cpR("built/pxtrunner.js", "built/web/")
-    jake.cpR("built/pxtwinrt.js", "built/web/")
     jake.cpR("built/pxteditor.js", "built/web/")
     jake.cpR("external/tdast.js", "built/web/")
 
@@ -324,7 +319,6 @@ file('built/web/vs/language/typescript/src/worker.js', ['built/monaco-typescript
 file('built/webapp/src/app.js', expand([
     "webapp",
     "built/web/pxtlib.js",
-    "built/web/pxtwinrt.js",
     "built/web/pxtsim.js",
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js"

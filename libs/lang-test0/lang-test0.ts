@@ -691,19 +691,23 @@ function switchB(e: En) {
 function testForOf() {
     let arr = [1, 7, 8]
     let sum = 0
-    for (let e of arr)
+    for (let e of arr) {
         sum += (e - 1)
+    }
     assert(sum == 13, "fo1")
 
     // make sure we incr reference count of the array during the loop execution
-    for (let q of [3, 4, 12])
+    for (let q of [3, 4, 12]) {
         sum += (q - 2)
+    }
     assert(sum == 26, "fo2")
 
     // iteration over a string
     let s = "hello, world!"
     let s2 = ""
-    for (let c of s) s2 += c
+    for (let c of s) {
+        s2 += c
+    }
     assert(s == s2, "fo3")
 
     // mutation of array during iteration
@@ -732,7 +736,9 @@ function testForOf() {
     assert(concat.length == 10, "fo6")
 
     sum = 0
-    for (let y of concat) sum += y
+    for (let y of concat) {
+        sum += y
+    }
     assert(sum == 55, "fo7")
 }
 
@@ -933,6 +939,7 @@ class GetSet {
 }
 
 function testAccessors() {
+    msg("testAccessors")
     glb1 = 0
     let f = new GetSet()
     f.x = 12
@@ -949,6 +956,7 @@ function testAccessors() {
 
 class BazClass { }
 function testBoolCasts() {
+    msg("testBoolCast")
     function boolDie() {
         control.assert(false, "bool casts")
     }
@@ -979,6 +987,7 @@ function testBoolCasts() {
 }
 
 function testLazyRef() {
+    msg("testLazyRef")
     let x = ("x" + "Y") || "foo"
     let y = "" || "bXr" + "2"
     assert(x.length == 2, "two")
@@ -1005,6 +1014,7 @@ function testLazyRef() {
 }
 
 function testNull() {
+    msg("testNull")
     let x = 0
     let y = 0
     x = null
@@ -1016,9 +1026,26 @@ function testNull() {
 }
 
 function testToString() {
+    msg("testToString")
     let f = new Foo(44, 2)
     let s = "" + f
     assert(s == "Foo42", "ts")
+}
+
+class NestedFun {
+    f: () => number;
+}
+
+function testComplexCallExpr() {
+    let a = new NestedFun()
+    a.f = () => 12;
+
+    function bar() {
+        return () => 17;
+    }
+
+    assert(a.f() == 12, "af")
+    assert(bar()() == 17, "ff")
 }
 
 // ---------------------------------------------------------------------------
@@ -1061,6 +1088,7 @@ testBoolCasts()
 testLazyRef()
 testNull()
 testToString()
+testComplexCallExpr()
 
 
 msg("test top level code")

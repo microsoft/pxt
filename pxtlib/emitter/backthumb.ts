@@ -282,6 +282,9 @@ ${bkptLabel + "_after"}:
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
 
+            if (name == "thumb::ignore")
+                return
+
             if (U.startsWith(name, "thumb::")) {
                 write(`${name.slice(7)} r0, r1`)
             } else {
@@ -681,7 +684,7 @@ ${bkptLabel + "_after"}:
                 return bytes
             }
 
-            let hd = [0x4208, numReservedGlobals + bin.globals.length, bytecodeStartAddrPadded & 0xffff, bytecodeStartAddrPadded >>> 16]
+            let hd = [0x4209, 0, bytecodeStartAddrPadded & 0xffff, bytecodeStartAddrPadded >>> 16]
             let tmp = hexTemplateHash()
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
@@ -757,7 +760,8 @@ ${hex.hexPrelude()}
     .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
-    .space 16 ; reserved
+    .short ${numReservedGlobals + bin.globals.length}   ; num. globals
+    .space 14 ; reserved
 `
         bin.procs.forEach(p => {
             asmsource += "\n" + irToAssembly(bin, p) + "\n"
@@ -780,6 +784,7 @@ ${hex.hexPrelude()}
 
     export function thumbInlineAssemble(src: string) {
         let b = mkThumbFile()
+        b.disablePeepHole = true
         b.emit(src)
         throwThumbErrors(b)
 

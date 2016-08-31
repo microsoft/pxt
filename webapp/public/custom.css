@@ -36,6 +36,7 @@ body {
   position: absolute;
   top:4.75rem;
   right:4.25rem;
+  display:none;
 }
 .rtl #sidedocspopout {
     right:auto;
@@ -46,6 +47,7 @@ body {
   position: absolute;
   top:4.75rem;
   right:1.25rem;
+  display:none;
 }
 .rtl #sidedocsexpand {
     right:auto;
@@ -501,7 +503,7 @@ html {
         display:block;
         width:22rem;
     }
-    #sidedocsbutton {
+    #sidedocspopout, #sidedocsexpand {
         display:block;
     }
 }

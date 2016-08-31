@@ -247,6 +247,8 @@ namespace pxt {
     export interface AppSimulator {
         autoRun?: boolean;
         aspectRatio?: number; // width / height
+        partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
+        builtinParts?: U.Map<boolean>;
     }
 
     export interface ICompilationOptions {

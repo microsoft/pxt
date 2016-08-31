@@ -146,6 +146,8 @@ namespace pxsim {
         export function cmp_eq(x: number, y: number) { return pxtrt.nullFix(x) == pxtrt.nullFix(y); }
         export function cmp_gt(x: number, y: number) { return x > y; }
         export function cmp_ge(x: number, y: number) { return x >= y; }
+
+        export function ignore(v: any) { return v; }
     }
 
     export namespace String_ {

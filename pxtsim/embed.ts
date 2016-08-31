@@ -8,6 +8,7 @@ namespace pxsim {
         frameCounter?: number;
         options?: any;
         parts?: string[];
+        fnArgs?: any;
         code: string;
     }
 

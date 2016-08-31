@@ -206,11 +206,16 @@ namespace pxt.runner {
                 let js = resp.outfiles[pxtc.BINARY_JS];
                 if (js) {
                     let options: pxsim.SimulatorDriverOptions = {};
-                    if (pxt.appTarget.simulator)
-                        options.aspectRatio = pxt.appTarget.simulator.aspectRatio;
-                    let parts = pxtc.computeUsedParts(resp);
                     let driver = new pxsim.SimulatorDriver(container, options);
-                    driver.run(js, { parts: parts });
+
+                    let fnArgs = resp.usedArguments;
+                    let parts = pxtc.computeUsedParts(resp, true);
+                    let runOptions: pxsim.SimulatorRunOptions = { parts: parts, fnArgs: fnArgs };
+                    if (pxt.appTarget.simulator)
+                        runOptions.aspectRatio = parts && pxt.appTarget.simulator.partsAspectRatio
+                            ? pxt.appTarget.simulator.partsAspectRatio
+                            : pxt.appTarget.simulator.aspectRatio;
+                    driver.run(js, runOptions);
                 }
             })
     }

@@ -88,9 +88,9 @@ namespace ts.pxtc {
         }
     }
 
-    export function computeUsedParts(resp: CompileResult): string[] {
+    export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
         if (!resp.usedSymbols)
-            return null;
+            return [];
 
         let parts: string[] = [];
         for (let symbol in resp.usedSymbols) {
@@ -106,6 +106,12 @@ namespace ts.pxtc {
                     });
                 }
             }
+        }
+
+        if (ignoreBuiltin) {
+            const builtinParts = pxt.appTarget.simulator.builtinParts;
+            if (builtinParts)
+                parts = parts.filter(p => !builtinParts[p]);
         }
         return parts;
     }
