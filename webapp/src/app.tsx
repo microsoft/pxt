@@ -242,6 +242,19 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             this.props.parent.importHexFileDialog();
         }
 
+        const isEmpty = () => {
+            if (this.state.searchFor) {
+                if (headers.length > 0
+                    || data.length > 0
+                    || bundles.length > 0
+                    || ghdata.length > 0
+                    || urldata.length > 0)
+                    return false;
+                return true;
+            }
+            return false;
+        }
+
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
                 <div className="ui search">
@@ -314,6 +327,13 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             color="blue"
                             />
                     ) }
+                    { isEmpty() ?
+                        <div className="ui card">
+                            {this.state.packages ?
+                                lf("We couldn't find any packages matching '{0}'", this.state.searchFor) :
+                                lf("We couldn't find any projects matching '{0}'", this.state.searchFor)}
+                        </div>
+                        : undefined }
                 </div>
             </sui.Modal >
         );
