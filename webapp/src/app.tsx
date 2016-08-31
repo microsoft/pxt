@@ -410,9 +410,9 @@ class DocsMenu extends data.Component<ISettingsProps, {}> {
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         return <div id="docsmenu" className="ui buttons">
-            <sui.DropdownMenu class="floating icon button" icon="help" title="Help">
-                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item widedesktop hidden">{m.name}</a>) }
-                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" class="widedesktop only" onClick={() => this.openDoc(m.path) }>{m.name}</sui.Item>) }
+            <sui.DropdownMenu class="floating icon button" icon="help">
+                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} className="ui item widedesktop hidden">{m.name}</a>) }
+                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} class="widedesktop only" onClick={() => this.openDoc(m.path) }>{m.name}</sui.Item>) }
             </sui.DropdownMenu>
         </div>
     }
@@ -460,10 +460,10 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         const icon = state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
             <iframe id="sidedocs" src={docsUrl} role="complementary" />
-            <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab")} className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
+            <button id="sidedocspopout" className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
                 <i className={`external icon`}></i>
             </button>
-            <button id="sidedocsexpand" role="button" title={lf("Show/Hide side documentation")} className="circular ui icon button" onClick={() => this.toggleVisibility() }>
+            <button id="sidedocsexpand" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`${icon} icon`}></i>
             </button>
         </div>
@@ -1303,8 +1303,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
                                     <div className="ui divider"></div>
-                                    { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
-                                    { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank">{lf("Terms Of Use") }</a> : undefined }
+                                    { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
+                                    { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }
                                     <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                 </sui.DropdownMenu>
                             </div>}

@@ -18,7 +18,6 @@ export interface WithPopupProps extends UiProps {
 
 export interface DropdownProps extends WithPopupProps {
     value?: string;
-    title?: string;
     onChange?: (v: string) => void;
 }
 
@@ -80,7 +79,7 @@ export class DropdownMenu extends UiElement<DropdownProps> {
 
     renderCore() {
         return (
-            <div className={genericClassName("ui dropdown", this.props) } role={this.props.role} title={this.props.title ? this.props.title : this.props.text}>
+            <div className={genericClassName("ui dropdown", this.props) } role={this.props.role}>
                 {genericContent(this.props) }
                 <div className="menu">
                     {this.props.children}
@@ -120,7 +119,6 @@ export class Item extends data.Component<ItemProps, {}> {
         return (
             <div className={genericClassName("ui item", this.props) }
                 role={this.props.role}
-                title={this.props.text}
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}>
