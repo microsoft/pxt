@@ -900,9 +900,11 @@ namespace pxt.blocks {
             return compileExpression(e, b.getInputTargetBlock(p.field))
     }
 
-    function compileStdCall(e: Environment, b: B.Block, func: StdFunc) {
+    function compileStdCall(e: Environment, b: B.Block, func: StdFunc): Node {
         let args = func.args.map((p: StdArg) => compileArgument(e, b, p));
-        if (func.isExtensionMethod) {
+        if (func.isIdentity)
+            return args[0];
+        else if (func.isExtensionMethod) {
             return H.extensionCall(func.f, args);
         } else if (func.namespace) {
             return H.namespaceCall(func.namespace, func.f, args);
@@ -980,6 +982,7 @@ namespace pxt.blocks {
         hasHandler?: boolean;
         property?: boolean;
         namespace?: string;
+        isIdentity?: boolean; // TD_ID shim
     }
 
     function compileStatementBlock(e: Environment, b: B.Block): Node[] {
@@ -1067,7 +1070,8 @@ namespace pxt.blocks {
                         imageLiteral: fn.attributes.imageLiteral,
                         hasHandler: fn.parameters && fn.parameters.some(p => p.type == "() => void"),
                         property: !fn.parameters,
-                        args: args
+                        args: args,
+                        isIdentity: fn.attributes.shim == "TD_ID"
                     }
                 })
 
