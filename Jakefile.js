@@ -96,7 +96,7 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
 })
 
 file('built/blockly.d.ts', ['built/pxtlib.js'], function () {
-    jake.cpR("pxtblocks/blockly.d.ts", "built/blockly.d.ts")
+    jake.cpR("localtypings/blockly.d.ts", "built/blockly.d.ts")
 })
 
 compileDir("pxtlib", ["built/typescriptServices.d.ts"])
