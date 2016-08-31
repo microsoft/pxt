@@ -1,5 +1,4 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
-/// <reference path="../../built/pxtwinrt.d.ts"/>
 import * as core from "./core";
 import * as pkg from "./package";
 import * as hwdbg from "./hwdbg";
@@ -65,7 +64,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     </div>
   </div>
 </div>
-${pxtwinrt.isWindows() ? `
+${pxt.BrowserUtils.isWindows() ? `
     <div class="ui info message landscape only">
         ${lf("Tired of copying the .hex file?")}
         <a href="/uploader" target="_blank">${lf("Install the Uploader!")}</a>
@@ -94,17 +93,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function initCommandsAsync(): Promise<void> {
-    if (pxtwinrt.isWinRT()) {
-        pxt.debug('using winrt commands')
-        pxt.commands.deployCoreAsync = (resp) => {
-            core.infoNotification(lf("Uploading .hex file..."));
-            return pxtwinrt.deployCoreAsync(resp)
-                .then(() => {
-                    core.infoNotification(lf(".hex file uploaded"));
-                })
-        }
-        pxt.commands.browserDownloadAsync = pxtwinrt.browserDownloadAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
+    if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
         pxt.commands.browserDownloadAsync = browserDownloadAsync;
     } else { // in browser

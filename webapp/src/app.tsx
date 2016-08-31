@@ -1643,8 +1643,6 @@ $(document).ready(() => {
         .then(() => {
             initSerial()
             initHashchange();
-            return pxtwinrt.initAsync(ih);
-        }).then(() => {
             switch (hash.cmd) {
                 case "pub":
                 case "edit":
