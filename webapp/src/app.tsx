@@ -1048,7 +1048,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     code: code ? code.content : "basic.showString('Hello!');",
                 };
                 let parts = ts.pxtc.computeUsedParts(resp);
-                if (parts)
+                if (parts.length)
                     data.parts = parts.join(" ");
                 let fnArgs = resp.usedArguments;
                 if (fnArgs)

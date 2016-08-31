@@ -7,7 +7,6 @@ namespace pxsim {
         onCompile?: (name: string, content: string, contentType: string) => void;
         onStateChanged?: (state: SimulatorState) => void;
         simUrl?: string;
-        aspectRatio?: number;
     }
 
     export enum SimulatorState {
@@ -28,6 +27,7 @@ namespace pxsim {
         debug?: boolean;
         parts?: string[];
         fnArgs?: any;
+        aspectRatio?: number;
     }
 
     export interface HwDebugger {
@@ -42,6 +42,7 @@ namespace pxsim {
         private currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
         public debug = false;
+        public aspectRatio = 0;
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
 
@@ -114,8 +115,8 @@ namespace pxsim {
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
-            if (this.options.aspectRatio)
-                wrapper.style.paddingBottom = (100 / this.options.aspectRatio) + "%";
+            if (this.aspectRatio)
+                wrapper.style.paddingBottom = (100 / this.aspectRatio) + "%";
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
@@ -160,6 +161,15 @@ namespace pxsim {
                 this.cleanupFrames();
             }, 5000);
         }
+
+        private applyAspectRatio() {
+            let frames = this.container.getElementsByTagName("iframe");
+            for (let i = 0; i < frames.length; ++i) {
+                frames[i].parentElement.style.paddingBottom =
+                    (100 / this.aspectRatio) + "%";
+            }
+        }
+
         private cleanupFrames() {
             // drop unused extras frames after 5 seconds
             let frames = this.container.getElementsByTagName("iframe");
@@ -175,6 +185,7 @@ namespace pxsim {
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
             this.debug = opts.debug;
+            this.aspectRatio = opts.aspectRatio; // restart as needed
             this.runId = this.nextId();
             this.addEventListeners();
 
@@ -186,6 +197,7 @@ namespace pxsim {
                 code: js
             }
 
+            this.applyAspectRatio();
             this.scheduleFrameCleanup();
 
             // first frame            
