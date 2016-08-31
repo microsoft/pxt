@@ -24,6 +24,7 @@
     "built/pxtlib.js",
     "built/pxtlib.d.ts",
     "built/pxtsim.d.ts",
+    "built/pxtrunner.d.ts",
     "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
