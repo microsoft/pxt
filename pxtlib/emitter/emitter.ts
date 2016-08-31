@@ -226,10 +226,15 @@ namespace ts.pxtc {
     }
 
     interface ClassInfo {
-        reffields: PropertyDeclaration[];
-        primitivefields: PropertyDeclaration[];
+        id: string;
+        baseClassInfo: ClassInfo;
+        decl: ClassDeclaration;
+        numRefFields: number;
         allfields: PropertyDeclaration[];
+        refmask: boolean[];
         attrs: CommentAttrs;
+        hasVTable?: boolean;
+        isUsed?: boolean;
     }
 
     let lf = assembler.lf;
@@ -786,31 +791,73 @@ namespace ts.pxtc {
             }
         }
 
+        function getBaseClassInfo(node: ClassDeclaration) {
+            if (node.heritageClauses)
+                for (let h of node.heritageClauses) {
+                    switch (h.token) {
+                        case SK.ExtendsKeyword:
+                            if (!h.types || h.types.length != 1)
+                                throw userError(9228, lf("invalid extends clause"))
+                            let tp = typeOf(h.types[0])
+                            if (isPossiblyGenericClassType(tp)) {
+                                return getClassInfo(tp)
+                            } else {
+                                throw userError(9228, lf("cannot inherit from this type"))
+                            }
+                        case SK.ImplementsKeyword:
+                            throw userError(9228, lf("interfaces not supported yet"))
+                        default:
+                            throw userError(9228, lf("invalid heritage clause"))
+                    }
+                }
+            return null
+        }
+
+
         function getClassInfo(t: Type) {
             let decl = <ClassDeclaration>t.symbol.valueDeclaration
             let bindings = getTypeBindings(t)
-            let id = getNodeId(decl) + refMask(bindings)
-            let info = classInfos[id]
+            let id = "C" + getNodeId(decl) + refMask(bindings)
+            let info: ClassInfo = classInfos[id]
             if (!info) {
+                let reffields: PropertyDeclaration[] = []
+                let primitivefields: PropertyDeclaration[] = []
                 info = {
-                    reffields: [],
-                    primitivefields: [],
-                    allfields: null,
-                    attrs: parseComments(decl)
+                    id: id,
+                    numRefFields: 0,
+                    allfields: [],
+                    attrs: parseComments(decl),
+                    decl: decl,
+                    baseClassInfo: null
                 }
                 classInfos[id] = info;
+                // only do it after storing our in case we run into cycles (which should be errors)
+                info.baseClassInfo = getBaseClassInfo(decl)
+                if (info.baseClassInfo) {
+                    info.hasVTable = true
+                    info.baseClassInfo.hasVTable = true
+                }
                 scope(() => {
                     U.pushRange(typeBindings, bindings)
                     for (let mem of decl.members) {
                         if (mem.kind == SK.PropertyDeclaration) {
                             let pdecl = <PropertyDeclaration>mem
                             if (isRefType(typeOf(pdecl)))
-                                info.reffields.push(pdecl)
-                            else info.primitivefields.push(pdecl)
+                                reffields.push(pdecl)
+                            else primitivefields.push(pdecl)
+                            info.allfields.push(pdecl)
                         }
                     }
+                    if (info.baseClassInfo) {
+                        info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
+                        info.numRefFields = 255
+                    } else {
+                        info.allfields = reffields.concat(primitivefields)
+                        info.numRefFields = reffields.length
+                    }
+                    info.refmask = info.allfields.map(f => isRefType(typeOf(f)))
                 })
-                info.allfields = info.reffields.concat(info.primitivefields)
+
             }
             return info;
         }
@@ -1381,8 +1428,16 @@ ${lbl}: .short 0xffff
                 }
                 let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
                 let info = getClassInfo(t)
+                info.isUsed = true
 
-                let obj = ir.shared(ir.rtcall("pxt::mkRecord", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
+                let obj: ir.Expr
+                if (info.hasVTable) {
+                    let lbl = info.id + "_VT"
+                    obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
+                } else {
+                    obj = ir.rtcall("pxt::mkRecord", [ir.numlit(info.numRefFields), ir.numlit(info.allfields.length)])
+                }
+                obj = ir.shared(obj)
 
                 if (ctor) {
                     markUsed(ctor)
@@ -1711,7 +1766,7 @@ ${lbl}: .short 0xffff
                     userError(9224, lf("field {0} not found", pacc.name.text))
                 let attrs = parseComments(fld)
                 return {
-                    idx: info.allfields.indexOf(fld),
+                    idx: (info.hasVTable ? 1 : 0) + info.allfields.indexOf(fld),
                     name: pacc.name.text,
                     isRef: isRefType(typeOf(pacc)),
                     shimName: attrs.shim
@@ -2311,10 +2366,6 @@ ${lbl}: .short 0xffff
 
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
-            //if (node.typeParameters)
-            //    userError(9227, lf("generic classes not supported"))
-            if (node.heritageClauses)
-                userError(9228, lf("inheritance not supported"))
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
