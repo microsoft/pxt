@@ -102,7 +102,7 @@ mixpanel.init("762fef19c053a0ea4cec43d2fecae76e");</script><!-- end Mixpanel -->
         ksRunnerReady(function() {
             var theme = pxt.appTarget.appTheme;
             document.title = theme.title;
-            if (footer) pxt.runner.initFooter($('#footer'), id);
+            if (footer) pxt.runner.initFooter(document.getElementById('footer'), id);
             if (hex) {
                 console.log('compiling script to hex')
                 pxt.runner.generateHexFileAsync(options).done(function(hex) {

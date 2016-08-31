@@ -30,7 +30,7 @@ namespace pxt.blocks {
         package?: string;
     }
 
-    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Align }): JQuery {
+    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Align }): HTMLElement {
         if (!workspace) {
             blocklyDiv = document.createElement("div");
             blocklyDiv.style.position = "absolute";
@@ -83,7 +83,7 @@ namespace pxt.blocks {
                 svg[0].style.height = (metrics.contentHeight / options.emPixels) + 'em';
             }
 
-            return svg;
+            return svg[0];
 
         } catch (e) {
             pxt.reportException(e, { blocks: blocksXml });

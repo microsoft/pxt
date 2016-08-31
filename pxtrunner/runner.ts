@@ -130,20 +130,21 @@ namespace pxt.runner {
             })
     }
 
-    export function initFooter(footer: JQuery, shareId?: string) {
-        let theme = pxt.appTarget.appTheme;
-        if (footer.length == 0) return;
-        let body = $('body');
+    export function initFooter(footer: HTMLElement, shareId?: string) {
+        if (!footer) return;
 
+        let theme = pxt.appTarget.appTheme;
+        let body = $('body');
+        let $footer = $(footer)
         let footera = $('<a/>').attr('href', theme.homeUrl)
             .attr('target', '_blank');
-        footer.append(footera);
+        $footer.append(footera);
         if (theme.organizationLogo)
             footera.append($('<img/>').attr('src', Util.toDataUri(theme.organizationLogo)));
         else footera.append(lf("powered by {0}", theme.title));
 
-        body.mouseenter(ev => footer.fadeOut());
-        body.mouseleave(ev => footer.fadeIn());
+        body.mouseenter(ev => $footer.fadeOut());
+        body.mouseleave(ev => $footer.fadeIn());
     }
 
     export function showError(msg: string) {
@@ -443,7 +444,7 @@ ${files["main.ts"]}
     export interface DecompileResult {
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
-        blocksSvg?: JQuery;
+        blocksSvg?: HTMLElement;
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
