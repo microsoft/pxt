@@ -96,17 +96,24 @@ namespace ts.pxtc {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
-    function isClassFunction(node: Node) {
-        if (!node) return false;
+    function classFunctionPref(node: Node) {
+        if (!node) return null;
         switch (node.kind) {
-            case SK.MethodDeclaration:
-            case SK.Constructor:
-            case SK.GetAccessor:
-            case SK.SetAccessor:
-                return true
+            case SK.MethodDeclaration: return "";
+            case SK.Constructor: return "new/";
+            case SK.GetAccessor: return "get/";
+            case SK.SetAccessor: return "set/";
             default:
-                return false
+                return null
         }
+    }
+
+    function classFunctionKey(node: Node) {
+        return classFunctionPref(node) + getName(node)
+    }
+
+    function isClassFunction(node: Node) {
+        return classFunctionPref(node) != null
     }
 
     function getEnclosingMethod(node: Node): MethodDeclaration {
@@ -225,16 +232,18 @@ namespace ts.pxtc {
         args: Expression[];
     }
 
-    interface ClassInfo {
+    export interface ClassInfo {
         id: string;
         baseClassInfo: ClassInfo;
         decl: ClassDeclaration;
         numRefFields: number;
         allfields: PropertyDeclaration[];
+        methods: FunctionLikeDeclaration[];
         refmask: boolean[];
         attrs: CommentAttrs;
         hasVTable?: boolean;
         isUsed?: boolean;
+        vtable?: FunctionAddInfo[];
     }
 
     let lf = assembler.lf;
@@ -503,10 +512,16 @@ namespace ts.pxtc {
 
     export interface FunctionAddInfo {
         capturedVars: VarOrParam[];
+        decl: FunctionLikeDeclaration;
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
         usages?: TypeBinding[][];
         prePassUsagesEmitted?: number;
+        virtualRoot?: FunctionAddInfo;
+        virtualInstances?: FunctionAddInfo[];
+        virtualIndex?: number;
+        isUsed?: boolean;
+        parentClassInfo?: ClassInfo;
     }
 
     export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
@@ -546,7 +561,9 @@ namespace ts.pxtc {
         let proc: ir.Procedure;
 
         function reset() {
+            let prev = bin ? bin.usedClassInfos : null
             bin = new Binary();
+            if (prev) bin.usedClassInfos = prev
             bin.res = res;
             bin.target = opts.target;
             proc = null
@@ -594,6 +611,7 @@ namespace ts.pxtc {
 
         reset();
         emit(rootFunction)
+        emitVTables()
 
         if (diagnostics.getModificationCount() == 0) {
             reset();
@@ -703,6 +721,7 @@ namespace ts.pxtc {
             let info = functionInfo[key]
             if (!info)
                 functionInfo[key] = info = {
+                    decl: f,
                     capturedVars: []
                 }
             return info
@@ -813,6 +832,33 @@ namespace ts.pxtc {
             return null
         }
 
+        function getVTable(inf: ClassInfo) {
+            assert(inf.isUsed)
+            if (!inf.vtable) {
+                let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
+                for (let m of inf.methods) {
+                    let minf = getFunctionInfo(m)
+                    if (minf.virtualRoot) {
+                        let key = classFunctionKey(m)
+                        let done = false
+                        for (let i = 0; i < tbl.length; ++i) {
+                            if (classFunctionKey(tbl[i].decl) == key) {
+                                tbl[i] = minf
+                                minf.virtualIndex = i
+                                done = true
+                            }
+                        }
+                        if (!done) {
+                            minf.virtualIndex = tbl.length
+                            tbl.push(minf)
+                        }
+                    }
+                }
+                inf.vtable = tbl
+            }
+            return inf.vtable
+        }
+
 
         function getClassInfo(t: Type) {
             let decl = <ClassDeclaration>t.symbol.valueDeclaration
@@ -828,7 +874,9 @@ namespace ts.pxtc {
                     allfields: [],
                     attrs: parseComments(decl),
                     decl: decl,
-                    baseClassInfo: null
+                    refmask: null,
+                    baseClassInfo: null,
+                    methods: []
                 }
                 classInfos[id] = info;
                 // only do it after storing our in case we run into cycles (which should be errors)
@@ -846,11 +894,35 @@ namespace ts.pxtc {
                                 reffields.push(pdecl)
                             else primitivefields.push(pdecl)
                             info.allfields.push(pdecl)
+                        } else if (isClassFunction(mem) && mem.kind != SK.Constructor) {
+                            let minf = getFunctionInfo(mem as any)
+                            minf.parentClassInfo = info
+                            info.methods.push(mem as any)
                         }
                     }
                     if (info.baseClassInfo) {
                         info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
-                        info.numRefFields = 255
+                        info.numRefFields = -1
+                        let nameMap: U.Map<FunctionLikeDeclaration> = {}
+                        for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
+                            for (let m of curr.methods) {
+                                nameMap[classFunctionKey(m)] = m
+                            }
+                        }
+                        for (let m of info.methods) {
+                            let prev = U.lookup(nameMap, classFunctionKey(m))
+                            if (prev) {
+                                let minf = getFunctionInfo(m)
+                                let pinf = getFunctionInfo(prev)
+                                minf.virtualRoot = pinf
+                                if (!pinf.virtualRoot)
+                                    pinf.virtualRoot = pinf
+                                assert(pinf.virtualRoot == pinf)
+                                if (!pinf.virtualInstances)
+                                    pinf.virtualInstances = []
+                                pinf.virtualInstances.push(minf)
+                            }
+                        }
                     } else {
                         info.allfields = reffields.concat(primitivefields)
                         info.numRefFields = reffields.length
@@ -1359,6 +1431,23 @@ ${lbl}: .short 0xffff
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
                 } else
                     unhandled(node, lf("strange method call"), 9241)
+                let info = getFunctionInfo(decl)
+                if (info.virtualRoot) info = info.virtualRoot
+                if (!info.isUsed) {
+                    info.isUsed = true
+                    for (let vinst of info.virtualInstances || []) {
+                        if (vinst.parentClassInfo.isUsed)
+                            markFunctionUsed(vinst.decl, bindings)
+                    }
+                }
+                if (info.virtualRoot) {
+                    assert(!bin.finalPass || info.virtualIndex != null)
+                    return ir.op(EK.ProcCall, args.map(emitExpr), {
+                        action: decl,
+                        bindings: bindings,
+                        virtualIndex: info.virtualIndex
+                    })
+                }
                 if (attrs.shim) {
                     return emitShim(decl, node, args);
                 } else if (attrs.helper) {
@@ -1417,6 +1506,24 @@ ${lbl}: .short 0xffff
             })
         }
 
+        function emitVTables() {
+            for (let info of bin.usedClassInfos) {
+                getVTable(info) // gets cached
+            }
+        }
+
+        function markClassUsed(info: ClassInfo) {
+            if (info.isUsed) return
+            info.isUsed = true
+            if (info.baseClassInfo) markClassUsed(info.baseClassInfo)
+            bin.usedClassInfos.push(info)
+            for (let m of info.methods) {
+                let minf = getFunctionInfo(m)
+                if (minf.virtualRoot && minf.virtualRoot.isUsed)
+                    markFunctionUsed(m, []) // TODO bindings
+            }
+        }
+
         function emitNewExpression(node: NewExpression) {
             let t = typeOf(node)
             if (isArrayType(t)) {
@@ -1427,8 +1534,9 @@ ${lbl}: .short 0xffff
                     userError(9221, lf("new expression only supported on class types"))
                 }
                 let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
-                let info = getClassInfo(t)
-                info.isUsed = true
+                let info = getClassInfo(checker.getTypeAtLocation(node.expression))
+
+                markClassUsed(info)
 
                 let obj: ir.Expr
                 if (info.hasVTable) {
@@ -1766,7 +1874,7 @@ ${lbl}: .short 0xffff
                     userError(9224, lf("field {0} not found", pacc.name.text))
                 let attrs = parseComments(fld)
                 return {
-                    idx: (info.hasVTable ? 1 : 0) + info.allfields.indexOf(fld),
+                    idx: info.allfields.indexOf(fld),
                     name: pacc.name.text,
                     isRef: isRefType(typeOf(pacc)),
                     shimName: attrs.shim
@@ -2683,6 +2791,7 @@ ${lbl}: .short 0xffff
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
         res: CompileResult;
+        usedClassInfos: ClassInfo[] = [];
 
         strings: StringMap<string> = {};
         otherLiterals: string[] = [];

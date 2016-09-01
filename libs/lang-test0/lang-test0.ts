@@ -1048,6 +1048,60 @@ function testComplexCallExpr() {
     assert(bar()() == 17, "ff")
 }
 
+
+namespace ClassTest {
+    class A {
+        v: number
+        foo() {
+            glb1++
+            this.v = 9
+        }
+        bar(v: number, i: string) {
+            glb1 += v + this.v
+        }
+    }
+
+    class B extends A {
+        foo() {
+            glb1 += 2
+            this.v = 10
+        }
+        bar(v: number, i: string) {
+            glb1 += v + parseInt(i) + this.v
+        }
+    }
+
+    class C extends A {
+        foo() {
+            glb1 += 3
+            this.v = 7
+        }
+    }
+
+    class D extends C {
+        bar(v: number, i: string) {
+            glb1 = this.v
+        }
+    }
+
+    function testACall(a: A, v0: number, v1: number) {
+        glb1 = 0
+        a.foo()
+        console.log("foo is " + glb1)
+        assert(glb1 == v0, "v0")
+        a.bar(32, "6" + "4")
+        console.log("bar is " + glb1)
+        assert(glb1 == v1, "v1")
+    }
+
+    export function run() {
+        testACall(new A(), 1, 42)
+        testACall(new B(), 2, 108)
+        testACall(new C(), 3, 42)
+        testACall(new D(), 3, 7)
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Driver starts
 // ---------------------------------------------------------------------------
@@ -1089,6 +1143,7 @@ testLazyRef()
 testNull()
 testToString()
 testComplexCallExpr()
+ClassTest.run()
 
 
 msg("test top level code")
