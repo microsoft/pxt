@@ -28,6 +28,7 @@ namespace pxsim {
         parts?: string[];
         fnArgs?: any;
         aspectRatio?: number;
+        partDefinitions?: pxsim.Map<PartDefinition>;
     }
 
     export interface HwDebugger {
@@ -192,7 +193,8 @@ namespace pxsim {
                 type: 'run',
                 parts: opts.parts,
                 fnArgs: opts.fnArgs,
-                code: js
+                code: js,
+                partDefinitions: opts.partDefinitions,
             }
 
             this.applyAspectRatio();

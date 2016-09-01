@@ -23,6 +23,7 @@
     "built/blockly.d.ts",
     "built/pxt.d.ts",
     "built/pxtpackage.d.ts",
+    "built/pxtparts.d.ts",
     "built/pxtlib.js",
     "built/pxtlib.d.ts",
     "built/pxtsim.d.ts",

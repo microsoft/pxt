@@ -1,4 +1,5 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../built/pxtparts.d.ts"/>
 
 namespace pxsim {
     export namespace U {
@@ -73,9 +74,14 @@ namespace pxsim {
     export function getResume() { return runtime.getResume() }
 
     export class BaseBoard {
+        public runOptions: SimulatorRunMessage;
+
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) { }
-        public initAsync(msg: SimulatorRunMessage): Promise<void> { return Promise.resolve(); }
+        public initAsync(msg: SimulatorRunMessage): Promise<void> {
+            this.runOptions = msg;
+            return Promise.resolve()
+        }
         public kill() { }
 
         protected serialOutBuffer: string = '';

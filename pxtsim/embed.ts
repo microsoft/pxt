@@ -1,3 +1,5 @@
+/// <reference path="../built/pxtparts.d.ts"/>
+
 namespace pxsim {
     export interface SimulatorMessage {
         type: string;
@@ -8,6 +10,7 @@ namespace pxsim {
         frameCounter?: number;
         options?: any;
         parts?: string[];
+        partDefinitions?: Map<PartDefinition>
         fnArgs?: any;
         code: string;
     }
@@ -97,7 +100,7 @@ namespace pxsim {
         export function run(msg: SimulatorRunMessage) {
             stop();
 
-            runtime = new Runtime(msg.code);
+            runtime = new Runtime(msg.code);            
             runtime.id = msg.id;
             runtime.board.initAsync(msg)
                 .done(() => {
