@@ -88,7 +88,7 @@ namespace pxsim {
                     case '\n':
                         Runtime.postMessage(<SimulatorSerialMessage>{
                             type: 'serial',
-                            data: this.serialOutBuffer,
+                            data: this.serialOutBuffer + '\n',
                             id: runtime.id,
                             sim: true
                         })
