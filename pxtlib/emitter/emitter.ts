@@ -1434,11 +1434,15 @@ ${lbl}: .short 0xffff
             }
 
             if (isMethod) {
+                let isSuper = false
                 if (isStatic(decl)) {
                     // no additional arguments
                 } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
                     if (!recv)
                         recv = (<PropertyAccessExpression>funcExpr).expression
+                    if (recv.kind == SK.SuperKeyword) {
+                        isSuper = true
+                    }
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
@@ -1453,7 +1457,7 @@ ${lbl}: .short 0xffff
                             markFunctionUsed(vinst.decl, bindings)
                     }
                 }
-                if (info.virtualRoot) {
+                if (info.virtualRoot && !isSuper) {
                     assert(!bin.finalPass || info.virtualIndex != null)
                     return ir.op(EK.ProcCall, args.map(emitExpr), {
                         action: decl,
@@ -2656,6 +2660,7 @@ ${lbl}: .short 0xffff
                     return emitArrayLiteral(<ArrayLiteralExpression>node);
                 case SK.NewExpression:
                     return emitNewExpression(<NewExpression>node);
+                case SK.SuperKeyword:
                 case SK.ThisKeyword:
                     return emitThis(node);
                 case SK.CallExpression:

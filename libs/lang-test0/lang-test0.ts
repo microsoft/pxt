@@ -1074,7 +1074,8 @@ namespace ClassTest {
     class D extends C {
         bar(v: number, i: string) {
             glb1 = this.v
-            //super.bar(v, i)
+            this.v = 13
+            super.bar(v, i)
         }
     }
 
@@ -1092,7 +1093,7 @@ namespace ClassTest {
         testACall(new A(), 1, 42)
         testACall(new B(), 2, 108)
         testACall(new C(), 3, 42)
-        testACall(new D(), 3, 7)
+        testACall(new D(), 3, 52)
     }
 }
 
