@@ -1,4 +1,8 @@
 namespace pxsim.svg {
+    export function toDataUri(xml: string): string {
+        return 'data:image/svg+xml,' + encodeURI(xml);
+    }
+
     let pt: SVGPoint;
     export function cursorPoint(pt: SVGPoint, svg: SVGSVGElement, evt: MouseEvent): SVGPoint {
         pt.x = evt.clientX;
