@@ -1038,13 +1038,14 @@ function testComplexCallExpr() {
     control.assert(bar()() == 17, "ff")
 }
 
-
 namespace ClassTest {
     class A {
         v: number
+        s: string
         foo() {
             glb1++
             this.v = 9
+            this.s = "xx" + "z42z"
         }
         bar(v: number, i: string) {
             glb1 += v + this.v
@@ -1052,9 +1053,11 @@ namespace ClassTest {
     }
 
     class B extends A {
+        s2: string
         foo() {
             glb1 += 2
             this.v = 10
+            this.s2 = "xy" + "z42z"
         }
         bar(v: number, i: string) {
             glb1 += v + parseInt(i) + this.v
@@ -1071,6 +1074,7 @@ namespace ClassTest {
     class D extends C {
         bar(v: number, i: string) {
             glb1 = this.v
+            //super.bar(v, i)
         }
     }
 
