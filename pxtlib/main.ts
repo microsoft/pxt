@@ -1,4 +1,5 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../built/pxtpackage.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
@@ -103,32 +104,6 @@ namespace pxt {
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
 
-    export interface CodeCard {
-        name?: string;
-
-        color?: string; // one of semantic ui colors
-        description?: string;
-        promoUrl?: string;
-        blocksXml?: string;
-        typeScript?: string;
-        imageUrl?: string;
-        time?: number;
-        url?: string;
-        responsive?: boolean;
-
-        header?: string;
-        any?: number;
-        hardware?: number;
-        software?: number;
-        blocks?: number;
-        javascript?: number;
-
-        onClick?: (e: any) => void; // React event
-
-        target?: string;
-        className?: string;
-    }
-
     export interface TargetVersions {
         target: string;
         pxt: string;
@@ -189,25 +164,6 @@ namespace pxt {
         bundledpkgs: U.Map<U.Map<string>>;
         bundleddirs: string[];
         versions: TargetVersions;
-    }
-
-    export interface PackageConfig {
-        name: string;
-        version?: string;
-        installedVersion?: string;
-        description?: string;
-        dependencies: U.Map<string>;
-        license?: string;
-        authors?: string[];
-        files: string[];
-        simFiles?: string[];
-        testFiles?: string[];
-        public?: boolean;
-        binaryonly?: boolean;
-        yotta?: pxtc.YottaConfig;
-        card?: CodeCard;
-        additionalFilePath?: string;
-        minTargetVersion?: string;
     }
 
     // this is for remote file interface to packages

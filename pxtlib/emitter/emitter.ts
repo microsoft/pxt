@@ -1,3 +1,5 @@
+/// <reference path="../../built/pxtpackage.d.ts"/>
+
 namespace ts.pxtc {
     export const assert = Util.assert;
     export const oops = Util.oops;
@@ -2589,18 +2591,11 @@ ${lbl}: .short 0xffff
         value: number;
     }
 
-    export interface YottaConfig {
-        dependencies?: U.Map<string>;
-        config?: any;
-        configIsJustDefaults?: boolean;
-        ignoreConflicts?: boolean;
-    }
-
     export interface ExtensionInfo {
         functions: FuncInfo[];
         generatedFiles: U.Map<string>;
         extensionFiles: U.Map<string>;
-        yotta: YottaConfig;
+        yotta: pxt.YottaConfig;
         sha: string;
         compileData: string;
         shimsDTS: string;

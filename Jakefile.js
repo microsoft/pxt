@@ -95,11 +95,10 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-file('built/blockly.d.ts', ['built/pxtlib.js'], function () {
-    jake.cpR("localtypings/blockly.d.ts", "built/blockly.d.ts")
-})
+task('built/blockly.d.ts', [], function() { jake.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
+task('built/pxtpackage.d.ts', [], function() { jake.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
 
-compileDir("pxtlib", ["built/typescriptServices.d.ts"])
+compileDir("pxtlib", ["built/pxtpackage.d.ts", "built/typescriptServices.d.ts"])
 compileDir("pxtblocks", ["built/pxtlib.js", "built/blockly.d.ts"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
 compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
