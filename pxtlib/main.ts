@@ -590,8 +590,13 @@ namespace pxt {
                     try {
                         let p = JSON.parse(pjson) as U.Map<pxsim.PartDefinition>;
                         for (let k in p) {
-                            if (parts.indexOf(k) >= 0)
-                                res[k] = p[k];
+                            if (parts.indexOf(k) >= 0) {
+                                let part = res[k] = p[k];
+                                if (part.visual instanceof String && /\.svg$/i.test(<string>part.visual)) {
+                                    let f = d.readFile(<string>part.visual);
+                                    part.visual = `data:image/svg+xml,` + encodeURI(f);
+                                }
+                            }
                         }
                     } catch (e) {
                         pxt.reportError(lf("invalid pxtparts.json file"), undefined);
