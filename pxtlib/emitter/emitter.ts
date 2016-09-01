@@ -855,6 +855,9 @@ namespace ts.pxtc {
                     }
                 }
                 inf.vtable = tbl
+                if (inf.hasVTable) {
+                    inf.refmask.unshift(false) // for the vtable
+                }
             }
             return inf.vtable
         }
@@ -1881,7 +1884,7 @@ ${lbl}: .short 0xffff
                     userError(9224, lf("field {0} not found", pacc.name.text))
                 let attrs = parseComments(fld)
                 return {
-                    idx: info.allfields.indexOf(fld),
+                    idx: (info.hasVTable ? 1 : 0) + info.allfields.indexOf(fld),
                     name: pacc.name.text,
                     isRef: isRefType(typeOf(pacc)),
                     shimName: attrs.shim
