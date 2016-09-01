@@ -219,7 +219,7 @@ namespace pxt.runner {
                     let parts = pxtc.computeUsedParts(resp, true);
                     let runOptions: pxsim.SimulatorRunOptions = { parts: parts, fnArgs: fnArgs };
                     if (pxt.appTarget.simulator)
-                        runOptions.aspectRatio = parts && pxt.appTarget.simulator.partsAspectRatio
+                        runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                             ? pxt.appTarget.simulator.partsAspectRatio
                             : pxt.appTarget.simulator.aspectRatio;
                     driver.run(js, runOptions);
