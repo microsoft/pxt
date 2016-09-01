@@ -1087,10 +1087,10 @@ namespace ClassTest {
     function testACall(a: A, v0: number, v1: number) {
         glb1 = 0
         a.foo()
-        console.log("foo is " + glb1)
+        //console.log("foo is " + glb1)
         assert(glb1 == v0, "v0")
         a.bar(32, "6" + "4")
-        console.log("bar is " + glb1)
+        //console.log("bar is " + glb1)
         assert(glb1 == v1, "v1")
     }
 

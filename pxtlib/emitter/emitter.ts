@@ -818,7 +818,7 @@ namespace ts.pxtc {
                             if (!h.types || h.types.length != 1)
                                 throw userError(9228, lf("invalid extends clause"))
                             let tp = typeOf(h.types[0])
-                            if (isPossiblyGenericClassType(tp)) {
+                            if (isClassType(tp)) {
                                 return getClassInfo(tp)
                             } else {
                                 throw userError(9228, lf("cannot inherit from this type"))
@@ -860,8 +860,9 @@ namespace ts.pxtc {
         }
 
 
-        function getClassInfo(t: Type) {
-            let decl = <ClassDeclaration>t.symbol.valueDeclaration
+        function getClassInfo(t: Type, decl: ClassDeclaration = null) {
+            if (!decl)
+                decl = <ClassDeclaration>t.symbol.valueDeclaration
             let bindings = getTypeBindings(t)
             let id = "C" + getNodeId(decl) + refMask(bindings)
             let info: ClassInfo = classInfos[id]
@@ -1534,7 +1535,7 @@ ${lbl}: .short 0xffff
                     userError(9221, lf("new expression only supported on class types"))
                 }
                 let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
-                let info = getClassInfo(checker.getTypeAtLocation(node.expression))
+                let info = getClassInfo(typeOf(node), classDecl)
 
                 markClassUsed(info)
 
