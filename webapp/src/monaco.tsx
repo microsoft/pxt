@@ -18,8 +18,6 @@ const lf = Util.lf
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
 
-export const cursorMarker = "\uE108"
-
 enum FileType {
     Unknown,
     TypeScript,
@@ -243,11 +241,11 @@ export class Editor extends srceditor.Editor {
             return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
         }
 
-        let data = this.textAndPosition(this.editor.getPosition())
-        let cursorOverride = data.programText.indexOf(cursorMarker)
+        let position = this.editor.getPosition()
+        let data = this.textAndPosition(position)
+        let cursorOverride = this.editor.getModel().getOffsetAt(position)
         if (cursorOverride >= 0) {
             isAutomatic = false
-            data.programText = Util.replaceAll(data.programText, cursorMarker, "")
             data.charNo = cursorOverride
         }
         let tmp = pxtc.format(data.programText, data.charNo)
@@ -266,6 +264,7 @@ export class Editor extends srceditor.Editor {
         }
         this.editor.setValue(formatted)
         this.editor.setScrollPosition(line)
+        this.editor.setPosition(position)
         return formatted
     }
 
