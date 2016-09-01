@@ -7,12 +7,28 @@ namespace ts.pxtc {
         "thumb::muls": "*"
     }
 
+    function vtableToJs(info: ClassInfo) {
+        let s = `var ${info.id}_VT = {\n` +
+            `  name: ${JSON.stringify(getName(info.decl))},\n` +
+            `  refmask: ${JSON.stringify(info.refmask)},\n` +
+            `  methods: [\n`
+        for (let m of info.vtable) {
+            s += `    ${getFunctionLabel(m.decl, [])},\n`
+
+        }
+        s += "  ],\n};\n"
+        return s
+    }
+
     export function jsEmit(bin: Binary) {
         let jssource = ""
         if (!bin.target.jsRefCounting)
             jssource += "pxsim.noRefCounting();\n"
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
+        })
+        bin.usedClassInfos.forEach(info => {
+            jssource += vtableToJs(info)
         })
         if (bin.res.breakpoints)
             jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
@@ -268,7 +284,8 @@ switch (step) {
             let frameIdx = exprStack.length
             exprStack.push(frameExpr)
 
-            let proc = bin.procs.filter(p => p.matches(topExpr.data))[0]
+            let procid = topExpr.data as ir.ProcId
+            let proc = bin.procs.filter(p => p.matches(procid))[0]
             let frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
             write(`${frameRef} = { fn: ${proc.label()}, parent: s };`)
@@ -280,6 +297,10 @@ switch (step) {
             })
 
             write(`s.pc = ${lblId};`)
+            if (procid.virtualIndex != null) {
+                assert(procid.virtualIndex >= 0)
+                write(`${frameRef}.fn = ${frameRef}.${proc.args[0].uniqueName()}.vtable.methods[${procid.virtualIndex}];`)
+            }
             write(`return actionCall(${frameRef})`)
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)

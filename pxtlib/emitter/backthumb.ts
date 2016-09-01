@@ -306,17 +306,35 @@ ${bkptLabel + "_after"}:
                 return a
             })
 
-            let proc = bin.procs.filter(p => p.matches(topExpr.data))[0]
             let lbl = mkLbl("proccall")
+
+            let procid = topExpr.data as ir.ProcId
+            let procIdx = -1
+            if (procid.virtualIndex != null) {
+                write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
+                write(`ldr r0, [r0, #8] ; ld-vtable`)
+                let effIdx = procid.virtualIndex + 1
+                if (effIdx <= 31)
+                    write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
+                else {
+                    emitInt(effIdx * 4, "r1")
+                    write(`ldr r0, [r0, r1] ; ld-method`)
+                }
+                write(lbl + ":")
+                write("blx r0")
+
+            } else {
+                let proc = bin.procs.filter(p => p.matches(topExpr.data))[0]
+                procIdx = proc.seqNo
+                write(lbl + ":")
+                write("bl " + proc.label())
+            }
             calls.push({
-                procIndex: proc.seqNo,
+                procIndex: procIdx,
                 stack: 0,
                 addr: 0,
                 callLabel: lbl,
             })
-            write(lbl + ":")
-            write("bl " + proc.label())
-
             for (let a of argStmts) {
                 a.currUses = 1
             }
@@ -753,6 +771,28 @@ ${lbl}: .string ${stringLiteral(s)}
         }
     }
 
+    function vtableToAsm(info: ClassInfo) {
+        if (!info.hasVTable) return ""
+
+        let s = `
+        .balign 4
+${info.id}_VT:
+        .short 0xffff ; refcount
+        .byte ${info.refmask.length}, ${info.vtable.length}  ; num. fields, num. methods
+`;
+
+        for (let m of info.vtable) {
+            s += `        .word ${getFunctionLabel(m.decl, [])}|1\n`
+        }
+
+        let refmask = info.refmask.map(v => v ? "1" : "0")
+        while (refmask.length < 2 || refmask.length % 2 != 0)
+            refmask.push("0")
+        s += `        .byte ${refmask.join(",")}\n`
+        s += "\n"
+        return s
+    }
+
 
     function serialize(bin: Binary) {
         let asmsource = `; start
@@ -765,6 +805,10 @@ ${hex.hexPrelude()}
 `
         bin.procs.forEach(p => {
             asmsource += "\n" + irToAssembly(bin, p) + "\n"
+        })
+
+        bin.usedClassInfos.forEach(info => {
+            asmsource += vtableToAsm(info)
         })
 
         asmsource += hex.asmTotalSource

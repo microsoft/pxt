@@ -27,7 +27,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9255
+    // next free error 9256
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -96,17 +96,24 @@ namespace ts.pxtc {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
-    function isClassFunction(node: Node) {
-        if (!node) return false;
+    function classFunctionPref(node: Node) {
+        if (!node) return null;
         switch (node.kind) {
-            case SK.MethodDeclaration:
-            case SK.Constructor:
-            case SK.GetAccessor:
-            case SK.SetAccessor:
-                return true
+            case SK.MethodDeclaration: return "";
+            case SK.Constructor: return "new/";
+            case SK.GetAccessor: return "get/";
+            case SK.SetAccessor: return "set/";
             default:
-                return false
+                return null
         }
+    }
+
+    function classFunctionKey(node: Node) {
+        return classFunctionPref(node) + getName(node)
+    }
+
+    function isClassFunction(node: Node) {
+        return classFunctionPref(node) != null
     }
 
     function getEnclosingMethod(node: Node): MethodDeclaration {
@@ -226,11 +233,18 @@ namespace ts.pxtc {
         args: Expression[];
     }
 
-    interface ClassInfo {
-        reffields: PropertyDeclaration[];
-        primitivefields: PropertyDeclaration[];
+    export interface ClassInfo {
+        id: string;
+        baseClassInfo: ClassInfo;
+        decl: ClassDeclaration;
+        numRefFields: number;
         allfields: PropertyDeclaration[];
+        methods: FunctionLikeDeclaration[];
+        refmask: boolean[];
         attrs: CommentAttrs;
+        hasVTable?: boolean;
+        isUsed?: boolean;
+        vtable?: FunctionAddInfo[];
     }
 
     let lf = assembler.lf;
@@ -499,10 +513,16 @@ namespace ts.pxtc {
 
     export interface FunctionAddInfo {
         capturedVars: VarOrParam[];
+        decl: FunctionLikeDeclaration;
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
         usages?: TypeBinding[][];
         prePassUsagesEmitted?: number;
+        virtualRoot?: FunctionAddInfo;
+        virtualInstances?: FunctionAddInfo[];
+        virtualIndex?: number;
+        isUsed?: boolean;
+        parentClassInfo?: ClassInfo;
     }
 
     export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
@@ -542,7 +562,9 @@ namespace ts.pxtc {
         let proc: ir.Procedure;
 
         function reset() {
+            let prev = bin ? bin.usedClassInfos : null
             bin = new Binary();
+            if (prev) bin.usedClassInfos = prev
             bin.res = res;
             bin.target = opts.target;
             proc = null
@@ -590,6 +612,7 @@ namespace ts.pxtc {
 
         reset();
         emit(rootFunction)
+        emitVTables()
 
         if (diagnostics.getModificationCount() == 0) {
             reset();
@@ -699,6 +722,7 @@ namespace ts.pxtc {
             let info = functionInfo[key]
             if (!info)
                 functionInfo[key] = info = {
+                    decl: f,
                     capturedVars: []
                 }
             return info
@@ -787,31 +811,136 @@ namespace ts.pxtc {
             }
         }
 
-        function getClassInfo(t: Type) {
-            let decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let bindings = getTypeBindings(t)
-            let id = getNodeId(decl) + refMask(bindings)
-            let info = classInfos[id]
+        function getBaseClassInfo(node: ClassDeclaration) {
+            if (node.heritageClauses)
+                for (let h of node.heritageClauses) {
+                    switch (h.token) {
+                        case SK.ExtendsKeyword:
+                            if (!h.types || h.types.length != 1)
+                                throw userError(9228, lf("invalid extends clause"))
+                            let tp = typeOf(h.types[0])
+                            if (isClassType(tp)) {
+                                return getClassInfo(tp)
+                            } else {
+                                throw userError(9228, lf("cannot inherit from this type"))
+                            }
+                        case SK.ImplementsKeyword:
+                            throw userError(9228, lf("interfaces not supported yet"))
+                        default:
+                            throw userError(9228, lf("invalid heritage clause"))
+                    }
+                }
+            return null
+        }
+
+        function getVTable(inf: ClassInfo) {
+            assert(inf.isUsed)
+            if (!inf.vtable) {
+                let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
+                for (let m of inf.methods) {
+                    let minf = getFunctionInfo(m)
+                    if (minf.virtualRoot) {
+                        let key = classFunctionKey(m)
+                        let done = false
+                        for (let i = 0; i < tbl.length; ++i) {
+                            if (classFunctionKey(tbl[i].decl) == key) {
+                                tbl[i] = minf
+                                minf.virtualIndex = i
+                                done = true
+                            }
+                        }
+                        if (!done) {
+                            minf.virtualIndex = tbl.length
+                            tbl.push(minf)
+                        }
+                    }
+                }
+                inf.vtable = tbl
+                if (inf.hasVTable) {
+                    inf.refmask.unshift(false) // for the vtable
+                }
+            }
+            return inf.vtable
+        }
+
+
+        function getClassInfo(t: Type, decl: ClassDeclaration = null) {
+            if (!decl)
+                decl = <ClassDeclaration>t.symbol.valueDeclaration
+            let bindings = t
+                ? getTypeBindings(t)
+                : decl.typeParameters
+                    ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
+                    : []
+            let id = "C" + getNodeId(decl) + refMask(bindings)
+            let info: ClassInfo = classInfos[id]
             if (!info) {
+                let reffields: PropertyDeclaration[] = []
+                let primitivefields: PropertyDeclaration[] = []
                 info = {
-                    reffields: [],
-                    primitivefields: [],
-                    allfields: null,
-                    attrs: parseComments(decl)
+                    id: id,
+                    numRefFields: 0,
+                    allfields: [],
+                    attrs: parseComments(decl),
+                    decl: decl,
+                    refmask: null,
+                    baseClassInfo: null,
+                    methods: []
                 }
                 classInfos[id] = info;
+                // only do it after storing our in case we run into cycles (which should be errors)
+                info.baseClassInfo = getBaseClassInfo(decl)
+                if (info.baseClassInfo) {
+                    info.hasVTable = true
+                    info.baseClassInfo.hasVTable = true
+                }
                 scope(() => {
                     U.pushRange(typeBindings, bindings)
                     for (let mem of decl.members) {
                         if (mem.kind == SK.PropertyDeclaration) {
                             let pdecl = <PropertyDeclaration>mem
                             if (isRefType(typeOf(pdecl)))
-                                info.reffields.push(pdecl)
-                            else info.primitivefields.push(pdecl)
+                                reffields.push(pdecl)
+                            else primitivefields.push(pdecl)
+                            info.allfields.push(pdecl)
+                        } else if (isClassFunction(mem) && mem.kind != SK.Constructor) {
+                            let minf = getFunctionInfo(mem as any)
+                            minf.parentClassInfo = info
+                            info.methods.push(mem as any)
                         }
                     }
+                    if (info.baseClassInfo) {
+                        info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
+                        info.numRefFields = -1
+                        let nameMap: U.Map<FunctionLikeDeclaration> = {}
+                        for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
+                            for (let m of curr.methods) {
+                                nameMap[classFunctionKey(m)] = m
+                            }
+                        }
+                        for (let m of info.methods) {
+                            let prev = U.lookup(nameMap, classFunctionKey(m))
+                            if (prev) {
+                                let minf = getFunctionInfo(m)
+                                let pinf = getFunctionInfo(prev)
+                                if (prev.parameters.length != m.parameters.length)
+                                    error(m, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
+                                minf.virtualRoot = pinf
+                                if (!pinf.virtualRoot)
+                                    pinf.virtualRoot = pinf
+                                assert(pinf.virtualRoot == pinf)
+                                if (!pinf.virtualInstances)
+                                    pinf.virtualInstances = []
+                                pinf.virtualInstances.push(minf)
+                            }
+                        }
+                    } else {
+                        info.allfields = reffields.concat(primitivefields)
+                        info.numRefFields = reffields.length
+                    }
+                    info.refmask = info.allfields.map(f => isRefType(typeOf(f)))
                 })
-                info.allfields = info.reffields.concat(info.primitivefields)
+
             }
             return info;
         }
@@ -1313,6 +1442,23 @@ ${lbl}: .short 0xffff
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
                 } else
                     unhandled(node, lf("strange method call"), 9241)
+                let info = getFunctionInfo(decl)
+                if (info.virtualRoot) info = info.virtualRoot
+                if (!info.isUsed) {
+                    info.isUsed = true
+                    for (let vinst of info.virtualInstances || []) {
+                        if (vinst.parentClassInfo.isUsed)
+                            markFunctionUsed(vinst.decl, bindings)
+                    }
+                }
+                if (info.virtualRoot) {
+                    assert(!bin.finalPass || info.virtualIndex != null)
+                    return ir.op(EK.ProcCall, args.map(emitExpr), {
+                        action: decl,
+                        bindings: bindings,
+                        virtualIndex: info.virtualIndex
+                    })
+                }
                 if (attrs.shim) {
                     return emitShim(decl, node, args);
                 } else if (attrs.helper) {
@@ -1371,6 +1517,24 @@ ${lbl}: .short 0xffff
             })
         }
 
+        function emitVTables() {
+            for (let info of bin.usedClassInfos) {
+                getVTable(info) // gets cached
+            }
+        }
+
+        function markClassUsed(info: ClassInfo) {
+            if (info.isUsed) return
+            info.isUsed = true
+            if (info.baseClassInfo) markClassUsed(info.baseClassInfo)
+            bin.usedClassInfos.push(info)
+            for (let m of info.methods) {
+                let minf = getFunctionInfo(m)
+                if (minf.virtualRoot && minf.virtualRoot.isUsed)
+                    markFunctionUsed(m, []) // TODO bindings
+            }
+        }
+
         function emitNewExpression(node: NewExpression) {
             let t = typeOf(node)
             if (isArrayType(t)) {
@@ -1381,9 +1545,18 @@ ${lbl}: .short 0xffff
                     userError(9221, lf("new expression only supported on class types"))
                 }
                 let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
-                let info = getClassInfo(t)
+                let info = getClassInfo(typeOf(node), classDecl)
 
-                let obj = ir.shared(ir.rtcall("pxt::mkRecord", [ir.numlit(info.reffields.length), ir.numlit(info.allfields.length)]))
+                markClassUsed(info)
+
+                let obj: ir.Expr
+                if (info.hasVTable) {
+                    let lbl = info.id + "_VT"
+                    obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
+                } else {
+                    obj = ir.rtcall("pxt::mkRecord", [ir.numlit(info.numRefFields), ir.numlit(info.allfields.length)])
+                }
+                obj = ir.shared(obj)
 
                 if (ctor) {
                     markUsed(ctor)
@@ -1712,7 +1885,7 @@ ${lbl}: .short 0xffff
                     userError(9224, lf("field {0} not found", pacc.name.text))
                 let attrs = parseComments(fld)
                 return {
-                    idx: info.allfields.indexOf(fld),
+                    idx: (info.hasVTable ? 1 : 0) + info.allfields.indexOf(fld),
                     name: pacc.name.text,
                     isRef: isRefType(typeOf(pacc)),
                     shimName: attrs.shim
@@ -2312,10 +2485,7 @@ ${lbl}: .short 0xffff
 
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
-            //if (node.typeParameters)
-            //    userError(9227, lf("generic classes not supported"))
-            if (node.heritageClauses)
-                userError(9228, lf("inheritance not supported"))
+            getClassInfo(null, node)
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
@@ -2633,6 +2803,7 @@ ${lbl}: .short 0xffff
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
         res: CompileResult;
+        usedClassInfos: ClassInfo[] = [];
 
         strings: StringMap<string> = {};
         otherLiterals: string[] = [];
