@@ -411,8 +411,8 @@ class DocsMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <div id="docsmenu" className="ui buttons">
             <sui.DropdownMenu class="floating icon button" icon="help" title="Help">
-                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item widedesktop hidden">{m.name}</a>) }
-                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" class="widedesktop only" onClick={() => this.openDoc(m.path) }>{m.name}</sui.Item>) }
+                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item widedesktop hide">{m.name}</a>) }
+                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) }
             </sui.DropdownMenu>
         </div>
     }

@@ -489,7 +489,7 @@ html {
     .ui.widedesktop.only {
         display:block !important;
     }
-    .ui.widedesktop.hidden {
+    .ui.widedesktop.hide {
         display:none !important;
     }
     .sideDocs #maineditor {
