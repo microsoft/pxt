@@ -56,6 +56,7 @@ namespace pxt {
         pxtVersion: string; // "0.3.8",
         pxtRelId: string; // "zstad",
         pxtCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zstad/c/",
+        targetUrl: string; // "https://codethemicrobit.com"
         targetVersion: string; // "0.2.108",
         targetRelId: string; // "zowrj",
         targetCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zowrj/c/",
@@ -76,12 +77,13 @@ namespace pxt {
             pxtVersion: "local",
             pxtRelId: "",
             pxtCdnUrl: "/cdn/",
+            targetUrl: "",
             targetVersion: "local",
             targetRelId: "",
             targetCdnUrl: "/sim/",
             targetId: appTarget ? appTarget.id : "",
             simUrl: "/sim/simulator.html",
-            partsUrl: "/sim/instructions.html"
+            partsUrl: "/sim/siminstructions.html"
         }
         return r
     }
