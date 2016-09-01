@@ -78,25 +78,6 @@ export function isDirty(): boolean { // in need of a restart?
     return /sepia/.test(driver.container.className);
 }
 
-function computePartDefinitions(pkg: pxt.MainPackage, parts: string[]): pxsim.Map<pxsim.PartDefinition> {
-    let res: pxsim.Map<pxsim.PartDefinition> = {};
-    pkg.sortedDeps().forEach(d => {
-        let pjson = d.readFile("pxtparts.json");
-        if (pjson) {
-            try {
-                let p = JSON.parse(pjson) as U.Map<pxsim.PartDefinition>;
-                for (let k in p) {
-                    if (parts.indexOf(k) >= 0)
-                        res[k] = p[k];
-                }
-            } catch (e) {
-                pxt.reportError(lf("invalid pxtparts.json file"), undefined);
-            }
-        }
-    })
-    return res;
-}
-
 export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[pxtc.BINARY_JS]
@@ -109,7 +90,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         debug: debug,
         fnArgs: fnArgs,
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
-        partDefinitions: computePartDefinitions(pkg, parts)
+        partDefinitions: pkg.computePartDefinitions(parts)
     }
 
     driver.run(js, opts);
