@@ -7,6 +7,13 @@ namespace ts.pxtc {
         "thumb::muls": "*"
     }
 
+    export function shimToJs(shimName: string) {
+        shimName = shimName.replace(/::/g, ".")
+        if (shimName.slice(0, 4) == "pxt.")
+            shimName = "pxtcore." + shimName.slice(4)
+        return "pxsim." + shimName
+    }
+
     function vtableToJs(info: ClassInfo) {
         let s = `var ${info.id}_VT = {\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
@@ -254,11 +261,11 @@ switch (step) {
             if (name[0] == ".")
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
             else if (U.startsWith(name, "new "))
-                text = `new pxsim.${name.slice(4).replace(/::/g, ".")}(${args.join(", ")})`
+                text = `new ${shimToJs(name.slice(4))}(${args.join(", ")})`
             else if (args.length == 2 && bin.target.floatingPoint && U.lookup(jsOpMap, name))
                 text = `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})`
             else
-                text = `pxsim.${name.replace(/::/g, ".")}(${args.join(", ")})`
+                text = `${shimToJs(name)}(${args.join(", ")})`
 
             if (topExpr.callingConvention == ir.CallingConvention.Plain) {
                 write(`r0 = ${text};`)

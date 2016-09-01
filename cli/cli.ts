@@ -2134,7 +2134,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
-        let simName = "pxsim." + shim.replace(/::/g, ".")
+        let simName = pxtc.shimToJs(shim)
         let sym = U.lookup(decls, simName)
         if (!sym) {
             console.log("missing in sim:", simName)
@@ -2146,7 +2146,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
     for (let ent of U.values(apiInfo.byQName)) {
         let shim = ent.attributes.shim
         if (shim) {
-            let simName = "pxsim." + shim.replace(/::/g, ".")
+            let simName = pxtc.shimToJs(shim)
             let sym = U.lookup(decls, simName)
             if (!sym) {
                 console.log("missing in sim:", simName)

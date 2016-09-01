@@ -183,7 +183,7 @@ namespace pxsim {
                 U.nextTick(() => {
                     runtime = this;
                     this.setupTop(resolve)
-                    pxt.runAction3(a, arg0, arg1, arg2)
+                    pxtcore.runAction3(a, arg0, arg1, arg2)
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
