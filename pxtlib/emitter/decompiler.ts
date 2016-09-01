@@ -247,11 +247,15 @@ ${output}</xml>`;
 
         // TODO handle special for loops
         function emitForStatement(n: ts.ForStatement) {
-            writeBeginBlock("controls_simple_for");
             let vd = n.initializer as ts.VariableDeclarationList;
-            if (vd.declarations.length != 1) {
-                error(n, "for loop with multiple variables not supported");
+            if (!vd.declarations) {
+                error(n, Util.lf("for loop with out-of-scope variables not supported"));
+                return;
             }
+            if (vd.declarations.length != 1)
+                error(n, Util.lf("for loop with multiple variables not supported"));
+
+            writeBeginBlock("controls_simple_for");
             let id = vd.declarations[0].name as ts.Identifier;
             write(`<field name="VAR">${Util.htmlEscape(id.text)}</field>`)
             write('<value name="TO">');
