@@ -176,6 +176,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return headers;
     }
 
+    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
+        return this.state.searchFor != nextState.searchFor || this.state.packages != nextState.packages;
+    }
+
     renderCore() {
         const headers = this.fetchLocalData();
         const data = this.fetchCloudData();
@@ -242,12 +246,25 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             this.props.parent.importHexFileDialog();
         }
 
+        const isEmpty = () => {
+            if (this.state.searchFor) {
+                if (headers.length > 0
+                    || data.length > 0
+                    || bundles.length > 0
+                    || ghdata.length > 0
+                    || urldata.length > 0)
+                    return false;
+                return true;
+            }
+            return false;
+        }
+
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
                 <div className="ui search">
-                    <div className="ui fluid action input">
+                    <div className="ui fluid action input" role="search">
                         <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
-                        <button className="ui right primary labeled icon button" onClick={upd}>
+                        <button title={lf("Search")} className="ui right primary labeled icon button" onClick={upd}>
                             <i className="search icon"></i>
                             {lf("Search") }
                         </button>
@@ -315,6 +332,15 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             />
                     ) }
                 </div>
+                { isEmpty() ?
+                    <div className="ui items">
+                        <div className="ui item">
+                            {this.state.packages ?
+                                lf("We couldn't find any packages matching '{0}'", this.state.searchFor) :
+                                lf("We couldn't find any projects matching '{0}'", this.state.searchFor)}
+                        </div>
+                    </div>
+                    : undefined }
             </sui.Modal >
         );
     }
@@ -384,9 +410,9 @@ class DocsMenu extends data.Component<ISettingsProps, {}> {
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         return <div id="docsmenu" className="ui buttons">
-            <sui.DropdownMenu class="floating icon button" icon="help">
-                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} className="ui item widedesktop hidden">{m.name}</a>) }
-                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} class="widedesktop only" onClick={() => this.openDoc(m.path) }>{m.name}</sui.Item>) }
+            <sui.DropdownMenu class="floating icon button" icon="help" title="Help">
+                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item widedesktop hide">{m.name}</a>) }
+                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) }
             </sui.DropdownMenu>
         </div>
     }
@@ -434,10 +460,10 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         const icon = state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
             <iframe id="sidedocs" src={docsUrl} role="complementary" />
-            <button id="sidedocspopout" className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
+            <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab")} className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
                 <i className={`external icon`}></i>
             </button>
-            <button id="sidedocsexpand" className="circular ui icon button" onClick={() => this.toggleVisibility() }>
+            <button id="sidedocsexpand" role="button" title={lf("Show/Hide side documentation")} className="circular ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`${icon} icon`}></i>
             </button>
         </div>
@@ -636,7 +662,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
-                        && !simulator.driver.debug
+                        && !simulator.driver.runOptions.debug
                         && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
                         this.autoRunSimulator();
                 }
@@ -1053,8 +1079,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let fnArgs = resp.usedArguments;
                 if (fnArgs)
                     data.fnArgs = JSON.stringify(fnArgs);
+                data.package = Util.values(pkg.mainPkg.deps).filter(p => p.id != "this").map(p => `${p.id}=${p._verspec}`).join('\n')
                 let urlData = $.param(data);
-                let url = `/sim/instructions.html?${urlData}`
+                let url = `${pxt.webConfig.partsUrl}?${urlData}`
                 window.open(url, '_blank')
             });
     }
@@ -1066,7 +1093,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     hwDebug() {
         let start = Promise.resolve()
-        if (!this.state.running || !simulator.driver.debug)
+        if (!this.state.running || !simulator.driver.runOptions.debug)
             start = this.runSimulator({ debug: true })
         return start.then(() => {
             simulator.driver.setHwDebugger({
@@ -1102,7 +1129,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
                     simulator.run(opts.debug, resp)
-                    this.setState({ running: true })
+                    this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
@@ -1246,8 +1273,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
+                                {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='configure' class="secondary portrait only" onClick={() => this.openInstructions() } /> : undefined }
                                 {sandbox ? undefined : <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
-                                {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='shopping cart' class="violet portrait only" onClick={() => this.openInstructions() } /> : undefined }
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />}
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />}
                                 {this.editor.menu() }
@@ -1276,8 +1303,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
                                     <div className="ui divider"></div>
-                                    { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
-                                    { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" target="_blank">{lf("Terms Of Use") }</a> : undefined }
+                                    { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
+                                    { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank">{lf("Terms Of Use") }</a> : undefined }
                                     <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                 </sui.DropdownMenu>
                             </div>}
@@ -1308,16 +1335,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
-                        {sandbox ? undefined : <sui.Button key='runbtn' class={`fluid half`} icon={this.state.running ? "stop" : "play"} text={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                        {!sandbox && this.state.showParts ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } onClick={() => this.openInstructions() } /> : undefined }
+                        {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play")} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                         {pxt.debugMode() ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={lf("Dev Debug") } onClick={() => this.hwDebug() } /> : ''}
                     </div>
-                    {!sandbox && this.state.showParts ?
-                    <div className="ui item landscape only">
-                        <sui.Button icon='shopping cart' class="violet" text="Parts" onClick={() => this.openInstructions() } />
-                    </div> : undefined }
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
                     </div>
@@ -1486,7 +1510,7 @@ function showIcons() {
         "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle",
         "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
         "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
-        "user", "wizard", "shopping cart",
+        "user", "wizard", "configure",
     ]
     core.confirmAsync({
         header: "Icons",

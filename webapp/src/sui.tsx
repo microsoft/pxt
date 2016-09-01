@@ -18,6 +18,7 @@ export interface WithPopupProps extends UiProps {
 
 export interface DropdownProps extends WithPopupProps {
     value?: string;
+    title?: string;
     onChange?: (v: string) => void;
 }
 
@@ -79,7 +80,7 @@ export class DropdownMenu extends UiElement<DropdownProps> {
 
     renderCore() {
         return (
-            <div className={genericClassName("ui dropdown", this.props) } role={this.props.role}>
+            <div className={genericClassName("ui dropdown", this.props) } role={this.props.role} title={this.props.title ? this.props.title : this.props.text}>
                 {genericContent(this.props) }
                 <div className="menu">
                     {this.props.children}
@@ -119,6 +120,7 @@ export class Item extends data.Component<ItemProps, {}> {
         return (
             <div className={genericClassName("ui item", this.props) }
                 role={this.props.role}
+                title={this.props.text}
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}>
@@ -129,6 +131,7 @@ export class Item extends data.Component<ItemProps, {}> {
 }
 
 export interface ButtonProps extends WithPopupProps {
+    title?: string;
     onClick?: (e: React.MouseEvent) => void;
     disabled?: boolean;
 }
@@ -138,7 +141,7 @@ export class Button extends UiElement<ButtonProps> {
         return (
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
-                title={this.props.text}
+                title={this.props.title ? this.props.title : this.props.text}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}

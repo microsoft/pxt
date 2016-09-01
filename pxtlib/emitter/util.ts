@@ -489,7 +489,7 @@ namespace ts.pxtc.Util {
     export function getMime(filename: string) {
         let m = /\.([a-zA-Z0-9]+)$/.exec(filename)
         if (m)
-            switch (m[1]) {
+            switch (m[1].toLowerCase()) {
                 case "txt": return "text/plain";
                 case "html":
                 case "htm": return "text/html";

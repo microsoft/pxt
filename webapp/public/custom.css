@@ -489,7 +489,7 @@ html {
     .ui.widedesktop.only {
         display:block !important;
     }
-    .ui.widedesktop.hidden {
+    .ui.widedesktop.hide {
         display:none !important;
     }
     .sideDocs #maineditor {
@@ -672,6 +672,9 @@ html {
 .ui.fluid.button.half{
     width:50% !important;
 }
+.ui.fluid.button.sixty{
+    width:60% !important;
+}
 
 /* monaco: Editor */
 
@@ -731,9 +734,8 @@ html {
 
 /* monaco: Tokens */
 
-.monaco-editor.vs .token.ts.identifier:hover {
-    border-radius: 6px;
-    border: 1px solid #565656;
+.token.ts.identifier:hover, .token.ts.keyword:hover {
+    outline: 1px auto #bdc3c7;
 }
 
 .token.ts {
@@ -743,10 +745,8 @@ html {
 
 .token.ts.keyword.if, .token.ts.keyword.else {
     color: #5B80A5;
-    border-radius: 3px;
 }
 
 .token.ts.keyword.while:not(.true), .token.ts.keyword.for {
     color: #5BA55B;
-    border-radius: 3px;
 }

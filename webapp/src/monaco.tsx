@@ -204,7 +204,7 @@ export class Editor extends srceditor.Editor {
                     let element = colorDict[ns];
                     let color = element.color;
                     let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.` + element.fns.join(', .token.ts.identifier.');
-                    cssContent += `${cssTag} { color: ${color}; border-radius: 3px; }`;
+                    cssContent += `${cssTag} { color: ${color}; }`;
                 })
                 return cssContent;
             }).done((cssContent: string) => {

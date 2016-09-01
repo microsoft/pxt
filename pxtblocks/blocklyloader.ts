@@ -1,4 +1,4 @@
-/// <reference path="./blockly.d.ts" />
+/// <reference path="../built/blockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
 import Util = pxt.Util;
 
@@ -125,6 +125,11 @@ namespace pxt.blocks {
     }
 
     function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement) {
+        // identity function are just a trick to get an enum drop down in the block
+        // while allowing the parameter to be a number
+        if (fn.attributes.shim == "TD_ID")
+            return;
+
         let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         let nsn = info.apis.byQName[ns];
         if (nsn) ns = nsn.attributes.block || ns;

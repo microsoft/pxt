@@ -60,6 +60,7 @@ namespace pxt {
         targetCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zowrj/c/",
         targetId: string; // "microbit",
         simUrl: string; // "https://trg-microbit.kindscript.net/sim/zowrj"
+        partsUrl?: string; // /beta---parts
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
         isStatic?: boolean;
@@ -79,6 +80,7 @@ namespace pxt {
             targetCdnUrl: "/sim/",
             targetId: appTarget ? appTarget.id : "",
             simUrl: "/sim/simulator.html",
+            partsUrl: "/sim/instructions.html"
         }
         return r
     }
@@ -234,7 +236,6 @@ namespace pxt {
 
     export interface AppSerial {
         manufacturerFilter?: string; // used by node-serial
-        nameFilter?: string; // used by winrt
         log?: boolean;
     }
 

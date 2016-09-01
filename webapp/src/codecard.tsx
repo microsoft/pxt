@@ -87,7 +87,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         if (!card.onClick && url) {
             return (
                 <div>
-                    <a href={url} target="docs" className="ui widedesktop hidden">{cardDiv}</a>
+                    <a href={url} target="docs" className="ui widedesktop hide">{cardDiv}</a>
                     <a href={sideUrl} className="ui widedesktop only">{cardDiv}</a>
                 </div>
             )

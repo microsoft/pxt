@@ -8,6 +8,16 @@ Here is a list of some of the features supported by the Editor:
 
 The Editor contains a built-in JavaScript/Typescript language service that provides complete code intelligence.
 
+### Coloring
+
+The Editor automatically colors each of function and its respective namespace to match the colors of the respective block in the Block Editor.
+
+![](/static/images/monaco-coloring.png)
+
+This is the equivalent of the following blocks:
+
+![](/static/images/monaco-coloring-blocks.png)
+
 ### Auto Suggest
 
 Also known as IntelliSense, the editor supports automatic word completion.
@@ -58,12 +68,6 @@ Errors are surfaced to the user in one of two different ways:
 
 You can change the editor's font size by zooming in or out the editor content. 
 Use ```Ctrl and +``` and ```Ctrl and -``` to zoom in/out.
-
-### Coloring
-
-The Editor automatically colors each of function and its respective namespace to match the colors of the respective block in the Block Editor.
-
-![](/static/images/monaco-coloring.png)
 
 ### Find and Replace
 

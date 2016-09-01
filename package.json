@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.3.61",
+  "version": "0.3.71",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -20,10 +20,13 @@
     "README.md",
     "built/pxt.js",
     "built/pxt-common.json",
+    "built/blockly.d.ts",
     "built/pxt.d.ts",
     "built/pxtlib.js",
     "built/pxtlib.d.ts",
     "built/pxtsim.d.ts",
+    "built/pxtblocks.d.ts",
+    "built/pxtrunner.d.ts",
     "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
@@ -40,12 +43,12 @@
     "typings/bluebird",
     "typings/node",
     "typings/marked",
+    "typings/jquery",
     "docfiles"
   ],
   "main": "built/pxt.js",
   "dependencies": {
     "bluebird": "^3.1.4",
-    "dapjs": "^0.3.0",
     "faye-websocket": "^0.11.0",
     "highlight.js": "^9.5.0",
     "lzma": "^2.3.2",

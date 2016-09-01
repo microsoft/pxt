@@ -127,7 +127,7 @@ namespace pxt.runner {
     function renderSnippetsAsync(options: ClientRenderOptions): Promise<void> {
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
-            let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
+            let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let js = $('<code/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             let compiled = r.compileJS && r.compileJS.success;
@@ -164,7 +164,7 @@ namespace pxt.runner {
             let info = decompileCallInfo(file.statements[0]);
             if (!info) return;
 
-            let s = r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
+            let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code/>').text(sig);

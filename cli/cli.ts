@@ -663,6 +663,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     let replacements: U.Map<string> = {
         "/sim/simulator.html": "@simUrl@",
+        "/sim/instructions.html": "@partsUrl@",
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/embed.js": "@relprefix@embed",
         "/cdn/": "@pxtCdnUrl@",
@@ -686,6 +687,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "targetCdnUrl": opts.localDir,
             "targetId": opts.target,
             "simUrl": opts.localDir + "simulator.html",
+            "partsUrl": opts.localDir + "instructions.html",
             "runUrl": opts.localDir + "run.html",
             "docsUrl": opts.localDir + "docs.html",
             "isStatic": true,
@@ -705,6 +707,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "embed.js",
         "run.html",
         "docs.html",
+        "instructions.html",
         "release.manifest",
         "worker.js",
         "tdworker.js",

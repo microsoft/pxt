@@ -314,13 +314,20 @@ ${output}</xml>`;
             writeEndBlock()
         }
 
-        function emitPropertyAccessExpression(n: ts.PropertyAccessExpression): void {
+        function emitPropertyAccessExpression(n: ts.PropertyAccessExpression, shadow = false): void {
             let callInfo = (n as any).callInfo as pxtc.CallInfo;
             if (!callInfo) {
                 error(n);
                 return;
             }
-            output += (callInfo.attrs.blockId || callInfo.qName);
+            let value = callInfo.attrs.blockId || callInfo.qName
+            if (callInfo.attrs.blockIdentity) {
+                let idfn = blocksInfo.apis.byQName[callInfo.attrs.blockIdentity];
+                let tag = shadow ? "shadow" : "block";
+                let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
+                write(`<${tag} type="${idfn.attributes.blockId}"><field name="${f[1]}">${value}</field></${tag}>`)
+            }
+            else output += value;
         }
 
         function emitArrowFunction(n: ts.ArrowFunction) {
@@ -506,11 +513,17 @@ ${output}</xml>`;
                         write('</statement>');
                         break;
                     case SK.PropertyAccessExpression:
-                        output += `<field name="${argNames[i]}">`;
+                        let forv = "field";
+                        let callInfo = (e as any).callInfo as pxtc.CallInfo;
+                        let shadow = callInfo && !!callInfo.attrs.blockIdentity
+                        if (shadow)
+                            forv = "value";
+
+                        output += `<${forv} name="${argNames[i]}">`;
                         pushBlocks();
-                        emit(e);
+                        emitPropertyAccessExpression(e as PropertyAccessExpression, shadow);
                         flushBlocks();
-                        output += `</field>`;
+                        output += `</${forv}>`;
                         break;
                     default:
                         write(`<value name="${argNames[i]}">`)

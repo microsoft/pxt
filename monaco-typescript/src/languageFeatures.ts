@@ -22,7 +22,7 @@ let snippets = {
 	"For Loop": {
 		"prefix": "for",
 		"body": [
-			"for (let ${index} = 0; ${index} <= {{4}}; ${index}++) {",
+			"for (let index = 0; index <= 4; index++) {",
 			"\t$0",
 			"}"
 		],
@@ -36,17 +36,6 @@ let snippets = {
 			"}"
 		],
 		"description": "If Statement"
-	},
-	"If-Else Statement": {
-		"prefix": "ifelse",
-		"body": [
-			"if (${condition}) {",
-			"\t$0",
-			"} else {",
-			"\t",
-			"}"
-		],
-		"description": "If-Else Statement"
 	},
 	"While Statement": {
 		"prefix": "while",
@@ -346,9 +335,9 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
     `
             let renderDefaultVal = function (name: string, type: string, enumDefinitions?: monaco.languages.SymbolInformation[][]): string {
                 switch (type) {
-                    case "number": return "{{0}}";
-                    case "boolean": return "{{false}}";
-                    case "string": return (name == "leds" ? "`" + defaultImgLit + "`" : "\"{{}}\"");
+                    case "number": return "0";
+                    case "boolean": return "false";
+                    case "string": return (name == "leds" ? "`" + defaultImgLit + "`" : "\"\"");
                 }
                 if (enumDefinitions) {
                     let enumValue: string;

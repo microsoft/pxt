@@ -198,6 +198,7 @@ namespace ts.pxtc {
         blockImportId?: string;
         blockBuiltin?: boolean;
         blockNamespace?: string;
+        blockIdentity?: string;
         color?: string;
         icon?: string;
         imageLiteral?: number;
@@ -1010,7 +1011,7 @@ ${lbl}: .short 0xffff
                 decl,
                 qName: getFullName(checker, decl.symbol),
                 attrs,
-                args: []
+                args: [],
             };
             (node as any).callInfo = callInfo;
             if (decl.kind == SK.EnumMember) {

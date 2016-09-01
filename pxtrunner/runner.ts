@@ -78,7 +78,13 @@ namespace pxt.runner {
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
                         let cfg = JSON.parse(files[pxt.configName]) as pxt.PackageConfig;
-                        pkg.verArgument().split(',').forEach(d => cfg.dependencies[d] = "*");
+                        pkg.verArgument().split(',').forEach(d => {
+                            let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(d);
+                            if (m)
+                                cfg.dependencies[m[1]] = m[3] || "*"
+                            else
+                                console.warn(`unknown package syntax ${d}`)
+                        });
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
                         files[pxt.configName] = JSON.stringify(cfg, null, 4);
@@ -124,20 +130,21 @@ namespace pxt.runner {
             })
     }
 
-    export function initFooter(footer: JQuery, shareId?: string) {
-        let theme = pxt.appTarget.appTheme;
-        if (footer.length == 0) return;
-        let body = $('body');
+    export function initFooter(footer: HTMLElement, shareId?: string) {
+        if (!footer) return;
 
+        let theme = pxt.appTarget.appTheme;
+        let body = $('body');
+        let $footer = $(footer)
         let footera = $('<a/>').attr('href', theme.homeUrl)
             .attr('target', '_blank');
-        footer.append(footera);
+        $footer.append(footera);
         if (theme.organizationLogo)
             footera.append($('<img/>').attr('src', Util.toDataUri(theme.organizationLogo)));
         else footera.append(lf("powered by {0}", theme.title));
 
-        body.mouseenter(ev => footer.fadeOut());
-        body.mouseleave(ev => footer.fadeIn());
+        body.mouseenter(ev => $footer.fadeOut());
+        body.mouseleave(ev => $footer.fadeIn());
     }
 
     export function showError(msg: string) {
@@ -212,7 +219,7 @@ namespace pxt.runner {
                     let parts = pxtc.computeUsedParts(resp, true);
                     let runOptions: pxsim.SimulatorRunOptions = { parts: parts, fnArgs: fnArgs };
                     if (pxt.appTarget.simulator)
-                        runOptions.aspectRatio = parts && pxt.appTarget.simulator.partsAspectRatio
+                        runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                             ? pxt.appTarget.simulator.partsAspectRatio
                             : pxt.appTarget.simulator.aspectRatio;
                     driver.run(js, runOptions);
@@ -437,7 +444,7 @@ ${files["main.ts"]}
     export interface DecompileResult {
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
-        blocksSvg?: JQuery;
+        blocksSvg?: HTMLElement;
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {

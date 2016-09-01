@@ -90,7 +90,7 @@ namespace pxt.docs.codeCard {
                 pxt.debug(card.blocksXml);
             } else {
                 let holder = div(img, ''); holder.setAttribute('style', 'width:100%; min-height:10em');
-                holder.appendChild(svg[0]);
+                holder.appendChild(svg);
             }
         }
 
