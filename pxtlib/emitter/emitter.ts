@@ -27,7 +27,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9255
+    // next free error 9256
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -863,7 +863,11 @@ namespace ts.pxtc {
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let bindings = getTypeBindings(t)
+            let bindings = t
+                ? getTypeBindings(t)
+                : decl.typeParameters
+                    ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
+                    : []
             let id = "C" + getNodeId(decl) + refMask(bindings)
             let info: ClassInfo = classInfos[id]
             if (!info) {
@@ -915,6 +919,8 @@ namespace ts.pxtc {
                             if (prev) {
                                 let minf = getFunctionInfo(m)
                                 let pinf = getFunctionInfo(prev)
+                                if (prev.parameters.length != m.parameters.length)
+                                    error(m, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
                                 minf.virtualRoot = pinf
                                 if (!pinf.virtualRoot)
                                     pinf.virtualRoot = pinf
@@ -2475,6 +2481,7 @@ ${lbl}: .short 0xffff
 
         function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
+            getClassInfo(null, node)
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
