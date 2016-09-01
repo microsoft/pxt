@@ -1335,7 +1335,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
-                        {!sandbox && this.state.showParts ? <sui.Button icon='shopping cart' class="fluid sixty violet" text={lf("Parts") } onClick={() => this.openInstructions() } /> : undefined }
+                        {!sandbox && this.state.showParts ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } onClick={() => this.openInstructions() } /> : undefined }
                         {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play")} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
