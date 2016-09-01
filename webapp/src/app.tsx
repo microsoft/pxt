@@ -1273,8 +1273,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
+                                {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='configure' class="secondary portrait only" onClick={() => this.openInstructions() } /> : undefined }
                                 {sandbox ? undefined : <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
-                                {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='shopping cart' class="violet portrait only" onClick={() => this.openInstructions() } /> : undefined }
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />}
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />}
                                 {this.editor.menu() }
@@ -1510,7 +1510,7 @@ function showIcons() {
         "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle",
         "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
         "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
-        "user", "wizard", "shopping cart",
+        "user", "wizard", "configure",
     ]
     core.confirmAsync({
         header: "Icons",
