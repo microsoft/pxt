@@ -559,16 +559,13 @@ namespace ts.pxtc {
             opts.breakpoints = true
         }
 
-
-        let bin: Binary;
+        let bin = new Binary()
         let proc: ir.Procedure;
+        bin.res = res;
+        bin.target = opts.target;
 
         function reset() {
-            let prev = bin ? bin.usedClassInfos : null
-            bin = new Binary();
-            if (prev) bin.usedClassInfos = prev
-            bin.res = res;
-            bin.target = opts.target;
+            bin.reset()
             proc = null
             if (opts.breakpoints)
                 res.breakpoints = [{
@@ -1460,10 +1457,9 @@ ${lbl}: .short 0xffff
                 if (info.virtualRoot && !isSuper) {
                     assert(!bin.finalPass || info.virtualIndex != null)
                     return ir.op(EK.ProcCall, args.map(emitExpr), {
-                        action: decl,
-                        bindings: bindings,
+                        proc: null,
                         virtualIndex: info.virtualIndex
-                    })
+                    } as ir.ProcId)
                 }
                 if (attrs.shim) {
                     return emitShim(decl, node, args);
@@ -1517,10 +1513,13 @@ ${lbl}: .short 0xffff
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
+            let id: ir.ProcQuery = { action: decl as ts.FunctionLikeDeclaration, bindings }
+            let proc = bin.procs.filter(p => p.matches(id))[0]
+            assert(!!proc || !bin.finalPass)
             return ir.op(EK.ProcCall, args, {
-                action: decl,
-                bindings: bindings
-            })
+                proc: proc,
+                virtualIndex: null
+            } as ir.ProcId)
         }
 
         function emitVTables() {
@@ -1676,14 +1675,24 @@ ${lbl}: .short 0xffff
 
             assert(!!lit == isExpression)
 
-            let isRoot = proc == null
-            proc = new ir.Procedure();
-            proc.isRoot = isRoot
-            proc.action = node;
-            proc.info = info;
+            let id: ir.ProcQuery = { action: node, bindings }
+            let existing = bin.procs.filter(p => p.matches(id))[0]
+
+            if (existing) {
+                proc = existing
+                proc.reset()
+            } else {
+                assert(!bin.finalPass)
+                let isRoot = proc == null
+                proc = new ir.Procedure();
+                proc.isRoot = isRoot
+                proc.action = node;
+                proc.info = info;
+                proc.bindings = bindings;
+                bin.addProc(proc);
+            }
+
             proc.captured = locals;
-            proc.bindings = bindings;
-            bin.addProc(proc);
 
             U.pushRange(typeBindings, bindings)
 
@@ -2809,7 +2818,16 @@ ${lbl}: .short 0xffff
         otherLiterals: string[] = [];
         lblNo = 0;
 
+        reset() {
+            this.lblNo = 0
+            this.otherLiterals = []
+            this.strings = {}
+            for (let p of this.procs)
+                p.reset()
+        }
+
         addProc(proc: ir.Procedure) {
+            assert(!this.finalPass)
             this.procs.push(proc)
             proc.seqNo = this.procs.length
             //proc.binary = this

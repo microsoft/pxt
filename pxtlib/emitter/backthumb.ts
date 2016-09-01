@@ -324,7 +324,7 @@ ${bkptLabel + "_after"}:
                 write("blx r0")
 
             } else {
-                let proc = bin.procs.filter(p => p.matches(topExpr.data))[0]
+                let proc = procid.proc
                 procIdx = proc.seqNo
                 write(lbl + ":")
                 write("bl " + proc.label())
