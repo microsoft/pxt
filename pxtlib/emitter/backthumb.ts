@@ -772,6 +772,8 @@ ${lbl}: .string ${stringLiteral(s)}
     }
 
     function vtableToAsm(info: ClassInfo) {
+        if (!info.hasVTable) return ""
+
         let s = `
         .balign 4
 ${info.id}_VT:
@@ -784,7 +786,7 @@ ${info.id}_VT:
         }
 
         let refmask = info.refmask.map(v => v ? "1" : "0")
-        if (refmask.length % 2)
+        while (refmask.length < 2 || refmask.length % 2 != 0)
             refmask.push("0")
         s += `        .byte ${refmask.join(",")}\n`
         s += "\n"
