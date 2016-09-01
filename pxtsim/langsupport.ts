@@ -116,7 +116,7 @@ namespace pxsim {
         }
     }
 
-    export namespace pxt {
+    export namespace pxtcore {
         export function mkAction(reflen: number, len: number, fn: LabelFn) {
             let r = new RefAction();
             r.len = len
@@ -260,7 +260,7 @@ namespace pxsim {
         })
     }
 
-    export namespace pxt {
+    export namespace pxtcore {
         export var incr = pxsim.incr;
         export var decr = pxsim.decr;
 
@@ -382,7 +382,7 @@ namespace pxsim {
     }
 
 
-    export namespace pxt {
+    export namespace pxtcore {
         export function mkRecord(reflen: number, totallen: number) {
             check(0 <= reflen && reflen <= totallen);
             check(reflen <= totallen && totallen <= 255);
