@@ -100,7 +100,7 @@ namespace pxsim {
         export function run(msg: SimulatorRunMessage) {
             stop();
 
-            runtime = new Runtime(msg.code);            
+            runtime = new Runtime(msg.code);
             runtime.id = msg.id;
             runtime.board.initAsync(msg)
                 .done(() => {
