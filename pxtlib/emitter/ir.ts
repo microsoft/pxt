@@ -256,6 +256,8 @@ namespace ts.pxtc.ir {
         }
 
         uniqueName() {
+            if (this.isarg)
+                return "arg" + this.index // have to keep names stable for inheritance
             return this.getName().replace(/[^\w]/g, "_") + "___" + getNodeId(this.def)
         }
 
@@ -349,6 +351,7 @@ namespace ts.pxtc.ir {
     export interface ProcId {
         action: ts.FunctionLikeDeclaration;
         bindings: TypeBinding[];
+        virtualIndex?: number;
     }
 
     export class Procedure extends Node {
