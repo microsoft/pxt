@@ -131,6 +131,7 @@ export class Item extends data.Component<ItemProps, {}> {
 }
 
 export interface ButtonProps extends WithPopupProps {
+    title?: string;
     onClick?: (e: React.MouseEvent) => void;
     disabled?: boolean;
 }
@@ -140,7 +141,7 @@ export class Button extends UiElement<ButtonProps> {
         return (
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
-                title={this.props.text}
+                title={this.props.title ? this.props.title : this.props.text}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}

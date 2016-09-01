@@ -262,9 +262,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return (
             <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
                 <div className="ui search">
-                    <div className="ui fluid action input">
+                    <div className="ui fluid action input" role="search">
                         <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
-                        <button className="ui right primary labeled icon button" onClick={upd}>
+                        <button title={lf("Search")} className="ui right primary labeled icon button" onClick={upd}>
                             <i className="search icon"></i>
                             {lf("Search") }
                         </button>
@@ -1336,7 +1336,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
                         {!sandbox && this.state.showParts ? <sui.Button icon='shopping cart' class="fluid sixty violet" text={lf("Parts") } onClick={() => this.openInstructions() } /> : undefined }
-                        {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                        {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play")} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
                         {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
