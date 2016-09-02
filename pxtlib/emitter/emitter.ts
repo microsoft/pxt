@@ -15,6 +15,18 @@ namespace ts.pxtc {
 
     export const numReservedGlobals = 1;
 
+    interface NodeWithId extends Node {
+        pxtNodeId: number;
+    }
+
+    let lastNodeId = 0
+    export function getNodeId(n: Node) {
+        let nn = n as NodeWithId
+        if (!nn.pxtNodeId)
+            nn.pxtNodeId = ++lastNodeId
+        return nn.pxtNodeId
+    }
+
     export function stringKind(n: Node) {
         if (!n) return "<null>"
         return (<any>ts).SyntaxKind[n.kind]
@@ -538,6 +550,8 @@ namespace ts.pxtc {
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
+
+        lastNodeId = 0
 
         if (opts.target.isNative) {
             if (!opts.hexinfo) {
