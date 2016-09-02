@@ -595,6 +595,9 @@ namespace pxt {
                                 if (part.visual instanceof String && /\.svg$/i.test(<string>part.visual)) {
                                     let f = d.readFile(<string>part.visual);
                                     part.visual = `data:image/svg+xml,` + encodeURI(f);
+                                } else if (/\.svg$/i.test(((<pxsim.PartVisualDefinition>part.visual).image))) {
+                                    let f = d.readFile((<pxsim.PartVisualDefinition>part.visual).image);
+                                    (<pxsim.PartVisualDefinition>part.visual).image = `data:image/svg+xml,` + encodeURI(f);
                                 }
                             }
                         }
