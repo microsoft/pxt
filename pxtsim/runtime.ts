@@ -174,6 +174,7 @@ namespace pxsim {
         startTime = 0;
         id: string;
         globals: any = {};
+        currFrame: StackFrame;
 
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
@@ -363,6 +364,7 @@ namespace pxsim {
                 try {
                     runtime = _this
                     while (!!p) {
+                        _this.currFrame = p;
                         p = p.fn(p)
                         _this.maybeUpdateDisplay()
                     }

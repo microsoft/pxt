@@ -377,6 +377,10 @@ namespace pxsim {
             return a;
         }
 
+        export function runtimeWarning(msg: string) {
+            Runtime.postMessage(pxsim.getWarningMessage(msg))
+        }
+
         // these are never used in simulator; silence the warnings
         export var getGlobalsPtr: any;
     }

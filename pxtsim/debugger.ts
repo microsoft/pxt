@@ -24,13 +24,36 @@ namespace pxsim {
         stackframes: {
             locals: Variables;
             funcInfo: any; // pxtc.FunctionLocationInfo
+            breakpointId: number;
         }[];
         exceptionMessage?: string;
         exceptionStack?: string;
     }
 
+    export interface DebuggerWarningMessage extends DebuggerMessage {
+        message: string;
+        breakpointIds: number[];
+    }
+
     export interface Variables {
         [name: string]: any;
+    }
+
+    export function getWarningMessage(msg: string) {
+        let r: DebuggerWarningMessage = {
+            type: "debugger",
+            subtype: "warning",
+            breakpointIds: [],
+            message: msg
+        }
+
+        let s = runtime.currFrame
+        while (s != null) {
+            r.breakpointIds.push(s.lastBrkId)
+            s = s.parent
+        }
+
+        return r
     }
 
     export function getBreakpointMsg(s: StackFrame, brkId: number) {
@@ -77,7 +100,8 @@ namespace pxsim {
             if (info)
                 r.stackframes.push({
                     locals: frameVars(s),
-                    funcInfo: info
+                    funcInfo: info,
+                    breakpointId: s.lastBrkId
                 })
             s = s.parent
         }

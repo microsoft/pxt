@@ -52,6 +52,17 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             }
         },
+        onDebuggerWarning: function (wrn) {
+            for (let id of wrn.breakpointIds) {
+                let brkInfo = lastCompileResult.breakpoints[id]
+                if (brkInfo) {
+                    if (!U.startsWith("pxt_modules/", brkInfo.fileName)) {
+                        config.highlightStatement(brkInfo)
+                        break
+                    }
+                }
+            }
+        },
         onDebuggerResume: function () {
             config.highlightStatement(null)
             updateDebuggerButtons()
