@@ -1,4 +1,5 @@
 /// <reference path="../../built/pxtsim.d.ts" />
+/// <reference path="../../built/pxtparts.d.ts" />
 
 import U = pxt.U
 
@@ -11,7 +12,6 @@ interface SimulatorConfig {
 export var driver: pxsim.SimulatorDriver;
 let nextFrameId: number = 0;
 const themes = ["blue", "red", "green", "yellow"];
-let currentRuntime: pxsim.SimulatorRunMessage;
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
 
@@ -78,7 +78,7 @@ export function isDirty(): boolean { // in need of a restart?
     return /sepia/.test(driver.container.className);
 }
 
-export function run(debug: boolean, res: pxtc.CompileResult) {
+export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
     let js = res.outfiles[pxtc.BINARY_JS]
     let parts = pxtc.computeUsedParts(res, true);
@@ -89,7 +89,8 @@ export function run(debug: boolean, res: pxtc.CompileResult) {
         parts: parts,
         debug: debug,
         fnArgs: fnArgs,
-        aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio
+        aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
+        partDefinitions: pkg.computePartDefinitions(parts)
     }
 
     driver.run(js, opts);

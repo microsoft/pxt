@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.3.76",
+  "version": "0.3.82",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -23,6 +23,7 @@
     "built/blockly.d.ts",
     "built/pxt.d.ts",
     "built/pxtpackage.d.ts",
+    "built/pxtparts.d.ts",
     "built/pxtlib.js",
     "built/pxtlib.d.ts",
     "built/pxtsim.d.ts",

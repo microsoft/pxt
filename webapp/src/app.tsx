@@ -1074,8 +1074,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     code: code ? code.content : "basic.showString('Hello!');",
                 };
                 let parts = ts.pxtc.computeUsedParts(resp);
-                if (parts.length)
+                if (parts.length) {
                     data.parts = parts.join(" ");
+                    data.partdefs = JSON.stringify(pkg.mainPkg.computePartDefinitions(parts));
+                }
                 let fnArgs = resp.usedArguments;
                 if (fnArgs)
                     data.fnArgs = JSON.stringify(fnArgs);
@@ -1128,7 +1130,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(opts.debug, resp)
+                    simulator.run(pkg.mainPkg, opts.debug, resp)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
