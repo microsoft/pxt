@@ -75,6 +75,8 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 opts.justMyCode = true
             }
             opts.computeUsedSymbols = true
+            if (/test=1/i.test(window.location.href))
+                opts.testMode = true
             return opts
         })
         .then(compileCoreAsync)
