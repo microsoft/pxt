@@ -64,7 +64,7 @@ for line in file:
                 instruction.isDirective = True;
                 instruction.opcode = directive.group(1)
                 h = gethex(tokens[i+1])
-                instruction.operands = [ h.group(1) ]
+                instruction.operands = [ h.group(0) ]
             else:
                 # should be an instruction
                 opcode = re.match("[a-z]*",tokens[i])
@@ -75,14 +75,15 @@ for line in file:
                     while(i<len(tokens) and tokens[i] != ";"):
                         h = gethex(tokens[i])
                         if h:
-                            assert(h.group(1) != "")
+                            assert(h.group(0) != "")
                             # print("HEX_IMM = ",h.group(1))
-                            instruction.operands.append(h.group(1))
+                            # keep the 0x to distinguish from decimal
+                            instruction.operands.append(h.group(0))
                         else:
-                            reg = re.match("(r\d+|X|Y|Z|\-X|\+X|Y\+\d+|Z\+\d+)",tokens[i])
+                            reg = re.match("r\d+|X|Y|Z|\-X|\+X|Y\+\d+|Z\+\d+",tokens[i])
                             if (reg):
                                 #print ("REG =", reg.group(1))
-                                instruction.operands.append(reg.group(1))
+                                instruction.operands.append(reg.group(0))
                             else:
                                 relative = re.match("\.([\+\-]\d+)",tokens[i])
                                 if (relative):
@@ -93,48 +94,51 @@ for line in file:
                                     dec = re.match("\d+",tokens[i])
                                     if (dec):
                                         # print("DEC_IMM = ", dec.group(0))
-                                        instruction.operands.append(dec.group(0))
+                                        instruction.operands.append("#" + dec.group(0))
                                     else:
                                         print("DIE = ",tokens[i])
                                         assert(False)
-                        # TODO: if we are at a token, capture remaining
-                        # extract any hex value    
-                        # or branch offset
-                        # print(instruction.toString())
                         i = i + 1
+                    # replace relative jump by absolute address
                     if relative:
                         assert(tokens[i] == ";")
                         h = gethex(tokens[i+1])
-                        # replace relative jump by address for
-                        instruction.operands[0] = h.group(1)                        
+                        instruction.operands[0] = h.group(0)                        
                 else:
                     assert(False)
 
 ## now find the addresses which are targets of jumps
-## relative jumps?
 
 lbl = 1
 labels = dict({})
 for i in code:
     a = i.addr
     if (i.opcode == "jmp" or i.opcode=="call" or i.relative != ""):
-        addr = i.operands[0]
+        # skip the 0x
+        addr = i.operands[0][2:]
         if not (addr in labels): 
+            # new target address
             labels[addr] = "L" + str(lbl)
+            # add label to instruction, if we have it
             if (addr in addr_map):
                 addr_map[addr].label = labels[addr]
             lbl = lbl + 1
-    if (i.relative != ""):
-        # label generation
-        # tgt = a + relative
-        # make tgt a label
-        pass
 
+# replace addresses by labels in operand lists
 for i in code:   
     if (i.opcode == "jmp" or i.opcode =="call" or i.relative != ""):
-        addr = i.operands[0]
+        # skip the 0x
+        addr = i.operands[0][2:]
         if (addr in labels):
             i.operands[0] = labels[addr]
+
+# TODO: create a test file
+#        assembler.expect(avr,
+#            "0c00      lsl     r0\n" +
+#            "920f      push    r0\n" +
+#            "e604      ldi     r16, #100        ; 0x64\n" +
+#            "903f      pop     r3\n")
+
 
 for i in code:
     print(i.toString())
