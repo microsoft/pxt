@@ -23,6 +23,16 @@ declare namespace pxsim {
         onboardComponents?: string[]
         useCrocClips?: boolean,
         marginWhenBreadboarding?: [number, number, number, number],
+        spiPins?: {
+            MOSI: string,
+            MISO: string,
+            SCK: string,
+        },
+        i2cPins?: {
+            SDA: string,
+            SCL: string,
+        },
+        analogInPins?: string[] //TODO: implement allocation
     }
     interface FactoryFunctionPinAlloc {
         type: "factoryfunction",
@@ -52,8 +62,15 @@ declare namespace pxsim {
         color: string,
         assemblyStep: number
     }
-    type WireLocationDefinition =
-        ["breadboard", string, number] | ["GPIO", number] | "ground" | "threeVolt"
+    type SPIPin = "MOSI" | "MISO" | "SCK";
+    type I2CPin = "SDA" | "SCL";
+    export type WireLocationDefinition = (
+        ["breadboard", string, number]
+        | ["GPIO", number]
+        | SPIPin
+        | I2CPin
+        | "ground"
+        | "threeVolt");
 
     interface PartDefinition {
         visual: string | PartVisualDefinition,
