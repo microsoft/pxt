@@ -1817,8 +1817,10 @@ ${lbl}: .short 0xffff
                 if (!info.usages) {
                     assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass)
                     // test mode - make fake binding
-                    let sig = checker.getSignatureFromDeclaration(node)
-                    let bindings = sig.getTypeParameters().map(t => ({ tp: t, isRef: true }))
+                    let bindings = getTypeParameters(node).map(t => ({
+                        tp: checker.getTypeAtLocation(t),
+                        isRef: true
+                    }))
                     addEnclosingTypeBindings(bindings, node)
                     U.assert(bindings.length > 0)
                     info.usages = [bindings]
