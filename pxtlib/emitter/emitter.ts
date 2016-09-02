@@ -1542,19 +1542,22 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function getCtor(decl: ClassDeclaration) {
+            return decl.members.filter(m => m.kind == SK.Constructor)[0] as ConstructorDeclaration
+        }
+
         function markClassUsed(info: ClassInfo) {
             if (info.isUsed) return
             info.isUsed = true
             if (info.baseClassInfo) markClassUsed(info.baseClassInfo)
             bin.usedClassInfos.push(info)
-            let ctor: ConstructorDeclaration
             for (let m of info.methods) {
-                if (m.kind == SK.Constructor) ctor = m as any
                 let minf = getFunctionInfo(m)
                 if (minf.virtualRoot && minf.virtualRoot.isUsed)
                     markFunctionUsed(m, info.bindings)
             }
 
+            let ctor = getCtor(info.decl)
             if (ctor) {
                 markFunctionUsed(ctor, info.bindings)
             }
@@ -1569,8 +1572,14 @@ ${lbl}: .short 0xffff
                 if (classDecl.kind != SK.ClassDeclaration) {
                     userError(9221, lf("new expression only supported on class types"))
                 }
-                let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
+                let ctor: ClassElement
                 let info = getClassInfo(typeOf(node), classDecl)
+
+                // find ctor to call in base chain
+                for (let parinfo = info; parinfo; parinfo = parinfo.baseClassInfo) {
+                    ctor = getCtor(parinfo.decl)
+                    if (ctor) break
+                }
 
                 markClassUsed(info)
 
