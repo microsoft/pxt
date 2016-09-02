@@ -180,7 +180,10 @@ function ensureApisInfoAsync() {
 
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
-        .then(opts => workerOpAsync("setOptions", { options: opts }))
+        .then(opts => {
+            opts.testMode = true // show errors in all top-level code
+            return workerOpAsync("setOptions", { options: opts })
+        })
         .then(() => workerOpAsync("allDiags", {}))
         .then(setDiagnostics)
         .then(ensureApisInfoAsync)
