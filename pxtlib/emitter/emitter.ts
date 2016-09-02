@@ -2672,6 +2672,9 @@ ${lbl}: .short 0xffff
                 case SK.GetAccessor:
                 case SK.SetAccessor:
                     return emitAccessor(<AccessorDeclaration>node);
+                case SK.ImportEqualsDeclaration:
+                    // this doesn't do anything in compiled code
+                    return emitImportEqualsDeclaration(<ImportEqualsDeclaration>node);
                 default:
                     unhandled(node);
             }
@@ -2727,7 +2730,7 @@ ${lbl}: .short 0xffff
                     return emitConditionalExpression(<ConditionalExpression>node);
                 case SK.AsExpression:
                     return emitAsExpression(<AsExpression>node);
-                case SyntaxKind.TemplateExpression:
+                case SK.TemplateExpression:
                     return emitTemplateExpression(<TemplateExpression>node);
 
                 default:
@@ -2801,8 +2804,6 @@ ${lbl}: .short 0xffff
                     return emitEnumMember(<EnumMember>node);
                 case SyntaxKind.ImportDeclaration:
                     return emitImportDeclaration(<ImportDeclaration>node);
-                case SyntaxKind.ImportEqualsDeclaration:
-                    return emitImportEqualsDeclaration(<ImportEqualsDeclaration>node);
                 case SyntaxKind.ExportDeclaration:
                     return emitExportDeclaration(<ExportDeclaration>node);
                 case SyntaxKind.ExportAssignment:
