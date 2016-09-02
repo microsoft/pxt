@@ -545,6 +545,8 @@ export function serveAsync(options: ServeOptions) {
             if (U.startsWith(pathname, "/sim/")) {
                 pathname = pathname.slice(4)
                 dd = simdirs
+            } else if (U.startsWith(pathname, "/parts/")) {
+                dd = simdirs
             } else if (U.startsWith(pathname, "/cdn/")) {
                 pathname = pathname.slice(4)
                 dd = dirs

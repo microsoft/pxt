@@ -7,12 +7,35 @@ namespace ts.pxtc {
         "thumb::muls": "*"
     }
 
+    export function shimToJs(shimName: string) {
+        shimName = shimName.replace(/::/g, ".")
+        if (shimName.slice(0, 4) == "pxt.")
+            shimName = "pxtcore." + shimName.slice(4)
+        return "pxsim." + shimName
+    }
+
+    function vtableToJs(info: ClassInfo) {
+        let s = `var ${info.id}_VT = {\n` +
+            `  name: ${JSON.stringify(getName(info.decl))},\n` +
+            `  refmask: ${JSON.stringify(info.refmask)},\n` +
+            `  methods: [\n`
+        for (let m of info.vtable) {
+            s += `    ${getFunctionLabel(m.decl, [])},\n`
+
+        }
+        s += "  ],\n};\n"
+        return s
+    }
+
     export function jsEmit(bin: Binary) {
         let jssource = ""
         if (!bin.target.jsRefCounting)
             jssource += "pxsim.noRefCounting();\n"
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
+        })
+        bin.usedClassInfos.forEach(info => {
+            jssource += vtableToJs(info)
         })
         if (bin.res.breakpoints)
             jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
@@ -238,11 +261,11 @@ switch (step) {
             if (name[0] == ".")
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
             else if (U.startsWith(name, "new "))
-                text = `new pxsim.${name.slice(4).replace(/::/g, ".")}(${args.join(", ")})`
+                text = `new ${shimToJs(name.slice(4))}(${args.join(", ")})`
             else if (args.length == 2 && bin.target.floatingPoint && U.lookup(jsOpMap, name))
                 text = `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})`
             else
-                text = `pxsim.${name.replace(/::/g, ".")}(${args.join(", ")})`
+                text = `${shimToJs(name)}(${args.join(", ")})`
 
             if (topExpr.callingConvention == ir.CallingConvention.Plain) {
                 write(`r0 = ${text};`)
@@ -268,7 +291,8 @@ switch (step) {
             let frameIdx = exprStack.length
             exprStack.push(frameExpr)
 
-            let proc = bin.procs.filter(p => p.matches(topExpr.data))[0]
+            let procid = topExpr.data as ir.ProcId
+            let proc = bin.procs.filter(p => p.matches(procid))[0]
             let frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
             write(`${frameRef} = { fn: ${proc.label()}, parent: s };`)
@@ -280,6 +304,10 @@ switch (step) {
             })
 
             write(`s.pc = ${lblId};`)
+            if (procid.virtualIndex != null) {
+                assert(procid.virtualIndex >= 0)
+                write(`${frameRef}.fn = ${frameRef}.${proc.args[0].uniqueName()}.vtable.methods[${procid.virtualIndex}];`)
+            }
             write(`return actionCall(${frameRef})`)
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)

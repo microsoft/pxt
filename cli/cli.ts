@@ -663,9 +663,9 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     let replacements: U.Map<string> = {
         "/sim/simulator.html": "@simUrl@",
-        "/sim/instructions.html": "@partsUrl@",
+        "/sim/siminstructions.html": "@partsUrl@",
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
-        "/embed.js": "@relprefix@embed",
+        "/embed.js": "@targetUrl@@relprefix@embed",
         "/cdn/": "@pxtCdnUrl@",
         "/sim/": "@targetCdnUrl@",
         "data-manifest=\"\"": "@manifest@",
@@ -685,9 +685,10 @@ function uploadCoreAsync(opts: UploadOptions) {
             "targetVersion": opts.pkgversion,
             "targetRelId": "",
             "targetCdnUrl": opts.localDir,
+            "targetUrl": "",
             "targetId": opts.target,
             "simUrl": opts.localDir + "simulator.html",
-            "partsUrl": opts.localDir + "instructions.html",
+            "partsUrl": opts.localDir + "siminstructions.html",
             "runUrl": opts.localDir + "run.html",
             "docsUrl": opts.localDir + "docs.html",
             "isStatic": true,
@@ -707,7 +708,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "embed.js",
         "run.html",
         "docs.html",
-        "instructions.html",
+        "siminstructions.html",
         "release.manifest",
         "worker.js",
         "tdworker.js",
@@ -2134,7 +2135,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
-        let simName = "pxsim." + shim.replace(/::/g, ".")
+        let simName = pxtc.shimToJs(shim)
         let sym = U.lookup(decls, simName)
         if (!sym) {
             console.log("missing in sim:", simName)
@@ -2146,7 +2147,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
     for (let ent of U.values(apiInfo.byQName)) {
         let shim = ent.attributes.shim
         if (shim) {
-            let simName = "pxsim." + shim.replace(/::/g, ".")
+            let simName = pxtc.shimToJs(shim)
             let sym = U.lookup(decls, simName)
             if (!sym) {
                 console.log("missing in sim:", simName)

@@ -49,6 +49,12 @@ namespace pxsim {
             public cb: ResumeFn) { }
     }
 
+    export interface VTable {
+        name: string;
+        methods: LabelFn[];
+        refmask: boolean[];
+    }
+
     export class RefRecord extends RefObject {
         len: number;
         reflen: number;
@@ -60,8 +66,34 @@ namespace pxsim {
             this.fields = null
         }
 
+        isRef(idx: number) {
+            check(0 <= idx && idx < this.len)
+            return idx < this.reflen
+        }
+
         print() {
             console.log(`RefRecord id:${this.id} refs:${this.refcnt} len:${this.len}`)
+        }
+    }
+
+    export class RefInstance extends RefRecord {
+        vtable: VTable;
+
+        destroy() {
+            let refmask = this.vtable.refmask
+            for (let i = 0; i < refmask.length; ++i)
+                if (refmask[i]) decr(this.fields[i])
+            this.fields = null
+            this.vtable = null
+        }
+
+        isRef(idx: number) {
+            check(0 <= idx && idx < this.len)
+            return !!this.vtable.refmask[idx]
+        }
+
+        print() {
+            console.log(`RefInstance id:${this.id} (${this.vtable.name}) len:${this.len}`)
         }
     }
 
@@ -84,7 +116,7 @@ namespace pxsim {
         }
     }
 
-    export namespace pxt {
+    export namespace pxtcore {
         export function mkAction(reflen: number, len: number, fn: LabelFn) {
             let r = new RefAction();
             r.len = len
@@ -228,7 +260,7 @@ namespace pxsim {
         })
     }
 
-    export namespace pxt {
+    export namespace pxtcore {
         export var incr = pxsim.incr;
         export var decr = pxsim.decr;
 
@@ -285,27 +317,27 @@ namespace pxsim {
         }
 
         export function ldfld(r: RefRecord, idx: number) {
-            check(r.reflen <= idx && idx < r.len)
+            check(!r.isRef(idx))
             let v = num(r.fields[idx])
             decr(r)
             return v;
         }
 
         export function stfld(r: RefRecord, idx: number, v: any) {
-            check(r.reflen <= idx && idx < r.len)
+            check(!r.isRef(idx))
             r.fields[idx] = v;
             decr(r)
         }
 
         export function ldfldRef(r: RefRecord, idx: number) {
-            check(0 <= idx && idx < r.reflen)
+            check(r.isRef(idx))
             let v = incr(ref(r.fields[idx]))
             decr(r)
             return v
         }
 
         export function stfldRef(r: RefRecord, idx: number, v: any) {
-            check(0 <= idx && idx < r.reflen)
+            check(r.isRef(idx))
             decr(r.fields[idx])
             r.fields[idx] = v
             decr(r)
@@ -350,7 +382,7 @@ namespace pxsim {
     }
 
 
-    export namespace pxt {
+    export namespace pxtcore {
         export function mkRecord(reflen: number, totallen: number) {
             check(0 <= reflen && reflen <= totallen);
             check(reflen <= totallen && totallen <= 255);
@@ -358,7 +390,19 @@ namespace pxsim {
             r.reflen = reflen
             r.len = totallen
             for (let i = 0; i < totallen; ++i)
-                r.fields.push(i < reflen ? null : 0)
+                r.fields.push(0)
+            return r
+        }
+
+        export function mkClassInstance(vtable: VTable) {
+            check(!!vtable.methods)
+            check(!!vtable.refmask)
+            let r = new RefInstance()
+            r.len = vtable.refmask.length
+            r.reflen = vtable.refmask.length
+            r.vtable = vtable
+            for (let i = 0; i < r.len; ++i)
+                r.fields.push(0)
             return r
         }
 

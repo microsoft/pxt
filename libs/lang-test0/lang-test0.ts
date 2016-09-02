@@ -3,19 +3,9 @@
 // Do not use anything besides basic.pause, control.inBackground, console.log
 //
 
-//% shim=pxtrt::panic
-function panic(code2: number): void { }
-
 function msg(s: string): void {
     //console.log(s)
     //basic.pause(50);
-}
-
-function assert(cond: boolean, msg_: string) {
-    if (!cond) {
-        console.log("ASSERT: " + msg_);
-        panic(45);
-    }
 }
 
 //
@@ -44,18 +34,18 @@ function defaultArgs(x: number, y = 3, z = 7) {
 
 function testDefaultArgs() {
     msg("testDefaultArgs");
-    assert(defaultArgs(1) == 11, "defl0")
-    assert(defaultArgs(1, 4) == 12, "defl1")
-    assert(defaultArgs(1, 4, 8) == 13, "defl2")
+    control.assert(defaultArgs(1) == 11, "defl0")
+    control.assert(defaultArgs(1, 4) == 12, "defl1")
+    control.assert(defaultArgs(1, 4, 8) == 13, "defl2")
 
-    assert(optargs(1) == 1, "opt0");
-    assert(optargs(1, 2) == 3, "opt1");
-    assert(optargs(1, 2, 3) == 3, "opt2");
+    control.assert(optargs(1) == 1, "opt0");
+    control.assert(optargs(1, 2) == 3, "opt1");
+    control.assert(optargs(1, 2, 3) == 3, "opt2");
 
-    assert(optstring(3) == 6, "os0")
-    assert(optstring(3, "7") == 10, "os1")
-    assert(optstring2(3) == 6, "os0")
-    assert(optstring2(3, "7") == 10, "os1")
+    control.assert(optstring(3) == 6, "os0")
+    control.assert(optstring(3, "7") == 10, "os1")
+    control.assert(optstring2(3) == 6, "os0")
+    control.assert(optstring2(3, "7") == 10, "os1")
 }
 
 function optargs(x: number, y?: number, z?: number) {
@@ -78,37 +68,37 @@ function optstring2(x: number, s: string = null) {
 
 function testNums(): void {
     let x = 40 + 2;
-    assert(x == 42, "add");
+    control.assert(x == 42, "add");
     x = 40 / 2;
-    assert(x == 20, "div");
+    control.assert(x == 20, "div");
     let r = fib(15);
     msg("FIB" + r);
-    assert(r == 987, "fib");
+    control.assert(r == 987, "fib");
     let x3 = doStuff(x, 2);
-    assert(x3 == 10, "call order");
+    control.assert(x3 == 10, "call order");
     glb1 = 5;
     incrBy_2();
-    assert(glb1 == 7, "glb1");
+    control.assert(glb1 == 7, "glb1");
     incrBy_2();
-    assert(glb1 == 9, "glb2");
-    assert(Math.abs(-42) == 42, "abs");
-    assert(Math.abs(42) == 42, "abs");
-    assert(Math.sign(42) == 1, "abs");
+    control.assert(glb1 == 9, "glb2");
+    control.assert(Math.abs(-42) == 42, "abs");
+    control.assert(Math.abs(42) == 42, "abs");
+    control.assert(Math.sign(42) == 1, "abs");
     testIf();
 
-    assert((3 & 6) == 2, "&")
-    assert((3 | 6) == 7, "|")
-    assert((3 ^ 6) == 5, "^")
-    assert((-10 >> 2) == -3, ">>")
-    assert((-10 >>> 20) == 4095, ">>>")
-    assert((-10 << 2) == -40, "<<")
-    assert((10 << 2) == 40, "<<+")
-    assert((10 >> 2) == 2, ">>+")
-    assert((10 >>> 2) == 2, ">>>+")
-    assert(1000000 * 1000000 == -727379968, "*")
-    assert(100000001 * 100000001 == 2074919425, "*2")
+    control.assert((3 & 6) == 2, "&")
+    control.assert((3 | 6) == 7, "|")
+    control.assert((3 ^ 6) == 5, "^")
+    control.assert((-10 >> 2) == -3, ">>")
+    control.assert((-10 >>> 20) == 4095, ">>>")
+    control.assert((-10 << 2) == -40, "<<")
+    control.assert((10 << 2) == 40, "<<+")
+    control.assert((10 >> 2) == 2, ">>+")
+    control.assert((10 >>> 2) == 2, ">>>+")
+    control.assert(1000000 * 1000000 == -727379968, "*")
+    control.assert(100000001 * 100000001 == 2074919425, "*2")
 
-    assert(105 % 100 == 5, "perc")
+    control.assert(105 % 100 == 5, "perc")
 }
 
 
@@ -132,15 +122,15 @@ function testIf(): void {
     if (!b) {
         glb1 = 7;
     } else {
-        assert(false, "b0");
+        control.assert(false, "b0");
     }
-    assert(glb1 == 7, "glb3");
+    control.assert(glb1 == 7, "glb3");
     if (b) {
-        assert(false, "b1");
+        control.assert(false, "b1");
     } else {
         glb1 = 8;
     }
-    assert(glb1 == 8, "glb3");
+    control.assert(glb1 == 8, "glb3");
 }
 
 
@@ -149,28 +139,28 @@ function incrBy_2(): void {
 }
 
 function testStrings(): void {
-    assert((42).toString() == "42", "42");
+    control.assert((42).toString() == "42", "42");
 
     let s = "live";
-    assert(s == "live", "hello eq");
+    control.assert(s == "live", "hello eq");
     s = s + "4OK";
     s2 = s;
-    assert(s.charCodeAt(4) == 52, "hello eq2");
-    assert(s.charAt(4) == "4", "hello eq2X");
-    assert(s[4] == "4", "hello eq2X");
-    assert(s.length == 7, "len7");
+    control.assert(s.charCodeAt(4) == 52, "hello eq2");
+    control.assert(s.charAt(4) == "4", "hello eq2X");
+    control.assert(s[4] == "4", "hello eq2X");
+    control.assert(s.length == 7, "len7");
     s = "";
     for (let i = 0; i < 10; i++) {
         s = s + i;
     }
-    assert(s == "0123456789", "for");
+    control.assert(s == "0123456789", "for");
     let x = 10;
     s = "";
     while (x >= 0) {
         s = s + x;
         x = x - 1;
     }
-    assert(s == "109876543210", "while");
+    control.assert(s == "109876543210", "while");
     msg(s);
     msg(s2);
 
@@ -180,33 +170,33 @@ function testStrings(): void {
     x = 21
     s = "foo"
     s = `a${x * 2}X${s}X${s}Z`
-    assert(s == "a42XfooXfoo" + "Z", "`")
+    control.assert(s == "a42XfooXfoo" + "Z", "`")
 
-    assert("X" + true == "Xt" + "rue", "boolStr")
+    control.assert("X" + true == "Xt" + "rue", "boolStr")
 }
 
 
 function testNumCollection(): void {
     let collXYZ: number[] = [];
-    assert(collXYZ.length == 0, "");
+    control.assert(collXYZ.length == 0, "");
     collXYZ.push(42);
-    assert(collXYZ.length == 1, "");
+    control.assert(collXYZ.length == 1, "");
     collXYZ.push(22);
-    assert(collXYZ[1] == 22, "");
+    control.assert(collXYZ[1] == 22, "");
     collXYZ.splice(0, 1);
-    assert(collXYZ[0] == 22, "");
+    control.assert(collXYZ[0] == 22, "");
     collXYZ.removeElement(22);
-    assert(collXYZ.length == 0, "");
+    control.assert(collXYZ.length == 0, "");
     for (let i = 0; i < 100; i++) {
         collXYZ.push(i);
     }
-    assert(collXYZ.length == 100, "");
+    control.assert(collXYZ.length == 100, "");
 
     collXYZ = [1, 2, 3];
-    assert(collXYZ.length == 3, "cons");
-    assert(collXYZ[0] == 1, "cons0");
-    assert(collXYZ[1] == 2, "cons1");
-    assert(collXYZ[2] == 3, "cons2");
+    control.assert(collXYZ.length == 3, "cons");
+    control.assert(collXYZ[0] == 1, "cons0");
+    control.assert(collXYZ[1] == 2, "cons1");
+    control.assert(collXYZ[2] == 3, "cons2");
 }
 
 function testStringCollection(): void {
@@ -214,24 +204,24 @@ function testStringCollection(): void {
     coll.push("foobar");
     coll.push((12).toString());
     coll.push(coll[0] + "xx");
-    assert(coll.indexOf("12") == 1, "idx");
+    control.assert(coll.indexOf("12") == 1, "idx");
     coll = [
         "a" + "b",
         coll[2],
     ]
-    assert(coll[0] == "ab", "")
-    assert(coll[1] == "foob" + "arxx", "")
-    assert(coll.length == 2, "")
+    control.assert(coll[0] == "ab", "")
+    control.assert(coll[1] == "foob" + "arxx", "")
+    control.assert(coll.length == 2, "")
 }
 
 function testStringOps(): void {
-    assert("foo".concat("bar") == "foobar", "concat");
-    assert("xAb".charCodeAt(1) == 65, "code at");
-    assert("B".charCodeAt(0) == 66, "tcc");
-    assert(parseInt("-123") == -123, "tonum");
-    assert("fo"[1] == "o", "at");
-    assert("fo".length == 2, "count");
-    assert("fo".charCodeAt(17) == 0, "ct oor");
+    control.assert("foo".concat("bar") == "foobar", "concat");
+    control.assert("xAb".charCodeAt(1) == 65, "code at");
+    control.assert("B".charCodeAt(0) == 66, "tcc");
+    control.assert(parseInt("-123") == -123, "tonum");
+    control.assert("fo"[1] == "o", "at");
+    control.assert("fo".length == 2, "count");
+    control.assert("fo".charCodeAt(17) == 0, "ct oor");
 }
 
 class Testrec {
@@ -251,16 +241,16 @@ function postPreFix() {
     let x = new Testrec()
     lazyAcc = 0
     recordId(x).num = 12
-    assert(x.num == 12 && lazyAcc == 1, "X0")
+    control.assert(x.num == 12 && lazyAcc == 1, "X0")
     let y = recordId(x).num++
-    assert(x.num == 13 && lazyAcc == 2, "X1")
-    assert(y == 12, "X2")
+    control.assert(x.num == 13 && lazyAcc == 2, "X1")
+    control.assert(y == 12, "X2")
     y = ++recordId(x).num
-    assert(y == 14 && x.num == 14 && lazyAcc == 3, "X2")
+    control.assert(y == 14 && x.num == 14 && lazyAcc == 3, "X2")
 
     recordId(x).num >>= 1
-    assert(x.num == 7, "X3")
-    assert(lazyAcc == 4, "X4")
+    control.assert(x.num == 7, "X3")
+    control.assert(lazyAcc == 4, "X4")
 }
 
 function testArrIncr() {
@@ -272,7 +262,7 @@ function testArrIncr() {
     }
     getarr()[0]++
     control.assert(glb1 == 1)
-    assert(arr[0] == 2, "t")
+    control.assert(arr[0] == 2, "t")
     function getarr2() {
         return [1]
     }
@@ -282,15 +272,15 @@ function testArrIncr() {
 function eqOp() {
     msg("eqOp")
     let x = 12
-    assert((x += 10) == 22, "Y0")
-    assert(x == 22, "Y1")
+    control.assert((x += 10) == 22, "Y0")
+    control.assert(x == 22, "Y1")
     x /= 2
-    assert(x == 11, "Y2")
+    control.assert(x == 11, "Y2")
 
     let s = ("fo" + 1)
     let t = ("ba" + 2)
     s += t
-    assert(s == "fo1b" + "a2", "fb")
+    control.assert(s == "fo1b" + "a2", "fb")
 }
 
 function testRec0(): Testrec {
@@ -298,13 +288,13 @@ function testRec0(): Testrec {
     testrec.str2 = "Hello" + " world";
     testrec.str = testrec.str2;
     testrec.num = 42;
-    assert(testrec.str == "Hello world", "recstr");
-    assert(testrec.num == 42, "recnum");
+    control.assert(testrec.str == "Hello world", "recstr");
+    control.assert(testrec.num == 42, "recnum");
     msg(testrec.str2);
     let testrec2 = <Testrec>null;
-    assert(testrec2 == null, "isinv");
-    assert(testrec == testrec, "eq");
-    assert(testrec != null, "non inv");
+    control.assert(testrec2 == null, "isinv");
+    control.assert(testrec == testrec, "eq");
+    control.assert(testrec != null, "non inv");
     return testrec;
 }
 
@@ -328,8 +318,8 @@ function inBg() {
         glb1 = glb1 + 1
     })
     basic.pause(50)
-    assert(glb1 == 18, "inbg0")
-    assert(rec.str == "foo", "inbg1")
+    control.assert(glb1 == 18, "inbg0")
+    control.assert(rec.str == "foo", "inbg1")
 }
 
 function runTwice(fn: Action): void {
@@ -350,7 +340,7 @@ function testIter() {
     iter(10, v => {
         x = x + (v + 1)
     })
-    assert(x == 55, "55")
+    control.assert(x == 55, "55")
 }
 
 function testAction(p: number): void {
@@ -363,8 +353,8 @@ function testAction(p: number): void {
         coll.push(x);
         msg(s + x);
     });
-    assert(x == 42 + p * 6, "run2");
-    assert(coll.length == 2, "run2");
+    control.assert(x == 42 + p * 6, "run2");
+    control.assert(coll.length == 2, "run2");
 }
 
 function add7() {
@@ -382,16 +372,16 @@ function testFunDecl() {
         sum = sum + 10;
     }
     runTwice(addX)
-    assert(sum == 24, "cap")
+    control.assert(sum == 24, "cap")
     msg("testAdd10");
     runTwice(add10);
     msg("end-testAdd10");
-    assert(sum == 44, "nocap");
+    control.assert(sum == 44, "nocap");
     runTwice(add7);
-    assert(sum == 44 + 14, "glb")
+    control.assert(sum == 44 + 14, "glb")
     addX();
     add10();
-    assert(sum == 44 + 14 + x + 10, "direct");
+    control.assert(sum == 44 + 14 + x + 10, "direct");
 }
 
 function saveAction(fn: Action): void {
@@ -410,7 +400,7 @@ function testActionSave(): void {
     saveGlobalAction();
     runTwice(action);
     msg(tot);
-    assert(tot == "foo42foo42", "");
+    control.assert(tot == "foo42foo42", "");
     tot = "";
     action = null;
 }
@@ -418,58 +408,58 @@ function testActionSave(): void {
 function testLazyOps(): void {
     lazyAcc = 0;
     if (incrLazyAcc(10, false) && incrLazyAcc(1, true)) {
-        assert(false, "");
+        control.assert(false, "");
     } else {
-        assert(lazyAcc == 10, "lazy1");
+        control.assert(lazyAcc == 10, "lazy1");
     }
-    assert(lazyAcc == 10, "lazy2");
+    control.assert(lazyAcc == 10, "lazy2");
     if (incrLazyAcc(100, true) && incrLazyAcc(1, false)) {
-        assert(false, "");
+        control.assert(false, "");
     } else {
-        assert(lazyAcc == 111, "lazy4");
+        control.assert(lazyAcc == 111, "lazy4");
     }
     lazyAcc = 0;
     if (incrLazyAcc(100, true) && incrLazyAcc(8, true)) {
-        assert(lazyAcc == 108, "lazy5");
+        control.assert(lazyAcc == 108, "lazy5");
     } else {
-        assert(false, "");
+        control.assert(false, "");
     }
     lazyAcc = 0;
     if (incrLazyAcc(10, true) || incrLazyAcc(1, true)) {
-        assert(lazyAcc == 10, "lazy1b");
+        control.assert(lazyAcc == 10, "lazy1b");
     } else {
-        assert(false, "");
+        control.assert(false, "");
     }
-    assert(lazyAcc == 10, "lazy2xx");
+    control.assert(lazyAcc == 10, "lazy2xx");
     if (incrLazyAcc(100, false) || incrLazyAcc(1, false)) {
-        assert(false, "");
+        control.assert(false, "");
     } else {
-        assert(lazyAcc == 111, "lazy4x");
+        control.assert(lazyAcc == 111, "lazy4x");
     }
     lazyAcc = 0;
     if (incrLazyAcc(100, false) || incrLazyAcc(8, true)) {
-        assert(lazyAcc == 108, "lazy5");
+        control.assert(lazyAcc == 108, "lazy5");
     } else {
-        assert(false, "");
+        control.assert(false, "");
     }
     lazyAcc = 0;
     if (incrLazyAcc(10, true) && incrLazyAcc(1, true) && incrLazyAcc(100, false)) {
-        assert(false, "");
+        control.assert(false, "");
     } else {
-        assert(lazyAcc == 111, "lazy10");
+        control.assert(lazyAcc == 111, "lazy10");
     }
     lazyAcc = 0;
     if (incrLazyAcc(10, true) && incrLazyAcc(1, true) || incrLazyAcc(100, false)) {
-        assert(lazyAcc == 11, "lazy101");
+        control.assert(lazyAcc == 11, "lazy101");
     } else {
-        assert(false, "");
+        control.assert(false, "");
     }
 
     lazyAcc = 0;
-    assert((true ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 42, "?:")
-    assert(lazyAcc == 1, "?:0");
-    assert((false ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 36, "?:1")
-    assert(lazyAcc == 11, "?:2");
+    control.assert((true ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 42, "?:")
+    control.assert(lazyAcc == 1, "?:0");
+    control.assert((false ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 36, "?:1")
+    control.assert(lazyAcc == 11, "?:2");
 }
 
 function incrLazyAcc(delta: number, res: boolean): boolean {
@@ -500,7 +490,7 @@ function testRefLocals(): void {
         });
     }
     basic.pause(200);
-    assert(s == "101112", "reflocals");
+    control.assert(s == "101112", "reflocals");
 }
 
 function byRefParam_0(p: number): void {
@@ -534,29 +524,29 @@ function testByRefParams(): void {
     byRefParam_0(4);
     byRefParam_2(10);
     basic.pause(30);
-    assert(sum == 18, "by ref");
+    control.assert(sum == 18, "by ref");
 }
 
 function refparamWrite(s: string): void {
     s = s + "c";
-    assert(s == "abc", "abc");
+    control.assert(s == "abc", "abc");
 }
 
 function refparamWrite2(testrec: Testrec): void {
     testrec = new Testrec();
-    assert(testrec.bool == false, "");
+    control.assert(testrec.bool == false, "");
 }
 
 function refparamWrite3(testrecX: Testrec): void {
     control.inBackground(() => {
         basic.pause(1);
-        assert(testrecX.str == "foo", "ff");
+        control.assert(testrecX.str == "foo", "ff");
         testrecX.str = testrecX.str + "x";
     });
     testrecX = new Testrec();
     testrecX.str = "foo";
     basic.pause(30);
-    assert(testrecX.str == "foox", "ff2");
+    control.assert(testrecX.str == "foox", "ff2");
 }
 
 function testMemoryFree(): void {
@@ -614,9 +604,9 @@ class Foo {
 
 function testClass() {
     let f = new Foo(272, 100);
-    assert(f.getPin() == 172, "ctor")
+    control.assert(f.getPin() == 172, "ctor")
     f.setPin(42)
-    assert(f.getPin() == 42, "getpin")
+    control.assert(f.getPin() == 42, "getpin")
 }
 
 enum En {
@@ -638,31 +628,31 @@ function testEnums() {
     msg("enums")
 
     let k = En.C as number
-    assert(k == 2, "e0")
+    control.assert(k == 2, "e0")
     k = En.D as number
-    assert(k == 4200, "e1")
+    control.assert(k == 4200, "e1")
     k = En.E as number
-    assert(k == 4201, "e43")
+    control.assert(k == 4201, "e43")
 
     k = En2.D0 as number
-    assert(k == 4200, "eX0")
+    control.assert(k == 4200, "eX0")
     k = En2.D1 as number
-    assert(k == 4201, "eX1")
+    control.assert(k == 4201, "eX1")
 
     msg("enums0")
-    assert(switchA(En.A) == 7, "s1")
-    assert(switchA(En.B) == 7, "s2")
-    assert(switchA(En.C) == 12, "s3")
-    assert(switchA(En.D) == 13, "s4")
-    assert(switchA(En.E) == 12, "s5")
-    assert(switchA(-3 as En) == 12, "s6")
+    control.assert(switchA(En.A) == 7, "s1")
+    control.assert(switchA(En.B) == 7, "s2")
+    control.assert(switchA(En.C) == 12, "s3")
+    control.assert(switchA(En.D) == 13, "s4")
+    control.assert(switchA(En.E) == 12, "s5")
+    control.assert(switchA(-3 as En) == 12, "s6")
 
     msg("enums1")
-    assert(switchB(En.A) == 7, "x1")
-    assert(switchB(En.B) == 7, "x2")
-    assert(switchB(En.C) == 17, "x3")
-    assert(switchB(En.D) == 13, "x4")
-    assert(switchB(En.E) == 14, "x5")
+    control.assert(switchB(En.A) == 7, "x1")
+    control.assert(switchB(En.B) == 7, "x2")
+    control.assert(switchB(En.C) == 17, "x3")
+    control.assert(switchB(En.D) == 13, "x4")
+    control.assert(switchB(En.E) == 14, "x5")
 }
 
 
@@ -694,13 +684,13 @@ function testForOf() {
     for (let e of arr) {
         sum += (e - 1)
     }
-    assert(sum == 13, "fo1")
+    control.assert(sum == 13, "fo1")
 
     // make sure we incr reference count of the array during the loop execution
     for (let q of [3, 4, 12]) {
         sum += (q - 2)
     }
-    assert(sum == 26, "fo2")
+    control.assert(sum == 26, "fo2")
 
     // iteration over a string
     let s = "hello, world!"
@@ -708,7 +698,7 @@ function testForOf() {
     for (let c of s) {
         s2 += c
     }
-    assert(s == s2, "fo3")
+    control.assert(s == s2, "fo3")
 
     // mutation of array during iteration
     let fibs = [0, 1]
@@ -717,12 +707,12 @@ function testForOf() {
             fibs.push(fibs[fibs.length - 2] + fibs[fibs.length - 1])
         }
     }
-    assert(fibs.length == 10, "fo4")
+    control.assert(fibs.length == 10, "fo4")
 
     // mutation of array during iteration
     let xs = [10, 9, 8]
     for (let x of xs) {
-        assert(xs.removeElement(x), "fo5")
+        control.assert(xs.removeElement(x), "fo5")
     }
 
     // array concatenation
@@ -733,13 +723,13 @@ function testForOf() {
             concat.push(y)
         }
     }
-    assert(concat.length == 10, "fo6")
+    control.assert(concat.length == 10, "fo6")
 
     sum = 0
     for (let y of concat) {
         sum += y
     }
-    assert(sum == 55, "fo7")
+    control.assert(sum == 55, "fo7")
 }
 
 
@@ -804,17 +794,17 @@ function testMaps() {
 
     mapSet(m, "two", 2)
     control.assert(m.getElt("two") == 2, "2")
-    //control.assert(mapGet(m, "zzzz") == null, "0")
+    //control.control.assert(mapGet(m, "zzzz") == null, "0")
 }
 
 function testComma() {
     glb1 = 0
     let x = (incrBy_2(), 77)
-    assert(x == 77, "x")
-    assert(glb1 == 2, "g")
+    control.assert(x == 77, "x")
+    control.assert(glb1 == 2, "g")
     // make sure there are no leaks
     let y = ("aaa" + "zz", "x" + "yyy")
-    assert(y.length == 4, "y")
+    control.assert(y.length == 4, "y")
 }
 
 function doubleIt(f: (x: number) => number) {
@@ -829,18 +819,18 @@ function checkLen(f: (x: string) => string, k: number) {
     // make sure strings are GCed
     f("baz")
     let s = f("foo")
-    assert(s.length == k, "len")
+    control.assert(s.length == k, "len")
 }
 
 function testLambdas() {
     let x = doubleIt(k => {
         return k * 108
     })
-    assert(x == -108, "l0")
+    control.assert(x == -108, "l0")
     x = triple((x, y, z) => {
         return x * y + z
     })
-    assert(x == 108, "l1")
+    control.assert(x == 108, "l1")
     checkLen((s) => {
         return s + "XY1"
     }, 6)
@@ -877,17 +867,17 @@ function testArrayMap() {
     for (let s of strs) {
         r += s
     }
-    assert(r == "AX1X2X3", "map")
+    control.assert(r == "AX1X2X3", "map")
 
     let flt = [17, 8, 2, 3, 100].filter((x, i) => x == i)
-    assert(flt.length == 2, "flt")
-    assert(flt[1] == 3, "flt")
+    control.assert(flt.length == 2, "flt")
+    control.assert(flt[1] == 3, "flt")
 
     let sum = [1, 2, 3].reduce((s, v) => s + v, 0)
-    assert(sum == 6, "red")
+    control.assert(sum == 6, "red")
 
     let x = ["A" + "12", "B" + "3"].map((k, i) => k.length + i).reduce((c, n) => c * n, 1)
-    assert(x == 9, "9")
+    control.assert(x == 9, "9")
 }
 
 function testInnerLambdaCapture() {
@@ -901,7 +891,7 @@ function testInnerLambdaCapture() {
         h()
     }
     g()
-    assert(glb1 == 7, "7")
+    control.assert(glb1 == 7, "7")
 }
 
 class StaticCl {
@@ -918,10 +908,10 @@ function testStatic() {
     msg("testStatic");
     glb1 = 0
     StaticCl.foo()
-    assert(glb1 == 12, "s0")
+    control.assert(glb1 == 12, "s0")
     StaticCl.bar(13)
     StaticCl.foo()
-    assert(glb1 == 25, "s1")
+    control.assert(glb1 == 25, "s1")
 }
 
 class GetSet {
@@ -943,15 +933,15 @@ function testAccessors() {
     glb1 = 0
     let f = new GetSet()
     f.x = 12
-    assert(glb1 == 4, "s")
-    assert(f.x == 12, "s12")
+    control.assert(glb1 == 4, "s")
+    control.assert(f.x == 12, "s12")
     function getf() {
         glb1 += 100
         return f
     }
     getf().x++
-    assert(glb1 == 110, "s10")
-    assert(f.x == 13, "s13")
+    control.assert(glb1 == 110, "s10")
+    control.assert(f.x == 13, "s13")
 }
 
 class BazClass { }
@@ -990,27 +980,27 @@ function testLazyRef() {
     msg("testLazyRef")
     let x = ("x" + "Y") || "foo"
     let y = "" || "bXr" + "2"
-    assert(x.length == 2, "two")
-    assert(y.length == 4, "emp")
+    control.assert(x.length == 2, "two")
+    control.assert(y.length == 4, "emp")
     y = null || "foo"
-    assert(y == "foo", "ln")
+    control.assert(y == "foo", "ln")
 
     x = "x" + "12x" && "7" + "xx"
-    assert(x.length == 3, "and")
+    control.assert(x.length == 3, "and")
 
     x = "" && "blah"
-    assert(x == "", "andemp")
+    control.assert(x == "", "andemp")
     x = "foo" && "x" + "Y"
-    assert(x.length == 2, "twoand")
+    control.assert(x.length == 2, "twoand")
     x = "x" + "Y" && "bar"
-    assert(x.length == 3, "threeand")
+    control.assert(x.length == 3, "threeand")
 
     let z = 0 || 12
-    assert(z == 12, "12")
+    control.assert(z == 12, "12")
     z = 12 || 13
-    assert(z == 12, "12.2")
+    control.assert(z == 12, "12.2")
     z = 12 && 13
-    assert(z == 13, "13")
+    control.assert(z == 13, "13")
 }
 
 function testNull() {
@@ -1018,18 +1008,18 @@ function testNull() {
     let x = 0
     let y = 0
     x = null
-    assert(x == y, "null")
+    control.assert(x == y, "null")
     x = undefined
-    assert(x == y, "undef")
+    control.assert(x == y, "undef")
     y = 1
-    assert(x != y, "null")
+    control.assert(x != y, "null")
 }
 
 function testToString() {
     msg("testToString")
     let f = new Foo(44, 2)
     let s = "" + f
-    assert(s == "Foo42", "ts")
+    control.assert(s == "Foo42", "ts")
 }
 
 class NestedFun {
@@ -1044,8 +1034,67 @@ function testComplexCallExpr() {
         return () => 17;
     }
 
-    assert(a.f() == 12, "af")
-    assert(bar()() == 17, "ff")
+    control.assert(a.f() == 12, "af")
+    control.assert(bar()() == 17, "ff")
+}
+
+namespace ClassTest {
+    class A {
+        v: number
+        s: string
+        foo() {
+            glb1++
+            this.v = 9
+            this.s = "xx" + "z42z"
+        }
+        bar(v: number, i: string) {
+            glb1 += v + this.v
+        }
+    }
+
+    class B extends A {
+        s2: string
+        foo() {
+            glb1 += 2
+            this.v = 10
+            this.s2 = "xy" + "z42z"
+        }
+        bar(v: number, i: string) {
+            glb1 += v + parseInt(i) + this.v
+        }
+    }
+
+    class C extends A {
+        foo() {
+            glb1 += 3
+            this.v = 7
+        }
+    }
+
+    class D extends C {
+        bar(v: number, i: string) {
+            glb1 = this.v
+            this.v = 13
+            super.bar(v, i)
+        }
+    }
+
+    function testACall(a: A, v0: number, v1: number) {
+        glb1 = 0
+        a.foo()
+        //console.log("foo is " + glb1)
+        control.assert(glb1 == v0, "v0")
+        a.bar(32, "6" + "4")
+        //console.log("bar is " + glb1)
+        control.assert(glb1 == v1, "v1")
+    }
+
+    export function run() {
+        testACall(new A(), 1, 42)
+        testACall(new B(), 2, 108)
+        testACall(new C(), 3, 42)
+        testACall(new D(), 3, 52)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1089,6 +1138,7 @@ testLazyRef()
 testNull()
 testToString()
 testComplexCallExpr()
+ClassTest.run()
 
 
 msg("test top level code")
@@ -1096,16 +1146,16 @@ let xsum = 0;
 for (let i = 0; i < 11; ++i) {
     xsum = xsum + i;
 }
-assert(xsum == 55, "mainfor")
+control.assert(xsum == 55, "mainfor")
 
 control.inBackground(() => {
     xsum = xsum + 10;
 })
 
 basic.pause(20)
-assert(xsum == 65, "mainforBg")
+control.assert(xsum == 65, "mainforBg")
 
-assert(xyz == 12, "init")
+control.assert(xyz == 12, "init")
 
 function incrXyz() {
     xyz++;
@@ -1113,7 +1163,7 @@ function incrXyz() {
 }
 var unusedInit = incrXyz();
 
-assert(xyz == 13, "init2")
+control.assert(xyz == 13, "init2")
 
 
 testClass()
