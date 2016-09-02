@@ -1806,17 +1806,13 @@ ${lbl}: .short 0xffff
 
             if (isGenericFunction(node)) {
                 if (!info.usages) {
-                    if (bin.finalPass && !usedDecls[nodeKey(node)]) {
-                        // test mode - make fake binding
-                        let sig = checker.getSignatureFromDeclaration(node)
-                        let bindings = sig.getTypeParameters().map(t => ({ tp: t, isRef: true }))
-                        addEnclosingTypeBindings(bindings, node)
-                        U.assert(bindings.length > 0)
-                        info.usages = [bindings]
-                    } else {
-                        U.assert(!bin.finalPass)
-                        return null
-                    }
+                    assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass)
+                    // test mode - make fake binding
+                    let sig = checker.getSignatureFromDeclaration(node)
+                    let bindings = sig.getTypeParameters().map(t => ({ tp: t, isRef: true }))
+                    addEnclosingTypeBindings(bindings, node)
+                    U.assert(bindings.length > 0)
+                    info.usages = [bindings]
                 }
                 U.assert(info.usages.length > 0, "no generic usages recorded")
                 let todo = info.usages
