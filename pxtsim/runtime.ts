@@ -1,4 +1,5 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../built/pxtparts.d.ts"/>
 
 namespace pxsim {
     export namespace U {
@@ -58,6 +59,7 @@ namespace pxsim {
         lambdaArgs?: any[];
         caps?: any[];
         finalCallback?: ResumeFn;
+        lastBrkId?: number;
         // ... plus locals etc, added dynamically
     }
 
@@ -73,9 +75,14 @@ namespace pxsim {
     export function getResume() { return runtime.getResume() }
 
     export class BaseBoard {
+        public runOptions: SimulatorRunMessage;
+
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) { }
-        public initAsync(msg: SimulatorRunMessage): Promise<void> { return Promise.resolve(); }
+        public initAsync(msg: SimulatorRunMessage): Promise<void> {
+            this.runOptions = msg;
+            return Promise.resolve()
+        }
         public kill() { }
 
         protected serialOutBuffer: string = '';
@@ -362,8 +369,13 @@ namespace pxsim {
                 } catch (e) {
                     if (_this.errorHandler)
                         _this.errorHandler(e)
-                    else
+                    else {
                         console.error("Simulator crashed, no error handler", e.stack)
+                        let msg = getBreakpointMsg(p, p.lastBrkId)
+                        msg.exceptionMessage = e.message
+                        msg.exceptionStack = e.stack
+                        Runtime.postMessage(msg)
+                    }
                 }
             }
 

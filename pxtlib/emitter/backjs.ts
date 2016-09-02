@@ -123,8 +123,11 @@ switch (step) {
         return resText
 
         function emitBreakpoint(s: ir.Stmt) {
-            let lbl = ++lblIdx
             let id = s.breakpointInfo.id
+            write(`s.lastBrkId = ${id};`)
+            if (!bin.options.breakpoints)
+                return;
+            let lbl = ++lblIdx
             let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
             if (s.breakpointInfo.isDebuggerStmt)
                 write(brkCall)
@@ -292,21 +295,21 @@ switch (step) {
             exprStack.push(frameExpr)
 
             let procid = topExpr.data as ir.ProcId
-            let proc = bin.procs.filter(p => p.matches(procid))[0]
+            let proc = procid.proc
             let frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
-            write(`${frameRef} = { fn: ${proc.label()}, parent: s };`)
+            write(`${frameRef} = { fn: ${proc ? proc.label() : null}, parent: s };`)
 
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
                 emitExpr(a)
-                write(`${frameRef}.${proc.args[i].uniqueName()} = r0;`)
+                write(`${frameRef}.arg${i} = r0;`)
             })
 
             write(`s.pc = ${lblId};`)
             if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
-                write(`${frameRef}.fn = ${frameRef}.${proc.args[0].uniqueName()}.vtable.methods[${procid.virtualIndex}];`)
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             }
             write(`return actionCall(${frameRef})`)
             writeRaw(`  case ${lblId}:`)

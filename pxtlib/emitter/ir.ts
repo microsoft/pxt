@@ -349,9 +349,13 @@ namespace ts.pxtc.ir {
     }
 
     export interface ProcId {
+        proc: Procedure;
+        virtualIndex: number;
+    }
+
+    export interface ProcQuery {
         action: ts.FunctionLikeDeclaration;
         bindings: TypeBinding[];
-        virtualIndex?: number;
     }
 
     export class Procedure extends Node {
@@ -366,16 +370,25 @@ namespace ts.pxtc.ir {
         debugInfo: ProcDebugInfo;
         bindings: TypeBinding[];
         fillDebugInfo: (th: assembler.File) => void;
+        classInfo: ClassInfo;
 
         body: Stmt[] = [];
         lblNo = 0;
         action: ts.FunctionLikeDeclaration;
 
+        reset() {
+            this.body = []
+            this.lblNo = 0
+            this.locals = []
+            this.captured = []
+            this.args = []
+        }
+
         label() {
             return getFunctionLabel(this.action, this.bindings)
         }
 
-        matches(id: ProcId) {
+        matches(id: ProcQuery) {
             if (this.action == id.action) {
                 U.assert(this.bindings.length == id.bindings.length)
                 for (let i = 0; i < this.bindings.length; ++i)

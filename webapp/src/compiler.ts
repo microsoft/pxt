@@ -75,6 +75,8 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 opts.justMyCode = true
             }
             opts.computeUsedSymbols = true
+            if (/test=1/i.test(window.location.href))
+                opts.testMode = true
             return opts
         })
         .then(compileCoreAsync)
@@ -178,7 +180,10 @@ function ensureApisInfoAsync() {
 
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
-        .then(opts => workerOpAsync("setOptions", { options: opts }))
+        .then(opts => {
+            opts.testMode = true // show errors in all top-level code
+            return workerOpAsync("setOptions", { options: opts })
+        })
         .then(() => workerOpAsync("allDiags", {}))
         .then(setDiagnostics)
         .then(ensureApisInfoAsync)

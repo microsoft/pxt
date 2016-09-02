@@ -1097,6 +1097,43 @@ namespace ClassTest {
     }
 }
 
+namespace Ctors {
+    class A {
+        v: number
+        s: string
+        constructor(k = 12) {
+            this.v = k
+        }
+    }
+
+    class B extends A {
+        q: number
+        constructor() {
+            super()
+            this.q = 17
+        }
+    }
+
+    class C extends B { }
+    class D extends A { }
+
+    export function run() {
+        let a = new A()
+        control.assert(a.v == 12, "A12")
+        a = new B()
+        control.assert(a.v == 12, "B12")
+        control.assert((a as B).q == 17, "B17")
+        a = new C()
+        control.assert(a.v == 12, "C12")
+        control.assert((a as B).q == 17, "C17")
+        let d = new D(33)
+        control.assert(d.v == 33, "D33")
+        d = new D()
+        control.assert(d.v == 12, "D12")
+    }
+}
+
+
 // ---------------------------------------------------------------------------
 // Driver starts
 // ---------------------------------------------------------------------------
@@ -1139,6 +1176,7 @@ testNull()
 testToString()
 testComplexCallExpr()
 ClassTest.run()
+Ctors.run()
 
 
 msg("test top level code")

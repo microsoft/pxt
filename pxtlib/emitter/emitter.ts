@@ -15,6 +15,18 @@ namespace ts.pxtc {
 
     export const numReservedGlobals = 1;
 
+    interface NodeWithId extends Node {
+        pxtNodeId: number;
+    }
+
+    let lastNodeId = 0
+    export function getNodeId(n: Node) {
+        let nn = n as NodeWithId
+        if (!nn.pxtNodeId)
+            nn.pxtNodeId = ++lastNodeId
+        return nn.pxtNodeId
+    }
+
     export function stringKind(n: Node) {
         if (!n) return "<null>"
         return (<any>ts).SyntaxKind[n.kind]
@@ -247,6 +259,8 @@ namespace ts.pxtc {
         hasVTable?: boolean;
         isUsed?: boolean;
         vtable?: FunctionAddInfo[];
+        bindings: TypeBinding[];
+        ctor?: ir.Procedure;
     }
 
     let lf = assembler.lf;
@@ -537,6 +551,8 @@ namespace ts.pxtc {
         let functionInfo: StringMap<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
 
+        lastNodeId = 0
+
         if (opts.target.isNative) {
             if (!opts.hexinfo) {
                 // we may have not been able to compile or download the hex file
@@ -559,28 +575,25 @@ namespace ts.pxtc {
             opts.breakpoints = true
         }
 
-
-        let bin: Binary;
+        let bin = new Binary()
         let proc: ir.Procedure;
+        bin.res = res;
+        bin.options = opts;
+        bin.target = opts.target;
 
         function reset() {
-            let prev = bin ? bin.usedClassInfos : null
-            bin = new Binary();
-            if (prev) bin.usedClassInfos = prev
-            bin.res = res;
-            bin.target = opts.target;
+            bin.reset()
             proc = null
-            if (opts.breakpoints)
-                res.breakpoints = [{
-                    id: 0,
-                    isDebuggerStmt: false,
-                    fileName: "bogus",
-                    start: 0,
-                    length: 0,
-                    line: 0,
-                    character: 0,
-                    successors: null
-                }]
+            res.breakpoints = [{
+                id: 0,
+                isDebuggerStmt: false,
+                fileName: "bogus",
+                start: 0,
+                length: 0,
+                line: 0,
+                character: 0,
+                successors: null
+            }]
         }
 
         if (opts.computeUsedSymbols) {
@@ -866,14 +879,15 @@ namespace ts.pxtc {
         }
 
 
-        function getClassInfo(t: Type, decl: ClassDeclaration = null) {
+        function getClassInfo(t: Type, decl: ClassDeclaration = null, bindings: TypeBinding[] = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let bindings = t
-                ? getTypeBindings(t)
-                : decl.typeParameters
-                    ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
-                    : []
+            if (!bindings)
+                bindings = t
+                    ? getTypeBindings(t)
+                    : decl.typeParameters
+                        ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
+                        : []
             let id = "C" + getNodeId(decl) + refMask(bindings)
             let info: ClassInfo = classInfos[id]
             if (!info) {
@@ -887,7 +901,8 @@ namespace ts.pxtc {
                     decl: decl,
                     refmask: null,
                     baseClassInfo: null,
-                    methods: []
+                    methods: [],
+                    bindings: bindings
                 }
                 classInfos[id] = info;
                 // only do it after storing our in case we run into cycles (which should be errors)
@@ -1433,6 +1448,14 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            if (funcExpr.kind == SK.SuperKeyword) {
+                let baseCtor = proc.classInfo.baseClassInfo.ctor
+                assert(!bin.finalPass || !!baseCtor)
+                let ctorArgs = args.map(emitExpr)
+                ctorArgs.unshift(emitThis(funcExpr))
+                return mkProcCallCore(baseCtor, null, ctorArgs)
+            }
+
             if (isMethod) {
                 let isSuper = false
                 if (isStatic(decl)) {
@@ -1459,11 +1482,7 @@ ${lbl}: .short 0xffff
                 }
                 if (info.virtualRoot && !isSuper) {
                     assert(!bin.finalPass || info.virtualIndex != null)
-                    return ir.op(EK.ProcCall, args.map(emitExpr), {
-                        action: decl,
-                        bindings: bindings,
-                        virtualIndex: info.virtualIndex
-                    })
+                    return mkProcCallCore(null, info.virtualIndex, args.map(emitExpr))
                 }
                 if (attrs.shim) {
                     return emitShim(decl, node, args);
@@ -1516,17 +1535,29 @@ ${lbl}: .short 0xffff
             return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
         }
 
+        function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[]) {
+            let data: ir.ProcId = {
+                proc: proc,
+                virtualIndex: vidx
+            }
+            return ir.op(EK.ProcCall, args, data)
+        }
+
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
-            return ir.op(EK.ProcCall, args, {
-                action: decl,
-                bindings: bindings
-            })
+            let id: ir.ProcQuery = { action: decl as ts.FunctionLikeDeclaration, bindings }
+            let proc = bin.procs.filter(p => p.matches(id))[0]
+            assert(!!proc || !bin.finalPass)
+            return mkProcCallCore(proc, null, args)
         }
 
         function emitVTables() {
             for (let info of bin.usedClassInfos) {
                 getVTable(info) // gets cached
             }
+        }
+
+        function getCtor(decl: ClassDeclaration) {
+            return decl.members.filter(m => m.kind == SK.Constructor)[0] as ConstructorDeclaration
         }
 
         function markClassUsed(info: ClassInfo) {
@@ -1537,7 +1568,12 @@ ${lbl}: .short 0xffff
             for (let m of info.methods) {
                 let minf = getFunctionInfo(m)
                 if (minf.virtualRoot && minf.virtualRoot.isUsed)
-                    markFunctionUsed(m, []) // TODO bindings
+                    markFunctionUsed(m, info.bindings)
+            }
+
+            let ctor = getCtor(info.decl)
+            if (ctor) {
+                markFunctionUsed(ctor, info.bindings)
             }
         }
 
@@ -1550,8 +1586,14 @@ ${lbl}: .short 0xffff
                 if (classDecl.kind != SK.ClassDeclaration) {
                     userError(9221, lf("new expression only supported on class types"))
                 }
-                let ctor = classDecl.members.filter(n => n.kind == SK.Constructor)[0]
+                let ctor: ClassElement
                 let info = getClassInfo(typeOf(node), classDecl)
+
+                // find ctor to call in base chain
+                for (let parinfo = info; parinfo; parinfo = parinfo.baseClassInfo) {
+                    ctor = getCtor(parinfo.decl)
+                    if (ctor) break
+                }
 
                 markClassUsed(info)
 
@@ -1676,14 +1718,41 @@ ${lbl}: .short 0xffff
 
             assert(!!lit == isExpression)
 
-            let isRoot = proc == null
-            proc = new ir.Procedure();
-            proc.isRoot = isRoot
-            proc.action = node;
-            proc.info = info;
+            let id: ir.ProcQuery = { action: node, bindings }
+            let existing = bin.procs.filter(p => p.matches(id))[0]
+
+            if (existing) {
+                proc = existing
+                proc.reset()
+            } else {
+                assert(!bin.finalPass)
+                let isRoot = proc == null
+                proc = new ir.Procedure();
+                proc.isRoot = isRoot
+                proc.action = node;
+                proc.info = info;
+                proc.bindings = bindings;
+                bin.addProc(proc);
+            }
+
             proc.captured = locals;
-            proc.bindings = bindings;
-            bin.addProc(proc);
+
+            if (node.parent.kind == SK.ClassDeclaration) {
+                let parClass = node.parent as ClassDeclaration
+                let numTP = parClass.typeParameters ? parClass.typeParameters.length : 0
+                assert(bindings.length >= numTP)
+                let classInfo = getClassInfo(null, parClass, bindings.slice(0, numTP))
+                if (proc.classInfo)
+                    assert(proc.classInfo == classInfo)
+                else
+                    proc.classInfo = classInfo
+                if (node.kind == SK.Constructor) {
+                    if (classInfo.ctor)
+                        assert(classInfo.ctor == proc)
+                    else
+                        classInfo.ctor = proc
+                }
+            }
 
             U.pushRange(typeBindings, bindings)
 
@@ -1760,17 +1829,15 @@ ${lbl}: .short 0xffff
 
             if (isGenericFunction(node)) {
                 if (!info.usages) {
-                    if (bin.finalPass && !usedDecls[nodeKey(node)]) {
-                        // test mode - make fake binding
-                        let sig = checker.getSignatureFromDeclaration(node)
-                        let bindings = sig.getTypeParameters().map(t => ({ tp: t, isRef: true }))
-                        addEnclosingTypeBindings(bindings, node)
-                        U.assert(bindings.length > 0)
-                        info.usages = [bindings]
-                    } else {
-                        U.assert(!bin.finalPass)
-                        return null
-                    }
+                    assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass)
+                    // test mode - make fake binding
+                    let bindings = getTypeParameters(node).map(t => ({
+                        tp: checker.getTypeAtLocation(t),
+                        isRef: true
+                    }))
+                    addEnclosingTypeBindings(bindings, node)
+                    U.assert(bindings.length > 0)
+                    info.usages = [bindings]
                 }
                 U.assert(info.usages.length > 0, "no generic usages recorded")
                 let todo = info.usages
@@ -2006,7 +2073,6 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
-            if (!opts.breakpoints) return
             let src = getSourceFileOfNode(node)
             if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
                 return;
@@ -2619,6 +2685,9 @@ ${lbl}: .short 0xffff
                 case SK.GetAccessor:
                 case SK.SetAccessor:
                     return emitAccessor(<AccessorDeclaration>node);
+                case SK.ImportEqualsDeclaration:
+                    // this doesn't do anything in compiled code
+                    return emitImportEqualsDeclaration(<ImportEqualsDeclaration>node);
                 default:
                     unhandled(node);
             }
@@ -2674,7 +2743,7 @@ ${lbl}: .short 0xffff
                     return emitConditionalExpression(<ConditionalExpression>node);
                 case SK.AsExpression:
                     return emitAsExpression(<AsExpression>node);
-                case SyntaxKind.TemplateExpression:
+                case SK.TemplateExpression:
                     return emitTemplateExpression(<TemplateExpression>node);
 
                 default:
@@ -2748,8 +2817,6 @@ ${lbl}: .short 0xffff
                     return emitEnumMember(<EnumMember>node);
                 case SyntaxKind.ImportDeclaration:
                     return emitImportDeclaration(<ImportDeclaration>node);
-                case SyntaxKind.ImportEqualsDeclaration:
-                    return emitImportEqualsDeclaration(<ImportEqualsDeclaration>node);
                 case SyntaxKind.ExportDeclaration:
                     return emitExportDeclaration(<ExportDeclaration>node);
                 case SyntaxKind.ExportAssignment:
@@ -2803,13 +2870,23 @@ ${lbl}: .short 0xffff
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
         res: CompileResult;
+        options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
 
         strings: StringMap<string> = {};
         otherLiterals: string[] = [];
         lblNo = 0;
 
+        reset() {
+            this.lblNo = 0
+            this.otherLiterals = []
+            this.strings = {}
+            for (let p of this.procs)
+                p.reset()
+        }
+
         addProc(proc: ir.Procedure) {
+            assert(!this.finalPass)
             this.procs.push(proc)
             proc.seqNo = this.procs.length
             //proc.binary = this

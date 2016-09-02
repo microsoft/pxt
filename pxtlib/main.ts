@@ -1,5 +1,6 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 /// <reference path="../built/pxtpackage.d.ts"/>
+/// <reference path="../built/pxtparts.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
@@ -577,6 +578,37 @@ namespace pxt {
                     return U.sortObjectFields(files)
                 })
         }
+
+
+        computePartDefinitions(parts: string[]): pxt.Map<pxsim.PartDefinition> {
+            if (!parts || !parts.length) return {};
+
+            let res: pxt.Map<pxsim.PartDefinition> = {};
+            this.sortedDeps().forEach(d => {
+                let pjson = d.readFile("pxtparts.json");
+                if (pjson) {
+                    try {
+                        let p = JSON.parse(pjson) as U.Map<pxsim.PartDefinition>;
+                        for (let k in p) {
+                            if (parts.indexOf(k) >= 0) {
+                                let part = res[k] = p[k];
+                                if (part.visual instanceof String && /\.svg$/i.test(<string>part.visual)) {
+                                    let f = d.readFile(<string>part.visual);
+                                    part.visual = `data:image/svg+xml,` + encodeURI(f);
+                                } else if (/\.svg$/i.test(((<pxsim.PartVisualDefinition>part.visual).image))) {
+                                    let f = d.readFile((<pxsim.PartVisualDefinition>part.visual).image);
+                                    (<pxsim.PartVisualDefinition>part.visual).image = `data:image/svg+xml,` + encodeURI(f);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        pxt.reportError(lf("invalid pxtparts.json file"), undefined);
+                    }
+                }
+            })
+            return res;
+        }
+
     }
 
     export const configName = "pxt.json"
