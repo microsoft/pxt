@@ -59,6 +59,7 @@ namespace pxsim {
         lambdaArgs?: any[];
         caps?: any[];
         finalCallback?: ResumeFn;
+        lastBrkId?: number;
         // ... plus locals etc, added dynamically
     }
 
@@ -368,8 +369,13 @@ namespace pxsim {
                 } catch (e) {
                     if (_this.errorHandler)
                         _this.errorHandler(e)
-                    else
+                    else {
                         console.error("Simulator crashed, no error handler", e.stack)
+                        let msg = getBreakpointMsg(p, p.lastBrkId)
+                        msg.exceptionMessage = e.message
+                        msg.exceptionStack = e.stack
+                        Runtime.postMessage(msg)
+                    }
                 }
             }
 

@@ -25,6 +25,8 @@ namespace pxsim {
             locals: Variables;
             funcInfo: any; // pxtc.FunctionLocationInfo
         }[];
+        exceptionMessage?: string;
+        exceptionStack?: string;
     }
 
     export interface Variables {

@@ -1,6 +1,7 @@
 /// <reference path="../../built/pxtsim.d.ts" />
 /// <reference path="../../built/pxtparts.d.ts" />
 
+import * as core from "./core";
 import U = pxt.U
 
 interface SimulatorConfig {
@@ -47,6 +48,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             updateDebuggerButtons(brk)
             let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
             config.highlightStatement(brkInfo)
+            if (brk.exceptionMessage) {
+                core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
+            }
         },
         onDebuggerResume: function () {
             config.highlightStatement(null)

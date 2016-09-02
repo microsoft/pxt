@@ -42,7 +42,7 @@ namespace pxsim {
         private frameCounter = 0;
         private currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
-        public runOptions: SimulatorRunOptions = { };
+        public runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
 
@@ -304,7 +304,10 @@ namespace pxsim {
                 case "breakpoint":
                     let brk = msg as pxsim.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
-                        this.setState(SimulatorState.Paused);
+                        if (brk.exceptionMessage)
+                            this.stop();
+                        else
+                            this.setState(SimulatorState.Paused);
                         if (this.options.onDebuggerBreakpoint)
                             this.options.onDebuggerBreakpoint(brk);
                     } else {

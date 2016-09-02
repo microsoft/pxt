@@ -123,8 +123,11 @@ switch (step) {
         return resText
 
         function emitBreakpoint(s: ir.Stmt) {
-            let lbl = ++lblIdx
             let id = s.breakpointInfo.id
+            write(`s.lastBrkId = ${id};`)
+            if (!bin.options.breakpoints)
+                return;
+            let lbl = ++lblIdx
             let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
             if (s.breakpointInfo.isDebuggerStmt)
                 write(brkCall)

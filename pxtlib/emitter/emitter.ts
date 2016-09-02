@@ -578,22 +578,22 @@ namespace ts.pxtc {
         let bin = new Binary()
         let proc: ir.Procedure;
         bin.res = res;
+        bin.options = opts;
         bin.target = opts.target;
 
         function reset() {
             bin.reset()
             proc = null
-            if (opts.breakpoints)
-                res.breakpoints = [{
-                    id: 0,
-                    isDebuggerStmt: false,
-                    fileName: "bogus",
-                    start: 0,
-                    length: 0,
-                    line: 0,
-                    character: 0,
-                    successors: null
-                }]
+            res.breakpoints = [{
+                id: 0,
+                isDebuggerStmt: false,
+                fileName: "bogus",
+                start: 0,
+                length: 0,
+                line: 0,
+                character: 0,
+                successors: null
+            }]
         }
 
         if (opts.computeUsedSymbols) {
@@ -2073,7 +2073,6 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
-            if (!opts.breakpoints) return
             let src = getSourceFileOfNode(node)
             if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
                 return;
@@ -2871,6 +2870,7 @@ ${lbl}: .short 0xffff
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
         res: CompileResult;
+        options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
 
         strings: StringMap<string> = {};
