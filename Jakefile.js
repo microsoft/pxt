@@ -102,10 +102,10 @@ task('built/pxtpackage.d.ts', [], function() {
     jake.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') 
 })
 
-compileDir("pxtlib", ["built/pxtpackage.d.ts", "built/typescriptServices.d.ts"])
+compileDir("pxtlib", ["built/pxtparts.d.ts", "built/pxtpackage.d.ts", "built/typescriptServices.d.ts"])
 compileDir("pxtblocks", ["built/pxtlib.js", "built/blockly.d.ts"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
-compileDir("pxtsim", ["built/pxtparts.d.ts", "built/pxtlib.js", "built/pxtblocks.js"])
+compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ['pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
