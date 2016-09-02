@@ -167,6 +167,13 @@ namespace pxt.blocks {
             return mkStmt(mkSimpleCall("=", [x, e]))
         }
 
+        export function mkParenthesizedExpression(expression: Node): Node {
+            return mkGroup([
+                mkText("("),
+                expression,
+                mkText(")")
+            ])
+        }
     }
 
     import H = Helpers;
@@ -579,7 +586,7 @@ namespace pxt.blocks {
 
     function compileNot(e: Environment, b: B.Block): Node {
         let expr = compileExpression(e, b.getInputTargetBlock("BOOL"));
-        return H.mkSimpleCall("!", [expr]);
+        return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
 
     function extractNumberLit(e: Node): number {

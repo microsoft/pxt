@@ -37,11 +37,7 @@ function bundleOne(task, moduleId, exclude) {
     });
 }
 
-task('built', function() {
-    if (!fs.existsSync("built")) fs.mkdirSync("built");    
-})
-
-task('default', ['built', 'updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'compilemonaco'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'compilemonaco'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testlang'])
 
@@ -99,9 +95,9 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-task('built/blockly.d.ts', ['built'], function() { jake.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
-task('built/pxtparts.d.ts', ['built'], function() { jake.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
-task('built/pxtpackage.d.ts', ['built'], function() { jake.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
+file('built/blockly.d.ts', [], function() { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
+file('built/pxtparts.d.ts', [], function() { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
+file('built/pxtpackage.d.ts', [], function() { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
 
 compileDir("pxtlib", ["built/pxtparts.d.ts", "built/pxtpackage.d.ts", "built/typescriptServices.d.ts"])
 compileDir("pxtblocks", ["built/pxtlib.js", "built/blockly.d.ts"])

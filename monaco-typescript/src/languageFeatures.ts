@@ -376,7 +376,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                             let match: RegExpExecArray;
                             let examples: string[] = []
                             while ((match = reg.exec(paramExamples[1])) != null) {
-                                examples.push(match[1]);
+                                examples.push(match[2]);
                             }
                             if (examples.length > 0) {
                                 defaultVal = examples[0];

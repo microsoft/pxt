@@ -17,13 +17,17 @@ namespace ts.pxtc {
 
     interface NodeWithId extends Node {
         pxtNodeId: number;
+        pxtNodeWave: number;
     }
 
     let lastNodeId = 0
+    let currNodeWave = 1
     export function getNodeId(n: Node) {
         let nn = n as NodeWithId
-        if (!nn.pxtNodeId)
+        if (nn.pxtNodeWave !== currNodeWave) {
             nn.pxtNodeId = ++lastNodeId
+            nn.pxtNodeWave = currNodeWave
+        }
         return nn.pxtNodeId
     }
 
@@ -545,13 +549,14 @@ namespace ts.pxtc {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: StringMap<ClassInfo> = {}
-        let usedDecls: StringMap<boolean> = {}
+        let usedDecls: StringMap<Node> = {}
         let usedWorkList: Declaration[] = []
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
 
         lastNodeId = 0
+        currNodeWave++
 
         if (opts.target.isNative) {
             if (!opts.hexinfo) {
@@ -1241,7 +1246,7 @@ ${lbl}: .short 0xffff
             else {
                 let info = getFunctionInfo(decl)
                 if (!info.usages) {
-                    usedDecls[nodeKey(decl)] = true
+                    usedDecls[nodeKey(decl)] = decl
                     info.usages = []
                     info.prePassUsagesEmitted = 0
 
@@ -1261,7 +1266,7 @@ ${lbl}: .short 0xffff
                 res.usedSymbols[getFullName(checker, decl.symbol)] = null
 
             if (decl && !isUsed(decl)) {
-                usedDecls[nodeKey(decl)] = true
+                usedDecls[nodeKey(decl)] = decl
                 usedWorkList.push(decl)
             }
         }
@@ -1439,7 +1444,7 @@ ${lbl}: .short 0xffff
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
                 if (!info.location) {
-                    if (attrs.shim) {
+                    if (attrs.shim && !hasShimDummy(decl)) {
                         return emitShim(decl, node, args);
                     }
 
@@ -1484,7 +1489,7 @@ ${lbl}: .short 0xffff
                     assert(!bin.finalPass || info.virtualIndex != null)
                     return mkProcCallCore(null, info.virtualIndex, args.map(emitExpr))
                 }
-                if (attrs.shim) {
+                if (attrs.shim && !hasShimDummy(decl)) {
                     return emitShim(decl, node, args);
                 } else if (attrs.helper) {
                     let syms = checker.getSymbolsInScope(node, SymbolFlags.Module)
@@ -1803,6 +1808,13 @@ ${lbl}: .short 0xffff
             return lit
         }
 
+        function hasShimDummy(node: Declaration) {
+            if (opts.target.isNative)
+                return false
+            let f = node as FunctionLikeDeclaration
+            return f.body && (f.body.kind != SK.Block || (f.body as Block).statements.length > 0)
+        }
+
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (!isUsed(node))
                 return;
@@ -1815,7 +1827,8 @@ ${lbl}: .short 0xffff
                         funcHasReturn(node),
                         getParameters(node).length);
                 }
-                return
+                if (!hasShimDummy(node))
+                    return
             }
 
             if (node.flags & NodeFlags.Ambient)

@@ -56,4 +56,36 @@ The simulator function can also get hold of a callback function using `getResume
 and then call the resulting function when the function is supposed to resume.
 You need to include the ``//% async`` annotation in that case.
 
+## Simulator implementations
 
+If you're adding your own C++ or assembly functions [in packages](/packages)
+and you either cannot or don't want to add a corresponding function to the simulator,
+you can provide a simulator-only implementation. For example:
+
+```js
+/**
+ *  Writes to the Bluetooth UART service buffer.
+ */
+//% blockId=bluetooth_uart_write block="bluetooth uart write %data" blockGap=8
+//% shim=bluetooth::uartWrite
+export function uartWrite(data: string): void {
+    // dummy implementation for simulator
+    console.log("UART Write: " + data)
+}
+```
+
+Notice the `shim=` annotation. In C++ you would have just this:
+
+```cpp
+namespace bluetooth {
+  //%
+  void uartWrite(StringData *data) {
+    // ...
+  }
+}   
+```
+
+When PXT sees a call to function annotated with `shim=`, it will always use the
+shim in the native compilation. In simulator compilation it will use the shim only
+if the function has no body or empty body. If you don't want your simulator implementation
+to do anything, you can for example put a single `return` statement as the body.

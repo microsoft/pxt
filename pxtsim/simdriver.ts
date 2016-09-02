@@ -2,6 +2,7 @@ namespace pxsim {
     export interface SimulatorDriverOptions {
         revealElement?: (el: HTMLElement) => void;
         removeElement?: (el: HTMLElement) => void;
+        onDebuggerWarning?: (wrn: DebuggerWarningMessage) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
         onCompile?: (name: string, content: string, contentType: string) => void;
@@ -301,6 +302,10 @@ namespace pxsim {
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
             console.log("DBG-MSG", msg.subtype, msg)
             switch (msg.subtype) {
+                case "warning":
+                    if (this.options.onDebuggerWarning)
+                        this.options.onDebuggerWarning(msg as pxsim.DebuggerWarningMessage);
+                    break;
                 case "breakpoint":
                     let brk = msg as pxsim.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
