@@ -89,7 +89,7 @@ namespace ts.pxtc {
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
-        if (!resp.usedSymbols)
+        if (!resp.usedSymbols || !pxt.debugMode())
             return [];
 
         let parts: string[] = [];
