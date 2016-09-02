@@ -370,6 +370,7 @@ namespace ts.pxtc.ir {
         debugInfo: ProcDebugInfo;
         bindings: TypeBinding[];
         fillDebugInfo: (th: assembler.File) => void;
+        classInfo: ClassInfo;
 
         body: Stmt[] = [];
         lblNo = 0;

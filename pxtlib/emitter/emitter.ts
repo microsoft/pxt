@@ -247,6 +247,8 @@ namespace ts.pxtc {
         hasVTable?: boolean;
         isUsed?: boolean;
         vtable?: FunctionAddInfo[];
+        bindings: TypeBinding[];
+        ctor?: ir.Procedure;
     }
 
     let lf = assembler.lf;
@@ -863,14 +865,15 @@ namespace ts.pxtc {
         }
 
 
-        function getClassInfo(t: Type, decl: ClassDeclaration = null) {
+        function getClassInfo(t: Type, decl: ClassDeclaration = null, bindings: TypeBinding[] = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let bindings = t
-                ? getTypeBindings(t)
-                : decl.typeParameters
-                    ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
-                    : []
+            if (!bindings)
+                bindings = t
+                    ? getTypeBindings(t)
+                    : decl.typeParameters
+                        ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
+                        : []
             let id = "C" + getNodeId(decl) + refMask(bindings)
             let info: ClassInfo = classInfos[id]
             if (!info) {
@@ -884,7 +887,8 @@ namespace ts.pxtc {
                     decl: decl,
                     refmask: null,
                     baseClassInfo: null,
-                    methods: []
+                    methods: [],
+                    bindings: bindings
                 }
                 classInfos[id] = info;
                 // only do it after storing our in case we run into cycles (which should be errors)
@@ -1430,6 +1434,14 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            if (funcExpr.kind == SK.SuperKeyword) {
+                let baseCtor = proc.classInfo.baseClassInfo.ctor
+                assert(!bin.finalPass || !!baseCtor)
+                let ctorArgs = args.map(emitExpr)
+                ctorArgs.unshift(emitThis(funcExpr))
+                return mkProcCallCore(baseCtor, null, ctorArgs)
+            }
+
             if (isMethod) {
                 let isSuper = false
                 if (isStatic(decl)) {
@@ -1456,10 +1468,7 @@ ${lbl}: .short 0xffff
                 }
                 if (info.virtualRoot && !isSuper) {
                     assert(!bin.finalPass || info.virtualIndex != null)
-                    return ir.op(EK.ProcCall, args.map(emitExpr), {
-                        proc: null,
-                        virtualIndex: info.virtualIndex
-                    } as ir.ProcId)
+                    return mkProcCallCore(null, info.virtualIndex, args.map(emitExpr))
                 }
                 if (attrs.shim) {
                     return emitShim(decl, node, args);
@@ -1512,14 +1521,19 @@ ${lbl}: .short 0xffff
             return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
         }
 
+        function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[]) {
+            let data: ir.ProcId = {
+                proc: proc,
+                virtualIndex: vidx
+            }
+            return ir.op(EK.ProcCall, args, data)
+        }
+
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
             let id: ir.ProcQuery = { action: decl as ts.FunctionLikeDeclaration, bindings }
             let proc = bin.procs.filter(p => p.matches(id))[0]
             assert(!!proc || !bin.finalPass)
-            return ir.op(EK.ProcCall, args, {
-                proc: proc,
-                virtualIndex: null
-            } as ir.ProcId)
+            return mkProcCallCore(proc, null, args)
         }
 
         function emitVTables() {
@@ -1533,10 +1547,16 @@ ${lbl}: .short 0xffff
             info.isUsed = true
             if (info.baseClassInfo) markClassUsed(info.baseClassInfo)
             bin.usedClassInfos.push(info)
+            let ctor: ConstructorDeclaration
             for (let m of info.methods) {
+                if (m.kind == SK.Constructor) ctor = m as any
                 let minf = getFunctionInfo(m)
                 if (minf.virtualRoot && minf.virtualRoot.isUsed)
-                    markFunctionUsed(m, []) // TODO bindings
+                    markFunctionUsed(m, info.bindings)
+            }
+
+            if (ctor) {
+                markFunctionUsed(ctor, info.bindings)
             }
         }
 
@@ -1693,6 +1713,23 @@ ${lbl}: .short 0xffff
             }
 
             proc.captured = locals;
+
+            if (node.parent.kind == SK.ClassDeclaration) {
+                let parClass = node.parent as ClassDeclaration
+                let numTP = parClass.typeParameters ? parClass.typeParameters.length : 0
+                assert(bindings.length >= numTP)
+                let classInfo = getClassInfo(null, parClass, bindings.slice(0, numTP))
+                if (proc.classInfo)
+                    assert(proc.classInfo == classInfo)
+                else
+                    proc.classInfo = classInfo
+                if (node.kind == SK.Constructor) {
+                    if (classInfo.ctor)
+                        assert(classInfo.ctor == proc)
+                    else
+                        classInfo.ctor = proc
+                }
+            }
 
             U.pushRange(typeBindings, bindings)
 
