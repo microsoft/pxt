@@ -3,6 +3,7 @@
 var child_process = require("child_process");
 var fs = require("fs");
 var util = require("util");
+var path = require("path");
 
 // for use with child_process.exec/execFile
 function execCallback(task) {
@@ -15,6 +16,21 @@ function execCallback(task) {
         }
         else task.complete();
     }
+}
+
+function mkdirP(thePath) {
+    if (thePath == ".") return;
+    if (!fs.existsSync(thePath)) {
+        mkdirP(path.dirname(thePath))
+        fs.mkdirSync(thePath)
+    }
+}
+
+
+function cpR(src, trg) {
+    let p = path.dirname(trg)
+    mkdirP(p)
+    jake.cpR(src, trg)
 }
 
 function expand1(dirs) {
@@ -98,4 +114,5 @@ exports.expand1 = expand1;
 exports.catFiles = catFiles;
 exports.cmdIn = cmdIn;
 exports.cmdsIn = cmdsIn;
-
+exports.cpR = cpR;
+exports.mkdirP = mkdirP;
