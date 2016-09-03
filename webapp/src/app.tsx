@@ -1071,7 +1071,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let code = p.files["main.ts"];
                 let data: any = {
                     name: p.header.name || lf("Untitled"),
-                    code: code ? code.content : "basic.showString('Hello!');",
+                    code: code ? code.content : `basic.showString("Hi!");`,
                 };
                 let parts = ts.pxtc.computeUsedParts(resp);
                 if (parts.length) {
@@ -1082,7 +1082,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 if (fnArgs)
                     data.fnArgs = JSON.stringify(fnArgs);
                 data.package = Util.values(pkg.mainPkg.deps).filter(p => p.id != "this").map(p => `${p.id}=${p._verspec}`).join('\n')
-                let urlData = $.param(data);
+                let urlData = Object.keys(data).map(k => `${k}=${encodeURIComponent(data[k])}`).join('&');
                 let url = `${pxt.webConfig.partsUrl}?${urlData}`
                 window.open(url, '_blank')
             });
