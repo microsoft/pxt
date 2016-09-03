@@ -62,6 +62,7 @@ See also [issue #51](https://github.com/Microsoft/pxt/issues/51).
 * asynchronous functions that look [synchronous to the user](/async)
 * method-like properties (get/set accessors)
 * basic generic classes, methods, and functions
+* class inheritance
 
 ## Unsupported language features
 
@@ -71,10 +72,12 @@ Things you may miss and we may implement:
 
 * exceptions (`throw`, `try ... catch`, `try ... finally`)
 * object literals `{ foo: 1, bar: "two" }`
-* class inheritance
 * classes implementing interfaces
 * using generic functions as values
 * nested generic functions
+* class inheritance for generic classes and methods
+* initializers for class fields
+* `public`/`private` annotations on constructor arguments
 
 For JS-only targets we may implement the following:
 
