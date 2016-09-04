@@ -282,6 +282,8 @@ namespace ts.pxtc.assembler {
             if (s[0] == "-") {
                 mul *= -1;
                 s = s.slice(1)
+            } else if (s[0] == "+") {
+                s = s.slice(1)
             }
 
             let v: number = null
@@ -1091,7 +1093,7 @@ namespace ts.pxtc.assembler {
 
     export function expect(ei: EncodersInstructions, disasm: string) {
         let exp: number[] = []
-        let asm = disasm.replace(/^([0-9a-fA-F]{4})\s/gm, (w, n) => {
+        let asm = disasm.replace(/^([0-9a-fA-F]{4,8})\s/gm, (w, n) => {
             exp.push(parseInt(n, 16))
             return ""
         })
