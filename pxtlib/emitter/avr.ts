@@ -213,8 +213,8 @@ namespace ts.pxtc.avr {
             this.addInst("lds   $r3, $la", 0x9000, 0xfe0f, "LDS");
             this.addInst("lds   $r3, $i6", 0xa000, 0xf800);
             this.addInst("lpm", 0x95a8, 0xffff);
-            this.addInst("lpm2  $r0", 0x9004, 0xfe0f);
-            this.addInst("lpm3  $r0", 0x9005, 0xfe0f);
+            this.addInst("lpm   $r0, Z", 0x9004, 0xfe0f);
+            this.addInst("lpm   $r0, Z+", 0x9005, 0xfe0f);
             this.addInst("lsl   $r6", 0x0c00, 0xfc00);
             this.addInst("lsr   $r0", 0x9406, 0xfe0f);
             this.addInst("mov   $r0, $r1", 0x2C00, 0xfC00);

@@ -68,6 +68,8 @@ namespace ts.pxtc.assembler {
             let stack = 0;
             let numArgs: number[] = []
             let labelName: string = null
+            let bit32_value: number = null
+            let bit32_actual: string = null
 
             for (let i = 0; i < this.args.length; ++i) {
                 let formal = this.args[i]
@@ -121,6 +123,9 @@ namespace ts.pxtc.assembler {
                         if (/^[+-]?\d+$/.test(actual)) {
                             v = parseInt(actual, 10)
                             labelName = "rel" + v
+                        } else if (/^0x[0-9a-fA-F]+$/.test(actual) ) {
+                            v = parseInt(actual, 16)
+                            labelName = "abs" + v
                         } else {
                             labelName = actual
                             v = ln.bin.getRelativeLabel(actual, enc.isWordAligned)
@@ -131,17 +136,14 @@ namespace ts.pxtc.assembler {
                                     v = 8; // needs to be divisible by 4 etc
                             }
                         }
+                        if (this.ei.is32bit(this)) {
+                            bit32_value = v
+                            bit32_actual = actual
+                        }
                     } else {
                         oops()
                     }
                     if (v == null) return emitErr("didn't understand it", actual); // shouldn't happen
-
-                    // special handling for ARM long branch instruction (32-bit)
-                    // TODO: we may need to generalize this for AVR 32-bit instructions
-                    if (this.ei.is32bit(this)) {
-                        if (tokens[j]) return emitErr("trailing tokens", tokens[j])
-                        return this.ei.emit32(this, v, ln.bin.normalizeExternalLabel(actual));
-                    }
 
                     numArgs.push(v)
 
@@ -159,6 +161,10 @@ namespace ts.pxtc.assembler {
             }
 
             if (tokens[j]) return emitErr("trailing tokens", tokens[j])
+
+            if (this.ei.is32bit(this)) {
+                return this.ei.emit32(this, bit32_value, ln.bin.normalizeExternalLabel(bit32_actual));
+            }
 
             return {
                 stack: stack,
