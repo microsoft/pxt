@@ -24,7 +24,7 @@ class Instruction:
         self.operands = []
         self.relative = ""
     def toString(self):
-        return self.addr + ": " + self.encoding + " " + (self.label + ": " if self.label != "" else "") + self.opcode + " " + ", ".join(self.operands)
+        return self.encoding + " " + (self.label + ": " if self.label != "" else "") + self.opcode + " " + ", ".join(self.operands)
 
 def gethex(t):
     hex = re.match("0x([a-zA-Z0-9]*)",t)
@@ -49,20 +49,28 @@ for line in file:
             code.append(instruction)
             i = 1
             hex2 = re.match("[a-f0-9][a-f0-9]$", tokens[i])
-            fullhex = ""
+            fullhex = []
             ## get the hex values at this address
             while(hex2):
-                fullhex = fullhex + hex2.group(0)
+                fullhex.append(hex2.group(0))
                 i = i + 1
                 hex2 = re.match("[a-f0-9][a-f0-9]$", tokens[i])
+            if (len(fullhex)>1):
+                tmp = fullhex[0]
+                fullhex[0] = fullhex[1]
+                fullhex[1] = tmp
+            if (len(fullhex)>2):
+                tmp = fullhex[2]
+                fullhex[2] = fullhex[3]
+                fullhex[3] = tmp                
             # print("CONTENTS = ", fullhex)
-            instruction.encoding = fullhex;
+            instruction.encoding = "".join(fullhex);
             # now, we either should have an assembly instruction or a directive
             directive = re.match("\.(.*)",tokens[i])
             if directive:
                 # print("DIR = ", directive.group(1))
                 instruction.isDirective = True;
-                instruction.opcode = directive.group(1)
+                instruction.opcode = directive.group(0)
                 h = gethex(tokens[i+1])
                 instruction.operands = [ h.group(0) ]
             else:
@@ -73,6 +81,8 @@ for line in file:
                     # print("OP = ",inst.group(0))
                     i = i + 1
                     while(i<len(tokens) and tokens[i] != ";"):
+                        # remove ,
+                        tokens[i] = re.sub(",","",tokens[i])
                         h = gethex(tokens[i])
                         if h:
                             assert(h.group(0) != "")
@@ -80,10 +90,17 @@ for line in file:
                             # keep the 0x to distinguish from decimal
                             instruction.operands.append(h.group(0))
                         else:
-                            reg = re.match("r\d+|X|Y|Z|\-X|\+X|Y\+\d+|Z\+\d+",tokens[i])
+                            reg = re.match("^r\d+$|^X$|^Y$|^Z$|^\-X$|^X\+$|^\-Y$|^Y\+$|^\-Z$|^Z\+$|^Y\+(\d+)$|^Z\+(\d+)$",tokens[i])
                             if (reg):
-                                #print ("REG =", reg.group(1))
-                                instruction.operands.append(reg.group(0))
+                                #print ("REG =", reg.group(0))
+                                if (reg.group(1)):
+                                    instruction.operands.append(tokens[i][0])
+                                    instruction.operands.append("#" + reg.group(1))
+                                elif (reg.group(2)):
+                                    instruction.operands.append(tokens[i][0])
+                                    instruction.operands.append("#" + reg.group(2))
+                                else:
+                                    instruction.operands.append(reg.group(0))
                             else:
                                 relative = re.match("\.([\+\-]\d+)",tokens[i])
                                 if (relative):
@@ -97,7 +114,7 @@ for line in file:
                                         instruction.operands.append("#" + dec.group(0))
                                     else:
                                         print("DIE = ",tokens[i])
-                                        assert(False)
+                                        assert(0)
                         i = i + 1
                     # replace relative jump by absolute address
                     if relative:
@@ -140,5 +157,18 @@ for i in code:
 #            "903f      pop     r3\n")
 
 
-for i in code:
-    print(i.toString())
+result =  "assembler.expect(avr,\n" + "\".startaddr 0x1b8\\n\" +\n"
+
+i = 0
+while i<500:
+    result = result + "\"" + (code[i].toString()) + "\\n\" +\n"
+    i = i + 1
+
+result = result + "\"\")"
+file_out = open("out.ts","w")
+file_out.write(result)
+file_out.close()
+
+
+
+
