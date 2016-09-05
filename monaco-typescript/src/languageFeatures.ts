@@ -18,6 +18,9 @@ import Promise = monaco.Promise;
 import CancellationToken = monaco.CancellationToken;
 import IDisposable = monaco.IDisposable;
 
+import Util = pxt.Util;
+const lf = Util.lf
+
 let snippets = {
 	"For Loop": {
 		"prefix": "for",
@@ -164,9 +167,12 @@ export class DiagnostcsAdapter extends Adapter {
 // --- suggest ------
 
 interface MyCompletionItem extends monaco.languages.CompletionItem {
+    name: string;
     model: monaco.editor.IReadOnlyModel;
     uri: Uri;
     position: Position;
+    containerName?: string;
+    navigation?: typescript.NavigateToItem;
 }
 
 interface TypescriptSnippet {
@@ -222,9 +228,55 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
         const resource = model.uri;
         const offset = this._positionToOffset(resource, position);
 
+
+        let isNamespace = false;
+        const prevWordInfo = model.getWordUntilPosition(new Position(position.lineNumber, wordInfo.startColumn - 1));
+        if (!wordInfo || !prevWordInfo)
+            return;
+        if (prevWordInfo.word && prevWordInfo.word != "")
+            isNamespace = true;
+
         return wireCancellationToken(token, this._worker(resource).then(worker => {
-            return worker.getCompletionsAtPosition(resource.toString(), offset);
-        }).then(info => {
+            let promises: Promise<any>[] = [];
+            promises.push(worker.getCompletionsAtPosition(resource.toString(), offset));
+            let promise = worker.getNavigateToItems(wordInfo.word).then(navigation => {
+                if (!navigation || navigation.length == 0) return;
+                function convert(bucket: MyCompletionItem[], entry: typescript.NavigateToItem): void {
+                    let label = entry.containerName ? entry.containerName + '.' + entry.name : entry.name;
+                    let result: MyCompletionItem = {
+                        model: model,
+                        uri: resource,
+                        position: position,
+                        label: label,
+                        name: entry.name,
+                        sortText: entry.name,
+                        filterText: (isNamespace ? prevWordInfo.word + "." : "") + entry.name,
+                        kind: SuggestAdapter.convertKind(entry.kind),
+                        containerName: entry.containerName,
+                        navigation: entry,
+                        textEdit: {
+                            text: (isNamespace ? prevWordInfo.word + "." : "") + entry.name,
+                            range: new monaco.Range(position.lineNumber,
+                                    position.column - wordInfo.word.length - (isNamespace ? prevWordInfo.word.length + 1 : 0),
+                                    position.lineNumber,
+                                    position.column)
+                        }
+                    };
+                    bucket.push(result);
+                }
+                let result: MyCompletionItem[] = [];
+                navigation
+                    .filter(item => (item.kind == Kind.function || item.kind == Kind.memberFunction)
+                                    && (isNamespace ? item.containerName != prevWordInfo.word : true))
+                    .forEach(item => convert(result, item));
+                return result;
+            })
+            promises.push(promise);
+            return Promise.join(promises);
+        }).then(values => {
+            let info: typescript.CompletionInfo = values[0];
+            let moreinfo: MyCompletionItem[] = values[1];
+
             if (!info) {
                 return;
             }
@@ -236,10 +288,14 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                         uri: resource,
                         position: position,
                         label: entry.name,
+                        name: entry.name,
                         sortText: entry.sortText,
                         kind: SuggestAdapter.convertKind(entry.kind)
                     };
             });
+            if (moreinfo) {
+                suggestions = suggestions.concat(moreinfo);
+            }
             return suggestions;
         }));
     }
@@ -259,29 +315,30 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
             })
         }
 
-        let word = myItem.label;
-        let currWord = model.getWordAtPosition(position);
+        const wordInfo = model.getWordUntilPosition(position);
+        const prevWordInfo = model.getWordUntilPosition(new Position(position.lineNumber, wordInfo.startColumn - 1));
         let refPosition = 0;
-        let lookupSig = true;
 
-        if (currWord) {
-            let prevWordPos = position.clone(); prevWordPos.column -= currWord.word.length + 1;
-            let prevWord = model.getWordAtPosition(prevWordPos);
-            if (prevWord) {
-                this.referenceModel.setValue(prevWord.word + "." + word + "()");
-                refPosition = prevWord.word.length + word.length + 2;
-            } else {
-                this.referenceModel.setValue(word + "()");
-                refPosition = word.length + 1;
-            }
-            lookupSig = model.getValue().charAt(this._positionToOffset(resource, position) + currWord.word.length - 1) != '(';
+        let currWord = myItem.name;
+        let prevWord = myItem.containerName ?
+                        myItem.containerName :
+                        (prevWordInfo && prevWordInfo.word != "" ? prevWordInfo.word : "");
+        if (prevWord != "") {
+            this.referenceModel.setValue(prevWord + "." + currWord + "()");
+            refPosition = (myItem.containerName ? myItem.containerName.length : prevWord.length) + currWord.length + 2;
+        } else {
+            this.referenceModel.setValue(currWord + "()");
+            refPosition = currWord.length + 1;
         }
-
-        if (!this.referenceModel) this.referenceModel = monaco.editor.createModel("", "typescript", this.referenceModelUri);
+        if (!this.referenceModel || this.referenceModel.isDisposed()) this.referenceModel = monaco.editor.createModel("", "typescript", this.referenceModelUri);
 
         return wireCancellationToken(token, this._worker(resource).then(worker => {
             let promises: Promise<any>[] = [];
-            promises.push(worker.getCompletionEntryDetails(resource.toString(), this._positionToOffset(resource, position), myItem.label));
+            if (myItem.navigation) {
+                promises.push(worker.getCompletionEntryDetails(myItem.navigation.fileName, myItem.navigation.textSpan.start, myItem.name));
+            }else {
+                promises.push(worker.getCompletionEntryDetails(resource.toString(), this._positionToOffset(resource, position), myItem.name));
+            }
             promises.push(worker.getSignatureHelpItems(this.referenceModelUri.toString(), refPosition));
             promises.push(worker.getSignatureHelpItems(this.referenceModelUri.toString(), refPosition).then((signature) => {
                 if (!signature) return;
@@ -328,7 +385,6 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
             myItem.model = model;
             myItem.uri = resource;
             myItem.position = position;
-            myItem.label = details.name;
             myItem.kind = SuggestAdapter.convertKind(details.kind);
             myItem.detail = typescript.displayPartsToString(details.displayParts);
             myItem.documentation = typescript.displayPartsToString(details.documentation);
@@ -362,7 +418,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
             let hasParams = myItem.kind == monaco.languages.CompletionItemKind.Function || myItem.kind == monaco.languages.CompletionItemKind.Method;
 
             if (signature) {
-                let codeSnippet = details.name;
+                let codeSnippet = myItem.label;
                 let suggestionArgumentNames: string[] = [];
                 let parameters = signature.items[0].parameters;
                 parameters.forEach(parameter => {
@@ -398,7 +454,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 }
                 myItem.insertText = codeSnippet;
             } else if (hasParams) {
-                let codeSnippet = details.name;
+                let codeSnippet = myItem.label;
                 let suggestionArgumentNames: string[] = [];
                 let decl = ts.displayPartsToString(details.displayParts);
                 let parameterString = /function .+\..+?\((.*)\):.*/i.exec(decl);
@@ -420,7 +476,6 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 }
                 myItem.insertText = codeSnippet;
             }
-            if (!lookupSig) myItem.insertText = null;
             return myItem;
         }));
     }
@@ -543,7 +598,7 @@ export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverP
                     contents = typescript.displayPartsToString(info.displayParts);
                 return {
                     range: this._textSpanToRange(resource, info.textSpan),
-                    contents: [contents]
+                    contents: [lf(contents)]
                 };
             } else if (signature && signature.items[0]) {
                 let activeParameter = signature.argumentIndex;
@@ -558,13 +613,13 @@ export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverP
                 }
                 return {
                     range: this._textSpanToRange(resource, parameterSpan),
-                    contents: [contents, display]
+                    contents: [lf(contents), lf(contents)]
                 };
             } else if (info) {
                 let contents = typescript.displayPartsToString(info.displayParts);
                 return {
                     range: this._textSpanToRange(resource, info.textSpan),
-                    contents: [contents]
+                    contents: [lf(contents)]
                 };
             }
             return;
