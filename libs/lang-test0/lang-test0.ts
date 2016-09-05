@@ -1011,6 +1011,13 @@ function testLazyRef() {
     control.assert(z == 12, "12.2")
     z = 12 && 13
     control.assert(z == 13, "13")
+
+    let q = new Testrec()
+    let r: Testrec = null
+    let qq = q && r
+    control.assert(qq == null, "&n")
+    qq = r && q
+    control.assert(qq == null, "&r")
 }
 
 function testNull() {
