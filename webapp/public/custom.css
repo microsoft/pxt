@@ -750,3 +750,11 @@ html {
 .token.ts.keyword.while:not(.true), .token.ts.keyword.for {
     color: #5BA55B;
 }
+
+.highlight-statement {
+    color: red !important;
+	text-decoration: underline;
+	font-weight: bold;
+	font-style: oblique;
+    background-color: yellow;
+}

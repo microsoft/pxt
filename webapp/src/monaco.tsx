@@ -379,6 +379,9 @@ export class Editor extends srceditor.Editor {
                 monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
             }
 
+            if (this.highlightDecorations)
+                this.editor.deltaDecorations(this.highlightDecorations, []);
+
             if (this.lastSet != null) {
                 this.lastSet = null
             } else {
@@ -551,5 +554,17 @@ export class Editor extends srceditor.Editor {
                 }
             }
         }
+    }
+
+    private highlightDecorations: string[];
+
+    highlightStatement(brk: pxtc.LocationInfo) {
+        if (!this.editor) return;
+        let position = this.editor.getModel().getPositionAt(brk.start);
+        if (!position) return;
+        this.highlightDecorations = this.editor.deltaDecorations([], [
+            { range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column + brk.length),
+                options: { inlineClassName: 'highlight-statement' }},
+        ]);
     }
 }
