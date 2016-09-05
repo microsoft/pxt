@@ -28,6 +28,7 @@ function bundleOne(task, moduleId, exclude) {
         name: 'vs/language/typescript/' + moduleId,
         out: 'built/web/vs/language/typescript/' + moduleId + '.js',
         exclude: exclude,
+        optimize: "none",
         paths: {
             'vs/language/typescript': __dirname + '/built/monaco-typescript/'
         }
@@ -234,34 +235,11 @@ file("built/web/pxtlib.js", [
     "built/pxtblocks.js",
     "built/pxtsim.js",
     "built/pxtrunner.js",
-    "built/pxteditor.js", 
-    "built/web/vs/language/typescript/src/monaco.contribution.js"
+    "built/pxteditor.js"
 ], function () {
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
-
-    jake.mkdirP("webapp/public/vs")
-    jake.cpR("node_modules/monaco-editor/dev/vs/base", "webapp/public/vs/")
-    jake.cpR("node_modules/monaco-editor/dev/vs/editor", "webapp/public/vs/")
-
-    let monacotypescriptcontribution = fs.readFileSync("built/web/vs/language/typescript/src/monaco.contribution.js", "utf8")
-    monacotypescriptcontribution.replace('["require","exports"]', '["require","exports","vs/editor/edcore.main"]')
-
-    let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
-    monacoeditor = monacoeditor.replace("var FocusHeight = 35", "var FocusHeight = 45");
-    monacoeditor = monacoeditor.replace("var UnfocusedHeight = 19", "var UnfocusedHeight = 29");
-    monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
-    fs.writeFileSync("webapp/public/vs/editor/editor.main.js", monacoeditor)
-
-    jake.cpR("node_modules/monaco-editor/dev/vs/css.js", "webapp/public/vs/")
-    jake.cpR("node_modules/monaco-editor/dev/vs/loader.js", "webapp/public/vs/")
-    jake.cpR("node_modules/monaco-editor/dev/vs/nls.js", "webapp/public/vs/")
-    jake.mkdirP("webapp/public/vs/basic-languages/src")
-    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/bat.js", "webapp/public/vs/basic-languages/src/")
-    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/cpp.js", "webapp/public/vs/basic-languages/src/")
-    jake.mkdirP("webapp/public/vs/language/json")
-    jake.cpR("node_modules/monaco-editor/dev/vs/language/json/", "webapp/public/vs/language/")
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtblocks.js", "built/web/")
@@ -285,7 +263,8 @@ task('compilemonaco', [
     "built/web/vs/language/typescript/src/monaco.contribution.js",
     "built/web/vs/language/typescript/lib/typescriptServices.js",
     "built/web/vs/language/typescript/src/mode.js",
-    "built/web/vs/language/typescript/src/worker.js"
+    "built/web/vs/language/typescript/src/worker.js",
+    "built/web/vs/editor/editor.main.js"
 ])
 
 file('built/monaco-typescript', expand([
@@ -296,7 +275,37 @@ file('built/monaco-typescript', expand([
      tscIn(this, "monaco-typescript");
 })
 
-file('built/web/vs/language/typescript/src/monaco.contribution.js', ['built/monaco-typescript', 'built/monaco-typescript/src/monaco.contribution.js'], { async: true }, function () {
+file('built/web/vs/editor/editor.main.js', ['built/monaco-typescript', 'built/web/vs/language/typescript/src/monaco.contribution.js'], function () {
+    jake.mkdirP("built/web/vs/editor")
+    let monacotypescriptcontribution = fs.readFileSync("built/web/vs/language/typescript/src/monaco.contribution.js", "utf8")
+    monacotypescriptcontribution.replace('["require","exports"]', '["require","exports","vs/editor/edcore.main"]')
+
+    let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
+    monacoeditor = monacoeditor.replace("var FocusHeight = 35", "var FocusHeight = 45");
+    monacoeditor = monacoeditor.replace("var UnfocusedHeight = 19", "var UnfocusedHeight = 29");
+    monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
+    monacoeditor = monacoeditor.replace("this._container.focus()", "//this._container.focus()");
+    monacoeditor = monacoeditor.replace("this.editor.revealPosition(position);", "//this.editor.revealPosition(position);");
+    monacoeditor = monacoeditor.replace("this.editor.setSelection(where);", "//this.editor.setSelection(where);");
+    monacoeditor = monacoeditor.replace("this.editor.revealLine(revealLineNumber);", "//this.editor.revealLine(revealLineNumber);");
+    fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
+
+    jake.mkdirP("webapp/public/vs")
+    jake.cpR("node_modules/monaco-editor/dev/vs/base", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/editor", "webapp/public/vs/")
+    fs.unlinkSync("webapp/public/vs/editor/editor.main.js")
+
+    jake.cpR("node_modules/monaco-editor/dev/vs/css.js", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/loader.js", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/nls.js", "webapp/public/vs/")
+    jake.mkdirP("webapp/public/vs/basic-languages/src")
+    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/bat.js", "webapp/public/vs/basic-languages/src/")
+    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/cpp.js", "webapp/public/vs/basic-languages/src/")
+    jake.mkdirP("webapp/public/vs/language/json")
+    jake.cpR("node_modules/monaco-editor/dev/vs/language/json/", "webapp/public/vs/language/")
+})
+
+file('built/web/vs/language/typescript/src/monaco.contribution.js', ['built/monaco-typescript'], { async: true }, function () {
     bundleOne(this, 'src/monaco.contribution');
 })
 
