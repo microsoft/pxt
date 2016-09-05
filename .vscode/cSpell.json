@@ -13,7 +13,8 @@
         "multithreading",
         "simshim",
         "semver",
-        "user's"
+        "user's",
+        "initializers"
     ],
     // flagWords - list of words to be always considered incorrect
     // This is useful for offensive words and common spelling errors.
@@ -21,10 +22,9 @@
     "flagWords": [
         "hte"
     ],
-    
     "enabledLanguageIds": [
         "markdown",
         "plaintext",
         "text"
-     ]
+    ]
 }
