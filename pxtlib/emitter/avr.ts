@@ -122,8 +122,8 @@ namespace ts.pxtc.avr {
             this.addEnc("$i9", "#0-7", v => this.inrange(7, v, v))
 
             // TODO: revisit labelling
-            this.addEnc("$la", "LABEL", v => this.inrange(255, v / 4, v >> 2)).isWordAligned = true;
-            this.addEnc("$lb", "LABEL", v => this.inrangeSigned(63, v / 2, (v >> 1) << 3))
+            this.addEnc("$la", "LABEL", v => this.inrange(255, v >> 1, v >> 1)).isWordAligned = true;
+            this.addEnc("$lb", "LABEL", v => this.inrangeSigned(127, v >> 1, (v >> 1) << 3))
             this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(2047, v / 2, v >> 1))
 
             this.addInst("adc   $r0, $r1", 0x1C00, 0xfC00);
@@ -302,65 +302,65 @@ namespace ts.pxtc.avr {
             "0000  l8: nop     \n")
 
 
-assembler.expect(avr,
-"92cf push r12\n" +
-"92df push r13\n" +
-"92ef push r14\n" +
-"92ff push r15\n" +
-"930f push r16\n" +
-"931f push r17\n" +
-"93cf push r28\n" +
-"93df push r29\n" +
-"017c movw r14, r24\n" +
-"018a movw r16, r20\n" +
-"91800363 lds r24, 0x0363\n" +
-"2388 and r24, r24\n" +
-"f089 breq L16\n" +
-"01eb movw r28, r22\n" +
-"016b movw r12, r22\n" +
-"0ec4 add r12, r20\n" +
-"1ed5 adc r13, r21\n" +
-"15cc L18: cp r28, r12\n" +
-"05dd cpc r29, r13\n" +
-"f0f1 breq L17\n" +
-"9169 ld r22, Y+\n" +
-"01d7 movw r26, r14\n" +
-"91ed ld r30, X+\n" +
-"91fc ld r31, X\n" +
-"9001 ld r0, Z+\n" +
-"81f0 ld r31, Z\n" +
-"2de0 mov r30, r0\n" +
-"01c7 movw r24, r14\n" +
-"9509 icall \n" +
-"cff3 rjmp L18\n" +
-"2f84 L16: mov r24, r20\n" +
-"3241 cpi r20, 0x21\n" +
-"f488 brcc L17\n" +
-"91900362 lds r25, 0x0362\n" +
-"3094 cpi r25, 0x04\n" +
-"f469 brne L17\n" +
-"934002d7 sts 0x02D7, r20\n" +
-"01fb movw r30, r22\n" +
-"eb25 ldi r18, 0xB5\n" +
-"e032 ldi r19, 0x02\n" +
-"01d9 movw r26, r18\n" +
-"2f9a L19: mov r25, r26\n" +
-"1b92 sub r25, r18\n" +
-"1798 cp r25, r24\n" +
-"f418 brcc L17\n" +
-"9191 ld r25, Z+\n" +
-"939d st X+, r25\n" +
-"cff9 rjmp L19\n" +
-"01c8 L17: movw r24, r16\n" +
-"91df pop r29\n" +
-"91cf pop r28\n" +
-"911f pop r17\n" +
-"910f pop r16\n" +
-"90ff pop r15\n" +
-"90ef pop r14\n" +
-"90df pop r13\n" +
-"90cf pop r12\n" +
-"9508 ret \n")
+        assembler.expect(avr,
+            "92cf push r12\n" +
+            "92df push r13\n" +
+            "92ef push r14\n" +
+            "92ff push r15\n" +
+            "930f push r16\n" +
+            "931f push r17\n" +
+            "93cf push r28\n" +
+            "93df push r29\n" +
+            "017c movw r14, r24\n" +
+            "018a movw r16, r20\n" +
+            "91800363 lds r24, 0x0363\n" +
+            "2388 and r24, r24\n" +
+            "f089 breq L16\n" +
+            "01eb movw r28, r22\n" +
+            "016b movw r12, r22\n" +
+            "0ec4 add r12, r20\n" +
+            "1ed5 adc r13, r21\n" +
+            "15cc L18: cp r28, r12\n" +
+            "05dd cpc r29, r13\n" +
+            "f0f1 breq L17\n" +
+            "9169 ld r22, Y+\n" +
+            "01d7 movw r26, r14\n" +
+            "91ed ld r30, X+\n" +
+            "91fc ld r31, X\n" +
+            "9001 ld r0, Z+\n" +
+            "81f0 ld r31, Z\n" +
+            "2de0 mov r30, r0\n" +
+            "01c7 movw r24, r14\n" +
+            "9509 icall \n" +
+            "cff3 rjmp L18\n" +
+            "2f84 L16: mov r24, r20\n" +
+            "3241 cpi r20, 0x21\n" +
+            "f488 brcc L17\n" +
+            "91900362 lds r25, 0x0362\n" +
+            "3094 cpi r25, 0x04\n" +
+            "f469 brne L17\n" +
+            "934002d7 sts 0x02D7, r20\n" +
+            "01fb movw r30, r22\n" +
+            "eb25 ldi r18, 0xB5\n" +
+            "e032 ldi r19, 0x02\n" +
+            "01d9 movw r26, r18\n" +
+            "2f9a L19: mov r25, r26\n" +
+            "1b92 sub r25, r18\n" +
+            "1798 cp r25, r24\n" +
+            "f418 brcc L17\n" +
+            "9191 ld r25, Z+\n" +
+            "939d st X+, r25\n" +
+            "cff9 rjmp L19\n" +
+            "01c8 L17: movw r24, r16\n" +
+            "91df pop r29\n" +
+            "91cf pop r28\n" +
+            "911f pop r17\n" +
+            "910f pop r16\n" +
+            "90ff pop r15\n" +
+            "90ef pop r14\n" +
+            "90df pop r13\n" +
+            "90cf pop r12\n" +
+            "9508 ret \n")
 
 
 /*

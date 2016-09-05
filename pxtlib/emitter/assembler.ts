@@ -327,6 +327,7 @@ namespace ts.pxtc.assembler {
                         this.directiveError(lf("saved stack not found"))
                 }
 
+                // TODO: ARM-specific???
                 m = /^(.*)@(hi|lo)$/.exec(s)
                 if (m && this.looksLikeLabel(m[1])) {
                     v = this.lookupLabel(m[1], true)
