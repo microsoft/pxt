@@ -1535,9 +1535,8 @@ ${lbl}: .short 0xffff
             args.unshift(funcExpr)
             callInfo.args.unshift(funcExpr)
 
-            // force mask=1 - i.e., do not decr() the arguments, only the action itself, 
-            // because what we're calling is ultimately a procedure which will decr arguments itself
-            return ir.rtcallMask("pxt::runAction" + suff, 1, ir.CallingConvention.Async, args.map(emitExpr))
+            // lambdas do not decr() arguments themselves; do it normally with getMask()
+            return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async, args.map(emitExpr))
         }
 
         function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[]) {

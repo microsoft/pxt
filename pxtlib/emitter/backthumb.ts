@@ -424,6 +424,12 @@ ${bkptLabel + "_after"}:
                 write(`push {r${i + 1}}`)
             })
             write("@stackmark args");
+            proc.args.forEach((p, i) => {
+                if (p.isRef()) {
+                    write(`ldr r0, ${cellref(p)}`)
+                    emitCallRaw("pxt::incr")
+                }
+            })
 
             write(`bl pxtrt::getGlobalsPtr`)
             write(`mov r6, r0`)
