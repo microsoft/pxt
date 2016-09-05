@@ -359,8 +359,25 @@ export class Editor extends srceditor.Editor {
             });
         }
 
+        this.editor.onDidBlurEditorText(() => {
+            if (this.isIncomplete()) {
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
+            } else {
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = false;
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
+            }
+        })
+
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
             if (this.fileType == FileType.Unknown || this.currFile.isReadonly()) return;
+            if (this.isIncomplete()) {
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
+            } else {
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = false;
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
+            }
 
             if (this.lastSet != null) {
                 this.lastSet = null
