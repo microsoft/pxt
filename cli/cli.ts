@@ -1592,9 +1592,9 @@ const defaultFiles: U.Map<string> = {
 
     "tests.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
-    "enums.d.ts": ``,
+    "enums.d.ts": ` `,
 
-    "shims.d.ts": ``,
+    "shims.d.ts": ` `,
 
     "README.md": `# @NAME@
 @DESCRIPTION@
