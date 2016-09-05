@@ -74,7 +74,7 @@ namespace ts.pxtc {
             if (b) return b.isRef
             U.oops("unbound type parameter: " + checker.typeToString(t))
         }
-        return !(t.flags & (TypeFlags.Number | TypeFlags.Boolean | TypeFlags.Enum))
+        return !(t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
     }
 
     function isRefDecl(def: Declaration) {
@@ -1216,7 +1216,7 @@ ${lbl}: .short 0xffff
             }
 
             if (indexer) {
-                if (typeOf(node.argumentExpression).flags & TypeFlags.Number) {
+                if (typeOf(node.argumentExpression).flags & TypeFlags.NumberLike) {
                     let args = [node.expression, node.argumentExpression]
                     return rtcallMask(indexer, args, ir.CallingConvention.Plain, assign ? [assign] : [])
                 } else {
@@ -2165,7 +2165,7 @@ ${lbl}: .short 0xffff
                     return emitLazyBinaryExpression(node);
             }
 
-            if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
+            if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
                 if (!shimName)
@@ -2232,7 +2232,7 @@ ${lbl}: .short 0xffff
             if (isStringLiteral(e))
                 return r;
             let tp = typeOf(e)
-            if (tp.flags & TypeFlags.Number)
+            if (tp.flags & TypeFlags.NumberLike)
                 return ir.rtcall("Number_::toString", [r])
             else if (tp.flags & TypeFlags.Boolean)
                 return ir.rtcall("Boolean_::toString", [r])
@@ -2506,7 +2506,7 @@ ${lbl}: .short 0xffff
 
         function emitSwitchStatement(node: SwitchStatement) {
             emitBrk(node)
-            if (!(typeOf(node.expression).flags & (TypeFlags.Number | TypeFlags.Enum))) {
+            if (!(typeOf(node.expression).flags & (TypeFlags.NumberLike))) {
                 userError(9226, lf("switch() only supported over numbers or enums"))
             }
 

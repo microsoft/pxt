@@ -653,6 +653,16 @@ function testEnums() {
     control.assert(switchB(En.C) == 17, "x3")
     control.assert(switchB(En.D) == 13, "x4")
     control.assert(switchB(En.E) == 14, "x5")
+
+    let kk = 1
+    if (kk & En2.D2) {
+    } else {
+        control.assert(false, "e&")
+    }
+    kk = 2
+    if (kk & En2.D2) {
+        control.assert(false, "e&")
+    }
 }
 
 
