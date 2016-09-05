@@ -46,7 +46,7 @@ See also [issue #51](https://github.com/Microsoft/pxt/issues/51).
 * `for(;;)` loops
 * `for ... of` statements (see below about `for ... in`)
 * `break/continue`; also with labeled loops
-* `switch` statement (on numbers only)
+* `switch` statement (on numbers, strings, and arbitrary types - the last one isn't very useful)
 * `debugger` statement for breakpoints
 * conditional operator `? :`; lazy boolean operators
 * namespaces (a form of modules) 
