@@ -2506,26 +2506,66 @@ ${lbl}: .short 0xffff
 
         function emitSwitchStatement(node: SwitchStatement) {
             emitBrk(node)
-            if (!(typeOf(node.expression).flags & (TypeFlags.NumberLike))) {
-                userError(9226, lf("switch() only supported over numbers or enums"))
-            }
+
+            let switchType = typeOf(node.expression)
+            let isNumber = !!(switchType.flags & TypeFlags.NumberLike)
 
             let l = getLabels(node)
-            let hasDefault = false
-            let expr = emitExpr(node.expression)
-            emitInJmpValue(expr)
+            let defaultLabel: ir.Stmt
+            let quickCmpMode = isNumber
+
+            let expr = ir.shared(emitExpr(node.expression))
+            let plainExpr = expr
+            if (isNumber) {
+                emitInJmpValue(expr)
+            }
+
             let lbls = node.caseBlock.clauses.map(cl => {
                 let lbl = proc.mkLabel("switch")
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
-                    proc.emitJmp(lbl, emitExpr(cc.expression), ir.JmpMode.IfJmpValEq)
+                    let cmpExpr = emitExpr(cc.expression)
+                    if (switchType.flags & TypeFlags.String) {
+                        let cmpCall = ir.rtcallMask("String_::compare",
+                            isRefCountedExpr(cc.expression) ? 3 : 2,
+                            ir.CallingConvention.Plain, [cmpExpr, expr])
+                        expr = ir.op(EK.Incr, [expr])
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero)
+                    } else if (isRefCountedExpr(cc.expression)) {
+                        let cmpCall = ir.rtcallMask("Number_::eq", 3,
+                            ir.CallingConvention.Plain, [cmpExpr, expr])
+                        quickCmpMode = false
+                        expr = ir.op(EK.Incr, [expr])
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero)
+                    } else {
+                        if (cmpExpr.exprKind == EK.NumberLiteral) {
+                            if (!quickCmpMode) {
+                                emitInJmpValue(expr)
+                                quickCmpMode = true
+                            }
+                            proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq)
+                        } else {
+                            let cmpCall = ir.rtcallMask("Number_::eq", 0,
+                                ir.CallingConvention.Plain, [cmpExpr, expr])
+                            quickCmpMode = false
+                            proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero)
+                        }
+                    }
+                } else if (cl.kind == SK.DefaultClause) {
+                    // Save default label for emit at the end of the 
+                    // tests section. Default label doesn't have to come at the
+                    // end in JS.
+                    assert(!defaultLabel)
+                    defaultLabel = lbl
                 } else {
-                    hasDefault = true
-                    proc.emitJmp(lbl)
+                    oops()
                 }
                 return lbl
             })
-            if (!hasDefault)
+
+            if (defaultLabel)
+                proc.emitJmp(defaultLabel)
+            else
                 proc.emitJmp(l.brk);
 
             node.caseBlock.clauses.forEach((cl, i) => {
