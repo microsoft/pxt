@@ -430,7 +430,7 @@ export class Editor extends srceditor.Editor {
             "ts": "typescript",
             "js": "javascript",
             "blocks": "xml",
-            "asm": "bat"
+            "asm": "asm"
         }
         let mode = "text"
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
