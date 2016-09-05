@@ -27,7 +27,7 @@ namespace ts.pxtc.avr {
         // - the call and jmp instructions have both 16-bit and 22-bit varieties
         // - lds and sts are both 16-bit
         // for now, we only support only 16-bit
-        public emit32(i: assembler.Instruction, v: number, actual: string): pxtc.assembler.EmitResult {
+        public emit32(v0: number, v: number, actual: string): pxtc.assembler.EmitResult {
             // TODO: we can have odd addresses in AVR
             // if (v % 2) return pxtc.assembler.emitErr("uneven target label?", actual);
             let off = v // / 2
@@ -41,7 +41,7 @@ namespace ts.pxtc.avr {
             let imm = off & 0xffff
 
             return {
-                opcode: i.opcode,
+                opcode: v0,
                 opcode2: imm,
                 stack: 0,
                 numArgs: [v],
@@ -360,8 +360,7 @@ assembler.expect(avr,
 "90ef pop r14\n" +
 "90df pop r13\n" +
 "90cf pop r12\n" +
-"9508 ret \n" +
-"")
+"9508 ret \n")
 
 
 /*
