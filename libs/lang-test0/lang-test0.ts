@@ -1205,6 +1205,13 @@ function testAnySwitch() {
         control.assert(testQuick(i) == i + 1, "q")
 }
 
+function testLambdasWithMoreParams() {
+    function a(f: (x: number, v: string, y: number) => void) {
+        f(1, "a" + "X12b", 7)
+    }
+    a(() => { })
+}
+
 
 // ---------------------------------------------------------------------------
 // Driver starts
@@ -1250,6 +1257,7 @@ testComplexCallExpr()
 ClassTest.run()
 Ctors.run()
 testAnySwitch()
+testLambdasWithMoreParams()
 
 
 msg("test top level code")
