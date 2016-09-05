@@ -297,7 +297,7 @@ namespace pxsim {
             return v
         }
 
-        export function nullCheck(v:any) {
+        export function nullCheck(v: any) {
             if (!v)
                 U.userError("Using null value.")
         }
@@ -442,7 +442,7 @@ namespace pxsim {
                     .then(loop)
                     .done()
             }
-            pxtrt.nullCheck(a)            
+            pxtrt.nullCheck(a)
             incr(a)
             loop()
         }

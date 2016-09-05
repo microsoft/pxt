@@ -638,7 +638,7 @@ namespace ts.pxtc.assembler {
                     expectOne()
                     this.stack += this.parseOneInt(words[1]);
                     break
-                    
+
                 case ".section":
                 case ".global":
                     this.stackpointers = {};
