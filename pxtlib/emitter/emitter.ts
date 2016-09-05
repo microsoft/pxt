@@ -2034,7 +2034,6 @@ ${lbl}: .short 0xffff
             let lbl = proc.mkLabel("lazy")
             let left = emitExpr(node.left)
             let isString = typeOf(node.left).flags & TypeFlags.String
-            let needsFinalFakeRef = false
             if (node.operatorToken.kind == SK.BarBarToken) {
                 if (isString)
                     left = ir.rtcall("pxtrt::emptyToNull", [left])
@@ -2044,11 +2043,10 @@ ${lbl}: .short 0xffff
                 if (isString) {
                     let slbl = proc.mkLabel("lazyStr")
                     proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
-                    proc.emitJmp(lbl, left, ir.JmpMode.Always)
+                    proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
                     proc.emitLbl(slbl)
-                    if (isRefCountedExpr(node.left))
-                        proc.emitExpr(ir.op(EK.Decr, [left]))
-                    needsFinalFakeRef = true
+                    //if (isRefCountedExpr(node.left)) - always decr, so that we for sure have a reference here
+                    proc.emitExpr(ir.op(EK.Decr, [left]))
                 } else {
                     if (isRefCountedExpr(node.left))
                         proc.emitExpr(ir.op(EK.Decr, [left]))
@@ -2060,9 +2058,6 @@ ${lbl}: .short 0xffff
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
-
-            if (needsFinalFakeRef)
-                proc.emitExpr(ir.rtcall("thumb::ignore", [ir.op(EK.JmpValue, []), left]))
 
             return ir.op(EK.JmpValue, [])
         }
@@ -2530,25 +2525,25 @@ ${lbl}: .short 0xffff
                             isRefCountedExpr(cc.expression) ? 3 : 2,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         expr = ir.op(EK.Incr, [expr])
-                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero)
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, plainExpr)
                     } else if (isRefCountedExpr(cc.expression)) {
                         let cmpCall = ir.rtcallMask("Number_::eq", 3,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
                         expr = ir.op(EK.Incr, [expr])
-                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero)
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
                         if (cmpExpr.exprKind == EK.NumberLiteral) {
                             if (!quickCmpMode) {
                                 emitInJmpValue(expr)
                                 quickCmpMode = true
                             }
-                            proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq)
+                            proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq, plainExpr)
                         } else {
                             let cmpCall = ir.rtcallMask("Number_::eq", 0,
                                 ir.CallingConvention.Plain, [cmpExpr, expr])
                             quickCmpMode = false
-                            proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero)
+                            proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                         }
                     }
                 } else if (cl.kind == SK.DefaultClause) {
@@ -2564,9 +2559,9 @@ ${lbl}: .short 0xffff
             })
 
             if (defaultLabel)
-                proc.emitJmp(defaultLabel)
+                proc.emitJmp(defaultLabel, plainExpr)
             else
-                proc.emitJmp(l.brk);
+                proc.emitJmp(l.brk, plainExpr);
 
             node.caseBlock.clauses.forEach((cl, i) => {
                 proc.emitLbl(lbls[i])
