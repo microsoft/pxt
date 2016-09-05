@@ -738,11 +738,6 @@ html {
     outline: 1px auto #bdc3c7;
 }
 
-.token.ts {
-    padding-left: 0.1em;
-    padding-right: 0.1em;
-}
-
 .token.ts.keyword.if, .token.ts.keyword.else {
     color: #5B80A5;
 }
@@ -752,9 +747,5 @@ html {
 }
 
 .highlight-statement {
-    color: red !important;
-	text-decoration: underline;
-	font-weight: bold;
-	font-style: oblique;
-    background-color: yellow;
+    background-color: #FFB900;
 }

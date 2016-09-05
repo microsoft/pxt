@@ -32,6 +32,43 @@ namespace pxt.vs {
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         if (!monaco.languages.typescript) return;
 
+        initAsmMonarchLanguage();
+
+        // validation settings
+        let diagnosticOptions = monaco.languages.typescript.typescriptDefaults.diagnosticsOptions;
+        diagnosticOptions.noSyntaxValidation = false;
+        diagnosticOptions.noSemanticValidation = false;
+
+        // compiler options
+        let compilerOptions = monaco.languages.typescript.typescriptDefaults.compilerOptions;
+        compilerOptions.allowUnreachableCode = true;
+        compilerOptions.noImplicitAny = true;
+        compilerOptions.allowJs = false;
+        compilerOptions.allowUnusedLabels = true;
+        compilerOptions.target = monaco.languages.typescript.ScriptTarget.ES5;
+        compilerOptions.outDir = "built";
+        compilerOptions.rootDir = ".";
+        compilerOptions.noLib = true;
+
+        let editor = monaco.editor.create(element, {
+            model: null,
+            //ariaLabel: lf("JavaScript Editor"),
+            fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
+            scrollBeyondLastLine: false,
+            language: "typescript",
+            experimentalScreenReader: true
+        });
+
+        window.addEventListener('resize', function () {
+            editor.layout();
+        });
+
+        editor.layout();
+
+        return editor;
+    }
+
+    function initAsmMonarchLanguage(): void {
         monaco.languages.register({id: 'asm', extensions: ['.asm']});
         monaco.languages.setMonarchTokensProvider('asm', <monaco.languages.IMonarchLanguage>{
             // Set defaultToken to invalid to see what you do not tokenize yet
@@ -119,38 +156,5 @@ namespace pxt.vs {
                 ],
             }
         });
-
-        // validation settings
-        let diagnosticOptions = monaco.languages.typescript.typescriptDefaults.diagnosticsOptions;
-        diagnosticOptions.noSyntaxValidation = false;
-        diagnosticOptions.noSemanticValidation = false;
-
-        // compiler options
-        let compilerOptions = monaco.languages.typescript.typescriptDefaults.compilerOptions;
-        compilerOptions.allowUnreachableCode = true;
-        compilerOptions.noImplicitAny = true;
-        compilerOptions.allowJs = false;
-        compilerOptions.allowUnusedLabels = true;
-        compilerOptions.target = monaco.languages.typescript.ScriptTarget.ES5;
-        compilerOptions.outDir = "built";
-        compilerOptions.rootDir = ".";
-        compilerOptions.noLib = true;
-
-        let editor = monaco.editor.create(element, {
-            model: null,
-            //ariaLabel: lf("JavaScript Editor"),
-            fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
-            scrollBeyondLastLine: false,
-            language: "typescript",
-            experimentalScreenReader: true
-        });
-
-        window.addEventListener('resize', function () {
-            editor.layout();
-        });
-
-        editor.layout();
-
-        return editor;
     }
 }
