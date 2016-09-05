@@ -940,7 +940,7 @@ namespace ts.pxtc {
                     case TokenKind.Block:
                         let blk = t as BlockToken;
                         if (blk.stmts.length == 0) {
-                            output += " "
+                            output += "\n\t\n"
                         } else {
                             output += "\n"
                             blk.stmts.forEach(ppStmt)
