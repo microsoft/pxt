@@ -164,7 +164,7 @@ namespace ts.pxtc.assembler {
             if (tokens[j]) return emitErr("trailing tokens", tokens[j])
 
             if (this.ei.is32bit(this)) {
-                return this.ei.emit32(this, bit32_value, ln.bin.normalizeExternalLabel(bit32_actual));
+                return this.ei.emit32(r, bit32_value, ln.bin.normalizeExternalLabel(bit32_actual));
             }
 
             return {
@@ -947,7 +947,7 @@ namespace ts.pxtc.assembler {
             return false;
         }
 
-        public emit32(i: Instruction, v: number, actual: string): EmitResult {
+        public emit32(v1:number, v2: number, actual: string): EmitResult {
             return null;
         }
 
@@ -1106,7 +1106,9 @@ namespace ts.pxtc.assembler {
     export function expect(ei: EncodersInstructions, disasm: string) {
         let exp: number[] = []
         let asm = disasm.replace(/^([0-9a-fA-F]{4,8})\s/gm, (w, n) => {
-            exp.push(parseInt(n, 16))
+            exp.push(parseInt(n.slice(0,4), 16))
+            if (n.length == 8)
+                exp.push(parseInt(n.slice(4,8), 16))
             return ""
         })
 

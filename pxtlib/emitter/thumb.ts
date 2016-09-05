@@ -181,7 +181,7 @@ namespace ts.pxtc.thumb {
             return i.name == "bl" || i.name == "bb";
         }
 
-        public emit32(i: pxtc.assembler.Instruction, v: number, actual: string): pxtc.assembler.EmitResult {
+        public emit32(v0: number, v: number, actual: string): pxtc.assembler.EmitResult {
             if (v % 2) return pxtc.assembler.emitErr("uneven BL?", actual);
             let off = v / 2
             assert(off != null)
