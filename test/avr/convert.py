@@ -128,6 +128,7 @@ for line in file:
 
 lbl = 1
 labels = dict({})
+calls = dict({})
 for i in code:
     a = i.addr
     if (i.opcode == "jmp" or i.opcode=="call" or i.relative != ""):
@@ -136,6 +137,8 @@ for i in code:
         if not (addr in labels): 
             # new target address
             labels[addr] = "L" + str(lbl)
+            if (i.opcode == "call"):
+                calls[addr] = labels[addr] 
             # add label to instruction, if we have it
             if (addr in addr_map):
                 addr_map[addr].label = labels[addr]
@@ -143,7 +146,7 @@ for i in code:
 
 # replace addresses by labels in operand lists
 for i in code:   
-    if (i.opcode == "jmp" or i.opcode =="call" or i.relative != ""):
+    if (i.relative != ""):
         # skip the 0x
         addr = i.operands[0][2:]
         if (addr in labels):
@@ -157,16 +160,22 @@ for i in code:
 #            "903f      pop     r3\n")
 
 
-result =  "assembler.expect(avr,\n" + "\".startaddr 0x1b8\\n\" +\n"
+def header(a):
+    return "assembler.expect(avr,\n" + "\".startaddr " + a + "\\n\" +\n"
 
-i = 0
-while i<500:
-    result = result + "\"" + (code[i].toString()) + "\\n\" +\n"
-    i = i + 1
-
-result = result + "\"\")"
 file_out = open("out.ts","w")
-file_out.write(result)
+result = ""
+for asm in code:
+    if asm.addr in calls:
+        if result != "":
+            result = result + "\"\")\n\n"
+            file_out.write(result)
+        result = header(asm.addr)
+    if result != "":
+        result = result + "\"" + (asm.toString()) + "\\n\" +\n"
+if (result != ""):
+    result = result + "\"\")\n\n"
+    file_out.write(result)
 file_out.close()
 
 

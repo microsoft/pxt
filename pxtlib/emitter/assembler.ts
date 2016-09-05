@@ -139,6 +139,7 @@ namespace ts.pxtc.assembler {
                         if (this.ei.is32bit(this)) {
                             bit32_value = v
                             bit32_actual = actual
+                            continue
                         }
                     } else {
                         oops()
