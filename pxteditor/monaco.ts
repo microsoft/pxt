@@ -84,7 +84,7 @@ namespace pxt.vs {
                                         '@default'  : '' } } ],
 
                 // @ annotations.
-                [/@\s*[a-zA-Z_\$][\w\$]*/, { token: 'annotation', log: 'annotation token: $0' }],
+                [/@\s*[a-zA-Z_\$][\w\$]*/, { token: 'annotation' }],
 
                 // numbers
                 //[/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
