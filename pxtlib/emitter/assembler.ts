@@ -623,6 +623,11 @@ namespace ts.pxtc.assembler {
                     this.checkStack = false
                     break
 
+                case "@dummystack":
+                    expectOne()
+                    this.stack += this.parseOneInt(words[1]);
+                    break
+
                 case ".section":
                 case ".global":
                     this.stackpointers = {};

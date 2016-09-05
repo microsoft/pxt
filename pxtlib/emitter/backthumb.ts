@@ -135,10 +135,29 @@ ${bkptLabel + "_after"}:
             return "." + root + bin.lblNo++
         }
 
+        function terminate(expr: ir.Expr) {
+            assert(expr.exprKind == ir.EK.SharedRef)
+            let arg = expr.args[0]
+            if (arg.currUses == arg.totalUses)
+                return
+            let numEntries = 0
+            while (numEntries < exprStack.length) {
+                let ee = exprStack[numEntries]
+                if (ee != arg && ee.currUses != ee.totalUses)
+                    break
+                numEntries++
+            }
+            assert(numEntries > 0)
+            write(`@dummystack ${numEntries}`)
+            write(`add sp, #4*${numEntries} ; terminate ref`)
+        }
+
         function emitJmp(jmp: ir.Stmt) {
             if (jmp.jmpMode == ir.JmpMode.Always) {
                 if (jmp.expr)
                     emitExpr(jmp.expr)
+                if (jmp.terminateExpr)
+                    terminate(jmp.terminateExpr)
                 write("bb " + jmp.lblName + " ; with expression")
             } else {
                 let lbl = mkLbl("jmpz")
@@ -162,6 +181,9 @@ ${bkptLabel + "_after"}:
                     // IfZero or IfJmpValEq
                     write("bne " + lbl)
                 }
+
+                if (jmp.terminateExpr)
+                    terminate(jmp.terminateExpr)
 
                 write("bb " + jmp.lblName)
                 write(lbl + ":")
@@ -250,7 +272,8 @@ ${bkptLabel + "_after"}:
                 case EK.SharedDef:
                     return emitSharedDef(e)
                 case EK.Sequence:
-                    return e.args.forEach(emitExpr)
+                    e.args.forEach(emitExpr)
+                    return clearStack()
                 default:
                     return emitExprInto(e, "r0")
             }
@@ -270,6 +293,12 @@ ${bkptLabel + "_after"}:
             }
         }
 
+        function emitSharedTerminate(e: ir.Expr) {
+            emitExpr(e)
+            let arg = e.data as ir.Expr
+
+        }
+
         function emitRtCall(topExpr: ir.Expr) {
             let info = ir.flattenArgs(topExpr)
 
@@ -278,6 +307,8 @@ ${bkptLabel + "_after"}:
                 U.assert(i <= 3)
                 emitExprInto(a, "r" + i)
             })
+
+            clearStack()
 
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)

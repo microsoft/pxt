@@ -74,7 +74,7 @@ namespace ts.pxtc {
             if (b) return b.isRef
             U.oops("unbound type parameter: " + checker.typeToString(t))
         }
-        return !(t.flags & (TypeFlags.Number | TypeFlags.Boolean | TypeFlags.Enum))
+        return !(t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
     }
 
     function isRefDecl(def: Declaration) {
@@ -1216,7 +1216,7 @@ ${lbl}: .short 0xffff
             }
 
             if (indexer) {
-                if (typeOf(node.argumentExpression).flags & TypeFlags.Number) {
+                if (typeOf(node.argumentExpression).flags & TypeFlags.NumberLike) {
                     let args = [node.expression, node.argumentExpression]
                     return rtcallMask(indexer, args, ir.CallingConvention.Plain, assign ? [assign] : [])
                 } else {
@@ -2034,7 +2034,6 @@ ${lbl}: .short 0xffff
             let lbl = proc.mkLabel("lazy")
             let left = emitExpr(node.left)
             let isString = typeOf(node.left).flags & TypeFlags.String
-            let needsFinalFakeRef = false
             if (node.operatorToken.kind == SK.BarBarToken) {
                 if (isString)
                     left = ir.rtcall("pxtrt::emptyToNull", [left])
@@ -2044,11 +2043,10 @@ ${lbl}: .short 0xffff
                 if (isString) {
                     let slbl = proc.mkLabel("lazyStr")
                     proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
-                    proc.emitJmp(lbl, left, ir.JmpMode.Always)
+                    proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
                     proc.emitLbl(slbl)
-                    if (isRefCountedExpr(node.left))
-                        proc.emitExpr(ir.op(EK.Decr, [left]))
-                    needsFinalFakeRef = true
+                    //if (isRefCountedExpr(node.left)) - always decr, so that we for sure have a reference here
+                    proc.emitExpr(ir.op(EK.Decr, [left]))
                 } else {
                     if (isRefCountedExpr(node.left))
                         proc.emitExpr(ir.op(EK.Decr, [left]))
@@ -2060,9 +2058,6 @@ ${lbl}: .short 0xffff
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
-
-            if (needsFinalFakeRef)
-                proc.emitExpr(ir.rtcall("thumb::ignore", [ir.op(EK.JmpValue, []), left]))
 
             return ir.op(EK.JmpValue, [])
         }
@@ -2165,7 +2160,7 @@ ${lbl}: .short 0xffff
                     return emitLazyBinaryExpression(node);
             }
 
-            if ((lt.flags & TypeFlags.Number) && (rt.flags & TypeFlags.Number)) {
+            if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(noEq || node.operatorToken.kind)
                 if (!shimName)
@@ -2232,7 +2227,7 @@ ${lbl}: .short 0xffff
             if (isStringLiteral(e))
                 return r;
             let tp = typeOf(e)
-            if (tp.flags & TypeFlags.Number)
+            if (tp.flags & TypeFlags.NumberLike)
                 return ir.rtcall("Number_::toString", [r])
             else if (tp.flags & TypeFlags.Boolean)
                 return ir.rtcall("Boolean_::toString", [r])
@@ -2506,27 +2501,67 @@ ${lbl}: .short 0xffff
 
         function emitSwitchStatement(node: SwitchStatement) {
             emitBrk(node)
-            if (!(typeOf(node.expression).flags & (TypeFlags.Number | TypeFlags.Enum))) {
-                userError(9226, lf("switch() only supported over numbers or enums"))
-            }
+
+            let switchType = typeOf(node.expression)
+            let isNumber = !!(switchType.flags & TypeFlags.NumberLike)
 
             let l = getLabels(node)
-            let hasDefault = false
-            let expr = emitExpr(node.expression)
-            emitInJmpValue(expr)
+            let defaultLabel: ir.Stmt
+            let quickCmpMode = isNumber
+
+            let expr = ir.shared(emitExpr(node.expression))
+            let plainExpr = expr
+            if (isNumber) {
+                emitInJmpValue(expr)
+            }
+
             let lbls = node.caseBlock.clauses.map(cl => {
                 let lbl = proc.mkLabel("switch")
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
-                    proc.emitJmp(lbl, emitExpr(cc.expression), ir.JmpMode.IfJmpValEq)
+                    let cmpExpr = emitExpr(cc.expression)
+                    if (switchType.flags & TypeFlags.String) {
+                        let cmpCall = ir.rtcallMask("String_::compare",
+                            isRefCountedExpr(cc.expression) ? 3 : 2,
+                            ir.CallingConvention.Plain, [cmpExpr, expr])
+                        expr = ir.op(EK.Incr, [expr])
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, plainExpr)
+                    } else if (isRefCountedExpr(cc.expression)) {
+                        let cmpCall = ir.rtcallMask("Number_::eq", 3,
+                            ir.CallingConvention.Plain, [cmpExpr, expr])
+                        quickCmpMode = false
+                        expr = ir.op(EK.Incr, [expr])
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
+                    } else {
+                        if (cmpExpr.exprKind == EK.NumberLiteral) {
+                            if (!quickCmpMode) {
+                                emitInJmpValue(expr)
+                                quickCmpMode = true
+                            }
+                            proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq, plainExpr)
+                        } else {
+                            let cmpCall = ir.rtcallMask("Number_::eq", 0,
+                                ir.CallingConvention.Plain, [cmpExpr, expr])
+                            quickCmpMode = false
+                            proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
+                        }
+                    }
+                } else if (cl.kind == SK.DefaultClause) {
+                    // Save default label for emit at the end of the 
+                    // tests section. Default label doesn't have to come at the
+                    // end in JS.
+                    assert(!defaultLabel)
+                    defaultLabel = lbl
                 } else {
-                    hasDefault = true
-                    proc.emitJmp(lbl)
+                    oops()
                 }
                 return lbl
             })
-            if (!hasDefault)
-                proc.emitJmp(l.brk);
+
+            if (defaultLabel)
+                proc.emitJmp(defaultLabel, plainExpr)
+            else
+                proc.emitJmp(l.brk, plainExpr);
 
             node.caseBlock.clauses.forEach((cl, i) => {
                 proc.emitLbl(lbls[i])

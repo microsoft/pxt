@@ -181,6 +181,7 @@ namespace ts.pxtc.ir {
         public breakpointInfo: Breakpoint;
         public stmtNo: number;
         public findIdx: number;
+        public terminateExpr: Expr;
 
         constructor(
             public stmtKind: SK,
@@ -472,10 +473,11 @@ namespace ts.pxtc.ir {
             this.emitJmp(trg, expr, JmpMode.IfZero)
         }
 
-        emitJmp(trg: string | Stmt, expr?: Expr, mode = JmpMode.Always) {
+        emitJmp(trg: string | Stmt, expr?: Expr, mode = JmpMode.Always, terminate: Expr = null) {
             let jmp = stmt(SK.Jmp, expr)
 
             jmp.jmpMode = mode;
+            jmp.terminateExpr = terminate
 
             if (typeof trg == "string")
                 jmp.lblName = trg as any
