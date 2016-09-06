@@ -1572,8 +1572,6 @@ function initTheme() {
         pxsim.U.addClass(document.body, "rtl");
         document.body.style.direction = "rtl";
     }
-
-    pxt.blocks.updateUserLanguage();
 }
 
 function parseHash(): { cmd: string; arg: string } {

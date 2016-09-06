@@ -496,20 +496,6 @@ namespace pxt.blocks {
         // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
         // we're taking off hats.
         // Blockly.BlockSvg.START_HAT = true;
-
-        updateUserLanguage();
-    }
-
-    export function updateUserLanguage() {
-        if (pxtc.Util.userLanguage() != "en") {
-            let src = pxt.webConfig.pxtCdnUrl + "blockly/msg/js/" + pxtc.Util.userLanguage() + ".js";
-            if (!document.head.querySelector(`script[src='${src}']`)) {
-                let script = document.createElement("script")
-                script.type = "text/javascript";
-                script.src = src;
-                document.head.appendChild(script);
-            }
-        }
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
