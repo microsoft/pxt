@@ -594,7 +594,11 @@ namespace pxt.blocks {
                     {
                       "type": "field_variable",
                       "name": "VAR",
-                      "variable": "item"
+                      "variable": lf("_default_var") // "item" in English
+		      // Please note that most multilingual characters
+		      // cannot be used as variable name at this point.
+		      // Translate or decide the default variable name
+		      // with care.
                     },
                     {
                       "type": "input_value",
@@ -983,8 +987,8 @@ namespace pxt.blocks {
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
             // user has created a variable of the same name.
-            goog.array.remove(variableList, "item");
-            variableList.unshift("item");
+            goog.array.remove(variableList, lf("_default_var"));
+            variableList.unshift(lf("_default_var"));
 
             let xmlList: HTMLElement[] = [];
             // variables getters first
@@ -1066,7 +1070,7 @@ namespace pxt.blocks {
 
         // builtin variables_set
         msg.VARIABLES_SET = lf("set %1 to %2");
-        msg.VARIABLES_DEFAULT_NAME = "item";
+        msg.VARIABLES_DEFAULT_NAME = lf("_default_var");
         //XXX Do not translate the default variable name.
         //XXX Variable names with Unicode character are harmful at this point.
         msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
@@ -1086,7 +1090,7 @@ namespace pxt.blocks {
 		    {
 		      "type": "field_variable",
 		      "name": "VAR",
-		      "variable": "item"
+		      "variable": lf("_default_var")
 		    },
 		    {
 		      "type": "input_value",
