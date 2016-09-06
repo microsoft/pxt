@@ -198,8 +198,8 @@ namespace ts.pxtc.avr {
             this.addInst("lac   Z, $r0", 0x9206, 0xfe0f);
             this.addInst("las   Z, $r0", 0x9205, 0xfe0f);
             this.addInst("lat   Z, $r0", 0x9207, 0xfe0f);
-            this.addInst("ld    $r0, X", 0x9006, 0xfe0f);
-            this.addInst("ld    $r0, X+", 0x9007, 0xfe0f);
+            this.addInst("ld    $r0, X", 0x900c, 0xfe0f);
+            this.addInst("ld    $r0, X+", 0x900d, 0xfe0f);
             this.addInst("ld    $r0, -X", 0x900e, 0xfe0f);
             this.addInst("ld    $r0, Y", 0x8008, 0xfe0f);
             this.addInst("ld    $r0, Y+", 0x9009, 0xfe0f);
@@ -362,6 +362,154 @@ namespace ts.pxtc.avr {
             "90cf pop r12\n" +
             "9508 ret \n")
 
+
+        assembler.expect(avr,
+            "91200363 L123: lds r18, 0x0363\n" +
+            "2322 and r18, r18\n" +
+            "f0c9 breq L20\n" +
+            "91200386 lds r18, 0x0386\n" +
+            "3220 cpi r18, 0x20\n" +
+            "f040 brcs L21\n" +
+            "e021 ldi r18, 0x01\n" +
+            "e030 ldi r19, 0x00\n" +
+            "01fc movw r30, r24\n" +
+            "8333 std Z, #3, r19\n" +
+            "8322 std Z, #2, r18\n" +
+            "e080 ldi r24, 0x00\n" +
+            "e090 ldi r25, 0x00\n" +
+            "9508 ret \n" +
+            "91800364 L21: lds r24, 0x0364\n" +
+            "2fe8 mov r30, r24\n" +
+            "e0f0 ldi r31, 0x00\n" +
+            "59eb subi r30, 0x9B\n" +
+            "4ffc sbci r31, 0xFC\n" +
+            "8360 st Z, r22\n" +
+            "5f8f subi r24, 0xFF\n" +
+            "93800364 sts 0x0364, r24\n" +
+            "93800386 sts 0x0386, r24\n" +
+            "c009 rjmp L22\n" +
+            "91800362 L20: lds r24, 0x0362\n" +
+            "3084 cpi r24, 0x04\n" +
+            "f429 brne L22\n" +
+            "e081 ldi r24, 0x01\n" +
+            "938002d7 sts 0x02D7, r24\n" +
+            "936002b5 sts 0x02B5, r22\n" +
+            "e081 L22: ldi r24, 0x01\n" +
+            "e090 ldi r25, 0x00\n" +
+            "9508 ret \n")
+
+/*
+        assembler.expect(avr,
+            "931f L111: push r17\n" +
+            "93cf push r28\n" +
+            "93df push r29\n" +
+            "2f28 mov r18, r24\n" +
+            "e030 ldi r19, 0x00\n" +
+            "01f9 movw r30, r18\n" +
+            "56e7 subi r30, 0x67\n" +
+            "4ffe sbci r31, 0xFE\n" +
+            "9184 lpm r24, Z\n" +
+            "01f9 movw r30, r18\n" +
+            "5ce1 subi r30, 0xC1\n" +
+            "4ffe sbci r31, 0xFE\n" +
+            "91d4 lpm r29, Z\n" +
+            "01f9 movw r30, r18\n" +
+            "59e4 subi r30, 0x94\n" +
+            "4ffe sbci r31, 0xFE\n" +
+            "91c4 lpm r28, Z\n" +
+            "23cc and r28, r28\n" +
+            "f0c9 breq L31\n" +
+            "2f16 mov r17, r22\n" +
+            "1181 cpse r24, r1\n" +
+            "940e0229 call 0x452\n" +
+            "2fec mov r30, r28\n" +
+            "e0f0 ldi r31, 0x00\n" +
+            "0fee add r30, r30\n" +
+            "1fff adc r31, r31\n" +
+            "5ae2 subi r30, 0xA2\n" +
+            "4ffe sbci r31, 0xFE\n" +
+            "91a5 lpm r26, Z+\n" +
+            "91b4 lpm r27, Z\n" +
+            "b78f in r24, 0x3f\n" +
+            "94f8 cli \n" +
+            "1111 cpse r17, r1\n" +
+            "c005 rjmp L33\n" +
+            "919c ld r25, X\n" +
+            "2fed mov r30, r29\n" +
+            "95e0 com r30\n" +
+            "23e9 and r30, r25\n" +
+            "c002 rjmp L34\n" +
+            "91ec L33: ld r30, X\n" +
+            "2bed or r30, r29\n" +
+            "93ec L34: st X, r30\n" +
+            "bf8f out 0x3f, r24\n" +
+            "91df L31: pop r29\n" +
+            "91cf pop r28\n" +
+            "911f pop r17\n" +
+            "9508 ret \n")
+
+        assembler.expect(avr,
+            "93cf L110: push r28\n" +
+            "93df push r29\n" +
+            "e090 ldi r25, 0x00\n" +
+            "01fc movw r30, r24\n" +
+            "5ce1 subi r30, 0xC1\n" +
+            "4ffe sbci r31, 0xFE\n" +
+            "9124 lpm r18, Z\n" +
+            "01fc movw r30, r24\n" +
+            "59e4 subi r30, 0x94\n" +
+            "4ffe sbci r31, 0xFE\n" +
+            "9184 lpm r24, Z\n" +
+            "2388 and r24, r24\n" +
+            "f161 breq L35\n" +
+            "e090 ldi r25, 0x00\n" +
+            "0f88 add r24, r24\n" +
+            "1f99 adc r25, r25\n" +
+            "01fc movw r30, r24\n" +
+            "5cef subi r30, 0xCF\n" +
+            "4ffe sbci r31, 0xFE\n" +
+            "91c5 lpm r28, Z+\n" +
+            "91d4 lpm r29, Z\n" +
+            "01fc movw r30, r24\n" +
+            "5ae2 subi r30, 0xA2\n" +
+            "4ffe sbci r31, 0xFE\n" +
+            "91a5 lpm r26, Z+\n" +
+            "91b4 lpm r27, Z\n" +
+            "1161 cpse r22, r1\n" +
+            "c009 rjmp L36\n" +
+            "b79f in r25, 0x3f\n" +
+            "94f8 cli \n" +
+            "8188 ld r24, Y\n" +
+            "9520 com r18\n" +
+            "2382 and r24, r18\n" +
+            "8388 st Y, r24\n" +
+            "91ec ld r30, X\n" +
+            "232e and r18, r30\n" +
+            "c00b rjmp L37\n" +
+            "3062 L36: cpi r22, 0x02\n" +
+            "f461 brne L38\n" +
+            "b79f in r25, 0x3f\n" +
+            "94f8 cli \n" +
+            "8138 ld r19, Y\n" +
+            "2f82 mov r24, r18\n" +
+            "9580 com r24\n" +
+            "2383 and r24, r19\n" +
+            "8388 st Y, r24\n" +
+            "91ec ld r30, X\n" +
+            "2b2e or r18, r30\n" +
+            "932c L37: st X, r18\n" +
+            "bf9f out 0x3f, r25\n" +
+            "c006 rjmp L35\n" +
+            "b78f L38: in r24, 0x3f\n" +
+            "94f8 cli \n" +
+            "81e8 ld r30, Y\n" +
+            "2b2e or r18, r30\n" +
+            "8328 st Y, r18\n" +
+            "bf8f out 0x3f, r24\n" +
+            "91df L35: pop r29\n" +
+            "91cf pop r28\n" +
+            "9508 ret \n")
+*/
 
 /*
         assembler.expect(avr,
