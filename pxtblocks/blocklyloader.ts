@@ -397,7 +397,7 @@ namespace pxt.blocks {
         // Load localized names for default categories
         if (tb) {
             let cats = tb.querySelectorAll('category');
-            for (var i = 0; i < cats.length; i++) {
+            for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
                     Util._localize(cats[i].getAttribute('name')));
             }
