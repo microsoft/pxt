@@ -845,16 +845,15 @@ ${info.id}_VT:
         .byte ${info.refmask.length}, ${info.vtable.length + 1}  ; num. fields, num. methods
 `;
 
-        let refmask = info.refmask.map(v => v ? "1" : "0")
-        while (refmask.length < 4 || refmask.length % 4 != 0)
-            refmask.push("0")
-
-        //let ifaceOffset = refmask.length + info.vtable.length * 4 + 8
         s += `        .word ${info.id}_IfaceVT\n`
 
         for (let m of info.vtable) {
             s += `        .word ${getFunctionLabel(m, info.bindings)}|1\n`
         }
+
+        let refmask = info.refmask.map(v => v ? "1" : "0")
+        while (refmask.length < 2 || refmask.length % 2 != 0)
+            refmask.push("0")
 
         s += `        .byte ${refmask.join(",")}\n`
 
@@ -862,7 +861,10 @@ ${info.id}_VT:
         // methods and lots of classes this could become a problem. We could use a table
         // of (iface-member-id, function-addr) pairs and binary search.
         // See https://codethemicrobit.com/nymuaedeou for Thumb binary search.
-        s += `${info.id}_IfaceVT:`
+        s += `
+        .balign 4
+${info.id}_IfaceVT:
+`
         for (let m of info.itable) {
             s += `        .word ${m ? getFunctionLabel(m, info.bindings) + "|1" : "0"}\n`
         }
