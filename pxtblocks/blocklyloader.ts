@@ -684,6 +684,21 @@ namespace pxt.blocks {
     }
 
     function initContextMenu() {
+        // Translate the context menu for blocks.
+        let msg:any = Blockly.Msg;
+        msg.DUPLICATE_BLOCK = lf("Duplicate");
+        msg.REMOVE_COMMENT = lf("Remove Comment");
+        msg.ADD_COMMENT = lf("Add Comment");
+        msg.EXTERNAL_INPUTS = lf("External Inputs");
+        msg.INLINE_INPUTS = lf("Inline Inputs");
+        msg.EXPAND_BLOCK = lf("Expand Block");
+        msg.COLLAPSE_BLOCK = lf("Collapse Block");
+        msg.ENABLE_BLOCK = lf("Enable Block");
+        msg.DISABLE_BLOCK = lf("Disable Block");
+        msg.DELETE_BLOCK = lf("Delete Block");
+        msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
+        msg.HELP = "Help";
+
         /**
          * Show the context menu for the workspace.
          * @param {!Event} e Mouse event.
