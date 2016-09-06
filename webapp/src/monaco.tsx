@@ -556,13 +556,13 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    private highlightDecorations: string[];
+    private highlightDecorations: string[] = [];
 
     highlightStatement(brk: pxtc.LocationInfo) {
-        if (!this.editor) return;
+        if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
         let position = this.editor.getModel().getPositionAt(brk.start);
         if (!position) return;
-        this.highlightDecorations = this.editor.deltaDecorations([], [
+        this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
             { range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column + brk.length),
                 options: { inlineClassName: 'highlight-statement' }},
         ]);
