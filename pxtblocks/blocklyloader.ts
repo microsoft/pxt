@@ -1136,7 +1136,7 @@ namespace pxt.blocks {
         // builtin logic_compare
         Blockly.Blocks['logic_compare'].init = function() {
             let OPERATORS = [
-                [lf("_op_eq"),  'EQ'],  // =
+                [lf("=="),  'EQ'],  // =
                 [lf("_op_neq"), 'NEQ'], // ≠
                 [lf("_op_lt"),  'LT'],  // <  (ltr)
                 [lf("_op_lte"), 'LTE'], // ≦ (ltr)
@@ -1172,8 +1172,8 @@ namespace pxt.blocks {
         };
 
         // builtin logic_operation
-        msg.LOGIC_OPERATION_AND = lf("_op_and");
-        msg.LOGIC_OPERATION_OR = lf("_op_or");
+        msg.LOGIC_OPERATION_AND = lf("&&");
+        msg.LOGIC_OPERATION_OR = lf("||");
         msg.LOGIC_OPERATION_TOOLTIP_AND = lf("Return true if both inputs are true."),
         msg.LOGIC_OPERATION_TOOLTIP_OR = lf("Return true if at least one of the inputs is true."),
         installHelpResources(
