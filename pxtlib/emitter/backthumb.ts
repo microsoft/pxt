@@ -519,7 +519,7 @@ ${bkptLabel + "_after"}:
                     writeMov((n >>> 8) & 0xff)
                     shift()
                 case 1:
-                    writeMov(n)
+                    writeMov(n & 0xff)
                     break
                 default:
                     oops()
