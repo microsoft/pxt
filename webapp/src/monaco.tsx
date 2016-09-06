@@ -559,7 +559,7 @@ export class Editor extends srceditor.Editor {
     private highlightDecorations: string[] = [];
 
     highlightStatement(brk: pxtc.LocationInfo) {
-        if (!this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
+        if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
         let position = this.editor.getModel().getPositionAt(brk.start);
         if (!position) return;
         this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [

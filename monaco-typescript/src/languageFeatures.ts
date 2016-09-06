@@ -266,7 +266,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 }
                 let result: MyCompletionItem[] = [];
                 navigation
-                    .filter(item => (item.kind == Kind.function || item.kind == Kind.memberFunction)
+                    .filter(item => (item.kind == Kind.function)
                                     && (isNamespace ? item.containerName != prevWordInfo.word : true))
                     .forEach(item => convert(result, item));
                 return result;
@@ -601,20 +601,23 @@ export class QuickInfoAdapter extends Adapter implements monaco.languages.HoverP
                     contents: [lf(contents)]
                 };
             } else if (signature && signature.items[0]) {
-                let activeParameter = signature.argumentIndex;
-                let contents = typescript.displayPartsToString(signature.items[0].parameters[activeParameter].documentation);
-                let display = typescript.displayPartsToString(signature.items[0].parameters[activeParameter].displayParts);
-                let parameterSpan = signature.applicableSpan;
-                if (signature.argumentCount > 1) {
-                    let parametersStr = model.getValue().substr(signature.applicableSpan.start, signature.applicableSpan.length);
-                    let parametersSplit = parametersStr.split(',');
-                    parameterSpan.start = parameterSpan.start + parametersStr.indexOf(parametersSplit[activeParameter]);
-                    parameterSpan.length = parametersSplit[activeParameter].length;
+                if (signature.items[0].parameters.length > 0) {
+                    let activeParameter = signature.argumentIndex;
+                    let contents = typescript.displayPartsToString(signature.items[0].parameters[activeParameter].documentation);
+                    if (!contents)
+                        contents = typescript.displayPartsToString(signature.items[0].parameters[activeParameter].displayParts);
+                    let parameterSpan = signature.applicableSpan;
+                    if (signature.argumentCount > 1) {
+                        let parametersStr = model.getValue().substr(signature.applicableSpan.start, signature.applicableSpan.length);
+                        let parametersSplit = parametersStr.split(',');
+                        parameterSpan.start = parameterSpan.start + parametersStr.indexOf(parametersSplit[activeParameter]);
+                        parameterSpan.length = parametersSplit[activeParameter].length;
+                    }
+                    return {
+                        range: this._textSpanToRange(resource, parameterSpan),
+                        contents: [lf(contents), lf(contents)]
+                    };
                 }
-                return {
-                    range: this._textSpanToRange(resource, parameterSpan),
-                    contents: [lf(contents), lf(contents)]
-                };
             } else if (info) {
                 let contents = typescript.displayPartsToString(info.displayParts);
                 return {
