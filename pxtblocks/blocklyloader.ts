@@ -570,7 +570,7 @@ namespace pxt.blocks {
                   "colour": blockColors['loops']
                 });
                 this.appendStatementInput("DO")
-                    .appendField(lf("do"));
+                    .appendField(lf("do{id:while_do}"));
 
                 setHelpResources(this,
                     'device_while',

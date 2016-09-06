@@ -1,7 +1,7 @@
 let salutation = "hello"
 let language = ""
 
-switch (salutation) { // TS9226
+switch (salutation) { // ok now
     case "hello":
         language = "english"
         break;

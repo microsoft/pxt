@@ -297,6 +297,11 @@ namespace pxsim {
             return v
         }
 
+        export function nullCheck(v: any) {
+            if (!v)
+                U.userError("Using null value.")
+        }
+
         export function panic(code: number) {
             U.userError("PANIC! Code " + code)
         }
@@ -317,6 +322,7 @@ namespace pxsim {
         }
 
         export function ldfld(r: RefRecord, idx: number) {
+            nullCheck(r)
             check(!r.isRef(idx))
             let v = num(r.fields[idx])
             decr(r)
@@ -324,12 +330,14 @@ namespace pxsim {
         }
 
         export function stfld(r: RefRecord, idx: number, v: any) {
+            nullCheck(r)
             check(!r.isRef(idx))
             r.fields[idx] = v;
             decr(r)
         }
 
         export function ldfldRef(r: RefRecord, idx: number) {
+            nullCheck(r)
             check(r.isRef(idx))
             let v = incr(ref(r.fields[idx]))
             decr(r)
@@ -337,6 +345,7 @@ namespace pxsim {
         }
 
         export function stfldRef(r: RefRecord, idx: number, v: any) {
+            nullCheck(r)
             check(r.isRef(idx))
             decr(r.fields[idx])
             r.fields[idx] = v
@@ -433,6 +442,7 @@ namespace pxsim {
                     .then(loop)
                     .done()
             }
+            pxtrt.nullCheck(a)
             incr(a)
             loop()
         }

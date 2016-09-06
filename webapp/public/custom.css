@@ -738,15 +738,14 @@ html {
     outline: 1px auto #bdc3c7;
 }
 
-.token.ts {
-    padding-left: 0.1em;
-    padding-right: 0.1em;
-}
-
 .token.ts.keyword.if, .token.ts.keyword.else {
     color: #5B80A5;
 }
 
 .token.ts.keyword.while:not(.true), .token.ts.keyword.for {
     color: #5BA55B;
+}
+
+.highlight-statement {
+    background-color: #FFB900;
 }

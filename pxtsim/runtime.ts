@@ -168,6 +168,7 @@ namespace pxsim {
         public board: BaseBoard;
         numGlobals = 1000;
         errorHandler: (e: any) => void;
+        postError: (e: any) => void;
         stateChanged: () => void;
         dead = false;
         running = false;
@@ -377,6 +378,8 @@ namespace pxsim {
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)
+                        if (_this.postError)
+                            _this.postError(e)
                     }
                 }
             }

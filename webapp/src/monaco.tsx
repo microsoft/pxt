@@ -359,8 +359,28 @@ export class Editor extends srceditor.Editor {
             });
         }
 
+        this.editor.onDidBlurEditorText(() => {
+            if (this.isIncomplete()) {
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
+            } else {
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = false;
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
+            }
+        })
+
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
             if (this.fileType == FileType.Unknown || this.currFile.isReadonly()) return;
+            if (this.isIncomplete()) {
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
+            } else {
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = false;
+                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
+            }
+
+            if (this.highlightDecorations)
+                this.editor.deltaDecorations(this.highlightDecorations, []);
 
             if (this.lastSet != null) {
                 this.lastSet = null
@@ -430,7 +450,7 @@ export class Editor extends srceditor.Editor {
             "ts": "typescript",
             "js": "javascript",
             "blocks": "xml",
-            "asm": "bat"
+            "asm": "asm"
         }
         let mode = "text"
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
@@ -442,17 +462,18 @@ export class Editor extends srceditor.Editor {
         let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
         if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()), mode, monaco.Uri.parse(proto));
         if (model) this.editor.setModel(model);
+        this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
 
-        if (mode == "typescript")
+        if (this.fileType == FileType.TypeScript)
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly());
 
         this.setValue(file.content)
         this.setDiagnostics(file, this.snapshotState())
 
-        this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
-
         if (this.fileType == FileType.Markdown)
             this.parent.setSideMarkdown(file.content);
+
+        this.formatCode();
     }
 
     snapshotState() {
@@ -533,5 +554,17 @@ export class Editor extends srceditor.Editor {
                 }
             }
         }
+    }
+
+    private highlightDecorations: string[] = [];
+
+    highlightStatement(brk: pxtc.LocationInfo) {
+        if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
+        let position = this.editor.getModel().getPositionAt(brk.start);
+        if (!position) return;
+        this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
+            { range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column + brk.length),
+                options: { inlineClassName: 'highlight-statement' }},
+        ]);
     }
 }

@@ -135,10 +135,29 @@ ${bkptLabel + "_after"}:
             return "." + root + bin.lblNo++
         }
 
+        function terminate(expr: ir.Expr) {
+            assert(expr.exprKind == ir.EK.SharedRef)
+            let arg = expr.args[0]
+            if (arg.currUses == arg.totalUses)
+                return
+            let numEntries = 0
+            while (numEntries < exprStack.length) {
+                let ee = exprStack[numEntries]
+                if (ee != arg && ee.currUses != ee.totalUses)
+                    break
+                numEntries++
+            }
+            assert(numEntries > 0)
+            write(`@dummystack ${numEntries}`)
+            write(`add sp, #4*${numEntries} ; terminate ref`)
+        }
+
         function emitJmp(jmp: ir.Stmt) {
             if (jmp.jmpMode == ir.JmpMode.Always) {
                 if (jmp.expr)
                     emitExpr(jmp.expr)
+                if (jmp.terminateExpr)
+                    terminate(jmp.terminateExpr)
                 write("bb " + jmp.lblName + " ; with expression")
             } else {
                 let lbl = mkLbl("jmpz")
@@ -162,6 +181,9 @@ ${bkptLabel + "_after"}:
                     // IfZero or IfJmpValEq
                     write("bne " + lbl)
                 }
+
+                if (jmp.terminateExpr)
+                    terminate(jmp.terminateExpr)
 
                 write("bb " + jmp.lblName)
                 write(lbl + ":")
@@ -250,7 +272,8 @@ ${bkptLabel + "_after"}:
                 case EK.SharedDef:
                     return emitSharedDef(e)
                 case EK.Sequence:
-                    return e.args.forEach(emitExpr)
+                    e.args.forEach(emitExpr)
+                    return clearStack()
                 default:
                     return emitExprInto(e, "r0")
             }
@@ -270,6 +293,12 @@ ${bkptLabel + "_after"}:
             }
         }
 
+        function emitSharedTerminate(e: ir.Expr) {
+            emitExpr(e)
+            let arg = e.data as ir.Expr
+
+        }
+
         function emitRtCall(topExpr: ir.Expr) {
             let info = ir.flattenArgs(topExpr)
 
@@ -278,6 +307,8 @@ ${bkptLabel + "_after"}:
                 U.assert(i <= 3)
                 emitExprInto(a, "r" + i)
             })
+
+            clearStack()
 
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
@@ -393,6 +424,12 @@ ${bkptLabel + "_after"}:
                 write(`push {r${i + 1}}`)
             })
             write("@stackmark args");
+            proc.args.forEach((p, i) => {
+                if (p.isRef()) {
+                    write(`ldr r0, ${cellref(p)}`)
+                    emitCallRaw("pxt::incr")
+                }
+            })
 
             write(`bl pxtrt::getGlobalsPtr`)
             write(`mov r6, r0`)
@@ -419,19 +456,29 @@ ${bkptLabel + "_after"}:
             write(`adds ${reg}, ${lbl}@lo`);
         }
 
+        function numBytes(n: number) {
+            let v = 0
+            for (let q = n; q > 0; q >>>= 8) {
+                v++
+            }
+            return v || 1
+        }
+
         function emitInt(v: number, reg: string) {
+            let movWritten = false
+
             function writeMov(v: number) {
                 assert(0 <= v && v <= 255)
-                write(`movs ${reg}, #${v}`)
+                if (movWritten) {
+                    if (v)
+                        write(`adds ${reg}, #${v}`)
+                } else
+                    write(`movs ${reg}, #${v}`)
+                movWritten = true
             }
 
-            function writeAdd(v: number) {
-                assert(0 <= v && v <= 255)
-                write(`adds ${reg}, #${v}`)
-            }
-
-            function shift() {
-                write(`lsls ${reg}, ${reg}, #8`)
+            function shift(v = 8) {
+                write(`lsls ${reg}, ${reg}, #${v}`)
             }
 
             assert(v != null);
@@ -443,27 +490,41 @@ ${bkptLabel + "_after"}:
                 n = -n
             }
 
-            if (n <= 255) {
-                writeMov(n)
-            } else if (n <= 0xffff) {
-                writeMov((n >> 8) & 0xff)
-                shift()
-                writeAdd(n & 0xff)
-            } else if (n <= 0xffffff) {
-                writeMov((n >> 16) & 0xff)
-                shift()
-                writeAdd((n >> 8) & 0xff)
-                shift()
-                writeAdd(n & 0xff)
-            } else {
-                writeMov((n >> 24) & 0xff)
-                shift()
-                writeAdd((n >> 16) & 0xff)
-                shift()
-                writeAdd((n >> 8) & 0xff)
-                shift()
-                writeAdd((n >> 0) & 0xff)
+            let numShift = 0
+            if (n > 0xff) {
+                let shifted = n
+                while ((shifted & 1) == 0) {
+                    shifted >>>= 1
+                    numShift++
+                }
+                if (numBytes(shifted) < numBytes(n)) {
+                    n = shifted
+                } else {
+                    numShift = 0
+                }
             }
+
+
+            switch (numBytes(n)) {
+                case 4:
+                    writeMov((n >>> 24) & 0xff)
+                    shift()
+                case 3:
+                    writeMov((n >>> 16) & 0xff)
+                    shift()
+                case 2:
+                    writeMov((n >>> 8) & 0xff)
+                    shift()
+                case 1:
+                    writeMov(n)
+                    break
+                default:
+                    oops()
+            }
+
+            if (numShift)
+                shift(numShift)
+
             if (isNeg) {
                 write(`negs ${reg}, ${reg}`)
             }
