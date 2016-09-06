@@ -12,8 +12,8 @@ namespace pxt.blocks {
         variables: 330,
         text: 160,
         lists: 260,
-	math: 230,
-	logic: 210
+        math: 230,
+        logic: 210
     }
 
     // list of built-in blocks, should be touched.
@@ -404,7 +404,7 @@ namespace pxt.blocks {
         }
 
         // Do not remove this comment.
-	// These are used for category names.
+        // These are used for category names.
         // lf("Loops")
         // lf("Logic")
         // lf("Variables")
@@ -490,8 +490,8 @@ namespace pxt.blocks {
         initMath();
         initVariables();
         initLoops();
-	initLogic();
-	initText();
+        initLogic();
+        initText();
 
         // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
         // we're taking off hats.
@@ -513,19 +513,19 @@ namespace pxt.blocks {
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
-	if (tooltip) block.setTooltip(tooltip);
-	if (url) block.setHelpUrl(url);
+        if (tooltip) block.setTooltip(tooltip);
+        if (url) block.setHelpUrl(url);
 
-	let tb = document.getElementById('blocklyToolboxDefinition');
+        let tb = document.getElementById('blocklyToolboxDefinition');
         let xml: HTMLElement = tb ? tb.querySelector(`category block[type~='${id}']`) as HTMLElement : undefined;
-	block.codeCard = <pxt.CodeCard>{
-	    header: name,
-	    name: name,
-	    software: 1,
-	    description: goog.isFunction(tooltip) ? tooltip() : tooltip,
-	    blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"</block>`) + "</xml>") : undefined,
-	    url: url
-	};
+        block.codeCard = <pxt.CodeCard>{
+            header: name,
+            name: name,
+            software: 1,
+            description: goog.isFunction(tooltip) ? tooltip() : tooltip,
+            blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"</block>`) + "</xml>") : undefined,
+            url: url
+        };
     }
 
     function installHelpResources(id: string, name: string, tooltip: any, url: string) {
@@ -572,12 +572,12 @@ namespace pxt.blocks {
                 this.appendStatementInput("DO")
                     .appendField(lf("_while_do")); // "do" in English
 
-		setHelpResources(this,
-		    'device_while',
-		    lf("a loop that repeats while the condition is true"),
-		    lf("Run the same sequence of actions while the condition is met."),
-		    '/blocks/loops/while'
-		);
+                setHelpResources(this,
+                    'device_while',
+                    lf("a loop that repeats while the condition is true"),
+                    lf("Run the same sequence of actions while the condition is met."),
+                    '/blocks/loops/while'
+                );
             }
         };
 
@@ -595,10 +595,10 @@ namespace pxt.blocks {
                       "type": "field_variable",
                       "name": "VAR",
                       "variable": lf("_default_var") // "item" in English
-		      // Please note that most multilingual characters
-		      // cannot be used as variable name at this point.
-		      // Translate or decide the default variable name
-		      // with care.
+                      // Please note that most multilingual characters
+                      // cannot be used as variable name at this point.
+                      // Translate or decide the default variable name
+                      // with care.
                     },
                     {
                       "type": "input_value",
@@ -615,14 +615,14 @@ namespace pxt.blocks {
                     .appendField(lf("_for_do")); // "do" in English
 
                 let thisBlock = this;
-		setHelpResources(this,
-		    'controls_simple_for',
-		    lf("a loop that repeats the number of times you say"),
-		    function () {
-			return lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks.", thisBlock.getFieldValue('VAR'));
-		    },
-		    '/blocks/loops/for'
-		);
+                setHelpResources(this,
+                    'controls_simple_for',
+                    lf("a loop that repeats the number of times you say"),
+                    function () {
+                        return lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks.", thisBlock.getFieldValue('VAR'));
+                    },
+                    '/blocks/loops/for'
+                );
             },
             /**
              * Return all variables referenced by this block.
@@ -874,14 +874,14 @@ namespace pxt.blocks {
                 });
 
                 let thisBlock = this;
-		setHelpResources(this,
-		    'math_op2',
+                setHelpResources(this,
+                    'math_op2',
                     lf("minimum or maximum of 2 numbers"),
                     function () {
-			return thisBlock.getFieldValue('op') == 'min' ? lf("smaller value of 2 numbers") : lf("larger value of 2 numbers");
+                        return thisBlock.getFieldValue('op') == 'min' ? lf("smaller value of 2 numbers") : lf("larger value of 2 numbers");
                     },
                     '/blocks/math'
-		);
+                );
             }
         };
 
@@ -902,12 +902,12 @@ namespace pxt.blocks {
                   "colour": blockColors['math']
                 });
 
-		setHelpResources(this,
-		    'math_op3',
+                setHelpResources(this,
+                    'math_op3',
                     lf("absolute number"),
                     lf("absolute value of a number"),
                     '/blocks/math/abs'
-		);
+                );
             }
         };
 
@@ -928,12 +928,12 @@ namespace pxt.blocks {
                   "colour": blockColors['math']
                 });
 
-		setHelpResources(this,
-		    'device_random',
+                setHelpResources(this,
+                    'device_random',
                     lf("pick random number"),
                     lf("Returns a random integer between 0 and the specified bound (inclusive)."),
                     '/blocks/math/random'
-		);
+                );
             }
         };
 
@@ -942,7 +942,7 @@ namespace pxt.blocks {
         installHelpResources(
             'math_number',
             lf("number"),
-	    (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
+            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             '/blocks/math/random'
         );
 
@@ -1083,35 +1083,35 @@ namespace pxt.blocks {
 
         // pxt variables_change
         Blockly.Blocks['variables_change'] = {
-	    init: function () {
-		this.jsonInit({
-		  "message0": lf("change %1 by %2"),
-		  "args0": [
-		    {
-		      "type": "field_variable",
-		      "name": "VAR",
-		      "variable": lf("_default_var")
-		    },
-		    {
-		      "type": "input_value",
-		      "name": "VALUE",
-		      "check": "Number"
-		    }
-		  ],
-		  "inputsInline": true,
-		  "previousStatement": null,
-		  "nextStatement": null,
-		  "colour": blockColors['variables']
-		});
+            init: function () {
+                this.jsonInit({
+                  "message0": lf("change %1 by %2"),
+                  "args0": [
+                    {
+                      "type": "field_variable",
+                      "name": "VAR",
+                      "variable": lf("_default_var")
+                    },
+                    {
+                      "type": "input_value",
+                      "name": "VALUE",
+                      "check": "Number"
+                    }
+                  ],
+                  "inputsInline": true,
+                  "previousStatement": null,
+                  "nextStatement": null,
+                  "colour": blockColors['variables']
+                });
 
-		setHelpResources(this,
-		    'variables_change',
-		    lf("update the value of a number variable"),
-		    lf("Changes the value of the variable by this amount"),
-		    '/blocks/variables/change-var'
-		);
-	    }
-	};
+                setHelpResources(this,
+                    'variables_change',
+                    lf("update the value of a number variable"),
+                    lf("Changes the value of the variable by this amount"),
+                    '/blocks/variables/change-var'
+                );
+            }
+        };
     }
 
     function initLogic() {
@@ -1134,92 +1134,92 @@ namespace pxt.blocks {
         );
 
         // builtin logic_compare
-	Blockly.Blocks['logic_compare'].init = function() {
-	    let OPERATORS = [
-		[lf("_op_eq"),  'EQ'],  // =
-		[lf("_op_neq"), 'NEQ'], // ≠
-		[lf("_op_lt"),  'LT'],  // <  (ltr)
-		[lf("_op_lte"), 'LTE'], // ≦ (ltr)
-		[lf("_op_gt"),  'GT'],  // >  (ltr)
-		[lf("_op_gte"), 'GTE']  // ≧ (ltr)
-	    ];
-	    this.setColour(blockColors['logic']);
-	    this.setOutput(true, 'Boolean');
-	    this.appendValueInput('A');
-	    this.appendValueInput('B')
-		.appendField(new Blockly.FieldDropdown(OPERATORS), 'OP');
-	    this.setInputsInline(true);
-	    this.prevBlocks_ = [null, null];
+        Blockly.Blocks['logic_compare'].init = function() {
+            let OPERATORS = [
+                [lf("_op_eq"),  'EQ'],  // =
+                [lf("_op_neq"), 'NEQ'], // ≠
+                [lf("_op_lt"),  'LT'],  // <  (ltr)
+                [lf("_op_lte"), 'LTE'], // ≦ (ltr)
+                [lf("_op_gt"),  'GT'],  // >  (ltr)
+                [lf("_op_gte"), 'GTE']  // ≧ (ltr)
+            ];
+            this.setColour(blockColors['logic']);
+            this.setOutput(true, 'Boolean');
+            this.appendValueInput('A');
+            this.appendValueInput('B')
+                .appendField(new Blockly.FieldDropdown(OPERATORS), 'OP');
+            this.setInputsInline(true);
+            this.prevBlocks_ = [null, null];
 
-	    let TOOLTIPS:any = {
-		'EQ': lf("Return true if both inputs equal each other."),
-		'NEQ': lf("Return true if both inputs are not equal to each other."),
-		'LT': lf("Return true if the first input is smaller than the second input."),
-		'LTE': lf("Return true if the first input is smaller than or equal to the second input."),
-		'GT': lf("Return true if the first input is greater than the second input."),
-		'GTE': lf("Return true if the first input is greater than or equal to the second input.")
-	    };
+            let TOOLTIPS:any = {
+                'EQ': lf("Return true if both inputs equal each other."),
+                'NEQ': lf("Return true if both inputs are not equal to each other."),
+                'LT': lf("Return true if the first input is smaller than the second input."),
+                'LTE': lf("Return true if the first input is smaller than or equal to the second input."),
+                'GT': lf("Return true if the first input is greater than the second input."),
+                'GTE': lf("Return true if the first input is greater than or equal to the second input.")
+            };
 
-	    var thisBlock = this;
-	    setHelpResources(this,
-		'logic_compare',
-		lf("comparing two numbers"),
-		function() {
-		    return TOOLTIPS[thisBlock.getFieldValue('OP')];
-		},
-		'/blocks/logic/boolean'
-	    );
-	};
+            var thisBlock = this;
+            setHelpResources(this,
+                'logic_compare',
+                lf("comparing two numbers"),
+                function() {
+                    return TOOLTIPS[thisBlock.getFieldValue('OP')];
+                },
+                '/blocks/logic/boolean'
+            );
+        };
 
-	// builtin logic_operation
-	msg.LOGIC_OPERATION_AND = lf("_op_and");
-	msg.LOGIC_OPERATION_OR = lf("_op_or");
-	msg.LOGIC_OPERATION_TOOLTIP_AND = lf("Return true if both inputs are true."),
-	msg.LOGIC_OPERATION_TOOLTIP_OR = lf("Return true if at least one of the inputs is true."),
+        // builtin logic_operation
+        msg.LOGIC_OPERATION_AND = lf("_op_and");
+        msg.LOGIC_OPERATION_OR = lf("_op_or");
+        msg.LOGIC_OPERATION_TOOLTIP_AND = lf("Return true if both inputs are true."),
+        msg.LOGIC_OPERATION_TOOLTIP_OR = lf("Return true if at least one of the inputs is true."),
         installHelpResources(
-	    'logic_operation',
-	    lf("boolean operation"),
-	    undefined,
-	    '/blocks/logic/boolean'
+            'logic_operation',
+            lf("boolean operation"),
+            undefined,
+            '/blocks/logic/boolean'
         );
 
-	// builtin logic_negate
-	msg.LOGIC_NEGATE_TITLE = lf("not %1");
-	installHelpResources(
-	    'logic_negate',
-	    lf("logical negation"),
-	    lf("Returns true if the input is false. Returns false if the input is true."),
-	    '/blocks/logic/boolean'
-	);
+        // builtin logic_negate
+        msg.LOGIC_NEGATE_TITLE = lf("not %1");
+        installHelpResources(
+            'logic_negate',
+            lf("logical negation"),
+            lf("Returns true if the input is false. Returns false if the input is true."),
+            '/blocks/logic/boolean'
+        );
 
-	// builtin logic_boolean
-	msg.LOGIC_BOOLEAN_TRUE = lf("_logic_true");
-	msg.LOGIC_BOOLEAN_FALSE = lf("_logic_false");
-	installHelpResources(
-	    'logic_boolean',
-	    lf("a `true` or `false` value"),
-	    lf("Returns either true or false."),
-	    '/blocks/logic/boolean'
-	);
+        // builtin logic_boolean
+        msg.LOGIC_BOOLEAN_TRUE = lf("_logic_true");
+        msg.LOGIC_BOOLEAN_FALSE = lf("_logic_false");
+        installHelpResources(
+            'logic_boolean',
+            lf("a `true` or `false` value"),
+            lf("Returns either true or false."),
+            '/blocks/logic/boolean'
+        );
     }
 
     function initText() {
-	// builtin text
-	installHelpResources(
-	    'text',
-	    lf("a piece of text"),
-	    lf("A letter, word, or line of text."),
-	    "reference/types/string"
-	);
+        // builtin text
+        installHelpResources(
+            'text',
+            lf("a piece of text"),
+            lf("A letter, word, or line of text."),
+            "reference/types/string"
+        );
 
-	// builtin text_length
+        // builtin text_length
         let msg:any = Blockly.Msg;
-	msg.TEXT_LENGTH_TITLE = lf("length of %1");
-	installHelpResources(
-	    'text_length',
-	    lf("number of characters in the string"),
-	    lf("Returns the number of letters (including spaces) in the provided text."),
-	    "reference/types/string-functions"
-	);
+        msg.TEXT_LENGTH_TITLE = lf("length of %1");
+        installHelpResources(
+            'text_length',
+            lf("number of characters in the string"),
+            lf("Returns the number of letters (including spaces) in the provided text."),
+            "reference/types/string-functions"
+        );
     }
 }
