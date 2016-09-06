@@ -266,7 +266,7 @@ export class SuggestAdapter extends Adapter implements monaco.languages.Completi
                 }
                 let result: MyCompletionItem[] = [];
                 navigation
-                    .filter(item => (item.kind == Kind.function)
+                    .filter(item => (item.kind == Kind.function && item.kindModifiers != "")
                                     && (isNamespace ? item.containerName != prevWordInfo.word : true))
                     .forEach(item => convert(result, item));
                 return result;
