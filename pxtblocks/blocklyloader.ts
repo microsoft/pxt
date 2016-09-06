@@ -615,7 +615,7 @@ namespace pxt.blocks {
 		    'controls_simple_for',
 		    lf("a loop that repeats the number of times you say"),
 		    function () {
-			return lf("Have the variable '%1' take on the values from 0 to the end number, counting by 1, and do the specified blocks.").replace('%1', thisBlock.getFieldValue('VAR'));
+			return lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks.", thisBlock.getFieldValue('VAR'));
 		    },
 		    '/blocks/loops/for'
 		);
@@ -649,7 +649,7 @@ namespace pxt.blocks {
                 if (!this.isCollapsed()) {
                     let option: any = { enabled: true };
                     let name = this.getFieldValue('VAR');
-                    option.text = lf("Create 'get %1'").replace('%1', name);
+                    option.text = lf("Create 'get {0}'", name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
                     let xmlBlock = goog.dom.createDom('block', null, xmlField);
@@ -793,12 +793,11 @@ namespace pxt.blocks {
 
             let deleteOption = {
                 text: deleteList.length == 1 ? lf("Delete Block") :
-                    lf("Delete %1 Blocks").replace('%1', String(deleteList.length)),
+                    lf("Delete {0} Blocks", deleteList.length),
                 enabled: deleteList.length > 0,
                 callback: function () {
                     if (deleteList.length < 2 ||
-                        window.confirm(lf("Delete all %1 blocks?").replace('%1',
-                            String(deleteList.length)))) {
+                        window.confirm(lf("Delete all {0} blocks?", deleteList.length))) {
                         deleteNext();
                     }
                 }
