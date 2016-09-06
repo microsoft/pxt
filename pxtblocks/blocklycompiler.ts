@@ -1351,7 +1351,7 @@ namespace pxt.blocks {
         function block(n: Node) {
             let finalNl = n.noFinalNewline ? "" : "\n";
             if (n.children.length == 0) {
-                write(" { }" + finalNl)
+                write(" {\n\t\n}" + finalNl)
                 return
             }
 
