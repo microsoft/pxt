@@ -352,6 +352,7 @@ namespace ts.pxtc.ir {
     export interface ProcId {
         proc: Procedure;
         virtualIndex: number;
+        ifaceIndex: number;
     }
 
     export interface ProcQuery {

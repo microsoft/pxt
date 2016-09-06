@@ -341,10 +341,14 @@ ${bkptLabel + "_after"}:
 
             let procid = topExpr.data as ir.ProcId
             let procIdx = -1
-            if (procid.virtualIndex != null) {
+            if (procid.virtualIndex != null || procid.ifaceIndex != null) {
                 write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
                 write(`ldr r0, [r0, #8] ; ld-vtable`)
-                let effIdx = procid.virtualIndex + 1
+                let effIdx = procid.virtualIndex + 2
+                if (procid.ifaceIndex != null) {
+                    write(`ldr r0, [r0, #4] ; iface table`)
+                    effIdx = procid.ifaceIndex
+                }
                 if (effIdx <= 31)
                     write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
                 else {
@@ -353,7 +357,6 @@ ${bkptLabel + "_after"}:
                 }
                 write(lbl + ":")
                 write("blx r0")
-
             } else {
                 let proc = procid.proc
                 procIdx = proc.seqNo
@@ -839,17 +842,31 @@ ${lbl}: .string ${stringLiteral(s)}
         .balign 4
 ${info.id}_VT:
         .short 0xffff ; refcount
-        .byte ${info.refmask.length}, ${info.vtable.length}  ; num. fields, num. methods
+        .byte ${info.refmask.length}, ${info.vtable.length + 1}  ; num. fields, num. methods
 `;
 
+        let refmask = info.refmask.map(v => v ? "1" : "0")
+        while (refmask.length < 4 || refmask.length % 4 != 0)
+            refmask.push("0")
+
+        //let ifaceOffset = refmask.length + info.vtable.length * 4 + 8
+        s += `        .word ${info.id}_IfaceVT\n`
+
         for (let m of info.vtable) {
-            s += `        .word ${getFunctionLabel(m.decl, [])}|1\n`
+            s += `        .word ${getFunctionLabel(m, info.bindings)}|1\n`
         }
 
-        let refmask = info.refmask.map(v => v ? "1" : "0")
-        while (refmask.length < 2 || refmask.length % 2 != 0)
-            refmask.push("0")
         s += `        .byte ${refmask.join(",")}\n`
+
+        // VTable for interface method is just linear. If we ever have lots of interface
+        // methods and lots of classes this could become a problem. We could use a table
+        // of (iface-member-id, function-addr) pairs and binary search.
+        // See https://codethemicrobit.com/nymuaedeou for Thumb binary search.
+        s += `${info.id}_IfaceVT:`
+        for (let m of info.itable) {
+            s += `        .word ${m ? getFunctionLabel(m, info.bindings) + "|1" : "0"}\n`
+        }
+
         s += "\n"
         return s
     }

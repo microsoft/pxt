@@ -1212,6 +1212,38 @@ function testLambdasWithMoreParams() {
     a(() => { })
 }
 
+namespace Ifaces {
+    interface IFoo {
+        foo(): number;
+        bar(x: number): string;
+    }
+
+    class A {
+        foo() {
+            return 12
+        }
+        bar(v: number) {
+            return v.toString()
+        }
+    }
+    class B extends A {
+        foo() {
+            return 13
+        }
+    }
+
+    function foo(f: IFoo) {
+        return f.foo() + f.bar(42)
+    }
+
+    export function run() {
+        msg("Ifaces.run")
+        let a = new A()
+        control.assert(foo(a) + "X" == "1242X")
+        a = new B()
+        control.assert(foo(a) + "X" == "1342X")
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Driver starts
@@ -1258,6 +1290,7 @@ ClassTest.run()
 Ctors.run()
 testAnySwitch()
 testLambdasWithMoreParams()
+Ifaces.run()
 
 
 msg("test top level code")

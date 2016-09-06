@@ -262,7 +262,8 @@ namespace ts.pxtc {
         attrs: CommentAttrs;
         hasVTable?: boolean;
         isUsed?: boolean;
-        vtable?: FunctionAddInfo[];
+        vtable?: FunctionLikeDeclaration[];
+        itable?: FunctionLikeDeclaration[];
         bindings: TypeBinding[];
         ctor?: ir.Procedure;
     }
@@ -554,6 +555,8 @@ namespace ts.pxtc {
         let variableStatus: StringMap<VariableAddInfo> = {};
         let functionInfo: StringMap<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
+        let ifaceMembers: StringMap<number> = {}
+        let nextIfaceMemberId = 0;
 
         lastNodeId = 0
         currNodeWave++
@@ -786,6 +789,19 @@ namespace ts.pxtc {
             }
         }
 
+        function getIfaceMemberId(name: string) {
+            let v = U.lookup(ifaceMembers, name)
+            if (v != null) return v
+            for (let inf of bin.usedClassInfos) {
+                for (let m of inf.methods) {
+                    if (getName(m) == name)
+                        markFunctionUsed(m, inf.bindings)
+                }
+            }
+            v = ifaceMembers[name] = nextIfaceMemberId++
+            return v
+        }
+
         function finalEmit() {
             if (diagnostics.getModificationCount() || opts.noEmit || !host)
                 return;
@@ -863,19 +879,35 @@ namespace ts.pxtc {
                         let key = classFunctionKey(m)
                         let done = false
                         for (let i = 0; i < tbl.length; ++i) {
-                            if (classFunctionKey(tbl[i].decl) == key) {
-                                tbl[i] = minf
+                            if (classFunctionKey(tbl[i]) == key) {
+                                tbl[i] = minf.decl
                                 minf.virtualIndex = i
                                 done = true
                             }
                         }
                         if (!done) {
                             minf.virtualIndex = tbl.length
-                            tbl.push(minf)
+                            tbl.push(minf.decl)
                         }
                     }
                 }
                 inf.vtable = tbl
+                inf.itable = []
+                for (let curr = inf; curr; curr = curr.baseClassInfo) {
+                    for (let m of curr.methods) {
+                        let n = getName(m)
+                        if (isIfaceMemberUsed(m)) {
+                            let id = getIfaceMemberId(getName(m))
+                            if (!inf.itable[id])
+                                inf.itable[id] = m
+                        }
+                    }
+                }
+                for (let i = 0; i < inf.itable.length; ++i)
+                    if (!inf.itable[i])
+                        inf.itable[i] = null // avoid undefined
+                if (inf.itable.length)
+                    inf.hasVTable = true
                 if (inf.hasVTable) {
                     inf.refmask.unshift(false) // for the vtable
                 }
@@ -1509,6 +1541,8 @@ ${lbl}: .short 0xffff
                     })
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
+                } else if (decl.kind == SK.MethodSignature) {
+                    return mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(getName(decl)))
                 } else {
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
@@ -1539,10 +1573,11 @@ ${lbl}: .short 0xffff
             return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async, args.map(emitExpr))
         }
 
-        function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[]) {
+        function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[], ifaceIdx: number = null) {
             let data: ir.ProcId = {
                 proc: proc,
-                virtualIndex: vidx
+                virtualIndex: vidx,
+                ifaceIndex: ifaceIdx
             }
             return ir.op(EK.ProcCall, args, data)
         }
@@ -1564,6 +1599,10 @@ ${lbl}: .short 0xffff
             return decl.members.filter(m => m.kind == SK.Constructor)[0] as ConstructorDeclaration
         }
 
+        function isIfaceMemberUsed(decl: FunctionLikeDeclaration) {
+            return U.lookup(ifaceMembers, getName(decl)) != null
+        }
+
         function markClassUsed(info: ClassInfo) {
             if (info.isUsed) return
             info.isUsed = true
@@ -1571,7 +1610,7 @@ ${lbl}: .short 0xffff
             bin.usedClassInfos.push(info)
             for (let m of info.methods) {
                 let minf = getFunctionInfo(m)
-                if (minf.virtualRoot && minf.virtualRoot.isUsed)
+                if (isIfaceMemberUsed(m) || (minf.virtualRoot && minf.virtualRoot.isUsed))
                     markFunctionUsed(m, info.bindings)
             }
 

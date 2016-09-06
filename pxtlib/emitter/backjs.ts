@@ -20,10 +20,15 @@ namespace ts.pxtc {
             `  refmask: ${JSON.stringify(info.refmask)},\n` +
             `  methods: [\n`
         for (let m of info.vtable) {
-            s += `    ${getFunctionLabel(m.decl, [])},\n`
-
+            s += `    ${getFunctionLabel(m, info.bindings)},\n`
         }
-        s += "  ],\n};\n"
+        s += "  ],\n"
+        s += "  iface: [\n"
+        for (let m of info.itable) {
+            s += `    ${m ? getFunctionLabel(m, info.bindings) : "null"},\n`
+        }
+        s += "  ],\n"
+        s += "};\n"
         return s
     }
 
@@ -307,7 +312,9 @@ switch (step) {
             })
 
             write(`s.pc = ${lblId};`)
-            if (procid.virtualIndex != null) {
+            if (procid.ifaceIndex != null) {
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface[${procid.ifaceIndex}];`)
+            } else if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             }
