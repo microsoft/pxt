@@ -1596,19 +1596,16 @@ const defaultFiles: U.Map<string> = {
 
     "shims.d.ts": ` `,
 
-    "makefile": `all: deploy
+    "Makefile": `all: deploy
 
 build:
-    pxt build
-    
+\tpxt build
+  
 deploy:
-    pxt deploy
-    
-test:
-   pxt test
+\tpxt deploy
 
 test:
-   pxt test
+\tpxt test
 `,
 
     "README.md": `# @NAME@
