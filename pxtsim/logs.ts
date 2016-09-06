@@ -226,7 +226,7 @@ namespace pxsim.logs {
             let nvalue = m ? parseInt(m[3]) : null;
             for (let i = ens.length - 1; i >= 0; --i) {
                 if (ens[i].source == source &&
-                    (ens[i].value == value ||
+                    ((i == ens.length - 1 && ens[i].value == value) ||
                         (variable && ens[i].variable == variable))) {
                     last = ens[i];
                     break;
