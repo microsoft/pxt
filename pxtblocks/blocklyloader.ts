@@ -549,7 +549,7 @@ namespace pxt.blocks {
                     .setCheck("Boolean")
                     .appendField("while");
                 this.appendStatementInput("DO")
-                    .appendField("do");
+                    .appendField(lf("do{id:while_do}"));
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
                 this.setTooltip(lf("Run the same sequence of actions while the condition is met."));
