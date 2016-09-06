@@ -304,9 +304,29 @@ ${output}</xml>`;
         }
 
         function emitVariableSetOrChange(name: string, value: ts.Expression | number, changed = false) {
+            const isNumber = typeof value === 'number';
+            if (!isNumber) {
+                const valueNode = value as ts.Expression;
+
+                // Assignments to null are not supported because there is no block value equivalent to null.
+                // However, declarations that initialize to null are fine so long as they occur in the global
+                // scope since blocks that have object types will regenerate the initializations in compilation
+                if (valueNode.kind === SyntaxKind.NullKeyword) {
+                    if (valueNode.parent.kind !== SyntaxKind.VariableDeclaration) {
+                        error(valueNode, "Assigning null to a variable is not supported in blocks");
+                    }
+                    else if (getEnclosingBlockScopeContainer(valueNode).kind !== SyntaxKind.SourceFile) {
+                        error(valueNode, "Only globally scoped initializations to null are supported in blocks");
+                    }
+
+                    // Do not emit null initializers
+                    return;
+                }
+            }
+
             writeBeginBlock(changed ? "variables_change" : "variables_set")
             write(`<field name="VAR">${Util.htmlEscape(name)}</field>`)
-            if (typeof value == 'number')
+            if (isNumber)
                 write(`<value name="VALUE"><block type="math_number"><field name="NUM">${value}</field></block></value>`);
             else {
                 write('<value name="VALUE">')
