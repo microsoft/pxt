@@ -582,7 +582,7 @@ export function serveAsync(options: ServeOptions) {
                         name: e
                     }
                 })
-                let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc)
+                let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc, pathname)
                 sendHtml(html)
             } else {
                 sendFile(webFile)
