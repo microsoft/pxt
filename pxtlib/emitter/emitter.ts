@@ -902,8 +902,13 @@ namespace ts.pxtc {
 
         function getVTable(inf: ClassInfo) {
             assert(inf.isUsed)
-            if (!inf.vtable) {
-                let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
+            if (inf.vtable)
+                return inf.vtable
+            let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
+
+            scope(() => {
+                U.pushRange(typeBindings, inf.bindings)
+                
                 for (let m of inf.methods) {
                     let minf = getFunctionInfo(m)
                     if (minf.virtualRoot) {
@@ -1003,7 +1008,8 @@ namespace ts.pxtc {
                 if (inf.hasVTable) {
                     inf.refmask.unshift(false) // for the vtable
                 }
-            }
+            })
+
             return inf.vtable
         }
 
