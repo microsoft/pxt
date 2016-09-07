@@ -343,34 +343,67 @@ ${bkptLabel + "_after"}:
             let procid = topExpr.data as ir.ProcId
             let procIdx = -1
             if (procid.virtualIndex != null || procid.ifaceIndex != null) {
-                write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
-                write(`ldr r0, [r0, #8] ; ld-vtable`)
-                let effIdx = procid.virtualIndex + 2
-                if (procid.ifaceIndex != null) {
-                    if (procid.mapMethod) {
-                        let nonlitlbl = mkLbl("nonLit")
-                        write(`cmp r0, #42`)
-                        write(`bne ${nonlitlbl}`)
-                        write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]`)
-                        emitInt(procid.mapIdx, "r1")
-                        if (topExpr.args.length == 2)
-                            write(`ldr r2, [sp, #4*0]`)
-                        emitCallRaw(procid.mapMethod)
-                        write(`b ${afterall}`)
-                        write(`${nonlitlbl}:`)
+                if (procid.mapMethod) {
+                    let isSet = /Set/.test(procid.mapMethod)
+                    assert(isSet == (topExpr.args.length == 2))
+                    assert(!isSet == (topExpr.args.length == 1))
+                    emitInt(procid.mapIdx, "r1")
+                    if (isSet)
+                        emitInt(procid.ifaceIndex, "r2")
+                    let id = "__" + procid.mapMethod.replace(/[^\w]/g, "_")
+                    let asm = `
+
+                    .section code
+${id}:
+        ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
+        ldr r3, [r0, #8] ; ld-vtable
+        cmp r3, #42
+        beq .objlit
+.nonlit:
+        ldr r0, [r3, #4] ; iface table
+        lsls r1, ${isSet ? "r2" : "r1"}, #2
+        ldr r0, [r0, r1] ; ld-method
+        bx r0
+.objlit:
+        ${isSet ? "ldr r2, [sp, #0]" : ""}
+        push {lr}
+        bl ${procid.mapMethod}
+        pop {pc}
+
+`
+                    bin.codeHelpers[id] = asm
+                    write(lbl + ":")
+                    write(`bl ${id}`)
+                } else {
+                    write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
+                    write(`ldr r0, [r0, #8] ; ld-vtable`)
+                    let effIdx = procid.virtualIndex + 2
+                    if (procid.ifaceIndex != null) {
+                        if (procid.mapMethod) {
+                            let nonlitlbl = mkLbl("nonLit")
+                            write(`cmp r0, #42`)
+                            write(`bne ${nonlitlbl}`)
+                            write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]`)
+                            emitInt(procid.mapIdx, "r1")
+                            if (topExpr.args.length == 2)
+                                write(`ldr r2, [sp, #4*0]`)
+                            emitCallRaw(procid.mapMethod)
+                            write(`b ${afterall}`)
+                            write(`${nonlitlbl}:`)
+                        }
+                        write(`ldr r0, [r0, #4] ; iface table`)
+                        effIdx = procid.ifaceIndex
                     }
-                    write(`ldr r0, [r0, #4] ; iface table`)
-                    effIdx = procid.ifaceIndex
+                    if (effIdx <= 31)
+                        write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
+                    else {
+                        emitInt(effIdx * 4, "r1")
+                        write(`ldr r0, [r0, r1] ; ld-method`)
+                    }
+                    write(lbl + ":")
+                    write("blx r0")
+                    write(afterall + ":")
                 }
-                if (effIdx <= 31)
-                    write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
-                else {
-                    emitInt(effIdx * 4, "r1")
-                    write(`ldr r0, [r0, r1] ; ld-method`)
-                }
-                write(lbl + ":")
-                write("blx r0")
-                write(afterall + ":")
             } else {
                 let proc = procid.proc
                 procIdx = proc.seqNo
@@ -903,6 +936,10 @@ ${hex.hexPrelude()}
 
         bin.usedClassInfos.forEach(info => {
             asmsource += vtableToAsm(info)
+        })
+
+        U.iterStringMap(bin.codeHelpers, (id, s) => {
+            asmsource += s
         })
 
         asmsource += hex.asmTotalSource

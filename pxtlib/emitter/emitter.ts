@@ -3102,6 +3102,7 @@ ${lbl}: .short 0xffff
 
         strings: StringMap<string> = {};
         otherLiterals: string[] = [];
+        codeHelpers: StringMap<string> = {};
         lblNo = 0;
 
         reset() {
