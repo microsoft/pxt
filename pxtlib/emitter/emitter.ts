@@ -887,8 +887,9 @@ namespace ts.pxtc {
                             } else {
                                 throw userError(9228, lf("cannot inherit from this type"))
                             }
+                        // ignore it - implementation of interfaces is implicit
                         case SK.ImplementsKeyword:
-                            throw userError(9228, lf("interfaces not supported yet"))
+                            break
                         default:
                             throw userError(9228, lf("invalid heritage clause"))
                     }

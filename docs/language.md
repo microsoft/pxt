@@ -63,6 +63,7 @@ See also [issue #51](https://github.com/Microsoft/pxt/issues/51).
 * method-like properties (get/set accessors)
 * basic generic classes, methods, and functions
 * class inheritance
+* classes implementing interfaces (explicitly and implicitly)
 * object literals `{ foo: 1, bar: "two" }`
 
 ## Unsupported language features
@@ -72,7 +73,6 @@ We generally stay away from the more dynamic parts of JavaScript.
 Things you may miss and we may implement:
 
 * exceptions (`throw`, `try ... catch`, `try ... finally`)
-* classes implementing interfaces
 * using generic functions as values
 * nested generic functions
 * class inheritance for generic classes and methods
