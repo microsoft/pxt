@@ -37,6 +37,7 @@
     "built/web/*.js",
     "built/web/*.css",
     "built/web/*.html",
+    "built/web/vs/editor/editor.main.js",
     "built/web/vs/language/typescript/lib/*.js",
     "built/web/vs/language/typescript/src/*.js",
     "libs/lang-test0/*.ts",
