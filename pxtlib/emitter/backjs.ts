@@ -24,8 +24,10 @@ namespace ts.pxtc {
         }
         s += "  ],\n"
         s += "  iface: [\n"
+        let i = 0
         for (let m of info.itable) {
-            s += `    ${m ? m.label() : "null"},\n`
+            s += `    ${m ? m.label() : "null"},  // ${info.itableInfo[i] || "."}\n`
+            i++
         }
         s += "  ],\n"
         s += "};\n"

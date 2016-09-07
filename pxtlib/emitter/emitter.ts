@@ -269,6 +269,7 @@ namespace ts.pxtc {
         isUsed?: boolean;
         vtable?: ir.Procedure[];
         itable?: ir.Procedure[];
+        itableInfo?: string[];
         bindings: TypeBinding[];
         ctor?: ir.Procedure;
     }
@@ -436,6 +437,8 @@ namespace ts.pxtc {
 
     function typeOf(node: Node) {
         let r: Type;
+        if ((node as any).typeOverride)
+            return (node as any).typeOverride as Type
         if (isExpression(node))
             r = checker.getContextualType(<Expression>node)
         if (!r) {
@@ -556,6 +559,7 @@ namespace ts.pxtc {
             kind: SK.MethodDeclaration,
             parameters: [],
             name: {
+                kind: SK.Identifier,
                 text: name,
                 pos: 0,
                 end: 0
@@ -921,33 +925,69 @@ namespace ts.pxtc {
                 }
                 inf.vtable = tbl
                 inf.itable = []
-                for (let fld0 of inf.allfields) {
-                    let fld = fld0 as FieldWithAccessors
-                    if (!isIfaceMemberUsed(fld)) continue
-                    if (!fld.irGetter)
-                        fld.irGetter = mkBogusMethod(inf, getName(fld))
-                    let proc = lookupProc(fld.irGetter, inf.bindings)
+                inf.itableInfo = []
+
+                let storeIface = (name: string, proc: ir.Procedure) => {
+                    let id = getIfaceMemberId(name)
+                    inf.itable[id] = proc
+                    inf.itableInfo[id] = name
+                    assert(!!proc)
+                }
+
+                let emitSynthetic = (fn: MethodDeclaration, fill: (p: ir.Procedure) => void) => {
+                    let proc = lookupProc(fn, inf.bindings)
                     if (!proc) {
                         scope(() => {
-                            emitFuncCore(fld.irGetter, inf.bindings)
-                            proc = lookupProc(fld.irGetter, inf.bindings)
+                            emitFuncCore(fn, inf.bindings)
+                            proc = lookupProc(fn, inf.bindings)
                             proc.body = []
-                            let idx = fieldIndexCore(inf, fld, typeOf(fld))
+                            fill(proc)
+                        })
+                    }
+                    assert(!!proc)
+                    storeIface(getName(fn), proc)
+                }
+
+                for (let fld0 of inf.allfields) {
+                    let fld = fld0 as FieldWithAccessors
+                    let fname = getName(fld)
+                    let setname = "set/" + fname
+                    let idx = fieldIndexCore(inf, fld, typeOf(fld))
+
+                    if (isIfaceMemberUsed(fname)) {
+                        if (!fld.irGetter)
+                            fld.irGetter = mkBogusMethod(inf, fname)
+                        emitSynthetic(fld.irGetter, (proc) => {
                             // we skip final decr, but the ldfld call will do its own decr
                             let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
                             emitInJmpValue(access)
                         })
                     }
-                    assert(!!proc)
-                    inf.itable[getIfaceMemberId(getName(fld))] = proc
+
+                    if (isIfaceMemberUsed(setname)) {
+                        if (!fld.irSetter) {
+                            fld.irSetter = mkBogusMethod(inf, setname)
+                            fld.irSetter.parameters.unshift({
+                                kind: SK.Parameter,
+                                name: { text: "v" },
+                                parent: fld.irSetter,
+                                typeOverride: typeOf(fld)
+                            } as any)
+                        }
+                        emitSynthetic(fld.irSetter, (proc) => {
+                            // decrs work out
+                            let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
+                            proc.emitExpr(ir.op(EK.Store, [access, proc.args[1].loadCore()]))
+                        })
+                    }
                 }
                 for (let curr = inf; curr; curr = curr.baseClassInfo) {
                     for (let m of curr.methods) {
                         let n = getName(m)
-                        if (isIfaceMemberUsed(m)) {
-                            let id = getIfaceMemberId(getName(m))
+                        if (isIfaceMemberUsed(n)) {
+                            let id = getIfaceMemberId(n)
                             if (!inf.itable[id]) {
-                                inf.itable[id] = lookupProc(m, curr.bindings)
+                                storeIface(n, lookupProc(m, curr.bindings))
                             }
                         }
                     }
@@ -955,6 +995,9 @@ namespace ts.pxtc {
                 for (let i = 0; i < inf.itable.length; ++i)
                     if (!inf.itable[i])
                         inf.itable[i] = null // avoid undefined
+                for (let k of Object.keys(ifaceMembers)) {
+                    inf.itableInfo[ifaceMembers[k]] = k
+                }
                 if (inf.itable.length)
                     inf.hasVTable = true
                 if (inf.hasVTable) {
@@ -1594,7 +1637,10 @@ ${lbl}: .short 0xffff
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
                 } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
-                    return mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(getName(decl)))
+                    let name = getName(decl)
+                    if (args.length == 2 && decl.kind == SK.PropertySignature)
+                        name = "set/" + name
+                    return mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(name))
                 } else {
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
@@ -1655,8 +1701,8 @@ ${lbl}: .short 0xffff
             return decl.members.filter(m => m.kind == SK.Constructor)[0] as ConstructorDeclaration
         }
 
-        function isIfaceMemberUsed(decl: Declaration) {
-            return U.lookup(ifaceMembers, getName(decl)) != null
+        function isIfaceMemberUsed(name: string) {
+            return U.lookup(ifaceMembers, name) != null
         }
 
         function markClassUsed(info: ClassInfo) {
@@ -1666,7 +1712,7 @@ ${lbl}: .short 0xffff
             bin.usedClassInfos.push(info)
             for (let m of info.methods) {
                 let minf = getFunctionInfo(m)
-                if (isIfaceMemberUsed(m) || (minf.virtualRoot && minf.virtualRoot.isUsed))
+                if (isIfaceMemberUsed(getName(m)) || (minf.virtualRoot && minf.virtualRoot.isUsed))
                     markFunctionUsed(m, info.bindings)
             }
 
@@ -2096,6 +2142,8 @@ ${lbl}: .short 0xffff
                     if (!decl) {
                         unhandled(trg, lf("setter not available"), 9253)
                     }
+                    proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
+                } else if (decl && decl.kind == SK.PropertySignature) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
