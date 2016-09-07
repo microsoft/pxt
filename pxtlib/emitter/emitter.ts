@@ -908,7 +908,7 @@ namespace ts.pxtc {
 
             scope(() => {
                 U.pushRange(typeBindings, inf.bindings)
-                
+
                 for (let m of inf.methods) {
                     let minf = getFunctionInfo(m)
                     if (minf.virtualRoot) {
@@ -2196,8 +2196,11 @@ ${lbl}: .short 0xffff
                     proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
                     proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
                     proc.emitLbl(slbl)
-                    //if (isRefCountedExpr(node.left)) - always decr, so that we for sure have a reference here
-                    proc.emitExpr(ir.op(EK.Decr, [left]))
+                    if (isRefCountedExpr(node.left))
+                        proc.emitExpr(ir.op(EK.Decr, [left]))
+                    else
+                        // make sure we have reference and the stack is cleared
+                        proc.emitExpr(ir.rtcall("thumb::ignore", [left]))
                 } else {
                     if (isRefCountedExpr(node.left))
                         proc.emitExpr(ir.op(EK.Decr, [left]))
@@ -2499,7 +2502,6 @@ ${lbl}: .short 0xffff
             let a = typeOf(node)
             if (!(a.flags & TypeFlags.Void)) {
                 if (isRefType(a)) {
-                    // will pop
                     v = ir.op(EK.Decr, [v])
                 }
             }

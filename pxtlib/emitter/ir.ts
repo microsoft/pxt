@@ -365,6 +365,28 @@ namespace ts.pxtc.ir {
         bindings: TypeBinding[];
     }
 
+    function noRefCount(e: ir.Expr): boolean {
+        switch (e.exprKind) {
+            case ir.EK.Sequence:
+                return noRefCount(e.args[e.args.length - 1])
+            case ir.EK.NumberLiteral:
+                return true
+            case ir.EK.RuntimeCall:
+                switch (e.data as string) {
+                    case "String_::mkEmpty":
+                    case "pxt::ptrOfLiteral":
+                        return true
+                    default:
+                        return false
+                }
+            case ir.EK.SharedDef:
+            case ir.EK.SharedRef:
+                return noRefCount(e.args[0])
+            default:
+                return false
+        }
+    }
+
     export class Procedure extends Node {
         numArgs = 0;
         info: FunctionAddInfo;
@@ -496,9 +518,6 @@ namespace ts.pxtc.ir {
         }
 
         resolve() {
-            // TODO remove decr(stringData)
-            // TODO remove decr(static function literal)
-
             let iterargs = (e: Expr, f: (v: Expr) => Expr) => {
                 if (e.args)
                     for (let i = 0; i < e.args.length; ++i)
@@ -533,6 +552,10 @@ namespace ts.pxtc.ir {
                     return e;
 
                 iterargs(e, opt)
+
+                if ((e.exprKind == EK.Decr || e.exprKind == EK.Incr) && noRefCount(e.args[0])) {
+                    return e.args[0]
+                }
 
                 switch (e.exprKind) {
                     case EK.Decr:
