@@ -1253,6 +1253,56 @@ namespace Ifaces {
     }
 }
 
+namespace ObjLit {
+    interface Opts {
+        width?: number;
+        height?: number;
+        msg?: string;
+    }
+    class OptImpl {
+        width: number;
+        get height() {
+            return 33
+        }
+        get msg() {
+            return "X" + "OptImpl"
+        }
+    }
+    function foo(o: Opts) {
+        if (!o.msg) {
+            o.msg = "None"
+        }
+        glb1 += o.width - o.height + o.msg.length
+        //console.log(`w=${ o.width } h=${ o.height } m=${ o.msg }`)
+    }
+
+    export function run() {
+        glb1 = 0
+        foo({
+            width: 12,
+            msg: "h" + "w"
+        })
+        control.assert(glb1 == 14)
+        foo({
+            width: 12,
+            height: 13
+        })
+        control.assert(glb1 == 17)
+
+        let op: Opts = {}
+        op.width = 10
+        op.msg = "X" + "Z123"
+        foo(op)
+        control.assert(glb1 == 17 + 15)
+
+        glb1 = 0
+        let v = new OptImpl()
+        v.width = 34
+        foo(v)
+        control.assert(glb1 == 9)
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Driver starts
 // ---------------------------------------------------------------------------
@@ -1299,6 +1349,7 @@ Ctors.run()
 testAnySwitch()
 testLambdasWithMoreParams()
 Ifaces.run()
+ObjLit.run()
 
 
 msg("test top level code")

@@ -652,6 +652,12 @@ namespace ts.pxtc.Util {
         return n ? (n[0].toLocaleUpperCase() + n.slice(1)) : n;
     }
 
+    export function range(len: number) {
+        let r: number[] = []
+        for (let i = 0; i < len; ++i) r.push(i)
+        return r
+    }
+
     export function toDataUri(data: string, mimetype?: string): string {
         // TODO does this only support trusted data?
 

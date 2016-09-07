@@ -26,6 +26,7 @@ namespace pxt {
         cardLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: pxtc.Util.Map<string>;
+        githubUrl?: string;
     }
 
     export interface DocMenuEntry {
@@ -40,6 +41,7 @@ namespace pxt.docs {
     declare var require: any;
     let marked: MarkedStatic;
     import U = pxtc.Util;
+    const lf = U.lf;
 
     let stdboxes: U.Map<string> = {
     }
@@ -113,7 +115,7 @@ namespace pxt.docs {
         return require("marked");
     }
 
-    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null, breadcrumb: BreadcrumbEntry[] = []): string {
+    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null, breadcrumb: BreadcrumbEntry[] = [], filepath: string = null): string {
         let params: U.Map<string> = pubinfo || {}
 
         let boxes = U.clone(stdboxes)
@@ -333,6 +335,15 @@ namespace pxt.docs {
         params["targetname"] = theme.name || "PXT"
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         params["name"] = params["title"] + " - " + params["targetname"]
+        if (filepath && theme.githubUrl) {
+            //I would have used NodeJS path library, but this code may have to work in browser
+            let leadingTrailingSlash = /^\/|\/$/;
+            let githubUrl = `${theme.githubUrl.replace(leadingTrailingSlash, '')}/blob/master/docs/${filepath.replace(leadingTrailingSlash, '')}`;
+            params["github"] = `<p style="margin-top:1em"><a href="${githubUrl}"><i class="write icon"></i>${lf("Edit this page on GitHub")}</a></p>`;
+        }
+        else {
+            params["github"] = "";
+        }
 
         let style = '';
         if (theme.accentColor) style += `
@@ -341,7 +352,7 @@ namespace pxt.docs {
 `
         params["targetstyle"] = style;
 
-        return injectHtml(template, params, ["body", "menu", "breadcrumb", "targetlogo"])
+        return injectHtml(template, params, ["body", "menu", "breadcrumb", "targetlogo", "github"])
     }
 
     function injectHtml(template: string, vars: U.Map<string>, quoted: string[] = []) {

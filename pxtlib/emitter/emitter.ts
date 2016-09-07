@@ -728,10 +728,6 @@ namespace ts.pxtc {
                 case ts.SyntaxKind.TaggedTemplateExpression:
                     syntax = lf("tagged templates")
                     break
-                case ts.SyntaxKind.ObjectLiteralExpression:
-                    syntax = lf("object literals")
-                    alternative = lf("define a class instead")
-                    break
                 case ts.SyntaxKind.TypeOfExpression:
                     syntax = lf("typeof")
                     break
@@ -891,8 +887,9 @@ namespace ts.pxtc {
                             } else {
                                 throw userError(9228, lf("cannot inherit from this type"))
                             }
+                        // ignore it - implementation of interfaces is implicit
                         case SK.ImplementsKeyword:
-                            throw userError(9228, lf("interfaces not supported yet"))
+                            break
                         default:
                             throw userError(9228, lf("invalid heritage clause"))
                     }
@@ -957,11 +954,12 @@ namespace ts.pxtc {
                     let fld = fld0 as FieldWithAccessors
                     let fname = getName(fld)
                     let setname = "set/" + fname
-                    let idx = fieldIndexCore(inf, fld, typeOf(fld))
 
                     if (isIfaceMemberUsed(fname)) {
+                        inf.hasVTable = true
                         if (!fld.irGetter)
                             fld.irGetter = mkBogusMethod(inf, fname)
+                        let idx = fieldIndexCore(inf, fld, typeOf(fld))
                         emitSynthetic(fld.irGetter, (proc) => {
                             // we skip final decr, but the ldfld call will do its own decr
                             let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
@@ -970,6 +968,7 @@ namespace ts.pxtc {
                     }
 
                     if (isIfaceMemberUsed(setname)) {
+                        inf.hasVTable = true
                         if (!fld.irSetter) {
                             fld.irSetter = mkBogusMethod(inf, setname)
                             fld.irSetter.parameters.unshift({
@@ -979,6 +978,7 @@ namespace ts.pxtc {
                                 typeOverride: typeOf(fld)
                             } as any)
                         }
+                        let idx = fieldIndexCore(inf, fld, typeOf(fld))
                         emitSynthetic(fld.irSetter, (proc) => {
                             // decrs work out
                             let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
@@ -1270,7 +1270,20 @@ ${lbl}: .short 0xffff
             }
             return coll
         }
-        function emitObjectLiteral(node: ObjectLiteralExpression) { }
+        function emitObjectLiteral(node: ObjectLiteralExpression) {
+            let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
+            node.properties.forEach((p: PropertyAssignment) => {
+                let refSuff = ""
+                if (isRefCountedExpr(p.initializer))
+                    refSuff = "Ref"
+                proc.emitExpr(ir.rtcall("pxtrt::mapSet" + refSuff, [
+                    ir.op(EK.Incr, [expr]),
+                    ir.numlit(getIfaceMemberId(p.name.getText())),
+                    emitExpr(p.initializer)
+                ]))
+            })
+            return expr
+        }
         function emitPropertyAssignment(node: PropertyDeclaration) {
             if (isStatic(node)) {
                 emitVariableDeclaration(node)
@@ -1644,9 +1657,23 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
                     let name = getName(decl)
-                    if (args.length == 2 && decl.kind == SK.PropertySignature)
-                        name = "set/" + name
-                    return mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(name))
+                    let res = mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(name))
+                    if (decl.kind == SK.PropertySignature) {
+                        let pid = res.data as ir.ProcId
+                        pid.mapIdx = pid.ifaceIndex
+                        let refSuff = ""
+                        if (args.length == 2) {
+                            if (isRefCountedExpr(args[1]))
+                                refSuff = "Ref"
+                            pid.ifaceIndex = getIfaceMemberId("set/" + name)
+                            pid.mapMethod = "pxtrt::mapSet" + refSuff
+                        } else {
+                            if (isRefType(typeOf(node)))
+                                refSuff = "Ref"
+                            pid.mapMethod = "pxtrt::mapGet" + refSuff
+                        }
+                    }
+                    return res
                 } else {
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
@@ -2946,7 +2973,8 @@ ${lbl}: .short 0xffff
                     return emitAsExpression(<AsExpression>node);
                 case SK.TemplateExpression:
                     return emitTemplateExpression(<TemplateExpression>node);
-
+                case SK.ObjectLiteralExpression:
+                    return emitObjectLiteral(<ObjectLiteralExpression>node);
                 default:
                     unhandled(node);
                     return null
@@ -2974,8 +3002,6 @@ ${lbl}: .short 0xffff
                     return emitArrayBindingPattern(<BindingPattern>node);
                 case SyntaxKind.BindingElement:
                     return emitBindingElement(<BindingElement>node);
-                case SyntaxKind.ObjectLiteralExpression:
-                    return emitObjectLiteral(<ObjectLiteralExpression>node);
                 case SyntaxKind.ShorthandPropertyAssignment:
                     return emitShorthandPropertyAssignment(<ShorthandPropertyAssignment>node);
                 case SyntaxKind.ComputedPropertyName:

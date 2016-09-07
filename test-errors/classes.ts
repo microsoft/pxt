@@ -5,8 +5,8 @@ class A {
 class B extends A {  // ok
     foo() { } // TS9255
 }
-interface C { } // Probably should emit some sort of error, just skips it at the moment
-class D implements C { } // TS9228
+interface C { }
+class D implements C { } // OK
 class G<T> { } // Generics now supported
 class X extends G<number> {} // TS9228 - cannot extend generic type
 class S {
