@@ -338,6 +338,7 @@ ${bkptLabel + "_after"}:
             })
 
             let lbl = mkLbl("proccall")
+            let afterall = mkLbl("afterall")
 
             let procid = topExpr.data as ir.ProcId
             let procIdx = -1
@@ -346,6 +347,18 @@ ${bkptLabel + "_after"}:
                 write(`ldr r0, [r0, #8] ; ld-vtable`)
                 let effIdx = procid.virtualIndex + 2
                 if (procid.ifaceIndex != null) {
+                    if (procid.mapMethod) {
+                        let nonlitlbl = mkLbl("nonLit")
+                        write(`cmp r0, #42`)
+                        write(`bne ${nonlitlbl}`)
+                        write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]`)
+                        emitInt(procid.mapIdx, "r1")
+                        if (topExpr.args.length == 2)
+                            write(`ldr r2, [sp, #4*0]`)
+                        emitCallRaw(procid.mapMethod)
+                        write(`b ${afterall}`)
+                        write(`${nonlitlbl}:`)
+                    }
                     write(`ldr r0, [r0, #4] ; iface table`)
                     effIdx = procid.ifaceIndex
                 }
@@ -357,6 +370,7 @@ ${bkptLabel + "_after"}:
                 }
                 write(lbl + ":")
                 write("blx r0")
+                write(afterall + ":")
             } else {
                 let proc = procid.proc
                 procIdx = proc.seqNo

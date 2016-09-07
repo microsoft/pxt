@@ -332,7 +332,7 @@ switch (step) {
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)
 
-            frameExpr.currUses = 1            
+            frameExpr.currUses = 1
         }
 
         function emitStore(trg: ir.Expr, src: ir.Expr) {
