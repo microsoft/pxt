@@ -323,6 +323,14 @@ ${bkptLabel + "_after"}:
             }
         }
 
+        function emitHelper(asm: string) {
+            if (!bin.codeHelpers[asm]) {
+                let len = Object.keys(bin.codeHelpers).length
+                bin.codeHelpers[asm] = "_hlp_" + len
+            }
+            write(`bl ${bin.codeHelpers[asm]}`)
+        }
+
         function emitProcCall(topExpr: ir.Expr) {
             let stackBottom = 0
             //console.log("PROCCALL", topExpr.toString())
@@ -350,11 +358,8 @@ ${bkptLabel + "_after"}:
                     emitInt(procid.mapIdx, "r1")
                     if (isSet)
                         emitInt(procid.ifaceIndex, "r2")
-                    let id = "__" + procid.mapMethod.replace(/[^\w]/g, "_")
-                    let asm = `
-
-                    .section code
-${id}:
+                    write(lbl + ":")
+                    emitHelper(`
         ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
         ldr r3, [r0, #8] ; ld-vtable
         cmp r3, #42
@@ -369,11 +374,7 @@ ${id}:
         push {lr}
         bl ${procid.mapMethod}
         pop {pc}
-
-`
-                    bin.codeHelpers[id] = asm
-                    write(lbl + ":")
-                    write(`bl ${id}`)
+`);
                 } else {
                     write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
                     write(`ldr r0, [r0, #8] ; ld-vtable`)
@@ -464,29 +465,43 @@ ${id}:
             write("@stackmark litfunc");
             if (isMain)
                 write(".themain:")
-            write("push {r5, r6, lr}");
-            write("mov r5, r0");
-
             let parms = proc.args.map(a => a.def)
-            parms.forEach((p, i) => {
+            if (parms.length >= 1)
+                write("push {r1, r5, r6, lr}");
+            else
+                write("push {r5, r6, lr}");
+
+
+            parms.forEach((_, i) => {
                 if (i >= 3)
                     U.userError(U.lf("only up to three parameters supported in lambdas"))
-                write(`push {r${i + 1}}`)
+                if (i > 0) // r1 already done
+                    write(`push {r${i + 1}}`)
             })
-            write("@stackmark args");
+
+            let asm = `
+    @stackmark args
+    push {lr}
+    mov r5, r0
+`;
+
             proc.args.forEach((p, i) => {
                 if (p.isRef()) {
-                    write(`ldr r0, ${cellref(p)}`)
-                    emitCallRaw("pxt::incr")
+                    asm += `    ldr r0, ${cellref(p).replace(/;.*/, "")}\n`
+                    asm += `    bl pxt::incr\n`
                 }
             })
 
-            write(`bl pxtrt::getGlobalsPtr`)
-            write(`mov r6, r0`)
+            asm += `
+    bl pxtrt::getGlobalsPtr
+    mov r6, r0
+    pop {pc}
+    @stackempty args
+`
 
+            emitHelper(asm) // using shared helper saves about 3% of binary size
             write(`bl ${proc.label()}`)
 
-            write("@stackempty args")
             if (parms.length)
                 write("add sp, #4*" + parms.length + " ; pop args")
             write("pop {r5, r6, pc}");
@@ -938,8 +953,8 @@ ${hex.hexPrelude()}
             asmsource += vtableToAsm(info)
         })
 
-        U.iterStringMap(bin.codeHelpers, (id, s) => {
-            asmsource += s
+        U.iterStringMap(bin.codeHelpers, (code, lbl) => {
+            asmsource += `    .section code\n${lbl}:\n${code}\n`
         })
 
         asmsource += hex.asmTotalSource
