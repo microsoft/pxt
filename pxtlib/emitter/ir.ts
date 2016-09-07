@@ -114,7 +114,12 @@ namespace ts.pxtc.ir {
                     return this.data + "(" + this.args.map(a => a.toString()).join(", ") + ")"
 
                 case EK.ProcCall:
-                    return getDeclName(this.data.action) + "(" + this.args.map(a => a.toString()).join(", ") + ")"
+                    let procid = this.data as ProcId
+                    let name = ""
+                    if (procid.ifaceIndex != null) name = `IFACE@${procid.ifaceIndex}`
+                    else if (procid.virtualIndex != null) name = `VTABLE@${procid.virtualIndex}`
+                    else name = getDeclName(procid.proc.action)
+                    return name + "(" + this.args.map(a => a.toString()).join(", ") + ")"
 
                 case EK.Sequence:
                     return "(" + this.args.map(a => a.toString()).join("; ") + ")"
