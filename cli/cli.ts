@@ -1145,7 +1145,7 @@ function buildTargetCoreAsync() {
     let statFiles: U.Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
     dirsToWatch.push("sim"); // simulator
-    dirsToWatch.push("sim/public"); // simulator
+    dirsToWatch = dirsToWatch.concat(fs.readdirSync("sim").map(p => path.join("sim", p)).filter(p => fs.statSync(p).isDirectory()));
     console.log("building target.json...")
     return forEachBundledPkgAsync(pkg =>
         pkg.filesToBePublishedAsync()
