@@ -26,26 +26,26 @@ CACHE:
 /cdn/blockly/media/delete.mp3
 
 # monaco
-# /cdn/vs/css.js
-# /cdn/vs/loader.js
-# /cdn/vs/nls.js
-# /cdn/vs/base/common/worker/simpleWorker.js
-# /cdn/vs/base/common/worker/simpleWorker.nls.js
-# /cdn/vs/base/common/worker/workerServer.js
-# /cdn/vs/base/common/worker/workerServer.nls.js
-# /cdn/vs/base/worker/workerMain.js
-# /cdn/vs/base/worker/workerMainCompatibility.html
-# /cdn/vs/basic-languages/src/bat.js
-# /cdn/vs/basic-languages/src/cpp.js
-# /cdn/vs/editor/editor.main.css
-# /cdn/vs/editor/editor.main.js
-# /cdn/vs/editor/editor.main.nls.js
-# /cdn/vs/language/json/jsonMode.js
-# /cdn/vs/language/json/jsonWorker.js
-# /cdn/vs/language/typescript/lib/typescriptServices.js
-# /cdn/vs/language/typescript/src/mode.js
-# /cdn/vs/language/typescript/src/worker.js
-# /cdn/monacoworker.js
+/cdn/vs/css.js
+/cdn/vs/loader.js
+/cdn/vs/nls.js
+/cdn/vs/base/common/worker/simpleWorker.js
+/cdn/vs/base/common/worker/simpleWorker.nls.js
+/cdn/vs/base/common/worker/workerServer.js
+/cdn/vs/base/common/worker/workerServer.nls.js
+/cdn/vs/base/worker/workerMain.js
+/cdn/vs/base/worker/workerMainCompatibility.html
+/cdn/vs/basic-languages/src/bat.js
+/cdn/vs/basic-languages/src/cpp.js
+/cdn/vs/editor/editor.main.css
+/cdn/vs/editor/editor.main.js
+/cdn/vs/editor/editor.main.nls.js
+/cdn/vs/language/json/jsonMode.js
+/cdn/vs/language/json/jsonWorker.js
+/cdn/vs/language/typescript/lib/typescriptServices.js
+/cdn/vs/language/typescript/src/mode.js
+/cdn/vs/language/typescript/src/worker.js
+/cdn/monacoworker.js
 
 @workerjs@
 
