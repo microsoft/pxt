@@ -358,6 +358,8 @@ namespace ts.pxtc.ir {
         proc: Procedure;
         virtualIndex: number;
         ifaceIndex: number;
+        mapMethod?: string;
+        mapIdx?: number;
     }
 
     export interface ProcQuery {

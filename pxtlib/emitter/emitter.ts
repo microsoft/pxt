@@ -1644,9 +1644,23 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
                     let name = getName(decl)
-                    if (args.length == 2 && decl.kind == SK.PropertySignature)
-                        name = "set/" + name
-                    return mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(name))
+                    let res = mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(name))
+                    if (decl.kind == SK.PropertySignature) {
+                        let pid = res.data as ir.ProcId
+                        pid.mapIdx = pid.ifaceIndex
+                        let refSuff = ""
+                        if (args.length == 2) {
+                            if (isRefCountedExpr(args[1]))
+                                refSuff = "Ref"
+                            pid.ifaceIndex = getIfaceMemberId("set/" + name)
+                            pid.mapMethod = "pxtrt::mapSet" + refSuff
+                        } else {
+                            if (isRefType(typeOf(node)))
+                                refSuff = "Ref"
+                            pid.mapMethod = "pxtrt::mapGet" + refSuff
+                        }
+                    }
+                    return res
                 } else {
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
