@@ -848,7 +848,7 @@ ${info.id}_VT:
         s += `        .word ${info.id}_IfaceVT\n`
 
         for (let m of info.vtable) {
-            s += `        .word ${getFunctionLabel(m, info.bindings)}|1\n`
+            s += `        .word ${m.label()}|1\n`
         }
 
         let refmask = info.refmask.map(v => v ? "1" : "0")
@@ -866,7 +866,7 @@ ${info.id}_VT:
 ${info.id}_IfaceVT:
 `
         for (let m of info.itable) {
-            s += `        .word ${m ? getFunctionLabel(m, info.bindings) + "|1" : "0"}\n`
+            s += `        .word ${m ? m.label() + "|1" : "0"}\n`
         }
 
         s += "\n"

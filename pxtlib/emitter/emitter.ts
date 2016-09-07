@@ -20,6 +20,11 @@ namespace ts.pxtc {
         pxtNodeWave: number;
     }
 
+    interface FieldWithAccessors extends PropertyDeclaration {
+        irGetter: MethodDeclaration;
+        irSetter: MethodDeclaration;
+    }
+
     let lastNodeId = 0
     let currNodeWave = 1
     export function getNodeId(n: Node) {
@@ -262,8 +267,8 @@ namespace ts.pxtc {
         attrs: CommentAttrs;
         hasVTable?: boolean;
         isUsed?: boolean;
-        vtable?: FunctionLikeDeclaration[];
-        itable?: FunctionLikeDeclaration[];
+        vtable?: ir.Procedure[];
+        itable?: ir.Procedure[];
         bindings: TypeBinding[];
         ctor?: ir.Procedure;
     }
@@ -347,7 +352,7 @@ namespace ts.pxtc {
     }
 
     export function parseComments(node: Node): CommentAttrs {
-        if (!node || (node as any).isRootFunction) return parseCommentString("")
+        if (!node || (node as any).isBogusFunction) return parseCommentString("")
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
         return res
@@ -546,6 +551,27 @@ namespace ts.pxtc {
         parentClassInfo?: ClassInfo;
     }
 
+    function mkBogusMethod(info: ClassInfo, name: string) {
+        let rootFunction = <any>{
+            kind: SK.MethodDeclaration,
+            parameters: [],
+            name: {
+                text: name,
+                pos: 0,
+                end: 0
+            },
+            body: {
+                kind: SK.Block,
+                statements: []
+            },
+            parent: info.decl,
+            pos: 0,
+            end: 0,
+            isBogusFunction: true,
+        }
+        return rootFunction as MethodDeclaration
+    }
+
     export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
@@ -627,7 +653,8 @@ namespace ts.pxtc {
             parent: src,
             pos: 0,
             end: 0,
-            isRootFunction: true
+            isRootFunction: true,
+            isBogusFunction: true
         }
 
         markUsed(rootFunction);
@@ -878,28 +905,50 @@ namespace ts.pxtc {
                     if (minf.virtualRoot) {
                         let key = classFunctionKey(m)
                         let done = false
+                        let proc = lookupProc(m, inf.bindings)
                         for (let i = 0; i < tbl.length; ++i) {
-                            if (classFunctionKey(tbl[i]) == key) {
-                                tbl[i] = minf.decl
+                            if (classFunctionKey(tbl[i].action) == key) {
+                                tbl[i] = proc
                                 minf.virtualIndex = i
                                 done = true
                             }
                         }
                         if (!done) {
                             minf.virtualIndex = tbl.length
-                            tbl.push(minf.decl)
+                            tbl.push(proc)
                         }
                     }
                 }
                 inf.vtable = tbl
                 inf.itable = []
+                for (let fld0 of inf.allfields) {
+                    let fld = fld0 as FieldWithAccessors
+                    if (!isIfaceMemberUsed(fld)) continue
+                    if (!fld.irGetter)
+                        fld.irGetter = mkBogusMethod(inf, getName(fld))
+                    let proc = lookupProc(fld.irGetter, inf.bindings)
+                    if (!proc) {
+                        scope(() => {
+                            emitFuncCore(fld.irGetter, inf.bindings)
+                            proc = lookupProc(fld.irGetter, inf.bindings)
+                            proc.body = []
+                            let idx = fieldIndexCore(inf, fld, typeOf(fld))
+                            // we skip final decr, but the ldfld call will do its own decr
+                            let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
+                            emitInJmpValue(access)
+                        })
+                    }
+                    assert(!!proc)
+                    inf.itable[getIfaceMemberId(getName(fld))] = proc
+                }
                 for (let curr = inf; curr; curr = curr.baseClassInfo) {
                     for (let m of curr.methods) {
                         let n = getName(m)
                         if (isIfaceMemberUsed(m)) {
                             let id = getIfaceMemberId(getName(m))
-                            if (!inf.itable[id])
-                                inf.itable[id] = m
+                            if (!inf.itable[id]) {
+                                inf.itable[id] = lookupProc(m, curr.bindings)
+                            }
                         }
                     }
                 }
@@ -1212,12 +1261,14 @@ ${lbl}: .short 0xffff
                     return ir.numlit(parseInt(ev));
                 return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature) {
+                return emitCallCore(node, node, [], null, decl as any, node.expression)
+                /*
                 if (attrs.shim) {
                     callInfo.args.push(node.expression)
                     return emitShim(decl, node, [node.expression])
                 } else {
                     throw unhandled(node, lf("no {shim:...}"), 9236);
-                }
+                }*/
             } else if (decl.kind == SK.PropertyDeclaration) {
                 if (isStatic(decl)) {
                     return emitLocalLoad(decl as PropertyDeclaration)
@@ -1414,6 +1465,7 @@ ${lbl}: .short 0xffff
             let isMethod = false
             if (decl)
                 switch (decl.kind) {
+                    case SK.PropertySignature:
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
                     case SK.GetAccessor:
@@ -1541,7 +1593,7 @@ ${lbl}: .short 0xffff
                     })
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
-                } else if (decl.kind == SK.MethodSignature) {
+                } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
                     return mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(getName(decl)))
                 } else {
                     markFunctionUsed(decl, bindings)
@@ -1582,9 +1634,13 @@ ${lbl}: .short 0xffff
             return ir.op(EK.ProcCall, args, data)
         }
 
-        function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
+        function lookupProc(decl: ts.Declaration, bindings: TypeBinding[]) {
             let id: ir.ProcQuery = { action: decl as ts.FunctionLikeDeclaration, bindings }
-            let proc = bin.procs.filter(p => p.matches(id))[0]
+            return bin.procs.filter(p => p.matches(id))[0]
+        }
+
+        function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
+            let proc = lookupProc(decl, bindings)
             assert(!!proc || !bin.finalPass)
             return mkProcCallCore(proc, null, args)
         }
@@ -1599,7 +1655,7 @@ ${lbl}: .short 0xffff
             return decl.members.filter(m => m.kind == SK.Constructor)[0] as ConstructorDeclaration
         }
 
-        function isIfaceMemberUsed(decl: FunctionLikeDeclaration) {
+        function isIfaceMemberUsed(decl: Declaration) {
             return U.lookup(ifaceMembers, getName(decl)) != null
         }
 
@@ -1769,9 +1825,8 @@ ${lbl}: .short 0xffff
                 proc.reset()
             } else {
                 assert(!bin.finalPass)
-                let isRoot = proc == null
                 proc = new ir.Procedure();
-                proc.isRoot = isRoot
+                proc.isRoot = !!(node as any).isRootFunction
                 proc.action = node;
                 proc.info = info;
                 proc.bindings = bindings;
@@ -2000,6 +2055,16 @@ ${lbl}: .short 0xffff
             throw unhandled(node, lf("unsupported postfix unary operation"), 9246)
         }
 
+        function fieldIndexCore(info: ClassInfo, fld: PropertyDeclaration, t: Type) {
+            let attrs = parseComments(fld)
+            return {
+                idx: (info.hasVTable ? 1 : 0) + info.allfields.indexOf(fld),
+                name: getName(fld),
+                isRef: isRefType(t),
+                shimName: attrs.shim
+            }
+        }
+
         function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
             let tp = typeOf(pacc.expression)
             if (isPossiblyGenericClassType(tp)) {
@@ -2007,13 +2072,7 @@ ${lbl}: .short 0xffff
                 let fld = info.allfields.filter(f => (<Identifier>f.name).text == pacc.name.text)[0]
                 if (!fld)
                     userError(9224, lf("field {0} not found", pacc.name.text))
-                let attrs = parseComments(fld)
-                return {
-                    idx: (info.hasVTable ? 1 : 0) + info.allfields.indexOf(fld),
-                    name: pacc.name.text,
-                    isRef: isRefType(typeOf(pacc)),
-                    shimName: attrs.shim
-                }
+                return fieldIndexCore(info, fld, typeOf(pacc))
             } else {
                 throw unhandled(pacc, lf("bad field access"), 9247)
             }
@@ -2967,8 +3026,6 @@ ${lbl}: .short 0xffff
             this.lblNo = 0
             this.otherLiterals = []
             this.strings = {}
-            for (let p of this.procs)
-                p.reset()
         }
 
         addProc(proc: ir.Procedure) {
