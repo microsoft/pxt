@@ -13,7 +13,7 @@ and also to the simulator function `pxsim.foo.bar`.
 
 PXT can generate shim files from either C++
 in case of hardware targets, or from the simulator sources.
-In both cases, PXT will copy over all JSDoc style comments and `//%` annotions,
+In both cases, PXT will copy over all JSDoc style comments and `//%` annotations,
 add `shim=...` annotation, and also map the type appropriately (for example, C++ `int` type
 is mapped to `number`, and TypeScript `RefAction` to `()=>void`).
 We refer to the information copied as API meta-data.

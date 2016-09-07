@@ -14,7 +14,11 @@
         "simshim",
         "semver",
         "user's",
-        "initializers"
+        "initializers",
+        "superset",
+        "microcontroller",
+        "microcontrollers",
+        "bitwise"
     ],
     // flagWords - list of words to be always considered incorrect
     // This is useful for offensive words and common spelling errors.

@@ -58,7 +58,7 @@ and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/
 
 ### project
 
-The **project** language is simular to blocks but render a published project.
+The **project** language is similar to blocks but render a published project.
 
     ```project
     twejlyucio
@@ -159,6 +159,6 @@ Run `pxt snippets` in the project's root directory. This will automatically chec
 snippets in your documentation can be compiled, and it will check that no typescript features 
 that cannot be represented as blocks are used in block snippets.
 
-If you use an additional dependencies, make sure you refernece them (see [above](#dependencies)). 
+If you use an additional dependencies, make sure you reference them (see [above](#dependencies)). 
 
 To ensure that a snippet isn't checked, add `-ignore` after the snippet type.
