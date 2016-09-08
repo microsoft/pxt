@@ -405,12 +405,12 @@ namespace pxt.blocks {
 
         // Do not remove this comment.
         // These are used for category names.
-        // lf("{id:cat}Loops")
-        // lf("{id:cat}Logic")
-        // lf("{id:cat}Variables")
-        // lf("{id:cat}Lists")
-        // lf("{id:cat}Text")
-        // lf("{id:cat}Math")
+        // lf("{id:category}Loops")
+        // lf("{id:category}Logic")
+        // lf("{id:category}Variables")
+        // lf("{id:category}Lists")
+        // lf("{id:category}Text")
+        // lf("{id:category}Math")
 
         // add extra blocks
         if (tb && pxt.appTarget.runtime && pxt.appTarget.runtime.extraBlocks) {
@@ -676,7 +676,7 @@ namespace pxt.blocks {
     function initContextMenu() {
         // Translate the context menu for blocks.
         let msg: any = Blockly.Msg;
-        msg.DUPLICATE_BLOCK = lf("Duplicate{id:block}");
+        msg.DUPLICATE_BLOCK = lf("{id:block}Duplicate");
         msg.REMOVE_COMMENT = lf("Remove Comment");
         msg.ADD_COMMENT = lf("Add Comment");
         msg.EXTERNAL_INPUTS = lf("External Inputs");
