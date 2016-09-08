@@ -1,41 +1,6 @@
 /// <reference path='../typings/marked/marked.d.ts' />
+/// <reference path='../built/pxtarget.d.ts' />
 /// <reference path="emitter/util.ts"/>
-
-namespace pxt {
-    export interface AppTheme {
-        id?: string;
-        name?: string;
-        title?: string;
-        description?: string;
-        logoUrl?: string;
-        logo?: string;
-        portraitLogo?: string;
-        rightLogo?: string;
-        docsLogo?: string;
-        organizationLogo?: string;
-        homeUrl?: string;
-        embedUrl?: string;
-        docMenu?: DocMenuEntry[];
-        sideDoc?: string;
-        boardName?: string;
-        privacyUrl?: string;
-        termsOfUseUrl?: string;
-        contactUrl?: string;
-        accentColor?: string;
-        locales?: pxtc.Util.Map<AppTheme>;
-        cardLogo?: string;
-        appLogo?: string;
-        htmlDocIncludes?: pxtc.Util.Map<string>;
-        githubUrl?: string;
-    }
-
-    export interface DocMenuEntry {
-        name: string;
-        // needs to have one of `path` or `subitems` 
-        path?: string;
-        subitems?: DocMenuEntry[];
-    }
-}
 
 namespace pxt.docs {
     declare var require: any;

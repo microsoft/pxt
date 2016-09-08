@@ -1,3 +1,4 @@
+/// <reference path="../../built/pxtarget.d.ts"/>
 /// <reference path="../../built/pxtpackage.d.ts"/>
 
 namespace ts.pxtc {
@@ -3051,25 +3052,6 @@ ${lbl}: .short 0xffff
                 */
             }
         }
-    }
-
-    export interface FuncInfo {
-        name: string;
-        type: string;
-        args: number;
-        value: number;
-    }
-
-    export interface ExtensionInfo {
-        functions: FuncInfo[];
-        generatedFiles: U.Map<string>;
-        extensionFiles: U.Map<string>;
-        yotta: pxt.YottaConfig;
-        sha: string;
-        compileData: string;
-        shimsDTS: string;
-        enumsDTS: string;
-        onlyPublic: boolean;
     }
 
     export function emptyExtInfo(): ExtensionInfo {

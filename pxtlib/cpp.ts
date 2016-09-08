@@ -1,3 +1,4 @@
+/// <reference path="../built/pxtarget.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
