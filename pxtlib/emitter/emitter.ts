@@ -1773,7 +1773,7 @@ ${lbl}: .short 0xffff
             // stable-sort globals, with smallest first, because "strh/b" have 
             // smaller immediate range than plain "str" (and same for "ldr")
             globals.forEach((g, i) => g.index = i)
-            globals.sort((a, b) => 
+            globals.sort((a, b) =>
                 sizeOfBitSize(a.bitSize) - sizeOfBitSize(b.bitSize) ||
                 a.index - b.index)
             let currOff = numReservedGlobals * 4
