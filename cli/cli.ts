@@ -1679,18 +1679,99 @@ pxt_modules
 `
 }
 
+function addFile(name: string, cont: string) {
+    let ff = mainPkg.getFiles()
+    if (ff.indexOf(name) < 0) {
+        mainPkg.config.files.push(name)
+        mainPkg.saveConfig()
+        console.log(U.lf("Added {0} to files in {1}.", name, pxt.configName))
+    }
+
+    if (!fs.existsSync(name)) {
+        let vars: U.Map<string> = {}
+        let cfg = mainPkg.config as any
+        for (let k of Object.keys(cfg)) {
+            if (typeof cfg[k] == "string")
+                vars[k] = cfg
+        }
+        vars["ns"] = mainPkg.config.name.replace(/[^a-zA-Z0-9]/g, "_")
+        cont = cont.replace(/@([a-z]+)@/g, (f, k) => U.lookup(vars, k) || "")
+        fs.writeFileSync(name, cont)
+        console.log(U.lf("Wrote {0}.", name))
+    } else {
+        console.log(U.lf("Not overwriting {0}.", name))
+    }
+}
+
+
+function addAsmAsync() {
+    addFile("helpers.asm", `; example helper function
+@ns@_helper:
+    push {lr}
+    adds r0, r0, r1
+    pop {pc}
+`)
+
+    addFile("helpers.ts",
+        `namespace @ns@ {
+    /**
+     * Help goes here.
+     */
+    //% shim=@ns@_helper
+    export function helper(x: number, y: number) {
+        // Dummy implementation for the simulator.
+        return x - y
+    }
+}
+`)
+    return Promise.resolve()
+}
+
+function addCppAsync() {
+    addFile("extension.cpp",
+        `#include "pxt.h"
+using namespace pxt;
+namespace @ns@ {
+    //%
+    int extfun(int x, int y) {
+        return x + y;
+    }
+}
+`)
+    addFile("extension.ts",
+        `namespace @ns@ {
+    /**
+     * Help goes here.
+     */
+    //% shim=@ns@::extfun
+    export function extfun(x: number, y: number) {
+        // Dummy implementation for the simulator.
+        return x - y
+    }
+}
+`)
+
+    addFile("shims.d.ts", "// Will be auto-generated if needed.\n")
+    addFile("enums.d.ts", "// Will be auto-generated if needed.\n")
+
+    return Promise.resolve()
+}
+
+export function addAsync(...args: string[]) {
+    cmds = []
+    if (pxt.appTarget.compile.hasHex) {
+        cmd("asm - add assembly support", addAsmAsync)
+        cmd("cpp - add C++ extension support", addCppAsync)
+    }
+    return handleCommandAsync(args, loadPkgAsync)
+}
+
 export function initAsync() {
     if (fs.existsSync(pxt.configName))
         U.userError(`${pxt.configName} already present`)
 
     let prj = pxt.appTarget.tsprj;
     let config = U.clone(prj.config);
-
-    let askFieldAsync = (fld: string, deflt: string, prompt: string = "") =>
-        queryAsync(prompt || fld, deflt)
-            .then(r => {
-                (config as any)[fld] = r
-            })
 
     config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
     config.public = true
@@ -1756,7 +1837,8 @@ export function initAsync() {
                 fs.writeFileSync(k, v)
             })
 
-            console.log("package initialized")
+            console.log("Package initialized.")
+            console.log("Try 'pxt add' to add optional features.")
         })
         .then(() => installAsync())
 }
@@ -2823,7 +2905,7 @@ let cmds: Command[] = []
 
 
 function cmd(desc: string, cb: (...args: string[]) => Promise<void>, priority = 0) {
-    let m = /^(\S+)(\s+)(.*?)\s+- (.*)/.exec(desc)
+    let m = /^(\S+)(\s*)(.*?)\s+- (.*)/.exec(desc)
     cmds.push({
         name: m[1],
         argDesc: m[3],
@@ -2865,6 +2947,7 @@ cmd("ghppush                      - build static package and push to GitHub Page
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
 
+cmd("add      ARGUMENTS...        - add a feature (.asm, C++ etc) to package", addAsync)
 cmd("search   QUERY...            - search GitHub for a published package", searchAsync)
 cmd("pkginfo  USER/REPO           - show info about named GitHub packge", pkginfoAsync)
 
@@ -2879,19 +2962,12 @@ cmd("time                         - measure performance of the compiler on the c
 
 cmd("extension ADD_TEXT           - try compile extension", extensionAsync, 10)
 
-export function helpAsync(all?: string) {
+function showHelp(showAll = true) {
     let f = (s: string, n: number) => {
         while (s.length < n) {
             s += " "
         }
         return s
-    }
-    let showAll = all == "all"
-    console.log("USAGE: pxt command args...")
-    if (showAll) {
-        console.log("All commands:")
-    } else {
-        console.log("Common commands (use 'pxt help all' to show all):")
     }
     let commandWidth = Math.max(10, 1 + Math.max(...cmds.map(cmd => cmd.name.length)))
     let argWidth = Math.max(20, 1 + Math.max(...cmds.map(cmd => cmd.argDesc.length)))
@@ -2901,6 +2977,30 @@ export function helpAsync(all?: string) {
             console.log(f(cmd.name, commandWidth) + f(cmd.argDesc, argWidth) + cmd.desc);
         }
     })
+}
+
+function handleCommandAsync(args: string[], preApply = () => Promise.resolve()) {
+    let cmd = args[0]
+    let cc = cmds.filter(c => c.name == cmd)[0]
+    if (!cc) {
+        console.log("Avaiable subcommands:")
+        showHelp()
+        process.exit(1)
+        return Promise.resolve()
+    } else {
+        return preApply().then(() => cc.fn.apply(null, args.slice(1)))
+    }
+}
+
+export function helpAsync(all?: string) {
+    let showAll = all == "all"
+    console.log("USAGE: pxt command args...")
+    if (showAll) {
+        console.log("All commands:")
+    } else {
+        console.log("Common commands (use 'pxt help all' to show all):")
+    }
+    showHelp(showAll)
     return Promise.resolve()
 }
 
@@ -2929,6 +3029,11 @@ function goToPkgDir() {
 
 function ensurePkgDir() {
     goToPkgDir();
+}
+
+function loadPkgAsync() {
+    ensurePkgDir();
+    return mainPkg.loadAsync()
 }
 
 function errorHandler(reason: any) {
