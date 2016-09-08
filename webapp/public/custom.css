@@ -691,7 +691,7 @@ html {
     padding-right: .5em;
     width: initial !important;
     background-color: #B4009E;
-    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro;
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
 .monaco-editor .warning-view-zone {
@@ -701,7 +701,7 @@ html {
     padding-right: .5em;
     width: initial !important;
     background-color: #D83B01;
-    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro;
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
 /* monaco: Suggest Widget */

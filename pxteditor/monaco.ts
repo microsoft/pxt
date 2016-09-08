@@ -53,7 +53,7 @@ namespace pxt.vs {
         let editor = monaco.editor.create(element, {
             model: null,
             //ariaLabel: lf("JavaScript Editor"),
-            fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro'",
+            fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'monospace'",
             scrollBeyondLastLine: false,
             language: "typescript",
             experimentalScreenReader: true
