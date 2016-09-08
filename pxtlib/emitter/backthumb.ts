@@ -1,5 +1,12 @@
 namespace ts.pxtc {
     export var decodeBase64 = function (s: string) { return atob(s); }
+    interface BitSizeInfo {
+        size: number;
+        ldr: string;
+        str: string;
+        needsSignExt?: boolean;
+        immLimit: number;
+    }
 
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
         let resText = ""
@@ -232,11 +239,46 @@ ${bkptLabel + "_after"}:
                     }
                     break;
                 case EK.CellRef:
-                    let cell = e.data as ir.Cell;
-                    write(`ldr ${reg}, ${cellref(cell)}`)
+                    let cell = e.data as ir.Cell
+                    if (cell.isGlobal()) {
+                        let inf = bitSizeInfo(cell.bitSize)
+                        let off = "#" + cell.index
+                        if (inf.needsSignExt || cell.index >= inf.immLimit) {
+                            emitInt(cell.index, reg)
+                            off = reg
+                        }
+                        write(`${inf.ldr} ${reg}, [r6, ${off}]`)
+                    } else {
+                        write(`ldr ${reg}, ${cellref(cell)}`)
+                    }
                     break;
                 default: oops();
             }
+        }
+
+        function bitSizeInfo(b: BitSize) {
+            let inf: BitSizeInfo = {
+                size: sizeOfBitSize(b),
+                ldr: "",
+                str: "",
+                immLimit: 128
+            }
+            if (inf.size == 1) {
+                inf.immLimit = 32
+                inf.str = "strb"
+            } else if (inf.size == 2) {
+                inf.immLimit = 64
+                inf.str = "strh"
+            } else {
+                inf.str = "str"
+            }
+            if (b == BitSize.Int8 || b == BitSize.Int16) {
+                inf.needsSignExt = true
+                inf.ldr = inf.str.replace("str", "ldrs")
+            } else {
+                inf.ldr = inf.str.replace("str", "ldr")
+            }
+            return inf
         }
 
         // result in R0
@@ -428,7 +470,17 @@ ${bkptLabel + "_after"}:
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
                     emitExpr(src)
-                    write("str r0, " + cellref(cell))
+                    if (cell.isGlobal()) {
+                        let inf = bitSizeInfo(cell.bitSize)
+                        let off = "#" + cell.index
+                        if (cell.index >= inf.immLimit) {
+                            emitInt(cell.index, "r1")
+                            off = "r1"
+                        }
+                        write(`${inf.str} r0, [r6, ${off}]`)
+                    } else {
+                        write("str r0, " + cellref(cell))
+                    }
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
@@ -441,7 +493,7 @@ ${bkptLabel + "_after"}:
 
         function cellref(cell: ir.Cell) {
             if (cell.isGlobal()) {
-                return "[r6, #4*" + cell.index + "]"
+                throw oops()
             } else if (cell.iscap) {
                 assert(0 <= cell.index && cell.index < 32)
                 return "[r5, #4*" + cell.index + "]"
@@ -942,7 +994,7 @@ ${hex.hexPrelude()}
     .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
-    .short ${numReservedGlobals + bin.globals.length}   ; num. globals
+    .short ${bin.globalsWords}   ; num. globals
     .space 14 ; reserved
 `
         bin.procs.forEach(p => {

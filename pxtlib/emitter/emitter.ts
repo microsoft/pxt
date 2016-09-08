@@ -106,6 +106,17 @@ namespace ts.pxtc {
         }
     }
 
+    export function sizeOfBitSize(b: BitSize) {
+        switch (b) {
+            case BitSize.None: return 4
+            case BitSize.Int8: return 1
+            case BitSize.Int16: return 2
+            case BitSize.Int32: return 4
+            case BitSize.UInt8: return 1
+            case BitSize.UInt16: return 2
+            default: throw oops()
+        }
+    }
 
     export function setCellProps(l: ir.Cell) {
         l._isRef = isRefDecl(l.def)
@@ -698,6 +709,7 @@ namespace ts.pxtc {
 
         reset();
         emit(rootFunction)
+        layOutGlobals()
         emitVTables()
 
         if (diagnostics.getModificationCount() == 0) {
@@ -890,7 +902,7 @@ namespace ts.pxtc {
                 typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
-                    ex = new ir.Cell(bin.globals.length + numReservedGlobals, decl, getVarInfo(decl))
+                    ex = new ir.Cell(null, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
                 return ex
@@ -1754,6 +1766,25 @@ ${lbl}: .short 0xffff
             let proc = lookupProc(decl, bindings)
             assert(!!proc || !bin.finalPass)
             return mkProcCallCore(proc, null, args)
+        }
+
+        function layOutGlobals() {
+            let globals = bin.globals.slice(0)
+            // stable-sort globals, with smallest first, because "strh/b" have 
+            // smaller immediate range than plain "str" (and same for "ldr")
+            globals.forEach((g, i) => g.index = i)
+            globals.sort((a, b) => 
+                sizeOfBitSize(a.bitSize) - sizeOfBitSize(b.bitSize) ||
+                a.index - b.index)
+            let currOff = numReservedGlobals * 4
+            for (let g of globals) {
+                let sz = sizeOfBitSize(g.bitSize)
+                while (currOff & (sz - 1))
+                    currOff++ // align
+                g.index = currOff
+                currOff += sz
+            }
+            bin.globalsWords = (currOff + 3) >> 2
         }
 
         function emitVTables() {
@@ -3106,6 +3137,7 @@ ${lbl}: .short 0xffff
     export class Binary {
         procs: ir.Procedure[] = [];
         globals: ir.Cell[] = [];
+        globalsWords: number;
         finalPass = false;
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
