@@ -172,6 +172,40 @@ namespace pxsim {
         }
     }
 
+    export interface MapEntry {
+        key: number;
+        val: any;
+    }
+
+    export class RefMap extends RefObject {
+        vtable = 42;
+        data: MapEntry[] = [];
+
+        findIdx(key: number) {
+            for (let i = 0; i < this.data.length; ++i) {
+                if (this.data[i].key >> 1 == key)
+                    return i;
+            }
+            return -1;
+        }
+
+        destroy() {
+            super.destroy()
+            for (let i = 0; i < this.data.length; ++i) {
+                if (this.data[i].key & 1) {
+                    decr(this.data[i].val);
+                }
+                this.data[i].val = 0;
+            }
+            this.data = []
+        }
+
+        print() {
+            console.log(`RefMap id:${this.id} refs:${this.refcnt} size:${this.data.length}`)
+        }
+    }
+
+
     function num(v: any) {
         if (v === undefined) return 0;
         return v;
@@ -388,6 +422,67 @@ namespace pxsim {
 
         export function runtimeWarning(msg: string) {
             Runtime.postMessage(pxsim.getWarningMessage(msg))
+        }
+
+        export function mkMap() {
+            return new RefMap();
+        }
+
+        export function mapGet(map: RefMap, key: number) {
+            let i = map.findIdx(key);
+            if (i < 0) {
+                decr(map)
+                return 0;
+            }
+            let r = map.data[i].val;
+            decr(map)
+            return r;
+        }
+
+        export function mapGetRef(map: RefMap, key: number) {
+            let i = map.findIdx(key);
+            if (i < 0) {
+                decr(map);
+                return 0;
+            }
+            let r = incr(map.data[i].val);
+            decr(map)
+            return r;
+        }
+
+        export function mapSet(map: RefMap, key: number, val: any) {
+            let i = map.findIdx(key);
+            if (i < 0) {
+                map.data.push({
+                    key: key << 1,
+                    val: val
+                });
+            } else {
+                if (map.data[i].key & 1) {
+                    decr(map.data[i].val);
+                    map.data[i].key = key << 1;
+                }
+                map.data[i].val = val;
+            }
+            decr(map)
+        }
+
+        export function mapSetRef(map: RefMap, key: number, val: any) {
+            let i = map.findIdx(key);
+            if (i < 0) {
+                map.data.push({
+                    key: (key << 1) | 1,
+                    val: val
+                });
+            } else {
+                if (map.data[i].key & 1) {
+                    decr(map.data[i].val);
+                } else {
+                    map.data[i].key = (key << 1) | 1;
+                }
+                map.data[i].val = val;
+            }
+            decr(map)
         }
 
         // these are never used in simulator; silence the warnings

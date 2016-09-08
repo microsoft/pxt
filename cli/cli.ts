@@ -1145,7 +1145,7 @@ function buildTargetCoreAsync() {
     let statFiles: U.Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
     dirsToWatch.push("sim"); // simulator
-    dirsToWatch.push("sim/public"); // simulator
+    dirsToWatch = dirsToWatch.concat(fs.readdirSync("sim").map(p => path.join("sim", p)).filter(p => fs.statSync(p).isDirectory()));
     console.log("building target.json...")
     return forEachBundledPkgAsync(pkg =>
         pkg.filesToBePublishedAsync()
@@ -1279,7 +1279,7 @@ function renderDocs(localDir: string) {
                     name: e
                 }
             })
-            let html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc)
+            let html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc, f)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
                 return beg + ` href="${webpath}docs${url}.html"`
             })
@@ -1592,23 +1592,17 @@ const defaultFiles: U.Map<string> = {
 
     "tests.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
-    "enums.d.ts": ` `,
 
-    "shims.d.ts": ` `,
-
-    "makefile": `all: deploy
+    "Makefile": `all: deploy
 
 build:
-    pxt build
-    
+\tpxt build
+  
 deploy:
-    pxt deploy
-    
-test:
-   pxt test
+\tpxt deploy
 
 test:
-   pxt test
+\tpxt test
 `,
 
     "README.md": `# @NAME@

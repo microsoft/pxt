@@ -1,4 +1,5 @@
 /// <reference path="../../built/typescriptServices.d.ts"/>
+/// <reference path="../../built/pxtarget.d.ts"/>
 
 // Enforce order:
 /// <reference path="util.ts"/>
@@ -12,35 +13,6 @@
 /// <reference path="decompiler.ts"/>
 
 namespace ts.pxtc {
-    export interface CompileTarget {
-        simulatorPostMessage?: boolean; // provided by simulator as a post command message
-        isNative: boolean; // false -> JavaScript for simulator
-        nativeType?: string; // currently only "thumb"
-        hasHex: boolean;
-        hexMimeType?: string;
-        driveName?: string;
-        jsRefCounting?: boolean;
-        floatingPoint?: boolean;
-        deployDrives?: string; // partial name of drives where the .hex file should be copied
-    }
-
-    export interface CompileOptions {
-        fileSystem: StringMap<string>;
-        target: CompileTarget;
-        testMode?: boolean;
-        sourceFiles?: string[];
-        hexinfo: any;
-        extinfo?: ExtensionInfo;
-        noEmit?: boolean;
-        ast?: boolean;
-        breakpoints?: boolean;
-        justMyCode?: boolean;
-        computeUsedSymbols?: boolean;
-
-        embedMeta?: string;
-        embedBlob?: string; // base64
-    }
-
     export interface Breakpoint extends LocationInfo {
         id: number;
         isDebuggerStmt: boolean;

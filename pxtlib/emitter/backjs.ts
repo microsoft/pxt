@@ -20,10 +20,17 @@ namespace ts.pxtc {
             `  refmask: ${JSON.stringify(info.refmask)},\n` +
             `  methods: [\n`
         for (let m of info.vtable) {
-            s += `    ${getFunctionLabel(m.decl, [])},\n`
-
+            s += `    ${m.label()},\n`
         }
-        s += "  ],\n};\n"
+        s += "  ],\n"
+        s += "  iface: [\n"
+        let i = 0
+        for (let m of info.itable) {
+            s += `    ${m ? m.label() : "null"},  // ${info.itableInfo[i] || "."}\n`
+            i++
+        }
+        s += "  ],\n"
+        s += "};\n"
         return s
     }
 
@@ -307,7 +314,17 @@ switch (step) {
             })
 
             write(`s.pc = ${lblId};`)
-            if (procid.virtualIndex != null) {
+            if (procid.ifaceIndex != null) {
+                if (procid.mapMethod) {
+                    write(`if (${frameRef}.arg0.vtable === 42) {`)
+                    let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
+                    args.splice(1, 0, procid.mapIdx.toString())
+                    write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
+                    write(`  ${frameRef}.fn = doNothing;`)
+                    write(`} else`)
+                }
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface[${procid.ifaceIndex}];`)
+            } else if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             }

@@ -268,6 +268,12 @@ namespace pxsim {
                 throw new Error("sim error: " + msg)
             }
 
+            // referenced from eval()ed code
+            function doNothing(s: StackFrame) {
+                s.pc = -1;
+                return leave(s, s.parent.retval)
+            }
+
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
                 yieldSteps = yieldMaxSteps;
                 let now = Date.now()

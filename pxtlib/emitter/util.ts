@@ -635,6 +635,8 @@ namespace ts.pxtc.Util {
             lfmt = lfmt.replace(/\{\d+:s\}/g, "")
         }
 
+        lfmt = lfmt.replace(/\{id:[^\}]+\}/g, '');
+
         return fmt_va(lfmt, args);
     }
 
@@ -648,6 +650,12 @@ namespace ts.pxtc.Util {
 
     export function capitalize(n: string): string {
         return n ? (n[0].toLocaleUpperCase() + n.slice(1)) : n;
+    }
+
+    export function range(len: number) {
+        let r: number[] = []
+        for (let i = 0; i < len; ++i) r.push(i)
+        return r
     }
 
     export function toDataUri(data: string, mimetype?: string): string {

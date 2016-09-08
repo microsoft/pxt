@@ -370,7 +370,7 @@ export class Editor extends srceditor.Editor {
         })
 
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
-            if (this.fileType == FileType.Unknown || this.currFile.isReadonly()) return;
+            if (this.currFile.isReadonly()) return;
             if (this.isIncomplete()) {
                 monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
                 monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
@@ -462,18 +462,17 @@ export class Editor extends srceditor.Editor {
         let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
         if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()), mode, monaco.Uri.parse(proto));
         if (model) this.editor.setModel(model);
-        this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
 
-        if (this.fileType == FileType.TypeScript)
+        if (mode == "typescript")
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly());
 
         this.setValue(file.content)
         this.setDiagnostics(file, this.snapshotState())
 
+        this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
+
         if (this.fileType == FileType.Markdown)
             this.parent.setSideMarkdown(file.content);
-
-        this.formatCode();
     }
 
     snapshotState() {

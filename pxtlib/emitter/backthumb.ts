@@ -323,6 +323,14 @@ ${bkptLabel + "_after"}:
             }
         }
 
+        function emitHelper(asm: string) {
+            if (!bin.codeHelpers[asm]) {
+                let len = Object.keys(bin.codeHelpers).length
+                bin.codeHelpers[asm] = "_hlp_" + len
+            }
+            write(`bl ${bin.codeHelpers[asm]}`)
+        }
+
         function emitProcCall(topExpr: ir.Expr) {
             let stackBottom = 0
             //console.log("PROCCALL", topExpr.toString())
@@ -338,22 +346,65 @@ ${bkptLabel + "_after"}:
             })
 
             let lbl = mkLbl("proccall")
+            let afterall = mkLbl("afterall")
 
             let procid = topExpr.data as ir.ProcId
             let procIdx = -1
-            if (procid.virtualIndex != null) {
-                write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
-                write(`ldr r0, [r0, #8] ; ld-vtable`)
-                let effIdx = procid.virtualIndex + 1
-                if (effIdx <= 31)
-                    write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
-                else {
-                    emitInt(effIdx * 4, "r1")
-                    write(`ldr r0, [r0, r1] ; ld-method`)
+            if (procid.virtualIndex != null || procid.ifaceIndex != null) {
+                if (procid.mapMethod) {
+                    let isSet = /Set/.test(procid.mapMethod)
+                    assert(isSet == (topExpr.args.length == 2))
+                    assert(!isSet == (topExpr.args.length == 1))
+                    emitInt(procid.mapIdx, "r1")
+                    if (isSet)
+                        emitInt(procid.ifaceIndex, "r2")
+                    write(lbl + ":")
+                    emitHelper(`
+        ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
+        ldr r3, [r0, #8] ; ld-vtable
+        cmp r3, #42
+        beq .objlit
+.nonlit:
+        ldr r0, [r3, #4] ; iface table
+        lsls r1, ${isSet ? "r2" : "r1"}, #2
+        ldr r0, [r0, r1] ; ld-method
+        bx r0
+.objlit:
+        ${isSet ? "ldr r2, [sp, #0]" : ""}
+        push {lr}
+        bl ${procid.mapMethod}
+        pop {pc}
+`);
+                } else {
+                    write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
+                    write(`ldr r0, [r0, #8] ; ld-vtable`)
+                    let effIdx = procid.virtualIndex + 2
+                    if (procid.ifaceIndex != null) {
+                        if (procid.mapMethod) {
+                            let nonlitlbl = mkLbl("nonLit")
+                            write(`cmp r0, #42`)
+                            write(`bne ${nonlitlbl}`)
+                            write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]`)
+                            emitInt(procid.mapIdx, "r1")
+                            if (topExpr.args.length == 2)
+                                write(`ldr r2, [sp, #4*0]`)
+                            emitCallRaw(procid.mapMethod)
+                            write(`b ${afterall}`)
+                            write(`${nonlitlbl}:`)
+                        }
+                        write(`ldr r0, [r0, #4] ; iface table`)
+                        effIdx = procid.ifaceIndex
+                    }
+                    if (effIdx <= 31)
+                        write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
+                    else {
+                        emitInt(effIdx * 4, "r1")
+                        write(`ldr r0, [r0, r1] ; ld-method`)
+                    }
+                    write(lbl + ":")
+                    write("blx r0")
+                    write(afterall + ":")
                 }
-                write(lbl + ":")
-                write("blx r0")
-
             } else {
                 let proc = procid.proc
                 procIdx = proc.seqNo
@@ -414,29 +465,43 @@ ${bkptLabel + "_after"}:
             write("@stackmark litfunc");
             if (isMain)
                 write(".themain:")
-            write("push {r5, r6, lr}");
-            write("mov r5, r0");
-
             let parms = proc.args.map(a => a.def)
-            parms.forEach((p, i) => {
+            if (parms.length >= 1)
+                write("push {r1, r5, r6, lr}");
+            else
+                write("push {r5, r6, lr}");
+
+
+            parms.forEach((_, i) => {
                 if (i >= 3)
                     U.userError(U.lf("only up to three parameters supported in lambdas"))
-                write(`push {r${i + 1}}`)
+                if (i > 0) // r1 already done
+                    write(`push {r${i + 1}}`)
             })
-            write("@stackmark args");
+
+            let asm = `
+    @stackmark args
+    push {lr}
+    mov r5, r0
+`;
+
             proc.args.forEach((p, i) => {
                 if (p.isRef()) {
-                    write(`ldr r0, ${cellref(p)}`)
-                    emitCallRaw("pxt::incr")
+                    asm += `    ldr r0, ${cellref(p).replace(/;.*/, "")}\n`
+                    asm += `    bl pxt::incr\n`
                 }
             })
 
-            write(`bl pxtrt::getGlobalsPtr`)
-            write(`mov r6, r0`)
+            asm += `
+    bl pxtrt::getGlobalsPtr
+    mov r6, r0
+    pop {pc}
+    @stackempty args
+`
 
+            emitHelper(asm) // using shared helper saves about 3% of binary size
             write(`bl ${proc.label()}`)
 
-            write("@stackempty args")
             if (parms.length)
                 write("add sp, #4*" + parms.length + " ; pop args")
             write("pop {r5, r6, pc}");
@@ -456,19 +521,29 @@ ${bkptLabel + "_after"}:
             write(`adds ${reg}, ${lbl}@lo`);
         }
 
+        function numBytes(n: number) {
+            let v = 0
+            for (let q = n; q > 0; q >>>= 8) {
+                v++
+            }
+            return v || 1
+        }
+
         function emitInt(v: number, reg: string) {
+            let movWritten = false
+
             function writeMov(v: number) {
                 assert(0 <= v && v <= 255)
-                write(`movs ${reg}, #${v}`)
+                if (movWritten) {
+                    if (v)
+                        write(`adds ${reg}, #${v}`)
+                } else
+                    write(`movs ${reg}, #${v}`)
+                movWritten = true
             }
 
-            function writeAdd(v: number) {
-                assert(0 <= v && v <= 255)
-                write(`adds ${reg}, #${v}`)
-            }
-
-            function shift() {
-                write(`lsls ${reg}, ${reg}, #8`)
+            function shift(v = 8) {
+                write(`lsls ${reg}, ${reg}, #${v}`)
             }
 
             assert(v != null);
@@ -480,27 +555,41 @@ ${bkptLabel + "_after"}:
                 n = -n
             }
 
-            if (n <= 255) {
-                writeMov(n)
-            } else if (n <= 0xffff) {
-                writeMov((n >> 8) & 0xff)
-                shift()
-                writeAdd(n & 0xff)
-            } else if (n <= 0xffffff) {
-                writeMov((n >> 16) & 0xff)
-                shift()
-                writeAdd((n >> 8) & 0xff)
-                shift()
-                writeAdd(n & 0xff)
-            } else {
-                writeMov((n >> 24) & 0xff)
-                shift()
-                writeAdd((n >> 16) & 0xff)
-                shift()
-                writeAdd((n >> 8) & 0xff)
-                shift()
-                writeAdd((n >> 0) & 0xff)
+            let numShift = 0
+            if (n > 0xff) {
+                let shifted = n
+                while ((shifted & 1) == 0) {
+                    shifted >>>= 1
+                    numShift++
+                }
+                if (numBytes(shifted) < numBytes(n)) {
+                    n = shifted
+                } else {
+                    numShift = 0
+                }
             }
+
+
+            switch (numBytes(n)) {
+                case 4:
+                    writeMov((n >>> 24) & 0xff)
+                    shift()
+                case 3:
+                    writeMov((n >>> 16) & 0xff)
+                    shift()
+                case 2:
+                    writeMov((n >>> 8) & 0xff)
+                    shift()
+                case 1:
+                    writeMov(n & 0xff)
+                    break
+                default:
+                    oops()
+            }
+
+            if (numShift)
+                shift(numShift)
+
             if (isNeg) {
                 write(`negs ${reg}, ${reg}`)
             }
@@ -815,17 +904,33 @@ ${lbl}: .string ${stringLiteral(s)}
         .balign 4
 ${info.id}_VT:
         .short 0xffff ; refcount
-        .byte ${info.refmask.length}, ${info.vtable.length}  ; num. fields, num. methods
+        .byte ${info.refmask.length}, ${info.vtable.length + 1}  ; num. fields, num. methods
 `;
 
+        s += `        .word ${info.id}_IfaceVT\n`
+
         for (let m of info.vtable) {
-            s += `        .word ${getFunctionLabel(m.decl, [])}|1\n`
+            s += `        .word ${m.label()}|1\n`
         }
 
         let refmask = info.refmask.map(v => v ? "1" : "0")
         while (refmask.length < 2 || refmask.length % 2 != 0)
             refmask.push("0")
+
         s += `        .byte ${refmask.join(",")}\n`
+
+        // VTable for interface method is just linear. If we ever have lots of interface
+        // methods and lots of classes this could become a problem. We could use a table
+        // of (iface-member-id, function-addr) pairs and binary search.
+        // See https://codethemicrobit.com/nymuaedeou for Thumb binary search.
+        s += `
+        .balign 4
+${info.id}_IfaceVT:
+`
+        for (let m of info.itable) {
+            s += `        .word ${m ? m.label() + "|1" : "0"}\n`
+        }
+
         s += "\n"
         return s
     }
@@ -846,6 +951,10 @@ ${hex.hexPrelude()}
 
         bin.usedClassInfos.forEach(info => {
             asmsource += vtableToAsm(info)
+        })
+
+        U.iterStringMap(bin.codeHelpers, (code, lbl) => {
+            asmsource += `    .section code\n${lbl}:\n${code}\n`
         })
 
         asmsource += hex.asmTotalSource

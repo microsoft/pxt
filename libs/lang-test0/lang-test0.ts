@@ -1212,6 +1212,96 @@ function testLambdasWithMoreParams() {
     a(() => { })
 }
 
+namespace Ifaces {
+    interface IFoo {
+        foo(): number;
+        bar(x: number): string;
+        baz: string;
+    }
+
+    class A {
+        constructor() {
+            this.baz = "Q" + "A"
+        }
+        foo() {
+            return 12
+        }
+        bar(v: number) {
+            return v.toString()
+        }
+        baz: string;
+    }
+    class B extends A {
+        foo() {
+            return 13
+        }
+    }
+
+    function foo(f: IFoo) {
+        return f.foo() + f.baz + f.bar(42)
+    }
+
+    export function run() {
+        msg("Ifaces.run")
+        let a = new A()
+        control.assert(foo(a) + "X" == "12QA42X")
+        a = new B()
+        control.assert(foo(a) + "X" == "13QA42X")
+        let q = a as IFoo
+        q.baz = "Z"
+        control.assert(foo(q) + "X" == "13Z42X")
+    }
+}
+
+namespace ObjLit {
+    interface Opts {
+        width?: number;
+        height?: number;
+        msg?: string;
+    }
+    class OptImpl {
+        width: number;
+        get height() {
+            return 33
+        }
+        get msg() {
+            return "X" + "OptImpl"
+        }
+    }
+    function foo(o: Opts) {
+        if (!o.msg) {
+            o.msg = "None"
+        }
+        glb1 += o.width - o.height + o.msg.length
+        //console.log(`w=${ o.width } h=${ o.height } m=${ o.msg }`)
+    }
+
+    export function run() {
+        glb1 = 0
+        foo({
+            width: 12,
+            msg: "h" + "w"
+        })
+        control.assert(glb1 == 14)
+        foo({
+            width: 12,
+            height: 13
+        })
+        control.assert(glb1 == 17)
+
+        let op: Opts = {}
+        op.width = 10
+        op.msg = "X" + "Z123"
+        foo(op)
+        control.assert(glb1 == 17 + 15)
+
+        glb1 = 0
+        let v = new OptImpl()
+        v.width = 34
+        foo(v)
+        control.assert(glb1 == 9)
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Driver starts
@@ -1258,6 +1348,8 @@ ClassTest.run()
 Ctors.run()
 testAnySwitch()
 testLambdasWithMoreParams()
+Ifaces.run()
+ObjLit.run()
 
 
 msg("test top level code")

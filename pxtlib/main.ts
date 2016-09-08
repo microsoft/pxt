@@ -1,6 +1,7 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 /// <reference path="../built/pxtpackage.d.ts"/>
 /// <reference path="../built/pxtparts.d.ts"/>
+/// <reference path="../built/pxtarget.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
@@ -115,54 +116,6 @@ namespace pxt {
         commits?: string; // URL
     }
 
-    export interface TargetCompileService {
-        yottaTarget?: string; // bbc-microbit-classic-gcc
-        yottaCorePackage?: string; // pxt-microbit-core
-        githubCorePackage?: string; // microsoft/pxt-microbit-core
-        gittag: string;
-        serviceId: string;
-    }
-
-    export interface RuntimeOptions {
-        mathBlocks?: boolean;
-        textBlocks?: boolean;
-        listsBlocks?: boolean;
-        variablesBlocks?: boolean;
-        logicBlocks?: boolean;
-        loopsBlocks?: boolean;
-
-        extraBlocks?: {
-            namespace: string;
-            type: string;
-            gap?: number;
-            weight?: number;
-            fields?: U.Map<string>;
-        }[]
-    }
-
-    export interface AppAnalytics {
-        userVoiceApiKey?: string;
-        userVoiceForumId?: number;
-    }
-
-    export interface AppTarget {
-        id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
-        name: string;
-        description?: string;
-        corepkg: string;
-        title?: string;
-        cloud?: AppCloud;
-        simulator?: AppSimulator;
-        blocksprj: ProjectTemplate;
-        tsprj: ProjectTemplate;
-        runtime?: RuntimeOptions;
-        compile: CompileTarget;
-        serial?: AppSerial;
-        appTheme: AppTheme;
-        compileService?: TargetCompileService;
-        analytics?: AppAnalytics;
-    }
-
     export interface TargetBundle extends AppTarget {
         bundledpkgs: U.Map<U.Map<string>>;
         bundleddirs: string[];
@@ -185,30 +138,6 @@ namespace pxt {
 
     export interface FsPkgs {
         pkgs: FsPkg[];
-    }
-
-    export interface ProjectTemplate {
-        id: string;
-        config: pxt.PackageConfig;
-        files: U.Map<string>;
-    }
-
-    export interface AppSerial {
-        manufacturerFilter?: string; // used by node-serial
-        log?: boolean;
-    }
-
-    export interface AppCloud {
-        workspaces?: boolean;
-        packages?: boolean;
-        preferredPackages?: string[]; // list of company/project(#tag) of packages
-    }
-
-    export interface AppSimulator {
-        autoRun?: boolean;
-        aspectRatio?: number; // width / height
-        partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
-        builtinParts?: U.Map<boolean>;
     }
 
     export interface ICompilationOptions {
