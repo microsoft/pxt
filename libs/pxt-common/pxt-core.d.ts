@@ -190,6 +190,13 @@ interface Function {}
 interface IArguments {}
 interface RegExp {}
 
+type uint8 = number;
+type uint16 = number;
+//type uint32 = number;
+type int8 = number;
+type int16 = number;
+type int32 = number;
+
 
 declare interface Boolean {
     /**

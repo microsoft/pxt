@@ -51,7 +51,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9256
+    // next free error 9257
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -91,12 +91,33 @@ namespace ts.pxtc {
         return isRefType(tp)
     }
 
+
+    function getBitSize(decl: TypedDecl) {
+        if (!decl || !decl.type) return BitSize.None
+        if (!(typeOf(decl).flags & TypeFlags.Number)) return BitSize.None
+        if (decl.type.kind != SK.TypeReference) return BitSize.None
+        switch ((decl.type as TypeReferenceNode).typeName.getText()) {
+            case "int8": return BitSize.Int8
+            case "int16": return BitSize.Int16
+            case "int32": return BitSize.Int32
+            case "uint8": return BitSize.UInt8
+            case "uint16": return BitSize.UInt16
+            default: return BitSize.None
+        }
+    }
+
+
     export function setCellProps(l: ir.Cell) {
         l._isRef = isRefDecl(l.def)
         l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
         if (!l.isRef() && typeOf(l.def).flags & TypeFlags.Void) {
             oops("void-typed variable, " + l.toString())
+        }
+        l.bitSize = getBitSize(l.def)
+        if (l.isLocal() && l.bitSize != BitSize.None) {
+            l.bitSize = BitSize.None
+            userError(9256, lf("bit sizes are not supported for locals and parameters"))
         }
     }
 
@@ -210,6 +231,15 @@ namespace ts.pxtc {
             default:
                 return true;
         }
+    }
+
+    export const enum BitSize {
+        None,
+        Int8,
+        UInt8,
+        Int16,
+        UInt16,
+        Int32,
     }
 
     export interface CommentAttrs {
@@ -535,6 +565,7 @@ namespace ts.pxtc {
     }
 
     export type VarOrParam = VariableDeclaration | ParameterDeclaration | PropertyDeclaration;
+    export type TypedDecl = Declaration & { type?: TypeNode }
 
     export interface VariableAddInfo {
         captured?: boolean;

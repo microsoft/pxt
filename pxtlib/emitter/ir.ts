@@ -234,6 +234,7 @@ namespace ts.pxtc.ir {
         _isRef = false;
         _isLocal = false;
         _isGlobal = false;
+        bitSize = BitSize.None;
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
             if (def && info) {
