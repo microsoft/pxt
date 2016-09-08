@@ -73,8 +73,8 @@ a mapping between the block field names and the function names.
 
 The following types are supported in function signatures that are meant to be exported:
 
-* ``number` (TypeScript) or ``int`` (C++)
-* ``string`` (TypeScript) or [ManagedString](https://github.com/lancaster-university/microbit-dal/blob/master/inc/types/ManagedString.h)
+* ``number`` (TypeScript) or ``int`` (C++)
+* ``string`` (TypeScript) or ``StringData*`` (C++)
 * enums (see below)
 * custom classes that are also exported
 * arrays of the above
