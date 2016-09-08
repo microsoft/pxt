@@ -162,7 +162,7 @@ function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
-    let opts: U.Map<string> = querystring.parse(url.parse(req.url).query)
+    let opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
     let innerPath = elts.slice(2).join("/").replace(/^\//, "")
     let filename = path.resolve(path.join(fileDir, innerPath))
     let meth = req.method.toUpperCase()
@@ -246,7 +246,7 @@ interface SerialPortInfo {
 }
 
 let wsSerialClients: WebSocket[] = [];
-let serialPorts: U.Map<SerialPortInfo> = {}
+let serialPorts: pxt.Map<SerialPortInfo> = {}
 
 function initSocketServer() {
     console.log('starting local ws server at 3233...')
@@ -418,7 +418,7 @@ function openUrl(startUrl: string) {
         console.error("invalid URL to open: " + startUrl)
         return
     }
-    let cmds: U.Map<string> = {
+    let cmds: pxt.Map<string> = {
         darwin: "open",
         win32: "start",
         linux: "xdg-open"

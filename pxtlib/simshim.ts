@@ -1,5 +1,5 @@
 namespace pxt {
-    export function simshim(prog: ts.Program): U.Map<string> {
+    export function simshim(prog: ts.Program): Map<string> {
         let SK = ts.SyntaxKind
         let checker = prog.getTypeChecker()
         let mainWr = cpp.nsWriter("declare namespace")
@@ -16,7 +16,7 @@ namespace pxt {
             }
         }
 
-        let res: U.Map<string> = {}
+        let res: Map<string> = {}
         res[appTarget.corepkg] = mainWr.finish()
         return res
 

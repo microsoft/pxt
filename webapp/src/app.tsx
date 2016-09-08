@@ -1,3 +1,4 @@
+/// <reference path="../../built/pxtpackage.d.ts"/>
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
@@ -471,7 +472,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 }
 
 interface FileListState {
-    expands: Util.Map<boolean>;
+    expands: pxt.Map<boolean>;
 }
 
 class FileList extends data.Component<ISettingsProps, FileListState> {
@@ -980,7 +981,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    newProject(filesOverride?: Util.Map<string>) {
+    newProject(filesOverride?: pxt.Map<string>) {
         pxt.tickEvent("menu.newproject");
         core.showLoading(lf("creating new project..."));
         this.newBlocksProjectAsync(filesOverride)
@@ -988,11 +989,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .done(() => core.hideLoading());
     }
 
-    newBlocksProjectAsync(fileOverrides?: Util.Map<string>, nameOverride?: string) {
+    newBlocksProjectAsync(fileOverrides?: pxt.Map<string>, nameOverride?: string) {
         return this.newProjectFromIdAsync(pxt.appTarget.blocksprj, fileOverrides, nameOverride);
     }
 
-    newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: Util.Map<string>, nameOverride?: string): Promise<void> {
+    newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: pxt.Map<string>, nameOverride?: string): Promise<void> {
         let cfg = pxt.U.clone(prj.config);
         cfg.name = nameOverride || lf("Untitled") // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
         let files: ScriptText = Util.clone(prj.files)
@@ -1341,8 +1342,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play")} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
-                        {pxt.debugMode() && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
-                        {pxt.debugMode() ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={lf("Dev Debug") } onClick={() => this.hwDebug() } /> : ''}
+                        {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
+                        {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={lf("Dev Debug") } onClick={() => this.hwDebug() } /> : ''}
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
@@ -1465,7 +1466,7 @@ function enableAppInsights(version: string) {
     let rexp = pxt.reportException;
     pxt.reportException = function (err: any, data: any): void {
         if (rexp) rexp(err, data);
-        let props: pxt.U.Map<string> = {};
+        let props: pxt.Map<string> = {};
         if (data)
             for (let k in data)
                 props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
@@ -1478,7 +1479,7 @@ function enableAppInsights(version: string) {
             throw msg
         }
         catch (err) {
-            let props: pxt.U.Map<string> = {};
+            let props: pxt.Map<string> = {};
             if (data)
                 for (let k in data)
                     props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
@@ -1625,7 +1626,7 @@ $(document).ready(() => {
     ksVersion = config.pxtVersion;
     targetVersion = config.targetVersion;
     sandbox = /sandbox=1/i.test(window.location.href);
-    pxt.setDebugMode(/dbg=1/i.test(window.location.href));
+    pxt.options.debug = /dbg=1/i.test(window.location.href);
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
     enableAnalytics(ksVersion)

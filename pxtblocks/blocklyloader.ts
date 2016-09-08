@@ -6,7 +6,7 @@ let lf = Util.lf;
 
 namespace pxt.blocks {
 
-    const blockColors: Util.StringMap<number> = {
+    const blockColors: Map<number> = {
         loops: 120,
         images: 45,
         variables: 330,
@@ -17,7 +17,7 @@ namespace pxt.blocks {
     }
 
     // list of built-in blocks, should be touched.
-    const builtinBlocks: Util.StringMap<{
+    const builtinBlocks: Map<{
         block: B.BlockDefinition;
         symbol?: pxtc.SymbolInfo;
     }> = {};
@@ -30,7 +30,7 @@ namespace pxt.blocks {
         fn: pxtc.SymbolInfo;
         block: Blockly.BlockDefinition;
     }
-    let cachedBlocks: Util.StringMap<CachedBlock> = {};
+    let cachedBlocks: Map<CachedBlock> = {};
     let cachedToolbox: string = "";
 
     export function blockSymbol(type: string): pxtc.SymbolInfo {
@@ -69,10 +69,10 @@ namespace pxt.blocks {
         shadowValue?: string;
     }
 
-    export function parameterNames(fn: pxtc.SymbolInfo): Util.StringMap<BlockParameter> {
+    export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
         // collect blockly parameter name mapping
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
-        let attrNames: Util.StringMap<BlockParameter> = {};
+        let attrNames: Map<BlockParameter> = {};
 
         if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
         if (fn.parameters)
@@ -101,7 +101,7 @@ namespace pxt.blocks {
         return attrNames;
     }
 
-    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
+    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>): HTMLElement {
         //
         // toolbox update
         //
@@ -161,7 +161,7 @@ namespace pxt.blocks {
         category.appendChild(block);
     }
 
-    let iconCanvasCache: Util.StringMap<HTMLCanvasElement> = {};
+    let iconCanvasCache: Map<HTMLCanvasElement> = {};
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let canvas = iconCanvasCache[c];
         if (!canvas) {
@@ -177,7 +177,7 @@ namespace pxt.blocks {
         return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
     }
 
-    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
+    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>, blockXml: HTMLElement): boolean {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
@@ -240,7 +240,7 @@ namespace pxt.blocks {
         }
     }
 
-    function initBlock(block: any, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+    function initBlock(block: any, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
@@ -360,8 +360,8 @@ namespace pxt.blocks {
             return c;
         })
 
-        let currentBlocks: Util.StringMap<number> = {};
-        const dbg = pxt.debugMode();
+        let currentBlocks: Map<number> = {};
+        const dbg = pxt.options.debug;
         // create new toolbox and update block definitions
         blockInfo.blocks
             .filter(fn => !tb || !tb.querySelector(`block[type='${fn.attributes.blockId}']`))

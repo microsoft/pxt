@@ -652,7 +652,7 @@ ${bkptLabel + "_after"}:
 
     // TODO should be internal
     export namespace hex {
-        let funcInfo: StringMap<FuncInfo>;
+        let funcInfo: Map<FuncInfo>;
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;
@@ -660,7 +660,7 @@ ${bkptLabel + "_after"}:
         let bytecodeStartAddr: number;
         export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
-        let asmLabels: StringMap<boolean> = {};
+        let asmLabels: Map<boolean> = {};
         export let asmTotalSource: string = "";
         export const pageSize = 0x400;
 
@@ -1005,7 +1005,7 @@ ${hex.hexPrelude()}
             asmsource += vtableToAsm(info)
         })
 
-        U.iterStringMap(bin.codeHelpers, (code, lbl) => {
+        U.iterMap(bin.codeHelpers, (code, lbl) => {
             asmsource += `    .section code\n${lbl}:\n${code}\n`
         })
 

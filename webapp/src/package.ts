@@ -9,7 +9,7 @@ const lf = Util.lf
 
 let hostCache = new db.Table("hostcache")
 
-let extWeight: Util.StringMap<number> = {
+let extWeight: pxt.Map<number> = {
     "ts": 10,
     "blocks": 20,
     "json": 30,
@@ -98,7 +98,7 @@ export class File {
 }
 
 export class EditorPackage {
-    files: Util.StringMap<File> = {};
+    files: pxt.Map<File> = {};
     header: pxt.workspace.Header;
     onupdate = () => { };
     saveScheduled = false;
@@ -186,8 +186,8 @@ export class EditorPackage {
         return f.setContentAsync(v);
     }
 
-    setFiles(files: Util.StringMap<string>) {
-        this.files = Util.mapStringMap(files, (k, v) => new File(this, k, v))
+    setFiles(files: pxt.Map<string>) {
+        this.files = Util.mapMap(files, (k, v) => new File(this, k, v))
         data.invalidate("open-meta:")
     }
 
@@ -218,7 +218,7 @@ export class EditorPackage {
     }
 
     getAllFiles() {
-        return Util.mapStringMap(this.files, (k, f) => f.content)
+        return Util.mapMap(this.files, (k, f) => f.content)
     }
 
     saveFilesAsync() {
@@ -355,7 +355,7 @@ export function allEditorPkgs() {
     return getEditorPkg(mainPkg).pkgAndDeps()
 }
 
-export function notifySyncDone(updated: Util.StringMap<number>) {
+export function notifySyncDone(updated: pxt.Map<number>) {
     let newOnes = Util.values(mainPkg.deps).filter(d => d.verProtocol() == "workspace" && updated.hasOwnProperty(d.verArgument()))
     if (newOnes.length > 0) {
         getEditorPkg(mainPkg).onupdate()

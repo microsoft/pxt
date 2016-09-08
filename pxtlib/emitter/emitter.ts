@@ -4,7 +4,6 @@
 namespace ts.pxtc {
     export const assert = Util.assert;
     export const oops = Util.oops;
-    export type StringMap<T> = Util.Map<T>;
     export import U = pxtc.Util;
 
     export const BINARY_JS = "binary.js";
@@ -284,9 +283,9 @@ namespace ts.pxtc {
 
         _name?: string;
         jsDoc?: string;
-        paramHelp?: Util.Map<string>;
+        paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
-        paramDefl: Util.Map<string>;
+        paramDefl: pxt.Map<string>;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
@@ -622,13 +621,13 @@ namespace ts.pxtc {
     export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
-        let classInfos: StringMap<ClassInfo> = {}
-        let usedDecls: StringMap<Node> = {}
+        let classInfos: pxt.Map<ClassInfo> = {}
+        let usedDecls: pxt.Map<Node> = {}
         let usedWorkList: Declaration[] = []
-        let variableStatus: StringMap<VariableAddInfo> = {};
-        let functionInfo: StringMap<FunctionAddInfo> = {};
+        let variableStatus: pxt.Map<VariableAddInfo> = {};
+        let functionInfo: pxt.Map<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
-        let ifaceMembers: StringMap<number> = {}
+        let ifaceMembers: pxt.Map<number> = {}
         let nextIfaceMemberId = 0;
 
         lastNodeId = 0
@@ -1108,7 +1107,7 @@ namespace ts.pxtc {
                     if (info.baseClassInfo) {
                         info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
                         info.numRefFields = -1
-                        let nameMap: U.Map<FunctionLikeDeclaration> = {}
+                        let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
                         for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
                             for (let m of curr.methods) {
                                 nameMap[classFunctionKey(m)] = m
@@ -3145,9 +3144,9 @@ ${lbl}: .short 0xffff
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
 
-        strings: StringMap<string> = {};
+        strings: Map<string> = {};
         otherLiterals: string[] = [];
-        codeHelpers: StringMap<string> = {};
+        codeHelpers: Map<string> = {};
         lblNo = 0;
 
         reset() {

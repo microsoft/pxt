@@ -29,7 +29,7 @@ namespace pxt.blocks {
             let doc = parser.parseFromString(xml, "application/xml");
 
             // build upgrade map
-            let enums: U.Map<string> = {};
+            let enums: Map<string> = {};
             for (let k in info.apis.byQName) {
                 let api = info.apis.byQName[k];
                 if (api.kind == pxtc.SymbolKind.EnumMember)
@@ -50,7 +50,7 @@ namespace pxt.blocks {
         }
     }
 
-    function patchBlock(info: pxtc.BlocksInfo, enums: U.Map<string>, block: Element): void {
+    function patchBlock(info: pxtc.BlocksInfo, enums: Map<string>, block: Element): void {
         let type = block.getAttribute("type");
         let b = Blockly.Blocks[type];
         let symbol = blockSymbol(type);
