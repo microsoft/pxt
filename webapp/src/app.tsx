@@ -760,6 +760,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
+        Blockly.fireUiEvent(window, 'resize');
     }
 
     setSideFile(fn: pkg.File) {
