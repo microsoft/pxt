@@ -1,0 +1,49 @@
+<link rel="stylesheet" href="/doccdn/semantic.css" />
+<link rel="stylesheet" href="/docfiles/style.css" />
+<link rel="stylesheet" href="/docfiles/vs.css" />
+
+<script src="/doccdn/jquery.js"></script>
+<script src="/doccdn/semantic.js"></script>
+<script src="/doccdn/lzma/lzma_worker-min.js"></script>
+
+<script src="/--embed" type="text/javascript"></script>
+<script src="/docfiles/docs.js" type="text/javascript"></script>
+
+<style>
+    @targetstyle@
+</style>
+
+<style>
+    svg {
+        max-width: 100%;
+    }
+    
+    .blocklyText,
+    .ace_editor {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+        font-size: 1rem !important;
+    }
+    
+    .blocklyCheckbox,
+    .blocklyLed {
+        fill: #ff3030 !important;
+        text-shadow: 0px 0px 7px #f00;
+        font-size: 24px;
+    }
+    
+    .ui.card .blocklyPreview {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 1em);
+        max-height: calc(100% - 1em);
+    }
+</style>
+
+
+<script>
+    $(document).ready(function() {
+        $('.ui.embed').embed();        
+    })
+</script>

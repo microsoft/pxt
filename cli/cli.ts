@@ -680,6 +680,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/embed.js": "@targetUrl@@relprefix@embed",
         "/cdn/": "@pxtCdnUrl@",
+        "/doccdn/": "@pxtCdnUrl@",
         "/sim/": "@targetCdnUrl@",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
@@ -709,6 +710,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         replacements = {
             "/embed.js": opts.localDir + "embed.js",
             "/cdn/": opts.localDir,
+            "/doccdn/": opts.localDir,
             "/sim/": opts.localDir,
             "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
@@ -1295,6 +1297,7 @@ function renderDocs(localDir: string) {
     let webpath = localDir
     let docsTemplate = fs.readFileSync(dst + "/docfiles/template.html", "utf8")
     docsTemplate = U.replaceAll(docsTemplate, "/cdn/", webpath)
+    docsTemplate = U.replaceAll(docsTemplate, "/doccdn/", webpath)
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
