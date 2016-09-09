@@ -1295,7 +1295,7 @@ function renderDocs(localDir: string) {
         cpR("docfiles", dst + "/docfiles")
 
     let webpath = localDir
-    let docsTemplate = fs.readFileSync(dst + "/docfiles/template.html", "utf8")
+    let docsTemplate = server.expandDocFileTemplate("docs.html")
     docsTemplate = U.replaceAll(docsTemplate, "/cdn/", webpath)
     docsTemplate = U.replaceAll(docsTemplate, "/doccdn/", webpath)
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")

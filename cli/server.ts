@@ -237,20 +237,19 @@ function fileExistsSync(p: string): boolean {
     }
 }
 
-function getDocFile(name: string) {
+export function lookupDocFile(name: string) {
     if (docfilesdirs.length <= 1)
         setupDocfilesdirs()
     for (let d of docfilesdirs) {
         let foundAt = path.join(d, name)
-        if (fs.existsSync(foundAt)) {
-            return fs.readFileSync(foundAt, "utf8")
-        }
+        if (fs.existsSync(foundAt)) return foundAt
     }
-    return ""
+    return null
 }
 
-function expandDocFileTemplate(name: string) {
-    let template = getDocFile(name)
+export function expandDocFileTemplate(name: string) {
+    let fn = lookupDocFile(name)
+    let template = fn ? fs.readFileSync(fn, "utf8") : ""
     template = template
         .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
         (full, fn) => {
