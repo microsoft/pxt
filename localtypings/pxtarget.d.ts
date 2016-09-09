@@ -60,6 +60,7 @@ declare namespace pxt {
 
     interface AppSimulator {
         autoRun?: boolean;
+        streams?: boolean;
         aspectRatio?: number; // width / height
         parts?: boolean; // parts enabled?
         instructions?: boolean;
