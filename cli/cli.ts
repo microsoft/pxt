@@ -1130,14 +1130,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
 
-    for (let fn of allFiles("node_modules/pxt-core/includes", 1, true).concat(allFiles("includes"))) {
-        let m = /docs-(.*)\.html$/.exec(fn)
-        if (m) {
-            console.log("embed: " + fn)
-            cfg.appTheme.htmlDocIncludes[m[1]] = fs.readFileSync(fn, "utf8")
-        }
-    }
-
     cfg.appTheme.locales = {}
 
     let lpath = "docs/_locales"
