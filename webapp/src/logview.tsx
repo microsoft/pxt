@@ -40,8 +40,10 @@ export class LogView extends React.Component<{}, LogViewState> {
     }
 
     componentDidUpdate() {
-        if (this.state.stream) this.view.setLabel(lf("streaming to cloud"), "green cloudflash");
-        else if (this.state.trends) this.view.setLabel(lf("streaming off"), "gray");
+        const streams = pxt.appTarget.simulator && !!pxt.appTarget.simulator.streams;
+
+        if (streams && this.state.stream) this.view.setLabel(lf("streaming to cloud"), "green cloudflash");
+        else if (streams && this.state.trends) this.view.setLabel(lf("streaming off"), "gray");
         else this.view.setLabel(undefined);
         if (this.state.stream)
             this.scheduleStreamData();
@@ -104,6 +106,7 @@ export class LogView extends React.Component<{}, LogViewState> {
 
     showStreamDialog(entries: pxsim.logs.ILogEntry[]) {
         const targetTheme = pxt.appTarget.appTheme;
+        const streaming = pxt.appTarget.simulator && !!pxt.appTarget.simulator.streams;
         let rootUrl = targetTheme.embedUrl
 
         if (!rootUrl) {
@@ -115,7 +118,7 @@ export class LogView extends React.Component<{}, LogViewState> {
         let streamUrl = this.state.stream ? rootUrl + this.state.stream.id : undefined;
 
         core.confirmAsync({
-            logos: ["https://az851932.vo.msecnd.net/pub/hjlxsmaf"], // azure logo
+            logos: streaming ? ["https://az851932.vo.msecnd.net/pub/hjlxsmaf"] : undefined, // azure logo
             header: pxt.appTarget.title + ' - ' + lf("Analyze Data"),
             hideAgree: true,
             disagreeLbl: lf("Close"),
@@ -148,7 +151,7 @@ export class LogView extends React.Component<{}, LogViewState> {
         <div class="content">
             <div class="header">${lf("Local File")}</div>
             <div class="description">
-                ${lf("Save the data to your local Downloads folder and open it in Excel.")}
+                ${lf("Save the data to your 'Downloads' folder.")}
             </div>
         </div>
         <div id="datasavelocalfile" class="ui bottom attached button">
@@ -156,25 +159,26 @@ export class LogView extends React.Component<{}, LogViewState> {
             ${lf("Download data")}
         </div>        
     </div>
-    <div id="datastreamcard" class="ui card">
+    ${streaming ?
+                `<div id="datastreamcard" class="ui card">
         <div class="content">
             <div class="header">${lf("Stream to Cloud")}</div>
             <div class="description">
                 ${ streamUrl ? lf("We are uploading your data to Microsoft Azure every minute.")
-                : lf("Upload your data to Microsoft Azure to analyze it.")}
+                    : lf("Upload your data to Microsoft Azure to analyze it.")}
             </div>
         </div>
         ${streamUrl ?
-                `<div id="datastream" class="ui bottom attached two buttons">
+                    `<div id="datastream" class="ui bottom attached two buttons">
         <a target="_blank" href="${streamUrl}" class="ui green button">Open</a>
         <div id="datastreamstop" class="ui button">Stop</div>
             </div>` :
-                `<div id="datastreamstart" class="ui bottom attached green button">
+                    `<div id="datastreamstart" class="ui bottom attached green button">
                 <i class="play icon"></i>
                 ${lf("Start")}
                 </div>`
-            }
-  </div>
+                }
+  </div>` : ``}
 </div>`
         }).done();
     }
