@@ -100,6 +100,7 @@ declare namespace pxt {
         cardLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
+        htmlTemplates?: Map<string>;
         githubUrl?: string;
     }
 

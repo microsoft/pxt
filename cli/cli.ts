@@ -1157,6 +1157,10 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
         }
     }
 
+    if (fs.existsSync("built/templates.json")) {
+        cfg.appTheme.htmlTemplates = readJson("built/templates.json")
+    }
+
     nodeutil.mkdirP("built");
     fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
 }
@@ -2806,7 +2810,7 @@ export function uploadDocsAsync(...args: string[]): Promise<void> {
     if (info.tag || (info.branch && info.branch != "master"))
         return Promise.resolve()
     let cfg = readLocalPxTarget()
-    saveThemeJson(cfg)
+    uploader.saveThemeJson = () => saveThemeJson(cfg)
     return uploader.uploadDocsAsync(...args)
 }
 

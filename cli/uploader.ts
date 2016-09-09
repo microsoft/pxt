@@ -6,6 +6,7 @@ import * as querystring from 'querystring';
 import * as crypto from 'crypto';
 
 import * as nodeutil from './nodeutil';
+import * as server from './server';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -17,6 +18,8 @@ let usedPromises: Map<boolean> = {};
 let ptrPrefix = ""
 let showVerbose = false
 let sitemap: Map<string>;
+
+export var saveThemeJson = () => { }
 
 function error(msg: string) {
     U.userError(msg)
@@ -167,10 +170,45 @@ export function getFiles(): string[] {
     return res
 }
 
+function uploadDocfilesAsync() {
+    uploadDir = ""
+    let templates: pxt.Map<string> = {}
+    let promises: pxt.Map<Promise<string>> = {}
+    let docrx = /\/docfiles\/([\w\/\.-]+)/g
+    for (let f of ["docs.html"]) {
+        let tmpl = server.expandDocFileTemplate(f)
+        // TODO make configurable
+        tmpl = tmpl.replace(/\/doccdn\//g, "https://az851932.vo.msecnd.net/app/lkgya/c/")
+        tmpl.replace(docrx, (f, fn) => {
+            if (!promises[fn]) {
+                let ff = server.lookupDocFile(fn)
+                promises[fn] = uploadArtAsync(ff, true)
+            }
+            return ""
+        })
+        templates[f] = tmpl
+    }
+    return Promise.all(U.values(promises))
+        .then(() => {
+            U.iterMap(templates, (k, v) => {
+                v = v.replace(docrx, (f, fn) => {
+                    return promises[fn].value()
+                })
+                templates[k] = v
+                fs.writeFileSync("built/" + k, v)
+            })
+            fs.writeFileSync("built/templates.json", JSON.stringify(templates, null, 4))
+            saveThemeJson()
+        })
+}
+
 function uploadJsonAsync() {
-    uploadDir = "built"
-    return uploadFileAsync("/theme.json")
-        .then(uploadSitemapAsync)
+    return uploadDocfilesAsync()
+        .then(() => {
+            uploadDir = "built"
+            return uploadFileAsync("/theme.json")
+                .then(uploadSitemapAsync)
+        })
 }
 
 function uploadSitemapAsync() {
