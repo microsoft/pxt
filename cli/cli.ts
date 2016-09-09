@@ -867,6 +867,11 @@ function readLocalPxTarget() {
     }
     nodeutil.targetDir = process.cwd()
     let cfg: pxt.TargetBundle = readJson("pxtarget.json")
+    if (forkPref()) {
+        let cfgF: pxt.TargetBundle = readJson(forkPref() + "pxtarget.json")
+        U.jsonMergeFrom(cfgF, cfg)
+        return cfgF
+    }
     return cfg
 }
 

@@ -83,10 +83,14 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    function isKV(v:any) {
+        return !!v && typeof v === "object" && !Array.isArray(v)
+    }
+
     export function jsonMergeFrom(trg: any, src: any) {
         if (!src) return;
         Object.keys(src).forEach(k => {
-            if (typeof trg[k] === 'object' && typeof src[k] === "object")
+            if (isKV(trg[k]) && isKV(src[k]))
                 jsonMergeFrom(trg[k], src[k]);
             else trg[k] = clone(src[k]);
         });
