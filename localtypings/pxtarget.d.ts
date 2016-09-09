@@ -1,7 +1,8 @@
 /// <reference path="pxtpackage.d.ts" />
 declare namespace pxt {
     interface AppTarget {
-        id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
+        id: string; // has to match ^[a-z]+$; used in URLs and domain names
+        forkof?: string; // id of a target we're based on
         name: string;
         description?: string;
         corepkg: string;

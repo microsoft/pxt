@@ -38,7 +38,15 @@ function findPxtJs() {
             var local = s + "/built/pxt.js" // local build
             if (fs.existsSync(local)) return local
             if (fs.existsSync(installed)) return installed
-            console.error("Found", targetjson, "but cannot find neither", local, "nor", installed, ", did you run 'jake' in the PXT folder once?")
+            
+            var cfg = JSON.parse(fs.readFileSync(targetjson, "utf8"))
+            if (cfg.forkof) {
+                installed = mod + "pxt-" + cfg.forkof + "/node_modules/pxt-core/built/pxt.js"
+                if (fs.existsSync(installed)) return installed
+            }
+
+            console.error("Found", targetjson, "but cannot find neither", 
+                local, "nor", installed, ", did you run 'jake' in the PXT folder once?")
             return null
         }
 
@@ -68,8 +76,6 @@ function target(n) {
 }
 
 function main() {
-    var path = findPxtJs();
-
     var args = process.argv.slice(2)
 
     if (args[0] == "target") {
@@ -77,6 +83,7 @@ function main() {
         process.exit(0)
     }
 
+    var path = findPxtJs();
     if (!path) {
         console.error("Couldn't find PXT; maybe try 'pxt target microbit'?")
         process.exit(1)
