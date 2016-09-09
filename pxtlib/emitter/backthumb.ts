@@ -8,6 +8,8 @@ namespace ts.pxtc {
         immLimit: number;
     }
 
+    const vtableShift = 2;
+
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
         let resText = ""
         let write = (s: string) => { resText += asmline(s); }
@@ -403,13 +405,14 @@ ${bkptLabel + "_after"}:
                     write(lbl + ":")
                     emitHelper(`
         ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
-        ldr r3, [r0, #8] ; ld-vtable
-        cmp r3, #42
+        ldrh r3, [r0, #2] ; ld-vtable
+        lsls r3, r3, #${vtableShift}
+        ldr r3, [r3, #4] ; iface table
+        cmp r3, #43
         beq .objlit
 .nonlit:
-        ldr r0, [r3, #4] ; iface table
         lsls r1, ${isSet ? "r2" : "r1"}, #2
-        ldr r0, [r0, r1] ; ld-method
+        ldr r0, [r3, r1] ; ld-method
         bx r0
 .objlit:
         ${isSet ? "ldr r2, [sp, #0]" : ""}
@@ -419,21 +422,10 @@ ${bkptLabel + "_after"}:
 `);
                 } else {
                     write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
-                    write(`ldr r0, [r0, #8] ; ld-vtable`)
-                    let effIdx = procid.virtualIndex + 2
+                    write(`ldrh r0, [r0, #2] ; ld-vtable`)
+                    write(`lsls r0, r0, #${vtableShift}`)
+                    let effIdx = procid.virtualIndex + 4
                     if (procid.ifaceIndex != null) {
-                        if (procid.mapMethod) {
-                            let nonlitlbl = mkLbl("nonLit")
-                            write(`cmp r0, #42`)
-                            write(`bne ${nonlitlbl}`)
-                            write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]`)
-                            emitInt(procid.mapIdx, "r1")
-                            if (topExpr.args.length == 2)
-                                write(`ldr r2, [sp, #4*0]`)
-                            emitCallRaw(procid.mapMethod)
-                            write(`b ${afterall}`)
-                            write(`${nonlitlbl}:`)
-                        }
                         write(`ldr r0, [r0, #4] ; iface table`)
                         effIdx = procid.ifaceIndex
                     }
@@ -950,16 +942,16 @@ ${lbl}: .string ${stringLiteral(s)}
     }
 
     function vtableToAsm(info: ClassInfo) {
-        if (!info.hasVTable) return ""
-
         let s = `
-        .balign 4
+        .balign ${1 << vtableShift}
 ${info.id}_VT:
-        .short 0xffff ; refcount
-        .byte ${info.refmask.length}, ${info.vtable.length + 1}  ; num. fields, num. methods
+        .short ${info.refmask.length * 4 + 4}  ; size in bytes
+        .byte ${info.vtable.length + 2}, 0  ; num. methods
 `;
 
         s += `        .word ${info.id}_IfaceVT\n`
+        s += `        .word pxt::RefRecord_destroy|1\n`
+        s += `        .word pxt::RefRecord_print|1\n`
 
         for (let m of info.vtable) {
             s += `        .word ${m.label()}|1\n`
