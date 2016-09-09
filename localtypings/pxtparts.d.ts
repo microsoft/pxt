@@ -1,4 +1,5 @@
 declare namespace pxsim {
+    // ----- board definition
     interface PinBlockDefinition {
         x: number,
         y: number,
@@ -34,50 +35,87 @@ declare namespace pxsim {
         },
         analogInPins?: string[] //TODO: implement allocation
     }
-    interface FactoryFunctionPinAlloc {
-        type: "factoryfunction",
-        functionName: string,
-        pinArgPositions: number[],
-        otherArgPositions?: number[],
+    // ---- part definition
+    export interface PartDefinition {
+        // built-in simulator logic name
+        simulationBehavior?: string,
+        // total number of power + GPIO + other pins
+        numberOfPins: number,
+        // visual description or built-in visual name 
+        visual: PartVisualDefinition,
+        // metadata for each pin
+        pinDefinitions: PartPinDefinition[],
+        // description of how part is instantiated
+        instantiation: PartSingletonDefinition | PartFunctionDefinition,
+        // list describing number and order of assembly instruction steps; the length is how many steps this part needs 
+        assembly: AssemblyStepDefinition[],
     }
-    interface PredefinedPinAlloc {
-        type: "predefined",
-        pins: string[],
-    }
-    interface AutoPinAlloc {
-        type: "auto",
-        gpioPinsNeeded: number | number[],
-    }
-    interface PartVisualDefinition {
-        image: string,
+    export interface PartVisualDefinition {
+        // URL to image asset
+        image?: string,
+        // or name of built-in part visual
+        builtIn?: string,
+        // description of a parts visual; units don't matter but must be internally consistent
         width: number,
         height: number,
-        pinDist: number,
-        extraColumnOffset?: number,
-        firstPin: [number, number],
+        // the distance between the centers of two adjecent pins; used to scale part for breadboard
+        pinDistance: number,
+        // the exact centers of each pin; must have as many locations as the "numberOfPins" property
+        pinLocations: XY[],
     }
-    interface WireDefinition {
-        start: WireLocationDefinition,
-        end: WireLocationDefinition,
-        color: string,
-        assemblyStep: number
+    export type XY = {x: number, y: number}
+    export interface PartPinDefinition {
+        target: UninstantiatedPinTarget, // e.g.: "ground", "MISO", etc.; see PinType
+        style: PinStyle, // e.g.: "male", "female", "solder"; see PinStyle
+        orientation: PinOrientation, // e.g.: "+X", "-Z", etc.; see PinOrientation
+        colorGroup?: number, // if set, the allocator while try to give pins for this part in the same group the same color 
     }
-    type SPIPin = "MOSI" | "MISO" | "SCK";
-    type I2CPin = "SDA" | "SCL";
-    export type WireLocationDefinition = (
-        ["breadboard", string, number]
-        | ["GPIO", number]
+    export type UninstantiatedPinTarget = PinTarget | PinInstantiationIdx;
+    export type PinTarget = (
+          "ground"
+        | "threeVolt"
+        | MicrobitPin
         | SPIPin
-        | I2CPin
-        | "ground"
-        | "threeVolt");
-
-    interface PartDefinition {
-        visual: string | PartVisualDefinition,
-        breadboardColumnsNeeded: number,
-        breadboardStartRow: string,
-        wires: WireDefinition[],
-        assemblyStep: number,
-        pinAllocation: FactoryFunctionPinAlloc | PredefinedPinAlloc | AutoPinAlloc,
+        | I2CPin);
+    // a hard-coded pin index; used by parts that are pre-built on the microbit: led matrix, buttons, etc.
+    export type MicrobitPin = (
+        "P0" | "P1" | "P2" | "P3" | "P4" | "P5" | "P6" | "P7" | "P8" | "P9"
+        | "P10" | "P11" | "P12" | "P13" | "P14" | "P15" | "P16" | "P19" | "P20");
+    export type SPIPin = "MOSI" | "MISO" | "SCK";
+    export type I2CPin = "SDA" | "SCL";
+    // the pin style, necessary to know how to attach to the pin
+    export type PinStyle = "male" | "female" | "solder";
+    // orientation along an axis in a right-hand coordinate system where:
+    //   -Z is into the breadboard
+    //   +X is toward larger breadboard numbers
+    //   +Y is toward latter breadboard letters
+    export type PinOrientation = "+X" | "-X" | "+Y" | "-Y" | "+Z" | "-Z";
+    // instantiation definition for parts where there maybe be at most one
+    export type PartSingletonDefinition = {
+        kind: "singleton"
+    }
+    // instantiation definition for parts that are created by a function
+    export interface PartFunctionDefinition {
+        kind: "function",
+        fullyQualifiedName: string, // including namespace
+        // if the function has the "trackArgs" annotation, this describes how each tracked
+        //  argument is treated during part instantiation
+        argumentRoles: ArgumentRole[],
+    }
+    export interface ArgumentRole {
+        // argument is to be passed to the part during initialization. 
+        //  E.g. NeoPixel uses this to know if the strip is "RGB" or "RGBW" style 
+        partParameter?: string;
+        // argument is a "DigitalPin" enum value that is used as a pin value for this part 
+        //  E.g. neopixel.create(..)'s first argument is the pin which the NeoPixel is connected to 
+        pinInstantiationIdx?: number;
+    }
+    export interface PinInstantiationIdx {
+        pinInstantiationIdx: number
+    }
+    // describes a single step for the assembly instructions
+    export interface AssemblyStepDefinition {
+        part?: boolean, // if true, the part itself should be assembled during this step
+        pinIndices?: number[], // the indices (ranging from 0 to "numberOfPins") of pins that should be wired for this step 
     }
 }
