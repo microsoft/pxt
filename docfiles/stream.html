@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Stream: @name@ /@id@</title>
+    <meta name="Description" content="Live data stream" />
+
+
+    <!-- @include meta.html -->
+    <!-- @include head.html -->
+
+</head>
+
+<body id='root' class='root'>
+
+
+    <!-- @include header.html -->
+    <!-- @include macros.html -->
+
+    <aside id=main-container class=box>
+        <div style='display:none' class="ui text container segment">
+            @BODY@
+        </div>
+    </aside>
+
+
+    <div class="ui main container mainbody">
+
+        @breadcrumb@
+        
+        <!-- @include abuse.html -->
+
+        <div class="ui container stackable grid">
+            <div class="ui six wide column">
+                <div class="ui card">
+                    <!-- <div class="image"><img src="..."></div> -->
+                    <div class="content">
+                        <div class="header">Stream: @name@</div>
+                        <div class="meta">
+                            <span class='humantime' data-time="@time@">@humantime@</span>
+                            <span class='right floated'>/@id@</span>
+                        </div>
+                        <div class="description">
+                            Live data powered by
+                            <img src="https://az851932.vo.msecnd.net/pub/hjlxsmaf" class="ui fluid image" />
+                        </div>
+                    </div>
+                    <div class="extra content">
+
+                        <div class="ui two buttons">
+                            <a href="/api/@id@/data?start=-24h" class="ui button">JSON</a>
+                            <a href="/api/@id@/data.csv?start=-24h" class="ui green button">CSV</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="ui card ten wide column">
+                <h2>Streaming data in Excel 2016</h2>
+                <p>The data stored in this stream can easily be imported into an Excel 2016 spreadsheet using
+                    <a href="https://support.office.com/en-us/article/Get-Transform-in-Excel-2016-881c63c6-37c5-4ca2-b616-59e18d75b4de">Get & Transform</a>.
+                </p>
+                <div class="ui segment">
+                    <p>Create a <b>Blank Workbook</b> in Excel 2016</p>
+                </div>
+                <div class="ui segment">
+                    <p>Click on <b>Data</b> » <b>New Query</b> » <b>From Other Sources</b> » <b>From Web</b>.
+                    </p>
+                    <img class="ui large centered image" src="https://az851932.vo.msecnd.net/pub/tipefycm" />
+                </div>
+                <div class="ui segment">
+                    <p>Enter the following URL and click on <b>Connect</b>.</p>
+                    <div class="ui fluid labeled input">
+                        <div class="ui label">URL</div>
+                        <input type="text" value="@apiroot@@id@/data.csv?start=-24h" readonly="" />
+                    </div>
+                    <img class="ui medium centered image" src="https://az851932.vo.msecnd.net/pub/jgyhkunq" />
+                </div>
+                <div class="ui segment">
+                    <p>Select <b>Anonymous</b> and click <b>Connect</b>.</p>
+                    <img class="ui medium centered image" src="https://az851932.vo.msecnd.net/pub/vvrkgcai" />
+                </div>
+                <div class="ui segment">
+                    <p>Click on <b>Close &amp; Load</b>.</p>
+                    <img class="ui medium centered image" src="https://az851932.vo.msecnd.net/pub/lgwswrzo" />
+                </div>
+            </div>
+        </div>
+
+        @body@
+
+    </div>
+
+    <!-- @include footer.html -->
+    <!-- @include tracking.html -->
+
+</body>
+
+</html>

@@ -175,7 +175,7 @@ function uploadDocfilesAsync() {
     let templates: pxt.Map<string> = {}
     let promises: pxt.Map<Promise<string>> = {}
     let docrx = /\/docfiles\/([\w\/\.-]+)/g
-    for (let f of ["docs.html"]) {
+    for (let f of ["docs.html", "script.html", "stream.html"]) {
         let tmpl = server.expandDocFileTemplate(f)
         // TODO make configurable
         tmpl = tmpl.replace(/\/doccdn\//g, "https://az851932.vo.msecnd.net/app/lkgya/c/")
