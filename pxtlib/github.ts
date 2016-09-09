@@ -45,7 +45,7 @@ namespace pxt.github {
 
     export interface CachedPackage {
         sha: string;
-        files: U.Map<string>;
+        files: Map<string>;
     }
 
     export function pkgConfigAsync(repopath: string, tag = "master") {

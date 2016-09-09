@@ -24,7 +24,7 @@ namespace pxt.workspace {
         saveId?: any;
     }
 
-    export type ScriptText = U.StringMap<string>;
+    export type ScriptText = pxt.Map<string>;
 
     export interface WorkspaceProvider {
         getHeaders(): Header[];

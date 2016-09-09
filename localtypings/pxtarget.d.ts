@@ -61,6 +61,8 @@ declare namespace pxt {
     interface AppSimulator {
         autoRun?: boolean;
         aspectRatio?: number; // width / height
+        parts?: boolean; // parts enabled?
+        instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         builtinParts?: Map<boolean>;
     }

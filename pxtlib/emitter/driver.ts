@@ -44,16 +44,16 @@ namespace ts.pxtc {
     }
 
     export interface CompileResult {
-        outfiles: StringMap<string>;
+        outfiles: pxt.Map<string>;
         diagnostics: KsDiagnostic[];
         success: boolean;
-        times: U.Map<number>;
+        times: pxt.Map<number>;
         ast?: Program;
         breakpoints?: Breakpoint[];
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
-        usedSymbols?: U.Map<SymbolInfo>; // q-names of symbols used
-        usedArguments?: U.Map<string[]>;
+        usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
+        usedArguments?: pxt.Map<string[]>;
         quickFlash?: {
             words: number[];
             startAddr: number;
@@ -61,7 +61,7 @@ namespace ts.pxtc {
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
-        if (!resp.usedSymbols || !pxt.debugMode())
+        if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
             return [];
 
         let parts: string[] = [];

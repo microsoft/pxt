@@ -9,7 +9,7 @@ namespace pxt.runner {
     }
 
     class EditorPackage {
-        files: Util.StringMap<string> = {};
+        files: Map<string> = {};
         id: string;
 
         constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) {
@@ -27,12 +27,12 @@ namespace pxt.runner {
             return this.ksPkg && this.ksPkg.level == 0;
         }
 
-        setFiles(files: Util.StringMap<string>) {
+        setFiles(files: Map<string>) {
             this.files = files;
         }
 
         getAllFiles() {
-            return Util.mapStringMap(this.files, (k, f) => f)
+            return Util.mapMap(this.files, (k, f) => f)
         }
     }
 
@@ -321,7 +321,7 @@ namespace pxt.runner {
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
         return Cloud.privateGetTextAsync(projectid + "/text")
             .then(txt => JSON.parse(txt))
-            .then((files: U.Map<string>) => {
+            .then((files: Map<string>) => {
                 let md = `\`\`\`${template}
 ${files["main.ts"]}
 \`\`\``;

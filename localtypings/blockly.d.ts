@@ -49,7 +49,9 @@ declare namespace Blockly {
         customContextMenu?: any;
     }
 
-    let Blocks: pxt.Util.StringMap<BlockDefinition>;
+    const Blocks: {
+        [index: string]: BlockDefinition;
+    }
 
     class Field {
         init(block: Block): void;

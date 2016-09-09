@@ -9,13 +9,14 @@ import * as nodeutil from './nodeutil';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+import Map = pxt.Map;
 
-let uploadCache: U.Map<string> = {};
-let uploadPromises: U.Map<Promise<string>> = {};
-let usedPromises: U.Map<boolean> = {};
+let uploadCache: Map<string> = {};
+let uploadPromises: Map<Promise<string>> = {};
+let usedPromises: Map<boolean> = {};
 let ptrPrefix = ""
 let showVerbose = false
-let sitemap: U.Map<string>;
+let sitemap: Map<string>;
 
 function error(msg: string) {
     U.userError(msg)
@@ -238,7 +239,7 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
     let files = getFiles();
 
     // known urls
-    let urls: U.Map<string> = {};
+    let urls: Map<string> = {};
     files.forEach(f => urls[f.replace(/\.md$/i, '')] = f);
 
     let checked = 0;

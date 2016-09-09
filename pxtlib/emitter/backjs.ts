@@ -1,5 +1,5 @@
 namespace ts.pxtc {
-    const jsOpMap: U.Map<string> = {
+    const jsOpMap: pxt.Map<string> = {
         "thumb::adds": "+",
         "thumb::subs": "-",
         "Number_::div": "/",
@@ -47,7 +47,7 @@ namespace ts.pxtc {
         if (bin.res.breakpoints)
             jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
         jssource += "\npxsim.setupStringLiterals(" +
-            JSON.stringify(U.mapStringMap(bin.strings, (k, v) => 1), null, 1) +
+            JSON.stringify(U.mapMap(bin.strings, (k, v) => 1), null, 1) +
             ")\n"
         bin.writeFile(BINARY_JS, jssource)
     }

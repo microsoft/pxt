@@ -211,7 +211,7 @@ function syncAsync() {
     let numUp = 0
     let numDown = 0
     let blobConatiner = ""
-    let updated: U.StringMap<number> = {}
+    let updated: pxt.Map<number> = {}
 
     if (!Cloud.hasAccessToken())
         return Promise.resolve()
@@ -256,7 +256,7 @@ function syncAsync() {
                 header.modificationTime = cloudHeader.scriptVersion.time
                 header.editor = resp.editor
                 header.name = resp.name
-                let files: U.StringMap<string> = { "_default_": resp.script }
+                let files: pxt.Map<string> = { "_default_": resp.script }
                 if (isProject(header))
                     files = JSON.parse(resp.script)
                 header.recentUse = cloudHeader.recentUse

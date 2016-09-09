@@ -30,7 +30,7 @@ interface Project {
     text?: ScriptText;
 }
 
-let projects: U.Map<Project> = {};
+let projects: pxt.Map<Project> = {};
 let target = "";
 
 function getHeaders(): Header[] {

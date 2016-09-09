@@ -8,15 +8,15 @@ namespace pxt.docs {
     import U = pxtc.Util;
     const lf = U.lf;
 
-    let stdboxes: U.Map<string> = {
+    let stdboxes: Map<string> = {
     }
 
-    let stdmacros: U.Map<string> = {
+    let stdmacros: Map<string> = {
     }
 
     const stdSetting = "<!-- @CMD@ @ARGS@ -->"
 
-    let stdsettings: U.Map<string> = {
+    let stdsettings: Map<string> = {
         "parent": stdSetting,
         "short": stdSetting,
         "description": "<!-- desc -->"
@@ -80,16 +80,16 @@ namespace pxt.docs {
         return require("marked");
     }
 
-    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: U.Map<string> = null, breadcrumb: BreadcrumbEntry[] = [], filepath: string = null): string {
-        let params: U.Map<string> = pubinfo || {}
+    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: Map<string> = null, breadcrumb: BreadcrumbEntry[] = [], filepath: string = null): string {
+        let params: Map<string> = pubinfo || {}
 
         let boxes = U.clone(stdboxes)
         let macros = U.clone(stdmacros)
         let settings = U.clone(stdsettings)
-        let menus: U.Map<string> = {}
+        let menus: Map<string> = {}
 
         function parseHtmlAttrs(s: string) {
-            let attrs: U.Map<string> = {};
+            let attrs: Map<string> = {};
             while (s.trim()) {
                 let m = /\s*([^=\s]+)=("([^"]*)"|'([^']*)'|(\S*))/.exec(s)
                 if (m) {
@@ -204,7 +204,7 @@ namespace pxt.docs {
                         return error(`Unknown command: @${cmd}`)
                 }
 
-                let ivars: U.Map<string> = {
+                let ivars: Map<string> = {
                     ARGS: args,
                     CMD: cmd
                 }
@@ -251,7 +251,7 @@ namespace pxt.docs {
             </div>`;
         }
 
-        let registers: U.Map<string> = {}
+        let registers: Map<string> = {}
         registers["main"] = "" // first
 
         html = html.replace(/<!-- BEGIN-ASIDE (\S+) -->([^]*?)<!-- END-ASIDE -->/g, (f, nam, cont) => {
@@ -276,7 +276,7 @@ namespace pxt.docs {
 
         let recMenu = (m: DocMenuEntry, lev: number) => {
             let templ = menus["item"]
-            let mparams: U.Map<string> = {
+            let mparams: Map<string> = {
                 NAME: m.name,
             }
             if (m.subitems) {
@@ -320,7 +320,7 @@ namespace pxt.docs {
         return injectHtml(template, params, ["body", "menu", "breadcrumb", "targetlogo", "github"])
     }
 
-    function injectHtml(template: string, vars: U.Map<string>, quoted: string[] = []) {
+    function injectHtml(template: string, vars: Map<string>, quoted: string[] = []) {
         if (!template) return '';
 
         return template.replace(/@(\w+)@/g, (f, key) => {
