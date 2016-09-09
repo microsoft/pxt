@@ -83,7 +83,7 @@ namespace ts.pxtc.Util {
         return r
     }
 
-    function isKV(v:any) {
+    function isKV(v: any) {
         return !!v && typeof v === "object" && !Array.isArray(v)
     }
 
