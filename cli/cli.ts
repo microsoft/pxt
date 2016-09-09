@@ -758,15 +758,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 if (isText) {
                     content = data.toString("utf8")
                     if (fileName == "index.html") {
-                        content = content
-                            .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-                            (full, fn) => {
-                                let cont = ""
-                                try {
-                                    cont = fs.readFileSync("includes/" + fn, "utf8")
-                                } catch (e) { }
-                                return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
-                            })
+                        content = server.expandDocFileTemplateCore(content)
                             .replace(/@(\w+)@/g, (full, varname) => {
                                 return (pxt.appTarget.appTheme as any)[varname] || ""
                             })

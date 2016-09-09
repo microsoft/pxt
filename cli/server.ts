@@ -247,9 +247,7 @@ export function lookupDocFile(name: string) {
     return null
 }
 
-export function expandDocFileTemplate(name: string) {
-    let fn = lookupDocFile(name)
-    let template = fn ? fs.readFileSync(fn, "utf8") : ""
+export function expandDocFileTemplateCore(template: string) {
     template = template
         .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
         (full, fn) => {
@@ -260,6 +258,12 @@ ${expandDocFileTemplate(fn)}
 `
         })
     return template
+}
+
+export function expandDocFileTemplate(name: string) {
+    let fn = lookupDocFile(name)
+    let template = fn ? fs.readFileSync(fn, "utf8") : ""
+    return expandDocFileTemplateCore(template)
 }
 
 interface SerialPortInfo {
