@@ -265,7 +265,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 <div className="ui search">
                     <div className="ui fluid action input" role="search">
                         <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
-                        <button title={lf("Search")} className="ui right primary labeled icon button" onClick={upd}>
+                        <button title={lf("Search") } className="ui right primary labeled icon button" onClick={upd}>
                             <i className="search icon"></i>
                             {lf("Search") }
                         </button>
@@ -338,7 +338,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                         <div className="ui item">
                             {this.state.packages ?
                                 lf("We couldn't find any packages matching '{0}'", this.state.searchFor) :
-                                lf("We couldn't find any projects matching '{0}'", this.state.searchFor)}
+                                lf("We couldn't find any projects matching '{0}'", this.state.searchFor) }
                         </div>
                     </div>
                     : undefined }
@@ -410,10 +410,11 @@ class DocsMenu extends data.Component<ISettingsProps, {}> {
 
     render() {
         const targetTheme = pxt.appTarget.appTheme;
+        const sideDocs = !pxt.options.light;
         return <div id="docsmenu" className="ui buttons">
             <sui.DropdownMenu class="floating icon button" icon="help" title="Help">
-                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item widedesktop hide">{m.name}</a>) }
-                {targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) }
+                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs ? "widedesktop hide" : ""}`}>{m.name}</a>)}
+                {sideDocs ? targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
             </sui.DropdownMenu>
         </div>
     }
@@ -461,10 +462,10 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         const icon = state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
             <iframe id="sidedocs" src={docsUrl} role="complementary" />
-            <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab")} className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
+            <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
                 <i className={`external icon`}></i>
             </button>
-            <button id="sidedocsexpand" role="button" title={lf("Show/Hide side documentation")} className="circular ui icon button" onClick={() => this.toggleVisibility() }>
+            <button id="sidedocsexpand" role="button" title={lf("Show/Hide side documentation") } className="circular ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`${icon} icon`}></i>
             </button>
         </div>
@@ -1197,6 +1198,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setHelpCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
+        if (pxt.options.light) return; // avoid rendering blocks in low-end devices
         this.setState({
             helpCard: card,
             helpCardClick: onClick
@@ -1264,7 +1266,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless small menu`} role="menubar">
                         <span id="logo" className="ui item">
@@ -1306,8 +1308,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     }
                                     <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
                                     <div className="ui divider"></div>
-                                    { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies")} target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
-                                    { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use")} target="_blank">{lf("Terms Of Use") }</a> : undefined }
+                                    { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
+                                    { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
                                     <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                 </sui.DropdownMenu>
                             </div>}
@@ -1339,7 +1341,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
                         {!sandbox && this.state.showParts ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } onClick={() => this.openInstructions() } /> : undefined }
-                        {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play")} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                        {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
                         {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -1354,7 +1356,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                {sandbox ? undefined : <SideDocs ref="sidedoc" parent={this} />}
+                {sandbox || pxt.options.light ? undefined : <SideDocs ref="sidedoc" parent={this} />}
                 {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
@@ -1627,6 +1629,7 @@ $(document).ready(() => {
     targetVersion = config.targetVersion;
     sandbox = /sandbox=1/i.test(window.location.href);
     pxt.options.debug = /dbg=1/i.test(window.location.href);
+    pxt.options.light = /light=1/i.test(window.location.href);
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
     enableAnalytics(ksVersion)
