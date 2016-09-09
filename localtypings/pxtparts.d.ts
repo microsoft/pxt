@@ -112,7 +112,7 @@ declare namespace pxsim {
     }
     export interface PinInstantiationIdx {
         pinInstantiationIdx: number
-    };
+    }
     // describes a single step for the assembly instructions
     export interface AssemblyStepDefinition {
         part?: boolean, // if true, the part itself should be assembled during this step
