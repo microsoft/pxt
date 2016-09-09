@@ -22,12 +22,27 @@ let docsDir = ""
 let tempDir = ""
 let packagedDir = ""
 
+export function forkPref() {
+    if (pxt.appTarget.forkof)
+        return "node_modules/pxt-" + pxt.appTarget.forkof + "/"
+    else
+        return ""
+}
+
 function setupRootDir() {
+    function forkDirs(lst: string[]) {
+        let res = lst.map(p => path.join(root, p))
+        let fp = forkPref()
+        if (fp) {
+            U.pushRange(res, lst.map(p => path.join(root, fp + p)))
+        }
+        return res
+    }
     root = process.cwd()
     console.log("Starting server in", root)
-    dirs = ["node_modules/pxt-core/built/web", "node_modules/pxt-core/webapp/public"].map(p => path.join(root, p))
-    simdirs = ["built", "sim/public"].map(p => path.join(root, p))
-    docfilesdirs = ["docfiles", "node_modules/pxt-core/docfiles"].map(p => path.join(root, p))
+    dirs = forkDirs(["node_modules/pxt-core/built/web", "node_modules/pxt-core/webapp/public"])
+    simdirs = forkDirs(["built", "sim/public"])
+    docfilesdirs = forkDirs(["docfiles", "node_modules/pxt-core/docfiles"])
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
     packagedDir = path.join(root, "built/packaged")
@@ -525,18 +540,20 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        let publicDir = forkPref() + 'node_modules/pxt-core/webapp/public/'
+
         if (pathname == "/--embed") {
-            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/embed.js'));
+            sendFile(path.join(root, publicDir + 'embed.js'));
             return
         }
 
         if (pathname == "/--run") {
-            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/run.html'));
+            sendFile(path.join(root, publicDir + 'run.html'));
             return
         }
 
         if (pathname == "/--docs") {
-            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/docs.html'));
+            sendFile(path.join(root, publicDir + 'docs.html'));
             return
         }
 
