@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta charset="UTF-8">
+    <title>@name@ /@id@</title>
+    <meta name="Description" content="@description@" />
+
+    <!-- @include meta.html -->
+    <!-- @include head.html -->
+
+    <link rel="alternate" type="application/json+oembed" href="@oembedurl@&format=json" />
+    <link rel="alternate" type="text/xml+oembed" href="@oembedurl@&format=xml" />
+    <script src="https://az851932.vo.msecnd.net/app/bbjfu/c/marked/marked.min.js"></script>
+</head>
+
+<body id='root' class='root'>
+
+
+    <!-- @include header.html -->
+    <!-- @include macros.html -->
+    <aside id=main-container class=box>
+        <div class="ui text container segment">
+            @BODY@
+        </div>
+    </aside>
+
+
+
+    <div class="ui main container mainbody">
+
+        @breadcrumb@
+
+        <!-- @include abuse.html -->
+
+        <div class="ui container grid">
+            <div class="ui card six wide column">
+                <!-- <div class="image"><img src="..."></div> -->
+                <div class="content">
+                    <div class="header">@title@ @byuser@</div>
+                    <div class="meta">
+                        <span class='humantime' data-time="@time@">@humantime@</span>
+                        <span class='right floated'>/@id@</span>
+                    </div>
+                    <div class="description">
+                        @description@
+                    </div>
+                </div>
+                <div class="extra content">
+
+                    <div class="ui two buttons">
+                        <a href="/#pub:@id@" class="ui green button">Edit</a>
+                        <a id='embed' href="#" class="ui button">Embed</a>
+                    </div>
+
+                </div>
+            </div>
+            <div class="ui ten wide column">
+                <div style="position:relative;height:0;padding-bottom:83%;overflow:hidden;">
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="/--run?id=@id@" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+
+        @body@
+
+        <div class="ui container segment">
+            <h4 class="description">Edit in <a href="https://code.visualstudio.com/">Visual Studio Code</a></h4>
+            <pre style="white-space: pre-wrap;"># open a shell and run these commands pxt extract https://codethemicrobit.com/@id@ cd @title@ code .</pre>
+            <p class="ui description">Do you need help installing the tools? <a href="https://codethemicrobit.com/code">Follow these instructions!</a></p>
+        </div>
+
+        <pre>
+            <code class="lang-project">
+        @id@
+    </code>
+        </pre>
+
+        <script>
+    $(document).ready(function() {
+        var id = "@id@";
+        $("#embed").click(function() {
+            // TODO popup modal or something
+        })
+    })
+        </script>
+
+
+
+    </div>
+
+
+    <!-- @include footer.html -->
+    <!-- @include tracking.html -->
+
+</body>
+
+</html>

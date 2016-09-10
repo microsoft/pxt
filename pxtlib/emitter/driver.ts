@@ -61,7 +61,7 @@ namespace ts.pxtc {
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
-        if (!resp.usedSymbols || !pxt.options.debug)
+        if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
             return [];
 
         let parts: string[] = [];

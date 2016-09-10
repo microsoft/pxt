@@ -1,7 +1,8 @@
 /// <reference path="pxtpackage.d.ts" />
 declare namespace pxt {
     interface AppTarget {
-        id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
+        id: string; // has to match ^[a-z]+$; used in URLs and domain names
+        forkof?: string; // id of a target we're based on
         name: string;
         description?: string;
         corepkg: string;
@@ -60,7 +61,10 @@ declare namespace pxt {
 
     interface AppSimulator {
         autoRun?: boolean;
+        streams?: boolean;
         aspectRatio?: number; // width / height
+        parts?: boolean; // parts enabled?
+        instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         builtinParts?: Map<boolean>;
     }
@@ -97,6 +101,7 @@ declare namespace pxt {
         cardLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
+        htmlTemplates?: Map<string>;
         githubUrl?: string;
     }
 

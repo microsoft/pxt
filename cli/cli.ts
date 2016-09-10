@@ -296,9 +296,9 @@ function ptrcheckAsync(cmd: string) {
 
 
     let files = U.toDictionary(allFiles("docs", 8)
-        .filter(e => /\.md$/.test(e))
+        .filter(e => /\.(md|html)$/.test(e))
         .map(e => {
-            let s = e.slice(5).replace(/\.md$/, "")
+            let s = e.slice(5).replace(/\.(md|html)$/, "")
             let m = /^_locales\/([a-z]+)\/(.*)/.exec(s)
             if (m) s = m[2] + "@" + m[1]
             s = s.replace(/\//g, "-")
@@ -622,9 +622,17 @@ function pkgVersion() {
 }
 
 function targetFileList() {
-    let lst = onlyExts(allFiles("built", 1), [".js", ".css", ".json", ".webmanifest"])
-        .concat(allFiles("sim/public"))
-    // the cloud only accepts *.json and sim* files in targets
+    let fp = forkPref()
+    let forkFiles = (name: string) => {
+        if (fp)
+            // make sure for the local files to follow fork files - this is the overriding order
+            return allFiles(fp + name).concat(allFiles(name, 8, true))
+        else
+            return allFiles(name)
+    }
+    let lst = onlyExts(forkFiles("built"), [".js", ".css", ".json", ".webmanifest"])
+        .concat(forkFiles("sim/public"))
+    // the cloud only accepts *.json and sim* files in targets - TODO is this still true?
     return lst.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
 }
 
@@ -643,7 +651,7 @@ export function staticpkgAsync(label?: string) {
 export function uploadtrgAsync(label?: string) {
     return uploadCoreAsync({
         label: label,
-        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+        fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
         pkgversion: pkgVersion(),
         fileContent: {}
     })
@@ -659,6 +667,10 @@ interface UploadOptions {
     localDir?: string;
 }
 
+function uploadFileName(p: string) {
+    return p.replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
+}
+
 function uploadCoreAsync(opts: UploadOptions) {
     let liteId = "<none>"
 
@@ -668,6 +680,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/embed.js": "@targetUrl@@relprefix@embed",
         "/cdn/": "@pxtCdnUrl@",
+        "/doccdn/": "@pxtCdnUrl@",
         "/sim/": "@targetCdnUrl@",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
@@ -697,6 +710,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         replacements = {
             "/embed.js": opts.localDir + "embed.js",
             "/cdn/": opts.localDir,
+            "/doccdn/": opts.localDir,
             "/sim/": opts.localDir,
             "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
@@ -736,8 +750,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
         return rdf
             .then((data: Buffer) => {
-                // Strip the leading directory name, unless we are uploading a single file.
-                let fileName = p.replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
+                let fileName = uploadFileName(p)
                 let mime = U.getMime(p)
                 let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
                 let content = ""
@@ -745,18 +758,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 if (isText) {
                     content = data.toString("utf8")
                     if (fileName == "index.html") {
-                        content = content
-                            .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-                            (full, fn) => {
-                                let cont = ""
-                                try {
-                                    cont = fs.readFileSync("includes/" + fn, "utf8")
-                                } catch (e) { }
-                                return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
-                            })
-                            .replace(/@(\w+)@/g, (full, varname) => {
-                                return (pxt.appTarget.appTheme as any)[varname] || ""
-                            })
+                        content = server.expandDocTemplateCore(content)
                     }
 
                     if (replFiles.indexOf(fileName) >= 0) {
@@ -800,6 +802,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                     })
             })
     }
+
+    // only keep the last version of each uploadFileName()
+    opts.fileList = U.values(U.toDictionary(opts.fileList, uploadFileName))
 
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
@@ -853,14 +858,18 @@ function readLocalPxTarget() {
     }
     nodeutil.targetDir = process.cwd()
     let cfg: pxt.TargetBundle = readJson("pxtarget.json")
+    if (forkPref()) {
+        let cfgF: pxt.TargetBundle = readJson(forkPref() + "pxtarget.json")
+        U.jsonMergeFrom(cfgF, cfg)
+        return cfgF
+    }
     return cfg
 }
 
 function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage) => Promise<void>) {
-    let cfg = readLocalPxTarget()
     let prev = process.cwd()
-
-    return Promise.mapSeries(cfg.bundleddirs, (dirname) => {
+    return Promise.mapSeries(pxt.appTarget.bundleddirs, (dirname) => {
+        console.log("building in " + dirname)
         process.chdir(path.join(nodeutil.targetDir, dirname))
         mainPkg = new pxt.MainPackage(new Host())
         return f(mainPkg);
@@ -975,6 +984,8 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export function buildTargetAsync(): Promise<void> {
+    if (pxt.appTarget.forkof || pxt.appTarget.id == "core")
+        return buildTargetCoreAsync()
     return simshimAsync()
         .then(() => buildFolderAsync('sim'))
         .then(buildTargetCoreAsync)
@@ -1116,14 +1127,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
 
-    for (let fn of allFiles("node_modules/pxt-core/includes", 1, true).concat(allFiles("includes"))) {
-        let m = /docs-(.*)\.html$/.exec(fn)
-        if (m) {
-            console.log("embed: " + fn)
-            cfg.appTheme.htmlDocIncludes[m[1]] = fs.readFileSync(fn, "utf8")
-        }
-    }
-
     cfg.appTheme.locales = {}
 
     let lpath = "docs/_locales"
@@ -1135,19 +1138,34 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
         }
     }
 
+    if (fs.existsSync("built/templates.json")) {
+        cfg.appTheme.htmlTemplates = readJson("built/templates.json")
+    }
+
     nodeutil.mkdirP("built");
     fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
 }
+
+let forkPref = server.forkPref
 
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
     pxt.appTarget = cfg;
     let statFiles: Map<number> = {}
+    let isFork = !!pxt.appTarget.forkof
+    if (isFork)
+        forceCloudBuild = true
+    cfg.bundleddirs = cfg.bundleddirs.map(s => forkPref() + s)
     dirsToWatch = cfg.bundleddirs.slice()
-    dirsToWatch.push("sim"); // simulator
-    dirsToWatch = dirsToWatch.concat(fs.readdirSync("sim").map(p => path.join("sim", p)).filter(p => fs.statSync(p).isDirectory()));
-    console.log("building target.json...")
+    if (!isFork && pxt.appTarget.id != "core") {
+        dirsToWatch.push("sim"); // simulator
+        dirsToWatch = dirsToWatch.concat(
+            fs.readdirSync("sim")
+                .map(p => path.join("sim", p))
+                .filter(p => fs.statSync(p).isDirectory()));
+    }
+    console.log(`building target.json in ${process.cwd()}...`)
     return forEachBundledPkgAsync(pkg =>
         pkg.filesToBePublishedAsync()
             .then(res => {
@@ -1161,7 +1179,9 @@ function buildTargetCoreAsync() {
                 tag: info.tag,
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
-                pxt: readJson("node_modules/pxt-core/package.json")["version"],
+                pxt: pxt.appTarget.id == "core" ?
+                    readJson("package.json")["version"] :
+                    readJson(forkPref() + "node_modules/pxt-core/package.json")["version"],
             }
 
             saveThemeJson(cfg)
@@ -1218,6 +1238,11 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync() {
+    if (forkPref() && fs.existsSync("pxtarget.json")) {
+        console.log("Assuming target fork; building once.")
+        return buildTargetAsync()
+    }
+
     if (!fs.existsSync("sim/tsconfig.json")) {
         console.log("No sim/tsconfig.json; assuming npm installed package")
         return Promise.resolve()
@@ -1257,8 +1282,9 @@ function renderDocs(localDir: string) {
         cpR("docfiles", dst + "/docfiles")
 
     let webpath = localDir
-    let docsTemplate = fs.readFileSync(dst + "/docfiles/template.html", "utf8")
+    let docsTemplate = server.expandDocFileTemplate("docs.html")
     docsTemplate = U.replaceAll(docsTemplate, "/cdn/", webpath)
+    docsTemplate = U.replaceAll(docsTemplate, "/doccdn/", webpath)
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
@@ -1271,7 +1297,7 @@ function renderDocs(localDir: string) {
             dirs[dir] = true
         }
         let buf = fs.readFileSync(f)
-        if (/\.md$/.test(f)) {
+        if (/\.(md|html)$/.test(f)) {
             let str = buf.toString("utf8")
             let path = f.slice(5).split(/\//)
             let bc = path.map((e, i) => {
@@ -1280,7 +1306,11 @@ function renderDocs(localDir: string) {
                     name: e
                 }
             })
-            let html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc, f)
+            let html = ""
+            if (U.endsWith(f, ".md"))
+                html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc, f)
+            else
+                html = server.expandHtml(str)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
                 return beg + ` href="${webpath}docs${url}.html"`
             })
@@ -2279,7 +2309,8 @@ function testForBuildTargetAsync() {
         .then(res => {
             reportDiagnostics(res.diagnostics);
             if (!res.success) U.userError("Test failed")
-            simulatorCoverage(res, opts)
+            if (!pxt.appTarget.forkof)
+                simulatorCoverage(res, opts)
         })
 }
 
@@ -2777,7 +2808,7 @@ export function uploadDocsAsync(...args: string[]): Promise<void> {
     if (info.tag || (info.branch && info.branch != "master"))
         return Promise.resolve()
     let cfg = readLocalPxTarget()
-    saveThemeJson(cfg)
+    uploader.saveThemeJson = () => saveThemeJson(cfg)
     return uploader.uploadDocsAsync(...args)
 }
 

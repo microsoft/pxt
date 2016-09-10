@@ -6,6 +6,7 @@ import * as querystring from 'querystring';
 import * as crypto from 'crypto';
 
 import * as nodeutil from './nodeutil';
+import * as server from './server';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -18,6 +19,8 @@ let ptrPrefix = ""
 let showVerbose = false
 let sitemap: Map<string>;
 
+export var saveThemeJson = () => { }
+
 function error(msg: string) {
     U.userError(msg)
 }
@@ -27,14 +30,26 @@ function verbose(msg: string) {
         console.log(msg)
 }
 
-function replContent(str: string, waitFor: Promise<string>[]) {
-    return str.replace(/[\.\/]*(\/static\/[\w\.\-\/]+)/g, (m, x) => {
-        let repl = uploadFileAsync(x)
-        usedPromises[x] = true;
-        if (waitFor) waitFor.push(repl)
-        else return repl.value();
-        return "";
-    })
+function replContentAsync(str: string) {
+    function replContent(str: string, waitFor: Promise<string>[]) {
+        return str
+            // TODO make configurable
+            .replace(/\/doccdn\//g, "https://az851932.vo.msecnd.net/app/lkgya/c/")
+            .replace(/[\.\/]*(\/(docfiles|static)\/[\w\.\-\/]+)/g, (m, x) => {
+                let repl = uploadFileAsync(x)
+                usedPromises[x] = true;
+                if (waitFor) waitFor.push(repl)
+                else return repl.value();
+                return "";
+            })
+    }
+
+    let waitFor: Promise<any>[] = [];
+    replContent(str, waitFor);
+    return Promise.all(waitFor)
+        .then(() => {
+            return replContent(str, null);
+        })
 }
 
 function rewriteUrl(id: string): string {
@@ -62,17 +77,26 @@ function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
     if (!contentType || contentType == "application/octet-stream")
         error("content type not understood: " + fn)
 
-    let buf = fs.readFileSync(uploadDir + fn)
+    let fsPath = fn
+    if (U.startsWith(fn, "/docfiles/")) {
+        fsPath = server.lookupDocFile(fn.slice(10))
+    } else {
+        fsPath = uploadDir + fn
+    }
+
+    let buf = fs.readFileSync(fsPath)
 
     return Promise.resolve()
         .then(() => {
-            if (!noRepl && /^text/.test(contentType)) {
+            if (contentType == "text/html") {
                 let str = buf.toString("utf8");
-                let waitFor: Promise<any>[] = [];
-                replContent(str, waitFor);
-                return Promise.all(waitFor)
-                    .then(() => {
-                        str = replContent(str, null);
+                str = server.expandHtml(str)
+                buf = new Buffer(str, "utf8");
+                contentType = "text/plain" // text/html not accepted by the cloud
+            }
+            if (!noRepl && /^text/.test(contentType)) {
+                return replContentAsync(buf.toString("utf8"))
+                    .then(str => {
                         buf = new Buffer(str, "utf8");
                     })
             } else {
@@ -111,10 +135,13 @@ function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
 function uploadFileAsync(fn: string) {
     if (uploadPromises[fn])
         return uploadPromises[fn]
-    let path = fn.replace(/\.md$/, "")
+    let path = fn.replace(/\.(md|html)$/, "")
+    let isHtml = U.endsWith(fn, ".html")
     let mm = /^\/_locales\/([A-Za-z\-]+)(\/.*)/.exec(path)
     if (mm) path = mm[2] + "@" + mm[1].toLowerCase()
     let isStatic = U.startsWith(fn, "/static/")
+    let isDocfile = U.startsWith(fn, "/docfiles/")
+    if (isDocfile) isStatic = true
     if (!isStatic && sitemap) sitemap[path] = ""
     path = ptrPrefix + path
     uploadPromises[fn] = uploadArtAsync(fn)
@@ -128,19 +155,20 @@ function uploadFileAsync(fn: string) {
             return Cloud.privateGetAsync(nodeutil.pathToPtr(path))
                 .then(v => v, e => { return {} })
                 .then((curr: Cloud.JsonPointer) => {
-                    if (curr.artid == id) {
+                    let postData = {
+                        path: nodeutil.sanitizePath(path),
+                        htmlartid: isHtml ? id : "",
+                        artid: isHtml ? "" : id,
+                        scriptid: "",
+                        releaseid: "",
+                        redirect: ""
+                    }
+                    if (curr.artid == postData.artid && curr.htmlartid == postData.htmlartid) {
                         verbose(`already set: ${fn} -> ${id}`)
                         return Promise.resolve()
                     }
 
-                    return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(path),
-                        htmlartid: "",
-                        artid: id,
-                        scriptid: "",
-                        releaseid: "",
-                        redirect: ""
-                    })
+                    return Cloud.privatePostAsync("pointers", postData)
                         .then(() => {
                             console.log(`${fn}: set to ${id}`)
                         })
@@ -167,10 +195,28 @@ export function getFiles(): string[] {
     return res
 }
 
+function uploadDocfilesAsync() {
+    let templates: pxt.Map<string> = {}
+    return Promise.map(["docs.html", "script.html", "stream.html"], f =>
+        replContentAsync(server.expandDocFileTemplate(f))
+            .then(tmpl => {
+                fs.writeFileSync("built/" + f, tmpl)
+                templates[f] = tmpl
+            }))
+        .then(() => {
+            templates = U.sortObjectFields(templates)
+            fs.writeFileSync("built/templates.json", JSON.stringify(templates, null, 4))
+            saveThemeJson()
+        })
+}
+
 function uploadJsonAsync() {
-    uploadDir = "built"
-    return uploadFileAsync("/theme.json")
-        .then(uploadSitemapAsync)
+    return uploadDocfilesAsync()
+        .then(() => {
+            uploadDir = "built"
+            return uploadFileAsync("/theme.json")
+                .then(uploadSitemapAsync)
+        })
 }
 
 function uploadSitemapAsync() {

@@ -80,41 +80,51 @@ namespace pxt.docs {
         return require("marked");
     }
 
-    export function renderMarkdown(template: string, src: string, theme: AppTheme = {}, pubinfo: Map<string> = null, breadcrumb: BreadcrumbEntry[] = [], filepath: string = null): string {
-        let params: Map<string> = pubinfo || {}
+    export interface RenderData {
+        html: string;
+        theme: AppTheme;
+        params: Map<string>;
+        breadcrumb?: BreadcrumbEntry[];
+        filepath?: string;
 
+        finish?: () => string;
+        boxes?: Map<string>;
+        macros?: Map<string>;
+        settings?: Map<string>;
+    }
+
+    function parseHtmlAttrs(s: string) {
+        let attrs: Map<string> = {};
+        while (s.trim()) {
+            let m = /\s*([^=\s]+)=("([^"]*)"|'([^']*)'|(\S*))/.exec(s)
+            if (m) {
+                let v = m[3] || m[4] || m[5] || ""
+                attrs[m[1].toLowerCase()] = v
+            } else {
+                m = /^\s*(\S+)/.exec(s)
+                attrs[m[1]] = "true"
+            }
+            s = s.slice(m[0].length)
+        }
+        return attrs
+    }
+
+    let error = (s: string) =>
+        `<div class='ui negative message'>${htmlQuote(s)}</div>`
+
+    export function prepTemplate(d: RenderData) {
         let boxes = U.clone(stdboxes)
         let macros = U.clone(stdmacros)
         let settings = U.clone(stdsettings)
         let menus: Map<string> = {}
+        let params = d.params
+        let theme = d.theme
 
-        function parseHtmlAttrs(s: string) {
-            let attrs: Map<string> = {};
-            while (s.trim()) {
-                let m = /\s*([^=\s]+)=("([^"]*)"|'([^']*)'|(\S*))/.exec(s)
-                if (m) {
-                    let v = m[3] || m[4] || m[5] || ""
-                    attrs[m[1].toLowerCase()] = v
-                } else {
-                    m = /^\s*(\S+)/.exec(s)
-                    attrs[m[1]] = "true"
-                }
-                s = s.slice(m[0].length)
-            }
-            return attrs
-        }
+        d.boxes = boxes
+        d.macros = macros
+        d.settings = settings
 
-        let error = (s: string) =>
-            `<div class='ui negative message'>${htmlQuote(s)}</div>`
-
-        template = template
-            .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-            (full, fn) => {
-                let cont = (theme.htmlDocIncludes || {})[fn] || ""
-                return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
-            })
-
-        template = template.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
+        d.html = d.html.replace(/<aside\s+([^<>]+)>([^]*?)<\/aside>/g, (full, attrsStr, body) => {
             let attrs = parseHtmlAttrs(attrsStr)
             let name = attrs["data-name"] || attrs["id"]
 
@@ -133,6 +143,89 @@ namespace pxt.docs {
             }
             return `<!-- macro ${name} -->`
         })
+
+        let recMenu = (m: DocMenuEntry, lev: number) => {
+            let templ = menus["item"]
+            let mparams: Map<string> = {
+                NAME: m.name,
+            }
+            if (m.subitems) {
+                if (lev == 0) templ = menus["top-dropdown"]
+                else templ = menus["inner-dropdown"]
+                mparams["ITEMS"] = m.subitems.map(e => recMenu(e, lev + 1)).join("\n")
+            } else {
+                if (/^-+$/.test(m.name)) {
+                    templ = menus["divider"]
+                }
+                if (m.path && !/^(https?:|\/)/.test(m.path))
+                    return error("Invalid link: " + m.path)
+                mparams["LINK"] = m.path
+            }
+            return injectHtml(templ, mparams, ["ITEMS"])
+        }
+
+        let breadcrumbHtml = '';
+        if (d.breadcrumb && d.breadcrumb.length > 1) {
+            breadcrumbHtml = `
+            <div class="ui breadcrumb">
+                ${d.breadcrumb.map((b, i) =>
+                    `<a class="${i == d.breadcrumb.length - 1 ? "active" : ""} section" 
+                        href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
+                    .join('<i class="right chevron icon divider"></i>')}
+            </div>`;
+        }
+        params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
+        params["breadcrumb"] = breadcrumbHtml;
+        params["targetname"] = theme.name || "PXT"
+        params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
+        if (d.filepath && theme.githubUrl) {
+            //I would have used NodeJS path library, but this code may have to work in browser
+            let leadingTrailingSlash = /^\/|\/$/;
+            let githubUrl = `${theme.githubUrl.replace(leadingTrailingSlash, '')}/blob/master/docs/${d.filepath.replace(leadingTrailingSlash, '')}`;
+            params["github"] = `<p style="margin-top:1em"><a href="${githubUrl}"><i class="write icon"></i>${lf("Edit this page on GitHub")}</a></p>`;
+        }
+        else {
+            params["github"] = "";
+        }
+
+        let style = '';
+        if (theme.accentColor) style += `
+.ui.accent { color: ${theme.accentColor}; }
+.ui.inverted.accent { background: ${theme.accentColor}; }
+`
+        params["targetstyle"] = style;
+
+        for (let k of Object.keys(theme)) {
+            let v = (theme as any)[k]
+            if (params[k] === undefined && typeof v == "string")
+                params[k] = v
+        }
+
+        d.finish = () => injectHtml(d.html, params,
+            ["body", "menu", "breadcrumb", "targetlogo", "github"])
+    }
+
+    export function renderMarkdown(template: string, src: string,
+        theme: AppTheme = {}, pubinfo: Map<string> = null,
+        breadcrumb: BreadcrumbEntry[] = [], filepath: string = null): string {
+
+        let params: Map<string> = pubinfo || {}
+
+        template = template
+            .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
+            (full, fn) => {
+                let cont = (theme.htmlDocIncludes || {})[fn] || ""
+                return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
+            })
+
+        let d: RenderData = {
+            html: template,
+            theme: theme,
+            params: params,
+            breadcrumb: breadcrumb,
+            filepath: filepath
+        }
+        prepTemplate(d)
 
         if (!marked) {
             marked = requireMarked();
@@ -195,11 +288,11 @@ namespace pxt.docs {
             args = html2Quote(args)
             cmd = html2Quote(cmd)
             if (tp == "@") {
-                let expansion = U.lookup(settings, cmd)
+                let expansion = U.lookup(d.settings, cmd)
                 if (expansion != null) {
                     params[cmd] = args
                 } else {
-                    expansion = U.lookup(macros, cmd)
+                    expansion = U.lookup(d.macros, cmd)
                     if (expansion == null)
                         return error(`Unknown command: @${cmd}`)
                 }
@@ -217,7 +310,7 @@ namespace pxt.docs {
                     return r
                 }
 
-                let box = U.lookup(boxes, cmd)
+                let box = U.lookup(d.boxes, cmd)
                 if (box) {
                     let parts = box.split("@BODY@")
                     endBox = parts[1]
@@ -240,17 +333,6 @@ namespace pxt.docs {
                 params["description"] = html2Quote(descM[1])
         }
 
-        let breadcrumbHtml = '';
-        if (breadcrumb && breadcrumb.length > 1) {
-            breadcrumbHtml = `
-            <div class="ui breadcrumb">
-                ${breadcrumb.map((b, i) =>
-                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section" 
-                        href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
-                    .join('<i class="right chevron icon divider"></i>')}
-            </div>`;
-        }
-
         let registers: Map<string> = {}
         registers["main"] = "" // first
 
@@ -266,7 +348,7 @@ namespace pxt.docs {
         registers["main"] = html
 
         let injectBody = (tmpl: string, body: string) =>
-            injectHtml(boxes[tmpl] || "@BODY@", { BODY: body }, ["BODY"])
+            injectHtml(d.boxes[tmpl] || "@BODY@", { BODY: body }, ["BODY"])
 
         html = ""
 
@@ -274,50 +356,10 @@ namespace pxt.docs {
             html += injectBody(k + "-container", registers[k])
         }
 
-        let recMenu = (m: DocMenuEntry, lev: number) => {
-            let templ = menus["item"]
-            let mparams: Map<string> = {
-                NAME: m.name,
-            }
-            if (m.subitems) {
-                if (lev == 0) templ = menus["top-dropdown"]
-                else templ = menus["inner-dropdown"]
-                mparams["ITEMS"] = m.subitems.map(e => recMenu(e, lev + 1)).join("\n")
-            } else {
-                if (/^-+$/.test(m.name)) {
-                    templ = menus["divider"]
-                }
-                if (m.path && !/^(https?:|\/)/.test(m.path))
-                    return error("Invalid link: " + m.path)
-                mparams["LINK"] = m.path
-            }
-            return injectHtml(templ, mparams, ["ITEMS"])
-        }
-
         params["body"] = html
-        params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["breadcrumb"] = breadcrumbHtml;
-        params["targetname"] = theme.name || "PXT"
-        params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         params["name"] = params["title"] + " - " + params["targetname"]
-        if (filepath && theme.githubUrl) {
-            //I would have used NodeJS path library, but this code may have to work in browser
-            let leadingTrailingSlash = /^\/|\/$/;
-            let githubUrl = `${theme.githubUrl.replace(leadingTrailingSlash, '')}/blob/master/docs/${filepath.replace(leadingTrailingSlash, '')}`;
-            params["github"] = `<p style="margin-top:1em"><a href="${githubUrl}"><i class="write icon"></i>${lf("Edit this page on GitHub")}</a></p>`;
-        }
-        else {
-            params["github"] = "";
-        }
 
-        let style = '';
-        if (theme.accentColor) style += `
-.ui.accent { color: ${theme.accentColor}; }
-.ui.inverted.accent { background: ${theme.accentColor}; }
-`
-        params["targetstyle"] = style;
-
-        return injectHtml(template, params, ["body", "menu", "breadcrumb", "targetlogo", "github"])
+        return d.finish()
     }
 
     function injectHtml(template: string, vars: Map<string>, quoted: string[] = []) {

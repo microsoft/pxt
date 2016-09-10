@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Programming Experience Toolkit</title>
+  <meta name="Description" content="Programming Experiences in Blocks and JavaScript for beginners." />
+
+  <!-- @include meta.html -->
+  <!-- @include head.html -->
+  <style>
+    .masthead.segment {
+      min-height: 700px;
+      padding: 1em 0em;
+    }
+    
+    .masthead .logo.item img {
+      margin-right: 1em;
+    }
+    
+    .masthead .ui.menu .ui.button {
+      margin-left: 0.5em;
+    }
+    
+    .masthead h1.ui.header {
+      margin-top: 0.5em;
+      margin-bottom: 0em;
+      font-size: 4em;
+      font-weight: normal;
+    }
+    
+    .masthead h2 {
+      font-size: 1.7em;
+      font-weight: normal;
+      margin-top: 0.2em;
+      margin-bottom: 2em;
+    }
+    
+    .ui.vertical.stripe {
+      padding: 8em 0em;
+    }
+    
+    .ui.vertical.stripe h3 {
+      font-size: 1.8em;
+    }
+    
+    .ui.vertical.stripe .button + h3,
+    .ui.vertical.stripe p + h3 {
+      margin-top: 3em;
+    }
+    
+    .ui.vertical.stripe .floated.image {
+      clear: both;
+    }
+    
+    .ui.vertical.stripe p {
+      font-size: 1.1em;
+    }
+    
+    .ui.vertical.stripe .horizontal.divider {
+      margin: 3em 0em;
+    }
+    
+    .quote.stripe.segment {
+      padding: 0em;
+    }
+    
+    .quote.stripe.segment .grid .column {
+      padding-top: 5em;
+      padding-bottom: 5em;
+    }
+    
+    .footer.segment {
+      padding: 5em 0em;
+    }
+    
+    .ui.menu {
+      display: none;
+    }
+    
+    .ui.inverted.mspurple {
+      background: #5C2D91;
+    }
+    
+    .ui.inverted.white {
+      background: none;
+      color: 1px solid white;
+    }
+  </style>
+</head>
+
+<body id='root' class='root'>
+
+  <!-- @include header.html -->
+
+  <div class="pusher">
+    <div class="ui container">
+      <a href="https://www.microsoft.com" class="ui small left image" style="margin:0.5em">
+        <img class="ui image" src="/static/images/Microsoft-logo_rgb_c-gray.png" />
+      </a>
+    </div>
+    <div class="ui inverted vertical masthead center aligned segment mspurple">
+      <div class="ui text container">
+        <a href="https://codethemicrobit.com" class="ui centered medium image" style="margin-top:10em">
+          <img class="ui image" src="/static/images/microbit.simplified.svg" />
+        </a>
+        <h1 class="ui inverted header">code the micro:bit</h1>
+        <p>Compatible with <b>BBC micro:bit</b></p>
+        <a href="https://codethemicrobit.com#gettingstarted" class="ui inverted huge white button">Start coding<i class="right arrow icon"></i></a>
+      </div>
+    </div>
+
+    <div class="ui vertical stripe quote segment">
+      <div class="ui equal width stackable internally celled grid">
+        <div class="center aligned row">
+          <div class="column">
+            <h3>Block Editor</h3>
+            <p>Get started with a beginner friendly drag&amp;drop code editor.</p>
+            <img src="/static/images/blocks.png" class="editor-image">
+          </div>
+          <div class="column">
+            <h3>JavaScript Editor</h3>
+            <p>Upgrade to JavaScript thanks to our rich text editor with contextual help, background checks and auto-completion.</p>
+            <img src="/static/images/ts.png" class="editor-image">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ui vertical stripe segment">
+      <div class="ui middle aligned stackable grid container">
+        <div class="row">
+          <div class="eight wide column">
+            <h3 class="ui header">Kodu for micro:bit</h3>
+            <p>Control your Kodu with the micro:bit! You can control character movement using the accelerometer, jump and shoot
+              with a button press, display animations and scrolling text on the screen, interface with other devices through
+              the IO pins, and much more..</p>
+            <a href="http://www.kodugamelab.com/bbc-microbit/" class="ui large green button">Download Kodu!</a>
+          </div>
+          <div class="eight wide right floated column">
+            <img src="/static/images/kodu1.png" class="ui image fuild">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ui vertical stripe segment">
+      <div class="ui equal width stackable grid container">
+        <div class="row">
+          <div class="column">
+            <h3 class="ui header">About PXT</h3>
+            <p>
+              The Microsoft Programming Experience Toolkit (PXT) provides a programming experience based around JavaScript (technically,
+              a subset of <a href="https://www.typescriptlang.org/">TypeScript</a>). The experience has a built-in
+              progression from simple block-based editor, through in-browser text editor with robust auto-completion and
+              auto-fixing, all the way to a professional integrated development environemnt (<a href="https://code.visualstudio.com/">Visual Studio Code</a>).
+            </p>
+            <a href="/about" class="ui large button">Learn more</a>
+
+          </div>
+          <div class="column">
+            <h3 class="ui header">Build your programming experience</h3>
+            <p>
+              PXT targets, including one for the BBC micro:bit, define a set of blocks and JavaScript APIs available to users. Teachers
+              and developers can extend existing targets by publishing packages or libraries with additional blocks and APIs
+              as well as build completely new targets.
+            </p>
+            <!--
+                    <p>
+                        Use PXT to provide a smooth coding experience for your project, in blocks and JavaScript. Build the APIs and the runtime
+                        and we will take care of the editor stuff.
+                    </p>
+                    -->
+            <a href="/docs" class="ui large button">Read the docs</a>
+            <!--
+                    <a href="https://github.com/Microsoft/pxt-sample" class="ui large button">Show me the sample!</a>
+                    -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- @include footer.html -->
+  <!-- @include macros.html -->
+  <!-- @include tracking.html -->
+
+</body>
+
+</html>

@@ -20,9 +20,9 @@ namespace ts.pxtc {
         pxtNodeWave: number;
     }
 
-    interface FieldWithAccessors extends PropertyDeclaration {
-        irGetter: MethodDeclaration;
-        irSetter: MethodDeclaration;
+    export interface FieldWithAddInfo extends PropertyDeclaration {
+        irGetter?: MethodDeclaration;
+        irSetter?: MethodDeclaration;
     }
 
     let lastNodeId = 0
@@ -302,11 +302,10 @@ namespace ts.pxtc {
         baseClassInfo: ClassInfo;
         decl: ClassDeclaration;
         numRefFields: number;
-        allfields: PropertyDeclaration[];
+        allfields: FieldWithAddInfo[];
         methods: FunctionLikeDeclaration[];
         refmask: boolean[];
         attrs: CommentAttrs;
-        hasVTable?: boolean;
         isUsed?: boolean;
         vtable?: ir.Procedure[];
         itable?: ir.Procedure[];
@@ -994,12 +993,11 @@ namespace ts.pxtc {
                 }
 
                 for (let fld0 of inf.allfields) {
-                    let fld = fld0 as FieldWithAccessors
+                    let fld = fld0 as FieldWithAddInfo
                     let fname = getName(fld)
                     let setname = "set/" + fname
 
                     if (isIfaceMemberUsed(fname)) {
-                        inf.hasVTable = true
                         if (!fld.irGetter)
                             fld.irGetter = mkBogusMethod(inf, fname)
                         let idx = fieldIndexCore(inf, fld, typeOf(fld))
@@ -1011,7 +1009,6 @@ namespace ts.pxtc {
                     }
 
                     if (isIfaceMemberUsed(setname)) {
-                        inf.hasVTable = true
                         if (!fld.irSetter) {
                             fld.irSetter = mkBogusMethod(inf, setname)
                             fld.irSetter.parameters.unshift({
@@ -1045,11 +1042,6 @@ namespace ts.pxtc {
                         inf.itable[i] = null // avoid undefined
                 for (let k of Object.keys(ifaceMembers)) {
                     inf.itableInfo[ifaceMembers[k]] = k
-                }
-                if (inf.itable.length)
-                    inf.hasVTable = true
-                if (inf.hasVTable) {
-                    inf.refmask.unshift(false) // for the vtable
                 }
             })
 
@@ -1085,10 +1077,6 @@ namespace ts.pxtc {
                 classInfos[id] = info;
                 // only do it after storing our in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
-                if (info.baseClassInfo) {
-                    info.hasVTable = true
-                    info.baseClassInfo.hasVTable = true
-                }
                 scope(() => {
                     U.pushRange(typeBindings, bindings)
                     for (let mem of decl.members) {
@@ -1837,13 +1825,8 @@ ${lbl}: .short 0xffff
 
                 markClassUsed(info)
 
-                let obj: ir.Expr
-                if (info.hasVTable) {
-                    let lbl = info.id + "_VT"
-                    obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
-                } else {
-                    obj = ir.rtcall("pxt::mkRecord", [ir.numlit(info.numRefFields), ir.numlit(info.allfields.length)])
-                }
+                let lbl = info.id + "_VT"
+                let obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
                 obj = ir.shared(obj)
 
                 if (ctor) {
@@ -2196,10 +2179,10 @@ ${lbl}: .short 0xffff
             throw unhandled(node, lf("unsupported postfix unary operation"), 9246)
         }
 
-        function fieldIndexCore(info: ClassInfo, fld: PropertyDeclaration, t: Type) {
+        function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, t: Type) {
             let attrs = parseComments(fld)
             return {
-                idx: (info.hasVTable ? 1 : 0) + info.allfields.indexOf(fld),
+                idx: info.allfields.indexOf(fld),
                 name: getName(fld),
                 isRef: isRefType(t),
                 shimName: attrs.shim

@@ -22,15 +22,37 @@ let docsDir = ""
 let tempDir = ""
 let packagedDir = ""
 
+export function forkPref() {
+    if (pxt.appTarget.forkof)
+        return "node_modules/pxt-" + pxt.appTarget.forkof + "/"
+    else
+        return ""
+}
+function forkDirs(lst: string[]) {
+    if (pxt.appTarget.id == "core") {
+        lst = lst.map(s => s.replace(/node_modules\/pxt-core\//, ""))
+    }
+    let res = lst.map(p => path.join(root, p))
+    let fp = forkPref()
+    if (fp) {
+        U.pushRange(res, lst.map(p => path.join(root, fp + p)))
+    }
+    return res
+}
+
+function setupDocfilesdirs() {
+    docfilesdirs = forkDirs(["docfiles", "node_modules/pxt-core/docfiles"])
+}
+
 function setupRootDir() {
     root = process.cwd()
     console.log("Starting server in", root)
-    dirs = ["node_modules/pxt-core/built/web", "node_modules/pxt-core/webapp/public"].map(p => path.join(root, p))
-    simdirs = ["built", "sim/public"].map(p => path.join(root, p))
-    docfilesdirs = ["docfiles", "node_modules/pxt-core/docfiles"].map(p => path.join(root, p))
+    dirs = forkDirs(["node_modules/pxt-core/built/web", "node_modules/pxt-core/webapp/public"])
+    simdirs = forkDirs(["built", "sim/public"])
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
     packagedDir = path.join(root, "built/packaged")
+    setupDocfilesdirs()
 }
 
 let statAsync = Promise.promisify(fs.stat)
@@ -218,22 +240,52 @@ function fileExistsSync(p: string): boolean {
     }
 }
 
-let docsTemplate: string = "@body@"
-
-function setupTemplate() {
-    let templatePath = "docfiles/template.html"
-    if (fs.existsSync(templatePath)) {
-        docsTemplate = fs.readFileSync(templatePath, "utf8")
-        console.log("Using local template override.")
-        return
+export function lookupDocFile(name: string) {
+    if (docfilesdirs.length <= 1)
+        setupDocfilesdirs()
+    for (let d of docfilesdirs) {
+        let foundAt = path.join(d, name)
+        if (fs.existsSync(foundAt)) return foundAt
     }
+    return null
+}
 
-    templatePath = path.join("node_modules/pxt-core", templatePath)
-    if (fs.existsSync(templatePath)) {
-        docsTemplate = fs.readFileSync(templatePath, "utf8")
-    } else {
-        console.error("Cannot find docfiles/template.html")
+export function expandHtml(html: string) {
+    let theme = U.flatClone(pxt.appTarget.appTheme)
+    html = expandDocTemplateCore(html)
+    let params: pxt.Map<string> = {}
+    let m = /<title>([^<>]*)<\/title>/.exec(html)
+    if (m) params["name"] = m[1]
+    m = /<meta name="Description" content="([^"]*)"/.exec(html)
+    if (m) params["description"] = m[1]
+    let d: pxt.docs.RenderData = {
+        html: html,
+        params: params,
+        theme: theme,
+        // Note that breadcrumb and filepath expansion are not supported in the cloud
+        // so we don't do them here either.
     }
+    pxt.docs.prepTemplate(d)
+    return d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
+}
+
+export function expandDocTemplateCore(template: string) {
+    template = template
+        .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
+        (full, fn) => {
+            return `
+<!-- include ${fn} -->
+${expandDocFileTemplate(fn)}
+<!-- end include ${fn} -->
+`
+        })
+    return template
+}
+
+export function expandDocFileTemplate(name: string) {
+    let fn = lookupDocFile(name)
+    let template = fn ? fs.readFileSync(fn, "utf8") : ""
+    return expandDocTemplateCore(template)
 }
 
 interface SerialPortInfo {
@@ -447,7 +499,6 @@ export function serveAsync(options: ServeOptions) {
 
     nodeutil.mkdirP(tempDir)
 
-    setupTemplate()
     initTargetCommands()
     initSerialMonitor();
 
@@ -468,14 +519,18 @@ export function serveAsync(options: ServeOptions) {
         }
 
         let sendFile = (filename: string) => {
-            let stat = fs.statSync(filename);
+            try {
+                let stat = fs.statSync(filename);
 
-            res.writeHead(200, {
-                'Content-Type': U.getMime(filename),
-                'Content-Length': stat.size
-            });
+                res.writeHead(200, {
+                    'Content-Type': U.getMime(filename),
+                    'Content-Length': stat.size
+                });
 
-            fs.createReadStream(filename).pipe(res);
+                fs.createReadStream(filename).pipe(res);
+            } catch (e) {
+                error(404, "File missing: " + filename)
+            }
         }
 
         let pathname = decodeURI(url.parse(req.url).pathname);
@@ -525,18 +580,20 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        let publicDir = forkPref() + 'node_modules/pxt-core/webapp/public/'
+
         if (pathname == "/--embed") {
-            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/embed.js'));
+            sendFile(path.join(root, publicDir + 'embed.js'));
             return
         }
 
         if (pathname == "/--run") {
-            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/run.html'));
+            sendFile(path.join(root, publicDir + 'run.html'));
             return
         }
 
         if (pathname == "/--docs") {
-            sendFile(path.join(root, 'node_modules/pxt-core/webapp/public/docs.html'));
+            sendFile(path.join(root, publicDir + 'docs.html'));
             return
         }
 
@@ -549,6 +606,9 @@ export function serveAsync(options: ServeOptions) {
                 dd = simdirs
             } else if (U.startsWith(pathname, "/cdn/")) {
                 pathname = pathname.slice(4)
+                dd = dirs
+            } else if (U.startsWith(pathname, "/doccdn/")) {
+                pathname = pathname.slice(7)
                 dd = dirs
             } else if (U.startsWith(pathname, "/docfiles/")) {
                 pathname = pathname.slice(10)
@@ -582,7 +642,11 @@ export function serveAsync(options: ServeOptions) {
                         name: e
                     }
                 })
-                let html = pxt.docs.renderMarkdown(docsTemplate, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc, pathname)
+                let templ = expandDocFileTemplate("docs.html")
+                let html = pxt.docs.renderMarkdown(templ, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc, pathname)
+                sendHtml(html)
+            } else if (/\.html$/.test(webFile)) {
+                let html = expandHtml(fs.readFileSync(webFile, "utf8"))
                 sendHtml(html)
             } else {
                 sendFile(webFile)

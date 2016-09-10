@@ -1,3 +1,7 @@
+body#root {
+    font-size: 16px;    
+}
+
 div.listing
 {
     color:Black;
@@ -63,16 +67,17 @@ pre {
     border-radius: 3px;
 }
 
-p > code {
+code {
     padding: 0;
     padding-top: 0.2em;
     padding-bottom: 0.2em;
     margin: 0;
     font-size: 85%;
+    background-color: rgba(0,0,0,0.04);
     border-radius: 3px;
 }
 
-p > code:before, p > code:after {
+code:before, code:after {
     letter-spacing: -0.2em;
     content: "\00a0";
 }
@@ -117,14 +122,14 @@ p > code:before, p > code:after {
 code {
         white-space: pre-wrap;
 }
+code.lang-config, code.lang-package { display: none;}
 code.lang-blocks::before,
 code.lang-sig::before,
 code.lang-block::before,
 code.lang-shuffle::before,
 code.lang-sim::before,
-code.lang-project::before,
 code.lang-cards::before,
-code.lang-namespace::before,
+code.lang-namespaces::before,
 code.lang-codecard::before
 {
     content:"...";
@@ -137,10 +142,22 @@ code.lang-sig,
 code.lang-block,
 code.lang-shuffle,
 code.lang-sim,
-code.lang-project,
 code.lang-cards,
-code.lang-namespace,
+code.lang-namespaces,
 code.lang-codecard
 {
     color:transparent;   
+}
+
+/* Limit width of text so that it's readable
+ */
+ 
+.ui.text p,
+.ui.text li {
+    max-width: 45em;
+}
+
+/* wrap cards header */
+.ui.card > .content > .header {
+    word-break: break-all;
 }
