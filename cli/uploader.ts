@@ -30,14 +30,26 @@ function verbose(msg: string) {
         console.log(msg)
 }
 
-function replContent(str: string, waitFor: Promise<string>[]) {
-    return str.replace(/[\.\/]*(\/static\/[\w\.\-\/]+)/g, (m, x) => {
-        let repl = uploadFileAsync(x)
-        usedPromises[x] = true;
-        if (waitFor) waitFor.push(repl)
-        else return repl.value();
-        return "";
-    })
+function replContentAsync(str: string) {
+    function replContent(str: string, waitFor: Promise<string>[]) {
+        return str
+            // TODO make configurable
+            .replace(/\/doccdn\//g, "https://az851932.vo.msecnd.net/app/lkgya/c/")
+            .replace(/[\.\/]*(\/(docfiles|static)\/[\w\.\-\/]+)/g, (m, x) => {
+                let repl = uploadFileAsync(x)
+                usedPromises[x] = true;
+                if (waitFor) waitFor.push(repl)
+                else return repl.value();
+                return "";
+            })
+    }
+
+    let waitFor: Promise<any>[] = [];
+    replContent(str, waitFor);
+    return Promise.all(waitFor)
+        .then(() => {
+            return replContent(str, null);
+        })
 }
 
 function rewriteUrl(id: string): string {
@@ -65,17 +77,26 @@ function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
     if (!contentType || contentType == "application/octet-stream")
         error("content type not understood: " + fn)
 
-    let buf = fs.readFileSync(uploadDir + fn)
+    let fsPath = fn
+    if (U.startsWith(fn, "/docfiles/")) {
+        fsPath = server.lookupDocFile(fn.slice(10))
+    } else {
+        fsPath = uploadDir + fn
+    }
+
+    let buf = fs.readFileSync(fsPath)
 
     return Promise.resolve()
         .then(() => {
-            if (!noRepl && /^text/.test(contentType)) {
+            if (contentType == "text/html") {
                 let str = buf.toString("utf8");
-                let waitFor: Promise<any>[] = [];
-                replContent(str, waitFor);
-                return Promise.all(waitFor)
-                    .then(() => {
-                        str = replContent(str, null);
+                str = server.expandHtml(str)
+                buf = new Buffer(str, "utf8");
+                contentType = "text/plain" // text/html not accepted by the cloud
+            }
+            if (!noRepl && /^text/.test(contentType)) {
+                return replContentAsync(buf.toString("utf8"))
+                    .then(str => {
                         buf = new Buffer(str, "utf8");
                     })
             } else {
@@ -114,10 +135,13 @@ function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
 function uploadFileAsync(fn: string) {
     if (uploadPromises[fn])
         return uploadPromises[fn]
-    let path = fn.replace(/\.md$/, "")
+    let path = fn.replace(/\.(md|html)$/, "")
+    let isHtml = U.endsWith(fn, ".html")
     let mm = /^\/_locales\/([A-Za-z\-]+)(\/.*)/.exec(path)
     if (mm) path = mm[2] + "@" + mm[1].toLowerCase()
     let isStatic = U.startsWith(fn, "/static/")
+    let isDocfile = U.startsWith(fn, "/docfiles/")
+    if (isDocfile) isStatic = true
     if (!isStatic && sitemap) sitemap[path] = ""
     path = ptrPrefix + path
     uploadPromises[fn] = uploadArtAsync(fn)
@@ -131,19 +155,20 @@ function uploadFileAsync(fn: string) {
             return Cloud.privateGetAsync(nodeutil.pathToPtr(path))
                 .then(v => v, e => { return {} })
                 .then((curr: Cloud.JsonPointer) => {
-                    if (curr.artid == id) {
+                    let postData = {
+                        path: nodeutil.sanitizePath(path),
+                        htmlartid: isHtml ? id : "",
+                        artid: isHtml ? "" : id,
+                        scriptid: "",
+                        releaseid: "",
+                        redirect: ""
+                    }
+                    if (curr.artid == postData.artid && curr.htmlartid == postData.htmlartid) {
                         verbose(`already set: ${fn} -> ${id}`)
                         return Promise.resolve()
                     }
 
-                    return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(path),
-                        htmlartid: "",
-                        artid: id,
-                        scriptid: "",
-                        releaseid: "",
-                        redirect: ""
-                    })
+                    return Cloud.privatePostAsync("pointers", postData)
                         .then(() => {
                             console.log(`${fn}: set to ${id}`)
                         })
@@ -171,32 +196,15 @@ export function getFiles(): string[] {
 }
 
 function uploadDocfilesAsync() {
-    uploadDir = ""
     let templates: pxt.Map<string> = {}
-    let promises: pxt.Map<Promise<string>> = {}
-    let docrx = /\/docfiles\/([\w\/\.-]+)/g
-    for (let f of ["docs.html", "script.html", "stream.html"]) {
-        let tmpl = server.expandDocFileTemplate(f)
-        // TODO make configurable
-        tmpl = tmpl.replace(/\/doccdn\//g, "https://az851932.vo.msecnd.net/app/lkgya/c/")
-        tmpl.replace(docrx, (f, fn) => {
-            if (!promises[fn]) {
-                let ff = server.lookupDocFile(fn)
-                promises[fn] = uploadArtAsync(ff, true)
-            }
-            return ""
-        })
-        templates[f] = tmpl
-    }
-    return Promise.all(U.values(promises))
+    return Promise.map(["docs.html", "script.html", "stream.html"], f =>
+        replContentAsync(server.expandDocFileTemplate(f))
+            .then(tmpl => {
+                fs.writeFileSync("built/" + f, tmpl)
+                templates[f] = tmpl
+            }))
         .then(() => {
-            U.iterMap(templates, (k, v) => {
-                v = v.replace(docrx, (f, fn) => {
-                    return promises[fn].value()
-                })
-                templates[k] = v
-                fs.writeFileSync("built/" + k, v)
-            })
+            templates = U.sortObjectFields(templates)
             fs.writeFileSync("built/templates.json", JSON.stringify(templates, null, 4))
             saveThemeJson()
         })

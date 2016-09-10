@@ -296,9 +296,9 @@ function ptrcheckAsync(cmd: string) {
 
 
     let files = U.toDictionary(allFiles("docs", 8)
-        .filter(e => /\.md$/.test(e))
+        .filter(e => /\.(md|html)$/.test(e))
         .map(e => {
-            let s = e.slice(5).replace(/\.md$/, "")
+            let s = e.slice(5).replace(/\.(md|html)$/, "")
             let m = /^_locales\/([a-z]+)\/(.*)/.exec(s)
             if (m) s = m[2] + "@" + m[1]
             s = s.replace(/\//g, "-")
@@ -758,10 +758,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 if (isText) {
                     content = data.toString("utf8")
                     if (fileName == "index.html") {
-                        content = server.expandDocFileTemplateCore(content)
-                            .replace(/@(\w+)@/g, (full, varname) => {
-                                return (pxt.appTarget.appTheme as any)[varname] || ""
-                            })
+                        content = server.expandDocTemplateCore(content)
                     }
 
                     if (replFiles.indexOf(fileName) >= 0) {
@@ -1298,7 +1295,7 @@ function renderDocs(localDir: string) {
             dirs[dir] = true
         }
         let buf = fs.readFileSync(f)
-        if (/\.md$/.test(f)) {
+        if (/\.(md|html)$/.test(f)) {
             let str = buf.toString("utf8")
             let path = f.slice(5).split(/\//)
             let bc = path.map((e, i) => {
@@ -1307,7 +1304,11 @@ function renderDocs(localDir: string) {
                     name: e
                 }
             })
-            let html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc, f)
+            let html = ""
+            if (U.endsWith(f, ".md"))
+                html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc, f)
+            else
+                html = server.expandHtml(str)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
                 return beg + ` href="${webpath}docs${url}.html"`
             })

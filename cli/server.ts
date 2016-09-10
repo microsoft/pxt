@@ -247,7 +247,25 @@ export function lookupDocFile(name: string) {
     return null
 }
 
-export function expandDocFileTemplateCore(template: string) {
+export function expandHtml(html: string) {
+    let theme = U.flatClone(pxt.appTarget.appTheme) as any as pxt.Map<string>
+    html = expandDocTemplateCore(html)
+    let m = /<title>([^<>]*)<\/title>/.exec(html)
+    if (m) theme["name"] = m[1]
+    m = /<meta name="Description" content="([^"]*)"/.exec(html)
+    if (m) theme["description"] = m[1]
+    let d: pxt.docs.RenderData = {
+        html: html,
+        params: {},
+        theme: theme,
+        // Note that breadcrumb and filepath expansion are not supported in the cloud
+        // so we don't do them here either.
+    }
+    pxt.docs.prepTemplate(d)
+    return d.finish()
+}
+
+export function expandDocTemplateCore(template: string) {
     template = template
         .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
         (full, fn) => {
@@ -263,7 +281,7 @@ ${expandDocFileTemplate(fn)}
 export function expandDocFileTemplate(name: string) {
     let fn = lookupDocFile(name)
     let template = fn ? fs.readFileSync(fn, "utf8") : ""
-    return expandDocFileTemplateCore(template)
+    return expandDocTemplateCore(template)
 }
 
 interface SerialPortInfo {
@@ -618,6 +636,9 @@ export function serveAsync(options: ServeOptions) {
                 })
                 let templ = expandDocFileTemplate("docs.html")
                 let html = pxt.docs.renderMarkdown(templ, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc, pathname)
+                sendHtml(html)
+            } else if (/\.html$/.test(webFile)) {
+                let html = expandHtml(fs.readFileSync(webFile, "utf8"))
                 sendHtml(html)
             } else {
                 sendFile(webFile)
