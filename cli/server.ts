@@ -266,7 +266,7 @@ export function expandHtml(html: string) {
         // so we don't do them here either.
     }
     pxt.docs.prepTemplate(d)
-    return d.finish()
+    return d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
 }
 
 export function expandDocTemplateCore(template: string) {
