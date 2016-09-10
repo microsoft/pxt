@@ -315,6 +315,8 @@ namespace ts.pxtc.assembler {
             let m = /^(\d+)$/i.exec(s)
             if (m) v = parseInt(m[1], 10)
 
+            // stack-specific processing
+
             // more special characters to handle
             if (s.indexOf("@") >= 0) {
                 m = /^(\w+)@(-?\d+)$/.exec(s)
@@ -322,6 +324,7 @@ namespace ts.pxtc.assembler {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
                     if (this.stackpointers.hasOwnProperty(m[1]))
+                        // TODO: ARM-specific???
                         v = 4 * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
                     else
                         this.directiveError(lf("saved stack not found"))
@@ -765,9 +768,11 @@ namespace ts.pxtc.assembler {
         }
 
         private iterLines() {
+            // TODO: check we have properly initialized everything
             this.stack = 0;
             this.buf = [];
             this.scopeId = 0;
+            // what about this.scope?
 
             this.lines.forEach(l => {
                 if (this.errors.length > 10)

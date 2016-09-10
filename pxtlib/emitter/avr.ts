@@ -398,8 +398,8 @@ namespace ts.pxtc.avr {
             "e090 ldi r25, 0x00\n" +
             "9508 ret \n")
 
-/*
         assembler.expect(avr,
+            ".global\n" +
             "931f L111: push r17\n" +
             "93cf push r28\n" +
             "93df push r29\n" +
@@ -448,6 +448,7 @@ namespace ts.pxtc.avr {
             "911f pop r17\n" +
             "9508 ret \n")
 
+/*
         assembler.expect(avr,
             "93cf L110: push r28\n" +
             "93df push r29\n" +
