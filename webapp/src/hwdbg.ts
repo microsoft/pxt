@@ -18,7 +18,7 @@ let cachedStateInfo: StateInfo
 let nextBreakpoints: number[] = []
 let currBreakpoint: pxtc.Breakpoint;
 let lastDebugStatus: number;
-let callInfos: U.Map<ExtCallInfo>;
+let callInfos: pxt.Map<ExtCallInfo>;
 
 interface ExtCallInfo {
     from: pxtc.ProcDebugInfo;

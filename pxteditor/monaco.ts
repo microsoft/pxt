@@ -6,7 +6,7 @@ namespace pxt.vs {
 
     export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): void {
         let extraLibs = monaco.languages.typescript.typescriptDefaults.extraLibs;
-        let modelMap: U.Map<string> = {}
+        let modelMap: Map<string> = {}
         if (!readOnly) {
             mainPkg.sortedDeps().forEach(pkg => {
                 pkg.getFiles().forEach(f => {

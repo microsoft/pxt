@@ -696,7 +696,7 @@ namespace pxt.blocks {
     interface Environment {
         workspace: Blockly.Workspace;
         bindings: Binding[];
-        stdCallTable: Util.StringMap<StdFunc>;
+        stdCallTable: pxt.Map<StdFunc>;
     }
 
     enum VarUsage {
@@ -1192,9 +1192,9 @@ namespace pxt.blocks {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
-        let variables: U.Map<string>[] = [{}];
+        let variables: Map<string>[] = [{}];
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
-        let infixPriTable: Util.StringMap<number> = {
+        let infixPriTable: Map<number> = {
             // 0 = comma/sequence
             // 1 = spread (...)
             // 2 = yield, yield*
@@ -1355,7 +1355,7 @@ namespace pxt.blocks {
                 return
             }
 
-            let vars = U.clone<U.Map<string>>(variables[variables.length - 1] || {});
+            let vars = U.clone<Map<string>>(variables[variables.length - 1] || {});
             variables.push(vars);
             indent += "    "
             write(" {\n")

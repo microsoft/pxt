@@ -31,7 +31,7 @@ namespace ts.pxtc {
     }
 
     export interface ApisInfo {
-        byQName: Util.Map<SymbolInfo>;
+        byQName: pxt.Map<SymbolInfo>;
     }
 
     export interface BlocksInfo {
@@ -46,7 +46,7 @@ namespace ts.pxtc {
     }
 
     export interface CompletionInfo {
-        entries: Util.Map<SymbolInfo>;
+        entries: pxt.Map<SymbolInfo>;
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
@@ -221,15 +221,15 @@ namespace ts.pxtc {
         package?: boolean;
     }
 
-    export function genMarkdown(pkg: string, apiInfo: ApisInfo, options: GenMarkdownOptions = {}): U.Map<string> {
-        let files: U.Map<string> = {};
+    export function genMarkdown(pkg: string, apiInfo: ApisInfo, options: GenMarkdownOptions = {}): pxt.Map<string> {
+        let files: pxt.Map<string> = {};
         let infos = Util.values(apiInfo.byQName);
         let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
         namespaces.sort(compareSymbol)
 
-        let locStrings: U.Map<string> = {};
-        let jsdocStrings: U.Map<string> = {};
-        let helpPages: U.Map<string> = {};
+        let locStrings: pxt.Map<string> = {};
+        let jsdocStrings: pxt.Map<string> = {};
+        let helpPages: pxt.Map<string> = {};
         let reference = ""
         const writeRef = (s: string) => reference += s + "\n"
         const writeLoc = (si: SymbolInfo) => {
@@ -243,8 +243,8 @@ namespace ts.pxtc {
                     jsdocStrings[`${si.qName}|param|${pi.name}`] = pi.description;
                 })
         }
-        const mapLocs = (m: U.Map<string>, name: string) => {
-            let locs: U.Map<string> = {};
+        const mapLocs = (m: pxt.Map<string>, name: string) => {
+            let locs: pxt.Map<string> = {};
             Object.keys(m).sort().forEach(l => locs[l] = m[l]);
             files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
         }
@@ -256,7 +256,7 @@ namespace ts.pxtc {
                 w("```");
             }
         }
-        const writeHelpPages = (h: U.Map<string>, w: (s: string) => void) => {
+        const writeHelpPages = (h: pxt.Map<string>, w: (s: string) => void) => {
             w("");
             w("### See Also");
             w("")
@@ -267,7 +267,7 @@ namespace ts.pxtc {
         writeRef('')
         writeRef('```namespaces')
         for (let ns of namespaces) {
-            let nsHelpPages: U.Map<string> = {};
+            let nsHelpPages: pxt.Map<string> = {};
             let syms = infos
                 .filter(si => si.namespace == ns.name && !!si.attributes.help)
                 .sort(compareSymbol)
@@ -439,7 +439,7 @@ namespace ts.pxtc.service {
 
     class Host implements LanguageServiceHost {
         opts = emptyOptions;
-        fileVersions: Util.Map<number> = {};
+        fileVersions: pxt.Map<number> = {};
         projectVer = 0;
 
         getProjectVersion() {
@@ -455,7 +455,7 @@ namespace ts.pxtc.service {
         }
 
         setOpts(o: CompileOptions) {
-            Util.iterStringMap(o.fileSystem, (fn, v) => {
+            Util.iterMap(o.fileSystem, (fn, v) => {
                 if (this.opts.fileSystem[fn] != v) {
                     this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
                 }
@@ -527,7 +527,7 @@ namespace ts.pxtc.service {
         isJsDocTagName: boolean;
     }
 
-    let operations: Util.Map<(v: OpArg) => any> = {
+    let operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
             host.setOpts(emptyOptions)

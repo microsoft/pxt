@@ -13,7 +13,7 @@ export interface Iface {
 }
 
 export function wrap(send: (v: any) => void): Iface {
-    let pendingMsgs: U.StringMap<(v: any) => void> = {}
+    let pendingMsgs: pxt.Map<(v: any) => void> = {}
     let msgId = 0;
     let q = new U.PromiseQueue();
 

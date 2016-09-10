@@ -14,6 +14,7 @@ import * as child_process from 'child_process';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+import Map = pxt.Map;
 
 import * as server from './server';
 import * as uploader from './uploader';
@@ -256,7 +257,7 @@ export function yesNoAsync(msg: string): Promise<boolean> {
 
 function ptrcheckAsync(cmd: string) {
     let prefixIgnore: string[] = []
-    let exactIgnore: U.Map<boolean> = {}
+    let exactIgnore: Map<boolean> = {}
 
     if (fs.existsSync("ptrcheck-ignore")) {
         let ign = fs.readFileSync("ptrcheck-ignore", "utf8").split(/\r?\n/)
@@ -651,7 +652,7 @@ export function uploadtrgAsync(label?: string) {
 interface UploadOptions {
     fileList: string[];
     pkgversion: string;
-    fileContent?: U.Map<string>;
+    fileContent?: Map<string>;
     label?: string
     legacyLabel?: boolean;
     target?: string;
@@ -661,7 +662,7 @@ interface UploadOptions {
 function uploadCoreAsync(opts: UploadOptions) {
     let liteId = "<none>"
 
-    let replacements: U.Map<string> = {
+    let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
         "/sim/siminstructions.html": "@partsUrl@",
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
@@ -1097,7 +1098,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     cfg.appTheme.description = cfg.description
 
     // expand logo
-    let logos = (cfg.appTheme as any as U.Map<string>);
+    let logos = (cfg.appTheme as any as Map<string>);
     Object.keys(logos)
         .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
         .forEach(k => {
@@ -1142,7 +1143,7 @@ function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
     pxt.appTarget = cfg;
-    let statFiles: U.Map<number> = {}
+    let statFiles: Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
     dirsToWatch.push("sim"); // simulator
     dirsToWatch = dirsToWatch.concat(fs.readdirSync("sim").map(p => path.join("sim", p)).filter(p => fs.statSync(p).isDirectory()));
@@ -1232,7 +1233,7 @@ function buildAndWatchTargetAsync() {
 function cpR(src: string, dst: string, maxDepth = 8) {
     src = path.resolve(src)
     let files = allFiles(src, maxDepth)
-    let dirs: U.Map<boolean> = {}
+    let dirs: Map<boolean> = {}
     for (let f of files) {
         let bn = f.slice(src.length)
         let dd = path.join(dst, bn)
@@ -1261,7 +1262,7 @@ function renderDocs(localDir: string) {
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
-    let dirs: U.Map<boolean> = {}
+    let dirs: Map<boolean> = {}
     for (let f of allFiles("docs", 8)) {
         let dd = path.join(dst, f)
         let dir = path.dirname(dd)
@@ -1354,12 +1355,12 @@ let execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Pr
 let readDirAsync = Promise.promisify(fs.readdir)
 let statAsync = Promise.promisify(fs.stat)
 
-let commonfiles: U.Map<string> = {}
-let fileoverrides: U.Map<string> = {}
+let commonfiles: Map<string> = {}
+let fileoverrides: Map<string> = {}
 
 class SnippetHost implements pxt.Host {
     //Global cache of module files
-    static files: U.Map<U.Map<string>> = {}
+    static files: Map<Map<string>> = {}
 
     constructor(public name: string, public main: string, public extraDependencies: string[]) { }
 
@@ -1530,7 +1531,7 @@ class Host
         return pkg.commonDownloadAsync()
             .then(resp => {
                 if (resp) {
-                    U.iterStringMap(resp, (fn: string, cont: string) => {
+                    U.iterMap(resp, (fn: string, cont: string) => {
                         pkg.host().writeFile(pkg, fn, cont)
                     })
                     return Promise.resolve()
@@ -1578,7 +1579,7 @@ export function installAsync(packageName?: string) {
     }
 }
 
-const defaultFiles: U.Map<string> = {
+const defaultFiles: Map<string> = {
     "tsconfig.json":
     `{
     "compilerOptions": {
@@ -1688,7 +1689,7 @@ function addFile(name: string, cont: string) {
     }
 
     if (!fs.existsSync(name)) {
-        let vars: U.Map<string> = {}
+        let vars: Map<string> = {}
         let cfg = mainPkg.config as any
         for (let k of Object.keys(cfg)) {
             if (typeof cfg[k] == "string")
@@ -1776,7 +1777,7 @@ export function initAsync() {
     config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
     config.public = true
 
-    let configMap: U.Map<string> = config as any
+    let configMap: Map<string> = config as any
 
     if (!config.license)
         config.license = "MIT"
@@ -1792,7 +1793,7 @@ export function initAsync() {
                 configMap[f] = r
             }))
         .then(() => {
-            let files: U.Map<string> = {};
+            let files: Map<string> = {};
             for (let f in defaultFiles)
                 files[f] = defaultFiles[f];
             for (let f in prj.files)
@@ -1831,7 +1832,7 @@ export function initAsync() {
             configMap = U.clone(configMap)
             configMap["target"] = pxt.appTarget.id
 
-            U.iterStringMap(files, (k, v) => {
+            U.iterMap(files, (k, v) => {
                 v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
                 nodeutil.mkdirP(path.dirname(k))
                 fs.writeFileSync(k, v)
@@ -1867,14 +1868,14 @@ export function serviceAsync(cmd: string) {
 
 export function timeAsync() {
     ensurePkgDir();
-    let min: U.Map<number> = null;
+    let min: Map<number> = null;
     let loop = () =>
         mainPkg.buildAsync(mainPkg.getTargetOptions())
             .then(res => {
                 if (!min) {
                     min = res.times
                 } else {
-                    U.iterStringMap(min, (k, v) => {
+                    U.iterMap(min, (k, v) => {
                         min[k] = Math.min(v, res.times[k])
                     })
                 }
@@ -1962,7 +1963,7 @@ function buildHexAsync(extInfo: pxtc.ExtensionInfo) {
     let allFiles = U.clone(extInfo.generatedFiles)
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
 
-    U.iterStringMap(allFiles, (fn, v) => {
+    U.iterMap(allFiles, (fn, v) => {
         fn = ytPath + fn
         nodeutil.mkdirP(path.dirname(fn))
         let existing: string = null
@@ -2003,8 +2004,8 @@ let parseCppInt = pxt.cpp.parseCppInt;
 
 function buildDalConst(force = false) {
     let constName = "dal.d.ts"
-    let vals: U.Map<string> = {}
-    let done: U.Map<string> = {}
+    let vals: Map<string> = {}
+    let done: Map<string> = {}
 
     function isValidInt(v: string) {
         return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
@@ -2076,7 +2077,7 @@ function buildDalConst(force = false) {
         let incPath = ytPath + "/yotta_modules/microbit-dal/inc/"
         let files = allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
-        let fc: U.Map<string> = {}
+        let fc: Map<string> = {}
         for (let fn of files) {
             if (U.endsWith(fn, "Config.h")) continue
             fc[fn] = fs.readFileSync(fn, "utf8")
@@ -2187,7 +2188,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
 }
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
-    let decls: U.Map<ts.Symbol> = {}
+    let decls: Map<ts.Symbol> = {}
 
     if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
 
@@ -2711,7 +2712,7 @@ function buildCoreAsync(mode: BuildOption) {
     return prepBuildOptionsAsync(mode)
         .then(pxtc.compile)
         .then(res => {
-            U.iterStringMap(res.outfiles, (fn, c) =>
+            U.iterMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
             reportDiagnostics(res.diagnostics);
             if (!res.success) {
@@ -2782,7 +2783,7 @@ export function uploadDocsAsync(...args: string[]): Promise<void> {
 
 export interface SavedProject {
     name: string;
-    files: U.Map<string>;
+    files: Map<string>;
 }
 
 export function extractAsync(filename: string) {
@@ -2814,7 +2815,7 @@ export function extractAsync(filename: string) {
                         if (!data.meta) data.meta = {} as any
                         let id = data.meta.cloudId || "?"
                         console.log(`.hex cloudId: ${id}`)
-                        let files: U.Map<string> = null
+                        let files: Map<string> = null
                         try {
                             files = JSON.parse(data.source)
                         } catch (e) {

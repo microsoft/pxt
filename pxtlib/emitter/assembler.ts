@@ -243,16 +243,16 @@ namespace ts.pxtc.assembler {
         private scopeId = 0;
         public errors: InlineError[] = [];
         public buf: number[];
-        private labels: StringMap<number> = {};
-        private userLabelsCache: StringMap<number>;
-        private stackpointers: StringMap<number> = {};
+        private labels: pxt.Map<number> = {};
+        private userLabelsCache: pxt.Map<number>;
+        private stackpointers: pxt.Map<number> = {};
         private stack = 0;
         public peepOps = 0;
         public peepDel = 0;
         private stats = "";
         public throwOnError = false;
         public disablePeepHole = false;
-        public stackAtLabel: StringMap<number> = {};
+        public stackAtLabel: pxt.Map<number> = {};
         private prevLabel: string;
 
         private emitShort(op: number) {
@@ -885,7 +885,7 @@ namespace ts.pxtc.assembler {
 
         public getLabels() {
             if (!this.userLabelsCache)
-                this.userLabelsCache = U.mapStringMap(this.labels, (k, v) => v + this.baseOffset)
+                this.userLabelsCache = U.mapMap(this.labels, (k, v) => v + this.baseOffset)
             return this.userLabelsCache
         }
 
@@ -941,8 +941,8 @@ namespace ts.pxtc.assembler {
     // class and provide Encoders and Instructions
     export abstract class EncodersInstructions {
 
-        public encoders: StringMap<Encoder>;
-        public instructions: StringMap<Instruction[]>;
+        public encoders: pxt.Map<Encoder>;
+        public instructions: pxt.Map<Instruction[]>;
 
         constructor() {
             this.encoders = {};

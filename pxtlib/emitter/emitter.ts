@@ -4,7 +4,6 @@
 namespace ts.pxtc {
     export const assert = Util.assert;
     export const oops = Util.oops;
-    export type StringMap<T> = Util.Map<T>;
     export import U = pxtc.Util;
 
     export const BINARY_JS = "binary.js";
@@ -51,7 +50,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9256
+    // next free error 9257
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -91,12 +90,44 @@ namespace ts.pxtc {
         return isRefType(tp)
     }
 
+
+    function getBitSize(decl: TypedDecl) {
+        if (!decl || !decl.type) return BitSize.None
+        if (!(typeOf(decl).flags & TypeFlags.Number)) return BitSize.None
+        if (decl.type.kind != SK.TypeReference) return BitSize.None
+        switch ((decl.type as TypeReferenceNode).typeName.getText()) {
+            case "int8": return BitSize.Int8
+            case "int16": return BitSize.Int16
+            case "int32": return BitSize.Int32
+            case "uint8": return BitSize.UInt8
+            case "uint16": return BitSize.UInt16
+            default: return BitSize.None
+        }
+    }
+
+    export function sizeOfBitSize(b: BitSize) {
+        switch (b) {
+            case BitSize.None: return 4
+            case BitSize.Int8: return 1
+            case BitSize.Int16: return 2
+            case BitSize.Int32: return 4
+            case BitSize.UInt8: return 1
+            case BitSize.UInt16: return 2
+            default: throw oops()
+        }
+    }
+
     export function setCellProps(l: ir.Cell) {
         l._isRef = isRefDecl(l.def)
         l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
         if (!l.isRef() && typeOf(l.def).flags & TypeFlags.Void) {
             oops("void-typed variable, " + l.toString())
+        }
+        l.bitSize = getBitSize(l.def)
+        if (l.isLocal() && l.bitSize != BitSize.None) {
+            l.bitSize = BitSize.None
+            userError(9256, lf("bit sizes are not supported for locals and parameters"))
         }
     }
 
@@ -212,6 +243,15 @@ namespace ts.pxtc {
         }
     }
 
+    export const enum BitSize {
+        None,
+        Int8,
+        UInt8,
+        Int16,
+        UInt16,
+        Int32,
+    }
+
     export interface CommentAttrs {
         debug?: boolean; // requires ?dbg=1
         shim?: string;
@@ -243,9 +283,9 @@ namespace ts.pxtc {
 
         _name?: string;
         jsDoc?: string;
-        paramHelp?: Util.Map<string>;
+        paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
-        paramDefl: Util.Map<string>;
+        paramDefl: pxt.Map<string>;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
@@ -535,6 +575,7 @@ namespace ts.pxtc {
     }
 
     export type VarOrParam = VariableDeclaration | ParameterDeclaration | PropertyDeclaration;
+    export type TypedDecl = Declaration & { type?: TypeNode }
 
     export interface VariableAddInfo {
         captured?: boolean;
@@ -580,13 +621,13 @@ namespace ts.pxtc {
     export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
-        let classInfos: StringMap<ClassInfo> = {}
-        let usedDecls: StringMap<Node> = {}
+        let classInfos: pxt.Map<ClassInfo> = {}
+        let usedDecls: pxt.Map<Node> = {}
         let usedWorkList: Declaration[] = []
-        let variableStatus: StringMap<VariableAddInfo> = {};
-        let functionInfo: StringMap<FunctionAddInfo> = {};
+        let variableStatus: pxt.Map<VariableAddInfo> = {};
+        let functionInfo: pxt.Map<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
-        let ifaceMembers: StringMap<number> = {}
+        let ifaceMembers: pxt.Map<number> = {}
         let nextIfaceMemberId = 0;
 
         lastNodeId = 0
@@ -667,6 +708,7 @@ namespace ts.pxtc {
 
         reset();
         emit(rootFunction)
+        layOutGlobals()
         emitVTables()
 
         if (diagnostics.getModificationCount() == 0) {
@@ -859,7 +901,7 @@ namespace ts.pxtc {
                 typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
-                    ex = new ir.Cell(bin.globals.length + numReservedGlobals, decl, getVarInfo(decl))
+                    ex = new ir.Cell(null, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
                 return ex
@@ -1065,7 +1107,7 @@ namespace ts.pxtc {
                     if (info.baseClassInfo) {
                         info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
                         info.numRefFields = -1
-                        let nameMap: U.Map<FunctionLikeDeclaration> = {}
+                        let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
                         for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
                             for (let m of curr.methods) {
                                 nameMap[classFunctionKey(m)] = m
@@ -1723,6 +1765,25 @@ ${lbl}: .short 0xffff
             let proc = lookupProc(decl, bindings)
             assert(!!proc || !bin.finalPass)
             return mkProcCallCore(proc, null, args)
+        }
+
+        function layOutGlobals() {
+            let globals = bin.globals.slice(0)
+            // stable-sort globals, with smallest first, because "strh/b" have 
+            // smaller immediate range than plain "str" (and same for "ldr")
+            globals.forEach((g, i) => g.index = i)
+            globals.sort((a, b) =>
+                sizeOfBitSize(a.bitSize) - sizeOfBitSize(b.bitSize) ||
+                a.index - b.index)
+            let currOff = numReservedGlobals * 4
+            for (let g of globals) {
+                let sz = sizeOfBitSize(g.bitSize)
+                while (currOff & (sz - 1))
+                    currOff++ // align
+                g.index = currOff
+                currOff += sz
+            }
+            bin.globalsWords = (currOff + 3) >> 2
         }
 
         function emitVTables() {
@@ -3075,6 +3136,7 @@ ${lbl}: .short 0xffff
     export class Binary {
         procs: ir.Procedure[] = [];
         globals: ir.Cell[] = [];
+        globalsWords: number;
         finalPass = false;
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
@@ -3082,9 +3144,9 @@ ${lbl}: .short 0xffff
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
 
-        strings: StringMap<string> = {};
+        strings: Map<string> = {};
         otherLiterals: string[] = [];
-        codeHelpers: StringMap<string> = {};
+        codeHelpers: Map<string> = {};
         lblNo = 0;
 
         reset() {

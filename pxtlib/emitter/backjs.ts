@@ -1,5 +1,5 @@
 namespace ts.pxtc {
-    const jsOpMap: U.Map<string> = {
+    const jsOpMap: pxt.Map<string> = {
         "thumb::adds": "+",
         "thumb::subs": "-",
         "Number_::div": "/",
@@ -47,7 +47,7 @@ namespace ts.pxtc {
         if (bin.res.breakpoints)
             jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
         jssource += "\npxsim.setupStringLiterals(" +
-            JSON.stringify(U.mapStringMap(bin.strings, (k, v) => 1), null, 1) +
+            JSON.stringify(U.mapMap(bin.strings, (k, v) => 1), null, 1) +
             ")\n"
         bin.writeFile(BINARY_JS, jssource)
     }
@@ -335,12 +335,24 @@ switch (step) {
             frameExpr.currUses = 1
         }
 
+        function bitSizeConverter(b: BitSize) {
+            switch (b) {
+                case BitSize.None: return ""
+                case BitSize.Int8: return "pxsim.pxtrt.toInt8"
+                case BitSize.Int16: return "pxsim.pxtrt.toInt16"
+                case BitSize.Int32: return "pxsim.pxtrt.toInt32"
+                case BitSize.UInt8: return "pxsim.pxtrt.toUInt8"
+                case BitSize.UInt16: return "pxsim.pxtrt.toUInt16"
+                default: throw oops()
+            }
+        }
+
         function emitStore(trg: ir.Expr, src: ir.Expr) {
             switch (trg.exprKind) {
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
                     emitExpr(src)
-                    write(`${locref(cell)} = r0;`)
+                    write(`${locref(cell)} = ${bitSizeConverter(cell.bitSize)}(r0);`)
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo

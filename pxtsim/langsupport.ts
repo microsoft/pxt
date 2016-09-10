@@ -323,6 +323,26 @@ namespace pxsim {
         export var incr = pxsim.incr;
         export var decr = pxsim.decr;
 
+        export function toInt8(v: number) {
+            return ((v & 0xff) << 24) >> 24
+        }
+
+        export function toInt16(v: number) {
+            return ((v & 0xffff) << 16) >> 16
+        }
+
+        export function toInt32(v: number) {
+            return v | 0
+        }
+
+        export function toUInt8(v: number) {
+            return v & 0xff
+        }
+
+        export function toUInt16(v: number) {
+            return v & 0xffff
+        }
+
         export function nullFix(v: any) {
             if (v === null || v === undefined || v === false)
                 return 0
