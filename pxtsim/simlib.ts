@@ -172,7 +172,7 @@ namespace pxsim {
         leave: string
     }
 
-    export const pointerEvents = typeof window != undefined && !!(window as any).PointerEvent ? {
+    export const pointerEvents = typeof window != "undefined" && !!(window as any).PointerEvent ? {
         up: "pointerup",
         down: "pointerdown",
         move: "pointermove",
