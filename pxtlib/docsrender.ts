@@ -195,6 +195,12 @@ namespace pxt.docs {
 `
         params["targetstyle"] = style;
 
+        for (let k of Object.keys(theme)) {
+            let v = (theme as any)[k]
+            if (params[k] === undefined && typeof v == "string")
+                params[k] = v
+        }
+
         d.finish = () => injectHtml(d.html, params,
             ["body", "menu", "breadcrumb", "targetlogo", "github"])
     }

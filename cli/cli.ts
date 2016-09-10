@@ -984,7 +984,7 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export function buildTargetAsync(): Promise<void> {
-    if (pxt.appTarget.forkof)
+    if (pxt.appTarget.forkof || pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
     return simshimAsync()
         .then(() => buildFolderAsync('sim'))
@@ -1158,7 +1158,7 @@ function buildTargetCoreAsync() {
         forceCloudBuild = true
     cfg.bundleddirs = cfg.bundleddirs.map(s => forkPref() + s)
     dirsToWatch = cfg.bundleddirs.slice()
-    if (!isFork) {
+    if (!isFork && pxt.appTarget.id != "core") {
         dirsToWatch.push("sim"); // simulator
         dirsToWatch = dirsToWatch.concat(
             fs.readdirSync("sim")
@@ -1179,7 +1179,9 @@ function buildTargetCoreAsync() {
                 tag: info.tag,
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
-                pxt: readJson(forkPref() + "node_modules/pxt-core/package.json")["version"],
+                pxt: pxt.appTarget.id == "core" ?
+                    readJson("package.json")["version"] :
+                    readJson(forkPref() + "node_modules/pxt-core/package.json")["version"],
             }
 
             saveThemeJson(cfg)

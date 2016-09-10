@@ -29,6 +29,9 @@ export function forkPref() {
         return ""
 }
 function forkDirs(lst: string[]) {
+    if (pxt.appTarget.id == "core") {
+        lst = lst.map(s => s.replace(/node_modules\/pxt-core\//, ""))
+    }
     let res = lst.map(p => path.join(root, p))
     let fp = forkPref()
     if (fp) {
@@ -248,15 +251,16 @@ export function lookupDocFile(name: string) {
 }
 
 export function expandHtml(html: string) {
-    let theme = U.flatClone(pxt.appTarget.appTheme) as any as pxt.Map<string>
+    let theme = U.flatClone(pxt.appTarget.appTheme)
     html = expandDocTemplateCore(html)
+    let params: pxt.Map<string> = {}
     let m = /<title>([^<>]*)<\/title>/.exec(html)
-    if (m) theme["name"] = m[1]
+    if (m) params["name"] = m[1]
     m = /<meta name="Description" content="([^"]*)"/.exec(html)
-    if (m) theme["description"] = m[1]
+    if (m) params["description"] = m[1]
     let d: pxt.docs.RenderData = {
         html: html,
-        params: {},
+        params: params,
         theme: theme,
         // Note that breadcrumb and filepath expansion are not supported in the cloud
         // so we don't do them here either.
@@ -515,14 +519,18 @@ export function serveAsync(options: ServeOptions) {
         }
 
         let sendFile = (filename: string) => {
-            let stat = fs.statSync(filename);
+            try {
+                let stat = fs.statSync(filename);
 
-            res.writeHead(200, {
-                'Content-Type': U.getMime(filename),
-                'Content-Length': stat.size
-            });
+                res.writeHead(200, {
+                    'Content-Type': U.getMime(filename),
+                    'Content-Length': stat.size
+                });
 
-            fs.createReadStream(filename).pipe(res);
+                fs.createReadStream(filename).pipe(res);
+            } catch (e) {
+                error(404, "File missing: " + filename)
+            }
         }
 
         let pathname = decodeURI(url.parse(req.url).pathname);
