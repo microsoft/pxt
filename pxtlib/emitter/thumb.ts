@@ -224,6 +224,7 @@ namespace ts.pxtc.thumb {
         }
 
         public isSubSP(opcode: number): boolean {
+            return opcode == 0xb080;
         }
 
         public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
