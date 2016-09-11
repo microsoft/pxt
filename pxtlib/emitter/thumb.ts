@@ -219,6 +219,13 @@ namespace ts.pxtc.thumb {
             return opcode == 0xb400;
         }
 
+        public isAddSP(opcode: number): boolean {
+            return opcode == 0xb000;
+        }
+
+        public isSubSP(opcode: number): boolean {
+        }
+
         public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
 
             let lb11 = this.encoders["$lb11"]

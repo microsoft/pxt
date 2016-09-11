@@ -2,6 +2,11 @@
 
 namespace ts.pxtc {
 
+    // this class defines the interface between the IR
+    // and a particular assembler (Thumb, AVR). Thus,
+    // the registers mentioned below are VIRTUAL registers
+    // required by the IR-machine, rather than PHYSICAL registers
+    // at the assembly level. 
     abstract class AssemblySnippets {
         public reg_gets_imm(reg: string, imm: number) { return "TBD" }
         public push(reg: string) { return "TBD" }

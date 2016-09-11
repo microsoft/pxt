@@ -421,7 +421,7 @@ namespace ts.pxtc.avr {
             "f0c9 breq L31\n" +
             "2f16 mov r17, r22\n" +
             "1181 cpse r24, r1\n" +
-            "940e0229 call 0x452\n" +
+            "940e0229 call 0x0229\n" +
             "2fec mov r30, r28\n" +
             "e0f0 ldi r31, 0x00\n" +
             "0fee add r30, r30\n" +

@@ -92,12 +92,11 @@ namespace ts.pxtc.assembler {
                         if (v == null) {
                             return emitErr("expecting number", actual)
                         } else {
-                            // ARM-specific - we are modifying the stack
-                            // if the instruction is changing the SP register
-                            if (this.opcode == 0xb000) // add sp, #imm
+                            if (this.ei.isAddSP(this.opcode))
                                 stack = -(v / 4);
-                            else if (this.opcode == 0xb080) // sub sp, #imm
+                            else if (this.ei.isSubSP(this.opcode))
                                 stack = (v / 4);
+                                
                         }
                     } else if (enc.isRegList) {
                         // register lists are ARM-specific - this code not used in AVR 
@@ -970,13 +969,20 @@ namespace ts.pxtc.assembler {
         }
 
         public isPop(opcode: number): boolean {
-            return null;
+            return false;
         }
 
         public isPush(opcode: number): boolean {
-            return null;
+            return false;
         }
 
+        public isAddSP(opcode: number): boolean {
+            return false;
+        }
+
+        public isSubSP(opcode: number): boolean {
+            return false;
+        }
 
         protected addEnc = (n: string, p: string, e: (v: number) => number) => {
             let ee: Encoder = {
