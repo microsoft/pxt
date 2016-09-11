@@ -448,69 +448,67 @@ namespace ts.pxtc.avr {
             "911f pop r17\n" +
             "9508 ret \n")
 
-/*
-        assembler.expect(avr,
-            "93cf L110: push r28\n" +
-            "93df push r29\n" +
-            "e090 ldi r25, 0x00\n" +
-            "01fc movw r30, r24\n" +
-            "5ce1 subi r30, 0xC1\n" +
-            "4ffe sbci r31, 0xFE\n" +
-            "9124 lpm r18, Z\n" +
-            "01fc movw r30, r24\n" +
-            "59e4 subi r30, 0x94\n" +
-            "4ffe sbci r31, 0xFE\n" +
-            "9184 lpm r24, Z\n" +
-            "2388 and r24, r24\n" +
-            "f161 breq L35\n" +
-            "e090 ldi r25, 0x00\n" +
-            "0f88 add r24, r24\n" +
-            "1f99 adc r25, r25\n" +
-            "01fc movw r30, r24\n" +
-            "5cef subi r30, 0xCF\n" +
-            "4ffe sbci r31, 0xFE\n" +
-            "91c5 lpm r28, Z+\n" +
-            "91d4 lpm r29, Z\n" +
-            "01fc movw r30, r24\n" +
-            "5ae2 subi r30, 0xA2\n" +
-            "4ffe sbci r31, 0xFE\n" +
-            "91a5 lpm r26, Z+\n" +
-            "91b4 lpm r27, Z\n" +
-            "1161 cpse r22, r1\n" +
-            "c009 rjmp L36\n" +
-            "b79f in r25, 0x3f\n" +
-            "94f8 cli \n" +
-            "8188 ld r24, Y\n" +
-            "9520 com r18\n" +
-            "2382 and r24, r18\n" +
-            "8388 st Y, r24\n" +
-            "91ec ld r30, X\n" +
-            "232e and r18, r30\n" +
-            "c00b rjmp L37\n" +
-            "3062 L36: cpi r22, 0x02\n" +
-            "f461 brne L38\n" +
-            "b79f in r25, 0x3f\n" +
-            "94f8 cli \n" +
-            "8138 ld r19, Y\n" +
-            "2f82 mov r24, r18\n" +
-            "9580 com r24\n" +
-            "2383 and r24, r19\n" +
-            "8388 st Y, r24\n" +
-            "91ec ld r30, X\n" +
-            "2b2e or r18, r30\n" +
-            "932c L37: st X, r18\n" +
-            "bf9f out 0x3f, r25\n" +
-            "c006 rjmp L35\n" +
-            "b78f L38: in r24, 0x3f\n" +
-            "94f8 cli \n" +
-            "81e8 ld r30, Y\n" +
-            "2b2e or r18, r30\n" +
-            "8328 st Y, r18\n" +
-            "bf8f out 0x3f, r24\n" +
-            "91df L35: pop r29\n" +
-            "91cf pop r28\n" +
-            "9508 ret \n")
-*/
+    assembler.expect(avr,
+        "93cf L110: push r28\n" +
+        "93df push r29\n" +
+        "e090 ldi r25, 0x00\n" +
+        "01fc movw r30, r24\n" +
+        "5ce1 subi r30, 0xC1\n" +
+        "4ffe sbci r31, 0xFE\n" +
+        "9124 lpm r18, Z\n" +
+        "01fc movw r30, r24\n" +
+        "59e4 subi r30, 0x94\n" +
+        "4ffe sbci r31, 0xFE\n" +
+        "9184 lpm r24, Z\n" +
+        "2388 and r24, r24\n" +
+        "f161 breq L35\n" +
+        "e090 ldi r25, 0x00\n" +
+        "0f88 add r24, r24\n" +
+        "1f99 adc r25, r25\n" +
+        "01fc movw r30, r24\n" +
+        "5cef subi r30, 0xCF\n" +
+        "4ffe sbci r31, 0xFE\n" +
+        "91c5 lpm r28, Z+\n" +
+        "91d4 lpm r29, Z\n" +
+        "01fc movw r30, r24\n" +
+        "5ae2 subi r30, 0xA2\n" +
+        "4ffe sbci r31, 0xFE\n" +
+        "91a5 lpm r26, Z+\n" +
+        "91b4 lpm r27, Z\n" +
+        "1161 cpse r22, r1\n" +
+        "c009 rjmp L36\n" +
+        "b79f in r25, 0x3f\n" +
+        "94f8 cli \n" +
+        "8188 ld r24, Y\n" +
+        "9520 com r18\n" +
+        "2382 and r24, r18\n" +
+        "8388 st Y, r24\n" +
+        "91ec ld r30, X\n" +
+        "232e and r18, r30\n" +
+        "c00b rjmp L37\n" +
+        "3062 L36: cpi r22, 0x02\n" +
+        "f461 brne L38\n" +
+        "b79f in r25, 0x3f\n" +
+        "94f8 cli \n" +
+        "8138 ld r19, Y\n" +
+        "2f82 mov r24, r18\n" +
+        "9580 com r24\n" +
+        "2383 and r24, r19\n" +
+        "8388 st Y, r24\n" +
+        "91ec ld r30, X\n" +
+        "2b2e or r18, r30\n" +
+        "932c L37: st X, r18\n" +
+        "bf9f out 0x3f, r25\n" +
+        "c006 rjmp L35\n" +
+        "b78f L38: in r24, 0x3f\n" +
+        "94f8 cli \n" +
+        "81e8 ld r30, Y\n" +
+        "2b2e or r18, r30\n" +
+        "8328 st Y, r18\n" +
+        "bf8f out 0x3f, r24\n" +
+        "91df L35: pop r29\n" +
+        "91cf pop r28\n" +
+        "9508 ret \n")
 
 /*
         assembler.expect(avr,
