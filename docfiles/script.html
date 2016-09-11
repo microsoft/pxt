@@ -13,7 +13,7 @@
 
     <link rel="alternate" type="application/json+oembed" href="@oembedurl@&format=json" />
     <link rel="alternate" type="text/xml+oembed" href="@oembedurl@&format=xml" />
-    <script src="https://az851932.vo.msecnd.net/app/bbjfu/c/marked/marked.min.js"></script>
+    <script src="/doccdn/marked/marked.min.js"></script>
 </head>
 
 <body id='root' class='root'>
@@ -68,14 +68,17 @@
 
         <div class="ui container segment">
             <h4 class="description">Edit in <a href="https://code.visualstudio.com/">Visual Studio Code</a></h4>
-            <pre style="white-space: pre-wrap;"># open a shell and run these commands pxt extract https://codethemicrobit.com/@id@ cd @title@ code .</pre>
+            <pre style="white-space: pre-wrap;">
+# open a shell and run these commands
+pxt extract https://codethemicrobit.com/@id@
+cd @title@
+code .
+            </pre>
             <p class="ui description">Do you need help installing the tools? <a href="https://codethemicrobit.com/code">Follow these instructions!</a></p>
         </div>
 
         <pre>
-            <code class="lang-project">
-        @id@
-    </code>
+            <code class="lang-project">@id@</code>
         </pre>
 
         <script>
