@@ -36,44 +36,105 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         return showUploadInstructionsAsync(fn, url);
 }
 
+enum MatchLevel {
+    None,
+    Any,
+    Exact
+};
+
+function matchLevelForStrings(haystack: string, needle: string): MatchLevel {
+    if (haystack.indexOf(needle) !== -1) {
+        return MatchLevel.Exact;
+    }
+    else if (haystack.indexOf("*") !== -1) {
+        return MatchLevel.Any;
+    }
+    else {
+        return MatchLevel.None
+    }
+}
+
+//Searches the known USB image, matching on platform and browser
+function namedUsbImage(name: string): string {
+    if (!pxt.appTarget.appTheme.usbHelp) return null;
+    let osMatch = (img: pxt.UsbHelpImage) => matchLevelForStrings(img.os, pxt.BrowserUtils.os());
+    let browserMatch = (img: pxt.UsbHelpImage) => matchLevelForStrings(img.browser, pxt.BrowserUtils.browser());
+    let matches = pxt.appTarget.appTheme.usbHelp.filter((img) => img.name == name &&
+                                                                     osMatch(img) != MatchLevel.None &&
+                                                                     browserMatch(img) != MatchLevel.None);
+    if (matches.length == 0) return null;
+    let bestMatch = 0;
+
+    for (let i = 1; i < matches.length; i++) {
+        //First we want to match on OS, then on browser
+        if (osMatch(matches[i]) > osMatch(matches[bestMatch])) {
+            bestMatch = i;
+        }
+        else if (browserMatch(matches[i]) > browserMatch(matches[bestMatch])) {
+            bestMatch = i;
+        }
+    }
+
+    return matches[bestMatch].path;
+}
+
+interface UploadInstructionStep {
+    title: string,
+    body?: string,
+    image?: string,
+}
+
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let boardName = pxt.appTarget.appTheme.boardName || "???";
     let boardDriveName = pxt.appTarget.compile.driveName || "???";
+
+    let instructions: UploadInstructionStep[] = [
+        {
+            title: lf("Connect your {0} to your computer using the USB cable.", boardName),
+            image: "connection"
+        },
+        {
+            title: lf("Save the <code>.hex</code> file to your computer."),
+            body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started")}</a>`,
+            image: "save"
+        },
+        {
+            title: lf("Copy the <code>.hex</code> file to your {0} drive", boardDriveName),
+            body: pxt.BrowserUtils.isMac() ? lf("Drag and drop the <code>.hex</code> file to your {0} drive in Finder", boardDriveName) :
+                  pxt.BrowserUtils.isWindows() ? lf("Right click on the file in Windows Explorer, click 'Send To', and select {0}", boardDriveName) : "",
+            image: "copy"
+        }
+    ];
+
+    let usbImagePath = namedUsbImage("connection");
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
-<div class="ui fluid vertical steps">
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Connect your {0} to your computer using the USB cable.", boardName)}</div>
-    </div>
-  </div>
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Save the <code>.hex</code> file to your computer.")}</div>
-    </div>
-  </div>
-  <a href='${encodeURI(url)}' download='${Util.htmlEscape(fn)}' target='_blank' class="step">
-    <div class="content">
-      <div class="description">${lf("Move the saved <code>.hex</code> file to the <code>{0}</code> drive.", boardDriveName)}</div>
-    </div>
-  </a>
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Wait till the yellow LED is done blinking.")}</div>
-    </div>
-  </div>
+<div class="ui styled fluid accordion">
+${instructions.map((step: UploadInstructionStep) => 
+`<div class="title">
+  <i class="dropdown icon"></i>
+  ${step.title}
 </div>
+<div class="content">
+    ${step.body ? step.body : ""}
+    ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}"  />` : ""}
+</div>`).join('')}
+</div>
+${pxt.appTarget.appTheme.usbDocs ? `
+    <div class="ui info message">
+        <p><a href="${pxt.appTarget.appTheme.usbDocs}" target="_blank">${lf("For more information on how to transfer the program to your {0} click here", boardName)}</a></p>
+    </div>` : ""}
 ${pxt.BrowserUtils.isWindows() ? `
     <div class="ui info message landscape only">
         ${lf("Tired of copying the .hex file?")}
         <a href="/uploader" target="_blank">${lf("Install the Uploader!")}</a>
     </div>
     ` : ""}
-`,
+<script type="text/javascript">$(".ui.accordion").accordion();</script>`, //This extra call needs to get fired otherwise the accordion isn't interactive
         hideCancel: true,
         agreeLbl: lf("Done!"),
-        timeout: 5000
+        timeout: 0 //We don't want this to timeout now that it is interactive
     }).then(() => { });
 }
 

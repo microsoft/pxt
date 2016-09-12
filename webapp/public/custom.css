@@ -749,3 +749,10 @@ html {
 .highlight-statement {
     background-color: #FFB900;
 }
+
+.accordion .content img {
+    max-width: 450px;
+    max-height: 250px;
+    margin: auto;
+    display: block;
+}
