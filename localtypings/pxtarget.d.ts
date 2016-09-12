@@ -111,6 +111,7 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbHelp?: UsbHelpImage[];
+        usbDocs?: string
     }
 
     interface DocMenuEntry {

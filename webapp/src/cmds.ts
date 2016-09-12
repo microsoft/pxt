@@ -94,14 +94,14 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         { 
             title: lf("Connect your {0} to your computer using the USB cable.", boardName),
             image: "connection",
-            altText: lf("Connect your ${0} to your computer using the USB cable.", boardName)
+            altText: lf("Connect your {0} to your computer using the USB cable.", boardName)
         },
         { 
             title: lf("Save the <code>.hex</code> file to your computer."),
             body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started")}</a>`,
         },
         {
-            title: lf("Copy the <code>.hex</code> file to your ${0} drive", boardName)
+            title: lf("Copy the <code>.hex</code> file to your {0} drive", boardName)
         }
     ];
          
@@ -118,11 +118,15 @@ ${instructions.map((step: UploadInstructionStep, i: number) =>
 </div>
 <div class="content ${i == 0 ? "active" : ""}">
   <div class="content ${i == 0? "active" : "hidden"}" ${i == 0 ? "style='display: block !important'" : ""}>
-    ${!!step.body ? step.body : ""}
-    ${!!step.image && !!namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  ${!!step.altText ? `alt="${step.altText}"` : ""}  />` : ""}
+    ${step.body ? step.body : ""}
+    ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  ${step.altText ? `alt="${step.altText}"` : ""}  />` : ""}
   </div>
 </div>`).join('')}
 </div>
+${pxt.appTarget.appTheme.usbDocs ? `
+    <div class="ui info message">
+        <p><a href="${pxt.appTarget.appTheme.usbDocs}" target="_blank">${lf("For more details click here")}</a></p>
+    </div>` : ""}
 ${pxt.BrowserUtils.isWindows() ? `
     <div class="ui info message landscape only">
         ${lf("Tired of copying the .hex file?")}
