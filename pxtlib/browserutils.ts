@@ -15,6 +15,18 @@ namespace pxt.BrowserUtils {
         return !!navigator && /Linux/i.test(navigator.platform);
     }
 
+    /*
+    Notes on browser detection
+
+    Actually:   Claims to be:
+                IE  Edge    Chrome  Safari  Firefox
+    IE          X                   X?
+    Edge            X       X       X
+    Chrome                  X       X
+    Safari                          X       X
+    Firefox                                 X
+    */
+
     //Edge lies about its user agent and claims to be Chrome, but Edge/Version
     //is always at the end
     export function isEdge(): boolean {
