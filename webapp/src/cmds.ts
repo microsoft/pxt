@@ -83,7 +83,6 @@ interface UploadInstructionStep {
     title: string,
     body?: string,
     image?: string,
-    altText?: string
 }
 
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
@@ -93,15 +92,16 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let instructions: UploadInstructionStep[] = [
         { 
             title: lf("Connect your {0} to your computer using the USB cable.", boardName),
-            image: "connection",
-            altText: lf("Connect your {0} to your computer using the USB cable.", boardName)
+            image: "connection"
         },
         { 
             title: lf("Save the <code>.hex</code> file to your computer."),
             body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started")}</a>`,
+            image: "save"
         },
         {
-            title: lf("Copy the <code>.hex</code> file to your {0} drive", boardName)
+            title: lf("Copy the <code>.hex</code> file to your {0} drive", boardName),
+            image: "copy"
         }
     ];
          
@@ -111,21 +111,19 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
 <div class="ui styled fluid accordion">
-${instructions.map((step: UploadInstructionStep, i: number) => 
-`<div class="title ${i == 0 ? "active" : ""}">
+${instructions.map((step: UploadInstructionStep) => 
+`<div class="title">
   <i class="dropdown icon"></i>
   ${step.title}
 </div>
-<div class="content ${i == 0 ? "active" : ""}">
-  <div class="content ${i == 0? "active" : "hidden"}" ${i == 0 ? "style='display: block !important'" : ""}>
+<div class="content">
     ${step.body ? step.body : ""}
-    ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  ${step.altText ? `alt="${step.altText}"` : ""}  />` : ""}
-  </div>
+    ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}"  />` : ""}
 </div>`).join('')}
 </div>
 ${pxt.appTarget.appTheme.usbDocs ? `
     <div class="ui info message">
-        <p><a href="${pxt.appTarget.appTheme.usbDocs}" target="_blank">${lf("For more details click here")}</a></p>
+        <p><a href="${pxt.appTarget.appTheme.usbDocs}" target="_blank">${lf("For more information on how to transfer the program to your {0} click here", boardName)}</a></p>
     </div>` : ""}
 ${pxt.BrowserUtils.isWindows() ? `
     <div class="ui info message landscape only">
