@@ -42,26 +42,33 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
-<div class="ui fluid vertical steps">
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Connect your {0} to your computer using the USB cable.", boardName)}</div>
-    </div>
+<div class="ui styled fluid accordion">
+  <div class="title active">
+    <i class="dropdown icon"></i>
+    ${lf("Connect your {0} to your computer using the USB cable.", boardName)}
   </div>
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Save the <code>.hex</code> file to your computer.")}</div>
-    </div>
+  <div class="content active">
+    <p class="transition visible" style="display: block !important">TODO: Image + explanation</p>
   </div>
-  <a href='${encodeURI(url)}' download='${Util.htmlEscape(fn)}' target='_blank' class="step">
-    <div class="content">
-      <div class="description">${lf("Move the saved <code>.hex</code> file to the <code>{0}</code> drive.", boardDriveName)}</div>
-    </div>
-  </a>
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Wait till the yellow LED is done blinking.")}</div>
-    </div>
+  <div class="title">
+    <i class="dropdown icon"></i>
+    ${lf("Save the <code>.hex</code> file to your computer.")}
+  </div>
+  <div class="content">
+    <p><a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started")}</a></p>
+  </div>
+  <div class="title">
+    <i class="dropdown icon"></i>
+    ${lf("Move the saved <code>.hex</code> file to the <code>{0}</code> drive.", boardDriveName)}
+  </div>
+  <div class="content">
+  </div>
+  <div class="title">
+    <i class="dropdown icon"></i>
+    ${lf("Wait till the yellow LED is done blinking.")}
+  </div>
+  <div class="content">
+    <p>Does this need an explanation?</p>
   </div>
 </div>
 ${pxt.BrowserUtils.isWindows() ? `
@@ -70,7 +77,7 @@ ${pxt.BrowserUtils.isWindows() ? `
         <a href="/uploader" target="_blank">${lf("Install the Uploader!")}</a>
     </div>
     ` : ""}
-`,
+<script type="text/javascript">$(".ui.accordion").accordion();</script>`, //This extra call needs to get fired otherwise the accordion isn't interactive
         hideCancel: true,
         agreeLbl: lf("Done!"),
         timeout: 5000
