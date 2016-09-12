@@ -1631,7 +1631,7 @@ $(document).ready(() => {
     targetVersion = config.targetVersion;
     sandbox = /sandbox=1/i.test(window.location.href);
     pxt.options.debug = /dbg=1/i.test(window.location.href);
-    pxt.options.light = /light=1/i.test(window.location.href);
+    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
     enableAnalytics(ksVersion)

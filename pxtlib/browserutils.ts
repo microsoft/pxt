@@ -15,6 +15,11 @@ namespace pxt.BrowserUtils {
         return !!navigator && /Linux/i.test(navigator.platform);
     }
 
+    // Detects if we are running on ARM (Raspberry pi)
+    export function isARM(): boolean {
+        return !!navigator && /arm/i.test(navigator.platform);
+    }
+
     /*
     Notes on browser detection
 
