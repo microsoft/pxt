@@ -134,7 +134,7 @@ ${pxt.BrowserUtils.isWindows() ? `
 <script type="text/javascript">$(".ui.accordion").accordion();</script>`, //This extra call needs to get fired otherwise the accordion isn't interactive
         hideCancel: true,
         agreeLbl: lf("Done!"),
-        timeout: 5000
+        timeout: 0 //We don't want this to timeout now that it is interactive
     }).then(() => { });
 }
 
