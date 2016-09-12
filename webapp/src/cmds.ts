@@ -100,7 +100,9 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
             image: "save"
         },
         {
-            title: lf("Copy the <code>.hex</code> file to your {0} drive", boardName),
+            title: lf("Copy the <code>.hex</code> file to your {0} drive", boardDriveName),
+            body: pxt.BrowserUtils.isMac() ? lf("Drag and drop the <code>.hex</code> file to your {0} drive in Finder", boardDriveName) : 
+                  pxt.BrowserUtils.isWindows() ? lf("Right click on the file in Windows Explorer, click 'Send To', and select {0}", boardDriveName) : "",
             image: "copy"
         }
     ];
