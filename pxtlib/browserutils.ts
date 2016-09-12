@@ -4,9 +4,15 @@ namespace pxt.BrowserUtils {
         return !!navigator && /Win32/i.test(navigator.platform);
     }
 
-    //MacIntel on most modern Macs
+    //MacIntel on modern Macs
     export function isMac(): boolean {
         return !!navigator && /Mac/i.test(navigator.platform);
+    }
+
+    //This is generally appears for Linux
+    //Android *sometimes* returns this
+    export function isLinux(): boolean {
+        return !!navigator && /Linux/i.test(navigator.platform);
     }
 
     //Edge lies about its user agent and claims to be Chrome, but Edge/Version
@@ -27,10 +33,10 @@ namespace pxt.BrowserUtils {
         return !isEdge() && !isIE() && !!navigator && (/Chrome/i.test(navigator.userAgent) || /Chromium/i.test(navigator.userAgent));
     }
 
-    //Chrome lies about being Safari
+    //Chrome and Edge lie about being Safari
     export function isSafari(): boolean {
         //Could also check isMac but I don't want to risk excluding iOS
-        return !isChrome() && !!navigator && /Safari/i.test(navigator.userAgent);
+        return !isChrome() && !isEdge() && !!navigator && /Safari/i.test(navigator.userAgent);
     }
 
     //Safari and WebKit lie about being Firefox
@@ -43,6 +49,7 @@ namespace pxt.BrowserUtils {
         let browser = '';
         if (isWindows()) platform += "Windows ";
         if (isMac()) platform += "Mac ";
+        if (isLinux()) platform += "Linux ";
         if (isEdge()) browser += "Edge ";
         if (isIE()) browser += "IE ";
         if (isChrome()) browser += "Chrome ";
