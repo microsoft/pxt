@@ -77,6 +77,13 @@ declare namespace pxt {
         serviceId: string;
     }
 
+    interface UsbHelpImage {
+        name: string,
+        browser: string,
+        os: string,
+        path: string
+    }
+
     interface AppTheme {
         id?: string;
         name?: string;
@@ -103,8 +110,7 @@ declare namespace pxt {
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
         githubUrl?: string;
-        usbPC?: string;
-        usbMac?: string
+        usbHelp?: UsbHelpImage[];
     }
 
     interface DocMenuEntry {

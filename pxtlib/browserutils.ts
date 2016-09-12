@@ -56,18 +56,20 @@ namespace pxt.BrowserUtils {
         return !isSafari() && !!navigator && (/Firefox/i.test(navigator.userAgent) || /Seamonkey/i.test(navigator.userAgent));
     }
 
-    export function browserTest(): string {
-        let platform = '';
-        let browser = '';
-        if (isWindows()) platform += "Windows ";
-        if (isMac()) platform += "Mac ";
-        if (isLinux()) platform += "Linux ";
-        if (isEdge()) browser += "Edge ";
-        if (isIE()) browser += "IE ";
-        if (isChrome()) browser += "Chrome ";
-        if (isSafari()) browser += "Safari ";
-        if (isFirefox()) browser += "Firefox ";
-        return `Platform = ${platform.trim()}, browser = ${browser.trim()}`;
+    export function os(): string {
+        if (isWindows()) return "windows";
+        else if (isMac()) return "mac";
+        else if (isLinux()) return "linux";
+        else return "unknown";
+    }
+
+    export function browser(): string {
+        if (isEdge()) return "edge";
+        else if (isIE()) return "ie";
+        else if (isChrome()) return "chrome";
+        else if (isSafari()) return "safari";
+        else if (isFirefox()) return "firefox";
+        else return "unknown";
     }
 
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {

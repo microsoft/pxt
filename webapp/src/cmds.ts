@@ -36,10 +36,57 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         return showUploadInstructionsAsync(fn, url);
 }
 
+enum MatchLevel
+{
+    None,
+    Any,
+    Exact
+};
+
+function matchLevelForStrings(haystack: string, needle: string): MatchLevel {
+    if (haystack.indexOf(needle) !== -1) {
+        return MatchLevel.Exact;
+    }
+    else if (haystack.indexOf("*") !== -1) {
+        return MatchLevel.Any;
+    }
+    else {
+        return MatchLevel.None
+    }
+}
+
+//Searches the known USB image, matching on platform and browser
+function namedUsbImage(name: string): string {
+    console.log(`Search for image ${name} in ${pxt.appTarget.appTheme.usbHelp}`);
+    if (!pxt.appTarget.appTheme.usbHelp) return null;
+    let osMatch = (img: pxt.UsbHelpImage) => matchLevelForStrings(img.os, pxt.BrowserUtils.os());
+    let browserMatch = (img: pxt.UsbHelpImage) => matchLevelForStrings(img.browser, pxt.BrowserUtils.browser());
+    let matches = pxt.appTarget.appTheme.usbHelp.filter((img) => img.name == name && 
+                                                                     osMatch(img) != MatchLevel.None && 
+                                                                     browserMatch(img) != MatchLevel.None);
+    console.log(`Matches = ${JSON.stringify(matches)}`);
+    if (matches.length == 0) return null;
+    let bestMatch = 0;
+
+    for (let i = 1; i < matches.length; i++) {
+        //First we want to match on OS, then on browser
+        if (osMatch(matches[i]) > osMatch(matches[bestMatch])) {
+            bestMatch = i;
+        }
+        else if (browserMatch(matches[i]) > browserMatch(matches[bestMatch])) {
+            bestMatch = i;
+        }
+    }
+
+    console.log(`Best match is ${matches[bestMatch]}`)
+
+    return matches[bestMatch].path;
+}
+
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let boardName = pxt.appTarget.appTheme.boardName || "???";
     let boardDriveName = pxt.appTarget.compile.driveName || "???";
-    let usbImagePath = pxt.BrowserUtils.isMac() && !!pxt.appTarget.appTheme.usbMac ? pxt.appTarget.appTheme.usbMac : !!pxt.appTarget.appTheme.usbPC ? pxt.appTarget.appTheme.usbPC : null;
+    let usbImagePath = namedUsbImage("connection");
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
