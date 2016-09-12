@@ -36,8 +36,7 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         return showUploadInstructionsAsync(fn, url);
 }
 
-enum MatchLevel
-{
+enum MatchLevel {
     None,
     Any,
     Exact
@@ -60,8 +59,8 @@ function namedUsbImage(name: string): string {
     if (!pxt.appTarget.appTheme.usbHelp) return null;
     let osMatch = (img: pxt.UsbHelpImage) => matchLevelForStrings(img.os, pxt.BrowserUtils.os());
     let browserMatch = (img: pxt.UsbHelpImage) => matchLevelForStrings(img.browser, pxt.BrowserUtils.browser());
-    let matches = pxt.appTarget.appTheme.usbHelp.filter((img) => img.name == name && 
-                                                                     osMatch(img) != MatchLevel.None && 
+    let matches = pxt.appTarget.appTheme.usbHelp.filter((img) => img.name == name &&
+                                                                     osMatch(img) != MatchLevel.None &&
                                                                      browserMatch(img) != MatchLevel.None);
     if (matches.length == 0) return null;
     let bestMatch = 0;
@@ -90,23 +89,22 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let boardDriveName = pxt.appTarget.compile.driveName || "???";
 
     let instructions: UploadInstructionStep[] = [
-        { 
+        {
             title: lf("Connect your {0} to your computer using the USB cable.", boardName),
             image: "connection"
         },
-        { 
+        {
             title: lf("Save the <code>.hex</code> file to your computer."),
             body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started")}</a>`,
             image: "save"
         },
         {
             title: lf("Copy the <code>.hex</code> file to your {0} drive", boardDriveName),
-            body: pxt.BrowserUtils.isMac() ? lf("Drag and drop the <code>.hex</code> file to your {0} drive in Finder", boardDriveName) : 
+            body: pxt.BrowserUtils.isMac() ? lf("Drag and drop the <code>.hex</code> file to your {0} drive in Finder", boardDriveName) :
                   pxt.BrowserUtils.isWindows() ? lf("Right click on the file in Windows Explorer, click 'Send To', and select {0}", boardDriveName) : "",
             image: "copy"
         }
     ];
-         
 
     let usbImagePath = namedUsbImage("connection");
     return core.confirmAsync({
