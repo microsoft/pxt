@@ -655,20 +655,6 @@ html {
     }
 }
 
-@media only screen and (max-height:36em) and (max-width: 49em) {
-    #filelist {
-        top:0.5rem;
-        right:0.5rem;
-        left:auto;
-        min-width: inherit;  
-        max-width: inherit;  
-    }    
-    .rtl #filelist {
-        left:0.5rem;
-        right:auto;
-    }
-}
-
 .ui.fluid.button.half{
     width:50% !important;
 }
