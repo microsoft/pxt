@@ -57,14 +57,12 @@ function matchLevelForStrings(haystack: string, needle: string): MatchLevel {
 
 //Searches the known USB image, matching on platform and browser
 function namedUsbImage(name: string): string {
-    console.log(`Search for image ${name} in ${pxt.appTarget.appTheme.usbHelp}`);
     if (!pxt.appTarget.appTheme.usbHelp) return null;
     let osMatch = (img: pxt.UsbHelpImage) => matchLevelForStrings(img.os, pxt.BrowserUtils.os());
     let browserMatch = (img: pxt.UsbHelpImage) => matchLevelForStrings(img.browser, pxt.BrowserUtils.browser());
     let matches = pxt.appTarget.appTheme.usbHelp.filter((img) => img.name == name && 
                                                                      osMatch(img) != MatchLevel.None && 
                                                                      browserMatch(img) != MatchLevel.None);
-    console.log(`Matches = ${JSON.stringify(matches)}`);
     if (matches.length == 0) return null;
     let bestMatch = 0;
 
@@ -78,48 +76,52 @@ function namedUsbImage(name: string): string {
         }
     }
 
-    console.log(`Best match is ${matches[bestMatch]}`)
-
     return matches[bestMatch].path;
+}
+
+interface UploadInstructionStep {
+    title: string,
+    body?: string,
+    image?: string,
+    altText?: string
 }
 
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let boardName = pxt.appTarget.appTheme.boardName || "???";
     let boardDriveName = pxt.appTarget.compile.driveName || "???";
+
+    let instructions: UploadInstructionStep[] = [
+        { 
+            title: lf("Connect your {0} to your computer using the USB cable.", boardName),
+            image: "connection",
+            altText: lf("Connect your ${0} to your computer using the USB cable.", boardName)
+        },
+        { 
+            title: lf("Save the <code>.hex</code> file to your computer."),
+            body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started")}</a>`,
+        },
+        {
+            title: lf("Copy the <code>.hex</code> file to your ${0} drive", boardName)
+        }
+    ];
+         
+
     let usbImagePath = namedUsbImage("connection");
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
 <div class="ui styled fluid accordion">
-  <div class="title active">
-    <i class="dropdown icon"></i>
-    ${lf("Connect your {0} to your computer using the USB cable.", boardName)}
+${instructions.map((step: UploadInstructionStep, i: number) => 
+`<div class="title ${i == 0 ? "active" : ""}">
+  <i class="dropdown icon"></i>
+  ${step.title}
+</div>
+<div class="content ${i == 0 ? "active" : ""}">
+  <div class="content ${i == 0? "active" : "hidden"}" ${i == 0 ? "style='display: block !important'" : ""}>
+    ${!!step.body ? step.body : ""}
+    ${!!step.image && !!namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  ${!!step.altText ? `alt="${step.altText}"` : ""}  />` : ""}
   </div>
-  <div class="content active">
-    <div class="transition visible style="display:block !important;">
-    ${usbImagePath ? `<img src="${usbImagePath}" alt="${lf("Connect your {0} to your computer using the USB cable.", boardName)}" style="max-height:250px;max-width:450px;margin:auto;display:block"/>`: ''}
-    </div>
-  </div>
-  <div class="title">
-    <i class="dropdown icon"></i>
-    ${lf("Save the <code>.hex</code> file to your computer.")}
-  </div>
-  <div class="content">
-    <p><a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started")}</a></p>
-  </div>
-  <div class="title">
-    <i class="dropdown icon"></i>
-    ${lf("Move the saved <code>.hex</code> file to the <code>{0}</code> drive.", boardDriveName)}
-  </div>
-  <div class="content">
-  </div>
-  <div class="title">
-    <i class="dropdown icon"></i>
-    ${lf("Wait till the yellow LED is done blinking.")}
-  </div>
-  <div class="content">
-    <p>Does this need an explanation?</p>
-  </div>
+</div>`).join('')}
 </div>
 ${pxt.BrowserUtils.isWindows() ? `
     <div class="ui info message landscape only">
