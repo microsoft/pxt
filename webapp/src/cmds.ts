@@ -39,6 +39,7 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let boardName = pxt.appTarget.appTheme.boardName || "???";
     let boardDriveName = pxt.appTarget.compile.driveName || "???";
+    let usbImagePath = pxt.BrowserUtils.isMac() && !!pxt.appTarget.appTheme.usbMac ? pxt.appTarget.appTheme.usbMac : !!pxt.appTarget.appTheme.usbPC ? pxt.appTarget.appTheme.usbPC : null;
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
@@ -48,7 +49,9 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     ${lf("Connect your {0} to your computer using the USB cable.", boardName)}
   </div>
   <div class="content active">
-    <p class="transition visible" style="display: block !important">TODO: Image + explanation</p>
+    <div class="transition visible style="display:block !important;">
+    ${usbImagePath ? `<img src="${usbImagePath}" alt="${lf("Connect your {0} to your computer using the USB cable.", boardName)}" style="max-height:250px;max-width:450px;margin:auto;display:block"/>`: ''}
+    </div>
   </div>
   <div class="title">
     <i class="dropdown icon"></i>

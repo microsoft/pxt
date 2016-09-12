@@ -103,6 +103,8 @@ declare namespace pxt {
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
         githubUrl?: string;
+        usbPC?: string;
+        usbMac?: string
     }
 
     interface DocMenuEntry {
