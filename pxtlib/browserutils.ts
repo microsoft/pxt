@@ -35,7 +35,20 @@ namespace pxt.BrowserUtils {
 
     //Safari and WebKit lie about being Firefox
     export function isFirefox(): boolean {
-        return !isSafari && !navigator && (/Firefox/i.test(navigator.userAgent) || /Seamonkey/i.test(navigator.userAgent));
+        return !isSafari() && !!navigator && (/Firefox/i.test(navigator.userAgent) || /Seamonkey/i.test(navigator.userAgent));
+    }
+
+    export function browserTest(): string {
+        let platform = '';
+        let browser = '';
+        if (isWindows()) platform += "Windows ";
+        if (isMac()) platform += "Mac ";
+        if (isEdge()) browser += "Edge ";
+        if (isIE()) browser += "IE ";
+        if (isChrome()) browser += "Chrome ";
+        if (isSafari()) browser += "Safari ";
+        if (isFirefox()) browser += "Firefox ";
+        return `Platform = ${platform.trim()}, browser = ${browser.trim()}`;
     }
 
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
