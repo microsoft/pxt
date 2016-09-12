@@ -24,7 +24,7 @@ namespace pxt.BrowserUtils {
 
     //Edge and IE11 lie about being Chrome
     export function isChrome(): boolean {
-        return !isEdge() && !isIE() && !!navigator && /Chrome/i.test(navigator.userAgent);
+        return !isEdge() && !isIE() && !!navigator && (/Chrome/i.test(navigator.userAgent) || /Chromium/i.test(navigator.userAgent));
     }
 
     //Chrome lies about being Safari
@@ -35,7 +35,7 @@ namespace pxt.BrowserUtils {
 
     //Safari and WebKit lie about being Firefox
     export function isFirefox(): boolean {
-        return !isSafari && !navigator && /Firefox/i.test(navigator.userAgent);
+        return !isSafari && !navigator && (/Firefox/i.test(navigator.userAgent) || /Seamonkey/i.test(navigator.userAgent));
     }
 
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
