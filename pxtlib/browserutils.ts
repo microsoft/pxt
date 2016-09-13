@@ -30,6 +30,8 @@ namespace pxt.BrowserUtils {
     Chrome                  X       X
     Safari                          X       X
     Firefox                                 X
+
+    I allow Opera to go about claiming to be Chrome because it might as well be
     */
 
     //Edge lies about its user agent and claims to be Chrome, but Edge/Version
@@ -61,6 +63,11 @@ namespace pxt.BrowserUtils {
         return !isSafari() && !!navigator && (/Firefox/i.test(navigator.userAgent) || /Seamonkey/i.test(navigator.userAgent));
     }
 
+    //These days Opera's core is based on Chromium so we shouldn't distinguish between them too much
+    export function isOpera(): boolean {
+        return !!navigator && /Opera|OPR/i.test(navigator.userAgent);
+    }
+
     export function os(): string {
         if (isWindows()) return "windows";
         else if (isMac()) return "mac";
@@ -70,6 +77,7 @@ namespace pxt.BrowserUtils {
 
     export function browser(): string {
         if (isEdge()) return "edge";
+        else if (isOpera()) return "opera";
         else if (isIE()) return "ie";
         else if (isChrome()) return "chrome";
         else if (isSafari()) return "safari";
