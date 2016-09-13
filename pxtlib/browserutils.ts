@@ -85,6 +85,34 @@ namespace pxt.BrowserUtils {
         else return "unknown";
     }
 
+    export function browserVersion(): string {
+        if (!navigator) return null;
+        //Unsurprisingly browsers also lie about this and include other browser versions...
+        let matches: string[] = [];
+        if (isOpera()) {
+            matches = /(Opera|OPR)\/([0-9\.]+)/i.exec(navigator.userAgent);
+        }
+        else if (isSafari()) {
+            matches = /Safari\/([0-9\.]+)/i.exec(navigator.userAgent);
+        }
+        else if (isChrome()) {
+            matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
+        }
+        else if (isEdge()) {
+            matches = /Edge\/([0-9\.]+)/i.exec(navigator.userAgent);
+        }
+        else if (isIE()) {
+            matches = /(MSIE |rv:)([0-9\.]+)/i.exec(navigator.userAgent);
+        }
+        else {
+            matches = /(Chrome|Chromium|Firefox|Seamonkey|Opera|OPR)\/([0-9\.]+)/i.exec(navigator.userAgent);
+        }
+        if (matches.length == 0) {
+            return null;
+        }
+        return matches[matches.length - 1];
+    }
+
     export function isBrowserSupported(): boolean {
         return false;
     }
