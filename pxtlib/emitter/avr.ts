@@ -72,7 +72,9 @@ namespace ts.pxtc.avr {
             // assumes this instruction is 16-bit  
             let pc = f.location() + 2;
             // if (wordAligned) pc = pc & 0xfffffffc
-            return l - pc;
+            let rel = l - pc
+            // console.log("lookup =", l, " pc+2 =", pc, " rel = ", rel);
+            return rel;
         }
 
 
@@ -123,8 +125,8 @@ namespace ts.pxtc.avr {
 
             // TODO: revisit labelling
             this.addEnc("$la", "LABEL", v => this.inrange(255, v >> 1, v >> 1)).isWordAligned = true;
-            this.addEnc("$lb", "LABEL", v => this.inrangeSigned(127, v >> 1, (v >> 1) << 3))
-            this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(2047, v / 2, v >> 1))
+            this.addEnc("$lb", "LABEL", v => this.inrangeSigned(127, v >> 1, v >> 1) << 3)
+            this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(2047, v >> 1, v >> 1))
 
             this.addInst("adc   $r0, $r1", 0x1C00, 0xfC00);
             this.addInst("add   $r0, $r1", 0x0C00, 0xfC00);
@@ -461,7 +463,7 @@ namespace ts.pxtc.avr {
         "4ffe sbci r31, 0xFE\n" +
         "9184 lpm r24, Z\n" +
         "2388 and r24, r24\n" +
-        "f161 breq L35\n" +
+        "f161 breq L35\n" +      // 01 0110 0 = 12+32 = 44
         "e090 ldi r25, 0x00\n" +
         "0f88 add r24, r24\n" +
         "1f99 adc r25, r25\n" +

@@ -96,7 +96,6 @@ namespace ts.pxtc.assembler {
                                 stack = -(v / 4);
                             else if (this.ei.isSubSP(this.opcode))
                                 stack = (v / 4);
-                                
                         }
                     } else if (enc.isRegList) {
                         // register lists are ARM-specific - this code not used in AVR 
@@ -127,11 +126,14 @@ namespace ts.pxtc.assembler {
                             labelName = "abs" + v
                         } else {
                             labelName = actual
+                            // console.log("op = ", this.name)
                             v = ln.bin.getRelativeLabel(actual, enc.isWordAligned)
                             if (v == null) {
                                 if (ln.bin.finalEmit)
                                     return emitErr("unknown label", actual)
                                 else
+                                    // just need some value when we are 
+                                    // doing some pass other than finalEmit
                                     v = 8; // needs to be divisible by 4 etc
                             }
                         }
@@ -147,8 +149,8 @@ namespace ts.pxtc.assembler {
 
                     numArgs.push(v)
 
-                    // console.log("v = ",v)
                     v = enc.encode(v)
+
                     // console.log("enc(v) = ",v)
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
                     assert((r & v) == 0)
@@ -952,7 +954,7 @@ namespace ts.pxtc.assembler {
             return false;
         }
 
-        public emit32(v1:number, v2: number, actual: string): EmitResult {
+        public emit32(v1: number, v2: number, actual: string): EmitResult {
             return null;
         }
 
@@ -1137,7 +1139,7 @@ namespace ts.pxtc.assembler {
             oops("ASMTEST: wrong buf len")
         for (let i = 0; i < exp.length; ++i) {
             if (b.buf[i] != exp[i])
-                oops("ASMTEST: wrong buf content, exp:" + tohex(exp[i]) + ", got: " + tohex(b.buf[i]))
+                oops("ASMTEST: wrong buf content at " + i + " , exp:" + tohex(exp[i]) + ", got: " + tohex(b.buf[i]))
         }
     }
 }
