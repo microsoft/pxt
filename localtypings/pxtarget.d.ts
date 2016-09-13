@@ -1,4 +1,6 @@
 /// <reference path="pxtpackage.d.ts" />
+/// <reference path="pxtparts.d.ts" />
+
 declare namespace pxt {
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
@@ -63,6 +65,7 @@ declare namespace pxt {
         autoRun?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
+        boardDefinition?: pxsim.BoardDefinition;
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed

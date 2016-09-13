@@ -1075,6 +1075,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let data: any = {
                     name: p.header.name || lf("Untitled"),
                     code: code ? code.content : `basic.showString("Hi!");`,
+                    board: JSON.stringify(pxt.appTarget.simulator.boardDefinition)                 
                 };
                 let parts = ts.pxtc.computeUsedParts(resp);
                 if (parts.length) {

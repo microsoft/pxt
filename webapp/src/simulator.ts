@@ -95,12 +95,14 @@ export function isDirty(): boolean { // in need of a restart?
 
 export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult) {
     pxsim.U.removeClass(driver.container, "sepia");
-    let js = res.outfiles[pxtc.BINARY_JS]
-    let parts = pxtc.computeUsedParts(res, true);
-    let fnArgs = res.usedArguments;
+    const js = res.outfiles[pxtc.BINARY_JS]
+    const boardDefinition = pxt.appTarget.simulator.boardDefinition;
+    const parts = pxtc.computeUsedParts(res, true);
+    const fnArgs = res.usedArguments;
     lastCompileResult = res;
 
-    let opts: pxsim.SimulatorRunOptions = {
+    const opts: pxsim.SimulatorRunOptions = {
+        boardDefinition: boardDefinition,
         parts: parts,
         debug: debug,
         fnArgs: fnArgs,
