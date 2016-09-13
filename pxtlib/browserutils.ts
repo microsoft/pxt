@@ -1,7 +1,7 @@
 
 namespace pxt.BrowserUtils {
     export function isWindows(): boolean {
-        return !!navigator && /Win32/i.test(navigator.platform);
+        return !!navigator && /(Win32|Win64|WOW64)/i.test(navigator.platform);
     }
 
     //MacIntel on modern Macs
