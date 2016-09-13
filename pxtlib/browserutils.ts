@@ -68,6 +68,17 @@ namespace pxt.BrowserUtils {
         return !!navigator && /Opera|OPR/i.test(navigator.userAgent);
     }
 
+    //Midori *was* the default browser on Raspbian, however isn't any more
+    export function isMidori(): boolean {
+        return !!navigator && /Midori/i.test(navigator.userAgent);
+    }
+
+    //Epiphany (code name for GNOME Web) is the default browser on Raspberry Pi
+    //Epiphany also lies about being Chrome, Safari, and Chromium
+    export function isEpiphany(): boolean {
+        return !!navigator && /Epiphany/i.test(navigator.userAgent);
+    }
+
     export function os(): string {
         if (isWindows()) return "windows";
         else if (isMac()) return "mac";
@@ -77,6 +88,8 @@ namespace pxt.BrowserUtils {
 
     export function browser(): string {
         if (isEdge()) return "edge";
+        if (isEpiphany()) return "epiphany";
+        else if (isMidori()) return "midori";
         else if (isOpera()) return "opera";
         else if (isIE()) return "ie";
         else if (isChrome()) return "chrome";
@@ -92,6 +105,12 @@ namespace pxt.BrowserUtils {
         if (isOpera()) {
             matches = /(Opera|OPR)\/([0-9\.]+)/i.exec(navigator.userAgent);
         }
+        if (isEpiphany()) {
+            matches = /Epiphany\/([0-9\.]+)/i.exec(navigator.userAgent);
+        }
+        else if (isMidori()) {
+            matches = /Midori\/([0-9\.]+)/i.exec(navigator.userAgent);
+        }
         else if (isSafari()) {
             matches = /Safari\/([0-9\.]+)/i.exec(navigator.userAgent);
         }
@@ -105,7 +124,7 @@ namespace pxt.BrowserUtils {
             matches = /(MSIE |rv:)([0-9\.]+)/i.exec(navigator.userAgent);
         }
         else {
-            matches = /(Chrome|Chromium|Firefox|Seamonkey|Opera|OPR)\/([0-9\.]+)/i.exec(navigator.userAgent);
+            matches = /(Firefox|Seamonkey)\/([0-9\.]+)/i.exec(navigator.userAgent);
         }
         if (matches.length == 0) {
             return null;
@@ -114,11 +133,19 @@ namespace pxt.BrowserUtils {
     }
 
     export function isBrowserSupported(): boolean {
+        if (!!navigator) {
+            return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
+        }
         const v = browserVersion();
         const isModernUpdatedBrowser = isChrome() || isFirefox() || isEdge() || isSafari();
         const isLastVersionOfIE = isIE() && /^11./.test(v);
         const isOperaBasedOnChromium = isOpera() && isChrome();
-        return isModernUpdatedBrowser || isLastVersionOfIE || isOperaBasedOnChromium;
+        const isUnsupportedRPI = isMidori();
+
+        const isSupported = isModernUpdatedBrowser || isLastVersionOfIE || isOperaBasedOnChromium;
+        const isNotSupported = isUnsupportedRPI;
+
+        return isSupported && !isNotSupported;
     }
 
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
