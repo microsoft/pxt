@@ -77,10 +77,10 @@ declare namespace pxt {
         serviceId: string;
     }
 
-    interface UsbHelpImage {
+    interface SpecializedResource {
         name: string,
-        browser: string,
-        os: string,
+        browser?: string,
+        os?: string,
         path: string
     }
 
@@ -103,7 +103,6 @@ declare namespace pxt {
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
-        unsupportedBrowserUrl?: string;
         accentColor?: string;
         locales?: Map<AppTheme>;
         cardLogo?: string;
@@ -111,8 +110,9 @@ declare namespace pxt {
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
         githubUrl?: string;
-        usbHelp?: UsbHelpImage[];
+        usbHelp?: SpecializedResource[];
         usbDocs?: string
+        browserSupport?: SpecializedResource[];
     }
 
     interface DocMenuEntry {
