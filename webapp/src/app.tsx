@@ -1655,6 +1655,14 @@ $(document).ready(() => {
     const cfg = pxt.webConfig;
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
+        .then(() => {
+            if (!pxt.BrowserUtils.isBrowserSupported()) {
+                let redirect = pxt.BrowserUtils.suggestedBrowserPath();
+                if (redirect) {
+                    window.location.href = redirect;
+                }
+            }
+        })
         .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
