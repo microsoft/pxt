@@ -828,7 +828,9 @@ function uploadCoreAsync(opts: UploadOptions) {
         })
         .then(() => {
             if (!opts.label) return Promise.resolve()
-            else if (opts.legacyLabel) return Cloud.privatePostAsync(liteId + "/label", { name: opts.label })
+            if (!U.startsWith(opts.label, pxt.appTarget.id))
+                opts.label = pxt.appTarget.id + "/" + opts.label
+            if (opts.legacyLabel) return Cloud.privatePostAsync(liteId + "/label", { name: opts.label })
             else return Cloud.privatePostAsync("pointers", {
                 path: nodeutil.sanitizePath(opts.label),
                 releaseid: liteId

@@ -34,7 +34,7 @@ function replContentAsync(str: string) {
     function replContent(str: string, waitFor: Promise<string>[]) {
         return str
             // TODO make configurable
-            .replace(/\/doccdn\//g, "https://az851932.vo.msecnd.net/app/lkgya/c/")
+            .replace(/\/doccdn\//g, "https://az851932.vo.msecnd.net/app/pduyv/c/")
             .replace(/[\.\/]*(\/(docfiles|static)\/[\w\.\-\/]+)/g, (m, x) => {
                 let repl = uploadFileAsync(x)
                 usedPromises[x] = true;
@@ -143,7 +143,10 @@ function uploadFileAsync(fn: string) {
     let isDocfile = U.startsWith(fn, "/docfiles/")
     if (isDocfile) isStatic = true
     if (!isStatic && sitemap) sitemap[path] = ""
-    path = ptrPrefix + path
+    if (ptrPrefix && path == "/home")
+        path = ptrPrefix
+    else
+        path = ptrPrefix + path
     uploadPromises[fn] = uploadArtAsync(fn)
         .then(bloburl => {
             if (isStatic)
