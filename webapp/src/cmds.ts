@@ -118,7 +118,7 @@ ${instructions.map((step: UploadInstructionStep, i: number) =>
 </div>
 <div class="content ${i == 0 ? "active" : ""}">
     ${step.body ? step.body : ""}
-    ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}"  />` : ""}
+    ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}" class="ui centered large image" />` : ""}
 </div>`).join('')}
 </div>
 ${pxt.appTarget.appTheme.usbDocs ? `
