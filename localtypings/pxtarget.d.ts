@@ -103,6 +103,7 @@ declare namespace pxt {
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
+        unsupportedBrowserUrl?: string;
         accentColor?: string;
         locales?: Map<AppTheme>;
         cardLogo?: string;

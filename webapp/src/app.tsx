@@ -1654,6 +1654,11 @@ $(document).ready(() => {
     const cfg = pxt.webConfig;
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
+        .then(() => {
+            if (!pxt.BrowserUtils.isBrowserSupported() && !!pxt.appTarget.appTheme.unsupportedBrowserUrl) {
+                window.location.href = pxt.appTarget.appTheme.unsupportedBrowserUrl + `?browser=${pxt.BrowserUtils.browser()}&os=${pxt.BrowserUtils.os()}`;
+            }
+        })
         .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
