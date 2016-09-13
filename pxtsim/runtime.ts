@@ -108,6 +108,42 @@ namespace pxsim {
         }
     }
 
+    export class CoreBoard extends BaseBoard {
+        id: string;
+
+        // the bus
+        bus: pxsim.EventBus;
+
+        // updates
+        updateSubscribers: (() => void)[];
+
+        // builtin
+        builtinParts: Map<any>;
+        builtinVisuals: Map<() => visuals.IBoardPart<any>>;
+        builtinPartVisuals: Map<(xy: visuals.Coord) => visuals.SVGElAndSize>;
+
+        constructor() {
+            super()
+            this.id = "b" + Math_.random(2147483647);
+            this.bus = new pxsim.EventBus(runtime);
+
+            // updates
+            this.updateSubscribers = []
+            this.updateView = () => {
+                this.updateSubscribers.forEach(sub => sub());
+            }
+
+            this.builtinParts = {};
+            this.builtinVisuals = {};
+            this.builtinPartVisuals = {};
+        }
+
+        kill() {
+            super.kill();
+            AudioContextManager.stop();
+        }
+    }
+
     class BareBoard extends BaseBoard {
     }
 

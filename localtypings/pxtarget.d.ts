@@ -77,6 +77,13 @@ declare namespace pxt {
         serviceId: string;
     }
 
+    interface SpecializedResource {
+        name: string,
+        browser?: string,
+        os?: string,
+        path: string
+    }
+
     interface AppTheme {
         id?: string;
         name?: string;
@@ -103,6 +110,9 @@ declare namespace pxt {
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
         githubUrl?: string;
+        usbHelp?: SpecializedResource[];
+        usbDocs?: string
+        browserSupport?: SpecializedResource[];
     }
 
     interface DocMenuEntry {

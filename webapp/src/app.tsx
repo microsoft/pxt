@@ -413,7 +413,7 @@ class DocsMenu extends data.Component<ISettingsProps, {}> {
         const sideDocs = !pxt.options.light;
         return <div id="docsmenu" className="ui buttons">
             <sui.DropdownMenu class="floating icon button" icon="help" title="Help">
-                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs ? "widedesktop hide" : ""}`}>{m.name}</a>)}
+                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs ? "widedesktop hide" : ""}`}>{m.name}</a>) }
                 {sideDocs ? targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
             </sui.DropdownMenu>
         </div>
@@ -1265,7 +1265,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const compile = pxt.appTarget.compile;
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
-        const make = !sandbox && pxt.appTarget.simulator && pxt.appTarget.simulator.instructions && this.state.showParts;
+        const simOpts = pxt.appTarget.simulator;
+        const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
@@ -1631,7 +1632,7 @@ $(document).ready(() => {
     targetVersion = config.targetVersion;
     sandbox = /sandbox=1/i.test(window.location.href);
     pxt.options.debug = /dbg=1/i.test(window.location.href);
-    pxt.options.light = /light=1/i.test(window.location.href);
+    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
     enableAnalytics(ksVersion)
@@ -1654,6 +1655,14 @@ $(document).ready(() => {
     const cfg = pxt.webConfig;
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
+        .then(() => {
+            if (!pxt.BrowserUtils.isBrowserSupported()) {
+                let redirect = pxt.BrowserUtils.suggestedBrowserPath();
+                if (redirect) {
+                    window.location.href = redirect;
+                }
+            }
+        })
         .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
