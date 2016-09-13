@@ -111,12 +111,12 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
 <div class="ui styled fluid accordion">
-${instructions.map((step: UploadInstructionStep) => 
-`<div class="title">
+${instructions.map((step: UploadInstructionStep, i: number) =>
+`<div class="title ${i == 0 ? "active" : ""}">
   <i class="dropdown icon"></i>
   ${step.title}
 </div>
-<div class="content">
+<div class="content ${i == 0 ? "active" : ""}">
     ${step.body ? step.body : ""}
     ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}"  />` : ""}
 </div>`).join('')}
