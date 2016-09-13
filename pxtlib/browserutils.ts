@@ -114,7 +114,11 @@ namespace pxt.BrowserUtils {
     }
 
     export function isBrowserSupported(): boolean {
-        return false;
+        const v = browserVersion();
+        const isModernUpdatedBrowser = isChrome() || isFirefox() || isEdge() || isSafari();
+        const isLastVersionOfIE = isIE() && /^11./.test(v);
+        const isOperaBasedOnChromium = isOpera() && isChrome();
+        return isModernUpdatedBrowser || isLastVersionOfIE || isOperaBasedOnChromium;
     }
 
     export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
