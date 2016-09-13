@@ -1656,7 +1656,7 @@ $(document).ready(() => {
         .then(pkg.setupAppTarget)
         .then(() => {
             if (!pxt.BrowserUtils.isBrowserSupported() && !!pxt.appTarget.appTheme.unsupportedBrowserUrl) {
-                window.location.href = pxt.appTarget.appTheme.unsupportedBrowserUrl + `?browser=${pxt.BrowserUtils.browser()}&os=${pxt.BrowserUtils.os()}`;
+                window.location.href = pxt.appTarget.appTheme.unsupportedBrowserUrl + `?browser=${pxt.BrowserUtils.browser()}&os=${pxt.BrowserUtils.os()}&version=${pxt.BrowserUtils.browserVersion()}`;
             }
         })
         .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
