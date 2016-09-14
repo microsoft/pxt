@@ -18,6 +18,7 @@ import Map = pxt.Map;
 
 import * as server from './server';
 import * as uploader from './uploader';
+import * as elf from './elf';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
@@ -2774,6 +2775,14 @@ function buildCoreAsync(mode: BuildOption) {
         })
 }
 
+export function elfAsync(fn: string) {
+    return readFileAsync(fn)
+        .then((buf: Buffer) => {
+            let json = elf.elfToJson(buf)
+            fs.writeFileSync("elf.json", JSON.stringify(json, null, 1))
+        })
+}
+
 export function buildAsync() {
     return buildCoreAsync(BuildOption.JustBuild)
 }
@@ -2980,6 +2989,7 @@ cmd("ptrcheck                     - check pointers in the cloud against ones in 
 cmd("travis                       - upload release and npm package", travisAsync, 1)
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
+cmd("elf      FILENAME            - convert ELF object file to JSON", elfAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 
 cmd("extension ADD_TEXT           - try compile extension", extensionAsync, 10)
