@@ -2776,11 +2776,22 @@ function buildCoreAsync(mode: BuildOption) {
 }
 
 export function elfAsync(fn: string) {
-    return readFileAsync(fn)
-        .then((buf: Buffer) => {
-            let json = elf.elfToJson(buf)
-            fs.writeFileSync("elf.json", JSON.stringify(json, null, 1))
-        })
+    if (!fn) fn = "."
+    let st = fs.statSync(fn)
+    let files = [fn]
+    if (st.isDirectory()) {
+        files = allFiles(fn, 100).filter(f => U.endsWith(f, ".o"))
+    }
+    files.sort(U.strcmp)
+    let res: any = {}
+    for (let f of files) {
+        console.log(f)
+        let buf = fs.readFileSync(f)
+        let json = elf.elfToJson(buf)
+        res[f] = json
+    }
+    fs.writeFileSync("elf.json", JSON.stringify(U.sortObjectFields(res), null, 1))
+    return Promise.resolve()
 }
 
 export function buildAsync() {

@@ -89,6 +89,11 @@ const enum SHT {
     REL = 9,
     SHLIB = 10,
     DYNSYM = 11,
+    INIT_ARRAY = 14,
+    FINI_ARRAY = 15,
+    PREINIT_ARRAY = 16,
+    GROUP = 17,
+    SYMTAB_SHNDX = 18,
 }
 
 const enum SHF {
@@ -125,7 +130,7 @@ export const enum RelocType {
     R_ARM_ABS8 = 8,
     R_ARM_SBREL32 = 9,
     R_ARM_THM_CALL = 10,
-    R_ARM_THM_PC8 = 11,
+    R_ARM_THM_PC8 = 11, 
     R_ARM_BREL_ADJ = 12,
     R_ARM_SWI24 = 13,
     R_ARM_THM_SWI8 = 14,
@@ -270,7 +275,7 @@ export function elfToJson(buf: Buffer): {} {
     let shnum = buf.readUInt16LE(0x30)
     let shstrndx = buf.readUInt16LE(0x32)
 
-    console.log(`${shnum} entries of ${shentsize} at ${shoff}`)
+    //console.log(`${shnum} entries of ${shentsize} at ${shoff}`)
 
     let sects = U.range(shnum).map(no =>
         readSH(shoff + no * shentsize))
@@ -282,7 +287,7 @@ export function elfToJson(buf: Buffer): {} {
     for (let s of sects) {
         s.name = readString(sects[shstrndx], s.rawname)
         sectsByName[s.name] = s
-        console.log(`${s.name} ${s.size} bytes ${s.type}`)
+        //console.log(`${s.name} ${s.size} bytes ${s.type}`)
         if (s.name == ".symtab") {
             if (symtab) U.userError("more than one .symtab")
             symtab = s
@@ -297,7 +302,8 @@ export function elfToJson(buf: Buffer): {} {
     readSymbols()
 
     for (let s of sects) {
-        if (s.type == SHT.PROGBITS) {
+        if ((s.type == SHT.PROGBITS || s.type == SHT.NOBITS || s.type == SHT.INIT_ARRAY)
+            && !/^\.debug/.test(s.name)) {
             s.reloc = readRel(sectsByName[".rel" + s.name]).concat(readRel(sectsByName[".rela" + s.name]))
         }
     }
@@ -309,45 +315,59 @@ export function elfToJson(buf: Buffer): {} {
     }
 
     let rsyms: Sym[] = []
+    let sidx = -1
 
     for (let s of syms) {
-        if (!s.shndx) continue
-        console.log(s.bind)
+        sidx++
+        if (!s.shndx || s.shndx == 65522) continue
         if ((s.bind == STB.GLOBAL && s.name) || s.isUsed) {
             let sect = sects[s.shndx]
+            if (!sect) {
+                U.userError(`sym=${s.name} using undefined section ${s.shndx}`)
+            }
             let ss: Sym = {
                 name: s.name,
                 type: SymType.Code,
                 align: sect.addralign || 1,
                 size: sect.size,
                 text: "",
-                relocs: sect.reloc.map(r => ({
-                    type: r.type,
-                    symname: r.sym.name,
-                    offset: r.offset,
-                    addend: r.addend
-                }))
+                relocs: convertRelocs(sect)
             }
             if (U.startsWith(sect.name, ".bss"))
                 ss.type = SymType.Bss
             else if (U.startsWith(sect.name, ".rodata"))
                 ss.type = SymType.RoData
+            else if (U.startsWith(sect.name, ".data"))
+                ss.type = SymType.RwData
             else if (U.startsWith(sect.name, ".text"))
                 ss.type = SymType.Code
-            else
-                U.userError("unknown section name type: " + sect.name)
+            else {
+                console.log(`unknown section name type: ${sect.name} for sym ${s.name} @ ${sidx}`)
+            }
             if (ss.type != SymType.Bss)
                 ss.text = buf.slice(sect.offset, sect.offset + ss.size).toString("hex")
             rsyms.push(ss)
         }
     }
 
+    let r = {
+        syms: rsyms,
+        init: convertRelocs(sectsByName[".init_array"])
+    }
 
+    return r
 
-    console.log(rsyms)
-
-    return { syms: rsyms }
-
+    function convertRelocs(s: Section): Reloc[] {
+        if (!s) return []
+        let rx = s.reloc
+        if (!rx) return []
+        return rx.map(r => ({
+            type: r.type,
+            symname: r.sym.name,
+            offset: r.offset,
+            addend: r.addend
+        }))
+    }
 
     function readString(s: Section, off: number) {
         off += s.offset
