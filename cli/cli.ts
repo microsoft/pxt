@@ -1189,7 +1189,7 @@ function buildTargetCoreAsync() {
             saveThemeJson(cfg)
 
             const webmanifest = buildWebManifest(cfg)
-            const webmanifestjson = JSON.stringify(cfg, null, 2)            
+            const webmanifestjson = JSON.stringify(cfg, null, 2)
             fs.writeFileSync("built/target.json", webmanifestjson)
             fs.writeFileSync("built/pxtarget.js", `
 var pxt;
