@@ -487,7 +487,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 
     renderCore() {
         let parent = this.props.parent
-        if (!parent.state.showFiles)
+        if (sandbox || !parent.state.showFiles)
             return null;
 
         let expands = this.state.expands;
