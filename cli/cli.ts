@@ -1188,14 +1188,27 @@ function buildTargetCoreAsync() {
 
             saveThemeJson(cfg)
 
-            let webmanifest = buildWebManifest(cfg)
-            fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
+            const webmanifest = buildWebManifest(cfg)
+            const webmanifestjson = JSON.stringify(cfg, null, 2)            
+            fs.writeFileSync("built/target.json", webmanifestjson)
+            fs.writeFileSync("built/pxtarget.js", `
+var pxt;
+(function (pxt) {
+    pxt.appTarget = ${webmanifestjson};
+})(pxt || (pxt = {}));`);
+
             pxt.appTarget = cfg; // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
             delete targetlight.appTheme
-            fs.writeFileSync("built/targetlight.json", JSON.stringify(targetlight, null, 2))
+            const targetlightjson = JSON.stringify(targetlight, null, 2);
+            fs.writeFileSync("built/targetlight.json", targetlightjson)
+            fs.writeFileSync("built/pxtargetlight.js", `
+var pxt;
+(function (pxt) {
+    pxt.appTarget = ${targetlightjson};
+})(pxt || (pxt = {}));`);
             fs.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
         })
         .then(() => {
