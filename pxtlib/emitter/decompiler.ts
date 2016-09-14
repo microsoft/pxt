@@ -6,7 +6,7 @@ namespace ts.pxtc.decompiler {
         top: number; current: number;
     }
 
-    const ops: U.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
+    const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
         "-": { type: "math_arithmetic", op: "MINUS" },
         "/": { type: "math_arithmetic", op: "DIVIDE" },
@@ -22,7 +22,7 @@ namespace ts.pxtc.decompiler {
         "||": { type: "logic_operation", op: "OR" },
     }
 
-    const builtinBlocks: U.Map<{ block: string; blockId: string; fields?: string }> = {
+    const builtinBlocks: pxt.Map<{ block: string; blockId: string; fields?: string }> = {
         "Math.random": { blockId: "device_random", block: "pick random 0 to %limit" },
         "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
         "Math.min": { blockId: "math_op2", block: "of %x|and %y" },

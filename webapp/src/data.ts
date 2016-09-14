@@ -18,7 +18,7 @@ interface CacheEntry {
     api: VirtualApi;
 }
 
-const virtualApis: Util.StringMap<VirtualApi> = {}
+const virtualApis: pxt.Map<VirtualApi> = {}
 
 mountVirtualApi("cloud", {
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
@@ -47,7 +47,7 @@ mountVirtualApi("gh-pkgcfg", {
     isOffline: () => !Cloud.isOnline(),
 })
 
-let cachedData: Util.StringMap<CacheEntry> = {};
+let cachedData: pxt.Map<CacheEntry> = {};
 
 function subscribe(component: AnyComponent, path: string) {
     let e = lookup(path)

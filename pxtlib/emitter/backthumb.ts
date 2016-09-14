@@ -1,5 +1,14 @@
 namespace ts.pxtc {
     export var decodeBase64 = function (s: string) { return atob(s); }
+    interface BitSizeInfo {
+        size: number;
+        ldr: string;
+        str: string;
+        needsSignExt?: boolean;
+        immLimit: number;
+    }
+
+    const vtableShift = 2;
 
     function irToAssembly(bin: Binary, proc: ir.Procedure) {
         let resText = ""
@@ -232,11 +241,46 @@ ${bkptLabel + "_after"}:
                     }
                     break;
                 case EK.CellRef:
-                    let cell = e.data as ir.Cell;
-                    write(`ldr ${reg}, ${cellref(cell)}`)
+                    let cell = e.data as ir.Cell
+                    if (cell.isGlobal()) {
+                        let inf = bitSizeInfo(cell.bitSize)
+                        let off = "#" + cell.index
+                        if (inf.needsSignExt || cell.index >= inf.immLimit) {
+                            emitInt(cell.index, reg)
+                            off = reg
+                        }
+                        write(`${inf.ldr} ${reg}, [r6, ${off}]`)
+                    } else {
+                        write(`ldr ${reg}, ${cellref(cell)}`)
+                    }
                     break;
                 default: oops();
             }
+        }
+
+        function bitSizeInfo(b: BitSize) {
+            let inf: BitSizeInfo = {
+                size: sizeOfBitSize(b),
+                ldr: "",
+                str: "",
+                immLimit: 128
+            }
+            if (inf.size == 1) {
+                inf.immLimit = 32
+                inf.str = "strb"
+            } else if (inf.size == 2) {
+                inf.immLimit = 64
+                inf.str = "strh"
+            } else {
+                inf.str = "str"
+            }
+            if (b == BitSize.Int8 || b == BitSize.Int16) {
+                inf.needsSignExt = true
+                inf.ldr = inf.str.replace("str", "ldrs")
+            } else {
+                inf.ldr = inf.str.replace("str", "ldr")
+            }
+            return inf
         }
 
         // result in R0
@@ -361,13 +405,14 @@ ${bkptLabel + "_after"}:
                     write(lbl + ":")
                     emitHelper(`
         ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
-        ldr r3, [r0, #8] ; ld-vtable
-        cmp r3, #42
+        ldrh r3, [r0, #2] ; ld-vtable
+        lsls r3, r3, #${vtableShift}
+        ldr r3, [r3, #4] ; iface table
+        cmp r3, #43
         beq .objlit
 .nonlit:
-        ldr r0, [r3, #4] ; iface table
         lsls r1, ${isSet ? "r2" : "r1"}, #2
-        ldr r0, [r0, r1] ; ld-method
+        ldr r0, [r3, r1] ; ld-method
         bx r0
 .objlit:
         ${isSet ? "ldr r2, [sp, #0]" : ""}
@@ -377,21 +422,10 @@ ${bkptLabel + "_after"}:
 `);
                 } else {
                     write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
-                    write(`ldr r0, [r0, #8] ; ld-vtable`)
-                    let effIdx = procid.virtualIndex + 2
+                    write(`ldrh r0, [r0, #2] ; ld-vtable`)
+                    write(`lsls r0, r0, #${vtableShift}`)
+                    let effIdx = procid.virtualIndex + 4
                     if (procid.ifaceIndex != null) {
-                        if (procid.mapMethod) {
-                            let nonlitlbl = mkLbl("nonLit")
-                            write(`cmp r0, #42`)
-                            write(`bne ${nonlitlbl}`)
-                            write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]`)
-                            emitInt(procid.mapIdx, "r1")
-                            if (topExpr.args.length == 2)
-                                write(`ldr r2, [sp, #4*0]`)
-                            emitCallRaw(procid.mapMethod)
-                            write(`b ${afterall}`)
-                            write(`${nonlitlbl}:`)
-                        }
                         write(`ldr r0, [r0, #4] ; iface table`)
                         effIdx = procid.ifaceIndex
                     }
@@ -428,7 +462,17 @@ ${bkptLabel + "_after"}:
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
                     emitExpr(src)
-                    write("str r0, " + cellref(cell))
+                    if (cell.isGlobal()) {
+                        let inf = bitSizeInfo(cell.bitSize)
+                        let off = "#" + cell.index
+                        if (cell.index >= inf.immLimit) {
+                            emitInt(cell.index, "r1")
+                            off = "r1"
+                        }
+                        write(`${inf.str} r0, [r6, ${off}]`)
+                    } else {
+                        write("str r0, " + cellref(cell))
+                    }
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
@@ -441,7 +485,7 @@ ${bkptLabel + "_after"}:
 
         function cellref(cell: ir.Cell) {
             if (cell.isGlobal()) {
-                return "[r6, #4*" + cell.index + "]"
+                throw oops()
             } else if (cell.iscap) {
                 assert(0 <= cell.index && cell.index < 32)
                 return "[r5, #4*" + cell.index + "]"
@@ -600,7 +644,7 @@ ${bkptLabel + "_after"}:
 
     // TODO should be internal
     export namespace hex {
-        let funcInfo: StringMap<FuncInfo>;
+        let funcInfo: Map<FuncInfo>;
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;
@@ -608,7 +652,7 @@ ${bkptLabel + "_after"}:
         let bytecodeStartAddr: number;
         export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
-        let asmLabels: StringMap<boolean> = {};
+        let asmLabels: Map<boolean> = {};
         export let asmTotalSource: string = "";
         export const pageSize = 0x400;
 
@@ -898,16 +942,16 @@ ${lbl}: .string ${stringLiteral(s)}
     }
 
     function vtableToAsm(info: ClassInfo) {
-        if (!info.hasVTable) return ""
-
         let s = `
-        .balign 4
+        .balign ${1 << vtableShift}
 ${info.id}_VT:
-        .short 0xffff ; refcount
-        .byte ${info.refmask.length}, ${info.vtable.length + 1}  ; num. fields, num. methods
+        .short ${info.refmask.length * 4 + 4}  ; size in bytes
+        .byte ${info.vtable.length + 2}, 0  ; num. methods
 `;
 
         s += `        .word ${info.id}_IfaceVT\n`
+        s += `        .word pxt::RefRecord_destroy|1\n`
+        s += `        .word pxt::RefRecord_print|1\n`
 
         for (let m of info.vtable) {
             s += `        .word ${m.label()}|1\n`
@@ -942,7 +986,7 @@ ${hex.hexPrelude()}
     .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
-    .short ${numReservedGlobals + bin.globals.length}   ; num. globals
+    .short ${bin.globalsWords}   ; num. globals
     .space 14 ; reserved
 `
         bin.procs.forEach(p => {
@@ -953,7 +997,7 @@ ${hex.hexPrelude()}
             asmsource += vtableToAsm(info)
         })
 
-        U.iterStringMap(bin.codeHelpers, (code, lbl) => {
+        U.iterMap(bin.codeHelpers, (code, lbl) => {
             asmsource += `    .section code\n${lbl}:\n${code}\n`
         })
 

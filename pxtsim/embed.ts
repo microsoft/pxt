@@ -7,6 +7,7 @@ namespace pxsim {
 
     export interface SimulatorRunMessage extends SimulatorMessage {
         id?: string;
+        boardDefinition?: BoardDefinition;
         frameCounter?: number;
         options?: any;
         parts?: string[];

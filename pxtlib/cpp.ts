@@ -1,3 +1,4 @@
+/// <reference path="../built/pxtarget.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
@@ -107,7 +108,7 @@ namespace pxt.cpp {
     }
 
     let prevExtInfo: pxtc.ExtensionInfo;
-    let prevSnapshot: U.Map<string>;
+    let prevSnapshot: Map<string>;
 
     export class PkgConflictError extends Error {
         pkg0: Package;
@@ -123,7 +124,7 @@ namespace pxt.cpp {
     }
 
     export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
-        let pkgSnapshot: U.Map<string> = {}
+        let pkgSnapshot: Map<string> = {}
         let constsName = "dal.d.ts"
 
         for (let pkg of mainPkg.sortedDeps()) {
@@ -157,7 +158,7 @@ namespace pxt.cpp {
                 serviceId: "nocompile"
             }
 
-        let enumVals: U.Map<string> = {
+        let enumVals: Map<string> = {
             "true": "1",
             "false": "0",
             "null": "0",
@@ -436,8 +437,8 @@ namespace pxt.cpp {
             return outp
         }
 
-        let currSettings: U.Map<any> = {}
-        let settingSrc: U.Map<Package> = {}
+        let currSettings: Map<any> = {}
+        let settingSrc: Map<Package> = {}
 
         function parseJson(pkg: Package) {
             let json = pkg.config.yotta
@@ -701,7 +702,7 @@ int main() {
 }
 
 namespace pxt.hex {
-    let downloadCache: U.Map<Promise<any>> = {};
+    let downloadCache: Map<Promise<any>> = {};
     let cdnUrlPromise: Promise<string>;
 
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {

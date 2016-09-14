@@ -7,12 +7,6 @@ namespace ts.pxtc {
 import pxtc = ts.pxtc
 
 namespace ts.pxtc.Util {
-    export var debug = false;
-
-    export interface Map<T> {
-        [index: string]: T;
-    }
-    export type StringMap<T> = Map<T>;
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
             debugger
@@ -50,33 +44,33 @@ namespace ts.pxtc.Util {
         return JSON.parse(JSON.stringify(v))
     }
 
-    export function iterStringMap<T>(m: Map<T>, f: (k: string, v: T) => void) {
+    export function iterMap<T>(m: pxt.Map<T>, f: (k: string, v: T) => void) {
         Object.keys(m).forEach(k => f(k, m[k]))
     }
 
-    export function mapStringMap<T, S>(m: Map<T>, f: (k: string, v: T) => S) {
-        let r: Map<S> = {}
+    export function mapMap<T, S>(m: pxt.Map<T>, f: (k: string, v: T) => S) {
+        let r: pxt.Map<S> = {}
         Object.keys(m).forEach(k => r[k] = f(k, m[k]))
         return r
     }
 
-    export function mapStringMapAsync<T, S>(m: Map<T>, f: (k: string, v: T) => Promise<S>) {
-        let r: Map<S> = {}
+    export function mapStringMapAsync<T, S>(m: pxt.Map<T>, f: (k: string, v: T) => Promise<S>) {
+        let r: pxt.Map<S> = {}
         return Promise.all(Object.keys(m).map(k => f(k, m[k]).then(v => r[k] = v)))
             .then(() => r)
     }
 
-    export function values<T>(m: Map<T>) {
+    export function values<T>(m: pxt.Map<T>) {
         return Object.keys(m || {}).map(k => m[k])
     }
 
-    export function lookup<T>(m: Map<T>, key: string): T {
+    export function lookup<T>(m: pxt.Map<T>, key: string): T {
         if (m.hasOwnProperty(key))
             return m[key]
         return null
     }
 
-    export function pushRange<T>(trg: T[], src: T[]) {
+    export function pushRange<T>(trg: T[], src: T[]): void {
         for (let i = 0; i < src.length; ++i)
             trg.push(src[i])
     }
@@ -89,10 +83,14 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    function isKV(v: any) {
+        return !!v && typeof v === "object" && !Array.isArray(v)
+    }
+
     export function jsonMergeFrom(trg: any, src: any) {
         if (!src) return;
         Object.keys(src).forEach(k => {
-            if (typeof trg[k] === 'object' && typeof src[k] === "object")
+            if (isKV(trg[k]) && isKV(src[k]))
                 jsonMergeFrom(trg[k], src[k]);
             else trg[k] = clone(src[k]);
         });
@@ -107,7 +105,7 @@ namespace ts.pxtc.Util {
 
     // { a: { b: 1 }, c: 2} => { "a.b": 1, c: 2 }
     export function jsonFlatten(v: any) {
-        let res: Map<any> = {}
+        let res: pxt.Map<any> = {}
         let loop = (pref: string, v: any) => {
             if (typeof v == "object") {
                 assert(!Array.isArray(v))
@@ -123,7 +121,7 @@ namespace ts.pxtc.Util {
         return res
     }
 
-    export function jsonUnFlatten(v: Map<any>) {
+    export function jsonUnFlatten(v: pxt.Map<any>) {
         let res: any = {}
         for (let k of Object.keys(v)) {
             let ptr = res
@@ -147,7 +145,7 @@ namespace ts.pxtc.Util {
         else return 1;
     }
 
-    export function stringMapEq(a: Map<string>, b: Map<string>) {
+    export function stringMapEq(a: pxt.Map<string>, b: pxt.Map<string>) {
         let ak = Object.keys(a)
         let bk = Object.keys(b)
         if (ak.length != bk.length) return false
@@ -203,8 +201,8 @@ namespace ts.pxtc.Util {
         return v;
     }
 
-    export function groupBy<T>(arr: T[], f: (t: T) => string): Map<T[]> {
-        let r: Map<T[]> = {}
+    export function groupBy<T>(arr: T[], f: (t: T) => string): pxt.Map<T[]> {
+        let r: pxt.Map<T[]> = {}
         arr.forEach(e => {
             let k = f(e)
             if (!r.hasOwnProperty(k)) r[k] = []
@@ -213,8 +211,8 @@ namespace ts.pxtc.Util {
         return r
     }
 
-    export function toDictionary<T>(arr: T[], f: (t: T) => string): Map<T> {
-        let r: Map<T> = {}
+    export function toDictionary<T>(arr: T[], f: (t: T) => string): pxt.Map<T> {
+        let r: pxt.Map<T> = {}
         arr.forEach(e => { r[f(e)] = e })
         return r
     }
@@ -247,9 +245,9 @@ namespace ts.pxtc.Util {
     }
 
     export function memoize<S, T>(getId: (v: S) => string, createNew: (v: S) => T): (id: S) => T {
-        let cache: Util.Map<T> = {}
+        const cache: pxt.Map<T> = {}
         return (v: S) => {
-            let id = getId(v)
+            const id = getId(v)
             if (cache.hasOwnProperty(id))
                 return cache[id]
             return (cache[id] = createNew(v))
@@ -350,13 +348,13 @@ namespace ts.pxtc.Util {
         url: string;
         method?: string; // default to GET
         data?: any;
-        headers?: Map<string>;
+        headers?: pxt.Map<string>;
         allowHttpErrors?: boolean; // don't treat non-200 responses as errors
     }
 
     export interface HttpResponse {
         statusCode: number;
-        headers: Map<string>;
+        headers: pxt.Map<string>;
         buffer?: any;
         text?: string;
         json?: any;
@@ -458,7 +456,7 @@ namespace ts.pxtc.Util {
     }
 
     export class PromiseQueue {
-        promises: Util.StringMap<Promise<any>> = {};
+        promises: pxt.Map<Promise<any>> = {};
 
         enqueue<T>(id: string, f: () => Promise<T>): Promise<T> {
             if (!this.promises.hasOwnProperty(id)) {
@@ -526,7 +524,7 @@ namespace ts.pxtc.Util {
     }
 
     let _localizeLang: string = "en";
-    let _localizeStrings: Map<string> = {};
+    let _localizeStrings: pxt.Map<string> = {};
 
     /**
      * Returns current user language iSO-code. Default is `en`.
@@ -635,7 +633,7 @@ namespace ts.pxtc.Util {
             lfmt = lfmt.replace(/\{\d+:s\}/g, "")
         }
 
-        lfmt = lfmt.replace(/\{id:[^\}]+\}/g, '');
+        lfmt = lfmt.replace(/\{(id|loc):[^\}]+\}/g, '');
 
         return fmt_va(lfmt, args);
     }

@@ -1,4 +1,5 @@
 /// <reference path="../../built/typescriptServices.d.ts"/>
+/// <reference path="../../built/pxtarget.d.ts"/>
 
 // Enforce order:
 /// <reference path="util.ts"/>
@@ -12,35 +13,6 @@
 /// <reference path="decompiler.ts"/>
 
 namespace ts.pxtc {
-    export interface CompileTarget {
-        simulatorPostMessage?: boolean; // provided by simulator as a post command message
-        isNative: boolean; // false -> JavaScript for simulator
-        nativeType?: string; // currently only "thumb"
-        hasHex: boolean;
-        hexMimeType?: string;
-        driveName?: string;
-        jsRefCounting?: boolean;
-        floatingPoint?: boolean;
-        deployDrives?: string; // partial name of drives where the .hex file should be copied
-    }
-
-    export interface CompileOptions {
-        fileSystem: StringMap<string>;
-        target: CompileTarget;
-        testMode?: boolean;
-        sourceFiles?: string[];
-        hexinfo: any;
-        extinfo?: ExtensionInfo;
-        noEmit?: boolean;
-        ast?: boolean;
-        breakpoints?: boolean;
-        justMyCode?: boolean;
-        computeUsedSymbols?: boolean;
-
-        embedMeta?: string;
-        embedBlob?: string; // base64
-    }
-
     export interface Breakpoint extends LocationInfo {
         id: number;
         isDebuggerStmt: boolean;
@@ -72,16 +44,16 @@ namespace ts.pxtc {
     }
 
     export interface CompileResult {
-        outfiles: StringMap<string>;
+        outfiles: pxt.Map<string>;
         diagnostics: KsDiagnostic[];
         success: boolean;
-        times: U.Map<number>;
+        times: pxt.Map<number>;
         ast?: Program;
         breakpoints?: Breakpoint[];
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
-        usedSymbols?: U.Map<SymbolInfo>; // q-names of symbols used
-        usedArguments?: U.Map<string[]>;
+        usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
+        usedArguments?: pxt.Map<string[]>;
         quickFlash?: {
             words: number[];
             startAddr: number;
@@ -89,7 +61,7 @@ namespace ts.pxtc {
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
-        if (!resp.usedSymbols || !pxt.debugMode())
+        if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
             return [];
 
         let parts: string[] = [];

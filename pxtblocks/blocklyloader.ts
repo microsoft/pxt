@@ -6,7 +6,7 @@ let lf = Util.lf;
 
 namespace pxt.blocks {
 
-    const blockColors: Util.StringMap<number> = {
+    const blockColors: Map<number> = {
         loops: 120,
         images: 45,
         variables: 330,
@@ -17,7 +17,7 @@ namespace pxt.blocks {
     }
 
     // list of built-in blocks, should be touched.
-    const builtinBlocks: Util.StringMap<{
+    const builtinBlocks: Map<{
         block: B.BlockDefinition;
         symbol?: pxtc.SymbolInfo;
     }> = {};
@@ -30,7 +30,7 @@ namespace pxt.blocks {
         fn: pxtc.SymbolInfo;
         block: Blockly.BlockDefinition;
     }
-    let cachedBlocks: Util.StringMap<CachedBlock> = {};
+    let cachedBlocks: Map<CachedBlock> = {};
     let cachedToolbox: string = "";
 
     export function blockSymbol(type: string): pxtc.SymbolInfo {
@@ -69,10 +69,10 @@ namespace pxt.blocks {
         shadowValue?: string;
     }
 
-    export function parameterNames(fn: pxtc.SymbolInfo): Util.StringMap<BlockParameter> {
+    export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
         // collect blockly parameter name mapping
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
-        let attrNames: Util.StringMap<BlockParameter> = {};
+        let attrNames: Map<BlockParameter> = {};
 
         if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
         if (fn.parameters)
@@ -101,7 +101,7 @@ namespace pxt.blocks {
         return attrNames;
     }
 
-    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>): HTMLElement {
+    function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>): HTMLElement {
         //
         // toolbox update
         //
@@ -161,7 +161,7 @@ namespace pxt.blocks {
         category.appendChild(block);
     }
 
-    let iconCanvasCache: Util.StringMap<HTMLCanvasElement> = {};
+    let iconCanvasCache: Map<HTMLCanvasElement> = {};
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let canvas = iconCanvasCache[c];
         if (!canvas) {
@@ -177,7 +177,7 @@ namespace pxt.blocks {
         return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
     }
 
-    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>, blockXml: HTMLElement): boolean {
+    function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>, blockXml: HTMLElement): boolean {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
@@ -240,7 +240,7 @@ namespace pxt.blocks {
         }
     }
 
-    function initBlock(block: any, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Util.StringMap<BlockParameter>) {
+    function initBlock(block: any, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
@@ -360,8 +360,8 @@ namespace pxt.blocks {
             return c;
         })
 
-        let currentBlocks: Util.StringMap<number> = {};
-        const dbg = pxt.debugMode();
+        let currentBlocks: Map<number> = {};
+        const dbg = pxt.options.debug;
         // create new toolbox and update block definitions
         blockInfo.blocks
             .filter(fn => !tb || !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
@@ -405,12 +405,12 @@ namespace pxt.blocks {
 
         // Do not remove this comment.
         // These are used for category names.
-        // lf("Loops")
-        // lf("Logic")
-        // lf("Variables")
-        // lf("Lists")
-        // lf("Text")
-        // lf("Math")
+        // lf("{id:category}Loops")
+        // lf("{id:category}Logic")
+        // lf("{id:category}Variables")
+        // lf("{id:category}Lists")
+        // lf("{id:category}Text")
+        // lf("{id:category}Math")
 
         // add extra blocks
         if (tb && pxt.appTarget.runtime && pxt.appTarget.runtime.extraBlocks) {
@@ -531,7 +531,7 @@ namespace pxt.blocks {
 
         // builtin controls_repeat_ext
         msg.CONTROLS_REPEAT_TITLE = lf("repeat %1 times");
-        msg.CONTROLS_REPEAT_INPUT_DO = lf("do");
+        msg.CONTROLS_REPEAT_INPUT_DO = lf("{id:repeat}do");
         installHelpResources(
             'controls_repeat_ext',
             lf("a loop that repeats and increments an index"),
@@ -556,7 +556,7 @@ namespace pxt.blocks {
                     "colour": blockColors['loops']
                 });
                 this.appendStatementInput("DO")
-                    .appendField(lf("do{id:while_do}"));
+                    .appendField(lf("{id:while}do"));
 
                 setHelpResources(this,
                     'device_while',
@@ -580,7 +580,7 @@ namespace pxt.blocks {
                         {
                             "type": "field_variable",
                             "name": "VAR",
-                            "variable": lf("item")
+                            "variable": lf("{id:var}item")
                             // Please note that most multilingual characters
                             // cannot be used as variable name at this point.
                             // Translate or decide the default variable name
@@ -598,7 +598,7 @@ namespace pxt.blocks {
                     "inputsInline": true
                 });
                 this.appendStatementInput('DO')
-                    .appendField(lf("do"));
+                    .appendField(lf("{id:for}do"));
 
                 let thisBlock = this;
                 setHelpResources(this,
@@ -676,7 +676,7 @@ namespace pxt.blocks {
     function initContextMenu() {
         // Translate the context menu for blocks.
         let msg: any = Blockly.Msg;
-        msg.DUPLICATE_BLOCK = lf("Duplicate");
+        msg.DUPLICATE_BLOCK = lf("{id:block}Duplicate");
         msg.REMOVE_COMMENT = lf("Remove Comment");
         msg.ADD_COMMENT = lf("Add Comment");
         msg.EXTERNAL_INPUTS = lf("External Inputs");
@@ -839,8 +839,8 @@ namespace pxt.blocks {
                             "type": "field_dropdown",
                             "name": "op",
                             "options": [
-                                [lf("min"), "min"],
-                                [lf("max"), "max"]
+                                [lf("{id:op}min"), "min"],
+                                [lf("{id:op}max"), "max"]
                             ]
                         },
                         {
@@ -927,18 +927,18 @@ namespace pxt.blocks {
         //XXX Integer validation needed.
         installHelpResources(
             'math_number',
-            lf("number"),
+            lf("{id:block}number"),
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             '/blocks/math/random'
         );
 
         // builtin math_arithmetic
         let msg: any = Blockly.Msg;
-        msg.MATH_ADDITION_SYMBOL = lf("+");
-        msg.MATH_SUBTRACTION_SYMBOL = lf("-");
-        msg.MATH_MULTIPLICATION_SYMBOL = lf("×");
-        msg.MATH_DIVISION_SYMBOL = lf("÷");
-        msg.MATH_POWER_SYMBOL = lf("^");
+        msg.MATH_ADDITION_SYMBOL = lf("{id:op}+");
+        msg.MATH_SUBTRACTION_SYMBOL = lf("{id:op}-");
+        msg.MATH_MULTIPLICATION_SYMBOL = lf("{id:op}×");
+        msg.MATH_DIVISION_SYMBOL = lf("{id:op}÷");
+        msg.MATH_POWER_SYMBOL = lf("{id:op}^");
 
         let TOOLTIPS: any = {
             'ADD': lf("Return the sum of the two numbers."),
@@ -967,14 +967,15 @@ namespace pxt.blocks {
     }
 
     function initVariables() {
+        let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace) {
             let variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
             // user has created a variable of the same name.
-            goog.array.remove(variableList, lf("item"));
-            variableList.unshift(lf("item"));
+            goog.array.remove(variableList, varname);
+            variableList.unshift(varname);
 
             let xmlList: HTMLElement[] = [];
             // variables getters first
@@ -1056,7 +1057,7 @@ namespace pxt.blocks {
 
         // builtin variables_set
         msg.VARIABLES_SET = lf("set %1 to %2");
-        msg.VARIABLES_DEFAULT_NAME = lf("item");
+        msg.VARIABLES_DEFAULT_NAME = varname;
         //XXX Do not translate the default variable name.
         //XXX Variable names with Unicode character are harmful at this point.
         msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
@@ -1076,7 +1077,7 @@ namespace pxt.blocks {
                         {
                             "type": "field_variable",
                             "name": "VAR",
-                            "variable": lf("item")
+                            "variable": varname
                         },
                         {
                             "type": "input_value",
@@ -1104,10 +1105,10 @@ namespace pxt.blocks {
         let msg: any = Blockly.Msg;
 
         // builtin controls_if
-        msg.CONTROLS_IF_MSG_IF = lf("if");
-        msg.CONTROLS_IF_MSG_THEN = lf("then");
-        msg.CONTROLS_IF_MSG_ELSE = lf("else");
-        msg.CONTROLS_IF_MSG_ELSEIF = lf("else if");
+        msg.CONTROLS_IF_MSG_IF = lf("{id:logic}if");
+        msg.CONTROLS_IF_MSG_THEN = lf("{id:logic}then");
+        msg.CONTROLS_IF_MSG_ELSE = lf("{id:logic}else");
+        msg.CONTROLS_IF_MSG_ELSEIF = lf("{id:logic}else if");
         msg.CONTROLS_IF_TOOLTIP_1 = lf("If a value is true, then do some statements.");
         msg.CONTROLS_IF_TOOLTIP_2 = lf("If a value is true, then do the first block of statements. Otherwise, do the second block of statements.");
         msg.CONTROLS_IF_TOOLTIP_3 = lf("If the first value is true, then do the first block of statements. Otherwise, if the second value is true, do the second block of statements.");
@@ -1134,8 +1135,8 @@ namespace pxt.blocks {
         );
 
         // builtin logic_operation
-        msg.LOGIC_OPERATION_AND = lf("and");
-        msg.LOGIC_OPERATION_OR = lf("or");
+        msg.LOGIC_OPERATION_AND = lf("{id:op}and");
+        msg.LOGIC_OPERATION_OR = lf("{id:op}or");
         msg.LOGIC_OPERATION_TOOLTIP_AND = lf("Return true if both inputs are true."),
             msg.LOGIC_OPERATION_TOOLTIP_OR = lf("Return true if at least one of the inputs is true."),
             installHelpResources(
@@ -1155,8 +1156,8 @@ namespace pxt.blocks {
         );
 
         // builtin logic_boolean
-        msg.LOGIC_BOOLEAN_TRUE = lf("true");
-        msg.LOGIC_BOOLEAN_FALSE = lf("false");
+        msg.LOGIC_BOOLEAN_TRUE = lf("{id:boolean}true");
+        msg.LOGIC_BOOLEAN_FALSE = lf("{id:boolean}false");
         installHelpResources(
             'logic_boolean',
             lf("a `true` or `false` value"),

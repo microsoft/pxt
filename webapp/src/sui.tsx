@@ -288,7 +288,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     renderCore() {
         if (!this.state.visible) return null;
         return (
-            <div id={this.id} className="ui mydimmer dimmer modals page transition visible active" onClick={ev => {
+            <div id={this.id} className={`ui mydimmer dimmer modals page ${pxt.options.light ? "" : "transition"} visible active`} onClick={ev => {
                 if (/mydimmer/.test((ev.target as HTMLElement).className))
                     this.hide()
             } }>

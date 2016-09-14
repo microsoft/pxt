@@ -19,6 +19,10 @@ var action: Action;
 var tot: string;
 var lazyAcc: number;
 var sum: number;
+var u8: uint8
+var i8: int8
+var u16: uint16
+var i16: int16
 
 var xyz = 12;
 
@@ -1303,6 +1307,30 @@ namespace ObjLit {
     }
 }
 
+function testBitSize() {
+    msg("testBitSize")
+    
+    u8 = 10 * 100
+    control.assert(u8 == 232)
+    u8 = 255
+    control.assert(u8 == 255)
+    i8 = -10
+    control.assert(i8 == -10)
+    i8 = 127
+    control.assert(i8 == 127)
+    i8 = -130 * 10 - 1
+    control.assert(i8 == -21)
+    u16 = 0xffff
+    control.assert(u16 == 0xffff)
+    u16 = -1
+    control.assert(u16 == 0xffff)
+    i16 = 1000 * 1000
+    control.assert(i16 == 16960)
+    i16 = -1000 * 1000
+    control.assert(i16 == -16960)
+}
+
+
 // ---------------------------------------------------------------------------
 // Driver starts
 // ---------------------------------------------------------------------------
@@ -1350,6 +1378,7 @@ testAnySwitch()
 testLambdasWithMoreParams()
 Ifaces.run()
 ObjLit.run()
+testBitSize()
 
 
 msg("test top level code")

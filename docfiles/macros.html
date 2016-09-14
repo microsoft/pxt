@@ -1,0 +1,95 @@
+<aside id=button class=box>
+   <a class="ui primary button" href="@ARGS@">@BODY@</a>
+</aside>   
+
+<aside id=vimeo>
+<div class="ui two column stackable grid container">
+<div class="column">
+    <div class="ui embed mdvid" data-source="vimeo" data-id="@ARGS@" data-placeholder="/thumbnail/1024/vimeo/@ARGS@" data-icon="video play">
+    </div>
+</div></div>    
+</aside>
+
+<aside id=youtube>
+<div class="ui two column stackable grid container">
+<div class="column">
+    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
+    </div>
+</div></div>    
+</aside>
+
+<aside id=section>
+    <!-- section @ARGS@ -->
+</aside>
+
+<aside id=hide class=box>
+    <div style='display:none'>
+        @BODY@
+    </div>
+</aside>
+
+<aside id=avatar class=box>
+    <div class='avatar @ARGS@'>
+        <div class='avatar-image'></div>
+        <div class='ui message'>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=hint class=box>
+    <div class="ui icon green message">
+        <div class="content">
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<!-- wrapped around ordinary content -->
+<aside id=main-container class=box>
+    <div class="ui text">
+        @BODY@
+    </div>
+</aside>
+
+<!-- used for 'column' box - they are collected and wrapped in 'column-container' -->
+<aside id=column class=aside>
+    <div class='column'>
+        @BODY@
+    </div>
+</aside>
+<aside id=column-container class=box>
+    <div class="ui three column stackable grid text">
+        @BODY@
+    </div>
+</aside>
+
+
+<!-- Menu on the top of the page -->
+<aside id=item class=menu>
+    <a class="item" href="@LINK@">@NAME@</a>
+</aside>
+
+<aside id=divider class=menu>
+    <div class="divider"></div>
+</aside>
+
+<aside id=top-dropdown class=menu>
+    <div class="ui simple dropdown item" title="@TITLE@">
+        @NAME@
+        <i class="dropdown icon"></i>
+        <div class="menu">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=inner-dropdown class=menu>
+    <div class="item" title="@TITLE@">
+        <i class="dropdown icon"></i> @NAME@
+        <div class="menu">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+

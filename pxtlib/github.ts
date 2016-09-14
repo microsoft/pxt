@@ -45,7 +45,7 @@ namespace pxt.github {
 
     export interface CachedPackage {
         sha: string;
-        files: U.Map<string>;
+        files: Map<string>;
     }
 
     export function pkgConfigAsync(repopath: string, tag = "master") {
@@ -154,7 +154,7 @@ namespace pxt.github {
                     }
                 })
 
-        query += ` in:name,description,readme "for PXT/${appTarget.id}"`
+        query += ` in:name,description,readme "for PXT/${appTarget.forkof || appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
             .then(r => r as SearchResults)
     }

@@ -1,9 +1,9 @@
+/// <reference path="../../built/pxtarget.d.ts"/>
 /// <reference path="../../built/pxtpackage.d.ts"/>
 
 namespace ts.pxtc {
     export const assert = Util.assert;
     export const oops = Util.oops;
-    export type StringMap<T> = Util.Map<T>;
     export import U = pxtc.Util;
 
     export const BINARY_JS = "binary.js";
@@ -20,9 +20,9 @@ namespace ts.pxtc {
         pxtNodeWave: number;
     }
 
-    interface FieldWithAccessors extends PropertyDeclaration {
-        irGetter: MethodDeclaration;
-        irSetter: MethodDeclaration;
+    export interface FieldWithAddInfo extends PropertyDeclaration {
+        irGetter?: MethodDeclaration;
+        irSetter?: MethodDeclaration;
     }
 
     let lastNodeId = 0
@@ -50,7 +50,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9256
+    // next free error 9257
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -90,12 +90,44 @@ namespace ts.pxtc {
         return isRefType(tp)
     }
 
+
+    function getBitSize(decl: TypedDecl) {
+        if (!decl || !decl.type) return BitSize.None
+        if (!(typeOf(decl).flags & TypeFlags.Number)) return BitSize.None
+        if (decl.type.kind != SK.TypeReference) return BitSize.None
+        switch ((decl.type as TypeReferenceNode).typeName.getText()) {
+            case "int8": return BitSize.Int8
+            case "int16": return BitSize.Int16
+            case "int32": return BitSize.Int32
+            case "uint8": return BitSize.UInt8
+            case "uint16": return BitSize.UInt16
+            default: return BitSize.None
+        }
+    }
+
+    export function sizeOfBitSize(b: BitSize) {
+        switch (b) {
+            case BitSize.None: return 4
+            case BitSize.Int8: return 1
+            case BitSize.Int16: return 2
+            case BitSize.Int32: return 4
+            case BitSize.UInt8: return 1
+            case BitSize.UInt16: return 2
+            default: throw oops()
+        }
+    }
+
     export function setCellProps(l: ir.Cell) {
         l._isRef = isRefDecl(l.def)
         l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
         if (!l.isRef() && typeOf(l.def).flags & TypeFlags.Void) {
             oops("void-typed variable, " + l.toString())
+        }
+        l.bitSize = getBitSize(l.def)
+        if (l.isLocal() && l.bitSize != BitSize.None) {
+            l.bitSize = BitSize.None
+            userError(9256, lf("bit sizes are not supported for locals and parameters"))
         }
     }
 
@@ -211,6 +243,15 @@ namespace ts.pxtc {
         }
     }
 
+    export const enum BitSize {
+        None,
+        Int8,
+        UInt8,
+        Int16,
+        UInt16,
+        Int32,
+    }
+
     export interface CommentAttrs {
         debug?: boolean; // requires ?dbg=1
         shim?: string;
@@ -242,9 +283,9 @@ namespace ts.pxtc {
 
         _name?: string;
         jsDoc?: string;
-        paramHelp?: Util.Map<string>;
+        paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
-        paramDefl: Util.Map<string>;
+        paramDefl: pxt.Map<string>;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
@@ -261,11 +302,10 @@ namespace ts.pxtc {
         baseClassInfo: ClassInfo;
         decl: ClassDeclaration;
         numRefFields: number;
-        allfields: PropertyDeclaration[];
+        allfields: FieldWithAddInfo[];
         methods: FunctionLikeDeclaration[];
         refmask: boolean[];
         attrs: CommentAttrs;
-        hasVTable?: boolean;
         isUsed?: boolean;
         vtable?: ir.Procedure[];
         itable?: ir.Procedure[];
@@ -534,6 +574,7 @@ namespace ts.pxtc {
     }
 
     export type VarOrParam = VariableDeclaration | ParameterDeclaration | PropertyDeclaration;
+    export type TypedDecl = Declaration & { type?: TypeNode }
 
     export interface VariableAddInfo {
         captured?: boolean;
@@ -579,13 +620,13 @@ namespace ts.pxtc {
     export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
-        let classInfos: StringMap<ClassInfo> = {}
-        let usedDecls: StringMap<Node> = {}
+        let classInfos: pxt.Map<ClassInfo> = {}
+        let usedDecls: pxt.Map<Node> = {}
         let usedWorkList: Declaration[] = []
-        let variableStatus: StringMap<VariableAddInfo> = {};
-        let functionInfo: StringMap<FunctionAddInfo> = {};
+        let variableStatus: pxt.Map<VariableAddInfo> = {};
+        let functionInfo: pxt.Map<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
-        let ifaceMembers: StringMap<number> = {}
+        let ifaceMembers: pxt.Map<number> = {}
         let nextIfaceMemberId = 0;
 
         lastNodeId = 0
@@ -666,6 +707,7 @@ namespace ts.pxtc {
 
         reset();
         emit(rootFunction)
+        layOutGlobals()
         emitVTables()
 
         if (diagnostics.getModificationCount() == 0) {
@@ -858,7 +900,7 @@ namespace ts.pxtc {
                 typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
-                    ex = new ir.Cell(bin.globals.length + numReservedGlobals, decl, getVarInfo(decl))
+                    ex = new ir.Cell(null, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
                 return ex
@@ -951,12 +993,11 @@ namespace ts.pxtc {
                 }
 
                 for (let fld0 of inf.allfields) {
-                    let fld = fld0 as FieldWithAccessors
+                    let fld = fld0 as FieldWithAddInfo
                     let fname = getName(fld)
                     let setname = "set/" + fname
 
                     if (isIfaceMemberUsed(fname)) {
-                        inf.hasVTable = true
                         if (!fld.irGetter)
                             fld.irGetter = mkBogusMethod(inf, fname)
                         let idx = fieldIndexCore(inf, fld, typeOf(fld))
@@ -968,7 +1009,6 @@ namespace ts.pxtc {
                     }
 
                     if (isIfaceMemberUsed(setname)) {
-                        inf.hasVTable = true
                         if (!fld.irSetter) {
                             fld.irSetter = mkBogusMethod(inf, setname)
                             fld.irSetter.parameters.unshift({
@@ -1002,11 +1042,6 @@ namespace ts.pxtc {
                         inf.itable[i] = null // avoid undefined
                 for (let k of Object.keys(ifaceMembers)) {
                     inf.itableInfo[ifaceMembers[k]] = k
-                }
-                if (inf.itable.length)
-                    inf.hasVTable = true
-                if (inf.hasVTable) {
-                    inf.refmask.unshift(false) // for the vtable
                 }
             })
 
@@ -1042,10 +1077,6 @@ namespace ts.pxtc {
                 classInfos[id] = info;
                 // only do it after storing our in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
-                if (info.baseClassInfo) {
-                    info.hasVTable = true
-                    info.baseClassInfo.hasVTable = true
-                }
                 scope(() => {
                     U.pushRange(typeBindings, bindings)
                     for (let mem of decl.members) {
@@ -1064,7 +1095,7 @@ namespace ts.pxtc {
                     if (info.baseClassInfo) {
                         info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
                         info.numRefFields = -1
-                        let nameMap: U.Map<FunctionLikeDeclaration> = {}
+                        let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
                         for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
                             for (let m of curr.methods) {
                                 nameMap[classFunctionKey(m)] = m
@@ -1724,6 +1755,25 @@ ${lbl}: .short 0xffff
             return mkProcCallCore(proc, null, args)
         }
 
+        function layOutGlobals() {
+            let globals = bin.globals.slice(0)
+            // stable-sort globals, with smallest first, because "strh/b" have 
+            // smaller immediate range than plain "str" (and same for "ldr")
+            globals.forEach((g, i) => g.index = i)
+            globals.sort((a, b) =>
+                sizeOfBitSize(a.bitSize) - sizeOfBitSize(b.bitSize) ||
+                a.index - b.index)
+            let currOff = numReservedGlobals * 4
+            for (let g of globals) {
+                let sz = sizeOfBitSize(g.bitSize)
+                while (currOff & (sz - 1))
+                    currOff++ // align
+                g.index = currOff
+                currOff += sz
+            }
+            bin.globalsWords = (currOff + 3) >> 2
+        }
+
         function emitVTables() {
             for (let info of bin.usedClassInfos) {
                 getVTable(info) // gets cached
@@ -1775,13 +1825,8 @@ ${lbl}: .short 0xffff
 
                 markClassUsed(info)
 
-                let obj: ir.Expr
-                if (info.hasVTable) {
-                    let lbl = info.id + "_VT"
-                    obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
-                } else {
-                    obj = ir.rtcall("pxt::mkRecord", [ir.numlit(info.numRefFields), ir.numlit(info.allfields.length)])
-                }
+                let lbl = info.id + "_VT"
+                let obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
                 obj = ir.shared(obj)
 
                 if (ctor) {
@@ -2134,10 +2179,10 @@ ${lbl}: .short 0xffff
             throw unhandled(node, lf("unsupported postfix unary operation"), 9246)
         }
 
-        function fieldIndexCore(info: ClassInfo, fld: PropertyDeclaration, t: Type) {
+        function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, t: Type) {
             let attrs = parseComments(fld)
             return {
-                idx: (info.hasVTable ? 1 : 0) + info.allfields.indexOf(fld),
+                idx: info.allfields.indexOf(fld),
                 name: getName(fld),
                 isRef: isRefType(t),
                 shimName: attrs.shim
@@ -3053,25 +3098,6 @@ ${lbl}: .short 0xffff
         }
     }
 
-    export interface FuncInfo {
-        name: string;
-        type: string;
-        args: number;
-        value: number;
-    }
-
-    export interface ExtensionInfo {
-        functions: FuncInfo[];
-        generatedFiles: U.Map<string>;
-        extensionFiles: U.Map<string>;
-        yotta: pxt.YottaConfig;
-        sha: string;
-        compileData: string;
-        shimsDTS: string;
-        enumsDTS: string;
-        onlyPublic: boolean;
-    }
-
     export function emptyExtInfo(): ExtensionInfo {
         return {
             functions: [],
@@ -3093,6 +3119,7 @@ ${lbl}: .short 0xffff
     export class Binary {
         procs: ir.Procedure[] = [];
         globals: ir.Cell[] = [];
+        globalsWords: number;
         finalPass = false;
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };
@@ -3100,9 +3127,9 @@ ${lbl}: .short 0xffff
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
 
-        strings: StringMap<string> = {};
+        strings: Map<string> = {};
         otherLiterals: string[] = [];
-        codeHelpers: StringMap<string> = {};
+        codeHelpers: Map<string> = {};
         lblNo = 0;
 
         reset() {

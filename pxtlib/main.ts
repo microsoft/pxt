@@ -1,23 +1,27 @@
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
 /// <reference path="../built/pxtpackage.d.ts"/>
 /// <reference path="../built/pxtparts.d.ts"/>
+/// <reference path="../built/pxtarget.d.ts"/>
+/// <reference path="../built/pxtpackage.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
-    let lf = U.lf;
+    const lf = U.lf;
 
     export var appTarget: TargetBundle;
-    export function debugMode() { return pxtc.Util.debug; }
-    export function setDebugMode(debug: boolean) {
-        pxtc.Util.debug = !!debug;
+
+    export interface PxtOptions {
+        debug?: boolean;
+        light?: boolean; // low resource device
     }
+    export var options: PxtOptions = {};
 
     // general error reported
     export var debug: (msg: any) => void = typeof console !== "undefined" && !!console.debug
         ? (msg) => {
-            if (pxtc.Util.debug)
+            if (pxt.options.debug)
                 console.debug(msg);
         } : () => { };
     export var log: (msg: any) => void = typeof console !== "undefined" && !!console.log
@@ -115,56 +119,8 @@ namespace pxt {
         commits?: string; // URL
     }
 
-    export interface TargetCompileService {
-        yottaTarget?: string; // bbc-microbit-classic-gcc
-        yottaCorePackage?: string; // pxt-microbit-core
-        githubCorePackage?: string; // microsoft/pxt-microbit-core
-        gittag: string;
-        serviceId: string;
-    }
-
-    export interface RuntimeOptions {
-        mathBlocks?: boolean;
-        textBlocks?: boolean;
-        listsBlocks?: boolean;
-        variablesBlocks?: boolean;
-        logicBlocks?: boolean;
-        loopsBlocks?: boolean;
-
-        extraBlocks?: {
-            namespace: string;
-            type: string;
-            gap?: number;
-            weight?: number;
-            fields?: U.Map<string>;
-        }[]
-    }
-
-    export interface AppAnalytics {
-        userVoiceApiKey?: string;
-        userVoiceForumId?: number;
-    }
-
-    export interface AppTarget {
-        id: string; // has to match ^[a-z\-]+$; used in URLs and domain names
-        name: string;
-        description?: string;
-        corepkg: string;
-        title?: string;
-        cloud?: AppCloud;
-        simulator?: AppSimulator;
-        blocksprj: ProjectTemplate;
-        tsprj: ProjectTemplate;
-        runtime?: RuntimeOptions;
-        compile: CompileTarget;
-        serial?: AppSerial;
-        appTheme: AppTheme;
-        compileService?: TargetCompileService;
-        analytics?: AppAnalytics;
-    }
-
     export interface TargetBundle extends AppTarget {
-        bundledpkgs: U.Map<U.Map<string>>;
+        bundledpkgs: Map<Map<string>>;
         bundleddirs: string[];
         versions: TargetVersions;
     }
@@ -187,35 +143,11 @@ namespace pxt {
         pkgs: FsPkg[];
     }
 
-    export interface ProjectTemplate {
-        id: string;
-        config: pxt.PackageConfig;
-        files: U.Map<string>;
-    }
-
-    export interface AppSerial {
-        manufacturerFilter?: string; // used by node-serial
-        log?: boolean;
-    }
-
-    export interface AppCloud {
-        workspaces?: boolean;
-        packages?: boolean;
-        preferredPackages?: string[]; // list of company/project(#tag) of packages
-    }
-
-    export interface AppSimulator {
-        autoRun?: boolean;
-        aspectRatio?: number; // width / height
-        partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
-        builtinParts?: U.Map<boolean>;
-    }
-
     export interface ICompilationOptions {
 
     }
 
-    export function getEmbeddedScript(id: string): Util.StringMap<string> {
+    export function getEmbeddedScript(id: string): Map<string> {
         return U.lookup(appTarget.bundledpkgs || {}, id)
     }
 
@@ -247,7 +179,7 @@ namespace pxt {
             return this.version()
         }
 
-        commonDownloadAsync(): Promise<U.Map<string>> {
+        commonDownloadAsync(): Promise<Map<string>> {
             let proto = this.verProtocol()
             if (proto == "pub") {
                 return Cloud.downloadScriptFilesAsync(this.verArgument())
@@ -258,7 +190,7 @@ namespace pxt {
                 let resp = pxt.getEmbeddedScript(this.verArgument())
                 return Promise.resolve(resp)
             } else
-                return Promise.resolve(null as U.Map<string>)
+                return Promise.resolve(null as Map<string>)
         }
 
         host() { return this.parent._host }
@@ -380,7 +312,7 @@ namespace pxt {
                 return this.config.files.slice(0);
         }
 
-        addSnapshot(files: U.Map<string>, exts: string[] = [""]) {
+        addSnapshot(files: Map<string>, exts: string[] = [""]) {
             for (let fn of this.getFiles()) {
                 if (exts.some(e => U.endsWith(fn, e))) {
                     files[this.id + "/" + fn] = this.readFile(fn)
@@ -392,18 +324,18 @@ namespace pxt {
         /**
          * Returns localized strings qName -> translation
          */
-        packageLocalizationStrings(lang: string): U.Map<string> {
-            let r: U.Map<string> = {};
+        packageLocalizationStrings(lang: string): Map<string> {
+            let r: Map<string> = {};
             let files = this.config.files;
 
             [this.id + "-jsdoc", this.id].map(name => {
                 let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
                 if (files.indexOf(fn) > -1)
-                    return JSON.parse(this.readFile(fn)) as U.Map<string>;
+                    return JSON.parse(this.readFile(fn)) as Map<string>;
                 if (lang.length > 2) {
                     fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
                     if (files.indexOf(fn) > -1)
-                        return JSON.parse(this.readFile(fn)) as U.Map<string>;
+                        return JSON.parse(this.readFile(fn)) as Map<string>;
                 }
                 return undefined;
             }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
@@ -414,7 +346,7 @@ namespace pxt {
 
     export class MainPackage
         extends Package {
-        public deps: U.Map<Package> = {};
+        public deps: Map<Package> = {};
 
         constructor(public _host: Host) {
             super("this", "file:.", null)
@@ -428,7 +360,7 @@ namespace pxt {
         }
 
         sortedDeps() {
-            let visited: U.Map<boolean> = {}
+            let visited: Map<boolean> = {}
             let ids: string[] = []
             let rec = (p: Package) => {
                 if (U.lookup(visited, p.id)) return;
@@ -442,8 +374,8 @@ namespace pxt {
             return ids.map(id => this.resolveDep(id))
         }
 
-        localizationStrings(lang: string): U.Map<string> {
-            let loc: U.Map<string> = {};
+        localizationStrings(lang: string): Map<string> {
+            let loc: Map<string> = {};
             Util.values(this.deps).forEach(dep => {
                 let depLoc = dep.packageLocalizationStrings(lang);
                 if (depLoc) // merge data
@@ -554,7 +486,7 @@ namespace pxt {
         }
 
         filesToBePublishedAsync(allowPrivate = false) {
-            let files: U.Map<string> = {};
+            let files: Map<string> = {};
 
             return this.loadAsync()
                 .then(() => {
@@ -562,7 +494,7 @@ namespace pxt {
                         U.userError('Only packages with "public":true can be published')
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
-                    U.iterStringMap(cfg.dependencies, (k, v) => {
+                    U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
                             cfg.dependencies[k] = "*"
                         }
@@ -588,16 +520,13 @@ namespace pxt {
                 let pjson = d.readFile("pxtparts.json");
                 if (pjson) {
                     try {
-                        let p = JSON.parse(pjson) as U.Map<pxsim.PartDefinition>;
+                        let p = JSON.parse(pjson) as pxt.Map<pxsim.PartDefinition>;
                         for (let k in p) {
                             if (parts.indexOf(k) >= 0) {
                                 let part = res[k] = p[k];
-                                if (part.visual instanceof String && /\.svg$/i.test(<string>part.visual)) {
-                                    let f = d.readFile(<string>part.visual);
-                                    part.visual = `data:image/svg+xml,` + encodeURI(f);
-                                } else if (/\.svg$/i.test(((<pxsim.PartVisualDefinition>part.visual).image))) {
-                                    let f = d.readFile((<pxsim.PartVisualDefinition>part.visual).image);
-                                    (<pxsim.PartVisualDefinition>part.visual).image = `data:image/svg+xml,` + encodeURI(f);
+                                if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
+                                    let f = d.readFile(part.visual.image);
+                                    part.visual.image = `data:image/svg+xml,` + encodeURI(f);
                                 }
                             }
                         }

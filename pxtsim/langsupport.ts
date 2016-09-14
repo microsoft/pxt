@@ -56,27 +56,7 @@ namespace pxsim {
     }
 
     export class RefRecord extends RefObject {
-        len: number;
-        reflen: number;
         fields: any[] = [];
-
-        destroy() {
-            for (let i = 0; i < this.reflen; ++i)
-                decr(this.fields[i])
-            this.fields = null
-        }
-
-        isRef(idx: number) {
-            check(0 <= idx && idx < this.len)
-            return idx < this.reflen
-        }
-
-        print() {
-            console.log(`RefRecord id:${this.id} refs:${this.refcnt} len:${this.len}`)
-        }
-    }
-
-    export class RefInstance extends RefRecord {
         vtable: VTable;
 
         destroy() {
@@ -88,40 +68,50 @@ namespace pxsim {
         }
 
         isRef(idx: number) {
-            check(0 <= idx && idx < this.len)
+            check(0 <= idx && idx < this.fields.length)
             return !!this.vtable.refmask[idx]
         }
 
         print() {
-            console.log(`RefInstance id:${this.id} (${this.vtable.name}) len:${this.len}`)
+            console.log(`RefInstance id:${this.id} (${this.vtable.name}) len:${this.fields.length}`)
         }
     }
 
-    export class RefAction extends RefRecord {
+    export class RefAction extends RefObject {
+        fields: any[] = [];
+        reflen: number
         func: LabelFn;
+
+        isRef(idx: number) {
+            check(0 <= idx && idx < this.fields.length)
+            return idx < this.reflen
+        }
 
         ldclo(n: number) {
             n >>= 2;
-            check(0 <= n && n < this.len)
+            check(0 <= n && n < this.fields.length)
             return this.fields[n]
         }
 
         destroy() {
-            super.destroy();
+            for (let i = 0; i < this.reflen; ++i)
+                decr(this.fields[i])
+            this.fields = null
             this.func = null
         }
 
         print() {
-            console.log(`RefAction id:${this.id} refs:${this.refcnt} len:${this.len}`)
+            console.log(`RefAction id:${this.id} refs:${this.refcnt} len:${this.fields.length}`)
         }
     }
 
     export namespace pxtcore {
         export function mkAction(reflen: number, len: number, fn: LabelFn) {
             let r = new RefAction();
-            r.len = len
             r.reflen = reflen
             r.func = fn
+            for (let i = 0; i < len; ++i)
+                r.fields.push(null)
             return r
         }
 
@@ -323,6 +313,26 @@ namespace pxsim {
         export var incr = pxsim.incr;
         export var decr = pxsim.decr;
 
+        export function toInt8(v: number) {
+            return ((v & 0xff) << 24) >> 24
+        }
+
+        export function toInt16(v: number) {
+            return ((v & 0xffff) << 16) >> 16
+        }
+
+        export function toInt32(v: number) {
+            return v | 0
+        }
+
+        export function toUInt8(v: number) {
+            return v & 0xff
+        }
+
+        export function toUInt16(v: number) {
+            return v & 0xffff
+        }
+
         export function nullFix(v: any) {
             if (v === null || v === undefined || v === false)
                 return 0
@@ -413,8 +423,8 @@ namespace pxsim {
 
         // Store a captured local in a closure. It returns the action, so it can be chained.
         export function stclo(a: RefAction, idx: number, v: any) {
-            check(0 <= idx && idx < a.len)
-            check(a.fields[idx] === undefined)
+            check(0 <= idx && idx < a.fields.length)
+            check(a.fields[idx] === null)
             //console.log(`STCLO [${idx}] = ${v}`)
             a.fields[idx] = v;
             return a;
@@ -491,25 +501,13 @@ namespace pxsim {
 
 
     export namespace pxtcore {
-        export function mkRecord(reflen: number, totallen: number) {
-            check(0 <= reflen && reflen <= totallen);
-            check(reflen <= totallen && totallen <= 255);
-            let r = new RefRecord();
-            r.reflen = reflen
-            r.len = totallen
-            for (let i = 0; i < totallen; ++i)
-                r.fields.push(0)
-            return r
-        }
-
         export function mkClassInstance(vtable: VTable) {
             check(!!vtable.methods)
             check(!!vtable.refmask)
-            let r = new RefInstance()
-            r.len = vtable.refmask.length
-            r.reflen = vtable.refmask.length
+            let r = new RefRecord()
             r.vtable = vtable
-            for (let i = 0; i < r.len; ++i)
+            let len = vtable.refmask.length
+            for (let i = 0; i < len; ++i)
                 r.fields.push(0)
             return r
         }

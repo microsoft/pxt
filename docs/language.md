@@ -117,3 +117,28 @@ This causes some semantic differences:
   (which are two different values, distinct from `0` or `false`); 
   in PXT `0`, `false`, `null`, and `undefined` all have the same underlying
   representation (32 zero bits) and thus will test as equal
+
+## Smaller int types
+
+As noted above, when performing computations numbers are treated as signed 32 bit
+integers. However, when you store numbers in global variables or (soon) record fields you
+can choose to use a smaller int type to save memory. Microcontrollers typically have very 
+little memory left, so these few bytes saved here and there (especially in commonly 
+used packages) do add up.
+
+The supported types are:
+* `uint8` with range `0` to `255`
+* `uint16` with range `0` to `65536`
+* `int8` with range `-128` to `127`
+* `int16` with range `-32768` to `32767`
+
+There is also `int32` type, but it's the same as `number`.
+
+If you attempt to store a number exceeding the range of the small int type, only
+the lowest 8 or 16 bits will be stored. There is no clamping nor overflow exceptions.
+
+### Limitations
+
+* arrays of int types are currently not supported; you can use a `Buffer` instead
+* locals and parameters of int types are not supported
+* there is no `uint32` type - all numbers are treated as signed

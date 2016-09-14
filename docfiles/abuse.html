@@ -1,0 +1,79 @@
+<div class="ui icon violet message" style='margin: 3em 0'>
+    <i class="user icon"></i>
+    <div class="content">
+        <h3 class="header">
+            User-provided content
+        </h3>
+        <p>
+            The content below is provided by a PXT user, and is not endorsed by Microsoft. If you think it's not appropriate, please
+            <a style='text-decoration:underline' id="abuse" href="#">report abuse</a>.
+        </p>
+    </div>
+</div>
+
+<div class="ui small modal" id='abusemodal'>
+    <div class="header">Report abuse</div>
+    <div class="content">
+        <div class="ui form">
+            <div class="field">
+                <label>Why do you find it offensive?</label>
+                <textarea id='abusetext' rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui cancel button">
+            <i class='ui cancel icon'></i> Cancel
+        </div>
+        <div class="ui ok button violet">
+            <i class='ui flag icon'></i> Submit
+        </div>
+    </div>
+</div>
+
+<div class="ui small modal" id='abusedone'>
+    <div class="header">Report sent</div>
+    <div class="content">
+        <p>
+            Thank you for helping keep PXT a friendly place!
+        </p>
+    </div>
+    <div class="actions">
+        <div class="ui ok green button">
+            <i class='ui trophy icon'></i> OK
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function() {
+        var id = "@id@";
+        var now = Math.round(Date.now()/1000);
+        $(".humantime").each(function() {
+            $(this).text(
+                describetime(now, parseInt($(this).data("time")))
+            )        
+        })
+        $("#abuse").click(function() {
+            $("#abusemodal")
+                .modal({
+                    onApprove: function() {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/api/@id@/abusereports',
+                            data: JSON.stringify({
+                                text: $('#abusetext').val()
+                            }),
+                            success: function() {
+                                $("#abusedone").modal("show"); 
+                            },
+                            contentType: "application/json",
+                            dataType: 'json'
+                        });
+                    }
+                })
+                .modal("show");
+        })
+    })
+</script>
