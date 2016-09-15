@@ -783,7 +783,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                             data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                         } else {
                             // expand usb help pages
-                            return Promise.join(
+                            return Promise.all(
                                 (trg.appTheme.usbHelp || []).filter(h => !!h.path)
                                     .map(h => uploader.uploadArtAsync(h.path, true)
                                         .then(blob => {
