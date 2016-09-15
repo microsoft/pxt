@@ -43,7 +43,6 @@ export interface FileHistoryEntry {
 }
 
 export interface EditorSettings {
-    showFiles?: boolean;
     editorFontSize: number;
     fileHistory: FileHistoryEntry[];
 }
@@ -558,7 +557,6 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private toggleVisibility() {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
-        this.props.parent.saveSettings();
     }
 
     renderCore() {
@@ -589,7 +587,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         document.title = pxt.appTarget.title || pxt.appTarget.name;
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         this.state = {
-            showFiles: !!this.settings.showFiles,
+            showFiles: false,
             active: document.visibilityState == 'visible'
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = 27;
@@ -616,7 +614,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     saveSettings() {
         let sett = this.settings
-        sett.showFiles = !!this.state.showFiles
 
         let f = this.editorFile
         if (f && f.epkg.getTopHeader()) {
@@ -843,7 +840,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         logs.clear();
         this.setState({
             helpCard: undefined,
-            showFiles: h.editor == pxt.javaScriptProjectName
+            showFiles: false
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
