@@ -91,6 +91,7 @@ export interface ButtonConfig {
     icon?: string; // defaults to "checkmark"
     class?: string; // defaults "positive"
     onclick?: () => (Promise<void> | void);
+    url?: string;
 }
 
 export interface ConfirmOptions extends DialogOptions {
@@ -144,10 +145,10 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let btnno = 0
     for (let b of options.buttons) {
         html += `
-      <button class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} target="_blank">
         ${Util.htmlEscape(b.label)}
         <i class="${b.icon || "checkmark"} icon"></i>
-      </button>`
+      </${b.url ? "a" : "button"}>`
     }
 
     html += `</div>`
@@ -160,7 +161,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
 
     modal.find('img').on('load', () => {
         modal.modal('refresh')
-    })
+    });
+    (modal.find(".ui.accordion") as any).accordion()
 
     return new Promise<void>((resolve, reject) => {
         let mo: any;

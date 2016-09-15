@@ -748,13 +748,13 @@ function uploadCoreAsync(opts: UploadOptions) {
             rdf = readFileAsync(p)
         }
 
-        return rdf
-            .then((data: Buffer) => {
-                let fileName = uploadFileName(p)
-                let mime = U.getMime(p)
-                let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
-                let content = ""
-
+        let fileName = uploadFileName(p)
+        let mime = U.getMime(p)
+        let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
+        let content = ""
+        let data: Buffer;
+        return rdf.then((rdata: Buffer) => {
+                data = rdata;
                 if (isText) {
                     content = data.toString("utf8")
                     if (fileName == "index.html") {
@@ -771,19 +771,35 @@ function uploadCoreAsync(opts: UploadOptions) {
                             // save it for developer inspection
                             fs.writeFileSync("built/uploadrepl/" + fileName, content)
                         }
-                    } else if (fileName == "target.json" && opts.localDir) {
+                    } else if (fileName == "target.json") {
                         let trg: pxt.TargetBundle = JSON.parse(content)
-                        for (let e of trg.appTheme.docMenu)
-                            if (e.path[0] == "/") {
-                                e.path = opts.localDir + "docs" + e.path + ".html"
-                            }
-                        trg.appTheme.logoUrl = opts.localDir
-                        trg.appTheme.homeUrl = opts.localDir
-                        data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                        if (opts.localDir) {
+                            for (let e of trg.appTheme.docMenu)
+                                if (e.path[0] == "/") {
+                                    e.path = opts.localDir + "docs" + e.path + ".html"
+                                }
+                            trg.appTheme.logoUrl = opts.localDir
+                            trg.appTheme.homeUrl = opts.localDir
+                            data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                        } else {
+                            // expand usb help pages
+                            return Promise.all(
+                                (trg.appTheme.usbHelp || []).filter(h => !!h.path)
+                                    .map(h => uploader.uploadArtAsync(h.path, true)
+                                        .then(blob => {
+                                            console.log(`target.json patch:    ${h.path} -> ${blob}`)
+                                            h.path = blob;
+                                        }))
+                            ).then(() => {
+                                content = JSON.stringify(trg, null, 2);
+                            })
+                        }
                     }
                 } else {
                     content = data.toString("base64")
                 }
+                return Promise.resolve()
+            }).then(() => {
 
                 if (opts.localDir) {
                     let fn = path.join(builtPackaged + opts.localDir, fileName)
@@ -796,10 +812,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                     filename: fileName,
                     contentType: mime,
                     content,
+                }).then(resp => {
+                    console.log(fileName, mime)
                 })
-                    .then(resp => {
-                        console.log(fileName, mime)
-                    })
             })
     }
 
@@ -1188,14 +1203,16 @@ function buildTargetCoreAsync() {
 
             saveThemeJson(cfg)
 
-            let webmanifest = buildWebManifest(cfg)
-            fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
+            const webmanifest = buildWebManifest(cfg)
+            const webmanifestjson = JSON.stringify(cfg, null, 2)
+            fs.writeFileSync("built/target.json", webmanifestjson)
             pxt.appTarget = cfg; // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
             delete targetlight.appTheme
-            fs.writeFileSync("built/targetlight.json", JSON.stringify(targetlight, null, 2))
+            const targetlightjson = JSON.stringify(targetlight, null, 2);
+            fs.writeFileSync("built/targetlight.json", targetlightjson)
             fs.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
         })
         .then(() => {

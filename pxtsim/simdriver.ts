@@ -26,6 +26,7 @@ namespace pxsim {
 
     export interface SimulatorRunOptions {
         debug?: boolean;
+        boardDefinition?: pxsim.BoardDefinition;
         parts?: string[];
         fnArgs?: any;
         aspectRatio?: number;
@@ -192,6 +193,7 @@ namespace pxsim {
             // store information
             this.currentRuntime = {
                 type: 'run',
+                boardDefinition: opts.boardDefinition,
                 parts: opts.parts,
                 fnArgs: opts.fnArgs,
                 code: js,

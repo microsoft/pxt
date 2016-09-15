@@ -216,8 +216,13 @@ namespace pxt.runner {
                     let driver = new pxsim.SimulatorDriver(container, options);
 
                     let fnArgs = resp.usedArguments;
+                    let board = pxt.appTarget.simulator.boardDefinition;
                     let parts = pxtc.computeUsedParts(resp, true);
-                    let runOptions: pxsim.SimulatorRunOptions = { parts: parts, fnArgs: fnArgs };
+                    let runOptions: pxsim.SimulatorRunOptions = {
+                        boardDefinition: board,
+                        parts: parts,
+                        fnArgs: fnArgs
+                    };
                     if (pxt.appTarget.simulator)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                             ? pxt.appTarget.simulator.partsAspectRatio

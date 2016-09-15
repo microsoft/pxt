@@ -411,7 +411,7 @@ function initSerialMonitor() {
     console.log('serial: monitoring ports...')
     initSocketServer();
 
-    const serialport = require("serialport");
+    const SerialPort = require("serialport");
 
     function close(info: SerialPortInfo) {
         console.log('serial: closing ' + info.pnpId);
@@ -421,9 +421,10 @@ function initSerialMonitor() {
     function open(info: SerialPortInfo) {
         console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
         serialPorts[info.pnpId] = info;
-        info.port = new serialport.SerialPort(info.comName, {
-            baudrate: 115200
-        }, false); // this is the openImmediately flag [default is true]
+        info.port = new SerialPort(info.comName, {
+            baudrate: 115200,
+            autoOpen: false
+        }); // this is the openImmediately flag [default is true]
         info.port.open(function (error: any) {
             if (error) {
                 console.log('failed to open: ' + error);
@@ -457,7 +458,7 @@ function initSerialMonitor() {
     }
 
     setInterval(() => {
-        serialport.list(function (err: any, ports: SerialPortInfo[]) {
+        SerialPort.list(function (err: any, ports: SerialPortInfo[]) {
             ports.filter(filterPort)
                 .filter(info => !serialPorts[info.pnpId])
                 .forEach((info) => open(info));
