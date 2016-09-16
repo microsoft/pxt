@@ -11,7 +11,7 @@ features).
 
 The main features of PXT are:
 * a Blockly-based code editor along with converter to the text format
-* an ACE-based text editor with enhanced, robust auto-completion and auto-correction
+* a Monaco code editor that powers [VS Code](https://github.com/Microsoft/vscode), editor's features are listed [here](https://code.visualstudio.com/docs/editor/editingevolved).
 * extensibility support to define new blocks in TypeScript
 * an ARM Thumb machine code emitter
 * a command-line package manager
