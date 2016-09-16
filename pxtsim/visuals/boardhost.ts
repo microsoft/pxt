@@ -75,10 +75,9 @@ namespace pxsim.visuals {
                 this.addAll(allocRes);
 
                 // hide breadboard if not used
-                const hideBreadboard = !allocRes.partsAndWires.some(r => 
+                const hideBreadboard = !allocRes.partsAndWires.some(r =>
                     (r.part && r.part.breadboardConnections && r.part.breadboardConnections.length > 0)
-                    || r.wires && r.wires.some(w => (w.end.type == "breadboard" && w.end.style != "croc") || (w.start.type == "breadboard" && w.start.style != "croc")))
-                )
+                    || r.wires && r.wires.some(w => (w.end.type == "breadboard" && (<BBLoc>w.end).style != "croc") || (w.start.type == "breadboard" && (<BBLoc>w.start).style != "croc")));
                 if (hideBreadboard) this.breadboard.hide();
             } else {
                 let el = this.boardView.getView().el;
