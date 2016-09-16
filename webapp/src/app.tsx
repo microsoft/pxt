@@ -888,7 +888,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 ],
                                 header: lf("Packages cannot be used together"),
                                 body: lf("Packages '{0}' and '{1}' cannot be used together, because they use incompatible settings ({2}).",
-                                    confl.pkg0.id, confl.pkg0.id, confl.settingName)
+                                    confl.pkg0.id, confl.pkg1.id, confl.settingName)
                             })
                         }
                     })
