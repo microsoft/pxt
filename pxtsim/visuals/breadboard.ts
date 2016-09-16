@@ -310,7 +310,7 @@ namespace pxsim.visuals {
         }
 
         public hide() {
-            this.bb.style.visibility = 'hidden';
+            this.bb.style.display = 'none';
         }
 
         public updateLocation(x: number, y: number) {
