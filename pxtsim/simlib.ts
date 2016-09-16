@@ -7,7 +7,8 @@ namespace pxsim {
         row: string,
         col: string
         xOffset?: number,
-        yOffset?: number
+        yOffset?: number,
+        style?: PinStyle;
     };
     export interface BoardLoc {
         type: "dalboard",

@@ -373,6 +373,7 @@ namespace pxsim {
                         type: "breadboard",
                         row: rowName,
                         col: colName,
+                        style: pin.def.style
                     };
                 } else {
                     //make a wire directly from pin to target
@@ -382,7 +383,8 @@ namespace pxsim {
                         row: rowName,
                         col: colName,
                         xOffset: pin.bbFit.xOffset / part.def.visual.pinDistance,
-                        yOffset: pin.bbFit.yOffset / part.def.visual.pinDistance
+                        yOffset: pin.bbFit.yOffset / part.def.visual.pinDistance,
+                        style: pin.def.style
                     }
                 }
                 let color: string;
