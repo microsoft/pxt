@@ -73,6 +73,8 @@ namespace pxsim.visuals {
                 });
 
                 this.addAll(allocRes);
+
+                if (!allocRes.requiresBreadboard) this.breadboard.hide();
             } else {
                 let el = this.boardView.getView().el;
                 this.view = el;

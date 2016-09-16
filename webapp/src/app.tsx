@@ -888,7 +888,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 ],
                                 header: lf("Packages cannot be used together"),
                                 body: lf("Packages '{0}' and '{1}' cannot be used together, because they use incompatible settings ({2}).",
-                                    confl.pkg0.id, confl.pkg0.id, confl.settingName)
+                                    confl.pkg0.id, confl.pkg1.id, confl.settingName)
                             })
                         }
                     })
@@ -1348,7 +1348,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
                         {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } onClick={() => this.openInstructions() } /> : undefined }
-                        {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                        {sandbox ? undefined : <sui.Button key='runbtn' class={make ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={make ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
                         {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}

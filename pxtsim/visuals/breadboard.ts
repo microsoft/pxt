@@ -309,6 +309,10 @@ namespace pxsim.visuals {
                 svg.addClass(this.bb, "sim-bb-outline");
         }
 
+        public hide() {
+            this.bb.style.display = 'none';
+        }
+
         public updateLocation(x: number, y: number) {
             svg.hydrate(this.bb, {
                 x: `${x}px`,
