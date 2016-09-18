@@ -22,7 +22,8 @@ export interface Sym {
     _relocs?: Reloc[];
     _id?: number;
     relocEnc?: number[];
-    file?: string;
+    file: string;
+    _imported?: boolean;
 }
 
 export interface Reloc {
@@ -118,7 +119,13 @@ const enum STT {
 const enum STB {
     LOCAL = 0,
     GLOBAL = 1,
-    WEAK = 2
+    WEAK = 2,
+    EXPORTED = GLOBAL | WEAK
+}
+
+const enum SHN {
+    ABS = 0xfff1,
+    COMMON = 0xfff2
 }
 
 export const enum RelocType {
@@ -256,11 +263,12 @@ export const enum RelocType {
 let currNameId = 0
 
 export interface FileInfo {
+    filename: string;
     syms: Sym[];
     init: Reloc[];
 }
 
-export function elfToJson(buf: Buffer): FileInfo {
+export function elfToJson(filename: string, buf: Buffer): FileInfo {
     if (buf.readUInt32LE(0) != 0x464c457f)
         U.userError("no magic")
     if (buf[4] != 1)
@@ -317,9 +325,11 @@ export function elfToJson(buf: Buffer): FileInfo {
     }
 
     for (let s of syms) {
-        if (s.isUsed && !s.name) {
+        if (!s.isUsed) continue
+        if (!s.name)
             s.name = "." + currNameId++
-        }
+        else if ((s.bind & STB.EXPORTED) == 0)
+            s.name += "." + currNameId++
     }
 
     let rsyms: Sym[] = []
@@ -327,39 +337,54 @@ export function elfToJson(buf: Buffer): FileInfo {
 
     for (let s of syms) {
         sidx++
-        if (!s.shndx || s.shndx == 65522) continue
-        if ((s.bind == STB.GLOBAL && s.name) || s.isUsed) {
-            let sect = sects[s.shndx]
-            if (!sect) {
-                U.userError(`sym=${s.name} using undefined section ${s.shndx}`)
+        if (!s.shndx) continue
+        if ((s.bind & STB.EXPORTED && s.name) || s.isUsed) {
+            let ss: Sym
+            if (s.shndx == SHN.COMMON) {
+                ss = {
+                    name: s.name,
+                    type: SymType.BSS,
+                    align: s.value || 4,
+                    size: s.size,
+                    text: "",
+                    file: filename,
+                    _relocs: []
+                }
+            } else {
+                let sect = sects[s.shndx]
+                if (!sect) {
+                    U.userError(`sym=${s.name} using undefined section ${s.shndx}`)
+                }
+                ss = {
+                    name: s.name,
+                    type: SymType.Code,
+                    align: sect.addralign || 1,
+                    size: sect.size,
+                    text: "",
+                    file: filename,
+                    _relocs: convertRelocs(sect)
+                }
+                if (U.startsWith(sect.name, ".bss"))
+                    ss.type = SymType.BSS
+                else if (U.startsWith(sect.name, ".rodata"))
+                    ss.type = SymType.RoData
+                else if (U.startsWith(sect.name, ".data") || U.startsWith(sect.name, "fs_data"))
+                    ss.type = SymType.RwData
+                else if (U.startsWith(sect.name, ".text"))
+                    ss.type = SymType.Code
+                else {
+                    ss.type = SymType.RwData
+                    console.log(`unknown section name type: ${sect.name} for sym ${s.name} @ ${sidx}`)
+                }
+                if (ss.type != SymType.BSS)
+                    ss.text = buf.slice(sect.offset, sect.offset + ss.size).toString("hex")
             }
-            let ss: Sym = {
-                name: s.name,
-                type: SymType.Code,
-                align: sect.addralign || 1,
-                size: sect.size,
-                text: "",
-                _relocs: convertRelocs(sect)
-            }
-            if (U.startsWith(sect.name, ".bss"))
-                ss.type = SymType.BSS
-            else if (U.startsWith(sect.name, ".rodata"))
-                ss.type = SymType.RoData
-            else if (U.startsWith(sect.name, ".data") || U.startsWith(sect.name, "fs_data"))
-                ss.type = SymType.RwData
-            else if (U.startsWith(sect.name, ".text"))
-                ss.type = SymType.Code
-            else {
-                ss.type = SymType.RwData
-                console.log(`unknown section name type: ${sect.name} for sym ${s.name} @ ${sidx}`)
-            }
-            if (ss.type != SymType.BSS)
-                ss.text = buf.slice(sect.offset, sect.offset + ss.size).toString("hex")
             rsyms.push(ss)
         }
     }
 
     let r: FileInfo = {
+        filename: filename,
         syms: rsyms,
         init: convertRelocs(sectsByName[".init_array"])
     }
@@ -446,27 +471,48 @@ export function elfToJson(buf: Buffer): FileInfo {
 }
 
 export interface ArArchive {
+    name: string;
     symbols: Map<number>;
     buf: Buffer;
     entries: ArEntry[];
+    filenamesOffset: number;
 }
 
 export interface ArEntry {
     filename: string;
     size: number;
     offset: number;
+    buf?: Buffer;
 }
 
 export function getArEntry(ar: ArArchive, pos: number) {
+    let ent = parseArEntry(ar, pos)
+    ent.buf = ar.buf.slice(pos + 60, pos + 60 + ent.size)
+    return ent
+}
+
+function parseArEntry(ar: ArArchive, pos: number): ArEntry {
     let buf = ar.buf
     let fn = buf.slice(pos, pos + 16).toString("binary").replace(/ *$/, "")
     let sz = parseInt(buf.slice(pos + 48, pos + 58).toString("binary"))
     if (buf[pos + 58] != 0x60 || buf[pos + 59] != 0x0A)
         U.userError("invalid AR")
-    return buf.slice(pos + 60, pos + 60 + sz)
+    let m = /^\/(\d+)/.exec(fn)
+    if (m && ar.filenamesOffset > 0) {
+        let oo = parseInt(m[1]) + ar.filenamesOffset
+        let e = oo
+        while (e < oo + 200 && buf[e] != 0x0A)
+            e++
+        fn = buf.slice(oo, e).toString("binary")
+    }
+    return {
+        filename: fn,
+        size: sz,
+        offset: pos
+    }
 }
 
-export function readArFile(buf: Buffer, onlySyms = false) {
+export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
     let magic = "!<arch>\n"
     if (buf.slice(0, magic.length).toString("binary") != magic)
         U.userError("bad AR header")
@@ -474,22 +520,20 @@ export function readArFile(buf: Buffer, onlySyms = false) {
     let hd: ArArchive = {
         symbols: {},
         buf,
-        entries: []
+        entries: [],
+        name: arname,
+        filenamesOffset: -1
     }
     while (pos < buf.length - 2) {
-        let fn = buf.slice(pos, pos + 16).toString("binary").replace(/ *$/, "")
-        let sz = parseInt(buf.slice(pos + 48, pos + 58).toString("binary"))
-        if (buf[pos + 58] != 0x60 || buf[pos + 59] != 0x0A)
-            U.userError("invalid AR")
-        hd.entries.push({
-            filename: fn,
-            size: sz,
-            offset: pos
-        })
-        if (fn == "/") {
+        let ent = parseArEntry(hd, pos)
+        hd.entries.push(ent)
+        if (ent.filename == "//") {
+            hd.filenamesOffset = pos + 60
+        }
+        if (ent.filename == "/") {
             let numsym = buf.readUInt32BE(pos + 60)
             let ptr = numsym * 4 + pos + 60 + 4
-            let endptr = pos + 60 + sz
+            let endptr = pos + 60 + ent.size
             let currsym = 0
             let beg = ptr
             while (ptr < endptr) {
@@ -505,41 +549,96 @@ export function readArFile(buf: Buffer, onlySyms = false) {
             }
             if (onlySyms) break
         }
-        //console.log(`${fn} - ${sz} bytes`)
-        let off = 60 + sz
-        if (sz & 1) off++
+        let off = 60 + ent.size
+        if (ent.size & 1) off++
         pos += off
     }
     return hd
 }
 
-// TODO rename static (local) symbols with unique names
 // TODO merge identical code symbols?
 // TODO pull in needed symbols from libc and libgcc
 // TODO do we need libcrt0?
 // TODO support for weak symbols
 
-export function linkInfos(infos: Map<FileInfo>): FileInfo {
+export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     let symLookup: Map<Sym> = {}
     let syms: Sym[] = []
     let inits: Reloc[] = []
+    let libOFiles: Map<FileInfo> = {}
+
+    function defineSym(s: Sym) {
+        s._id = syms.length
+        syms.push(s)
+        let ex = U.lookup(symLookup, s.name)
+        if (ex) {
+            console.log(`double definitions of ${s.name}`)
+        }
+        symLookup[s.name] = s
+    }
+
+    function defineBuiltin(name: string) {
+        let ss: Sym = {
+            name: name,
+            type: SymType.BSS,
+            align: 4,
+            size: 0,
+            text: "",
+            file: "_builtin_",
+            _relocs: []
+        }
+        defineSym(ss)
+    }
+
+    defineBuiltin("__etext") // == __data_start__ ?
+    defineBuiltin("__data_start__") // RAM globals
+    defineBuiltin("__data_end__") // RAM globals
+    defineBuiltin("__start_fs_data")
+    defineBuiltin("__stop_fs_data")
+
+    function lookupLib(sn: string) {
+        for (let l of libs) {
+            let soff = U.lookup(l.symbols, sn)
+            if (soff) {
+                let id = l.name + "." + soff
+                let fi = U.lookup(libOFiles, id)
+                if (!fi) {
+                    let e = getArEntry(l, soff)
+                    let fn = path.basename(l.name) + "/" + path.basename(e.filename)
+                    libOFiles[id] = fi = elfToJson(fn, e.buf)
+                }
+                let byname = U.toDictionary(fi.syms, s => s.name)
+                let ss = U.lookup(byname, sn)
+                if (!ss)
+                    U.userError(`unresolved symbol ${sn} in ${l.name} (${fi.filename})  `)
+                let addSym = (s: Sym) => {
+                    if (s._imported) return
+                    s._imported = true
+                    defineSym(s)
+                    for (let r of s._relocs) {
+                        let ls = U.lookup(byname, r.symname)
+                        if (ls) addSym(ls)
+                    }
+                }
+                addSym(ss)
+                return ss
+            }
+        }
+        return null
+    }
+
     U.iterMap(infos, (fn, fi) => {
         U.pushRange(inits, fi.init)
         for (let s of fi.syms) {
-            s._id = syms.length
-            syms.push(s)
-            let ex = U.lookup(symLookup, s.name)
-            if (ex) {
-                console.log(`double definitions of ${s.name}`)
-            }
-            s.file = fn
-            symLookup[s.name] = s
+            defineSym(s)
         }
     })
-    for (let s of syms) {
+
+    for (let i = 0; i < syms.length; ++i) {
+        let s = syms[i]
         s.relocEnc = []
         for (let r of s._relocs) {
-            let ts = U.lookup(symLookup, r.symname)
+            let ts = U.lookup(symLookup, r.symname) || lookupLib(r.symname)
             if (!ts) {
                 console.log(`unresolved ref ${s.name} -> ${r.symname}`)
             } else {
@@ -551,6 +650,7 @@ export function linkInfos(infos: Map<FileInfo>): FileInfo {
     for (let s of syms) {
         delete s._relocs
         delete s._id
+        delete s._imported
     }
-    return { syms: syms, init: inits, }
+    return { syms: syms, init: inits, filename: "" }
 }

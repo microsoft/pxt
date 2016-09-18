@@ -2775,43 +2775,74 @@ function buildCoreAsync(mode: BuildOption) {
         })
 }
 
-export function elfAsync(fn: string) {
-    if (/\.a$/.test(fn)) {
-        elf.readArFile(fs.readFileSync(fn))
-        return Promise.resolve()
+export function getLibDirsAsync() {
+    let libdirs = {
+        libgccPath: "",
+        libcPath: ""
     }
 
-    if (!fn) fn = "."
-    let st = fs.statSync(fn)
-    let files = [fn]
-    if (st.isDirectory()) {
-        files = allFiles(fn, 100).filter(f =>
-            f.indexOf("/ym/") >= 0 ? U.endsWith(f, ".a") : U.endsWith(f, ".o"))
-    }
-    files.sort(U.strcmp)
-    let res: any = {}
-    for (let f of files) {
-        console.log(f)
-        let buf = fs.readFileSync(f)
-        if (U.endsWith(f, ".a")) {
-            let ar = elf.readArFile(buf)
-            for (let e of ar.entries) {
-                if (e.filename == "/" || e.filename == "//")
-                    continue
-                let bb = elf.getArEntry(ar, e.offset)
-                let ff = f + "/" + e.filename
-                let json = elf.elfToJson(bb)
-                res[ff] = json
+    let arch = "armv6-m"
+    return execAsync("arm-none-eabi-gcc -print-libgcc-file-name")
+        .then(buf => {
+            let p = buf.toString("utf8").trim().replace("libgcc.a", "")
+            libdirs.libgccPath = path.join(p, arch)
+            return execAsync("arm-none-eabi-gcc -print-sysroot")
+        })
+        .then(buf => {
+            libdirs.libcPath = path.join(buf.toString("utf8").trim(), "lib", arch)
+        })
+        .then(() => {
+            return libdirs
+        })
+}
+
+export function elfAsync(fn: string) {
+    return getLibDirsAsync()
+        .then(libdirs => {
+            let dirmode = false
+            if (!fn) fn = "."
+            let st = fs.statSync(fn)
+            let files = [fn]
+            if (st.isDirectory()) {
+                dirmode = true
+                files = allFiles(fn, 100).filter(f =>
+                    f.indexOf("/ym/") >= 0 ? U.endsWith(f, ".a") : U.endsWith(f, ".o"))
             }
-        } else {
-            let json = elf.elfToJson(buf)
-            res[f] = json
-        }
-    }
-    res = U.sortObjectFields(res)
-    let total = elf.linkInfos(res)
-    fs.writeFileSync("elf.json", JSON.stringify(total, null, 1))
-    return Promise.resolve()
+            files.sort(U.strcmp)
+            let res: any = {}
+            for (let f of files) {
+                console.log(f)
+                let buf = fs.readFileSync(f)
+                if (U.endsWith(f, ".a")) {
+                    let ar = elf.readArFile(f, buf)
+                    for (let e of ar.entries) {
+                        if (e.filename == "/" || e.filename == "//")
+                            continue
+                        let bb = elf.getArEntry(ar, e.offset)
+                        let ff = f + "/" + e.filename
+                        let json = elf.elfToJson(path.basename(f) + "/" + e.filename, bb.buf)
+                        res[ff] = json
+                    }
+                } else {
+                    let json = elf.elfToJson(path.basename(f), buf)
+                    res[f] = json
+                }
+            }
+
+            let filenames = [
+                "libc_nano.a",
+                "libm.a",
+                "libnosys.a",
+                "libstdc++_nano.a",
+                "libsupc++_nano.a"
+            ].map(f => path.join(libdirs.libcPath, f))
+            filenames.push(path.join(libdirs.libgccPath, "libgcc.a"))
+            if (!dirmode) filenames = []
+            let libs = filenames.map(fn => elf.readArFile(fn, fs.readFileSync(fn), true))
+            res = U.sortObjectFields(res)
+            let total = elf.linkInfos(res, libs)
+            fs.writeFileSync("elf.json", JSON.stringify(total, null, 1))
+        })
 }
 
 export function buildAsync() {
