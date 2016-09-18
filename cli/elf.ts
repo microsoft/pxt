@@ -445,9 +445,76 @@ export function elfToJson(buf: Buffer): FileInfo {
     }
 }
 
+export interface ArArchive {
+    symbols: Map<number>;
+    buf: Buffer;
+    entries: ArEntry[];
+}
+
+export interface ArEntry {
+    filename: string;
+    size: number;
+    offset: number;
+}
+
+export function getArEntry(ar: ArArchive, pos: number) {
+    let buf = ar.buf
+    let fn = buf.slice(pos, pos + 16).toString("binary").replace(/ *$/, "")
+    let sz = parseInt(buf.slice(pos + 48, pos + 58).toString("binary"))
+    if (buf[pos + 58] != 0x60 || buf[pos + 59] != 0x0A)
+        U.userError("invalid AR")
+    return buf.slice(pos + 60, pos + 60 + sz)
+}
+
+export function readArFile(buf: Buffer, onlySyms = false) {
+    let magic = "!<arch>\n"
+    if (buf.slice(0, magic.length).toString("binary") != magic)
+        U.userError("bad AR header")
+    let pos = magic.length
+    let hd: ArArchive = {
+        symbols: {},
+        buf,
+        entries: []
+    }
+    while (pos < buf.length - 2) {
+        let fn = buf.slice(pos, pos + 16).toString("binary").replace(/ *$/, "")
+        let sz = parseInt(buf.slice(pos + 48, pos + 58).toString("binary"))
+        if (buf[pos + 58] != 0x60 || buf[pos + 59] != 0x0A)
+            U.userError("invalid AR")
+        hd.entries.push({
+            filename: fn,
+            size: sz,
+            offset: pos
+        })
+        if (fn == "/") {
+            let numsym = buf.readUInt32BE(pos + 60)
+            let ptr = numsym * 4 + pos + 60 + 4
+            let endptr = pos + 60 + sz
+            let currsym = 0
+            let beg = ptr
+            while (ptr < endptr) {
+                if (buf[ptr] == 0) {
+                    let symname = buf.slice(beg, ptr).toString("binary")
+                    let off = buf.readUInt32BE(pos + 60 + 4 + 4 * currsym)
+                    hd.symbols[symname] = off
+                    currsym++
+                    if (currsym >= numsym) break
+                    ptr++
+                    beg = ptr
+                } else ptr++
+            }
+            if (onlySyms) break
+        }
+        //console.log(`${fn} - ${sz} bytes`)
+        let off = 60 + sz
+        if (sz & 1) off++
+        pos += off
+    }
+    return hd
+}
+
 // TODO rename static (local) symbols with unique names
 // TODO merge identical code symbols?
-// TODO add support to .a format, including symbol index
 // TODO pull in needed symbols from libc and libgcc
 // TODO do we need libcrt0?
 // TODO support for weak symbols

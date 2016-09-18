@@ -2776,19 +2776,37 @@ function buildCoreAsync(mode: BuildOption) {
 }
 
 export function elfAsync(fn: string) {
+    if (/\.a$/.test(fn)) {
+        elf.readArFile(fs.readFileSync(fn))
+        return Promise.resolve()
+    }
+
     if (!fn) fn = "."
     let st = fs.statSync(fn)
     let files = [fn]
     if (st.isDirectory()) {
-        files = allFiles(fn, 100).filter(f => U.endsWith(f, ".o"))
+        files = allFiles(fn, 100).filter(f =>
+            f.indexOf("/ym/") >= 0 ? U.endsWith(f, ".a") : U.endsWith(f, ".o"))
     }
     files.sort(U.strcmp)
     let res: any = {}
     for (let f of files) {
         console.log(f)
         let buf = fs.readFileSync(f)
-        let json = elf.elfToJson(buf)
-        res[f] = json
+        if (U.endsWith(f, ".a")) {
+            let ar = elf.readArFile(buf)
+            for (let e of ar.entries) {
+                if (e.filename == "/" || e.filename == "//")
+                    continue
+                let bb = elf.getArEntry(ar, e.offset)
+                let ff = f + "/" + e.filename
+                let json = elf.elfToJson(bb)
+                res[ff] = json
+            }
+        } else {
+            let json = elf.elfToJson(buf)
+            res[f] = json
+        }
     }
     res = U.sortObjectFields(res)
     let total = elf.linkInfos(res)
