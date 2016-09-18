@@ -2790,7 +2790,9 @@ export function elfAsync(fn: string) {
         let json = elf.elfToJson(buf)
         res[f] = json
     }
-    fs.writeFileSync("elf.json", JSON.stringify(U.sortObjectFields(res), null, 1))
+    res = U.sortObjectFields(res)
+    let total = elf.linkInfos(res)
+    fs.writeFileSync("elf.json", JSON.stringify(total, null, 1))
     return Promise.resolve()
 }
 

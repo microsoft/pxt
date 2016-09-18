@@ -9,7 +9,7 @@ import Map = pxt.Map;
 export const enum SymType {
     Code,
     RoData,
-    Bss,
+    BSS,
     RwData,
 }
 
@@ -19,7 +19,10 @@ export interface Sym {
     align: number;
     size: number; // mostly relevant for bss
     text: string; // hex encoded
-    relocs: Reloc[];
+    _relocs?: Reloc[];
+    _id?: number;
+    relocEnc?: number[];
+    file?: string;
 }
 
 export interface Reloc {
@@ -130,7 +133,7 @@ export const enum RelocType {
     R_ARM_ABS8 = 8,
     R_ARM_SBREL32 = 9,
     R_ARM_THM_CALL = 10,
-    R_ARM_THM_PC8 = 11, 
+    R_ARM_THM_PC8 = 11,
     R_ARM_BREL_ADJ = 12,
     R_ARM_SWI24 = 13,
     R_ARM_THM_SWI8 = 14,
@@ -252,7 +255,12 @@ export const enum RelocType {
 
 let currNameId = 0
 
-export function elfToJson(buf: Buffer): {} {
+export interface FileInfo {
+    syms: Sym[];
+    init: Reloc[];
+}
+
+export function elfToJson(buf: Buffer): FileInfo {
     if (buf.readUInt32LE(0) != 0x464c457f)
         U.userError("no magic")
     if (buf[4] != 1)
@@ -331,26 +339,27 @@ export function elfToJson(buf: Buffer): {} {
                 align: sect.addralign || 1,
                 size: sect.size,
                 text: "",
-                relocs: convertRelocs(sect)
+                _relocs: convertRelocs(sect)
             }
             if (U.startsWith(sect.name, ".bss"))
-                ss.type = SymType.Bss
+                ss.type = SymType.BSS
             else if (U.startsWith(sect.name, ".rodata"))
                 ss.type = SymType.RoData
-            else if (U.startsWith(sect.name, ".data"))
+            else if (U.startsWith(sect.name, ".data") || U.startsWith(sect.name, "fs_data"))
                 ss.type = SymType.RwData
             else if (U.startsWith(sect.name, ".text"))
                 ss.type = SymType.Code
             else {
+                ss.type = SymType.RwData
                 console.log(`unknown section name type: ${sect.name} for sym ${s.name} @ ${sidx}`)
             }
-            if (ss.type != SymType.Bss)
+            if (ss.type != SymType.BSS)
                 ss.text = buf.slice(sect.offset, sect.offset + ss.size).toString("hex")
             rsyms.push(ss)
         }
     }
 
-    let r = {
+    let r: FileInfo = {
         syms: rsyms,
         init: convertRelocs(sectsByName[".init_array"])
     }
@@ -434,6 +443,47 @@ export function elfToJson(buf: Buffer): {} {
         }
         return res
     }
+}
 
+// TODO rename static (local) symbols with unique names
+// TODO merge identical code symbols?
+// TODO add support to .a format, including symbol index
+// TODO pull in needed symbols from libc and libgcc
+// TODO do we need libcrt0?
+// TODO support for weak symbols
 
+export function linkInfos(infos: Map<FileInfo>): FileInfo {
+    let symLookup: Map<Sym> = {}
+    let syms: Sym[] = []
+    let inits: Reloc[] = []
+    U.iterMap(infos, (fn, fi) => {
+        U.pushRange(inits, fi.init)
+        for (let s of fi.syms) {
+            s._id = syms.length
+            syms.push(s)
+            let ex = U.lookup(symLookup, s.name)
+            if (ex) {
+                console.log(`double definitions of ${s.name}`)
+            }
+            s.file = fn
+            symLookup[s.name] = s
+        }
+    })
+    for (let s of syms) {
+        s.relocEnc = []
+        for (let r of s._relocs) {
+            let ts = U.lookup(symLookup, r.symname)
+            if (!ts) {
+                console.log(`unresolved ref ${s.name} -> ${r.symname}`)
+            } else {
+                U.assert(r.addend == 0)
+                s.relocEnc.push(r.type, r.offset, ts._id)
+            }
+        }
+    }
+    for (let s of syms) {
+        delete s._relocs
+        delete s._id
+    }
+    return { syms: syms, init: inits, }
 }
