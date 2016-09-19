@@ -148,7 +148,9 @@ namespace pxt.BrowserUtils {
         const isRecentIE = isIE() && v >= 11
         const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
 
-        const isSupported = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
+        //In the future this should check for the availability of features, such
+        //as web workers
+        const isSupported = isModernBrowser
 
         const isUnsupportedRPI = isMidori() || (isLinux() && isARM() && isEpiphany());
         const isNotSupported = isUnsupportedRPI;
