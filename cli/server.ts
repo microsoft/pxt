@@ -501,7 +501,7 @@ export function serveAsync(options: ServeOptions) {
     nodeutil.mkdirP(tempDir)
 
     initTargetCommands()
-    initSerialMonitor();
+    //initSerialMonitor();
 
     let server = http.createServer((req, res) => {
         let error = (code: number, msg: string = null) => {
