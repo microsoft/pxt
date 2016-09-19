@@ -3091,7 +3091,7 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-export function mainCli(targetDir: string) {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2)) {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -3109,8 +3109,6 @@ export function mainCli(targetDir: string) {
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
-
-    let args = process.argv.slice(2)
 
     initConfig();
 
