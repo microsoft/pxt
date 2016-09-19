@@ -1364,12 +1364,20 @@ export function serveAsync(arg?: string) {
     }
     let localToken = globalConfig.localToken;
     if (!fs.existsSync("pxtarget.json")) {
-        let upper = path.join(__dirname, "../../..")
-        if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
-            console.log("going to " + upper)
-            process.chdir(upper)
-        } else {
-            U.userError("Cannot find pxtarget.json to serve.")
+        //Specifically when the target is being used as a library
+        let targetDepLoc = path.join(process.cwd(), nodeutil.targetDir);
+        if (fs.existsSync(path.join(targetDepLoc, "pxtarget.json"))) {
+            console.log(`Going to ${targetDepLoc}`)
+            process.chdir(targetDepLoc)
+        }
+        else {
+            let upper = path.join(__dirname, "../../..")
+            if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
+                console.log("going to " + upper)
+                process.chdir(upper)
+            } else {
+                U.userError("Cannot find pxtarget.json to serve.")
+            }
         }
     }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
