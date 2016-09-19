@@ -1354,6 +1354,9 @@ export function serveAsync(arg?: string) {
     } else if (arg == "-pkg") {
         justServe = true
         packaged = true
+    } else if (arg == "-no-browser") {
+        justServe = true
+        globalConfig.noAutoStart = true
     }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
