@@ -133,6 +133,8 @@ namespace pxt.BrowserUtils {
         return matches[matches.length - 1];
     }
 
+    let hasLoggedBrowser = false
+
     export function isBrowserSupported(): boolean {
         if (!!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
@@ -150,12 +152,24 @@ namespace pxt.BrowserUtils {
 
         //In the future this should check for the availability of features, such
         //as web workers
-        const isSupported = isModernBrowser
+        let isSupported = isModernBrowser
 
         const isUnsupportedRPI = isMidori() || (isLinux() && isARM() && isEpiphany());
         const isNotSupported = isUnsupportedRPI;
 
-        return isSupported && !isNotSupported;
+        isSupported = isSupported && !isNotSupported
+
+        //Bypass
+        isSupported = isSupported || /anybrowser=(true|1)/.test(window.location.href)
+
+        if (!hasLoggedBrowser) {
+            pxt.log(`Browser: ${browser()} ${versionString} on ${os()}`)
+            if (!isSupported) {
+                pxt.tickEvent(`browser.unsupported.${navigator.userAgent}`)
+            }
+            hasLoggedBrowser = true
+        }
+        return isSupported
     }
 
 
