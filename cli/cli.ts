@@ -70,7 +70,7 @@ function fatal(msg: string): Promise<any> {
     throw new Error(msg)
 }
 
-let globalConfig: UserConfig = {}
+export let globalConfig: UserConfig = {}
 
 function homePxtDir() {
     return path.join(process.env["HOME"] || process.env["UserProfile"], ".pxt")
