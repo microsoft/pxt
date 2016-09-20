@@ -1365,7 +1365,7 @@ export function serveAsync(arg?: string) {
     let localToken = globalConfig.localToken;
     if (!fs.existsSync("pxtarget.json")) {
         //Specifically when the target is being used as a library
-        let targetDepLoc = path.join(process.cwd(), nodeutil.targetDir);
+        let targetDepLoc = nodeutil.targetDir
         if (fs.existsSync(path.join(targetDepLoc, "pxtarget.json"))) {
             console.log(`Going to ${targetDepLoc}`)
             process.chdir(targetDepLoc)
