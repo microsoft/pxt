@@ -363,19 +363,26 @@ ${output}</xml>`;
         }
 
         function emitTopStatements(stmts: ts.Statement[]) {
-            // chunk statements
-            let chunks: ts.Statement[][] = [[]];
-            stmts.forEach(stmt => {
-                if (stmt.kind == ts.SyntaxKind.ExpressionStatement && isOutputExpression((stmt as ts.ExpressionStatement).expression))
-                    chunks.push([]);
-                chunks[chunks.length - 1].push(stmt);
-            })
+            const outputStatements: ts.Statement[] = [];
 
-            chunks.forEach(chunk => {
+            // Emit statements in one chunk, but filter out output expressions
+            pushBlocks();
+            for (const stmt of stmts) {
+                if (stmt.kind == ts.SyntaxKind.ExpressionStatement && isOutputExpression((stmt as ts.ExpressionStatement).expression)) {
+                    outputStatements.push(stmt)
+                }
+                else {
+                    emit(stmt)
+                }
+            }
+            flushBlocks();
+
+            // Now emit output expressions as standalone blocks
+            for (const stmt of outputStatements) {
                 pushBlocks();
-                chunk.forEach(statement => emit(statement));
+                emit(stmt);
                 flushBlocks();
-            })
+            }
         }
 
         function emitStatements(stmts: ts.Statement[]) {
