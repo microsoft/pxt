@@ -2,10 +2,6 @@
 namespace ts.pxtc.decompiler {
     const SK = ts.SyntaxKind;
 
-    interface BlockSequence {
-        top: number; current: number;
-    }
-
     const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
         "-": { type: "math_arithmetic", op: "MINUS" },
@@ -36,9 +32,8 @@ namespace ts.pxtc.decompiler {
             outfiles: {}, diagnostics: [], success: true, times: {}
         }
         let output = ""
-        let nexts: BlockSequence[] = [];
 
-        emitChunk(stmts, undefined, true);
+        emitBlockStatement(stmts, undefined, true);
 
         result.outfiles[file.fileName.replace(/(\.blocks)?\.\w*$/i, '') + '.blocks'] = `<xml xmlns="http://www.w3.org/1999/xhtml">
 ${output}</xml>`;
@@ -65,35 +60,45 @@ ${output}</xml>`;
         function isOutputExpression(expr: ts.Expression): boolean {
 
             switch (expr.kind) {
-                case ts.SyntaxKind.BinaryExpression:
+                case SK.BinaryExpression:
                     return !/[=<>]/.test((expr as ts.BinaryExpression).operatorToken.getText());
-                case ts.SyntaxKind.PrefixUnaryExpression: {
+                case SK.PrefixUnaryExpression: {
                     let op = (expr as ts.PrefixUnaryExpression).operator;
-                    return op != ts.SyntaxKind.PlusPlusToken && op != ts.SyntaxKind.MinusMinusToken;
+                    return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
                 }
-                case ts.SyntaxKind.PostfixUnaryExpression: {
+                case SK.PostfixUnaryExpression: {
                     let op = (expr as ts.PostfixUnaryExpression).operator;
-                    return op != ts.SyntaxKind.PlusPlusToken && op != ts.SyntaxKind.MinusMinusToken;
+                    return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
                 }
-                case ts.SyntaxKind.NumericLiteral:
-                case ts.SyntaxKind.StringLiteral:
-                case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
-                case ts.SyntaxKind.TrueKeyword:
-                case ts.SyntaxKind.FalseKeyword:
+                case SK.ParenthesizedExpression:
+                case SK.NumericLiteral:
+                case SK.StringLiteral:
+                case SK.NoSubstitutionTemplateLiteral:
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                case SK.NullKeyword:
                     return true;
                 default: return false;
             }
         }
 
-        function emitChunk(statements: ts.Node[], next?: ts.Node[], topLevel = false) {
+        /**
+         * Emits a block of statements
+         *
+         * @param statements    The statements or expressions to emit
+         * @param next?         Statements to be emitted after the block being emitted
+         * @param topLevel?     Indicates whether this block statement is at the top level scope (i.e. the source file) or not.
+         *                      If false, an error will be thrown if any output expressions are encountered. False by default
+         */
+        function emitBlockStatement(statements: ts.Node[], next?: ts.Node[], topLevel = false) {
             const outputStatements: ts.Node[] = [];
             const blockStatements: ts.Node[] = next || [];
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
             statements.reverse().forEach(statement => {
-                if (statement.kind == ts.SyntaxKind.ExpressionStatement && isOutputExpression((statement as ts.ExpressionStatement).expression)) {
+                if (statement.kind == SK.ExpressionStatement && isOutputExpression((statement as ts.ExpressionStatement).expression)) {
                     if (!topLevel) {
-                        error(statement, "Output expressions can only exist in the top level scope")
+                        error(statement, Util.lf("Output expressions can only exist in the top level scope"))
                     }
                     outputStatements.unshift(statement)
                 }
@@ -113,9 +118,9 @@ ${output}</xml>`;
         }
 
         /**
-         * Emit the given node as a series of output blocks.
+         * Emit the given node as a block that outputs a value
          *
-         * @param n The node to emit into blocks
+         * @param n     The node to emit into blocks
          */
         function emitOutputBlock(n: ts.Node): void {
             switch (n.kind) {
@@ -127,9 +132,6 @@ ${output}</xml>`;
                     break;
                 case SK.Identifier:
                     emitIdentifier(n as ts.Identifier);
-                    break;
-                case SK.Block:
-                    emitChunk((n as ts.Block).statements);
                     break;
                 case SK.StringLiteral:
                 case SK.FirstTemplateToken:
@@ -158,7 +160,7 @@ ${output}</xml>`;
                     emitPropertyAccessExpression(n as ts.PropertyAccessExpression);
                     break;
                 default:
-                    error(n, "Unsupported syntax kind for output expression block: " + SyntaxKind[n.kind]);
+                    error(n, Util.lf("Unsupported syntax kind for output expression block: " + SK[n.kind]));
                     break;
             }
 
@@ -166,7 +168,7 @@ ${output}</xml>`;
                 const op = n.operatorToken.getText();
                 const npp = ops[op];
                 if (!npp) {
-                    return error(n, "Could not find operator " + op)
+                    return error(n, Util.lf("Could not find operator " + op))
                 }
 
                 openBlockTag(npp.type)
@@ -183,28 +185,19 @@ ${output}</xml>`;
 
             function emitPrefixUnaryExpression(node: PrefixUnaryExpression) {
                 switch (node.operator) {
-                    case ts.SyntaxKind.PlusPlusToken:
-                    case ts.SyntaxKind.MinusMinusToken:
-                        emitStatementBlock(node);
-                        break;
-                    case ts.SyntaxKind.ExclamationToken:
+                    case SK.ExclamationToken:
                         openBlockTag("logic_negate");
                         emitValue("BOOL", node.operand)
                         closeBlockTag();
                         break;
-                    case ts.SyntaxKind.PlusToken:
+                    case SK.PlusToken:
                         emitOutputBlock(node.operand);
                         break;
-                    case ts.SyntaxKind.MinusToken:
-                        if (node.operand.kind == ts.SyntaxKind.NumericLiteral) {
+                    case SK.MinusToken:
+                        if (node.operand.kind == SK.NumericLiteral) {
                             emitNumericLiteral("-" + (node.operand as ts.LiteralExpression).text)
                         } else {
-                            // TODO add negation block
-                            openBlockTag("math_arithmetic")
-                            emitField("OP", "MINUS")
-                            emitValue("A", 0)
-                            emitValue("B", node.operand)
-                            closeBlockTag()
+                            negateAndEmitExpression(node.operand)
                         }
                         break;
                     default:
@@ -217,19 +210,19 @@ ${output}</xml>`;
         /**
          * Emit the given node as a statement block
          *
-         * @param n The node to emit into blocks
-         * @param next? A list of nodes to be emitted as statements following this one (i.e. part of the same block)
+         * @param n     The node to emit into blocks
+         * @param next? A list of nodes to be emitted as statements following this one (i.e. part of the same block of statements)
          */
         function emitStatementBlock(node: ts.Node, next?: ts.Node[]) {
             switch(node.kind) {
                 case SK.Block:
-                    emitChunk((node as ts.Block).statements, next);
+                    emitBlockStatement((node as ts.Block).statements, next);
                     return;
                 case SK.ExpressionStatement:
                     emitStatementBlock((node as ts.ExpressionStatement).expression, next);
                     return;
                 case SK.VariableStatement:
-                    emitChunk((node as ts.VariableStatement).declarationList.declarations, next);
+                    emitBlockStatement((node as ts.VariableStatement).declarationList.declarations, next);
                     return;
                 case SK.ArrowFunction:
                     emitArrowFunction(node as ts.ArrowFunction, next);
@@ -238,8 +231,9 @@ ${output}</xml>`;
                 case SK.BinaryExpression:
                     openBinaryExpressionBlock(node as ts.BinaryExpression)
                     break;
+                case SK.PostfixUnaryExpression:
                 case SK.PrefixUnaryExpression:
-                    openIncrementUnaryExpressionBlock(node as ts.PrefixUnaryExpression)
+                    openIncrementExpressionBlock(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression))
                     break;
                 case SK.VariableDeclaration:
                     openVaraiableDeclarationBlock(node as ts.VariableDeclaration);
@@ -258,10 +252,10 @@ ${output}</xml>`;
                     break;
                 default:
                     if (next) {
-                        error(node, "Unsupported statement in block: " + SyntaxKind[node.kind])
+                        error(node, Util.lf("Unsupported statement in block: " + SK[node.kind]))
                     }
                     else {
-                        error(node, "Statement kind unsupported in blocks: " + SyntaxKind[node.kind])
+                        error(node, Util.lf("Statement kind unsupported in blocks: " + SK[node.kind]))
                     }
                     return;
             }
@@ -276,7 +270,7 @@ ${output}</xml>`;
 
             function openImageLiteralExpressionBlock(node: ts.CallExpression, info: pxtc.CallInfo) {
                 let arg = node.arguments[0];
-                if (arg.kind != ts.SyntaxKind.StringLiteral && arg.kind != ts.SyntaxKind.NoSubstitutionTemplateLiteral) {
+                if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
                     error(node)
                     return;
                 }
@@ -291,23 +285,26 @@ ${output}</xml>`;
             }
 
             function openBinaryExpressionBlock(n: ts.BinaryExpression): void {
-                if (n.left.kind !== SyntaxKind.Identifier) {
-                    error(n, "Only variable names may be assigned to");
+                if (n.left.kind !== SK.Identifier) {
+                    error(n, Util.lf("Only variable names may be assigned to"));
                     return;
                 }
 
                 const name = (n.left as ts.Identifier).text;
 
                 switch (n.operatorToken.kind) {
-                    case SyntaxKind.EqualsToken:
+                    case SK.EqualsToken:
                         openVariableSetOrChangeBlock(name, n.right);
                         break;
-                    case SyntaxKind.PlusEqualsToken:
+                    case SK.PlusEqualsToken:
                         openVariableSetOrChangeBlock(name, n.right, true);
                         break;
-                    case SyntaxKind.MinusEqualsToken:
-                        // TODO: Support this
-                        error(n, "-= not currently supported")
+                    case SK.MinusEqualsToken:
+                        openBlockTag("variables_change");
+                        emitField("VAR", name);
+                        write(`<value name="VALUE">`);
+                        negateAndEmitExpression(n.right);
+                        write(`</value>`)
                         break;
 
                 }
@@ -333,7 +330,7 @@ ${output}</xml>`;
             }
 
             function openForStatementBlock(n: ts.ForStatement) {
-                if (n.initializer.kind !== SyntaxKind.VariableDeclarationList) {
+                if (n.initializer.kind !== SK.VariableDeclarationList) {
                     error(n, Util.lf("only variable declarations are permitted in for loop initializers"));
                     return;
                 }
@@ -354,13 +351,13 @@ ${output}</xml>`;
                     error(n, Util.lf("for loop incrementors may only increment the variable declared in the initializer"));
                 }
 
-                if (n.condition.kind !== SyntaxKind.BinaryExpression) {
+                if (n.condition.kind !== SK.BinaryExpression) {
                     error(n, Util.lf("for loop conditionals must be binary comparison operations"))
                     return;
                 }
 
                 const condition = n.condition as ts.BinaryExpression
-                if (condition.left.kind !== SyntaxKind.Identifier || (condition.left as ts.Identifier).text !== indexVar) {
+                if (condition.left.kind !== SK.Identifier || (condition.left as ts.Identifier).text !== indexVar) {
                     error(n, Util.lf("left side of for loop conditional must be the variable declared in the initializer"))
                     return;
                 }
@@ -372,7 +369,7 @@ ${output}</xml>`;
                 emitField("VAR", indexVar);
 
 
-                if (condition.operatorToken.kind === SyntaxKind.LessThanToken) {
+                if (condition.operatorToken.kind === SK.LessThanToken) {
                     write(`<value name="TO">`)
                     openBlockTag("math_arithmetic")
                     emitField("OP", "MINUS")
@@ -381,7 +378,7 @@ ${output}</xml>`;
                     closeBlockTag()
                     write(`</value>`)
                 }
-                else if (condition.operatorToken.kind === SyntaxKind.LessThanEqualsToken) {
+                else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
                     emitValue("TO", condition.right)
                 }
                 else {
@@ -391,9 +388,9 @@ ${output}</xml>`;
                 emitStatementTag("DO", n.statement);
 
                 function incrementorIsValid(varName: string): boolean {
-                    if (n.incrementor.kind === SyntaxKind.PostfixUnaryExpression) {
+                    if (n.incrementor.kind === SK.PostfixUnaryExpression) {
                         const incrementor = n.incrementor as ts.PostfixUnaryExpression;
-                        if (incrementor.operator === SyntaxKind.PlusPlusToken && incrementor.operand.kind === SyntaxKind.Identifier) {
+                        if (incrementor.operator === SK.PlusPlusToken && incrementor.operand.kind === SK.Identifier) {
                             return (incrementor.operand as ts.Identifier).text === varName;
                         }
                     }
@@ -409,23 +406,30 @@ ${output}</xml>`;
 
 
             function openVaraiableDeclarationBlock(n: ts.VariableDeclaration) {
-                if (n.name.kind !== SyntaxKind.Identifier) {
-                    error(n, "Variable declarations may not use binding patterns")
+                if (n.name.kind !== SK.Identifier) {
+                    error(n, Util.lf("Variable declarations may not use binding patterns"))
                     return;
                 }
                 else if (!n.initializer) {
-                    error(n, "Variable declarations must have an initializer")
+                    error(n, Util.lf("Variable declarations must have an initializer"))
                     return;
                 }
                 openVariableSetOrChangeBlock((n.name as ts.Identifier).text, n.initializer)
             }
 
-            function openIncrementUnaryExpressionBlock(node: PrefixUnaryExpression) {
-                if (node.operand.kind != ts.SyntaxKind.Identifier) {
-                    error(node, "-- and ++ may only be used on an identifier");
+            function openIncrementExpressionBlock(node: ts.PrefixUnaryExpression | PostfixUnaryExpression) {
+                if (node.operand.kind != SK.Identifier) {
+                    error(node, Util.lf("-- and ++ may only be used on an identifier"));
                     return;
                 }
-                openVariableSetOrChangeBlock((node.operand as ts.Identifier).text, node.operator == ts.SyntaxKind.PlusPlusToken ? 1 : -1, true)
+                const isPlusPlus = node.operator === SK.PlusPlusToken;
+
+                if (!isPlusPlus && node.operator !== SK.MinusMinusToken) {
+                    error(node);
+                    return;
+                }
+
+                openVariableSetOrChangeBlock((node.operand as ts.Identifier).text, isPlusPlus ? 1 : -1, true)
             }
 
             function openCallExpressionBlock(node: ts.CallExpression) {
@@ -558,6 +562,15 @@ ${output}</xml>`;
             else output += value;
         }
 
+        // TODO: Add a real negation block
+        function negateAndEmitExpression(node: ts.Node) {
+            openBlockTag("math_arithmetic")
+            emitField("OP", "MINUS")
+            emitValue("A", 0)
+            emitValue("B", node)
+            closeBlockTag()
+        }
+
         function emitValue(name: string, contents: boolean | number | string | Node): void {
             write(`<value name="${name}">`)
 
@@ -585,20 +598,14 @@ ${output}</xml>`;
             write(`<block type="${type}">`)
         }
 
-        function closeBlockTag(inBlock = false) {
-            if (!inBlock) {
-                write(`</block>`)
-            }
+        function closeBlockTag() {
+            write(`</block>`)
         }
 
         function emitStatementTag(name: string, contents: ts.Statement | ts.Expression) {
             write(`<statement name="${name}">`)
             emitStatementBlock(contents)
             write(`</statement>`)
-        }
-
-        function emitVariableStatement(n: ts.VariableStatement) {
-            emitChunk(n.declarationList.declarations);
         }
 
         function emitIdentifier(identifier: Identifier) {
