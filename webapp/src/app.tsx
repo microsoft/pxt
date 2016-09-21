@@ -1464,7 +1464,6 @@ function enableFeedback(version: string) {
 }
 
 function enableAnalytics(version: string) {
-    core.cookieNotification()
     enableAppInsights(version);
     enableMixPanel(version);
 }
@@ -1572,6 +1571,7 @@ export var targetVersion: string;
 export var sandbox = false;
 
 function initTheme() {
+    core.cookieNotification()
     if (pxt.appTarget.appTheme.accentColor) {
         let style = document.createElement('style');
         style.type = 'text/css';
