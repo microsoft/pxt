@@ -9,7 +9,7 @@
     <meta name="description" content="@description@" />
 
     <link rel="manifest" href="/sim/sim.webmanifest">
-    
+
     <link rel="apple-touch-icon" href="@appLogo@">
     <link rel="icon" href="@appLogo@">
     <link rel="shortcut icon" href="@appLogo@">
@@ -24,7 +24,7 @@
 
 </head>
 
-<body>    
+<body>
     <div id='loading' class="ui active inverted dimmer">
         <div class="ui large loader"></div>
     </div>
@@ -37,8 +37,8 @@
         <div id='warnmsg' class="ui orange inverted segment"></div>
         <div id='infomsg' class="ui teal inverted segment"></div>
         <div id='compilemsg' class="ui ignored info message"></div>
-        <div id='cookiemsg' class="ui teal inverted black segment"></div>
     </div>
+    <div id='cookiemsg' class="ui teal inverted black segment"></div>
 
     <link rel="stylesheet" data-name="vs/editor/editor.main" href="/cdn/vs/editor/editor.main.css">
     <style type="text/css">
@@ -99,7 +99,7 @@
                     <shadow type="logic_boolean">
                         <field name="BOOL">TRUE</field>
                     </shadow>
-                </value>                
+                </value>
             </block>
             <block type="controls_if" gap="8">
                 <mutation else="1"></mutation>
@@ -107,7 +107,7 @@
                     <shadow type="logic_boolean">
                         <field name="BOOL">TRUE</field>
                     </shadow>
-                </value>                
+                </value>
             </block>
             <block type="controls_if">
                 <mutation else="1" elseif="1"></mutation>
@@ -115,12 +115,12 @@
                     <shadow type="logic_boolean">
                         <field name="BOOL">TRUE</field>
                     </shadow>
-                </value>                
+                </value>
                 <value name="IF1">
                     <shadow type="logic_boolean">
                         <field name="BOOL">TRUE</field>
                     </shadow>
-                </value>                
+                </value>
             </block>
             <block type="logic_compare" gap="8">
                 <value name="A">
@@ -264,7 +264,7 @@
                         <field name="NUM">4</field>
                     </shadow>
                 </value>
-            </block>            
+            </block>
         </category>
         <category colour="160" name="Text" category="46">
             <block type="text"></block>

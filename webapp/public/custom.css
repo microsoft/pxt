@@ -83,9 +83,11 @@ body {
 #cookiemsg {
    position: absolute;
    left: 1rem;
-   bottom: 2rem;
+   bottom: 0.5rem;
    width: 18rem;
    text-align: left;
+   display:none;
+   z-index:1000;
 }
 
 #cookiemsg > a {
@@ -538,6 +540,9 @@ html {
         left:1.5rem;
         right:auto;
     }
+    #cookiemsg {
+        bottom:2.5rem;
+    }
     #filelist {
         bottom:3rem;
         min-width:20rem;
@@ -594,7 +599,7 @@ html {
     }            
     #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {     
         bottom:2rem;
-    }            
+    }       
     .ui.landscape.only {
         display:none !important;
     }
