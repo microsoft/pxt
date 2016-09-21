@@ -275,7 +275,7 @@ export class Editor extends srceditor.Editor {
     }
 
     isIncomplete() {
-        return (this.editor as any)._keybindingService.getContextValue('suggestWidgetVisible');
+        return this.editor ? (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible : false;
     }
 
     prepare() {
@@ -306,12 +306,12 @@ export class Editor extends srceditor.Editor {
             "editor.foldLevel4",
             "editor.foldLevel5"]
 
-        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._shouldShowInContextMenu = false : null);
+        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._actual.menuOpts = undefined : null);
 
         this.editor.getActions().forEach(action => disabledFromCommands.indexOf(action.id) > -1 ? (action as any)._enabled = false : null);
 
         this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
-            .run = () => Promise.resolve(this.formatCode());
+            .run = () => Promise.resolve(this.beforeCompile());
 
         this.editor.getActions().filter(action => action.id == "editor.action.quickCommand")[0]
             .label = lf("Show Commands");
@@ -320,8 +320,7 @@ export class Editor extends srceditor.Editor {
             id: "save",
             label: lf("Save"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-            enablement: { writeableEditor: true },
-            contextMenuGroupId: "4_tools/*",
+            keybindingContext: "writeableEditor",
             run: () => Promise.resolve(this.parent.typecheckNow())
         });
 
@@ -329,10 +328,19 @@ export class Editor extends srceditor.Editor {
             id: "runSimulator",
             label: lf("Run Simulator"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-            enablement: { writeableEditor: true },
-            contextMenuGroupId: "4_tools/*",
+            keybindingContext: "writeableEditor",
             run: () => Promise.resolve(this.parent.runSimulator())
         });
+
+        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+            this.editor.addAction({
+                id: "compileHex",
+                label: lf("Download"),
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
+                keybindingContext: "writeableEditor",
+                run: () => Promise.resolve(this.parent.compile())
+            });
+        }
 
         this.editor.addAction({
             id: "zoomIn",
@@ -348,36 +356,27 @@ export class Editor extends srceditor.Editor {
             run: () => Promise.resolve(this.zoomOut())
         });
 
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-            this.editor.addAction({
-                id: "compileHex",
-                label: lf("Download"),
-                enablement: { writeableEditor: true },
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
-                contextMenuGroupId: "4_tools/*",
-                run: () => Promise.resolve(this.parent.compile())
-            });
-        }
-
         this.editor.onDidBlurEditorText(() => {
             if (this.isIncomplete()) {
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSyntaxValidation: true});
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSemanticValidation: true});
             } else {
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = false;
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSyntaxValidation: false});
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSemanticValidation: false});
+            }
+        })
+
+        this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
+            // Update editor font size in settings after a ctrl+scroll zoom
+            let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
+            if (this.parent.settings.editorFontSize != currentFont) {
+                this.parent.settings.editorFontSize = currentFont;
+                this.forceDiagnosticsUpdate();
             }
         })
 
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
             if (this.currFile.isReadonly()) return;
-            if (this.isIncomplete()) {
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
-            } else {
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = false;
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
-            }
 
             if (this.highlightDecorations)
                 this.editor.deltaDecorations(this.highlightDecorations, []);
@@ -400,14 +399,17 @@ export class Editor extends srceditor.Editor {
 
     zoomIn() {
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
-        this.parent.settings.editorFontSize++;
+        let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
+        this.parent.settings.editorFontSize = currentFont + 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
 
     zoomOut() {
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
-        this.parent.settings.editorFontSize--;
+        let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
+        //(this.editor.getConfiguration() as any).EditorZoom.setZoomLevel(1);
+        this.parent.settings.editorFontSize = currentFont - 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
@@ -456,6 +458,8 @@ export class Editor extends srceditor.Editor {
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
 
         this.editor.updateOptions({ readOnly: file.isReadonly() });
+        let readOnlyContext = this.editor.createContextKey(/*key name*/'writeableEditor', /*default value*/false);
+        readOnlyContext.set(!file.isReadonly())
 
         this.currFile = file;
         let proto = "pkg:" + this.currFile.getName();
@@ -517,7 +521,7 @@ export class Editor extends srceditor.Editor {
         let file = this.currFile
         let lines: string[] = this.editor.getModel().getLinesContent();
         let fontSize = this.parent.settings.editorFontSize - 3;
-        let lineHeight = (this.editor as any)._configuration.editor.lineHeight;
+        let lineHeight = this.editor.getConfiguration().lineHeight;
 
         let viewZones = this.editorViewZones || [];
         this.annotationLines = [];

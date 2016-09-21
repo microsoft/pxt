@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.5.3(793ede49d53dba79d39e52205f16321278f5183c)
+ * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -97,6 +97,35 @@ define(__m[27], __M([1,0]), function (require, exports) {
         return low;
     }
     exports.findFirst = findFirst;
+    /**
+     * Returns the top N elements from the array.
+     *
+     * Faster than sorting the entire array when the array is a lot larger than N.
+     *
+     * @param array The unsorted array.
+     * @param compare A sort function for the elements.
+     * @param n The number of elements to return.
+     * @return The first n elemnts from array when sorted with compare.
+     */
+    function top(array, compare, n) {
+        if (n === 0) {
+            return [];
+        }
+        var result = array.slice(0, n).sort(compare);
+        var _loop_1 = function(i, m) {
+            var element = array[i];
+            if (compare(element, result[n - 1]) < 0) {
+                result.pop();
+                var j = findFirst(result, function (e) { return compare(element, e) < 0; });
+                result.splice(j, 0, element);
+            }
+        };
+        for (var i = n, m = array.length; i < m; i++) {
+            _loop_1(i, m);
+        }
+        return result;
+    }
+    exports.top = top;
     function merge(arrays, hashFn) {
         var result = new Array();
         if (!hashFn) {
@@ -240,12 +269,29 @@ define(__m[27], __M([1,0]), function (require, exports) {
         return arr;
     }
     exports.fill = fill;
-    function index(array, indexer) {
-        var result = Object.create(null);
-        array.forEach(function (t) { return result[indexer(t)] = t; });
-        return result;
+    function index(array, indexer, merger) {
+        if (merger === void 0) { merger = function (t) { return t; }; }
+        return array.reduce(function (r, t) {
+            var key = indexer(t);
+            r[key] = merger(t, r[key]);
+            return r;
+        }, Object.create(null));
     }
     exports.index = index;
+    /**
+     * Inserts an element into an array. Returns a function which, when
+     * called, will remove that element from the array.
+     */
+    function insert(array, element) {
+        array.push(element);
+        return function () {
+            var index = array.indexOf(element);
+            if (index > -1) {
+                array.splice(index, 1);
+            }
+        };
+    }
+    exports.insert = insert;
 });
 
 define(__m[19], __M([1,0]), function (require, exports) {
@@ -311,6 +357,16 @@ define(__m[24], __M([1,0,19]), function (require, exports, diffChange_1) {
      *  Licensed under the MIT License. See License.txt in the project root for license information.
      *--------------------------------------------------------------------------------------------*/
     'use strict';
+    function createStringSequence(a) {
+        return {
+            getLength: function () { return a.length; },
+            getElementHash: function (pos) { return a[pos]; }
+        };
+    }
+    function stringDiff(original, modified) {
+        return new LcsDiff(createStringSequence(original), createStringSequence(modified)).ComputeDiff();
+    }
+    exports.stringDiff = stringDiff;
     //
     // The code below has been ported from a C# implementation in VS
     //
@@ -1014,87 +1070,10 @@ define(__m[8], __M([1,0]), function (require, exports) {
      * A simple map to store value by a key object. Key can be any object that has toString() function to get
      * string value of the key.
      */
-    var SimpleMap = (function () {
-        function SimpleMap() {
-            this.map = Object.create(null);
-            this._size = 0;
-        }
-        Object.defineProperty(SimpleMap.prototype, "size", {
-            get: function () {
-                return this._size;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        SimpleMap.prototype.get = function (k) {
-            var value = this.peek(k);
-            return value ? value : null;
-        };
-        SimpleMap.prototype.keys = function () {
-            var keys = [];
-            for (var key in this.map) {
-                keys.push(this.map[key].key);
-            }
-            return keys;
-        };
-        SimpleMap.prototype.entries = function () {
-            var entries = [];
-            for (var key in this.map) {
-                entries.push(this.map[key]);
-            }
-            return entries;
-        };
-        SimpleMap.prototype.set = function (k, t) {
-            if (this.get(k)) {
-                return false; // already present!
-            }
-            this.push(k, t);
-            return true;
-        };
-        SimpleMap.prototype.delete = function (k) {
-            var value = this.get(k);
-            if (value) {
-                this.pop(k);
-                return value;
-            }
-            return null;
-        };
-        SimpleMap.prototype.has = function (k) {
-            return !!this.get(k);
-        };
-        SimpleMap.prototype.clear = function () {
-            this.map = Object.create(null);
-            this._size = 0;
-        };
-        SimpleMap.prototype.push = function (key, value) {
-            var entry = { key: key, value: value };
-            this.map[key.toString()] = entry;
-            this._size++;
-        };
-        SimpleMap.prototype.pop = function (k) {
-            delete this.map[k.toString()];
-            this._size--;
-        };
-        SimpleMap.prototype.peek = function (k) {
-            var entry = this.map[k.toString()];
-            return entry ? entry.value : null;
-        };
-        return SimpleMap;
-    }());
-    exports.SimpleMap = SimpleMap;
-    /**
-     * A simple Map<T> that optionally allows to set a limit of entries to store. Once the limit is hit,
-     * the cache will remove the entry that was last recently added. Or, if a ratio is provided below 1,
-     * all elements will be removed until the ratio is full filled (e.g. 0.75 to remove 25% of old elements).
-     */
     var LinkedMap = (function () {
-        function LinkedMap(limit, ratio) {
-            if (limit === void 0) { limit = Number.MAX_VALUE; }
-            if (ratio === void 0) { ratio = 1; }
-            this.limit = limit;
+        function LinkedMap() {
             this.map = Object.create(null);
             this._size = 0;
-            this.ratio = limit * ratio;
         }
         Object.defineProperty(LinkedMap.prototype, "size", {
             get: function () {
@@ -1103,7 +1082,99 @@ define(__m[8], __M([1,0]), function (require, exports) {
             enumerable: true,
             configurable: true
         });
-        LinkedMap.prototype.set = function (key, value) {
+        LinkedMap.prototype.get = function (k) {
+            var value = this.peek(k);
+            return value ? value : null;
+        };
+        LinkedMap.prototype.getOrSet = function (k, t) {
+            var res = this.get(k);
+            if (res) {
+                return res;
+            }
+            this.set(k, t);
+            return t;
+        };
+        LinkedMap.prototype.keys = function () {
+            var keys = [];
+            for (var key in this.map) {
+                keys.push(this.map[key].key);
+            }
+            return keys;
+        };
+        LinkedMap.prototype.values = function () {
+            var values = [];
+            for (var key in this.map) {
+                values.push(this.map[key].value);
+            }
+            return values;
+        };
+        LinkedMap.prototype.entries = function () {
+            var entries = [];
+            for (var key in this.map) {
+                entries.push(this.map[key]);
+            }
+            return entries;
+        };
+        LinkedMap.prototype.set = function (k, t) {
+            if (this.get(k)) {
+                return false; // already present!
+            }
+            this.push(k, t);
+            return true;
+        };
+        LinkedMap.prototype.delete = function (k) {
+            var value = this.get(k);
+            if (value) {
+                this.pop(k);
+                return value;
+            }
+            return null;
+        };
+        LinkedMap.prototype.has = function (k) {
+            return !!this.get(k);
+        };
+        LinkedMap.prototype.clear = function () {
+            this.map = Object.create(null);
+            this._size = 0;
+        };
+        LinkedMap.prototype.push = function (key, value) {
+            var entry = { key: key, value: value };
+            this.map[key.toString()] = entry;
+            this._size++;
+        };
+        LinkedMap.prototype.pop = function (k) {
+            delete this.map[k.toString()];
+            this._size--;
+        };
+        LinkedMap.prototype.peek = function (k) {
+            var entry = this.map[k.toString()];
+            return entry ? entry.value : null;
+        };
+        return LinkedMap;
+    }());
+    exports.LinkedMap = LinkedMap;
+    /**
+     * A simple Map<T> that optionally allows to set a limit of entries to store. Once the limit is hit,
+     * the cache will remove the entry that was last recently added. Or, if a ratio is provided below 1,
+     * all elements will be removed until the ratio is full filled (e.g. 0.75 to remove 25% of old elements).
+     */
+    var BoundedLinkedMap = (function () {
+        function BoundedLinkedMap(limit, ratio) {
+            if (limit === void 0) { limit = Number.MAX_VALUE; }
+            if (ratio === void 0) { ratio = 1; }
+            this.limit = limit;
+            this.map = Object.create(null);
+            this._size = 0;
+            this.ratio = limit * ratio;
+        }
+        Object.defineProperty(BoundedLinkedMap.prototype, "size", {
+            get: function () {
+                return this._size;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        BoundedLinkedMap.prototype.set = function (key, value) {
             if (this.map[key]) {
                 return false; // already present!
             }
@@ -1114,11 +1185,19 @@ define(__m[8], __M([1,0]), function (require, exports) {
             }
             return true;
         };
-        LinkedMap.prototype.get = function (key) {
+        BoundedLinkedMap.prototype.get = function (key) {
             var entry = this.map[key];
             return entry ? entry.value : null;
         };
-        LinkedMap.prototype.delete = function (key) {
+        BoundedLinkedMap.prototype.getOrSet = function (k, t) {
+            var res = this.get(k);
+            if (res) {
+                return res;
+            }
+            this.set(k, t);
+            return t;
+        };
+        BoundedLinkedMap.prototype.delete = function (key) {
             var entry = this.map[key];
             if (entry) {
                 this.map[key] = void 0;
@@ -1139,16 +1218,16 @@ define(__m[8], __M([1,0]), function (require, exports) {
             }
             return null;
         };
-        LinkedMap.prototype.has = function (key) {
+        BoundedLinkedMap.prototype.has = function (key) {
             return !!this.map[key];
         };
-        LinkedMap.prototype.clear = function () {
+        BoundedLinkedMap.prototype.clear = function () {
             this.map = Object.create(null);
             this._size = 0;
             this.head = null;
             this.tail = null;
         };
-        LinkedMap.prototype.push = function (entry) {
+        BoundedLinkedMap.prototype.push = function (entry) {
             if (this.head) {
                 // [A]-[B] = [A]-[B]->[X]
                 entry.prev = this.head;
@@ -1161,7 +1240,7 @@ define(__m[8], __M([1,0]), function (require, exports) {
             this.map[entry.key] = entry;
             this._size++;
         };
-        LinkedMap.prototype.trim = function () {
+        BoundedLinkedMap.prototype.trim = function () {
             if (this.tail) {
                 // Remove all elements until ratio is reached
                 if (this.ratio < this.limit) {
@@ -1192,9 +1271,9 @@ define(__m[8], __M([1,0]), function (require, exports) {
                 }
             }
         };
-        return LinkedMap;
+        return BoundedLinkedMap;
     }());
-    exports.LinkedMap = LinkedMap;
+    exports.BoundedLinkedMap = BoundedLinkedMap;
     /**
      * A subclass of Map<T> that makes an entry the MRU entry as soon
      * as it is being accessed. In combination with the limit for the
@@ -1218,7 +1297,7 @@ define(__m[8], __M([1,0]), function (require, exports) {
             return null;
         };
         return LRUCache;
-    }(LinkedMap));
+    }(BoundedLinkedMap));
     exports.LRUCache = LRUCache;
 });
 
@@ -1245,10 +1324,10 @@ define(__m[3], __M([1,0]), function (require, exports) {
         _isMacintosh = (process.platform === 'darwin');
         _isLinux = (process.platform === 'linux');
         _isRootUser = !_isWindows && (process.getuid() === 0);
-        var vscode_nls_config = process.env['VSCODE_NLS_CONFIG'];
-        if (vscode_nls_config) {
+        var rawNlsConfig = process.env['VSCODE_NLS_CONFIG'];
+        if (rawNlsConfig) {
             try {
-                var nlsConfig = JSON.parse(vscode_nls_config);
+                var nlsConfig = JSON.parse(rawNlsConfig);
                 var resolved = nlsConfig.availableLanguages['*'];
                 _locale = nlsConfig.locale;
                 // VSCode's default language is 'en'
@@ -1475,7 +1554,7 @@ define(__m[4], __M([1,0,8]), function (require, exports, map_1) {
     function endsWith(haystack, needle) {
         var diff = haystack.length - needle.length;
         if (diff > 0) {
-            return haystack.lastIndexOf(needle) === diff;
+            return haystack.indexOf(needle, diff) === diff;
         }
         else if (diff === 0) {
             return haystack === needle;
@@ -1510,33 +1589,6 @@ define(__m[4], __M([1,0,8]), function (require, exports, map_1) {
         return new RegExp(searchString, modifiers);
     }
     exports.createRegExp = createRegExp;
-    /**
-     * Create a regular expression only if it is valid and it doesn't lead to endless loop.
-     */
-    function createSafeRegExp(searchString, isRegex, matchCase, wholeWord) {
-        if (searchString === '') {
-            return null;
-        }
-        // Try to create a RegExp out of the params
-        var regex = null;
-        try {
-            regex = createRegExp(searchString, isRegex, matchCase, wholeWord, true);
-        }
-        catch (err) {
-            return null;
-        }
-        // Guard against endless loop RegExps & wrap around try-catch as very long regexes produce an exception when executed the first time
-        try {
-            if (regExpLeadsToEndlessLoop(regex)) {
-                return null;
-            }
-        }
-        catch (err) {
-            return null;
-        }
-        return regex;
-    }
-    exports.createSafeRegExp = createSafeRegExp;
     function regExpLeadsToEndlessLoop(regexp) {
         // Exit early if it's one of these special cases which are meant to match
         // against an empty string
@@ -1557,7 +1609,7 @@ define(__m[4], __M([1,0,8]), function (require, exports, map_1) {
      */
     exports.canNormalize = typeof (''.normalize) === 'function';
     var nonAsciiCharactersPattern = /[^\u0000-\u0080]/;
-    var normalizedCache = new map_1.LinkedMap(10000); // bounded to 10000 elements
+    var normalizedCache = new map_1.BoundedLinkedMap(10000); // bounded to 10000 elements
     function normalizeNFC(str) {
         if (!exports.canNormalize || !str) {
             return str;
@@ -1618,10 +1670,18 @@ define(__m[4], __M([1,0,8]), function (require, exports, map_1) {
         return -1;
     }
     exports.lastNonWhitespaceIndex = lastNonWhitespaceIndex;
-    function localeCompare(strA, strB) {
-        return strA.localeCompare(strB);
+    function compare(a, b) {
+        if (a < b) {
+            return -1;
+        }
+        else if (a > b) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
     }
-    exports.localeCompare = localeCompare;
+    exports.compare = compare;
     function isAsciiChar(code) {
         return (code >= 97 && code <= 122) || (code >= 65 && code <= 90);
     }
@@ -2154,7 +2214,7 @@ define(__m[25], __M([1,0,4,8]), function (require, exports, strings, map_1) {
     var SubstringMatching = exports.SubstringMatching;
     exports.fuzzyContiguousFilter = or(exports.matchesPrefix, matchesCamelCase, matchesContiguousSubString);
     var fuzzySeparateFilter = or(exports.matchesPrefix, matchesCamelCase, matchesSubString);
-    var fuzzyRegExpCache = new map_1.LinkedMap(10000); // bounded to 10000 elements
+    var fuzzyRegExpCache = new map_1.BoundedLinkedMap(10000); // bounded to 10000 elements
     function matchesFuzzy(word, wordToMatchAgainst, enableSeparateSubstringMatching) {
         if (enableSeparateSubstringMatching === void 0) { enableSeparateSubstringMatching = false; }
         if (typeof word !== 'string' || typeof wordToMatchAgainst !== 'string') {
@@ -2749,6 +2809,19 @@ define(__m[13], __M([1,0,3]), function (require, exports, platform) {
             this._formatted = null;
             this._fsPath = null;
         }
+        URI.isUri = function (thing) {
+            if (thing instanceof URI) {
+                return true;
+            }
+            if (!thing) {
+                return false;
+            }
+            return typeof thing.authority === 'string'
+                && typeof thing.fragment === 'string'
+                && typeof thing.path === 'string'
+                && typeof thing.query === 'string'
+                && typeof thing.scheme === 'string';
+        };
         Object.defineProperty(URI.prototype, "scheme", {
             /**
              * scheme is the 'http' part of 'http://www.msft.com/some/path?query#fragment'.
@@ -2812,7 +2885,7 @@ define(__m[13], __M([1,0,3]), function (require, exports, platform) {
             get: function () {
                 if (!this._fsPath) {
                     var value;
-                    if (this._authority && this.scheme === 'file') {
+                    if (this._authority && this._path && this.scheme === 'file') {
                         // unc path: file://shares/c$/far/boo
                         value = "//" + this._authority + this._path;
                     }
@@ -2839,11 +2912,37 @@ define(__m[13], __M([1,0,3]), function (require, exports, platform) {
             if (!change) {
                 return this;
             }
-            var scheme = change.scheme || this.scheme;
-            var authority = change.authority || this.authority;
-            var path = change.path || this.path;
-            var query = change.query || this.query;
-            var fragment = change.fragment || this.fragment;
+            var scheme = change.scheme, authority = change.authority, path = change.path, query = change.query, fragment = change.fragment;
+            if (scheme === void 0) {
+                scheme = this.scheme;
+            }
+            else if (scheme === null) {
+                scheme = '';
+            }
+            if (authority === void 0) {
+                authority = this.authority;
+            }
+            else if (authority === null) {
+                authority = '';
+            }
+            if (path === void 0) {
+                path = this.path;
+            }
+            else if (path === null) {
+                path = '';
+            }
+            if (query === void 0) {
+                query = this.query;
+            }
+            else if (query === null) {
+                query = '';
+            }
+            if (fragment === void 0) {
+                fragment = this.fragment;
+            }
+            else if (fragment === null) {
+                fragment = '';
+            }
             if (scheme === this.scheme
                 && authority === this.authority
                 && path === this.path
@@ -2922,17 +3021,27 @@ define(__m[13], __M([1,0,3]), function (require, exports, platform) {
             return new URI().with(components);
         };
         URI._validate = function (ret) {
-            // validation
+            // scheme, https://tools.ietf.org/html/rfc3986#section-3.1
+            // ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+            if (ret.scheme && !URI._schemePattern.test(ret.scheme)) {
+                throw new Error('[UriError]: Scheme contains illegal characters.');
+            }
             // path, http://tools.ietf.org/html/rfc3986#section-3.3
             // If a URI contains an authority component, then the path component
             // must either be empty or begin with a slash ("/") character.  If a URI
             // does not contain an authority component, then the path cannot begin
             // with two slash characters ("//").
-            if (ret.authority && ret.path && ret.path[0] !== '/') {
-                throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character');
-            }
-            if (!ret.authority && ret.path.indexOf('//') === 0) {
-                throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")');
+            if (ret.path) {
+                if (ret.authority) {
+                    if (!URI._singleSlashStart.test(ret.path)) {
+                        throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character');
+                    }
+                }
+                else {
+                    if (URI._doubleSlashStart.test(ret.path)) {
+                        throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")');
+                    }
+                }
             }
         };
         // ---- printing/externalize ---------------------------
@@ -2976,10 +3085,15 @@ define(__m[13], __M([1,0,3]), function (require, exports, platform) {
                 }
             }
             if (path) {
-                // lower-case windown drive letters in /C:/fff
+                // lower-case windows drive letters in /C:/fff or C:/fff
                 var m = URI._upperCaseDrive.exec(path);
                 if (m) {
-                    path = m[1] + m[2].toLowerCase() + path.substr(m[1].length + m[2].length);
+                    if (m[1]) {
+                        path = '/' + m[2].toLowerCase() + path.substr(3); // "/c:".length === 3
+                    }
+                    else {
+                        path = m[2].toLowerCase() + path.substr(2); // // "c:".length === 2
+                    }
                 }
                 // encode every segement but not slashes
                 // make sure that # and ? are always encoded
@@ -3034,6 +3148,9 @@ define(__m[13], __M([1,0,3]), function (require, exports, platform) {
         URI._regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
         URI._driveLetterPath = /^\/[a-zA-z]:/;
         URI._upperCaseDrive = /^(\/)?([A-Z]:)/;
+        URI._schemePattern = /^\w[\w\d+.-]*$/;
+        URI._singleSlashStart = /^\//;
+        URI._doubleSlashStart = /^\/\//;
         return URI;
     }());
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -5996,19 +6113,22 @@ define(__m[18], __M([1,0]), function (require, exports) {
      *  Licensed under the MIT License. See License.txt in the project root for license information.
      *--------------------------------------------------------------------------------------------*/
     'use strict';
-    // State machine for http:// or https://
-    var STATE_MAP = [], START_STATE = 1, END_STATE = 9, ACCEPT_STATE = 10;
-    STATE_MAP[1] = { 'h': 2, 'H': 2, 'f': 11, 'F': 11 };
+    // State machine for http:// or https:// or file://
+    var STATE_MAP = [];
+    var START_STATE = 1;
+    var END_STATE = 12;
+    var ACCEPT_STATE = 13;
+    STATE_MAP[1] = { 'h': 2, 'H': 2, 'f': 6, 'F': 6 };
     STATE_MAP[2] = { 't': 3, 'T': 3 };
     STATE_MAP[3] = { 't': 4, 'T': 4 };
     STATE_MAP[4] = { 'p': 5, 'P': 5 };
-    STATE_MAP[5] = { 's': 6, 'S': 6, ':': 7 };
-    STATE_MAP[6] = { ':': 7 };
-    STATE_MAP[7] = { '/': 8 };
-    STATE_MAP[8] = { '/': 9 };
-    STATE_MAP[11] = { 'i': 12, 'I': 12 };
-    STATE_MAP[12] = { 'l': 13, 'L': 13 };
-    STATE_MAP[13] = { 'e': 6, 'E': 6 };
+    STATE_MAP[5] = { 's': 9, 'S': 9, ':': 10 };
+    STATE_MAP[6] = { 'i': 7, 'I': 7 };
+    STATE_MAP[7] = { 'l': 8, 'L': 8 };
+    STATE_MAP[8] = { 'e': 9, 'E': 9 };
+    STATE_MAP[9] = { ':': 10 };
+    STATE_MAP[10] = { '/': 11 };
+    STATE_MAP[11] = { '/': END_STATE };
     var CharacterClass;
     (function (CharacterClass) {
         CharacterClass[CharacterClass["None"] = 0] = "None";
@@ -6055,37 +6175,47 @@ define(__m[18], __M([1,0]), function (require, exports) {
         };
         return CharacterClassifier;
     }());
+    var characterClassifier = new CharacterClassifier();
     var LinkComputer = (function () {
         function LinkComputer() {
         }
         LinkComputer._createLink = function (line, lineNumber, linkBeginIndex, linkEndIndex) {
+            // Do not allow to end link in certain characters...
+            var lastIncludedCharIndex = linkEndIndex - 1;
+            do {
+                var chCode = line.charCodeAt(lastIncludedCharIndex);
+                var chClass = characterClassifier.classify(chCode);
+                if (chClass !== CharacterClass.CannotEndIn) {
+                    break;
+                }
+                lastIncludedCharIndex--;
+            } while (lastIncludedCharIndex > linkBeginIndex);
             return {
                 range: {
                     startLineNumber: lineNumber,
                     startColumn: linkBeginIndex + 1,
                     endLineNumber: lineNumber,
-                    endColumn: linkEndIndex + 1
+                    endColumn: lastIncludedCharIndex + 2
                 },
-                url: line.substring(linkBeginIndex, linkEndIndex)
+                url: line.substring(linkBeginIndex, lastIncludedCharIndex + 1)
             };
         };
         LinkComputer.computeLinks = function (model) {
-            var i, lineCount, result = [];
-            var line, j, lastIncludedCharIndex, len, linkBeginIndex, state, ch, chCode, chClass, resetStateMachine, hasOpenParens, hasOpenSquareBracket, hasOpenCurlyBracket, characterClassifier = LinkComputer._characterClassifier;
-            for (i = 1, lineCount = model.getLineCount(); i <= lineCount; i++) {
-                line = model.getLineContent(i);
-                j = 0;
-                len = line.length;
-                linkBeginIndex = 0;
-                state = START_STATE;
-                hasOpenParens = false;
-                hasOpenSquareBracket = false;
-                hasOpenCurlyBracket = false;
+            var result = [];
+            for (var i = 1, lineCount = model.getLineCount(); i <= lineCount; i++) {
+                var line = model.getLineContent(i);
+                var len = line.length;
+                var j = 0;
+                var linkBeginIndex = 0;
+                var state = START_STATE;
+                var hasOpenParens = false;
+                var hasOpenSquareBracket = false;
+                var hasOpenCurlyBracket = false;
                 while (j < len) {
-                    ch = line.charAt(j);
-                    chCode = line.charCodeAt(j);
-                    resetStateMachine = false;
+                    var resetStateMachine = false;
                     if (state === ACCEPT_STATE) {
+                        var chCode = line.charCodeAt(j);
+                        var chClass = void 0;
                         switch (chCode) {
                             case _openParens:
                                 hasOpenParens = true;
@@ -6113,22 +6243,13 @@ define(__m[18], __M([1,0]), function (require, exports) {
                         }
                         // Check if character terminates link
                         if (chClass === CharacterClass.ForceTermination) {
-                            // Do not allow to end link in certain characters...
-                            lastIncludedCharIndex = j - 1;
-                            do {
-                                chCode = line.charCodeAt(lastIncludedCharIndex);
-                                chClass = characterClassifier.classify(chCode);
-                                if (chClass !== CharacterClass.CannotEndIn) {
-                                    break;
-                                }
-                                lastIncludedCharIndex--;
-                            } while (lastIncludedCharIndex > linkBeginIndex);
-                            result.push(LinkComputer._createLink(line, i, linkBeginIndex, lastIncludedCharIndex + 1));
+                            result.push(LinkComputer._createLink(line, i, linkBeginIndex, j));
                             resetStateMachine = true;
                         }
                     }
                     else if (state === END_STATE) {
-                        chClass = characterClassifier.classify(chCode);
+                        var chCode = line.charCodeAt(j);
+                        var chClass = characterClassifier.classify(chCode);
                         // Check if character terminates link
                         if (chClass === CharacterClass.ForceTermination) {
                             resetStateMachine = true;
@@ -6138,6 +6259,7 @@ define(__m[18], __M([1,0]), function (require, exports) {
                         }
                     }
                     else {
+                        var ch = line.charAt(j);
                         if (STATE_MAP[state].hasOwnProperty(ch)) {
                             state = STATE_MAP[state][ch];
                         }
@@ -6161,7 +6283,6 @@ define(__m[18], __M([1,0]), function (require, exports) {
             }
             return result;
         };
-        LinkComputer._characterClassifier = new CharacterClassifier();
         return LinkComputer;
     }());
     /**
@@ -7061,6 +7182,38 @@ define(__m[14], __M([1,0,26]), function (require, exports, callbackList_1) {
         };
     }
     exports.fromEventEmitter = fromEventEmitter;
+    function fromPromise(promise) {
+        var toCancel = null;
+        var listener = null;
+        var emitter = new Emitter({
+            onFirstListenerAdd: function () {
+                toCancel = promise.then(function (event) { return listener = event(function (e) { return emitter.fire(e); }); }, function () { return null; });
+            },
+            onLastListenerRemove: function () {
+                if (toCancel) {
+                    toCancel.cancel();
+                    toCancel = null;
+                }
+                if (listener) {
+                    listener.dispose();
+                    listener = null;
+                }
+            }
+        });
+        return emitter.event;
+    }
+    exports.fromPromise = fromPromise;
+    function once(event) {
+        return function (listener, thisArgs, disposables) {
+            if (thisArgs === void 0) { thisArgs = null; }
+            var result = event(function (e) {
+                result.dispose();
+                return listener.call(thisArgs, e);
+            }, null, disposables);
+            return result;
+        };
+    }
+    exports.once = once;
     function mapEvent(event, map) {
         return function (listener, thisArgs, disposables) {
             if (thisArgs === void 0) { thisArgs = null; }
@@ -7086,8 +7239,9 @@ define(__m[14], __M([1,0,26]), function (require, exports, callbackList_1) {
                     output = merger(output, cur);
                     clearTimeout(handle);
                     handle = setTimeout(function () {
-                        emitter.fire(output);
+                        var _output = output;
                         output = undefined;
+                        emitter.fire(_output);
                     }, delay);
                 });
             },
@@ -7159,6 +7313,10 @@ define(__m[14], __M([1,0,26]), function (require, exports, callbackList_1) {
  *--------------------------------------------------------------------------------------------*/
 define(__m[15], __M([1,0,14]), function (require, exports, event_1) {
     'use strict';
+    var shortcutEvent = Object.freeze(function (callback, context) {
+        var handle = setTimeout(callback.bind(context), 0);
+        return { dispose: function () { clearTimeout(handle); } };
+    });
     var CancellationToken;
     (function (CancellationToken) {
         CancellationToken.None = Object.freeze({
@@ -7167,13 +7325,9 @@ define(__m[15], __M([1,0,14]), function (require, exports, event_1) {
         });
         CancellationToken.Cancelled = Object.freeze({
             isCancellationRequested: true,
-            onCancellationRequested: event_1.default.None
+            onCancellationRequested: shortcutEvent
         });
     })(CancellationToken = exports.CancellationToken || (exports.CancellationToken = {}));
-    var shortcutEvent = Object.freeze(function (callback, context) {
-        var handle = setTimeout(callback.bind(context), 0);
-        return { dispose: function () { clearTimeout(handle); } };
-    });
     var MutableToken = (function () {
         function MutableToken() {
             this._isCancelled = false;
@@ -7330,9 +7484,12 @@ define(__m[31], __M([1,0,5,3,2,15,10]), function (require, exports, errors, plat
     exports.toThenable = toThenable;
     function asWinJsPromise(callback) {
         var source = new cancellation_1.CancellationTokenSource();
-        return new winjs_base_1.TPromise(function (resolve, reject) {
+        return new winjs_base_1.TPromise(function (resolve, reject, progress) {
             var item = callback(source.token);
-            if (isThenable(item)) {
+            if (winjs_base_1.TPromise.is(item)) {
+                item.then(resolve, reject, progress);
+            }
+            else if (isThenable(item)) {
                 item.then(resolve, reject);
             }
             else {
@@ -7346,9 +7503,16 @@ define(__m[31], __M([1,0,5,3,2,15,10]), function (require, exports, errors, plat
     /**
      * Hook a cancellation token to a WinJS Promise
      */
-    function wireCancellationToken(token, promise) {
-        token.onCancellationRequested(function () { return promise.cancel(); });
-        return promise;
+    function wireCancellationToken(token, promise, resolveAsUndefinedWhenCancelled) {
+        var subscription = token.onCancellationRequested(function () { return promise.cancel(); });
+        if (resolveAsUndefinedWhenCancelled) {
+            promise = promise.then(undefined, function (err) {
+                if (!errors.isPromiseCanceledError(err)) {
+                    return winjs_base_1.TPromise.wrapError(err);
+                }
+            });
+        }
+        return always(promise, function () { return subscription.dispose(); });
     }
     exports.wireCancellationToken = wireCancellationToken;
     /**
@@ -9283,11 +9447,11 @@ define(__m[38], __M([1,0,13,2,7,25,29,21,18,16,17,30]), function (require, expor
         BaseEditorSimpleWorker.prototype._suggestFiltered = function (model, position, wordDefRegExp) {
             var value = this._suggestUnfiltered(model, position, wordDefRegExp);
             // filter suggestions
-            return [{
-                    currentWord: value.currentWord,
-                    suggestions: value.suggestions.filter(function (element) { return !!filters_1.fuzzyContiguousFilter(value.currentWord, element.label); }),
-                    incomplete: value.incomplete
-                }];
+            return {
+                currentWord: value.currentWord,
+                suggestions: value.suggestions.filter(function (element) { return !!filters_1.fuzzyContiguousFilter(value.currentWord, element.label); }),
+                incomplete: value.incomplete
+            };
         };
         BaseEditorSimpleWorker.prototype._suggestUnfiltered = function (model, position, wordDefRegExp) {
             var currentWord = model.getWordUntilPosition(position, wordDefRegExp).word;
@@ -9298,7 +9462,7 @@ define(__m[38], __M([1,0,13,2,7,25,29,21,18,16,17,30]), function (require, expor
                 return {
                     type: 'text',
                     label: word,
-                    codeSnippet: word,
+                    insertText: word,
                     noAutoAccept: true
                 };
             });
