@@ -1276,17 +1276,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
         const simOpts = pxt.appTarget.simulator;
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
+        const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless small menu`} role="menubar">
+                        {sandbox ? undefined :
                         <span id="logo" className="ui item">
                             {targetTheme.logo || targetTheme.portraitLogo
                                 ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
                                 : <span>{targetTheme.name}</span>}
                             {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
-                        </span>
+                        </span> }
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
@@ -1336,9 +1338,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
                             </div>
                         </div>}
-                        {targetTheme.rightLogo && !sandbox ?
-                            <div className="ui item right wide only">
-                                <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
+                        {rightLogo ?
+                            <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
+                                <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a>
                             </div> : null }
                     </div>
                 </div>
