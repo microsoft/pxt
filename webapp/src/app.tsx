@@ -1464,6 +1464,7 @@ function enableFeedback(version: string) {
 }
 
 function enableAnalytics(version: string) {
+    core.cookieNotification()
     enableAppInsights(version);
     enableMixPanel(version);
 }

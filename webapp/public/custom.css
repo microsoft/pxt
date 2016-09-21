@@ -79,6 +79,20 @@ body {
 #monacoEditor {
     direction:ltr;
 }
+
+#cookiemsg {
+   position: absolute;
+   left: 1rem;
+   bottom: 2rem;
+   width: 18rem;
+   text-align: left;
+}
+
+#cookiemsg > a {
+   color:white;
+   text-decoration: underline;    
+}
+
 .organization {
     position:absolute;
     top:1rem;
@@ -451,6 +465,11 @@ html {
 .rtl #filelist {
     left: auto;
     right: 0;
+}
+
+.rtl #cookiemsg {
+    left:auto;
+    right:1rem;
 }
 
 #maineditor {
