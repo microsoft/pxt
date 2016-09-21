@@ -41,7 +41,8 @@ function forkDirs(lst: string[]) {
 }
 
 function setupDocfilesdirs() {
-    docfilesdirs = [path.join(nodeutil.pxtCoreDir, "docfiles"), path.join(nodeutil.pxtCoreDir, "docfiles")]
+    docfilesdirs = ["docfiles", path.join(nodeutil.pxtCoreDir, "docfiles"), path.join(nodeutil.pxtCoreDir, "docfiles")]
+    console.log('docfilesdir: ', docfilesdirs.join(', '))
 }
 
 function setupRootDir() {
@@ -285,6 +286,8 @@ ${expandDocFileTemplate(fn)}
 
 export function expandDocFileTemplate(name: string) {
     let fn = lookupDocFile(name)
+    if (!fn) console.log(`template ${name} not found`)
+    else console.log(`found ${name}`)
     let template = fn ? fs.readFileSync(fn, "utf8") : ""
     return expandDocTemplateCore(template)
 }
