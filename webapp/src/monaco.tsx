@@ -408,7 +408,6 @@ export class Editor extends srceditor.Editor {
     zoomOut() {
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
         let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
-        //(this.editor.getConfiguration() as any).EditorZoom.setZoomLevel(1);
         this.parent.settings.editorFontSize = currentFont - 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
