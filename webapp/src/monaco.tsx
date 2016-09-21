@@ -39,6 +39,13 @@ export class Editor extends srceditor.Editor {
     openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
 
+        let shouldShowLoadingDialog = true;
+        setTimeout(function () {
+            if (shouldShowLoadingDialog) {
+                core.showLoading(lf('switching to blocks...'));
+            }
+        }, 300);
+
         let blockFile = this.currFile.getVirtualFileName();
         if (!blockFile) {
             let mainPkg = pkg.mainEditorPkg();
@@ -116,6 +123,9 @@ export class Editor extends srceditor.Editor {
                         return mainPkg.setContentAsync(blockFile, xml)
                             .then(() => this.parent.setFile(mainPkg.files[blockFile]));
                     })
+            }).finally(() => {
+                shouldShowLoadingDialog = false;
+                core.hideLoading();
             }).catch(e => {
                 pxt.reportException(e, { js: this.currFile.content });
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));

@@ -1024,6 +1024,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     saveTypeScriptAsync(open = false): Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
             return Promise.resolve();
+
+        let shouldShowLoadingDialog = true;
+        if (open) {
+            setTimeout(function () {
+                if (shouldShowLoadingDialog) {
+                    core.showLoading(lf('switching to JavaScript...'));
+                }
+            }, 300);
+        }
+
         let src = this.editor.saveToTypeScript()
 
         if (!src) return Promise.resolve();
@@ -1038,7 +1048,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let f = mainPkg.files[tsName];
                 this.setFile(f);
             }
-        })
+        }).finally(() => {
+            shouldShowLoadingDialog = false;
+            core.hideLoading();
+        });
     }
 
     compile() {
