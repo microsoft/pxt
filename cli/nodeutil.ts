@@ -11,7 +11,11 @@ Promise = require("bluebird");
 
 import Util = pxt.Util;
 
+//This should be correct at startup when running from command line
+//When running inside Electron it gets updated to the correct path
 export var targetDir: string = process.cwd();
+//When running the Electron app, this will be based on the initial value
+export var pxtCoreDir: string = path.join(targetDir, "node_modules/pxt-core")
 
 export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
