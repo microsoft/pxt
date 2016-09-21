@@ -286,8 +286,6 @@ ${expandDocFileTemplate(fn)}
 
 export function expandDocFileTemplate(name: string) {
     let fn = lookupDocFile(name)
-    if (!fn) console.log(`template ${name} not found`)
-    else console.log(`found ${name}`)
     let template = fn ? fs.readFileSync(fn, "utf8") : ""
     return expandDocTemplateCore(template)
 }
