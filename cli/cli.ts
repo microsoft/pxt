@@ -758,7 +758,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 if (isText) {
                     content = data.toString("utf8")
                     if (fileName == "index.html") {
-                        content = server.expandDocTemplateCore(content)
+                        content = server.expandHtml(content)
                     }
 
                     if (replFiles.indexOf(fileName) >= 0) {
