@@ -135,6 +135,18 @@ namespace pxt.BrowserUtils {
 
     let hasLoggedBrowser = false
 
+    export function isLocalStorageSupported(): boolean {
+        let testKey = "-pxt-local-storage-test-", storage = window.sessionStorage
+        try {
+            storage.setItem(testKey, testKey)
+            storage.removeItem(testKey)
+            return "localStorage" in window && typeof localStorage === "object"
+        }
+        catch (e) {
+            return false
+        }
+    }
+
     export function isBrowserSupported(): boolean {
         if (!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
@@ -152,7 +164,7 @@ namespace pxt.BrowserUtils {
 
         //In the future this should check for the availability of features, such
         //as web workers
-        let isSupported = isModernBrowser
+        let isSupported = isModernBrowser && isLocalStorageSupported()
 
         const isUnsupportedRPI = isMidori() || (isLinux() && isARM() && isEpiphany());
         const isNotSupported = isUnsupportedRPI;
