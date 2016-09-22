@@ -159,6 +159,9 @@ ${output}</xml>`;
                 case SK.PropertyAccessExpression:
                     emitPropertyAccessExpression(n as ts.PropertyAccessExpression);
                     break;
+                case SK.CallExpression:
+                    emitStatementBlock(n);
+                    break;
                 default:
                     error(n, Util.lf("Unsupported syntax kind for output expression block: " + SK[n.kind]));
                     break;
@@ -403,7 +406,6 @@ ${output}</xml>`;
                 emitField("VAR", name);
                 emitValue("VALUE", value);
             }
-
 
             function openVaraiableDeclarationBlock(n: ts.VariableDeclaration) {
                 if (n.name.kind !== SK.Identifier) {
