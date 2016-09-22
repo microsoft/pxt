@@ -2566,7 +2566,7 @@ function testDirAsync(dir: string) {
 function testDecompilerAsync(dir: string): Promise<void> {
     const filenames: string[] = [];
 
-    const baselineDir = path.resolve(dir, "..", "baselines")
+    const baselineDir = path.resolve(dir, "baselines")
 
     try {
         const stats = fs.statSync(baselineDir);

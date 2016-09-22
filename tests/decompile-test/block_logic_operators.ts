@@ -8,6 +8,9 @@ false || false
 !(false)
 !false
 
+true
+false
+
 // Complex
 false && (true || !false) || !(true && false)
 
