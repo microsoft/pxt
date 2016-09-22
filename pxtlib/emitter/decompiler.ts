@@ -217,7 +217,7 @@ ${output}</xml>`;
          * @param next? A list of nodes to be emitted as statements following this one (i.e. part of the same block of statements)
          */
         function emitStatementBlock(node: ts.Node, next?: ts.Node[]) {
-            switch(node.kind) {
+            switch (node.kind) {
                 case SK.Block:
                     emitBlockStatement((node as ts.Block).statements, next);
                     return;
