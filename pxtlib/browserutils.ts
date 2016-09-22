@@ -164,7 +164,7 @@ namespace pxt.BrowserUtils {
 
         //In the future this should check for the availability of features, such
         //as web workers
-        let isSupported = isModernBrowser && isLocalStorageSupported()
+        let isSupported = isModernBrowser
 
         const isUnsupportedRPI = isMidori() || (isLinux() && isARM() && isEpiphany());
         const isNotSupported = isUnsupportedRPI;
