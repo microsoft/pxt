@@ -52,16 +52,7 @@ export class Editor extends srceditor.Editor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
-            let shouldShowLoadingDialog = true;
-            if (this.isFirstBlocklyLoad) {
-                setTimeout(function () {
-                    if (shouldShowLoadingDialog) {
-                        core.showLoading(lf('loading...'));
-                    }
-                }, 300);
-            }
-
-            compiler.getBlocksAsync()
+            let promise = compiler.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
@@ -73,12 +64,15 @@ export class Editor extends srceditor.Editor {
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
                     this.isFirstBlocklyLoad = false;
-                    shouldShowLoadingDialog = false;
                 }).finally(() => {
                     editorDiv.removeChild(loading);
-                    core.hideLoading();
-                })
-                .done();
+                });
+
+            if (this.isFirstBlocklyLoad) {
+                core.showLoadingDelayed(lf('loading...'), promise).done();
+            } else {
+                promise.done();
+            }
         }
     }
 

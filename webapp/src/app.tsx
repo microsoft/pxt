@@ -562,7 +562,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
         return <div className={"ui tiny vertical menu filemenu landscape only"}>
-            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility()}>
+            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
             </div>
@@ -1025,33 +1025,29 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
             return Promise.resolve();
 
-        let shouldShowLoadingDialog = true;
-        if (open) {
-            setTimeout(function () {
-                if (shouldShowLoadingDialog) {
-                    core.showLoading(lf('switching to JavaScript...'));
+        let promise = Promise.resolve().then(() => {
+            let src = this.editor.saveToTypeScript();
+
+            if (!src) return Promise.resolve();
+            // format before saving
+            //src = pxtc.format(src, 0).formatted;
+
+            let mainPkg = pkg.mainEditorPkg();
+            let tsName = this.editorFile.getVirtualFileName();
+            Util.assert(tsName != this.editorFile.name);
+            return mainPkg.setContentAsync(tsName, src).then(() => {
+                if (open) {
+                    let f = mainPkg.files[tsName];
+                    this.setFile(f);
                 }
-            }, 300);
-        }
-
-        let src = this.editor.saveToTypeScript()
-
-        if (!src) return Promise.resolve();
-        // format before saving
-        //src = pxtc.format(src, 0).formatted;
-
-        let mainPkg = pkg.mainEditorPkg();
-        let tsName = this.editorFile.getVirtualFileName();
-        Util.assert(tsName != this.editorFile.name);
-        return mainPkg.setContentAsync(tsName, src).then(() => {
-            if (open) {
-                let f = mainPkg.files[tsName];
-                this.setFile(f);
-            }
-        }).finally(() => {
-            shouldShowLoadingDialog = false;
-            core.hideLoading();
+            });
         });
+
+        if (open) {
+            return core.showLoadingDelayed(lf('switching to JavaScript...'), promise);
+        } else {
+            return promise;
+        }
     }
 
     compile() {
@@ -1296,12 +1292,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 <div id="menubar" role="banner">
                     <div className={`ui borderless small menu`} role="menubar">
                         {sandbox ? undefined :
-                        <span id="logo" className="ui item">
-                            {targetTheme.logo || targetTheme.portraitLogo
-                                ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
-                                : <span>{targetTheme.name}</span>}
-                            {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
-                        </span> }
+                            <span id="logo" className="ui item">
+                                {targetTheme.logo || targetTheme.portraitLogo
+                                    ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
+                                    : <span>{targetTheme.name}</span>}
+                                {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
+                            </span> }
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }

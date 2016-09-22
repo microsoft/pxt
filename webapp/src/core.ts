@@ -30,6 +30,23 @@ export function showLoading(msg: string) {
     $('.ui.page.dimmer .msg').text(msg)
 }
 
+export function showLoadingDelayed(msg: string, operation: Promise<any>, delay: number = 300) {
+    let isShowing = false;
+
+    let timeout = setTimeout(function () {
+        isShowing = true;
+        showLoading(msg);
+    }, delay);
+
+    return operation.finally(() => {
+        clearTimeout(timeout);
+
+        if (isShowing) {
+            hideLoading();
+        }
+    });
+}
+
 export function navigateInWindow(url: string) {
     window.location.href = url;
 }
