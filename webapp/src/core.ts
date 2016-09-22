@@ -30,7 +30,7 @@ export function showLoading(msg: string) {
     $('.ui.page.dimmer .msg').text(msg)
 }
 
-export function showLoadingDelayed(msg: string, operation: Promise<any>, delay: number = 300) {
+export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 300) {
     let isShowing = false;
 
     let timeout = setTimeout(function () {

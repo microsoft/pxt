@@ -1044,7 +1044,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         });
 
         if (open) {
-            return core.showLoadingDelayed(lf('switching to JavaScript...'), promise);
+            return core.showLoadingAsync(lf('switching to JavaScript...'), promise);
         } else {
             return promise;
         }
