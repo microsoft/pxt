@@ -231,12 +231,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
+                core.showLoading(lf("downloading package..."));
                 pxt.github.latestVersionAsync(scr.full_name)
                     .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
-                        .then(cfg =>
-                            p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
+                        .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
                         .then(r => this.props.parent.reloadHeaderAsync()))
-                    .done();
+                    .done(() => core.hideLoading())
             } else {
                 Util.oops()
             }
@@ -562,7 +562,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
         return <div className={"ui tiny vertical menu filemenu landscape only"}>
-            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility()}>
+            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
             </div>
@@ -1276,17 +1276,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
         const simOpts = pxt.appTarget.simulator;
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
+        const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless small menu`} role="menubar">
-                        <span id="logo" className="ui item">
-                            {targetTheme.logo || targetTheme.portraitLogo
-                                ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
-                                : <span>{targetTheme.name}</span>}
-                            {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
-                        </span>
+                        {sandbox ? undefined :
+                            <span id="logo" className="ui item">
+                                {targetTheme.logo || targetTheme.portraitLogo
+                                    ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
+                                    : <span>{targetTheme.name}</span>}
+                                {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
+                            </span> }
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
@@ -1336,9 +1338,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
                             </div>
                         </div>}
-                        {targetTheme.rightLogo && !sandbox ?
-                            <div className="ui item right wide only">
-                                <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
+                        {rightLogo ?
+                            <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
+                                <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a>
                             </div> : null }
                     </div>
                 </div>
@@ -1569,6 +1571,7 @@ export var targetVersion: string;
 export var sandbox = false;
 
 function initTheme() {
+    core.cookieNotification()
     if (pxt.appTarget.appTheme.accentColor) {
         let style = document.createElement('style');
         style.type = 'text/css';
@@ -1589,7 +1592,6 @@ function parseHash(): { cmd: string; arg: string } {
     let hashArg = ""
     let hashM = /^#(\w+)(:([\/\-\w]+))?$/.exec(window.location.hash)
     if (hashM) {
-        window.location.hash = ""
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }
     return { cmd: '', arg: '' };
@@ -1620,6 +1622,17 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "uploader": // editor launched by the uploader
             pxt.storage.setLocal("uploader", "1");
             break;
+        case "sandbox":
+        case "pub":
+        case "edit":
+            let existing = workspace.getHeaders()
+                .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]                
+            core.showLoading(lf("Loading project..."))
+            return  (existing
+                ? theEditor.loadHeaderAsync(existing)
+                : workspace.installByIdAsync(hash.arg)
+                .then(hd => theEditor.loadHeaderAsync(hd)))
+                .done(() => core.hideLoading())
     }
 }
 
@@ -1634,7 +1647,7 @@ $(document).ready(() => {
     let config = pxt.webConfig
     ksVersion = config.pxtVersion;
     targetVersion = config.targetVersion;
-    sandbox = /sandbox=1/i.test(window.location.href);
+    sandbox = /sandbox=1|#sandbox/i.test(window.location.href);
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -1687,6 +1700,7 @@ $(document).ready(() => {
             initSerial()
             initHashchange();
             switch (hash.cmd) {
+                case "sandbox":
                 case "pub":
                 case "edit":
                     let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hash.arg)[0]

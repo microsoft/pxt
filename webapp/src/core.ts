@@ -77,6 +77,25 @@ export function infoNotification(msg: string) {
     htmlmsg("info", msg)
 }
 
+export function cookieNotification() {
+    const key = "cookieconsent"
+    let seen = !!pxt.storage.getLocal(key);
+    if (!seen) {
+        let $d = $('#cookiemsg');
+        $d.html(
+            `
+            <button arial-label="${lf("Continue")}" class="ui right floated icon button"><i class="remove icon"></i></button>
+            ${lf("By using this site you agree to the use of cookies for analytics.")}
+            <a class="ui link" href="https://www.pxt.io/privacy">${lf("Learn more")}</a>
+            `
+        ).fadeIn('fast')
+        $d.find('button').click(() => {
+            pxt.storage.setLocal(key, "1");
+            $d.fadeOut();
+        });
+    }
+}
+
 export function handleNetworkError(e: any) {
     let statusCode = <number>e.status
     if (e.isOffline) {

@@ -41,14 +41,16 @@ function forkDirs(lst: string[]) {
 }
 
 function setupDocfilesdirs() {
-    docfilesdirs = forkDirs(["docfiles", "node_modules/pxt-core/docfiles"])
+    docfilesdirs = ["docfiles", path.join(nodeutil.pxtCoreDir, "docfiles"), path.join(nodeutil.pxtCoreDir, "docfiles")]
+    console.log('docfilesdir: ', docfilesdirs.join(', '))
 }
 
 function setupRootDir() {
-    root = process.cwd()
+    root = nodeutil.targetDir
     console.log("Starting server in", root)
-    dirs = forkDirs(["node_modules/pxt-core/built/web", "node_modules/pxt-core/webapp/public"])
-    simdirs = forkDirs(["built", "sim/public"])
+    console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
+    dirs = [path.join(nodeutil.pxtCoreDir, "built/web"), path.join(nodeutil.pxtCoreDir, "webapp/public")]
+    simdirs = [path.join(nodeutil.targetDir, "built"), path.join(nodeutil.targetDir, "sim/public")]
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
     packagedDir = path.join(root, "built/packaged")
@@ -581,20 +583,20 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        let publicDir = forkPref() + 'node_modules/pxt-core/webapp/public/'
+        let publicDir = path.join(nodeutil.pxtCoreDir, "webapp/public")
 
         if (pathname == "/--embed") {
-            sendFile(path.join(root, publicDir + 'embed.js'));
+            sendFile(path.join(publicDir, 'embed.js'));
             return
         }
 
         if (pathname == "/--run") {
-            sendFile(path.join(root, publicDir + 'run.html'));
+            sendFile(path.join(publicDir, 'run.html'));
             return
         }
 
         if (pathname == "/--docs") {
-            sendFile(path.join(root, publicDir + 'docs.html'));
+            sendFile(path.join(publicDir,  'docs.html'));
             return
         }
 

@@ -22,10 +22,10 @@ import * as uploader from './uploader';
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
 function initTargetCommands() {
-    let cmdsjs = nodeutil.targetDir + '/built/cmds.js';
+    let cmdsjs = path.join(process.cwd(), nodeutil.targetDir, 'built/cmds.js');
     if (fs.existsSync(cmdsjs)) {
         pxt.debug(`loading cli extensions...`)
-        let cli = require(cmdsjs)
+        let cli = require.main.require(cmdsjs)
         if (cli.deployCoreAsync) {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
@@ -70,7 +70,7 @@ function fatal(msg: string): Promise<any> {
     throw new Error(msg)
 }
 
-let globalConfig: UserConfig = {}
+export let globalConfig: UserConfig = {}
 
 function homePxtDir() {
     return path.join(process.env["HOME"] || process.env["UserProfile"], ".pxt")
@@ -758,7 +758,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 if (isText) {
                     content = data.toString("utf8")
                     if (fileName == "index.html") {
-                        content = server.expandDocTemplateCore(content)
+                        content = server.expandHtml(content)
                     }
 
                     if (replFiles.indexOf(fileName) >= 0) {
@@ -1354,6 +1354,9 @@ export function serveAsync(arg?: string) {
     } else if (arg == "-pkg") {
         justServe = true
         packaged = true
+    } else if (arg == "-no-browser") {
+        justServe = true
+        globalConfig.noAutoStart = true
     }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
@@ -1361,12 +1364,20 @@ export function serveAsync(arg?: string) {
     }
     let localToken = globalConfig.localToken;
     if (!fs.existsSync("pxtarget.json")) {
-        let upper = path.join(__dirname, "../../..")
-        if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
-            console.log("going to " + upper)
-            process.chdir(upper)
-        } else {
-            U.userError("Cannot find pxtarget.json to serve.")
+        //Specifically when the target is being used as a library
+        let targetDepLoc = nodeutil.targetDir
+        if (fs.existsSync(path.join(targetDepLoc, "pxtarget.json"))) {
+            console.log(`Going to ${targetDepLoc}`)
+            process.chdir(targetDepLoc)
+        }
+        else {
+            let upper = path.join(__dirname, "../../..")
+            if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
+                console.log("going to " + upper)
+                process.chdir(upper)
+            } else {
+                U.userError("Cannot find pxtarget.json to serve.")
+            }
         }
     }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
@@ -3103,7 +3114,7 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-export function mainCli(targetDir: string) {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2)) {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -3121,8 +3132,6 @@ export function mainCli(targetDir: string) {
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
-
-    let args = process.argv.slice(2)
 
     initConfig();
 

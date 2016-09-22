@@ -133,20 +133,43 @@ namespace pxt.BrowserUtils {
         return matches[matches.length - 1];
     }
 
+    let hasLoggedBrowser = false
+
     export function isBrowserSupported(): boolean {
         if (!!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
         }
-        const v = browserVersion();
-        const isModernUpdatedBrowser = isChrome() || isFirefox() || isEdge() || isSafari();
-        const isLastVersionOfIE = isIE() && /^11./.test(v);
-        const isOperaBasedOnChromium = isOpera() && isChrome();
-        const isUnsupportedRPI = isMidori() || (isLinux() && isARM() && isEpiphany());
+        const versionString = browserVersion();
+        const v = parseInt(versionString)
 
-        const isSupported = isModernUpdatedBrowser || isLastVersionOfIE || isOperaBasedOnChromium;
+        const isRecentChrome = isChrome() && v >= 38
+        const isRecentFirefox = isFirefox() && v >= 31
+        const isRecentEdge = isEdge()
+        const isRecentSafari = isSafari() && v >= 9
+        const isRecentOpera = (isOpera() && isChrome()) && v >= 21
+        const isRecentIE = isIE() && v >= 11
+        const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
+
+        //In the future this should check for the availability of features, such
+        //as web workers
+        let isSupported = isModernBrowser
+
+        const isUnsupportedRPI = isMidori() || (isLinux() && isARM() && isEpiphany());
         const isNotSupported = isUnsupportedRPI;
 
-        return isSupported && !isNotSupported;
+        isSupported = isSupported && !isNotSupported
+
+        //Bypass
+        isSupported = isSupported || /anybrowser=(true|1)/.test(window.location.href)
+
+        if (!hasLoggedBrowser) {
+            pxt.log(`Browser: ${browser()} ${versionString} on ${os()}`)
+            if (!isSupported) {
+                pxt.tickEvent(`browser.unsupported.${navigator.userAgent}`)
+            }
+            hasLoggedBrowser = true
+        }
+        return isSupported
     }
 
 
