@@ -5,7 +5,6 @@ var ju = require("./jakeutil")
 var path = require("path")
 var expand = ju.expand;
 var cmdIn = ju.cmdIn;
-var rjs = require("requirejs")
 
 function tscIn(task, dir) {
     cmdIn(task, dir, 'node ../node_modules/typescript/bin/tsc')
@@ -21,24 +20,7 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
-function bundleOne(task, moduleId, exclude) {
-    console.log("bundling: " + moduleId);
-    var opts = {
-        baseUrl: '/built/monaco-typescript/',
-        name: 'vs/language/typescript/' + moduleId,
-        out: 'built/web/vs/language/typescript/' + moduleId + '.js',
-        exclude: exclude,
-        optimize: "none",
-        paths: {
-            'vs/language/typescript': __dirname + '/built/monaco-typescript/'
-        }
-    };
-    rjs.optimize(opts, function () {
-        task.complete();
-    });
-}
-
-task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'compilemonaco'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testlang'])
 
@@ -261,25 +243,15 @@ file("built/web/pxtlib.js", [
 })
 
 
-task('compilemonaco', [
-    "built/web/vs/language/typescript/src/monaco.contribution.js",
-    "built/web/vs/language/typescript/lib/typescriptServices.js",
-    "built/web/vs/language/typescript/src/mode.js",
-    "built/web/vs/language/typescript/src/worker.js",
-    "built/web/vs/editor/editor.main.js"
+task('monaco-editor', [
+    "built/web/vs/editor/editor.main.js",
+    "built/web/vs/language/typescript/src/mode.js"
 ])
 
-file('built/monaco-typescript/src/monaco.contribution.js', expand([
-    "monaco-typescript",
-    "built/pxtlib.js"
-    ]), { async: true }, 
-    function () {
-     tscIn(this, "monaco-typescript");
-})
-
-file('built/web/vs/editor/editor.main.js', ['built/monaco-typescript/src/monaco.contribution.js', 'built/web/vs/language/typescript/src/monaco.contribution.js'], function () {
+file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], { async: true }, function () {
+    console.log(`Updating the monaco editor bits`)
     jake.mkdirP("built/web/vs/editor")
-    let monacotypescriptcontribution = fs.readFileSync("built/web/vs/language/typescript/src/monaco.contribution.js", "utf8")
+    let monacotypescriptcontribution = fs.readFileSync("node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js", "utf8")
     monacotypescriptcontribution.replace('["require","exports"]', '["require","exports","vs/editor/edcore.main"]')
 
     let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
@@ -307,28 +279,13 @@ file('built/web/vs/editor/editor.main.js', ['built/monaco-typescript/src/monaco.
     jake.cpR("node_modules/monaco-editor/dev/vs/language/json/", "webapp/public/vs/language/")
 })
 
-file('built/web/vs/language/typescript/src/monaco.contribution.js', ['built/monaco-typescript/src/monaco.contribution.js'], { async: true }, function () {
-    bundleOne(this, 'src/monaco.contribution');
-})
-
-file('built/web/vs/language/typescript/lib/typescriptServices.js', ['built/monaco-typescript/src/monaco.contribution.js'], { async: true } , function () {
-    jake.cpR("monaco-typescript/lib", "built/monaco-typescript/lib/");
-    bundleOne(this, 'lib/typescriptServices');
-});
-			
-file('built/web/vs/language/typescript/src/mode.js', ['built/monaco-typescript/src/monaco.contribution.js', 
-                                                      'built/web/vs/language/typescript/lib/typescriptServices.js', 
-                                                      'built/monaco-typescript/src/mode.js', 
-                                                      'built/monaco-typescript/src/languageFeatures.js',
-                                                      'built/monaco-typescript/src/tokenization.js'], { async: true }, function () {
-    bundleOne(this, 'src/mode', ['vs/language/typescript/lib/typescriptServices']);
-})
-
-file('built/web/vs/language/typescript/src/worker.js', ['built/monaco-typescript/src/monaco.contribution.js', 
-                                                        'built/web/vs/language/typescript/lib/typescriptServices.js',
-                                                        'built/monaco-typescript/src/worker.js', 
-                                                        'built/monaco-typescript/src/workerManager.js'], { async: true }, function () {
-    bundleOne(this, 'src/worker', ['vs/language/typescript/lib/typescriptServices']);
+file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-typescript/release/src/mode.js'], { async: true }, function () {    
+    console.log(`Updating the monaco typescript language service`)
+    jake.mkdirP("built/web/vs/language/typescript/src")
+    jake.mkdirP("built/web/vs/language/typescript/lib")
+    jake.cpR("node_modules/pxt-monaco-typescript/release/lib/typescriptServices.js", "built/web/vs/language/typescript/lib/")
+    jake.cpR("node_modules/pxt-monaco-typescript/release/src/mode.js", "built/web/vs/language/typescript/src/")
+    jake.cpR("node_modules/pxt-monaco-typescript/release/src/worker.js", "built/web/vs/language/typescript/src/")
 })
 
 file('built/webapp/src/app.js', expand([

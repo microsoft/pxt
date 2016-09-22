@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.5.3(793ede49d53dba79d39e52205f16321278f5183c)
+ * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -42,9 +42,6 @@ define("vs/base/common/worker/workerServer.nls.zh-tw", {
 	"vs/editor/common/modes/modesRegistry": [
 		"純文字",
 	],
-	"vs/editor/common/modes/supports/suggestSupport": [
-		"啟用字組式建議。",
-	],
 	"vs/editor/common/services/modeServiceImpl": [
 		"提供語言宣告。",
 		"語言的識別碼。",
@@ -64,14 +61,6 @@ define("vs/base/common/worker/workerServer.nls.zh-tw", {
 		"屬性 \'{0}\' 可以省略且必須屬於 `string[]` 類型",
 		"屬性 \'{0}\' 可以省略且必須屬於 `string[]` 類型",
 		"`contributes.{0}` 無效。必須是陣列。",
-	],
-	"vs/platform/configuration/common/configurationRegistry": [
-		"提供組態設定。",
-		"設定的摘要。此標籤將會在設定檔中作為分隔註解使用。",
-		"組態屬性的描述。",
-		"如果已設定，\'configuration.type\' 必須設定為物件",
-		"\'configuration.title\' 必須是字串",
-		"\'configuration.properties\' 必須是物件",
 	],
 	"vs/platform/extensions/common/abstractExtensionService": [
 		"擴充功能 `{1}` 無法啟動。原因: 未知的相依性 `{0}`。",
@@ -102,41 +91,5 @@ define("vs/base/common/worker/workerServer.nls.zh-tw", {
 		"其它擴充功能的相依性。擴充功能的識別碼一律為 ${publisher}.${name}。例如: vscode.csharp。",
 		"在封裝作為 VS Code 擴充功能發行前所執行的指令碼。",
 		"此封裝所代表的所有 VS Code 擴充功能比重。",
-	],
-	"vs/platform/jsonschemas/common/jsonContributionRegistry": [
-		"使用結構描述來描述 JSON 檔案。如需詳細資訊，請參閱 json-schema.org。",
-		"結構描述的唯一識別碼。",
-		"結構描述，用來驗證此文件",
-		"元素的描述性標題",
-		"元素的詳細描述。用於暫留功能表和建議。",
-		"預設值。供建議使用。",
-		"應該會整除目前值的數字 (即沒有餘數)",
-		"最大數值，預設為包含。",
-		"將最大值屬性設為排除。",
-		"最小數值，預設為包含。",
-		"將最小值屬性設為排除。",
-		"字串的最大長度。",
-		"字串的最小長度。",
-		"規則運算式，用來比對字串。其未隱含錨定。",
-		"用於陣列 (只有在項目設為陣列時)。如果為結構描述，這個結構描述會驗證項目陣列所指定的項目之後的項目。如果為 False，則額外的項目會導致驗證失敗。",
-		"用於陣列。可以是用來比對驗證每個元素的結構描述，或是用來依序比對驗證每個項目的結構描述陣列 (第一個結構描述驗證第一個元素，第二個結構描述驗證第二個元素，依此類推)。",
-		"可包含在陣列中的最大項目數。包含。",
-		"可包含在陣列中的最小項目數。包含。",
-		"陣列中的所有項目是否都必須為唯一。預設為 False。",
-		"物件可具有的最大屬性數目。包含。",
-		"物件可具有的最小屬性數目。包含。",
-		"這個字串陣列會列出這個物件所需的所有屬性的名稱。",
-		"為結構描述或布林值。若為結構描述，將會用以驗證所有不符合 \'properties\' 或 \'patternProperties\' 的屬性。若為 false，則所有不符合這兩項其中之一的屬性，都會導致此結構描述失敗。",
-		"不用於驗證。將您要利用 $ref 內嵌參考的子結構描述置於此",
-		"每個屬性的屬性名稱對結構描述對應。",
-		"屬性名稱的規則運算式對結構描述的對應，用於比對屬性。",
-		"屬性名稱對屬性名稱陣列或結構描述的對應。屬性名稱陣列表示索引鍵中的命名屬性若要有效，陣列中的屬性必須出現在物件中。如果值是結構描述，則只有在索引鍵中的屬性存在物件上時才會將結構描述套用到該物件。",
-		"有效常值的集合",
-		"可以是其中一個基本結構描述類型 (數字、整數、null、陣列、物件、布林值、字串) 的字串，或是指定這些類型子集的字串陣列。",
-		"描述此值預期的格式。",
-		"結構描述的陣列，必須全部符合。",
-		"結構描述的陣列，其中至少一個必須符合。",
-		"結構描述的陣列，其中剛好一個必須符合。",
-		"不能相符的結構描述。",
 	]
 });

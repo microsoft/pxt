@@ -22,10 +22,10 @@ import * as uploader from './uploader';
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
 function initTargetCommands() {
-    let cmdsjs = nodeutil.targetDir + '/built/cmds.js';
+    let cmdsjs = path.join(process.cwd(), nodeutil.targetDir, 'built/cmds.js');
     if (fs.existsSync(cmdsjs)) {
         pxt.debug(`loading cli extensions...`)
-        let cli = require(cmdsjs)
+        let cli = require.main.require(cmdsjs)
         if (cli.deployCoreAsync) {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
@@ -70,7 +70,7 @@ function fatal(msg: string): Promise<any> {
     throw new Error(msg)
 }
 
-let globalConfig: UserConfig = {}
+export let globalConfig: UserConfig = {}
 
 function homePxtDir() {
     return path.join(process.env["HOME"] || process.env["UserProfile"], ".pxt")
@@ -748,17 +748,17 @@ function uploadCoreAsync(opts: UploadOptions) {
             rdf = readFileAsync(p)
         }
 
-        return rdf
-            .then((data: Buffer) => {
-                let fileName = uploadFileName(p)
-                let mime = U.getMime(p)
-                let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
-                let content = ""
-
+        let fileName = uploadFileName(p)
+        let mime = U.getMime(p)
+        let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
+        let content = ""
+        let data: Buffer;
+        return rdf.then((rdata: Buffer) => {
+                data = rdata;
                 if (isText) {
                     content = data.toString("utf8")
                     if (fileName == "index.html") {
-                        content = server.expandDocTemplateCore(content)
+                        content = server.expandHtml(content)
                     }
 
                     if (replFiles.indexOf(fileName) >= 0) {
@@ -771,19 +771,35 @@ function uploadCoreAsync(opts: UploadOptions) {
                             // save it for developer inspection
                             fs.writeFileSync("built/uploadrepl/" + fileName, content)
                         }
-                    } else if (fileName == "target.json" && opts.localDir) {
+                    } else if (fileName == "target.json") {
                         let trg: pxt.TargetBundle = JSON.parse(content)
-                        for (let e of trg.appTheme.docMenu)
-                            if (e.path[0] == "/") {
-                                e.path = opts.localDir + "docs" + e.path + ".html"
-                            }
-                        trg.appTheme.logoUrl = opts.localDir
-                        trg.appTheme.homeUrl = opts.localDir
-                        data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                        if (opts.localDir) {
+                            for (let e of trg.appTheme.docMenu)
+                                if (e.path[0] == "/") {
+                                    e.path = opts.localDir + "docs" + e.path + ".html"
+                                }
+                            trg.appTheme.logoUrl = opts.localDir
+                            trg.appTheme.homeUrl = opts.localDir
+                            data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                        } else {
+                            // expand usb help pages
+                            return Promise.all(
+                                (trg.appTheme.usbHelp || []).filter(h => !!h.path)
+                                    .map(h => uploader.uploadArtAsync(h.path, true)
+                                        .then(blob => {
+                                            console.log(`target.json patch:    ${h.path} -> ${blob}`)
+                                            h.path = blob;
+                                        }))
+                            ).then(() => {
+                                content = JSON.stringify(trg, null, 2);
+                            })
+                        }
                     }
                 } else {
                     content = data.toString("base64")
                 }
+                return Promise.resolve()
+            }).then(() => {
 
                 if (opts.localDir) {
                     let fn = path.join(builtPackaged + opts.localDir, fileName)
@@ -796,10 +812,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                     filename: fileName,
                     contentType: mime,
                     content,
+                }).then(resp => {
+                    console.log(fileName, mime)
                 })
-                    .then(resp => {
-                        console.log(fileName, mime)
-                    })
             })
     }
 
@@ -1188,14 +1203,16 @@ function buildTargetCoreAsync() {
 
             saveThemeJson(cfg)
 
-            let webmanifest = buildWebManifest(cfg)
-            fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
+            const webmanifest = buildWebManifest(cfg)
+            const webmanifestjson = JSON.stringify(cfg, null, 2)
+            fs.writeFileSync("built/target.json", webmanifestjson)
             pxt.appTarget = cfg; // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
             delete targetlight.appTheme
-            fs.writeFileSync("built/targetlight.json", JSON.stringify(targetlight, null, 2))
+            const targetlightjson = JSON.stringify(targetlight, null, 2);
+            fs.writeFileSync("built/targetlight.json", targetlightjson)
             fs.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
         })
         .then(() => {
@@ -1337,6 +1354,9 @@ export function serveAsync(arg?: string) {
     } else if (arg == "-pkg") {
         justServe = true
         packaged = true
+    } else if (arg == "-no-browser") {
+        justServe = true
+        globalConfig.noAutoStart = true
     }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
@@ -1344,12 +1364,20 @@ export function serveAsync(arg?: string) {
     }
     let localToken = globalConfig.localToken;
     if (!fs.existsSync("pxtarget.json")) {
-        let upper = path.join(__dirname, "../../..")
-        if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
-            console.log("going to " + upper)
-            process.chdir(upper)
-        } else {
-            U.userError("Cannot find pxtarget.json to serve.")
+        //Specifically when the target is being used as a library
+        let targetDepLoc = nodeutil.targetDir
+        if (fs.existsSync(path.join(targetDepLoc, "pxtarget.json"))) {
+            console.log(`Going to ${targetDepLoc}`)
+            process.chdir(targetDepLoc)
+        }
+        else {
+            let upper = path.join(__dirname, "../../..")
+            if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
+                console.log("going to " + upper)
+                process.chdir(upper)
+            } else {
+                U.userError("Cannot find pxtarget.json to serve.")
+            }
         }
     }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
@@ -3184,7 +3212,7 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-export function mainCli(targetDir: string) {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2)) {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -3202,8 +3230,6 @@ export function mainCli(targetDir: string) {
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
-
-    let args = process.argv.slice(2)
 
     initConfig();
 

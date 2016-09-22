@@ -84,7 +84,7 @@ declare namespace pxsim {
     export type SPIPin = "MOSI" | "MISO" | "SCK";
     export type I2CPin = "SDA" | "SCL";
     // the pin style, necessary to know how to attach to the pin
-    export type PinStyle = "male" | "female" | "solder";
+    export type PinStyle = "male" | "female" | "solder" | "croc";
     // orientation along an axis in a right-hand coordinate system where:
     //   -Z is into the breadboard
     //   +X is toward larger breadboard numbers

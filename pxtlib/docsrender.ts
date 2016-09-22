@@ -376,9 +376,9 @@ namespace pxt.docs {
     }
 
     export function embedUrl(rootUrl: string, id: string, height?: number): string {
-        const url = `${rootUrl}?sandbox=1#pub:${id}`;
+        const url = `${rootUrl}#sandbox:${id}`;
         let padding = '70%';
-        return `<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`;
+        return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0"></iframe></div>`;
     }
 
     export function docsEmbedUrl(rootUrl: string, id: string, height?: number): string {

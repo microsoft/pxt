@@ -77,6 +77,25 @@ export function infoNotification(msg: string) {
     htmlmsg("info", msg)
 }
 
+export function cookieNotification() {
+    const key = "cookieconsent"
+    let seen = !!pxt.storage.getLocal(key);
+    if (!seen) {
+        let $d = $('#cookiemsg');
+        $d.html(
+            `
+            <button arial-label="${lf("Continue")}" class="ui right floated icon button"><i class="remove icon"></i></button>
+            ${lf("By using this site you agree to the use of cookies for analytics.")}
+            <a class="ui link" href="https://www.pxt.io/privacy">${lf("Learn more")}</a>
+            `
+        ).fadeIn('fast')
+        $d.find('button').click(() => {
+            pxt.storage.setLocal(key, "1");
+            $d.fadeOut();
+        });
+    }
+}
+
 export function handleNetworkError(e: any) {
     let statusCode = <number>e.status
     if (e.isOffline) {
@@ -91,6 +110,7 @@ export interface ButtonConfig {
     icon?: string; // defaults to "checkmark"
     class?: string; // defaults "positive"
     onclick?: () => (Promise<void> | void);
+    url?: string;
 }
 
 export interface ConfirmOptions extends DialogOptions {
@@ -144,10 +164,10 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let btnno = 0
     for (let b of options.buttons) {
         html += `
-      <button class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} target="_blank">
         ${Util.htmlEscape(b.label)}
         <i class="${b.icon || "checkmark"} icon"></i>
-      </button>`
+      </${b.url ? "a" : "button"}>`
     }
 
     html += `</div>`
@@ -160,7 +180,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
 
     modal.find('img').on('load', () => {
         modal.modal('refresh')
-    })
+    });
+    (modal.find(".ui.accordion") as any).accordion()
 
     return new Promise<void>((resolve, reject) => {
         let mo: any;

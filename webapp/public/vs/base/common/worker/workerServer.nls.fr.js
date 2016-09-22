@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.5.3(793ede49d53dba79d39e52205f16321278f5183c)
+ * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -42,9 +42,6 @@ define("vs/base/common/worker/workerServer.nls.fr", {
 	"vs/editor/common/modes/modesRegistry": [
 		"Texte brut",
 	],
-	"vs/editor/common/modes/supports/suggestSupport": [
-		"Enable word based suggestions.",
-	],
 	"vs/editor/common/services/modeServiceImpl": [
 		"Ajoute des déclarations de langage.",
 		"ID du langage.",
@@ -64,14 +61,6 @@ define("vs/base/common/worker/workerServer.nls.fr", {
 		"la propriété \'{0}\' peut être omise et doit être de type \'string[]\'",
 		"la propriété \'{0}\' peut être omise et doit être de type \'string[]\'",
 		"\'contributes.{0}\' non valide. Tableau attendu.",
-	],
-	"vs/platform/configuration/common/configurationRegistry": [
-		"Ajoute des paramètres de configuration.",
-		"Résumé des paramètres. Cette étiquette va être utilisée dans le fichier de paramètres en tant que commentaire de séparation.",
-		"Description des propriétés de configuration.",
-		"s\'il est défini, \'configuration.type\' doit avoir la valeur \'object",
-		"\'configuration.title\' doit être une chaîne",
-		"\'configuration.properties\' doit être un objet",
 	],
 	"vs/platform/extensions/common/abstractExtensionService": [
 		"Échec de l\'activation de l\'extension \'{1}\'. Raison : dépendance \'{0}\' inconnue.",
@@ -99,44 +88,8 @@ define("vs/base/common/worker/workerServer.nls.fr", {
 		"Thème de couleur de la police utilisée dans la bannière.",
 		"Éditeur de l\'extension VS Code.",
 		"Événements d\'activation pour l\'extension VS Code.",
-		"Dépendances à d\'autres extensions. L\'ID d\'une extension est toujours ${publisher}.${name}. Par exemple : vscode.csharp.",
+		"Dépendances envers d\'autres extensions. L\'identificateur d\'une extension est toujours ${publisher}.${name}. Exemple : vscode.csharp.",
 		"Le script exécuté avant le package est publié en tant qu\'extension VS Code.",
 		"Toutes les contributions de l\'extension VS Code représentées par ce package.",
-	],
-	"vs/platform/jsonschemas/common/jsonContributionRegistry": [
-		"Décrit un fichier JSON à l\'aide d\'un schéma. Voir json-schema.org pour plus d\'infos.",
-		"Identificateur unique du schéma.",
-		"Schéma servant à la vérification de ce document ",
-		"Titre descriptif de l\'élément",
-		"Description longue de l\'élément. Utilisée dans les menus sensitifs et les suggestions.",
-		"Valeur par défaut. Utilisée par les suggestions.",
-		"Nombre qui doit diviser parfaitement la valeur actuelle (sans reste)",
-		"Valeur numérique maximum, inclusive par défaut.",
-		"Rend la propriété maximum exclusive.",
-		"Valeur numérique minimum, inclusive par défaut.",
-		"Rend la propriété minimum exclusive.",
-		"Longueur maximum d\'une chaîne.",
-		"Longueur minimum d\'une chaîne.",
-		"Expression régulière à mettre en correspondance avec la chaîne. Elle n\'est pas implicitement ancrée.",
-		"Pour les tableaux, uniquement quand les éléments sont définis comme tableau. S\'il s\'agit d\'un schéma, celui-ci valide les éléments après ceux spécifiés par le tableau d\'éléments. Si la valeur est false, les éléments supplémentaires entraînent l\'échec de la validation.",
-		"Pour les tableaux. Peut être soit un schéma en fonction duquel valider chaque élément, soit un tableau de schémas en fonction duquel valider chaque élément dans l\'ordre (le premier schéma valide le premier élément, le deuxième schéma valide le deuxième élément, etc.).",
-		"Nombre maximum d\'éléments pouvant figurer dans un tableau (inclusif).",
-		"Nombre minimum d\'éléments pouvant figurer dans un tableau (inclusif).",
-		"Si tous les éléments du tableau doivent être uniques. La valeur par défaut est false.",
-		"Nombre maximum de propriétés d\'un objet (inclusif).",
-		"Nombre minimum de propriétés d\'un objet (inclusif).",
-		"Tableau de chaînes qui répertorie les noms de toutes les propriétés nécessaires sur cet objet.",
-		"Schéma ou booléen. S\'il s\'agit d\'un schéma, il est utilisé pour valider toutes les propriétés non mises en correspondance par \'properties\' ou \'patternProperties\'. Si la valeur est false, les propriétés non mises en correspondance entraînent l\'échec du schéma.",
-		"Non utilisé pour la validation. Placez ici les sous-schémas à référencer inline avec $ref",
-		"Mappage des noms de propriété avec les schémas de chaque propriété.",
-		"Mappage d\'expressions régulières sur les noms de propriété avec les schémas des propriétés correspondantes.",
-		"Mappage des noms de propriétés à un tableau de noms de propriétés ou un schéma. Dans le cas d\'un tableau de noms de propriétés, la propriété nommée dans la clé est valide uniquement si les propriétés du tableau sont présentes dans l\'objet. Si la valeur est un schéma, celui-ci est uniquement appliqué à l\'objet si la propriété dans la clé existe sur l\'objet.",
-		"Ensemble des valeurs littérales valides",
-		"Chaîne d\'un des types de schéma de base (nombre, entier, Null, tableau, objet, booléen ou chaîne) ou tableau de chaînes spécifiant un sous-ensemble de ces types.",
-		"Décrit le format attendu pour la valeur.",
-		"Tableau de schémas qui doivent tous correspondre.",
-		"Tableau de schémas dont au moins un doit correspondre.",
-		"Tableau de schémas, dont exactement un doit correspondre.",
-		"Schéma qui ne doit pas correspondre.",
 	]
 });

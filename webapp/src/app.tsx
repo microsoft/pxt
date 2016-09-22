@@ -43,7 +43,6 @@ export interface FileHistoryEntry {
 }
 
 export interface EditorSettings {
-    showFiles?: boolean;
     editorFontSize: number;
     fileHistory: FileHistoryEntry[];
 }
@@ -232,12 +231,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (this.modal) this.modal.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
+                core.showLoading(lf("downloading package..."));
                 pxt.github.latestVersionAsync(scr.full_name)
                     .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
-                        .then(cfg =>
-                            p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
+                        .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
                         .then(r => this.props.parent.reloadHeaderAsync()))
-                    .done();
+                    .done(() => core.hideLoading())
             } else {
                 Util.oops()
             }
@@ -485,80 +484,90 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
         }
     }
 
+    private removePkg(e: React.MouseEvent, p: pkg.EditorPackage) {
+        e.stopPropagation();
+        core.confirmAsync({
+            header: lf("Remove {0} package", p.getPkgId()),
+            body: lf("You are about to remove a package from your project. Are you sure?"),
+            agreeClass: "red",
+            agreeIcon: "trash",
+            agreeLbl: lf("Remove it"),
+        }).done(res => {
+            if (res) {
+                pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
+                    .then(() => this.props.parent.reloadHeaderAsync())
+                    .done()
+            }
+        })
+    }
+
+    private removeFile(e: React.MouseEvent, f: pkg.File) {
+        e.stopPropagation();
+        this.props.parent.removeFile(f);
+    }
+
+    private updatePkg(e: React.MouseEvent, p: pkg.EditorPackage) {
+        e.stopPropagation();
+        pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
+            .then(() => this.props.parent.reloadHeaderAsync())
+            .done()
+    }
+
+    private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
+        const deleteFiles = pkg.getPkgId() == "this";
+        const parent = this.props.parent;
+        return pkg.sortedFiles().map(file => {
+            let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
+            return (
+                <a key={file.getName() }
+                    onClick={() => parent.setSideFile(file) }
+                    className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
+                    >
+                    {file.name} {meta.isSaved ? "" : "*"}
+                    {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
+                    {meta.isReadonly ? <i className="lock icon"></i> : null}
+                    {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+                    {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removeFile(e, file) } /> : ''}
+                </a>);
+        })
+    }
+
+    private packageOf(p: pkg.EditorPackage) {
+        const expands = this.state.expands;
+        let del = p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built";
+        let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
+        return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => this.togglePkg(p) }>
+            <i className={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`}></i>
+            {upd ? <sui.Button class="primary label" icon="refresh" onClick={(e) => this.updatePkg(e, p) } /> : ''}
+            {del ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removePkg(e, p) } /> : ''}
+            {p.getPkgId() }
+        </div>
+        ].concat(expands[p.getPkgId()] ? this.filesOf(p) : [])
+    }
+
+    private togglePkg(p: pkg.EditorPackage) {
+        const expands = this.state.expands;
+        expands[p.getPkgId()] = !expands[p.getPkgId()];
+        this.forceUpdate();
+    }
+
+    private filesWithHeader(p: pkg.EditorPackage) {
+        return p.isTopLevel() ? this.filesOf(p) : this.packageOf(p);
+    }
+
+    private toggleVisibility() {
+        this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
+    }
+
     renderCore() {
-        let parent = this.props.parent
-        if (!parent.state.showFiles)
-            return null;
-
-        let expands = this.state.expands;
-        let removeFile = (e: React.MouseEvent, f: pkg.File) => {
-            e.stopPropagation();
-            parent.removeFile(f);
-        }
-        let removePkg = (e: React.MouseEvent, p: pkg.EditorPackage) => {
-            e.stopPropagation();
-            core.confirmAsync({
-                header: lf("Remove {0} package", p.getPkgId()),
-                body: lf("You are about to remove a package from your project. Are you sure?"),
-                agreeClass: "red",
-                agreeIcon: "trash",
-                agreeLbl: lf("Remove it"),
-            }).done(res => {
-                if (res) {
-                    pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
-                        .then(() => this.props.parent.reloadHeaderAsync())
-                        .done()
-                }
-            })
-        }
-        let updatePkg = (e: React.MouseEvent, p: pkg.EditorPackage) => {
-            e.stopPropagation();
-            pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
-                .then(() => this.props.parent.reloadHeaderAsync())
-                .done()
-        }
-
-        let filesOf = (pkg: pkg.EditorPackage): JSX.Element[] => {
-            const deleteFiles = pkg.getPkgId() == "this";
-            return pkg.sortedFiles().map(file => {
-                let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
-                return (
-                    <a key={file.getName() }
-                        onClick={() => parent.setSideFile(file) }
-                        className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
-                        >
-                        {file.name} {meta.isSaved ? "" : "*"}
-                        {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
-                        {meta.isReadonly ? <i className="lock icon"></i> : null}
-                        {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-                        {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={(e) => removeFile(e, file) } /> : ''}
-                    </a>);
-            })
-        }
-
-        let packageOf = (p: pkg.EditorPackage) => {
-            let del = p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built";
-            let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
-            return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => togglePkg(p) }>
-                {upd ? <sui.Button class="primary label" icon="refresh" onClick={(e) => updatePkg(e, p) } /> : ''}
-                {del ? <sui.Button class="primary label" icon="trash" onClick={(e) => removePkg(e, p) } /> : ''}
-                {p.getPkgId() }
+        const show = !!this.props.parent.state.showFiles;
+        return <div className={"ui tiny vertical menu filemenu landscape only"}>
+            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
+                {lf("Explorer") }
+                <i className={`chevron ${show ? "down" : "right"} icon`}></i>
             </div>
-            ].concat(expands[p.getPkgId()] ? filesOf(p) : [])
-        }
-
-        let togglePkg = (p: pkg.EditorPackage) => {
-            expands[p.getPkgId()] = !expands[p.getPkgId()];
-            this.forceUpdate();
-        }
-
-        let filesWithHeader = (p: pkg.EditorPackage) => p.isTopLevel() ? filesOf(p) : packageOf(p);
-
-        return (
-            <div className={"ui vertical menu filemenu landscape only"}>
-                {Util.concat(pkg.allEditorPkgs().map(filesWithHeader)) }
-            </div>
-        )
+            {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
+        </div>;
     }
 }
 
@@ -578,7 +587,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         document.title = pxt.appTarget.title || pxt.appTarget.name;
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         this.state = {
-            showFiles: !!this.settings.showFiles,
+            showFiles: false,
             active: document.visibilityState == 'visible'
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = 27;
@@ -605,7 +614,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     saveSettings() {
         let sett = this.settings
-        sett.showFiles = !!this.state.showFiles
 
         let f = this.editorFile
         if (f && f.epkg.getTopHeader()) {
@@ -832,7 +840,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         logs.clear();
         this.setState({
             helpCard: undefined,
-            showFiles: h.editor == pxt.javaScriptProjectName
+            showFiles: false
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -880,7 +888,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 ],
                                 header: lf("Packages cannot be used together"),
                                 body: lf("Packages '{0}' and '{1}' cannot be used together, because they use incompatible settings ({2}).",
-                                    confl.pkg0.id, confl.pkg0.id, confl.settingName)
+                                    confl.pkg0.id, confl.pkg1.id, confl.settingName)
                             })
                         }
                     })
@@ -1092,7 +1100,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let data: any = {
                     name: p.header.name || lf("Untitled"),
                     code: code ? code.content : `basic.showString("Hi!");`,
-                    board: JSON.stringify(pxt.appTarget.simulator.boardDefinition)                 
+                    board: JSON.stringify(pxt.appTarget.simulator.boardDefinition)
                 };
                 let parts = ts.pxtc.computeUsedParts(resp);
                 if (parts.length) {
@@ -1285,17 +1293,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
         const simOpts = pxt.appTarget.simulator;
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
+        const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless small menu`} role="menubar">
-                        <span id="logo" className="ui item">
-                            {targetTheme.logo || targetTheme.portraitLogo
-                                ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
-                                : <span>{targetTheme.name}</span>}
-                            {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
-                        </span>
+                        {sandbox ? undefined :
+                            <span id="logo" className="ui item">
+                                {targetTheme.logo || targetTheme.portraitLogo
+                                    ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
+                                    : <span>{targetTheme.name}</span>}
+                                {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
+                            </span> }
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
@@ -1312,11 +1322,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
                                     {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
-                                    {this.state.header ? <sui.Item role="menuitem" icon='folder' text={this.state.showFiles ? lf("Hide Files") : lf("Show Files") } onClick={() => {
-                                        pxt.tickEvent("menu.showfiles");
-                                        this.setState({ showFiles: !this.state.showFiles });
-                                        this.saveSettings();
-                                    } } /> : undefined}
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                     <div className="ui divider"></div>
@@ -1350,9 +1355,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
                             </div>
                         </div>}
-                        {targetTheme.rightLogo && !sandbox ?
-                            <div className="ui item right wide only">
-                                <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(targetTheme.rightLogo) } /></a>
+                        {rightLogo ?
+                            <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
+                                <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a>
                             </div> : null }
                     </div>
                 </div>
@@ -1362,7 +1367,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class="fluid blue" text={lf("Download") } disabled={compileDisabled} onClick={() => this.compile() } /> : ""}
                         {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } onClick={() => this.openInstructions() } /> : undefined }
-                        {sandbox ? undefined : <sui.Button key='runbtn' class={this.state.showParts ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={this.state.showParts ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
+                        {sandbox ? undefined : <sui.Button key='runbtn' class={make ? "" : "fluid half"} icon={this.state.running ? "stop" : "play"} text={make ? undefined : this.state.running ? lf("Stop") : lf("Play") } title={this.state.running ? lf("Stop") : lf("Play") } onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />}
                     </div>
                     <div className="ui item landscape only">
                         {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -1371,7 +1376,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
                     </div>
-                    <FileList parent={this} />
+                    {sandbox ? undefined : <FileList parent={this} />}
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
@@ -1605,6 +1610,7 @@ export var targetVersion: string;
 export var sandbox = false;
 
 function initTheme() {
+    core.cookieNotification()
     if (pxt.appTarget.appTheme.accentColor) {
         let style = document.createElement('style');
         style.type = 'text/css';
@@ -1625,7 +1631,6 @@ function parseHash(): { cmd: string; arg: string } {
     let hashArg = ""
     let hashM = /^#(\w+)(:([\/\-\w]+))?$/.exec(window.location.hash)
     if (hashM) {
-        window.location.hash = ""
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }
     return { cmd: '', arg: '' };
@@ -1656,6 +1661,17 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "uploader": // editor launched by the uploader
             pxt.storage.setLocal("uploader", "1");
             break;
+        case "sandbox":
+        case "pub":
+        case "edit":
+            let existing = workspace.getHeaders()
+                .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]                
+            core.showLoading(lf("Loading project..."))
+            return  (existing
+                ? theEditor.loadHeaderAsync(existing)
+                : workspace.installByIdAsync(hash.arg)
+                .then(hd => theEditor.loadHeaderAsync(hd)))
+                .done(() => core.hideLoading())
     }
 }
 
@@ -1670,7 +1686,7 @@ $(document).ready(() => {
     let config = pxt.webConfig
     ksVersion = config.pxtVersion;
     targetVersion = config.targetVersion;
-    sandbox = /sandbox=1/i.test(window.location.href);
+    sandbox = /sandbox=1|#sandbox/i.test(window.location.href);
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -1723,6 +1739,7 @@ $(document).ready(() => {
             initSerial()
             initHashchange();
             switch (hash.cmd) {
+                case "sandbox":
                 case "pub":
                 case "edit":
                     let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hash.arg)[0]

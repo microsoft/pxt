@@ -661,7 +661,7 @@ namespace pxt.blocks {
             Blockly.terminateDrag_();
             const delta = e.deltaY > 0 ? -1 : 1;
             const position = Blockly.mouseToSvg(e, ws.getParentSvg());
-            if (e.ctrlKey)
+            if (e.ctrlKey || e.metaKey)
                 ws.zoom(position.x, position.y, delta);
             else if (ws.scrollbar) {
                 let y = parseFloat(ws.scrollbar.vScroll.svgKnob_.getAttribute("y") || "0");

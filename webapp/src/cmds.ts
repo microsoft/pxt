@@ -54,29 +54,30 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
 
     let instructions: UploadInstructionStep[] = [
         {
-            title: lf("Connect your {0} to your computer using the USB cable.", boardName),
+            title: lf("Connect your {0} to your PC using the USB cable.", boardName),
             image: "connection"
         },
         {
             title: lf("Save the <code>.hex</code> file to your computer."),
-            body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started")}</a>`,
+            body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started.")}</a>`,
             image: "save"
         },
         {
-            title: lf("Copy the <code>.hex</code> file to your {0} drive", boardDriveName),
+            title: lf("Copy the <code>.hex</code> file to your {0} drive.", boardDriveName),
             body: pxt.BrowserUtils.isMac() ? lf("Drag and drop the <code>.hex</code> file to your {0} drive in Finder", boardDriveName) :
-                  pxt.BrowserUtils.isWindows() ? lf("Right click on the file in Windows Explorer, click 'Send To', and select {0}", boardDriveName) : "",
+                pxt.BrowserUtils.isWindows() ? lf("Right click on the file in Windows Explorer, click 'Send To', and select {0}", boardDriveName) : "",
             image: "copy"
         }
     ];
 
     let usbImagePath = namedUsbImage("connection");
+    let docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
 <div class="ui styled fluid accordion">
 ${instructions.map((step: UploadInstructionStep, i: number) =>
-`<div class="title ${i == 0 ? "active" : ""}">
+            `<div class="title ${i == 0 ? "active" : ""}">
   <i class="dropdown icon"></i>
   ${step.title}
 </div>
@@ -85,19 +86,20 @@ ${instructions.map((step: UploadInstructionStep, i: number) =>
     ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}" class="ui centered large image" />` : ""}
 </div>`).join('')}
 </div>
-${pxt.appTarget.appTheme.usbDocs ? `
-    <div class="ui info message">
-        <p><a href="${pxt.appTarget.appTheme.usbDocs}" target="_blank">${lf("For more information on how to transfer the program to your {0} click here", boardName)}</a></p>
-    </div>` : ""}
 ${pxt.BrowserUtils.isWindows() ? `
-    <div class="ui info message landscape only">
+    <div class="ui info message landscape desktop only">
         ${lf("Tired of copying the .hex file?")}
         <a href="/uploader" target="_blank">${lf("Install the Uploader!")}</a>
     </div>
-    ` : ""}
-<script type="text/javascript">$(".ui.accordion").accordion();</script>`, //This extra call needs to get fired otherwise the accordion isn't interactive
+    ` : ""}`,
         hideCancel: true,
         agreeLbl: lf("Done!"),
+        buttons: !docUrl ? undefined : [{
+            label: lf("Help"),
+            icon: "help",
+            class: "lightgrey",
+            url: docUrl
+        }],
         timeout: 0 //We don't want this to timeout now that it is interactive
     }).then(() => { });
 }
