@@ -320,7 +320,7 @@ export class Editor extends srceditor.Editor {
             id: "save",
             label: lf("Save"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-            keybindingContext: "writeableEditor",
+            keybindingContext: "!editorReadonly",
             run: () => Promise.resolve(this.parent.typecheckNow())
         });
 
@@ -328,7 +328,7 @@ export class Editor extends srceditor.Editor {
             id: "runSimulator",
             label: lf("Run Simulator"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-            keybindingContext: "writeableEditor",
+            keybindingContext: "!editorReadonly",
             run: () => Promise.resolve(this.parent.runSimulator())
         });
 
@@ -337,7 +337,7 @@ export class Editor extends srceditor.Editor {
                 id: "compileHex",
                 label: lf("Download"),
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
-                keybindingContext: "writeableEditor",
+                keybindingContext: "!editorReadonly",
                 run: () => Promise.resolve(this.parent.compile())
             });
         }
@@ -457,8 +457,6 @@ export class Editor extends srceditor.Editor {
         if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
 
         this.editor.updateOptions({ readOnly: file.isReadonly() });
-        let readOnlyContext = this.editor.createContextKey(/*key name*/'writeableEditor', /*default value*/false);
-        readOnlyContext.set(!file.isReadonly())
 
         this.currFile = file;
         let proto = "pkg:" + this.currFile.getName();
