@@ -1024,21 +1024,30 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     saveTypeScriptAsync(open = false): Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
             return Promise.resolve();
-        let src = this.editor.saveToTypeScript()
 
-        if (!src) return Promise.resolve();
-        // format before saving
-        //src = pxtc.format(src, 0).formatted;
+        let promise = Promise.resolve().then(() => {
+            let src = this.editor.saveToTypeScript();
 
-        let mainPkg = pkg.mainEditorPkg();
-        let tsName = this.editorFile.getVirtualFileName();
-        Util.assert(tsName != this.editorFile.name);
-        return mainPkg.setContentAsync(tsName, src).then(() => {
-            if (open) {
-                let f = mainPkg.files[tsName];
-                this.setFile(f);
-            }
-        })
+            if (!src) return Promise.resolve();
+            // format before saving
+            //src = pxtc.format(src, 0).formatted;
+
+            let mainPkg = pkg.mainEditorPkg();
+            let tsName = this.editorFile.getVirtualFileName();
+            Util.assert(tsName != this.editorFile.name);
+            return mainPkg.setContentAsync(tsName, src).then(() => {
+                if (open) {
+                    let f = mainPkg.files[tsName];
+                    this.setFile(f);
+                }
+            });
+        });
+
+        if (open) {
+            return core.showLoadingAsync(lf('switching to JavaScript...'), promise);
+        } else {
+            return promise;
+        }
     }
 
     compile() {
