@@ -196,6 +196,7 @@ export class Editor extends srceditor.Editor {
             trashcan: true,
             collapse: false,
             comments: false,
+            disable: false,
             zoom: {
                 enabled: true,
                 controls: true,
