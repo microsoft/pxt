@@ -3099,7 +3099,7 @@ cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
-cmd("decompile file.ts            - decompile ts file and produce a similalrly named .blocks file", decompileAsync, 1)
+cmd("decompile file.ts...         - decompile ts files and produce similarly named .blocks files", decompileAsync, 1)
 cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and compare to baselines", testDecompilerAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
