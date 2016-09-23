@@ -1,0 +1,187 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">1</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">2</field>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">3</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">4</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">y</field>
+<value name="VALUE">
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">1</field>
+</block>
+</value>
+<value name="B">
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">2</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">3</field>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">4</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">z</field>
+<value name="VALUE">
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">1</field>
+</block>
+</value>
+<value name="B">
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">2</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">3</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">4</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+</block>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+</block>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+</block>
+<block type="math_arithmetic">
+<field name="OP">DIVIDE</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+</block>
+<block type="math_modulo">
+<value name="DIVIDEND">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<value name="DIVISOR">
+<block type="math_number">
+<field name="NUM">1</field>
+</block>
+</value>
+</block>
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</xml>
