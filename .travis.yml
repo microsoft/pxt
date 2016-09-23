@@ -8,9 +8,6 @@ sudo: false
 notifications:
   email:
     - touchdevelop-build@microsoft.com
-  slack: pxt-team:dNxkje2gg4MgRxX1imoyXWLD
-    on_success: always
-    on_failure: always
 cache:
   directories:
     - node_modules
