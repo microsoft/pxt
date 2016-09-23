@@ -102,7 +102,7 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget",
         "node built/pxt.js uploaddoc",
-    ], { printStdout: true });
+    ], { printStdout: true }, complete.bind(this));
 })
 
 task("lint", [], { async: true }, function () {
@@ -252,7 +252,7 @@ task('monaco-editor', [
     "built/web/vs/language/typescript/src/mode.js"
 ])
 
-file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], { async: true }, function () {
+file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], function () {
     console.log(`Updating the monaco editor bits`)
     jake.mkdirP("built/web/vs/editor")
     let monacotypescriptcontribution = fs.readFileSync("node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js", "utf8")
@@ -283,7 +283,7 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     jake.cpR("node_modules/monaco-editor/dev/vs/language/json/", "webapp/public/vs/language/")
 })
 
-file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-typescript/release/src/mode.js'], { async: true }, function () {
+file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-typescript/release/src/mode.js'], function () {
     console.log(`Updating the monaco typescript language service`)
     jake.mkdirP("built/web/vs/language/typescript/src")
     jake.mkdirP("built/web/vs/language/typescript/lib")
