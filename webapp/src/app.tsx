@@ -1651,8 +1651,26 @@ function initHashchange() {
     });
 }
 
+function unsupportedBrowserRedirect() {
+    Util.httpGetJsonAsync(pxt.webConfig.targetCdnUrl + "target.json")
+        .then(pkg.setupAppTarget)
+        .then(() => {
+            let redirect = pxt.BrowserUtils.suggestedBrowserPath();
+            if (redirect) {
+                window.location.href = redirect;
+            }
+        })
+}
+
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
+
+    //Browser check needs to be as early as possible
+    if (!pxt.BrowserUtils.isBrowserSupported()) {
+        unsupportedBrowserRedirect()
+        return
+    }
+
     let config = pxt.webConfig
     ksVersion = config.pxtVersion;
     targetVersion = config.targetVersion;
@@ -1681,14 +1699,6 @@ $(document).ready(() => {
     const cfg = pxt.webConfig;
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
         .then(pkg.setupAppTarget)
-        .then(() => {
-            if (!pxt.BrowserUtils.isBrowserSupported()) {
-                let redirect = pxt.BrowserUtils.suggestedBrowserPath();
-                if (redirect) {
-                    window.location.href = redirect;
-                }
-            }
-        })
         .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
