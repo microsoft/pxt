@@ -39,87 +39,91 @@ export class Editor extends srceditor.Editor {
     openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
 
-        let blockFile = this.currFile.getVirtualFileName();
-        if (!blockFile) {
-            let mainPkg = pkg.mainEditorPkg();
-            if (!mainPkg || !mainPkg.files["main.blocks"]) {
-                if (mainPkg) {
-                    this.parent.setFile(mainPkg.files["main.ts"]);
-                }
-                return;
-            }
-            this.currFile = mainPkg.files["main.ts"];
-            blockFile = this.currFile.getVirtualFileName();
-        }
-
-        const failedAsync = (file: string) => {
-            this.forceDiagnosticsUpdate();
-            return this.showConversionFailedDialog(file);
-        }
-
-        if (!this.hasBlocks())
-            return
-
-        // needed to test roundtrip
-        let js = this.formatCode();
-
-        // might be undefined
-        let mainPkg = pkg.mainEditorPkg();
-        let xml: string;
-
-        // it's a bit for a wild round trip:
-        // 1) convert blocks to js to see if any changes happened, otherwise, just reload blocks
-        // 2) decompile js -> blocks then take the decompiled blocks -> js
-        // 3) check that decompiled js == current js % white space
-        let blocksInfo: pxtc.BlocksInfo;
-        this.parent.saveFileAsync()
-            .then(() => compiler.getBlocksAsync())
-            .then((bi) => {
-                blocksInfo = bi;
-                pxt.blocks.initBlocks(blocksInfo);
-                let oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
-                if (oldWorkspace) {
-                    let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                    if (oldJs == js) {
-                        console.log('js not changed, skipping decompile');
-                        pxt.tickEvent("typescript.noChanges")
-                        return this.parent.setFile(mainPkg.files[blockFile]);
+        let promise = Promise.resolve().then(() => {
+            let blockFile = this.currFile.getVirtualFileName();
+            if (!blockFile) {
+                let mainPkg = pkg.mainEditorPkg();
+                if (!mainPkg || !mainPkg.files["main.blocks"]) {
+                    if (mainPkg) {
+                        this.parent.setFile(mainPkg.files["main.ts"]);
                     }
+                    return;
                 }
-                return compiler.decompileAsync(this.currFile.name)
-                    .then(resp => {
-                        if (!resp.success) return failedAsync(blockFile);
-                        xml = resp.outfiles[blockFile];
-                        Util.assert(!!xml);
-                        // try to convert back to typescript
-                        let workspace = pxt.blocks.loadWorkspaceXml(xml);
-                        if (!workspace) return failedAsync(blockFile);
+                this.currFile = mainPkg.files["main.ts"];
+                blockFile = this.currFile.getVirtualFileName();
+            }
 
-                        let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
+            const failedAsync = (file: string) => {
+                this.forceDiagnosticsUpdate();
+                return this.showConversionFailedDialog(file);
+            }
 
-                        const cleanRx = /[\s;]/g;
-                        if (b2jsr.source.replace(cleanRx, '') != js.replace(cleanRx, '')) {
-                            pxt.tickEvent("typescript.conversionFailed");
-                            console.log('js roundtrip failed:')
-                            console.log('-- original:');
-                            console.log(js.replace(cleanRx, ''));
-                            console.log('-- roundtrip:');
-                            console.log(b2jsr.source.replace(cleanRx, ''));
-                            pxt.reportError('decompilation failure', {
-                                js: js,
-                                blockly: xml,
-                                jsroundtrip: b2jsr.source
-                            })
-                            return failedAsync(blockFile);
+            if (!this.hasBlocks())
+                return
+
+            // needed to test roundtrip
+            let js = this.formatCode();
+
+            // might be undefined
+            let mainPkg = pkg.mainEditorPkg();
+            let xml: string;
+
+            // it's a bit for a wild round trip:
+            // 1) convert blocks to js to see if any changes happened, otherwise, just reload blocks
+            // 2) decompile js -> blocks then take the decompiled blocks -> js
+            // 3) check that decompiled js == current js % white space
+            let blocksInfo: pxtc.BlocksInfo;
+            return this.parent.saveFileAsync()
+                .then(() => compiler.getBlocksAsync())
+                .then((bi) => {
+                    blocksInfo = bi;
+                    pxt.blocks.initBlocks(blocksInfo);
+                    let oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
+                    if (oldWorkspace) {
+                        let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
+                        if (oldJs == js) {
+                            console.log('js not changed, skipping decompile');
+                            pxt.tickEvent("typescript.noChanges")
+                            return this.parent.setFile(mainPkg.files[blockFile]);
                         }
+                    }
+                    return compiler.decompileAsync(this.currFile.name)
+                        .then(resp => {
+                            if (!resp.success) return failedAsync(blockFile);
+                            xml = resp.outfiles[blockFile];
+                            Util.assert(!!xml);
+                            // try to convert back to typescript
+                            let workspace = pxt.blocks.loadWorkspaceXml(xml);
+                            if (!workspace) return failedAsync(blockFile);
 
-                        return mainPkg.setContentAsync(blockFile, xml)
-                            .then(() => this.parent.setFile(mainPkg.files[blockFile]));
-                    })
-            }).catch(e => {
-                pxt.reportException(e, { js: this.currFile.content });
-                core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
-            }).done()
+                            let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
+
+                            const cleanRx = /[\s;]/g;
+                            if (b2jsr.source.replace(cleanRx, '') != js.replace(cleanRx, '')) {
+                                pxt.tickEvent("typescript.conversionFailed");
+                                console.log('js roundtrip failed:')
+                                console.log('-- original:');
+                                console.log(js.replace(cleanRx, ''));
+                                console.log('-- roundtrip:');
+                                console.log(b2jsr.source.replace(cleanRx, ''));
+                                pxt.reportError('decompilation failure', {
+                                    js: js,
+                                    blockly: xml,
+                                    jsroundtrip: b2jsr.source
+                                })
+                                return failedAsync(blockFile);
+                            }
+
+                            return mainPkg.setContentAsync(blockFile, xml)
+                                .then(() => this.parent.setFile(mainPkg.files[blockFile]));
+                        })
+                }).catch(e => {
+                    pxt.reportException(e, { js: this.currFile.content });
+                    core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
+                });
+        });
+
+        core.showLoadingAsync(lf('switching to blocks...'), promise).done();
     }
 
     showConversionFailedDialog(blockFile: string): Promise<void> {
@@ -176,7 +180,7 @@ export class Editor extends srceditor.Editor {
     }
 
     initEditorCss() {
-        let colorDict: { [ns: string]: { color: string, fns: string[] } } = { };
+        let colorDict: { [ns: string]: { color: string, fns: string[] } } = {};
         let head = document.head || document.getElementsByTagName('head')[0],
             style = (document.getElementById('monacoeditorStyles') as HTMLStyleElement) || document.createElement('style');
         style.id = "monacoeditorStyles";
@@ -186,16 +190,16 @@ export class Editor extends srceditor.Editor {
             .then((blockInfo: pxtc.BlocksInfo) => {
                 if (!blockInfo) return;
                 blockInfo.blocks
-                .forEach(fn => {
-                    let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                    let nsn = blockInfo.apis.byQName[ns];
-                    if (nsn) ns = nsn.attributes.block || ns;
-                    if (nsn && nsn.attributes.color) {
-                        if (!colorDict[ns])
-                            colorDict[ns] = { color: nsn.attributes.color, fns: [] };
-                        colorDict[ns].fns.push(fn.name);
-                    }
-                });
+                    .forEach(fn => {
+                        let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                        let nsn = blockInfo.apis.byQName[ns];
+                        if (nsn) ns = nsn.attributes.block || ns;
+                        if (nsn && nsn.attributes.color) {
+                            if (!colorDict[ns])
+                                colorDict[ns] = { color: nsn.attributes.color, fns: [] };
+                            colorDict[ns].fns.push(fn.name);
+                        }
+                    });
             }).then(() => {
                 let cssContent = "";
                 Object.keys(colorDict).forEach(function (ns) {
@@ -275,7 +279,7 @@ export class Editor extends srceditor.Editor {
     }
 
     isIncomplete() {
-        return (this.editor as any)._keybindingService.getContextValue('suggestWidgetVisible');
+        return this.editor ? (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible : false;
     }
 
     prepare() {
@@ -306,12 +310,12 @@ export class Editor extends srceditor.Editor {
             "editor.foldLevel4",
             "editor.foldLevel5"]
 
-        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._shouldShowInContextMenu = false : null);
+        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._actual.menuOpts = undefined : null);
 
         this.editor.getActions().forEach(action => disabledFromCommands.indexOf(action.id) > -1 ? (action as any)._enabled = false : null);
 
         this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
-            .run = () => Promise.resolve(this.formatCode());
+            .run = () => Promise.resolve(this.beforeCompile());
 
         this.editor.getActions().filter(action => action.id == "editor.action.quickCommand")[0]
             .label = lf("Show Commands");
@@ -320,8 +324,7 @@ export class Editor extends srceditor.Editor {
             id: "save",
             label: lf("Save"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-            enablement: { writeableEditor: true },
-            contextMenuGroupId: "4_tools/*",
+            keybindingContext: "!editorReadonly",
             run: () => Promise.resolve(this.parent.typecheckNow())
         });
 
@@ -329,10 +332,19 @@ export class Editor extends srceditor.Editor {
             id: "runSimulator",
             label: lf("Run Simulator"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-            enablement: { writeableEditor: true },
-            contextMenuGroupId: "4_tools/*",
+            keybindingContext: "!editorReadonly",
             run: () => Promise.resolve(this.parent.runSimulator())
         });
+
+        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+            this.editor.addAction({
+                id: "compileHex",
+                label: lf("Download"),
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
+                keybindingContext: "!editorReadonly",
+                run: () => Promise.resolve(this.parent.compile())
+            });
+        }
 
         this.editor.addAction({
             id: "zoomIn",
@@ -348,36 +360,27 @@ export class Editor extends srceditor.Editor {
             run: () => Promise.resolve(this.zoomOut())
         });
 
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-            this.editor.addAction({
-                id: "compileHex",
-                label: lf("Download"),
-                enablement: { writeableEditor: true },
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
-                contextMenuGroupId: "4_tools/*",
-                run: () => Promise.resolve(this.parent.compile())
-            });
-        }
-
         this.editor.onDidBlurEditorText(() => {
             if (this.isIncomplete()) {
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSyntaxValidation: true});
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSemanticValidation: true});
             } else {
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = false;
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSyntaxValidation: false});
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSemanticValidation: false});
+            }
+        })
+
+        this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
+            // Update editor font size in settings after a ctrl+scroll zoom
+            let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
+            if (this.parent.settings.editorFontSize != currentFont) {
+                this.parent.settings.editorFontSize = currentFont;
+                this.forceDiagnosticsUpdate();
             }
         })
 
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
             if (this.currFile.isReadonly()) return;
-            if (this.isIncomplete()) {
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = true;
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = true;
-            } else {
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSyntaxValidation = false;
-                monaco.languages.typescript.typescriptDefaults.diagnosticsOptions.noSemanticValidation = false;
-            }
 
             if (this.highlightDecorations)
                 this.editor.deltaDecorations(this.highlightDecorations, []);
@@ -400,14 +403,16 @@ export class Editor extends srceditor.Editor {
 
     zoomIn() {
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
-        this.parent.settings.editorFontSize++;
+        let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
+        this.parent.settings.editorFontSize = currentFont + 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
 
     zoomOut() {
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
-        this.parent.settings.editorFontSize--;
+        let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
+        this.parent.settings.editorFontSize = currentFont - 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
@@ -517,7 +522,7 @@ export class Editor extends srceditor.Editor {
         let file = this.currFile
         let lines: string[] = this.editor.getModel().getLinesContent();
         let fontSize = this.parent.settings.editorFontSize - 3;
-        let lineHeight = (this.editor as any)._configuration.editor.lineHeight;
+        let lineHeight = this.editor.getConfiguration().lineHeight;
 
         let viewZones = this.editorViewZones || [];
         this.annotationLines = [];
@@ -562,8 +567,10 @@ export class Editor extends srceditor.Editor {
         let position = this.editor.getModel().getPositionAt(brk.start);
         if (!position) return;
         this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
-            { range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column + brk.length),
-                options: { inlineClassName: 'highlight-statement' }},
+            {
+                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column + brk.length),
+                options: { inlineClassName: 'highlight-statement' }
+            },
         ]);
     }
 }

@@ -17,6 +17,7 @@ export class Editor extends srceditor.Editor {
     loadingXml: boolean;
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
+    isFirstBlocklyLoad = true;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -51,7 +52,7 @@ export class Editor extends srceditor.Editor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
-            compiler.getBlocksAsync()
+            let promise = compiler.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
@@ -62,13 +63,16 @@ export class Editor extends srceditor.Editor {
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
+                    this.isFirstBlocklyLoad = false;
+                }).finally(() => {
+                    editorDiv.removeChild(loading);
+                });
 
-                })
-                .done(() => {
-                    editorDiv.removeChild(loading);
-                }, e => {
-                    editorDiv.removeChild(loading);
-                })
+            if (this.isFirstBlocklyLoad) {
+                core.showLoadingAsync(lf('loading...'), promise).done();
+            } else {
+                promise.done();
+            }
         }
     }
 
@@ -196,6 +200,7 @@ export class Editor extends srceditor.Editor {
             trashcan: true,
             collapse: false,
             comments: false,
+            disable: false,
             zoom: {
                 enabled: true,
                 controls: true,
