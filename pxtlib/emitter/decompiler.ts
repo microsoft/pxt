@@ -163,7 +163,7 @@ ${output}</xml>`;
                     emitStatementBlock(n);
                     break;
                 default:
-                    error(n, Util.lf("Unsupported syntax kind for output expression block: " + SK[n.kind]));
+                    error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
                     break;
             }
 
@@ -171,7 +171,7 @@ ${output}</xml>`;
                 const op = n.operatorToken.getText();
                 const npp = ops[op];
                 if (!npp) {
-                    return error(n, Util.lf("Could not find operator " + op))
+                    return error(n, Util.lf("Could not find operator {0}", op))
                 }
 
                 openBlockTag(npp.type)
@@ -255,10 +255,10 @@ ${output}</xml>`;
                     break;
                 default:
                     if (next) {
-                        error(node, Util.lf("Unsupported statement in block: " + SK[node.kind]))
+                        error(node, Util.lf("Unsupported statement in block: {0}", SK[node.kind]))
                     }
                     else {
-                        error(node, Util.lf("Statement kind unsupported in blocks: " + SK[node.kind]))
+                        error(node, Util.lf("Statement kind unsupported in blocks: {0}", SK[node.kind]))
                     }
                     return;
             }

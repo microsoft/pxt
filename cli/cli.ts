@@ -2599,11 +2599,13 @@ function testDecompilerAsync(dir: string): Promise<void> {
     try {
         const stats = fs.statSync(baselineDir);
         if (!stats.isDirectory()) {
-            return Promise.reject(baselineDir + " is not a directory");
+            console.error(baselineDir + " is not a directory; unable to run decompiler tests");
+            process.exit(1);
         }
     }
     catch (e) {
-        return Promise.reject(baselineDir + " does not exist");
+        console.error(baselineDir + " does not exist; unable to run decompiler tests");
+        process.exit(1);
     }
 
     for (const file of fs.readdirSync(dir)) {
@@ -2616,6 +2618,8 @@ function testDecompilerAsync(dir: string): Promise<void> {
             filenames.push(filename)
         }
     }
+
+    const errors: string[] = [];
 
     return Promise.mapSeries(filenames, filename => {
         const basename = path.basename(filename);
@@ -2631,8 +2635,8 @@ function testDecompilerAsync(dir: string): Promise<void> {
         }
 
         if (!baselineExists) {
-            // Don't kill the promise chain, just print an resolve
-            console.log(`Could not find baseline file for "${basename}" at ${baselineFile}`)
+            // Don't kill the promise chain, just push an error
+            errors.push(`decompiler test FAILED; ${basename} does not have a baseline at ${baselineFile}`)
             return Promise.resolve()
         }
 
@@ -2640,18 +2644,27 @@ function testDecompilerAsync(dir: string): Promise<void> {
             .then(decompiled => {
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (compareBaselines(decompiled, baseline)) {
-                    console.log(`${basename} - okay`);
+                    console.log(`decompiler test OK: ${basename}`);
                 }
                 else {
                     const outFile = path.join(replaceFileExtension(filename, ".local.blocks"))
                     fs.writeFileSync(outFile, decompiled)
-                    console.log(`${basename} - error: baselines did not match (local baseline written to ${outFile})`);
+                    errors.push((`decompiler test FAILED; ${basename} did not match baseline, output written to ${outFile})`));
                 }
             }, error => {
-                console.log(`${basename} - error: ${error}`)
+                errors.push((`decompiler test FAILED; ${basename} was unable to decompile due to: ${error}`))
             })
     })
-        .then(() => {});
+        .then(() => {
+            if (errors.length) {
+                errors.forEach(e => console.log(e));
+                console.error(`${errors.length} decompiler test failure(s)`);
+                process.exit(1);
+            }
+            else {
+                console.log(`${filenames.length} decompiler test(s) OK`);
+            }
+        });
 }
 
 function compareBaselines(a: string, b: string): boolean {
