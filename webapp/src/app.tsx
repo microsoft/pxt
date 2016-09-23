@@ -1044,7 +1044,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         });
 
         if (open) {
-            return core.showLoadingAsync(lf('switching to JavaScript...'), promise);
+            return core.showLoadingAsync(lf("switching to JavaScript..."), promise);
         } else {
             return promise;
         }
@@ -1636,7 +1636,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "edit":
             let existing = workspace.getHeaders()
                 .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]                
-            core.showLoading(lf("Loading project..."))
+            core.showLoading(lf("loading project..."))
             return  (existing
                 ? theEditor.loadHeaderAsync(existing)
                 : workspace.installByIdAsync(hash.arg)
