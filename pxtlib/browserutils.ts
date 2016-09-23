@@ -113,7 +113,7 @@ namespace pxt.BrowserUtils {
             matches = /Midori\/([0-9\.]+)/i.exec(navigator.userAgent);
         }
         else if (isSafari()) {
-            matches = /Safari\/([0-9\.]+)/i.exec(navigator.userAgent);
+            matches = /Version\/([0-9\.]+)/i.exec(navigator.userAgent);
         }
         else if (isChrome()) {
             matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
@@ -136,7 +136,7 @@ namespace pxt.BrowserUtils {
     let hasLoggedBrowser = false
 
     export function isBrowserSupported(): boolean {
-        if (!!navigator) {
+        if (!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
         }
         const versionString = browserVersion();
