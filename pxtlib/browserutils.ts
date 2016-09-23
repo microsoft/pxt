@@ -136,7 +136,7 @@ namespace pxt.BrowserUtils {
     let hasLoggedBrowser = false
 
     export function isBrowserSupported(): boolean {
-        if (!!navigator) {
+        if (!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
         }
         const versionString = browserVersion();
