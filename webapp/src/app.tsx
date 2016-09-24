@@ -236,7 +236,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
                         .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
                         .then(r => this.props.parent.reloadHeaderAsync()))
-                    .done(() => core.hideLoading())
+                    .catch(core.handleNetworkError)
+                    .finally(() => core.hideLoading());
             } else {
                 Util.oops()
             }
@@ -1674,12 +1675,12 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "pub":
         case "edit":
             let existing = workspace.getHeaders()
-                .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]                
+                .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
             core.showLoading(lf("loading project..."))
-            return  (existing
+            return (existing
                 ? theEditor.loadHeaderAsync(existing)
                 : workspace.installByIdAsync(hash.arg)
-                .then(hd => theEditor.loadHeaderAsync(hd)))
+                    .then(hd => theEditor.loadHeaderAsync(hd)))
                 .done(() => core.hideLoading())
     }
 }
@@ -1719,6 +1720,7 @@ $(document).ready(() => {
     const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     const cfg = pxt.webConfig;
     Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
+        .catch(core.handleNetworkError)
         .then(pkg.setupAppTarget)
         .then(() => {
             if (!pxt.BrowserUtils.isBrowserSupported()) {

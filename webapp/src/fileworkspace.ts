@@ -45,7 +45,7 @@ function apiAsync(path: string, data?: any) {
         headers: { "Authorization": Cloud.localToken },
         method: data ? "POST" : "GET",
         data: data || undefined
-    }).then(r => r.json)
+    }).then(r => r.json).catch(core.handleNetworkError);
 }
 
 function mergeFsPkg(pkg: pxt.FsPkg) {
