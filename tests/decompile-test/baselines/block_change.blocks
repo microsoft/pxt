@@ -1,0 +1,140 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="variables_set">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">1</field>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">-1</field>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">-1</field>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">1</field>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">5</field>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">-5</field>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">5</field>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">6</field>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">-6</field>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<value name="B">
+<block type="math_number">
+<field name="NUM">6</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</xml>

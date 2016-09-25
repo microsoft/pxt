@@ -18,7 +18,7 @@ class Instruction:
     def __init__(self):
         self.addr = -1
         self.label = ""
-        self.isDirective = False;
+        self.isDirective = False
         self.opcode = ""
         self.encoding = ""
         self.operands = []

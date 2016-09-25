@@ -1,75 +1,15 @@
-// base class for generating assembly code 
-
 namespace ts.pxtc {
-
-    // this class defines the interface between the IR
-    // and a particular assembler (Thumb, AVR). Thus,
-    // the registers mentioned below are VIRTUAL registers
-    // required by the IR-machine, rather than PHYSICAL registers
-    // at the assembly level. 
-    abstract class AssemblySnippets {
-        public reg_gets_imm(reg: string, imm: number) { return "TBD" }
-        public push(reg: string) { return "TBD" }
-        public pop(reg: string) { return "TBD" }
-        public debugger_hook(lbl: string) { return "TBD" }
-        public debugger_bkpt(lbl: string) { return "TBD" }
-        public pop_locals(n: number) { return "TBD" }
-        public pop_pc() { return "TBD" }
-        public unconditional_branch() { return "TBD" }
-        public beq() { return "TBD" }
-        public bne() { return "TBD" }
-        public cmp(o1: string, o2: string) { return "TBD" }
-        public load_reg_sp_off(reg: string, off: number) { return "TBD"; }
-    }
-
-    // we have a very simple code generation strategy
-    class ThumbSnippets extends AssemblySnippets {
-        public reg_gets_imm(reg: string, imm: number) {
-            return `movs ${reg}, #${imm}`
-        }
-        public push(reg: string) { return `push {${reg}} ` }
-        public pop(reg: string) { return `pop {${reg}} ` }
-
-        public debugger_hook(lbl: string) {
-            return `
-    ldr r0, [r6, #0]
-    lsls r0, r0, #30
-    bmi ${lbl}
-${lbl + "_after"}:
-`;
-        }
-
-        public debugger_bkpt(lbl: string) {
-            return `
-    ldr r0, [r6, #0]
-    lsls r0, r0, #31
-    bpl ${lbl}
-    bkpt 2
-${lbl}:`
-        }
-
-        public pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
-        public pop_pc() { return "pop {pc}" }
-        public unconditional_branch() { return "bb "; }
-        public beq() { return "beq " }
-        public bne() { return "bne " }
-        public cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
-        public load_reg_sp_off(reg: string, off: number) {
-            return `ldr ${reg}, [sp, #4*${off}]`
-        }
-    }
-
 
     class ProcToAssembly {
 
-        private t: AssemblySnippets;
+        private t: ts.pxtc.AssemblySnippets;
         private bin: Binary;
         private resText = ""
         private exprStack: ir.Expr[] = []
         private calls: ProcCallInfo[] = []
         private proc: ir.Procedure = null;
 
-        constructor(t: AssemblySnippets, bin: Binary, proc: ir.Procedure) {
+        constructor(t: ts.pxtc.AssemblySnippets, bin: Binary, proc: ir.Procedure) {
             this.t = t;
             this.bin = bin;
             this.proc = proc;
@@ -518,6 +458,4 @@ ${baseLabel}:
             }
         }
     }
-
 }
-

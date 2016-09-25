@@ -22,7 +22,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testlang'])
+task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -45,6 +45,10 @@ task('testerr', ['built/pxt.js'], { async: true }, function () {
 
 task('testlang', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js run')
+})
+
+task('testdecompiler', ['built/pxt.js'], { async: true }, function () {
+    cmdIn(this, "tests/decompile-test", 'node ../../built/pxt.js testdecompiler .')
 })
 
 ju.catFiles('built/pxt.js', [
@@ -98,7 +102,7 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget",
         "node built/pxt.js uploaddoc",
-    ], { printStdout: true });
+    ], { printStdout: true }, complete.bind(this));
 })
 
 task("lint", [], { async: true }, function () {
@@ -151,7 +155,7 @@ file('built/localization.json', ju.expand1(
         if (!/\.(ts|tsx|html)$/.test(filename)) return
         if (/\.d\.ts$/.test(filename)) return
 
-        //console.log('extracting strings from %s', filename);    
+        //console.log('extracting strings from %s', filename);
         loadText(filename).split('\n').forEach((line, idx) => {
             function err(msg) {
                 console.log("%s(%d): %s", filename, idx, msg);
@@ -248,7 +252,7 @@ task('monaco-editor', [
     "built/web/vs/language/typescript/src/mode.js"
 ])
 
-file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], { async: true }, function () {
+file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], function () {
     console.log(`Updating the monaco editor bits`)
     jake.mkdirP("built/web/vs/editor")
     let monacotypescriptcontribution = fs.readFileSync("node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js", "utf8")
@@ -279,7 +283,7 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     jake.cpR("node_modules/monaco-editor/dev/vs/language/json/", "webapp/public/vs/language/")
 })
 
-file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-typescript/release/src/mode.js'], { async: true }, function () {    
+file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-typescript/release/src/mode.js'], function () {
     console.log(`Updating the monaco typescript language service`)
     jake.mkdirP("built/web/vs/language/typescript/src")
     jake.mkdirP("built/web/vs/language/typescript/lib")
