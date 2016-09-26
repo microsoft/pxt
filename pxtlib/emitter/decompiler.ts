@@ -40,8 +40,8 @@ ${output}</xml>`;
 
         return result;
 
-        function write(s: string) {
-            output += s + "\n"
+        function write(s: string, suffix = "\n") {
+            output += s + suffix
         }
 
         function error(n: ts.Node, msg?: string) {
@@ -478,12 +478,12 @@ ${output}</xml>`;
                             if (shadow)
                                 forv = "value";
 
-                            write(`<${forv} name="${argNames[i]}">`);
+                            write(`<${forv} name="${U.htmlEscape(argNames[i])}">`, "");
                             emitPropertyAccessExpression(e as PropertyAccessExpression, shadow);
                             write(`</${forv}>`);
                             break;
                         default:
-                            write(`<value name="${argNames[i]}">`)
+                            write(`<value name="${U.htmlEscape(argNames[i])}">`)
                             if (info.qName == "Math.random") {
                                 emitMathRandomArgumentExpresion(e);
                             }
@@ -554,14 +554,14 @@ ${output}</xml>`;
                 error(n);
                 return;
             }
-            let value = callInfo.attrs.blockId || callInfo.qName
+            let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName)
             if (callInfo.attrs.blockIdentity) {
                 let idfn = blocksInfo.apis.byQName[callInfo.attrs.blockIdentity];
                 let tag = shadow ? "shadow" : "block";
                 let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
-                write(`<${tag} type="${idfn.attributes.blockId}"><field name="${f[1]}">${value}</field></${tag}>`)
+                write(`<${tag} type="${U.htmlEscape(idfn.attributes.blockId)}"><field name="${U.htmlEscape(f[1])}">${value}</field></${tag}>`)
             }
-            else output += value;
+            else write(value, "")
         }
 
         // TODO: Add a real negation block
@@ -574,7 +574,7 @@ ${output}</xml>`;
         }
 
         function emitValue(name: string, contents: boolean | number | string | Node): void {
-            write(`<value name="${name}">`)
+            write(`<value name="${U.htmlEscape(name)}">`)
 
             if (typeof contents === "number") {
                 emitNumericLiteral(contents.toString())
@@ -593,11 +593,11 @@ ${output}</xml>`;
         }
 
         function emitField(name: string, value: string) {
-            write(`<field name="${name}">${U.htmlEscape(value)}</field>`)
+            write(`<field name="${U.htmlEscape(name)}">${U.htmlEscape(value)}</field>`)
         }
 
         function openBlockTag(type: string) {
-            write(`<block type="${type}">`)
+            write(`<block type="${U.htmlEscape(type)}">`)
         }
 
         function closeBlockTag() {
@@ -605,7 +605,7 @@ ${output}</xml>`;
         }
 
         function emitStatementTag(name: string, contents: ts.Statement | ts.Expression) {
-            write(`<statement name="${name}">`)
+            write(`<statement name="${U.htmlEscape(name)}">`)
             emitStatementBlock(contents)
             write(`</statement>`)
         }
