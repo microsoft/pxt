@@ -5,7 +5,6 @@
         "noImplicitReturns": true,
         "declaration": true,
         "out": "../built/pxtrunner.js",
-        "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false
     }
