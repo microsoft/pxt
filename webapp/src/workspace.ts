@@ -164,6 +164,7 @@ export function getPublishedScriptAsync(id: string) {
             (pxt.github.isGithubId(id) ?
                 pxt.github.downloadPackageAsync(id).then(v => v.files) :
                 Cloud.downloadScriptFilesAsync(id))
+                .catch(core.handleNetworkError)
                 .then(files => scripts.setAsync({ id: eid, files: files })
                     .then(() => {
                         //return (scriptCache[id] = files)

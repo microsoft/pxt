@@ -115,12 +115,15 @@ export function cookieNotification() {
 }
 
 export function handleNetworkError(e: any) {
-    let statusCode = <number>e.status
-    if (e.isOffline) {
-        warningNotification(lf("Network request failed; you appear to be offline"))
-    } else {
-        throw e;
+    let statusCode = parseInt(e.statusCode);
+
+    if (e.isOffline || statusCode === 0) {
+        warningNotification(lf("Network request failed; you appear to be offline"));
+    } else if (!isNaN(statusCode) && statusCode !== 200) {
+        warningNotification(lf("Network request failed"));
     }
+
+    throw e;
 }
 
 export interface ButtonConfig {
