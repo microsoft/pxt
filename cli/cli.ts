@@ -1033,7 +1033,7 @@ function addCmd(name: string) {
     return name + (/^win/.test(process.platform) ? ".cmd" : "")
 }
 
-function buildPxtAsync(includeSourceMaps: boolean): Promise<string[]> {
+function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
     let ksd = "node_modules/pxt-core"
     if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
@@ -1256,7 +1256,7 @@ function buildFailed(msg: string, e: any) {
     console.log("")
 }
 
-function buildAndWatchTargetAsync(includeSourceMaps: boolean) {
+function buildAndWatchTargetAsync(includeSourceMaps = false) {
     if (forkPref() && fs.existsSync("pxtarget.json")) {
         console.log("Assuming target fork; building once.")
         return buildTargetAsync()
