@@ -30,21 +30,22 @@ export function showLoading(msg: string) {
     $('.ui.page.dimmer .msg').text(msg)
 }
 
-export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 300) {
-    let isShowing = false;
+let asyncLoadingTimeout: number;
 
-    let timeout = setTimeout(function () {
-        isShowing = true;
+export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 300) {
+    clearTimeout(asyncLoadingTimeout);
+    asyncLoadingTimeout = setTimeout(function () {
         showLoading(msg);
     }, delay);
 
     return operation.finally(() => {
-        clearTimeout(timeout);
-
-        if (isShowing) {
-            hideLoading();
-        }
+        cancelAsyncLoading();
     });
+}
+
+export function cancelAsyncLoading() {
+    clearTimeout(asyncLoadingTimeout);
+    hideLoading();
 }
 
 export function navigateInWindow(url: string) {
