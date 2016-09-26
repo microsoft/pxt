@@ -69,7 +69,7 @@ export class Editor extends srceditor.Editor {
                 });
 
             if (this.isFirstBlocklyLoad) {
-                core.showLoadingAsync(lf('loading...'), promise).done();
+                core.showLoadingAsync(lf("loading..."), promise).done();
             } else {
                 promise.done();
             }

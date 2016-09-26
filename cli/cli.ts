@@ -1508,7 +1508,7 @@ class SnippetHost implements pxt.Host {
     }
 
     private get dependencies(): { [key: string]: string } {
-        let stdDeps: { [key: string]: string } = { "microbit": "file:../microbit" }
+        let stdDeps: { [key: string]: string } = { }
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
         }
@@ -1658,7 +1658,7 @@ const defaultFiles: Map<string> = {
 
 build:
 \tpxt build
-  
+
 deploy:
 \tpxt deploy
 
@@ -1697,7 +1697,7 @@ pxt_modules
         "**/yotta_modules/**": true,
         "**/yotta_targets": true,
         "**/pxt_modules/**": true
-    },    
+    },
     "search.exclude": {
         "**/built": true,
         "**/node_modules": true,
@@ -2591,6 +2591,126 @@ function testDirAsync(dir: string) {
         })
 }
 
+function testDecompilerAsync(dir: string): Promise<void> {
+    const filenames: string[] = [];
+
+    const baselineDir = path.resolve(dir, "baselines")
+
+    try {
+        const stats = fs.statSync(baselineDir);
+        if (!stats.isDirectory()) {
+            console.error(baselineDir + " is not a directory; unable to run decompiler tests");
+            process.exit(1);
+        }
+    }
+    catch (e) {
+        console.error(baselineDir + " does not exist; unable to run decompiler tests");
+        process.exit(1);
+    }
+
+    for (const file of fs.readdirSync(dir)) {
+        if (file[0] == ".") {
+            continue;
+        }
+
+        const filename = path.join(dir, file)
+        if (U.endsWith(file, ".ts")) {
+            filenames.push(filename)
+        }
+    }
+
+    const errors: string[] = [];
+
+    return Promise.mapSeries(filenames, filename => {
+        const basename = path.basename(filename);
+        const baselineFile = path.join(baselineDir, replaceFileExtension(basename, ".blocks"))
+
+        let baselineExists: boolean;
+        try {
+            const stats = fs.statSync(baselineFile)
+            baselineExists = stats.isFile()
+        }
+        catch (e) {
+            baselineExists = false
+        }
+
+        if (!baselineExists) {
+            // Don't kill the promise chain, just push an error
+            errors.push(`decompiler test FAILED; ${basename} does not have a baseline at ${baselineFile}`)
+            return Promise.resolve()
+        }
+
+        return decompileAsyncWorker(filename)
+            .then(decompiled => {
+                const baseline = fs.readFileSync(baselineFile, "utf8")
+                if (compareBaselines(decompiled, baseline)) {
+                    console.log(`decompiler test OK: ${basename}`);
+                }
+                else {
+                    const outFile = path.join(replaceFileExtension(filename, ".local.blocks"))
+                    fs.writeFileSync(outFile, decompiled)
+                    errors.push((`decompiler test FAILED; ${basename} did not match baseline, output written to ${outFile})`));
+                }
+            }, error => {
+                errors.push((`decompiler test FAILED; ${basename} was unable to decompile due to: ${error}`))
+            })
+    })
+        .then(() => {
+            if (errors.length) {
+                errors.forEach(e => console.log(e));
+                console.error(`${errors.length} decompiler test failure(s)`);
+                process.exit(1);
+            }
+            else {
+                console.log(`${filenames.length} decompiler test(s) OK`);
+            }
+        });
+}
+
+function compareBaselines(a: string, b: string): boolean {
+    // Ignore whitespace
+    return a.replace(/\s/g, "") === b.replace(/\s/g, "")
+}
+
+function replaceFileExtension(file: string, extension: string) {
+    return file && file.substr(0, file.length - path.extname(file).length) + extension;
+}
+
+function decompileAsync(...fileNames: string[]) {
+    return Promise.mapSeries(fileNames, f => {
+        const outFile = replaceFileExtension(f, ".blocks")
+        return decompileAsyncWorker(f)
+            .then(result => {
+                fs.writeFileSync(outFile, result)
+                console.log("Wrote " + outFile)
+            })
+    })
+        .then(() => {
+            console.log("Done")
+        }, error => {
+            console.log("Error: " + error)
+        })
+}
+
+function decompileAsyncWorker(f: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        const input = fs.readFileSync(f, "utf8")
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, []));
+
+        pkg.getCompileOptionsAsync()
+            .then(opts => {
+                opts.ast = true;
+                const decompiled = pxtc.decompile(opts, "main.ts");
+                if (decompiled.success) {
+                    resolve(decompiled.outfiles["main.blocks"]);
+                }
+                else {
+                    reject("Could not decompile " + f)
+                }
+            });
+    });
+}
+
 function testSnippetsAsync(...args: string[]): Promise<void> {
     let filenameMatch = new RegExp('.*')
     let ignorePreviousSuccesses = false
@@ -2655,6 +2775,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         let snippets = uploader.getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
+        extraDeps.push("microbit")
         let ignoredTypes = ["Text", "sig", "pre", "codecard", "cards", "package", "namespaces"]
         let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0 && !s.ignore)
         ignoreCount += snippets.length - snippetsToCheck.length
@@ -2978,6 +3099,8 @@ cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
+cmd("decompile file.ts...         - decompile ts files and produce similarly named .blocks files", decompileAsync, 1)
+cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and compare to baselines", testDecompilerAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)

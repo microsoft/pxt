@@ -123,7 +123,7 @@ export class Editor extends srceditor.Editor {
                 });
         });
 
-        core.showLoadingAsync(lf('switching to blocks...'), promise).done();
+        core.showLoadingAsync(lf("switching to blocks..."), promise).done();
     }
 
     showConversionFailedDialog(blockFile: string): Promise<void> {

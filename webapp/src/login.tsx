@@ -29,7 +29,7 @@ export function showDeleteAccountDialog() {
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
-            core.showLoading(lf("Deleting your account..."));
+            core.showLoading(lf("deleting your account..."));
             Cloud.privateDeleteAsync("me")
                 .then(() => {
                     core.hideLoading();
@@ -63,7 +63,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
             "&redirect_uri=" + encodeURIComponent(hereUrl) +
             "&state=" + encodeURIComponent(oauthState) + addParameters;
 
-        core.showLoading(lf("Signing in..."))
+        core.showLoading(lf("signing in..."))
 
         core.navigateInWindow(url);
     }
@@ -80,7 +80,7 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
             if (!r) return;
 
             LoginBox.signingOut = true;
-            core.showLoading(lf("Signing out..."))
+            core.showLoading(lf("signing out..."))
             workspace.resetAsync()
                 .then(() => Cloud.privatePostAsync("logout", {}))
                 .catch((e: any) => { })
