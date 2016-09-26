@@ -1255,6 +1255,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         pxt.debug('saving project name to ' + this.state.projectName);
         try {
+            //Save the name in the target MainPackage as well
+            pkg.mainPkg.config.name = this.state.projectName;
+
             let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.configName);
             let config = JSON.parse(f.content) as pxt.PackageConfig;
             config.name = this.state.projectName;
