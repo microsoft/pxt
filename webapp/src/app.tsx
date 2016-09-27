@@ -461,7 +461,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         const state = this.props.parent.state;
         const icon = state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
-            <iframe id="sidedocs" src={docsUrl} role="complementary" />
+            <iframe id="sidedocs" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
             <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
                 <i className={`external icon`}></i>
             </button>
