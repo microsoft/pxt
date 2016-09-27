@@ -1033,14 +1033,14 @@ function addCmd(name: string) {
     return name + (/^win/.test(process.platform) ? ".cmd" : "")
 }
 
-function buildPxtAsync(): Promise<string[]> {
+function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
     let ksd = "node_modules/pxt-core"
     if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
     console.log(`building ${ksd}...`);
     return spawnAsync({
         cmd: addCmd("jake"),
-        args: [],
+        args: includeSourceMaps ? ["sourceMaps=true"] : [],
         cwd: ksd
     }).then(() => {
         console.log("local pxt-core built.")
@@ -1256,7 +1256,7 @@ function buildFailed(msg: string, e: any) {
     console.log("")
 }
 
-function buildAndWatchTargetAsync() {
+function buildAndWatchTargetAsync(includeSourceMaps = false) {
     if (forkPref() && fs.existsSync("pxtarget.json")) {
         console.log("Assuming target fork; building once.")
         return buildTargetAsync()
@@ -1267,7 +1267,7 @@ function buildAndWatchTargetAsync() {
         return Promise.resolve()
     }
 
-    return buildAndWatchAsync(() => buildPxtAsync()
+    return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
@@ -1345,6 +1345,7 @@ export function serveAsync(arg?: string) {
     forceCloudBuild = !globalConfig.localBuild
     let justServe = false
     let packaged = false
+    let includeSourceMaps = false;
     if (arg == "-yt") {
         forceCloudBuild = false
     } else if (arg == "-cloud") {
@@ -1357,6 +1358,8 @@ export function serveAsync(arg?: string) {
     } else if (arg == "-no-browser") {
         justServe = true
         globalConfig.noAutoStart = true
+    } else if (arg == "-include-source-maps") {
+        includeSourceMaps = true;
     }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
@@ -1380,7 +1383,7 @@ export function serveAsync(arg?: string) {
             }
         }
     }
-    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
+    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
         .then(() => server.serveAsync({
             localToken: localToken,
             autoStart: !globalConfig.noAutoStart,
