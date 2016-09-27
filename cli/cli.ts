@@ -2807,8 +2807,10 @@ export function elfAsync(fn: string) {
                 dirmode = true
                 files = allFiles(fn, 100).filter(f =>
                     f.indexOf("/ym/") >= 0 ? U.endsWith(f, ".a") : U.endsWith(f, ".o"))
+                files.sort(U.strcmp)
+                files.push(libdirs.libgccPath + "/crtbegin.o")
+                files.push(libdirs.libcPath + "/crt0.o")
             }
-            files.sort(U.strcmp)
             let res: any = {}
             for (let f of files) {
                 console.log(f)

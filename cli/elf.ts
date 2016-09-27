@@ -560,6 +560,7 @@ export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
 // TODO pull in needed symbols from libc and libgcc
 // TODO do we need libcrt0?
 // TODO support for weak symbols
+// TODO value of symbol seems to be section offset
 
 export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     let symLookup: Map<Sym> = {}
@@ -593,6 +594,10 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     defineBuiltin("__etext") // == __data_start__ ?
     defineBuiltin("__data_start__") // RAM globals
     defineBuiltin("__data_end__") // RAM globals
+    defineBuiltin("__bss_start__")
+    defineBuiltin("__bss_end__")
+    defineBuiltin("__end__")
+    defineBuiltin("__stack")
     defineBuiltin("__start_fs_data")
     defineBuiltin("__stop_fs_data")
 
