@@ -5,7 +5,6 @@
         "noImplicitReturns": true,
         "declaration": true,
         "out": "../built/pxteditor.js",
-        "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false
     }
