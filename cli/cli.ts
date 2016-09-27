@@ -2808,9 +2808,12 @@ export function elfAsync(fn: string) {
                 files = allFiles(fn, 100).filter(f =>
                     f.indexOf("/ym/") >= 0 ? U.endsWith(f, ".a") : U.endsWith(f, ".o"))
                 files.sort(U.strcmp)
-                files.push(libdirs.libgccPath + "/crtbegin.o")
+                //files.push(libdirs.libgccPath + "/crtbegin.o")
                 files.push(libdirs.libcPath + "/crt0.o")
             }
+            let isLib = (f:string) => U.endsWith(f, ".a") && !/microbit-dal\.a/.test(f)
+            let yottaLibs = files.filter(isLib)
+            files = files.filter(f => !isLib(f))
             let res: any = {}
             for (let f of files) {
                 console.log(f)
@@ -2840,6 +2843,7 @@ export function elfAsync(fn: string) {
             ].map(f => path.join(libdirs.libcPath, f))
             filenames.push(path.join(libdirs.libgccPath, "libgcc.a"))
             if (!dirmode) filenames = []
+            filenames = yottaLibs.concat(filenames)
             let libs = filenames.map(fn => elf.readArFile(fn, fs.readFileSync(fn), true))
             res = U.sortObjectFields(res)
             let total = elf.linkInfos(res, libs)

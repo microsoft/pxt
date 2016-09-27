@@ -11,6 +11,7 @@ export const enum SymType {
     RoData,
     BSS,
     RwData,
+    Vectors,   // comes at the beginning of the file
 }
 
 export interface Sym {
@@ -19,6 +20,7 @@ export interface Sym {
     align: number;
     size: number; // mostly relevant for bss
     text: string; // hex encoded
+    bind: STB;
     _relocs?: Reloc[];
     _id?: number;
     relocEnc?: number[];
@@ -116,7 +118,7 @@ const enum STT {
     TLS = 6,
 }
 
-const enum STB {
+export const enum STB {
     LOCAL = 0,
     GLOBAL = 1,
     WEAK = 2,
@@ -348,6 +350,7 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                     size: s.size,
                     text: "",
                     file: filename,
+                    bind: STB.GLOBAL,
                     _relocs: []
                 }
             } else {
@@ -362,6 +365,7 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                     size: sect.size,
                     text: "",
                     file: filename,
+                    bind: s.bind,
                     _relocs: convertRelocs(sect)
                 }
                 if (U.startsWith(sect.name, ".bss"))
@@ -372,9 +376,12 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                     ss.type = SymType.RwData
                 else if (U.startsWith(sect.name, ".text"))
                     ss.type = SymType.Code
+                else if (sect.name == ".Vectors")
+                    ss.type = SymType.Vectors
                 else {
                     ss.type = SymType.RwData
                     console.log(`unknown section name type: ${sect.name} for sym ${s.name} @ ${sidx}`)
+                    continue
                 }
                 if (ss.type != SymType.BSS)
                     ss.text = buf.slice(sect.offset, sect.offset + ss.size).toString("hex")
@@ -557,9 +564,6 @@ export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
 }
 
 // TODO merge identical code symbols?
-// TODO pull in needed symbols from libc and libgcc
-// TODO do we need libcrt0?
-// TODO support for weak symbols
 // TODO value of symbol seems to be section offset
 
 export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
@@ -569,26 +573,37 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     let libOFiles: Map<FileInfo> = {}
 
     function defineSym(s: Sym) {
-        s._id = syms.length
-        syms.push(s)
         let ex = U.lookup(symLookup, s.name)
         if (ex) {
+            // re-definitions with the same text are fine
+            if (ex.text && ex.text == s.text) {
+                s._id = ex._id
+                return
+            }
+            if (!(ex.bind & STB.WEAK) && (s.bind & STB.WEAK)) {
+                s._id = ex._id
+                return
+            }
             console.log(`double definitions of ${s.name}`)
         }
+        s._id = syms.length
+        syms.push(s)
         symLookup[s.name] = s
     }
 
-    function defineBuiltin(name: string) {
+    function defineBuiltin(name: string, hex = "") {
         let ss: Sym = {
             name: name,
-            type: SymType.BSS,
+            type: hex ? SymType.Code : SymType.BSS,
             align: 4,
-            size: 0,
-            text: "",
+            size: hex.length / 2,
+            text: hex,
             file: "_builtin_",
+            bind: STB.GLOBAL,
             _relocs: []
         }
         defineSym(ss)
+        return ss
     }
 
     defineBuiltin("__etext") // == __data_start__ ?
@@ -598,8 +613,20 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     defineBuiltin("__bss_end__")
     defineBuiltin("__end__")
     defineBuiltin("__stack")
-    defineBuiltin("__start_fs_data")
-    defineBuiltin("__stop_fs_data")
+    defineBuiltin("__StackTop")
+    //defineBuiltin("__start_fs_data")
+    //defineBuiltin("__stop_fs_data")
+
+    let dso = defineBuiltin("__dso_handle")
+    dso.size = 4
+
+    let bxLr = "4770"
+
+    defineBuiltin("__libc_init_array", bxLr)
+    defineBuiltin("__libc_fini_array", bxLr)
+    defineBuiltin("hardware_init_hook", bxLr)
+    defineBuiltin("software_init_hook", bxLr)
+    defineBuiltin("__real_main", bxLr) // unused
 
     function lookupLib(sn: string) {
         for (let l of libs) {
@@ -635,7 +662,15 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     U.iterMap(infos, (fn, fi) => {
         U.pushRange(inits, fi.init)
         for (let s of fi.syms) {
-            defineSym(s)
+            if (s.bind & STB.GLOBAL)
+                defineSym(s)
+        }
+    })
+
+    U.iterMap(infos, (fn, fi) => {
+        for (let s of fi.syms) {
+            if (!(s.bind & STB.GLOBAL))
+                defineSym(s)
         }
     })
 
@@ -654,7 +689,7 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     }
     for (let s of syms) {
         delete s._relocs
-        delete s._id
+        //delete s._id
         delete s._imported
     }
     return { syms: syms, init: inits, filename: "" }
