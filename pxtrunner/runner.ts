@@ -356,7 +356,7 @@ ${files["main.ts"]}
 <aside id=youtube>
 <div class="ui two column stackable grid container">
 <div class="column">
-    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/hqdefault.jpg">
+    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/maxresdefault.jpg">
     </div>
 </div></div>    
 </aside>
@@ -374,7 +374,7 @@ ${files["main.ts"]}
 <aside id=avatar class=box>
     <div class='avatar @ARGS@'>
         <div class='avatar-image'></div>
-        <div class='ui message'>
+        <div class='ui compact message'>
             @BODY@
         </div>
     </div>
