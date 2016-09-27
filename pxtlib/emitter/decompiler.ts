@@ -239,6 +239,12 @@ ${output}</xml>`;
                     openIncrementExpressionBlock(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression))
                     break;
                 case SK.VariableDeclaration:
+                    const decl = node as ts.VariableDeclaration;
+                    if (decl.initializer && decl.initializer.kind === SyntaxKind.NullKeyword) {
+                        // Don't emit null initializers; They are implicit within the blocks
+                        if (next && next.length) emitStatementBlock(next.shift(), next)
+                        return;
+                    }
                     openVaraiableDeclarationBlock(node as ts.VariableDeclaration);
                     break;
                 case SK.WhileStatement:
@@ -263,13 +269,39 @@ ${output}</xml>`;
                     return;
             }
 
-            if (next && next.length) {
+            const toEmit = consumeToNextBlock();
+            if (toEmit) {
                 write("<next>")
-                emitStatementBlock(next.shift(), next);
+                emitStatementBlock(toEmit, next);
                 write("</next>")
             }
 
             closeBlockTag()
+
+            function consumeToNextBlock(): ts.Node {
+                if (next && next.length) {
+                    const toEmit = next.shift();
+                    if (canBeEmitted(toEmit)) {
+                        return toEmit;
+                    }
+                    return consumeToNextBlock();
+                }
+                return undefined;
+            }
+
+            function canBeEmitted(node: ts.Node) {
+                switch (node.kind) {
+                    case SyntaxKind.VariableStatement:
+                        const decl = node as ts.VariableDeclaration;
+                        if (decl.initializer && decl.initializer.kind === SyntaxKind.NullKeyword) {
+                            // Don't emit null initializers; They are implicit within the blocks
+                            return false;
+                        }
+                    break;
+                    default:
+                }
+                return true;
+            }
 
             function openImageLiteralExpressionBlock(node: ts.CallExpression, info: pxtc.CallInfo) {
                 let arg = node.arguments[0];

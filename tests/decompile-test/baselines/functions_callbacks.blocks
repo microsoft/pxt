@@ -1,0 +1,40 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_callback">
+<statement name="HANDLER">
+</statement>
+<next>
+<block type="test_callback">
+<statement name="HANDLER">
+<block type="test_no_argument">
+</block>
+</statement>
+<next>
+<block type="test_callback">
+<statement name="HANDLER">
+<block type="test_no_argument">
+<next>
+<block type="test_no_argument">
+</block>
+</next>
+</block>
+</statement>
+<next>
+<block type="test_callback_with_argument">
+<field name="arg1">TestEnum.testValue2</field>
+<value name="arg2">
+<block type="math_number">
+<field name="NUM">10</field>
+</block>
+</value>
+<statement name="HANDLER">
+<block type="test_no_argument">
+</block>
+</statement>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</xml>

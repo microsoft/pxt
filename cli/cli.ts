@@ -1449,21 +1449,27 @@ class SnippetHost implements pxt.Host {
             }
         }
         else {
+            let p0 = path.join(module.id, filename);
             let p1 = path.join('libs', module.id, filename)
             let p2 = path.join('libs', module.id, 'built', filename)
 
             let contents: string = null
 
             try {
-                contents = fs.readFileSync(p1, 'utf8')
+                contents = fs.readFileSync(p0, 'utf8')
             }
             catch (e) {
-                //console.log(e)
                 try {
-                    contents = fs.readFileSync(p2, 'utf8')
+                    contents = fs.readFileSync(p1, 'utf8')
                 }
                 catch (e) {
                     //console.log(e)
+                    try {
+                        contents = fs.readFileSync(p2, 'utf8')
+                    }
+                    catch (e) {
+                        //console.log(e)
+                    }
                 }
             }
 
@@ -2608,6 +2614,14 @@ function testDecompilerAsync(dir: string): Promise<void> {
         process.exit(1);
     }
 
+    const testBlocksDir = path.relative(process.cwd(), path.join(dir, "testBlocks"));
+    let testBlocksDirExists = false;
+    try {
+        const stats = fs.statSync(testBlocksDir);
+        testBlocksDirExists = stats.isDirectory();
+    }
+    catch (e) {}
+
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
             continue;
@@ -2640,7 +2654,7 @@ function testDecompilerAsync(dir: string): Promise<void> {
             return Promise.resolve()
         }
 
-        return decompileAsyncWorker(filename)
+        return decompileAsyncWorker(filename, testBlocksDir)
             .then(decompiled => {
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (compareBaselines(decompiled, baseline)) {
@@ -2692,10 +2706,10 @@ function decompileAsync(...fileNames: string[]) {
         })
 }
 
-function decompileAsyncWorker(f: string): Promise<string> {
+function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         const input = fs.readFileSync(f, "utf8")
-        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, []));
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dependency ? [dependency] : []));
 
         pkg.getCompileOptionsAsync()
             .then(opts => {
