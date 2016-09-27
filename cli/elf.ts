@@ -18,14 +18,17 @@ export interface Sym {
     name: string;
     type: SymType;
     align: number;
-    size: number; // mostly relevant for bss
+    size?: number; // mostly relevant for bss
     text: string; // hex encoded
+    _textAlias?: string; // name of the symbol where text resides
+    offset?: number;
     bind: STB;
     _relocs?: Reloc[];
     _id?: number;
     relocEnc?: number[];
     file: string;
     _imported?: boolean;
+    symAlias?: number;
 }
 
 export interface Reloc {
@@ -48,6 +51,7 @@ interface Section {
     addralign: number;
     entsize: number;
     reloc?: RawRel[];
+    symName?: string;
 };
 
 interface RawSym {
@@ -362,7 +366,6 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                     name: s.name,
                     type: SymType.Code,
                     align: sect.addralign || 1,
-                    size: sect.size,
                     text: "",
                     file: filename,
                     bind: s.bind,
@@ -383,8 +386,17 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                     console.log(`unknown section name type: ${sect.name} for sym ${s.name} @ ${sidx}`)
                     continue
                 }
-                if (ss.type != SymType.BSS)
-                    ss.text = buf.slice(sect.offset, sect.offset + ss.size).toString("hex")
+
+                if (ss.type == SymType.BSS) {
+                    ss.size = sect.size
+                } else {
+                    if (s.value && s.value != 1) ss.offset = s.value
+                    ss.text = buf.slice(sect.offset, sect.offset + sect.size).toString("hex")
+                    if (!sect.symName) {
+                        sect.symName = ss.name
+                    }
+                    ss._textAlias = sect.symName
+                }
             }
             rsyms.push(ss)
         }
@@ -575,20 +587,20 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     function defineSym(s: Sym) {
         let ex = U.lookup(symLookup, s.name)
         if (ex) {
+            s._id = ex._id
             // re-definitions with the same text are fine
             if (ex.text && ex.text == s.text) {
-                s._id = ex._id
                 return
             }
             if (!(ex.bind & STB.WEAK) && (s.bind & STB.WEAK)) {
-                s._id = ex._id
                 return
             }
             console.log(`double definitions of ${s.name}`)
+        } else {
+            s._id = syms.length
+            syms.push(s)
+            symLookup[s.name] = s
         }
-        s._id = syms.length
-        syms.push(s)
-        symLookup[s.name] = s
     }
 
     function defineBuiltin(name: string, hex = "") {
@@ -596,7 +608,6 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             name: name,
             type: hex ? SymType.Code : SymType.BSS,
             align: 4,
-            size: hex.length / 2,
             text: hex,
             file: "_builtin_",
             bind: STB.GLOBAL,
@@ -687,7 +698,21 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             }
         }
     }
+    let byAlias: Map<number> = {}
+    let idx = -1
     for (let s of syms) {
+        idx++
+        if (!s._textAlias) continue
+        let v = U.lookup(byAlias, s._textAlias)
+        if (v != null) {
+            s.symAlias = v
+            s.text = ""
+        } else {
+            byAlias[s._textAlias] = idx
+        }
+    }
+    for (let s of syms) {
+        delete s._textAlias
         delete s._relocs
         //delete s._id
         delete s._imported
