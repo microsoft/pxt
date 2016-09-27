@@ -302,7 +302,7 @@ namespace pxsim.instructions {
         let allocRes = allocateDefinitions(allocOpts);
         let stepToWires: WireInst[][] = [];
         let stepToCmps: PartInst[][] = [];
-        let stepOffset = 0;
+        let stepOffset = 1;
         allocRes.partsAndWires.forEach(cAndWs => {
             let part = cAndWs.part;
             let wires = cAndWs.wires;
@@ -528,11 +528,14 @@ namespace pxsim.instructions {
                 } else {
                     topLbl = "";
                 }
+                let scale = REQ_CMP_SCALE;
+                if (c.visual.builtIn === "buttonpair")
+                    scale *= 0.5; //TODO: don't special case
                 let cmp = mkCmpDiv(c.visual, {
                     top: topLbl,
                     topSize: LOC_LBL_SIZE,
                     cmpHeight: REQ_CMP_HEIGHT,
-                    cmpScale: REQ_CMP_SCALE
+                    cmpScale: scale
                 })
                 addClass(cmp, "cmp-div");
                 reqsDiv.appendChild(cmp);
@@ -587,7 +590,6 @@ namespace pxsim.instructions {
         let dummyBreadboard = new visuals.Breadboard({});
         let onboardCmps = options.boardDef.onboardComponents || [];
         let activeComponents = (options.parts || []).filter(c => onboardCmps.indexOf(c) < 0);
-        activeComponents.sort();
         let props = mkBoardProps({
             boardDef: options.boardDef,
             partDefs: cmpDefs,

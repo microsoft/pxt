@@ -44,7 +44,6 @@ namespace pxsim.visuals {
             this.state = opts.state;
             let onboardCmps = opts.boardDef.onboardComponents || [];
             let activeComponents = (opts.partsList || []).filter(c => onboardCmps.indexOf(c) < 0);
-            activeComponents.sort();
             this.useCrocClips = opts.boardDef.useCrocClips;
 
             let useBreadboard = 0 < activeComponents.length || opts.forceBreadboard;

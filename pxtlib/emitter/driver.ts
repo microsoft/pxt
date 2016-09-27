@@ -85,6 +85,13 @@ namespace ts.pxtc {
             if (builtinParts)
                 parts = parts.filter(p => !builtinParts[p]);
         }
+
+        //sort parts (so breadboarding layout is stable w.r.t. code ordering)
+        parts.sort();
+        parts = parts.reverse(); //not strictly necessary, but it's a little
+                                 // nicer for demos to have "ledmatrix"
+                                 // before "buttonpair"
+
         return parts;
     }
 
