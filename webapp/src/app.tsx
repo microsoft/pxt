@@ -348,6 +348,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 }
 
 enum ShareMode {
+    Screenshot,
     Editor,
     Simulator,
     Cli
@@ -363,7 +364,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
-            mode: ShareMode.Editor
+            mode: ShareMode.Screenshot
         }
     }
 
@@ -376,27 +377,38 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
 
         const mode = this.state.mode;
         const ready = !!header.pubId && header.pubCurrent;
-        const url = ready ? `${rootUrl}${header.pubId}` : undefined;
+        let url = '';
         let embed = '';
         let help = lf("Copy this HTML to your website or blog.");
         let helpUrl = "/share";
-        switch (mode) {
-            case ShareMode.Cli:
-                embed = `pxt extract ${header.pubId}`;
-                help = lf("Run this command from a shell.");
-                helpUrl = "/cli";
-                break;
-            case ShareMode.Simulator:
-                let padding = '81.97%';
-                // TODO: parts aspect ratio
-                if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-                embed = pxt.docs.runUrl(pxt.webConfig.runUrl || rootUrl + "--run", padding, header.pubId);
-                break;
-            default:
-                embed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
-                break;
+        if (ready) {
+            url = `${rootUrl}${header.pubId}`;
+            let editUrl = `${rootUrl}#pub:${header.pubId}`;
+            switch (mode) {
+                case ShareMode.Cli:
+                    embed = `pxt extract ${header.pubId}`;
+                    help = lf("Run this command from a shell.");
+                    helpUrl = "/cli";
+                    break;
+                case ShareMode.Simulator:
+                    let padding = '81.97%';
+                    // TODO: parts aspect ratio
+                    if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
+                    embed = pxt.docs.runUrl(pxt.webConfig.runUrl || rootUrl + "--run", padding, header.pubId);
+                    break;
+                case ShareMode.Editor:
+                    embed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
+                    break;
+                default:
+                    // render svg
+                    let screenshot = pxt.blocks.layout.toSvg(this.props.parent.blocksEditor.editor);
+                    if (!screenshot)
+                        embed = `<a href="${editUrl}"><pre><code>TODO</code></pre></a>`
+                    else
+                        embed = `<a href="${editUrl}"><img src="${pxsim.svg.toDataUri(screenshot)}" /></a>`
+                    break;
+            }
         }
-
 
         const publish = () => {
             pxt.tickEvent("menu.embed.publish");
@@ -420,7 +432,9 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                     <div className="ui form">
                         <div className="inline fields">
                             <label>{lf("Embed...") }</label>
-                            {[{ mode: ShareMode.Editor, label: lf("Editor") },
+                            {[
+                                { mode: ShareMode.Screenshot, label: lf("Screenshot") },
+                                { mode: ShareMode.Editor, label: lf("Editor") },
                                 { mode: ShareMode.Simulator, label: lf("Simulator") },
                                 { mode: ShareMode.Cli, label: lf("Command line") }]
                                 .map(f =>
@@ -435,7 +449,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                     </div> : undefined }
                 { ready ?
                     <sui.Field>
-                        <p>{help} <span><a target="_blank" href={helpUrl}>{lf("Help...")}</a></span></p>
+                        <p>{help} <span><a target="_blank" href={helpUrl}>{lf("Help...") }</a></span></p>
                         <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
             </div>

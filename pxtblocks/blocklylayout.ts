@@ -29,6 +29,8 @@ namespace pxt.blocks.layout {
     }
 
     export function toSvg(ws: B.Workspace): string {
+        if (!ws) return undefined;
+
         const bbox = ws.svgBlockCanvas_.getBBox();
         let sg = ws.svgBlockCanvas_.cloneNode(true) as SVGGElement;
         if (!sg.childNodes[0])
@@ -63,13 +65,18 @@ namespace pxt.blocks.layout {
     text-shadow: 0px 0px 6px #f00;
     font-size: 17pt !important;
 }`;
-        let cssLink = document.createElementNS("http://www.w3.org/1999/xhtml", "style");
-        cssLink.textContent = (Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n';
-        sg.insertBefore(cssLink, sg.firstChild);
 
-        let xml = new XMLSerializer().serializeToString(sg);
-        xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">${xml}</svg>`;
+        let xsg = new DOMParser().parseFromString(
+`<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">
+${new XMLSerializer().serializeToString(sg)}
+</svg>`, "image/svg+xml");
 
+        const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
+        // CSS may contain <, > which need to be stored in CDATA section
+        cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
+        xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+
+        let xml = new XMLSerializer().serializeToString(xsg);
         return xml;
     }
 
