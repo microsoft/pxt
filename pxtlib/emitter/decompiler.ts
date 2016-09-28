@@ -138,9 +138,6 @@ ${output}</xml>`;
                 case SK.NoSubstitutionTemplateLiteral:
                     emitStringLiteral((n as ts.LiteralExpression).text);
                     break;
-                case SK.NullKeyword:
-                    // don't emit anything
-                    break;
                 case SK.NumericLiteral:
                     emitNumericLiteral((n as ts.LiteralExpression).text);
                     break;
@@ -341,7 +338,9 @@ ${output}</xml>`;
                         negateAndEmitExpression(n.right);
                         write(`</value>`)
                         break;
-
+                    default:
+                        error(n, Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]));
+                        return;
                 }
             }
 
@@ -365,6 +364,11 @@ ${output}</xml>`;
             }
 
             function openForStatementBlock(n: ts.ForStatement) {
+                if (!n.initializer || !n.incrementor || !n.condition) {
+                    error(n, Util.lf("for loops must have an initializer, incrementor, and condition"));
+                    return;
+                }
+
                 if (n.initializer.kind !== SK.VariableDeclarationList) {
                     error(n, Util.lf("only variable declarations are permitted in for loop initializers"));
                     return;
@@ -643,6 +647,10 @@ ${output}</xml>`;
         }
 
         function emitIdentifier(identifier: Identifier) {
+            if (isUndefined(identifier)) {
+                error(identifier, Util.lf("Undefined has no block equivalent"))
+                return;
+            }
             emitFieldBlock("variables_get", "VAR", identifier.text)
         }
 
@@ -662,6 +670,10 @@ ${output}</xml>`;
             openBlockTag(type)
             emitField(fieldName, value)
             closeBlockTag()
+        }
+
+        function isUndefined(node: ts.Node) {
+            return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
         }
     }
 }
