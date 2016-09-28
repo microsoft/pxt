@@ -1,4 +1,9 @@
 namespace pxsim.visuals {
+    export interface BoardViewOptions {
+        visual: string |  BoardImageDefinition,
+        wireframe?: boolean
+    }
+
     export interface BoardHostOpts {
         state: CoreBoard,
         boardDef: BoardDefinition,
@@ -10,6 +15,15 @@ namespace pxsim.visuals {
         maxHeight?: string
         wireframe?: boolean
     }
+
+    export var mkBoardView = (opts: BoardViewOptions): BoardView => {
+        let boardVis = opts.visual as BoardImageDefinition;
+        return new visuals.GenericBoardSvg({
+            visualDef: boardVis,
+            wireframe: opts.wireframe,
+        });
+    }
+
     export class BoardHost {
         private parts: IBoardPart<any>[] = [];
         private wireFactory: WireFactory;

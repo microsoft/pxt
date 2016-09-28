@@ -76,6 +76,9 @@ body {
 #logo img, #rightlogo img {
     height: 2.5rem;    
 }
+#rightlogo {
+    line-height: 1;
+}
 #monacoEditor {
     direction:ltr;
 }

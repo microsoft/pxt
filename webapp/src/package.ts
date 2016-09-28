@@ -140,9 +140,10 @@ export class EditorPackage {
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
         return pxt.github.latestVersionAsync(parsed.repo)
-                    .then(tag => { parsed.tag = tag })
-                    .then(() => pxt.github.pkgConfigAsync(parsed.repo, parsed.tag))
-                        .then(cfg => this.addDepAsync(cfg.name, pxt.github.stringifyRepo(parsed)));
+            .then(tag => { parsed.tag = tag })
+            .then(() => pxt.github.pkgConfigAsync(parsed.repo, parsed.tag))
+            .catch(core.handleNetworkError)
+            .then(cfg => this.addDepAsync(cfg.name, pxt.github.stringifyRepo(parsed)));
     }
 
     removeDepAsync(pkgid: string) {
@@ -283,7 +284,7 @@ class Host
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
-        return pxt.hex.getHexInfoAsync(this, extInfo)
+        return pxt.hex.getHexInfoAsync(this, extInfo).catch(core.handleNetworkError);
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -368,6 +369,7 @@ export function loadPkgAsync(id: string) {
     mainPkg._verspec = "workspace:" + id
 
     return theHost.downloadPackageAsync(mainPkg)
+        .catch(core.handleNetworkError)
         .then(() => theHost.readFile(mainPkg, pxt.configName))
         .then(str => {
             if (!str) return Promise.resolve()

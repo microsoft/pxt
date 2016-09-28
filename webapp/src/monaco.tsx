@@ -54,6 +54,7 @@ export class Editor extends srceditor.Editor {
             }
 
             const failedAsync = (file: string) => {
+                core.cancelAsyncLoading();
                 this.forceDiagnosticsUpdate();
                 return this.showConversionFailedDialog(file);
             }
