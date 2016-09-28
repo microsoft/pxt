@@ -25,7 +25,7 @@ namespace pxt.blocks.layout {
     export function screenshot(ws: B.Workspace) {
         let xml = toSvg(ws);
         if (xml)
-            BrowserUtils.browserDownloadText(xml, lf("screenshot") + ".svg", "image/svg+xml");
+            BrowserUtils.browserDownloadText(xml, lf("screenshot") + ".svg", "image/svg+xml svg");
     }
 
     export function toSvg(ws: B.Workspace): string {
