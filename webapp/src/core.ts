@@ -32,7 +32,7 @@ export function showLoading(msg: string) {
 
 let asyncLoadingTimeout: number;
 
-export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 300) {
+export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 700) {
     clearTimeout(asyncLoadingTimeout);
     asyncLoadingTimeout = setTimeout(function () {
         showLoading(msg);
