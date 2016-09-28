@@ -347,8 +347,28 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 }
 
-class ShareEditor extends data.Component<ISettingsProps, {}> {
+enum ShareMode {
+    Screenshot,
+    Editor,
+    Simulator,
+    Cli
+}
+
+interface ShareEditorState {
+    mode?: ShareMode;
+    screenshotId?: string;
+    screenshotUri?: string;
+}
+
+class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
     modal: sui.Modal;
+
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            mode: ShareMode.Screenshot
+        }
+    }
 
     renderCore() {
         const header = this.props.parent.state.header;
@@ -356,21 +376,52 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
+
+        const mode = this.state.mode;
         const ready = !!header.pubId && header.pubCurrent;
-        let url: string;
-        let docembed: string;
-        let vscode: string;
+        let url = '';
+        let embed = '';
+        let help = lf("Copy this HTML to your website or blog.");
+        let helpUrl = "/share";
         if (ready) {
             url = `${rootUrl}${header.pubId}`;
-            docembed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
-            vscode = `pxt extract ${header.pubId}`
+            let editUrl = `${rootUrl}#pub:${header.pubId}`;
+            switch (mode) {
+                case ShareMode.Cli:
+                    embed = `pxt extract ${header.pubId}`;
+                    help = lf("Run this command from a shell.");
+                    helpUrl = "/cli";
+                    break;
+                case ShareMode.Simulator:
+                    let padding = '81.97%';
+                    // TODO: parts aspect ratio
+                    if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
+                    embed = pxt.docs.runUrl(pxt.webConfig.runUrl || rootUrl + "--run", padding, header.pubId);
+                    break;
+                case ShareMode.Editor:
+                    embed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
+                    break;
+                default:
+                    // render svg
+                    if (this.state.screenshotId == header.pubId) {
+                        if (this.state.screenshotUri)
+                            embed = `<a href="${editUrl}"><img src="${this.state.screenshotUri}" /></a>`
+                        else embed = lf("Ooops, no screenshot available.");
+                    }
+                    else {
+                        embed = lf("rendering...");
+                        pxt.blocks.layout.toPngAsync(this.props.parent.blocksEditor.editor)
+                            .done(uri => this.setState({ screenshotId: header.pubId, screenshotUri: uri }));
+                    }
+                    break;
+            }
         }
 
-        let publish = () => {
+        const publish = () => {
             pxt.tickEvent("menu.embed.publish");
             this.props.parent.publishAsync().done();
         }
-        let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
+        const formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
 
         return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Embed Project") }>
             <div className={`ui ${formState} form`}>
@@ -384,15 +435,29 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                     <h3>{lf("Project URL") }</h3>
                     <div className="header"><a target="_blank" href={url}>{url}</a></div>
                 </div> : undefined }
-                { docembed ?
-                    <sui.Field label={lf("Embed the web editor") }>
-                        <p>{lf("Copy this HTML to your website or blog.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={2} value={docembed} copy={ready} disabled={!ready} />
-                    </sui.Field> : null }
-                { vscode ?
-                    <sui.Field label={lf("Edit JavaScript in Visual Studio Code") }>
-                        <p><a href="/code">{lf("Run this command from a shell.") }</a></p>
-                        <sui.Input class="mini" readOnly={true} lines={1} value={vscode} copy={ready} disabled={!ready} />
+                { ready ?
+                    <div className="ui form">
+                        <div className="inline fields">
+                            <label>{lf("Embed...") }</label>
+                            {[
+                                { mode: ShareMode.Screenshot, label: lf("Screenshot") },
+                                { mode: ShareMode.Editor, label: lf("Editor") },
+                                { mode: ShareMode.Simulator, label: lf("Simulator") },
+                                { mode: ShareMode.Cli, label: lf("Command line") }]
+                                .map(f =>
+                                    <div className="field">
+                                        <div className="ui radio checkbox">
+                                            <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
+                                            <label>{f.label}</label>
+                                        </div>
+                                    </div>
+                                ) }
+                        </div>
+                    </div> : undefined }
+                { ready ?
+                    <sui.Field>
+                        <p>{help} <span><a target="_blank" href={helpUrl}>{lf("Help...") }</a></span></p>
+                        <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
             </div>
         </sui.Modal>
@@ -1278,6 +1343,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent("menu.about");
         core.confirmAsync({
             header: lf("About {0}", pxt.appTarget.name),
+            hideCancel: true,
+            agreeLbl: lf("Ok"),
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.name)} version: ${targetVersion}</p>
 <p>${lf("PXT version: {0}", ksVersion)}</p>
@@ -1399,6 +1466,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization)}</a> : undefined}
+                    <a className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use")}</a>
+                    <a className="item" href={targetTheme.privacyUrl}>{lf("Privacy")}</a>
+                </div> : undefined}
             </div>
         );
     }

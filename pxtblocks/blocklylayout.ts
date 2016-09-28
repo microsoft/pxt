@@ -22,13 +22,57 @@ namespace pxt.blocks.layout {
         flow(blocks, ratio || 1.62);
     }
 
-    export function screenshot(ws: B.Workspace) {
-        let svg = (ws as any).svgBlockCanvas_.cloneNode(true);
-        svg.removeAttribute("width");
-        svg.removeAttribute("height");
-        if (svg.childNodes[0] !== undefined) {
-            svg.removeAttribute("transform");
-            let customCss = `
+    export function screenshot(ws: B.Workspace, name?: string) {
+        toPngAsync(ws)
+            .done(uri => {
+                if (uri)
+                    BrowserUtils.browserDownloadDataUri(
+                        uri,
+                        (name || `${pxt.appTarget.id}-${lf("screenshot")}`) + ".png");
+            })
+
+    }
+
+    export function toPngAsync(ws: B.Workspace): Promise<string> {
+        let sg = toSvg(ws);
+        if (!sg) return Promise.resolve<string>(undefined);
+
+        return new Promise<string>((resolve, reject) => {
+            let img = document.createElement("img") as HTMLImageElement;
+            img.onload = ev => {
+                let cvs = document.createElement("canvas") as HTMLCanvasElement;
+                cvs.width = sg.width;
+                cvs.height = sg.height;
+                let ctx = cvs.getContext("2d");
+                ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+                let datauri = cvs.toDataURL("image/png");
+                resolve(datauri);
+            }
+            img.onerror = ev => {
+                pxt.reportError("blocks screenshot failed", sg);
+                resolve(undefined)
+            }
+            img.src = "data:image/svg+xml," + encodeURI(sg.xml);
+        })
+    }
+
+    export function toSvg(ws: B.Workspace): {
+        width: number; height: number; xml: string;
+    } {
+        if (!ws) return undefined;
+
+        const bbox = ws.svgBlockCanvas_.getBBox();
+        let sg = ws.svgBlockCanvas_.cloneNode(true) as SVGGElement;
+        if (!sg.childNodes[0])
+            return undefined;
+
+        const width = bbox.width;
+        const height = bbox.height;
+
+        sg.removeAttribute("width");
+        sg.removeAttribute("height");
+        sg.removeAttribute("transform");
+        const customCss = `
 .blocklyMainBackground {
     stroke:none !important;
 }
@@ -54,15 +98,19 @@ namespace pxt.blocks.layout {
     text-shadow: 0px 0px 6px #f00;
     font-size: 17pt !important;
 }`;
-            let cssLink = document.createElementNS("http://www.w3.org/1999/xhtml", "style");
-            cssLink.textContent = (Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n';
-            svg.insertBefore(cssLink, svg.firstChild);
 
-            let bbox = (document.getElementsByClassName("blocklyBlockCanvas")[0] as any).getBBox();
-            let xml = new XMLSerializer().serializeToString(svg);
-            xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">${xml}</svg>`;
-            BrowserUtils.browserDownloadText(xml, lf("screenshot") + ".svg", "image/svg+xml");
-        }
+        let xsg = new DOMParser().parseFromString(
+            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${bbox.x} ${bbox.y} ${width} ${height}">
+${new XMLSerializer().serializeToString(sg)}
+</svg>`, "image/svg+xml");
+
+        const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
+        // CSS may contain <, > which need to be stored in CDATA section
+        cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
+        xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+
+        let xml = new XMLSerializer().serializeToString(xsg);
+        return { width, height, xml };
     }
 
     function flow(blocks: Blockly.Block[], ratio: number) {
