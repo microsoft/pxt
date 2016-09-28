@@ -811,12 +811,21 @@ namespace pxt.blocks {
 
             let shuffleOption = {
                 text: lf("Shuffle Blocks"),
-                enabled: true,
+                enabled: topBlocks.length > 0,
                 callback: () => {
                     pxt.blocks.layout.shuffle(this, 1);
                 }
             };
             menuOptions.push(shuffleOption);
+
+            let screenshotOption = {
+                text: lf("Download Screenshot"),
+                enabled: topBlocks.length > 0,
+                callback: () => {
+                    pxt.blocks.layout.screenshot(this);
+                }
+            };
+            menuOptions.push(screenshotOption);
 
             // custom options...
             if (onShowContextMenu)

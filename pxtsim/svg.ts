@@ -149,4 +149,13 @@ namespace pxsim.svg {
         el.appendChild(t);
         return t;
     }
+
+    export function toHtmlColor(c: number): string {
+        const b = c & 0xFF;
+        const g = (c >> 8) & 0xFF;
+        const r = (c >> 16) & 0xFF;
+        const a = (c >> 24) & 0xFF / 255;
+        return `rgba(${r}, ${g}, ${b}, ${a})`;
+    }
+
 }
