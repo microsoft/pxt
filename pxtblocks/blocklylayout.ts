@@ -70,8 +70,8 @@ namespace pxt.blocks.layout {
     } {
         if (!ws) return undefined;
 
-        const bbox = ws.svgBlockCanvas_.getBBox();
-        let sg = ws.svgBlockCanvas_.cloneNode(true) as SVGGElement;
+        const bbox = (ws as any).svgBlockCanvas_.getBBox();
+        let sg = (ws as any).svgBlockCanvas_.cloneNode(true) as SVGGElement;
 
         const customCss = `
 .blocklyMainBackground {

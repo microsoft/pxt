@@ -122,7 +122,7 @@ namespace pxt.runner {
     text-shadow: 0px 0px 6px #f00;
     font-size: 17pt !important;
 }`;
-            let svgElement = $svg.context as any;
+            let svgElement = $svg.get(0) as any;
             let bbox = $svg.get(0).getBoundingClientRect();
             pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height)
             .done(uri => {
