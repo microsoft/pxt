@@ -32,12 +32,26 @@ ${lbl}:`
         public beq(lbl: string) { return "beq " + lbl }
         public bne(lbl: string) { return "bne " + lbl }
         public cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
-        public load_reg_src_off(reg: string, src: string, off: string, inf: BitSizeInfo) {
-            if (inf == null) {
-                return `ldr ${reg}, [${src}, #4*${off}]`
-            } else {
-                return "TBD"
+        public load_reg_src_off(reg: string, src: string, off: string, word: boolean, store: boolean, inf: BitSizeInfo) {
+            if (word) {
+                off = `#4*${off}`
             }
+            let str = "str"
+            let ldr = "ldr"
+            if (inf) {
+                if (inf.immLimit == 32)
+                    str = "strb"
+                else if (inf.immLimit == 64)
+                    str = "strh"
+                if (inf.needsSignExt)
+                    ldr = str.replace("str", "ldrs")
+                else
+                    ldr = str.replace("str","ldr")
+            }
+            if (store)
+                return `${str} ${reg}, [${src}, ${off}]`
+            else
+                return `${ldr} ${reg}, [${src}, ${off}]`
         }
     }
 

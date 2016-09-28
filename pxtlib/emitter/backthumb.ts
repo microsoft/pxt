@@ -26,8 +26,10 @@ export abstract class AssemblerSnippets {
     public beq(lbl: string) { return "TBD" }
     public bne(lbl: string) { return "TBD" }
     public cmp(o1: string, o2: string) { return "TBD" }
-    // inf == null means we default to size of processor register
-    public load_reg_src_off(reg: string, src: string, off: string, inf?: BitSizeInfo) { return "TBD"; }
+    // word? - does offset represent an index that must be multiplied by word size?
+    // inf?  - control over size of referenced data
+    // str?  - true=Store/false=Load
+    public load_reg_src_off(reg: string, src: string, off: string, word?: boolean, inf?: BitSizeInfo, str?: boolean) { return "TBD"; }
 }
 
 let EK = ir.EK
@@ -284,20 +286,17 @@ ${baseLabel}:
                         this.emitInt(cell.index, reg)
                         off = reg
                     }
-                    // write(`${inf.ldr} ${reg}, [r6, ${off}]`)
-                    this.write(this.t.load_reg_src_off(reg, "r6", off, inf))
+                    this.write(this.t.load_reg_src_off(reg, "r6", off, false, inf, false))
                 } else {
                     // TODO
-                    let [reg,imm,idx] = this.cellref(cell)
-                    // write(`ldr ${reg}, ${cellref(cell)}`)
-                    write(`ldr ${reg}, `);
+                    let [src,imm,idx] = this.cellref(cell)
+                    this.write(this.t.load_reg_src_off(reg, src, imm, idx))
                 }
                 break;
             default: oops();
         }
     }
 
-    // TODO: generalize this from ARM
     private bitSizeInfo(b: BitSize) {
         let inf: BitSizeInfo = {
             size: sizeOfBitSize(b),
@@ -305,18 +304,11 @@ ${baseLabel}:
         }
         if (inf.size == 1) {
             inf.immLimit = 32
-            // inf.str = "strb"
         } else if (inf.size == 2) {
             inf.immLimit = 64
-            // inf.str = "strh"
-        } else {
-            // inf.str = "str"
         }
         if (b == BitSize.Int8 || b == BitSize.Int16) {
             inf.needsSignExt = true
-            // inf.ldr = inf.str.replace("str", "ldrs")
-        } else {
-            // inf.ldr = inf.str.replace("str", "ldr")
         }
         return inf
     }
@@ -522,7 +514,6 @@ ${baseLabel}:
         }
     }
 
-    // TODO: get rid of ARM specific
     private cellref(cell: ir.Cell): [string, string, boolean] {
         if (cell.isGlobal()) {
             throw oops()
