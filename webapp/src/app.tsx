@@ -1343,6 +1343,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent("menu.about");
         core.confirmAsync({
             header: lf("About {0}", pxt.appTarget.name),
+            hideCancel: true,
+            agreeLbl: lf("Ok"),
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.name)} version: ${targetVersion}</p>
 <p>${lf("PXT version: {0}", ksVersion)}</p>
@@ -1464,6 +1466,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization)}</a> : undefined}
+                    <a className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use")}</a>
+                    <a className="item" href={targetTheme.privacyUrl}>{lf("Privacy")}</a>
+                </div> : undefined}
             </div>
         );
     }

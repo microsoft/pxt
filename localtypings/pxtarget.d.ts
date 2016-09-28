@@ -96,6 +96,8 @@ declare namespace pxt {
         portraitLogo?: string;
         rightLogo?: string;
         docsLogo?: string;
+        organization?: string;
+        organizationUrl?: string;
         organizationLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
