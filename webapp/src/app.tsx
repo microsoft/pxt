@@ -347,8 +347,25 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 }
 
-class ShareEditor extends data.Component<ISettingsProps, {}> {
+enum ShareMode {
+    Editor,
+    Simulator,
+    Cli
+}
+
+interface ShareEditorState {
+    mode: ShareMode;
+}
+
+class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
     modal: sui.Modal;
+
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            mode: ShareMode.Editor
+        }
+    }
 
     renderCore() {
         const header = this.props.parent.state.header;
@@ -356,21 +373,36 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
+
+        const mode = this.state.mode;
         const ready = !!header.pubId && header.pubCurrent;
-        let url: string;
-        let docembed: string;
-        let vscode: string;
-        if (ready) {
-            url = `${rootUrl}${header.pubId}`;
-            docembed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
-            vscode = `pxt extract ${header.pubId}`
+        const url = ready ? `${rootUrl}${header.pubId}` : undefined;
+        let embed = '';
+        let help = lf("Copy this HTML to your website or blog.");
+        let helpUrl = "/share";
+        switch (mode) {
+            case ShareMode.Cli:
+                embed = `pxt extract ${header.pubId}`;
+                help = lf("Run this command from a shell.");
+                helpUrl = "/cli";
+                break;
+            case ShareMode.Simulator:
+                let padding = '81.97%';
+                // TODO: parts aspect ratio
+                if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
+                embed = pxt.docs.runUrl(pxt.webConfig.runUrl || rootUrl + "--run", padding, header.pubId);
+                break;
+            default:
+                embed = pxt.docs.embedUrl(rootUrl, header.pubId, header.meta.blocksHeight);
+                break;
         }
 
-        let publish = () => {
+
+        const publish = () => {
             pxt.tickEvent("menu.embed.publish");
             this.props.parent.publishAsync().done();
         }
-        let formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
+        const formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
 
         return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Embed Project") }>
             <div className={`ui ${formState} form`}>
@@ -384,15 +416,27 @@ class ShareEditor extends data.Component<ISettingsProps, {}> {
                     <h3>{lf("Project URL") }</h3>
                     <div className="header"><a target="_blank" href={url}>{url}</a></div>
                 </div> : undefined }
-                { docembed ?
-                    <sui.Field label={lf("Embed the web editor") }>
-                        <p>{lf("Copy this HTML to your website or blog.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={2} value={docembed} copy={ready} disabled={!ready} />
-                    </sui.Field> : null }
-                { vscode ?
-                    <sui.Field label={lf("Edit JavaScript in Visual Studio Code") }>
-                        <p><a href="/code">{lf("Run this command from a shell.") }</a></p>
-                        <sui.Input class="mini" readOnly={true} lines={1} value={vscode} copy={ready} disabled={!ready} />
+                { ready ?
+                    <div className="ui form">
+                        <div className="inline fields">
+                            <label>{lf("Embed...") }</label>
+                            {[{ mode: ShareMode.Editor, label: lf("Editor") },
+                                { mode: ShareMode.Simulator, label: lf("Simulator") },
+                                { mode: ShareMode.Cli, label: lf("Command line") }]
+                                .map(f =>
+                                    <div className="field">
+                                        <div className="ui radio checkbox">
+                                            <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
+                                            <label>{f.label}</label>
+                                        </div>
+                                    </div>
+                                ) }
+                        </div>
+                    </div> : undefined }
+                { ready ?
+                    <sui.Field>
+                        <p>{help} <span><a target="_blank" href={helpUrl}>{lf("Help...")}</a></span></p>
+                        <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
             </div>
         </sui.Modal>
