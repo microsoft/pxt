@@ -32,7 +32,7 @@ ${lbl}:`
         public beq(lbl: string) { return "beq " + lbl }
         public bne(lbl: string) { return "bne " + lbl }
         public cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
-        public load_reg_src_off(reg: string, src: string, off: number, inf: BitSizeInfo) {
+        public load_reg_src_off(reg: string, src: string, off: string, inf: BitSizeInfo) {
             if (inf == null) {
                 return `ldr ${reg}, [${src}, #4*${off}]`
             } else {

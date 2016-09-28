@@ -78,6 +78,7 @@ ${baseLabel}:
     push {lr}
 `)
 
+        // create a new function for later use by hex file generation
         this.proc.fillDebugInfo = th => {
             let labels = th.getLabels()
 
@@ -107,8 +108,11 @@ ${baseLabel}:
             }
         }
 
+
+        // initialize the locals
         let numlocals = this.proc.locals.length
-        if (numlocals > 0) this.write(this.t.reg_gets_imm("r0", 0));
+        if (numlocals > 0) 
+            this.write(this.t.reg_gets_imm("r0", 0));
         this.proc.locals.forEach(l => {
             this.write(this.t.push("r0") + " ;loc")
         })
@@ -232,7 +236,7 @@ ${baseLabel}:
 
     private clearStack() {
         let numEntries = 0
-        while (this.exprStack.length > 0 && this.exprStack[0].currUses == exprStack[0].totalUses) {
+        while (this.exprStack.length > 0 && this.exprStack[0].currUses == this.exprStack[0].totalUses) {
             numEntries++;
             this.exprStack.shift()
         }
@@ -268,7 +272,7 @@ ${baseLabel}:
                     this.exprStack.shift()
                     this.clearStack()
                 } else {
-                    this.write(this.t.load_reg_src_off(reg, "sp", idx.toString) + `; tmpref @${this.exprStack.length - idx}`)
+                    this.write(this.t.load_reg_src_off(reg, "sp", idx.toString()) + `; tmpref @${this.exprStack.length - idx}`)
                 }
                 break;
             case EK.CellRef:
@@ -280,10 +284,12 @@ ${baseLabel}:
                         this.emitInt(cell.index, reg)
                         off = reg
                     }
+                    // write(`${inf.ldr} ${reg}, [r6, ${off}]`)
                     this.write(this.t.load_reg_src_off(reg, "r6", off, inf))
                 } else {
                     // TODO
                     let [reg,imm,idx] = this.cellref(cell)
+                    // write(`ldr ${reg}, ${cellref(cell)}`)
                     write(`ldr ${reg}, `);
                 }
                 break;
