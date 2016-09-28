@@ -22,6 +22,49 @@ namespace pxt.blocks.layout {
         flow(blocks, ratio || 1.62);
     }
 
+    export function screenshot(ws: B.Workspace, ratio?: number) {
+        let svg = ws.getCanvas().cloneNode(true);
+        svg.removeAttribute("width");
+        svg.removeAttribute("height");
+        if (svg.children[0] !== undefined) {
+            svg.removeAttribute("transform");
+            let customCss = `
+.blocklyMainBackground {
+    stroke:none !important;
+}
+
+.blocklyTreeLabel, .blocklyText, .blocklyHtmlInput {
+    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;   
+}
+
+.blocklyText {    
+    font-size:1rem !important;
+}
+
+.rtl .blocklyText {
+    text-align:right;
+}
+
+.blocklyTreeLabel {
+    font-size:1.25rem !important;
+}
+
+.blocklyCheckbox {
+    fill: #ff3030 !important;
+    text-shadow: 0px 0px 6px #f00;
+    font-size: 17pt !important;
+}`;
+            var cssLink = document.createElementNS("http://www.w3.org/1999/xhtml", "style");
+            cssLink.textContent = (Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n';
+            svg.insertBefore(cssLink, svg.firstChild);
+
+            var bbox = (document.getElementsByClassName("blocklyBlockCanvas")[0] as any).getBBox();
+            var xml = new XMLSerializer().serializeToString(svg);
+            xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">${xml}</svg>`;
+            BrowserUtils.browserDownloadText(xml, lf("screenshot") + ".svg", "image/svg+xml");
+        }
+    }
+
     function flow(blocks: Blockly.Block[], ratio: number) {
         const gap = 14;
         // compute total block surface and infer width
