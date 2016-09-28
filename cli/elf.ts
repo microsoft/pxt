@@ -5,6 +5,24 @@ import * as nodeutil from './nodeutil';
 import U = pxt.Util;
 import Map = pxt.Map;
 
+export interface TargetConfig {
+    id: string;
+    flashOrigin: number;
+    flashSize: number;
+    ramOrigin: number;
+    ramSize: number;
+}
+
+let targets: TargetConfig[] = [
+    {
+        id: "microbit (nrf51-16k)",
+        flashOrigin: 0x00018000,
+        flashSize: 0x28000,
+        ramOrigin: 0x20002000,
+        ramSize: 0x2000,
+    }
+]
+
 
 export const enum SymType {
     Code,
@@ -29,6 +47,7 @@ export interface Sym {
     file: string;
     _imported?: boolean;
     symAlias?: number;
+    position?: number;
 }
 
 export interface Reloc {
@@ -272,6 +291,7 @@ export interface FileInfo {
     filename: string;
     syms: Sym[];
     init: Reloc[];
+    target: TargetConfig;
 }
 
 export function elfToJson(filename: string, buf: Buffer): FileInfo {
@@ -405,7 +425,8 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
     let r: FileInfo = {
         filename: filename,
         syms: rsyms,
-        init: convertRelocs(sectsByName[".init_array"])
+        init: convertRelocs(sectsByName[".init_array"]),
+        target: targets[0]
     }
 
     return r
@@ -575,9 +596,6 @@ export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
     return hd
 }
 
-// TODO merge identical code symbols?
-// TODO value of symbol seems to be section offset
-
 export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     let symLookup: Map<Sym> = {}
     let syms: Sym[] = []
@@ -603,12 +621,12 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
         }
     }
 
-    function defineBuiltin(name: string, hex = "") {
+    function defineBuiltin(name: string) {
         let ss: Sym = {
             name: name,
-            type: hex ? SymType.Code : SymType.BSS,
+            type: SymType.BSS,
             align: 4,
-            text: hex,
+            text: "",
             file: "_builtin_",
             bind: STB.GLOBAL,
             _relocs: []
@@ -617,27 +635,41 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
         return ss
     }
 
-    defineBuiltin("__etext") // == __data_start__ ?
+    let bxLr = "4770"
+    let firstNoop = ""
+    function defineNoop(name: string) {
+        let sym = defineBuiltin(name)
+        sym.type = SymType.Code
+        sym.text = bxLr
+        if (!firstNoop) {
+            firstNoop = name
+        } else {
+            sym._textAlias = firstNoop
+        }
+    }
+
+    defineBuiltin("__etext") // end of text, start of RAM globals to be copied
     defineBuiltin("__data_start__") // RAM globals
     defineBuiltin("__data_end__") // RAM globals
     defineBuiltin("__bss_start__")
     defineBuiltin("__bss_end__")
     defineBuiltin("__end__")
     defineBuiltin("__stack")
-    defineBuiltin("__StackTop")
-    //defineBuiltin("__start_fs_data")
-    //defineBuiltin("__stop_fs_data")
 
     let dso = defineBuiltin("__dso_handle")
     dso.size = 4
 
-    let bxLr = "4770"
+    defineNoop("__libc_init_array")
+    defineNoop("__libc_fini_array")
+    defineNoop("hardware_init_hook")
+    defineNoop("software_init_hook")
+    defineNoop("__real_main") // unused, avoid warning
 
-    defineBuiltin("__libc_init_array", bxLr)
-    defineBuiltin("__libc_fini_array", bxLr)
-    defineBuiltin("hardware_init_hook", bxLr)
-    defineBuiltin("software_init_hook", bxLr)
-    defineBuiltin("__real_main", bxLr) // unused
+    // we never exit...
+    defineNoop("atexit")
+    defineNoop("__cxa_atexit")
+    defineNoop("__aeabi_atexit")
+    defineNoop("_global_atexit")
 
     function lookupLib(sn: string) {
         for (let l of libs) {
@@ -670,7 +702,10 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
         return null
     }
 
+    let target: TargetConfig = null
+
     U.iterMap(infos, (fn, fi) => {
+        target = fi.target
         U.pushRange(inits, fi.init)
         for (let s of fi.syms) {
             if (s.bind & STB.GLOBAL)
@@ -711,11 +746,183 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             byAlias[s._textAlias] = idx
         }
     }
+    let minimal = false
     for (let s of syms) {
         delete s._textAlias
         delete s._relocs
-        //delete s._id
         delete s._imported
+        if (minimal) {
+            delete s._id
+            delete s.file
+        }
     }
-    return { syms: syms, init: inits, filename: "" }
+    return { syms: syms, init: inits, filename: "", target: target }
+}
+
+function bufToHex(buf: Uint8Array, origin: number) {
+    let addr = origin;
+    let upper = 0
+    let ptr = 0
+    let myhex: string[] = []
+
+    while (ptr < buf.length) {
+        if ((addr >> 16) != upper) {
+            upper = addr >> 16
+            myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
+        }
+
+        myhex.push(hexBytes(nextLine(addr)))
+        addr += 16
+    }
+
+    return myhex.join("\r\n")
+
+    function nextLine(addr: number) {
+        let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
+        for (let j = 0; j < 16; ++j) {
+            bytes.push((buf[ptr] || 0) & 0xff)
+            ptr++
+        }
+        return bytes
+    }
+
+
+    function hexBytes(bytes: number[]) {
+        let chk = 0
+        let r = ":"
+        bytes.forEach(b => chk += b)
+        bytes.push((-chk) & 0xff)
+        bytes.forEach(b => r += ("0" + b.toString(16)).slice(-2))
+        return r.toUpperCase();
+    }
+}
+
+export function linkBinary(info: FileInfo) {
+    let vect = info.syms.filter(s => s.type == SymType.Vectors)
+    if (vect.length != 1) {
+        U.userError(`expecting one vector section, got ${vect.length}`)
+    }
+    let byName = U.toDictionary(info.syms, s => s.name)
+    let flashPos = info.target.flashOrigin
+    let dataPos = info.target.ramOrigin
+    let etext = 0
+    let dataBeg = dataPos
+
+    let usedSyms: Sym[] = []
+    let rwDataSyms: Sym[] = []
+    let bssSyms: Sym[] = []
+
+    setPos("__stack", info.target.ramOrigin + info.target.ramSize)
+
+    addSym(vect[0])
+
+    flashPos = align(flashPos, 4)
+    etext = flashPos
+    setPos("__etext", etext)
+
+    setPos("__data_start__", dataPos)
+    // TODO sort data by size/align
+    for (let s of rwDataSyms) {
+        dataPos = place(s, dataPos)
+    }
+    dataPos = align(dataPos, 4)
+    setPos("__data_end__", dataPos)
+    let dataSize = dataPos - dataBeg
+    flashPos += dataSize
+
+    setPos("__bss_start__", dataPos)
+    // TODO sort data by size/align
+    for (let b of bssSyms) {
+        dataPos = place(b, dataPos)
+    }
+    dataPos = align(dataPos, 4)
+    setPos("__bss_end__", dataPos)
+    setPos("__end__", dataPos)
+
+    let flash = new Uint8Array(info.target.flashSize)
+
+    for (let s of usedSyms) {
+        if (s.text) {
+            let dst = s.position
+            if (s.type == SymType.RwData)
+                dst = s.position - dataBeg + etext
+            dst -= info.target.flashOrigin
+            for (let i = 0; i < s.text.length; i += 2) {
+                let v = parseInt(s.text.slice(i, i + 2), 16)
+                flash[dst++] = v
+            }
+            for (let i = 0; i < s.relocEnc.length; i += 3) {
+                let ts = info.syms[s.relocEnc[i + 2]]
+                U.assert(ts.position != null && ts.position >= 0)
+                let off = s.relocEnc[i + 1]
+                let tp = s.relocEnc[i + 0]
+                switch (tp) {
+                    case RelocType.R_ARM_ABS32:
+                        // TODO
+                        break;
+                    case RelocType.R_ARM_THM_CALL:
+                        // TODO
+                        break;
+                    default:
+                        U.oops(`unknown reloc type: ${tp}`)
+                }
+            }
+        }
+    }
+
+    return bufToHex(flash, info.target.flashOrigin)
+
+
+    function align(p: number, a: number) {
+        while (p & (a - 1))
+            p++
+        return p
+    }
+
+    function place(s: Sym, p: number) {
+        p = align(p, s.align || 1)
+        s.position = p
+        if (s.text)
+            p += s.text.length / 2
+        else if (s.size != null)
+            p += s.size
+        else
+            U.oops()
+        return p
+    }
+
+    function setPos(name: string, p: number) {
+        byName[name].position = p
+    }
+
+    function addSym(s: Sym) {
+        if (s.position != null) return
+        if (s.symAlias != null) {
+            let ss = info.syms[s.symAlias]
+            addSym(ss)
+            s.position = ss.position
+            return
+        }
+        usedSyms.push(s)
+        switch (s.type) {
+            case SymType.BSS:
+                U.assert(s.relocEnc.length == 0)
+                bssSyms.push(s)
+                s.position = -1
+                break;
+            case SymType.Code:
+            case SymType.RoData:
+            case SymType.Vectors:
+                flashPos = place(s, flashPos)
+                break;
+            case SymType.RwData:
+                s.position = -1
+                rwDataSyms.push(s)
+                break;
+        }
+        for (let i = 0; i < s.relocEnc.length; i += 3) {
+            let ss = info.syms[s.relocEnc[i + 2]]
+            addSym(ss)
+        }
+    }
 }

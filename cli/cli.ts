@@ -9,6 +9,7 @@ import * as nodeutil from './nodeutil';
 nodeutil.init();
 
 import * as fs from 'fs';
+import * as zlib from 'zlib';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
@@ -2848,6 +2849,11 @@ export function elfAsync(fn: string) {
             res = U.sortObjectFields(res)
             let total = elf.linkInfos(res, libs)
             fs.writeFileSync("elf.json", JSON.stringify(total, null, 1))
+            let ss = JSON.stringify(total)
+            let buf: Buffer = zlib.deflateSync(new Buffer(ss, "utf8"))
+            console.log(`Size: ${ss.length} / ${buf.length} compressed`)
+            let hex = elf.linkBinary(total)
+            fs.writeFileSync("elf.hex", hex)
         })
 }
 
