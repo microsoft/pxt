@@ -410,7 +410,7 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                 if (ss.type == SymType.BSS) {
                     ss.size = sect.size
                 } else {
-                    if (s.value && s.value != 1) ss.offset = s.value
+                    if (s.value) ss.offset = s.value
                     ss.text = buf.slice(sect.offset, sect.offset + sect.size).toString("hex")
                     if (!sect.symName) {
                         sect.symName = ss.name
@@ -626,6 +626,7 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             name: name,
             type: SymType.BSS,
             align: 4,
+            size: 0,
             text: "",
             file: "_builtin_",
             bind: STB.GLOBAL,
@@ -655,6 +656,10 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     defineBuiltin("__bss_end__")
     defineBuiltin("__end__")
     defineBuiltin("__stack")
+    defineBuiltin("__StackTop")
+    defineBuiltin("__StackLimit")
+    defineBuiltin("__HeapLimit")
+    defineBuiltin("__HeapBase")
 
     let dso = defineBuiltin("__dso_handle")
     dso.size = 4
@@ -720,6 +725,8 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
         }
     })
 
+    lookupLib("__Vectors")
+
     for (let i = 0; i < syms.length; ++i) {
         let s = syms[i]
         s.relocEnc = []
@@ -733,6 +740,7 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             }
         }
     }
+
     let byAlias: Map<number> = {}
     let idx = -1
     for (let s of syms) {
@@ -813,6 +821,9 @@ export function linkBinary(info: FileInfo) {
     let bssSyms: Sym[] = []
 
     setPos("__stack", info.target.ramOrigin + info.target.ramSize)
+    setPos("__StackTop", info.target.ramOrigin + info.target.ramSize)
+    let stackLimit = info.target.ramOrigin + info.target.ramSize - 2048
+    setPos("__StackLimit", stackLimit)
 
     addSym(vect[0])
 
@@ -822,8 +833,8 @@ export function linkBinary(info: FileInfo) {
 
     setPos("__data_start__", dataPos)
     // TODO sort data by size/align
-    for (let s of rwDataSyms) {
-        dataPos = place(s, dataPos)
+    for (let d of rwDataSyms) {
+        dataPos = place(d, dataPos)
     }
     dataPos = align(dataPos, 4)
     setPos("__data_end__", dataPos)
@@ -839,6 +850,9 @@ export function linkBinary(info: FileInfo) {
     setPos("__bss_end__", dataPos)
     setPos("__end__", dataPos)
 
+    setPos("__HeapBase", dataPos)
+    setPos("__HeapLimit", stackLimit)
+
     let flash = new Uint8Array(info.target.flashSize)
 
     for (let s of usedSyms) {
@@ -853,18 +867,33 @@ export function linkBinary(info: FileInfo) {
             }
             for (let i = 0; i < s.relocEnc.length; i += 3) {
                 let ts = info.syms[s.relocEnc[i + 2]]
-                U.assert(ts.position != null && ts.position >= 0)
-                let off = s.relocEnc[i + 1]
+                if (ts.symAlias != null)
+                    ts = info.syms[ts.symAlias]
+                if (ts.position == null || ts.position < 0) {
+                    U.oops(`unpositioned symbol: ${ts.name} at ${ts.position} type ${ts.type} @${rwDataSyms.indexOf(ts)}`)
+                }
+                let pc = s.relocEnc[i + 1] + s.position
+                let off = pc - info.target.flashOrigin
                 let tp = s.relocEnc[i + 0]
+                let currV = flash[off]
+                    | (flash[off + 1] << 8)
+                    | (flash[off + 2] << 16)
+                    | (flash[off + 3] << 24)
+                let symV = ts.position + ts.offset
                 switch (tp) {
                     case RelocType.R_ARM_ABS32:
-                        // TODO
+                        currV += symV
+                        break;
+                    case RelocType.R_ARM_REL32:
+                        currV += symV - pc
                         break;
                     case RelocType.R_ARM_THM_CALL:
+                        if ((currV >>> 0) != 0xfffef7ff)
+                            U.oops(`bad thm call value: ${(currV >>> 0).toString(16)}`)
                         // TODO
                         break;
                     default:
-                        U.oops(`unknown reloc type: ${tp}`)
+                        U.oops(`unknown reloc type: ${tp} (${ts.name} / ${ts.file}) in ${s.name} / ${s.file}`)
                 }
             }
         }
@@ -887,7 +916,7 @@ export function linkBinary(info: FileInfo) {
         else if (s.size != null)
             p += s.size
         else
-            U.oops()
+            U.oops(`sym: ${s.name}`)
         return p
     }
 
