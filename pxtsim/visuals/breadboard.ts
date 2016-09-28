@@ -72,25 +72,36 @@ namespace pxsim.visuals {
         .sim-bb-outline .sim-bb-mid-channel {
             fill: #FFF;
             stroke: #888;
-            stroke-width: 1px;
+            stroke-width: 2px;
         }
         /* grayed out */
+        .grayed .sim-bb-background {
+            stroke-width: ${PIN_DIST / 5}px;
+        }
         .grayed .sim-bb-red,
         .grayed .sim-bb-blue {
             fill: #BBB;
         }
+        .grayed .sim-bb-bar {
+            fill: #FFF;
+        }
         .grayed .sim-bb-pin {
-            fill:none;
-            stroke: #BBB;
+            fill: #000;
+            stroke: #FFF;
+            stroke-width: 3px;
         }
         .grayed .sim-bb-label {
-            fill: #BBB;
+            fill: none;
         }
         .grayed .sim-bb-background {
-            stroke: #BBB;
+            stroke-width: ${PIN_DIST / 2}px;
+            stroke: #555;
         }
         .grayed .sim-bb-group-wire {
             stroke: #DDD;
+        }
+        .grayed .sim-bb-channel {
+            visibility: hidden;
         }
         /* highlighted */
         .sim-bb-label.highlight {
@@ -104,6 +115,9 @@ namespace pxsim.visuals {
         }
         .sim-bb-red.highlight {
             fill:${RED};
+        }
+        .sim-bb-bar.highlight {
+            stroke-width: 0px;
         }
         `
     // Pin rows and coluns
@@ -377,8 +391,8 @@ namespace pxsim.visuals {
             }
 
             mkChannel(BAR_HEIGHT + MID_HEIGHT / 2, CHANNEL_HEIGHT, "sim-bb-mid-channel");
-            mkChannel(BAR_HEIGHT, SMALL_CHANNEL_HEIGHT);
-            mkChannel(BAR_HEIGHT + MID_HEIGHT, SMALL_CHANNEL_HEIGHT);
+            mkChannel(BAR_HEIGHT, SMALL_CHANNEL_HEIGHT, "sim-bb-sml-channel");
+            mkChannel(BAR_HEIGHT + MID_HEIGHT, SMALL_CHANNEL_HEIGHT), "sim-bb-sml-channel";
 
             //-----pins
             const getMidTopOrBot = (rowIdx: number) => rowIdx < BREADBOARD_MID_ROWS / 2.0 ? "b" : "t";

@@ -22,7 +22,7 @@ namespace pxsim.visuals {
         }
         .gray-cover {
             fill:#FFF;
-            opacity: 0.7;
+            opacity: 0.3;
             stroke-width:0;
             visibility: hidden;
         }
@@ -167,7 +167,7 @@ namespace pxsim.visuals {
                     width: width,
                     height: width,
                 });
-                return { el: el, w: width, h: width, x: 0, y: 0 };
+                return {el: el, w: width, h: width, x: 0, y: 0};
             }
             const mkSquareHoverPin = (): SVGElAndSize => {
                 let el = svg.elt("rect");
@@ -177,7 +177,7 @@ namespace pxsim.visuals {
                     width: width,
                     height: width
                 });
-                return { el: el, w: width, h: width, x: 0, y: 0 };
+                return {el: el, w: width, h: width, x: 0, y: 0};
             }
             const mkPinBlockGrid = (pinBlock: PinBlockDefinition, blockIdx: number) => {
                 let xOffset = scaleFn(pinBlock.x) + PIN_DIST / 2.0;
@@ -213,13 +213,8 @@ namespace pxsim.visuals {
             //tooltip
             this.allPins.forEach(p => {
                 let tooltip = p.col;
-                svg.hydrate(p.el, { title: tooltip });
-                svg.hydrate(p.hoverEl, { title: tooltip });
-            });
-            //attach pins
-            this.allPins.forEach(p => {
-                this.g.appendChild(p.el);
-                this.g.appendChild(p.hoverEl);
+                svg.hydrate(p.el, {title: tooltip});
+                svg.hydrate(p.hoverEl, {title: tooltip});
             });
             //catalog pins
             this.allPins.forEach(p => {
@@ -249,22 +244,27 @@ namespace pxsim.visuals {
                 svg.addClass(el, "sim-board-pin-lbl");
                 let hoverEl = mkLabelTxtEl(pinX, pinY, PIN_LBL_HOVER_SIZE, txt, pos);
                 svg.addClass(hoverEl, "sim-board-pin-lbl-hover");
-                let label: GridLabel = { el: el, hoverEl: hoverEl, txt: txt };
+                let label: GridLabel = {el: el, hoverEl: hoverEl, txt: txt};
                 return label;
             }
             this.allLabels = this.allPins.map((p, pIdx) => {
                 let blk = pinToBlockDef[pIdx];
                 return mkLabel(p.cx, p.cy, p.col, blk.labelPosition);
             });
-            //attach labels
-            this.allLabels.forEach(l => {
-                this.g.appendChild(l.el);
-                this.g.appendChild(l.hoverEl);
-            });
             //catalog labels
             this.allPins.forEach((pin, pinIdx) => {
                 let lbl = this.allLabels[pinIdx];
                 this.pinNmToLbl[pin.col] = lbl;
+            });
+
+            //attach pins & labels
+            this.allPins.forEach((p, idx) => {
+                let lbl = this.allLabels[idx];
+                //pins and labels must be adjacent for hover CSS
+                this.g.appendChild(p.el);
+                this.g.appendChild(p.hoverEl);
+                this.g.appendChild(lbl.el);
+                this.g.appendChild(lbl.hoverEl);
             });
         }
 
@@ -277,13 +277,13 @@ namespace pxsim.visuals {
 
         private mkGrayCover(x: number, y: number, w: number, h: number) {
             let rect = <SVGRectElement>svg.elt("rect");
-            svg.hydrate(rect, { x: x, y: y, width: w, height: h, class: "gray-cover" });
+            svg.hydrate(rect, {x: x, y: y, width: w, height: h, class: "gray-cover"});
             return rect;
         }
 
 
         public getView(): SVGAndSize<SVGSVGElement> {
-            return { el: this.element, w: this.width, h: this.height, x: 0, y: 0 };
+            return {el: this.element, w: this.width, h: this.height, x: 0, y: 0};
         }
 
         public getPinDist() {

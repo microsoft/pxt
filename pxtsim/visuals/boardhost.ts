@@ -7,13 +7,14 @@ namespace pxsim.visuals {
     export interface BoardHostOpts {
         state: CoreBoard,
         boardDef: BoardDefinition,
-        partsList?: string[],
+        partsList: string[],
         partDefs: Map<PartDefinition>,
         fnArgs: any,
-        forceBreadboard?: boolean,
+        forceBreadboardLayout?: boolean,
+        forceBreadboardRender?: boolean,
         maxWidth?: string,
-        maxHeight?: string
-        wireframe?: boolean
+        maxHeight?: string,
+        wireframe?: boolean,
     }
 
     export var mkBoardView = (opts: BoardViewOptions): BoardView => {
@@ -42,12 +43,10 @@ namespace pxsim.visuals {
         constructor(view: BoardView, opts: BoardHostOpts) {
             this.boardView = view;
             this.state = opts.state;
-            let onboardCmps = opts.boardDef.onboardComponents || [];
-            let activeComponents = (opts.partsList || []).filter(c => onboardCmps.indexOf(c) < 0);
-            activeComponents.sort();
+            let activeComponents = opts.partsList;
             this.useCrocClips = opts.boardDef.useCrocClips;
 
-            let useBreadboard = 0 < activeComponents.length || opts.forceBreadboard;
+            let useBreadboard = 0 < activeComponents.length || opts.forceBreadboardLayout;
             if (useBreadboard) {
                 this.breadboard = new Breadboard({
                     wireframe: opts.wireframe,
@@ -88,7 +87,8 @@ namespace pxsim.visuals {
 
                 this.addAll(allocRes);
 
-                if (!allocRes.requiresBreadboard) this.breadboard.hide();
+                if (!allocRes.requiresBreadboard && !opts.forceBreadboardRender)
+                    this.breadboard.hide();
             } else {
                 let el = this.boardView.getView().el;
                 this.view = el;
@@ -137,6 +137,7 @@ namespace pxsim.visuals {
         }
         private getPinCoord(pin: string) {
             let boardCoord = this.boardView.getCoord(pin);
+            U.assert(!!boardCoord, `Unable to find coord for pin: ${pin}`);
             return this.fromMBCoord(boardCoord);
         }
         public getLocCoord(loc: Loc): Coord {

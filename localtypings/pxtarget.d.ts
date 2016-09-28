@@ -69,7 +69,6 @@ declare namespace pxt {
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
-        builtinParts?: Map<boolean>;
     }
 
     interface TargetCompileService {
