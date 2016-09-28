@@ -165,6 +165,7 @@ declare namespace Blockly {
     class Workspace {
         svgGroup_: any;
         scrollbar: ScrollbarPair;
+        svgBlockCanvas_: SVGGElement;
 
         render(): void;
         clear(): void;
