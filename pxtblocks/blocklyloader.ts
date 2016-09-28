@@ -822,7 +822,7 @@ namespace pxt.blocks {
                 text: lf("Download Screenshot"),
                 enabled: topBlocks.length > 0,
                 callback: () => {
-                    pxt.blocks.layout.screenshot(this, 1);
+                    pxt.blocks.layout.screenshot(this);
                 }
             };
             menuOptions.push(screenshotOption);
