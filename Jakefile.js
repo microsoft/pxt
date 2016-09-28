@@ -6,14 +6,18 @@ var path = require("path")
 var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 
-function tscIn(task, dir) {
-    cmdIn(task, dir, 'node ../node_modules/typescript/bin/tsc')
+function tscIn(task, dir, builtDir) {
+    let command = 'node ../node_modules/typescript/bin/tsc'
+    if (process.env.sourceMaps === 'true') {
+        command += ' --sourceMap --mapRoot file:///' + path.resolve(builtDir)
+    }
+    cmdIn(task, dir, command)
 }
 
 function compileDir(name, deps) {
     if (!deps) deps = []
     let dd = expand([name].concat(deps))
-    file('built/' + name + '.js', dd, { async: true }, function () { tscIn(this, name) })
+    file('built/' + name + '.js', dd, { async: true }, function () { tscIn(this, name, "built") })
 }
 
 function loadText(filename) {
@@ -303,7 +307,7 @@ file('built/webapp/src/app.js', expand([
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js"
 ]), { async: true }, function () {
-    tscIn(this, "webapp")
+    tscIn(this, "webapp", "built/webapp")
 })
 
 file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {

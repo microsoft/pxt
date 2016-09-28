@@ -256,6 +256,11 @@ div.simframe > iframe {
 }
 
 /* blockly */
+#blocksEditor {
+    right:0.25rem;
+    bottom:0.25rem;
+}
+
 #blocksEditor > div.loading {
     background:#fff;
     position: absolute;

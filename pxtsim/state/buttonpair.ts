@@ -2,6 +2,7 @@ namespace pxsim {
     export class Button {
         constructor(public id: number) { }
         pressed: boolean;
+        virtual: boolean;
     }
 
     export interface ButtonPairProps {
@@ -22,6 +23,7 @@ namespace pxsim {
             this.aBtn = new Button(this.props.ID_BUTTON_A);
             this.bBtn = new Button(this.props.ID_BUTTON_B);
             this.abBtn = new Button(this.props.ID_BUTTON_AB);
+            this.abBtn.virtual = true;
         }
     }
 }

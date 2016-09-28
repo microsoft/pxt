@@ -202,8 +202,8 @@ namespace pxt.BrowserUtils {
         let osMatch = (res: pxt.SpecializedResource) => matchLevelForStrings(res.os, os());
         let browserMatch = (res: pxt.SpecializedResource) => matchLevelForStrings(res.browser, browser());
         let matches = resources.filter((res) => res.name == name &&
-                                                osMatch(res) != MatchLevel.None &&
-                                                browserMatch(res) != MatchLevel.None);
+            osMatch(res) != MatchLevel.None &&
+            browserMatch(res) != MatchLevel.None);
         if (matches.length == 0) {
             return null;
         }
@@ -233,9 +233,40 @@ namespace pxt.BrowserUtils {
         return browserDownloadUInt8Array(buf, name, contentType, onError);
     }
 
+    export function browserDownloadDataUri(uri: string, name: string) {
+        if (pxt.BrowserUtils.isSafari()) {
+            // For mysterious reasons, the "link" trick closes the
+            // PouchDB database                
+            let iframe = document.getElementById("downloader") as HTMLIFrameElement;
+            if (!iframe) {
+                pxt.debug('injecting downloader iframe')
+                iframe = document.createElement("iframe") as HTMLIFrameElement;
+                iframe.id = "downloader";
+                iframe.style.position = "absolute";
+                iframe.style.right = "0";
+                iframe.style.bottom = "0";
+                iframe.style.zIndex = "-1";
+                iframe.style.width = "1px";
+                iframe.style.height = "1px";
+                document.body.appendChild(iframe);
+            }
+            iframe.src = uri;
+        } else {
+            let link = <any>window.document.createElement('a');
+            if (typeof link.download == "string") {
+                link.href = uri;
+                link.download = name;
+                document.body.appendChild(link); // for FF
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                document.location.href = uri;
+            }
+        }
+    }
+
     function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
         const isMobileBrowser = /mobile/.test(navigator.userAgent);
-        const isSafari = /safari/i.test(navigator.userAgent) && !/chrome/i.test(navigator.userAgent);
         const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
 
         const dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf))
@@ -243,35 +274,7 @@ namespace pxt.BrowserUtils {
             if (isDesktopIE) {
                 let b = new Blob([buf], { type: contentType })
                 let result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
-            } else if (isSafari) {
-                // For mysterious reasons, the "link" trick closes the
-                // PouchDB database                
-                let iframe = document.getElementById("downloader") as HTMLIFrameElement;
-                if (!iframe) {
-                    pxt.debug('injecting downloader iframe')
-                    iframe = document.createElement("iframe") as HTMLIFrameElement;
-                    iframe.id = "downloader";
-                    iframe.style.position = "absolute";
-                    iframe.style.right = "0";
-                    iframe.style.bottom = "0";
-                    iframe.style.zIndex = "-1";
-                    iframe.style.width = "1px";
-                    iframe.style.height = "1px";
-                    document.body.appendChild(iframe);
-                }
-                iframe.src = dataurl;
-            } else {
-                let link = <any>window.document.createElement('a');
-                if (typeof link.download == "string") {
-                    link.href = dataurl;
-                    link.download = name;
-                    document.body.appendChild(link); // for FF
-                    link.click();
-                    document.body.removeChild(link);
-                } else {
-                    document.location.href = dataurl;
-                }
-            }
+            } else browserDownloadDataUri(dataurl, name);
         } catch (e) {
             if (onError) onError(e);
             pxt.debug("saving failed")

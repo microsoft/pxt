@@ -81,10 +81,17 @@ namespace ts.pxtc {
         }
 
         if (ignoreBuiltin) {
-            const builtinParts = pxt.appTarget.simulator.builtinParts;
+            const builtinParts = pxt.appTarget.simulator.boardDefinition.onboardComponents;
             if (builtinParts)
-                parts = parts.filter(p => !builtinParts[p]);
+                parts = parts.filter(p => builtinParts.indexOf(p) < 0);
         }
+
+        //sort parts (so breadboarding layout is stable w.r.t. code ordering)
+        parts.sort();
+        parts = parts.reverse(); //not strictly necessary, but it's a little
+                                 // nicer for demos to have "ledmatrix"
+                                 // before "buttonpair"
+
         return parts;
     }
 

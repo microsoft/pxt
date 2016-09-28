@@ -95,7 +95,7 @@ code:before, code:after {
 .avatar .avatar-image {
     position: absolute;
     left: 0;
-    top: 0;
+    top: 1em;
     width: 3em;
     height: 3em;
     background-image: url(https://az851932.vo.msecnd.net/pub/nbduqpku/logo-solid.svg);
