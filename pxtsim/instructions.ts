@@ -341,16 +341,18 @@ namespace pxsim.instructions {
             allWireColors: allWireColors,
         };
     }
-    function mkBlankBoardAndBreadboard(boardDef: BoardDefinition, cmpDefs: Map<PartDefinition>, fnArgs: any, width: number, buildMode: boolean = false): visuals.BoardHost {
+    function mkBlankBoardAndBreadboard(props: BoardProps, width: number, buildMode: boolean = false): visuals.BoardHost {
         const state = runtime.board as pxsim.CoreBoard;
         const opts: visuals.BoardHostOpts = {
             state: state,
-            boardDef: boardDef,
-            forceBreadboard: true,
-            partDefs: cmpDefs,
+            boardDef: props.boardDef,
+            forceBreadboardLayout: true,
+            forceBreadboardRender: props.allAlloc.requiresBreadboard,
+            partDefs: props.cmpDefs,
             maxWidth: `${width}px`,
-            fnArgs: fnArgs,
+            fnArgs: props.fnArgs,
             wireframe: buildMode,
+            partsList: []
         };
         let boardHost = new visuals.BoardHost(pxsim.visuals.mkBoardView({
             visual: opts.boardDef.visual,
@@ -472,7 +474,7 @@ namespace pxsim.instructions {
         let panel = mkPanel();
 
         //board
-        let board = mkBlankBoardAndBreadboard(props.boardDef, props.cmpDefs, props.fnArgs, BOARD_WIDTH, true)
+        let board = mkBlankBoardAndBreadboard(props, BOARD_WIDTH, true)
         drawSteps(board, step, props);
         panel.appendChild(board.getView());
 
@@ -547,7 +549,7 @@ namespace pxsim.instructions {
     function updateFrontPanel(props: BoardProps): [HTMLElement, BoardProps] {
         let panel = document.getElementById("front-panel");
 
-        let board = mkBlankBoardAndBreadboard(props.boardDef, props.cmpDefs, props.fnArgs, FRONT_PAGE_BOARD_WIDTH, false);
+        let board = mkBlankBoardAndBreadboard(props, FRONT_PAGE_BOARD_WIDTH, false);
         board.addAll(props.allAlloc);
         panel.appendChild(board.getView());
 
@@ -557,7 +559,7 @@ namespace pxsim.instructions {
 
         let panel = mkPanel();
         addClass(panel, "back-panel");
-        let board = mkBlankBoardAndBreadboard(props.boardDef, props.cmpDefs, props.fnArgs, BACK_PAGE_BOARD_WIDTH, false)
+        let board = mkBlankBoardAndBreadboard(props, BACK_PAGE_BOARD_WIDTH, false)
         board.addAll(props.allAlloc);
         panel.appendChild(board.getView());
 
@@ -588,12 +590,10 @@ namespace pxsim.instructions {
 
         //props
         let dummyBreadboard = new visuals.Breadboard({});
-        let onboardCmps = options.boardDef.onboardComponents || [];
-        let activeComponents = (options.parts || []).filter(c => onboardCmps.indexOf(c) < 0);
         let props = mkBoardProps({
             boardDef: options.boardDef,
             partDefs: cmpDefs,
-            partsList: activeComponents,
+            partsList: options.parts,
             fnArgs: options.fnArgs,
             getBBCoord: dummyBreadboard.getCoord.bind(dummyBreadboard)
         });
