@@ -2657,7 +2657,7 @@ function testDecompilerAsync(dir: string): Promise<void> {
             return Promise.resolve()
         }
 
-        return decompileAsyncWorker(filename, testBlocksDir)
+        return decompileAsyncWorker(filename, testBlocksDirExists ? testBlocksDir : undefined)
             .then(decompiled => {
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (compareBaselines(decompiled, baseline)) {
