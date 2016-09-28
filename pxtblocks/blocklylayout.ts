@@ -23,12 +23,21 @@ namespace pxt.blocks.layout {
     }
 
     export function screenshot(ws: B.Workspace) {
-        let svg = (ws as any).svgBlockCanvas_.cloneNode(true);
-        svg.removeAttribute("width");
-        svg.removeAttribute("height");
-        if (svg.childNodes[0] !== undefined) {
-            svg.removeAttribute("transform");
-            let customCss = `
+        let xml = toSvg(ws);
+        if (xml)
+            BrowserUtils.browserDownloadText(xml, lf("screenshot") + ".svg", "image/svg+xml");
+    }
+
+    export function toSvg(ws: B.Workspace): string {
+        const bbox = ws.svgBlockCanvas_.getBBox();
+        let sg = ws.svgBlockCanvas_.cloneNode(true) as SVGGElement;
+        if (!sg.childNodes[0])
+            return undefined;
+
+        sg.removeAttribute("width");
+        sg.removeAttribute("height");
+        sg.removeAttribute("transform");
+        const customCss = `
 .blocklyMainBackground {
     stroke:none !important;
 }
@@ -54,15 +63,14 @@ namespace pxt.blocks.layout {
     text-shadow: 0px 0px 6px #f00;
     font-size: 17pt !important;
 }`;
-            let cssLink = document.createElementNS("http://www.w3.org/1999/xhtml", "style");
-            cssLink.textContent = (Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n';
-            svg.insertBefore(cssLink, svg.firstChild);
+        let cssLink = document.createElementNS("http://www.w3.org/1999/xhtml", "style");
+        cssLink.textContent = (Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n';
+        sg.insertBefore(cssLink, sg.firstChild);
 
-            let bbox = (document.getElementsByClassName("blocklyBlockCanvas")[0] as any).getBBox();
-            let xml = new XMLSerializer().serializeToString(svg);
-            xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">${xml}</svg>`;
-            BrowserUtils.browserDownloadText(xml, lf("screenshot") + ".svg", "image/svg+xml");
-        }
+        let xml = new XMLSerializer().serializeToString(sg);
+        xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">${xml}</svg>`;
+
+        return xml;
     }
 
     function flow(blocks: Blockly.Block[], ratio: number) {
