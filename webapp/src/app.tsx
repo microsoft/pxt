@@ -355,7 +355,9 @@ enum ShareMode {
 }
 
 interface ShareEditorState {
-    mode: ShareMode;
+    mode?: ShareMode;
+    screenshotId?: string;
+    screenshotUri?: string;
 }
 
 class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
@@ -401,11 +403,16 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                     break;
                 default:
                     // render svg
-                    let screenshot = pxt.blocks.layout.toSvg(this.props.parent.blocksEditor.editor);
-                    if (!screenshot)
-                        embed = `<a href="${editUrl}"><pre><code>TODO</code></pre></a>`
-                    else
-                        embed = `<a href="${editUrl}"><img src="${pxsim.svg.toDataUri(screenshot)}" /></a>`
+                    if (this.state.screenshotId == header.pubId) {
+                        if (this.state.screenshotUri)
+                            embed = `<a href="${editUrl}"><img src="${this.state.screenshotUri}" /></a>`
+                        else embed = lf("Ooops, no screenshot available.");
+                    }
+                    else {
+                        embed = lf("rendering...");
+                        pxt.blocks.layout.toPngAsync(this.props.parent.blocksEditor.editor)
+                            .done(uri => this.setState({ screenshotId: header.pubId, screenshotUri: uri }));
+                    }
                     break;
             }
         }
