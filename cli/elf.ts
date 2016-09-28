@@ -842,16 +842,27 @@ export function linkBinary(info: FileInfo) {
     flashPos += dataSize
 
     setPos("__bss_start__", dataPos)
+    let bssStart = dataPos
     // TODO sort data by size/align
     for (let b of bssSyms) {
+        console.log(b)
         dataPos = place(b, dataPos)
     }
     dataPos = align(dataPos, 4)
+    let bssSize = dataPos - bssStart
     setPos("__bss_end__", dataPos)
     setPos("__end__", dataPos)
 
     setPos("__HeapBase", dataPos)
     setPos("__HeapLimit", stackLimit)
+
+    let sizes = {
+        codeSize: etext - info.target.flashOrigin,
+        dataSize: dataSize,
+        bssSize: bssSize
+    }
+
+    console.log(sizes)
 
     let flash = new Uint8Array(info.target.flashSize)
 
