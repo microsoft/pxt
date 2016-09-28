@@ -30,7 +30,7 @@ namespace pxt.blocks.layout {
                         uri,
                         (name || `${pxt.appTarget.id}-${lf("screenshot")}`) + ".png");
             })
-            
+
     }
 
     export function toPngAsync(ws: B.Workspace): Promise<string> {
