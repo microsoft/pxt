@@ -265,7 +265,7 @@ namespace pxt.BrowserUtils {
         }
     }
 
-    function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
+    export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
         const isMobileBrowser = /mobile/.test(navigator.userAgent);
         const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
 

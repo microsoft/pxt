@@ -1078,7 +1078,22 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     saveProjectToFile() {
-        // a HexFile lzma compressed
+        const mpkg = pkg.mainPkg
+        this.saveFileAsync()
+            .then(() => mpkg.filesToBePublishedAsync(true))
+            .then(files => {
+                const project: pxt.cpp.HexFile = {
+                    meta: {
+                        cloudId: `pxt/${pxt.appTarget.id}`,
+                        editor: pxt.blocksProjectName, // TODO
+                        name: mpkg.config.name
+                    },
+                    source: JSON.stringify(files, null, 2)
+                }
+                return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+            }).done((buf: Uint8Array) => {
+                pxt.BrowserUtils.browserDownloadUInt8Array(buf, `${pxt.appTarget.id}-${this.state.projectName}.pxt`, 'application/octet-stream');
+            })
     }
 
     addPackage() {
