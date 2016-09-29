@@ -994,9 +994,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     importBlocksFiles(file: File) {
         if (!file) return;
 
-        fileReadAsText(file)
-            .then(contents => {
-                return this.newBlocksProjectAsync({ "main.blocks": contents, "main.ts": "  " }, "untitled")
+        fileReadAsTextAsync(file)
+            .done(contents => {
+                return this.newBlocksProjectAsync({ "main.blocks": contents, "main.ts": "  " }, lf("Untitled"))
             })
     }
 
@@ -1042,6 +1042,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         core.warningNotification(lf("Sorry, we could not import this project."))
     }
 
+    importProjectFile(file: File) {
+        if (!file) return;
+
+        fileReadAsBufferAsync(file)
+            .then(buf => pxt.lzmaDecompressAsync(buf))
+            .done(contents => {
+                let data = JSON.parse(contents) as pxt.cpp.HexFile;
+                this.importHex(data);
+            }, e => {
+                core.warningNotification(lf("Sorry, we could not import this project."))
+            });
+    }
+
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && isHexFile(file.name) || isBlocksFile(file.name),
@@ -1049,8 +1062,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 if (files) {
                     if (isHexFile(files[0].name)) {
                         this.importHexFile(files[0])
-                    } else {
+                    } else if (isBlocksFile(files[0].name)) {
                         this.importBlocksFiles(files[0])
+                    } else if (isProjectFile(files[0].name)) {
+                        this.importProjectFile(files[0]);
                     }
                 }
             }
@@ -1060,6 +1075,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent("menu.openproject");
         this.scriptSearch.setState({ packages: false, searchFor: '' })
         this.scriptSearch.modal.show()
+    }
+
+    saveProjectToFile() {
+        // a HexFile lzma compressed
     }
 
     addPackage() {
@@ -1400,6 +1419,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
+                                    <sui.Item role="menuitem" icon="folder save" text={lf("Save Project...") } onClick={() => this.saveProjectToFile() } />
                                     {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -1467,9 +1487,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
-                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization)}</a> : undefined}
-                    <a className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use")}</a>
-                    <a className="item" href={targetTheme.privacyUrl}>{lf("Privacy")}</a>
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
+                    <a className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
+                    <a className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
                 </div> : undefined}
             </div>
         );
@@ -1493,7 +1513,24 @@ function isBlocksFile(filename: string) {
     return /^\.blocks$/i.test(filename)
 }
 
-function fileReadAsText(f: File): Promise<string> { // ArrayBuffer
+function isProjectFile(filename: string) {
+    return /^\.pxt$/i.test(filename)
+}
+
+function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
+    if (!f)
+        return Promise.resolve<Uint8Array>(null);
+    else {
+        return new Promise<Uint8Array>((resolve, reject) => {
+            let reader = new FileReader();
+            reader.onerror = (ev) => resolve(null);
+            reader.onload = (ev) => resolve(new Uint8Array(reader.result as ArrayBuffer));
+            reader.readAsArrayBuffer(f);
+        });
+    }
+}
+
+function fileReadAsTextAsync(f: File): Promise<string> { // ArrayBuffer
     if (!f)
         return Promise.resolve<string>(null);
     else {
