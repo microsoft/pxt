@@ -490,6 +490,7 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                 bind: 0
             }
             e.bind = e.info >> 4
+            e.info = e.info & 0xf
             if (e.rawname)
                 e.name = readString(strtab, e.rawname)
             syms.push(e)
@@ -512,6 +513,15 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                 type: info & 0xff,
                 sym: syms[info >>> 8],
                 addend: 0
+            }
+            if (r.sym.info == STT.SECTION) {
+                let cand = syms.filter(s => s.shndx == r.sym.shndx && s.info == STT.OBJECT)
+                if (cand.length == 0) {
+                    if (r.sym.bind & STB.EXPORTED)
+                        U.userError(`no OBJECT found for SECTION; sym=${info >>> 8} sect=${r.sym.shndx} in ${filename} (${s.name})`)
+                } else {
+                    r.sym = cand[0]
+                }
             }
             r.sym.isUsed = true
             if (s.type == SHT.RELA)
