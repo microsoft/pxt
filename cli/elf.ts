@@ -37,6 +37,7 @@ export const enum SymType {
     BSS,
     RwData,
     Vectors,   // comes at the beginning of the file
+    Const,
 }
 
 export interface Sym {
@@ -354,8 +355,14 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
 
     for (let s of syms) {
         if (!s.isUsed) continue
-        if (!s.name)
-            s.name = "." + currNameId++
+        if (!s.name) {
+            s.name = ""
+            if (s.shndx && s.shndx != SHN.COMMON) {
+                let sect = sects[s.shndx]
+                if (sect) s.name = sect.name
+            }
+            s.name += "." + currNameId++
+        }
         else if ((s.bind & STB.EXPORTED) == 0)
             s.name += "." + currNameId++
     }
@@ -680,7 +687,7 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     function defineBuiltin(name: string) {
         let ss: Sym = {
             name: name,
-            type: SymType.BSS,
+            type: SymType.Const,
             align: 4,
             size: 0,
             text: "",
@@ -721,6 +728,7 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
 
     let dso = defineBuiltin("__dso_handle")
     dso.size = 4
+    dso.type = SymType.BSS
 
     defineNoop("__libc_fini_array")
     defineNoop("hardware_init_hook")
@@ -952,7 +960,8 @@ export function linkBinary(info: FileInfo) {
     let flash = new Uint8Array(info.target.flashSize)
     let map = ""
 
-    usedSyms.sort((a, b) => a.position - b.position)
+    // so they appear nicely in the memory map
+    usedSyms.sort((a, b) => a.position - b.position || U.strcmp(a.name, b.name))
 
     for (let s of usedSyms) {
         map += ("00000000" + s.position.toString(16)).slice(-8) + "  " + s.name + "\n"
@@ -1046,6 +1055,7 @@ export function linkBinary(info: FileInfo) {
     }
 
     function setPos(name: string, p: number) {
+        console.log(`${name} := ${p}`)
         byName[name].position = p
     }
 
@@ -1072,6 +1082,9 @@ export function linkBinary(info: FileInfo) {
             case SymType.RwData:
                 s.position = -1
                 rwDataSyms.push(s)
+                break;
+            case SymType.Const:
+                // do nothing
                 break;
         }
         if (s.initSym != null && info.init[s.initSym]) {
