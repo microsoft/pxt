@@ -1452,21 +1452,27 @@ class SnippetHost implements pxt.Host {
             }
         }
         else {
+            let p0 = path.join(module.id, filename);
             let p1 = path.join('libs', module.id, filename)
             let p2 = path.join('libs', module.id, 'built', filename)
 
             let contents: string = null
 
             try {
-                contents = fs.readFileSync(p1, 'utf8')
+                contents = fs.readFileSync(p0, 'utf8')
             }
             catch (e) {
-                //console.log(e)
                 try {
-                    contents = fs.readFileSync(p2, 'utf8')
+                    contents = fs.readFileSync(p1, 'utf8')
                 }
                 catch (e) {
                     //console.log(e)
+                    try {
+                        contents = fs.readFileSync(p2, 'utf8')
+                    }
+                    catch (e) {
+                        //console.log(e)
+                    }
                 }
             }
 
@@ -2622,6 +2628,14 @@ function testDecompilerAsync(dir: string): Promise<void> {
         process.exit(1);
     }
 
+    const testBlocksDir = path.relative(process.cwd(), path.join(dir, "testBlocks"));
+    let testBlocksDirExists = false;
+    try {
+        const stats = fs.statSync(testBlocksDir);
+        testBlocksDirExists = stats.isDirectory();
+    }
+    catch (e) {}
+
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
             continue;
@@ -2654,7 +2668,7 @@ function testDecompilerAsync(dir: string): Promise<void> {
             return Promise.resolve()
         }
 
-        return decompileAsyncWorker(filename)
+        return decompileAsyncWorker(filename, testBlocksDirExists ? testBlocksDir : undefined)
             .then(decompiled => {
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (compareBaselines(decompiled, baseline)) {
@@ -2690,6 +2704,118 @@ function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
 }
 
+function testDecompilerErrorsAsync(dir: string) {
+    const filenames: string[] = [];
+    for (const file of fs.readdirSync(dir)) {
+        if (file[0] == ".") {
+            continue;
+        }
+
+        const filename = path.join(dir, file)
+        if (U.endsWith(file, ".ts")) {
+            filenames.push(filename)
+        }
+    }
+
+    const errors: string[] = [];
+    let totalCases = 0;
+
+    return Promise.mapSeries(filenames, filename => {
+        const basename = path.basename(filename);
+        let fullText: string;
+
+        try {
+            fullText = fs.readFileSync(filename, "utf8");
+        }
+        catch (e) {
+            errors.push("Could not read " + filename)
+            process.exit(1)
+        }
+
+        const cases = getCasesFromFile(fullText);
+        totalCases += cases.length;
+
+        let success = true;
+
+        if (cases.length === 0) {
+            errors.push(`decompiler error test FAILED; ${basename} contains no test cases`)
+            success = false;
+        }
+
+        return Promise.mapSeries(cases, testCase => {
+            const pkg = new pxt.MainPackage(new SnippetHost("decompile-error-pkg", testCase.text, []));
+
+            return pkg.getCompileOptionsAsync()
+                .then(opts => {
+                    opts.ast = true;
+                    try {
+                        const decompiled = pxtc.decompile(opts, "main.ts");
+                        if (decompiled.success) {
+                            errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" expected a decompilation error but got none`);
+                            success = false;
+                        }
+                    }
+                    catch (e) {
+                        errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" generated an exception: ${e}`);
+                        success = false
+                    }
+                });
+        })
+        .then(() => {
+            if (success) {
+                console.log(`decompiler error test OK: ${basename}`);
+            }
+        })
+    })
+        .then(() => {
+            if (errors.length) {
+                errors.forEach(e => console.log(e));
+                console.error(`${errors.length} decompiler error test failure(s)`);
+                process.exit(1);
+            }
+            else {
+                console.log(`${totalCases} decompiler error test(s) OK`);
+            }
+        })
+}
+
+interface DecompilerErrorTestCase {
+    name: string,
+    text: string
+}
+
+const testCaseSeperatorRegex = /\/\/\s+@case:\s*([a-zA-z ]+)$/
+
+function getCasesFromFile(fileText: string): DecompilerErrorTestCase[] {
+    const result: DecompilerErrorTestCase[] = [];
+
+    const lines = fileText.split("\n")
+
+    let currentCase: DecompilerErrorTestCase;
+
+    for (const line of lines) {
+        const match = testCaseSeperatorRegex.exec(line)
+        if (match) {
+            if (currentCase) {
+                result.push(currentCase)
+            }
+            currentCase = {
+                name: match[1],
+                text: ""
+            };
+        }
+        else if (currentCase) {
+            currentCase.text += line + "\n"
+        }
+    }
+
+    if (currentCase) {
+        result.push(currentCase)
+    }
+
+    return result;
+}
+
 function decompileAsync(...fileNames: string[]) {
     return Promise.mapSeries(fileNames, f => {
         const outFile = replaceFileExtension(f, ".blocks")
@@ -2706,10 +2832,10 @@ function decompileAsync(...fileNames: string[]) {
         })
 }
 
-function decompileAsyncWorker(f: string): Promise<string> {
+function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         const input = fs.readFileSync(f, "utf8")
-        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, []));
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dependency ? [dependency] : []));
 
         pkg.getCompileOptionsAsync()
             .then(opts => {
@@ -3116,6 +3242,7 @@ cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", forma
 cmd("testassembler                - test the assemblers", testAssemblers)
 cmd("decompile file.ts...         - decompile ts files and produce similarly named .blocks files", decompileAsync, 1)
 cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and compare to baselines", testDecompilerAsync, 1)
+cmd("testdecompilererrors  DIR    - decompile unsupported files from DIR one-by-one and check for errors", testDecompilerErrorsAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)

@@ -1,0 +1,10 @@
+{
+    "name": "testBlocks",
+    "description": "Project that defines a variety of blocks to be used in decopmiler test cases",
+    "files": [
+        "basic.ts"
+    ],
+    "public": true,
+    "dependencies": {},
+    "installedVersion": "file:."
+}

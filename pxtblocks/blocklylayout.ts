@@ -36,23 +36,32 @@ namespace pxt.blocks.layout {
     export function toPngAsync(ws: B.Workspace): Promise<string> {
         let sg = toSvg(ws);
         if (!sg) return Promise.resolve<string>(undefined);
+        return toPngAsyncInternal(sg.width, sg.height, sg.xml);
+    }
 
+    export function svgToPngAsync(svg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number): Promise<string> {
+        let sg = toSvgInternal(svg, customCss, x, y, width, height);
+        if (!sg) return Promise.resolve<string>(undefined);
+        return toPngAsyncInternal(sg.width, sg.height, sg.xml);
+    }
+
+    function toPngAsyncInternal(width: number, height: number, xml: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             let img = document.createElement("img") as HTMLImageElement;
             img.onload = ev => {
                 let cvs = document.createElement("canvas") as HTMLCanvasElement;
-                cvs.width = sg.width;
-                cvs.height = sg.height;
+                cvs.width = width;
+                cvs.height = height;
                 let ctx = cvs.getContext("2d");
                 ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
                 let datauri = cvs.toDataURL("image/png");
                 resolve(datauri);
             }
             img.onerror = ev => {
-                pxt.reportError("blocks screenshot failed", sg);
+                pxt.reportError("blocks screenshot failed", xml);
                 resolve(undefined)
             }
-            img.src = "data:image/svg+xml," + encodeURI(sg.xml);
+            img.src = "data:image/svg+xml," + encodeURI(xml);
         })
     }
 
@@ -61,17 +70,9 @@ namespace pxt.blocks.layout {
     } {
         if (!ws) return undefined;
 
-        const bbox = ws.svgBlockCanvas_.getBBox();
-        let sg = ws.svgBlockCanvas_.cloneNode(true) as SVGGElement;
-        if (!sg.childNodes[0])
-            return undefined;
+        const bbox = (ws as any).svgBlockCanvas_.getBBox();
+        let sg = (ws as any).svgBlockCanvas_.cloneNode(true) as SVGGElement;
 
-        const width = bbox.width;
-        const height = bbox.height;
-
-        sg.removeAttribute("width");
-        sg.removeAttribute("height");
-        sg.removeAttribute("transform");
         const customCss = `
 .blocklyMainBackground {
     stroke:none !important;
@@ -99,8 +100,21 @@ namespace pxt.blocks.layout {
     font-size: 17pt !important;
 }`;
 
+        return toSvgInternal(sg, customCss, bbox.x, bbox.y, bbox.width, bbox.height);
+    }
+
+    function toSvgInternal(sg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number): {
+        width: number; height: number; xml: string;
+    } {
+        if (!sg.childNodes[0])
+            return undefined;
+
+        sg.removeAttribute("width");
+        sg.removeAttribute("height");
+        sg.removeAttribute("transform");
+
         let xsg = new DOMParser().parseFromString(
-            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${bbox.x} ${bbox.y} ${width} ${height}">
+            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${x} ${y} ${width} ${height}">
 ${new XMLSerializer().serializeToString(sg)}
 </svg>`, "image/svg+xml");
 

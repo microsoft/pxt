@@ -1,0 +1,60 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="variables_set">
+<field name="VAR">var1</field>
+<value name="VALUE">
+<block type="test_create_class">
+<value name="x">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">var2</field>
+<value name="VALUE">
+<block type="test_create_class">
+<value name="x">
+<block type="math_number">
+<field name="NUM">5</field>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="test_class_method">
+<value name="testClass">
+<block type="variables_get">
+<field name="VAR">var1</field>
+</block>
+</value>
+<value name="x">
+<block type="math_number">
+<field name="NUM">2</field>
+</block>
+</value>
+<next>
+<block type="test_class_method">
+<value name="testClass">
+<block type="test_create_class">
+<value name="x">
+<block type="math_number">
+<field name="NUM">1</field>
+</block>
+</value>
+</block>
+</value>
+<value name="x">
+<block type="math_number">
+<field name="NUM">3</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</xml>

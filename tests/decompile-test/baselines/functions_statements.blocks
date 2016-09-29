@@ -1,0 +1,55 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_no_argument">
+<next>
+<block type="test_boolean_argument">
+<value name="arg">
+<block type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</block>
+</value>
+<next>
+<block type="test_number_argument">
+<value name="arg">
+<block type="math_number">
+<field name="NUM">5</field>
+</block>
+</value>
+<next>
+<block type="test_string_argument">
+<value name="arg">
+<block type="text">
+<field name="TEXT">okay</field>
+</block>
+</value>
+<next>
+<block type="test_enum_argument">
+<field name="arg">TestEnum.testValue1</field>
+<next>
+<block type="test_enum_function_argument">
+<field name="arg">EnumWithValueBlock.testValue1</field>
+<next>
+<block type="test_multiple_arguments">
+<value name="arg1">
+<block type="math_number">
+<field name="NUM">2</field>
+</block>
+</value>
+<value name="arg2">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</xml>

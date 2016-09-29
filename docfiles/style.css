@@ -167,17 +167,16 @@ svg {
     max-width: 100%;
 }
 
-.blocklyText,
-.ace_editor {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-    font-size: 1rem !important;
+.blocklyText {
+    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+    font-size:1rem !important;  
 }
 
 .blocklyCheckbox,
 .blocklyLed {
     fill: #ff3030 !important;
-    text-shadow: 0px 0px 7px #f00;
-    font-size: 24px;
+    text-shadow: 0px 0px 6px #f00;
+    font-size: 17pt !important;
 }
 
 .ui.card .blocklyPreview {
