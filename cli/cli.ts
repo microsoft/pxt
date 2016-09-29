@@ -3135,6 +3135,7 @@ export function elfAsync(fn: string) {
             let libs = filenames.map(fn => elf.readArFile(fn, fs.readFileSync(fn), true))
             let total = elf.linkInfos(objInfos, libs)
             fs.writeFileSync("elf.linkmap", total.depInfo)
+            delete total.depInfo
             let hexentries = U.concat(hexFiles.map(n => elf.readHexFile(fs.readFileSync(n))))
             total.hexEntries = hexentries
             fs.writeFileSync("elf.json", JSON.stringify(total, null, 1))

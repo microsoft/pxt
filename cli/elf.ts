@@ -58,6 +58,7 @@ export interface Sym {
     _relocs?: Reloc[];
     _id?: number;
     _fileId?: number;
+    _isUsed?: boolean;
     relocEnc?: number[];
     _imported?: boolean;
     symAlias?: number;
@@ -678,7 +679,6 @@ export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
 
 export function linkInfos(inputInfos: FileInfo[], libs: ArArchive[]): AssemblyInfo {
     let symLookup: Map<Sym[]> = {}
-    let syms: Sym[] = []
     let inits: string[][] = []
     let libOFiles: Map<FileInfo> = {}
     let builtInFI: FileInfo = {
@@ -693,12 +693,9 @@ export function linkInfos(inputInfos: FileInfo[], libs: ArArchive[]): AssemblyIn
         depInfo: ""
     }
     let depIndent = ""
+    let usedSyms: Sym[] = []
 
     function defineSyms(fi: FileInfo) {
-        let fid = res.infos.length
-        res.infos.push(fi)
-        res.depInfo += depIndent + "> " + fi.filename + "\n"
-        depIndent += "    "
         for (let s of fi.syms) {
             let ex = U.lookup(symLookup, s.name)
             if (ex) {
@@ -709,10 +706,14 @@ export function linkInfos(inputInfos: FileInfo[], libs: ArArchive[]): AssemblyIn
             } else {
                 symLookup[s.name] = [s]
             }
-            s._id = syms.length
-            s._fileId = fid
-            syms.push(s)
         }
+    }
+
+    function defineSymsRec(fi: FileInfo) {
+        let fid = res.infos.length
+        res.infos.push(fi)
+        res.depInfo += depIndent + "> " + fi.filename + "\n"
+        depIndent += "    "
         for (let s of fi.syms) {
             res.depInfo += depIndent + s.name + "\n"
             addDeps(s)
@@ -791,6 +792,7 @@ export function linkInfos(inputInfos: FileInfo[], libs: ArArchive[]): AssemblyIn
                     libOFiles[id] = fi = elfToJson(fn, e.buf)
                     fi.fromArchive = true
                     defineSyms(fi)
+                    defineSymsRec(fi)
                 }
                 let ss = fi.syms.filter(x => x.name == sn)[0]
                 if (!ss)
@@ -801,28 +803,83 @@ export function linkInfos(inputInfos: FileInfo[], libs: ArArchive[]): AssemblyIn
         return null
     }
 
-    defineSyms(builtInFI)
-    inputInfos.forEach(defineSyms)
-    lookupLib("__Vectors")
+    let topInfos = [builtInFI].concat(inputInfos)
+
+    topInfos.forEach(defineSyms)
+    topInfos.forEach(defineSymsRec)
+
+    usedSyms = U.concat(topInfos.map(i => i.syms))
+    usedSyms.push(lookupLib("__Vectors")[0])
+
+    for (let inf of res.infos) {
+        for (let initName of inf.init) {
+            usedSyms.push(inf.syms.filter(s => s.name == initName)[0])
+        }
+    }
+
+    usedSyms.forEach(chaseRelocs)
+    usedSyms = []
+
+    res.infos = res.infos.filter(inf => {
+        inf.syms = inf.syms.filter(s => s._isUsed)
+        return inf.syms.length > 0
+    })
+
+    let fid = 0
+    for (let inf of res.infos) {
+        for (let s of inf.syms) {
+            s._id = usedSyms.length
+            s._fileId = fid
+            usedSyms.push(s)
+        }
+        fid++
+    }
+
+    usedSyms.forEach(resolveRelocs)
 
     function addDeps(s: Sym) {
         s.relocEnc = []
         for (let r of s._relocs) {
             let ts = U.lookup(symLookup, r.symname) || lookupLib(r.symname)
             if (!ts) {
+                //console.log(`unresolved ref ${s.name} -> ${r.symname}`)
+            } else {
+                U.assert(r.addend == 0)
+            }
+        }
+    }
+
+    function chaseRelocs(s: Sym) {
+        if (s._isUsed) return
+        s._isUsed = true
+        res.depInfo += depIndent + "* " + s.name + "\n"
+        depIndent += "  "
+        for (let r of s._relocs) {
+            let ts = U.lookup(symLookup, r.symname)
+            if (!ts) {
                 console.log(`unresolved ref ${s.name} -> ${r.symname}`)
             } else {
                 U.assert(r.addend == 0)
-                let id = ts[0]._id
-                if (r.isWeak) id = -id
-                s.relocEnc.push(r.type, r.offset, id)
+                ts.forEach(chaseRelocs)
             }
+        }
+        depIndent = depIndent.slice(2)
+    }
+
+    function resolveRelocs(s: Sym) {
+        s.relocEnc = []
+        for (let r of s._relocs) {
+            let ts = U.lookup(symLookup, r.symname)
+            U.assert(r.addend == 0)
+            let id = ts[0]._id
+            if (r.isWeak) id = -id
+            s.relocEnc.push(r.type, r.offset, id)
         }
     }
 
     let byAlias: Map<number> = {}
     let idx = -1
-    for (let s of syms) {
+    for (let s of usedSyms) {
         idx++
         if (!s._textAlias) continue
         let v = U.lookup(byAlias, s._textAlias)
@@ -835,10 +892,11 @@ export function linkInfos(inputInfos: FileInfo[], libs: ArArchive[]): AssemblyIn
         }
     }
     let minimal = false
-    for (let s of syms) {
+    for (let s of usedSyms) {
         delete s._textAlias
         delete s._relocs
         delete s._imported
+        delete s._isUsed
         if (minimal) {
             delete s._id
             delete s._fileId
@@ -907,6 +965,8 @@ export function linkBinary(assembly: AssemblyInfo) {
     let bssSyms: Sym[] = []
     let codeSyms: Sym[] = []
 
+    assembly.infos[0].syms.forEach(addSymCore)
+
     setPos("__stack", assembly.target.ramOrigin + assembly.target.ramSize)
     setPos("__StackTop", assembly.target.ramOrigin + assembly.target.ramSize)
     let stackLimit = assembly.target.ramOrigin + assembly.target.ramSize - 2048
@@ -932,7 +992,13 @@ export function linkBinary(assembly: AssemblyInfo) {
     // TODO remove unused symbols here
 
     for (let s of codeSyms) {
-        flashPos = place(s, flashPos)
+        if (s.symAlias == null)
+            flashPos = place(s, flashPos)
+    }
+
+    for (let s of codeSyms) {
+        if (s.symAlias != null)
+            s.position = syms[s.symAlias].position
     }
 
     flashPos = align(flashPos, 4)
@@ -1047,34 +1113,26 @@ export function linkBinary(assembly: AssemblyInfo) {
     function addSymCore(s: Sym) {
         U.assert(s.position == null)
 
-        map += mapInd + s.name + "\n"
-        mapInd += "  "
-
+        s.position = -1
         usedSyms.push(s)
+
         switch (s.type) {
             case SymType.BSS:
                 U.assert(s.relocEnc.length == 0)
                 bssSyms.push(s)
-                s.position = -1
                 break;
             case SymType.Code:
             case SymType.RoData:
             case SymType.Vectors:
                 codeSyms.push(s)
-                s.position = -1
                 break;
             case SymType.RwData:
-                s.position = -1
                 rwDataSyms.push(s)
                 break;
             case SymType.Const:
                 // do nothing
                 break;
         }
-
-        setRelocs(s)
-
-        mapInd = mapInd.slice(2)
     }
 
     function setRelocs(s: Sym) {
@@ -1121,20 +1179,18 @@ export function linkBinary(assembly: AssemblyInfo) {
     function addSym(s: Sym) {
         if (s.position != null) return
 
-        if (s.symAlias != null) {
-            let ss = syms[s.symAlias]
-            addSym(ss)
-            s.position = ss.position
-            return
-        }
-
         let fi = assembly.infos[s._fileId]
 
-        // start with the requested one
-        addSymCore(s)
         for (let ss of fi.syms)
-            if (s !== ss)
-                addSymCore(ss)
+            addSymCore(ss)
+
+        // start with the requested one?
+        for (let ss of fi.syms) {
+            map += mapInd + ss.name + "\n"
+            mapInd += "  "
+            setRelocs(ss)
+            mapInd = mapInd.slice(2)
+        }
 
         U.assert(!!fi.init)
         let arr = fi.init
