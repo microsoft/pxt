@@ -10,14 +10,14 @@
 <block type="logic_compare">
 <field name="OP">LT</field>
 <value name="A">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">0</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">1</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -25,14 +25,14 @@
 <block type="logic_compare">
 <field name="OP">LTE</field>
 <value name="A">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">9</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">5</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -44,32 +44,38 @@
 <block type="logic_compare">
 <field name="OP">EQ</field>
 <value name="A">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="math_arithmetic">
 <field name="OP">MULTIPLY</field>
 <value name="A">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">6</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">5</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
 <value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="math_arithmetic">
 <field name="OP">DIVIDE</field>
 <value name="A">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">8</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">7</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -88,9 +94,9 @@
 <value name="BOOL">
 <block type="logic_negate">
 <value name="BOOL">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -100,9 +106,9 @@
 <block type="controls_if">
 <mutation elseif="0" else="1"></mutation>
 <value name="IF0">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</block>
+</shadow>
 </value>
 <statement name="DO0">
 </statement>
@@ -113,9 +119,9 @@
 <next>
 <block type="device_while">
 <value name="COND">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</block>
+</shadow>
 </value>
 <statement name="DO">
 </statement>
