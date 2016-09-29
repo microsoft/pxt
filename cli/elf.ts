@@ -921,6 +921,7 @@ export function linkBinary(info: FileInfo) {
     let dataStart = dataPos
     let inits: Sym[] = []
     let map = ""
+    let mapInd = ""
 
     let usedSyms: Sym[] = []
     let rwDataSyms: Sym[] = []
@@ -1100,7 +1101,10 @@ export function linkBinary(info: FileInfo) {
             s.position = ss.position
             return
         }
-        map += "\n" + s.name + "("
+
+        map += mapInd + s.name + "\n"
+        mapInd += "  "
+
         usedSyms.push(s)
         switch (s.type) {
             case SymType.BSS:
@@ -1140,6 +1144,6 @@ export function linkBinary(info: FileInfo) {
             }
             addSym(ss)
         }
-        map += ")"
+        mapInd = mapInd.slice(2)
     }
 }
