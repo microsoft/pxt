@@ -191,6 +191,9 @@ export function apiAsync(path: string, postArguments?: string): Promise<void> {
             .then(str => apiAsync(path, str))
     }
 
+    if (postArguments && fs.existsSync(postArguments))
+        postArguments = fs.readFileSync(postArguments, "utf8");
+
     let dat = postArguments ? JSON.parse(postArguments) : null
     if (dat)
         console.log("POST", "/api/" + path, JSON.stringify(dat, null, 2))
