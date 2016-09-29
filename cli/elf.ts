@@ -26,9 +26,15 @@ let targets: TargetConfig[] = [
 export interface FileInfo {
     filename: string;
     syms: Sym[];
-    init: string[][];
+    init: string[];
+    fromArchive?: boolean;
+}
+
+export interface AssemblyInfo {
+    infos: FileInfo[];
     target: TargetConfig;
-    hexEntries?: HexEntry[];
+    hexEntries: HexEntry[];
+    depInfo: string;
 }
 
 export const enum SymType {
@@ -46,14 +52,13 @@ export interface Sym {
     align: number;
     size?: number; // mostly relevant for bss
     text: string; // hex encoded
-    initSym?: number;
     _textAlias?: string; // name of the symbol where text resides
     offset?: number;
     bind: STB;
     _relocs?: Reloc[];
     _id?: number;
+    _fileId?: number;
     relocEnc?: number[];
-    file: string;
     _imported?: boolean;
     symAlias?: number;
     position?: number;
@@ -383,7 +388,6 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                     align: s.value || 4,
                     size: s.size,
                     text: "",
-                    file: filename,
                     bind: STB.GLOBAL,
                     _relocs: []
                 }
@@ -397,7 +401,6 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
                     type: SymType.Code,
                     align: sect.addralign || 1,
                     text: "",
-                    file: filename,
                     bind: s.bind,
                     _relocs: convertRelocs(sect)
                 }
@@ -437,8 +440,7 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
     let r: FileInfo = {
         filename: filename,
         syms: rsyms,
-        target: targets[0],
-        init: inits.length ? [inits.map(s => s.symname)] : null
+        init: inits.map(s => s.symname)
     }
 
     return r
@@ -674,29 +676,48 @@ export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
     return hd
 }
 
-export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
-    let symLookup: Map<Sym> = {}
+export function linkInfos(inputInfos: FileInfo[], libs: ArArchive[]): AssemblyInfo {
+    let symLookup: Map<Sym[]> = {}
     let syms: Sym[] = []
     let inits: string[][] = []
     let libOFiles: Map<FileInfo> = {}
+    let builtInFI: FileInfo = {
+        filename: "_builtin_",
+        syms: [],
+        init: [],
+    }
+    let res: AssemblyInfo = {
+        infos: [],
+        target: targets[0],
+        hexEntries: [],
+        depInfo: ""
+    }
+    let depIndent = ""
 
-    function defineSym(s: Sym) {
-        let ex = U.lookup(symLookup, s.name)
-        if (ex) {
-            s._id = ex._id
-            // re-definitions with the same text are fine
-            if (ex.text && ex.text == s.text) {
-                return
+    function defineSyms(fi: FileInfo) {
+        let fid = res.infos.length
+        res.infos.push(fi)
+        res.depInfo += depIndent + "> " + fi.filename + "\n"
+        depIndent += "    "
+        for (let s of fi.syms) {
+            let ex = U.lookup(symLookup, s.name)
+            if (ex) {
+                if (s.bind & STB.WEAK)
+                    ex.push(s)
+                else
+                    ex.unshift(s)
+            } else {
+                symLookup[s.name] = [s]
             }
-            if (!(ex.bind & STB.WEAK) && (s.bind & STB.WEAK)) {
-                return
-            }
-            console.log(`double definitions of ${s.name}`)
-        } else {
             s._id = syms.length
+            s._fileId = fid
             syms.push(s)
-            symLookup[s.name] = s
         }
+        for (let s of fi.syms) {
+            res.depInfo += depIndent + s.name + "\n"
+            addDeps(s)
+        }
+        depIndent = depIndent.slice(4)
     }
 
     function defineBuiltin(name: string) {
@@ -706,11 +727,10 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             align: 4,
             size: 0,
             text: "",
-            file: "_builtin_",
             bind: STB.GLOBAL,
             _relocs: []
         }
-        defineSym(ss)
+        builtInFI.syms.push(ss)
         return ss
     }
 
@@ -765,62 +785,27 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             if (soff) {
                 let id = l.name + "." + soff
                 let fi = U.lookup(libOFiles, id)
-                let first = false
                 if (!fi) {
                     let e = getArEntry(l, soff)
                     let fn = path.basename(l.name) + "/" + path.basename(e.filename)
                     libOFiles[id] = fi = elfToJson(fn, e.buf)
-                    handleInits(fi)
-                    first = true
+                    fi.fromArchive = true
+                    defineSyms(fi)
                 }
-                let byname = U.toDictionary(fi.syms, s => s.name)
-                let ss = U.lookup(byname, sn)
+                let ss = fi.syms.filter(x => x.name == sn)[0]
                 if (!ss)
                     U.userError(`unresolved symbol ${sn} in ${l.name} (${fi.filename})  `)
-                let addSym = (s: Sym) => {
-                    if (s._imported) return
-                    s._imported = true
-                    defineSym(s)
-                    for (let r of s._relocs) {
-                        let ls = U.lookup(byname, r.symname)
-                        if (ls) addSym(ls)
-                    }
-                    if (first && fi.init) {
-                        for (let sname of fi.init[0]) {
-                            let ls = U.lookup(byname, sname)
-                            if (ls) addSym(ls)
-                        }
-                    }
-                }
-                addSym(ss)
-                return ss
+                return [ss]
             }
         }
         return null
     }
 
-    let target: TargetConfig = null
-
-    U.iterMap(infos, (fn, fi) => {
-        target = fi.target
-        for (let s of fi.syms) {
-            if (s.bind & STB.GLOBAL)
-                defineSym(s)
-        }
-        handleInits(fi)
-    })
-
-    U.iterMap(infos, (fn, fi) => {
-        for (let s of fi.syms) {
-            if (!(s.bind & STB.GLOBAL))
-                defineSym(s)
-        }
-    })
-
+    defineSyms(builtInFI)
+    inputInfos.forEach(defineSyms)
     lookupLib("__Vectors")
 
-    for (let i = 0; i < syms.length; ++i) {
-        let s = syms[i]
+    function addDeps(s: Sym) {
         s.relocEnc = []
         for (let r of s._relocs) {
             let ts = U.lookup(symLookup, r.symname) || lookupLib(r.symname)
@@ -828,7 +813,7 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
                 console.log(`unresolved ref ${s.name} -> ${r.symname}`)
             } else {
                 U.assert(r.addend == 0)
-                let id = ts._id
+                let id = ts[0]._id
                 if (r.isWeak) id = -id
                 s.relocEnc.push(r.type, r.offset, id)
             }
@@ -844,6 +829,7 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
         if (v != null) {
             s.symAlias = v
             s.text = ""
+            s.relocEnc = []
         } else {
             byAlias[s._textAlias] = idx
         }
@@ -855,20 +841,11 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
         delete s._imported
         if (minimal) {
             delete s._id
-            delete s.file
+            delete s._fileId
         }
     }
-    return { syms: syms, filename: "", target: target, init: inits }
 
-    function handleInits(fi: FileInfo) {
-        if (fi.init) {
-            U.assert(fi.init.length == 1)
-            let idx = inits.length
-            inits.push(fi.init[0])
-            for (let s of fi.syms)
-                s.initSym = idx
-        }
-    }
+    return res
 }
 
 function bufToHex(buf: Uint8Array, origin: number) {
@@ -909,14 +886,16 @@ function bufToHex(buf: Uint8Array, origin: number) {
     }
 }
 
-export function linkBinary(info: FileInfo) {
-    let vect = info.syms.filter(s => s.type == SymType.Vectors)
+
+export function linkBinary(assembly: AssemblyInfo) {
+    let syms = U.concat(assembly.infos.map(i => i.syms))
+    let vect = syms.filter(s => s.type == SymType.Vectors)
     if (vect.length != 1) {
         U.userError(`expecting one vector section, got ${vect.length}`)
     }
-    let byName = U.toDictionary(info.syms, s => s.name)
-    let flashPos = info.target.flashOrigin
-    let dataPos = info.target.ramOrigin
+    let byName = U.groupBy(syms, s => s.name)
+    let flashPos = assembly.target.flashOrigin
+    let dataPos = assembly.target.ramOrigin
     let etext = 0
     let dataStart = dataPos
     let inits: Sym[] = []
@@ -926,20 +905,93 @@ export function linkBinary(info: FileInfo) {
     let usedSyms: Sym[] = []
     let rwDataSyms: Sym[] = []
     let bssSyms: Sym[] = []
+    let codeSyms: Sym[] = []
 
-    setPos("__stack", info.target.ramOrigin + info.target.ramSize)
-    setPos("__StackTop", info.target.ramOrigin + info.target.ramSize)
-    let stackLimit = info.target.ramOrigin + info.target.ramSize - 2048
+    setPos("__stack", assembly.target.ramOrigin + assembly.target.ramSize)
+    setPos("__StackTop", assembly.target.ramOrigin + assembly.target.ramSize)
+    let stackLimit = assembly.target.ramOrigin + assembly.target.ramSize - 2048
     setPos("__StackLimit", stackLimit)
 
+    //
+    // Recursively pull in symbols
+    //
+
     addSym(vect[0])
+
+    // also include all non-archive members
+    for (let inf of assembly.infos)
+        if (!inf.fromArchive)
+            addSym(inf.syms[0])
+
+    let prevUsed = usedSyms.length
+    for (let s of usedSyms) {
+        setRelocs(s) // fixup
+    }
+    U.assert(prevUsed == usedSyms.length) // nothing should be added!
+
+    // TODO remove unused symbols here
+
+    for (let s of codeSyms) {
+        flashPos = place(s, flashPos)
+    }
 
     flashPos = align(flashPos, 4)
     etext = flashPos
     setPos("__etext", etext)
 
     let sizes: Map<number> = {
-        codeSize: etext - info.target.flashOrigin,
+        codeSize: etext - assembly.target.flashOrigin,
+    }
+
+    dataPos = layoutSyms(rwDataSyms, dataPos, "data")
+    let dataSize = dataPos - dataStart
+    flashPos += dataSize
+    flashPos = align(flashPos, 4)
+
+    dataPos = layoutSyms(bssSyms, dataPos, "bss")
+    setPos("__end__", dataPos)
+
+    setPos("__HeapBase", dataPos)
+    setPos("__HeapLimit", stackLimit)
+
+    let initSym = byName["__libc_init_array"][0]
+    initSym.text = "b500" + inits.map(i => "fff7feff").join("") + "bd00"
+    initSym.relocEnc = U.concat(inits.map((isym, idx) =>
+        [RelocType.R_ARM_THM_CALL, idx * 4 + 2, isym._id]))
+    console.log(inits.map(s => s.name))
+
+
+    let flash = new Uint8Array(assembly.target.flashSize)
+
+    // so they appear nicely in the memory map
+    usedSyms.sort((a, b) => a.position - b.position || U.strcmp(a.name, b.name))
+    usedSyms.forEach(writeSymbol)
+
+    let hexEntries = assembly.hexEntries || []
+
+    hexEntries.push({
+        address: assembly.target.flashOrigin,
+        hex: "-"
+    })
+    hexEntries.sort((a, b) => a.address - b.address)
+
+    let resHex = ""
+    for (let he of hexEntries) {
+        if (he.hex === "-")
+            resHex += bufToHex(flash.slice(0, flashPos - assembly.target.flashOrigin), he.address)
+        else {
+            let hbuf = new Uint8Array(he.hex.length >> 1)
+            for (let i = 0; i < hbuf.length; ++i)
+                hbuf[i] = parseInt(he.hex.slice(i << 1, (i << 1) + 2))
+            resHex += bufToHex(hbuf, he.address)
+        }
+    }
+    resHex += ":00000001FF\r\n"
+
+    return {
+        hex: resHex,
+        sizes: sizes,
+        map: map
     }
 
     function layoutSyms(syms: Sym[], p: number, id: string) {
@@ -970,107 +1022,6 @@ export function linkBinary(info: FileInfo) {
         return p
     }
 
-    dataPos = layoutSyms(rwDataSyms, dataPos, "data")
-    let dataSize = dataPos - dataStart
-    flashPos += dataSize
-    flashPos = align(flashPos, 4)
-
-    dataPos = layoutSyms(bssSyms, dataPos, "bss")
-    setPos("__end__", dataPos)
-
-    setPos("__HeapBase", dataPos)
-    setPos("__HeapLimit", stackLimit)
-
-    let initSym = byName["__libc_init_array"]
-    initSym.text = "b500" + inits.map(i => "fff7feff").join("") + "bd00"
-    initSym.relocEnc = U.concat(inits.map((isym, idx) =>
-        [RelocType.R_ARM_THM_CALL, idx * 4 + 2, isym._id]))
-    console.log(inits.map(s => s.name))
-
-
-    let flash = new Uint8Array(info.target.flashSize)
-
-    // so they appear nicely in the memory map
-    usedSyms.sort((a, b) => a.position - b.position || U.strcmp(a.name, b.name))
-
-    for (let s of usedSyms) {
-        map += ("00000000" + s.position.toString(16)).slice(-8) + "  " + s.name + "\n"
-        if (s.text) {
-            let dst = s.position
-            if (s.type == SymType.RwData)
-                dst = s.position - dataStart + etext
-            dst -= info.target.flashOrigin
-            for (let i = 0; i < s.text.length; i += 2) {
-                let v = parseInt(s.text.slice(i, i + 2), 16)
-                flash[dst++] = v
-            }
-            for (let i = 0; i < s.relocEnc.length; i += 3) {
-                let id = s.relocEnc[i + 2]
-                let ts = info.syms[Math.abs(id)]
-                if (ts.symAlias != null)
-                    ts = info.syms[ts.symAlias]
-                if (ts.position == null || ts.position < 0) {
-                    if (id < 0) {
-                        console.log(`skip weak ref: ${ts.name} from ${s.name}`)
-                        continue // weak symbol
-                    }
-                    U.oops(`unpositioned symbol: ${ts.name} at ${ts.position} type ${ts.type} @${rwDataSyms.indexOf(ts)}`)
-                }
-                let pc = s.relocEnc[i + 1] + s.position
-                let off = pc - info.target.flashOrigin
-                let tp = s.relocEnc[i + 0]
-                let currV = flash[off]
-                    | (flash[off + 1] << 8)
-                    | (flash[off + 2] << 16)
-                    | (flash[off + 3] << 24)
-                let symV = ts.position + ts.offset
-                switch (tp) {
-                    case RelocType.R_ARM_ABS32:
-                        currV += symV
-                        break;
-                    case RelocType.R_ARM_REL32:
-                        currV += symV - pc
-                        break;
-                    case RelocType.R_ARM_THM_CALL:
-                        if ((currV >>> 0) != 0xfffef7ff)
-                            U.oops(`bad thm call value: ${(currV >>> 0).toString(16)}`)
-                        // TODO
-                        break;
-                    default:
-                        U.oops(`unknown reloc type: ${tp} (${ts.name} / ${ts.file}) in ${s.name} / ${s.file}`)
-                }
-            }
-        }
-    }
-
-    let hexEntries = info.hexEntries || []
-
-    hexEntries.push({
-        address: info.target.flashOrigin,
-        hex: "-"
-    })
-    hexEntries.sort((a, b) => a.address - b.address)
-
-    let resHex = ""
-    for (let he of hexEntries) {
-        if (he.hex === "-")
-            resHex += bufToHex(flash.slice(0, flashPos - info.target.flashOrigin), he.address)
-        else {
-            let hbuf = new Uint8Array(he.hex.length >> 1)
-            for (let i = 0; i < hbuf.length; ++i)
-                hbuf[i] = parseInt(he.hex.slice(i << 1, (i << 1) + 2))
-            resHex += bufToHex(hbuf, he.address)
-        }
-    }
-    resHex += ":00000001FF\r\n"
-
-    return {
-        hex: resHex,
-        sizes: sizes,
-        map: map
-    }
-
-
     function align(p: number, a: number) {
         while (p & (a - 1))
             p++
@@ -1090,17 +1041,11 @@ export function linkBinary(info: FileInfo) {
     }
 
     function setPos(name: string, p: number) {
-        byName[name].position = p
+        byName[name][0].position = p
     }
 
-    function addSym(s: Sym) {
-        if (s.position != null) return
-        if (s.symAlias != null) {
-            let ss = info.syms[s.symAlias]
-            addSym(ss)
-            s.position = ss.position
-            return
-        }
+    function addSymCore(s: Sym) {
+        U.assert(s.position == null)
 
         map += mapInd + s.name + "\n"
         mapInd += "  "
@@ -1115,7 +1060,8 @@ export function linkBinary(info: FileInfo) {
             case SymType.Code:
             case SymType.RoData:
             case SymType.Vectors:
-                flashPos = place(s, flashPos)
+                codeSyms.push(s)
+                s.position = -1
                 break;
             case SymType.RwData:
                 s.position = -1
@@ -1125,25 +1071,134 @@ export function linkBinary(info: FileInfo) {
                 // do nothing
                 break;
         }
-        if (s.initSym != null && info.init[s.initSym]) {
-            let arr = info.init[s.initSym]
-            info.init[s.initSym] = null
-            for (let sname of arr) {
-                let isym = U.lookup(byName, sname)
-                if (!isym) U.userError(`init symbol ${sname} not found`)
-                inits.push(isym)
-                addSym(isym)
-            }
-        }
+
+        setRelocs(s)
+
+        mapInd = mapInd.slice(2)
+    }
+
+    function setRelocs(s: Sym) {
         for (let i = 0; i < s.relocEnc.length; i += 3) {
             let id = s.relocEnc[i + 2]
-            let ss = info.syms[Math.abs(id)]
             if (id < 0) {
                 //console.log(`skip weak ref: ${ss.name}`)
                 continue
             }
+            let ss = syms[Math.abs(id)]
+            let cand = U.lookup(byName, ss.name)
+            if (cand.length == 1) {
+                U.assert(cand[0] === ss)
+            } else {
+                ss = pickCandidate(cand)
+                s.relocEnc[i + 2] = ss._id
+            }
             addSym(ss)
         }
-        mapInd = mapInd.slice(2)
+    }
+
+    function symbolImported(s: Sym) {
+        if (s.position != null) return true
+        let fi = assembly.infos[s._fileId]
+        if (!fi.fromArchive) return true
+        return false
+    }
+
+    function pickCandidate(cand: Sym[]) {
+        let curr = cand.filter(symbolImported)
+        if (curr.length == 0)
+            curr = cand
+        let strong = curr.filter(s => !(s.bind & STB.WEAK))
+        if (strong.length == 0)
+            return curr[0] // multiple weak symbols are OK
+        else {
+            if (strong.length > 1) {
+                console.log(`multiple symbols to consider: ${strong.map(symInfo).join(", ")}`)
+            }
+            return strong[0]
+        }
+    }
+
+    function addSym(s: Sym) {
+        if (s.position != null) return
+
+        if (s.symAlias != null) {
+            let ss = syms[s.symAlias]
+            addSym(ss)
+            s.position = ss.position
+            return
+        }
+
+        let fi = assembly.infos[s._fileId]
+
+        // start with the requested one
+        addSymCore(s)
+        for (let ss of fi.syms)
+            if (s !== ss)
+                addSymCore(ss)
+
+        U.assert(!!fi.init)
+        let arr = fi.init
+        fi.init = null
+        for (let sname of arr) {
+            let isym = U.lookup(byName, sname)[0]
+            if (!isym) U.userError(`init symbol ${sname} not found`)
+            if (isym._fileId != s._fileId) U.userError(`init symbol ${sname} in wrong place`)
+            inits.push(isym)
+        }
+    }
+
+    function symInfo(s: Sym) {
+        let f = assembly.infos[s._fileId]
+
+        return `${s.name} (${f.filename})`
+    }
+
+    function writeSymbol(s: Sym) {
+        map += ("00000000" + s.position.toString(16)).slice(-8) + "  " + s.name + "\n"
+        if (!s.text) return
+        let dst = s.position
+        if (s.type == SymType.RwData)
+            dst = s.position - dataStart + etext
+        dst -= assembly.target.flashOrigin
+        for (let i = 0; i < s.text.length; i += 2) {
+            let v = parseInt(s.text.slice(i, i + 2), 16)
+            flash[dst++] = v
+        }
+        for (let i = 0; i < s.relocEnc.length; i += 3) {
+            let id = s.relocEnc[i + 2]
+            let ts = syms[Math.abs(id)]
+            if (ts.symAlias != null)
+                ts = syms[ts.symAlias]
+            if (ts.position == null || ts.position < 0) {
+                if (id < 0) {
+                    console.log(`skip weak ref: ${ts.name} from ${s.name}`)
+                    continue // weak symbol
+                }
+                U.oops(`unpositioned symbol: ${symInfo(ts)} at ${ts.position} type ${ts.type} @${rwDataSyms.indexOf(ts)}`)
+            }
+            let pc = s.relocEnc[i + 1] + s.position
+            let off = pc - assembly.target.flashOrigin
+            let tp = s.relocEnc[i + 0]
+            let currV = flash[off]
+                | (flash[off + 1] << 8)
+                | (flash[off + 2] << 16)
+                | (flash[off + 3] << 24)
+            let symV = ts.position + ts.offset
+            switch (tp) {
+                case RelocType.R_ARM_ABS32:
+                    currV += symV
+                    break;
+                case RelocType.R_ARM_REL32:
+                    currV += symV - pc
+                    break;
+                case RelocType.R_ARM_THM_CALL:
+                    if ((currV >>> 0) != 0xfffef7ff)
+                        U.oops(`bad thm call value: ${(currV >>> 0).toString(16)}`)
+                    // TODO
+                    break;
+                default:
+                    U.oops(`unknown reloc type: ${tp} (${symInfo(ts)}) in ${symInfo(s)}`)
+            }
+        }
     }
 }
