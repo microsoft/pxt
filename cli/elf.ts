@@ -639,11 +639,13 @@ export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
         name: arname,
         filenamesOffset: -1
     }
+    let gotSyms = false
     while (pos < buf.length - 2) {
         let ent = parseArEntry(hd, pos)
         hd.entries.push(ent)
         if (ent.filename == "//") {
             hd.filenamesOffset = pos + 60
+            if (onlySyms && gotSyms) break
         }
         if (ent.filename == "/") {
             let numsym = buf.readUInt32BE(pos + 60)
@@ -662,7 +664,8 @@ export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
                     beg = ptr
                 } else ptr++
             }
-            if (onlySyms) break
+            gotSyms = true
+            if (onlySyms && hd.filenamesOffset >= 0) break
         }
         let off = 60 + ent.size
         if (ent.size & 1) off++
