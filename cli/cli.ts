@@ -3141,8 +3141,10 @@ export function elfAsync(fn: string) {
             let ss = JSON.stringify(total)
             let buf: Buffer = zlib.deflateSync(new Buffer(ss, "utf8"))
             console.log(`Size: ${ss.length} / ${buf.length} compressed`)
-            let hex = elf.linkBinary(total)
-            fs.writeFileSync("elf.hex", hex)
+            let lres = elf.linkBinary(total)
+            console.log(lres.sizes)
+            fs.writeFileSync("elf.hex", lres.hex)
+            fs.writeFileSync("elf.map", lres.map)
         })
 }
 
