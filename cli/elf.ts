@@ -292,6 +292,7 @@ export interface FileInfo {
     syms: Sym[];
     init: Reloc[];
     target: TargetConfig;
+    hexEntries?: HexEntry[];
 }
 
 export function elfToJson(filename: string, buf: Buffer): FileInfo {
@@ -552,6 +553,58 @@ function parseArEntry(ar: ArArchive, pos: number): ArEntry {
     }
 }
 
+export interface HexEntry {
+    address: number;
+    hex: string;
+}
+
+export function readHexFile(buf: Buffer): HexEntry[] {
+    let res: HexEntry[] = []
+    let currAddr = -1
+    let upperAddr = 0
+    let ptr = 0
+
+    while (ptr < buf.length) {
+        while (buf[ptr] == 10 || buf[ptr] == 13)
+            ptr++
+        let beg = ptr
+        while (ptr < buf.length && buf[ptr] != 10 && buf[ptr] != 13)
+            ptr++
+        if (buf[beg] != 58)
+            U.userError("bad hex record, beg=" + beg)
+        let lineBuf = new Buffer(buf.slice(beg + 1, ptr).toString("binary"), "hex")
+        if (lineBuf.length != lineBuf[0] + 5)
+            U.userError("bad hex record len")
+        let sum = 0
+        for (let i = 0; i < lineBuf.length; ++i)
+            sum = (sum + lineBuf[i]) & 0xff
+        if (sum != 0)
+            U.userError("bad hex record checksum")
+        let currRes = res[res.length - 1]
+        switch (lineBuf[3]) {
+            case 0:
+                let addr = lineBuf.readUInt16BE(1)
+                if (currAddr != (upperAddr | addr)) {
+                    currAddr = upperAddr | addr
+                    currRes = {
+                        hex: "",
+                        address: currAddr
+                    }
+                    res.push(currRes)
+                }
+                currRes.hex += lineBuf.slice(4, lineBuf.length - 1).toString("hex")
+                currAddr += lineBuf[0]
+                break
+            case 4:
+                upperAddr = lineBuf.readUInt16BE(4) << 16
+                break
+            case 1:
+                return res
+        }
+    }
+    throw U.userError("unexpected end of hex file")
+}
+
 export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
     let magic = "!<arch>\n"
     if (buf.slice(0, magic.length).toString("binary") != magic)
@@ -769,21 +822,21 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
 
 function bufToHex(buf: Uint8Array, origin: number) {
     let addr = origin;
-    let upper = 0
+    let upper = -1
     let ptr = 0
-    let myhex: string[] = []
+    let myhex = ""
 
     while (ptr < buf.length) {
         if ((addr >> 16) != upper) {
             upper = addr >> 16
-            myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
+            hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff])
         }
 
-        myhex.push(hexBytes(nextLine(addr)))
+        hexBytes(nextLine(addr))
         addr += 16
     }
 
-    return myhex.join("\r\n")
+    return myhex
 
     function nextLine(addr: number) {
         let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
@@ -801,7 +854,7 @@ function bufToHex(buf: Uint8Array, origin: number) {
         bytes.forEach(b => chk += b)
         bytes.push((-chk) & 0xff)
         bytes.forEach(b => r += ("0" + b.toString(16)).slice(-2))
-        return r.toUpperCase();
+        myhex += r.toUpperCase() + "\r\n";
     }
 }
 
@@ -840,12 +893,13 @@ export function linkBinary(info: FileInfo) {
     setPos("__data_end__", dataPos)
     let dataSize = dataPos - dataBeg
     flashPos += dataSize
+    flashPos = align(flashPos, 4)
 
     setPos("__bss_start__", dataPos)
     let bssStart = dataPos
     // TODO sort data by size/align
     for (let b of bssSyms) {
-        console.log(b)
+        //console.log(b)
         dataPos = place(b, dataPos)
     }
     dataPos = align(dataPos, 4)
@@ -910,7 +964,27 @@ export function linkBinary(info: FileInfo) {
         }
     }
 
-    return bufToHex(flash, info.target.flashOrigin)
+    let hexEntries = info.hexEntries || []
+
+    hexEntries.push({
+        address: info.target.flashOrigin,
+        hex: "-"
+    })
+    hexEntries.sort((a, b) => a.address - b.address)
+
+    let resHex = ""
+    for (let he of hexEntries) {
+        if (he.hex === "-")
+            resHex += bufToHex(flash.slice(0, flashPos - info.target.flashOrigin), he.address)
+        else {
+            let hbuf = new Uint8Array(he.hex.length >> 1)
+            for (let i = 0; i < hbuf.length; ++i)
+                hbuf[i] = parseInt(he.hex.slice(i << 1, (i << 1) + 2))
+            resHex += bufToHex(hbuf, he.address)
+        }
+    }
+    resHex += ":00000001FF\r\n"
+    return resHex
 
 
     function align(p: number, a: number) {

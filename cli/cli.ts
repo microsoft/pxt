@@ -756,68 +756,68 @@ function uploadCoreAsync(opts: UploadOptions) {
         let content = ""
         let data: Buffer;
         return rdf.then((rdata: Buffer) => {
-                data = rdata;
-                if (isText) {
-                    content = data.toString("utf8")
-                    if (fileName == "index.html") {
-                        content = server.expandHtml(content)
-                    }
-
-                    if (replFiles.indexOf(fileName) >= 0) {
-                        for (let from of Object.keys(replacements)) {
-                            content = U.replaceAll(content, from, replacements[from])
-                        }
-                        if (opts.localDir) {
-                            data = new Buffer(content, "utf8")
-                        } else {
-                            // save it for developer inspection
-                            fs.writeFileSync("built/uploadrepl/" + fileName, content)
-                        }
-                    } else if (fileName == "target.json") {
-                        let trg: pxt.TargetBundle = JSON.parse(content)
-                        if (opts.localDir) {
-                            for (let e of trg.appTheme.docMenu)
-                                if (e.path[0] == "/") {
-                                    e.path = opts.localDir + "docs" + e.path + ".html"
-                                }
-                            trg.appTheme.logoUrl = opts.localDir
-                            trg.appTheme.homeUrl = opts.localDir
-                            data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
-                        } else {
-                            // expand usb help pages
-                            return Promise.all(
-                                (trg.appTheme.usbHelp || []).filter(h => !!h.path)
-                                    .map(h => uploader.uploadArtAsync(h.path, true)
-                                        .then(blob => {
-                                            console.log(`target.json patch:    ${h.path} -> ${blob}`)
-                                            h.path = blob;
-                                        }))
-                            ).then(() => {
-                                content = JSON.stringify(trg, null, 2);
-                            })
-                        }
-                    }
-                } else {
-                    content = data.toString("base64")
-                }
-                return Promise.resolve()
-            }).then(() => {
-
-                if (opts.localDir) {
-                    let fn = path.join(builtPackaged + opts.localDir, fileName)
-                    nodeutil.mkdirP(path.dirname(fn))
-                    return writeFileAsync(fn, data)
+            data = rdata;
+            if (isText) {
+                content = data.toString("utf8")
+                if (fileName == "index.html") {
+                    content = server.expandHtml(content)
                 }
 
-                return Cloud.privatePostAsync(liteId + "/files", {
-                    encoding: isText ? "utf8" : "base64",
-                    filename: fileName,
-                    contentType: mime,
-                    content,
-                }).then(resp => {
-                    console.log(fileName, mime)
-                })
+                if (replFiles.indexOf(fileName) >= 0) {
+                    for (let from of Object.keys(replacements)) {
+                        content = U.replaceAll(content, from, replacements[from])
+                    }
+                    if (opts.localDir) {
+                        data = new Buffer(content, "utf8")
+                    } else {
+                        // save it for developer inspection
+                        fs.writeFileSync("built/uploadrepl/" + fileName, content)
+                    }
+                } else if (fileName == "target.json") {
+                    let trg: pxt.TargetBundle = JSON.parse(content)
+                    if (opts.localDir) {
+                        for (let e of trg.appTheme.docMenu)
+                            if (e.path[0] == "/") {
+                                e.path = opts.localDir + "docs" + e.path + ".html"
+                            }
+                        trg.appTheme.logoUrl = opts.localDir
+                        trg.appTheme.homeUrl = opts.localDir
+                        data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                    } else {
+                        // expand usb help pages
+                        return Promise.all(
+                            (trg.appTheme.usbHelp || []).filter(h => !!h.path)
+                                .map(h => uploader.uploadArtAsync(h.path, true)
+                                    .then(blob => {
+                                        console.log(`target.json patch:    ${h.path} -> ${blob}`)
+                                        h.path = blob;
+                                    }))
+                        ).then(() => {
+                            content = JSON.stringify(trg, null, 2);
+                        })
+                    }
+                }
+            } else {
+                content = data.toString("base64")
+            }
+            return Promise.resolve()
+        }).then(() => {
+
+            if (opts.localDir) {
+                let fn = path.join(builtPackaged + opts.localDir, fileName)
+                nodeutil.mkdirP(path.dirname(fn))
+                return writeFileAsync(fn, data)
+            }
+
+            return Cloud.privatePostAsync(liteId + "/files", {
+                encoding: isText ? "utf8" : "base64",
+                filename: fileName,
+                contentType: mime,
+                content,
+            }).then(resp => {
+                console.log(fileName, mime)
             })
+        })
     }
 
     // only keep the last version of each uploadFileName()
@@ -1519,7 +1519,7 @@ class SnippetHost implements pxt.Host {
     }
 
     private get dependencies(): { [key: string]: string } {
-        let stdDeps: { [key: string]: string } = { }
+        let stdDeps: { [key: string]: string } = {}
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
         }
@@ -2625,7 +2625,7 @@ function testDecompilerAsync(dir: string): Promise<void> {
         const stats = fs.statSync(testBlocksDir);
         testBlocksDirExists = stats.isDirectory();
     }
-    catch (e) {}
+    catch (e) { }
 
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
@@ -2752,11 +2752,11 @@ function testDecompilerErrorsAsync(dir: string) {
                     }
                 });
         })
-        .then(() => {
-            if (success) {
-                console.log(`decompiler error test OK: ${basename}`);
-            }
-        })
+            .then(() => {
+                if (success) {
+                    console.log(`decompiler error test OK: ${basename}`);
+                }
+            })
     })
         .then(() => {
             if (errors.length) {
@@ -3076,21 +3076,30 @@ export function getLibDirsAsync() {
 }
 
 export function elfAsync(fn: string) {
+    let targetName = "bbc-microbit-classic-gcc"
     return getLibDirsAsync()
         .then(libdirs => {
             let dirmode = false
             if (!fn) fn = "."
             let st = fs.statSync(fn)
             let files = [fn]
+            let hexFiles: string[] = []
             if (st.isDirectory()) {
+                let trgDir = fn + "/yotta_targets/" + targetName + "/"
+                let bootloader = onlyExts(allFiles(trgDir + "bootloader", 1), [".hex"])
+                let softdevice = onlyExts(allFiles(trgDir + "softdevice", 1), [".hex"])
+                hexFiles = bootloader.concat(softdevice)
+                if (bootloader.length != 1 || softdevice.length != 1) {
+                    U.userError(`static .hex files not found (or too many): ${hexFiles.join()}`)
+                }
                 dirmode = true
-                files = allFiles(fn, 100).filter(f =>
+                files = allFiles(fn + "/build/" + targetName, 100).filter(f =>
                     f.indexOf("/ym/") >= 0 ? U.endsWith(f, ".a") : U.endsWith(f, ".o"))
                 files.sort(U.strcmp)
                 //files.push(libdirs.libgccPath + "/crtbegin.o")
                 files.push(libdirs.libcPath + "/crt0.o")
             }
-            let isLib = (f:string) => U.endsWith(f, ".a") && !/microbit-dal\.a/.test(f)
+            let isLib = (f: string) => U.endsWith(f, ".a") && !/microbit-dal\.a/.test(f)
             let yottaLibs = files.filter(isLib)
             files = files.filter(f => !isLib(f))
             let res: any = {}
@@ -3126,6 +3135,8 @@ export function elfAsync(fn: string) {
             let libs = filenames.map(fn => elf.readArFile(fn, fs.readFileSync(fn), true))
             res = U.sortObjectFields(res)
             let total = elf.linkInfos(res, libs)
+            let hexentries = U.concat(hexFiles.map(n => elf.readHexFile(fs.readFileSync(n))))
+            total.hexEntries = hexentries
             fs.writeFileSync("elf.json", JSON.stringify(total, null, 1))
             let ss = JSON.stringify(total)
             let buf: Buffer = zlib.deflateSync(new Buffer(ss, "utf8"))
