@@ -184,12 +184,17 @@ namespace ts.pxtc {
             times: {},
         }
 
-        let fileText = opts.fileSystem
+        let fileText: {[index: string]: string} = {};
+        for (let fileName in opts.fileSystem) {
+            fileText[normalizePath(fileName)] = opts.fileSystem[fileName];
+        }
+
         let setParentNodes = true
         let options = getTsCompilerOptions(opts)
 
         let host: CompilerHost = {
             getSourceFile: (fn, v, err) => {
+                fn = normalizePath(fn)
                 let text = ""
                 if (fileText.hasOwnProperty(fn)) {
                     text = fileText[fn]
@@ -198,7 +203,10 @@ namespace ts.pxtc {
                 }
                 return createSourceFile(fn, text, v, setParentNodes)
             },
-            fileExists: fn => fileText.hasOwnProperty(fn),
+            fileExists: fn => {
+                fn = normalizePath(fn)
+                return fileText.hasOwnProperty(fn)
+            },
             getCanonicalFileName: fn => fn,
             getDefaultLibFileName: () => "no-default-lib.d.ts",
             writeFile: (fileName, data, writeByteOrderMark, onError) => {
@@ -207,7 +215,10 @@ namespace ts.pxtc {
             getCurrentDirectory: () => ".",
             useCaseSensitiveFileNames: () => true,
             getNewLine: () => "\n",
-            readFile: fn => fileText[fn] || "",
+            readFile: fn => {
+                fn = normalizePath(fn)
+                return fileText[fn] || "";
+            },
             directoryExists: dn => true,
         }
 
@@ -262,5 +273,9 @@ namespace ts.pxtc {
         let blocksInfo = pxtc.getBlocksInfo(apis);
         let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file)
         return bresp;
+    }
+
+    function normalizePath(path: string): string {
+        return path.replace(/\\/g, "/")
     }
 }
