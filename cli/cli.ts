@@ -3099,7 +3099,7 @@ export function elfAsync(fn: string) {
                 //files.push(libdirs.libgccPath + "/crtbegin.o")
                 files.push(libdirs.libcPath + "/crt0.o")
             }
-            let isLib = (f: string) => U.endsWith(f, ".a") && !/microbit-dal\.a/.test(f)
+            let isLib = (f: string) => U.endsWith(f, ".a") // && !/microbit-dal\.a/.test(f)
             let yottaLibs = files.filter(isLib)
             files = files.filter(f => !isLib(f))
             let res: any = {}

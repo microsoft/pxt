@@ -64,6 +64,7 @@ export interface Reloc {
     symname: string;
     offset: number;
     addend: number;
+    isWeak: boolean;
 }
 
 interface Section {
@@ -450,7 +451,8 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
             type: r.type,
             symname: r.sym.name,
             offset: r.offset,
-            addend: r.addend
+            addend: r.addend,
+            isWeak: !!(r.sym.bind & STB.WEAK) && !r.sym.shndx
         }))
     }
 
@@ -813,7 +815,9 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
                 console.log(`unresolved ref ${s.name} -> ${r.symname}`)
             } else {
                 U.assert(r.addend == 0)
-                s.relocEnc.push(r.type, r.offset, ts._id)
+                let id = ts._id
+                if (r.isWeak) id = -id
+                s.relocEnc.push(r.type, r.offset, id)
             }
         }
     }
@@ -901,8 +905,9 @@ export function linkBinary(info: FileInfo) {
     let flashPos = info.target.flashOrigin
     let dataPos = info.target.ramOrigin
     let etext = 0
-    let dataBeg = dataPos
+    let dataStart = dataPos
     let inits: Sym[] = []
+    let map = ""
 
     let usedSyms: Sym[] = []
     let rwDataSyms: Sym[] = []
@@ -919,27 +924,44 @@ export function linkBinary(info: FileInfo) {
     etext = flashPos
     setPos("__etext", etext)
 
-    setPos("__data_start__", dataPos)
-    // TODO sort data by size/align
-    for (let d of rwDataSyms) {
-        dataPos = place(d, dataPos)
+    let sizes: Map<number> = {
+        codeSize: etext - info.target.flashOrigin,
     }
-    dataPos = align(dataPos, 4)
-    setPos("__data_end__", dataPos)
-    let dataSize = dataPos - dataBeg
+
+    function layoutSyms(syms: Sym[], p: number, id: string) {
+        let byAlign = U.groupBy(syms, s => (s.align || 1) + "")
+        let aligns = Object.keys(byAlign).map(s => parseInt(s))
+        let wasted = 0
+        aligns.sort((a, b) => b - a)
+        function findAligned(): Sym {
+            for (let align of aligns) {
+                if ((p & (align - 1)) == 0 && byAlign[align + ""].length) {
+                    return byAlign[align + ""].shift()
+                }
+            }
+            wasted++
+            p++
+            return findAligned()
+        }
+        let beg = p
+        setPos("__" + id + "_start__", beg)
+        for (let i = 0; i < syms.length; ++i) {
+            let d: Sym = findAligned()
+            p = place(d, p)
+        }
+        p = align(p, 4)
+        setPos("__" + id + "_end__", p)
+        sizes[id + "Size"] = p - beg
+        sizes[id + "Wasted"] = wasted
+        return p
+    }
+
+    dataPos = layoutSyms(rwDataSyms, dataPos, "data")
+    let dataSize = dataPos - dataStart
     flashPos += dataSize
     flashPos = align(flashPos, 4)
 
-    setPos("__bss_start__", dataPos)
-    let bssStart = dataPos
-    // TODO sort data by size/align
-    for (let b of bssSyms) {
-        //console.log(b)
-        dataPos = place(b, dataPos)
-    }
-    dataPos = align(dataPos, 4)
-    let bssSize = dataPos - bssStart
-    setPos("__bss_end__", dataPos)
+    dataPos = layoutSyms(bssSyms, dataPos, "bss")
     setPos("__end__", dataPos)
 
     setPos("__HeapBase", dataPos)
@@ -951,14 +973,8 @@ export function linkBinary(info: FileInfo) {
         [RelocType.R_ARM_THM_CALL, idx * 4 + 2, isym._id]))
     console.log(inits.map(s => s.name))
 
-    let sizes = {
-        codeSize: etext - info.target.flashOrigin,
-        dataSize: dataSize,
-        bssSize: bssSize
-    }
 
     let flash = new Uint8Array(info.target.flashSize)
-    let map = ""
 
     // so they appear nicely in the memory map
     usedSyms.sort((a, b) => a.position - b.position || U.strcmp(a.name, b.name))
@@ -968,17 +984,22 @@ export function linkBinary(info: FileInfo) {
         if (s.text) {
             let dst = s.position
             if (s.type == SymType.RwData)
-                dst = s.position - dataBeg + etext
+                dst = s.position - dataStart + etext
             dst -= info.target.flashOrigin
             for (let i = 0; i < s.text.length; i += 2) {
                 let v = parseInt(s.text.slice(i, i + 2), 16)
                 flash[dst++] = v
             }
             for (let i = 0; i < s.relocEnc.length; i += 3) {
-                let ts = info.syms[s.relocEnc[i + 2]]
+                let id = s.relocEnc[i + 2]
+                let ts = info.syms[Math.abs(id)]
                 if (ts.symAlias != null)
                     ts = info.syms[ts.symAlias]
                 if (ts.position == null || ts.position < 0) {
+                    if (id < 0) {
+                        console.log(`skip weak ref: ${ts.name} from ${s.name}`)
+                        continue // weak symbol
+                    }
                     U.oops(`unpositioned symbol: ${ts.name} at ${ts.position} type ${ts.type} @${rwDataSyms.indexOf(ts)}`)
                 }
                 let pc = s.relocEnc[i + 1] + s.position
@@ -1055,7 +1076,6 @@ export function linkBinary(info: FileInfo) {
     }
 
     function setPos(name: string, p: number) {
-        console.log(`${name} := ${p}`)
         byName[name].position = p
     }
 
@@ -1067,6 +1087,7 @@ export function linkBinary(info: FileInfo) {
             s.position = ss.position
             return
         }
+        map += "\n" + s.name + "("
         usedSyms.push(s)
         switch (s.type) {
             case SymType.BSS:
@@ -1098,8 +1119,14 @@ export function linkBinary(info: FileInfo) {
             }
         }
         for (let i = 0; i < s.relocEnc.length; i += 3) {
-            let ss = info.syms[s.relocEnc[i + 2]]
+            let id = s.relocEnc[i + 2]
+            let ss = info.syms[Math.abs(id)]
+            if (id < 0) {
+                //console.log(`skip weak ref: ${ss.name}`)
+                continue
+            }
             addSym(ss)
         }
+        map += ")"
     }
 }
