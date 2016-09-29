@@ -138,9 +138,6 @@ ${output}</xml>`;
                 case SK.NoSubstitutionTemplateLiteral:
                     emitStringLiteral((n as ts.LiteralExpression).text);
                     break;
-                case SK.NullKeyword:
-                    // don't emit anything
-                    break;
                 case SK.NumericLiteral:
                     emitNumericLiteral((n as ts.LiteralExpression).text);
                     break;
@@ -239,6 +236,12 @@ ${output}</xml>`;
                     openIncrementExpressionBlock(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression))
                     break;
                 case SK.VariableDeclaration:
+                    const decl = node as ts.VariableDeclaration;
+                    if (decl.initializer && decl.initializer.kind === SyntaxKind.NullKeyword) {
+                        // Don't emit null initializers; They are implicit within the blocks
+                        if (next && next.length) emitStatementBlock(next.shift(), next)
+                        return;
+                    }
                     openVaraiableDeclarationBlock(node as ts.VariableDeclaration);
                     break;
                 case SK.WhileStatement:
@@ -263,13 +266,39 @@ ${output}</xml>`;
                     return;
             }
 
-            if (next && next.length) {
+            const toEmit = consumeToNextBlock();
+            if (toEmit) {
                 write("<next>")
-                emitStatementBlock(next.shift(), next);
+                emitStatementBlock(toEmit, next);
                 write("</next>")
             }
 
             closeBlockTag()
+
+            function consumeToNextBlock(): ts.Node {
+                if (next && next.length) {
+                    const toEmit = next.shift();
+                    if (canBeEmitted(toEmit)) {
+                        return toEmit;
+                    }
+                    return consumeToNextBlock();
+                }
+                return undefined;
+            }
+
+            function canBeEmitted(node: ts.Node) {
+                switch (node.kind) {
+                    case SyntaxKind.VariableStatement:
+                        const decl = node as ts.VariableDeclaration;
+                        if (decl.initializer && decl.initializer.kind === SyntaxKind.NullKeyword) {
+                            // Don't emit null initializers; They are implicit within the blocks
+                            return false;
+                        }
+                    break;
+                    default:
+                }
+                return true;
+            }
 
             function openImageLiteralExpressionBlock(node: ts.CallExpression, info: pxtc.CallInfo) {
                 let arg = node.arguments[0];
@@ -309,7 +338,9 @@ ${output}</xml>`;
                         negateAndEmitExpression(n.right);
                         write(`</value>`)
                         break;
-
+                    default:
+                        error(n, Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]));
+                        return;
                 }
             }
 
@@ -333,6 +364,11 @@ ${output}</xml>`;
             }
 
             function openForStatementBlock(n: ts.ForStatement) {
+                if (!n.initializer || !n.incrementor || !n.condition) {
+                    error(n, Util.lf("for loops must have an initializer, incrementor, and condition"));
+                    return;
+                }
+
                 if (n.initializer.kind !== SK.VariableDeclarationList) {
                     error(n, Util.lf("only variable declarations are permitted in for loop initializers"));
                     return;
@@ -611,6 +647,10 @@ ${output}</xml>`;
         }
 
         function emitIdentifier(identifier: Identifier) {
+            if (isUndefined(identifier)) {
+                error(identifier, Util.lf("Undefined has no block equivalent"))
+                return;
+            }
             emitFieldBlock("variables_get", "VAR", identifier.text)
         }
 
@@ -630,6 +670,10 @@ ${output}</xml>`;
             openBlockTag(type)
             emitField(fieldName, value)
             closeBlockTag()
+        }
+
+        function isUndefined(node: ts.Node) {
+            return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
         }
     }
 }
