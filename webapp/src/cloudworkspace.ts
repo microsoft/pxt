@@ -249,6 +249,7 @@ function syncAsync() {
         let blobId = cloudHeader.scriptVersion.baseSnapshot
         pxt.debug(`sync down ${header.id} - ${blobId}`)
         return U.httpGetJsonAsync(blobConatiner + blobId)
+            .catch(core.handleNetworkError)
             .then(resp => {
                 U.assert(resp.guid == header.id)
                 header.blobCurrent = true

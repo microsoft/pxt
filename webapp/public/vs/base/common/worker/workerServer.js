@@ -1,12 +1,12 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.5.3(793ede49d53dba79d39e52205f16321278f5183c)
+ * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
 
 (function() {
-var __m = ["exports","require","vs/base/common/errors","vs/base/common/strings","vs/platform/instantiation/common/instantiation","vs/base/common/winjs.base","vs/nls!vs/base/common/worker/workerServer","vs/nls","vs/base/common/event","vs/base/common/types","vs/base/common/platform","vs/platform/platform","vs/base/common/objects","vs/base/common/paths","vs/editor/common/modes/supports","vs/base/common/eventEmitter","vs/base/common/lifecycle","vs/editor/common/model/wordHelper","vs/editor/common/core/modeTransition","vs/editor/common/editorCommon","vs/base/common/uri","vs/editor/common/modes","vs/editor/common/core/position","vs/editor/common/services/modeService","vs/base/common/async","vs/editor/common/modes/monarch/monarchCommon","vs/base/common/timer","vs/platform/workspace/common/workspace","vs/editor/common/modes/supports/richEditBrackets","vs/editor/common/core/range","vs/editor/common/core/arrays","vs/editor/common/modes/languageConfigurationRegistry","vs/base/common/severity","vs/platform/instantiation/common/descriptors","vs/base/common/assert","vs/editor/common/services/compatWorkerService","vs/base/common/map","vs/editor/common/services/resourceService","vs/platform/extensions/common/extensions","vs/editor/common/modes/abstractState","vs/editor/common/modes/modesRegistry","vs/platform/jsonschemas/common/jsonContributionRegistry","vs/platform/extensions/common/extensionsRegistry","vs/platform/request/common/request","vs/platform/telemetry/common/telemetry","vs/editor/common/model/textModel","vs/base/common/mime","vs/base/common/cancellation","vs/editor/common/modes/nullMode","vs/base/common/collections","vs/editor/common/core/viewLineToken","vs/platform/configuration/common/configuration","vs/platform/event/common/event","vs/editor/common/modes/supports/tokenizationSupport","vs/platform/instantiation/common/serviceCollection","vs/base/common/glob","vs/editor/common/model/tokensBinaryEncoding","vs/editor/common/model/modelLine","vs/base/common/arrays","vs/editor/common/modes/supports/suggestSupport","vs/editor/common/modes/abstractMode","vs/base/common/stopwatch","vs/editor/common/modes/lineStream","vs/base/common/callbackList","vs/editor/common/model/textModelWithTokensHelpers","vs/nls!vs/base/common/severity","vs/nls!vs/base/common/errors","vs/nls!vs/editor/common/config/defaultConfig","vs/editor/common/config/defaultConfig","vs/editor/common/model/tokenIterator","vs/nls!vs/editor/common/model/textModelWithTokens","vs/editor/common/model/textModelWithTokens","vs/editor/common/model/mirrorModel","vs/nls!vs/editor/common/modes/modesRegistry","vs/nls!vs/editor/common/modes/supports/suggestSupport","vs/nls!vs/editor/common/services/modeServiceImpl","vs/nls!vs/platform/configuration/common/configurationRegistry","vs/nls!vs/platform/extensions/common/abstractExtensionService","vs/nls!vs/platform/extensions/common/extensionsRegistry","vs/nls!vs/platform/jsonschemas/common/jsonContributionRegistry","vs/base/common/filters","vs/base/common/events","vs/editor/common/modes/languageSelector","vs/editor/common/services/editorWorkerService","vs/base/common/network","vs/editor/common/services/modelService","vs/base/common/graph","vs/editor/common/services/resourceServiceImpl","vs/editor/common/modes/monarch/monarchCompile","vs/base/common/marshalling","vs/platform/event/common/eventService","vs/base/common/worker/workerProtocol","vs/platform/workspace/common/baseWorkspaceContextService","vs/platform/instantiation/common/instantiationService","vs/editor/common/modes/supports/characterPair","vs/editor/common/model/indentationGuesser","vs/editor/common/services/compatWorkerServiceWorker","vs/editor/common/services/languagesRegistry","vs/editor/common/languages.common","vs/editor/common/modes/supports/electricCharacter","vs/platform/configuration/common/configurationRegistry","vs/editor/common/model/lineToken","vs/editor/common/modes/languageFeatureRegistry","vs/editor/common/services/modeServiceImpl","vs/platform/extensions/common/abstractExtensionService","vs/editor/common/modes/monarch/monarchLexer","vs/editor/common/modes/supports/onEnter","vs/platform/request/common/baseRequestService","vs/editor/common/viewModel/prefixSumComputer","vs/base/common/worker/workerServer","vs/base/common/winjs.base.raw","vs/editor/common/worker/editorWorkerServer"];
+var __m = ["require","exports","vs/base/common/errors","vs/platform/instantiation/common/instantiation","vs/base/common/strings","vs/base/common/winjs.base","vs/base/common/types","vs/nls","vs/base/common/event","vs/editor/common/core/modeTransition","vs/nls!vs/base/common/worker/workerServer","vs/base/common/platform","vs/base/common/paths","vs/editor/common/core/token","vs/editor/common/model/wordHelper","vs/editor/common/modes","vs/platform/platform","vs/editor/common/editorCommon","vs/base/common/eventEmitter","vs/base/common/lifecycle","vs/editor/common/core/position","vs/editor/common/modes/supports","vs/editor/common/core/arrays","vs/editor/common/modes/supports/richEditBrackets","vs/editor/common/modes/monarch/monarchCommon","vs/platform/instantiation/common/descriptors","vs/base/common/severity","vs/editor/common/modes/abstractState","vs/editor/common/core/range","vs/editor/common/services/modeService","vs/base/common/uri","vs/editor/common/modes/modesRegistry","vs/base/common/map","vs/base/common/assert","vs/base/common/async","vs/editor/common/modes/languageConfigurationRegistry","vs/base/common/timer","vs/base/common/glob","vs/editor/common/services/resourceService","vs/base/common/collections","vs/platform/extensions/common/extensionsRegistry","vs/editor/common/modes/supports/tokenizationSupport","vs/editor/common/services/compatWorkerService","vs/base/common/stopwatch","vs/base/common/mime","vs/editor/common/core/viewLineToken","vs/platform/extensions/common/extensions","vs/editor/common/model/textModel","vs/base/common/objects","vs/base/common/callbackList","vs/base/common/arrays","vs/base/common/cancellation","vs/platform/jsonschemas/common/jsonContributionRegistry","vs/editor/common/modes/abstractMode","vs/editor/common/modes/lineStream","vs/editor/common/modes/supports/suggestSupport","vs/platform/instantiation/common/serviceCollection","vs/platform/configuration/common/configuration","vs/editor/common/model/tokensBinaryEncoding","vs/editor/common/model/modelLine","vs/editor/common/modes/nullMode","vs/editor/common/modes/monarch/monarchCompile","vs/editor/common/modes/languageFeatureRegistry","vs/editor/common/languages.common","vs/editor/common/model/textModelWithTokensHelpers","vs/platform/workspace/common/workspace","vs/nls!vs/base/common/severity","vs/nls!vs/base/common/errors","vs/nls!vs/editor/common/config/defaultConfig","vs/editor/common/config/defaultConfig","vs/nls!vs/editor/common/model/textModelWithTokens","vs/nls!vs/editor/common/modes/modesRegistry","vs/nls!vs/editor/common/services/modeServiceImpl","vs/nls!vs/platform/extensions/common/abstractExtensionService","vs/nls!vs/platform/extensions/common/extensionsRegistry","vs/platform/event/common/eventService","vs/editor/common/viewModel/prefixSumComputer","vs/editor/common/services/resourceServiceImpl","vs/editor/common/modes/monarch/monarchLexer","vs/editor/common/services/editorWorkerService","vs/editor/common/modes/supports/electricCharacter","vs/editor/common/services/modelService","vs/editor/common/modes/supports/characterPair","vs/editor/common/modes/supports/onEnter","vs/editor/common/modes/languageSelector","vs/platform/contextkey/common/contextkey","vs/editor/common/model/tokenIterator","vs/editor/common/model/indentationGuesser","vs/editor/common/model/textModelWithTokens","vs/editor/common/model/mirrorModel","vs/platform/event/common/event","vs/editor/common/model/indentRanges","vs/base/common/worker/workerProtocol","vs/platform/instantiation/common/instantiationService","vs/base/common/marshalling","vs/base/common/graph","vs/editor/common/services/compatWorkerServiceWorker","vs/editor/common/services/languagesRegistry","vs/base/common/filters","vs/base/common/events","vs/editor/common/services/modeServiceImpl","vs/platform/extensions/common/abstractExtensionService","vs/platform/telemetry/common/telemetry","vs/base/common/winjs.base.raw","vs/base/common/worker/workerServer","vs/editor/common/worker/editorWorkerServer"];
 var __M = function(deps) {
   var result = [];
   for (var i = 0, len = deps.length; i < len; i++) {
@@ -14,7 +14,7 @@ var __M = function(deps) {
   }
   return result;
 };
-define(__m[58], __M([1,0]), function (require, exports) {
+define(__m[50], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -97,6 +97,35 @@ define(__m[58], __M([1,0]), function (require, exports) {
         return low;
     }
     exports.findFirst = findFirst;
+    /**
+     * Returns the top N elements from the array.
+     *
+     * Faster than sorting the entire array when the array is a lot larger than N.
+     *
+     * @param array The unsorted array.
+     * @param compare A sort function for the elements.
+     * @param n The number of elements to return.
+     * @return The first n elemnts from array when sorted with compare.
+     */
+    function top(array, compare, n) {
+        if (n === 0) {
+            return [];
+        }
+        var result = array.slice(0, n).sort(compare);
+        var _loop_1 = function(i, m) {
+            var element = array[i];
+            if (compare(element, result[n - 1]) < 0) {
+                result.pop();
+                var j = findFirst(result, function (e) { return compare(element, e) < 0; });
+                result.splice(j, 0, element);
+            }
+        };
+        for (var i = n, m = array.length; i < m; i++) {
+            _loop_1(i, m);
+        }
+        return result;
+    }
+    exports.top = top;
     function merge(arrays, hashFn) {
         var result = new Array();
         if (!hashFn) {
@@ -240,15 +269,32 @@ define(__m[58], __M([1,0]), function (require, exports) {
         return arr;
     }
     exports.fill = fill;
-    function index(array, indexer) {
-        var result = Object.create(null);
-        array.forEach(function (t) { return result[indexer(t)] = t; });
-        return result;
+    function index(array, indexer, merger) {
+        if (merger === void 0) { merger = function (t) { return t; }; }
+        return array.reduce(function (r, t) {
+            var key = indexer(t);
+            r[key] = merger(t, r[key]);
+            return r;
+        }, Object.create(null));
     }
     exports.index = index;
+    /**
+     * Inserts an element into an array. Returns a function which, when
+     * called, will remove that element from the array.
+     */
+    function insert(array, element) {
+        array.push(element);
+        return function () {
+            var index = array.indexOf(element);
+            if (index > -1) {
+                array.splice(index, 1);
+            }
+        };
+    }
+    exports.insert = insert;
 });
 
-define(__m[34], __M([1,0]), function (require, exports) {
+define(__m[33], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -265,7 +311,7 @@ define(__m[34], __M([1,0]), function (require, exports) {
     exports.ok = ok;
 });
 
-define(__m[49], __M([1,0]), function (require, exports) {
+define(__m[39], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -359,7 +405,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-define(__m[81], __M([1,0]), function (require, exports) {
+define(__m[99], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -403,7 +449,6 @@ define(__m[81], __M([1,0]), function (require, exports) {
         EXPAND: 'expand',
         COLLAPSE: 'collapse',
         TOGGLE: 'toggle',
-        CONTENTS_CHANGED: 'contentsChanged',
         BEFORE_RUN: 'beforeRun',
         RUN: 'run',
         EDIT: 'edit',
@@ -423,93 +468,16 @@ define(__m[81], __M([1,0]), function (require, exports) {
 
 
 
-define(__m[36], __M([1,0]), function (require, exports) {
+define(__m[32], __M([0,1]), function (require, exports) {
     'use strict';
     /**
      * A simple map to store value by a key object. Key can be any object that has toString() function to get
      * string value of the key.
      */
-    var SimpleMap = (function () {
-        function SimpleMap() {
-            this.map = Object.create(null);
-            this._size = 0;
-        }
-        Object.defineProperty(SimpleMap.prototype, "size", {
-            get: function () {
-                return this._size;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        SimpleMap.prototype.get = function (k) {
-            var value = this.peek(k);
-            return value ? value : null;
-        };
-        SimpleMap.prototype.keys = function () {
-            var keys = [];
-            for (var key in this.map) {
-                keys.push(this.map[key].key);
-            }
-            return keys;
-        };
-        SimpleMap.prototype.entries = function () {
-            var entries = [];
-            for (var key in this.map) {
-                entries.push(this.map[key]);
-            }
-            return entries;
-        };
-        SimpleMap.prototype.set = function (k, t) {
-            if (this.get(k)) {
-                return false; // already present!
-            }
-            this.push(k, t);
-            return true;
-        };
-        SimpleMap.prototype.delete = function (k) {
-            var value = this.get(k);
-            if (value) {
-                this.pop(k);
-                return value;
-            }
-            return null;
-        };
-        SimpleMap.prototype.has = function (k) {
-            return !!this.get(k);
-        };
-        SimpleMap.prototype.clear = function () {
-            this.map = Object.create(null);
-            this._size = 0;
-        };
-        SimpleMap.prototype.push = function (key, value) {
-            var entry = { key: key, value: value };
-            this.map[key.toString()] = entry;
-            this._size++;
-        };
-        SimpleMap.prototype.pop = function (k) {
-            delete this.map[k.toString()];
-            this._size--;
-        };
-        SimpleMap.prototype.peek = function (k) {
-            var entry = this.map[k.toString()];
-            return entry ? entry.value : null;
-        };
-        return SimpleMap;
-    }());
-    exports.SimpleMap = SimpleMap;
-    /**
-     * A simple Map<T> that optionally allows to set a limit of entries to store. Once the limit is hit,
-     * the cache will remove the entry that was last recently added. Or, if a ratio is provided below 1,
-     * all elements will be removed until the ratio is full filled (e.g. 0.75 to remove 25% of old elements).
-     */
     var LinkedMap = (function () {
-        function LinkedMap(limit, ratio) {
-            if (limit === void 0) { limit = Number.MAX_VALUE; }
-            if (ratio === void 0) { ratio = 1; }
-            this.limit = limit;
+        function LinkedMap() {
             this.map = Object.create(null);
             this._size = 0;
-            this.ratio = limit * ratio;
         }
         Object.defineProperty(LinkedMap.prototype, "size", {
             get: function () {
@@ -518,7 +486,99 @@ define(__m[36], __M([1,0]), function (require, exports) {
             enumerable: true,
             configurable: true
         });
-        LinkedMap.prototype.set = function (key, value) {
+        LinkedMap.prototype.get = function (k) {
+            var value = this.peek(k);
+            return value ? value : null;
+        };
+        LinkedMap.prototype.getOrSet = function (k, t) {
+            var res = this.get(k);
+            if (res) {
+                return res;
+            }
+            this.set(k, t);
+            return t;
+        };
+        LinkedMap.prototype.keys = function () {
+            var keys = [];
+            for (var key in this.map) {
+                keys.push(this.map[key].key);
+            }
+            return keys;
+        };
+        LinkedMap.prototype.values = function () {
+            var values = [];
+            for (var key in this.map) {
+                values.push(this.map[key].value);
+            }
+            return values;
+        };
+        LinkedMap.prototype.entries = function () {
+            var entries = [];
+            for (var key in this.map) {
+                entries.push(this.map[key]);
+            }
+            return entries;
+        };
+        LinkedMap.prototype.set = function (k, t) {
+            if (this.get(k)) {
+                return false; // already present!
+            }
+            this.push(k, t);
+            return true;
+        };
+        LinkedMap.prototype.delete = function (k) {
+            var value = this.get(k);
+            if (value) {
+                this.pop(k);
+                return value;
+            }
+            return null;
+        };
+        LinkedMap.prototype.has = function (k) {
+            return !!this.get(k);
+        };
+        LinkedMap.prototype.clear = function () {
+            this.map = Object.create(null);
+            this._size = 0;
+        };
+        LinkedMap.prototype.push = function (key, value) {
+            var entry = { key: key, value: value };
+            this.map[key.toString()] = entry;
+            this._size++;
+        };
+        LinkedMap.prototype.pop = function (k) {
+            delete this.map[k.toString()];
+            this._size--;
+        };
+        LinkedMap.prototype.peek = function (k) {
+            var entry = this.map[k.toString()];
+            return entry ? entry.value : null;
+        };
+        return LinkedMap;
+    }());
+    exports.LinkedMap = LinkedMap;
+    /**
+     * A simple Map<T> that optionally allows to set a limit of entries to store. Once the limit is hit,
+     * the cache will remove the entry that was last recently added. Or, if a ratio is provided below 1,
+     * all elements will be removed until the ratio is full filled (e.g. 0.75 to remove 25% of old elements).
+     */
+    var BoundedLinkedMap = (function () {
+        function BoundedLinkedMap(limit, ratio) {
+            if (limit === void 0) { limit = Number.MAX_VALUE; }
+            if (ratio === void 0) { ratio = 1; }
+            this.limit = limit;
+            this.map = Object.create(null);
+            this._size = 0;
+            this.ratio = limit * ratio;
+        }
+        Object.defineProperty(BoundedLinkedMap.prototype, "size", {
+            get: function () {
+                return this._size;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        BoundedLinkedMap.prototype.set = function (key, value) {
             if (this.map[key]) {
                 return false; // already present!
             }
@@ -529,11 +589,19 @@ define(__m[36], __M([1,0]), function (require, exports) {
             }
             return true;
         };
-        LinkedMap.prototype.get = function (key) {
+        BoundedLinkedMap.prototype.get = function (key) {
             var entry = this.map[key];
             return entry ? entry.value : null;
         };
-        LinkedMap.prototype.delete = function (key) {
+        BoundedLinkedMap.prototype.getOrSet = function (k, t) {
+            var res = this.get(k);
+            if (res) {
+                return res;
+            }
+            this.set(k, t);
+            return t;
+        };
+        BoundedLinkedMap.prototype.delete = function (key) {
             var entry = this.map[key];
             if (entry) {
                 this.map[key] = void 0;
@@ -554,16 +622,16 @@ define(__m[36], __M([1,0]), function (require, exports) {
             }
             return null;
         };
-        LinkedMap.prototype.has = function (key) {
+        BoundedLinkedMap.prototype.has = function (key) {
             return !!this.map[key];
         };
-        LinkedMap.prototype.clear = function () {
+        BoundedLinkedMap.prototype.clear = function () {
             this.map = Object.create(null);
             this._size = 0;
             this.head = null;
             this.tail = null;
         };
-        LinkedMap.prototype.push = function (entry) {
+        BoundedLinkedMap.prototype.push = function (entry) {
             if (this.head) {
                 // [A]-[B] = [A]-[B]->[X]
                 entry.prev = this.head;
@@ -576,7 +644,7 @@ define(__m[36], __M([1,0]), function (require, exports) {
             this.map[entry.key] = entry;
             this._size++;
         };
-        LinkedMap.prototype.trim = function () {
+        BoundedLinkedMap.prototype.trim = function () {
             if (this.tail) {
                 // Remove all elements until ratio is reached
                 if (this.ratio < this.limit) {
@@ -607,9 +675,9 @@ define(__m[36], __M([1,0]), function (require, exports) {
                 }
             }
         };
-        return LinkedMap;
+        return BoundedLinkedMap;
     }());
-    exports.LinkedMap = LinkedMap;
+    exports.BoundedLinkedMap = BoundedLinkedMap;
     /**
      * A subclass of Map<T> that makes an entry the MRU entry as soon
      * as it is being accessed. In combination with the limit for the
@@ -633,11 +701,11 @@ define(__m[36], __M([1,0]), function (require, exports) {
             return null;
         };
         return LRUCache;
-    }(LinkedMap));
+    }(BoundedLinkedMap));
     exports.LRUCache = LRUCache;
 });
 
-define(__m[10], __M([1,0]), function (require, exports) {
+define(__m[11], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -660,10 +728,10 @@ define(__m[10], __M([1,0]), function (require, exports) {
         _isMacintosh = (process.platform === 'darwin');
         _isLinux = (process.platform === 'linux');
         _isRootUser = !_isWindows && (process.getuid() === 0);
-        var vscode_nls_config = process.env['VSCODE_NLS_CONFIG'];
-        if (vscode_nls_config) {
+        var rawNlsConfig = process.env['VSCODE_NLS_CONFIG'];
+        if (rawNlsConfig) {
             try {
-                var nlsConfig = JSON.parse(vscode_nls_config);
+                var nlsConfig = JSON.parse(rawNlsConfig);
                 var resolved = nlsConfig.availableLanguages['*'];
                 _locale = nlsConfig.locale;
                 // VSCode's default language is 'en'
@@ -735,7 +803,7 @@ define(__m[10], __M([1,0]), function (require, exports) {
     exports.clearInterval = _globals.clearInterval.bind(_globals);
 });
 
-define(__m[13], __M([1,0,10]), function (require, exports, platform_1) {
+define(__m[12], __M([0,1,11]), function (require, exports, platform_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -944,6 +1012,9 @@ define(__m[13], __M([1,0,10]), function (require, exports, platform_1) {
     }
     exports.getRoot = getRoot;
     exports.join = function () {
+        // Not using a function with var-args because of how TS compiles
+        // them to JS - it would result in 2*n runtime cost instead
+        // of 1*n, where n is parts.length.
         var value = '';
         for (var i = 0; i < arguments.length; i++) {
             var part = arguments[i];
@@ -1085,7 +1156,7 @@ define(__m[13], __M([1,0,10]), function (require, exports, platform_1) {
     exports.isAbsolute = isAbsolute;
 });
 
-define(__m[61], __M([1,0,10]), function (require, exports, platform_1) {
+define(__m[43], __M([0,1,11]), function (require, exports, platform_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -1119,7 +1190,7 @@ define(__m[61], __M([1,0,10]), function (require, exports, platform_1) {
     exports.StopWatch = StopWatch;
 });
 
-define(__m[3], __M([1,0,36]), function (require, exports, map_1) {
+define(__m[4], __M([0,1,32]), function (require, exports, map_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -1274,7 +1345,7 @@ define(__m[3], __M([1,0,36]), function (require, exports, map_1) {
     function endsWith(haystack, needle) {
         var diff = haystack.length - needle.length;
         if (diff > 0) {
-            return haystack.lastIndexOf(needle) === diff;
+            return haystack.indexOf(needle, diff) === diff;
         }
         else if (diff === 0) {
             return haystack === needle;
@@ -1309,33 +1380,6 @@ define(__m[3], __M([1,0,36]), function (require, exports, map_1) {
         return new RegExp(searchString, modifiers);
     }
     exports.createRegExp = createRegExp;
-    /**
-     * Create a regular expression only if it is valid and it doesn't lead to endless loop.
-     */
-    function createSafeRegExp(searchString, isRegex, matchCase, wholeWord) {
-        if (searchString === '') {
-            return null;
-        }
-        // Try to create a RegExp out of the params
-        var regex = null;
-        try {
-            regex = createRegExp(searchString, isRegex, matchCase, wholeWord, true);
-        }
-        catch (err) {
-            return null;
-        }
-        // Guard against endless loop RegExps & wrap around try-catch as very long regexes produce an exception when executed the first time
-        try {
-            if (regExpLeadsToEndlessLoop(regex)) {
-                return null;
-            }
-        }
-        catch (err) {
-            return null;
-        }
-        return regex;
-    }
-    exports.createSafeRegExp = createSafeRegExp;
     function regExpLeadsToEndlessLoop(regexp) {
         // Exit early if it's one of these special cases which are meant to match
         // against an empty string
@@ -1356,7 +1400,7 @@ define(__m[3], __M([1,0,36]), function (require, exports, map_1) {
      */
     exports.canNormalize = typeof (''.normalize) === 'function';
     var nonAsciiCharactersPattern = /[^\u0000-\u0080]/;
-    var normalizedCache = new map_1.LinkedMap(10000); // bounded to 10000 elements
+    var normalizedCache = new map_1.BoundedLinkedMap(10000); // bounded to 10000 elements
     function normalizeNFC(str) {
         if (!exports.canNormalize || !str) {
             return str;
@@ -1417,10 +1461,18 @@ define(__m[3], __M([1,0,36]), function (require, exports, map_1) {
         return -1;
     }
     exports.lastNonWhitespaceIndex = lastNonWhitespaceIndex;
-    function localeCompare(strA, strB) {
-        return strA.localeCompare(strB);
+    function compare(a, b) {
+        if (a < b) {
+            return -1;
+        }
+        else if (a > b) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
     }
-    exports.localeCompare = localeCompare;
+    exports.compare = compare;
     function isAsciiChar(code) {
         return (code >= 97 && code <= 122) || (code >= 65 && code <= 90);
     }
@@ -1672,7 +1724,7 @@ define(__m[3], __M([1,0,36]), function (require, exports, map_1) {
     exports.repeat = repeat;
 });
 
-define(__m[80], __M([1,0,3,36]), function (require, exports, strings, map_1) {
+define(__m[98], __M([0,1,4,32]), function (require, exports, strings, map_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -1953,7 +2005,7 @@ define(__m[80], __M([1,0,3,36]), function (require, exports, strings, map_1) {
     var SubstringMatching = exports.SubstringMatching;
     exports.fuzzyContiguousFilter = or(exports.matchesPrefix, matchesCamelCase, matchesContiguousSubString);
     var fuzzySeparateFilter = or(exports.matchesPrefix, matchesCamelCase, matchesSubString);
-    var fuzzyRegExpCache = new map_1.LinkedMap(10000); // bounded to 10000 elements
+    var fuzzyRegExpCache = new map_1.BoundedLinkedMap(10000); // bounded to 10000 elements
     function matchesFuzzy(word, wordToMatchAgainst, enableSeparateSubstringMatching) {
         if (enableSeparateSubstringMatching === void 0) { enableSeparateSubstringMatching = false; }
         if (typeof word !== 'string' || typeof wordToMatchAgainst !== 'string') {
@@ -1976,7 +2028,7 @@ define(__m[80], __M([1,0,3,36]), function (require, exports, strings, map_1) {
     exports.matchesFuzzy = matchesFuzzy;
 });
 
-define(__m[55], __M([1,0,3,13,36]), function (require, exports, strings, paths, map_1) {
+define(__m[37], __M([0,1,4,12,32]), function (require, exports, strings, paths, map_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -2133,129 +2185,246 @@ define(__m[55], __M([1,0,3,13,36]), function (require, exports, strings, paths, 
     // regexes to check for trival glob patterns that just check for String#endsWith
     var T1 = /^\*\*\/\*\.[\w\.-]+$/; // **/*.something
     var T2 = /^\*\*\/[\w\.-]+$/; // **/something
-    var T3 = /^{\*\*\/\*\.[\w\.-]+(,\*\*\/\*\.[\w\.-]+)*}$/; // {**/*.something,**/*.else}
-    var Trivia;
-    (function (Trivia) {
-        Trivia[Trivia["T1"] = 0] = "T1";
-        Trivia[Trivia["T2"] = 1] = "T2";
-        Trivia[Trivia["T3"] = 2] = "T3"; // {**/*.something,**/*.else}
-    })(Trivia || (Trivia = {}));
-    var CACHE = new map_1.LinkedMap(10000); // bounded to 10000 elements
+    var T3 = /^{\*\*\/[\*\.]?[\w\.-]+(,\*\*\/[\*\.]?[\w\.-]+)*}$/; // {**/*.something,**/*.else} or {**/package.json,**/project.json}
+    var CACHE = new map_1.BoundedLinkedMap(10000); // bounded to 10000 elements
+    var FALSE = function () {
+        return false;
+    };
+    var NULL = function () {
+        return null;
+    };
     function parsePattern(pattern) {
         if (!pattern) {
-            return null;
+            return NULL;
         }
         // Whitespace trimming
         pattern = pattern.trim();
         // Check cache
         var parsedPattern = CACHE.get(pattern);
         if (parsedPattern) {
-            if (parsedPattern.regexp) {
-                parsedPattern.regexp.lastIndex = 0; // reset RegExp to its initial state to reuse it!
-            }
             return parsedPattern;
         }
-        parsedPattern = Object.create(null);
         // Check for Trivias
         if (T1.test(pattern)) {
-            parsedPattern.trivia = Trivia.T1;
+            var base_1 = pattern.substr(4); // '**/*'.length === 4
+            parsedPattern = function (path, basename) {
+                return path && strings.endsWith(path, base_1) ? pattern : null;
+            };
         }
         else if (T2.test(pattern)) {
-            parsedPattern.trivia = Trivia.T2;
+            var base_2 = pattern.substr(3); // '**/'.length === 3
+            var slashBase_1 = "/" + base_2;
+            var backslashBase_1 = "\\" + base_2;
+            parsedPattern = function (path, basename) {
+                if (!path) {
+                    return null;
+                }
+                if (basename) {
+                    return basename === base_2 ? pattern : null;
+                }
+                return path === base_2 || strings.endsWith(path, slashBase_1) || strings.endsWith(path, backslashBase_1) ? pattern : null;
+            };
+            parsedPattern.basenames = [base_2];
+            parsedPattern.patterns = [pattern];
         }
         else if (T3.test(pattern)) {
-            parsedPattern.trivia = Trivia.T3;
+            var parsedPatterns_1 = aggregateBasenameMatches(pattern.slice(1, -1).split(',')
+                .map(function (pattern) { return parsePattern(pattern); })
+                .filter(function (pattern) { return pattern !== NULL; }), pattern);
+            var n = parsedPatterns_1.length;
+            if (!n) {
+                return NULL;
+            }
+            if (n === 1) {
+                return parsedPatterns_1[0];
+            }
+            parsedPattern = function (path, basename) {
+                for (var i = 0, n_1 = parsedPatterns_1.length; i < n_1; i++) {
+                    if (parsedPatterns_1[i](path, basename)) {
+                        return pattern;
+                    }
+                }
+                return null;
+            };
         }
         else {
-            parsedPattern.regexp = toRegExp("^" + parseRegExp(pattern) + "$");
+            parsedPattern = toRegExp(pattern);
         }
         // Cache
         CACHE.set(pattern, parsedPattern);
         return parsedPattern;
     }
-    function toRegExp(regEx) {
+    function toRegExp(pattern) {
         try {
-            return new RegExp(regEx);
+            var regExp_1 = new RegExp("^" + parseRegExp(pattern) + "$");
+            return function (path, basename) {
+                regExp_1.lastIndex = 0; // reset RegExp to its initial state to reuse it!
+                return path && regExp_1.test(path) ? pattern : null;
+            };
         }
         catch (error) {
-            return /.^/; // create a regex that matches nothing if we cannot parse the pattern
+            return NULL;
         }
     }
-    function match(arg1, path, siblings) {
+    function match(arg1, path, siblingsFn) {
         if (!arg1 || !path) {
             return false;
         }
-        // Glob with String
-        if (typeof arg1 === 'string') {
-            var parsedPattern = parsePattern(arg1);
-            if (!parsedPattern) {
-                return false;
-            }
-            // common pattern: **/*.txt just need endsWith check
-            if (parsedPattern.trivia === Trivia.T1) {
-                return strings.endsWith(path, arg1.substr(4)); // '**/*'.length === 4
-            }
-            // common pattern: **/some.txt just need basename check
-            if (parsedPattern.trivia === Trivia.T2) {
-                var base = arg1.substr(3); // '**/'.length === 3
-                return path === base || strings.endsWith(path, "/" + base) || strings.endsWith(path, "\\" + base);
-            }
-            // repetition of common patterns (see above) {**/*.txt,**/*.png}
-            if (parsedPattern.trivia === Trivia.T3) {
-                return arg1.slice(1, -1).split(',').some(function (pattern) { return match(pattern, path); });
-            }
-            return parsedPattern.regexp.test(path);
-        }
-        // Glob with Expression
-        return matchExpression(arg1, path, siblings);
+        return parse(arg1)(path, undefined, siblingsFn);
     }
     exports.match = match;
-    function matchExpression(expression, path, siblings) {
-        var patterns = Object.getOwnPropertyNames(expression);
-        var basename;
-        var _loop_1 = function(i) {
-            var pattern = patterns[i];
-            var value = expression[pattern];
-            if (value === false) {
-                return "continue"; // pattern is disabled
+    function parse(arg1) {
+        if (!arg1) {
+            return FALSE;
+        }
+        // Glob with String
+        if (typeof arg1 === 'string') {
+            var parsedPattern_1 = parsePattern(arg1);
+            if (parsedPattern_1 === NULL) {
+                return FALSE;
             }
-            // Pattern matches path
-            if (match(pattern, path)) {
-                // Expression Pattern is <boolean>
-                if (typeof value === 'boolean') {
-                    return { value: pattern };
+            return function (path, basename) {
+                return !!parsedPattern_1(path, basename);
+            };
+        }
+        // Glob with Expression
+        return parsedExpression(arg1);
+    }
+    exports.parse = parse;
+    function parsedExpression(expression) {
+        var parsedPatterns = aggregateBasenameMatches(Object.getOwnPropertyNames(expression)
+            .map(function (pattern) { return parseExpressionPattern(pattern, expression[pattern]); })
+            .filter(function (pattern) { return pattern !== NULL; }));
+        var n = parsedPatterns.length;
+        if (!n) {
+            return NULL;
+        }
+        if (!parsedPatterns.some(function (parsedPattern) { return parsedPattern.requiresSiblings; })) {
+            if (n === 1) {
+                return parsedPatterns[0];
+            }
+            return function (path, basename, siblingsFn) {
+                for (var i = 0, n_2 = parsedPatterns.length; i < n_2; i++) {
+                    // Pattern matches path
+                    var result = parsedPatterns[i](path, basename);
+                    if (result) {
+                        return result;
+                    }
                 }
-                // Expression Pattern is <SiblingClause>
-                if (value && typeof value.when === 'string') {
-                    if (!siblings || !siblings.length) {
-                        return "continue"; // pattern is malformed or we don't have siblings
+                return null;
+            };
+        }
+        return function (path, basename, siblingsFn) {
+            var siblingsPattern;
+            var siblingsResolved = !siblingsFn;
+            function siblingsPatternFn() {
+                // Resolve siblings only once
+                if (!siblingsResolved) {
+                    siblingsResolved = true;
+                    var siblings = siblingsFn();
+                    if (siblings && siblings.length) {
+                        if (!basename) {
+                            basename = paths.basename(path);
+                        }
+                        var name_1 = basename.substr(0, basename.length - paths.extname(path).length);
+                        siblingsPattern = { siblings: siblings, name: name_1 };
                     }
-                    if (!basename) {
-                        basename = strings.rtrim(paths.basename(path), paths.extname(path));
+                }
+                return siblingsPattern;
+            }
+            for (var i = 0, n_3 = parsedPatterns.length; i < n_3; i++) {
+                // Pattern matches path
+                var result = parsedPatterns[i](path, basename, siblingsPatternFn);
+                if (result) {
+                    return result;
+                }
+            }
+            return null;
+        };
+    }
+    function parseExpressionPattern(pattern, value) {
+        if (value === false) {
+            return NULL; // pattern is disabled
+        }
+        var parsedPattern = parsePattern(pattern);
+        if (parsedPattern === NULL) {
+            return NULL;
+        }
+        // Expression Pattern is <boolean>
+        if (typeof value === 'boolean') {
+            return parsedPattern;
+        }
+        // Expression Pattern is <SiblingClause>
+        if (value) {
+            var when_1 = value.when;
+            if (typeof when_1 === 'string') {
+                var result = function (path, basename, siblingsPatternFn) {
+                    if (!parsedPattern(path, basename)) {
+                        return null;
                     }
-                    var clause = value;
-                    var clausePattern_1 = clause.when.replace('$(basename)', basename);
-                    if (siblings.some(function (sibling) { return sibling === clausePattern_1; })) {
-                        return { value: pattern };
+                    var siblingsPattern = siblingsPatternFn();
+                    if (!siblingsPattern) {
+                        return null; // pattern is malformed or we don't have siblings
+                    }
+                    var clausePattern = when_1.replace('$(basename)', siblingsPattern.name);
+                    if (siblingsPattern.siblings.indexOf(clausePattern) !== -1) {
+                        return pattern;
                     }
                     else {
-                        return "continue"; // pattern does not match in the end because the when clause is not satisfied
+                        return null; // pattern does not match in the end because the when clause is not satisfied
+                    }
+                };
+                result.requiresSiblings = true;
+                return result;
+            }
+        }
+        // Expression is Anything
+        return parsedPattern;
+    }
+    var SLASH = '/'.charCodeAt(0);
+    var BACKSLASH = '\\'.charCodeAt(0);
+    function aggregateBasenameMatches(parsedPatterns, result) {
+        var basenamePatterns = parsedPatterns.filter(function (parsedPattern) { return !!parsedPattern.basenames; });
+        if (basenamePatterns.length < 2) {
+            return parsedPatterns;
+        }
+        var basenames = basenamePatterns.reduce(function (all, current) { return all.concat(current.basenames); }, []);
+        var patterns;
+        if (result) {
+            patterns = [];
+            for (var i = 0, n = basenames.length; i < n; i++) {
+                patterns.push(result);
+            }
+        }
+        else {
+            patterns = basenamePatterns.reduce(function (all, current) { return all.concat(current.patterns); }, []);
+        }
+        var aggregate = function (path, basename) {
+            if (!path) {
+                return null;
+            }
+            if (!basename) {
+                var i = void 0;
+                for (i = path.length; i > 0; i--) {
+                    var ch = path.charCodeAt(i - 1);
+                    if (ch === SLASH || ch === BACKSLASH) {
+                        break;
                     }
                 }
-                // Expression is Anything
-                return { value: pattern };
+                basename = path.substr(i);
             }
+            var index = basenames.indexOf(basename);
+            return index !== -1 ? patterns[index] : null;
         };
-        for (var i = 0; i < patterns.length; i++) {
-            var state_1 = _loop_1(i);
-            if (typeof state_1 === "object") return state_1.value;
-            if (state_1 === "continue") continue;
-        }
-        return null;
+        aggregate.basenames = basenames;
+        aggregate.patterns = patterns;
+        var aggregatedPatterns = parsedPatterns.filter(function (parsedPattern) { return !parsedPattern.basenames; });
+        aggregatedPatterns.push(aggregate);
+        return aggregatedPatterns;
     }
 });
 
-define(__m[9], __M([1,0]), function (require, exports) {
+define(__m[6], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -2420,7 +2589,7 @@ define(__m[9], __M([1,0]), function (require, exports) {
     exports.create = create;
 });
 
-define(__m[86], __M([1,0,9,49]), function (require, exports, types_1, collections_1) {
+define(__m[95], __M([0,1,6,39]), function (require, exports, types_1, collections_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -2514,7 +2683,7 @@ define(__m[86], __M([1,0,9,49]), function (require, exports, types_1, collection
 
 
 
-define(__m[16], __M([1,0,9]), function (require, exports, types_1) {
+define(__m[19], __M([0,1,6]), function (require, exports, types_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -2583,7 +2752,7 @@ define(__m[16], __M([1,0,9]), function (require, exports, types_1) {
     exports.Disposables = Disposables;
 });
 
-define(__m[46], __M([1,0,13,9,3,55]), function (require, exports, paths, types, strings, glob_1) {
+define(__m[44], __M([0,1,12,6,4,37]), function (require, exports, paths, types, strings, glob_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -2593,43 +2762,69 @@ define(__m[46], __M([1,0,13,9,3,55]), function (require, exports, paths, types, 
     exports.MIME_BINARY = 'application/octet-stream';
     exports.MIME_UNKNOWN = 'application/unknown';
     var registeredAssociations = [];
+    var nonUserRegisteredAssociations = [];
+    var userRegisteredAssociations = [];
     /**
      * Associate a text mime to the registry.
      */
     function registerTextMime(association) {
         // Register
-        registeredAssociations.push(association);
+        var associationItem = toTextMimeAssociationItem(association);
+        registeredAssociations.push(associationItem);
+        if (!associationItem.userConfigured) {
+            nonUserRegisteredAssociations.push(associationItem);
+        }
+        else {
+            userRegisteredAssociations.push(associationItem);
+        }
         // Check for conflicts unless this is a user configured association
-        if (!association.userConfigured) {
+        if (!associationItem.userConfigured) {
             registeredAssociations.forEach(function (a) {
-                if (a.mime === association.mime || a.userConfigured) {
+                if (a.mime === associationItem.mime || a.userConfigured) {
                     return; // same mime or userConfigured is ok
                 }
-                if (association.extension && a.extension === association.extension) {
-                    console.warn("Overwriting extension <<" + association.extension + ">> to now point to mime <<" + association.mime + ">>");
+                if (associationItem.extension && a.extension === associationItem.extension) {
+                    console.warn("Overwriting extension <<" + associationItem.extension + ">> to now point to mime <<" + associationItem.mime + ">>");
                 }
-                if (association.filename && a.filename === association.filename) {
-                    console.warn("Overwriting filename <<" + association.filename + ">> to now point to mime <<" + association.mime + ">>");
+                if (associationItem.filename && a.filename === associationItem.filename) {
+                    console.warn("Overwriting filename <<" + associationItem.filename + ">> to now point to mime <<" + associationItem.mime + ">>");
                 }
-                if (association.filepattern && a.filepattern === association.filepattern) {
-                    console.warn("Overwriting filepattern <<" + association.filepattern + ">> to now point to mime <<" + association.mime + ">>");
+                if (associationItem.filepattern && a.filepattern === associationItem.filepattern) {
+                    console.warn("Overwriting filepattern <<" + associationItem.filepattern + ">> to now point to mime <<" + associationItem.mime + ">>");
                 }
-                if (association.firstline && a.firstline === association.firstline) {
-                    console.warn("Overwriting firstline <<" + association.firstline + ">> to now point to mime <<" + association.mime + ">>");
+                if (associationItem.firstline && a.firstline === associationItem.firstline) {
+                    console.warn("Overwriting firstline <<" + associationItem.firstline + ">> to now point to mime <<" + associationItem.mime + ">>");
                 }
             });
         }
     }
     exports.registerTextMime = registerTextMime;
+    function toTextMimeAssociationItem(association) {
+        return {
+            mime: association.mime,
+            filename: association.filename,
+            extension: association.extension,
+            filepattern: association.filepattern,
+            firstline: association.firstline,
+            userConfigured: association.userConfigured,
+            filenameLowercase: association.filename ? association.filename.toLowerCase() : void 0,
+            extensionLowercase: association.extension ? association.extension.toLowerCase() : void 0,
+            filepatternLowercase: association.filepattern ? association.filepattern.toLowerCase() : void 0,
+            filepatternOnPath: association.filepattern ? association.filepattern.indexOf(paths.sep) >= 0 : false
+        };
+    }
     /**
      * Clear text mimes from the registry.
      */
     function clearTextMimes(onlyUserConfigured) {
         if (!onlyUserConfigured) {
             registeredAssociations = [];
+            nonUserRegisteredAssociations = [];
+            userRegisteredAssociations = [];
         }
         else {
             registeredAssociations = registeredAssociations.filter(function (a) { return !a.userConfigured; });
+            userRegisteredAssociations = [];
         }
     }
     exports.clearTextMimes = clearTextMimes;
@@ -2641,13 +2836,14 @@ define(__m[46], __M([1,0,13,9,3,55]), function (require, exports, paths, types, 
             return [exports.MIME_UNKNOWN];
         }
         path = path.toLowerCase();
+        var filename = paths.basename(path);
         // 1.) User configured mappings have highest priority
-        var configuredMime = guessMimeTypeByPath(path, registeredAssociations.filter(function (a) { return a.userConfigured; }));
+        var configuredMime = guessMimeTypeByPath(path, filename, userRegisteredAssociations);
         if (configuredMime) {
             return [configuredMime, exports.MIME_TEXT];
         }
         // 2.) Registered mappings have middle priority
-        var registeredMime = guessMimeTypeByPath(path, registeredAssociations.filter(function (a) { return !a.userConfigured; }));
+        var registeredMime = guessMimeTypeByPath(path, filename, nonUserRegisteredAssociations);
         if (registeredMime) {
             return [registeredMime, exports.MIME_TEXT];
         }
@@ -2661,31 +2857,30 @@ define(__m[46], __M([1,0,13,9,3,55]), function (require, exports, paths, types, 
         return [exports.MIME_UNKNOWN];
     }
     exports.guessMimeTypes = guessMimeTypes;
-    function guessMimeTypeByPath(path, associations) {
-        var filename = paths.basename(path);
+    function guessMimeTypeByPath(path, filename, associations) {
         var filenameMatch;
         var patternMatch;
         var extensionMatch;
         for (var i = 0; i < associations.length; i++) {
             var association = associations[i];
             // First exact name match
-            if (association.filename && filename === association.filename.toLowerCase()) {
+            if (filename === association.filenameLowercase) {
                 filenameMatch = association;
                 break; // take it!
             }
             // Longest pattern match
             if (association.filepattern) {
-                var target = association.filepattern.indexOf(paths.sep) >= 0 ? path : filename; // match on full path if pattern contains path separator
-                if (glob_1.match(association.filepattern.toLowerCase(), target)) {
-                    if (!patternMatch || association.filepattern.length > patternMatch.filepattern.length) {
+                if (!patternMatch || association.filepattern.length > patternMatch.filepattern.length) {
+                    var target = association.filepatternOnPath ? path : filename; // match on full path if pattern contains path separator
+                    if (glob_1.match(association.filepatternLowercase, target)) {
                         patternMatch = association;
                     }
                 }
             }
             // Longest extension match
             if (association.extension) {
-                if (strings.endsWith(filename, association.extension.toLowerCase())) {
-                    if (!extensionMatch || association.extension.length > extensionMatch.extension.length) {
+                if (!extensionMatch || association.extension.length > extensionMatch.extension.length) {
+                    if (strings.endsWith(filename, association.extensionLowercase)) {
                         extensionMatch = association;
                     }
                 }
@@ -2758,12 +2953,12 @@ define(__m[46], __M([1,0,13,9,3,55]), function (require, exports, paths, types, 
                 return prefix + association.extension;
             }
         }
-        return null;
+        return prefix; // without any known extension, just return the prefix
     }
     exports.suggestFilename = suggestFilename;
 });
 
-define(__m[12], __M([1,0,9]), function (require, exports, Types) {
+define(__m[48], __M([0,1,6]), function (require, exports, Types) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -3054,7 +3249,7 @@ define(__m[12], __M([1,0,9]), function (require, exports, Types) {
     exports.getOrDefault = getOrDefault;
 });
 
-define(__m[20], __M([1,0,10]), function (require, exports, platform) {
+define(__m[30], __M([0,1,11]), function (require, exports, platform) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -3096,6 +3291,19 @@ define(__m[20], __M([1,0,10]), function (require, exports, platform) {
             this._formatted = null;
             this._fsPath = null;
         }
+        URI.isUri = function (thing) {
+            if (thing instanceof URI) {
+                return true;
+            }
+            if (!thing) {
+                return false;
+            }
+            return typeof thing.authority === 'string'
+                && typeof thing.fragment === 'string'
+                && typeof thing.path === 'string'
+                && typeof thing.query === 'string'
+                && typeof thing.scheme === 'string';
+        };
         Object.defineProperty(URI.prototype, "scheme", {
             /**
              * scheme is the 'http' part of 'http://www.msft.com/some/path?query#fragment'.
@@ -3159,7 +3367,7 @@ define(__m[20], __M([1,0,10]), function (require, exports, platform) {
             get: function () {
                 if (!this._fsPath) {
                     var value;
-                    if (this._authority && this.scheme === 'file') {
+                    if (this._authority && this._path && this.scheme === 'file') {
                         // unc path: file://shares/c$/far/boo
                         value = "//" + this._authority + this._path;
                     }
@@ -3186,11 +3394,37 @@ define(__m[20], __M([1,0,10]), function (require, exports, platform) {
             if (!change) {
                 return this;
             }
-            var scheme = change.scheme || this.scheme;
-            var authority = change.authority || this.authority;
-            var path = change.path || this.path;
-            var query = change.query || this.query;
-            var fragment = change.fragment || this.fragment;
+            var scheme = change.scheme, authority = change.authority, path = change.path, query = change.query, fragment = change.fragment;
+            if (scheme === void 0) {
+                scheme = this.scheme;
+            }
+            else if (scheme === null) {
+                scheme = '';
+            }
+            if (authority === void 0) {
+                authority = this.authority;
+            }
+            else if (authority === null) {
+                authority = '';
+            }
+            if (path === void 0) {
+                path = this.path;
+            }
+            else if (path === null) {
+                path = '';
+            }
+            if (query === void 0) {
+                query = this.query;
+            }
+            else if (query === null) {
+                query = '';
+            }
+            if (fragment === void 0) {
+                fragment = this.fragment;
+            }
+            else if (fragment === null) {
+                fragment = '';
+            }
             if (scheme === this.scheme
                 && authority === this.authority
                 && path === this.path
@@ -3269,17 +3503,27 @@ define(__m[20], __M([1,0,10]), function (require, exports, platform) {
             return new URI().with(components);
         };
         URI._validate = function (ret) {
-            // validation
+            // scheme, https://tools.ietf.org/html/rfc3986#section-3.1
+            // ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+            if (ret.scheme && !URI._schemePattern.test(ret.scheme)) {
+                throw new Error('[UriError]: Scheme contains illegal characters.');
+            }
             // path, http://tools.ietf.org/html/rfc3986#section-3.3
             // If a URI contains an authority component, then the path component
             // must either be empty or begin with a slash ("/") character.  If a URI
             // does not contain an authority component, then the path cannot begin
             // with two slash characters ("//").
-            if (ret.authority && ret.path && ret.path[0] !== '/') {
-                throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character');
-            }
-            if (!ret.authority && ret.path.indexOf('//') === 0) {
-                throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")');
+            if (ret.path) {
+                if (ret.authority) {
+                    if (!URI._singleSlashStart.test(ret.path)) {
+                        throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character');
+                    }
+                }
+                else {
+                    if (URI._doubleSlashStart.test(ret.path)) {
+                        throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")');
+                    }
+                }
             }
         };
         // ---- printing/externalize ---------------------------
@@ -3323,10 +3567,15 @@ define(__m[20], __M([1,0,10]), function (require, exports, platform) {
                 }
             }
             if (path) {
-                // lower-case windown drive letters in /C:/fff
+                // lower-case windows drive letters in /C:/fff or C:/fff
                 var m = URI._upperCaseDrive.exec(path);
                 if (m) {
-                    path = m[1] + m[2].toLowerCase() + path.substr(m[1].length + m[2].length);
+                    if (m[1]) {
+                        path = '/' + m[2].toLowerCase() + path.substr(3); // "/c:".length === 3
+                    }
+                    else {
+                        path = m[2].toLowerCase() + path.substr(2); // // "c:".length === 2
+                    }
                 }
                 // encode every segement but not slashes
                 // make sure that # and ? are always encoded
@@ -3381,13 +3630,16 @@ define(__m[20], __M([1,0,10]), function (require, exports, platform) {
         URI._regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
         URI._driveLetterPath = /^\/[a-zA-z]:/;
         URI._upperCaseDrive = /^(\/)?([A-Z]:)/;
+        URI._schemePattern = /^\w[\w\d+.-]*$/;
+        URI._singleSlashStart = /^\//;
+        URI._doubleSlashStart = /^\/\//;
         return URI;
     }());
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.default = URI;
 });
 
-define(__m[89], __M([1,0,20]), function (require, exports, uri_1) {
+define(__m[94], __M([0,1,30]), function (require, exports, uri_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -5500,7 +5752,7 @@ if (typeof process !== 'undefined' && typeof process.nextTick === 'function') {
 }
 
 })();
-define(__m[91], __M([1,0]), function (require, exports) {
+define(__m[92], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -5525,7 +5777,7 @@ define(__m[91], __M([1,0]), function (require, exports) {
     };
 });
 
-define(__m[30], __M([1,0]), function (require, exports) {
+define(__m[22], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -5565,35 +5817,26 @@ define(__m[30], __M([1,0]), function (require, exports) {
     })(Arrays = exports.Arrays || (exports.Arrays = {}));
 });
 
-define(__m[18], __M([1,0,30]), function (require, exports, arrays_1) {
+define(__m[9], __M([0,1,22]), function (require, exports, arrays_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
      *--------------------------------------------------------------------------------------------*/
     'use strict';
     var ModeTransition = (function () {
-        function ModeTransition(startIndex, mode) {
+        function ModeTransition(startIndex, modeId) {
             this.startIndex = startIndex | 0;
-            this.mode = mode;
-            this.modeId = mode.getId();
+            this.modeId = modeId;
         }
         ModeTransition.findIndexInSegmentsArray = function (arr, desiredIndex) {
             return arrays_1.Arrays.findIndexInSegmentsArray(arr, desiredIndex);
-        };
-        ModeTransition.create = function (modeTransitions) {
-            var result = [];
-            for (var i = 0, len = modeTransitions.length; i < len; i++) {
-                var modeTransition = modeTransitions[i];
-                result.push(new ModeTransition(modeTransition.startIndex, modeTransition.mode));
-            }
-            return result;
         };
         return ModeTransition;
     }());
     exports.ModeTransition = ModeTransition;
 });
 
-define(__m[22], __M([1,0]), function (require, exports) {
+define(__m[20], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -5701,7 +5944,7 @@ define(__m[22], __M([1,0]), function (require, exports) {
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-define(__m[29], __M([1,0,22]), function (require, exports, position_1) {
+define(__m[28], __M([0,1,20]), function (require, exports, position_1) {
     'use strict';
     /**
      * A range in the editor. (startLineNumber,startColumn) is <= (endLineNumber,endColumn)
@@ -6002,7 +6245,46 @@ define(__m[29], __M([1,0,22]), function (require, exports, position_1) {
     exports.Range = Range;
 });
 
-define(__m[50], __M([1,0,30]), function (require, exports, arrays_1) {
+define(__m[13], __M([0,1,22]), function (require, exports, arrays_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    var Token = (function () {
+        function Token(startIndex, type) {
+            this.startIndex = startIndex | 0; // @perf
+            this.type = type;
+        }
+        Token.prototype.toString = function () {
+            return '(' + this.startIndex + ', ' + this.type + ')';
+        };
+        Token.prototype.equals = function (other) {
+            return (this.startIndex === other.startIndex
+                && this.type === other.type);
+        };
+        Token.findIndexInSegmentsArray = function (arr, desiredIndex) {
+            return arrays_1.Arrays.findIndexInSegmentsArray(arr, desiredIndex);
+        };
+        Token.equalsArray = function (a, b) {
+            var aLen = a.length;
+            var bLen = b.length;
+            if (aLen !== bLen) {
+                return false;
+            }
+            for (var i = 0; i < aLen; i++) {
+                if (!a[i].equals(b[i])) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        return Token;
+    }());
+    exports.Token = Token;
+});
+
+define(__m[45], __M([0,1,22]), function (require, exports, arrays_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -6067,966 +6349,66 @@ define(__m[50], __M([1,0,30]), function (require, exports, arrays_1) {
     exports.ViewLineTokens = ViewLineTokens;
 });
 
-
-
-
-
-
-define(__m[19], __M([1,0]), function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+define(__m[91], __M([0,1]), function (require, exports) {
     'use strict';
-    /**
-     * Describes how to indent wrapped lines.
-     */
-    (function (WrappingIndent) {
-        /**
-         * No indentation => wrapped lines begin at column 1.
-         */
-        WrappingIndent[WrappingIndent["None"] = 0] = "None";
-        /**
-         * Same => wrapped lines get the same indentation as the parent.
-         */
-        WrappingIndent[WrappingIndent["Same"] = 1] = "Same";
-        /**
-         * Indent => wrapped lines get +1 indentation as the parent.
-         */
-        WrappingIndent[WrappingIndent["Indent"] = 2] = "Indent";
-    })(exports.WrappingIndent || (exports.WrappingIndent = {}));
-    var WrappingIndent = exports.WrappingIndent;
-    var InternalEditorScrollbarOptions = (function () {
-        /**
-         * @internal
-         */
-        function InternalEditorScrollbarOptions(source) {
-            this.arrowSize = source.arrowSize | 0;
-            this.vertical = source.vertical | 0;
-            this.horizontal = source.horizontal | 0;
-            this.useShadows = Boolean(source.useShadows);
-            this.verticalHasArrows = Boolean(source.verticalHasArrows);
-            this.horizontalHasArrows = Boolean(source.horizontalHasArrows);
-            this.handleMouseWheel = Boolean(source.handleMouseWheel);
-            this.horizontalScrollbarSize = source.horizontalScrollbarSize | 0;
-            this.horizontalSliderSize = source.horizontalSliderSize | 0;
-            this.verticalScrollbarSize = source.verticalScrollbarSize | 0;
-            this.verticalSliderSize = source.verticalSliderSize | 0;
-            this.mouseWheelScrollSensitivity = Number(source.mouseWheelScrollSensitivity);
-        }
-        /**
-         * @internal
-         */
-        InternalEditorScrollbarOptions.prototype.equals = function (other) {
-            return (this.arrowSize === other.arrowSize
-                && this.vertical === other.vertical
-                && this.horizontal === other.horizontal
-                && this.useShadows === other.useShadows
-                && this.verticalHasArrows === other.verticalHasArrows
-                && this.horizontalHasArrows === other.horizontalHasArrows
-                && this.handleMouseWheel === other.handleMouseWheel
-                && this.horizontalScrollbarSize === other.horizontalScrollbarSize
-                && this.horizontalSliderSize === other.horizontalSliderSize
-                && this.verticalScrollbarSize === other.verticalScrollbarSize
-                && this.verticalSliderSize === other.verticalSliderSize
-                && this.mouseWheelScrollSensitivity === other.mouseWheelScrollSensitivity);
-        };
-        /**
-         * @internal
-         */
-        InternalEditorScrollbarOptions.prototype.clone = function () {
-            return new InternalEditorScrollbarOptions(this);
-        };
-        return InternalEditorScrollbarOptions;
-    }());
-    exports.InternalEditorScrollbarOptions = InternalEditorScrollbarOptions;
-    var EditorWrappingInfo = (function () {
-        /**
-         * @internal
-         */
-        function EditorWrappingInfo(source) {
-            this.isViewportWrapping = Boolean(source.isViewportWrapping);
-            this.wrappingColumn = source.wrappingColumn | 0;
-            this.wrappingIndent = source.wrappingIndent | 0;
-            this.wordWrapBreakBeforeCharacters = String(source.wordWrapBreakBeforeCharacters);
-            this.wordWrapBreakAfterCharacters = String(source.wordWrapBreakAfterCharacters);
-            this.wordWrapBreakObtrusiveCharacters = String(source.wordWrapBreakObtrusiveCharacters);
-        }
-        /**
-         * @internal
-         */
-        EditorWrappingInfo.prototype.equals = function (other) {
-            return (this.isViewportWrapping === other.isViewportWrapping
-                && this.wrappingColumn === other.wrappingColumn
-                && this.wrappingIndent === other.wrappingIndent
-                && this.wordWrapBreakBeforeCharacters === other.wordWrapBreakBeforeCharacters
-                && this.wordWrapBreakAfterCharacters === other.wordWrapBreakAfterCharacters
-                && this.wordWrapBreakObtrusiveCharacters === other.wordWrapBreakObtrusiveCharacters);
-        };
-        /**
-         * @internal
-         */
-        EditorWrappingInfo.prototype.clone = function () {
-            return new EditorWrappingInfo(this);
-        };
-        return EditorWrappingInfo;
-    }());
-    exports.EditorWrappingInfo = EditorWrappingInfo;
-    var InternalEditorViewOptions = (function () {
-        /**
-         * @internal
-         */
-        function InternalEditorViewOptions(source) {
-            this.theme = String(source.theme);
-            this.canUseTranslate3d = Boolean(source.canUseTranslate3d);
-            this.experimentalScreenReader = Boolean(source.experimentalScreenReader);
-            this.rulers = InternalEditorViewOptions._toSortedIntegerArray(source.rulers);
-            this.ariaLabel = String(source.ariaLabel);
-            this.lineNumbers = source.lineNumbers;
-            this.selectOnLineNumbers = Boolean(source.selectOnLineNumbers);
-            this.glyphMargin = Boolean(source.glyphMargin);
-            this.revealHorizontalRightPadding = source.revealHorizontalRightPadding | 0;
-            this.roundedSelection = Boolean(source.roundedSelection);
-            this.overviewRulerLanes = source.overviewRulerLanes | 0;
-            this.cursorBlinking = String(source.cursorBlinking);
-            this.cursorStyle = source.cursorStyle | 0;
-            this.hideCursorInOverviewRuler = Boolean(source.hideCursorInOverviewRuler);
-            this.scrollBeyondLastLine = Boolean(source.scrollBeyondLastLine);
-            this.editorClassName = String(source.editorClassName);
-            this.stopRenderingLineAfter = source.stopRenderingLineAfter | 0;
-            this.renderWhitespace = Boolean(source.renderWhitespace);
-            this.indentGuides = Boolean(source.indentGuides);
-            this.scrollbar = source.scrollbar.clone();
-        }
-        InternalEditorViewOptions._toSortedIntegerArray = function (source) {
-            if (!Array.isArray(source)) {
-                return [];
-            }
-            var arrSource = source;
-            var result = arrSource.map(function (el) {
-                var r = parseInt(el, 10);
-                if (isNaN(r)) {
-                    return 0;
-                }
-                return r;
-            });
-            result.sort();
-            return result;
-        };
-        InternalEditorViewOptions._numberArraysEqual = function (a, b) {
-            if (a.length !== b.length) {
-                return false;
-            }
-            for (var i = 0; i < a.length; i++) {
-                if (a[i] !== b[i]) {
-                    return false;
-                }
-            }
-            return true;
-        };
-        /**
-         * @internal
-         */
-        InternalEditorViewOptions.prototype.equals = function (other) {
-            return (this.theme === other.theme
-                && this.canUseTranslate3d === other.canUseTranslate3d
-                && this.experimentalScreenReader === other.experimentalScreenReader
-                && InternalEditorViewOptions._numberArraysEqual(this.rulers, other.rulers)
-                && this.ariaLabel === other.ariaLabel
-                && this.lineNumbers === other.lineNumbers
-                && this.selectOnLineNumbers === other.selectOnLineNumbers
-                && this.glyphMargin === other.glyphMargin
-                && this.revealHorizontalRightPadding === other.revealHorizontalRightPadding
-                && this.roundedSelection === other.roundedSelection
-                && this.overviewRulerLanes === other.overviewRulerLanes
-                && this.cursorBlinking === other.cursorBlinking
-                && this.cursorStyle === other.cursorStyle
-                && this.hideCursorInOverviewRuler === other.hideCursorInOverviewRuler
-                && this.scrollBeyondLastLine === other.scrollBeyondLastLine
-                && this.editorClassName === other.editorClassName
-                && this.stopRenderingLineAfter === other.stopRenderingLineAfter
-                && this.renderWhitespace === other.renderWhitespace
-                && this.indentGuides === other.indentGuides
-                && this.scrollbar.equals(other.scrollbar));
-        };
-        /**
-         * @internal
-         */
-        InternalEditorViewOptions.prototype.createChangeEvent = function (newOpts) {
-            return {
-                theme: this.theme !== newOpts.theme,
-                canUseTranslate3d: this.canUseTranslate3d !== newOpts.canUseTranslate3d,
-                experimentalScreenReader: this.experimentalScreenReader !== newOpts.experimentalScreenReader,
-                rulers: (!InternalEditorViewOptions._numberArraysEqual(this.rulers, newOpts.rulers)),
-                ariaLabel: this.ariaLabel !== newOpts.ariaLabel,
-                lineNumbers: this.lineNumbers !== newOpts.lineNumbers,
-                selectOnLineNumbers: this.selectOnLineNumbers !== newOpts.selectOnLineNumbers,
-                glyphMargin: this.glyphMargin !== newOpts.glyphMargin,
-                revealHorizontalRightPadding: this.revealHorizontalRightPadding !== newOpts.revealHorizontalRightPadding,
-                roundedSelection: this.roundedSelection !== newOpts.roundedSelection,
-                overviewRulerLanes: this.overviewRulerLanes !== newOpts.overviewRulerLanes,
-                cursorBlinking: this.cursorBlinking !== newOpts.cursorBlinking,
-                cursorStyle: this.cursorStyle !== newOpts.cursorStyle,
-                hideCursorInOverviewRuler: this.hideCursorInOverviewRuler !== newOpts.hideCursorInOverviewRuler,
-                scrollBeyondLastLine: this.scrollBeyondLastLine !== newOpts.scrollBeyondLastLine,
-                editorClassName: this.editorClassName !== newOpts.editorClassName,
-                stopRenderingLineAfter: this.stopRenderingLineAfter !== newOpts.stopRenderingLineAfter,
-                renderWhitespace: this.renderWhitespace !== newOpts.renderWhitespace,
-                indentGuides: this.indentGuides !== newOpts.indentGuides,
-                scrollbar: (!this.scrollbar.equals(newOpts.scrollbar)),
-            };
-        };
-        /**
-         * @internal
-         */
-        InternalEditorViewOptions.prototype.clone = function () {
-            return new InternalEditorViewOptions(this);
-        };
-        return InternalEditorViewOptions;
-    }());
-    exports.InternalEditorViewOptions = InternalEditorViewOptions;
-    var EditorContribOptions = (function () {
-        /**
-         * @internal
-         */
-        function EditorContribOptions(source) {
-            this.selectionClipboard = Boolean(source.selectionClipboard);
-            this.hover = Boolean(source.hover);
-            this.contextmenu = Boolean(source.contextmenu);
-            this.quickSuggestions = Boolean(source.quickSuggestions);
-            this.quickSuggestionsDelay = source.quickSuggestionsDelay || 0;
-            this.parameterHints = Boolean(source.parameterHints);
-            this.iconsInSuggestions = Boolean(source.iconsInSuggestions);
-            this.formatOnType = Boolean(source.formatOnType);
-            this.suggestOnTriggerCharacters = Boolean(source.suggestOnTriggerCharacters);
-            this.acceptSuggestionOnEnter = Boolean(source.acceptSuggestionOnEnter);
-            this.selectionHighlight = Boolean(source.selectionHighlight);
-            this.outlineMarkers = Boolean(source.outlineMarkers);
-            this.referenceInfos = Boolean(source.referenceInfos);
-            this.folding = Boolean(source.folding);
-        }
-        /**
-         * @internal
-         */
-        EditorContribOptions.prototype.equals = function (other) {
-            return (this.selectionClipboard === other.selectionClipboard
-                && this.hover === other.hover
-                && this.contextmenu === other.contextmenu
-                && this.quickSuggestions === other.quickSuggestions
-                && this.quickSuggestionsDelay === other.quickSuggestionsDelay
-                && this.parameterHints === other.parameterHints
-                && this.iconsInSuggestions === other.iconsInSuggestions
-                && this.formatOnType === other.formatOnType
-                && this.suggestOnTriggerCharacters === other.suggestOnTriggerCharacters
-                && this.acceptSuggestionOnEnter === other.acceptSuggestionOnEnter
-                && this.selectionHighlight === other.selectionHighlight
-                && this.outlineMarkers === other.outlineMarkers
-                && this.referenceInfos === other.referenceInfos
-                && this.folding === other.folding);
-        };
-        /**
-         * @internal
-         */
-        EditorContribOptions.prototype.clone = function () {
-            return new EditorContribOptions(this);
-        };
-        return EditorContribOptions;
-    }());
-    exports.EditorContribOptions = EditorContribOptions;
-    /**
-     * Internal configuration options (transformed or computed) for the editor.
-     */
-    var InternalEditorOptions = (function () {
-        /**
-         * @internal
-         */
-        function InternalEditorOptions(source) {
-            this.lineHeight = source.lineHeight | 0;
-            this.readOnly = Boolean(source.readOnly);
-            this.wordSeparators = String(source.wordSeparators);
-            this.autoClosingBrackets = Boolean(source.autoClosingBrackets);
-            this.useTabStops = Boolean(source.useTabStops);
-            this.tabFocusMode = Boolean(source.tabFocusMode);
-            this.layoutInfo = source.layoutInfo.clone();
-            this.fontInfo = source.fontInfo.clone();
-            this.viewInfo = source.viewInfo.clone();
-            this.wrappingInfo = source.wrappingInfo.clone();
-            this.contribInfo = source.contribInfo.clone();
-        }
-        /**
-         * @internal
-         */
-        InternalEditorOptions.prototype.equals = function (other) {
-            return (this.lineHeight === other.lineHeight
-                && this.readOnly === other.readOnly
-                && this.wordSeparators === other.wordSeparators
-                && this.autoClosingBrackets === other.autoClosingBrackets
-                && this.useTabStops === other.useTabStops
-                && this.tabFocusMode === other.tabFocusMode
-                && this.layoutInfo.equals(other.layoutInfo)
-                && this.fontInfo.equals(other.fontInfo)
-                && this.viewInfo.equals(other.viewInfo)
-                && this.wrappingInfo.equals(other.wrappingInfo)
-                && this.contribInfo.equals(other.contribInfo));
-        };
-        /**
-         * @internal
-         */
-        InternalEditorOptions.prototype.createChangeEvent = function (newOpts) {
-            return {
-                lineHeight: (this.lineHeight !== newOpts.lineHeight),
-                readOnly: (this.readOnly !== newOpts.readOnly),
-                wordSeparators: (this.wordSeparators !== newOpts.wordSeparators),
-                autoClosingBrackets: (this.autoClosingBrackets !== newOpts.autoClosingBrackets),
-                useTabStops: (this.useTabStops !== newOpts.useTabStops),
-                tabFocusMode: (this.tabFocusMode !== newOpts.tabFocusMode),
-                layoutInfo: (!this.layoutInfo.equals(newOpts.layoutInfo)),
-                fontInfo: (!this.fontInfo.equals(newOpts.fontInfo)),
-                viewInfo: this.viewInfo.createChangeEvent(newOpts.viewInfo),
-                wrappingInfo: (!this.wrappingInfo.equals(newOpts.wrappingInfo)),
-                contribInfo: (!this.contribInfo.equals(newOpts.contribInfo)),
-            };
-        };
-        /**
-         * @internal
-         */
-        InternalEditorOptions.prototype.clone = function () {
-            return new InternalEditorOptions(this);
-        };
-        return InternalEditorOptions;
-    }());
-    exports.InternalEditorOptions = InternalEditorOptions;
-    /**
-     * Vertical Lane in the overview ruler of the editor.
-     */
-    (function (OverviewRulerLane) {
-        OverviewRulerLane[OverviewRulerLane["Left"] = 1] = "Left";
-        OverviewRulerLane[OverviewRulerLane["Center"] = 2] = "Center";
-        OverviewRulerLane[OverviewRulerLane["Right"] = 4] = "Right";
-        OverviewRulerLane[OverviewRulerLane["Full"] = 7] = "Full";
-    })(exports.OverviewRulerLane || (exports.OverviewRulerLane = {}));
-    var OverviewRulerLane = exports.OverviewRulerLane;
-    /**
-     * End of line character preference.
-     */
-    (function (EndOfLinePreference) {
-        /**
-         * Use the end of line character identified in the text buffer.
-         */
-        EndOfLinePreference[EndOfLinePreference["TextDefined"] = 0] = "TextDefined";
-        /**
-         * Use line feed (\n) as the end of line character.
-         */
-        EndOfLinePreference[EndOfLinePreference["LF"] = 1] = "LF";
-        /**
-         * Use carriage return and line feed (\r\n) as the end of line character.
-         */
-        EndOfLinePreference[EndOfLinePreference["CRLF"] = 2] = "CRLF";
-    })(exports.EndOfLinePreference || (exports.EndOfLinePreference = {}));
-    var EndOfLinePreference = exports.EndOfLinePreference;
-    /**
-     * The default end of line to use when instantiating models.
-     */
-    (function (DefaultEndOfLine) {
-        /**
-         * Use line feed (\n) as the end of line character.
-         */
-        DefaultEndOfLine[DefaultEndOfLine["LF"] = 1] = "LF";
-        /**
-         * Use carriage return and line feed (\r\n) as the end of line character.
-         */
-        DefaultEndOfLine[DefaultEndOfLine["CRLF"] = 2] = "CRLF";
-    })(exports.DefaultEndOfLine || (exports.DefaultEndOfLine = {}));
-    var DefaultEndOfLine = exports.DefaultEndOfLine;
-    /**
-     * End of line character preference.
-     */
-    (function (EndOfLineSequence) {
-        /**
-         * Use line feed (\n) as the end of line character.
-         */
-        EndOfLineSequence[EndOfLineSequence["LF"] = 0] = "LF";
-        /**
-         * Use carriage return and line feed (\r\n) as the end of line character.
-         */
-        EndOfLineSequence[EndOfLineSequence["CRLF"] = 1] = "CRLF";
-    })(exports.EndOfLineSequence || (exports.EndOfLineSequence = {}));
-    var EndOfLineSequence = exports.EndOfLineSequence;
-    /**
-     * Describes the behaviour of decorations when typing/editing near their edges.
-     */
-    (function (TrackedRangeStickiness) {
-        TrackedRangeStickiness[TrackedRangeStickiness["AlwaysGrowsWhenTypingAtEdges"] = 0] = "AlwaysGrowsWhenTypingAtEdges";
-        TrackedRangeStickiness[TrackedRangeStickiness["NeverGrowsWhenTypingAtEdges"] = 1] = "NeverGrowsWhenTypingAtEdges";
-        TrackedRangeStickiness[TrackedRangeStickiness["GrowsOnlyWhenTypingBefore"] = 2] = "GrowsOnlyWhenTypingBefore";
-        TrackedRangeStickiness[TrackedRangeStickiness["GrowsOnlyWhenTypingAfter"] = 3] = "GrowsOnlyWhenTypingAfter";
-    })(exports.TrackedRangeStickiness || (exports.TrackedRangeStickiness = {}));
-    var TrackedRangeStickiness = exports.TrackedRangeStickiness;
-    /**
-     * Describes the reason the cursor has changed its position.
-     */
-    (function (CursorChangeReason) {
-        /**
-         * Unknown or not set.
-         */
-        CursorChangeReason[CursorChangeReason["NotSet"] = 0] = "NotSet";
-        /**
-         * A `model.setValue()` was called.
-         */
-        CursorChangeReason[CursorChangeReason["ContentFlush"] = 1] = "ContentFlush";
-        /**
-         * The `model` has been changed outside of this cursor and the cursor recovers its position from associated markers.
-         */
-        CursorChangeReason[CursorChangeReason["RecoverFromMarkers"] = 2] = "RecoverFromMarkers";
-        /**
-         * There was an explicit user gesture.
-         */
-        CursorChangeReason[CursorChangeReason["Explicit"] = 3] = "Explicit";
-        /**
-         * There was a Paste.
-         */
-        CursorChangeReason[CursorChangeReason["Paste"] = 4] = "Paste";
-        /**
-         * There was an Undo.
-         */
-        CursorChangeReason[CursorChangeReason["Undo"] = 5] = "Undo";
-        /**
-         * There was a Redo.
-         */
-        CursorChangeReason[CursorChangeReason["Redo"] = 6] = "Redo";
-    })(exports.CursorChangeReason || (exports.CursorChangeReason = {}));
-    var CursorChangeReason = exports.CursorChangeReason;
-    /**
-     * @internal
-     */
-    (function (VerticalRevealType) {
-        VerticalRevealType[VerticalRevealType["Simple"] = 0] = "Simple";
-        VerticalRevealType[VerticalRevealType["Center"] = 1] = "Center";
-        VerticalRevealType[VerticalRevealType["CenterIfOutsideViewport"] = 2] = "CenterIfOutsideViewport";
-    })(exports.VerticalRevealType || (exports.VerticalRevealType = {}));
-    var VerticalRevealType = exports.VerticalRevealType;
-    /**
-     * A description for the overview ruler position.
-     */
-    var OverviewRulerPosition = (function () {
-        /**
-         * @internal
-         */
-        function OverviewRulerPosition(source) {
-            this.width = source.width | 0;
-            this.height = source.height | 0;
-            this.top = source.top | 0;
-            this.right = source.right | 0;
-        }
-        /**
-         * @internal
-         */
-        OverviewRulerPosition.prototype.equals = function (other) {
-            return (this.width === other.width
-                && this.height === other.height
-                && this.top === other.top
-                && this.right === other.right);
-        };
-        /**
-         * @internal
-         */
-        OverviewRulerPosition.prototype.clone = function () {
-            return new OverviewRulerPosition(this);
-        };
-        return OverviewRulerPosition;
-    }());
-    exports.OverviewRulerPosition = OverviewRulerPosition;
-    /**
-     * The internal layout details of the editor.
-     */
-    var EditorLayoutInfo = (function () {
-        /**
-         * @internal
-         */
-        function EditorLayoutInfo(source) {
-            this.width = source.width | 0;
-            this.height = source.height | 0;
-            this.glyphMarginLeft = source.glyphMarginLeft | 0;
-            this.glyphMarginWidth = source.glyphMarginWidth | 0;
-            this.glyphMarginHeight = source.glyphMarginHeight | 0;
-            this.lineNumbersLeft = source.lineNumbersLeft | 0;
-            this.lineNumbersWidth = source.lineNumbersWidth | 0;
-            this.lineNumbersHeight = source.lineNumbersHeight | 0;
-            this.decorationsLeft = source.decorationsLeft | 0;
-            this.decorationsWidth = source.decorationsWidth | 0;
-            this.decorationsHeight = source.decorationsHeight | 0;
-            this.contentLeft = source.contentLeft | 0;
-            this.contentWidth = source.contentWidth | 0;
-            this.contentHeight = source.contentHeight | 0;
-            this.verticalScrollbarWidth = source.verticalScrollbarWidth | 0;
-            this.horizontalScrollbarHeight = source.horizontalScrollbarHeight | 0;
-            this.overviewRuler = source.overviewRuler.clone();
-        }
-        /**
-         * @internal
-         */
-        EditorLayoutInfo.prototype.equals = function (other) {
-            return (this.width === other.width
-                && this.height === other.height
-                && this.glyphMarginLeft === other.glyphMarginLeft
-                && this.glyphMarginWidth === other.glyphMarginWidth
-                && this.glyphMarginHeight === other.glyphMarginHeight
-                && this.lineNumbersLeft === other.lineNumbersLeft
-                && this.lineNumbersWidth === other.lineNumbersWidth
-                && this.lineNumbersHeight === other.lineNumbersHeight
-                && this.decorationsLeft === other.decorationsLeft
-                && this.decorationsWidth === other.decorationsWidth
-                && this.decorationsHeight === other.decorationsHeight
-                && this.contentLeft === other.contentLeft
-                && this.contentWidth === other.contentWidth
-                && this.contentHeight === other.contentHeight
-                && this.verticalScrollbarWidth === other.verticalScrollbarWidth
-                && this.horizontalScrollbarHeight === other.horizontalScrollbarHeight
-                && this.overviewRuler.equals(other.overviewRuler));
-        };
-        /**
-         * @internal
-         */
-        EditorLayoutInfo.prototype.clone = function () {
-            return new EditorLayoutInfo(this);
-        };
-        return EditorLayoutInfo;
-    }());
-    exports.EditorLayoutInfo = EditorLayoutInfo;
-    /**
-     * Type of hit element with the mouse in the editor.
-     */
-    (function (MouseTargetType) {
-        /**
-         * Mouse is on top of an unknown element.
-         */
-        MouseTargetType[MouseTargetType["UNKNOWN"] = 0] = "UNKNOWN";
-        /**
-         * Mouse is on top of the textarea used for input.
-         */
-        MouseTargetType[MouseTargetType["TEXTAREA"] = 1] = "TEXTAREA";
-        /**
-         * Mouse is on top of the glyph margin
-         */
-        MouseTargetType[MouseTargetType["GUTTER_GLYPH_MARGIN"] = 2] = "GUTTER_GLYPH_MARGIN";
-        /**
-         * Mouse is on top of the line numbers
-         */
-        MouseTargetType[MouseTargetType["GUTTER_LINE_NUMBERS"] = 3] = "GUTTER_LINE_NUMBERS";
-        /**
-         * Mouse is on top of the line decorations
-         */
-        MouseTargetType[MouseTargetType["GUTTER_LINE_DECORATIONS"] = 4] = "GUTTER_LINE_DECORATIONS";
-        /**
-         * Mouse is on top of the whitespace left in the gutter by a view zone.
-         */
-        MouseTargetType[MouseTargetType["GUTTER_VIEW_ZONE"] = 5] = "GUTTER_VIEW_ZONE";
-        /**
-         * Mouse is on top of text in the content.
-         */
-        MouseTargetType[MouseTargetType["CONTENT_TEXT"] = 6] = "CONTENT_TEXT";
-        /**
-         * Mouse is on top of empty space in the content (e.g. after line text or below last line)
-         */
-        MouseTargetType[MouseTargetType["CONTENT_EMPTY"] = 7] = "CONTENT_EMPTY";
-        /**
-         * Mouse is on top of a view zone in the content.
-         */
-        MouseTargetType[MouseTargetType["CONTENT_VIEW_ZONE"] = 8] = "CONTENT_VIEW_ZONE";
-        /**
-         * Mouse is on top of a content widget.
-         */
-        MouseTargetType[MouseTargetType["CONTENT_WIDGET"] = 9] = "CONTENT_WIDGET";
-        /**
-         * Mouse is on top of the decorations overview ruler.
-         */
-        MouseTargetType[MouseTargetType["OVERVIEW_RULER"] = 10] = "OVERVIEW_RULER";
-        /**
-         * Mouse is on top of a scrollbar.
-         */
-        MouseTargetType[MouseTargetType["SCROLLBAR"] = 11] = "SCROLLBAR";
-        /**
-         * Mouse is on top of an overlay widget.
-         */
-        MouseTargetType[MouseTargetType["OVERLAY_WIDGET"] = 12] = "OVERLAY_WIDGET";
-    })(exports.MouseTargetType || (exports.MouseTargetType = {}));
-    var MouseTargetType = exports.MouseTargetType;
-    /**
-     * A context key that is set when the editor's text has focus (cursor is blinking).
-     */
-    exports.KEYBINDING_CONTEXT_EDITOR_TEXT_FOCUS = 'editorTextFocus';
-    /**
-     * A context key that is set when the editor's text or an editor's widget has focus.
-     */
-    exports.KEYBINDING_CONTEXT_EDITOR_FOCUS = 'editorFocus';
-    /**
-     * @internal
-     */
-    exports.KEYBINDING_CONTEXT_EDITOR_TAB_MOVES_FOCUS = 'editorTabMovesFocus';
-    /**
-     * A context key that is set when the editor has multiple selections (multiple cursors).
-     */
-    exports.KEYBINDING_CONTEXT_EDITOR_HAS_MULTIPLE_SELECTIONS = 'editorHasMultipleSelections';
-    /**
-     * A context key that is set when the editor has a non-collapsed selection.
-     */
-    exports.KEYBINDING_CONTEXT_EDITOR_HAS_NON_EMPTY_SELECTION = 'editorHasSelection';
-    /**
-     * A context key that is set to the language associated with the model associated with the editor.
-     */
-    exports.KEYBINDING_CONTEXT_EDITOR_LANGUAGE_ID = 'editorLangId';
-    /**
-     * @internal
-     */
-    exports.SHOW_ACCESSIBILITY_HELP_ACTION_ID = 'editor.action.showAccessibilityHelp';
-    var BareFontInfo = (function () {
-        /**
-         * @internal
-         */
-        function BareFontInfo(opts) {
-            this.fontFamily = String(opts.fontFamily);
-            this.fontSize = opts.fontSize | 0;
-            this.lineHeight = opts.lineHeight | 0;
-        }
-        /**
-         * @internal
-         */
-        BareFontInfo.prototype.getId = function () {
-            return this.fontFamily + '-' + this.fontSize + '-' + this.lineHeight;
-        };
-        return BareFontInfo;
-    }());
-    exports.BareFontInfo = BareFontInfo;
-    var FontInfo = (function (_super) {
-        __extends(FontInfo, _super);
-        /**
-         * @internal
-         */
-        function FontInfo(opts) {
-            _super.call(this, opts);
-            this.typicalHalfwidthCharacterWidth = opts.typicalHalfwidthCharacterWidth;
-            this.typicalFullwidthCharacterWidth = opts.typicalFullwidthCharacterWidth;
-            this.spaceWidth = opts.spaceWidth;
-            this.maxDigitWidth = opts.maxDigitWidth;
-        }
-        /**
-         * @internal
-         */
-        FontInfo.prototype.equals = function (other) {
-            return (this.fontFamily === other.fontFamily
-                && this.fontSize === other.fontSize
-                && this.lineHeight === other.lineHeight
-                && this.typicalHalfwidthCharacterWidth === other.typicalHalfwidthCharacterWidth
-                && this.typicalFullwidthCharacterWidth === other.typicalFullwidthCharacterWidth
-                && this.spaceWidth === other.spaceWidth
-                && this.maxDigitWidth === other.maxDigitWidth);
-        };
-        /**
-         * @internal
-         */
-        FontInfo.prototype.clone = function () {
-            return new FontInfo(this);
-        };
-        return FontInfo;
-    }(BareFontInfo));
-    exports.FontInfo = FontInfo;
-    /**
-     * @internal
-     */
-    exports.ViewEventNames = {
-        ModelFlushedEvent: 'modelFlushedEvent',
-        LinesDeletedEvent: 'linesDeletedEvent',
-        LinesInsertedEvent: 'linesInsertedEvent',
-        LineChangedEvent: 'lineChangedEvent',
-        TokensChangedEvent: 'tokensChangedEvent',
-        DecorationsChangedEvent: 'decorationsChangedEvent',
-        CursorPositionChangedEvent: 'cursorPositionChangedEvent',
-        CursorSelectionChangedEvent: 'cursorSelectionChangedEvent',
-        RevealRangeEvent: 'revealRangeEvent',
-        LineMappingChangedEvent: 'lineMappingChangedEvent',
-        ScrollRequestEvent: 'scrollRequestEvent'
-    };
-    /**
-     * @internal
-     */
-    var Viewport = (function () {
-        function Viewport(top, left, width, height) {
-            this.top = top | 0;
-            this.left = left | 0;
-            this.width = width | 0;
-            this.height = height | 0;
-        }
-        return Viewport;
-    }());
-    exports.Viewport = Viewport;
-    /**
-     * @internal
-     */
-    (function (CodeEditorStateFlag) {
-        CodeEditorStateFlag[CodeEditorStateFlag["Value"] = 0] = "Value";
-        CodeEditorStateFlag[CodeEditorStateFlag["Selection"] = 1] = "Selection";
-        CodeEditorStateFlag[CodeEditorStateFlag["Position"] = 2] = "Position";
-        CodeEditorStateFlag[CodeEditorStateFlag["Scroll"] = 3] = "Scroll";
-    })(exports.CodeEditorStateFlag || (exports.CodeEditorStateFlag = {}));
-    var CodeEditorStateFlag = exports.CodeEditorStateFlag;
-    /**
-     * The type of the `IEditor`.
-     */
-    exports.EditorType = {
-        ICodeEditor: 'vs.editor.ICodeEditor',
-        IDiffEditor: 'vs.editor.IDiffEditor'
-    };
-    /**
-     * @internal
-     */
-    exports.ClassName = {
-        EditorWarningDecoration: 'greensquiggly',
-        EditorErrorDecoration: 'redsquiggly'
-    };
-    /**
-     * @internal
-     */
-    exports.EventType = {
-        Disposed: 'disposed',
-        ConfigurationChanged: 'configurationChanged',
-        ModelDispose: 'modelDispose',
-        ModelChanged: 'modelChanged',
-        ModelTokensChanged: 'modelTokensChanged',
-        ModelModeChanged: 'modelsModeChanged',
-        ModelModeSupportChanged: 'modelsModeSupportChanged',
-        ModelOptionsChanged: 'modelOptionsChanged',
-        ModelRawContentChanged: 'contentChanged',
-        ModelContentChanged2: 'contentChanged2',
-        ModelRawContentChangedFlush: 'flush',
-        ModelRawContentChangedLinesDeleted: 'linesDeleted',
-        ModelRawContentChangedLinesInserted: 'linesInserted',
-        ModelRawContentChangedLineChanged: 'lineChanged',
-        EditorTextBlur: 'blur',
-        EditorTextFocus: 'focus',
-        EditorFocus: 'widgetFocus',
-        EditorBlur: 'widgetBlur',
-        ModelDecorationsChanged: 'decorationsChanged',
-        CursorPositionChanged: 'positionChanged',
-        CursorSelectionChanged: 'selectionChanged',
-        CursorRevealRange: 'revealRange',
-        CursorScrollRequest: 'scrollRequest',
-        ViewFocusGained: 'focusGained',
-        ViewFocusLost: 'focusLost',
-        ViewFocusChanged: 'focusChanged',
-        ViewScrollChanged: 'scrollChanged',
-        ViewZonesChanged: 'zonesChanged',
-        ViewLayoutChanged: 'viewLayoutChanged',
-        ContextMenu: 'contextMenu',
-        MouseDown: 'mousedown',
-        MouseUp: 'mouseup',
-        MouseMove: 'mousemove',
-        MouseLeave: 'mouseleave',
-        KeyDown: 'keydown',
-        KeyUp: 'keyup',
-        EditorLayout: 'editorLayout',
-        DiffUpdated: 'diffUpdated'
-    };
-    /**
-     * Built-in commands.
-     */
-    exports.Handler = {
-        ExecuteCommand: 'executeCommand',
-        ExecuteCommands: 'executeCommands',
-        CursorLeft: 'cursorLeft',
-        CursorLeftSelect: 'cursorLeftSelect',
-        CursorWordLeft: 'cursorWordLeft',
-        CursorWordStartLeft: 'cursorWordStartLeft',
-        CursorWordEndLeft: 'cursorWordEndLeft',
-        CursorWordLeftSelect: 'cursorWordLeftSelect',
-        CursorWordStartLeftSelect: 'cursorWordStartLeftSelect',
-        CursorWordEndLeftSelect: 'cursorWordEndLeftSelect',
-        CursorRight: 'cursorRight',
-        CursorRightSelect: 'cursorRightSelect',
-        CursorWordRight: 'cursorWordRight',
-        CursorWordStartRight: 'cursorWordStartRight',
-        CursorWordEndRight: 'cursorWordEndRight',
-        CursorWordRightSelect: 'cursorWordRightSelect',
-        CursorWordStartRightSelect: 'cursorWordStartRightSelect',
-        CursorWordEndRightSelect: 'cursorWordEndRightSelect',
-        CursorUp: 'cursorUp',
-        CursorUpSelect: 'cursorUpSelect',
-        CursorDown: 'cursorDown',
-        CursorDownSelect: 'cursorDownSelect',
-        CursorPageUp: 'cursorPageUp',
-        CursorPageUpSelect: 'cursorPageUpSelect',
-        CursorPageDown: 'cursorPageDown',
-        CursorPageDownSelect: 'cursorPageDownSelect',
-        CursorHome: 'cursorHome',
-        CursorHomeSelect: 'cursorHomeSelect',
-        CursorEnd: 'cursorEnd',
-        CursorEndSelect: 'cursorEndSelect',
-        ExpandLineSelection: 'expandLineSelection',
-        CursorTop: 'cursorTop',
-        CursorTopSelect: 'cursorTopSelect',
-        CursorBottom: 'cursorBottom',
-        CursorBottomSelect: 'cursorBottomSelect',
-        CursorColumnSelectLeft: 'cursorColumnSelectLeft',
-        CursorColumnSelectRight: 'cursorColumnSelectRight',
-        CursorColumnSelectUp: 'cursorColumnSelectUp',
-        CursorColumnSelectPageUp: 'cursorColumnSelectPageUp',
-        CursorColumnSelectDown: 'cursorColumnSelectDown',
-        CursorColumnSelectPageDown: 'cursorColumnSelectPageDown',
-        AddCursorDown: 'addCursorDown',
-        AddCursorUp: 'addCursorUp',
-        CursorUndo: 'cursorUndo',
-        MoveTo: 'moveTo',
-        MoveToSelect: 'moveToSelect',
-        ColumnSelect: 'columnSelect',
-        CreateCursor: 'createCursor',
-        LastCursorMoveToSelect: 'lastCursorMoveToSelect',
-        JumpToBracket: 'jumpToBracket',
-        Type: 'type',
-        ReplacePreviousChar: 'replacePreviousChar',
-        Paste: 'paste',
-        Tab: 'tab',
-        Indent: 'indent',
-        Outdent: 'outdent',
-        DeleteLeft: 'deleteLeft',
-        DeleteRight: 'deleteRight',
-        DeleteWordLeft: 'deleteWordLeft',
-        DeleteWordStartLeft: 'deleteWordStartLeft',
-        DeleteWordEndLeft: 'deleteWordEndLeft',
-        DeleteWordRight: 'deleteWordRight',
-        DeleteWordStartRight: 'deleteWordStartRight',
-        DeleteWordEndRight: 'deleteWordEndRight',
-        DeleteAllLeft: 'deleteAllLeft',
-        DeleteAllRight: 'deleteAllRight',
-        RemoveSecondaryCursors: 'removeSecondaryCursors',
-        CancelSelection: 'cancelSelection',
-        Cut: 'cut',
-        Undo: 'undo',
-        Redo: 'redo',
-        WordSelect: 'wordSelect',
-        WordSelectDrag: 'wordSelectDrag',
-        LastCursorWordSelect: 'lastCursorWordSelect',
-        LineSelect: 'lineSelect',
-        LineSelectDrag: 'lineSelectDrag',
-        LastCursorLineSelect: 'lastCursorLineSelect',
-        LastCursorLineSelectDrag: 'lastCursorLineSelectDrag',
-        LineInsertBefore: 'lineInsertBefore',
-        LineInsertAfter: 'lineInsertAfter',
-        LineBreakInsert: 'lineBreakInsert',
-        SelectAll: 'selectAll',
-        ScrollLineUp: 'scrollLineUp',
-        ScrollLineDown: 'scrollLineDown',
-        ScrollPageUp: 'scrollPageUp',
-        ScrollPageDown: 'scrollPageDown'
-    };
-    /**
-     * The style in which the editor's cursor should be rendered.
-     */
-    (function (TextEditorCursorStyle) {
-        /**
-         * As a vertical line (sitting between two characters).
-         */
-        TextEditorCursorStyle[TextEditorCursorStyle["Line"] = 1] = "Line";
-        /**
-         * As a block (sitting on top of a character).
-         */
-        TextEditorCursorStyle[TextEditorCursorStyle["Block"] = 2] = "Block";
-        /**
-         * As a horizontal line (sitting under a character).
-         */
-        TextEditorCursorStyle[TextEditorCursorStyle["Underline"] = 3] = "Underline";
-    })(exports.TextEditorCursorStyle || (exports.TextEditorCursorStyle = {}));
-    var TextEditorCursorStyle = exports.TextEditorCursorStyle;
-    /**
-     * @internal
-     */
-    function cursorStyleToString(cursorStyle) {
-        if (cursorStyle === TextEditorCursorStyle.Line) {
-            return 'line';
-        }
-        else if (cursorStyle === TextEditorCursorStyle.Block) {
-            return 'block';
-        }
-        else if (cursorStyle === TextEditorCursorStyle.Underline) {
-            return 'underline';
-        }
-        else {
-            throw new Error('cursorStyleToString: Unknown cursorStyle');
-        }
-    }
-    exports.cursorStyleToString = cursorStyleToString;
-    /**
-     * @internal
-     */
-    var ColorZone = (function () {
-        function ColorZone(from, to, colorId, position) {
-            this.from = from | 0;
-            this.to = to | 0;
-            this.colorId = colorId | 0;
-            this.position = position | 0;
-        }
-        return ColorZone;
-    }());
-    exports.ColorZone = ColorZone;
-    /**
-     * A zone in the overview ruler
-     * @internal
-     */
-    var OverviewRulerZone = (function () {
-        function OverviewRulerZone(startLineNumber, endLineNumber, position, forceHeight, color, darkColor) {
+    var IndentRange = (function () {
+        function IndentRange(startLineNumber, endLineNumber, indent) {
             this.startLineNumber = startLineNumber;
             this.endLineNumber = endLineNumber;
-            this.position = position;
-            this.forceHeight = forceHeight;
-            this._color = color;
-            this._darkColor = darkColor;
-            this._colorZones = null;
+            this.indent = indent;
         }
-        OverviewRulerZone.prototype.getColor = function (useDarkColor) {
-            if (useDarkColor) {
-                return this._darkColor;
+        IndentRange.deepCloneArr = function (indentRanges) {
+            var result = [];
+            for (var i = 0, len = indentRanges.length; i < len; i++) {
+                var r = indentRanges[i];
+                result[i] = new IndentRange(r.startLineNumber, r.endLineNumber, r.indent);
             }
-            return this._color;
+            return result;
         };
-        OverviewRulerZone.prototype.equals = function (other) {
-            return (this.startLineNumber === other.startLineNumber
-                && this.endLineNumber === other.endLineNumber
-                && this.position === other.position
-                && this.forceHeight === other.forceHeight
-                && this._color === other._color
-                && this._darkColor === other._darkColor);
-        };
-        OverviewRulerZone.prototype.compareTo = function (other) {
-            if (this.startLineNumber === other.startLineNumber) {
-                if (this.endLineNumber === other.endLineNumber) {
-                    if (this.forceHeight === other.forceHeight) {
-                        if (this.position === other.position) {
-                            if (this._darkColor === other._darkColor) {
-                                if (this._color === other._color) {
-                                    return 0;
-                                }
-                                return this._color < other._color ? -1 : 1;
-                            }
-                            return this._darkColor < other._darkColor ? -1 : 1;
-                        }
-                        return this.position - other.position;
-                    }
-                    return this.forceHeight - other.forceHeight;
-                }
-                return this.endLineNumber - other.endLineNumber;
-            }
-            return this.startLineNumber - other.startLineNumber;
-        };
-        OverviewRulerZone.prototype.setColorZones = function (colorZones) {
-            this._colorZones = colorZones;
-        };
-        OverviewRulerZone.prototype.getColorZones = function () {
-            return this._colorZones;
-        };
-        return OverviewRulerZone;
+        return IndentRange;
     }());
-    exports.OverviewRulerZone = OverviewRulerZone;
+    exports.IndentRange = IndentRange;
+    function computeRanges(model, minimumRangeSize) {
+        if (minimumRangeSize === void 0) { minimumRangeSize = 1; }
+        var result = [];
+        var previousRegions = [];
+        previousRegions.push({ indent: -1, line: model.getLineCount() + 1 }); // sentinel, to make sure there's at least one entry
+        for (var line = model.getLineCount(); line > 0; line--) {
+            var indent = model.getIndentLevel(line);
+            if (indent === -1) {
+                continue; // only whitespace
+            }
+            var previous = previousRegions[previousRegions.length - 1];
+            if (previous.indent > indent) {
+                // discard all regions with larger indent
+                do {
+                    previousRegions.pop();
+                    previous = previousRegions[previousRegions.length - 1];
+                } while (previous.indent > indent);
+                // new folding range
+                var endLineNumber = previous.line - 1;
+                if (endLineNumber - line >= minimumRangeSize) {
+                    result.push(new IndentRange(line, endLineNumber, indent));
+                }
+            }
+            if (previous.indent === indent) {
+                previous.line = line;
+            }
+            else {
+                // new region with a bigger indent
+                previousRegions.push({ indent: indent, line: line });
+            }
+        }
+        return result.reverse();
+    }
+    exports.computeRanges = computeRanges;
 });
 
-define(__m[95], __M([1,0]), function (require, exports) {
+define(__m[87], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -7163,46 +6545,7 @@ define(__m[95], __M([1,0]), function (require, exports) {
     exports.guessIndentation = guessIndentation;
 });
 
-define(__m[101], __M([1,0,30]), function (require, exports, arrays_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    /**
-     * A token on a line.
-     */
-    var LineToken = (function () {
-        function LineToken(startIndex, type) {
-            this.startIndex = startIndex | 0; // @perf
-            this.type = type;
-        }
-        LineToken.prototype.equals = function (other) {
-            return (this.startIndex === other.startIndex
-                && this.type === other.type);
-        };
-        LineToken.findIndexInSegmentsArray = function (arr, desiredIndex) {
-            return arrays_1.Arrays.findIndexInSegmentsArray(arr, desiredIndex);
-        };
-        LineToken.equalsArray = function (a, b) {
-            var aLen = a.length;
-            var bLen = b.length;
-            if (aLen !== bLen) {
-                return false;
-            }
-            for (var i = 0; i < aLen; i++) {
-                if (!a[i].equals(b[i])) {
-                    return false;
-                }
-            }
-            return true;
-        };
-        return LineToken;
-    }());
-    exports.LineToken = LineToken;
-});
-
-define(__m[69], __M([1,0]), function (require, exports) {
+define(__m[86], __M([0,1,13]), function (require, exports, token_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -7286,10 +6629,7 @@ define(__m[69], __M([1,0]), function (require, exports) {
             var type = this._currentLineTokens.getTokenType(this._currentTokenIndex);
             var endIndex = this._currentLineTokens.getTokenEndIndex(this._currentTokenIndex, this._model.getLineContent(this._currentLineNumber).length);
             return {
-                token: {
-                    startIndex: startIndex,
-                    type: type
-                },
+                token: new token_1.Token(startIndex, type),
                 lineNumber: this._currentLineNumber,
                 startColumn: startIndex + 1,
                 endColumn: endIndex + 1
@@ -7326,7 +6666,7 @@ define(__m[69], __M([1,0]), function (require, exports) {
     exports.TokenIterator = TokenIterator;
 });
 
-define(__m[17], __M([1,0]), function (require, exports) {
+define(__m[14], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -7403,7 +6743,7 @@ define(__m[17], __M([1,0]), function (require, exports) {
     exports.getWordAtText = getWordAtText;
 });
 
-define(__m[39], __M([1,0]), function (require, exports) {
+define(__m[27], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -7471,7 +6811,7 @@ define(__m[39], __M([1,0]), function (require, exports) {
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-define(__m[82], __M([1,0,55]), function (require, exports, glob_1) {
+define(__m[84], __M([0,1,37]), function (require, exports, glob_1) {
     'use strict';
     function matches(selection, uri, language) {
         return score(selection, uri, language) > 0;
@@ -7497,15 +6837,18 @@ define(__m[82], __M([1,0,55]), function (require, exports, glob_1) {
             }
         }
         else if (selector) {
+            // all must match but only highest score counts
             var filter = selector;
-            var value = 0;
+            var valueLanguage = 0;
+            var valueScheme = 0;
+            var valuePattern = 0;
             // language id
             if (filter.language) {
                 if (filter.language === language) {
-                    value += 10;
+                    valueLanguage = 10;
                 }
                 else if (filter.language === '*') {
-                    value += 5;
+                    valueLanguage = 5;
                 }
                 else {
                     return 0;
@@ -7514,7 +6857,7 @@ define(__m[82], __M([1,0,55]), function (require, exports, glob_1) {
             // scheme
             if (filter.scheme) {
                 if (filter.scheme === uri.scheme) {
-                    value += 10;
+                    valueScheme = 10;
                 }
                 else {
                     return 0;
@@ -7523,22 +6866,22 @@ define(__m[82], __M([1,0,55]), function (require, exports, glob_1) {
             // match fsPath with pattern
             if (filter.pattern) {
                 if (filter.pattern === uri.fsPath) {
-                    value += 10;
+                    valuePattern = 10;
                 }
                 else if (glob_1.match(filter.pattern, uri.fsPath)) {
-                    value += 5;
+                    valuePattern = 5;
                 }
                 else {
                     return 0;
                 }
             }
-            return value;
+            return Math.max(valueLanguage, valueScheme, valuePattern);
         }
     }
     exports.score = score;
 });
 
-define(__m[62], __M([1,0]), function (require, exports) {
+define(__m[54], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -7889,7 +7232,7 @@ define(__m[62], __M([1,0]), function (require, exports) {
     exports.LineStream = LineStream;
 });
 
-define(__m[25], __M([1,0]), function (require, exports) {
+define(__m[24], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -8029,7 +7372,7 @@ define(__m[25], __M([1,0]), function (require, exports) {
     exports.stateExists = stateExists;
 });
 
-define(__m[88], __M([1,0,12,25]), function (require, exports, objects, monarchCommon) {
+define(__m[61], __M([0,1,48,24]), function (require, exports, objects, monarchCommon) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -8532,7 +7875,7 @@ define(__m[88], __M([1,0,12,25]), function (require, exports, objects, monarchCo
     exports.compile = compile;
 });
 
-define(__m[48], __M([1,0]), function (require, exports) {
+define(__m[60], __M([0,1,9,13]), function (require, exports, modeTransition_1, token_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -8585,24 +7928,14 @@ define(__m[48], __M([1,0]), function (require, exports) {
         NullMode.prototype.toSimplifiedMode = function () {
             return this;
         };
-        NullMode.ID = 'vs.editor.modes.nullMode';
+        NullMode.ID = 'vs.editor.nullMode';
         return NullMode;
     }());
     exports.NullMode = NullMode;
-    function nullTokenize(mode, buffer, state, deltaOffset, stopAtOffset) {
+    function nullTokenize(modeId, buffer, state, deltaOffset, stopAtOffset) {
         if (deltaOffset === void 0) { deltaOffset = 0; }
-        var tokens = [
-            {
-                startIndex: deltaOffset,
-                type: ''
-            }
-        ];
-        var modeTransitions = [
-            {
-                startIndex: deltaOffset,
-                mode: mode
-            }
-        ];
+        var tokens = [new token_1.Token(deltaOffset, '')];
+        var modeTransitions = [new modeTransition_1.ModeTransition(deltaOffset, modeId)];
         return {
             tokens: tokens,
             actualStopOffset: deltaOffset + buffer.length,
@@ -8613,23 +7946,12 @@ define(__m[48], __M([1,0]), function (require, exports) {
     exports.nullTokenize = nullTokenize;
 });
 
-define(__m[14], __M([1,0,3,12,18]), function (require, exports, strings, objects, modeTransition_1) {
+define(__m[21], __M([0,1,9]), function (require, exports, modeTransition_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
      *--------------------------------------------------------------------------------------------*/
     'use strict';
-    var Token = (function () {
-        function Token(startIndex, type) {
-            this.startIndex = startIndex;
-            this.type = type;
-        }
-        Token.prototype.toString = function () {
-            return '(' + this.startIndex + ', ' + this.type + ')';
-        };
-        return Token;
-    }());
-    exports.Token = Token;
     var LineTokens = (function () {
         function LineTokens(tokens, modeTransitions, actualStopOffset, endState) {
             this.tokens = tokens;
@@ -8647,7 +7969,7 @@ define(__m[14], __M([1,0,3,12,18]), function (require, exports, strings, objects
             return runner(modeTransitions[0].modeId, context, offset);
         }
         var modeIndex = modeTransition_1.ModeTransition.findIndexInSegmentsArray(modeTransitions, offset);
-        var nestedMode = modeTransitions[modeIndex].mode;
+        var nestedModeId = modeTransitions[modeIndex].modeId;
         var modeStartIndex = modeTransitions[modeIndex].startIndex;
         var firstTokenInModeIndex = context.findIndexOfOffset(modeStartIndex);
         var nextCharacterAfterModeIndex = -1;
@@ -8661,13 +7983,13 @@ define(__m[14], __M([1,0,3,12,18]), function (require, exports, strings, objects
             nextCharacterAfterModeIndex = context.getLineContent().length;
         }
         var firstTokenCharacterOffset = context.getTokenStartIndex(firstTokenInModeIndex);
-        var newCtx = new FilteredLineContext(context, nestedMode, firstTokenInModeIndex, nextTokenAfterMode, firstTokenCharacterOffset, nextCharacterAfterModeIndex);
-        return runner(nestedMode.getId(), newCtx, offset - firstTokenCharacterOffset);
+        var newCtx = new FilteredLineContext(context, nestedModeId, firstTokenInModeIndex, nextTokenAfterMode, firstTokenCharacterOffset, nextCharacterAfterModeIndex);
+        return runner(nestedModeId, newCtx, offset - firstTokenCharacterOffset);
     }
     exports.handleEvent = handleEvent;
     var FilteredLineContext = (function () {
-        function FilteredLineContext(actual, mode, firstTokenInModeIndex, nextTokenAfterMode, firstTokenCharacterOffset, nextCharacterAfterModeIndex) {
-            this.modeTransitions = [new modeTransition_1.ModeTransition(0, mode)];
+        function FilteredLineContext(actual, modeId, firstTokenInModeIndex, nextTokenAfterMode, firstTokenCharacterOffset, nextCharacterAfterModeIndex) {
+            this.modeTransitions = [new modeTransition_1.ModeTransition(0, modeId)];
             this._actual = actual;
             this._firstTokenInModeIndex = firstTokenInModeIndex;
             this._nextTokenAfterMode = nextTokenAfterMode;
@@ -8687,14 +8009,8 @@ define(__m[14], __M([1,0,3,12,18]), function (require, exports, strings, objects
         FilteredLineContext.prototype.getTokenStartIndex = function (tokenIndex) {
             return this._actual.getTokenStartIndex(tokenIndex + this._firstTokenInModeIndex) - this._firstTokenCharacterOffset;
         };
-        FilteredLineContext.prototype.getTokenEndIndex = function (tokenIndex) {
-            return this._actual.getTokenEndIndex(tokenIndex + this._firstTokenInModeIndex) - this._firstTokenCharacterOffset;
-        };
         FilteredLineContext.prototype.getTokenType = function (tokenIndex) {
             return this._actual.getTokenType(tokenIndex + this._firstTokenInModeIndex);
-        };
-        FilteredLineContext.prototype.getTokenText = function (tokenIndex) {
-            return this._actual.getTokenText(tokenIndex + this._firstTokenInModeIndex);
         };
         return FilteredLineContext;
     }());
@@ -8704,94 +8020,9 @@ define(__m[14], __M([1,0,3,12,18]), function (require, exports, strings, objects
         return IGNORE_IN_TOKENS.test(tokenType);
     }
     exports.ignoreBracketsInToken = ignoreBracketsInToken;
-    // TODO@Martin: find a better home for this code:
-    // TODO@Martin: modify suggestSupport to return a boolean if snippets should be presented or not
-    //       and turn this into a real registry
-    var SnippetsRegistry = (function () {
-        function SnippetsRegistry() {
-        }
-        SnippetsRegistry.registerDefaultSnippets = function (modeId, snippets) {
-            this._defaultSnippets[modeId] = (this._defaultSnippets[modeId] || []).concat(snippets);
-        };
-        SnippetsRegistry.registerSnippets = function (modeId, path, snippets) {
-            var snippetsByMode = this._snippets[modeId];
-            if (!snippetsByMode) {
-                this._snippets[modeId] = snippetsByMode = {};
-            }
-            snippetsByMode[path] = snippets;
-        };
-        // the previous
-        SnippetsRegistry.getNonWhitespacePrefix = function (model, position) {
-            var line = model.getLineContent(position.lineNumber);
-            var match = line.match(/[^\s]+$/);
-            if (match) {
-                return match[0];
-            }
-            return '';
-        };
-        SnippetsRegistry.getSnippets = function (model, position) {
-            var word = model.getWordAtPosition(position);
-            var currentWord = word ? word.word.substring(0, position.column - word.startColumn).toLowerCase() : '';
-            var currentFullWord = SnippetsRegistry.getNonWhitespacePrefix(model, position).toLowerCase();
-            var result = {
-                currentWord: currentWord,
-                incomplete: currentWord.length === 0,
-                suggestions: []
-            };
-            var modeId = model.getModeId();
-            var snippets = [];
-            var snipppetsByMode = this._snippets[modeId];
-            if (snipppetsByMode) {
-                for (var s in snipppetsByMode) {
-                    snippets = snippets.concat(snipppetsByMode[s]);
-                }
-            }
-            var defaultSnippets = this._defaultSnippets[modeId];
-            if (defaultSnippets) {
-                snippets = snippets.concat(defaultSnippets);
-            }
-            // to avoid that snippets are too prominent in the intellisense proposals:
-            // enforce that current word is matched or the position is after a whitespace
-            snippets.forEach(function (p) {
-                if (currentWord.length === 0 && currentFullWord.length === 0) {
-                }
-                else {
-                    var label = p.label.toLowerCase();
-                    // force that the current word or full word matches with the snippet prefix
-                    if (currentWord.length > 0 && strings.startsWith(label, currentWord)) {
-                    }
-                    else if (currentFullWord.length > currentWord.length && strings.startsWith(label, currentFullWord)) {
-                        p = objects.clone(p);
-                        p.overwriteBefore = currentFullWord.length;
-                    }
-                    else {
-                        return;
-                    }
-                }
-                result.suggestions.push(p);
-            });
-            // if (result.suggestions.length > 0) {
-            // 	if (word) {
-            // 		// Push also the current word as first suggestion, to avoid unexpected snippet acceptance on Enter.
-            // 		result.suggestions = result.suggestions.slice(0);
-            // 		result.suggestions.unshift({
-            // 			codeSnippet: word.word,
-            // 			label: word.word,
-            // 			type: 'text'
-            // 		});
-            // 	}
-            // 	result.incomplete = true;
-            // }
-            return result;
-        };
-        SnippetsRegistry._defaultSnippets = Object.create(null);
-        SnippetsRegistry._snippets = Object.create(null);
-        return SnippetsRegistry;
-    }());
-    exports.SnippetsRegistry = SnippetsRegistry;
 });
 
-define(__m[94], __M([1,0,14]), function (require, exports, supports_1) {
+define(__m[82], __M([0,1,21]), function (require, exports, supports_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -8849,7 +8080,7 @@ define(__m[94], __M([1,0,14]), function (require, exports, supports_1) {
     exports.CharacterPairSupport = CharacterPairSupport;
 });
 
-define(__m[28], __M([1,0,3,29]), function (require, exports, strings, range_1) {
+define(__m[23], __M([0,1,4,28]), function (require, exports, strings, range_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -8873,10 +8104,10 @@ define(__m[28], __M([1,0,3,29]), function (require, exports, strings, range_1) {
             this.textIsOpenBracket = {};
             this.maxBracketLength = 0;
             this.brackets.forEach(function (b) {
-                _this.textIsBracket[b.open] = b;
-                _this.textIsBracket[b.close] = b;
-                _this.textIsOpenBracket[b.open] = true;
-                _this.textIsOpenBracket[b.close] = false;
+                _this.textIsBracket[b.open.toLowerCase()] = b;
+                _this.textIsBracket[b.close.toLowerCase()] = b;
+                _this.textIsOpenBracket[b.open.toLowerCase()] = true;
+                _this.textIsOpenBracket[b.close.toLowerCase()] = false;
                 _this.maxBracketLength = Math.max(_this.maxBracketLength, b.open.length);
                 _this.maxBracketLength = Math.max(_this.maxBracketLength, b.close.length);
             });
@@ -8967,18 +8198,18 @@ define(__m[28], __M([1,0,3,29]), function (require, exports, strings, range_1) {
     exports.BracketsUtils = BracketsUtils;
 });
 
-define(__m[99], __M([1,0,3,14,28]), function (require, exports, strings, supports_1, richEditBrackets_1) {
+define(__m[80], __M([0,1,4,21,23]), function (require, exports, strings, supports_1, richEditBrackets_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
      *--------------------------------------------------------------------------------------------*/
     'use strict';
     var BracketElectricCharacterSupport = (function () {
-        function BracketElectricCharacterSupport(registry, modeId, brackets, contribution) {
+        function BracketElectricCharacterSupport(registry, modeId, brackets, autoClosePairs, contribution) {
             this._registry = registry;
             this._modeId = modeId;
             this.contribution = contribution || {};
-            this.brackets = new Brackets(modeId, brackets, this.contribution.docComment);
+            this.brackets = new Brackets(modeId, brackets, autoClosePairs, this.contribution.docComment);
         }
         BracketElectricCharacterSupport.prototype.getElectricCharacters = function () {
             if (Array.isArray(this.contribution.embeddedElectricCharacters)) {
@@ -9003,11 +8234,14 @@ define(__m[99], __M([1,0,3,14,28]), function (require, exports, strings, support
     }());
     exports.BracketElectricCharacterSupport = BracketElectricCharacterSupport;
     var Brackets = (function () {
-        function Brackets(modeId, richEditBrackets, docComment) {
-            if (docComment === void 0) { docComment = null; }
+        function Brackets(modeId, richEditBrackets, autoClosePairs, docComment) {
             this._modeId = modeId;
             this._richEditBrackets = richEditBrackets;
-            this._docComment = docComment ? docComment : null;
+            this._complexAutoClosePairs = autoClosePairs.filter(function (pair) { return pair.open.length > 1 && !!pair.close; });
+            if (docComment) {
+                // IDocComment is legacy, only partially supported
+                this._complexAutoClosePairs.push({ open: docComment.open, close: docComment.close });
+            }
         }
         Brackets.prototype.getElectricCharacters = function () {
             var result = [];
@@ -9018,9 +8252,10 @@ define(__m[99], __M([1,0,3,14,28]), function (require, exports, strings, support
                     result.push(lastChar);
                 }
             }
-            // Doc comments
-            if (this._docComment) {
-                result.push(this._docComment.open.charAt(this._docComment.open.length - 1));
+            // auto close
+            for (var _i = 0, _a = this._complexAutoClosePairs; _i < _a.length; _i++) {
+                var pair = _a[_i];
+                result.push(pair.open.charAt(pair.open.length - 1));
             }
             // Filter duplicate entries
             result = result.filter(function (item, pos, array) {
@@ -9032,8 +8267,8 @@ define(__m[99], __M([1,0,3,14,28]), function (require, exports, strings, support
             if (context.getTokenCount() === 0) {
                 return null;
             }
-            return (this._onElectricCharacterDocComment(context, offset) ||
-                this._onElectricCharacterStandardBrackets(context, offset));
+            return (this._onElectricAutoClose(context, offset) ||
+                this._onElectricAutoIndent(context, offset));
         };
         Brackets.prototype.containsTokenTypes = function (fullTokenSpec, tokensToLookFor) {
             var array = tokensToLookFor.split('.');
@@ -9044,7 +8279,7 @@ define(__m[99], __M([1,0,3,14,28]), function (require, exports, strings, support
             }
             return true;
         };
-        Brackets.prototype._onElectricCharacterStandardBrackets = function (context, offset) {
+        Brackets.prototype._onElectricAutoIndent = function (context, offset) {
             if (!this._richEditBrackets || this._richEditBrackets.brackets.length === 0) {
                 return null;
             }
@@ -9061,6 +8296,7 @@ define(__m[99], __M([1,0,3,14,28]), function (require, exports, strings, support
                 var r = richEditBrackets_1.BracketsUtils.findPrevBracketInToken(reversedBracketRegex, 1, lineText, tokenStart, tokenEnd);
                 if (r) {
                     var text = lineText.substring(r.startColumn - 1, r.endColumn - 1);
+                    text = text.toLowerCase();
                     var isOpen = this._richEditBrackets.textIsOpenBracket[text];
                     if (!isOpen) {
                         return {
@@ -9071,37 +8307,50 @@ define(__m[99], __M([1,0,3,14,28]), function (require, exports, strings, support
             }
             return null;
         };
-        Brackets.prototype._onElectricCharacterDocComment = function (context, offset) {
-            // We only auto-close, so do nothing if there is no closing part.
-            if (!this._docComment || !this._docComment.close) {
+        Brackets.prototype._onElectricAutoClose = function (context, offset) {
+            var _this = this;
+            if (!this._complexAutoClosePairs.length) {
                 return null;
             }
             var line = context.getLineContent();
             var char = line[offset];
-            // See if the right electric character was pressed
-            if (char !== this._docComment.open.charAt(this._docComment.open.length - 1)) {
-                return null;
+            var _loop_1 = function(i) {
+                var pair = this_1._complexAutoClosePairs[i];
+                // See if the right electric character was pressed
+                if (char !== pair.open.charAt(pair.open.length - 1)) {
+                    return "continue";
+                }
+                // If this line already contains the closing tag, do nothing.
+                if (line.indexOf(pair.close, offset) >= 0) {
+                    return "continue";
+                }
+                // check if the full open bracket matches
+                var lastTokenIndex = context.findIndexOfOffset(offset);
+                if (line.substring(context.getTokenStartIndex(lastTokenIndex), offset + 1 /* include electric char*/) !== pair.open) {
+                    return "continue";
+                }
+                // If we're in a scope listen in 'notIn', do nothing
+                if (pair.notIn) {
+                    var tokenType_1 = context.getTokenType(lastTokenIndex);
+                    if (pair.notIn.some(function (scope) { return _this.containsTokenTypes(tokenType_1, scope); })) {
+                        return "continue";
+                    }
+                }
+                return { value: { appendText: pair.close } };
+            };
+            var this_1 = this;
+            for (var i = 0; i < this._complexAutoClosePairs.length; i++) {
+                var state_1 = _loop_1(i);
+                if (typeof state_1 === "object") return state_1.value;
+                if (state_1 === "continue") continue;
             }
-            // If this line already contains the closing tag, do nothing.
-            if (line.indexOf(this._docComment.close, offset) >= 0) {
-                return null;
-            }
-            // If we're not in a documentation comment, do nothing.
-            var lastTokenIndex = context.findIndexOfOffset(offset);
-            if (!this.containsTokenTypes(context.getTokenType(lastTokenIndex), this._docComment.scope)) {
-                return null;
-            }
-            if (line.substring(context.getTokenStartIndex(lastTokenIndex), offset + 1 /* include electric char*/) !== this._docComment.open) {
-                return null;
-            }
-            return { appendText: this._docComment.close };
         };
         return Brackets;
     }());
     exports.Brackets = Brackets;
 });
 
-define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, nullMode_1, supports_1) {
+define(__m[41], __M([0,1,54,60,13,9]), function (require, exports, lineStream_1, nullMode_1, token_1, modeTransition_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -9113,6 +8362,7 @@ define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, n
     var TokenizationSupport = (function () {
         function TokenizationSupport(mode, customization, supportsNestedModes) {
             this._mode = mode;
+            this._modeId = this._mode.getId();
             this.customization = customization;
             this.supportsNestedModes = supportsNestedModes;
             this._embeddedModesListeners = {};
@@ -9165,14 +8415,14 @@ define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, n
             var nestedMode = stepOnceNestedState.getMode();
             if (!leavingNestedModeData) {
                 // tokenization will not leave nested mode
-                var result;
+                var result = void 0;
                 if (nestedMode.tokenizationSupport) {
                     result = nestedMode.tokenizationSupport.tokenize(buffer, nestedModeState, deltaOffset, stopAtOffset);
                 }
                 else {
                     // The nested mode doesn't have tokenization support,
                     // unfortunatelly this means we have to fake it
-                    result = nullMode_1.nullTokenize(nestedMode, buffer, nestedModeState, deltaOffset);
+                    result = nullMode_1.nullTokenize(nestedMode.getId(), buffer, nestedModeState, deltaOffset);
                 }
                 result.tokens = prependTokens.concat(result.tokens);
                 result.modeTransitions = prependModeTransitions.concat(result.modeTransitions);
@@ -9181,14 +8431,14 @@ define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, n
             var nestedModeBuffer = leavingNestedModeData.nestedModeBuffer;
             if (nestedModeBuffer.length > 0) {
                 // Tokenize with the nested mode
-                var nestedModeLineTokens;
+                var nestedModeLineTokens = void 0;
                 if (nestedMode.tokenizationSupport) {
                     nestedModeLineTokens = nestedMode.tokenizationSupport.tokenize(nestedModeBuffer, nestedModeState, deltaOffset, stopAtOffset);
                 }
                 else {
                     // The nested mode doesn't have tokenization support,
                     // unfortunatelly this means we have to fake it
-                    nestedModeLineTokens = nullMode_1.nullTokenize(nestedMode, nestedModeBuffer, nestedModeState, deltaOffset);
+                    nestedModeLineTokens = nullMode_1.nullTokenize(nestedMode.getId(), nestedModeBuffer, nestedModeState, deltaOffset);
                 }
                 // Save last state of nested mode
                 nestedModeState = nestedModeLineTokens.endState;
@@ -9213,15 +8463,12 @@ define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, n
             var previousType = null;
             var retokenize = null;
             myState = myState.clone();
-            if (prependModeTransitions.length <= 0 || prependModeTransitions[prependModeTransitions.length - 1].mode !== this._mode) {
+            if (prependModeTransitions.length <= 0 || prependModeTransitions[prependModeTransitions.length - 1].modeId !== this._modeId) {
                 // Avoid transitioning to the same mode (this can happen in case of empty embedded modes)
-                prependModeTransitions.push({
-                    startIndex: deltaOffset,
-                    mode: this._mode
-                });
+                prependModeTransitions.push(new modeTransition_1.ModeTransition(deltaOffset, this._modeId));
             }
             var maxPos = Math.min(stopAtOffset - deltaOffset, buffer.length);
-            while (lineStream.pos() < maxPos) {
+            var _loop_1 = function() {
                 beforeTokenizeStreamPos = lineStream.pos();
                 do {
                     tokenResult = myState.tokenize(lineStream);
@@ -9235,40 +8482,40 @@ define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, n
                         myState = tokenResult.nextState;
                     }
                     if (lineStream.pos() <= beforeTokenizeStreamPos) {
-                        throw new Error('Stream did not advance while tokenizing. Mode id is ' + this._mode.getId() + ' (stuck at token type: "' + tokenResult.type + '", prepend tokens: "' + (prependTokens.map(function (t) { return t.type; }).join(',')) + '").');
+                        throw new Error('Stream did not advance while tokenizing. Mode id is ' + this_1._modeId + ' (stuck at token type: "' + tokenResult.type + '", prepend tokens: "' + (prependTokens.map(function (t) { return t.type; }).join(',')) + '").');
                     }
                 } while (!tokenResult.type && tokenResult.type !== '');
                 if (previousType !== tokenResult.type || tokenResult.dontMergeWithPrev || previousType === null) {
-                    prependTokens.push(new supports_1.Token(beforeTokenizeStreamPos + deltaOffset, tokenResult.type));
+                    prependTokens.push(new token_1.Token(beforeTokenizeStreamPos + deltaOffset, tokenResult.type));
                 }
                 previousType = tokenResult.type;
-                if (this.supportsNestedModes && this.enterNestedMode(myState)) {
-                    var currentEmbeddedLevels = this._getEmbeddedLevel(myState);
+                if (this_1.supportsNestedModes && this_1.enterNestedMode(myState)) {
+                    var currentEmbeddedLevels = this_1._getEmbeddedLevel(myState);
                     if (currentEmbeddedLevels < TokenizationSupport.MAX_EMBEDDED_LEVELS) {
-                        var nestedModeState = this.getNestedModeInitialState(myState);
+                        var nestedModeState = this_1.getNestedModeInitialState(myState);
                         // Re-emit tokenizationSupport change events from all modes that I ever embedded
                         var embeddedMode = nestedModeState.state.getMode();
-                        if (typeof embeddedMode.addSupportChangedListener === 'function' && !this._embeddedModesListeners.hasOwnProperty(embeddedMode.getId())) {
-                            var emitting = false;
-                            this._embeddedModesListeners[embeddedMode.getId()] = embeddedMode.addSupportChangedListener(function (e) {
-                                if (emitting) {
+                        if (typeof embeddedMode.addSupportChangedListener === 'function' && !this_1._embeddedModesListeners.hasOwnProperty(embeddedMode.getId())) {
+                            var emitting_1 = false;
+                            this_1._embeddedModesListeners[embeddedMode.getId()] = embeddedMode.addSupportChangedListener(function (e) {
+                                if (emitting_1) {
                                     return;
                                 }
                                 if (e.tokenizationSupport) {
-                                    emitting = true;
+                                    emitting_1 = true;
                                     _this._mode.setTokenizationSupport(function (mode) {
                                         return mode.tokenizationSupport;
                                     });
-                                    emitting = false;
+                                    emitting_1 = false;
                                 }
                             });
                         }
                         if (!lineStream.eos()) {
                             // There is content from the embedded mode
                             var restOfBuffer = buffer.substr(lineStream.pos());
-                            var result = this._nestedTokenize(restOfBuffer, nestedModeState.state, deltaOffset + lineStream.pos(), stopAtOffset, prependTokens, prependModeTransitions);
+                            var result = this_1._nestedTokenize(restOfBuffer, nestedModeState.state, deltaOffset + lineStream.pos(), stopAtOffset, prependTokens, prependModeTransitions);
                             result.retokenize = result.retokenize || nestedModeState.missingModePromise;
-                            return result;
+                            return { value: result };
                         }
                         else {
                             // Transition to the nested mode state
@@ -9277,6 +8524,11 @@ define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, n
                         }
                     }
                 }
+            };
+            var this_1 = this;
+            while (lineStream.pos() < maxPos) {
+                var state_1 = _loop_1();
+                if (typeof state_1 === "object") return state_1.value;
             }
             return {
                 tokens: prependTokens,
@@ -9323,7 +8575,7 @@ define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, n
             if (this.defaults.getNestedModeInitialState) {
                 var nestedMode = TokenizationSupport._validatedNestedMode(this.getNestedMode(state));
                 var missingModePromise = nestedMode.missingModePromise;
-                var nestedModeState;
+                var nestedModeState = void 0;
                 if (nestedMode.mode.tokenizationSupport) {
                     nestedModeState = nestedMode.mode.tokenizationSupport.getInitialState();
                 }
@@ -9361,7 +8613,7 @@ define(__m[53], __M([1,0,62,48,14]), function (require, exports, lineStream_1, n
 
 
 
-define(__m[105], __M([1,0,39,62,25,53]), function (require, exports, abstractState_1, lineStream_1, monarchCommon, tokenizationSupport_1) {
+define(__m[78], __M([0,1,27,54,24,41]), function (require, exports, abstractState_1, lineStream_1, monarchCommon, tokenizationSupport_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -9747,7 +8999,76 @@ define(__m[105], __M([1,0,39,62,25,53]), function (require, exports, abstractSta
     exports.createTokenizationSupport = createTokenizationSupport;
 });
 
-define(__m[108], __M([1,0]), function (require, exports) {
+define(__m[77], __M([0,1]), function (require, exports) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    var MirrorModelMap = (function () {
+        function MirrorModelMap() {
+            this._data = {};
+        }
+        MirrorModelMap.prototype.set = function (key, data) {
+            this._data[key] = data;
+        };
+        MirrorModelMap.prototype.get = function (key) {
+            return this._data[key] || null;
+        };
+        MirrorModelMap.prototype.contains = function (key) {
+            return !!this._data[key];
+        };
+        MirrorModelMap.prototype.remove = function (key) {
+            delete this._data[key];
+        };
+        return MirrorModelMap;
+    }());
+    var ResourceService = (function () {
+        function ResourceService() {
+            this._map = new MirrorModelMap();
+        }
+        ResourceService._anonymousModelId = function (input) {
+            var r = '';
+            for (var i = 0; i < input.length; i++) {
+                var ch = input[i];
+                if (ch >= '0' && ch <= '9') {
+                    r += '0';
+                    continue;
+                }
+                if (ch >= 'a' && ch <= 'z') {
+                    r += 'a';
+                    continue;
+                }
+                if (ch >= 'A' && ch <= 'Z') {
+                    r += 'A';
+                    continue;
+                }
+                r += ch;
+            }
+            return r;
+        };
+        ResourceService.prototype.insert = function (uri, element) {
+            var key = uri.toString();
+            if (this._map.contains(key)) {
+                // There already exists a model with this id => this is a programmer error
+                throw new Error('ResourceService: Cannot add model ' + ResourceService._anonymousModelId(key) + ' because it already exists!');
+            }
+            this._map.set(key, element);
+        };
+        ResourceService.prototype.get = function (uri) {
+            var key = uri.toString();
+            return this._map.get(key);
+        };
+        ResourceService.prototype.remove = function (uri) {
+            var key = uri.toString();
+            this._map.remove(key);
+        };
+        return ResourceService;
+    }());
+    exports.ResourceService = ResourceService;
+});
+
+define(__m[76], __M([0,1]), function (require, exports) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -9877,8 +9198,8 @@ define(__m[108], __M([1,0]), function (require, exports) {
     exports.PrefixSumComputer = PrefixSumComputer;
 });
 
-define(__m[66], __M([7,6]), function(nls, data) { return nls.create("vs/base/common/errors", data); });
-define(__m[2], __M([1,0,66,12,10,9,58,3]), function (require, exports, nls, objects, platform, types, arrays, strings) {
+define(__m[67], __M([7,10]), function(nls, data) { return nls.create("vs/base/common/errors", data); });
+define(__m[2], __M([0,1,67,48,11,6,50,4]), function (require, exports, nls, objects, platform, types, arrays, strings) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10206,7 +9527,7 @@ define(__m[2], __M([1,0,66,12,10,9,58,3]), function (require, exports, nls, obje
     exports.create = create;
 });
 
-define(__m[63], __M([1,0,2]), function (require, exports, errors_1) {
+define(__m[49], __M([0,1,2]), function (require, exports, errors_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10283,7 +9604,7 @@ define(__m[63], __M([1,0,2]), function (require, exports, errors_1) {
     exports.default = CallbackList;
 });
 
-define(__m[8], __M([1,0,63]), function (require, exports, callbackList_1) {
+define(__m[8], __M([0,1,49]), function (require, exports, callbackList_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10414,6 +9735,38 @@ define(__m[8], __M([1,0,63]), function (require, exports, callbackList_1) {
         };
     }
     exports.fromEventEmitter = fromEventEmitter;
+    function fromPromise(promise) {
+        var toCancel = null;
+        var listener = null;
+        var emitter = new Emitter({
+            onFirstListenerAdd: function () {
+                toCancel = promise.then(function (event) { return listener = event(function (e) { return emitter.fire(e); }); }, function () { return null; });
+            },
+            onLastListenerRemove: function () {
+                if (toCancel) {
+                    toCancel.cancel();
+                    toCancel = null;
+                }
+                if (listener) {
+                    listener.dispose();
+                    listener = null;
+                }
+            }
+        });
+        return emitter.event;
+    }
+    exports.fromPromise = fromPromise;
+    function once(event) {
+        return function (listener, thisArgs, disposables) {
+            if (thisArgs === void 0) { thisArgs = null; }
+            var result = event(function (e) {
+                result.dispose();
+                return listener.call(thisArgs, e);
+            }, null, disposables);
+            return result;
+        };
+    }
+    exports.once = once;
     function mapEvent(event, map) {
         return function (listener, thisArgs, disposables) {
             if (thisArgs === void 0) { thisArgs = null; }
@@ -10439,8 +9792,9 @@ define(__m[8], __M([1,0,63]), function (require, exports, callbackList_1) {
                     output = merger(output, cur);
                     clearTimeout(handle);
                     handle = setTimeout(function () {
-                        emitter.fire(output);
+                        var _output = output;
                         output = undefined;
+                        emitter.fire(_output);
                     }, delay);
                 });
             },
@@ -10510,8 +9864,12 @@ define(__m[8], __M([1,0,63]), function (require, exports, callbackList_1) {
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-define(__m[47], __M([1,0,8]), function (require, exports, event_1) {
+define(__m[51], __M([0,1,8]), function (require, exports, event_1) {
     'use strict';
+    var shortcutEvent = Object.freeze(function (callback, context) {
+        var handle = setTimeout(callback.bind(context), 0);
+        return { dispose: function () { clearTimeout(handle); } };
+    });
     var CancellationToken;
     (function (CancellationToken) {
         CancellationToken.None = Object.freeze({
@@ -10520,13 +9878,9 @@ define(__m[47], __M([1,0,8]), function (require, exports, event_1) {
         });
         CancellationToken.Cancelled = Object.freeze({
             isCancellationRequested: true,
-            onCancellationRequested: event_1.default.None
+            onCancellationRequested: shortcutEvent
         });
     })(CancellationToken = exports.CancellationToken || (exports.CancellationToken = {}));
-    var shortcutEvent = Object.freeze(function (callback, context) {
-        var handle = setTimeout(callback.bind(context), 0);
-        return { dispose: function () { clearTimeout(handle); } };
-    });
     var MutableToken = (function () {
         function MutableToken() {
             this._isCancelled = false;
@@ -10601,7 +9955,7 @@ define(__m[47], __M([1,0,8]), function (require, exports, event_1) {
 
 
 
-define(__m[15], __M([1,0,2]), function (require, exports, Errors) {
+define(__m[18], __M([0,1,2]), function (require, exports, Errors) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10851,7 +10205,7 @@ define(__m[15], __M([1,0,2]), function (require, exports, Errors) {
     }
 });
 
-define(__m[26], __M([1,0,10,2,61]), function (require, exports, Platform, errors, precision) {
+define(__m[36], __M([0,1,11,2,43]), function (require, exports, Platform, errors, precision) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -11073,7 +10427,7 @@ define(__m[26], __M([1,0,10,2,61]), function (require, exports, Platform, errors
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-define(__m[5], __M([110,2]), function (winjs, __Errors__) {
+define(__m[5], __M([103,2]), function (winjs, __Errors__) {
 	'use strict';
 
 	var outstandingPromiseErrors = {};
@@ -11139,7 +10493,7 @@ define(__m[5], __M([110,2]), function (winjs, __Errors__) {
 
 
 
-define(__m[24], __M([1,0,2,10,5,47,16]), function (require, exports, errors, platform, winjs_base_1, cancellation_1, lifecycle_1) {
+define(__m[34], __M([0,1,2,11,5,51,19]), function (require, exports, errors, platform, winjs_base_1, cancellation_1, lifecycle_1) {
     'use strict';
     function isThenable(obj) {
         return obj && typeof obj.then === 'function';
@@ -11155,9 +10509,12 @@ define(__m[24], __M([1,0,2,10,5,47,16]), function (require, exports, errors, pla
     exports.toThenable = toThenable;
     function asWinJsPromise(callback) {
         var source = new cancellation_1.CancellationTokenSource();
-        return new winjs_base_1.TPromise(function (resolve, reject) {
+        return new winjs_base_1.TPromise(function (resolve, reject, progress) {
             var item = callback(source.token);
-            if (isThenable(item)) {
+            if (winjs_base_1.TPromise.is(item)) {
+                item.then(resolve, reject, progress);
+            }
+            else if (isThenable(item)) {
                 item.then(resolve, reject);
             }
             else {
@@ -11171,9 +10528,16 @@ define(__m[24], __M([1,0,2,10,5,47,16]), function (require, exports, errors, pla
     /**
      * Hook a cancellation token to a WinJS Promise
      */
-    function wireCancellationToken(token, promise) {
-        token.onCancellationRequested(function () { return promise.cancel(); });
-        return promise;
+    function wireCancellationToken(token, promise, resolveAsUndefinedWhenCancelled) {
+        var subscription = token.onCancellationRequested(function () { return promise.cancel(); });
+        if (resolveAsUndefinedWhenCancelled) {
+            promise = promise.then(undefined, function (err) {
+                if (!errors.isPromiseCanceledError(err)) {
+                    return winjs_base_1.TPromise.wrapError(err);
+                }
+            });
+        }
+        return always(promise, function () { return subscription.dispose(); });
     }
     exports.wireCancellationToken = wireCancellationToken;
     /**
@@ -11666,75 +11030,7 @@ define(__m[24], __M([1,0,2,10,5,47,16]), function (require, exports, errors, pla
     exports.ninvoke = ninvoke;
 });
 
-define(__m[84], __M([1,0,5]), function (require, exports, winjs_base_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    var Schemas;
-    (function (Schemas) {
-        /**
-         * A schema that is used for models that exist in memory
-         * only and that have no correspondence on a server or such.
-         */
-        Schemas.inMemory = 'inmemory';
-        /**
-         * A schema that is used for setting files
-         */
-        Schemas.vscode = 'vscode';
-        /**
-         * A schema that is used for internal private files
-         */
-        Schemas.internal = 'private';
-        Schemas.http = 'http';
-        Schemas.https = 'https';
-        Schemas.file = 'file';
-    })(Schemas = exports.Schemas || (exports.Schemas = {}));
-    function xhr(options) {
-        var req = null;
-        var canceled = false;
-        return new winjs_base_1.TPromise(function (c, e, p) {
-            req = new XMLHttpRequest();
-            req.onreadystatechange = function () {
-                if (canceled) {
-                    return;
-                }
-                if (req.readyState === 4) {
-                    // Handle 1223: http://bugs.jquery.com/ticket/1450
-                    if ((req.status >= 200 && req.status < 300) || req.status === 1223) {
-                        c(req);
-                    }
-                    else {
-                        e(req);
-                    }
-                    req.onreadystatechange = function () { };
-                }
-                else {
-                    p(req);
-                }
-            };
-            req.open(options.type || 'GET', options.url, 
-            // Promise based XHR does not support sync.
-            //
-            true, options.user, options.password);
-            req.responseType = options.responseType || '';
-            Object.keys(options.headers || {}).forEach(function (k) {
-                req.setRequestHeader(k, options.headers[k]);
-            });
-            if (options.customRequestInitializer) {
-                options.customRequestInitializer(req);
-            }
-            req.send(options.data);
-        }, function () {
-            canceled = true;
-            req.abort();
-        });
-    }
-    exports.xhr = xhr;
-});
-
-define(__m[109], __M([1,0,2,89,91]), function (require, exports, errors_1, marshalling_1, workerProtocol) {
+define(__m[104], __M([0,1,2,94,92]), function (require, exports, errors_1, marshalling_1, workerProtocol) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -11870,7 +11166,7 @@ define(__m[109], __M([1,0,2,89,91]), function (require, exports, errors_1, marsh
     exports.create = create;
 });
 
-define(__m[56], __M([1,0,2,3,50]), function (require, exports, errors_1, strings, viewLineToken_1) {
+define(__m[58], __M([0,1,2,4,45]), function (require, exports, errors_1, strings, viewLineToken_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -12016,7 +11312,7 @@ define(__m[56], __M([1,0,2,3,50]), function (require, exports, errors_1, strings
     exports.TokensBinaryEncoding = TokensBinaryEncoding;
 });
 
-define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, tokensBinaryEncoding_1, modeTransition_1, viewLineToken_1) {
+define(__m[59], __M([0,1,4,58,9,45]), function (require, exports, strings, tokensBinaryEncoding_1, modeTransition_1, viewLineToken_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -12041,11 +11337,38 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
         MarkerMoveSemantics[MarkerMoveSemantics["ForceMove"] = 1] = "ForceMove";
         MarkerMoveSemantics[MarkerMoveSemantics["ForceStay"] = 2] = "ForceStay";
     })(MarkerMoveSemantics || (MarkerMoveSemantics = {}));
+    /**
+     * Returns:
+     *  - 0 => the line consists of whitespace
+     *  - otherwise => the indent level is returned value - 1
+     */
+    function computePlusOneIndentLevel(line, tabSize) {
+        var indent = 0;
+        var i = 0;
+        var len = line.length;
+        while (i < len) {
+            var chCode = line.charCodeAt(i);
+            if (chCode === 32 /*space*/) {
+                indent++;
+            }
+            else if (chCode === 9 /*\t*/) {
+                indent = indent - indent % tabSize + tabSize;
+            }
+            else {
+                break;
+            }
+            i++;
+        }
+        if (i === len) {
+            return 0; // line only consists of whitespace
+        }
+        return indent + 1;
+    }
     var ModelLine = (function () {
-        function ModelLine(lineNumber, text) {
+        function ModelLine(lineNumber, text, tabSize) {
             this._lineNumber = lineNumber | 0;
-            this._text = text;
-            this._isInvalid = false;
+            this._metadata = 0;
+            this._setText(text, tabSize);
             this._state = null;
             this._modeTransitions = null;
             this._lineTokens = null;
@@ -12062,12 +11385,41 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
             configurable: true
         });
         Object.defineProperty(ModelLine.prototype, "isInvalid", {
-            get: function () { return this._isInvalid; },
-            set: function (value) { this._isInvalid = value; },
+            get: function () {
+                return (this._metadata & 0x00000001) ? true : false;
+            },
+            set: function (value) {
+                this._metadata = (this._metadata & 0xfffffffe) | (value ? 1 : 0);
+            },
             enumerable: true,
             configurable: true
         });
+        /**
+         * Returns:
+         *  - -1 => the line consists of whitespace
+         *  - otherwise => the indent level is returned value
+         */
+        ModelLine.prototype.getIndentLevel = function () {
+            return ((this._metadata & 0xfffffffe) >> 1) - 1;
+        };
+        ModelLine.prototype._setPlusOneIndentLevel = function (value) {
+            this._metadata = (this._metadata & 0x00000001) | ((value & 0xefffffff) << 1);
+        };
+        ModelLine.prototype.updateTabSize = function (tabSize) {
+            if (tabSize === 0) {
+                // don't care mark
+                this._metadata = this._metadata & 0x00000001;
+            }
+            else {
+                this._setPlusOneIndentLevel(computePlusOneIndentLevel(this._text, tabSize));
+            }
+        };
         // --- BEGIN STATE
+        ModelLine.prototype.resetTokenizationState = function () {
+            this._state = null;
+            this._modeTransitions = null;
+            this._lineTokens = null;
+        };
         ModelLine.prototype.setState = function (state) {
             this._state = state;
         };
@@ -12076,26 +11428,26 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
         };
         // --- END STATE
         // --- BEGIN MODE TRANSITIONS
-        ModelLine.prototype.getModeTransitions = function (topLevelMode) {
+        ModelLine.prototype.getModeTransitions = function (topLevelModeId) {
             if (this._modeTransitions) {
                 return this._modeTransitions;
             }
             else {
-                return [new modeTransition_1.ModeTransition(0, topLevelMode)];
+                return [new modeTransition_1.ModeTransition(0, topLevelModeId)];
             }
         };
         // --- END MODE TRANSITIONS
         // --- BEGIN TOKENS
-        ModelLine.prototype.setTokens = function (map, tokens, topLevelMode, modeTransitions) {
+        ModelLine.prototype.setTokens = function (map, tokens, topLevelModeId, modeTransitions) {
             this._lineTokens = toLineTokensFromInflated(map, tokens, this._text.length);
-            this._modeTransitions = toModeTransitions(topLevelMode, modeTransitions);
+            this._modeTransitions = toModeTransitions(topLevelModeId, modeTransitions);
         };
-        ModelLine.prototype._setLineTokensFromDeflated = function (map, tokens) {
-            this._lineTokens = toLineTokensFromDeflated(map, tokens, this._text.length);
+        ModelLine.prototype._setLineTokensFromDeflated = function (tokens) {
+            this._lineTokens = toLineTokensFromDeflated(tokens, this._text.length);
         };
-        ModelLine.prototype.getTokens = function () {
+        ModelLine.prototype.getTokens = function (map) {
             if (this._lineTokens) {
-                return this._lineTokens;
+                return new LineTokens(map, this._lineTokens);
             }
             if (this._text.length === 0) {
                 return EmptyLineTokens.INSTANCE;
@@ -12108,8 +11460,7 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
                 // This line does not have real tokens, so there is nothing to adjust
                 return NO_OP_TOKENS_ADJUSTER;
             }
-            var lineTokens = this._lineTokens;
-            var tokens = lineTokens.getBinaryEncodedTokens();
+            var tokens = this._lineTokens;
             var tokensLength = tokens.length;
             var tokensIndex = 0;
             var currentTokenStartIndex = 0;
@@ -12156,10 +11507,18 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
                 finish: finish
             };
         };
-        ModelLine.prototype._setText = function (text) {
+        ModelLine.prototype._setText = function (text, tabSize) {
             this._text = text;
-            if (this._lineTokens) {
-                var map = this._lineTokens.getBinaryEncodedTokensMap(), tokens = this._lineTokens.getBinaryEncodedTokens(), lineTextLength = this._text.length;
+            if (tabSize === 0) {
+                // don't care mark
+                this._metadata = this._metadata & 0x00000001;
+            }
+            else {
+                this._setPlusOneIndentLevel(computePlusOneIndentLevel(text, tabSize));
+            }
+            var tokens = this._lineTokens;
+            if (tokens) {
+                var lineTextLength = this._text.length;
                 // Remove overflowing tokens
                 while (tokens.length > 0) {
                     var lastTokenStartIndex = (tokens[tokens.length - 1] / START_INDEX_OFFSET) & START_INDEX_MASK;
@@ -12170,7 +11529,7 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
                     // This token now overflows the text => remove it
                     tokens.pop();
                 }
-                this._setLineTokensFromDeflated(map, tokens);
+                this._setLineTokensFromDeflated(tokens);
             }
         };
         // private _printMarkers(): string {
@@ -12267,7 +11626,7 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
                 finish: finish
             };
         };
-        ModelLine.prototype.applyEdits = function (changedMarkers, edits) {
+        ModelLine.prototype.applyEdits = function (changedMarkers, edits, tabSize) {
             var deltaColumn = 0;
             var resultText = this._text;
             var tokensAdjuster = this._createTokensAdjuster();
@@ -12307,10 +11666,10 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
             tokensAdjuster.finish(deltaColumn, resultText.length);
             markersAdjuster.finish(deltaColumn, resultText.length);
             // Save the resulting text
-            this._setText(resultText);
+            this._setText(resultText, tabSize);
             return deltaColumn;
         };
-        ModelLine.prototype.split = function (changedMarkers, splitColumn, forceMoveMarkers) {
+        ModelLine.prototype.split = function (changedMarkers, splitColumn, forceMoveMarkers, tabSize) {
             // console.log('--> split @ ' + splitColumn + '::: ' + this._printMarkers());
             var myText = this._text.substring(0, splitColumn - 1);
             var otherText = this._text.substring(splitColumn - 1);
@@ -12339,22 +11698,21 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
                     }
                 }
             }
-            this._setText(myText);
-            var otherLine = new ModelLine(this._lineNumber + 1, otherText);
+            this._setText(myText, tabSize);
+            var otherLine = new ModelLine(this._lineNumber + 1, otherText, tabSize);
             if (otherMarkers) {
                 otherLine.addMarkers(otherMarkers);
             }
             return otherLine;
         };
-        ModelLine.prototype.append = function (changedMarkers, other) {
+        ModelLine.prototype.append = function (changedMarkers, other, tabSize) {
             // console.log('--> append: THIS :: ' + this._printMarkers());
             // console.log('--> append: OTHER :: ' + this._printMarkers());
             var thisTextLength = this._text.length;
-            this._setText(this._text + other._text);
-            var otherLineTokens = other._lineTokens;
-            if (otherLineTokens) {
+            this._setText(this._text + other._text, tabSize);
+            var otherTokens = other._lineTokens;
+            if (otherTokens) {
                 // Other has real tokens
-                var otherTokens = otherLineTokens.getBinaryEncodedTokens();
                 // Adjust other tokens
                 if (thisTextLength > 0) {
                     for (var i = 0, len = otherTokens.length; i < len; i++) {
@@ -12370,11 +11728,11 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
                 var myLineTokens = this._lineTokens;
                 if (myLineTokens) {
                     // I have real tokens
-                    this._setLineTokensFromDeflated(myLineTokens.getBinaryEncodedTokensMap(), myLineTokens.getBinaryEncodedTokens().concat(otherTokens));
+                    this._setLineTokensFromDeflated(myLineTokens.concat(otherTokens));
                 }
                 else {
                     // I don't have real tokens
-                    this._setLineTokensFromDeflated(otherLineTokens.getBinaryEncodedTokensMap(), otherTokens);
+                    this._setLineTokensFromDeflated(otherTokens);
                 }
             }
             if (other._markers) {
@@ -12507,10 +11865,9 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
                 return null;
             }
         }
-        var deflated = tokensBinaryEncoding_1.TokensBinaryEncoding.deflateArr(map, tokens);
-        return new LineTokens(map, deflated);
+        return tokensBinaryEncoding_1.TokensBinaryEncoding.deflateArr(map, tokens);
     }
-    function toLineTokensFromDeflated(map, tokens, textLength) {
+    function toLineTokensFromDeflated(tokens, textLength) {
         if (textLength === 0) {
             return null;
         }
@@ -12522,7 +11879,7 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
                 return null;
             }
         }
-        return new LineTokens(map, tokens);
+        return tokens;
     }
     var LineTokens = (function () {
         function LineTokens(map, tokens) {
@@ -12642,11 +11999,11 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
         return DefaultLineTokens;
     }());
     exports.DefaultLineTokens = DefaultLineTokens;
-    function toModeTransitions(topLevelMode, modeTransitions) {
+    function toModeTransitions(topLevelModeId, modeTransitions) {
         if (!modeTransitions || modeTransitions.length === 0) {
             return null;
         }
-        else if (modeTransitions.length === 1 && modeTransitions[0].startIndex === 0 && modeTransitions[0].mode === topLevelMode) {
+        else if (modeTransitions.length === 1 && modeTransitions[0].startIndex === 0 && modeTransitions[0].modeId === topLevelModeId) {
             return null;
         }
         return modeTransitions;
@@ -12657,7 +12014,7 @@ define(__m[57], __M([1,0,3,56,18,50]), function (require, exports, strings, toke
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-define(__m[102], __M([1,0,8,82]), function (require, exports, event_1, languageSelector_1) {
+define(__m[62], __M([0,1,8,84]), function (require, exports, event_1, languageSelector_1) {
     'use strict';
     var LanguageFeatureRegistry = (function () {
         function LanguageFeatureRegistry() {
@@ -12796,7 +12153,7 @@ define(__m[102], __M([1,0,8,82]), function (require, exports, event_1, languageS
     exports.default = LanguageFeatureRegistry;
 });
 
-define(__m[21], __M([1,0,102]), function (require, exports, languageFeatureRegistry_1) {
+define(__m[15], __M([0,1,62]), function (require, exports, languageFeatureRegistry_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -13030,7 +12387,7 @@ define(__m[21], __M([1,0,102]), function (require, exports, languageFeatureRegis
     exports.LinkProviderRegistry = new languageFeatureRegistry_1.default();
 });
 
-define(__m[106], __M([1,0,2,3,21,14]), function (require, exports, errors_1, strings, modes_1, supports_1) {
+define(__m[83], __M([0,1,2,4,15,21]), function (require, exports, errors_1, strings, modes_1, supports_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -13164,7 +12521,7 @@ define(__m[106], __M([1,0,2,3,21,14]), function (require, exports, errors_1, str
     exports.OnEnterSupport = OnEnterSupport;
 });
 
-define(__m[31], __M([1,0,21,94,99,106,28,8,2,22,3,17]), function (require, exports, modes_1, characterPair_1, electricCharacter_1, onEnter_1, richEditBrackets_1, event_1, errors_1, position_1, strings, wordHelper_1) {
+define(__m[35], __M([0,1,15,82,80,83,23,8,2,20,4,14]), function (require, exports, modes_1, characterPair_1, electricCharacter_1, onEnter_1, richEditBrackets_1, event_1, errors_1, position_1, strings, wordHelper_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -13182,12 +12539,8 @@ define(__m[31], __M([1,0,21,94,99,106,28,8,2,22,3,17]), function (require, expor
             }
             this._handleOnEnter(modeId, this._conf);
             this._handleComments(modeId, this._conf);
-            if (this._conf.autoClosingPairs) {
-                this.characterPair = new characterPair_1.CharacterPairSupport(exports.LanguageConfigurationRegistry, modeId, this._conf);
-            }
-            if (this._conf.__electricCharacterSupport || this._conf.brackets) {
-                this.electricCharacter = new electricCharacter_1.BracketElectricCharacterSupport(exports.LanguageConfigurationRegistry, modeId, this.brackets, this._conf.__electricCharacterSupport);
-            }
+            this.characterPair = new characterPair_1.CharacterPairSupport(exports.LanguageConfigurationRegistry, modeId, this._conf);
+            this.electricCharacter = new electricCharacter_1.BracketElectricCharacterSupport(exports.LanguageConfigurationRegistry, modeId, this.brackets, this.characterPair.getAutoClosingPairs(), this._conf.__electricCharacterSupport);
             this.wordDefinition = this._conf.wordPattern || wordHelper_1.DEFAULT_WORD_REGEXP;
         }
         RichEditSupport._mergeConf = function (prev, current) {
@@ -13350,7 +12703,7 @@ define(__m[31], __M([1,0,21,94,99,106,28,8,2,22,3,17]), function (require, expor
     exports.LanguageConfigurationRegistry = new LanguageConfigurationRegistryImpl();
 });
 
-define(__m[64], __M([1,0,18,31,17]), function (require, exports, modeTransition_1, languageConfigurationRegistry_1, wordHelper_1) {
+define(__m[64], __M([0,1,9,35,14]), function (require, exports, modeTransition_1, languageConfigurationRegistry_1, wordHelper_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -13359,22 +12712,27 @@ define(__m[64], __M([1,0,18,31,17]), function (require, exports, modeTransition_
     var WordHelper = (function () {
         function WordHelper() {
         }
-        WordHelper._safeGetWordDefinition = function (mode) {
-            return languageConfigurationRegistry_1.LanguageConfigurationRegistry.getWordDefinition(mode.getId());
+        WordHelper._safeGetWordDefinition = function (modeId) {
+            return languageConfigurationRegistry_1.LanguageConfigurationRegistry.getWordDefinition(modeId);
         };
-        WordHelper.massageWordDefinitionOf = function (mode) {
-            return wordHelper_1.ensureValidWordDefinition(WordHelper._safeGetWordDefinition(mode));
+        WordHelper.massageWordDefinitionOf = function (modeId) {
+            return wordHelper_1.ensureValidWordDefinition(WordHelper._safeGetWordDefinition(modeId));
         };
         WordHelper._getWordAtColumn = function (txt, column, modeIndex, modeTransitions) {
-            var modeStartIndex = modeTransitions[modeIndex].startIndex, modeEndIndex = (modeIndex + 1 < modeTransitions.length ? modeTransitions[modeIndex + 1].startIndex : txt.length), mode = modeTransitions[modeIndex].mode;
-            return wordHelper_1.getWordAtText(column, WordHelper.massageWordDefinitionOf(mode), txt.substring(modeStartIndex, modeEndIndex), modeStartIndex);
+            var modeStartIndex = modeTransitions[modeIndex].startIndex;
+            var modeEndIndex = (modeIndex + 1 < modeTransitions.length ? modeTransitions[modeIndex + 1].startIndex : txt.length);
+            var modeId = modeTransitions[modeIndex].modeId;
+            return wordHelper_1.getWordAtText(column, WordHelper.massageWordDefinitionOf(modeId), txt.substring(modeStartIndex, modeEndIndex), modeStartIndex);
         };
         WordHelper.getWordAtPosition = function (textSource, position) {
             if (!textSource._lineIsTokenized(position.lineNumber)) {
-                return wordHelper_1.getWordAtText(position.column, WordHelper.massageWordDefinitionOf(textSource.getMode()), textSource.getLineContent(position.lineNumber), 0);
+                return wordHelper_1.getWordAtText(position.column, WordHelper.massageWordDefinitionOf(textSource.getModeId()), textSource.getLineContent(position.lineNumber), 0);
             }
             var result = null;
-            var txt = textSource.getLineContent(position.lineNumber), modeTransitions = textSource._getLineModeTransitions(position.lineNumber), columnIndex = position.column - 1, modeIndex = modeTransition_1.ModeTransition.findIndexInSegmentsArray(modeTransitions, columnIndex);
+            var txt = textSource.getLineContent(position.lineNumber);
+            var modeTransitions = textSource._getLineModeTransitions(position.lineNumber);
+            var columnIndex = position.column - 1;
+            var modeIndex = modeTransition_1.ModeTransition.findIndexInSegmentsArray(modeTransitions, columnIndex);
             result = WordHelper._getWordAtColumn(txt, position.column, modeIndex, modeTransitions);
             if (!result && modeIndex > 0 && modeTransitions[modeIndex].startIndex === columnIndex) {
                 // The position is right at the beginning of `modeIndex`, so try looking at `modeIndex` - 1 too
@@ -13387,8 +12745,55 @@ define(__m[64], __M([1,0,18,31,17]), function (require, exports, modeTransition_
     exports.WordHelper = WordHelper;
 });
 
-define(__m[65], __M([7,6]), function(nls, data) { return nls.create("vs/base/common/severity", data); });
-define(__m[32], __M([1,0,65,3]), function (require, exports, nls, strings) {
+define(__m[55], __M([0,1,98,34]), function (require, exports, filters_1, async_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    var TextualSuggestSupport = (function () {
+        function TextualSuggestSupport(editorWorkerService, configurationService) {
+            this._editorWorkerService = editorWorkerService;
+            this._configurationService = configurationService;
+        }
+        Object.defineProperty(TextualSuggestSupport.prototype, "triggerCharacters", {
+            get: function () {
+                return [];
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(TextualSuggestSupport.prototype, "filter", {
+            get: function () {
+                return filters_1.matchesPrefix;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        TextualSuggestSupport.prototype.provideCompletionItems = function (model, position, token) {
+            var config = this._configurationService.getConfiguration('editor');
+            if (!config || config.wordBasedSuggestions) {
+                return async_1.wireCancellationToken(token, this._editorWorkerService.textualSuggest(model.uri, position));
+            }
+        };
+        return TextualSuggestSupport;
+    }());
+    exports.TextualSuggestSupport = TextualSuggestSupport;
+    function filterSuggestions(value) {
+        if (!value) {
+            return;
+        }
+        return {
+            currentWord: value.currentWord,
+            suggestions: value.suggestions.filter(function (element) { return !!filters_1.fuzzyContiguousFilter(value.currentWord, element.label); }),
+            incomplete: value.incomplete
+        };
+    }
+    exports.filterSuggestions = filterSuggestions;
+});
+
+define(__m[66], __M([7,10]), function(nls, data) { return nls.create("vs/base/common/severity", data); });
+define(__m[26], __M([0,1,66,4]), function (require, exports, nls, strings) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -13441,8 +12846,8 @@ define(__m[32], __M([1,0,65,3]), function (require, exports, nls, strings) {
     exports.default = Severity;
 });
 
-define(__m[67], __M([7,6]), function(nls, data) { return nls.create("vs/editor/common/config/defaultConfig", data); });
-define(__m[68], __M([1,0,67,10,17]), function (require, exports, nls, platform, wordHelper_1) {
+define(__m[68], __M([7,10]), function(nls, data) { return nls.create("vs/editor/common/config/defaultConfig", data); });
+define(__m[69], __M([0,1,68,11,14]), function (require, exports, nls, platform, wordHelper_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -13487,6 +12892,7 @@ define(__m[68], __M([1,0,67,10,17]), function (require, exports, nls, platform, 
                 },
                 overviewRulerLanes: 2,
                 cursorBlinking: 'blink',
+                mouseWheelZoom: false,
                 cursorStyle: 'line',
                 fontLigatures: false,
                 disableTranslate3d: false,
@@ -13494,11 +12900,11 @@ define(__m[68], __M([1,0,67,10,17]), function (require, exports, nls, platform, 
                 scrollBeyondLastLine: true,
                 automaticLayout: false,
                 wrappingColumn: 300,
+                wordWrap: false,
                 wrappingIndent: 'same',
                 wordWrapBreakBeforeCharacters: '([{‘“〈《「『【〔（［｛｢£¥＄￡￥+＋',
                 wordWrapBreakAfterCharacters: ' \t})]?|&,;¢°′″‰℃、。｡､￠，．：；？！％・･ゝゞヽヾーァィゥェォッャュョヮヵヶぁぃぅぇぉっゃゅょゎゕゖㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿ々〻ｧｨｩｪｫｬｭｮｯｰ’”〉》」』】〕）］｝｣',
                 wordWrapBreakObtrusiveCharacters: '.',
-                tabFocusMode: false,
                 // Features
                 hover: true,
                 contextmenu: true,
@@ -13511,14 +12917,20 @@ define(__m[68], __M([1,0,67,10,17]), function (require, exports, nls, platform, 
                 formatOnType: false,
                 suggestOnTriggerCharacters: true,
                 acceptSuggestionOnEnter: true,
+                snippetSuggestions: 'bottom',
+                tabCompletion: false,
+                wordBasedSuggestions: true,
                 selectionHighlight: true,
-                outlineMarkers: false,
+                codeLens: true,
                 referenceInfos: true,
                 folding: true,
                 renderWhitespace: false,
-                indentGuides: false,
+                renderControlCharacters: false,
+                renderIndentGuides: false,
+                renderLineHighlight: true,
                 useTabStops: true,
                 fontFamily: (platform.isMacintosh ? DEFAULT_MAC_FONT_FAMILY : (platform.isLinux ? DEFAULT_LINUX_FONT_FAMILY : DEFAULT_WINDOWS_FONT_FAMILY)),
+                fontWeight: 'normal',
                 fontSize: (platform.isMacintosh ? 12 : 14),
                 lineHeight: 0
             };
@@ -13528,12 +12940,2172 @@ define(__m[68], __M([1,0,67,10,17]), function (require, exports, nls, platform, 
     exports.DefaultConfig = new ConfigClass();
 });
 
+define(__m[70], __M([7,10]), function(nls, data) { return nls.create("vs/editor/common/model/textModelWithTokens", data); });
+define(__m[71], __M([7,10]), function(nls, data) { return nls.create("vs/editor/common/modes/modesRegistry", data); });
+define(__m[72], __M([7,10]), function(nls, data) { return nls.create("vs/editor/common/services/modeServiceImpl", data); });
+define(__m[73], __M([7,10]), function(nls, data) { return nls.create("vs/platform/extensions/common/abstractExtensionService", data); });
+define(__m[74], __M([7,10]), function(nls, data) { return nls.create("vs/platform/extensions/common/extensionsRegistry", data); });
 
 
 
 
 
-define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, exports, eventEmitter_1, strings, position_1, range_1, editorCommon, modelLine_1, indentationGuesser_1, defaultConfig_1, prefixSumComputer_1) {
+define(__m[75], __M([0,1,18]), function (require, exports, eventEmitter_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    // --- implementation ------------------------------------------
+    var EventService = (function (_super) {
+        __extends(EventService, _super);
+        function EventService() {
+            _super.call(this);
+        }
+        return EventService;
+    }(eventEmitter_1.EventEmitter));
+    exports.EventService = EventService;
+});
+
+
+
+
+
+
+define(__m[25], __M([0,1,2]), function (require, exports, errors_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    var AbstractDescriptor = (function () {
+        function AbstractDescriptor(_staticArguments) {
+            this._staticArguments = _staticArguments;
+            // empty
+        }
+        AbstractDescriptor.prototype.appendStaticArguments = function (more) {
+            this._staticArguments.push.apply(this._staticArguments, more);
+        };
+        AbstractDescriptor.prototype.staticArguments = function (nth) {
+            if (isNaN(nth)) {
+                return this._staticArguments.slice(0);
+            }
+            else {
+                return this._staticArguments[nth];
+            }
+        };
+        AbstractDescriptor.prototype._validate = function (type) {
+            if (!type) {
+                throw errors_1.illegalArgument('can not be falsy');
+            }
+        };
+        return AbstractDescriptor;
+    }());
+    exports.AbstractDescriptor = AbstractDescriptor;
+    var SyncDescriptor = (function (_super) {
+        __extends(SyncDescriptor, _super);
+        function SyncDescriptor(_ctor) {
+            var staticArguments = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                staticArguments[_i - 1] = arguments[_i];
+            }
+            _super.call(this, staticArguments);
+            this._ctor = _ctor;
+        }
+        Object.defineProperty(SyncDescriptor.prototype, "ctor", {
+            get: function () {
+                return this._ctor;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        SyncDescriptor.prototype.bind = function () {
+            var moreStaticArguments = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                moreStaticArguments[_i - 0] = arguments[_i];
+            }
+            var allArgs = [];
+            allArgs = allArgs.concat(this.staticArguments());
+            allArgs = allArgs.concat(moreStaticArguments);
+            return new (SyncDescriptor.bind.apply(SyncDescriptor, [void 0].concat([this._ctor], allArgs)))();
+        };
+        return SyncDescriptor;
+    }(AbstractDescriptor));
+    exports.SyncDescriptor = SyncDescriptor;
+    exports.createSyncDescriptor = function (ctor) {
+        var staticArguments = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            staticArguments[_i - 1] = arguments[_i];
+        }
+        return new (SyncDescriptor.bind.apply(SyncDescriptor, [void 0].concat([ctor], staticArguments)))();
+    };
+    var AsyncDescriptor = (function (_super) {
+        __extends(AsyncDescriptor, _super);
+        function AsyncDescriptor(_moduleName, _ctorName) {
+            var staticArguments = [];
+            for (var _i = 2; _i < arguments.length; _i++) {
+                staticArguments[_i - 2] = arguments[_i];
+            }
+            _super.call(this, staticArguments);
+            this._moduleName = _moduleName;
+            this._ctorName = _ctorName;
+            if (typeof _moduleName !== 'string') {
+                throw new Error('Invalid AsyncDescriptor arguments, expected `moduleName` to be a string!');
+            }
+        }
+        AsyncDescriptor.create = function (moduleName, ctorName) {
+            return new AsyncDescriptor(moduleName, ctorName);
+        };
+        Object.defineProperty(AsyncDescriptor.prototype, "moduleName", {
+            get: function () {
+                return this._moduleName;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(AsyncDescriptor.prototype, "ctorName", {
+            get: function () {
+                return this._ctorName;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        AsyncDescriptor.prototype.bind = function () {
+            var moreStaticArguments = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                moreStaticArguments[_i - 0] = arguments[_i];
+            }
+            var allArgs = [];
+            allArgs = allArgs.concat(this.staticArguments());
+            allArgs = allArgs.concat(moreStaticArguments);
+            return new (AsyncDescriptor.bind.apply(AsyncDescriptor, [void 0].concat([this.moduleName, this.ctorName], allArgs)))();
+        };
+        return AsyncDescriptor;
+    }(AbstractDescriptor));
+    exports.AsyncDescriptor = AsyncDescriptor;
+    var _createAsyncDescriptor = function (moduleName, ctorName) {
+        var staticArguments = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            staticArguments[_i - 2] = arguments[_i];
+        }
+        return new (AsyncDescriptor.bind.apply(AsyncDescriptor, [void 0].concat([moduleName, ctorName], staticArguments)))();
+    };
+    exports.createAsyncDescriptor0 = _createAsyncDescriptor;
+    exports.createAsyncDescriptor1 = _createAsyncDescriptor;
+    exports.createAsyncDescriptor2 = _createAsyncDescriptor;
+    exports.createAsyncDescriptor3 = _createAsyncDescriptor;
+    exports.createAsyncDescriptor4 = _createAsyncDescriptor;
+    exports.createAsyncDescriptor5 = _createAsyncDescriptor;
+    exports.createAsyncDescriptor6 = _createAsyncDescriptor;
+    exports.createAsyncDescriptor7 = _createAsyncDescriptor;
+});
+
+define(__m[3], __M([0,1]), function (require, exports) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    // ------ internal util
+    var _util;
+    (function (_util) {
+        _util.DI_TARGET = '$di$target';
+        _util.DI_DEPENDENCIES = '$di$dependencies';
+        function getServiceDependencies(ctor) {
+            return ctor[_util.DI_DEPENDENCIES] || [];
+        }
+        _util.getServiceDependencies = getServiceDependencies;
+    })(_util = exports._util || (exports._util = {}));
+    exports.IInstantiationService = createDecorator('instantiationService');
+    function storeServiceDependency(id, target, index, optional) {
+        if (target[_util.DI_TARGET] === target) {
+            target[_util.DI_DEPENDENCIES].push({ id: id, index: index, optional: optional });
+        }
+        else {
+            target[_util.DI_DEPENDENCIES] = [{ id: id, index: index, optional: optional }];
+            target[_util.DI_TARGET] = target;
+        }
+    }
+    /**
+     * A *only* valid way to create a {{ServiceIdentifier}}.
+     */
+    function createDecorator(serviceId) {
+        var id = function (target, key, index) {
+            if (arguments.length !== 3) {
+                throw new Error('@IServiceName-decorator can only be used to decorate a parameter');
+            }
+            storeServiceDependency(id, target, index, false);
+        };
+        id.toString = function () { return serviceId; };
+        return id;
+    }
+    exports.createDecorator = createDecorator;
+    /**
+     * Mark a service dependency as optional.
+     */
+    function optional(serviceIdentifier) {
+        return function (target, key, index) {
+            if (arguments.length !== 3) {
+                throw new Error('@optional-decorator can only be used to decorate a parameter');
+            }
+            storeServiceDependency(serviceIdentifier, target, index, true);
+        };
+    }
+    exports.optional = optional;
+});
+
+define(__m[42], __M([0,1,3]), function (require, exports, instantiation_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    exports.ICompatWorkerService = instantiation_1.createDecorator('compatWorkerService');
+    function findMember(proto, target) {
+        for (var i in proto) {
+            if (proto[i] === target) {
+                return i;
+            }
+        }
+        throw new Error('Member not found in prototype');
+    }
+    function CompatWorkerAttr(type, target) {
+        var methodName = findMember(type.prototype, target);
+        type.prototype[methodName] = function () {
+            var param = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                param[_i - 0] = arguments[_i];
+            }
+            var obj = this;
+            return obj.compatWorkerService.CompatWorker(obj, methodName, target, param);
+        };
+    }
+    exports.CompatWorkerAttr = CompatWorkerAttr;
+});
+
+define(__m[79], __M([0,1,3]), function (require, exports, instantiation_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    exports.ID_EDITOR_WORKER_SERVICE = 'editorWorkerService';
+    exports.IEditorWorkerService = instantiation_1.createDecorator(exports.ID_EDITOR_WORKER_SERVICE);
+});
+
+define(__m[29], __M([0,1,3]), function (require, exports, instantiation_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    exports.IModeService = instantiation_1.createDecorator('modeService');
+});
+
+define(__m[81], __M([0,1,3]), function (require, exports, instantiation_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    exports.IModelService = instantiation_1.createDecorator('modelService');
+});
+
+define(__m[38], __M([0,1,3]), function (require, exports, instantiation_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    // Resource Service
+    exports.IResourceService = instantiation_1.createDecorator('resourceService');
+});
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+define(__m[57], __M([0,1,3]), function (require, exports, instantiation_1) {
+    "use strict";
+    exports.IConfigurationService = instantiation_1.createDecorator('configurationService');
+    /**
+     * A helper function to get the configuration value with a specific settings path (e.g. config.some.setting)
+     */
+    function getConfigurationValue(config, settingPath, defaultValue) {
+        function accessSetting(config, path) {
+            var current = config;
+            for (var i = 0; i < path.length; i++) {
+                current = current[path[i]];
+                if (!current) {
+                    return undefined;
+                }
+            }
+            return current;
+        }
+        var path = settingPath.split('.');
+        var result = accessSetting(config, path);
+        return typeof result === 'undefined' ? defaultValue : result;
+    }
+    exports.getConfigurationValue = getConfigurationValue;
+});
+
+
+
+
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+define(__m[53], __M([0,1,18,5,25,3,57,15,55,79,14]), function (require, exports, eventEmitter_1, winjs_base_1, descriptors_1, instantiation_1, configuration_1, modes, suggestSupport_1, editorWorkerService_1, wordHelper) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    function createWordRegExp(allowInWords) {
+        if (allowInWords === void 0) { allowInWords = ''; }
+        return wordHelper.createWordRegExp(allowInWords);
+    }
+    exports.createWordRegExp = createWordRegExp;
+    var ModeWorkerManager = (function () {
+        function ModeWorkerManager(descriptor, workerModuleId, workerClassName, superWorkerModuleId, instantiationService) {
+            this._descriptor = descriptor;
+            this._workerDescriptor = descriptors_1.createAsyncDescriptor1(workerModuleId, workerClassName);
+            this._superWorkerModuleId = superWorkerModuleId;
+            this._instantiationService = instantiationService;
+            this._workerPiecePromise = null;
+        }
+        ModeWorkerManager.prototype.worker = function (runner) {
+            return this._getOrCreateWorker().then(runner);
+        };
+        ModeWorkerManager.prototype._getOrCreateWorker = function () {
+            var _this = this;
+            if (!this._workerPiecePromise) {
+                // TODO@Alex: workaround for missing `bundles` config
+                // First, load the code of the worker super class
+                var superWorkerCodePromise = (this._superWorkerModuleId ? ModeWorkerManager._loadModule(this._superWorkerModuleId) : winjs_base_1.TPromise.as(null));
+                this._workerPiecePromise = superWorkerCodePromise.then(function () {
+                    // Second, load the code of the worker (without instantiating it)
+                    return ModeWorkerManager._loadModule(_this._workerDescriptor.moduleName);
+                }).then(function () {
+                    // Finally, create the mode worker instance
+                    return _this._instantiationService.createInstance(_this._workerDescriptor, _this._descriptor.id);
+                });
+            }
+            return this._workerPiecePromise;
+        };
+        ModeWorkerManager._loadModule = function (moduleName) {
+            return new winjs_base_1.TPromise(function (c, e, p) {
+                // Use the global require to be sure to get the global config
+                self.require([moduleName], c, e);
+            }, function () {
+                // Cannot cancel loading code
+            });
+        };
+        return ModeWorkerManager;
+    }());
+    exports.ModeWorkerManager = ModeWorkerManager;
+    var AbstractMode = (function () {
+        function AbstractMode(modeId) {
+            this._modeId = modeId;
+            this._eventEmitter = new eventEmitter_1.EventEmitter();
+            this._simplifiedMode = null;
+        }
+        AbstractMode.prototype.getId = function () {
+            return this._modeId;
+        };
+        AbstractMode.prototype.toSimplifiedMode = function () {
+            if (!this._simplifiedMode) {
+                this._simplifiedMode = new SimplifiedMode(this);
+            }
+            return this._simplifiedMode;
+        };
+        AbstractMode.prototype.addSupportChangedListener = function (callback) {
+            return this._eventEmitter.addListener2('modeSupportChanged', callback);
+        };
+        AbstractMode.prototype.setTokenizationSupport = function (callback) {
+            var _this = this;
+            var supportImpl = callback(this);
+            this['tokenizationSupport'] = supportImpl;
+            this._eventEmitter.emit('modeSupportChanged', _createModeSupportChangedEvent());
+            return {
+                dispose: function () {
+                    if (_this['tokenizationSupport'] === supportImpl) {
+                        delete _this['tokenizationSupport'];
+                        _this._eventEmitter.emit('modeSupportChanged', _createModeSupportChangedEvent());
+                    }
+                }
+            };
+        };
+        return AbstractMode;
+    }());
+    exports.AbstractMode = AbstractMode;
+    var CompatMode = (function (_super) {
+        __extends(CompatMode, _super);
+        function CompatMode(modeId, compatWorkerService) {
+            _super.call(this, modeId);
+            this.compatWorkerService = compatWorkerService;
+            if (this.compatWorkerService) {
+                this.compatWorkerService.registerCompatMode(this);
+            }
+        }
+        return CompatMode;
+    }(AbstractMode));
+    exports.CompatMode = CompatMode;
+    var SimplifiedMode = (function () {
+        function SimplifiedMode(sourceMode) {
+            var _this = this;
+            this._sourceMode = sourceMode;
+            this._eventEmitter = new eventEmitter_1.EventEmitter();
+            this._id = 'vs.editor.modes.simplifiedMode:' + sourceMode.getId();
+            this._assignSupports();
+            if (this._sourceMode.addSupportChangedListener) {
+                this._sourceMode.addSupportChangedListener(function (e) {
+                    _this._assignSupports();
+                    _this._eventEmitter.emit('modeSupportChanged', e);
+                });
+            }
+        }
+        SimplifiedMode.prototype.getId = function () {
+            return this._id;
+        };
+        SimplifiedMode.prototype.toSimplifiedMode = function () {
+            return this;
+        };
+        SimplifiedMode.prototype._assignSupports = function () {
+            this.tokenizationSupport = this._sourceMode.tokenizationSupport;
+        };
+        return SimplifiedMode;
+    }());
+    exports.isDigit = (function () {
+        var _0 = '0'.charCodeAt(0), _1 = '1'.charCodeAt(0), _2 = '2'.charCodeAt(0), _3 = '3'.charCodeAt(0), _4 = '4'.charCodeAt(0), _5 = '5'.charCodeAt(0), _6 = '6'.charCodeAt(0), _7 = '7'.charCodeAt(0), _8 = '8'.charCodeAt(0), _9 = '9'.charCodeAt(0), _a = 'a'.charCodeAt(0), _b = 'b'.charCodeAt(0), _c = 'c'.charCodeAt(0), _d = 'd'.charCodeAt(0), _e = 'e'.charCodeAt(0), _f = 'f'.charCodeAt(0), _A = 'A'.charCodeAt(0), _B = 'B'.charCodeAt(0), _C = 'C'.charCodeAt(0), _D = 'D'.charCodeAt(0), _E = 'E'.charCodeAt(0), _F = 'F'.charCodeAt(0);
+        return function isDigit(character, base) {
+            var c = character.charCodeAt(0);
+            switch (base) {
+                case 1:
+                    return c === _0;
+                case 2:
+                    return c >= _0 && c <= _1;
+                case 3:
+                    return c >= _0 && c <= _2;
+                case 4:
+                    return c >= _0 && c <= _3;
+                case 5:
+                    return c >= _0 && c <= _4;
+                case 6:
+                    return c >= _0 && c <= _5;
+                case 7:
+                    return c >= _0 && c <= _6;
+                case 8:
+                    return c >= _0 && c <= _7;
+                case 9:
+                    return c >= _0 && c <= _8;
+                case 10:
+                    return c >= _0 && c <= _9;
+                case 11:
+                    return (c >= _0 && c <= _9) || (c === _a) || (c === _A);
+                case 12:
+                    return (c >= _0 && c <= _9) || (c >= _a && c <= _b) || (c >= _A && c <= _B);
+                case 13:
+                    return (c >= _0 && c <= _9) || (c >= _a && c <= _c) || (c >= _A && c <= _C);
+                case 14:
+                    return (c >= _0 && c <= _9) || (c >= _a && c <= _d) || (c >= _A && c <= _D);
+                case 15:
+                    return (c >= _0 && c <= _9) || (c >= _a && c <= _e) || (c >= _A && c <= _E);
+                default:
+                    return (c >= _0 && c <= _9) || (c >= _a && c <= _f) || (c >= _A && c <= _F);
+            }
+        };
+    })();
+    var FrankensteinMode = (function (_super) {
+        __extends(FrankensteinMode, _super);
+        function FrankensteinMode(descriptor, configurationService, editorWorkerService) {
+            _super.call(this, descriptor.id);
+            if (editorWorkerService) {
+                modes.SuggestRegistry.register(this.getId(), new suggestSupport_1.TextualSuggestSupport(editorWorkerService, configurationService), true);
+            }
+        }
+        FrankensteinMode = __decorate([
+            __param(1, configuration_1.IConfigurationService),
+            __param(2, instantiation_1.optional(editorWorkerService_1.IEditorWorkerService))
+        ], FrankensteinMode);
+        return FrankensteinMode;
+    }(AbstractMode));
+    exports.FrankensteinMode = FrankensteinMode;
+    function _createModeSupportChangedEvent() {
+        return {
+            tokenizationSupport: true
+        };
+    }
+});
+
+
+
+
+
+
+define(__m[85], __M([0,1,3]), function (require, exports, instantiation_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    (function (ContextKeyExprType) {
+        ContextKeyExprType[ContextKeyExprType["Defined"] = 1] = "Defined";
+        ContextKeyExprType[ContextKeyExprType["Not"] = 2] = "Not";
+        ContextKeyExprType[ContextKeyExprType["Equals"] = 3] = "Equals";
+        ContextKeyExprType[ContextKeyExprType["NotEquals"] = 4] = "NotEquals";
+        ContextKeyExprType[ContextKeyExprType["And"] = 5] = "And";
+    })(exports.ContextKeyExprType || (exports.ContextKeyExprType = {}));
+    var ContextKeyExprType = exports.ContextKeyExprType;
+    var ContextKeyExpr = (function () {
+        function ContextKeyExpr() {
+        }
+        ContextKeyExpr.has = function (key) {
+            return new ContextKeyDefinedExpr(key);
+        };
+        ContextKeyExpr.equals = function (key, value) {
+            return new ContextKeyEqualsExpr(key, value);
+        };
+        ContextKeyExpr.notEquals = function (key, value) {
+            return new ContextKeyNotEqualsExpr(key, value);
+        };
+        ContextKeyExpr.not = function (key) {
+            return new ContextKeyNotExpr(key);
+        };
+        ContextKeyExpr.and = function () {
+            var expr = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                expr[_i - 0] = arguments[_i];
+            }
+            return new ContextKeyAndExpr(expr);
+        };
+        ContextKeyExpr.deserialize = function (serialized) {
+            var _this = this;
+            if (!serialized) {
+                return null;
+            }
+            var pieces = serialized.split('&&');
+            var result = new ContextKeyAndExpr(pieces.map(function (p) { return _this._deserializeOne(p); }));
+            return result.normalize();
+        };
+        ContextKeyExpr._deserializeOne = function (serializedOne) {
+            serializedOne = serializedOne.trim();
+            if (serializedOne.indexOf('!=') >= 0) {
+                var pieces = serializedOne.split('!=');
+                return new ContextKeyNotEqualsExpr(pieces[0].trim(), this._deserializeValue(pieces[1]));
+            }
+            if (serializedOne.indexOf('==') >= 0) {
+                var pieces = serializedOne.split('==');
+                return new ContextKeyEqualsExpr(pieces[0].trim(), this._deserializeValue(pieces[1]));
+            }
+            if (/^\!\s*/.test(serializedOne)) {
+                return new ContextKeyNotExpr(serializedOne.substr(1).trim());
+            }
+            return new ContextKeyDefinedExpr(serializedOne);
+        };
+        ContextKeyExpr._deserializeValue = function (serializedValue) {
+            serializedValue = serializedValue.trim();
+            if (serializedValue === 'true') {
+                return true;
+            }
+            if (serializedValue === 'false') {
+                return false;
+            }
+            var m = /^'([^']*)'$/.exec(serializedValue);
+            if (m) {
+                return m[1].trim();
+            }
+            return serializedValue;
+        };
+        return ContextKeyExpr;
+    }());
+    exports.ContextKeyExpr = ContextKeyExpr;
+    function cmp(a, b) {
+        var aType = a.getType();
+        var bType = b.getType();
+        if (aType !== bType) {
+            return aType - bType;
+        }
+        switch (aType) {
+            case ContextKeyExprType.Defined:
+                return a.cmp(b);
+            case ContextKeyExprType.Not:
+                return a.cmp(b);
+            case ContextKeyExprType.Equals:
+                return a.cmp(b);
+            case ContextKeyExprType.NotEquals:
+                return a.cmp(b);
+            default:
+                throw new Error('Unknown ContextKeyExpr!');
+        }
+    }
+    var ContextKeyDefinedExpr = (function () {
+        function ContextKeyDefinedExpr(key) {
+            this.key = key;
+        }
+        ContextKeyDefinedExpr.prototype.getType = function () {
+            return ContextKeyExprType.Defined;
+        };
+        ContextKeyDefinedExpr.prototype.cmp = function (other) {
+            if (this.key < other.key) {
+                return -1;
+            }
+            if (this.key > other.key) {
+                return 1;
+            }
+            return 0;
+        };
+        ContextKeyDefinedExpr.prototype.equals = function (other) {
+            if (other instanceof ContextKeyDefinedExpr) {
+                return (this.key === other.key);
+            }
+            return false;
+        };
+        ContextKeyDefinedExpr.prototype.evaluate = function (context) {
+            return (!!context[this.key]);
+        };
+        ContextKeyDefinedExpr.prototype.normalize = function () {
+            return this;
+        };
+        ContextKeyDefinedExpr.prototype.serialize = function () {
+            return this.key;
+        };
+        ContextKeyDefinedExpr.prototype.keys = function () {
+            return [this.key];
+        };
+        return ContextKeyDefinedExpr;
+    }());
+    exports.ContextKeyDefinedExpr = ContextKeyDefinedExpr;
+    var ContextKeyEqualsExpr = (function () {
+        function ContextKeyEqualsExpr(key, value) {
+            this.key = key;
+            this.value = value;
+        }
+        ContextKeyEqualsExpr.prototype.getType = function () {
+            return ContextKeyExprType.Equals;
+        };
+        ContextKeyEqualsExpr.prototype.cmp = function (other) {
+            if (this.key < other.key) {
+                return -1;
+            }
+            if (this.key > other.key) {
+                return 1;
+            }
+            if (this.value < other.value) {
+                return -1;
+            }
+            if (this.value > other.value) {
+                return 1;
+            }
+            return 0;
+        };
+        ContextKeyEqualsExpr.prototype.equals = function (other) {
+            if (other instanceof ContextKeyEqualsExpr) {
+                return (this.key === other.key && this.value === other.value);
+            }
+            return false;
+        };
+        ContextKeyEqualsExpr.prototype.evaluate = function (context) {
+            /* tslint:disable:triple-equals */
+            // Intentional ==
+            return (context[this.key] == this.value);
+            /* tslint:enable:triple-equals */
+        };
+        ContextKeyEqualsExpr.prototype.normalize = function () {
+            if (typeof this.value === 'boolean') {
+                if (this.value) {
+                    return new ContextKeyDefinedExpr(this.key);
+                }
+                return new ContextKeyNotExpr(this.key);
+            }
+            return this;
+        };
+        ContextKeyEqualsExpr.prototype.serialize = function () {
+            if (typeof this.value === 'boolean') {
+                return this.normalize().serialize();
+            }
+            return this.key + ' == \'' + this.value + '\'';
+        };
+        ContextKeyEqualsExpr.prototype.keys = function () {
+            return [this.key];
+        };
+        return ContextKeyEqualsExpr;
+    }());
+    exports.ContextKeyEqualsExpr = ContextKeyEqualsExpr;
+    var ContextKeyNotEqualsExpr = (function () {
+        function ContextKeyNotEqualsExpr(key, value) {
+            this.key = key;
+            this.value = value;
+        }
+        ContextKeyNotEqualsExpr.prototype.getType = function () {
+            return ContextKeyExprType.NotEquals;
+        };
+        ContextKeyNotEqualsExpr.prototype.cmp = function (other) {
+            if (this.key < other.key) {
+                return -1;
+            }
+            if (this.key > other.key) {
+                return 1;
+            }
+            if (this.value < other.value) {
+                return -1;
+            }
+            if (this.value > other.value) {
+                return 1;
+            }
+            return 0;
+        };
+        ContextKeyNotEqualsExpr.prototype.equals = function (other) {
+            if (other instanceof ContextKeyNotEqualsExpr) {
+                return (this.key === other.key && this.value === other.value);
+            }
+            return false;
+        };
+        ContextKeyNotEqualsExpr.prototype.evaluate = function (context) {
+            /* tslint:disable:triple-equals */
+            // Intentional !=
+            return (context[this.key] != this.value);
+            /* tslint:enable:triple-equals */
+        };
+        ContextKeyNotEqualsExpr.prototype.normalize = function () {
+            if (typeof this.value === 'boolean') {
+                if (this.value) {
+                    return new ContextKeyNotExpr(this.key);
+                }
+                return new ContextKeyDefinedExpr(this.key);
+            }
+            return this;
+        };
+        ContextKeyNotEqualsExpr.prototype.serialize = function () {
+            if (typeof this.value === 'boolean') {
+                return this.normalize().serialize();
+            }
+            return this.key + ' != \'' + this.value + '\'';
+        };
+        ContextKeyNotEqualsExpr.prototype.keys = function () {
+            return [this.key];
+        };
+        return ContextKeyNotEqualsExpr;
+    }());
+    exports.ContextKeyNotEqualsExpr = ContextKeyNotEqualsExpr;
+    var ContextKeyNotExpr = (function () {
+        function ContextKeyNotExpr(key) {
+            this.key = key;
+        }
+        ContextKeyNotExpr.prototype.getType = function () {
+            return ContextKeyExprType.Not;
+        };
+        ContextKeyNotExpr.prototype.cmp = function (other) {
+            if (this.key < other.key) {
+                return -1;
+            }
+            if (this.key > other.key) {
+                return 1;
+            }
+            return 0;
+        };
+        ContextKeyNotExpr.prototype.equals = function (other) {
+            if (other instanceof ContextKeyNotExpr) {
+                return (this.key === other.key);
+            }
+            return false;
+        };
+        ContextKeyNotExpr.prototype.evaluate = function (context) {
+            return (!context[this.key]);
+        };
+        ContextKeyNotExpr.prototype.normalize = function () {
+            return this;
+        };
+        ContextKeyNotExpr.prototype.serialize = function () {
+            return '!' + this.key;
+        };
+        ContextKeyNotExpr.prototype.keys = function () {
+            return [this.key];
+        };
+        return ContextKeyNotExpr;
+    }());
+    exports.ContextKeyNotExpr = ContextKeyNotExpr;
+    var ContextKeyAndExpr = (function () {
+        function ContextKeyAndExpr(expr) {
+            this.expr = ContextKeyAndExpr._normalizeArr(expr);
+        }
+        ContextKeyAndExpr.prototype.getType = function () {
+            return ContextKeyExprType.And;
+        };
+        ContextKeyAndExpr.prototype.equals = function (other) {
+            if (other instanceof ContextKeyAndExpr) {
+                if (this.expr.length !== other.expr.length) {
+                    return false;
+                }
+                for (var i = 0, len = this.expr.length; i < len; i++) {
+                    if (!this.expr[i].equals(other.expr[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        };
+        ContextKeyAndExpr.prototype.evaluate = function (context) {
+            for (var i = 0, len = this.expr.length; i < len; i++) {
+                if (!this.expr[i].evaluate(context)) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        ContextKeyAndExpr._normalizeArr = function (arr) {
+            var expr = [];
+            if (arr) {
+                for (var i = 0, len = arr.length; i < len; i++) {
+                    var e = arr[i];
+                    if (!e) {
+                        continue;
+                    }
+                    e = e.normalize();
+                    if (!e) {
+                        continue;
+                    }
+                    if (e instanceof ContextKeyAndExpr) {
+                        expr = expr.concat(e.expr);
+                        continue;
+                    }
+                    expr.push(e);
+                }
+                expr.sort(cmp);
+            }
+            return expr;
+        };
+        ContextKeyAndExpr.prototype.normalize = function () {
+            if (this.expr.length === 0) {
+                return null;
+            }
+            if (this.expr.length === 1) {
+                return this.expr[0];
+            }
+            return this;
+        };
+        ContextKeyAndExpr.prototype.serialize = function () {
+            if (this.expr.length === 0) {
+                return '';
+            }
+            if (this.expr.length === 1) {
+                return this.normalize().serialize();
+            }
+            return this.expr.map(function (e) { return e.serialize(); }).join(' && ');
+        };
+        ContextKeyAndExpr.prototype.keys = function () {
+            var result = [];
+            for (var _i = 0, _a = this.expr; _i < _a.length; _i++) {
+                var expr = _a[_i];
+                result.push.apply(result, expr.keys());
+            }
+            return result;
+        };
+        return ContextKeyAndExpr;
+    }());
+    exports.ContextKeyAndExpr = ContextKeyAndExpr;
+    var RawContextKey = (function (_super) {
+        __extends(RawContextKey, _super);
+        function RawContextKey(key, defaultValue) {
+            _super.call(this, key);
+            this._defaultValue = defaultValue;
+        }
+        RawContextKey.prototype.bindTo = function (target) {
+            return target.createKey(this.key, this._defaultValue);
+        };
+        RawContextKey.prototype.getValue = function (target) {
+            return target.getContextKeyValue(this.key);
+        };
+        RawContextKey.prototype.toNegated = function () {
+            return ContextKeyExpr.not(this.key);
+        };
+        RawContextKey.prototype.isEqualTo = function (value) {
+            return ContextKeyExpr.equals(this.key, value);
+        };
+        return RawContextKey;
+    }(ContextKeyDefinedExpr));
+    exports.RawContextKey = RawContextKey;
+    exports.IContextKeyService = instantiation_1.createDecorator('contextKeyService');
+    exports.SET_CONTEXT_COMMAND_ID = 'setContext';
+});
+
+
+
+
+
+
+define(__m[17], __M([0,1,6,85]), function (require, exports, types, contextkey_1) {
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    'use strict';
+    /**
+     * Describes how to indent wrapped lines.
+     */
+    (function (WrappingIndent) {
+        /**
+         * No indentation => wrapped lines begin at column 1.
+         */
+        WrappingIndent[WrappingIndent["None"] = 0] = "None";
+        /**
+         * Same => wrapped lines get the same indentation as the parent.
+         */
+        WrappingIndent[WrappingIndent["Same"] = 1] = "Same";
+        /**
+         * Indent => wrapped lines get +1 indentation as the parent.
+         */
+        WrappingIndent[WrappingIndent["Indent"] = 2] = "Indent";
+    })(exports.WrappingIndent || (exports.WrappingIndent = {}));
+    var WrappingIndent = exports.WrappingIndent;
+    var InternalEditorScrollbarOptions = (function () {
+        /**
+         * @internal
+         */
+        function InternalEditorScrollbarOptions(source) {
+            this.arrowSize = source.arrowSize | 0;
+            this.vertical = source.vertical | 0;
+            this.horizontal = source.horizontal | 0;
+            this.useShadows = Boolean(source.useShadows);
+            this.verticalHasArrows = Boolean(source.verticalHasArrows);
+            this.horizontalHasArrows = Boolean(source.horizontalHasArrows);
+            this.handleMouseWheel = Boolean(source.handleMouseWheel);
+            this.horizontalScrollbarSize = source.horizontalScrollbarSize | 0;
+            this.horizontalSliderSize = source.horizontalSliderSize | 0;
+            this.verticalScrollbarSize = source.verticalScrollbarSize | 0;
+            this.verticalSliderSize = source.verticalSliderSize | 0;
+            this.mouseWheelScrollSensitivity = Number(source.mouseWheelScrollSensitivity);
+        }
+        /**
+         * @internal
+         */
+        InternalEditorScrollbarOptions.prototype.equals = function (other) {
+            return (this.arrowSize === other.arrowSize
+                && this.vertical === other.vertical
+                && this.horizontal === other.horizontal
+                && this.useShadows === other.useShadows
+                && this.verticalHasArrows === other.verticalHasArrows
+                && this.horizontalHasArrows === other.horizontalHasArrows
+                && this.handleMouseWheel === other.handleMouseWheel
+                && this.horizontalScrollbarSize === other.horizontalScrollbarSize
+                && this.horizontalSliderSize === other.horizontalSliderSize
+                && this.verticalScrollbarSize === other.verticalScrollbarSize
+                && this.verticalSliderSize === other.verticalSliderSize
+                && this.mouseWheelScrollSensitivity === other.mouseWheelScrollSensitivity);
+        };
+        /**
+         * @internal
+         */
+        InternalEditorScrollbarOptions.prototype.clone = function () {
+            return new InternalEditorScrollbarOptions(this);
+        };
+        return InternalEditorScrollbarOptions;
+    }());
+    exports.InternalEditorScrollbarOptions = InternalEditorScrollbarOptions;
+    var EditorWrappingInfo = (function () {
+        /**
+         * @internal
+         */
+        function EditorWrappingInfo(source) {
+            this.isViewportWrapping = Boolean(source.isViewportWrapping);
+            this.wrappingColumn = source.wrappingColumn | 0;
+            this.wrappingIndent = source.wrappingIndent | 0;
+            this.wordWrapBreakBeforeCharacters = String(source.wordWrapBreakBeforeCharacters);
+            this.wordWrapBreakAfterCharacters = String(source.wordWrapBreakAfterCharacters);
+            this.wordWrapBreakObtrusiveCharacters = String(source.wordWrapBreakObtrusiveCharacters);
+        }
+        /**
+         * @internal
+         */
+        EditorWrappingInfo.prototype.equals = function (other) {
+            return (this.isViewportWrapping === other.isViewportWrapping
+                && this.wrappingColumn === other.wrappingColumn
+                && this.wrappingIndent === other.wrappingIndent
+                && this.wordWrapBreakBeforeCharacters === other.wordWrapBreakBeforeCharacters
+                && this.wordWrapBreakAfterCharacters === other.wordWrapBreakAfterCharacters
+                && this.wordWrapBreakObtrusiveCharacters === other.wordWrapBreakObtrusiveCharacters);
+        };
+        /**
+         * @internal
+         */
+        EditorWrappingInfo.prototype.clone = function () {
+            return new EditorWrappingInfo(this);
+        };
+        return EditorWrappingInfo;
+    }());
+    exports.EditorWrappingInfo = EditorWrappingInfo;
+    var InternalEditorViewOptions = (function () {
+        /**
+         * @internal
+         */
+        function InternalEditorViewOptions(source) {
+            this.theme = String(source.theme);
+            this.canUseTranslate3d = Boolean(source.canUseTranslate3d);
+            this.experimentalScreenReader = Boolean(source.experimentalScreenReader);
+            this.rulers = InternalEditorViewOptions._toSortedIntegerArray(source.rulers);
+            this.ariaLabel = String(source.ariaLabel);
+            this.lineNumbers = source.lineNumbers;
+            this.selectOnLineNumbers = Boolean(source.selectOnLineNumbers);
+            this.glyphMargin = Boolean(source.glyphMargin);
+            this.revealHorizontalRightPadding = source.revealHorizontalRightPadding | 0;
+            this.roundedSelection = Boolean(source.roundedSelection);
+            this.overviewRulerLanes = source.overviewRulerLanes | 0;
+            this.cursorBlinking = source.cursorBlinking | 0;
+            this.mouseWheelZoom = Boolean(source.mouseWheelZoom);
+            this.cursorStyle = source.cursorStyle | 0;
+            this.hideCursorInOverviewRuler = Boolean(source.hideCursorInOverviewRuler);
+            this.scrollBeyondLastLine = Boolean(source.scrollBeyondLastLine);
+            this.editorClassName = String(source.editorClassName);
+            this.stopRenderingLineAfter = source.stopRenderingLineAfter | 0;
+            this.renderWhitespace = Boolean(source.renderWhitespace);
+            this.renderControlCharacters = Boolean(source.renderControlCharacters);
+            this.renderIndentGuides = Boolean(source.renderIndentGuides);
+            this.renderLineHighlight = Boolean(source.renderLineHighlight);
+            this.scrollbar = source.scrollbar.clone();
+        }
+        InternalEditorViewOptions._toSortedIntegerArray = function (source) {
+            if (!Array.isArray(source)) {
+                return [];
+            }
+            var arrSource = source;
+            var result = arrSource.map(function (el) {
+                var r = parseInt(el, 10);
+                if (isNaN(r)) {
+                    return 0;
+                }
+                return r;
+            });
+            result.sort();
+            return result;
+        };
+        InternalEditorViewOptions._numberArraysEqual = function (a, b) {
+            if (a.length !== b.length) {
+                return false;
+            }
+            for (var i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        /**
+         * @internal
+         */
+        InternalEditorViewOptions.prototype.equals = function (other) {
+            return (this.theme === other.theme
+                && this.canUseTranslate3d === other.canUseTranslate3d
+                && this.experimentalScreenReader === other.experimentalScreenReader
+                && InternalEditorViewOptions._numberArraysEqual(this.rulers, other.rulers)
+                && this.ariaLabel === other.ariaLabel
+                && this.lineNumbers === other.lineNumbers
+                && this.selectOnLineNumbers === other.selectOnLineNumbers
+                && this.glyphMargin === other.glyphMargin
+                && this.revealHorizontalRightPadding === other.revealHorizontalRightPadding
+                && this.roundedSelection === other.roundedSelection
+                && this.overviewRulerLanes === other.overviewRulerLanes
+                && this.cursorBlinking === other.cursorBlinking
+                && this.mouseWheelZoom === other.mouseWheelZoom
+                && this.cursorStyle === other.cursorStyle
+                && this.hideCursorInOverviewRuler === other.hideCursorInOverviewRuler
+                && this.scrollBeyondLastLine === other.scrollBeyondLastLine
+                && this.editorClassName === other.editorClassName
+                && this.stopRenderingLineAfter === other.stopRenderingLineAfter
+                && this.renderWhitespace === other.renderWhitespace
+                && this.renderControlCharacters === other.renderControlCharacters
+                && this.renderIndentGuides === other.renderIndentGuides
+                && this.renderLineHighlight === other.renderLineHighlight
+                && this.scrollbar.equals(other.scrollbar));
+        };
+        /**
+         * @internal
+         */
+        InternalEditorViewOptions.prototype.createChangeEvent = function (newOpts) {
+            return {
+                theme: this.theme !== newOpts.theme,
+                canUseTranslate3d: this.canUseTranslate3d !== newOpts.canUseTranslate3d,
+                experimentalScreenReader: this.experimentalScreenReader !== newOpts.experimentalScreenReader,
+                rulers: (!InternalEditorViewOptions._numberArraysEqual(this.rulers, newOpts.rulers)),
+                ariaLabel: this.ariaLabel !== newOpts.ariaLabel,
+                lineNumbers: this.lineNumbers !== newOpts.lineNumbers,
+                selectOnLineNumbers: this.selectOnLineNumbers !== newOpts.selectOnLineNumbers,
+                glyphMargin: this.glyphMargin !== newOpts.glyphMargin,
+                revealHorizontalRightPadding: this.revealHorizontalRightPadding !== newOpts.revealHorizontalRightPadding,
+                roundedSelection: this.roundedSelection !== newOpts.roundedSelection,
+                overviewRulerLanes: this.overviewRulerLanes !== newOpts.overviewRulerLanes,
+                cursorBlinking: this.cursorBlinking !== newOpts.cursorBlinking,
+                mouseWheelZoom: this.mouseWheelZoom !== newOpts.mouseWheelZoom,
+                cursorStyle: this.cursorStyle !== newOpts.cursorStyle,
+                hideCursorInOverviewRuler: this.hideCursorInOverviewRuler !== newOpts.hideCursorInOverviewRuler,
+                scrollBeyondLastLine: this.scrollBeyondLastLine !== newOpts.scrollBeyondLastLine,
+                editorClassName: this.editorClassName !== newOpts.editorClassName,
+                stopRenderingLineAfter: this.stopRenderingLineAfter !== newOpts.stopRenderingLineAfter,
+                renderWhitespace: this.renderWhitespace !== newOpts.renderWhitespace,
+                renderControlCharacters: this.renderControlCharacters !== newOpts.renderControlCharacters,
+                renderIndentGuides: this.renderIndentGuides !== newOpts.renderIndentGuides,
+                renderLineHighlight: this.renderLineHighlight !== newOpts.renderLineHighlight,
+                scrollbar: (!this.scrollbar.equals(newOpts.scrollbar)),
+            };
+        };
+        /**
+         * @internal
+         */
+        InternalEditorViewOptions.prototype.clone = function () {
+            return new InternalEditorViewOptions(this);
+        };
+        return InternalEditorViewOptions;
+    }());
+    exports.InternalEditorViewOptions = InternalEditorViewOptions;
+    var EditorContribOptions = (function () {
+        /**
+         * @internal
+         */
+        function EditorContribOptions(source) {
+            this.selectionClipboard = Boolean(source.selectionClipboard);
+            this.hover = Boolean(source.hover);
+            this.contextmenu = Boolean(source.contextmenu);
+            this.quickSuggestions = Boolean(source.quickSuggestions);
+            this.quickSuggestionsDelay = source.quickSuggestionsDelay || 0;
+            this.parameterHints = Boolean(source.parameterHints);
+            this.iconsInSuggestions = Boolean(source.iconsInSuggestions);
+            this.formatOnType = Boolean(source.formatOnType);
+            this.suggestOnTriggerCharacters = Boolean(source.suggestOnTriggerCharacters);
+            this.acceptSuggestionOnEnter = Boolean(source.acceptSuggestionOnEnter);
+            this.snippetSuggestions = source.snippetSuggestions;
+            this.tabCompletion = source.tabCompletion;
+            this.wordBasedSuggestions = source.wordBasedSuggestions;
+            this.selectionHighlight = Boolean(source.selectionHighlight);
+            this.codeLens = Boolean(source.codeLens);
+            this.folding = Boolean(source.folding);
+        }
+        /**
+         * @internal
+         */
+        EditorContribOptions.prototype.equals = function (other) {
+            return (this.selectionClipboard === other.selectionClipboard
+                && this.hover === other.hover
+                && this.contextmenu === other.contextmenu
+                && this.quickSuggestions === other.quickSuggestions
+                && this.quickSuggestionsDelay === other.quickSuggestionsDelay
+                && this.parameterHints === other.parameterHints
+                && this.iconsInSuggestions === other.iconsInSuggestions
+                && this.formatOnType === other.formatOnType
+                && this.suggestOnTriggerCharacters === other.suggestOnTriggerCharacters
+                && this.acceptSuggestionOnEnter === other.acceptSuggestionOnEnter
+                && this.snippetSuggestions === other.snippetSuggestions
+                && this.tabCompletion === other.tabCompletion
+                && this.wordBasedSuggestions === other.wordBasedSuggestions
+                && this.selectionHighlight === other.selectionHighlight
+                && this.codeLens === other.codeLens
+                && this.folding === other.folding);
+        };
+        /**
+         * @internal
+         */
+        EditorContribOptions.prototype.clone = function () {
+            return new EditorContribOptions(this);
+        };
+        return EditorContribOptions;
+    }());
+    exports.EditorContribOptions = EditorContribOptions;
+    /**
+     * Internal configuration options (transformed or computed) for the editor.
+     */
+    var InternalEditorOptions = (function () {
+        /**
+         * @internal
+         */
+        function InternalEditorOptions(source) {
+            this.lineHeight = source.lineHeight | 0;
+            this.readOnly = Boolean(source.readOnly);
+            this.wordSeparators = String(source.wordSeparators);
+            this.autoClosingBrackets = Boolean(source.autoClosingBrackets);
+            this.useTabStops = Boolean(source.useTabStops);
+            this.tabFocusMode = Boolean(source.tabFocusMode);
+            this.layoutInfo = source.layoutInfo.clone();
+            this.fontInfo = source.fontInfo.clone();
+            this.viewInfo = source.viewInfo.clone();
+            this.wrappingInfo = source.wrappingInfo.clone();
+            this.contribInfo = source.contribInfo.clone();
+        }
+        /**
+         * @internal
+         */
+        InternalEditorOptions.prototype.equals = function (other) {
+            return (this.lineHeight === other.lineHeight
+                && this.readOnly === other.readOnly
+                && this.wordSeparators === other.wordSeparators
+                && this.autoClosingBrackets === other.autoClosingBrackets
+                && this.useTabStops === other.useTabStops
+                && this.tabFocusMode === other.tabFocusMode
+                && this.layoutInfo.equals(other.layoutInfo)
+                && this.fontInfo.equals(other.fontInfo)
+                && this.viewInfo.equals(other.viewInfo)
+                && this.wrappingInfo.equals(other.wrappingInfo)
+                && this.contribInfo.equals(other.contribInfo));
+        };
+        /**
+         * @internal
+         */
+        InternalEditorOptions.prototype.createChangeEvent = function (newOpts) {
+            return {
+                lineHeight: (this.lineHeight !== newOpts.lineHeight),
+                readOnly: (this.readOnly !== newOpts.readOnly),
+                wordSeparators: (this.wordSeparators !== newOpts.wordSeparators),
+                autoClosingBrackets: (this.autoClosingBrackets !== newOpts.autoClosingBrackets),
+                useTabStops: (this.useTabStops !== newOpts.useTabStops),
+                tabFocusMode: (this.tabFocusMode !== newOpts.tabFocusMode),
+                layoutInfo: (!this.layoutInfo.equals(newOpts.layoutInfo)),
+                fontInfo: (!this.fontInfo.equals(newOpts.fontInfo)),
+                viewInfo: this.viewInfo.createChangeEvent(newOpts.viewInfo),
+                wrappingInfo: (!this.wrappingInfo.equals(newOpts.wrappingInfo)),
+                contribInfo: (!this.contribInfo.equals(newOpts.contribInfo)),
+            };
+        };
+        /**
+         * @internal
+         */
+        InternalEditorOptions.prototype.clone = function () {
+            return new InternalEditorOptions(this);
+        };
+        return InternalEditorOptions;
+    }());
+    exports.InternalEditorOptions = InternalEditorOptions;
+    /**
+     * Vertical Lane in the overview ruler of the editor.
+     */
+    (function (OverviewRulerLane) {
+        OverviewRulerLane[OverviewRulerLane["Left"] = 1] = "Left";
+        OverviewRulerLane[OverviewRulerLane["Center"] = 2] = "Center";
+        OverviewRulerLane[OverviewRulerLane["Right"] = 4] = "Right";
+        OverviewRulerLane[OverviewRulerLane["Full"] = 7] = "Full";
+    })(exports.OverviewRulerLane || (exports.OverviewRulerLane = {}));
+    var OverviewRulerLane = exports.OverviewRulerLane;
+    /**
+     * End of line character preference.
+     */
+    (function (EndOfLinePreference) {
+        /**
+         * Use the end of line character identified in the text buffer.
+         */
+        EndOfLinePreference[EndOfLinePreference["TextDefined"] = 0] = "TextDefined";
+        /**
+         * Use line feed (\n) as the end of line character.
+         */
+        EndOfLinePreference[EndOfLinePreference["LF"] = 1] = "LF";
+        /**
+         * Use carriage return and line feed (\r\n) as the end of line character.
+         */
+        EndOfLinePreference[EndOfLinePreference["CRLF"] = 2] = "CRLF";
+    })(exports.EndOfLinePreference || (exports.EndOfLinePreference = {}));
+    var EndOfLinePreference = exports.EndOfLinePreference;
+    /**
+     * The default end of line to use when instantiating models.
+     */
+    (function (DefaultEndOfLine) {
+        /**
+         * Use line feed (\n) as the end of line character.
+         */
+        DefaultEndOfLine[DefaultEndOfLine["LF"] = 1] = "LF";
+        /**
+         * Use carriage return and line feed (\r\n) as the end of line character.
+         */
+        DefaultEndOfLine[DefaultEndOfLine["CRLF"] = 2] = "CRLF";
+    })(exports.DefaultEndOfLine || (exports.DefaultEndOfLine = {}));
+    var DefaultEndOfLine = exports.DefaultEndOfLine;
+    /**
+     * End of line character preference.
+     */
+    (function (EndOfLineSequence) {
+        /**
+         * Use line feed (\n) as the end of line character.
+         */
+        EndOfLineSequence[EndOfLineSequence["LF"] = 0] = "LF";
+        /**
+         * Use carriage return and line feed (\r\n) as the end of line character.
+         */
+        EndOfLineSequence[EndOfLineSequence["CRLF"] = 1] = "CRLF";
+    })(exports.EndOfLineSequence || (exports.EndOfLineSequence = {}));
+    var EndOfLineSequence = exports.EndOfLineSequence;
+    /**
+     * Describes the behaviour of decorations when typing/editing near their edges.
+     */
+    (function (TrackedRangeStickiness) {
+        TrackedRangeStickiness[TrackedRangeStickiness["AlwaysGrowsWhenTypingAtEdges"] = 0] = "AlwaysGrowsWhenTypingAtEdges";
+        TrackedRangeStickiness[TrackedRangeStickiness["NeverGrowsWhenTypingAtEdges"] = 1] = "NeverGrowsWhenTypingAtEdges";
+        TrackedRangeStickiness[TrackedRangeStickiness["GrowsOnlyWhenTypingBefore"] = 2] = "GrowsOnlyWhenTypingBefore";
+        TrackedRangeStickiness[TrackedRangeStickiness["GrowsOnlyWhenTypingAfter"] = 3] = "GrowsOnlyWhenTypingAfter";
+    })(exports.TrackedRangeStickiness || (exports.TrackedRangeStickiness = {}));
+    var TrackedRangeStickiness = exports.TrackedRangeStickiness;
+    /**
+     * Describes the reason the cursor has changed its position.
+     */
+    (function (CursorChangeReason) {
+        /**
+         * Unknown or not set.
+         */
+        CursorChangeReason[CursorChangeReason["NotSet"] = 0] = "NotSet";
+        /**
+         * A `model.setValue()` was called.
+         */
+        CursorChangeReason[CursorChangeReason["ContentFlush"] = 1] = "ContentFlush";
+        /**
+         * The `model` has been changed outside of this cursor and the cursor recovers its position from associated markers.
+         */
+        CursorChangeReason[CursorChangeReason["RecoverFromMarkers"] = 2] = "RecoverFromMarkers";
+        /**
+         * There was an explicit user gesture.
+         */
+        CursorChangeReason[CursorChangeReason["Explicit"] = 3] = "Explicit";
+        /**
+         * There was a Paste.
+         */
+        CursorChangeReason[CursorChangeReason["Paste"] = 4] = "Paste";
+        /**
+         * There was an Undo.
+         */
+        CursorChangeReason[CursorChangeReason["Undo"] = 5] = "Undo";
+        /**
+         * There was a Redo.
+         */
+        CursorChangeReason[CursorChangeReason["Redo"] = 6] = "Redo";
+    })(exports.CursorChangeReason || (exports.CursorChangeReason = {}));
+    var CursorChangeReason = exports.CursorChangeReason;
+    /**
+     * @internal
+     */
+    (function (VerticalRevealType) {
+        VerticalRevealType[VerticalRevealType["Simple"] = 0] = "Simple";
+        VerticalRevealType[VerticalRevealType["Center"] = 1] = "Center";
+        VerticalRevealType[VerticalRevealType["CenterIfOutsideViewport"] = 2] = "CenterIfOutsideViewport";
+        VerticalRevealType[VerticalRevealType["Top"] = 3] = "Top";
+        VerticalRevealType[VerticalRevealType["Bottom"] = 4] = "Bottom";
+    })(exports.VerticalRevealType || (exports.VerticalRevealType = {}));
+    var VerticalRevealType = exports.VerticalRevealType;
+    /**
+     * A description for the overview ruler position.
+     */
+    var OverviewRulerPosition = (function () {
+        /**
+         * @internal
+         */
+        function OverviewRulerPosition(source) {
+            this.width = source.width | 0;
+            this.height = source.height | 0;
+            this.top = source.top | 0;
+            this.right = source.right | 0;
+        }
+        /**
+         * @internal
+         */
+        OverviewRulerPosition.prototype.equals = function (other) {
+            return (this.width === other.width
+                && this.height === other.height
+                && this.top === other.top
+                && this.right === other.right);
+        };
+        /**
+         * @internal
+         */
+        OverviewRulerPosition.prototype.clone = function () {
+            return new OverviewRulerPosition(this);
+        };
+        return OverviewRulerPosition;
+    }());
+    exports.OverviewRulerPosition = OverviewRulerPosition;
+    /**
+     * The internal layout details of the editor.
+     */
+    var EditorLayoutInfo = (function () {
+        /**
+         * @internal
+         */
+        function EditorLayoutInfo(source) {
+            this.width = source.width | 0;
+            this.height = source.height | 0;
+            this.glyphMarginLeft = source.glyphMarginLeft | 0;
+            this.glyphMarginWidth = source.glyphMarginWidth | 0;
+            this.glyphMarginHeight = source.glyphMarginHeight | 0;
+            this.lineNumbersLeft = source.lineNumbersLeft | 0;
+            this.lineNumbersWidth = source.lineNumbersWidth | 0;
+            this.lineNumbersHeight = source.lineNumbersHeight | 0;
+            this.decorationsLeft = source.decorationsLeft | 0;
+            this.decorationsWidth = source.decorationsWidth | 0;
+            this.decorationsHeight = source.decorationsHeight | 0;
+            this.contentLeft = source.contentLeft | 0;
+            this.contentWidth = source.contentWidth | 0;
+            this.contentHeight = source.contentHeight | 0;
+            this.verticalScrollbarWidth = source.verticalScrollbarWidth | 0;
+            this.horizontalScrollbarHeight = source.horizontalScrollbarHeight | 0;
+            this.overviewRuler = source.overviewRuler.clone();
+        }
+        /**
+         * @internal
+         */
+        EditorLayoutInfo.prototype.equals = function (other) {
+            return (this.width === other.width
+                && this.height === other.height
+                && this.glyphMarginLeft === other.glyphMarginLeft
+                && this.glyphMarginWidth === other.glyphMarginWidth
+                && this.glyphMarginHeight === other.glyphMarginHeight
+                && this.lineNumbersLeft === other.lineNumbersLeft
+                && this.lineNumbersWidth === other.lineNumbersWidth
+                && this.lineNumbersHeight === other.lineNumbersHeight
+                && this.decorationsLeft === other.decorationsLeft
+                && this.decorationsWidth === other.decorationsWidth
+                && this.decorationsHeight === other.decorationsHeight
+                && this.contentLeft === other.contentLeft
+                && this.contentWidth === other.contentWidth
+                && this.contentHeight === other.contentHeight
+                && this.verticalScrollbarWidth === other.verticalScrollbarWidth
+                && this.horizontalScrollbarHeight === other.horizontalScrollbarHeight
+                && this.overviewRuler.equals(other.overviewRuler));
+        };
+        /**
+         * @internal
+         */
+        EditorLayoutInfo.prototype.clone = function () {
+            return new EditorLayoutInfo(this);
+        };
+        return EditorLayoutInfo;
+    }());
+    exports.EditorLayoutInfo = EditorLayoutInfo;
+    /**
+     * Type of hit element with the mouse in the editor.
+     */
+    (function (MouseTargetType) {
+        /**
+         * Mouse is on top of an unknown element.
+         */
+        MouseTargetType[MouseTargetType["UNKNOWN"] = 0] = "UNKNOWN";
+        /**
+         * Mouse is on top of the textarea used for input.
+         */
+        MouseTargetType[MouseTargetType["TEXTAREA"] = 1] = "TEXTAREA";
+        /**
+         * Mouse is on top of the glyph margin
+         */
+        MouseTargetType[MouseTargetType["GUTTER_GLYPH_MARGIN"] = 2] = "GUTTER_GLYPH_MARGIN";
+        /**
+         * Mouse is on top of the line numbers
+         */
+        MouseTargetType[MouseTargetType["GUTTER_LINE_NUMBERS"] = 3] = "GUTTER_LINE_NUMBERS";
+        /**
+         * Mouse is on top of the line decorations
+         */
+        MouseTargetType[MouseTargetType["GUTTER_LINE_DECORATIONS"] = 4] = "GUTTER_LINE_DECORATIONS";
+        /**
+         * Mouse is on top of the whitespace left in the gutter by a view zone.
+         */
+        MouseTargetType[MouseTargetType["GUTTER_VIEW_ZONE"] = 5] = "GUTTER_VIEW_ZONE";
+        /**
+         * Mouse is on top of text in the content.
+         */
+        MouseTargetType[MouseTargetType["CONTENT_TEXT"] = 6] = "CONTENT_TEXT";
+        /**
+         * Mouse is on top of empty space in the content (e.g. after line text or below last line)
+         */
+        MouseTargetType[MouseTargetType["CONTENT_EMPTY"] = 7] = "CONTENT_EMPTY";
+        /**
+         * Mouse is on top of a view zone in the content.
+         */
+        MouseTargetType[MouseTargetType["CONTENT_VIEW_ZONE"] = 8] = "CONTENT_VIEW_ZONE";
+        /**
+         * Mouse is on top of a content widget.
+         */
+        MouseTargetType[MouseTargetType["CONTENT_WIDGET"] = 9] = "CONTENT_WIDGET";
+        /**
+         * Mouse is on top of the decorations overview ruler.
+         */
+        MouseTargetType[MouseTargetType["OVERVIEW_RULER"] = 10] = "OVERVIEW_RULER";
+        /**
+         * Mouse is on top of a scrollbar.
+         */
+        MouseTargetType[MouseTargetType["SCROLLBAR"] = 11] = "SCROLLBAR";
+        /**
+         * Mouse is on top of an overlay widget.
+         */
+        MouseTargetType[MouseTargetType["OVERLAY_WIDGET"] = 12] = "OVERLAY_WIDGET";
+    })(exports.MouseTargetType || (exports.MouseTargetType = {}));
+    var MouseTargetType = exports.MouseTargetType;
+    /**
+     * @internal
+     */
+    var EditorContextKeys;
+    (function (EditorContextKeys) {
+        /**
+         * A context key that is set when the editor's text has focus (cursor is blinking).
+         * @internal
+         */
+        EditorContextKeys.TextFocus = new contextkey_1.RawContextKey('editorTextFocus', false);
+        /**
+         * A context key that is set when the editor's text or an editor's widget has focus.
+         * @internal
+         */
+        EditorContextKeys.Focus = new contextkey_1.RawContextKey('editorFocus', false);
+        /**
+         * A context key that is set when the editor's text is readonly.
+         * @internal
+         */
+        EditorContextKeys.ReadOnly = new contextkey_1.RawContextKey('editorReadonly', false);
+        /**
+         * @internal
+         */
+        EditorContextKeys.Writable = EditorContextKeys.ReadOnly.toNegated();
+        /**
+         * A context key that is set when the editor has a non-collapsed selection.
+         * @internal
+         */
+        EditorContextKeys.HasNonEmptySelection = new contextkey_1.RawContextKey('editorHasSelection', false);
+        /**
+         * @internal
+         */
+        EditorContextKeys.HasOnlyEmptySelection = EditorContextKeys.HasNonEmptySelection.toNegated();
+        /**
+         * A context key that is set when the editor has multiple selections (multiple cursors).
+         * @internal
+         */
+        EditorContextKeys.HasMultipleSelections = new contextkey_1.RawContextKey('editorHasMultipleSelections', false);
+        /**
+         * @internal
+         */
+        EditorContextKeys.HasSingleSelection = EditorContextKeys.HasMultipleSelections.toNegated();
+        /**
+         * @internal
+         */
+        EditorContextKeys.TabMovesFocus = new contextkey_1.RawContextKey('editorTabMovesFocus', false);
+        /**
+         * @internal
+         */
+        EditorContextKeys.TabDoesNotMoveFocus = EditorContextKeys.TabMovesFocus.toNegated();
+        /**
+         * A context key that is set to the language associated with the model associated with the editor.
+         * @internal
+         */
+        EditorContextKeys.LanguageId = new contextkey_1.RawContextKey('editorLangId', undefined);
+    })(EditorContextKeys = exports.EditorContextKeys || (exports.EditorContextKeys = {}));
+    ;
+    /**
+     * @internal
+     */
+    var ModeContextKeys;
+    (function (ModeContextKeys) {
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasCompletionItemProvider = new contextkey_1.RawContextKey('editorHasCompletionItemProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasCodeActionsProvider = new contextkey_1.RawContextKey('editorHasCodeActionsProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasCodeLensProvider = new contextkey_1.RawContextKey('editorHasCodeLensProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasDefinitionProvider = new contextkey_1.RawContextKey('editorHasDefinitionProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasHoverProvider = new contextkey_1.RawContextKey('editorHasHoverProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasDocumentHighlightProvider = new contextkey_1.RawContextKey('editorHasDocumentHighlightProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasDocumentSymbolProvider = new contextkey_1.RawContextKey('editorHasDocumentSymbolProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasReferenceProvider = new contextkey_1.RawContextKey('editorHasReferenceProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasRenameProvider = new contextkey_1.RawContextKey('editorHasRenameProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasFormattingProvider = new contextkey_1.RawContextKey('editorHasFormattingProvider', undefined);
+        /**
+         * @internal
+         */
+        ModeContextKeys.hasSignatureHelpProvider = new contextkey_1.RawContextKey('editorHasSignatureHelpProvider', undefined);
+    })(ModeContextKeys = exports.ModeContextKeys || (exports.ModeContextKeys = {}));
+    var BareFontInfo = (function () {
+        /**
+         * @internal
+         */
+        function BareFontInfo(opts) {
+            this.fontFamily = String(opts.fontFamily);
+            this.fontWeight = String(opts.fontWeight);
+            this.fontSize = opts.fontSize;
+            this.lineHeight = opts.lineHeight | 0;
+        }
+        /**
+         * @internal
+         */
+        BareFontInfo.prototype.getId = function () {
+            return this.fontFamily + '-' + this.fontWeight + '-' + this.fontSize + '-' + this.lineHeight + '-';
+        };
+        return BareFontInfo;
+    }());
+    exports.BareFontInfo = BareFontInfo;
+    var FontInfo = (function (_super) {
+        __extends(FontInfo, _super);
+        /**
+         * @internal
+         */
+        function FontInfo(opts) {
+            _super.call(this, opts);
+            this.typicalHalfwidthCharacterWidth = opts.typicalHalfwidthCharacterWidth;
+            this.typicalFullwidthCharacterWidth = opts.typicalFullwidthCharacterWidth;
+            this.spaceWidth = opts.spaceWidth;
+            this.maxDigitWidth = opts.maxDigitWidth;
+        }
+        /**
+         * @internal
+         */
+        FontInfo.prototype.equals = function (other) {
+            return (this.fontFamily === other.fontFamily
+                && this.fontWeight === other.fontWeight
+                && this.fontSize === other.fontSize
+                && this.lineHeight === other.lineHeight
+                && this.typicalHalfwidthCharacterWidth === other.typicalHalfwidthCharacterWidth
+                && this.typicalFullwidthCharacterWidth === other.typicalFullwidthCharacterWidth
+                && this.spaceWidth === other.spaceWidth
+                && this.maxDigitWidth === other.maxDigitWidth);
+        };
+        /**
+         * @internal
+         */
+        FontInfo.prototype.clone = function () {
+            return new FontInfo(this);
+        };
+        return FontInfo;
+    }(BareFontInfo));
+    exports.FontInfo = FontInfo;
+    /**
+     * @internal
+     */
+    exports.ViewEventNames = {
+        ModelFlushedEvent: 'modelFlushedEvent',
+        LinesDeletedEvent: 'linesDeletedEvent',
+        LinesInsertedEvent: 'linesInsertedEvent',
+        LineChangedEvent: 'lineChangedEvent',
+        TokensChangedEvent: 'tokensChangedEvent',
+        DecorationsChangedEvent: 'decorationsChangedEvent',
+        CursorPositionChangedEvent: 'cursorPositionChangedEvent',
+        CursorSelectionChangedEvent: 'cursorSelectionChangedEvent',
+        RevealRangeEvent: 'revealRangeEvent',
+        LineMappingChangedEvent: 'lineMappingChangedEvent',
+        ScrollRequestEvent: 'scrollRequestEvent'
+    };
+    /**
+     * @internal
+     */
+    var Viewport = (function () {
+        function Viewport(top, left, width, height) {
+            this.top = top | 0;
+            this.left = left | 0;
+            this.width = width | 0;
+            this.height = height | 0;
+        }
+        return Viewport;
+    }());
+    exports.Viewport = Viewport;
+    /**
+     * @internal
+     */
+    (function (CodeEditorStateFlag) {
+        CodeEditorStateFlag[CodeEditorStateFlag["Value"] = 0] = "Value";
+        CodeEditorStateFlag[CodeEditorStateFlag["Selection"] = 1] = "Selection";
+        CodeEditorStateFlag[CodeEditorStateFlag["Position"] = 2] = "Position";
+        CodeEditorStateFlag[CodeEditorStateFlag["Scroll"] = 3] = "Scroll";
+    })(exports.CodeEditorStateFlag || (exports.CodeEditorStateFlag = {}));
+    var CodeEditorStateFlag = exports.CodeEditorStateFlag;
+    /**
+     * The type of the `IEditor`.
+     */
+    exports.EditorType = {
+        ICodeEditor: 'vs.editor.ICodeEditor',
+        IDiffEditor: 'vs.editor.IDiffEditor'
+    };
+    /**
+     *@internal
+     */
+    function isCommonCodeEditor(thing) {
+        if (thing && typeof thing.getEditorType === 'function') {
+            return thing.getEditorType() === exports.EditorType.ICodeEditor;
+        }
+        else {
+            return false;
+        }
+    }
+    exports.isCommonCodeEditor = isCommonCodeEditor;
+    /**
+     *@internal
+     */
+    function isCommonDiffEditor(thing) {
+        if (thing && typeof thing.getEditorType === 'function') {
+            return thing.getEditorType() === exports.EditorType.ICodeEditor;
+        }
+        else {
+            return false;
+        }
+    }
+    exports.isCommonDiffEditor = isCommonDiffEditor;
+    /**
+     * @internal
+     */
+    exports.ClassName = {
+        EditorWarningDecoration: 'greensquiggly',
+        EditorErrorDecoration: 'redsquiggly'
+    };
+    /**
+     * @internal
+     */
+    exports.EventType = {
+        Disposed: 'disposed',
+        ConfigurationChanged: 'configurationChanged',
+        ModelDispose: 'modelDispose',
+        ModelChanged: 'modelChanged',
+        ModelTokensChanged: 'modelTokensChanged',
+        ModelModeChanged: 'modelsModeChanged',
+        ModelModeSupportChanged: 'modelsModeSupportChanged',
+        ModelOptionsChanged: 'modelOptionsChanged',
+        ModelRawContentChanged: 'contentChanged',
+        ModelContentChanged2: 'contentChanged2',
+        ModelRawContentChangedFlush: 'flush',
+        ModelRawContentChangedLinesDeleted: 'linesDeleted',
+        ModelRawContentChangedLinesInserted: 'linesInserted',
+        ModelRawContentChangedLineChanged: 'lineChanged',
+        EditorTextBlur: 'blur',
+        EditorTextFocus: 'focus',
+        EditorFocus: 'widgetFocus',
+        EditorBlur: 'widgetBlur',
+        ModelDecorationsChanged: 'decorationsChanged',
+        CursorPositionChanged: 'positionChanged',
+        CursorSelectionChanged: 'selectionChanged',
+        CursorRevealRange: 'revealRange',
+        CursorScrollRequest: 'scrollRequest',
+        ViewFocusGained: 'focusGained',
+        ViewFocusLost: 'focusLost',
+        ViewFocusChanged: 'focusChanged',
+        ViewScrollChanged: 'scrollChanged',
+        ViewZonesChanged: 'zonesChanged',
+        ViewLayoutChanged: 'viewLayoutChanged',
+        ContextMenu: 'contextMenu',
+        MouseDown: 'mousedown',
+        MouseUp: 'mouseup',
+        MouseMove: 'mousemove',
+        MouseLeave: 'mouseleave',
+        KeyDown: 'keydown',
+        KeyUp: 'keyup',
+        EditorLayout: 'editorLayout',
+        DiffUpdated: 'diffUpdated'
+    };
+    /**
+     * Positions in the view for cursor move command.
+     */
+    exports.CursorMovePosition = {
+        Left: 'left',
+        Right: 'right',
+        Up: 'up',
+        Down: 'down',
+        WrappedLineStart: 'wrappedLineStart',
+        WrappedLineFirstNonWhitespaceCharacter: 'wrappedLineFirstNonWhitespaceCharacter',
+        WrappedLineColumnCenter: 'wrappedLineColumnCenter',
+        WrappedLineEnd: 'wrappedLineEnd',
+        WrappedLineLastNonWhitespaceCharacter: 'wrappedLineLastNonWhitespaceCharacter',
+        ViewPortTop: 'viewPortTop',
+        ViewPortCenter: 'viewPortCenter',
+        ViewPortBottom: 'viewPortBottom',
+        ViewPortIfOutside: 'viewPortIfOutside'
+    };
+    /**
+     * Units for Cursor move 'by' argument
+     */
+    exports.CursorMoveByUnit = {
+        Line: 'line',
+        WrappedLine: 'wrappedLine',
+        Character: 'character',
+        HalfLine: 'halfLine'
+    };
+    ;
+    /**
+     * @internal
+     */
+    var isCursorMoveArgs = function (arg) {
+        if (!types.isObject(arg)) {
+            return false;
+        }
+        var cursorMoveArg = arg;
+        if (!types.isString(cursorMoveArg.to)) {
+            return false;
+        }
+        if (!types.isUndefined(cursorMoveArg.select) && !types.isBoolean(cursorMoveArg.select)) {
+            return false;
+        }
+        if (!types.isUndefined(cursorMoveArg.by) && !types.isString(cursorMoveArg.by)) {
+            return false;
+        }
+        if (!types.isUndefined(cursorMoveArg.value) && !types.isNumber(cursorMoveArg.value)) {
+            return false;
+        }
+        return true;
+    };
+    /**
+     * Directions in the view for editor scroll command.
+     */
+    exports.EditorScrollDirection = {
+        Up: 'up',
+        Down: 'down',
+    };
+    /**
+     * Units for editor scroll 'by' argument
+     */
+    exports.EditorScrollByUnit = {
+        Line: 'line',
+        WrappedLine: 'wrappedLine',
+        Page: 'page',
+        HalfPage: 'halfPage'
+    };
+    ;
+    /**
+     * @internal
+     */
+    var isEditorScrollArgs = function (arg) {
+        if (!types.isObject(arg)) {
+            return false;
+        }
+        var scrollArg = arg;
+        if (!types.isString(scrollArg.to)) {
+            return false;
+        }
+        if (!types.isUndefined(scrollArg.by) && !types.isString(scrollArg.by)) {
+            return false;
+        }
+        if (!types.isUndefined(scrollArg.value) && !types.isNumber(scrollArg.value)) {
+            return false;
+        }
+        if (!types.isUndefined(scrollArg.revealCursor) && !types.isBoolean(scrollArg.revealCursor)) {
+            return false;
+        }
+        return true;
+    };
+    ;
+    /**
+     * Values for reveal line 'at' argument
+     */
+    exports.RevealLineAtArgument = {
+        Top: 'top',
+        Center: 'center',
+        Bottom: 'bottom'
+    };
+    /**
+     * @internal
+     */
+    var isRevealLineArgs = function (arg) {
+        if (!types.isObject(arg)) {
+            return false;
+        }
+        var reveaLineArg = arg;
+        if (!types.isNumber(reveaLineArg.lineNumber)) {
+            return false;
+        }
+        if (!types.isUndefined(reveaLineArg.at) && !types.isString(reveaLineArg.at)) {
+            return false;
+        }
+        return true;
+    };
+    /**
+     * @internal
+     */
+    exports.CommandDescription = {
+        CursorMove: {
+            description: 'Move cursor to a logical position in the view',
+            args: [
+                {
+                    name: 'Cursor move argument object',
+                    description: "Property-value pairs that can be passed through this argument:\n\t\t\t\t\t'to': A mandatory logical position value providing where to move the cursor.\n\t\t\t\t\t```\n\t\t\t\t\t\t'left', 'right', 'up', 'down',\n\t\t\t\t\t\t'wrappedLineStart', 'wrappedLineFirstNonWhitespaceCharacter', 'wrappedLineColumnCenter', 'wrappedLineEnd' ,'wrappedLineLastNonWhitespaceCharacter',\n\t\t\t\t\t\t'viewPortTop', 'viewPortCenter', 'viewPortBottom', 'viewPortIfOutside'\n\t\t\t\t\t```\n\t\t\t\t\t'by': Unit to move. Default is computed based on 'to' value.\n\t\t\t\t\t```\n\t\t\t\t\t\t'line', 'wrappedLine', 'character', 'halfLine'\n\t\t\t\t\t```\n\t\t\t\t\t'value': Number of units to move. Default is '1'.\n\t\t\t\t\t'select': If 'true' makes the selection. Default is 'false'.\n\t\t\t\t",
+                    constraint: isCursorMoveArgs
+                }
+            ]
+        },
+        EditorScroll: {
+            description: 'Scroll editor in the given direction',
+            args: [
+                {
+                    name: 'Editor scroll argument object',
+                    description: "Property-value pairs that can be passed through this argument:\n\t\t\t\t\t'to': A mandatory direction value.\n\t\t\t\t\t```\n\t\t\t\t\t\t'up', 'down'\n\t\t\t\t\t```\n\t\t\t\t\t'by': Unit to move. Default is computed based on 'to' value.\n\t\t\t\t\t```\n\t\t\t\t\t\t'line', 'wrappedLine', 'page', 'halfPage'\n\t\t\t\t\t```\n\t\t\t\t\t'value': Number of units to move. Default is '1'.\n\t\t\t\t\t'revealCursor': If 'true' reveals the cursor if it is outside view port.\n\t\t\t\t",
+                    constraint: isEditorScrollArgs
+                }
+            ]
+        },
+        RevealLine: {
+            description: 'Reveal the given line at the given logical position',
+            args: [
+                {
+                    name: 'Reveal line argument object',
+                    description: "Property-value pairs that can be passed through this argument:\n\t\t\t\t\t'lineNumber': A mandatory line number value.\n\t\t\t\t\t'at': Logical position at which line has to be revealed .\n\t\t\t\t\t```\n\t\t\t\t\t\t'top', 'center', 'bottom'\n\t\t\t\t\t```\n\t\t\t\t",
+                    constraint: isRevealLineArgs
+                }
+            ]
+        }
+    };
+    /**
+     * Built-in commands.
+     */
+    exports.Handler = {
+        ExecuteCommand: 'executeCommand',
+        ExecuteCommands: 'executeCommands',
+        CursorLeft: 'cursorLeft',
+        CursorLeftSelect: 'cursorLeftSelect',
+        CursorWordLeft: 'cursorWordLeft',
+        CursorWordStartLeft: 'cursorWordStartLeft',
+        CursorWordEndLeft: 'cursorWordEndLeft',
+        CursorWordLeftSelect: 'cursorWordLeftSelect',
+        CursorWordStartLeftSelect: 'cursorWordStartLeftSelect',
+        CursorWordEndLeftSelect: 'cursorWordEndLeftSelect',
+        CursorRight: 'cursorRight',
+        CursorRightSelect: 'cursorRightSelect',
+        CursorWordRight: 'cursorWordRight',
+        CursorWordStartRight: 'cursorWordStartRight',
+        CursorWordEndRight: 'cursorWordEndRight',
+        CursorWordRightSelect: 'cursorWordRightSelect',
+        CursorWordStartRightSelect: 'cursorWordStartRightSelect',
+        CursorWordEndRightSelect: 'cursorWordEndRightSelect',
+        CursorUp: 'cursorUp',
+        CursorUpSelect: 'cursorUpSelect',
+        CursorDown: 'cursorDown',
+        CursorDownSelect: 'cursorDownSelect',
+        CursorPageUp: 'cursorPageUp',
+        CursorPageUpSelect: 'cursorPageUpSelect',
+        CursorPageDown: 'cursorPageDown',
+        CursorPageDownSelect: 'cursorPageDownSelect',
+        CursorHome: 'cursorHome',
+        CursorHomeSelect: 'cursorHomeSelect',
+        CursorEnd: 'cursorEnd',
+        CursorEndSelect: 'cursorEndSelect',
+        ExpandLineSelection: 'expandLineSelection',
+        CursorTop: 'cursorTop',
+        CursorTopSelect: 'cursorTopSelect',
+        CursorBottom: 'cursorBottom',
+        CursorBottomSelect: 'cursorBottomSelect',
+        CursorColumnSelectLeft: 'cursorColumnSelectLeft',
+        CursorColumnSelectRight: 'cursorColumnSelectRight',
+        CursorColumnSelectUp: 'cursorColumnSelectUp',
+        CursorColumnSelectPageUp: 'cursorColumnSelectPageUp',
+        CursorColumnSelectDown: 'cursorColumnSelectDown',
+        CursorColumnSelectPageDown: 'cursorColumnSelectPageDown',
+        CursorMove: 'cursorMove',
+        AddCursorDown: 'addCursorDown',
+        AddCursorUp: 'addCursorUp',
+        CursorUndo: 'cursorUndo',
+        MoveTo: 'moveTo',
+        MoveToSelect: 'moveToSelect',
+        ColumnSelect: 'columnSelect',
+        CreateCursor: 'createCursor',
+        LastCursorMoveToSelect: 'lastCursorMoveToSelect',
+        JumpToBracket: 'jumpToBracket',
+        Type: 'type',
+        ReplacePreviousChar: 'replacePreviousChar',
+        CompositionStart: 'compositionStart',
+        CompositionEnd: 'compositionEnd',
+        Paste: 'paste',
+        Tab: 'tab',
+        Indent: 'indent',
+        Outdent: 'outdent',
+        DeleteLeft: 'deleteLeft',
+        DeleteRight: 'deleteRight',
+        DeleteWordLeft: 'deleteWordLeft',
+        DeleteWordStartLeft: 'deleteWordStartLeft',
+        DeleteWordEndLeft: 'deleteWordEndLeft',
+        DeleteWordRight: 'deleteWordRight',
+        DeleteWordStartRight: 'deleteWordStartRight',
+        DeleteWordEndRight: 'deleteWordEndRight',
+        DeleteAllLeft: 'deleteAllLeft',
+        DeleteAllRight: 'deleteAllRight',
+        RemoveSecondaryCursors: 'removeSecondaryCursors',
+        CancelSelection: 'cancelSelection',
+        Cut: 'cut',
+        Undo: 'undo',
+        Redo: 'redo',
+        WordSelect: 'wordSelect',
+        WordSelectDrag: 'wordSelectDrag',
+        LastCursorWordSelect: 'lastCursorWordSelect',
+        LineSelect: 'lineSelect',
+        LineSelectDrag: 'lineSelectDrag',
+        LastCursorLineSelect: 'lastCursorLineSelect',
+        LastCursorLineSelectDrag: 'lastCursorLineSelectDrag',
+        LineInsertBefore: 'lineInsertBefore',
+        LineInsertAfter: 'lineInsertAfter',
+        LineBreakInsert: 'lineBreakInsert',
+        SelectAll: 'selectAll',
+        EditorScroll: 'editorScroll',
+        ScrollLineUp: 'scrollLineUp',
+        ScrollLineDown: 'scrollLineDown',
+        ScrollPageUp: 'scrollPageUp',
+        ScrollPageDown: 'scrollPageDown',
+        RevealLine: 'revealLine'
+    };
+    /**
+     * The style in which the editor's cursor should be rendered.
+     */
+    (function (TextEditorCursorStyle) {
+        /**
+         * As a vertical line (sitting between two characters).
+         */
+        TextEditorCursorStyle[TextEditorCursorStyle["Line"] = 1] = "Line";
+        /**
+         * As a block (sitting on top of a character).
+         */
+        TextEditorCursorStyle[TextEditorCursorStyle["Block"] = 2] = "Block";
+        /**
+         * As a horizontal line (sitting under a character).
+         */
+        TextEditorCursorStyle[TextEditorCursorStyle["Underline"] = 3] = "Underline";
+    })(exports.TextEditorCursorStyle || (exports.TextEditorCursorStyle = {}));
+    var TextEditorCursorStyle = exports.TextEditorCursorStyle;
+    /**
+     * The kind of animation in which the editor's cursor should be rendered.
+     */
+    (function (TextEditorCursorBlinkingStyle) {
+        /**
+         * Hidden
+         */
+        TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Hidden"] = 0] = "Hidden";
+        /**
+         * Blinking
+         */
+        TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Blink"] = 1] = "Blink";
+        /**
+         * Blinking with smooth fading
+         */
+        TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Smooth"] = 2] = "Smooth";
+        /**
+         * Blinking with prolonged filled state and smooth fading
+         */
+        TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Phase"] = 3] = "Phase";
+        /**
+         * Expand collapse animation on the y axis
+         */
+        TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Expand"] = 4] = "Expand";
+        /**
+         * No-Blinking
+         */
+        TextEditorCursorBlinkingStyle[TextEditorCursorBlinkingStyle["Solid"] = 5] = "Solid";
+    })(exports.TextEditorCursorBlinkingStyle || (exports.TextEditorCursorBlinkingStyle = {}));
+    var TextEditorCursorBlinkingStyle = exports.TextEditorCursorBlinkingStyle;
+    /**
+     * @internal
+     */
+    function cursorStyleToString(cursorStyle) {
+        if (cursorStyle === TextEditorCursorStyle.Line) {
+            return 'line';
+        }
+        else if (cursorStyle === TextEditorCursorStyle.Block) {
+            return 'block';
+        }
+        else if (cursorStyle === TextEditorCursorStyle.Underline) {
+            return 'underline';
+        }
+        else {
+            throw new Error('cursorStyleToString: Unknown cursorStyle');
+        }
+    }
+    exports.cursorStyleToString = cursorStyleToString;
+    /**
+     * @internal
+     */
+    var ColorZone = (function () {
+        function ColorZone(from, to, colorId, position) {
+            this.from = from | 0;
+            this.to = to | 0;
+            this.colorId = colorId | 0;
+            this.position = position | 0;
+        }
+        return ColorZone;
+    }());
+    exports.ColorZone = ColorZone;
+    /**
+     * A zone in the overview ruler
+     * @internal
+     */
+    var OverviewRulerZone = (function () {
+        function OverviewRulerZone(startLineNumber, endLineNumber, position, forceHeight, color, darkColor) {
+            this.startLineNumber = startLineNumber;
+            this.endLineNumber = endLineNumber;
+            this.position = position;
+            this.forceHeight = forceHeight;
+            this._color = color;
+            this._darkColor = darkColor;
+            this._colorZones = null;
+        }
+        OverviewRulerZone.prototype.getColor = function (useDarkColor) {
+            if (useDarkColor) {
+                return this._darkColor;
+            }
+            return this._color;
+        };
+        OverviewRulerZone.prototype.equals = function (other) {
+            return (this.startLineNumber === other.startLineNumber
+                && this.endLineNumber === other.endLineNumber
+                && this.position === other.position
+                && this.forceHeight === other.forceHeight
+                && this._color === other._color
+                && this._darkColor === other._darkColor);
+        };
+        OverviewRulerZone.prototype.compareTo = function (other) {
+            if (this.startLineNumber === other.startLineNumber) {
+                if (this.endLineNumber === other.endLineNumber) {
+                    if (this.forceHeight === other.forceHeight) {
+                        if (this.position === other.position) {
+                            if (this._darkColor === other._darkColor) {
+                                if (this._color === other._color) {
+                                    return 0;
+                                }
+                                return this._color < other._color ? -1 : 1;
+                            }
+                            return this._darkColor < other._darkColor ? -1 : 1;
+                        }
+                        return this.position - other.position;
+                    }
+                    return this.forceHeight - other.forceHeight;
+                }
+                return this.endLineNumber - other.endLineNumber;
+            }
+            return this.startLineNumber - other.startLineNumber;
+        };
+        OverviewRulerZone.prototype.setColorZones = function (colorZones) {
+            this._colorZones = colorZones;
+        };
+        OverviewRulerZone.prototype.getColorZones = function () {
+            return this._colorZones;
+        };
+        return OverviewRulerZone;
+    }());
+    exports.OverviewRulerZone = OverviewRulerZone;
+});
+
+
+
+
+
+
+define(__m[47], __M([0,1,18,4,20,28,17,59,87,69,76,91]), function (require, exports, eventEmitter_1, strings, position_1, range_1, editorCommon, modelLine_1, indentationGuesser_1, defaultConfig_1, prefixSumComputer_1, indentRanges_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -13578,10 +15150,14 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
                 }
             }
             if (typeof newOpts.tabSize !== 'undefined') {
-                if (this._options.tabSize !== newOpts.tabSize) {
+                var newTabSize = newOpts.tabSize | 0;
+                if (this._options.tabSize !== newTabSize) {
                     somethingChanged = true;
                     changed.tabSize = true;
-                    this._options.tabSize = newOpts.tabSize;
+                    this._options.tabSize = newTabSize;
+                    for (var i = 0, len = this._lines.length; i < len; i++) {
+                        this._lines[i].updateTabSize(newTabSize);
+                    }
                 }
             }
             if (typeof newOpts.trimAutoWhitespace !== 'undefined') {
@@ -13880,6 +15456,47 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
             }
             return this._lines[lineNumber - 1].text;
         };
+        TextModel.prototype.getIndentLevel = function (lineNumber) {
+            if (lineNumber < 1 || lineNumber > this.getLineCount()) {
+                throw new Error('Illegal value ' + lineNumber + ' for `lineNumber`');
+            }
+            return this._lines[lineNumber - 1].getIndentLevel();
+        };
+        TextModel.prototype._resetIndentRanges = function () {
+            this._indentRanges = null;
+        };
+        TextModel.prototype._getIndentRanges = function () {
+            if (!this._indentRanges) {
+                this._indentRanges = indentRanges_1.computeRanges(this);
+            }
+            return this._indentRanges;
+        };
+        TextModel.prototype.getIndentRanges = function () {
+            var indentRanges = this._getIndentRanges();
+            return indentRanges_1.IndentRange.deepCloneArr(indentRanges);
+        };
+        TextModel.prototype.getLineIndentGuide = function (lineNumber) {
+            if (lineNumber < 1 || lineNumber > this.getLineCount()) {
+                throw new Error('Illegal value ' + lineNumber + ' for `lineNumber`');
+            }
+            var indentRanges = this._getIndentRanges();
+            for (var i = indentRanges.length - 1; i >= 0; i--) {
+                var rng = indentRanges[i];
+                if (rng.startLineNumber === lineNumber) {
+                    return Math.ceil(rng.indent / this._options.tabSize);
+                }
+                if (rng.startLineNumber < lineNumber && lineNumber <= rng.endLineNumber) {
+                    return 1 + Math.floor(rng.indent / this._options.tabSize);
+                }
+                if (rng.endLineNumber + 1 === lineNumber) {
+                    if (i === 0 || indentRanges[i - 1].endLineNumber + 1 !== lineNumber) {
+                        // For endLineNumber matches, we need to find the outermost indent range
+                        return Math.ceil(rng.indent / this._options.tabSize);
+                    }
+                }
+            }
+            return 0;
+        };
         TextModel.prototype.getLinesContent = function () {
             var r = [];
             for (var i = 0, len = this._lines.length; i < len; i++) {
@@ -14041,14 +15658,17 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
             };
         };
         TextModel.prototype._constructLines = function (rawText) {
-            var rawLines = rawText.lines, modelLines = [], i, len;
-            for (i = 0, len = rawLines.length; i < len; i++) {
-                modelLines.push(new modelLine_1.ModelLine(i + 1, rawLines[i]));
+            var tabSize = rawText.options.tabSize;
+            var rawLines = rawText.lines;
+            var modelLines = [];
+            for (var i = 0, len = rawLines.length; i < len; i++) {
+                modelLines[i] = new modelLine_1.ModelLine(i + 1, rawLines[i], tabSize);
             }
             this._BOM = rawText.BOM;
             this._EOL = rawText.EOL;
             this._lines = modelLines;
             this._lineStarts = null;
+            this._resetIndentRanges();
         };
         TextModel.prototype._getEndOfLine = function (eol) {
             switch (eol) {
@@ -14061,10 +15681,54 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
             }
             throw new Error('Unknown EOL preference');
         };
+        TextModel._isMultiline = function (searchString) {
+            var BACKSLASH_CHAR_CODE = '\\'.charCodeAt(0);
+            var n_CHAR_CODE = 'n'.charCodeAt(0);
+            var r_CHAR_CODE = 'r'.charCodeAt(0);
+            if (!searchString || searchString.length === 0) {
+                return false;
+            }
+            for (var i = 0, len = searchString.length; i < len; i++) {
+                var chCode = searchString.charCodeAt(i);
+                if (chCode === BACKSLASH_CHAR_CODE) {
+                    // move to next char
+                    i++;
+                    if (i >= len) {
+                        // string ends with a \
+                        break;
+                    }
+                    var nextChCode = searchString.charCodeAt(i);
+                    if (nextChCode === n_CHAR_CODE || nextChCode === r_CHAR_CODE) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+        TextModel.parseSearchRequest = function (searchString, isRegex, matchCase, wholeWord) {
+            if (searchString === '') {
+                return null;
+            }
+            // Try to create a RegExp out of the params
+            var regex = null;
+            try {
+                regex = strings.createRegExp(searchString, isRegex, matchCase, wholeWord, true);
+            }
+            catch (err) {
+                return null;
+            }
+            if (!regex) {
+                return null;
+            }
+            return {
+                regex: regex,
+                isMultiline: isRegex && TextModel._isMultiline(searchString)
+            };
+        };
         TextModel.prototype.findMatches = function (searchString, rawSearchScope, isRegex, matchCase, wholeWord, limitResultCount) {
             if (limitResultCount === void 0) { limitResultCount = LIMIT_FIND_COUNT; }
-            var regex = strings.createSafeRegExp(searchString, isRegex, matchCase, wholeWord);
-            if (!regex) {
+            var r = TextModel.parseSearchRequest(searchString, isRegex, matchCase, wholeWord);
+            if (!r) {
                 return [];
             }
             var searchRange;
@@ -14074,54 +15738,41 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
             else {
                 searchRange = this.getFullModelRange();
             }
-            return this._doFindMatches(searchRange, regex, limitResultCount);
+            if (r.isMultiline) {
+                return this._doFindMatchesMultiline(searchRange, r.regex, limitResultCount);
+            }
+            return this._doFindMatchesLineByLine(searchRange, r.regex, limitResultCount);
         };
-        TextModel.prototype.findNextMatch = function (searchString, rawSearchStart, isRegex, matchCase, wholeWord) {
-            var regex = strings.createSafeRegExp(searchString, isRegex, matchCase, wholeWord);
-            if (!regex) {
-                return null;
-            }
-            var searchStart = this.validatePosition(rawSearchStart), lineCount = this.getLineCount(), startLineNumber = searchStart.lineNumber, text, r;
-            // Look in first line
-            text = this._lines[startLineNumber - 1].text.substring(searchStart.column - 1);
-            r = this._findMatchInLine(regex, text, startLineNumber, searchStart.column - 1);
-            if (r) {
-                return r;
-            }
-            for (var i = 1; i <= lineCount; i++) {
-                var lineIndex = (startLineNumber + i - 1) % lineCount;
-                text = this._lines[lineIndex].text;
-                r = this._findMatchInLine(regex, text, lineIndex + 1, 0);
-                if (r) {
-                    return r;
+        TextModel.prototype._doFindMatchesMultiline = function (searchRange, searchRegex, limitResultCount) {
+            var deltaOffset = this.getOffsetAt(searchRange.getStartPosition());
+            var text = this.getValueInRange(searchRange);
+            var result = [];
+            var prevStartOffset = 0;
+            var prevEndOffset = 0;
+            var counter = 0;
+            var m;
+            while ((m = searchRegex.exec(text))) {
+                var startOffset = deltaOffset + m.index;
+                var endOffset = startOffset + m[0].length;
+                if (prevStartOffset === startOffset && prevEndOffset === endOffset) {
+                    // Exit early if the regex matches the same range
+                    return result;
                 }
-            }
-            return null;
-        };
-        TextModel.prototype.findPreviousMatch = function (searchString, rawSearchStart, isRegex, matchCase, wholeWord) {
-            var regex = strings.createSafeRegExp(searchString, isRegex, matchCase, wholeWord);
-            if (!regex) {
-                return null;
-            }
-            var searchStart = this.validatePosition(rawSearchStart), lineCount = this.getLineCount(), startLineNumber = searchStart.lineNumber, text, r;
-            // Look in first line
-            text = this._lines[startLineNumber - 1].text.substring(0, searchStart.column - 1);
-            r = this._findLastMatchInLine(regex, text, startLineNumber);
-            if (r) {
-                return r;
-            }
-            for (var i = 1; i <= lineCount; i++) {
-                var lineIndex = (lineCount + startLineNumber - i - 1) % lineCount;
-                text = this._lines[lineIndex].text;
-                r = this._findLastMatchInLine(regex, text, lineIndex + 1);
-                if (r) {
-                    return r;
+                var startPosition = this.getPositionAt(startOffset);
+                var endPosition = this.getPositionAt(endOffset);
+                result[counter++] = new range_1.Range(startPosition.lineNumber, startPosition.column, endPosition.lineNumber, endPosition.column);
+                if (counter >= limitResultCount) {
+                    return result;
                 }
+                prevStartOffset = startOffset;
+                prevEndOffset = endOffset;
             }
-            return null;
+            return result;
         };
-        TextModel.prototype._doFindMatches = function (searchRange, searchRegex, limitResultCount) {
-            var result = [], text, counter = 0;
+        TextModel.prototype._doFindMatchesLineByLine = function (searchRange, searchRegex, limitResultCount) {
+            var result = [];
+            var text;
+            var counter = 0;
             // Early case for a search range that starts & stops on the same line number
             if (searchRange.startLineNumber === searchRange.endLineNumber) {
                 text = this._lines[searchRange.startLineNumber - 1].text.substring(searchRange.startColumn - 1, searchRange.endColumn - 1);
@@ -14142,7 +15793,99 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
             }
             return result;
         };
-        TextModel.prototype._findMatchInLine = function (searchRegex, text, lineNumber, deltaOffset) {
+        TextModel.prototype.findNextMatch = function (searchString, rawSearchStart, isRegex, matchCase, wholeWord) {
+            var r = TextModel.parseSearchRequest(searchString, isRegex, matchCase, wholeWord);
+            if (!r) {
+                return null;
+            }
+            var searchStart = this.validatePosition(rawSearchStart);
+            if (r.isMultiline) {
+                return this._doFindNextMatchMultiline(searchStart, r.regex);
+            }
+            return this._doFindNextMatchLineByLine(searchStart, r.regex);
+        };
+        TextModel.prototype._doFindNextMatchMultiline = function (searchStart, searchRegex) {
+            var deltaOffset = this.getOffsetAt(searchStart);
+            var text = this.getValueInRange(new range_1.Range(searchStart.lineNumber, searchStart.column, this.getLineCount(), this.getLineMaxColumn(this.getLineCount())));
+            var m = searchRegex.exec(text);
+            if (m) {
+                var startOffset = deltaOffset + m.index;
+                var endOffset = startOffset + m[0].length;
+                var startPosition = this.getPositionAt(startOffset);
+                var endPosition = this.getPositionAt(endOffset);
+                return new range_1.Range(startPosition.lineNumber, startPosition.column, endPosition.lineNumber, endPosition.column);
+            }
+            if (searchStart.lineNumber !== 1 || searchStart.column !== -1) {
+                // Try again from the top
+                return this._doFindNextMatchMultiline(new position_1.Position(1, 1), searchRegex);
+            }
+            return null;
+        };
+        TextModel.prototype._doFindNextMatchLineByLine = function (searchStart, searchRegex) {
+            var lineCount = this.getLineCount();
+            var startLineNumber = searchStart.lineNumber;
+            var text;
+            var r;
+            // Look in first line
+            text = this._lines[startLineNumber - 1].text.substring(searchStart.column - 1);
+            r = this._findFirstMatchInLine(searchRegex, text, startLineNumber, searchStart.column - 1);
+            if (r) {
+                return r;
+            }
+            for (var i = 1; i <= lineCount; i++) {
+                var lineIndex = (startLineNumber + i - 1) % lineCount;
+                text = this._lines[lineIndex].text;
+                r = this._findFirstMatchInLine(searchRegex, text, lineIndex + 1, 0);
+                if (r) {
+                    return r;
+                }
+            }
+            return null;
+        };
+        TextModel.prototype.findPreviousMatch = function (searchString, rawSearchStart, isRegex, matchCase, wholeWord) {
+            var r = TextModel.parseSearchRequest(searchString, isRegex, matchCase, wholeWord);
+            if (!r) {
+                return null;
+            }
+            var searchStart = this.validatePosition(rawSearchStart);
+            if (r.isMultiline) {
+                return this._doFindPreviousMatchMultiline(searchStart, r.regex);
+            }
+            return this._doFindPreviousMatchLineByLine(searchStart, r.regex);
+        };
+        TextModel.prototype._doFindPreviousMatchMultiline = function (searchStart, searchRegex) {
+            var matches = this._doFindMatchesMultiline(new range_1.Range(1, 1, searchStart.lineNumber, searchStart.column), searchRegex, 10 * LIMIT_FIND_COUNT);
+            if (matches.length > 0) {
+                return matches[matches.length - 1];
+            }
+            if (searchStart.lineNumber !== this.getLineCount() || searchStart.column !== this.getLineMaxColumn(this.getLineCount())) {
+                // Try again with all content
+                return this._doFindPreviousMatchMultiline(new position_1.Position(this.getLineCount(), this.getLineMaxColumn(this.getLineCount())), searchRegex);
+            }
+            return null;
+        };
+        TextModel.prototype._doFindPreviousMatchLineByLine = function (searchStart, searchRegex) {
+            var lineCount = this.getLineCount();
+            var startLineNumber = searchStart.lineNumber;
+            var text;
+            var r;
+            // Look in first line
+            text = this._lines[startLineNumber - 1].text.substring(0, searchStart.column - 1);
+            r = this._findLastMatchInLine(searchRegex, text, startLineNumber);
+            if (r) {
+                return r;
+            }
+            for (var i = 1; i <= lineCount; i++) {
+                var lineIndex = (lineCount + startLineNumber - i - 1) % lineCount;
+                text = this._lines[lineIndex].text;
+                r = this._findLastMatchInLine(searchRegex, text, lineIndex + 1);
+                if (r) {
+                    return r;
+                }
+            }
+            return null;
+        };
+        TextModel.prototype._findFirstMatchInLine = function (searchRegex, text, lineNumber, deltaOffset) {
             var m = searchRegex.exec(text);
             if (!m) {
                 return null;
@@ -14158,6 +15901,10 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
                     break;
                 }
                 bestResult = result;
+                if (m.index + m[0].length === text.length) {
+                    // Reached the end of the line
+                    break;
+                }
             }
             return bestResult;
         };
@@ -14169,13 +15916,17 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
                 m = searchRegex.exec(text);
                 if (m) {
                     var range = new range_1.Range(lineNumber, m.index + 1 + deltaOffset, lineNumber, m.index + 1 + m[0].length + deltaOffset);
-                    // Exit early if the regex matches the same range
                     if (range.equalsRange(result[result.length - 1])) {
+                        // Exit early if the regex matches the same range
                         return counter;
                     }
                     result.push(range);
                     counter++;
                     if (counter >= limitResultCount) {
+                        return counter;
+                    }
+                    if (m.index + m[0].length === text.length) {
+                        // Reached the end of the line
                         return counter;
                     }
                 }
@@ -14215,13 +15966,12 @@ define(__m[45], __M([1,0,15,3,22,29,19,57,95,68,108]), function (require, export
     exports.RawText = RawText;
 });
 
-define(__m[70], __M([7,6]), function(nls, data) { return nls.create("vs/editor/common/model/textModelWithTokens", data); });
 
 
 
 
 
-define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]), function (require, exports, nls, async_1, errors_1, lifecycle_1, stopwatch_1, timer, winjs_base_1, editorCommon, textModel_1, textModelWithTokensHelpers_1, tokenIterator_1, nullMode_1, supports_1, richEditBrackets_1, modeTransition_1, lineToken_1, tokensBinaryEncoding_1, languageConfigurationRegistry_1) {
+define(__m[88], __M([0,1,70,34,2,19,43,36,5,17,47,64,86,60,21,23,9,58,35,13]), function (require, exports, nls, async_1, errors_1, lifecycle_1, stopwatch_1, timer, winjs_base_1, editorCommon, textModel_1, textModelWithTokensHelpers_1, tokenIterator_1, nullMode_1, supports_1, richEditBrackets_1, modeTransition_1, tokensBinaryEncoding_1, languageConfigurationRegistry_1, token_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -14298,10 +16048,10 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
     }());
     exports.FullModelRetokenizer = FullModelRetokenizer;
     var LineContext = (function () {
-        function LineContext(topLevelMode, line) {
-            this.modeTransitions = line.getModeTransitions(topLevelMode);
+        function LineContext(topLevelModeId, line, map) {
+            this.modeTransitions = line.getModeTransitions(topLevelModeId);
             this._text = line.text;
-            this._lineTokens = line.getTokens();
+            this._lineTokens = line.getTokens(map);
         }
         LineContext.prototype.getLineContent = function () {
             return this._text;
@@ -14312,16 +16062,8 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
         LineContext.prototype.getTokenStartIndex = function (tokenIndex) {
             return this._lineTokens.getTokenStartIndex(tokenIndex);
         };
-        LineContext.prototype.getTokenEndIndex = function (tokenIndex) {
-            return this._lineTokens.getTokenEndIndex(tokenIndex, this._text.length);
-        };
         LineContext.prototype.getTokenType = function (tokenIndex) {
             return this._lineTokens.getTokenType(tokenIndex);
-        };
-        LineContext.prototype.getTokenText = function (tokenIndex) {
-            var startIndex = this._lineTokens.getTokenStartIndex(tokenIndex);
-            var endIndex = this._lineTokens.getTokenEndIndex(tokenIndex, this._text.length);
-            return this._text.substring(startIndex, endIndex);
         };
         LineContext.prototype.findIndexOfOffset = function (offset) {
             return this._lineTokens.findIndexOfOffset(offset);
@@ -14330,13 +16072,12 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
     }());
     var TextModelWithTokens = (function (_super) {
         __extends(TextModelWithTokens, _super);
-        function TextModelWithTokens(allowedEventTypes, rawText, shouldAutoTokenize, modeOrPromise) {
+        function TextModelWithTokens(allowedEventTypes, rawText, modeOrPromise) {
             var _this = this;
             allowedEventTypes.push(editorCommon.EventType.ModelTokensChanged);
             allowedEventTypes.push(editorCommon.EventType.ModelModeChanged);
             allowedEventTypes.push(editorCommon.EventType.ModelModeSupportChanged);
             _super.call(this, allowedEventTypes, rawText);
-            this._shouldAutoTokenize = shouldAutoTokenize;
             this._mode = null;
             this._modeListener = null;
             this._modeToModelBinder = null;
@@ -14385,6 +16126,9 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             this._retokenizers = lifecycle_1.dispose(this._retokenizers);
             this._scheduleRetokenizeNow.dispose();
             _super.prototype.dispose.call(this);
+        };
+        TextModelWithTokens.prototype._shouldAutoTokenize = function () {
+            return false;
         };
         TextModelWithTokens.prototype._massageMode = function (mode) {
             if (this.isTooLargeForHavingAMode()) {
@@ -14480,17 +16224,8 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             this._scheduleRetokenizeNow.cancel();
             this._clearTimers();
             for (var i = 0; i < this._lines.length; i++) {
-                this._lines[i].setState(null);
+                this._lines[i].resetTokenizationState();
             }
-            this._initializeTokenizationState();
-        };
-        TextModelWithTokens.prototype._clearTimers = function () {
-            if (this._revalidateTokensTimeout !== -1) {
-                clearTimeout(this._revalidateTokensTimeout);
-                this._revalidateTokensTimeout = -1;
-            }
-        };
-        TextModelWithTokens.prototype._initializeTokenizationState = function () {
             // Initialize tokenization states
             var initialState = null;
             if (this._mode.tokenizationSupport) {
@@ -14512,6 +16247,12 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             this._invalidLineStartIndex = 0;
             this._beginBackgroundTokenization();
         };
+        TextModelWithTokens.prototype._clearTimers = function () {
+            if (this._revalidateTokensTimeout !== -1) {
+                clearTimeout(this._revalidateTokensTimeout);
+                this._revalidateTokensTimeout = -1;
+            }
+        };
         TextModelWithTokens.prototype.getLineTokens = function (lineNumber, inaccurateTokensAcceptable) {
             if (inaccurateTokensAcceptable === void 0) { inaccurateTokensAcceptable = false; }
             if (lineNumber < 1 || lineNumber > this.getLineCount()) {
@@ -14520,21 +16261,24 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             if (!inaccurateTokensAcceptable) {
                 this._updateTokensUntilLine(lineNumber, true);
             }
-            return this._lines[lineNumber - 1].getTokens();
+            return this._lines[lineNumber - 1].getTokens(this._tokensInflatorMap);
         };
         TextModelWithTokens.prototype.getLineContext = function (lineNumber) {
             if (lineNumber < 1 || lineNumber > this.getLineCount()) {
                 throw new Error('Illegal value ' + lineNumber + ' for `lineNumber`');
             }
             this._updateTokensUntilLine(lineNumber, true);
-            return new LineContext(this._mode, this._lines[lineNumber - 1]);
+            return new LineContext(this.getModeId(), this._lines[lineNumber - 1], this._tokensInflatorMap);
         };
         TextModelWithTokens.prototype._getInternalTokens = function (lineNumber) {
             this._updateTokensUntilLine(lineNumber, true);
-            return this._lines[lineNumber - 1].getTokens();
+            return this._lines[lineNumber - 1].getTokens(this._tokensInflatorMap);
         };
         TextModelWithTokens.prototype.getMode = function () {
             return this._mode;
+        };
+        TextModelWithTokens.prototype.getModeId = function () {
+            return this.getMode().getId();
         };
         TextModelWithTokens.prototype.setMode = function (newModeOrPromise) {
             if (!newModeOrPromise) {
@@ -14589,38 +16333,9 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
                 this._beginBackgroundTokenization();
             }
         };
-        TextModelWithTokens._toLineTokens = function (tokens) {
-            if (!tokens || tokens.length === 0) {
-                return [];
-            }
-            if (tokens[0] instanceof lineToken_1.LineToken) {
-                return tokens;
-            }
-            var result = [];
-            for (var i = 0, len = tokens.length; i < len; i++) {
-                result[i] = new lineToken_1.LineToken(tokens[i].startIndex, tokens[i].type);
-            }
-            return result;
-        };
-        TextModelWithTokens._toModeTransitions = function (modeTransitions) {
-            if (!modeTransitions || modeTransitions.length === 0) {
-                return [];
-            }
-            if (modeTransitions[0] instanceof modeTransition_1.ModeTransition) {
-                return modeTransitions;
-            }
-            var result = [];
-            for (var i = 0, len = modeTransitions.length; i < len; i++) {
-                result[i] = new modeTransition_1.ModeTransition(modeTransitions[i].startIndex, modeTransitions[i].mode);
-            }
-            return result;
-        };
-        TextModelWithTokens.prototype._updateLineTokens = function (lineIndex, map, topLevelMode, r) {
-            this._lines[lineIndex].setTokens(map, TextModelWithTokens._toLineTokens(r.tokens), topLevelMode, TextModelWithTokens._toModeTransitions(r.modeTransitions));
-        };
         TextModelWithTokens.prototype._beginBackgroundTokenization = function () {
             var _this = this;
-            if (this._shouldAutoTokenize && this._revalidateTokensTimeout === -1) {
+            if (this._shouldAutoTokenize() && this._revalidateTokensTimeout === -1) {
                 this._revalidateTokensTimeout = setTimeout(function () {
                     _this._revalidateTokensTimeout = -1;
                     _this._revalidateTokensNow();
@@ -14640,6 +16355,9 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
                 }
             }
             this._revalidateTokensNow(toLineNumber);
+            if (this._invalidLineStartIndex < this._lines.length) {
+                this._beginBackgroundTokenization();
+            }
         };
         TextModelWithTokens.prototype._revalidateTokensNow = function (toLineNumber) {
             if (toLineNumber === void 0) { toLineNumber = this._invalidLineStartIndex + 1000000; }
@@ -14692,7 +16410,7 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
                 throw new Error('Illegal value ' + lineNumber + ' for `lineNumber`');
             }
             this._updateTokensUntilLine(lineNumber, true);
-            return this._lines[lineNumber - 1].getModeTransitions(this._mode);
+            return this._lines[lineNumber - 1].getModeTransitions(this.getModeId());
         };
         TextModelWithTokens.prototype._updateTokensUntilLine = function (lineNumber, emitEvents) {
             var linesLength = this._lines.length;
@@ -14722,28 +16440,22 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
                     }
                     if (r && r.actualStopOffset < text.length) {
                         // Treat the rest of the line (if above limit) as one default token
-                        r.tokens.push({
-                            startIndex: r.actualStopOffset,
-                            type: ''
-                        });
+                        r.tokens.push(new token_1.Token(r.actualStopOffset, ''));
                         // Use as end state the starting state
                         r.endState = this._lines[lineIndex].getState();
                     }
                 }
                 if (!r) {
-                    r = nullMode_1.nullTokenize(this._mode, text, this._lines[lineIndex].getState());
+                    r = nullMode_1.nullTokenize(this.getModeId(), text, this._lines[lineIndex].getState());
                 }
                 if (!r.modeTransitions) {
                     r.modeTransitions = [];
                 }
                 if (r.modeTransitions.length === 0) {
                     // Make sure there is at least the transition to the top-most mode
-                    r.modeTransitions.push({
-                        startIndex: 0,
-                        mode: this._mode
-                    });
+                    r.modeTransitions.push(new modeTransition_1.ModeTransition(0, this.getModeId()));
                 }
-                this._updateLineTokens(lineIndex, this._tokensInflatorMap, this._mode, r);
+                this._lines[lineIndex].setTokens(this._tokensInflatorMap, r.tokens, this.getModeId(), r.modeTransitions);
                 if (this._lines[lineIndex].isInvalid) {
                     this._lines[lineIndex].isInvalid = false;
                 }
@@ -14807,7 +16519,7 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             return this._invalidLineStartIndex > lineNumber - 1;
         };
         TextModelWithTokens.prototype._getWordDefinition = function () {
-            return textModelWithTokensHelpers_1.WordHelper.massageWordDefinitionOf(this._mode);
+            return textModelWithTokensHelpers_1.WordHelper.massageWordDefinitionOf(this.getModeId());
         };
         TextModelWithTokens.prototype.getWordAtPosition = function (position) {
             return textModelWithTokensHelpers_1.WordHelper.getWordAtPosition(this, this.validatePosition(position));
@@ -14833,9 +16545,10 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             iter._invalidate();
             return result;
         };
-        TextModelWithTokens.prototype.findMatchingBracketUp = function (bracket, _position) {
+        TextModelWithTokens.prototype.findMatchingBracketUp = function (_bracket, _position) {
+            var bracket = _bracket.toLowerCase();
             var position = this.validatePosition(_position);
-            var modeTransitions = this._lines[position.lineNumber - 1].getModeTransitions(this._mode);
+            var modeTransitions = this._lines[position.lineNumber - 1].getModeTransitions(this.getModeId());
             var currentModeIndex = modeTransition_1.ModeTransition.findIndexInSegmentsArray(modeTransitions, position.column - 1);
             var currentMode = modeTransitions[currentModeIndex];
             var currentModeBrackets = languageConfigurationRegistry_1.LanguageConfigurationRegistry.getBracketsSupport(currentMode.modeId);
@@ -14854,10 +16567,10 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
         TextModelWithTokens.prototype._matchBracket = function (position) {
             var lineNumber = position.lineNumber;
             var lineText = this._lines[lineNumber - 1].text;
-            var lineTokens = this._lines[lineNumber - 1].getTokens();
+            var lineTokens = this._lines[lineNumber - 1].getTokens(this._tokensInflatorMap);
             var currentTokenIndex = lineTokens.findIndexOfOffset(position.column - 1);
             var currentTokenStart = lineTokens.getTokenStartIndex(currentTokenIndex);
-            var modeTransitions = this._lines[lineNumber - 1].getModeTransitions(this._mode);
+            var modeTransitions = this._lines[lineNumber - 1].getModeTransitions(this.getModeId());
             var currentModeIndex = modeTransition_1.ModeTransition.findIndexInSegmentsArray(modeTransitions, position.column - 1);
             var currentMode = modeTransitions[currentModeIndex];
             var currentModeBrackets = languageConfigurationRegistry_1.LanguageConfigurationRegistry.getBracketsSupport(currentMode.modeId);
@@ -14882,6 +16595,7 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
                         // check that we didn't hit a bracket too far away from position
                         if (foundBracket && foundBracket.startColumn <= position.column && position.column <= foundBracket.endColumn) {
                             var foundBracketText = lineText.substring(foundBracket.startColumn - 1, foundBracket.endColumn - 1);
+                            foundBracketText = foundBracketText.toLowerCase();
                             var r = this._matchFoundBracket(foundBracket, prevModeBrackets.textIsBracket[foundBracketText], prevModeBrackets.textIsOpenBracket[foundBracketText]);
                             // check that we can actually match this bracket
                             if (r) {
@@ -14909,6 +16623,7 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
                         // check that we didn't hit a bracket too far away from position
                         if (foundBracket.startColumn <= position.column && position.column <= foundBracket.endColumn) {
                             var foundBracketText = lineText.substring(foundBracket.startColumn - 1, foundBracket.endColumn - 1);
+                            foundBracketText = foundBracketText.toLowerCase();
                             var r = this._matchFoundBracket(foundBracket, currentModeBrackets.textIsBracket[foundBracketText], currentModeBrackets.textIsOpenBracket[foundBracketText]);
                             // check that we can actually match this bracket
                             if (r) {
@@ -14942,9 +16657,9 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             var reversedBracketRegex = bracket.reversedRegex;
             var count = -1;
             for (var lineNumber = position.lineNumber; lineNumber >= 1; lineNumber--) {
-                var lineTokens = this._lines[lineNumber - 1].getTokens();
+                var lineTokens = this._lines[lineNumber - 1].getTokens(this._tokensInflatorMap);
                 var lineText = this._lines[lineNumber - 1].text;
-                var modeTransitions = this._lines[lineNumber - 1].getModeTransitions(this._mode);
+                var modeTransitions = this._lines[lineNumber - 1].getModeTransitions(this.getModeId());
                 var currentModeIndex = modeTransitions.length - 1;
                 var currentModeStart = modeTransitions[currentModeIndex].startIndex;
                 var currentModeId = modeTransitions[currentModeIndex].modeId;
@@ -14972,6 +16687,7 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
                                 break;
                             }
                             var hitText = lineText.substring(r.startColumn - 1, r.endColumn - 1);
+                            hitText = hitText.toLowerCase();
                             if (hitText === bracket.open) {
                                 count++;
                             }
@@ -14995,9 +16711,9 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             var bracketRegex = bracket.forwardRegex;
             var count = 1;
             for (var lineNumber = position.lineNumber, lineCount = this.getLineCount(); lineNumber <= lineCount; lineNumber++) {
-                var lineTokens = this._lines[lineNumber - 1].getTokens();
+                var lineTokens = this._lines[lineNumber - 1].getTokens(this._tokensInflatorMap);
                 var lineText = this._lines[lineNumber - 1].text;
-                var modeTransitions = this._lines[lineNumber - 1].getModeTransitions(this._mode);
+                var modeTransitions = this._lines[lineNumber - 1].getModeTransitions(this.getModeId());
                 var currentModeIndex = 0;
                 var nextModeStart = (currentModeIndex + 1 < modeTransitions.length ? modeTransitions[currentModeIndex + 1].startIndex : lineText.length + 1);
                 var currentModeId = modeTransitions[currentModeIndex].modeId;
@@ -15025,6 +16741,7 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
                                 break;
                             }
                             var hitText = lineText.substring(r.startColumn - 1, r.endColumn - 1);
+                            hitText = hitText.toLowerCase();
                             if (hitText === bracket.open) {
                                 count++;
                             }
@@ -15046,7 +16763,7 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             var position = this.validatePosition(_position);
             var reversedBracketRegex = /[\(\)\[\]\{\}]/; // TODO@Alex: use mode's brackets
             for (var lineNumber = position.lineNumber; lineNumber >= 1; lineNumber--) {
-                var lineTokens = this._lines[lineNumber - 1].getTokens();
+                var lineTokens = this._lines[lineNumber - 1].getTokens(this._tokensInflatorMap);
                 var lineText = this._lines[lineNumber - 1].text;
                 var tokensLength = lineTokens.getTokenCount() - 1;
                 var currentTokenEnd = lineText.length;
@@ -15072,7 +16789,7 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
             var position = this.validatePosition(_position);
             var bracketRegex = /[\(\)\[\]\{\}]/; // TODO@Alex: use mode's brackets
             for (var lineNumber = position.lineNumber, lineCount = this.getLineCount(); lineNumber <= lineCount; lineNumber++) {
-                var lineTokens = this._lines[lineNumber - 1].getTokens();
+                var lineTokens = this._lines[lineNumber - 1].getTokens(this._tokensInflatorMap);
                 var lineText = this._lines[lineNumber - 1].text;
                 var startTokenIndex = 0;
                 var currentTokenStart = lineTokens.getTokenStartIndex(startTokenIndex);
@@ -15121,16 +16838,17 @@ define(__m[71], __M([1,0,70,24,2,16,61,26,5,19,45,64,69,48,14,28,18,101,56,31]),
 
 
 
-define(__m[72], __M([1,0,19,57,45,71,29,22]), function (require, exports, editorCommon, modelLine_1, textModel_1, textModelWithTokens_1, range_1, position_1) {
+define(__m[89], __M([0,1,17,59,47,88,28,20]), function (require, exports, editorCommon, modelLine_1, textModel_1, textModelWithTokens_1, range_1, position_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
      *--------------------------------------------------------------------------------------------*/
     'use strict';
+    var NO_TAB_SIZE = 0;
     var AbstractMirrorModel = (function (_super) {
         __extends(AbstractMirrorModel, _super);
         function AbstractMirrorModel(allowedEventTypes, versionId, value, mode, associatedResource) {
-            _super.call(this, allowedEventTypes.concat([editorCommon.EventType.ModelDispose]), value, false, mode);
+            _super.call(this, allowedEventTypes.concat([editorCommon.EventType.ModelDispose]), value, mode);
             this._setVersionId(versionId);
             this._associatedResource = associatedResource;
         }
@@ -15290,7 +17008,7 @@ define(__m[72], __M([1,0,19,57,45,71,29,22]), function (require, exports, editor
                     endColumn: Number.MAX_VALUE,
                     text: e.detail,
                     forceMoveMarkers: false
-                }]);
+                }], NO_TAB_SIZE);
             if (this._lineStarts) {
                 // update prefix sum
                 this._lineStarts.changeValue(e.lineNumber - 1, this._lines[e.lineNumber - 1].text.length + this._EOL.length);
@@ -15318,7 +17036,7 @@ define(__m[72], __M([1,0,19,57,45,71,29,22]), function (require, exports, editor
             var lineIndex, i, splitLines = e.detail.split('\n');
             var newLengths = [];
             for (lineIndex = e.fromLineNumber - 1, i = 0; lineIndex < e.toLineNumber; lineIndex++, i++) {
-                this._lines.splice(lineIndex, 0, new modelLine_1.ModelLine(0, splitLines[i]));
+                this._lines.splice(lineIndex, 0, new modelLine_1.ModelLine(0, splitLines[i], NO_TAB_SIZE));
                 newLengths.push(splitLines[i].length + this._EOL.length);
             }
             if (this._lineStarts) {
@@ -15335,393 +17053,7 @@ define(__m[72], __M([1,0,19,57,45,71,29,22]), function (require, exports, editor
     exports.MirrorModel = MirrorModel;
 });
 
-define(__m[73], __M([7,6]), function(nls, data) { return nls.create("vs/editor/common/modes/modesRegistry", data); });
-define(__m[74], __M([7,6]), function(nls, data) { return nls.create("vs/editor/common/modes/supports/suggestSupport", data); });
-define(__m[75], __M([7,6]), function(nls, data) { return nls.create("vs/editor/common/services/modeServiceImpl", data); });
-define(__m[76], __M([7,6]), function(nls, data) { return nls.create("vs/platform/configuration/common/configurationRegistry", data); });
-define(__m[77], __M([7,6]), function(nls, data) { return nls.create("vs/platform/extensions/common/abstractExtensionService", data); });
-define(__m[78], __M([7,6]), function(nls, data) { return nls.create("vs/platform/extensions/common/extensionsRegistry", data); });
-define(__m[79], __M([7,6]), function(nls, data) { return nls.create("vs/platform/jsonschemas/common/jsonContributionRegistry", data); });
-
-
-
-
-
-define(__m[33], __M([1,0,2]), function (require, exports, errors_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    var AbstractDescriptor = (function () {
-        function AbstractDescriptor(_staticArguments) {
-            this._staticArguments = _staticArguments;
-            // empty
-        }
-        AbstractDescriptor.prototype.appendStaticArguments = function (more) {
-            this._staticArguments.push.apply(this._staticArguments, more);
-        };
-        AbstractDescriptor.prototype.staticArguments = function (nth) {
-            if (isNaN(nth)) {
-                return this._staticArguments.slice(0);
-            }
-            else {
-                return this._staticArguments[nth];
-            }
-        };
-        AbstractDescriptor.prototype._validate = function (type) {
-            if (!type) {
-                throw errors_1.illegalArgument('can not be falsy');
-            }
-        };
-        return AbstractDescriptor;
-    }());
-    exports.AbstractDescriptor = AbstractDescriptor;
-    var SyncDescriptor = (function (_super) {
-        __extends(SyncDescriptor, _super);
-        function SyncDescriptor(_ctor) {
-            var staticArguments = [];
-            for (var _i = 1; _i < arguments.length; _i++) {
-                staticArguments[_i - 1] = arguments[_i];
-            }
-            _super.call(this, staticArguments);
-            this._ctor = _ctor;
-        }
-        Object.defineProperty(SyncDescriptor.prototype, "ctor", {
-            get: function () {
-                return this._ctor;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        SyncDescriptor.prototype.bind = function () {
-            var moreStaticArguments = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                moreStaticArguments[_i - 0] = arguments[_i];
-            }
-            var allArgs = [];
-            allArgs = allArgs.concat(this.staticArguments());
-            allArgs = allArgs.concat(moreStaticArguments);
-            return new (SyncDescriptor.bind.apply(SyncDescriptor, [void 0].concat([this._ctor], allArgs)))();
-        };
-        return SyncDescriptor;
-    }(AbstractDescriptor));
-    exports.SyncDescriptor = SyncDescriptor;
-    exports.createSyncDescriptor = function (ctor) {
-        var staticArguments = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            staticArguments[_i - 1] = arguments[_i];
-        }
-        return new (SyncDescriptor.bind.apply(SyncDescriptor, [void 0].concat([ctor], staticArguments)))();
-    };
-    var AsyncDescriptor = (function (_super) {
-        __extends(AsyncDescriptor, _super);
-        function AsyncDescriptor(_moduleName, _ctorName) {
-            var staticArguments = [];
-            for (var _i = 2; _i < arguments.length; _i++) {
-                staticArguments[_i - 2] = arguments[_i];
-            }
-            _super.call(this, staticArguments);
-            this._moduleName = _moduleName;
-            this._ctorName = _ctorName;
-            if (typeof _moduleName !== 'string') {
-                throw new Error('Invalid AsyncDescriptor arguments, expected `moduleName` to be a string!');
-            }
-        }
-        AsyncDescriptor.create = function (moduleName, ctorName) {
-            return new AsyncDescriptor(moduleName, ctorName);
-        };
-        Object.defineProperty(AsyncDescriptor.prototype, "moduleName", {
-            get: function () {
-                return this._moduleName;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(AsyncDescriptor.prototype, "ctorName", {
-            get: function () {
-                return this._ctorName;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        AsyncDescriptor.prototype.bind = function () {
-            var moreStaticArguments = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                moreStaticArguments[_i - 0] = arguments[_i];
-            }
-            var allArgs = [];
-            allArgs = allArgs.concat(this.staticArguments());
-            allArgs = allArgs.concat(moreStaticArguments);
-            return new (AsyncDescriptor.bind.apply(AsyncDescriptor, [void 0].concat([this.moduleName, this.ctorName], allArgs)))();
-        };
-        return AsyncDescriptor;
-    }(AbstractDescriptor));
-    exports.AsyncDescriptor = AsyncDescriptor;
-    var _createAsyncDescriptor = function (moduleName, ctorName) {
-        var staticArguments = [];
-        for (var _i = 2; _i < arguments.length; _i++) {
-            staticArguments[_i - 2] = arguments[_i];
-        }
-        return new (AsyncDescriptor.bind.apply(AsyncDescriptor, [void 0].concat([moduleName, ctorName], staticArguments)))();
-    };
-    exports.createAsyncDescriptor0 = _createAsyncDescriptor;
-    exports.createAsyncDescriptor1 = _createAsyncDescriptor;
-    exports.createAsyncDescriptor2 = _createAsyncDescriptor;
-    exports.createAsyncDescriptor3 = _createAsyncDescriptor;
-    exports.createAsyncDescriptor4 = _createAsyncDescriptor;
-    exports.createAsyncDescriptor5 = _createAsyncDescriptor;
-    exports.createAsyncDescriptor6 = _createAsyncDescriptor;
-    exports.createAsyncDescriptor7 = _createAsyncDescriptor;
-});
-
-define(__m[4], __M([1,0]), function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    // ------ internal util
-    var _util;
-    (function (_util) {
-        _util.DI_TARGET = '$di$target';
-        _util.DI_DEPENDENCIES = '$di$dependencies';
-        function getServiceDependencies(ctor) {
-            return ctor[_util.DI_DEPENDENCIES] || [];
-        }
-        _util.getServiceDependencies = getServiceDependencies;
-    })(_util = exports._util || (exports._util = {}));
-    exports.IInstantiationService = createDecorator('instantiationService');
-    function storeServiceDependency(id, target, index, optional) {
-        if (target[_util.DI_TARGET] === target) {
-            target[_util.DI_DEPENDENCIES].push({ id: id, index: index, optional: optional });
-        }
-        else {
-            target[_util.DI_DEPENDENCIES] = [{ id: id, index: index, optional: optional }];
-            target[_util.DI_TARGET] = target;
-        }
-    }
-    /**
-     * A *only* valid way to create a {{ServiceIdentifier}}.
-     */
-    function createDecorator(serviceId) {
-        var id = function (target, key, index) {
-            if (arguments.length !== 3) {
-                throw new Error('@IServiceName-decorator can only be used to decorate a parameter');
-            }
-            storeServiceDependency(id, target, index, false);
-        };
-        id.toString = function () { return serviceId; };
-        return id;
-    }
-    exports.createDecorator = createDecorator;
-    /**
-     * Mark a service dependency as optional.
-     */
-    function optional(serviceIdentifier) {
-        return function (target, key, index) {
-            if (arguments.length !== 3) {
-                throw new Error('@optional-decorator can only be used to decorate a parameter');
-            }
-            storeServiceDependency(serviceIdentifier, target, index, true);
-        };
-    }
-    exports.optional = optional;
-});
-
-define(__m[35], __M([1,0,4]), function (require, exports, instantiation_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    exports.ICompatWorkerService = instantiation_1.createDecorator('compatWorkerService');
-    function findMember(proto, target) {
-        for (var i in proto) {
-            if (proto[i] === target) {
-                return i;
-            }
-        }
-        throw new Error('Member not found in prototype');
-    }
-    function CompatWorkerAttr(type, target) {
-        var methodName = findMember(type.prototype, target);
-        type.prototype[methodName] = function () {
-            var param = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                param[_i - 0] = arguments[_i];
-            }
-            var obj = this;
-            return obj.compatWorkerService.CompatWorker(obj, methodName, target, param);
-        };
-    }
-    exports.CompatWorkerAttr = CompatWorkerAttr;
-});
-
-define(__m[83], __M([1,0,4]), function (require, exports, instantiation_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    exports.ID_EDITOR_WORKER_SERVICE = 'editorWorkerService';
-    exports.IEditorWorkerService = instantiation_1.createDecorator(exports.ID_EDITOR_WORKER_SERVICE);
-});
-
-define(__m[23], __M([1,0,4]), function (require, exports, instantiation_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    exports.IModeService = instantiation_1.createDecorator('modeService');
-});
-
-define(__m[85], __M([1,0,4]), function (require, exports, instantiation_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    exports.IModelService = instantiation_1.createDecorator('modelService');
-});
-
-define(__m[37], __M([1,0,4]), function (require, exports, instantiation_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    // Resource Service
-    exports.ResourceEvents = {
-        ADDED: 'resource.added',
-        REMOVED: 'resource.removed',
-        CHANGED: 'resource.changed'
-    };
-    exports.IResourceService = instantiation_1.createDecorator('resourceService');
-});
-
-
-
-
-
-
-define(__m[87], __M([1,0,15,16,37]), function (require, exports, eventEmitter_1, lifecycle_1, resourceService_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    var ResourceService = (function (_super) {
-        __extends(ResourceService, _super);
-        function ResourceService() {
-            _super.call(this);
-            this.serviceId = resourceService_1.IResourceService;
-            this.data = {};
-            this.unbinds = {};
-        }
-        ResourceService.prototype.addListener2_ = function (eventType, listener) {
-            return _super.prototype.addListener2.call(this, eventType, listener);
-        };
-        ResourceService.prototype._anonymousModelId = function (input) {
-            var r = '';
-            for (var i = 0; i < input.length; i++) {
-                var ch = input[i];
-                if (ch >= '0' && ch <= '9') {
-                    r += '0';
-                    continue;
-                }
-                if (ch >= 'a' && ch <= 'z') {
-                    r += 'a';
-                    continue;
-                }
-                if (ch >= 'A' && ch <= 'Z') {
-                    r += 'A';
-                    continue;
-                }
-                r += ch;
-            }
-            return r;
-        };
-        ResourceService.prototype.insert = function (url, element) {
-            var _this = this;
-            // console.log('INSERT: ' + url.toString());
-            if (this.contains(url)) {
-                // There already exists a model with this id => this is a programmer error
-                throw new Error('ResourceService: Cannot add model ' + this._anonymousModelId(url.toString()) + ' because it already exists!');
-            }
-            // add resource
-            var key = url.toString();
-            this.data[key] = element;
-            this.unbinds[key] = [];
-            this.unbinds[key].push(element.addBulkListener2(function (value) {
-                _this.emit(resourceService_1.ResourceEvents.CHANGED, { url: url, originalEvents: value });
-            }));
-            // event
-            this.emit(resourceService_1.ResourceEvents.ADDED, { url: url, addedElement: element });
-        };
-        ResourceService.prototype.get = function (url) {
-            if (!this.data[url.toString()]) {
-                return null;
-            }
-            return this.data[url.toString()];
-        };
-        ResourceService.prototype.all = function () {
-            var _this = this;
-            return Object.keys(this.data).map(function (key) {
-                return _this.data[key];
-            });
-        };
-        ResourceService.prototype.contains = function (url) {
-            return !!this.data[url.toString()];
-        };
-        ResourceService.prototype.remove = function (url) {
-            // console.log('REMOVE: ' + url.toString());
-            if (!this.contains(url)) {
-                return;
-            }
-            var key = url.toString(), element = this.data[key];
-            // stop listen
-            this.unbinds[key] = lifecycle_1.dispose(this.unbinds[key]);
-            // removal
-            delete this.unbinds[key];
-            delete this.data[key];
-            // event
-            this.emit(resourceService_1.ResourceEvents.REMOVED, { url: url, removedElement: element });
-        };
-        return ResourceService;
-    }(eventEmitter_1.EventEmitter));
-    exports.ResourceService = ResourceService;
-});
-
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-define(__m[51], __M([1,0,4]), function (require, exports, instantiation_1) {
-    "use strict";
-    exports.IConfigurationService = instantiation_1.createDecorator('configurationService');
-    function getConfigurationValue(config, settingPath, defaultValue) {
-        function accessSetting(config, path) {
-            var current = config;
-            for (var i = 0; i < path.length; i++) {
-                current = current[path[i]];
-                if (!current) {
-                    return undefined;
-                }
-            }
-            return current;
-        }
-        var path = settingPath.split('.');
-        var result = accessSetting(config, path);
-        return typeof result === 'undefined'
-            ? defaultValue
-            : result;
-    }
-    exports.getConfigurationValue = getConfigurationValue;
-});
-
-define(__m[52], __M([1,0,4]), function (require, exports, instantiation_1) {
+define(__m[90], __M([0,1,3]), function (require, exports, instantiation_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -15730,30 +17062,7 @@ define(__m[52], __M([1,0,4]), function (require, exports, instantiation_1) {
     exports.IEventService = instantiation_1.createDecorator('eventService');
 });
 
-
-
-
-
-
-define(__m[90], __M([1,0,15,52]), function (require, exports, eventEmitter_1, event_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    // --- implementation ------------------------------------------
-    var EventService = (function (_super) {
-        __extends(EventService, _super);
-        function EventService() {
-            _super.call(this);
-            this.serviceId = event_1.IEventService;
-        }
-        return EventService;
-    }(eventEmitter_1.EventEmitter));
-    exports.EventService = EventService;
-});
-
-define(__m[38], __M([1,0,4]), function (require, exports, instantiation_1) {
+define(__m[46], __M([0,1,3]), function (require, exports, instantiation_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -15762,7 +17071,7 @@ define(__m[38], __M([1,0,4]), function (require, exports, instantiation_1) {
     exports.IExtensionService = instantiation_1.createDecorator('extensionService');
 });
 
-define(__m[54], __M([1,0,58]), function (require, exports, arrays_1) {
+define(__m[56], __M([0,1,50]), function (require, exports, arrays_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -15832,7 +17141,7 @@ define(__m[54], __M([1,0,58]), function (require, exports, arrays_1) {
     exports.ServiceCollection = ServiceCollection;
 });
 
-define(__m[93], __M([1,0,5,2,9,34,86,33,4,54]), function (require, exports, winjs_base_1, errors_1, types_1, assert, graph_1, descriptors_1, instantiation_1, serviceCollection_1) {
+define(__m[93], __M([0,1,5,2,6,33,95,25,3,56]), function (require, exports, winjs_base_1, errors_1, types_1, assert, graph_1, descriptors_1, instantiation_1, serviceCollection_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -16043,7 +17352,7 @@ define(__m[93], __M([1,0,5,2,9,34,86,33,4,54]), function (require, exports, winj
     exports.InstantiationService = InstantiationService;
 });
 
-define(__m[11], __M([1,0,9,34]), function (require, exports, Types, Assert) {
+define(__m[16], __M([0,1,6,33]), function (require, exports, Types, Assert) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -16106,7 +17415,7 @@ define(__m[11], __M([1,0,9,34]), function (require, exports, Types, Assert) {
     exports.BaseRegistry = BaseRegistry;
 });
 
-define(__m[40], __M([1,0,73,8,11]), function (require, exports, nls, event_1, platform_1) {
+define(__m[31], __M([0,1,71,8,16]), function (require, exports, nls, event_1, platform_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -16162,16 +17471,16 @@ define(__m[40], __M([1,0,73,8,11]), function (require, exports, nls, event_1, pl
     });
 });
 
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-define(__m[96], __M([1,0,5,35,37,23,72,2,40]), function (require, exports, winjs_base_1, compatWorkerService_1, resourceService_1, modeService_1, mirrorModel_1, errors_1, modesRegistry_1) {
+
+
+
+
+
+
+
+
+
+define(__m[96], __M([0,1,5,38,29,89,2,31]), function (require, exports, winjs_base_1, resourceService_1, modeService_1, mirrorModel_1, errors_1, modesRegistry_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -16181,7 +17490,6 @@ define(__m[96], __M([1,0,5,35,37,23,72,2,40]), function (require, exports, winjs
         function CompatWorkerServiceWorker(resourceService, modeService, modesRegistryData) {
             this.resourceService = resourceService;
             this.modeService = modeService;
-            this.serviceId = compatWorkerService_1.ICompatWorkerService;
             this.isInMainThread = false;
             modesRegistry_1.ModesRegistry.registerCompatModes(modesRegistryData.compatModes);
             modesRegistry_1.ModesRegistry.registerLanguages(modesRegistryData.languages);
@@ -16261,7 +17569,7 @@ define(__m[96], __M([1,0,5,35,37,23,72,2,40]), function (require, exports, winjs
     exports.CompatWorkerServiceWorker = CompatWorkerServiceWorker;
 });
 
-define(__m[97], __M([1,0,2,8,46,3,40]), function (require, exports, errors_1, event_1, mime, strings, modesRegistry_1) {
+define(__m[97], __M([0,1,2,8,44,4,31]), function (require, exports, errors_1, event_1, mime, strings, modesRegistry_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -16341,7 +17649,7 @@ define(__m[97], __M([1,0,2,8,46,3,40]), function (require, exports, errors_1, ev
                 }
             }
             if (!primaryMime) {
-                primaryMime = 'text/x-' + lang.id;
+                primaryMime = "text/x-" + lang.id;
                 this.mime2LanguageId[primaryMime] = lang.id;
             }
             if (Array.isArray(lang.extensions)) {
@@ -16481,7 +17789,7 @@ define(__m[97], __M([1,0,2,8,46,3,40]), function (require, exports, errors_1, ev
     exports.LanguagesRegistry = LanguagesRegistry;
 });
 
-define(__m[41], __M([1,0,79,11,15]), function (require, exports, nls, platform, eventEmitter_1) {
+define(__m[52], __M([0,1,16,18]), function (require, exports, platform, eventEmitter_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -16517,249 +17825,9 @@ define(__m[41], __M([1,0,79,11,15]), function (require, exports, nls, platform, 
     }());
     var jsonContributionRegistry = new JSONContributionRegistry();
     platform.Registry.add(exports.Extensions.JSONContribution, jsonContributionRegistry);
-    // preload the schema-schema with a version that contains descriptions.
-    jsonContributionRegistry.registerSchema('http://json-schema.org/draft-04/schema#', {
-        'id': 'http://json-schema.org/draft-04/schema#',
-        'title': nls.localize(0, null),
-        '$schema': 'http://json-schema.org/draft-04/schema#',
-        'definitions': {
-            'schemaArray': {
-                'type': 'array',
-                'minItems': 1,
-                'items': { '$ref': '#' }
-            },
-            'positiveInteger': {
-                'type': 'integer',
-                'minimum': 0
-            },
-            'positiveIntegerDefault0': {
-                'allOf': [{ '$ref': '#/definitions/positiveInteger' }, { 'default': 0 }]
-            },
-            'simpleTypes': {
-                'type': 'string',
-                'enum': ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string']
-            },
-            'stringArray': {
-                'type': 'array',
-                'items': { 'type': 'string' },
-                'minItems': 1,
-                'uniqueItems': true
-            }
-        },
-        'type': 'object',
-        'properties': {
-            'id': {
-                'type': 'string',
-                'format': 'uri',
-                'description': nls.localize(1, null)
-            },
-            '$schema': {
-                'type': 'string',
-                'format': 'uri',
-                'description': nls.localize(2, null)
-            },
-            'title': {
-                'type': 'string',
-                'description': nls.localize(3, null)
-            },
-            'description': {
-                'type': 'string',
-                'description': nls.localize(4, null)
-            },
-            'default': {
-                'description': nls.localize(5, null)
-            },
-            'multipleOf': {
-                'type': 'number',
-                'minimum': 0,
-                'exclusiveMinimum': true,
-                'description': nls.localize(6, null)
-            },
-            'maximum': {
-                'type': 'number',
-                'description': nls.localize(7, null)
-            },
-            'exclusiveMaximum': {
-                'type': 'boolean',
-                'default': false,
-                'description': nls.localize(8, null)
-            },
-            'minimum': {
-                'type': 'number',
-                'description': nls.localize(9, null)
-            },
-            'exclusiveMinimum': {
-                'type': 'boolean',
-                'default': false,
-                'description': nls.localize(10, null)
-            },
-            'maxLength': {
-                'allOf': [
-                    { '$ref': '#/definitions/positiveInteger' }
-                ],
-                'description': nls.localize(11, null)
-            },
-            'minLength': {
-                'allOf': [
-                    { '$ref': '#/definitions/positiveIntegerDefault0' }
-                ],
-                'description': nls.localize(12, null)
-            },
-            'pattern': {
-                'type': 'string',
-                'format': 'regex',
-                'description': nls.localize(13, null)
-            },
-            'additionalItems': {
-                'anyOf': [
-                    { 'type': 'boolean' },
-                    { '$ref': '#' }
-                ],
-                'default': {},
-                'description': nls.localize(14, null)
-            },
-            'items': {
-                'anyOf': [
-                    { '$ref': '#' },
-                    { '$ref': '#/definitions/schemaArray' }
-                ],
-                'default': {},
-                'description': nls.localize(15, null)
-            },
-            'maxItems': {
-                'allOf': [
-                    { '$ref': '#/definitions/positiveInteger' }
-                ],
-                'description': nls.localize(16, null)
-            },
-            'minItems': {
-                'allOf': [
-                    { '$ref': '#/definitions/positiveIntegerDefault0' }
-                ],
-                'description': nls.localize(17, null)
-            },
-            'uniqueItems': {
-                'type': 'boolean',
-                'default': false,
-                'description': nls.localize(18, null)
-            },
-            'maxProperties': {
-                'allOf': [
-                    { '$ref': '#/definitions/positiveInteger' }
-                ],
-                'description': nls.localize(19, null)
-            },
-            'minProperties': {
-                'allOf': [
-                    { '$ref': '#/definitions/positiveIntegerDefault0' },
-                ],
-                'description': nls.localize(20, null)
-            },
-            'required': {
-                'allOf': [
-                    { '$ref': '#/definitions/stringArray' }
-                ],
-                'description': nls.localize(21, null)
-            },
-            'additionalProperties': {
-                'anyOf': [
-                    { 'type': 'boolean' },
-                    { '$ref': '#' }
-                ],
-                'default': {},
-                'description': nls.localize(22, null)
-            },
-            'definitions': {
-                'type': 'object',
-                'additionalProperties': { '$ref': '#' },
-                'default': {},
-                'description': nls.localize(23, null)
-            },
-            'properties': {
-                'type': 'object',
-                'additionalProperties': { '$ref': '#' },
-                'default': {},
-                'description': nls.localize(24, null)
-            },
-            'patternProperties': {
-                'type': 'object',
-                'additionalProperties': { '$ref': '#' },
-                'default': {},
-                'description': nls.localize(25, null)
-            },
-            'dependencies': {
-                'type': 'object',
-                'additionalProperties': {
-                    'anyOf': [
-                        { '$ref': '#' },
-                        { '$ref': '#/definitions/stringArray' }
-                    ]
-                },
-                'description': nls.localize(26, null)
-            },
-            'enum': {
-                'type': 'array',
-                'minItems': 1,
-                'uniqueItems': true,
-                'description': nls.localize(27, null)
-            },
-            'type': {
-                'anyOf': [
-                    { '$ref': '#/definitions/simpleTypes' },
-                    {
-                        'type': 'array',
-                        'items': { '$ref': '#/definitions/simpleTypes' },
-                        'minItems': 1,
-                        'uniqueItems': true
-                    }
-                ],
-                'description': nls.localize(28, null)
-            },
-            'format': {
-                'anyOf': [
-                    {
-                        'type': 'string',
-                        'description': nls.localize(29, null),
-                        'enum': ['date-time', 'uri', 'email', 'hostname', 'ipv4', 'ipv6', 'regex']
-                    }, {
-                        'type': 'string'
-                    }
-                ]
-            },
-            'allOf': {
-                'allOf': [
-                    { '$ref': '#/definitions/schemaArray' }
-                ],
-                'description': nls.localize(30, null)
-            },
-            'anyOf': {
-                'allOf': [
-                    { '$ref': '#/definitions/schemaArray' }
-                ],
-                'description': nls.localize(31, null)
-            },
-            'oneOf': {
-                'allOf': [
-                    { '$ref': '#/definitions/schemaArray' }
-                ],
-                'description': nls.localize(32, null)
-            },
-            'not': {
-                'allOf': [
-                    { '$ref': '#' }
-                ],
-                'description': nls.localize(33, null)
-            }
-        },
-        'dependencies': {
-            'exclusiveMaximum': ['maximum'],
-            'exclusiveMinimum': ['minimum']
-        },
-        'default': {}
-    });
 });
 
-define(__m[42], __M([1,0,78,2,13,32,41,11]), function (require, exports, nls, errors_1, paths, severity_1, jsonContributionRegistry_1, platform_1) {
+define(__m[40], __M([0,1,74,2,12,26,52,16]), function (require, exports, nls, errors_1, paths, severity_1, jsonContributionRegistry_1, platform_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -16941,7 +18009,8 @@ define(__m[42], __M([1,0,78,2,13,32,41,11]), function (require, exports, nls, er
                 description: nls.localize(18, null),
                 type: 'array',
                 items: {
-                    type: 'string'
+                    type: 'string',
+                    defaultSnippets: [{ label: 'onLanguage', body: 'onLanguage:{{languageId}}' }, { label: 'onCommand', body: 'onCommand:{{commandId}}' }, { label: 'onDebug', body: 'onDebug:{{type}}' }, { label: 'workspaceContains', body: 'workspaceContains:{{fileName}}' }],
                 }
             },
             extensionDependencies: {
@@ -17099,160 +18168,6 @@ define(__m[42], __M([1,0,78,2,13,32,41,11]), function (require, exports, nls, er
     schemaRegistry.registerSchema(schemaId, schema);
 });
 
-define(__m[100], __M([1,0,76,8,11,12,42,41]), function (require, exports, nls, event_1, platform, objects, extensionsRegistry_1, JSONContributionRegistry) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    exports.Extensions = {
-        Configuration: 'base.contributions.configuration'
-    };
-    var schemaId = 'vscode://schemas/settings';
-    var contributionRegistry = platform.Registry.as(JSONContributionRegistry.Extensions.JSONContribution);
-    var ConfigurationRegistry = (function () {
-        function ConfigurationRegistry() {
-            this.configurationContributors = [];
-            this.configurationSchema = { allOf: [] };
-            this._onDidRegisterConfiguration = new event_1.Emitter();
-            contributionRegistry.registerSchema(schemaId, this.configurationSchema);
-        }
-        Object.defineProperty(ConfigurationRegistry.prototype, "onDidRegisterConfiguration", {
-            get: function () {
-                return this._onDidRegisterConfiguration.event;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        ConfigurationRegistry.prototype.registerConfiguration = function (configuration) {
-            this.configurationContributors.push(configuration);
-            this.registerJSONConfiguration(configuration);
-            this._onDidRegisterConfiguration.fire(this);
-        };
-        ConfigurationRegistry.prototype.getConfigurations = function () {
-            return this.configurationContributors.slice(0);
-        };
-        ConfigurationRegistry.prototype.registerJSONConfiguration = function (configuration) {
-            var schema = objects.clone(configuration);
-            this.configurationSchema.allOf.push(schema);
-            contributionRegistry.registerSchema(schemaId, this.configurationSchema);
-        };
-        return ConfigurationRegistry;
-    }());
-    var configurationRegistry = new ConfigurationRegistry();
-    platform.Registry.add(exports.Extensions.Configuration, configurationRegistry);
-    var configurationExtPoint = extensionsRegistry_1.ExtensionsRegistry.registerExtensionPoint('configuration', {
-        description: nls.localize(0, null),
-        type: 'object',
-        defaultSnippets: [{ body: { title: '', properties: {} } }],
-        properties: {
-            title: {
-                description: nls.localize(1, null),
-                type: 'string'
-            },
-            properties: {
-                description: nls.localize(2, null),
-                type: 'object',
-                additionalProperties: {
-                    $ref: 'http://json-schema.org/draft-04/schema#'
-                }
-            }
-        }
-    });
-    configurationExtPoint.setHandler(function (extensions) {
-        for (var i = 0; i < extensions.length; i++) {
-            var configuration = extensions[i].value;
-            var collector = extensions[i].collector;
-            if (configuration.type && configuration.type !== 'object') {
-                collector.warn(nls.localize(3, null));
-            }
-            else {
-                configuration.type = 'object';
-            }
-            if (configuration.title && (typeof configuration.title !== 'string')) {
-                collector.error(nls.localize(4, null));
-            }
-            if (configuration.properties && (typeof configuration.properties !== 'object')) {
-                collector.error(nls.localize(5, null));
-                return;
-            }
-            var clonedConfiguration = objects.clone(configuration);
-            clonedConfiguration.id = extensions[i].description.id;
-            configurationRegistry.registerConfiguration(clonedConfiguration);
-        }
-    });
-});
-
-define(__m[59], __M([1,0,80,100,11,74,24]), function (require, exports, filters_1, configurationRegistry_1, platform_1, nls_1, async_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    var TextualSuggestSupport = (function () {
-        function TextualSuggestSupport(editorWorkerService, configurationService) {
-            this._editorWorkerService = editorWorkerService;
-            this._configurationService = configurationService;
-        }
-        Object.defineProperty(TextualSuggestSupport.prototype, "triggerCharacters", {
-            /* tslint:enable */
-            get: function () {
-                return [];
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(TextualSuggestSupport.prototype, "shouldAutotriggerSuggest", {
-            get: function () {
-                return true;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(TextualSuggestSupport.prototype, "filter", {
-            get: function () {
-                return filters_1.matchesStrictPrefix;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        TextualSuggestSupport.prototype.provideCompletionItems = function (model, position, token) {
-            var config = this._configurationService.getConfiguration('editor');
-            if (!config || config.wordBasedSuggestions) {
-                return async_1.wireCancellationToken(token, this._editorWorkerService.textualSuggest(model.uri, position));
-            }
-            return [];
-        };
-        /* tslint:disable */
-        TextualSuggestSupport._c = platform_1.Registry.as(configurationRegistry_1.Extensions.Configuration).registerConfiguration({
-            type: 'object',
-            order: 5.1,
-            properties: {
-                'editor.wordBasedSuggestions': {
-                    'type': 'boolean',
-                    'description': nls_1.localize(0, null),
-                    'default': true
-                }
-            }
-        });
-        return TextualSuggestSupport;
-    }());
-    exports.TextualSuggestSupport = TextualSuggestSupport;
-    function filterSuggestions(value) {
-        if (!value) {
-            return;
-        }
-        // filter suggestions
-        var accept = filters_1.fuzzyContiguousFilter, result = [];
-        result.push({
-            currentWord: value.currentWord,
-            suggestions: value.suggestions.filter(function (element) { return !!accept(value.currentWord, element.label); }),
-            incomplete: value.incomplete
-        });
-        return result;
-    }
-    exports.filterSuggestions = filterSuggestions;
-});
 
 
 
@@ -17267,205 +18182,7 @@ define(__m[59], __M([1,0,80,100,11,74,24]), function (require, exports, filters_
 
 
 
-
-define(__m[60], __M([1,0,15,5,33,4,51,21,59,83,17]), function (require, exports, eventEmitter_1, winjs_base_1, descriptors_1, instantiation_1, configuration_1, modes, suggestSupport_1, editorWorkerService_1, wordHelper) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    function createWordRegExp(allowInWords) {
-        if (allowInWords === void 0) { allowInWords = ''; }
-        return wordHelper.createWordRegExp(allowInWords);
-    }
-    exports.createWordRegExp = createWordRegExp;
-    var ModeWorkerManager = (function () {
-        function ModeWorkerManager(descriptor, workerModuleId, workerClassName, superWorkerModuleId, instantiationService) {
-            this._descriptor = descriptor;
-            this._workerDescriptor = descriptors_1.createAsyncDescriptor1(workerModuleId, workerClassName);
-            this._superWorkerModuleId = superWorkerModuleId;
-            this._instantiationService = instantiationService;
-            this._workerPiecePromise = null;
-        }
-        ModeWorkerManager.prototype.worker = function (runner) {
-            return this._getOrCreateWorker().then(runner);
-        };
-        ModeWorkerManager.prototype._getOrCreateWorker = function () {
-            var _this = this;
-            if (!this._workerPiecePromise) {
-                // TODO@Alex: workaround for missing `bundles` config
-                // First, load the code of the worker super class
-                var superWorkerCodePromise = (this._superWorkerModuleId ? ModeWorkerManager._loadModule(this._superWorkerModuleId) : winjs_base_1.TPromise.as(null));
-                this._workerPiecePromise = superWorkerCodePromise.then(function () {
-                    // Second, load the code of the worker (without instantiating it)
-                    return ModeWorkerManager._loadModule(_this._workerDescriptor.moduleName);
-                }).then(function () {
-                    // Finally, create the mode worker instance
-                    return _this._instantiationService.createInstance(_this._workerDescriptor, _this._descriptor.id);
-                });
-            }
-            return this._workerPiecePromise;
-        };
-        ModeWorkerManager._loadModule = function (moduleName) {
-            return new winjs_base_1.TPromise(function (c, e, p) {
-                // Use the global require to be sure to get the global config
-                self.require([moduleName], c, e);
-            }, function () {
-                // Cannot cancel loading code
-            });
-        };
-        return ModeWorkerManager;
-    }());
-    exports.ModeWorkerManager = ModeWorkerManager;
-    var AbstractMode = (function () {
-        function AbstractMode(modeId) {
-            this._modeId = modeId;
-            this._eventEmitter = new eventEmitter_1.EventEmitter();
-            this._simplifiedMode = null;
-        }
-        AbstractMode.prototype.getId = function () {
-            return this._modeId;
-        };
-        AbstractMode.prototype.toSimplifiedMode = function () {
-            if (!this._simplifiedMode) {
-                this._simplifiedMode = new SimplifiedMode(this);
-            }
-            return this._simplifiedMode;
-        };
-        AbstractMode.prototype.addSupportChangedListener = function (callback) {
-            return this._eventEmitter.addListener2('modeSupportChanged', callback);
-        };
-        AbstractMode.prototype.setTokenizationSupport = function (callback) {
-            var _this = this;
-            var supportImpl = callback(this);
-            this['tokenizationSupport'] = supportImpl;
-            this._eventEmitter.emit('modeSupportChanged', _createModeSupportChangedEvent());
-            return {
-                dispose: function () {
-                    if (_this['tokenizationSupport'] === supportImpl) {
-                        delete _this['tokenizationSupport'];
-                        _this._eventEmitter.emit('modeSupportChanged', _createModeSupportChangedEvent());
-                    }
-                }
-            };
-        };
-        return AbstractMode;
-    }());
-    exports.AbstractMode = AbstractMode;
-    var CompatMode = (function (_super) {
-        __extends(CompatMode, _super);
-        function CompatMode(modeId, compatWorkerService) {
-            _super.call(this, modeId);
-            this.compatWorkerService = compatWorkerService;
-            if (this.compatWorkerService) {
-                this.compatWorkerService.registerCompatMode(this);
-            }
-        }
-        return CompatMode;
-    }(AbstractMode));
-    exports.CompatMode = CompatMode;
-    var SimplifiedMode = (function () {
-        function SimplifiedMode(sourceMode) {
-            var _this = this;
-            this._sourceMode = sourceMode;
-            this._eventEmitter = new eventEmitter_1.EventEmitter();
-            this._id = 'vs.editor.modes.simplifiedMode:' + sourceMode.getId();
-            this._assignSupports();
-            if (this._sourceMode.addSupportChangedListener) {
-                this._sourceMode.addSupportChangedListener(function (e) {
-                    _this._assignSupports();
-                    _this._eventEmitter.emit('modeSupportChanged', e);
-                });
-            }
-        }
-        SimplifiedMode.prototype.getId = function () {
-            return this._id;
-        };
-        SimplifiedMode.prototype.toSimplifiedMode = function () {
-            return this;
-        };
-        SimplifiedMode.prototype._assignSupports = function () {
-            this.tokenizationSupport = this._sourceMode.tokenizationSupport;
-        };
-        return SimplifiedMode;
-    }());
-    exports.isDigit = (function () {
-        var _0 = '0'.charCodeAt(0), _1 = '1'.charCodeAt(0), _2 = '2'.charCodeAt(0), _3 = '3'.charCodeAt(0), _4 = '4'.charCodeAt(0), _5 = '5'.charCodeAt(0), _6 = '6'.charCodeAt(0), _7 = '7'.charCodeAt(0), _8 = '8'.charCodeAt(0), _9 = '9'.charCodeAt(0), _a = 'a'.charCodeAt(0), _b = 'b'.charCodeAt(0), _c = 'c'.charCodeAt(0), _d = 'd'.charCodeAt(0), _e = 'e'.charCodeAt(0), _f = 'f'.charCodeAt(0), _A = 'A'.charCodeAt(0), _B = 'B'.charCodeAt(0), _C = 'C'.charCodeAt(0), _D = 'D'.charCodeAt(0), _E = 'E'.charCodeAt(0), _F = 'F'.charCodeAt(0);
-        return function isDigit(character, base) {
-            var c = character.charCodeAt(0);
-            switch (base) {
-                case 1:
-                    return c === _0;
-                case 2:
-                    return c >= _0 && c <= _1;
-                case 3:
-                    return c >= _0 && c <= _2;
-                case 4:
-                    return c >= _0 && c <= _3;
-                case 5:
-                    return c >= _0 && c <= _4;
-                case 6:
-                    return c >= _0 && c <= _5;
-                case 7:
-                    return c >= _0 && c <= _6;
-                case 8:
-                    return c >= _0 && c <= _7;
-                case 9:
-                    return c >= _0 && c <= _8;
-                case 10:
-                    return c >= _0 && c <= _9;
-                case 11:
-                    return (c >= _0 && c <= _9) || (c === _a) || (c === _A);
-                case 12:
-                    return (c >= _0 && c <= _9) || (c >= _a && c <= _b) || (c >= _A && c <= _B);
-                case 13:
-                    return (c >= _0 && c <= _9) || (c >= _a && c <= _c) || (c >= _A && c <= _C);
-                case 14:
-                    return (c >= _0 && c <= _9) || (c >= _a && c <= _d) || (c >= _A && c <= _D);
-                case 15:
-                    return (c >= _0 && c <= _9) || (c >= _a && c <= _e) || (c >= _A && c <= _E);
-                default:
-                    return (c >= _0 && c <= _9) || (c >= _a && c <= _f) || (c >= _A && c <= _F);
-            }
-        };
-    })();
-    var FrankensteinMode = (function (_super) {
-        __extends(FrankensteinMode, _super);
-        function FrankensteinMode(descriptor, configurationService, editorWorkerService) {
-            _super.call(this, descriptor.id);
-            if (editorWorkerService) {
-                modes.SuggestRegistry.register(this.getId(), new suggestSupport_1.TextualSuggestSupport(editorWorkerService, configurationService), true);
-            }
-        }
-        FrankensteinMode = __decorate([
-            __param(1, configuration_1.IConfigurationService),
-            __param(2, instantiation_1.optional(editorWorkerService_1.IEditorWorkerService))
-        ], FrankensteinMode);
-        return FrankensteinMode;
-    }(AbstractMode));
-    exports.FrankensteinMode = FrankensteinMode;
-    function _createModeSupportChangedEvent() {
-        return {
-            tokenizationSupport: true
-        };
-    }
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14]), function (require, exports, nls, errors_1, event_1, lifecycle_1, objects, paths, winjs_base_1, mime, descriptors_1, extensions_1, extensionsRegistry_1, instantiation_1, abstractMode_1, modesRegistry_1, languagesRegistry_1, modeService_1, configuration_1, abstractState_1, supports_1) {
+define(__m[100], __M([0,1,72,2,8,19,12,5,44,25,46,40,3,53,31,97,57,27,13,9]), function (require, exports, nls, errors_1, event_1, lifecycle_1, paths, winjs_base_1, mime, descriptors_1, extensions_1, extensionsRegistry_1, instantiation_1, abstractMode_1, modesRegistry_1, languagesRegistry_1, configuration_1, abstractState_1, token_1, modeTransition_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -17474,10 +18191,9 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
     var languagesExtPoint = extensionsRegistry_1.ExtensionsRegistry.registerExtensionPoint('languages', {
         description: nls.localize(0, null),
         type: 'array',
-        defaultSnippets: [{ body: [{ id: '', aliases: [], extensions: [] }] }],
         items: {
             type: 'object',
-            defaultSnippets: [{ body: { id: '', extensions: [] } }],
+            defaultSnippets: [{ body: { id: '{{languageId}}', aliases: ['{{label}}'], extensions: ['{{extension}}'], configuration: './language-configuration.json' } }],
             properties: {
                 id: {
                     description: nls.localize(1, null),
@@ -17525,7 +18241,8 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
                 },
                 configuration: {
                     description: nls.localize(8, null),
-                    type: 'string'
+                    type: 'string',
+                    default: './language-configuration.json'
                 }
             }
         }
@@ -17577,7 +18294,6 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
     var ModeServiceImpl = (function () {
         function ModeServiceImpl(instantiationService, extensionService) {
             var _this = this;
-            this.serviceId = modeService_1.IModeService;
             this._onDidAddModes = new event_1.Emitter();
             this.onDidAddModes = this._onDidAddModes.event;
             this._onDidCreateMode = new event_1.Emitter();
@@ -17586,43 +18302,9 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
             this._extensionService = extensionService;
             this._activationPromises = {};
             this._instantiatedModes = {};
-            this._config = {};
             this._registry = new languagesRegistry_1.LanguagesRegistry();
             this._registry.onDidAddModes(function (modes) { return _this._onDidAddModes.fire(modes); });
         }
-        ModeServiceImpl.prototype.getConfigurationForMode = function (modeId) {
-            return this._config[modeId] || {};
-        };
-        ModeServiceImpl.prototype.configureMode = function (mimetype, options) {
-            var modeId = this.getModeId(mimetype);
-            if (modeId) {
-                this.configureModeById(modeId, options);
-            }
-        };
-        ModeServiceImpl.prototype.configureModeById = function (modeId, options) {
-            var previousOptions = this._config[modeId] || {};
-            var newOptions = objects.mixin(objects.clone(previousOptions), options);
-            if (objects.equals(previousOptions, newOptions)) {
-                // This configure call is a no-op
-                return;
-            }
-            this._config[modeId] = newOptions;
-            var mode = this.getMode(modeId);
-            if (mode && mode.configSupport) {
-                mode.configSupport.configure(this.getConfigurationForMode(modeId));
-            }
-        };
-        ModeServiceImpl.prototype.configureAllModes = function (config) {
-            var _this = this;
-            if (!config) {
-                return;
-            }
-            var modes = this._registry.getRegisteredModes();
-            modes.forEach(function (modeIdentifier) {
-                var configuration = config[modeIdentifier];
-                _this.configureModeById(modeIdentifier, configuration);
-            });
-        };
         ModeServiceImpl.prototype.isRegisteredMode = function (mimetypeOrModeId) {
             return this._registry.isRegisteredMode(mimetypeOrModeId);
         };
@@ -17765,12 +18447,7 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
                 }
                 return resolvedDeps.then(function (_) {
                     var compatModeAsyncDescriptor = descriptors_1.createAsyncDescriptor1(compatModeData.moduleId, compatModeData.ctorName);
-                    return _this._instantiationService.createInstance(compatModeAsyncDescriptor, modeDescriptor).then(function (compatMode) {
-                        if (compatMode.configSupport) {
-                            compatMode.configSupport.configure(_this.getConfigurationForMode(modeId));
-                        }
-                        return compatMode;
-                    });
+                    return _this._instantiationService.createInstance(compatModeAsyncDescriptor, modeDescriptor);
                 });
             }
             return winjs_base_1.TPromise.as(this._instantiationService.createInstance(abstractMode_1.FrankensteinMode, modeDescriptor));
@@ -17873,10 +18550,10 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
                 var tokens_1 = [];
                 actualResult.tokens.forEach(function (t) {
                     if (typeof t.scopes === 'string') {
-                        tokens_1.push(new supports_1.Token(t.startIndex + offsetDelta, t.scopes));
+                        tokens_1.push(new token_1.Token(t.startIndex + offsetDelta, t.scopes));
                     }
                     else if (Array.isArray(t.scopes) && t.scopes.length === 1) {
-                        tokens_1.push(new supports_1.Token(t.startIndex + offsetDelta, t.scopes[0]));
+                        tokens_1.push(new token_1.Token(t.startIndex + offsetDelta, t.scopes[0]));
                     }
                     else {
                         throw new Error('Only token scopes as strings or of precisely 1 length are supported at this time!');
@@ -17886,7 +18563,7 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
                     tokens: tokens_1,
                     actualStopOffset: offsetDelta + line.length,
                     endState: new TokenizationState2Adapter(state.getMode(), actualResult.endState, state.getStateData()),
-                    modeTransitions: [{ startIndex: offsetDelta, mode: state.getMode() }],
+                    modeTransitions: [new modeTransition_1.ModeTransition(offsetDelta, state.getMode().getId())],
                 };
             }
             throw new Error('Unexpected state to tokenize with!');
@@ -17947,7 +18624,9 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
             // Register based on settings
             if (configuration.files && configuration.files.associations) {
                 Object.keys(configuration.files.associations).forEach(function (pattern) {
-                    mime.registerTextMime({ mime: _this.getMimeForMode(configuration.files.associations[pattern]), filepattern: pattern, userConfigured: true });
+                    var langId = configuration.files.associations[pattern];
+                    var mimetype = _this.getMimeForMode(langId) || "text/x-" + langId;
+                    mime.registerTextMime({ mime: mimetype, filepattern: pattern, userConfigured: true });
                 });
             }
         };
@@ -17961,7 +18640,7 @@ define(__m[103], __M([1,0,75,2,8,16,12,13,5,46,33,38,42,4,60,40,97,23,51,39,14])
     exports.MainThreadModeServiceImpl = MainThreadModeServiceImpl;
 });
 
-define(__m[104], __M([1,0,77,32,5,38,42]), function (require, exports, nls, severity_1, winjs_base_1, extensions_1, extensionsRegistry_1) {
+define(__m[101], __M([0,1,73,26,5,40]), function (require, exports, nls, severity_1, winjs_base_1, extensionsRegistry_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -17978,7 +18657,6 @@ define(__m[104], __M([1,0,77,32,5,38,42]), function (require, exports, nls, seve
     var AbstractExtensionService = (function () {
         function AbstractExtensionService(isReadyByDefault) {
             var _this = this;
-            this.serviceId = extensions_1.IExtensionService;
             if (isReadyByDefault) {
                 this._onReady = winjs_base_1.TPromise.as(true);
                 this._onReadyC = function (v) { };
@@ -18126,16 +18804,7 @@ define(__m[104], __M([1,0,77,32,5,38,42]), function (require, exports, nls, seve
     exports.AbstractExtensionService = AbstractExtensionService;
 });
 
-define(__m[43], __M([1,0,4]), function (require, exports, instantiation_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    exports.IRequestService = instantiation_1.createDecorator('requestService');
-});
-
-define(__m[44], __M([1,0,5,26,4]), function (require, exports, winjs_base_1, timer_1, instantiation_1) {
+define(__m[102], __M([0,1,5,36,3]), function (require, exports, winjs_base_1, timer_1, instantiation_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -18143,9 +18812,13 @@ define(__m[44], __M([1,0,5,26,4]), function (require, exports, winjs_base_1, tim
     'use strict';
     exports.ITelemetryService = instantiation_1.createDecorator('telemetryService');
     exports.NullTelemetryService = {
-        serviceId: undefined,
-        timedPublicLog: function (name, data) { return timer_1.nullEvent; },
-        publicLog: function (eventName, data) { return winjs_base_1.TPromise.as(null); },
+        _serviceBrand: undefined,
+        timedPublicLog: function (name, data) {
+            return timer_1.nullEvent;
+        },
+        publicLog: function (eventName, data) {
+            return winjs_base_1.TPromise.as(null);
+        },
         isOptedIn: true,
         getTelemetryInfo: function () {
             return winjs_base_1.TPromise.as({
@@ -18191,156 +18864,49 @@ define(__m[44], __M([1,0,5,26,4]), function (require, exports, winjs_base_1, tim
     exports.anonymize = anonymize;
 });
 
-define(__m[107], __M([1,0,20,5,84,3,26,24,12,43,44]), function (require, exports, uri_1, winjs_base_1, network_1, strings, Timer, Async, objects, request_1, telemetry_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    /**
-     * Simple IRequestService implementation to allow sharing of this service implementation
-     * between different layers of the platform.
-     */
-    var BaseRequestService = (function () {
-        function BaseRequestService(contextService, telemetryService) {
-            if (telemetryService === void 0) { telemetryService = telemetry_1.NullTelemetryService; }
-            this.serviceId = request_1.IRequestService;
-            var workspaceUri = null;
-            var workspace = contextService.getWorkspace();
-            this._serviceMap = workspace || Object.create(null);
-            this._telemetryService = telemetryService;
-            if (workspace) {
-                workspaceUri = strings.rtrim(workspace.resource.toString(), '/') + '/';
-            }
-            this.computeOrigin(workspaceUri);
-        }
-        BaseRequestService.prototype.computeOrigin = function (workspaceUri) {
-            if (workspaceUri) {
-                // Find root server URL from configuration
-                this._origin = workspaceUri;
-                var urlPath = uri_1.default.parse(this._origin).path;
-                if (urlPath && urlPath.length > 0) {
-                    this._origin = this._origin.substring(0, this._origin.length - urlPath.length + 1);
-                }
-                if (!strings.endsWith(this._origin, '/')) {
-                    this._origin += '/';
-                }
-            }
-            else {
-                this._origin = '/'; // Configuration not provided, fallback to default
-            }
-        };
-        BaseRequestService.prototype.makeCrossOriginRequest = function (options) {
-            return null;
-        };
-        BaseRequestService.prototype.makeRequest = function (options) {
-            var timer = Timer.nullEvent;
-            var isXhrRequestCORS = false;
-            var url = options.url;
-            if (!url) {
-                throw new Error('IRequestService.makeRequest: Url is required');
-            }
-            if ((strings.startsWith(url, 'http://') || strings.startsWith(url, 'https://')) && this._origin && !strings.startsWith(url, this._origin)) {
-                var coPromise = this.makeCrossOriginRequest(options);
-                if (coPromise) {
-                    return coPromise;
-                }
-                isXhrRequestCORS = true;
-            }
-            var xhrOptions = options;
-            var xhrOptionsPromise = winjs_base_1.TPromise.as(undefined);
-            if (!isXhrRequestCORS) {
-                xhrOptions = this._telemetryService.getTelemetryInfo().then(function (info) {
-                    var additionalHeaders = {};
-                    additionalHeaders['X-TelemetrySession'] = info.sessionId;
-                    additionalHeaders['X-Requested-With'] = 'XMLHttpRequest';
-                    xhrOptions.headers = objects.mixin(xhrOptions.headers, additionalHeaders);
-                });
-            }
-            if (options.timeout) {
-                xhrOptions.customRequestInitializer = function (xhrRequest) {
-                    xhrRequest.timeout = options.timeout;
-                };
-            }
-            return xhrOptionsPromise.then(function () {
-                return Async.always(network_1.xhr(xhrOptions), (function (xhr) {
-                    if (timer.data) {
-                        timer.data.status = xhr.status;
-                    }
-                    timer.stop();
-                }));
-            });
-        };
-        return BaseRequestService;
-    }());
-    exports.BaseRequestService = BaseRequestService;
-});
-
-define(__m[27], __M([1,0,4]), function (require, exports, instantiation_1) {
+define(__m[65], __M([0,1,30,3,12]), function (require, exports, uri_1, instantiation_1, paths) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
      *--------------------------------------------------------------------------------------------*/
     'use strict';
     exports.IWorkspaceContextService = instantiation_1.createDecorator('contextService');
-});
-
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-define(__m[98], __M([1,0,34,24,63,47,49,8,81,16,13,20,11,41,43,27,44,19,21,60,39,25,105,88,31,59,53,85,23,35]), function (require, exports) {
-    'use strict';
-});
-
-define(__m[92], __M([1,0,20,13,27]), function (require, exports, uri_1, paths, workspace_1) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    /**
-     * Simple IWorkspaceContextService implementation to allow sharing of this service implementation
-     * between different layers of the platform.
-     */
-    var BaseWorkspaceContextService = (function () {
-        function BaseWorkspaceContextService(workspace, configuration, options) {
-            if (options === void 0) { options = {}; }
-            this.serviceId = workspace_1.IWorkspaceContextService;
+    var WorkspaceContextService = (function () {
+        function WorkspaceContextService(workspace) {
             this.workspace = workspace;
-            this.configuration = configuration;
-            this.options = options;
         }
-        BaseWorkspaceContextService.prototype.getWorkspace = function () {
+        WorkspaceContextService.prototype.getWorkspace = function () {
             return this.workspace;
         };
-        BaseWorkspaceContextService.prototype.getConfiguration = function () {
-            return this.configuration;
-        };
-        BaseWorkspaceContextService.prototype.getOptions = function () {
-            return this.options;
-        };
-        BaseWorkspaceContextService.prototype.isInsideWorkspace = function (resource) {
+        WorkspaceContextService.prototype.isInsideWorkspace = function (resource) {
             if (resource && this.workspace) {
                 return paths.isEqualOrParent(resource.fsPath, this.workspace.resource.fsPath);
             }
             return false;
         };
-        BaseWorkspaceContextService.prototype.toWorkspaceRelativePath = function (resource) {
+        WorkspaceContextService.prototype.toWorkspaceRelativePath = function (resource) {
             if (this.isInsideWorkspace(resource)) {
                 return paths.normalize(paths.relative(this.workspace.resource.fsPath, resource.fsPath));
             }
             return null;
         };
-        BaseWorkspaceContextService.prototype.toResource = function (workspaceRelativePath) {
+        WorkspaceContextService.prototype.toResource = function (workspaceRelativePath) {
             if (typeof workspaceRelativePath === 'string' && this.workspace) {
                 return uri_1.default.file(paths.join(this.workspace.resource.fsPath, workspaceRelativePath));
             }
             return null;
         };
-        return BaseWorkspaceContextService;
+        return WorkspaceContextService;
     }());
-    exports.BaseWorkspaceContextService = BaseWorkspaceContextService;
+    exports.WorkspaceContextService = WorkspaceContextService;
+});
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+define(__m[63], __M([0,1,33,34,49,51,39,8,99,19,12,30,16,52,65,102,17,15,53,27,24,78,61,35,55,41,81,29,42]), function (require, exports) {
+    'use strict';
 });
 
 /*---------------------------------------------------------------------------------------------
@@ -18352,7 +18918,7 @@ define(__m[92], __M([1,0,20,13,27]), function (require, exports, uri_1, paths, w
 
 
 
-define(__m[111], __M([1,0,32,5,90,52,104,38,54,93,107,43,44,92,27,103,23,87,37,96,35,98]), function (require, exports, severity_1, winjs_base_1, eventService_1, event_1, abstractExtensionService_1, extensions_1, serviceCollection_1, instantiationService_1, baseRequestService_1, request_1, telemetry_1, baseWorkspaceContextService_1, workspace_1, modeServiceImpl_1, modeService_1, resourceServiceImpl_1, resourceService_1, compatWorkerServiceWorker_1, compatWorkerService_1) {
+define(__m[105], __M([0,1,26,5,75,90,101,46,56,93,100,29,77,38,96,42,63]), function (require, exports, severity_1, winjs_base_1, eventService_1, event_1, abstractExtensionService_1, extensions_1, serviceCollection_1, instantiationService_1, modeServiceImpl_1, modeService_1, resourceServiceImpl_1, resourceService_1, compatWorkerServiceWorker_1, compatWorkerService_1) {
     'use strict';
     var WorkerExtensionService = (function (_super) {
         __extends(WorkerExtensionService, _super);
@@ -18390,12 +18956,8 @@ define(__m[111], __M([1,0,32,5,90,52,104,38,54,93,107,43,44,92,27,103,23,87,37,9
             var instantiationService = new instantiationService_1.InstantiationService(services);
             var extensionService = new WorkerExtensionService();
             services.set(extensions_1.IExtensionService, extensionService);
-            var contextService = new baseWorkspaceContextService_1.BaseWorkspaceContextService(initData.contextService.workspace, initData.contextService.configuration, initData.contextService.options);
-            services.set(workspace_1.IWorkspaceContextService, contextService);
             var resourceService = new resourceServiceImpl_1.ResourceService();
             services.set(resourceService_1.IResourceService, resourceService);
-            var requestService = new baseRequestService_1.BaseRequestService(contextService, telemetry_1.NullTelemetryService);
-            services.set(request_1.IRequestService, requestService);
             services.set(event_1.IEventService, new eventService_1.EventService());
             var modeService = new modeServiceImpl_1.ModeServiceImpl(instantiationService, extensionService);
             services.set(modeService_1.IModeService, modeService);

@@ -514,6 +514,8 @@ namespace pxsim {
 
         // these are never used in simulator; silence the warnings
         export var getNumGlobals: any;
+        export var RefRecord_destroy: any;
+        export var RefRecord_print: any;
     }
 
     export namespace thread {

@@ -72,7 +72,7 @@ export function uploadArtFileAsync(fn: string) {
         })
 }
 
-function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
+export function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
     let contentType = U.getMime(fn)
     if (!contentType || contentType == "application/octet-stream")
         error("content type not understood: " + fn)

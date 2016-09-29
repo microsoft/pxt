@@ -30,6 +30,24 @@ export function showLoading(msg: string) {
     $('.ui.page.dimmer .msg').text(msg)
 }
 
+let asyncLoadingTimeout: number;
+
+export function showLoadingAsync(msg: string, operation: Promise<any>, delay: number = 700) {
+    clearTimeout(asyncLoadingTimeout);
+    asyncLoadingTimeout = setTimeout(function () {
+        showLoading(msg);
+    }, delay);
+
+    return operation.finally(() => {
+        cancelAsyncLoading();
+    });
+}
+
+export function cancelAsyncLoading() {
+    clearTimeout(asyncLoadingTimeout);
+    hideLoading();
+}
+
 export function navigateInWindow(url: string) {
     window.location.href = url;
 }
@@ -77,13 +95,35 @@ export function infoNotification(msg: string) {
     htmlmsg("info", msg)
 }
 
-export function handleNetworkError(e: any) {
-    let statusCode = <number>e.status
-    if (e.isOffline) {
-        warningNotification(lf("Network request failed; you appear to be offline"))
-    } else {
-        throw e;
+export function cookieNotification() {
+    const key = "cookieconsent"
+    let seen = !!pxt.storage.getLocal(key);
+    if (!seen) {
+        let $d = $('#cookiemsg');
+        $d.html(
+            `
+            <button arial-label="${lf("Continue")}" class="ui right floated icon button"><i class="remove icon"></i></button>
+            ${lf("By using this site you agree to the use of cookies for analytics.")}
+            <a class="ui link" href="https://www.pxt.io/privacy">${lf("Learn more")}</a>
+            `
+        ).fadeIn('fast')
+        $d.find('button').click(() => {
+            pxt.storage.setLocal(key, "1");
+            $d.fadeOut();
+        });
     }
+}
+
+export function handleNetworkError(e: any) {
+    let statusCode = parseInt(e.statusCode);
+
+    if (e.isOffline || statusCode === 0) {
+        warningNotification(lf("Network request failed; you appear to be offline"));
+    } else if (!isNaN(statusCode) && statusCode !== 200) {
+        warningNotification(lf("Network request failed"));
+    }
+
+    throw e;
 }
 
 export interface ButtonConfig {
@@ -91,6 +131,7 @@ export interface ButtonConfig {
     icon?: string; // defaults to "checkmark"
     class?: string; // defaults "positive"
     onclick?: () => (Promise<void> | void);
+    url?: string;
 }
 
 export interface ConfirmOptions extends DialogOptions {
@@ -144,10 +185,10 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let btnno = 0
     for (let b of options.buttons) {
         html += `
-      <button class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} target="_blank">
         ${Util.htmlEscape(b.label)}
         <i class="${b.icon || "checkmark"} icon"></i>
-      </button>`
+      </${b.url ? "a" : "button"}>`
     }
 
     html += `</div>`
@@ -160,7 +201,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
 
     modal.find('img').on('load', () => {
         modal.modal('refresh')
-    })
+    });
+    (modal.find(".ui.accordion") as any).accordion()
 
     return new Promise<void>((resolve, reject) => {
         let mo: any;

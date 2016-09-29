@@ -19,6 +19,7 @@ namespace pxt.runner {
         pxtUrl?: string;
         packageClass?: string;
         package?: string;
+        downloadScreenshots?: boolean
     }
 
     export interface WidgetOptions {
@@ -80,7 +81,7 @@ namespace pxt.runner {
                 else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl(options) + "?nofooter=1&code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" frameborder="0"></iframe></div></div></div>`);
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl(options) + "?nofooter=1&code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" sandbox="allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -100,6 +101,38 @@ namespace pxt.runner {
 
         // inject container
         $container.replaceWith(r);
+
+        // download screenshots
+        if (options.downloadScreenshots && woptions.hexname) {
+            pxt.debug("Downloading screenshot for: " + woptions.hexname);
+            let filename = woptions.hexname.substr(0,woptions.hexname.lastIndexOf('.'));
+            let fontSize = window.getComputedStyle($svg.get(0).querySelector(".blocklyText")).getPropertyValue("font-size");
+            const customCss = `
+.blocklyMainBackground {
+    stroke:none !important;
+}
+
+.blocklyText {
+    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+    font-size:${fontSize} !important;  
+}
+
+.blocklyCheckbox,
+.blocklyLed {
+    fill: #ff3030 !important;
+    text-shadow: 0px 0px 6px #f00;
+    font-size: 17pt !important;
+}`;
+            let svgElement = $svg.get(0) as any;
+            let bbox = $svg.get(0).getBoundingClientRect();
+            pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height)
+            .done(uri => {
+                if (uri)
+                    BrowserUtils.browserDownloadDataUri(
+                        uri,
+                        (name || `${pxt.appTarget.id}-${filename}`) + ".png");
+            });
+        }
     }
 
     function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void, options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
@@ -396,7 +429,7 @@ namespace pxt.runner {
                 if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                 let $sim = $(`<div class="ui centered card"><div class="ui content">
                     <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0"></iframe>
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe>
                     </div>
                     </div></div>`)
                 $sim.find("iframe").attr("src", getRunUrl(options) + "?nofooter=1&code=" + encodeURIComponent($c.text().trim()));

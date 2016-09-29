@@ -76,9 +76,28 @@ body {
 #logo img, #rightlogo img {
     height: 2.5rem;    
 }
+#rightlogo {
+    line-height: 1;
+}
 #monacoEditor {
     direction:ltr;
 }
+
+#cookiemsg {
+   position: absolute;
+   left: 1rem;
+   bottom: 0.5rem;
+   width: 18rem;
+   text-align: left;
+   display:none;
+   z-index:1000;
+}
+
+#cookiemsg > a {
+   color:white;
+   text-decoration: underline;    
+}
+
 .organization {
     position:absolute;
     top:1rem;
@@ -237,6 +256,11 @@ div.simframe > iframe {
 }
 
 /* blockly */
+#blocksEditor {
+    right:0.25rem;
+    bottom:0.25rem;
+}
+
 #blocksEditor > div.loading {
     background:#fff;
     position: absolute;
@@ -405,6 +429,13 @@ svg.ui.trend.black polyline {
     stroke:#000;
 }
 
+.sandboxfooter {
+    position:absolute;
+    bottom:1rem;
+    left:1rem;
+    z-index:5;
+}
+
 .grayscale {    
     -moz-filter: grayscale(1);
     -webkit-filter: grayscale(1);
@@ -451,6 +482,11 @@ html {
 .rtl #filelist {
     left: auto;
     right: 0;
+}
+
+.rtl #cookiemsg {
+    left:auto;
+    right:1rem;
 }
 
 #maineditor {
@@ -519,6 +555,9 @@ html {
         left:1.5rem;
         right:auto;
     }
+    #cookiemsg {
+        bottom:2.5rem;
+    }
     #filelist {
         bottom:3rem;
         min-width:20rem;
@@ -575,7 +614,7 @@ html {
     }            
     #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {     
         bottom:2rem;
-    }            
+    }       
     .ui.landscape.only {
         display:none !important;
     }
@@ -652,20 +691,6 @@ html {
     }    
     div.simframe iframe.grayscale {
         display:none !important;
-    }
-}
-
-@media only screen and (max-height:36em) and (max-width: 49em) {
-    #filelist {
-        top:0.5rem;
-        right:0.5rem;
-        left:auto;
-        min-width: inherit;  
-        max-width: inherit;  
-    }    
-    .rtl #filelist {
-        left:0.5rem;
-        right:auto;
     }
 }
 

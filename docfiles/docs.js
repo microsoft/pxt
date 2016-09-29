@@ -49,6 +49,7 @@ function renderSnippets() {
         codeElems[i].className = codeElems[i].className.replace('-ignore', '')
     }
 
+    var downloadScreenshots = /screenshots=1/i.test(window.location.href);
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function() {        
         pxt.runner.renderAsync({ 
@@ -65,7 +66,8 @@ function renderSnippets() {
             snippetReplaceParent: true,
             simulator: true,
             hex: true,
-            hexName: path
+            hexName: path,
+            downloadScreenshots: downloadScreenshots
         }).done();
     });    
 }

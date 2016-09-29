@@ -7,7 +7,8 @@ namespace pxsim {
         row: string,
         col: string
         xOffset?: number,
-        yOffset?: number
+        yOffset?: number,
+        style?: PinStyle;
     };
     export interface BoardLoc {
         type: "dalboard",
@@ -338,7 +339,7 @@ namespace pxsim.visuals {
 
     export type WireColor =
         "black" | "white" | "gray" | "purple" | "blue" | "green" | "yellow" | "orange" | "red" | "brown" | "pink";
-    export const GPIO_WIRE_COLORS = ["pink", "green", "purple", "orange", "yellow"];
+    export const GPIO_WIRE_COLORS = ["pink", "orange", "yellow", "green", "purple" ];
     export const WIRE_COLOR_MAP: Map<string> = {
         black: "#514f4d",
         white: "#fcfdfc",
@@ -372,5 +373,39 @@ namespace pxsim.visuals {
         getCoord(pinNm: string): Coord;
         getPinDist(): number;
         highlightPin(pinNm: string): void;
+    }
+
+    //expects rgb from 0,255, gives h in [0,360], s in [0, 100], l in [0, 100]
+    export function rgbToHsl(rgb: [number, number, number]): [number, number, number] {
+        let [r, g, b] = rgb;
+        let [r$, g$, b$] = [r / 255, g / 255, b / 255];
+        let cMin = Math.min(r$, g$, b$);
+        let cMax = Math.max(r$, g$, b$);
+        let cDelta = cMax - cMin;
+        let h: number, s: number, l: number;
+        let maxAndMin = cMax + cMin;
+
+        //lum
+        l = (maxAndMin / 2) * 100
+
+        if (cDelta === 0)
+            s = h = 0;
+        else {
+            //hue
+            if (cMax === r$)
+                h = 60 * (((g$ - b$) / cDelta) % 6);
+            else if (cMax === g$)
+                h = 60 * (((b$ - r$) / cDelta) + 2);
+            else if (cMax === b$)
+                h = 60 * (((r$ - g$) / cDelta) + 4);
+
+            //sat
+            if (l > 50)
+                s = 100 * (cDelta / (2 - maxAndMin));
+            else
+                s = 100 * (cDelta / maxAndMin);
+        }
+
+        return [Math.floor(h), Math.floor(s), Math.floor(l)];
     }
 }

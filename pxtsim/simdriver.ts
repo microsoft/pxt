@@ -26,6 +26,7 @@ namespace pxsim {
 
     export interface SimulatorRunOptions {
         debug?: boolean;
+        boardDefinition?: pxsim.BoardDefinition;
         parts?: string[];
         fnArgs?: any;
         aspectRatio?: number;
@@ -115,6 +116,7 @@ namespace pxsim {
             frame.id = 'sim-frame-' + this.nextId()
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+            frame.sandbox.value = "allow-scripts allow-same-origin"
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             if (this.runOptions.aspectRatio)
                 wrapper.style.paddingBottom = (100 / this.runOptions.aspectRatio) + "%";
@@ -192,6 +194,7 @@ namespace pxsim {
             // store information
             this.currentRuntime = {
                 type: 'run',
+                boardDefinition: opts.boardDefinition,
                 parts: opts.parts,
                 fnArgs: opts.fnArgs,
                 code: js,

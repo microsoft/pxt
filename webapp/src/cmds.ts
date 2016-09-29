@@ -36,44 +36,71 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         return showUploadInstructionsAsync(fn, url);
 }
 
+//Searches the known USB image, matching on platform and browser
+function namedUsbImage(name: string): string {
+    let match = pxt.BrowserUtils.bestResourceForOsAndBrowser(pxt.appTarget.appTheme.usbHelp, name);
+    return match ? match.path : null;
+}
+
+interface UploadInstructionStep {
+    title: string,
+    body?: string,
+    image?: string,
+}
+
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let boardName = pxt.appTarget.appTheme.boardName || "???";
     let boardDriveName = pxt.appTarget.compile.driveName || "???";
+
+    let instructions: UploadInstructionStep[] = [
+        {
+            title: lf("Connect your {0} to your PC using the USB cable.", boardName),
+            image: "connection"
+        },
+        {
+            title: lf("Save the <code>.hex</code> file to your computer."),
+            body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started.")}</a>`,
+            image: "save"
+        },
+        {
+            title: lf("Copy the <code>.hex</code> file to your {0} drive.", boardDriveName),
+            body: pxt.BrowserUtils.isMac() ? lf("Drag and drop the <code>.hex</code> file to your {0} drive in Finder", boardDriveName) :
+                pxt.BrowserUtils.isWindows() ? lf("Right click on the file in Windows Explorer, click 'Send To', and select {0}", boardDriveName) : "",
+            image: "copy"
+        }
+    ];
+
+    let usbImagePath = namedUsbImage("connection");
+    let docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
         htmlBody: `        
-<div class="ui fluid vertical steps">
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Connect your {0} to your computer using the USB cable.", boardName)}</div>
-    </div>
-  </div>
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Save the <code>.hex</code> file to your computer.")}</div>
-    </div>
-  </div>
-  <a href='${encodeURI(url)}' download='${Util.htmlEscape(fn)}' target='_blank' class="step">
-    <div class="content">
-      <div class="description">${lf("Move the saved <code>.hex</code> file to the <code>{0}</code> drive.", boardDriveName)}</div>
-    </div>
-  </a>
-  <div class="step">
-    <div class="content">
-      <div class="description">${lf("Wait till the yellow LED is done blinking.")}</div>
-    </div>
-  </div>
+<div class="ui styled fluid accordion">
+${instructions.map((step: UploadInstructionStep, i: number) =>
+            `<div class="title ${i == 0 ? "active" : ""}">
+  <i class="dropdown icon"></i>
+  ${step.title}
+</div>
+<div class="content ${i == 0 ? "active" : ""}">
+    ${step.body ? step.body : ""}
+    ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}" class="ui centered large image" />` : ""}
+</div>`).join('')}
 </div>
 ${pxt.BrowserUtils.isWindows() ? `
-    <div class="ui info message landscape only">
+    <div class="ui info message landscape desktop only">
         ${lf("Tired of copying the .hex file?")}
         <a href="/uploader" target="_blank">${lf("Install the Uploader!")}</a>
     </div>
-    ` : ""}
-`,
+    ` : ""}`,
         hideCancel: true,
         agreeLbl: lf("Done!"),
-        timeout: 5000
+        buttons: !docUrl ? undefined : [{
+            label: lf("Help"),
+            icon: "help",
+            class: "lightgrey",
+            url: docUrl
+        }],
+        timeout: 0 //We don't want this to timeout now that it is interactive
     }).then(() => { });
 }
 

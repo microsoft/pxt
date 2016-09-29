@@ -41,14 +41,16 @@ function forkDirs(lst: string[]) {
 }
 
 function setupDocfilesdirs() {
-    docfilesdirs = forkDirs(["docfiles", "node_modules/pxt-core/docfiles"])
+    docfilesdirs = ["docfiles", path.join(nodeutil.pxtCoreDir, "docfiles"), path.join(nodeutil.pxtCoreDir, "docfiles")]
+    console.log('docfilesdir: ', docfilesdirs.join(', '))
 }
 
 function setupRootDir() {
-    root = process.cwd()
+    root = nodeutil.targetDir
     console.log("Starting server in", root)
-    dirs = forkDirs(["node_modules/pxt-core/built/web", "node_modules/pxt-core/webapp/public"])
-    simdirs = forkDirs(["built", "sim/public"])
+    console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
+    dirs = [path.join(nodeutil.pxtCoreDir, "built/web"), path.join(nodeutil.pxtCoreDir, "webapp/public")]
+    simdirs = [path.join(nodeutil.targetDir, "built"), path.join(nodeutil.targetDir, "sim/public")]
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
     packagedDir = path.join(root, "built/packaged")
@@ -411,7 +413,7 @@ function initSerialMonitor() {
     console.log('serial: monitoring ports...')
     initSocketServer();
 
-    const serialport = require("serialport");
+    const SerialPort = require("serialport");
 
     function close(info: SerialPortInfo) {
         console.log('serial: closing ' + info.pnpId);
@@ -421,9 +423,10 @@ function initSerialMonitor() {
     function open(info: SerialPortInfo) {
         console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
         serialPorts[info.pnpId] = info;
-        info.port = new serialport.SerialPort(info.comName, {
-            baudrate: 115200
-        }, false); // this is the openImmediately flag [default is true]
+        info.port = new SerialPort(info.comName, {
+            baudrate: 115200,
+            autoOpen: false
+        }); // this is the openImmediately flag [default is true]
         info.port.open(function (error: any) {
             if (error) {
                 console.log('failed to open: ' + error);
@@ -457,7 +460,7 @@ function initSerialMonitor() {
     }
 
     setInterval(() => {
-        serialport.list(function (err: any, ports: SerialPortInfo[]) {
+        SerialPort.list(function (err: any, ports: SerialPortInfo[]) {
             ports.filter(filterPort)
                 .filter(info => !serialPorts[info.pnpId])
                 .forEach((info) => open(info));
@@ -580,20 +583,20 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        let publicDir = forkPref() + 'node_modules/pxt-core/webapp/public/'
+        let publicDir = path.join(nodeutil.pxtCoreDir, "webapp/public")
 
         if (pathname == "/--embed") {
-            sendFile(path.join(root, publicDir + 'embed.js'));
+            sendFile(path.join(publicDir, 'embed.js'));
             return
         }
 
         if (pathname == "/--run") {
-            sendFile(path.join(root, publicDir + 'run.html'));
+            sendFile(path.join(publicDir, 'run.html'));
             return
         }
 
         if (pathname == "/--docs") {
-            sendFile(path.join(root, publicDir + 'docs.html'));
+            sendFile(path.join(publicDir,  'docs.html'));
             return
         }
 

@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.5.3(793ede49d53dba79d39e52205f16321278f5183c)
+ * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -42,9 +42,6 @@ define("vs/base/common/worker/workerServer.nls.de", {
 	"vs/editor/common/modes/modesRegistry": [
 		"Nur-Text",
 	],
-	"vs/editor/common/modes/supports/suggestSupport": [
-		"Wortbasierte Vorschläge aktivieren.",
-	],
 	"vs/editor/common/services/modeServiceImpl": [
 		"Contributes-Sprachdeklarationen",
 		"Die ID der Sprache.",
@@ -64,14 +61,6 @@ define("vs/base/common/worker/workerServer.nls.de", {
 		"Die Eigenschaft \"{0}\" kann ausgelassen werden. Sie muss vom Typ \"string[]\" sein.",
 		"Die Eigenschaft \"{0}\" kann ausgelassen werden. Sie muss vom Typ \"string[]\" sein.",
 		"Ungültige Angabe \"contributes.{0}\". Es wurde ein Array erwartet.",
-	],
-	"vs/platform/configuration/common/configurationRegistry": [
-		"Trägt Konfigurationseigenschaften bei.",
-		"Eine Zusammenfassung der Einstellungen. Diese Bezeichnung wird in der Einstellungsdatei als trennender Kommentar verwendet.",
-		"Die Beschreibung der Konfigurationseigenschaften.",
-		"Wenn eine Festlegung erfolgt, muss \"configuration.type\" auf \"object\" festgelegt werden.",
-		"configuration.title muss eine Zeichenfolge sein.",
-		"\"configuration.properties\" muss ein Objekt sein.",
 	],
 	"vs/platform/extensions/common/abstractExtensionService": [
 		"Fehler beim Aktivieren der Extension \"{1}\". Ursache: unbekannte Abhängigkeit \"{0}\".",
@@ -102,41 +91,5 @@ define("vs/base/common/worker/workerServer.nls.de", {
 		"Abhängigkeiten von anderen Erweiterungen. Der Bezeichner einer Erweiterung ist immer ${publisher}.${name}, beispielsweise \"vscode.csharp\".",
 		"Ein Skript, das ausgeführt wird, bevor das Paket als VS Code-Extension veröffentlicht wird.",
 		"Alle Beiträge der VS Code-Extension, die durch dieses Paket dargestellt werden.",
-	],
-	"vs/platform/jsonschemas/common/jsonContributionRegistry": [
-		"Beschreibt eine JSON-Datei mithilfe eines Schemas. Weitere Informationen finden Sie unter \"json-schema.org\".",
-		"Ein eindeutiger Bezeichner für das Schema.",
-		"Das Schema, anhand dessen das Dokument überprüft wird. ",
-		"Ein beschreibender Titel des Elements.",
-		"Eine lange Beschreibung des Elements. Wird in Hovermenüs verwendet sowie in Vorschlägen.",
-		"Ein Standardwert. Wird von Vorschlägen verwendet.",
-		"Eine Zahl, die den aktuellen Wert glatt teilen sollte (d. h. ohne Rest)",
-		"Der maximale numerische Wert, standardmäßig inklusiv.",
-		"Definiert die maximum-Eigenschaft als exklusiv.",
-		"Der minimale numerische Wert, standardmäßig inklusiv.",
-		"Definiert die minimum-Eigenschaft als exklusiv.",
-		"Die maximale Länge einer Zeichenfolge.",
-		"Die minimale Länge einer Zeichenfolge.",
-		"Ein regulärer Ausdruck, mit dem die Zeichenfolge verglichen wird. Er ist nicht implizit verankert.",
-		"Für Arrays. Gilt nur, wenn \"items\" als Array festgelegt ist. Wenn es sich um ein Schema handelt, überprüft dieses Schema Elemente nach den vom Elementarray angegebenen Elementen. Wenn der Wert \"false\" ist, führen zusätzliche Elemente zu Validierungsfehlern.",
-		"Für Arrays. Kann ein Schema sein, anhand dessen jedes Element überprüft wird, oder ein Array von Schemas, anhand dessen jedes Element in der Reihenfolge überprüft wird (das erste Schema überprüft das erste Element, das zweite Schema überprüft das zweite Element usw.).",
-		"Die maximale Anzahl von Elementen, die sich innerhalb eines Arrays befinden können. Inklusiv.",
-		"Die minimale Anzahl von Elementen, die sich in einem Array befinden können. Inklusiv.",
-		"Gibt an, dass alle Elemente im Array eindeutig sein müssen. Der Standardwert ist \"false\".",
-		"Die maximale Anzahl von Eigenschaften, die ein Objekt haben kann. Inklusiv.",
-		"Die minimale Anzahl von Eigenschaften, die ein Objekt haben kann. Inklusiv.",
-		"Ein Array von Zeichenfolgen, das die Namen aller für dieses Objekt erforderlichen Eigenschaften auflistet.",
-		"Ein Schema oder ein boolescher Wert. Wenn es sich um ein Schema handelt, werden alle Eigenschaften überprüft, die nicht mit \"Properties\" oder \"PatternProperties\" übereinstimmen. Wenn \"false\", bewirken alle Eigenschaften, die mit keiner dieser Angaben übereinstimmen, einen Schemafehler.",
-		"Nicht für Überprüfungen verwendet. Platzieren Sie hier Teilschemas, auf die Sie inline mit $ref verweisen möchten.",
-		"Eine Zuordnung von Eigenschaftennamen zu Schemas für jede Eigenschaft.",
-		"Eine Zuordnung von regulären Ausdrücken für Eigenschaftennamen zu Schemas zum Vergleichen von Eigenschaften.",
-		"Eine Zuordnung von Eigenschaftennamen zu einem Array von Eigenschaftennamen oder zu einem Schema. Ein Array von Eigenschaftennamen bedeutet, dass die Gültigkeit der im Schlüssel benannten Eigenschaft davon abhängt, ob die Eigenschaften im Array des Objekts vorhanden sind. Wenn der Wert ein Schema ist, wird dieses Schema nur dann auf das Objekt angewendet, wenn die Eigenschaft im Schlüssel für das Objekt vorhanden ist.",
-		"Die Sammlung der gültigen Literalwerte.",
-		"Eine Zeichenfolge eines der grundlegenden Schematypen (\"number\", \"integer\", \"null\", \"array\", \"object\", \"boolean\", \"string\") oder ein Array aus Zeichenfolgen, das eine Teilmenge dieser Typen angibt.",
-		"Beschreibt das Format, das für den Wert erwartet wird.",
-		"Ein Array von Schemas, die alle übereinstimmen müssen.",
-		"Ein Array von Schemas, von denen mindestens ein Schema übereinstimmen muss.",
-		"Ein Array von Schemas, von denen genau ein Schema übereinstimmen muss.",
-		"Ein Schema, das nicht übereinstimmen darf.",
 	]
 });

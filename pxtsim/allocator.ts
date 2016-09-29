@@ -2,7 +2,7 @@ namespace pxsim {
     const GROUND_COLOR = "blue";
     const POWER_COLOR = "red";
 
-     export interface AllocatorOpts {
+    export interface AllocatorOpts {
         boardDef: BoardDefinition,
         partDefs: Map<PartDefinition>,
         partsList: string[]
@@ -11,7 +11,8 @@ namespace pxsim {
         getBBCoord: (loc: BBLoc) => visuals.Coord,
     };
     export interface AllocatorResult {
-        partsAndWires: PartAndWiresInst[],
+        partsAndWires: PartAndWiresInst[];
+        requiresBreadboard?: boolean;
     }
     export interface PartInst {
         name: string,
@@ -122,13 +123,13 @@ namespace pxsim {
     }
     function mergePowerUsage(powerUsages: PowerUsage[]) {
         let finalPowerUsage = powerUsages.reduce((p, n) => ({
-                topGround: p.topGround || n.topGround,
-                topThreeVolt: p.topThreeVolt || n.topThreeVolt,
-                bottomGround: p.bottomGround || n.bottomGround,
-                bottomThreeVolt: p.bottomThreeVolt || n.bottomThreeVolt,
-                singleGround: n.singleGround ? p.singleGround === null : p.singleGround,
-                singleThreeVolt: n.singleThreeVolt ? p.singleThreeVolt === null : p.singleThreeVolt,
-            }), {
+            topGround: p.topGround || n.topGround,
+            topThreeVolt: p.topThreeVolt || n.topThreeVolt,
+            bottomGround: p.bottomGround || n.bottomGround,
+            bottomThreeVolt: p.bottomThreeVolt || n.bottomThreeVolt,
+            singleGround: n.singleGround ? p.singleGround === null : p.singleGround,
+            singleThreeVolt: n.singleThreeVolt ? p.singleThreeVolt === null : p.singleThreeVolt,
+        }), {
                 topGround: false,
                 topThreeVolt: false,
                 bottomGround: false,
@@ -143,7 +144,7 @@ namespace pxsim {
         return finalPowerUsage;
     }
     function copyDoubleArray(a: string[][]) {
-         return a.map(b => b.map(p => p));
+        return a.map(b => b.map(p => p));
     }
     function merge2<A, B>(a: A, b: B): A & B {
         let res: any = {};
@@ -161,14 +162,14 @@ namespace pxsim {
         let pin = arg.split("DigitalPin.")[1];
         return <MicrobitPin>pin;
     }
-    function mkReverseMap(map: {[key: string]: string}) {
+    function mkReverseMap(map: { [key: string]: string }) {
         let origKeys: string[] = [];
         let origVals: string[] = [];
         for (let key in map) {
             origKeys.push(key);
             origVals.push(map[key]);
         }
-        let newMap: {[key: string]: string} = {};
+        let newMap: { [key: string]: string } = {};
         for (let i = 0; i < origKeys.length; i++) {
             let newKey = origVals[i];
             let newVal = origKeys[i];
@@ -184,12 +185,12 @@ namespace pxsim {
         private opts: AllocatorOpts;
         private availablePowerPins = {
             top: {
-                threeVolt: mkRange(26, 51).map(n => <BBLoc>{type: "breadboard", row: "+", col: `${n}`}),
-                ground: mkRange(26, 51).map(n => <BBLoc>{type: "breadboard", row: "-", col: `${n}`}),
+                threeVolt: mkRange(26, 51).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
+                ground: mkRange(26, 51).map(n => <BBLoc>{ type: "breadboard", row: "-", col: `${n}` }),
             },
             bottom: {
-                threeVolt: mkRange(1, 26).map(n => <BBLoc>{type: "breadboard", row: "+", col: `${n}`}),
-                ground: mkRange(1, 26).map(n => <BBLoc>{type: "breadboard", row: "-", col: `${n}`}),
+                threeVolt: mkRange(1, 26).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
+                ground: mkRange(1, 26).map(n => <BBLoc>{ type: "breadboard", row: "-", col: `${n}` }),
             },
         };
         private powerUsage: PowerUsage;
@@ -278,7 +279,7 @@ namespace pxsim {
             U.assert(pinLocs.length === numPins, `Mismatch between "numberOfPins" and length of "visual.pinLocations" for "${name}"`);
             U.assert(pinDefs.length === numPins, `Mismatch between "numberOfPins" and length of "pinDefinitions" for "${name}"`);
             U.assert(numPins > 0, `Part "${name}" has no pins`);
-            let pins = pinLocs.map((loc, idx) => merge3({idx: idx}, loc, pinDefs[idx]));
+            let pins = pinLocs.map((loc, idx) => merge3({ idx: idx }, loc, pinDefs[idx]));
             let bbPins = pins.filter(p => p.orientation === "-Z");
             let hasBBPins = bbPins.length > 0;
             let pinDist = def.visual.pinDistance;
@@ -307,7 +308,7 @@ namespace pxsim {
                 colCount: colCount
             };
         }
-        private allocColumns(colCounts: {colCount: number}[]): number[] {
+        private allocColumns(colCounts: { colCount: number }[]): number[] {
             let partsCount = colCounts.length;
             const totalColumnsCount = visuals.BREADBOARD_MID_COLS; //TODO allow multiple breadboards
             let totalSpaceNeeded = colCounts.map(d => d.colCount).reduce((p, n) => p + n, 0);
@@ -345,7 +346,7 @@ namespace pxsim {
             let placements = parts.map((p, idx) => {
                 let row = startRowIndicies[idx];
                 let col = startColumnIndices[idx];
-                return merge2({startColumnIdx: col, startRowIdx: row}, p);
+                return merge2({ startColumnIdx: col, startRowIdx: row }, p);
             });
             return placements;
         }
@@ -373,6 +374,7 @@ namespace pxsim {
                         type: "breadboard",
                         row: rowName,
                         col: colName,
+                        style: pin.def.style
                     };
                 } else {
                     //make a wire directly from pin to target
@@ -382,7 +384,8 @@ namespace pxsim {
                         row: rowName,
                         col: colName,
                         xOffset: pin.bbFit.xOffset / part.def.visual.pinDistance,
-                        yOffset: pin.bbFit.yOffset / part.def.visual.pinDistance
+                        yOffset: pin.bbFit.yOffset / part.def.visual.pinDistance,
+                        style: pin.def.style
                     }
                 }
                 let color: string;
@@ -406,17 +409,17 @@ namespace pxsim {
                     pinIdx: pinIdx,
                 }
             });
-            return merge2(part, {wires: wires});
+            return merge2(part, { wires: wires });
         }
         private allocLocation(location: WireIRLoc, opts: AllocLocOpts): Loc {
             if (location === "ground" || location === "threeVolt") {
                 //special case if there is only a single ground or three volt pin in the whole build
                 if (location === "ground" && this.powerUsage.singleGround) {
                     let boardGroundPin = this.getBoardGroundPin();
-                    return {type: "dalboard", pin: boardGroundPin};
+                    return { type: "dalboard", pin: boardGroundPin };
                 } else if (location === "threeVolt" && this.powerUsage.singleThreeVolt) {
                     let boardThreeVoltPin = this.getBoardThreeVoltPin();
-                    return {type: "dalboard", pin: boardThreeVoltPin};
+                    return { type: "dalboard", pin: boardThreeVoltPin };
                 }
 
                 U.assert(!!opts.referenceBBPin);
@@ -465,19 +468,19 @@ namespace pxsim {
                 if (!this.opts.boardDef.spiPins)
                     console.debug("No SPI pin mappings found!");
                 let pin = (<any>this.opts.boardDef.spiPins)[location as string] as string;
-                return {type: "dalboard", pin: pin};
+                return { type: "dalboard", pin: pin };
             } else if (location === "SDA" || location === "SCL") {
                 if (!this.opts.boardDef.i2cPins)
                     console.debug("No I2C pin mappings found!");
                 let pin = (<any>this.opts.boardDef.i2cPins)[location as string] as string;
-                return {type: "dalboard", pin: pin};
+                return { type: "dalboard", pin: pin };
             } else {
                 //it must be a MicrobitPin
                 U.assert(typeof location === "string", "Unknown location type: " + location);
                 let mbPin = <MicrobitPin>location;
                 let boardPin = this.opts.boardDef.gpioPinMap[mbPin];
                 U.assert(!!boardPin, "Unknown pin: " + location);
-                return {type: "dalboard", pin: boardPin};
+                return { type: "dalboard", pin: boardPin };
             }
         }
         private getBoardGroundPin(): string {
@@ -499,10 +502,10 @@ namespace pxsim {
         private allocPowerWires(powerUsage: PowerUsage): PartAndWiresInst {
             let boardGroundPin = this.getBoardGroundPin();
             let threeVoltPin = this.getBoardThreeVoltPin();
-            const topLeft: BBLoc = {type: "breadboard", row: "-", col: "26"};
-            const botLeft: BBLoc = {type: "breadboard", row: "-", col: "1"};
-            const topRight: BBLoc = {type: "breadboard", row: "-", col: "50"};
-            const botRight: BBLoc = {type: "breadboard", row: "-", col: "25"};
+            const topLeft: BBLoc = { type: "breadboard", row: "-", col: "26" };
+            const botLeft: BBLoc = { type: "breadboard", row: "-", col: "1" };
+            const topRight: BBLoc = { type: "breadboard", row: "-", col: "50" };
+            const botRight: BBLoc = { type: "breadboard", row: "-", col: "25" };
             let top: BBLoc, bot: BBLoc;
             if (this.opts.boardDef.attachPowerOnRight) {
                 top = topRight;
@@ -516,55 +519,55 @@ namespace pxsim {
             if (powerUsage.bottomGround && powerUsage.topGround) {
                 //bb top - <==> bb bot -
                 groundWires.push({
-                    start: this.allocLocation("ground", {referenceBBPin: top}),
-                    end: this.allocLocation("ground", {referenceBBPin: bot}),
+                    start: this.allocLocation("ground", { referenceBBPin: top }),
+                    end: this.allocLocation("ground", { referenceBBPin: bot }),
                     color: GROUND_COLOR,
                 });
             }
             if (powerUsage.topGround) {
                 //board - <==> bb top -
                 groundWires.push({
-                    start: this.allocLocation("ground", {referenceBBPin: top}),
-                    end: {type: "dalboard", pin: boardGroundPin},
+                    start: this.allocLocation("ground", { referenceBBPin: top }),
+                    end: { type: "dalboard", pin: boardGroundPin },
                     color: GROUND_COLOR,
                 });
             } else if (powerUsage.bottomGround) {
                 //board - <==> bb bot -
                 groundWires.push({
-                    start: this.allocLocation("ground", {referenceBBPin: bot}),
-                    end: {type: "dalboard", pin: boardGroundPin},
+                    start: this.allocLocation("ground", { referenceBBPin: bot }),
+                    end: { type: "dalboard", pin: boardGroundPin },
                     color: GROUND_COLOR,
                 });
             }
             if (powerUsage.bottomThreeVolt && powerUsage.bottomGround) {
                 //bb top + <==> bb bot +
                 threeVoltWires.push({
-                    start: this.allocLocation("threeVolt", {referenceBBPin: top}),
-                    end: this.allocLocation("threeVolt", {referenceBBPin: bot}),
+                    start: this.allocLocation("threeVolt", { referenceBBPin: top }),
+                    end: this.allocLocation("threeVolt", { referenceBBPin: bot }),
                     color: POWER_COLOR,
                 });
             }
             if (powerUsage.topThreeVolt) {
                 //board + <==> bb top +
                 threeVoltWires.push({
-                    start: this.allocLocation("threeVolt", {referenceBBPin: top}),
-                    end: {type: "dalboard", pin: threeVoltPin},
+                    start: this.allocLocation("threeVolt", { referenceBBPin: top }),
+                    end: { type: "dalboard", pin: threeVoltPin },
                     color: POWER_COLOR,
                 });
             } else if (powerUsage.bottomThreeVolt) {
                 //board + <==> bb bot +
                 threeVoltWires.push({
-                    start: this.allocLocation("threeVolt", {referenceBBPin: bot}),
-                    end: {type: "dalboard", pin: threeVoltPin},
+                    start: this.allocLocation("threeVolt", { referenceBBPin: bot }),
+                    end: { type: "dalboard", pin: threeVoltPin },
                     color: POWER_COLOR,
                 });
             }
             let assembly: AssemblyStep[] = [];
             if (groundWires.length > 0)
-                assembly.push({wireIndices: groundWires.map((w, i) => i)});
+                assembly.push({ wireIndices: groundWires.map((w, i) => i) });
             let numGroundWires = groundWires.length;
             if (threeVoltWires.length > 0)
-                assembly.push({wireIndices: threeVoltWires.map((w, i) => i + numGroundWires)});
+                assembly.push({ wireIndices: threeVoltWires.map((w, i) => i + numGroundWires) });
             return {
                 wires: groundWires.concat(threeVoltWires),
                 assembly: assembly
@@ -585,7 +588,7 @@ namespace pxsim {
                 });
                 return l;
             });
-            return {start: endInsts[0], end: endInsts[1], color: wireIR.color};
+            return { start: endInsts[0], end: endInsts[1], color: wireIR.color };
         }
         private allocPart(ir: PartPlacement): PartInst {
             let bbConnections = ir.pins
@@ -617,7 +620,7 @@ namespace pxsim {
         }
         public allocAll(): AllocatorResult {
             let partNmAndDefs = this.opts.partsList
-                .map(partName => {return {name: partName, def: this.opts.partDefs[partName]}})
+                .map(partName => { return { name: partName, def: this.opts.partDefs[partName] } })
                 .filter(d => !!d.def);
             if (partNmAndDefs.length > 0) {
                 let partNmsList = partNmAndDefs.map(p => p.name);
@@ -655,8 +658,15 @@ namespace pxsim {
                     }
                 });
                 let all = [basicWires].concat(partsAndWires);
+
+                // hide breadboard if not used
+                const requiresBreadboard = all.some(r =>
+                    (r.part && r.part.breadboardConnections && r.part.breadboardConnections.length > 0)
+                    || r.wires && r.wires.some(w => (w.end.type == "breadboard" && (<BBLoc>w.end).style != "croc") || (w.start.type == "breadboard" && (<BBLoc>w.start).style != "croc")));
+
                 return {
-                    partsAndWires: all
+                    partsAndWires: all,
+                    requiresBreadboard: requiresBreadboard
                 }
             } else {
                 return {

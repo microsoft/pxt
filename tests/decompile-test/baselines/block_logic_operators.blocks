@@ -1,0 +1,147 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<block type="math_number">
+<field name="NUM">0</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">y</field>
+<value name="VALUE">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">y</field>
+<value name="VALUE">
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<block type="logic_operation">
+<field name="OP">AND</field>
+<value name="A">
+<block type="variables_get">
+<field name="VAR">x</field>
+</block>
+</value>
+<value name="B">
+<block type="variables_get">
+<field name="VAR">y</field>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+<block type="logic_operation">
+<field name="OP">AND</field>
+<value name="A">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+<value name="B">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+</block>
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+<value name="B">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+</block>
+<block type="logic_negate">
+<value name="BOOL">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+</block>
+<block type="logic_negate">
+<value name="BOOL">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+</block>
+<block type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</block>
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<block type="logic_operation">
+<field name="OP">AND</field>
+<value name="A">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+<value name="B">
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<block type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</block>
+</value>
+<value name="B">
+<block type="logic_negate">
+<value name="BOOL">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<block type="logic_negate">
+<value name="BOOL">
+<block type="logic_operation">
+<field name="OP">AND</field>
+<value name="A">
+<block type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</block>
+</value>
+<value name="B">
+<block type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</xml>

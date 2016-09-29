@@ -1,4 +1,6 @@
 /// <reference path="pxtpackage.d.ts" />
+/// <reference path="pxtparts.d.ts" />
+
 declare namespace pxt {
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
@@ -63,10 +65,10 @@ declare namespace pxt {
         autoRun?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
+        boardDefinition?: pxsim.BoardDefinition;
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
-        builtinParts?: Map<boolean>;
     }
 
     interface TargetCompileService {
@@ -75,6 +77,13 @@ declare namespace pxt {
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
+    }
+
+    interface SpecializedResource {
+        name: string,
+        browser?: string,
+        os?: string,
+        path: string
     }
 
     interface AppTheme {
@@ -87,6 +96,8 @@ declare namespace pxt {
         portraitLogo?: string;
         rightLogo?: string;
         docsLogo?: string;
+        organization?: string;
+        organizationUrl?: string;
         organizationLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
@@ -103,6 +114,9 @@ declare namespace pxt {
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
         githubUrl?: string;
+        usbHelp?: SpecializedResource[];
+        usbDocs?: string
+        browserSupport?: SpecializedResource[];
     }
 
     interface DocMenuEntry {

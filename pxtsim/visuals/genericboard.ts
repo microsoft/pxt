@@ -22,7 +22,7 @@ namespace pxsim.visuals {
         }
         .gray-cover {
             fill:#FFF;
-            opacity: 0.7;
+            opacity: 0.3;
             stroke-width:0;
             visibility: hidden;
         }
@@ -216,11 +216,6 @@ namespace pxsim.visuals {
                 svg.hydrate(p.el, {title: tooltip});
                 svg.hydrate(p.hoverEl, {title: tooltip});
             });
-            //attach pins
-            this.allPins.forEach(p => {
-                this.g.appendChild(p.el);
-                this.g.appendChild(p.hoverEl);
-            });
             //catalog pins
             this.allPins.forEach(p => {
                 this.pinNmToPin[p.col] = p;
@@ -256,15 +251,20 @@ namespace pxsim.visuals {
                 let blk = pinToBlockDef[pIdx];
                 return mkLabel(p.cx, p.cy, p.col, blk.labelPosition);
             });
-            //attach labels
-            this.allLabels.forEach(l => {
-                this.g.appendChild(l.el);
-                this.g.appendChild(l.hoverEl);
-            });
             //catalog labels
             this.allPins.forEach((pin, pinIdx) => {
                 let lbl = this.allLabels[pinIdx];
                 this.pinNmToLbl[pin.col] = lbl;
+            });
+
+            //attach pins & labels
+            this.allPins.forEach((p, idx) => {
+                let lbl = this.allLabels[idx];
+                //pins and labels must be adjacent for hover CSS
+                this.g.appendChild(p.el);
+                this.g.appendChild(p.hoverEl);
+                this.g.appendChild(lbl.el);
+                this.g.appendChild(lbl.hoverEl);
             });
         }
 

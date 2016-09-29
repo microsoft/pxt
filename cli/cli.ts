@@ -24,10 +24,10 @@ import * as elf from './elf';
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
 function initTargetCommands() {
-    let cmdsjs = nodeutil.targetDir + '/built/cmds.js';
+    let cmdsjs = path.join(process.cwd(), nodeutil.targetDir, 'built/cmds.js');
     if (fs.existsSync(cmdsjs)) {
         pxt.debug(`loading cli extensions...`)
-        let cli = require(cmdsjs)
+        let cli = require.main.require(cmdsjs)
         if (cli.deployCoreAsync) {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
@@ -72,7 +72,7 @@ function fatal(msg: string): Promise<any> {
     throw new Error(msg)
 }
 
-let globalConfig: UserConfig = {}
+export let globalConfig: UserConfig = {}
 
 function homePxtDir() {
     return path.join(process.env["HOME"] || process.env["UserProfile"], ".pxt")
@@ -750,17 +750,17 @@ function uploadCoreAsync(opts: UploadOptions) {
             rdf = readFileAsync(p)
         }
 
-        return rdf
-            .then((data: Buffer) => {
-                let fileName = uploadFileName(p)
-                let mime = U.getMime(p)
-                let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
-                let content = ""
-
+        let fileName = uploadFileName(p)
+        let mime = U.getMime(p)
+        let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
+        let content = ""
+        let data: Buffer;
+        return rdf.then((rdata: Buffer) => {
+                data = rdata;
                 if (isText) {
                     content = data.toString("utf8")
                     if (fileName == "index.html") {
-                        content = server.expandDocTemplateCore(content)
+                        content = server.expandHtml(content)
                     }
 
                     if (replFiles.indexOf(fileName) >= 0) {
@@ -773,19 +773,35 @@ function uploadCoreAsync(opts: UploadOptions) {
                             // save it for developer inspection
                             fs.writeFileSync("built/uploadrepl/" + fileName, content)
                         }
-                    } else if (fileName == "target.json" && opts.localDir) {
+                    } else if (fileName == "target.json") {
                         let trg: pxt.TargetBundle = JSON.parse(content)
-                        for (let e of trg.appTheme.docMenu)
-                            if (e.path[0] == "/") {
-                                e.path = opts.localDir + "docs" + e.path + ".html"
-                            }
-                        trg.appTheme.logoUrl = opts.localDir
-                        trg.appTheme.homeUrl = opts.localDir
-                        data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                        if (opts.localDir) {
+                            for (let e of trg.appTheme.docMenu)
+                                if (e.path[0] == "/") {
+                                    e.path = opts.localDir + "docs" + e.path + ".html"
+                                }
+                            trg.appTheme.logoUrl = opts.localDir
+                            trg.appTheme.homeUrl = opts.localDir
+                            data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                        } else {
+                            // expand usb help pages
+                            return Promise.all(
+                                (trg.appTheme.usbHelp || []).filter(h => !!h.path)
+                                    .map(h => uploader.uploadArtAsync(h.path, true)
+                                        .then(blob => {
+                                            console.log(`target.json patch:    ${h.path} -> ${blob}`)
+                                            h.path = blob;
+                                        }))
+                            ).then(() => {
+                                content = JSON.stringify(trg, null, 2);
+                            })
+                        }
                     }
                 } else {
                     content = data.toString("base64")
                 }
+                return Promise.resolve()
+            }).then(() => {
 
                 if (opts.localDir) {
                     let fn = path.join(builtPackaged + opts.localDir, fileName)
@@ -798,10 +814,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                     filename: fileName,
                     contentType: mime,
                     content,
+                }).then(resp => {
+                    console.log(fileName, mime)
                 })
-                    .then(resp => {
-                        console.log(fileName, mime)
-                    })
             })
     }
 
@@ -1020,14 +1035,14 @@ function addCmd(name: string) {
     return name + (/^win/.test(process.platform) ? ".cmd" : "")
 }
 
-function buildPxtAsync(): Promise<string[]> {
+function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
     let ksd = "node_modules/pxt-core"
     if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
     console.log(`building ${ksd}...`);
     return spawnAsync({
         cmd: addCmd("jake"),
-        args: [],
+        args: includeSourceMaps ? ["sourceMaps=true"] : [],
         cwd: ksd
     }).then(() => {
         console.log("local pxt-core built.")
@@ -1190,14 +1205,16 @@ function buildTargetCoreAsync() {
 
             saveThemeJson(cfg)
 
-            let webmanifest = buildWebManifest(cfg)
-            fs.writeFileSync("built/target.json", JSON.stringify(cfg, null, 2))
+            const webmanifest = buildWebManifest(cfg)
+            const webmanifestjson = JSON.stringify(cfg, null, 2)
+            fs.writeFileSync("built/target.json", webmanifestjson)
             pxt.appTarget = cfg; // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
             delete targetlight.appTheme
-            fs.writeFileSync("built/targetlight.json", JSON.stringify(targetlight, null, 2))
+            const targetlightjson = JSON.stringify(targetlight, null, 2);
+            fs.writeFileSync("built/targetlight.json", targetlightjson)
             fs.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
         })
         .then(() => {
@@ -1241,7 +1258,7 @@ function buildFailed(msg: string, e: any) {
     console.log("")
 }
 
-function buildAndWatchTargetAsync() {
+function buildAndWatchTargetAsync(includeSourceMaps = false) {
     if (forkPref() && fs.existsSync("pxtarget.json")) {
         console.log("Assuming target fork; building once.")
         return buildTargetAsync()
@@ -1252,7 +1269,7 @@ function buildAndWatchTargetAsync() {
         return Promise.resolve()
     }
 
-    return buildAndWatchAsync(() => buildPxtAsync()
+    return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
@@ -1330,6 +1347,7 @@ export function serveAsync(arg?: string) {
     forceCloudBuild = !globalConfig.localBuild
     let justServe = false
     let packaged = false
+    let includeSourceMaps = false;
     if (arg == "-yt") {
         forceCloudBuild = false
     } else if (arg == "-cloud") {
@@ -1339,6 +1357,11 @@ export function serveAsync(arg?: string) {
     } else if (arg == "-pkg") {
         justServe = true
         packaged = true
+    } else if (arg == "-no-browser") {
+        justServe = true
+        globalConfig.noAutoStart = true
+    } else if (arg == "-include-source-maps") {
+        includeSourceMaps = true;
     }
     if (!globalConfig.localToken) {
         globalConfig.localToken = U.guidGen();
@@ -1346,15 +1369,23 @@ export function serveAsync(arg?: string) {
     }
     let localToken = globalConfig.localToken;
     if (!fs.existsSync("pxtarget.json")) {
-        let upper = path.join(__dirname, "../../..")
-        if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
-            console.log("going to " + upper)
-            process.chdir(upper)
-        } else {
-            U.userError("Cannot find pxtarget.json to serve.")
+        //Specifically when the target is being used as a library
+        let targetDepLoc = nodeutil.targetDir
+        if (fs.existsSync(path.join(targetDepLoc, "pxtarget.json"))) {
+            console.log(`Going to ${targetDepLoc}`)
+            process.chdir(targetDepLoc)
+        }
+        else {
+            let upper = path.join(__dirname, "../../..")
+            if (fs.existsSync(path.join(upper, "pxtarget.json"))) {
+                console.log("going to " + upper)
+                process.chdir(upper)
+            } else {
+                U.userError("Cannot find pxtarget.json to serve.")
+            }
         }
     }
-    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync())
+    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
         .then(() => server.serveAsync({
             localToken: localToken,
             autoStart: !globalConfig.noAutoStart,
@@ -1423,21 +1454,27 @@ class SnippetHost implements pxt.Host {
             }
         }
         else {
+            let p0 = path.join(module.id, filename);
             let p1 = path.join('libs', module.id, filename)
             let p2 = path.join('libs', module.id, 'built', filename)
 
             let contents: string = null
 
             try {
-                contents = fs.readFileSync(p1, 'utf8')
+                contents = fs.readFileSync(p0, 'utf8')
             }
             catch (e) {
-                //console.log(e)
                 try {
-                    contents = fs.readFileSync(p2, 'utf8')
+                    contents = fs.readFileSync(p1, 'utf8')
                 }
                 catch (e) {
                     //console.log(e)
+                    try {
+                        contents = fs.readFileSync(p2, 'utf8')
+                    }
+                    catch (e) {
+                        //console.log(e)
+                    }
                 }
             }
 
@@ -1482,7 +1519,7 @@ class SnippetHost implements pxt.Host {
     }
 
     private get dependencies(): { [key: string]: string } {
-        let stdDeps: { [key: string]: string } = { "microbit": "file:../microbit" }
+        let stdDeps: { [key: string]: string } = { }
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
         }
@@ -1632,7 +1669,7 @@ const defaultFiles: Map<string> = {
 
 build:
 \tpxt build
-  
+
 deploy:
 \tpxt deploy
 
@@ -1671,7 +1708,7 @@ pxt_modules
         "**/yotta_modules/**": true,
         "**/yotta_targets": true,
         "**/pxt_modules/**": true
-    },    
+    },
     "search.exclude": {
         "**/built": true,
         "**/node_modules": true,
@@ -2565,6 +2602,246 @@ function testDirAsync(dir: string) {
         })
 }
 
+function testDecompilerAsync(dir: string): Promise<void> {
+    const filenames: string[] = [];
+
+    const baselineDir = path.resolve(dir, "baselines")
+
+    try {
+        const stats = fs.statSync(baselineDir);
+        if (!stats.isDirectory()) {
+            console.error(baselineDir + " is not a directory; unable to run decompiler tests");
+            process.exit(1);
+        }
+    }
+    catch (e) {
+        console.error(baselineDir + " does not exist; unable to run decompiler tests");
+        process.exit(1);
+    }
+
+    const testBlocksDir = path.relative(process.cwd(), path.join(dir, "testBlocks"));
+    let testBlocksDirExists = false;
+    try {
+        const stats = fs.statSync(testBlocksDir);
+        testBlocksDirExists = stats.isDirectory();
+    }
+    catch (e) {}
+
+    for (const file of fs.readdirSync(dir)) {
+        if (file[0] == ".") {
+            continue;
+        }
+
+        const filename = path.join(dir, file)
+        if (U.endsWith(file, ".ts")) {
+            filenames.push(filename)
+        }
+    }
+
+    const errors: string[] = [];
+
+    return Promise.mapSeries(filenames, filename => {
+        const basename = path.basename(filename);
+        const baselineFile = path.join(baselineDir, replaceFileExtension(basename, ".blocks"))
+
+        let baselineExists: boolean;
+        try {
+            const stats = fs.statSync(baselineFile)
+            baselineExists = stats.isFile()
+        }
+        catch (e) {
+            baselineExists = false
+        }
+
+        if (!baselineExists) {
+            // Don't kill the promise chain, just push an error
+            errors.push(`decompiler test FAILED; ${basename} does not have a baseline at ${baselineFile}`)
+            return Promise.resolve()
+        }
+
+        return decompileAsyncWorker(filename, testBlocksDirExists ? testBlocksDir : undefined)
+            .then(decompiled => {
+                const baseline = fs.readFileSync(baselineFile, "utf8")
+                if (compareBaselines(decompiled, baseline)) {
+                    console.log(`decompiler test OK: ${basename}`);
+                }
+                else {
+                    const outFile = path.join(replaceFileExtension(filename, ".local.blocks"))
+                    fs.writeFileSync(outFile, decompiled)
+                    errors.push((`decompiler test FAILED; ${basename} did not match baseline, output written to ${outFile})`));
+                }
+            }, error => {
+                errors.push((`decompiler test FAILED; ${basename} was unable to decompile due to: ${error}`))
+            })
+    })
+        .then(() => {
+            if (errors.length) {
+                errors.forEach(e => console.log(e));
+                console.error(`${errors.length} decompiler test failure(s)`);
+                process.exit(1);
+            }
+            else {
+                console.log(`${filenames.length} decompiler test(s) OK`);
+            }
+        });
+}
+
+function compareBaselines(a: string, b: string): boolean {
+    // Ignore whitespace
+    return a.replace(/\s/g, "") === b.replace(/\s/g, "")
+}
+
+function replaceFileExtension(file: string, extension: string) {
+    return file && file.substr(0, file.length - path.extname(file).length) + extension;
+}
+
+function testDecompilerErrorsAsync(dir: string) {
+    const filenames: string[] = [];
+    for (const file of fs.readdirSync(dir)) {
+        if (file[0] == ".") {
+            continue;
+        }
+
+        const filename = path.join(dir, file)
+        if (U.endsWith(file, ".ts")) {
+            filenames.push(filename)
+        }
+    }
+
+    const errors: string[] = [];
+    let totalCases = 0;
+
+    return Promise.mapSeries(filenames, filename => {
+        const basename = path.basename(filename);
+        let fullText: string;
+
+        try {
+            fullText = fs.readFileSync(filename, "utf8");
+        }
+        catch (e) {
+            errors.push("Could not read " + filename)
+            process.exit(1)
+        }
+
+        const cases = getCasesFromFile(fullText);
+        totalCases += cases.length;
+
+        let success = true;
+
+        if (cases.length === 0) {
+            errors.push(`decompiler error test FAILED; ${basename} contains no test cases`)
+            success = false;
+        }
+
+        return Promise.mapSeries(cases, testCase => {
+            const pkg = new pxt.MainPackage(new SnippetHost("decompile-error-pkg", testCase.text, []));
+
+            return pkg.getCompileOptionsAsync()
+                .then(opts => {
+                    opts.ast = true;
+                    try {
+                        const decompiled = pxtc.decompile(opts, "main.ts");
+                        if (decompiled.success) {
+                            errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" expected a decompilation error but got none`);
+                            success = false;
+                        }
+                    }
+                    catch (e) {
+                        errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" generated an exception: ${e}`);
+                        success = false
+                    }
+                });
+        })
+        .then(() => {
+            if (success) {
+                console.log(`decompiler error test OK: ${basename}`);
+            }
+        })
+    })
+        .then(() => {
+            if (errors.length) {
+                errors.forEach(e => console.log(e));
+                console.error(`${errors.length} decompiler error test failure(s)`);
+                process.exit(1);
+            }
+            else {
+                console.log(`${totalCases} decompiler error test(s) OK`);
+            }
+        })
+}
+
+interface DecompilerErrorTestCase {
+    name: string,
+    text: string
+}
+
+const testCaseSeperatorRegex = /\/\/\s+@case:\s*([a-zA-z ]+)$/
+
+function getCasesFromFile(fileText: string): DecompilerErrorTestCase[] {
+    const result: DecompilerErrorTestCase[] = [];
+
+    const lines = fileText.split("\n")
+
+    let currentCase: DecompilerErrorTestCase;
+
+    for (const line of lines) {
+        const match = testCaseSeperatorRegex.exec(line)
+        if (match) {
+            if (currentCase) {
+                result.push(currentCase)
+            }
+            currentCase = {
+                name: match[1],
+                text: ""
+            };
+        }
+        else if (currentCase) {
+            currentCase.text += line + "\n"
+        }
+    }
+
+    if (currentCase) {
+        result.push(currentCase)
+    }
+
+    return result;
+}
+
+function decompileAsync(...fileNames: string[]) {
+    return Promise.mapSeries(fileNames, f => {
+        const outFile = replaceFileExtension(f, ".blocks")
+        return decompileAsyncWorker(f)
+            .then(result => {
+                fs.writeFileSync(outFile, result)
+                console.log("Wrote " + outFile)
+            })
+    })
+        .then(() => {
+            console.log("Done")
+        }, error => {
+            console.log("Error: " + error)
+        })
+}
+
+function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        const input = fs.readFileSync(f, "utf8")
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dependency ? [dependency] : []));
+
+        pkg.getCompileOptionsAsync()
+            .then(opts => {
+                opts.ast = true;
+                const decompiled = pxtc.decompile(opts, "main.ts");
+                if (decompiled.success) {
+                    resolve(decompiled.outfiles["main.blocks"]);
+                }
+                else {
+                    reject("Could not decompile " + f)
+                }
+            });
+    });
+}
+
 function testSnippetsAsync(...args: string[]): Promise<void> {
     let filenameMatch = new RegExp('.*')
     let ignorePreviousSuccesses = false
@@ -2629,6 +2906,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         let snippets = uploader.getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
+        extraDeps.push("microbit")
         let ignoredTypes = ["Text", "sig", "pre", "codecard", "cards", "package", "namespaces"]
         let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0 && !s.ignore)
         ignoreCount += snippets.length - snippetsToCheck.length
@@ -3033,6 +3311,9 @@ cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
+cmd("decompile file.ts...         - decompile ts files and produce similarly named .blocks files", decompileAsync, 1)
+cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and compare to baselines", testDecompilerAsync, 1)
+cmd("testdecompilererrors  DIR    - decompile unsupported files from DIR one-by-one and check for errors", testDecompilerErrorsAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
@@ -3158,7 +3439,7 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-export function mainCli(targetDir: string) {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2)) {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -3176,8 +3457,6 @@ export function mainCli(targetDir: string) {
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
-
-    let args = process.argv.slice(2)
 
     initConfig();
 
