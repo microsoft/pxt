@@ -104,8 +104,9 @@ namespace pxt.runner {
 
         // download screenshots
         if (options.downloadScreenshots && woptions.hexname) {
-            console.log("Downloading screenshot for: " + woptions.hexname);
+            pxt.debug("Downloading screenshot for: " + woptions.hexname);
             let filename = woptions.hexname.substr(0,woptions.hexname.lastIndexOf('.'));
+            let fontSize = window.getComputedStyle($svg.get(0).querySelector(".blocklyText")).getPropertyValue("font-size");
             const customCss = `
 .blocklyMainBackground {
     stroke:none !important;
@@ -113,7 +114,7 @@ namespace pxt.runner {
 
 .blocklyText {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-    font-size:0.9rem !important;  
+    font-size:${fontSize} !important;  
 }
 
 .blocklyCheckbox,
