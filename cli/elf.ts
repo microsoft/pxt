@@ -23,6 +23,13 @@ let targets: TargetConfig[] = [
     }
 ]
 
+export interface FileInfo {
+    filename: string;
+    syms: Sym[];
+    init: string[][];
+    target: TargetConfig;
+    hexEntries?: HexEntry[];
+}
 
 export const enum SymType {
     Code,
@@ -288,13 +295,6 @@ export const enum RelocType {
 
 let currNameId = 0
 
-export interface FileInfo {
-    filename: string;
-    syms: Sym[];
-    init?: number[];
-    target: TargetConfig;
-    hexEntries?: HexEntry[];
-}
 
 export function elfToJson(filename: string, buf: Buffer): FileInfo {
     if (buf.readUInt32LE(0) != 0x464c457f)
@@ -425,31 +425,12 @@ export function elfToJson(filename: string, buf: Buffer): FileInfo {
     }
 
     let inits = convertRelocs(sectsByName[".init_array"])
-    if (inits.length) {
-        let byname: Map<number> = {}
-        for (let i = 0; i < rsyms.length; ++i) {
-            byname[rsyms[i].name.replace(/\.\d+$/, "")] = i
-            byname[rsyms[i].name] = i
-        }
-        for (let rel of inits) {
-            let m = /^_GLOBAL__sub_I_([^.]*)(\.\d+)?$/.exec(rel.symname)
-            if (!m) {
-                U.userError(`invalid .init entry: ${rel.symname}`)
-            }
-            let cand = U.lookup(byname, m[1])
-            if (cand == null)
-                U.userError(`invalid .init entry: ${rel.symname} - no canidates`)
-            let idx = U.lookup(byname, rel.symname)
-            rsyms[cand].initSym = idx
-            if (idx == null)
-                U.userError("cannot find init sym")
-        }
-    }
 
     let r: FileInfo = {
         filename: filename,
         syms: rsyms,
-        target: targets[0]
+        target: targets[0],
+        init: inits.length ? [inits.map(s => s.symname)] : null
     }
 
     return r
@@ -674,7 +655,7 @@ export function readArFile(arname: string, buf: Buffer, onlySyms = false) {
 export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
     let symLookup: Map<Sym> = {}
     let syms: Sym[] = []
-    let inits: Sym[] = []
+    let inits: string[][] = []
     let libOFiles: Map<FileInfo> = {}
 
     function defineSym(s: Sym) {
@@ -761,10 +742,13 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             if (soff) {
                 let id = l.name + "." + soff
                 let fi = U.lookup(libOFiles, id)
+                let first = false
                 if (!fi) {
                     let e = getArEntry(l, soff)
                     let fn = path.basename(l.name) + "/" + path.basename(e.filename)
                     libOFiles[id] = fi = elfToJson(fn, e.buf)
+                    handleInits(fi)
+                    first = true
                 }
                 let byname = U.toDictionary(fi.syms, s => s.name)
                 let ss = U.lookup(byname, sn)
@@ -778,14 +762,10 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
                         let ls = U.lookup(byname, r.symname)
                         if (ls) addSym(ls)
                     }
-                    if (s.initSym != null) {
-                        let isym = fi.syms[s.initSym]
-                        if (isym._imported) {
-                            U.userError(`double init`)
-                        } else {
-                            addSym(isym)
-                            inits.push(isym)
-                            s.initSym = syms.indexOf(isym)
+                    if (first && fi.init) {
+                        for (let sname of fi.init[0]) {
+                            let ls = U.lookup(byname, sname)
+                            if (ls) addSym(ls)
                         }
                     }
                 }
@@ -804,19 +784,13 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             if (s.bind & STB.GLOBAL)
                 defineSym(s)
         }
+        handleInits(fi)
     })
 
     U.iterMap(infos, (fn, fi) => {
         for (let s of fi.syms) {
             if (!(s.bind & STB.GLOBAL))
                 defineSym(s)
-        }
-        for (let s of fi.syms) {
-            if (s.initSym != null) {
-                let idx = syms.indexOf(fi.syms[s.initSym])
-                if (idx < 0) U.userError("no init?")
-                s.initSym = idx
-            }
         }
     })
 
@@ -859,7 +833,17 @@ export function linkInfos(infos: Map<FileInfo>, libs: ArArchive[]): FileInfo {
             delete s.file
         }
     }
-    return { syms: syms, filename: "", target: target }
+    return { syms: syms, filename: "", target: target, init: inits }
+
+    function handleInits(fi: FileInfo) {
+        if (fi.init) {
+            U.assert(fi.init.length == 1)
+            let idx = inits.length
+            inits.push(fi.init[0])
+            for (let s of fi.syms)
+                s.initSym = idx
+        }
+    }
 }
 
 function bufToHex(buf: Uint8Array, origin: number) {
@@ -957,7 +941,7 @@ export function linkBinary(info: FileInfo) {
     initSym.text = "b500" + inits.map(i => "fff7feff").join("") + "bd00"
     initSym.relocEnc = U.concat(inits.map((isym, idx) =>
         [RelocType.R_ARM_THM_CALL, idx * 4 + 2, isym._id]))
-    console.log(inits, initSym)
+    console.log(inits.map(s => s.name))
 
     let sizes = {
         codeSize: etext - info.target.flashOrigin,
@@ -1090,10 +1074,15 @@ export function linkBinary(info: FileInfo) {
                 rwDataSyms.push(s)
                 break;
         }
-        if (s.initSym != null) {
-            let isym = info.syms[s.initSym]
-            addSym(isym)
-            inits.push(isym)
+        if (s.initSym != null && info.init[s.initSym]) {
+            let arr = info.init[s.initSym]
+            info.init[s.initSym] = null
+            for (let sname of arr) {
+                let isym = U.lookup(byName, sname)
+                if (!isym) U.userError(`init symbol ${sname} not found`)
+                inits.push(isym)
+                addSym(isym)
+            }
         }
         for (let i = 0; i < s.relocEnc.length; i += 3) {
             let ss = info.syms[s.relocEnc[i + 2]]
