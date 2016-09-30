@@ -1089,7 +1089,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 const project: pxt.cpp.HexFile = {
                     meta: {
                         cloudId: `pxt/${pxt.appTarget.id}`,
-                        targetVersion: pxt.webConfig.targetVersion,
+                        targetVersion: pxt.appTarget.versions.target,
                         editor: Util.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
                         name: mpkg.config.name
                     },
@@ -1389,7 +1389,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             hideCancel: true,
             agreeLbl: lf("Ok"),
             htmlBody: `
-<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${pxt.webConfig.targetVersion}</p>
+<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${pxt.appTarget.versions.target}</p>
 `
         }).done();
     }
