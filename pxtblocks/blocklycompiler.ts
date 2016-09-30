@@ -515,7 +515,7 @@ namespace pxt.blocks {
         }
     }
 
-    function compileNumber(e: Environment, b: B.Block): Node {
+    function compileNumber(e: Environment, b: B.Block, comments: string[]): Node {
         return H.mkNumberLiteral(extractNumber(b));
     }
 
@@ -536,11 +536,11 @@ namespace pxt.blocks {
         "NEQ": "!=",
     };
 
-    function compileArithmetic(e: Environment, b: B.Block): Node {
+    function compileArithmetic(e: Environment, b: B.Block, comments: string[]): Node {
         let bOp = b.getFieldValue("OP");
         let left = b.getInputTargetBlock("A");
         let right = b.getInputTargetBlock("B");
-        let args = [compileExpression(e, left), compileExpression(e, right)];
+        let args = [compileExpression(e, left, comments), compileExpression(e, right, comments)];
         let t = returnType(e, left).type;
 
         if (t == pString.type) {
@@ -557,35 +557,35 @@ namespace pxt.blocks {
         }
     }
 
-    function compileModulo(e: Environment, b: B.Block): Node {
+    function compileModulo(e: Environment, b: B.Block, comments: string[]): Node {
         let left = b.getInputTargetBlock("DIVIDEND");
         let right = b.getInputTargetBlock("DIVISOR");
-        let args = [compileExpression(e, left), compileExpression(e, right)];
+        let args = [compileExpression(e, left, comments), compileExpression(e, right, comments)];
         return H.mkSimpleCall("%", args);
     }
 
-    function compileMathOp2(e: Environment, b: B.Block): Node {
+    function compileMathOp2(e: Environment, b: B.Block, comments: string[]): Node {
         let op = b.getFieldValue("op");
-        let x = compileExpression(e, b.getInputTargetBlock("x"));
-        let y = compileExpression(e, b.getInputTargetBlock("y"));
+        let x = compileExpression(e, b.getInputTargetBlock("x"), comments);
+        let y = compileExpression(e, b.getInputTargetBlock("y"), comments);
         return H.mathCall(op, [x, y])
     }
 
-    function compileMathOp3(e: Environment, b: B.Block): Node {
-        let x = compileExpression(e, b.getInputTargetBlock("x"));
+    function compileMathOp3(e: Environment, b: B.Block, comments: string[]): Node {
+        let x = compileExpression(e, b.getInputTargetBlock("x"), comments);
         return H.mathCall("abs", [x]);
     }
 
-    function compileText(e: Environment, b: B.Block): Node {
+    function compileText(e: Environment, b: B.Block, comments: string[]): Node {
         return H.mkStringLiteral(b.getFieldValue("TEXT"));
     }
 
-    function compileBoolean(e: Environment, b: B.Block): Node {
+    function compileBoolean(e: Environment, b: B.Block, comments: string[]): Node {
         return H.mkBooleanLiteral(b.getFieldValue("BOOL") == "TRUE");
     }
 
-    function compileNot(e: Environment, b: B.Block): Node {
-        let expr = compileExpression(e, b.getInputTargetBlock("BOOL"));
+    function compileNot(e: Environment, b: B.Block, comments: string[]): Node {
+        let expr = compileExpression(e, b.getInputTargetBlock("BOOL"), comments);
         return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
 
@@ -595,8 +595,8 @@ namespace pxt.blocks {
         return parseInt(e.op)
     }
 
-    function compileRandom(e: Environment, b: B.Block): Node {
-        let expr = compileExpression(e, b.getInputTargetBlock("limit"));
+    function compileRandom(e: Environment, b: B.Block, comments: string[]): Node {
+        let expr = compileExpression(e, b.getInputTargetBlock("limit"), comments);
         let v = extractNumberLit(expr)
         if (v != null)
             return H.mathCall("random", [H.mkNumberLiteral(v + 1)]);
@@ -604,9 +604,9 @@ namespace pxt.blocks {
             return H.mathCall("random", [H.mkSimpleCall(opToTok["ADD"], [expr, H.mkNumberLiteral(1)])])
     }
 
-    function compileCreateList(e: Environment, b: B.Block): Node {
+    function compileCreateList(e: Environment, b: B.Block, comments: string[]): Node {
         // collect argument
-        let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock()) : undefined)
+        let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
             .filter(e => !!e);
 
         // we need at least 1 element to determine the type...
@@ -637,44 +637,45 @@ namespace pxt.blocks {
     // [t] is the expected type; we assume that we never null block children
     // (because placeholder blocks have been inserted by the type-checking phase
     // whenever a block was actually missing).
-    function compileExpression(e: Environment, b: B.Block): Node {
+    function compileExpression(e: Environment, b: B.Block, comments: string[]): Node {
         assert(b != null);
+        maybeAddComment(b, comments);
         let expr: Node;
         if (b.disabled || b.type == "placeholder")
             expr = defaultValueForType(returnType(e, b));
         else switch (b.type) {
             case "math_number":
-                expr = compileNumber(e, b); break;
+                expr = compileNumber(e, b, comments); break;
             case "math_op2":
-                expr = compileMathOp2(e, b); break;
+                expr = compileMathOp2(e, b, comments); break;
             case "math_op3":
-                expr = compileMathOp3(e, b); break;
+                expr = compileMathOp3(e, b, comments); break;
             case "device_random":
-                expr = compileRandom(e, b); break;
+                expr = compileRandom(e, b, comments); break;
             case "math_arithmetic":
             case "logic_compare":
             case "logic_operation":
-                expr = compileArithmetic(e, b); break;
+                expr = compileArithmetic(e, b, comments); break;
             case "math_modulo":
-                expr = compileModulo(e, b); break;
+                expr = compileModulo(e, b, comments); break;
             case "logic_boolean":
-                expr = compileBoolean(e, b); break;
+                expr = compileBoolean(e, b, comments); break;
             case "logic_negate":
-                expr = compileNot(e, b); break;
+                expr = compileNot(e, b, comments); break;
             case "variables_get":
                 expr = compileVariableGet(e, b); break;
             case "text":
-                expr = compileText(e, b); break;
+                expr = compileText(e, b, comments); break;
             case "lists_create_with":
-                expr = compileCreateList(e, b); break;
+                expr = compileCreateList(e, b, comments); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
                     if (call.imageLiteral)
                         expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f,
-                            call.args.map(ar => compileArgument(e, b, ar)))
+                            call.args.map(ar => compileArgument(e, b, ar, comments)))
                     else
-                        expr = compileStdCall(e, b, call);
+                        expr = compileStdCall(e, b, call, comments);
                 }
                 else {
                     pxt.reportError("Unable to compile expression: " + b.type, null);
@@ -753,11 +754,11 @@ namespace pxt.blocks {
     // Statements
     ///////////////////////////////////////////////////////////////////////////////
 
-    function compileControlsIf(e: Environment, b: B.IfBlock): Node[] {
+    function compileControlsIf(e: Environment, b: B.IfBlock, comments: string[]): Node[] {
         let stmts: Node[] = [];
         // Notice the <= (if there's no else-if, we still compile the primary if).
         for (let i = 0; i <= b.elseifCount_; ++i) {
-            let cond = compileExpression(e, b.getInputTargetBlock("IF" + i));
+            let cond = compileExpression(e, b.getInputTargetBlock("IF" + i), comments);
             let thenBranch = compileStatements(e, b.getInputTargetBlock("DO" + i));
             let startNode = mkText("if (")
             if (i > 0) {
@@ -782,7 +783,7 @@ namespace pxt.blocks {
         return stmts;
     }
 
-    function compileControlsFor(e: Environment, b: B.Block): Node[] {
+    function compileControlsFor(e: Environment, b: B.Block, comments: string[]): Node[] {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bTo = b.getInputTargetBlock("TO");
         let bDo = b.getInputTargetBlock("DO");
@@ -795,18 +796,18 @@ namespace pxt.blocks {
 
         return [
             mkText("for (let " + bVar + " = "),
-            bFrom ? compileExpression(e, bFrom) : mkText("0"),
+            bFrom ? compileExpression(e, bFrom, comments) : mkText("0"),
             mkText("; "),
-            mkInfix(mkText(bVar), "<=", compileExpression(e, bTo)),
+            mkInfix(mkText(bVar), "<=", compileExpression(e, bTo, comments)),
             mkText("; "),
-            incOne ? mkText(bVar + "++") : mkInfix(mkText(bVar), "+=", compileExpression(e, bBy)),
+            incOne ? mkText(bVar + "++") : mkInfix(mkText(bVar), "+=", compileExpression(e, bBy, comments)),
             mkText(")"),
             compileStatements(e, bDo)
         ]
     }
 
-    function compileControlsRepeat(e: Environment, b: B.Block): Node[] {
-        let bound = compileExpression(e, b.getInputTargetBlock("TIMES"));
+    function compileControlsRepeat(e: Environment, b: B.Block, comments: string[]): Node[] {
+        let bound = compileExpression(e, b.getInputTargetBlock("TIMES"), comments);
         let body = compileStatements(e, b.getInputTargetBlock("DO"));
         let valid = (x: string) => !lookup(e, x)
         let name = "i";
@@ -820,8 +821,8 @@ namespace pxt.blocks {
         ]
     }
 
-    function compileWhile(e: Environment, b: B.Block): Node[] {
-        let cond = compileExpression(e, b.getInputTargetBlock("COND"));
+    function compileWhile(e: Environment, b: B.Block, comments: string[]): Node[] {
+        let cond = compileExpression(e, b.getInputTargetBlock("COND"), comments);
         let body = compileStatements(e, b.getInputTargetBlock("DO"));
         return [
             mkText("while ("),
@@ -855,7 +856,7 @@ namespace pxt.blocks {
         return mkText(name);
     }
 
-    function compileSet(e: Environment, b: B.Block): Node {
+    function compileSet(e: Environment, b: B.Block, comments: string[]): Node {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
@@ -868,35 +869,35 @@ namespace pxt.blocks {
                 binding.assigned = VarUsage.Assign;
                 isDef = true
             }
-        let expr = compileExpression(e, bExpr);
+        let expr = compileExpression(e, bExpr, comments);
         return mkStmt(
             mkText(isDef ? "let " : ""),
             mkText(bVar + " = "),
             expr)
     }
 
-    function compileChange(e: Environment, b: B.Block): Node {
+    function compileChange(e: Environment, b: B.Block, comments: string[]): Node {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
-        let expr = compileExpression(e, bExpr);
+        let expr = compileExpression(e, bExpr, comments);
         let ref = mkText(bVar);
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
-    function compileCall(e: Environment, b: B.Block): Node {
+    function compileCall(e: Environment, b: B.Block, comments: string[]): Node {
         let call = e.stdCallTable[b.type];
         if (call.imageLiteral)
-            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar))))
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
-            return compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace)
+            return compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace, comments)
         else
-            return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type]))
+            return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
 
-    function compileArgument(e: Environment, b: B.Block, p: StdArg): Node {
+    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[]): Node {
         let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
@@ -904,11 +905,11 @@ namespace pxt.blocks {
         if (f)
             return mkText(f);
         else
-            return compileExpression(e, b.getInputTargetBlock(p.field))
+            return compileExpression(e, b.getInputTargetBlock(p.field), comments)
     }
 
-    function compileStdCall(e: Environment, b: B.Block, func: StdFunc): Node {
-        let args = func.args.map((p: StdArg) => compileArgument(e, b, p));
+    function compileStdCall(e: Environment, b: B.Block, func: StdFunc, comments: string[]): Node {
+        let args = func.args.map((p: StdArg) => compileArgument(e, b, p, comments));
         if (func.isIdentity)
             return args[0];
         else if (func.isExtensionMethod) {
@@ -920,8 +921,8 @@ namespace pxt.blocks {
         }
     }
 
-    function compileStdBlock(e: Environment, b: B.Block, f: StdFunc) {
-        return mkStmt(compileStdCall(e, b, f))
+    function compileStdBlock(e: Environment, b: B.Block, f: StdFunc, comments: string[]) {
+        return mkStmt(compileStdCall(e, b, f, comments))
     }
 
     function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node): Node {
@@ -931,12 +932,12 @@ namespace pxt.blocks {
         ])))
     }
 
-    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string): Node {
+    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): Node {
         let bBody = b.getInputTargetBlock("HANDLER");
         let compiledArgs: Node[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
             let argb = b.getInputTargetBlock(arg);
-            if (argb) return compileExpression(e, argb);
+            if (argb) return compileExpression(e, argb, comments);
             return mkText(b.getFieldValue(arg))
         });
         let body = compileStatements(e, bBody);
@@ -994,37 +995,44 @@ namespace pxt.blocks {
 
     function compileStatementBlock(e: Environment, b: B.Block): Node[] {
         let r: Node[];
+        const comments: string[] = [];
+        maybeAddComment(b, comments);
         switch (b.type) {
             case 'controls_if':
-                r = compileControlsIf(e, <B.IfBlock>b);
+                r = compileControlsIf(e, <B.IfBlock>b, comments);
                 break;
             case 'controls_for':
             case 'controls_simple_for':
-                r = compileControlsFor(e, b);
+                r = compileControlsFor(e, b, comments);
                 break;
             case 'variables_set':
-                r = [compileSet(e, b)];
+                r = [compileSet(e, b, comments)];
                 break;
 
             case 'variables_change':
-                r = [compileChange(e, b)];
+                r = [compileChange(e, b, comments)];
                 break;
 
             case 'controls_repeat_ext':
-                r = compileControlsRepeat(e, b);
+                r = compileControlsRepeat(e, b, comments);
                 break;
 
             case 'device_while':
-                r = compileWhile(e, b);
+                r = compileWhile(e, b, comments);
                 break;
 
             default:
                 let call = e.stdCallTable[b.type];
-                if (call) r = [compileCall(e, b)];
-                else r = [mkStmt(compileExpression(e, b))];
+                if (call) r = [compileCall(e, b, comments)];
+                else r = [mkStmt(compileExpression(e, b, comments))];
                 break;
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
+
+        for (const comment of comments.reverse()) {
+            r.unshift(mkNewLine())
+            r.unshift(mkText(`// ${comment}`))
+        }
         return r;
     }
 
@@ -1368,4 +1376,14 @@ namespace pxt.blocks {
         }
     }
 
+    function maybeAddComment(b: B.Block, comments: string[]) {
+        if (b.comment) {
+            if ((typeof b.comment) === "string") {
+                comments.push(b.comment as string)
+            }
+            else {
+                comments.push((b.comment as B.Comment).getText())
+            }
+        }
+    }
 }
