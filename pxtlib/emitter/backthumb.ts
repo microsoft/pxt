@@ -41,13 +41,17 @@ export abstract class AssemblerSnippets {
     // str?  - true=Store/false=Load
     public load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
     public rt_call(name: string, r0: string, r1: string) { return "TBD"; }
-    public call(name: string) { return "TBD"}
+    public call_lbl(name: string) { return "TBD" }
+    public call_reg(name: string) { return "TBD" }
     public vcall(mapMethod: string, isSet: boolean, vtableShift: number) { return "TBD" }
     public prologue_vtable(arg_index: number, vtableShift: number) { return "TBD" }
-    public blx(reg: string) { return "TBD" }
     public lambda_prologue() { return "TBD" }
     public lambda_epilogue() { return "TBD" }
     public LdPtr(lbl: string, reg: string) { return "TBD" }
+    public adds(reg: string, imm: number) { return "TBD" }
+    public movs(reg: string, imm: number) { return "TBD" }
+    public lsls(reg: string, imm: number) { return "TBD" }
+    public negs(reg: string) { return "TBD" }
 }
 
 let EK = ir.EK
@@ -411,7 +415,7 @@ ${baseLabel}:
         if (U.startsWith(name, "thumb::")) {
             this.write(this.t.rt_call(name.slice(7), "r0", "r1"))
         } else {
-            this.write(this.t.call(name))
+            this.write(this.t.call_lbl(name))
         }
     }
 
@@ -420,7 +424,7 @@ ${baseLabel}:
             let len = Object.keys(this.bin.codeHelpers).length
             this.bin.codeHelpers[asm] = "_hlp_" + len
         }
-        this.write(this.t.call(this.bin.codeHelpers[asm]))
+        this.write(this.t.call_lbl(this.bin.codeHelpers[asm]))
     }
 
     private emitProcCall(topExpr: ir.Expr) {
@@ -462,21 +466,20 @@ ${baseLabel}:
                 }
                 if (effIdx <= 31) {
                     this.write(this.t.load_reg_src_off("r0","r0",effIdx.toString(),true) + " ; ld-method")
-                    // write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
                 } else {
                     this.emitInt(effIdx * 4, "r1")
                     this.write(this.t.load_reg_src_off("r0","r0","r1") + " ; ld-method")
                 }
 
                 this.write(lbl + ":")
-                this.write(this.t.blx("r0"))
+                this.write(this.t.call_reg("r0"))
                 this.write(afterall + ":")
             }
         } else {
             let proc = procid.proc
             procIdx = proc.seqNo
             this.write(lbl + ":")
-            this.write(this.t.call(proc.label()))
+            this.write(this.t.call_lbl(proc.label()))
         }
         this.calls.push({
             procIndex: procIdx,
@@ -505,7 +508,6 @@ ${baseLabel}:
                      this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
                 } else {
                     let [reg,imm,off] = this.cellref(cell)
-                    // write("str r0, XXX")
                     this.write(this.t.load_reg_src_off("r0", reg, imm, off, true))
                 }
                 break;
@@ -563,14 +565,14 @@ ${baseLabel}:
                 if (p.isRef()) {
                     let [reg,off,idx] = this.cellref(p)
                     asm += this.t.load_reg_src_off("r0",reg,off,idx) + "\n"
-                    asm += this.t.call("pxt:incr") + "\n"
+                    asm += this.t.call_lbl("pxt:incr") + "\n"
                 }
             })
 
             asm += this.t.lambda_epilogue()
 
             this.emitHelper(asm) // using shared helper saves about 3% of binary size
-            this.write(this.t.call(this.proc.label()))
+            this.write(this.t.call_lbl(this.proc.label()))
 
             if (parms.length)
                 this.write(this.t.pop_locals(parms.length))
@@ -581,7 +583,7 @@ ${baseLabel}:
         private emitCallRaw(name: string) {
             let inf = hex.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
-            this.write(this.t.call(name) + " ; *" + inf.type + inf.args + " (raw)")
+            this.write(this.t.call_lbl(name) + " ; *" + inf.type + inf.args + " (raw)")
         }
 
         private numBytes(n: number) {
@@ -595,20 +597,18 @@ ${baseLabel}:
         private emitInt(v: number, reg: string) {
             let movWritten = false
 
-            // TODO: lift this out
             function writeMov(v: number) {
                 assert(0 <= v && v <= 255)
                 if (movWritten) {
                     if (v)
-                        this.write(`adds ${reg}, #${v}`)
+                        this.write(this.t.adds(reg,v))
                 } else
-                    this.write(`movs ${reg}, #${v}`)
+                    this.write(this.t.movs(reg,v))
                 movWritten = true
             }
 
-            // TODO: lift this out
             function shift(v = 8) {
-                this.write(`lsls ${reg}, ${reg}, #${v}`)
+                this.write(this.t.lsls(reg,v))
             }
 
             assert(v != null);
@@ -656,7 +656,7 @@ ${baseLabel}:
                 shift(numShift)
 
             if (isNeg) {
-                write(`negs ${reg}, ${reg}`)
+                this.write(this.t.negs(reg))
             }
         }
     }

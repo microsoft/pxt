@@ -60,8 +60,11 @@ ${lbl}:`
         public rt_call(name:string, r0: string, r1: string) { 
             return name + " " + r0 + ", " + r1;
         }
-        public call(name:string) {
+        public call_lbl(name:string) {
             return "bl " + name;
+        }
+        public call_reg(reg: string) {
+            return "blx " + reg;
         }
         public vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
             return `
@@ -89,9 +92,6 @@ ${lbl}:`
     lsls r0, r0, #${vtableShift}
     `;
         }
-        public blx(reg: string) {
-            return "blx " + reg;
-        }
         public lambda_prologue() {
             return `
     @stackmark args
@@ -114,6 +114,18 @@ ${lbl}:`
     lsls ${reg}, ${reg}, #8
     adds ${reg}, ${lbl}@lo
 `
+        }
+        public adds(reg: string, imm: number) {
+            return `adds ${reg} #${imm}`
+        }
+        public movs(reg: string, imm: number) {
+            return `movs ${reg} #${imm}`
+        }
+        public lsls(reg: string, imm: number) {
+            return `lsls ${reg} ${reg} #${imm}`
+        }
+        public negs(reg: string) { 
+            return `negs ${reg} ${reg}`
         }
     }
 
