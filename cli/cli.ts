@@ -776,9 +776,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                         }
                     } else if (fileName == "target.json") {
                         let trg: pxt.TargetBundle = JSON.parse(content)
-                        // include package version number
-                        const npmPkg = JSON.parse(fs.readFileSync("package.json", "utf8"))
-                        trg.version = npmPkg.version;
                         if (opts.localDir) {
                             for (let e of trg.appTheme.docMenu)
                                 if (e.path[0] == "/") {

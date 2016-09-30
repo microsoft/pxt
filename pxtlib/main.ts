@@ -111,20 +111,6 @@ namespace pxt {
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
 
-    export interface TargetVersions {
-        target: string;
-        pxt: string;
-        tag?: string;
-        branch?: string;
-        commits?: string; // URL
-    }
-
-    export interface TargetBundle extends AppTarget {
-        bundledpkgs: Map<Map<string>>;
-        bundleddirs: string[];
-        versions: TargetVersions;
-    }
-
     // this is for remote file interface to packages
     export interface FsFile {
         name: string;  // eg "main.ts"
@@ -439,7 +425,7 @@ namespace pxt {
                             scriptId: this.config.installedVersion,
                             cloudId: pxt.CLOUD_ID + appTarget.id,
                             editor: U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
-                            targetVersion: pxt.appTarget.version
+                            targetVersion: pxt.appTarget.versions.target
                         })
                         let programText = JSON.stringify(files)
                         return lzmaCompressAsync(headerString + programText)
