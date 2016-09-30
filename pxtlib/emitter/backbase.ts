@@ -136,7 +136,7 @@ ${baseLabel}:
         if (numlocals > 0) 
             this.write(this.t.reg_gets_imm("r0", 0));
         this.proc.locals.forEach(l => {
-            this.write(this.t.push("r0") + " ;loc")
+            this.write(this.t.push("{r0}") + " ;loc")
         })
         this.write("@stackmark locals")
         this.write(`${locLabel}:`)
@@ -290,11 +290,11 @@ ${baseLabel}:
                 let idx = this.exprStack.indexOf(arg)
                 U.assert(idx >= 0)
                 if (idx == 0 && arg.totalUses == arg.currUses) {
-                    this.write(this.t.pop(reg) + `; tmpref @${this.exprStack.length}`)
+                    this.write(this.t.pop(`{${reg}}`) + `; tmpref @${this.exprStack.length}`)
                     this.exprStack.shift()
                     this.clearStack()
                 } else {
-                    this.write(this.t.load_reg_src_off(reg, "sp", idx.toString()) + `; tmpref @${this.exprStack.length - idx}`)
+                    this.write(this.t.load_reg_src_off(reg, "sp", idx.toString(), true) + `; tmpref @${this.exprStack.length - idx}`)
                 }
                 break;
             case ir.EK.CellRef:
@@ -366,7 +366,7 @@ ${baseLabel}:
             case ir.EK.SharedDef:
                 return this.emitSharedDef(e)
             case ir.EK.Sequence:
-                e.args.forEach(this.emitExpr)
+                e.args.forEach(e => this.emitExpr(e))
                 return this.clearStack()
             default:
                 return this.emitExprInto(e, "r0")
@@ -383,7 +383,7 @@ ${baseLabel}:
         else {
             this.emitExpr(arg)
             this.exprStack.unshift(arg)
-            this.write(this.t.push("r0") + "; tmpstore @" + this.exprStack.length)
+            this.write(this.t.push("{r0}") + "; tmpstore @" + this.exprStack.length)
         }
     }
 
@@ -396,7 +396,7 @@ ${baseLabel}:
     private emitRtCall(topExpr: ir.Expr) {
         let info = ir.flattenArgs(topExpr)
 
-        info.precomp.forEach(this.emitExpr)
+        info.precomp.forEach(e => this.emitExpr(e))
         info.flattened.forEach((a, i) => {
             U.assert(i <= 3)
             this.emitExprInto(a, "r" + i)
@@ -594,19 +594,21 @@ ${baseLabel}:
 
         private emitInt(v: number, reg: string) {
             let movWritten = false
+            let write = this.write
+            let t = this.t
 
             function writeMov(v: number) {
                 assert(0 <= v && v <= 255)
                 if (movWritten) {
                     if (v)
-                        this.write(this.t.adds(reg,v))
+                        write(t.adds(reg,v))
                 } else
-                    this.write(this.t.movs(reg,v))
+                    write(t.movs(reg,v))
                 movWritten = true
             }
 
             function shift(v = 8) {
-                this.write(this.t.lsls(reg,v))
+                write(t.lsls(reg,v))
             }
 
             assert(v != null);
@@ -653,7 +655,7 @@ ${baseLabel}:
                 shift(numShift)
 
             if (isNeg) {
-                this.write(this.t.negs(reg))
+                write(t.negs(reg))
             }
         }
     }

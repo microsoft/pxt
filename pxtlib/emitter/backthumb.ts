@@ -6,8 +6,8 @@ namespace ts.pxtc {
         public reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
-        public push(reg: string) { return `push {${reg}} ` }
-        public pop(reg: string) { return `pop {${reg}} ` }
+        public push(reg: string) { return `push ${reg}` }
+        public pop(reg: string) { return `pop ${reg}` }
 
         public debugger_hook(lbl: string) {
             return `
@@ -116,16 +116,16 @@ ${lbl}:`
 `
         }
         public adds(reg: string, imm: number) {
-            return `adds ${reg} #${imm}`
+            return `adds ${reg}, #${imm}`
         }
         public movs(reg: string, imm: number) {
-            return `movs ${reg} #${imm}`
+            return `movs ${reg}, #${imm}`
         }
         public lsls(reg: string, imm: number) {
-            return `lsls ${reg} ${reg} #${imm}`
+            return `lsls ${reg}, ${reg}, #${imm}`
         }
         public negs(reg: string) { 
-            return `negs ${reg} ${reg}`
+            return `negs ${reg}, ${reg}`
         }
     }
 }
