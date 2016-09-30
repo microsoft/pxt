@@ -1906,7 +1906,8 @@ $(document).ready(() => {
         });
 
     document.addEventListener("visibilitychange", ev => {
-        theEditor.updateVisibility();
+        if (theEditor)
+            theEditor.updateVisibility();
     });
 
     window.addEventListener("unload", ev => {
