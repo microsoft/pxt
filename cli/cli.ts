@@ -757,68 +757,68 @@ function uploadCoreAsync(opts: UploadOptions) {
         let content = ""
         let data: Buffer;
         return rdf.then((rdata: Buffer) => {
-                data = rdata;
-                if (isText) {
-                    content = data.toString("utf8")
-                    if (fileName == "index.html") {
-                        content = server.expandHtml(content)
-                    }
-
-                    if (replFiles.indexOf(fileName) >= 0) {
-                        for (let from of Object.keys(replacements)) {
-                            content = U.replaceAll(content, from, replacements[from])
-                        }
-                        if (opts.localDir) {
-                            data = new Buffer(content, "utf8")
-                        } else {
-                            // save it for developer inspection
-                            fs.writeFileSync("built/uploadrepl/" + fileName, content)
-                        }
-                    } else if (fileName == "target.json") {
-                        let trg: pxt.TargetBundle = JSON.parse(content)
-                        if (opts.localDir) {
-                            for (let e of trg.appTheme.docMenu)
-                                if (e.path[0] == "/") {
-                                    e.path = opts.localDir + "docs" + e.path + ".html"
-                                }
-                            trg.appTheme.logoUrl = opts.localDir
-                            trg.appTheme.homeUrl = opts.localDir
-                            data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
-                        } else {
-                            // expand usb help pages
-                            return Promise.all(
-                                (trg.appTheme.usbHelp || []).filter(h => !!h.path)
-                                    .map(h => uploader.uploadArtAsync(h.path, true)
-                                        .then(blob => {
-                                            console.log(`target.json patch:    ${h.path} -> ${blob}`)
-                                            h.path = blob;
-                                        }))
-                            ).then(() => {
-                                content = JSON.stringify(trg, null, 2);
-                            })
-                        }
-                    }
-                } else {
-                    content = data.toString("base64")
-                }
-                return Promise.resolve()
-            }).then(() => {
-
-                if (opts.localDir) {
-                    let fn = path.join(builtPackaged + opts.localDir, fileName)
-                    nodeutil.mkdirP(path.dirname(fn))
-                    return writeFileAsync(fn, data)
+            data = rdata;
+            if (isText) {
+                content = data.toString("utf8")
+                if (fileName == "index.html") {
+                    content = server.expandHtml(content)
                 }
 
-                return Cloud.privatePostAsync(liteId + "/files", {
-                    encoding: isText ? "utf8" : "base64",
-                    filename: fileName,
-                    contentType: mime,
-                    content,
-                }).then(resp => {
-                    console.log(fileName, mime)
-                })
+                if (replFiles.indexOf(fileName) >= 0) {
+                    for (let from of Object.keys(replacements)) {
+                        content = U.replaceAll(content, from, replacements[from])
+                    }
+                    if (opts.localDir) {
+                        data = new Buffer(content, "utf8")
+                    } else {
+                        // save it for developer inspection
+                        fs.writeFileSync("built/uploadrepl/" + fileName, content)
+                    }
+                } else if (fileName == "target.json") {
+                    let trg: pxt.TargetBundle = JSON.parse(content)
+                    if (opts.localDir) {
+                        for (let e of trg.appTheme.docMenu)
+                            if (e.path[0] == "/") {
+                                e.path = opts.localDir + "docs" + e.path + ".html"
+                            }
+                        trg.appTheme.logoUrl = opts.localDir
+                        trg.appTheme.homeUrl = opts.localDir
+                        data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                    } else {
+                        // expand usb help pages
+                        return Promise.all(
+                            (trg.appTheme.usbHelp || []).filter(h => !!h.path)
+                                .map(h => uploader.uploadArtAsync(h.path, true)
+                                    .then(blob => {
+                                        console.log(`target.json patch:    ${h.path} -> ${blob}`)
+                                        h.path = blob;
+                                    }))
+                        ).then(() => {
+                            content = JSON.stringify(trg, null, 2);
+                        })
+                    }
+                }
+            } else {
+                content = data.toString("base64")
+            }
+            return Promise.resolve()
+        }).then(() => {
+
+            if (opts.localDir) {
+                let fn = path.join(builtPackaged + opts.localDir, fileName)
+                nodeutil.mkdirP(path.dirname(fn))
+                return writeFileAsync(fn, data)
+            }
+
+            return Cloud.privatePostAsync(liteId + "/files", {
+                encoding: isText ? "utf8" : "base64",
+                filename: fileName,
+                contentType: mime,
+                content,
+            }).then(resp => {
+                console.log(fileName, mime)
             })
+        })
     }
 
     // only keep the last version of each uploadFileName()
@@ -852,19 +852,30 @@ function uploadCoreAsync(opts: UploadOptions) {
             else return Cloud.privatePostAsync("pointers", {
                 path: nodeutil.sanitizePath(opts.label),
                 releaseid: liteId
-            })
-                .then(() => {
-                    // tag release/v0.1.2 also as release/beta
-                    let beta = opts.label.replace(/\/v\d.*/, "/beta")
-                    if (beta == opts.label) return Promise.resolve()
-                    else {
-                        console.log("Also tagging with " + beta)
-                        return Cloud.privatePostAsync("pointers", {
-                            path: nodeutil.sanitizePath(beta),
-                            releaseid: liteId
-                        })
-                    }
+            }).then(() => {
+                // semver style update, if v0.1.2, setup v0.1
+                let mami = opts.label.replace(/\v(\d+)\.(\d+)\.(\d+)$/, function (m, ma, mi) {
+                    return `/v${ma}.${mi}`;
+                });
+                if (opts.label != mami)
+                    return Promise.resolve();
+                console.log("Also tagging with " + mami)
+                return Cloud.privatePostAsync("pointers", {
+                    path: nodeutil.sanitizePath(mami),
+                    releaseid: liteId
                 })
+            }).then(() => {
+                // tag release/v0.1.2 also as release/beta
+                let beta = opts.label.replace(/\/v\d.*$/, "/beta")
+                if (beta == opts.label) return Promise.resolve()
+                else {
+                    console.log("Also tagging with " + beta)
+                    return Cloud.privatePostAsync("pointers", {
+                        path: nodeutil.sanitizePath(beta),
+                        releaseid: liteId
+                    })
+                }
+            })
         })
         .then(() => {
             console.log("All done; tagged with " + opts.label)
@@ -1520,7 +1531,7 @@ class SnippetHost implements pxt.Host {
     }
 
     private get dependencies(): { [key: string]: string } {
-        let stdDeps: { [key: string]: string } = { }
+        let stdDeps: { [key: string]: string } = {}
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
         }
@@ -2626,7 +2637,7 @@ function testDecompilerAsync(dir: string): Promise<void> {
         const stats = fs.statSync(testBlocksDir);
         testBlocksDirExists = stats.isDirectory();
     }
-    catch (e) {}
+    catch (e) { }
 
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
@@ -2753,11 +2764,11 @@ function testDecompilerErrorsAsync(dir: string) {
                     }
                 });
         })
-        .then(() => {
-            if (success) {
-                console.log(`decompiler error test OK: ${basename}`);
-            }
-        })
+            .then(() => {
+                if (success) {
+                    console.log(`decompiler error test OK: ${basename}`);
+                }
+            })
     })
         .then(() => {
             if (errors.length) {
