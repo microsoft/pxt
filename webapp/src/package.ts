@@ -352,6 +352,12 @@ export function mainEditorPkg() {
     return getEditorPkg(mainPkg)
 }
 
+export function genFileName(extension: string): string {
+    let sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
+    let fn = pxt.appTarget.id + "-" + sanitizedName + extension;
+    return fn;
+}
+
 export function allEditorPkgs() {
     return getEditorPkg(mainPkg).pkgAndDeps()
 }

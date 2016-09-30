@@ -244,7 +244,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
         const importHex = () => {
             if (this.modal) this.modal.hide();
-            this.props.parent.importHexFileDialog();
+            this.props.parent.importFileDialog();
         }
 
         const isEmpty = () => {
@@ -272,11 +272,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     </div>
                 </div>
                 <div className="ui cards">
-                    {pxt.appTarget.compile && pxt.appTarget.compile.hasHex && !this.state.packages ?
+                    {pxt.appTarget.compile && !this.state.packages ?
                         <codecard.CodeCardView
+                            color="pink"
                             key="importhex"
-                            name={lf("import...") }
-                            description={lf("Import project from a .hex file") }
+                            name={lf("My Computer...") }
+                            description={lf("Open .hex or .pxt files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
                     {bundles.map(scr =>
@@ -1055,19 +1056,22 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             });
     }
 
+    importFile(file: File) {
+        if (!file) return;
+        if (isHexFile(file.name)) {
+            this.importHexFile(file)
+        } else if (isBlocksFile(file.name)) {
+            this.importBlocksFiles(file)
+        } else if (isProjectFile(file.name)) {
+            this.importProjectFile(file);
+        } else core.warningNotification(lf("Oops, don't know how to load this file!"));
+    }
+
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && isHexFile(file.name) || isBlocksFile(file.name),
             files => {
-                if (files) {
-                    if (isHexFile(files[0].name)) {
-                        this.importHexFile(files[0])
-                    } else if (isBlocksFile(files[0].name)) {
-                        this.importBlocksFiles(files[0])
-                    } else if (isProjectFile(files[0].name)) {
-                        this.importProjectFile(files[0]);
-                    }
-                }
+                if (files) this.importFile(files[0]);
             }
         );
     }
@@ -1092,7 +1096,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 }
                 return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
             }).done((buf: Uint8Array) => {
-                pxt.BrowserUtils.browserDownloadUInt8Array(buf, `${pxt.appTarget.id}-${this.state.projectName}.pxt`, 'application/octet-stream');
+                const fn = pkg.genFileName(".pxt");
+                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
     }
 
@@ -1283,22 +1288,25 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
     }
 
-    importHexFileDialog() {
+    importFileDialog() {
         let input: HTMLInputElement;
         core.confirmAsync({
-            header: lf("Import .hex file"),
+            header: lf("Open .hex or .pxt file"),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select an .hex file to import.")}</label>
+    <label>${lf("Select an .hex or .pxt file to open.")}</label>
     <input type="file" class="ui button blue fluid"></input>
+  </div>
+  <div class="ui message">
+    ${lf("You can also drag and drop .hex or .pxt files into the editor!")}
   </div>
 </div>`,
         }).done(res => {
             if (res) {
-                this.importHexFile(input.files[0]);
+                this.importFile(input.files[0]);
             }
         })
     }
@@ -1521,15 +1529,15 @@ function getEditor() {
 }
 
 function isHexFile(filename: string) {
-    return /^\.hex$/i.test(filename)
+    return /\.hex$/i.test(filename)
 }
 
 function isBlocksFile(filename: string) {
-    return /^\.blocks$/i.test(filename)
+    return /\.blocks$/i.test(filename)
 }
 
 function isProjectFile(filename: string) {
-    return /^\.pxt$/i.test(filename)
+    return /\.pxt$/i.test(filename)
 }
 
 function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
