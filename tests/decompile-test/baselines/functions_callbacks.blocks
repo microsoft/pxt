@@ -22,9 +22,9 @@
 <block type="test_callback_with_argument">
 <field name="arg1">TestEnum.testValue2</field>
 <value name="arg2">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">10</field>
-</block>
+</shadow>
 </value>
 <statement name="HANDLER">
 <block type="test_no_argument">

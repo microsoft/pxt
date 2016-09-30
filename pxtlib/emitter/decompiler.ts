@@ -2,6 +2,12 @@
 namespace ts.pxtc.decompiler {
     const SK = ts.SyntaxKind;
 
+    enum ShadowType {
+        Boolean,
+        Number,
+        String
+    }
+
     const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
         "-": { type: "math_arithmetic", op: "MINUS" },
@@ -113,7 +119,7 @@ ${output}</xml>`;
 
             // Emit any output statements as standalone blocks
             for (const statement of outputStatements) {
-                emitOutputBlock(statement)
+                emitOutputBlock(statement, true)
             }
         }
 
@@ -122,13 +128,13 @@ ${output}</xml>`;
          *
          * @param n     The node to emit into blocks
          */
-        function emitOutputBlock(n: ts.Node): void {
+        function emitOutputBlock(n: ts.Node, topLevel = false): void {
             switch (n.kind) {
                 case SK.ExpressionStatement:
-                    emitOutputBlock((n as ts.ExpressionStatement).expression);
+                    emitOutputBlock((n as ts.ExpressionStatement).expression, topLevel);
                     break;
                 case SK.ParenthesizedExpression:
-                    emitOutputBlock((n as ts.ParenthesizedExpression).expression);
+                    emitOutputBlock((n as ts.ParenthesizedExpression).expression, topLevel);
                     break;
                 case SK.Identifier:
                     emitIdentifier(n as ts.Identifier);
@@ -136,16 +142,16 @@ ${output}</xml>`;
                 case SK.StringLiteral:
                 case SK.FirstTemplateToken:
                 case SK.NoSubstitutionTemplateLiteral:
-                    emitStringLiteral((n as ts.LiteralExpression).text);
+                    emitStringLiteral((n as ts.LiteralExpression).text, !topLevel);
                     break;
                 case SK.NumericLiteral:
-                    emitNumericLiteral((n as ts.LiteralExpression).text);
+                    emitNumericLiteral((n as ts.LiteralExpression).text, !topLevel);
                     break;
                 case SK.TrueKeyword:
-                    emitBooleanLiteral(true);
+                    emitBooleanLiteral(true, !topLevel);
                     break;
                 case SK.FalseKeyword:
-                    emitBooleanLiteral(false);
+                    emitBooleanLiteral(false, !topLevel);
                     break;
                 case SK.BinaryExpression:
                     emitBinaryExpression(n as ts.BinaryExpression);
@@ -177,8 +183,10 @@ ${output}</xml>`;
                     emitField("OP", npp.op)
                 }
 
-                emitValue(npp.leftName || "A", n.left);
-                emitValue(npp.rightName || "B", n.right);
+                const shadowType = (op === "&&" || op === "||") ? ShadowType.Boolean : ShadowType.Number;
+
+                emitValue(npp.leftName || "A", n.left, shadowType);
+                emitValue(npp.rightName || "B", n.right, shadowType);
 
                 closeBlockTag()
             }
@@ -187,7 +195,7 @@ ${output}</xml>`;
                 switch (node.operator) {
                     case SK.ExclamationToken:
                         openBlockTag("logic_negate");
-                        emitValue("BOOL", node.operand)
+                        emitValue("BOOL", node.operand, ShadowType.Boolean)
                         closeBlockTag();
                         break;
                     case SK.PlusToken:
@@ -346,7 +354,7 @@ ${output}</xml>`;
 
             function openWhileStatementBlock(n: ts.WhileStatement): void {
                 openBlockTag("device_while");
-                emitValue("COND", n.expression);
+                emitValue("COND", n.expression, ShadowType.Boolean);
                 emitStatementTag("DO", n.statement)
             }
 
@@ -355,7 +363,7 @@ ${output}</xml>`;
                 openBlockTag("controls_if");
                 write(`<mutation elseif="${flatif.ifStatements.length - 1}" else="${flatif.elseStatement ? 1 : 0}"></mutation>`)
                 flatif.ifStatements.forEach((stmt, i) => {
-                    emitValue("IF" + i, stmt.expression);
+                    emitValue("IF" + i, stmt.expression, ShadowType.Boolean);
                     emitStatementTag("DO" + i, stmt.thenStatement);
                 });
                 if (flatif.elseStatement) {
@@ -410,15 +418,20 @@ ${output}</xml>`;
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
                     write(`<value name="TO">`)
+
+                    // Emit a shadow block
+                    emitNumericLiteral("0")
+
+                    // Subtract 1 to get the same behavior as <=
                     openBlockTag("math_arithmetic")
                     emitField("OP", "MINUS")
-                    emitValue("A", condition.right)
+                    emitValue("A", condition.right, ShadowType.Number)
                     emitValue("B", 1)
                     closeBlockTag()
                     write(`</value>`)
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
-                    emitValue("TO", condition.right)
+                    emitValue("TO", condition.right, ShadowType.Number)
                 }
                 else {
                     error(n, Util.lf("for loop conditional operator must be either < or <="))
@@ -440,7 +453,9 @@ ${output}</xml>`;
             function openVariableSetOrChangeBlock(name: string, value: Node | number, changed = false) {
                 openBlockTag(changed ? "variables_change" : "variables_set")
                 emitField("VAR", name);
-                emitValue("VALUE", value);
+
+                // We always do a number shadow even if the variable is not of type number
+                emitValue("VALUE", value, ShadowType.Number);
             }
 
             function openVaraiableDeclarationBlock(n: ts.VariableDeclaration) {
@@ -602,14 +617,18 @@ ${output}</xml>`;
 
         // TODO: Add a real negation block
         function negateAndEmitExpression(node: ts.Node) {
+            // First emit a shadow block
+            emitNumericLiteral("0");
+
+            // Then negate the value by subtracting it from 0
             openBlockTag("math_arithmetic")
             emitField("OP", "MINUS")
             emitValue("A", 0)
-            emitValue("B", node)
+            emitValue("B", node, ShadowType.Number)
             closeBlockTag()
         }
 
-        function emitValue(name: string, contents: boolean | number | string | Node): void {
+        function emitValue(name: string, contents: boolean | number | string | Node, shadowType?: ShadowType): void {
             write(`<value name="${U.htmlEscape(name)}">`)
 
             if (typeof contents === "number") {
@@ -619,9 +638,23 @@ ${output}</xml>`;
                 emitBooleanLiteral(contents)
             }
             else if (typeof contents === "string") {
-                emitStringLiteral(contents);
+                emitStringLiteral(contents)
             }
             else {
+                // If this is some expression, we want to also emit a shadow block in case the expression
+                // gets pulled out of the block
+                if (shadowType && !isLiteralNode(contents)) {
+                    switch (shadowType) {
+                        case ShadowType.Number:
+                            emitNumericLiteral("0")
+                            break;
+                        case ShadowType.String:
+                            emitStringLiteral("")
+                            break;
+                        case ShadowType.Boolean:
+                            emitBooleanLiteral(true)
+                    }
+                }
                 emitOutputBlock(contents)
             }
 
@@ -651,29 +684,57 @@ ${output}</xml>`;
                 error(identifier, Util.lf("Undefined has no block equivalent"))
                 return;
             }
-            emitFieldBlock("variables_get", "VAR", identifier.text)
+            emitFieldBlock("variables_get", "VAR", identifier.text, false)
         }
 
-        function emitStringLiteral(value: string) {
-            emitFieldBlock("text", "TEXT", value)
+        function emitStringLiteral(value: string, shadow = true) {
+            emitFieldBlock("text", "TEXT", value, shadow)
         }
 
-        function emitNumericLiteral(value: string) {
-            emitFieldBlock("math_number", "NUM", value);
+        function emitNumericLiteral(value: string, shadow = true) {
+            emitFieldBlock("math_number", "NUM", value, shadow);
         }
 
-        function emitBooleanLiteral(value: boolean) {
-            emitFieldBlock("logic_boolean", "BOOL", value ? "TRUE" : "FALSE")
+        function emitBooleanLiteral(value: boolean, shadow = true) {
+            emitFieldBlock("logic_boolean", "BOOL", value ? "TRUE" : "FALSE", shadow)
         }
 
-        function emitFieldBlock(type: string, fieldName: string, value: string) {
-            openBlockTag(type)
-            emitField(fieldName, value)
-            closeBlockTag()
+        function emitFieldBlock(type: string, fieldName: string, value: string, shadow: boolean) {
+            if (shadow) {
+                write(`<shadow type="${U.htmlEscape(type)}">`)
+                emitField(fieldName, value)
+                write(`</shadow>`)
+            }
+            else {
+                openBlockTag(type)
+                emitField(fieldName, value)
+                closeBlockTag()
+            }
         }
 
         function isUndefined(node: ts.Node) {
             return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
+        }
+
+        function isLiteralNode(node: ts.Node): boolean {
+            if (!node) {
+                return false
+            }
+            switch (node.kind) {
+                case SK.ParenthesizedExpression:
+                    return isLiteralNode((node as ts.ParenthesizedExpression).expression)
+                case SK.NumericLiteral:
+                case SK.StringLiteral:
+                case SK.NoSubstitutionTemplateLiteral:
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                    return true
+                case SK.PrefixUnaryExpression:
+                    const expression = (node as ts.PrefixUnaryExpression)
+                    return (expression.operator === SK.PlusToken || expression.operator === SK.MinusToken) && isLiteralNode(expression.operand)
+                default:
+                    return false;
+            }
         }
     }
 }
