@@ -17,8 +17,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 
 function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let hex = resp.outfiles[pxtc.BINARY_HEX]
-    let sanitizedName = pkg.mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
-    let fn = pxt.appTarget.id + "-" + sanitizedName + ".hex"
+    let fn = pkg.genFileName(".hex");
     pxt.debug('saving ' + fn)
     let url = pxt.BrowserUtils.browserDownloadText(
         hex,
