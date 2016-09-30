@@ -220,7 +220,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
         return readJsonAsync()
             .then(d => deployCoreAsync(d))
             .catch((e) => {
-                throwError(500, U.lf("No board connected to computer"));
+                throwError(404, "Board not found");
             });
     else throw throwError(400)
 }

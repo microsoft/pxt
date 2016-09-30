@@ -114,12 +114,10 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         data: resp,
         allowHttpErrors: true
     }).then(r => {
-        if (r.statusCode >= 400) {
-            if (r.text) {
-                core.errorNotification(r.text);
-            } else {
-                core.errorNotification(lf("Error during deployment"));
-            }
+        if (r.statusCode == 404) {
+            core.errorNotification(lf("Please connect your {0} to your computer and try again", pxt.appTarget.appTheme.boardName));
+        } else if (r.statusCode !== 200) {
+            core.errorNotification(lf("There was a problem, please try again"));
         }
     });
 
