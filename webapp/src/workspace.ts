@@ -142,8 +142,8 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 export function fixupFileNames(txt: ScriptText) {
     if (!txt) return txt
     for (let oldName in ["kind.json", "yelm.json"]) {
-        if (!txt[pxt.configName] && txt[oldName]) {
-            txt[pxt.configName] = txt[oldName]
+        if (!txt[pxt.CONFIG_NAME] && txt[oldName]) {
+            txt[pxt.CONFIG_NAME] = txt[oldName]
             delete txt[oldName]
         }
     }

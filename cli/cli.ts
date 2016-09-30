@@ -160,7 +160,7 @@ function pkginfoAsync(repopath: string) {
     if (parsed.tag)
         return pxt.github.downloadPackageAsync(repopath)
             .then(pkg => {
-                let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.configName])
+                let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
                 pkgInfo(cfg)
                 console.log(`Size: ${JSON.stringify(pkg.files).length}`)
             })
@@ -581,7 +581,7 @@ function justBumpPkgAsync() {
 }
 
 function bumpAsync() {
-    if (fs.existsSync(pxt.configName))
+    if (fs.existsSync(pxt.CONFIG_NAME))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
             .then(() => justBumpPkgAsync())
@@ -776,6 +776,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                         }
                     } else if (fileName == "target.json") {
                         let trg: pxt.TargetBundle = JSON.parse(content)
+                        // include package version number
+                        const npmPkg = JSON.parse(fs.readFileSync("package.json", "utf8"))
+                        trg.version = npmPkg.version;
                         if (opts.localDir) {
                             for (let e of trg.appTheme.docMenu)
                                 if (e.path[0] == "/") {
@@ -1757,7 +1760,7 @@ function addFile(name: string, cont: string) {
     if (ff.indexOf(name) < 0) {
         mainPkg.config.files.push(name)
         mainPkg.saveConfig()
-        console.log(U.lf("Added {0} to files in {1}.", name, pxt.configName))
+        console.log(U.lf("Added {0} to files in {1}.", name, pxt.CONFIG_NAME))
     }
 
     if (!fs.existsSync(name)) {
@@ -1840,8 +1843,8 @@ export function addAsync(...args: string[]) {
 }
 
 export function initAsync() {
-    if (fs.existsSync(pxt.configName))
-        U.userError(`${pxt.configName} already present`)
+    if (fs.existsSync(pxt.CONFIG_NAME))
+        U.userError(`${pxt.CONFIG_NAME} already present`)
 
     let prj = pxt.appTarget.tsprj;
     let config = U.clone(prj.config);
@@ -2355,7 +2358,7 @@ function simshimAsync() {
         if (!cont.trim()) continue
         cont = "// Auto-generated from simulator. Do not edit.\n" + cont +
             "\n// Auto-generated. Do not edit. Really.\n"
-        let cfgname = "libs/" + s + "/" + pxt.configName
+        let cfgname = "libs/" + s + "/" + pxt.CONFIG_NAME
         let cfg: pxt.PackageConfig = readJson(cfgname)
         if (cfg.files.indexOf(filename) == -1)
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
@@ -2503,7 +2506,7 @@ function testDirAsync(dir: string) {
                 base: base,
                 text: text
             })
-        } else if (fs.existsSync(full + "/" + pxt.configName)) {
+        } else if (fs.existsSync(full + "/" + pxt.CONFIG_NAME)) {
             tests.push({
                 filename: full,
                 base: fn,
@@ -3137,7 +3140,7 @@ export function extractAsync(filename: string) {
                 console.log("Detected .json file.")
                 return JSON.parse(str)
             } else if (buf[0] == 0x5d) { // JSZ
-                console.log("Detected .jsz file.")
+                console.log("Detected .jsz/.pxt file.")
                 return pxt.lzmaDecompressAsync(buf as any)
                     .then(str => JSON.parse(str))
             } else
@@ -3157,9 +3160,9 @@ export function extractAsync(filename: string) {
                 delete json.scripts
             }
 
-            if (json[pxt.configName]) {
+            if (json[pxt.CONFIG_NAME]) {
                 console.log("Raw JSON files.")
-                let cfg: pxt.PackageConfig = JSON.parse(json[pxt.configName])
+                let cfg: pxt.PackageConfig = JSON.parse(json[pxt.CONFIG_NAME])
                 let files = json
                 json = {
                     projects: [{
@@ -3312,7 +3315,7 @@ export function helpAsync(all?: string) {
 
 function goToPkgDir() {
     let goUp = (s: string): string => {
-        if (fs.existsSync(s + "/" + pxt.configName)) {
+        if (fs.existsSync(s + "/" + pxt.CONFIG_NAME)) {
             return s
         }
         let s2 = path.resolve(path.join(s, ".."))
@@ -3323,11 +3326,11 @@ function goToPkgDir() {
     }
     let dir = goUp(process.cwd())
     if (!dir) {
-        console.error(`Cannot find ${pxt.configName} in any of the parent directories.`)
+        console.error(`Cannot find ${pxt.CONFIG_NAME} in any of the parent directories.`)
         process.exit(1)
     } else {
         if (dir != process.cwd()) {
-            console.log(`Going up to ${dir} which has ${pxt.configName}`)
+            console.log(`Going up to ${dir} which has ${pxt.CONFIG_NAME}`)
             process.chdir(dir)
         }
     }

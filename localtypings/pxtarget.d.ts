@@ -4,6 +4,7 @@
 declare namespace pxt {
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
+        version?: string; // target version
         forkof?: string; // id of a target we're based on
         name: string;
         description?: string;
