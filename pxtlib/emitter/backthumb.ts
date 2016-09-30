@@ -13,15 +13,25 @@ export interface BitSizeInfo {
 // and a particular assembler (Thumb, AVR). Thus,
 // the registers mentioned below are VIRTUAL registers
 // required by the IR-machine, rather than PHYSICAL registers
-// at the assembly level. 
+// at the assembly level.
+
+// the assumptions below about registers are based on
+// ARM, so a mapping will be needed for other processors
+
+// Assumptions:
+//
+//
+//
+
 export abstract class AssemblerSnippets {
+    public nop() { return "TBD " }
     public reg_gets_imm(reg: string, imm: number) { return "TBD" }
     public push(reg: string) { return "TBD" }
     public pop(reg: string) { return "TBD" }
     public debugger_hook(lbl: string) { return "TBD" }
     public debugger_bkpt(lbl: string) { return "TBD" }
+    public breakpoint() { return "TBD" }
     public pop_locals(n: number) { return "TBD" }
-    public pop_pc() { return "TBD" }
     public unconditional_branch(lbl: string) { return "TBD" }
     public beq(lbl: string) { return "TBD" }
     public bne(lbl: string) { return "TBD" }
@@ -29,7 +39,15 @@ export abstract class AssemblerSnippets {
     // word? - does offset represent an index that must be multiplied by word size?
     // inf?  - control over size of referenced data
     // str?  - true=Store/false=Load
-    public load_reg_src_off(reg: string, src: string, off: string, word?: boolean, inf?: BitSizeInfo, str?: boolean) { return "TBD"; }
+    public load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
+    public rt_call(name: string, r0: string, r1: string) { return "TBD"; }
+    public call(name: string) { return "TBD"}
+    public vcall(mapMethod: string, isSet: boolean, vtableShift: number) { return "TBD" }
+    public prologue_vtable(arg_index: number, vtableShift: number) { return "TBD" }
+    public blx(reg: string) { return "TBD" }
+    public lambda_prologue() { return "TBD" }
+    public lambda_epilogue() { return "TBD" }
+    public LdPtr(lbl: string, reg: string) { return "TBD" }
 }
 
 let EK = ir.EK
@@ -69,16 +87,16 @@ export class ProctoAssembler {
         let baseLabel = this.proc.label()
         let bkptLabel = baseLabel + "_bkpt"
         let locLabel = baseLabel + "_locals"
-        // TODO: lift this
         this.write(`
 .section code
-${bkptLabel}:
-    bkpt 1
+${bkptLabel}:`)
+        this.write(this.t.breakpoint())
+        this.write(`
 ${baseLabel}:
     @stackmark func
     @stackmark args
-    push {lr}
 `)
+        this.write(this.t.push("{lr}"))
 
         // create a new function for later use by hex file generation
         this.proc.fillDebugInfo = th => {
@@ -169,7 +187,7 @@ ${baseLabel}:
         assert(0 <= numlocals && numlocals < 127);
         if (numlocals > 0)
             this.write(this.t.pop_locals(numlocals))
-        this.write(this.t.pop_pc());
+        this.write(this.t.pop("{pc}"))
         this.write("@stackempty func");
         this.write("@stackempty args")
 
@@ -260,7 +278,7 @@ ${baseLabel}:
                 else oops();
                 break;
             case EK.PointerLiteral:
-                this.emitLdPtr(e.data, reg);
+                this.write(this.t.LdPtr(e.data, reg))
                 break;
             case EK.SharedRef:
                 let arg = e.args[0]
@@ -286,7 +304,7 @@ ${baseLabel}:
                         this.emitInt(cell.index, reg)
                         off = reg
                     }
-                    this.write(this.t.load_reg_src_off(reg, "r6", off, false, inf, false))
+                    this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
                 } else {
                     // TODO
                     let [src,imm,idx] = this.cellref(cell)
@@ -323,7 +341,7 @@ ${baseLabel}:
                 break;
             case EK.Nop:
                 // this is there because we need different addresses for breakpoints
-                this.write("nop")
+                this.write(this.t.nop())
                 break;
             case EK.Incr:
                 this.emitExpr(e.args[0])
@@ -391,9 +409,9 @@ ${baseLabel}:
             return
 
         if (U.startsWith(name, "thumb::")) {
-            write(`${name.slice(7)} r0, r1`)
+            this.write(this.t.rt_call(name.slice(7), "r0", "r1"))
         } else {
-            write(`bl ${name}`)
+            this.write(this.t.call(name))
         }
     }
 
@@ -402,7 +420,7 @@ ${baseLabel}:
             let len = Object.keys(this.bin.codeHelpers).length
             this.bin.codeHelpers[asm] = "_hlp_" + len
         }
-        write(`bl ${this.bin.codeHelpers[asm]}`)
+        this.write(this.t.call(this.bin.codeHelpers[asm]))
     }
 
     private emitProcCall(topExpr: ir.Expr) {
@@ -410,7 +428,7 @@ ${baseLabel}:
         //console.log("PROCCALL", topExpr.toString())
         let argStmts = topExpr.args.map((a, i) => {
             this.emitExpr(a)
-            write("push {r0} ; proc-arg")
+            this.write(this.t.push("{r0}") + " ; proc-arg")
             a.totalUses = 1
             a.currUses = 0
             this.exprStack.unshift(a)
@@ -432,48 +450,33 @@ ${baseLabel}:
                 this.emitInt(procid.mapIdx, "r1")
                 if (isSet)
                     this.emitInt(procid.ifaceIndex, "r2")
-                write(lbl + ":")
-                this.emitHelper(`
-    ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
-    ldrh r3, [r0, #2] ; ld-vtable
-    lsls r3, r3, #${vtableShift}
-    ldr r3, [r3, #4] ; iface table
-    cmp r3, #43
-    beq .objlit
-.nonlit:
-    lsls r1, ${isSet ? "r2" : "r1"}, #2
-    ldr r0, [r3, r1] ; ld-method
-    bx r0
-.objlit:
-    ${isSet ? "ldr r2, [sp, #0]" : ""}
-    push {lr}
-    bl ${procid.mapMethod}
-    pop {pc}
-`);
+                this.write(lbl + ":")
+                this.emitHelper(this.t.vcall(procid.mapMethod, isSet, vtableShift))
             } else {
-                write(`ldr r0, [sp, #4*${topExpr.args.length - 1}]  ; ld-this`)
-                write(`ldrh r0, [r0, #2] ; ld-vtable`)
-                write(`lsls r0, r0, #${vtableShift}`)
+                this.write(this.t.prologue_vtable(topExpr.args.length - 1, vtableShift))
+
                 let effIdx = procid.virtualIndex + 4
                 if (procid.ifaceIndex != null) {
-                    write(`ldr r0, [r0, #4] ; iface table`)
+                    this.write(this.t.load_reg_src_off("r0","r0","#4") + " ; iface table")
                     effIdx = procid.ifaceIndex
                 }
-                if (effIdx <= 31)
-                    write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
-                else {
+                if (effIdx <= 31) {
+                    this.write(this.t.load_reg_src_off("r0","r0",effIdx.toString(),true) + " ; ld-method")
+                    // write(`ldr r0, [r0, #4*${effIdx}] ; ld-method`)
+                } else {
                     this.emitInt(effIdx * 4, "r1")
-                    write(`ldr r0, [r0, r1] ; ld-method`)
+                    this.write(this.t.load_reg_src_off("r0","r0","r1") + " ; ld-method")
                 }
+
                 this.write(lbl + ":")
-                write("blx r0")
+                this.write(this.t.blx("r0"))
                 this.write(afterall + ":")
             }
         } else {
             let proc = procid.proc
             procIdx = proc.seqNo
             this.write(lbl + ":")
-            write("bl " + proc.label())
+            this.write(this.t.call(proc.label()))
         }
         this.calls.push({
             procIndex: procIdx,
@@ -499,10 +502,11 @@ ${baseLabel}:
                         this.emitInt(cell.index, "r1")
                         off = "r1"
                     }
-                    write(`${inf.str} r0, [r6, ${off}]`)
+                     this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
                 } else {
                     let [reg,imm,off] = this.cellref(cell)
-                    write("str r0, XXX")
+                    // write("str r0, XXX")
+                    this.write(this.t.load_reg_src_off("r0", reg, imm, off, true))
                 }
                 break;
             case EK.FieldAccess:
@@ -523,7 +527,6 @@ ${baseLabel}:
         } else if (cell.isarg) {
             let idx = this.proc.args.length - cell.index - 1
             return [ "sp", "args@" + idx.toString(), false ]
-            // cell.toString()
         } else {
             return [ "sp", "locals@" + cell.index, false]
         }
@@ -534,7 +537,7 @@ ${baseLabel}:
             this.write("")
             this.write(".section code");
             if (isMain)
-                write("b .themain")
+                this.write(this.t.unconditional_branch(".themain"))
             this.write(".balign 4");
             this.write(this.proc.label() + "_Lit:");
             this.write(".short 0xffff, 0x0000   ; action literal");
@@ -543,58 +546,42 @@ ${baseLabel}:
                 this.write(".themain:")
             let parms = this.proc.args.map(a => a.def)
             if (parms.length >= 1)
-                write("push {r1, r5, r6, lr}");
+                this.write(this.t.push("{r1, r5, r6, lr}"))
             else
-                write("push {r5, r6, lr}");
-
+                this.write(this.t.push("{r5, r6, lr}"))
 
             parms.forEach((_, i) => {
                 if (i >= 3)
                     U.userError(U.lf("only up to three parameters supported in lambdas"))
                 if (i > 0) // r1 already done
-                    write(`push {r${i + 1}}`)
+                    this.write(this.t.push(`{r${i + 1}}`))
             })
 
-            let asm = `
-    @stackmark args
-    push {lr}
-    mov r5, r0
-`;
+            let asm = this.t.lambda_prologue()
 
             this.proc.args.forEach((p, i) => {
                 if (p.isRef()) {
-                    asm += `    ldr r0, ${this.cellref(p).replace(/;.*/, "")}\n`
-                    asm += `    bl pxt::incr\n`
+                    let [reg,off,idx] = this.cellref(p)
+                    asm += this.t.load_reg_src_off("r0",reg,off,idx) + "\n"
+                    asm += this.t.call("pxt:incr") + "\n"
                 }
             })
 
-            asm += `
-    bl pxtrt::getGlobalsPtr
-    mov r6, r0
-    pop {pc}
-    @stackempty args
-`
+            asm += this.t.lambda_epilogue()
 
             this.emitHelper(asm) // using shared helper saves about 3% of binary size
-            write(`bl ${this.proc.label()}`)
+            this.write(this.t.call(this.proc.label()))
 
             if (parms.length)
                 this.write(this.t.pop_locals(parms.length))
-            write("pop {r5, r6, pc}");
+            this.write(this.t.pop("{r5, r6, pc}"))
             this.write("@stackempty litfunc");
         }
 
         private emitCallRaw(name: string) {
             let inf = hex.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
-            write("bl " + name + " ; *" + inf.type + inf.args + " (raw)")
-        }
-
-        private emitLdPtr(lbl: string, reg: string) {
-            assert(!!lbl)
-            write(`movs ${reg}, ${lbl}@hi  ; ldptr`)
-            write(`lsls ${reg}, ${reg}, #8`)
-            write(`adds ${reg}, ${lbl}@lo`);
+            this.write(this.t.call(name) + " ; *" + inf.type + inf.args + " (raw)")
         }
 
         private numBytes(n: number) {
@@ -608,18 +595,20 @@ ${baseLabel}:
         private emitInt(v: number, reg: string) {
             let movWritten = false
 
+            // TODO: lift this out
             function writeMov(v: number) {
                 assert(0 <= v && v <= 255)
                 if (movWritten) {
                     if (v)
-                        write(`adds ${reg}, #${v}`)
+                        this.write(`adds ${reg}, #${v}`)
                 } else
-                    write(`movs ${reg}, #${v}`)
+                    this.write(`movs ${reg}, #${v}`)
                 movWritten = true
             }
 
+            // TODO: lift this out
             function shift(v = 8) {
-                write(`lsls ${reg}, ${reg}, #${v}`)
+                this.write(`lsls ${reg}, ${reg}, #${v}`)
             }
 
             assert(v != null);

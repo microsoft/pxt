@@ -2,6 +2,7 @@ namespace ts.pxtc {
 
     // we have a very simple code generation strategy
     class ThumbSnippets extends AssemblerSnippets {
+        public nop() { return "nop" }
         public reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
@@ -26,8 +27,11 @@ ${lbl + "_after"}:
 ${lbl}:`
         }
 
+        public breakpoint() {
+            return "bkpt 1"
+        }
+
         public pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
-        public pop_pc() { return "pop {pc}" }
         public unconditional_branch(lbl: string) { return "b " + lbl; }
         public beq(lbl: string) { return "beq " + lbl }
         public bne(lbl: string) { return "bne " + lbl }
@@ -52,6 +56,64 @@ ${lbl}:`
                 return `${str} ${reg}, [${src}, ${off}]`
             else
                 return `${ldr} ${reg}, [${src}, ${off}]`
+        }
+        public rt_call(name:string, r0: string, r1: string) { 
+            return name + " " + r0 + ", " + r1;
+        }
+        public call(name:string) {
+            return "bl " + name;
+        }
+        public vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
+            return `
+    ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
+    ldrh r3, [r0, #2] ; ld-vtable
+    lsls r3, r3, #${vtableShift}
+    ldr r3, [r3, #4] ; iface table
+    cmp r3, #43
+    beq .objlit
+.nonlit:
+    lsls r1, ${isSet ? "r2" : "r1"}, #2
+    ldr r0, [r3, r1] ; ld-method
+    bx r0
+.objlit:
+    ${isSet ? "ldr r2, [sp, #0]" : ""}
+    push {lr}
+    bl ${mapMethod}
+    pop {pc}
+`;
+        }
+        public prologue_vtable(arg_top_index: number, vtableShift: number) {
+            return `
+    ldr r0, [sp, #4*${arg_top_index}]  ; ld-this
+    ldrh r0, [r0, #2] ; ld-vtable
+    lsls r0, r0, #${vtableShift}
+    `;
+        }
+        public blx(reg: string) {
+            return "blx " + reg;
+        }
+        public lambda_prologue() {
+            return `
+    @stackmark args
+    push {lr}
+    mov r5, r0
+`;
+        }
+        public lambda_epilogue() {
+            return `
+    bl pxtrt::getGlobalsPtr
+    mov r6, r0
+    pop {pc}
+    @stackempty args
+`
+        }
+        public LdPtr(lbl: string, reg: string) {
+            assert(!!lbl)
+            return `
+    movs ${reg}, ${lbl}@hi  ; ldptr
+    lsls ${reg}, ${reg}, #8
+    adds ${reg}, ${lbl}@lo
+`
         }
     }
 
