@@ -563,7 +563,7 @@ ${baseLabel}:
                 if (p.isRef()) {
                     let [reg,off,idx] = this.cellref(p)
                     asm += this.t.load_reg_src_off("r0",reg,off,idx) + "\n"
-                    asm += this.t.call_lbl("pxt:incr") + "\n"
+                    asm += this.t.call_lbl("pxt::incr") + "\n"
                 }
             })
 
