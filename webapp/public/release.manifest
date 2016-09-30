@@ -52,7 +52,6 @@ CACHE:
 /sim/target.json
 
 # External
-https://az416426.vo.msecnd.net/scripts/a/ai.0.js
 https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
   
 NETWORK:
