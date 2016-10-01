@@ -24,7 +24,7 @@ namespace pxt.blocks.layout {
         flow(blocks, ratio || 1.62);
     }
 
-    export function screenshot(ws: B.Workspace, callback: (uri: string, name: string)=> any, name?: string) {
+    export function screenshot(ws: B.Workspace, callback: (uri: string, name: string) => any, name?: string) {
         toPngAsync(ws)
             .done(uri => {
                 if (uri) {
@@ -53,14 +53,14 @@ namespace pxt.blocks.layout {
     function toPngAsyncInternal(width: number, height: number, data: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             let cvs = document.createElement("canvas") as HTMLCanvasElement,
-            ctx = cvs.getContext("2d");
+                ctx = cvs.getContext("2d");
             let img = new Image;
 
             cvs.width = width;
             cvs.height = height;
-            img.onload = function() {
+            img.onload = function () {
                 ctx.drawImage(img, 0, 0, width, height);
-                var canvasdata = cvs.toDataURL("image/png");
+                const canvasdata = cvs.toDataURL("image/png");
                 resolve(canvasdata);
             };
             img.onerror = ev => {
@@ -120,7 +120,7 @@ namespace pxt.blocks.layout {
         sg.removeAttribute("transform");
 
         let xsg = new DOMParser().parseFromString(
-            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${(Math.abs(x)+width)}" height="${(Math.abs(y)+height)}" viewBox="${x} ${y} ${width} ${height}">
+            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${(Math.abs(x) + width)}" height="${(Math.abs(y) + height)}" viewBox="${x} ${y} ${width} ${height}">
             ${new XMLSerializer().serializeToString(sg)}
             </svg>`, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
@@ -128,8 +128,8 @@ namespace pxt.blocks.layout {
         cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
         xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
-        let xml = new XMLSerializer().serializeToString(xsg);
-        var data = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+        const xml = new XMLSerializer().serializeToString(xsg);
+        const data = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
 
         return { width: width, height: height, xml: data };
     }
