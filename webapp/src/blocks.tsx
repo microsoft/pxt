@@ -18,6 +18,8 @@ export class Editor extends srceditor.Editor {
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
+    currentComment: B.Comment;
+    selectedEventGroup: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -199,7 +201,7 @@ export class Editor extends srceditor.Editor {
             sound: true,
             trashcan: true,
             collapse: false,
-            comments: false,
+            comments: true,
             disable: false,
             zoom: {
                 enabled: true,
@@ -215,9 +217,30 @@ export class Editor extends srceditor.Editor {
         this.editor.addChangeListener((ev) => {
             if (ev.recordUndo)
                 this.changeCallback();
-            if (ev.type == 'ui' && ev.element == 'category') {
-                let toolboxVisible = !!ev.newValue;
-                this.parent.setState({ hideEditorFloats: toolboxVisible });
+            if (ev.type == 'ui') {
+                if (ev.element == 'category') {
+                    let toolboxVisible = !!ev.newValue;
+                    this.parent.setState({ hideEditorFloats: toolboxVisible });
+                }
+                else if (ev.element == 'commentOpen') {
+                    /*
+                     * We override the default selection behavior so that when a block is selected, its
+                     * comment is expanded. However, if a user selects a block by clicking on its comment
+                     * icon (the blue question mark), there is a chance that the comment will be expanded
+                     * and immediately collapse again because the icon click toggled the state. This hack
+                     * prevents two events caused by the same click from opening and then closing a comment
+                     */
+                    if (ev.group) {
+                        // newValue is true if the comment has been expanded
+                        if (ev.newValue) {
+                            this.selectedEventGroup = ev.group
+                        }
+                        else if (ev.group == this.selectedEventGroup && this.currentComment) {
+                            this.currentComment.setVisible(true)
+                            this.selectedEventGroup = undefined
+                        }
+                    }
+                }
             }
             if (ev.element == 'field' && ev.type == Blockly.Events.CHANGE) {
                 this.updateHelpCard();
@@ -225,6 +248,16 @@ export class Editor extends srceditor.Editor {
         })
         Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
             this.updateHelpCard();
+
+            if (this.currentComment) {
+                this.currentComment.setVisible(false)
+            }
+
+            const selected = Blockly.selected
+            if (selected && selected.comment && typeof(selected.comment) !== "string") {
+                (selected.comment as Blockly.Comment).setVisible(true)
+                this.currentComment = selected.comment
+            }
         })
 
         this.isReady = true

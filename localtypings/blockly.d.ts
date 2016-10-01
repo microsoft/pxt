@@ -167,6 +167,7 @@ declare namespace Blockly {
         newValue?: string;
         name?: string;
         xml?: any;
+        group?: string;
     }
 
     class ScrollbarPair {
