@@ -26,6 +26,8 @@ namespace pxt.blocks {
         noFinalNewline?: boolean;
     }
 
+    const MAX_COMMENT_LINE_LENGTH = 50;
+
 
     function stringLit(s: string) {
         if (s.length > 20 && /\n/.test(s))
@@ -1029,10 +1031,10 @@ namespace pxt.blocks {
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
 
-        for (const comment of comments.reverse()) {
-            r.unshift(mkNewLine())
-            r.unshift(mkText(`// ${comment}`))
+        if (comments.length) {
+            addCommentNodes(comments, r)
         }
+
         return r;
     }
 
@@ -1384,6 +1386,51 @@ namespace pxt.blocks {
             else {
                 comments.push((b.comment as B.Comment).getText())
             }
+        }
+    }
+
+    function addCommentNodes(comments: string[], r: Node[]) {
+        const commentNodes: Node[] = []
+        const paragraphs: string[] = []
+
+        for (const comment of comments) {
+            for (const paragraph of comment.split("\n")) {
+                paragraphs.push(paragraph)
+            }
+        }
+
+        for (let i = 0; i < paragraphs.length; i++) {
+            // Wrap paragraph lines
+            const words = paragraphs[i].split(/\s/)
+            let currentLine: string;
+            for (const word of words) {
+                if (!currentLine) {
+                    currentLine = word
+                }
+                else if (currentLine.length + word.length > MAX_COMMENT_LINE_LENGTH) {
+                    commentNodes.push(mkText(`// ${currentLine}`))
+                    commentNodes.push(mkNewLine())
+                    currentLine = word
+                }
+                else {
+                    currentLine += " " + word
+                }
+            }
+
+            if (currentLine) {
+                commentNodes.push(mkText(`// ${currentLine}`))
+                commentNodes.push(mkNewLine())
+            }
+
+            // The decompiler expects an empty comment line between paragraphs
+            if (i !== paragraphs.length - 1) {
+                commentNodes.push(mkText(`//`))
+                commentNodes.push(mkNewLine())
+            }
+        }
+
+        for (const commentNode of commentNodes.reverse()) {
+            r.unshift(commentNode)
         }
     }
 }
