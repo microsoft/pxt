@@ -854,10 +854,8 @@ function uploadCoreAsync(opts: UploadOptions) {
                 releaseid: liteId
             }).then(() => {
                 // semver style update, if v0.1.2, setup v0.1
-                let mami = opts.label.replace(/\v(\d+)\.(\d+)\.(\d+)$/, function (m, ma, mi) {
-                    return `/v${ma}.${mi}`;
-                });
-                if (opts.label != mami)
+                let mami = opts.label.replace(/\/v(\d+)\.(\d+)\.(\d+)$/, `/v\$1.\$2`)
+                if (opts.label == mami)
                     return Promise.resolve();
                 console.log("Also tagging with " + mami)
                 return Cloud.privatePostAsync("pointers", {
