@@ -310,7 +310,7 @@ ${output}</xml>`;
                 const commentText = getCommentText(commentRanges)
 
                 if (commentText) {
-                    write(`<comment pinned="false">${commentText}</comment>`)
+                    write(`<comment pinned="false">${U.htmlEscape(commentText)}</comment>`)
                 }
             }
 
