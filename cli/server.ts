@@ -218,7 +218,10 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             .then(d => writePkgAsync(innerPath, d))
     else if (cmd == "POST deploy" && deployCoreAsync)
         return readJsonAsync()
-            .then(d => deployCoreAsync(d));
+            .then(d => deployCoreAsync(d))
+            .catch((e) => {
+                throwError(404, "Board not found");
+            });
     else throw throwError(400)
 }
 
@@ -558,8 +561,8 @@ export function serveAsync(options: ServeOptions) {
             return handleApiAsync(req, res, elts)
                 .then(sendJson, err => {
                     if (err.statusCode) {
-                        error(err.statusCode)
-                        console.log("Error " + err.statusCode)
+                        error(err.statusCode, err.message || "");
+                        console.log("Error " + err.statusCode);
                     }
                     else {
                         error(500)
@@ -596,7 +599,7 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (pathname == "/--docs") {
-            sendFile(path.join(publicDir,  'docs.html'));
+            sendFile(path.join(publicDir, 'docs.html'));
             return
         }
 
