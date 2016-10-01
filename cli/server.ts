@@ -99,10 +99,10 @@ type FsPkg = pxt.FsPkg;
 
 function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(fileDir, logicalDirname)
-    return readFileAsync(path.join(dirname, pxt.configName))
+    return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
         .then(buf => {
             let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
-            let files = [pxt.configName].concat(cfg.files || []).concat(cfg.testFiles || [])
+            let files = [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
             return Promise.map(files, fn =>
                 statOptAsync(path.join(dirname, fn))
                     .then<FsFile>(st => {
@@ -137,7 +137,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
     return Promise.map(data.files, f =>
         readFileAsync(path.join(dirname, f.name))
             .then(buf => {
-                if (f.name == pxt.configName) {
+                if (f.name == pxt.CONFIG_NAME) {
                     try {
                         let cfg: pxt.PackageConfig = JSON.parse(f.content)
                         if (!cfg.name) {
@@ -163,7 +163,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]> {
     logicalDirname = logicalDirname.replace(/^\//, "")
     let dirname = path.join(fileDir, logicalDirname)
-    return existsAsync(path.join(dirname, pxt.configName))
+    return existsAsync(path.join(dirname, pxt.CONFIG_NAME))
         .then(ispkg =>
             ispkg ? readPkgAsync(logicalDirname).then(r => [r], err => []) :
                 depth <= 1 ? [] :

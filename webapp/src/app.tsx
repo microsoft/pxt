@@ -1024,7 +1024,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.textEditor.formatCode()
                 })
             return;
-        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == "pxt/" + targetId) {
+        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId) {
             pxt.debug("importing project")
             let h: InstallHeader = {
                 target: targetId,
@@ -1089,7 +1089,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 const project: pxt.cpp.HexFile = {
                     meta: {
                         cloudId: `pxt/${pxt.appTarget.id}`,
-                        editor: pxt.blocksProjectName, // TODO
+                        targetVersion: pxt.appTarget.versions.target,
+                        editor: Util.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
                         name: mpkg.config.name
                     },
                     source: JSON.stringify(files, null, 2)
@@ -1366,7 +1367,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             //Save the name in the target MainPackage as well
             pkg.mainPkg.config.name = this.state.projectName;
 
-            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.configName);
+            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
             let config = JSON.parse(f.content) as pxt.PackageConfig;
             config.name = this.state.projectName;
             f.setContentAsync(JSON.stringify(config, null, 2)).done(() => {
@@ -1388,8 +1389,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             hideCancel: true,
             agreeLbl: lf("Ok"),
             htmlBody: `
-<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${targetVersion}</p>
-<p>${lf("PXT version: {0}", ksVersion)}</p>
+<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${pxt.appTarget.versions.target}</p>
 `
         }).done();
     }
@@ -1748,7 +1748,6 @@ let myexports: any = {
 (window as any).E = myexports;
 
 export var ksVersion: string;
-export var targetVersion: string;
 export var sandbox = false;
 
 function initTheme() {
@@ -1825,15 +1824,13 @@ function initHashchange() {
 
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
-    let config = pxt.webConfig
-    ksVersion = config.pxtVersion;
-    targetVersion = config.targetVersion;
+    const config = pxt.webConfig
     sandbox = /sandbox=1|#sandbox/i.test(window.location.href);
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
-    enableAnalytics(ksVersion)
+    enableAnalytics(config.targetVersion)
     appcache.init();
     initLogin();
 
@@ -1902,7 +1899,7 @@ $(document).ready(() => {
             else theEditor.newProject();
             return Promise.resolve();
         }).done(() => {
-            enableFeedback(ksVersion);
+            enableFeedback(config.targetVersion);
         });
 
     document.addEventListener("visibilitychange", ev => {
