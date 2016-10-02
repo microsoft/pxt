@@ -111,20 +111,6 @@ namespace pxt {
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
 
-    export interface TargetVersions {
-        target: string;
-        pxt: string;
-        tag?: string;
-        branch?: string;
-        commits?: string; // URL
-    }
-
-    export interface TargetBundle extends AppTarget {
-        bundledpkgs: Map<Map<string>>;
-        bundleddirs: string[];
-        versions: TargetVersions;
-    }
-
     // this is for remote file interface to packages
     export interface FsFile {
         name: string;  // eg "main.ts"
@@ -207,7 +193,7 @@ namespace pxt {
 
         saveConfig() {
             let cfg = JSON.stringify(this.config, null, 4) + "\n"
-            this.host().writeFile(this, configName, cfg)
+            this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
         }
 
         private resolveVersionAsync() {
@@ -231,9 +217,9 @@ namespace pxt {
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
-                            let confStr = this.readFile(configName)
+                            let confStr = this.readFile(pxt.CONFIG_NAME)
                             if (!confStr)
-                                U.userError(`package ${this.id} is missing ${configName}`)
+                                U.userError(`package ${this.id} is missing ${pxt.CONFIG_NAME}`)
                             this.parseConfig(confStr)
                             if (this.level != 0)
                                 this.config.installedVersion = this.version()
@@ -275,7 +261,7 @@ namespace pxt {
             let initPromise = Promise.resolve()
 
             this.isLoaded = true
-            let str = this.readFile(configName)
+            let str = this.readFile(pxt.CONFIG_NAME)
             if (str == null) {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id)
@@ -318,7 +304,7 @@ namespace pxt {
                     files[this.id + "/" + fn] = this.readFile(fn)
                 }
             }
-            files[this.id + "/" + configName] = this.readFile(configName)
+            files[this.id + "/" + pxt.CONFIG_NAME] = this.readFile(pxt.CONFIG_NAME)
         }
 
         /**
@@ -405,7 +391,7 @@ namespace pxt {
 
             let generateFile = (fn: string, cont: string) => {
                 if (this.config.files.indexOf(fn) < 0)
-                    U.userError(lf("please add '{0}' to \"files\" in {1}", fn, configName))
+                    U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
                     pxt.debug(lf("updating {0} (size={1})...", fn, cont.length))
@@ -437,8 +423,9 @@ namespace pxt {
                             comment: this.config.description,
                             status: "unpublished",
                             scriptId: this.config.installedVersion,
-                            cloudId: "pxt/" + appTarget.id,
-                            editor: U.lookup(files, "main.blocks") ? "blocksprj" : "tsprj"
+                            cloudId: pxt.CLOUD_ID + appTarget.id,
+                            editor: U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
+                            targetVersion: pxt.appTarget.versions ? pxt.appTarget.versions.target : undefined
                         })
                         let programText = JSON.stringify(files)
                         return lzmaCompressAsync(headerString + programText)
@@ -499,7 +486,7 @@ namespace pxt {
                             cfg.dependencies[k] = "*"
                         }
                     })
-                    files[configName] = JSON.stringify(cfg, null, 4)
+                    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
                     for (let f of this.getFiles()) {
                         let str = this.readFile(f)
                         if (str == null)
@@ -526,7 +513,7 @@ namespace pxt {
                                 let part = res[k] = p[k];
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
                                     let f = d.readFile(part.visual.image);
-                                    if (!f) pxt.reportError(`invalid part definition, missing visual ${part.visual.image}`,undefined)
+                                    if (!f) pxt.reportError(`invalid part definition, missing visual ${part.visual.image}`, undefined)
                                     part.visual.image = `data:image/svg+xml,` + encodeURI(f);
                                 }
                             }
@@ -541,7 +528,8 @@ namespace pxt {
 
     }
 
-    export const configName = "pxt.json"
-    export const blocksProjectName = "blocksprj";
-    export const javaScriptProjectName = "tsprj";
+    export const CONFIG_NAME = "pxt.json"
+    export const CLOUD_ID = "pxt/"
+    export const BLOCKS_PROJECT_NAME = "blocksprj";
+    export const JAVASCRIPT_PROJECT_NAME = "tsprj";
 }

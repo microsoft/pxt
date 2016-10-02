@@ -110,8 +110,16 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         url: "http://localhost:3232/api/deploy",
         headers: { "Authorization": Cloud.localToken },
         method: "POST",
-        data: resp
-    }).then(r => { });
+        data: resp,
+        allowHttpErrors: true
+    }).then(r => {
+        if (r.statusCode == 404) {
+            core.errorNotification(lf("Please connect your {0} to your computer and try again", pxt.appTarget.appTheme.boardName));
+        } else if (r.statusCode !== 200) {
+            core.errorNotification(lf("There was a problem, please try again"));
+        }
+    });
+
     if (/quickflash/i.test(window.location.href))
         return hwdbg.partialFlashAsync(resp, deploy)
     else

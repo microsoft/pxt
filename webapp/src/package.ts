@@ -123,7 +123,7 @@ export class EditorPackage {
     }
 
     updateConfigAsync(update: (cfg: pxt.PackageConfig) => void) {
-        let cfgFile = this.files[pxt.configName]
+        let cfgFile = this.files[pxt.CONFIG_NAME]
         if (cfgFile) {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
@@ -225,7 +225,7 @@ export class EditorPackage {
     saveFilesAsync() {
         if (!this.header) return Promise.resolve();
 
-        let cfgFile = this.files[pxt.configName]
+        let cfgFile = this.files[pxt.CONFIG_NAME]
         if (cfgFile) {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
@@ -278,7 +278,7 @@ class Host
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string): void {
-        if (filename == pxt.configName)
+        if (filename == pxt.CONFIG_NAME)
             return; // ignore config writes
         throw Util.oops("trying to write " + module + " / " + filename)
     }
@@ -376,7 +376,7 @@ export function loadPkgAsync(id: string) {
 
     return theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
-        .then(() => theHost.readFile(mainPkg, pxt.configName))
+        .then(() => theHost.readFile(mainPkg, pxt.CONFIG_NAME))
         .then(str => {
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()

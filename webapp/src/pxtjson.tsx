@@ -78,7 +78,7 @@ export class Editor extends srceditor.Editor {
     }
 
     acceptsFile(file: pkg.File) {
-        if (file.name != pxt.configName) return false
+        if (file.name != pxt.CONFIG_NAME) return false
 
         if (file.isReadonly()) {
             // TODO add read-only support
@@ -100,6 +100,6 @@ export class Editor extends srceditor.Editor {
     }
 
     menu() {
-        return (<sui.Button class="button floating" text={lf("Back to Code") } icon={this.parent.state.header.editor == pxt.blocksProjectName ? "puzzle" : "keyboard"} onClick={() => this.parent.setFile(pkg.mainEditorPkg().getMainFile()) } />)
+        return (<sui.Button class="button floating" text={lf("Back to Code") } icon={this.parent.state.header.editor == pxt.BLOCKS_PROJECT_NAME ? "puzzle" : "keyboard"} onClick={() => this.parent.setFile(pkg.mainEditorPkg().getMainFile()) } />)
     }
 }
