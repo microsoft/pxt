@@ -15,43 +15,48 @@ export interface BitSizeInfo {
 // required by the IR-machine, rather than PHYSICAL registers
 // at the assembly level.
 
-// the assumptions below about registers are based on
+// that said, the assumptions below about registers are based on
 // ARM, so a mapping will be needed for other processors
 
 // Assumptions:
 //
-//
-//
+// - special registers include: pc, lr
+// - registers are 32-bit (really???)
+// - pop/push receive register sets: { r0, r3, r4 }
+// - r0 is the current value (from expression evaluation)
+// - also used (fixed) are r1, r2, r5, r6 (what about r3, r4?)
+// - registers for runtime calls (r1,r2,r3)
+// - arguments passed on stack (user functions)
 
 export abstract class AssemblerSnippets {
-    public nop() { return "TBD " }
-    public reg_gets_imm(reg: string, imm: number) { return "TBD" }
-    public push(reg: string) { return "TBD" }
-    public pop(reg: string) { return "TBD" }
-    public debugger_hook(lbl: string) { return "TBD" }
-    public debugger_bkpt(lbl: string) { return "TBD" }
-    public breakpoint() { return "TBD" }
-    public pop_locals(n: number) { return "TBD" }
-    public unconditional_branch(lbl: string) { return "TBD" }
-    public beq(lbl: string) { return "TBD" }
-    public bne(lbl: string) { return "TBD" }
-    public cmp(o1: string, o2: string) { return "TBD" }
+    nop() { return "TBD " }
+    reg_gets_imm(reg: string, imm: number) { return "TBD" }
+    push(reg: string) { return "TBD" }
+    pop(reg: string) { return "TBD" }
+    debugger_hook(lbl: string) { return "TBD" }
+    debugger_bkpt(lbl: string) { return "TBD" }
+    breakpoint() { return "TBD" }
+    pop_locals(n: number) { return "TBD" }
+    unconditional_branch(lbl: string) { return "TBD" }
+    beq(lbl: string) { return "TBD" }
+    bne(lbl: string) { return "TBD" }
+    cmp(o1: string, o2: string) { return "TBD" }
     // word? - does offset represent an index that must be multiplied by word size?
     // inf?  - control over size of referenced data
     // str?  - true=Store/false=Load
-    public load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
-    public rt_call(name: string, r0: string, r1: string) { return "TBD"; }
-    public call_lbl(name: string) { return "TBD" }
-    public call_reg(name: string) { return "TBD" }
-    public vcall(mapMethod: string, isSet: boolean, vtableShift: number) { return "TBD" }
-    public prologue_vtable(arg_index: number, vtableShift: number) { return "TBD" }
-    public lambda_prologue() { return "TBD" }
-    public lambda_epilogue() { return "TBD" }
-    public LdPtr(lbl: string, reg: string) { return "TBD" }
-    public adds(reg: string, imm: number) { return "TBD" }
-    public movs(reg: string, imm: number) { return "TBD" }
-    public lsls(reg: string, imm: number) { return "TBD" }
-    public negs(reg: string) { return "TBD" }
+    load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
+    rt_call(name: string, r0: string, r1: string) { return "TBD"; }
+    call_lbl(name: string) { return "TBD" }
+    call_reg(name: string) { return "TBD" }
+    vcall(mapMethod: string, isSet: boolean, vtableShift: number) { return "TBD" }
+    prologue_vtable(arg_index: number, vtableShift: number) { return "TBD" }
+    lambda_prologue() { return "TBD" }
+    lambda_epilogue() { return "TBD" }
+    LdPtr(lbl: string, reg: string) { return "TBD" }
+    adds(reg: string, imm: number) { return "TBD" }
+    movs(reg: string, imm: number) { return "TBD" }
+    lsls(reg: string, imm: number) { return "TBD" }
+    negs(reg: string) { return "TBD" }
 }
 
 export class ProctoAssembler {
@@ -308,7 +313,6 @@ ${baseLabel}:
                     }
                     this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
                 } else {
-                    // TODO
                     let [src,imm,idx] = this.cellref(cell)
                     this.write(this.t.load_reg_src_off(reg, src, imm, idx))
                 }
@@ -390,7 +394,7 @@ ${baseLabel}:
     private emitSharedTerminate(e: ir.Expr) {
         this.emitExpr(e)
         let arg = e.data as ir.Expr
-
+        // ??? missing ???
     }
 
     private emitRtCall(topExpr: ir.Expr) {

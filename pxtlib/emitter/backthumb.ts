@@ -2,14 +2,14 @@ namespace ts.pxtc {
 
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
-        public nop() { return "nop" }
-        public reg_gets_imm(reg: string, imm: number) {
+        nop() { return "nop" }
+        reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
-        public push(reg: string) { return `push ${reg}` }
-        public pop(reg: string) { return `pop ${reg}` }
+        push(reg: string) { return `push ${reg}` }
+        pop(reg: string) { return `pop ${reg}` }
 
-        public debugger_hook(lbl: string) {
+        debugger_hook(lbl: string) {
             return `
     ldr r0, [r6, #0]
     lsls r0, r0, #30
@@ -18,7 +18,7 @@ ${lbl + "_after"}:
 `;
         }
 
-        public debugger_bkpt(lbl: string) {
+        debugger_bkpt(lbl: string) {
             return `
     ldr r0, [r6, #0]
     lsls r0, r0, #31
@@ -27,16 +27,16 @@ ${lbl + "_after"}:
 ${lbl}:`
         }
 
-        public breakpoint() {
+        breakpoint() {
             return "bkpt 1"
         }
 
-        public pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
-        public unconditional_branch(lbl: string) { return "b " + lbl; }
-        public beq(lbl: string) { return "beq " + lbl }
-        public bne(lbl: string) { return "bne " + lbl }
-        public cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
-        public load_reg_src_off(reg: string, src: string, off: string, word: boolean, store: boolean, inf: BitSizeInfo) {
+        pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
+        unconditional_branch(lbl: string) { return "b " + lbl; }
+        beq(lbl: string) { return "beq " + lbl }
+        bne(lbl: string) { return "bne " + lbl }
+        cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
+        load_reg_src_off(reg: string, src: string, off: string, word: boolean, store: boolean, inf: BitSizeInfo) {
             if (word) {
                 off = `#4*${off}`
             }
@@ -57,16 +57,16 @@ ${lbl}:`
             else
                 return `${ldr} ${reg}, [${src}, ${off}]`
         }
-        public rt_call(name:string, r0: string, r1: string) { 
+        rt_call(name:string, r0: string, r1: string) { 
             return name + " " + r0 + ", " + r1;
         }
-        public call_lbl(name:string) {
+        call_lbl(name:string) {
             return "bl " + name;
         }
-        public call_reg(reg: string) {
+        call_reg(reg: string) {
             return "blx " + reg;
         }
-        public vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
+        vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
             return `
     ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
     ldrh r3, [r0, #2] ; ld-vtable
@@ -85,21 +85,21 @@ ${lbl}:`
     pop {pc}
 `;
         }
-        public prologue_vtable(arg_top_index: number, vtableShift: number) {
+        prologue_vtable(arg_top_index: number, vtableShift: number) {
             return `
     ldr r0, [sp, #4*${arg_top_index}]  ; ld-this
     ldrh r0, [r0, #2] ; ld-vtable
     lsls r0, r0, #${vtableShift}
     `;
         }
-        public lambda_prologue() {
+        lambda_prologue() {
             return `
     @stackmark args
     push {lr}
     mov r5, r0
 `;
         }
-        public lambda_epilogue() {
+        lambda_epilogue() {
             return `
     bl pxtrt::getGlobalsPtr
     mov r6, r0
@@ -107,7 +107,7 @@ ${lbl}:`
     @stackempty args
 `
         }
-        public LdPtr(lbl: string, reg: string) {
+        LdPtr(lbl: string, reg: string) {
             assert(!!lbl)
             return `
     movs ${reg}, ${lbl}@hi  ; ldptr
@@ -115,16 +115,16 @@ ${lbl}:`
     adds ${reg}, ${lbl}@lo
 `
         }
-        public adds(reg: string, imm: number) {
+        adds(reg: string, imm: number) {
             return `adds ${reg}, #${imm}`
         }
-        public movs(reg: string, imm: number) {
+        movs(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
-        public lsls(reg: string, imm: number) {
+        lsls(reg: string, imm: number) {
             return `lsls ${reg}, ${reg}, #${imm}`
         }
-        public negs(reg: string) { 
+        negs(reg: string) { 
             return `negs ${reg}, ${reg}`
         }
     }
