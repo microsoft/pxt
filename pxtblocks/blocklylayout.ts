@@ -24,18 +24,8 @@ namespace pxt.blocks.layout {
         flow(blocks, ratio || 1.62);
     }
 
-    export function screenshot(ws: B.Workspace, callback: (uri: string, name: string) => any, name?: string) {
-        toPngAsync(ws)
-            .done(uri => {
-                if (uri) {
-                    try {
-                        callback(uri, name);
-                    } catch (e) {
-                        pxt.debug("saving screenshot failed")
-                    }
-                }
-            })
-
+    export function screenshotAsync(ws: B.Workspace): Promise<string> {
+        return toPngAsync(ws);
     }
 
     export function toPngAsync(ws: B.Workspace): Promise<string> {
@@ -120,7 +110,7 @@ namespace pxt.blocks.layout {
         sg.removeAttribute("transform");
 
         let xsg = new DOMParser().parseFromString(
-            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${(Math.abs(x) + width)}" height="${(Math.abs(y) + height)}" viewBox="${x} ${y} ${width} ${height}">
+            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">
             ${new XMLSerializer().serializeToString(sg)}
             </svg>`, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
