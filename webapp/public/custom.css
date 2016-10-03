@@ -310,6 +310,11 @@ div.simframe > iframe {
  width: calc(100% - 1em);
  max-height: calc(100% - 1em);
 }
+
+body.blocklyMinimalBody {
+    min-width: initial;
+}
+
 @supports (-ms-accelerator:true) {
     .rtl .blocklyPreview {
         right:50%;
