@@ -50,17 +50,17 @@ ${lbl}:`
                 if (inf.needsSignExt)
                     ldr = str.replace("str", "ldrs")
                 else
-                    ldr = str.replace("str","ldr")
+                    ldr = str.replace("str", "ldr")
             }
             if (store)
                 return `${str} ${reg}, [${src}, ${off}]`
             else
                 return `${ldr} ${reg}, [${src}, ${off}]`
         }
-        rt_call(name:string, r0: string, r1: string) { 
+        rt_call(name: string, r0: string, r1: string) {
             return name + " " + r0 + ", " + r1;
         }
-        call_lbl(name:string) {
+        call_lbl(name: string) {
             return "bl " + name;
         }
         call_reg(reg: string) {
@@ -107,7 +107,7 @@ ${lbl}:`
     @stackempty args
 `
         }
-        LdPtr(lbl: string, reg: string) {
+        load_ptr(lbl: string, reg: string) {
             assert(!!lbl)
             return `
     movs ${reg}, ${lbl}@hi  ; ldptr
@@ -124,7 +124,7 @@ ${lbl}:`
         lsls(reg: string, imm: number) {
             return `lsls ${reg}, ${reg}, #${imm}`
         }
-        negs(reg: string) { 
+        negs(reg: string) {
             return `negs ${reg}, ${reg}`
         }
     }
