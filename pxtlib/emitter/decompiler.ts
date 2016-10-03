@@ -24,6 +24,28 @@ namespace ts.pxtc.decompiler {
         "||": { type: "logic_operation", op: "OR" },
     }
 
+    /*
+     * Matches a single line comment and extracts the text.
+     * Breakdown:
+     *     ^\s*     - matches leading whitespace
+     *      \/\/s*  - matches double slash
+     *      (.*)    - matches rest of the comment
+     */
+    const singleLineCommentRegex = /^\s*\/\/\s*(.*)$/
+
+    /*
+     * Matches one line of a multi-line comment and extracts the text.
+     * Breakdown:
+     *      ^\s*                                        - matches leading whitespace
+     *      (?:\/\*\*?)                                 - matches beginning of a multi-line comment (/* or /**)
+     *      (?:\*)                                      - matches a single asterisk that might begin a line in the body of the comment
+     *      (?:(?:(?:\/\*\*?)|(?:\*))(?!\/))            - combines the previous two regexes but does not match either if followed by a slash
+     *      ^\s*(?:(?:(?:\/\*\*?)|(?:\*))(?!\/))?\s*    - matches all possible beginnings of a multi-line comment line (/*, /**, *, or just whitespace)
+     *      (.*?)                                       - matches the text of the comment line
+     *      (?:\*?\*\/)?$                               - matches the end of the multiline comment (one or two asterisks and a slash) or the end of a line within the comment
+     */
+    const multiLineCommentRegex = /^\s*(?:(?:(?:\/\*\*?)|(?:\*))(?!\/))?\s*(.*?)(?:\*?\*\/)?$/
+
     const builtinBlocks: pxt.Map<{ block: string; blockId: string; fields?: string }> = {
         "Math.random": { blockId: "device_random", block: "pick random 0 to %limit" },
         "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
@@ -37,6 +59,7 @@ namespace ts.pxtc.decompiler {
             blocksInfo: blocksInfo,
             outfiles: {}, diagnostics: [], success: true, times: {}
         }
+        const fileText = file.getFullText();
         let output = ""
 
         emitBlockStatement(stmts, undefined, true);
@@ -96,7 +119,7 @@ ${output}</xml>`;
          * @param topLevel?     Indicates whether this block statement is at the top level scope (i.e. the source file) or not.
          *                      If false, an error will be thrown if any output expressions are encountered. False by default
          */
-        function emitBlockStatement(statements: ts.Node[], next?: ts.Node[], topLevel = false) {
+        function emitBlockStatement(statements: ts.Node[], next?: ts.Node[], topLevel = false, parent?: ts.Node) {
             const outputStatements: ts.Node[] = [];
             const blockStatements: ts.Node[] = next || [];
 
@@ -114,7 +137,7 @@ ${output}</xml>`;
             });
 
             if (blockStatements.length) {
-                emitStatementBlock(blockStatements.shift(), blockStatements);
+                emitStatementBlock(blockStatements.shift(), blockStatements, parent);
             }
 
             // Emit any output statements as standalone blocks
@@ -218,19 +241,20 @@ ${output}</xml>`;
         /**
          * Emit the given node as a statement block
          *
-         * @param n     The node to emit into blocks
-         * @param next? A list of nodes to be emitted as statements following this one (i.e. part of the same block of statements)
+         * @param n         The node to emit into blocks
+         * @param next?     A list of nodes to be emitted as statements following this one (i.e. part of the same block of statements)
+         * @param parent?   The toplevel node for this statement if this statement is not the node which would have comments adjacent in the source text
          */
-        function emitStatementBlock(node: ts.Node, next?: ts.Node[]) {
+        function emitStatementBlock(node: ts.Node, next?: ts.Node[], parent?: ts.Node) {
             switch (node.kind) {
                 case SK.Block:
                     emitBlockStatement((node as ts.Block).statements, next);
                     return;
                 case SK.ExpressionStatement:
-                    emitStatementBlock((node as ts.ExpressionStatement).expression, next);
+                    emitStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node);
                     return;
                 case SK.VariableStatement:
-                    emitBlockStatement((node as ts.VariableStatement).declarationList.declarations, next);
+                    emitBlockStatement((node as ts.VariableStatement).declarationList.declarations, next, false, parent || node);
                     return;
                 case SK.ArrowFunction:
                     emitArrowFunction(node as ts.ArrowFunction, next);
@@ -279,6 +303,15 @@ ${output}</xml>`;
                 write("<next>")
                 emitStatementBlock(toEmit, next);
                 write("</next>")
+            }
+
+            const commentRanges = ts.getLeadingCommentRangesOfNode(parent || node, file)
+            if (commentRanges) {
+                const commentText = getCommentText(commentRanges)
+
+                if (commentText) {
+                    write(`<comment pinned="false">${U.htmlEscape(commentText)}</comment>`)
+                }
             }
 
             closeBlockTag()
@@ -734,6 +767,48 @@ ${output}</xml>`;
                     return (expression.operator === SK.PlusToken || expression.operator === SK.MinusToken) && isLiteralNode(expression.operand)
                 default:
                     return false;
+            }
+        }
+
+        /**
+         * Takes a series of comment ranges and converts them into string suitable for a
+         * comment block in blockly. All comments above a statement will be included,
+         * regardless of single vs multi line and whitespace. Paragraphs are delineated
+         * by empty lines between comments (a commented empty line, not an empty line
+         * between two separate comment blocks)
+         */
+        function getCommentText(commentRanges: ts.CommentRange[]) {
+            let text = ""
+            let currentLine = ""
+
+            for (const commentRange of commentRanges) {
+                const commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
+                if (commentRange.kind === SyntaxKind.SingleLineCommentTrivia) {
+                    appendMatch(commentText, singleLineCommentRegex)
+                }
+                else {
+                    const lines = commentText.split("\n")
+                    for (const line of lines) {
+                        appendMatch(line, multiLineCommentRegex)
+                    }
+                }
+            }
+
+            text += currentLine
+
+            return text.trim()
+
+            function appendMatch(line: string, regex: RegExp) {
+                const match = regex.exec(line)
+                if (match) {
+                    const matched = match[1].trim()
+                    if (matched) {
+                        currentLine += currentLine ? " " + matched : matched
+                    } else {
+                        text += currentLine + "\n"
+                        currentLine = ""
+                    }
+                }
             }
         }
     }

@@ -110,6 +110,25 @@ declare namespace Blockly {
         parentBlock_: Block;
         inputList: Input[];
         disabled: boolean;
+        comment: string | Comment;
+    }
+
+    class Comment {
+        constructor(b: Block);
+        computeIconLocation(): void;
+        createIcon(): void;
+        dispose(): void;
+        getBubbleSize(): { width: number, height: number };
+        getIconLocation(): { x: number, y: number }
+        getText(): string;
+        isVisible(): boolean;
+        renderIcon(cursorX: number): number;
+        setBubbleSize(width: number, height: number): void;
+        setIconLocation(xy: { x: number, y: number }): void;
+        setText(text: string): void;
+        setVisible(visible: boolean): void;
+        updateColour(): void;
+        updateEditable(): void;
     }
 
     // if type == controls_if
@@ -148,6 +167,7 @@ declare namespace Blockly {
         newValue?: string;
         name?: string;
         xml?: any;
+        group?: string;
     }
 
     class ScrollbarPair {
