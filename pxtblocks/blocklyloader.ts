@@ -828,7 +828,7 @@ namespace pxt.blocks {
                             uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
                         BrowserUtils.browserDownloadDataUri(
                             uri,
-                            `${pxt.appTarget.id}-${lf("screenshot")}`) + ".png";
+                            `${pxt.appTarget.id}-${lf("screenshot")}.png`);
                     });
                 }
             };
