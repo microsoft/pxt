@@ -653,6 +653,7 @@ int main() {
     export interface HexFile {
         meta?: {
             cloudId: string;
+            targetVersion?: string;
             editor: string;
             name: string;
         };

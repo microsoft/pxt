@@ -244,7 +244,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
         const importHex = () => {
             if (this.modal) this.modal.hide();
-            this.props.parent.importHexFileDialog();
+            this.props.parent.importFileDialog();
         }
 
         const isEmpty = () => {
@@ -272,11 +272,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     </div>
                 </div>
                 <div className="ui cards">
-                    {pxt.appTarget.compile && pxt.appTarget.compile.hasHex && !this.state.packages ?
+                    {pxt.appTarget.compile && !this.state.packages ?
                         <codecard.CodeCardView
+                            color="pink"
                             key="importhex"
-                            name={lf("import...") }
-                            description={lf("Import project from a .hex file") }
+                            name={lf("My Computer...") }
+                            description={lf("Open .hex or .pxt files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
                     {bundles.map(scr =>
@@ -994,9 +995,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     importBlocksFiles(file: File) {
         if (!file) return;
 
-        fileReadAsText(file)
-            .then(contents => {
-                return this.newBlocksProjectAsync({ "main.blocks": contents, "main.ts": "  " }, "untitled")
+        fileReadAsTextAsync(file)
+            .done(contents => {
+                return this.newBlocksProjectAsync({ "main.blocks": contents, "main.ts": "  " }, lf("Untitled"))
             })
     }
 
@@ -1023,7 +1024,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.textEditor.formatCode()
                 })
             return;
-        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == "pxt/" + targetId) {
+        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId) {
             pxt.debug("importing project")
             let h: InstallHeader = {
                 target: targetId,
@@ -1042,17 +1043,35 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         core.warningNotification(lf("Sorry, we could not import this project."))
     }
 
+    importProjectFile(file: File) {
+        if (!file) return;
+
+        fileReadAsBufferAsync(file)
+            .then(buf => pxt.lzmaDecompressAsync(buf))
+            .done(contents => {
+                let data = JSON.parse(contents) as pxt.cpp.HexFile;
+                this.importHex(data);
+            }, e => {
+                core.warningNotification(lf("Sorry, we could not import this project."))
+            });
+    }
+
+    importFile(file: File) {
+        if (!file) return;
+        if (isHexFile(file.name)) {
+            this.importHexFile(file)
+        } else if (isBlocksFile(file.name)) {
+            this.importBlocksFiles(file)
+        } else if (isProjectFile(file.name)) {
+            this.importProjectFile(file);
+        } else core.warningNotification(lf("Oops, don't know how to load this file!"));
+    }
+
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && isHexFile(file.name) || isBlocksFile(file.name),
             files => {
-                if (files) {
-                    if (isHexFile(files[0].name)) {
-                        this.importHexFile(files[0])
-                    } else {
-                        this.importBlocksFiles(files[0])
-                    }
-                }
+                if (files) this.importFile(files[0]);
             }
         );
     }
@@ -1060,6 +1079,27 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent("menu.openproject");
         this.scriptSearch.setState({ packages: false, searchFor: '' })
         this.scriptSearch.modal.show()
+    }
+
+    saveProjectToFile() {
+        const mpkg = pkg.mainPkg
+        this.saveFileAsync()
+            .then(() => mpkg.filesToBePublishedAsync(true))
+            .then(files => {
+                const project: pxt.cpp.HexFile = {
+                    meta: {
+                        cloudId: `pxt/${pxt.appTarget.id}`,
+                        targetVersion: pxt.appTarget.versions.target,
+                        editor: Util.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
+                        name: mpkg.config.name
+                    },
+                    source: JSON.stringify(files, null, 2)
+                }
+                return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+            }).done((buf: Uint8Array) => {
+                const fn = pkg.genFileName(".pxt");
+                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+            })
     }
 
     addPackage() {
@@ -1249,22 +1289,25 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
     }
 
-    importHexFileDialog() {
+    importFileDialog() {
         let input: HTMLInputElement;
         core.confirmAsync({
-            header: lf("Import .hex file"),
+            header: lf("Open .hex or .pxt file"),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select an .hex file to import.")}</label>
+    <label>${lf("Select an .hex or .pxt file to open.")}</label>
     <input type="file" class="ui button blue fluid"></input>
+  </div>
+  <div class="ui message">
+    ${lf("You can also drag and drop .hex or .pxt files into the editor!")}
   </div>
 </div>`,
         }).done(res => {
             if (res) {
-                this.importHexFile(input.files[0]);
+                this.importFile(input.files[0]);
             }
         })
     }
@@ -1324,7 +1367,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             //Save the name in the target MainPackage as well
             pkg.mainPkg.config.name = this.state.projectName;
 
-            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.configName);
+            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
             let config = JSON.parse(f.content) as pxt.PackageConfig;
             config.name = this.state.projectName;
             f.setContentAsync(JSON.stringify(config, null, 2)).done(() => {
@@ -1346,8 +1389,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             hideCancel: true,
             agreeLbl: lf("Ok"),
             htmlBody: `
-<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${targetVersion}</p>
-<p>${lf("PXT version: {0}", ksVersion)}</p>
+<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${pxt.appTarget.versions.target}</p>
 `
         }).done();
     }
@@ -1400,6 +1442,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
+                                    <sui.Item role="menuitem" icon="folder save" text={lf("Save Project...") } onClick={() => this.saveProjectToFile() } />
                                     {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -1467,9 +1510,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
-                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization)}</a> : undefined}
-                    <a className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use")}</a>
-                    <a className="item" href={targetTheme.privacyUrl}>{lf("Privacy")}</a>
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
+                    <a className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
+                    <a className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
                 </div> : undefined}
             </div>
         );
@@ -1486,14 +1529,31 @@ function getEditor() {
 }
 
 function isHexFile(filename: string) {
-    return /^\.hex$/i.test(filename)
+    return /\.hex$/i.test(filename)
 }
 
 function isBlocksFile(filename: string) {
-    return /^\.blocks$/i.test(filename)
+    return /\.blocks$/i.test(filename)
 }
 
-function fileReadAsText(f: File): Promise<string> { // ArrayBuffer
+function isProjectFile(filename: string) {
+    return /\.pxt$/i.test(filename)
+}
+
+function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
+    if (!f)
+        return Promise.resolve<Uint8Array>(null);
+    else {
+        return new Promise<Uint8Array>((resolve, reject) => {
+            let reader = new FileReader();
+            reader.onerror = (ev) => resolve(null);
+            reader.onload = (ev) => resolve(new Uint8Array(reader.result as ArrayBuffer));
+            reader.readAsArrayBuffer(f);
+        });
+    }
+}
+
+function fileReadAsTextAsync(f: File): Promise<string> { // ArrayBuffer
     if (!f)
         return Promise.resolve<string>(null);
     else {
@@ -1688,7 +1748,6 @@ let myexports: any = {
 (window as any).E = myexports;
 
 export var ksVersion: string;
-export var targetVersion: string;
 export var sandbox = false;
 
 function initTheme() {
@@ -1765,15 +1824,13 @@ function initHashchange() {
 
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
-    let config = pxt.webConfig
-    ksVersion = config.pxtVersion;
-    targetVersion = config.targetVersion;
+    const config = pxt.webConfig
     sandbox = /sandbox=1|#sandbox/i.test(window.location.href);
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
 
-    enableAnalytics(ksVersion)
+    enableAnalytics(config.targetVersion)
     appcache.init();
     initLogin();
 
@@ -1842,11 +1899,12 @@ $(document).ready(() => {
             else theEditor.newProject();
             return Promise.resolve();
         }).done(() => {
-            enableFeedback(ksVersion);
+            enableFeedback(config.targetVersion);
         });
 
     document.addEventListener("visibilitychange", ev => {
-        theEditor.updateVisibility();
+        if (theEditor)
+            theEditor.updateVisibility();
     });
 
     window.addEventListener("unload", ev => {

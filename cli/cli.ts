@@ -160,7 +160,7 @@ function pkginfoAsync(repopath: string) {
     if (parsed.tag)
         return pxt.github.downloadPackageAsync(repopath)
             .then(pkg => {
-                let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.configName])
+                let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
                 pkgInfo(cfg)
                 console.log(`Size: ${JSON.stringify(pkg.files).length}`)
             })
@@ -581,7 +581,7 @@ function justBumpPkgAsync() {
 }
 
 function bumpAsync() {
-    if (fs.existsSync(pxt.configName))
+    if (fs.existsSync(pxt.CONFIG_NAME))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
             .then(() => justBumpPkgAsync())
@@ -757,68 +757,68 @@ function uploadCoreAsync(opts: UploadOptions) {
         let content = ""
         let data: Buffer;
         return rdf.then((rdata: Buffer) => {
-                data = rdata;
-                if (isText) {
-                    content = data.toString("utf8")
-                    if (fileName == "index.html") {
-                        content = server.expandHtml(content)
-                    }
-
-                    if (replFiles.indexOf(fileName) >= 0) {
-                        for (let from of Object.keys(replacements)) {
-                            content = U.replaceAll(content, from, replacements[from])
-                        }
-                        if (opts.localDir) {
-                            data = new Buffer(content, "utf8")
-                        } else {
-                            // save it for developer inspection
-                            fs.writeFileSync("built/uploadrepl/" + fileName, content)
-                        }
-                    } else if (fileName == "target.json") {
-                        let trg: pxt.TargetBundle = JSON.parse(content)
-                        if (opts.localDir) {
-                            for (let e of trg.appTheme.docMenu)
-                                if (e.path[0] == "/") {
-                                    e.path = opts.localDir + "docs" + e.path + ".html"
-                                }
-                            trg.appTheme.logoUrl = opts.localDir
-                            trg.appTheme.homeUrl = opts.localDir
-                            data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
-                        } else {
-                            // expand usb help pages
-                            return Promise.all(
-                                (trg.appTheme.usbHelp || []).filter(h => !!h.path)
-                                    .map(h => uploader.uploadArtAsync(h.path, true)
-                                        .then(blob => {
-                                            console.log(`target.json patch:    ${h.path} -> ${blob}`)
-                                            h.path = blob;
-                                        }))
-                            ).then(() => {
-                                content = JSON.stringify(trg, null, 2);
-                            })
-                        }
-                    }
-                } else {
-                    content = data.toString("base64")
-                }
-                return Promise.resolve()
-            }).then(() => {
-
-                if (opts.localDir) {
-                    let fn = path.join(builtPackaged + opts.localDir, fileName)
-                    nodeutil.mkdirP(path.dirname(fn))
-                    return writeFileAsync(fn, data)
+            data = rdata;
+            if (isText) {
+                content = data.toString("utf8")
+                if (fileName == "index.html") {
+                    content = server.expandHtml(content)
                 }
 
-                return Cloud.privatePostAsync(liteId + "/files", {
-                    encoding: isText ? "utf8" : "base64",
-                    filename: fileName,
-                    contentType: mime,
-                    content,
-                }).then(resp => {
-                    console.log(fileName, mime)
-                })
+                if (replFiles.indexOf(fileName) >= 0) {
+                    for (let from of Object.keys(replacements)) {
+                        content = U.replaceAll(content, from, replacements[from])
+                    }
+                    if (opts.localDir) {
+                        data = new Buffer(content, "utf8")
+                    } else {
+                        // save it for developer inspection
+                        fs.writeFileSync("built/uploadrepl/" + fileName, content)
+                    }
+                } else if (fileName == "target.json") {
+                    let trg: pxt.TargetBundle = JSON.parse(content)
+                    if (opts.localDir) {
+                        for (let e of trg.appTheme.docMenu)
+                            if (e.path[0] == "/") {
+                                e.path = opts.localDir + "docs" + e.path + ".html"
+                            }
+                        trg.appTheme.logoUrl = opts.localDir
+                        trg.appTheme.homeUrl = opts.localDir
+                        data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                    } else {
+                        // expand usb help pages
+                        return Promise.all(
+                            (trg.appTheme.usbHelp || []).filter(h => !!h.path)
+                                .map(h => uploader.uploadArtAsync(h.path, true)
+                                    .then(blob => {
+                                        console.log(`target.json patch:    ${h.path} -> ${blob}`)
+                                        h.path = blob;
+                                    }))
+                        ).then(() => {
+                            content = JSON.stringify(trg, null, 2);
+                        })
+                    }
+                }
+            } else {
+                content = data.toString("base64")
+            }
+            return Promise.resolve()
+        }).then(() => {
+
+            if (opts.localDir) {
+                let fn = path.join(builtPackaged + opts.localDir, fileName)
+                nodeutil.mkdirP(path.dirname(fn))
+                return writeFileAsync(fn, data)
+            }
+
+            return Cloud.privatePostAsync(liteId + "/files", {
+                encoding: isText ? "utf8" : "base64",
+                filename: fileName,
+                contentType: mime,
+                content,
+            }).then(resp => {
+                console.log(fileName, mime)
             })
+        })
     }
 
     // only keep the last version of each uploadFileName()
@@ -852,19 +852,28 @@ function uploadCoreAsync(opts: UploadOptions) {
             else return Cloud.privatePostAsync("pointers", {
                 path: nodeutil.sanitizePath(opts.label),
                 releaseid: liteId
-            })
-                .then(() => {
-                    // tag release/v0.1.2 also as release/beta
-                    let beta = opts.label.replace(/\/v\d.*/, "/beta")
-                    if (beta == opts.label) return Promise.resolve()
-                    else {
-                        console.log("Also tagging with " + beta)
-                        return Cloud.privatePostAsync("pointers", {
-                            path: nodeutil.sanitizePath(beta),
-                            releaseid: liteId
-                        })
-                    }
+            }).then(() => {
+                // semver style update, if v0.1.2, setup v0.1
+                let mami = opts.label.replace(/\/v(\d+)\.(\d+)\.(\d+)$/, `/v\$1.\$2`)
+                if (opts.label == mami)
+                    return Promise.resolve();
+                console.log("Also tagging with " + mami)
+                return Cloud.privatePostAsync("pointers", {
+                    path: nodeutil.sanitizePath(mami),
+                    releaseid: liteId
                 })
+            }).then(() => {
+                // tag release/v0.1.2 also as release/beta
+                let beta = opts.label.replace(/\/v\d.*$/, "/beta")
+                if (beta == opts.label) return Promise.resolve()
+                else {
+                    console.log("Also tagging with " + beta)
+                    return Cloud.privatePostAsync("pointers", {
+                        path: nodeutil.sanitizePath(beta),
+                        releaseid: liteId
+                    })
+                }
+            })
         })
         .then(() => {
             console.log("All done; tagged with " + opts.label)
@@ -1520,7 +1529,7 @@ class SnippetHost implements pxt.Host {
     }
 
     private get dependencies(): { [key: string]: string } {
-        let stdDeps: { [key: string]: string } = { }
+        let stdDeps: { [key: string]: string } = {}
         for (let extraDep of this.extraDependencies) {
             stdDeps[extraDep] = `file:../${extraDep}`
         }
@@ -1757,7 +1766,7 @@ function addFile(name: string, cont: string) {
     if (ff.indexOf(name) < 0) {
         mainPkg.config.files.push(name)
         mainPkg.saveConfig()
-        console.log(U.lf("Added {0} to files in {1}.", name, pxt.configName))
+        console.log(U.lf("Added {0} to files in {1}.", name, pxt.CONFIG_NAME))
     }
 
     if (!fs.existsSync(name)) {
@@ -1840,8 +1849,8 @@ export function addAsync(...args: string[]) {
 }
 
 export function initAsync() {
-    if (fs.existsSync(pxt.configName))
-        U.userError(`${pxt.configName} already present`)
+    if (fs.existsSync(pxt.CONFIG_NAME))
+        U.userError(`${pxt.CONFIG_NAME} already present`)
 
     let prj = pxt.appTarget.tsprj;
     let config = U.clone(prj.config);
@@ -2355,7 +2364,7 @@ function simshimAsync() {
         if (!cont.trim()) continue
         cont = "// Auto-generated from simulator. Do not edit.\n" + cont +
             "\n// Auto-generated. Do not edit. Really.\n"
-        let cfgname = "libs/" + s + "/" + pxt.configName
+        let cfgname = "libs/" + s + "/" + pxt.CONFIG_NAME
         let cfg: pxt.PackageConfig = readJson(cfgname)
         if (cfg.files.indexOf(filename) == -1)
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
@@ -2503,7 +2512,7 @@ function testDirAsync(dir: string) {
                 base: base,
                 text: text
             })
-        } else if (fs.existsSync(full + "/" + pxt.configName)) {
+        } else if (fs.existsSync(full + "/" + pxt.CONFIG_NAME)) {
             tests.push({
                 filename: full,
                 base: fn,
@@ -2626,7 +2635,7 @@ function testDecompilerAsync(dir: string): Promise<void> {
         const stats = fs.statSync(testBlocksDir);
         testBlocksDirExists = stats.isDirectory();
     }
-    catch (e) {}
+    catch (e) { }
 
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
@@ -2753,11 +2762,11 @@ function testDecompilerErrorsAsync(dir: string) {
                     }
                 });
         })
-        .then(() => {
-            if (success) {
-                console.log(`decompiler error test OK: ${basename}`);
-            }
-        })
+            .then(() => {
+                if (success) {
+                    console.log(`decompiler error test OK: ${basename}`);
+                }
+            })
     })
         .then(() => {
             if (errors.length) {
@@ -3137,7 +3146,7 @@ export function extractAsync(filename: string) {
                 console.log("Detected .json file.")
                 return JSON.parse(str)
             } else if (buf[0] == 0x5d) { // JSZ
-                console.log("Detected .jsz file.")
+                console.log("Detected .jsz/.pxt file.")
                 return pxt.lzmaDecompressAsync(buf as any)
                     .then(str => JSON.parse(str))
             } else
@@ -3157,9 +3166,9 @@ export function extractAsync(filename: string) {
                 delete json.scripts
             }
 
-            if (json[pxt.configName]) {
+            if (json[pxt.CONFIG_NAME]) {
                 console.log("Raw JSON files.")
-                let cfg: pxt.PackageConfig = JSON.parse(json[pxt.configName])
+                let cfg: pxt.PackageConfig = JSON.parse(json[pxt.CONFIG_NAME])
                 let files = json
                 json = {
                     projects: [{
@@ -3312,7 +3321,7 @@ export function helpAsync(all?: string) {
 
 function goToPkgDir() {
     let goUp = (s: string): string => {
-        if (fs.existsSync(s + "/" + pxt.configName)) {
+        if (fs.existsSync(s + "/" + pxt.CONFIG_NAME)) {
             return s
         }
         let s2 = path.resolve(path.join(s, ".."))
@@ -3323,11 +3332,11 @@ function goToPkgDir() {
     }
     let dir = goUp(process.cwd())
     if (!dir) {
-        console.error(`Cannot find ${pxt.configName} in any of the parent directories.`)
+        console.error(`Cannot find ${pxt.CONFIG_NAME} in any of the parent directories.`)
         process.exit(1)
     } else {
         if (dir != process.cwd()) {
-            console.log(`Going up to ${dir} which has ${pxt.configName}`)
+            console.log(`Going up to ${dir} which has ${pxt.CONFIG_NAME}`)
             process.chdir(dir)
         }
     }

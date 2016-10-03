@@ -1,6 +1,8 @@
 
 namespace pxt.blocks.layout {
 
+    declare function unescape(escapeUri: string): string;
+
     export function verticalAlign(ws: B.Workspace, emPixels: number) {
         let blocks = ws.getTopBlocks(true);
         let y = 0
@@ -22,13 +24,16 @@ namespace pxt.blocks.layout {
         flow(blocks, ratio || 1.62);
     }
 
-    export function screenshot(ws: B.Workspace, name?: string) {
+    export function screenshot(ws: B.Workspace, callback: (uri: string, name: string) => any, name?: string) {
         toPngAsync(ws)
             .done(uri => {
-                if (uri)
-                    BrowserUtils.browserDownloadDataUri(
-                        uri,
-                        (name || `${pxt.appTarget.id}-${lf("screenshot")}`) + ".png");
+                if (uri) {
+                    try {
+                        callback(uri, name);
+                    } catch (e) {
+                        pxt.debug("saving screenshot failed")
+                    }
+                }
             })
 
     }
@@ -45,23 +50,24 @@ namespace pxt.blocks.layout {
         return toPngAsyncInternal(sg.width, sg.height, sg.xml);
     }
 
-    function toPngAsyncInternal(width: number, height: number, xml: string): Promise<string> {
+    function toPngAsyncInternal(width: number, height: number, data: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            let img = document.createElement("img") as HTMLImageElement;
-            img.onload = ev => {
-                let cvs = document.createElement("canvas") as HTMLCanvasElement;
-                cvs.width = width;
-                cvs.height = height;
-                let ctx = cvs.getContext("2d");
-                ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
-                let datauri = cvs.toDataURL("image/png");
-                resolve(datauri);
-            }
+            let cvs = document.createElement("canvas") as HTMLCanvasElement,
+                ctx = cvs.getContext("2d");
+            let img = new Image;
+
+            cvs.width = width;
+            cvs.height = height;
+            img.onload = function () {
+                ctx.drawImage(img, 0, 0, width, height);
+                const canvasdata = cvs.toDataURL("image/png");
+                resolve(canvasdata);
+            };
             img.onerror = ev => {
-                pxt.reportError("blocks screenshot failed", xml);
+                pxt.reportError("blocks screenshot failed", data);
                 resolve(undefined)
             }
-            img.src = "data:image/svg+xml," + encodeURI(xml);
+            img.src = data;
         })
     }
 
@@ -70,7 +76,7 @@ namespace pxt.blocks.layout {
     } {
         if (!ws) return undefined;
 
-        const bbox = (ws as any).svgBlockCanvas_.getBBox();
+        const bbox = (document.getElementsByClassName("blocklyBlockCanvas")[0] as any).getBBox();
         let sg = (ws as any).svgBlockCanvas_.cloneNode(true) as SVGGElement;
 
         const customCss = `
@@ -114,17 +120,18 @@ namespace pxt.blocks.layout {
         sg.removeAttribute("transform");
 
         let xsg = new DOMParser().parseFromString(
-            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="${x} ${y} ${width} ${height}">
-${new XMLSerializer().serializeToString(sg)}
-</svg>`, "image/svg+xml");
-
+            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${(Math.abs(x) + width)}" height="${(Math.abs(y) + height)}" viewBox="${x} ${y} ${width} ${height}">
+            ${new XMLSerializer().serializeToString(sg)}
+            </svg>`, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
         // CSS may contain <, > which need to be stored in CDATA section
         cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
         xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
-        let xml = new XMLSerializer().serializeToString(xsg);
-        return { width, height, xml };
+        const xml = new XMLSerializer().serializeToString(xsg);
+        const data = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+
+        return { width: width, height: height, xml: data };
     }
 
     function flow(blocks: Blockly.Block[], ratio: number) {

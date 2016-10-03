@@ -67,7 +67,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         target: currentTarget,
         name: pkg.config.name,
         meta: {},
-        editor: pxt.javaScriptProjectName,
+        editor: pxt.JAVASCRIPT_PROJECT_NAME,
         pubId: pkg.config.installedVersion,
         pubCurrent: false,
         _rev: null,
