@@ -295,6 +295,7 @@ namespace ts.pxtc {
         qName: string;
         attrs: CommentAttrs;
         args: Expression[];
+        isExpression: boolean;
     }
 
     export interface ClassInfo {
@@ -1337,6 +1338,7 @@ ${lbl}: .short 0xffff
                 qName: getFullName(checker, decl.symbol),
                 attrs,
                 args: [],
+                isExpression: true
             };
             (node as any).callInfo = callInfo;
             if (decl.kind == SK.EnumMember) {
@@ -1581,7 +1583,8 @@ ${lbl}: .short 0xffff
                 decl,
                 qName: decl ? getFullName(checker, decl.symbol) : "?",
                 attrs,
-                args: args.slice(0)
+                args: args.slice(0),
+                isExpression: hasRet
             };
             (node as any).callInfo = callInfo
 
@@ -1757,7 +1760,7 @@ ${lbl}: .short 0xffff
 
         function layOutGlobals() {
             let globals = bin.globals.slice(0)
-            // stable-sort globals, with smallest first, because "strh/b" have 
+            // stable-sort globals, with smallest first, because "strh/b" have
             // smaller immediate range than plain "str" (and same for "ldr")
             globals.forEach((g, i) => g.index = i)
             globals.sort((a, b) =>
@@ -2635,7 +2638,7 @@ ${lbl}: .short 0xffff
                 return
             }
 
-            //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it 
+            //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it
             markUsed(declList.declarations[0])
             let iterVar = emitVariableDeclaration(declList.declarations[0]) // c
             //Start with null, TODO: Is this necessary
@@ -2772,7 +2775,7 @@ ${lbl}: .short 0xffff
                         }
                     }
                 } else if (cl.kind == SK.DefaultClause) {
-                    // Save default label for emit at the end of the 
+                    // Save default label for emit at the end of the
                     // tests section. Default label doesn't have to come at the
                     // end in JS.
                     assert(!defaultLabel)
@@ -2982,7 +2985,7 @@ ${lbl}: .short 0xffff
                 case SK.NumericLiteral:
                 case SK.StringLiteral:
                 case SK.NoSubstitutionTemplateLiteral:
-                    //case SyntaxKind.RegularExpressionLiteral:                    
+                    //case SyntaxKind.RegularExpressionLiteral:
                     return emitLiteral(<LiteralExpression>node);
                 case SK.PropertyAccessExpression:
                     return emitPropertyAccess(<PropertyAccessExpression>node);
@@ -3024,7 +3027,7 @@ ${lbl}: .short 0xffff
                     unhandled(node);
                     return null
 
-                /*    
+                /*
                 case SyntaxKind.TemplateSpan:
                     return emitTemplateSpan(<TemplateSpan>node);
                 case SyntaxKind.Parameter:
