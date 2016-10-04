@@ -295,6 +295,7 @@ namespace ts.pxtc {
         qName: string;
         attrs: CommentAttrs;
         args: Expression[];
+        isExpression: boolean;
     }
 
     export interface ClassInfo {
@@ -1346,6 +1347,7 @@ ${lbl}: .short 0xffff
                 qName: getFullName(checker, decl.symbol),
                 attrs,
                 args: [],
+                isExpression: true
             };
             (node as any).callInfo = callInfo;
             if (decl.kind == SK.EnumMember) {
@@ -1590,7 +1592,8 @@ ${lbl}: .short 0xffff
                 decl,
                 qName: decl ? getFullName(checker, decl.symbol) : "?",
                 attrs,
-                args: args.slice(0)
+                args: args.slice(0),
+                isExpression: hasRet
             };
             (node as any).callInfo = callInfo
 
