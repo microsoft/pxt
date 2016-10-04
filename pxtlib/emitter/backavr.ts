@@ -39,6 +39,7 @@ namespace ts.pxtc {
     * R1 The zero-register is implicity call-saved (implicit because R1 is a fixed register). 
     */
 
+   /*
    export class AVRSnippets extends AssemblerSnippets  {
         nop() { return "nop" }
         // reg is a single register
@@ -74,5 +75,5 @@ namespace ts.pxtc {
         lsls(reg: string, imm: number) { return "TBD" }
         negs(reg: string) { return "TBD" }
     }
-
+    */
 }
