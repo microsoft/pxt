@@ -31,9 +31,7 @@ namespace ts.pxtc {
 
     export abstract class AssemblerSnippets {
         nop() { return "TBD " }
-        // reg is a single register
         reg_gets_imm(reg: string, imm: number) { return "TBD" }
-        // reg is of the form "{ rx, ry, ... }"
         push(reg: string[]) { return "TBD" }
         pop(reg: string[]) { return "TBD" }
         debugger_hook(lbl: string) { return "TBD" }
@@ -49,18 +47,15 @@ namespace ts.pxtc {
         // inf?  - control over size of referenced data
         // str?  - true=Store/false=Load
         load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
-        // r0 and r1 are single registers   
         rt_call(name: string, r0: string, r1: string) { return "TBD"; }
-        call_lbl(name: string) { return "TBD" }
-        call_reg(name: string) { return "TBD" }
+        call_lbl(lbl: string) { return "TBD" }
+        call_reg(reg: string) { return "TBD" }
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) { return "TBD" }
         prologue_vtable(arg_index: number, vtableShift: number) { return "TBD" }
         lambda_prologue() { return "TBD" }
         lambda_epilogue() { return "TBD" }
         load_ptr(lbl: string, reg: string) { return "TBD" }
-        // reg is a single register
         adds(reg: string, imm: number) { return "TBD" }
-        movs(reg: string, imm: number) { return "TBD" }
         lsls(reg: string, imm: number) { return "TBD" }
         negs(reg: string) { return "TBD" }
     }
@@ -613,7 +608,7 @@ ${baseLabel}:
                     if (v)
                         write(t.adds(reg, v))
                 } else
-                    write(t.movs(reg, v))
+                    write(t.reg_gets_imm(reg, v))
                 movWritten = true
             }
 

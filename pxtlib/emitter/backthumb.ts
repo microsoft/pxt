@@ -60,8 +60,8 @@ ${lbl}:`
         rt_call(name: string, r0: string, r1: string) {
             return name + " " + r0 + ", " + r1;
         }
-        call_lbl(name: string) {
-            return "bl " + name;
+        call_lbl(lbl: string) {
+            return "bl " + lbl;
         }
         call_reg(reg: string) {
             return "blx " + reg;
@@ -117,9 +117,6 @@ ${lbl}:`
         }
         adds(reg: string, imm: number) {
             return `adds ${reg}, #${imm}`
-        }
-        movs(reg: string, imm: number) {
-            return `movs ${reg}, #${imm}`
         }
         lsls(reg: string, imm: number) {
             return `lsls ${reg}, ${reg}, #${imm}`
