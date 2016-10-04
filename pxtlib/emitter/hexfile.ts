@@ -25,7 +25,6 @@ namespace ts.pxtc {
             return r
         }
 
-        // TODO: generalize and lift out ARM-specific code
         export function setupInlineAssembly(opts: CompileOptions) {
             asmLabels = {}
             let asmSources = opts.sourceFiles.filter(f => U.endsWith(f, ".asm"))

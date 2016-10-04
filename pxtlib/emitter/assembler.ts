@@ -325,13 +325,11 @@ namespace ts.pxtc.assembler {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
                     if (this.stackpointers.hasOwnProperty(m[1]))
-                        // TODO: ARM-specific???
                         v = 4 * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
                     else
                         this.directiveError(lf("saved stack not found"))
                 }
 
-                // TODO: ARM-specific???
                 m = /^(.*)@(hi|lo)$/.exec(s)
                 if (m && this.looksLikeLabel(m[1])) {
                     v = this.lookupLabel(m[1], true)
@@ -387,7 +385,6 @@ namespace ts.pxtc.assembler {
                 if (this.finalEmit)
                     this.directiveError(lf("unknown label: {0}", name));
                 else
-                    // Is this a joke?
                     v = 42;
             }
             return v;

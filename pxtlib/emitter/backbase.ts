@@ -21,11 +21,12 @@ namespace ts.pxtc {
     // Assumptions:
     //
     // - special registers include: pc, lr
-    // - registers are 32-bit (really???)
+    // - registers are 32-bit
     // - pop/push receive register sets: { r0, r3, r4 }
     // - r0 is the current value (from expression evaluation)
-    // - also used (fixed) are r1, r2, r5, r6 (what about r3, r4?)
-    // - registers for runtime calls (r1,r2,r3)
+    // - also used (fixed) are r1, r2, r5, r6 
+    // - registers for runtime calls (r0, r1,r2,r3)
+    // - r5 is for captured locals in lambda and r6 for global
     // - arguments passed on stack (user functions)
 
     export abstract class AssemblerSnippets {
