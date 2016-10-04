@@ -2330,7 +2330,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
     */
 }
 
-function testAssemblers(): Promise<void>  {
+function testAssemblers(): Promise<void> {
     console.log("- testing Thumb")
     pxtc.thumb.test();
     console.log("- done testing Thumb");

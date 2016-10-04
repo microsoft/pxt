@@ -120,12 +120,12 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         headers: { "Authorization": Cloud.localToken },
         method: "POST",
         data: resp,
-        allowHttpErrors: true
+        allowHttpErrors: true // To prevent "Network request failed" warning in case of error. We're not actually doing network requests in localhost scenarios
     }).then(r => {
-        if (r.statusCode == 404) {
-            core.errorNotification(lf("Please connect your {0} to your computer and try again", pxt.appTarget.appTheme.boardName));
-        } else if (r.statusCode !== 200) {
+        if (r.statusCode !== 200) {
             core.errorNotification(lf("There was a problem, please try again"));
+        } else if (r.json["boardCount"] === 0) {
+            core.warningNotification(lf("Please connect your {0} to your computer and try again", pxt.appTarget.appTheme.boardName));
         }
     });
 
