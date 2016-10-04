@@ -26,7 +26,7 @@ namespace ts.pxtc {
     // - r0 is the current value (from expression evaluation)
     // - also used (fixed) are r1, r2, r5, r6 
     // - registers for runtime calls (r0, r1,r2,r3)
-    // - r5 is for captured locals in lambda and r6 for global
+    // - r5 is for captured locals in lambda and r6 for global{}
     // - arguments passed on stack (user functions)
 
     export abstract class AssemblerSnippets {
@@ -34,8 +34,8 @@ namespace ts.pxtc {
         // reg is a single register
         reg_gets_imm(reg: string, imm: number) { return "TBD" }
         // reg is of the form "{ rx, ry, ... }"
-        push(reg: string) { return "TBD" }
-        pop(reg: string) { return "TBD" }
+        push(reg: string[]) { return "TBD" }
+        pop(reg: string[]) { return "TBD" }
         debugger_hook(lbl: string) { return "TBD" }
         debugger_bkpt(lbl: string) { return "TBD" }
         breakpoint() { return "TBD" }
@@ -109,7 +109,7 @@ ${baseLabel}:
     @stackmark func
     @stackmark args
 `)
-            this.write(this.t.push("{lr}"))
+            this.write(this.t.push(["lr"]))
 
             // create a new function for later use by hex file generation
             this.proc.fillDebugInfo = th => {
@@ -147,7 +147,7 @@ ${baseLabel}:
             if (numlocals > 0)
                 this.write(this.t.reg_gets_imm("r0", 0));
             this.proc.locals.forEach(l => {
-                this.write(this.t.push("{r0}") + " ;loc")
+                this.write(this.t.push(["r0"]) + " ;loc")
             })
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
@@ -200,7 +200,7 @@ ${baseLabel}:
             assert(0 <= numlocals && numlocals < 127);
             if (numlocals > 0)
                 this.write(this.t.pop_locals(numlocals))
-            this.write(this.t.pop("{pc}"))
+            this.write(this.t.pop(["pc"]))
             this.write("@stackempty func");
             this.write("@stackempty args")
 
@@ -301,7 +301,7 @@ ${baseLabel}:
                     let idx = this.exprStack.indexOf(arg)
                     U.assert(idx >= 0)
                     if (idx == 0 && arg.totalUses == arg.currUses) {
-                        this.write(this.t.pop(`{${reg}}`) + `; tmpref @${this.exprStack.length}`)
+                        this.write(this.t.pop([reg]) + `; tmpref @${this.exprStack.length}`)
                         this.exprStack.shift()
                         this.clearStack()
                     } else {
@@ -393,7 +393,7 @@ ${baseLabel}:
             else {
                 this.emitExpr(arg)
                 this.exprStack.unshift(arg)
-                this.write(this.t.push("{r0}") + "; tmpstore @" + this.exprStack.length)
+                this.write(this.t.push(["r0"]) + "; tmpstore @" + this.exprStack.length)
             }
         }
 
@@ -440,7 +440,7 @@ ${baseLabel}:
             //console.log("PROCCALL", topExpr.toString())
             let argStmts = topExpr.args.map((a, i) => {
                 this.emitExpr(a)
-                this.write(this.t.push("{r0}") + " ; proc-arg")
+                this.write(this.t.push(["r0"]) + " ; proc-arg")
                 a.totalUses = 1
                 a.currUses = 0
                 this.exprStack.unshift(a)
@@ -556,15 +556,15 @@ ${baseLabel}:
                 this.write(".themain:")
             let parms = this.proc.args.map(a => a.def)
             if (parms.length >= 1)
-                this.write(this.t.push("{r1, r5, r6, lr}"))
+                this.write(this.t.push(["r1", "r5", "r6", "lr"]))
             else
-                this.write(this.t.push("{r5, r6, lr}"))
+                this.write(this.t.push(["r5", "r6", "lr"]))
 
             parms.forEach((_, i) => {
                 if (i >= 3)
                     U.userError(U.lf("only up to three parameters supported in lambdas"))
                 if (i > 0) // r1 already done
-                    this.write(this.t.push(`{r${i + 1}}`))
+                    this.write(this.t.push([`r${i + 1}`]))
             })
 
             let asm = this.t.lambda_prologue()
@@ -584,7 +584,7 @@ ${baseLabel}:
 
             if (parms.length)
                 this.write(this.t.pop_locals(parms.length))
-            this.write(this.t.pop("{r5, r6, pc}"))
+            this.write(this.t.pop(["r5", "r6", "pc"]))
             this.write("@stackempty litfunc");
         }
 

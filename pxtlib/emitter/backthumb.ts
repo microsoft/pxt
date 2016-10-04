@@ -6,8 +6,8 @@ namespace ts.pxtc {
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
-        push(reg: string) { return `push ${reg}` }
-        pop(reg: string) { return `pop ${reg}` }
+        push(regs: string[]) { return "push {" + regs.join(", ") + "}"}
+        pop(regs: string[]) { return "pop {" + regs.join(", ") + "}"}
 
         debugger_hook(lbl: string) {
             return `
@@ -32,11 +32,7 @@ ${lbl}:`
         }
 
         pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
-<<<<<<< HEAD
-        unconditional_branch(lbl: string) { return "b " + lbl; }
-=======
         unconditional_branch(lbl: string) { return "bb " + lbl; }
->>>>>>> refs/remotes/origin/master
         beq(lbl: string) { return "beq " + lbl }
         bne(lbl: string) { return "bne " + lbl }
         cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
