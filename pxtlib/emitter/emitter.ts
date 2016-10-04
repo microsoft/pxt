@@ -50,7 +50,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9257
+    // next free error 9259
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -1252,10 +1252,10 @@ ${lbl}: .short 0xffff
                     const parsed = parseFloat(node.text)
                     if (!opts.target.floatingPoint) {
                         if (Math.floor(parsed) !== parsed) {
-                            userError(9242, lf("Decimal numbers are not supported"))
+                            userError(9257, lf("Decimal numbers are not supported"))
                         }
                         else if (parsed << 0 !== parsed) {
-                            userError(9243, lf("Number is either too big or too small"))
+                            userError(9258, lf("Number is either too big or too small"))
                         }
                     }
                     return ir.numlit(parsed)
