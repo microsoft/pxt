@@ -689,14 +689,6 @@ namespace pxt.blocks {
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
         msg.HELP = "Help";
 
-        let screenshotCallback = ((uri: string, fileName: string) => {
-            if (pxt.BrowserUtils.isSafari())
-                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-            BrowserUtils.browserDownloadDataUri(
-                uri,
-                (fileName || `${pxt.appTarget.id}-${lf("screenshot")}`) + ".png");
-        });
-
         /**
          * Show the context menu for the workspace.
          * @param {!Event} e Mouse event.
@@ -830,7 +822,14 @@ namespace pxt.blocks {
                 text: lf("Download Screenshot"),
                 enabled: topBlocks.length > 0,
                 callback: () => {
-                    pxt.blocks.layout.screenshot(this, screenshotCallback);
+                    pxt.blocks.layout.screenshotAsync(this)
+                    .then((uri) => {
+                        if (pxt.BrowserUtils.isSafari())
+                            uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+                        BrowserUtils.browserDownloadDataUri(
+                            uri,
+                            `${pxt.appTarget.id}-${lf("screenshot")}.png`);
+                    });
                 }
             };
             menuOptions.push(screenshotOption);
