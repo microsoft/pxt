@@ -498,23 +498,8 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function extractNumber(b: B.Block): number {
-        const isFloatingPoint = pxt.appTarget.compile.floatingPoint;
         let v = b.getFieldValue("NUM");
-        if (isFloatingPoint) {
-            let f = parseFloat(v);
-            if (f >> 0 != f) {
-                Errors.report(v + " is either too big or too small", b);
-                return 0;
-            }
-            return f;
-        } else {
-            let i = parseInt(v);
-            if (i >> 0 != i) {
-                Errors.report(v + " is either too big or too small", b);
-                return 0;
-            }
-            return i;
-        }
+        return parseFloat(v);
     }
 
     function compileNumber(e: Environment, b: B.Block, comments: string[]): Node {
