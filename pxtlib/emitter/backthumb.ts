@@ -32,7 +32,7 @@ ${lbl}:`
         }
 
         pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
-        unconditional_branch(lbl: string) { return "b " + lbl; }
+        unconditional_branch(lbl: string) { return "bb " + lbl; }
         beq(lbl: string) { return "beq " + lbl }
         bne(lbl: string) { return "bne " + lbl }
         cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
