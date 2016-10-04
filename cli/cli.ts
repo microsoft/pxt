@@ -22,7 +22,7 @@ import * as uploader from './uploader';
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 
 function initTargetCommands() {
-    let cmdsjs = path.join(process.cwd(), nodeutil.targetDir, 'built/cmds.js');
+    let cmdsjs = path.join(nodeutil.targetDir, 'built/cmds.js');
     if (fs.existsSync(cmdsjs)) {
         pxt.debug(`loading cli extensions...`)
         let cli = require.main.require(cmdsjs)
