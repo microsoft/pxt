@@ -1919,7 +1919,7 @@ $(document).ready(() => {
                         .then(hd => theEditor.loadHeaderAsync(hd))
                 case "project":
                     let fileContents = Util.stringToUint8Array(atob(hash.arg));
-                    return theEditor.importProjectFromFileAsync(fileContents);  
+                    return theEditor.importProjectFromFileAsync(fileContents);
                 default:
                     handleHash(hash); break;
             }
