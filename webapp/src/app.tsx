@@ -1825,7 +1825,9 @@ function initHashchange() {
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
-    sandbox = /sandbox=1|#sandbox/i.test(window.location.href);
+    sandbox = /sandbox=1|#sandbox/i.test(window.location.href)
+        // in iframe
+        || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
