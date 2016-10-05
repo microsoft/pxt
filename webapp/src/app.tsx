@@ -1444,7 +1444,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             {sandbox ? undefined : <div className="ui buttons">
                                 <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
-                                    {this.state.header && packages && sharingEnabled? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
+                                    {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
