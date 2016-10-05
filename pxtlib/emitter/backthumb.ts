@@ -6,8 +6,8 @@ namespace ts.pxtc {
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
-        push(reg: string) { return `push ${reg}` }
-        pop(reg: string) { return `pop ${reg}` }
+        push(regs: string[]) { return "push {" + regs.join(", ") + "}"}
+        pop(regs: string[]) { return "pop {" + regs.join(", ") + "}"}
 
         debugger_hook(lbl: string) {
             return `
@@ -32,7 +32,7 @@ ${lbl}:`
         }
 
         pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
-        unconditional_branch(lbl: string) { return "b " + lbl; }
+        unconditional_branch(lbl: string) { return "bb " + lbl; }
         beq(lbl: string) { return "beq " + lbl }
         bne(lbl: string) { return "bne " + lbl }
         cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
@@ -60,8 +60,8 @@ ${lbl}:`
         rt_call(name: string, r0: string, r1: string) {
             return name + " " + r0 + ", " + r1;
         }
-        call_lbl(name: string) {
-            return "bl " + name;
+        call_lbl(lbl: string) {
+            return "bl " + lbl;
         }
         call_reg(reg: string) {
             return "blx " + reg;
@@ -117,9 +117,6 @@ ${lbl}:`
         }
         adds(reg: string, imm: number) {
             return `adds ${reg}, #${imm}`
-        }
-        movs(reg: string, imm: number) {
-            return `movs ${reg}, #${imm}`
         }
         lsls(reg: string, imm: number) {
             return `lsls ${reg}, ${reg}, #${imm}`
