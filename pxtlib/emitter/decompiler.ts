@@ -891,7 +891,7 @@ ${output}</xml>`;
         }
 
         function findVariableName(name: string) {
-            for (var i = scopes.length - 1; i >= 0; i--) {
+            for (let i = scopes.length - 1; i >= 0; i--) {
                 if (scopes[i][name]) {
                     return scopes[i][name];
                 }
