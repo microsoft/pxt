@@ -681,7 +681,7 @@ namespace ts.pxtc {
             res.usedArguments = {}
         }
 
-        let allStmts = res.diagnostics.length > 0
+        let allStmts = opts.forceEmit && res.diagnostics.length > 0
             ? [] // TODO: panic
             : Util.concat(program.getSourceFiles().map(f => f.statements))
 
