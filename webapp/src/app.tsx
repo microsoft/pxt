@@ -1770,7 +1770,7 @@ function initTheme() {
 function parseHash(): { cmd: string; arg: string } {
     let hashCmd = ""
     let hashArg = ""
-    let hashM = /^#(\w+)(:([\/\-\w]+))?$/.exec(window.location.hash)
+    let hashM = /^#(\w+)(:([\/\-\+\=\w]+))?$/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }
@@ -1813,6 +1813,12 @@ function handleHash(hash: { cmd: string; arg: string }) {
                 : workspace.installByIdAsync(hash.arg)
                     .then(hd => theEditor.loadHeaderAsync(hd)))
                 .done(() => core.hideLoading())
+        case "sandboxproject":
+        case "project":
+            let fileContents = Util.stringToUint8Array(atob(hash.arg));
+            core.showLoading(lf("loading project..."))
+            return theEditor.importProjectFromFileAsync(fileContents)
+                .done(() => core.hideLoading())
     }
 }
 
@@ -1825,7 +1831,7 @@ function initHashchange() {
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
-    sandbox = /sandbox=1|#sandbox/i.test(window.location.href)
+    sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
         // in iframe
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
@@ -1889,6 +1895,9 @@ $(document).ready(() => {
                         return theEditor.loadHeaderAsync(existing)
                     else return workspace.installByIdAsync(hash.arg)
                         .then(hd => theEditor.loadHeaderAsync(hd))
+                case "project":
+                    let fileContents = Util.stringToUint8Array(atob(hash.arg));
+                    return theEditor.importProjectFromFileAsync(fileContents);  
                 default:
                     handleHash(hash); break;
             }
