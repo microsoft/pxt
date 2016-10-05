@@ -341,10 +341,6 @@ export class Editor extends srceditor.Editor {
 
     cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
-        for (const block of blocks) {
-            if (block.isShadow_) {
-                block.dispose(false);
-            }
-        }
+        blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
 }
