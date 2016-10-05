@@ -58,6 +58,8 @@ declare namespace pxt {
     interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
+        sharing?: boolean;
+        publishing?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
     }
 
