@@ -1228,6 +1228,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         core.warningNotification(lf(".hex file upload, please try again."));
                         pxt.reportException(e, resp);
                     })
+            }).catch(e => {
+                pxt.reportError('compile failed', e);
             }).done();
     }
 
