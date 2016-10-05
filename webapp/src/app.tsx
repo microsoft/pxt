@@ -1081,9 +1081,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.scriptSearch.modal.show()
     }
 
-    saveProjectToFile() {
-        const mpkg = pkg.mainPkg
-        this.saveFileAsync()
+    exportProjectToFileAsync(): Promise<Uint8Array> {
+        const mpkg = pkg.mainPkg;
+        return this.saveFileAsync()
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
                 const project: pxt.cpp.HexFile = {
@@ -1096,7 +1096,29 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     source: JSON.stringify(files, null, 2)
                 }
                 return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
-            }).done((buf: Uint8Array) => {
+            });
+    }
+
+    exportAsync(): Promise<string> {
+        pxt.debug("exporting project");
+        return this.exportProjectToFileAsync()
+            .then((buf) => {
+                return window.btoa(Util.uint8ArrayToString(buf));
+            });
+    }
+
+    importProjectFromFileAsync(buf: Uint8Array): Promise<void> {
+        return pxt.lzmaDecompressAsync(buf)
+            .then((project) => {
+                let hexFile = JSON.parse(project) as pxt.cpp.HexFile;
+                return this.importHex(hexFile);
+            })
+    }
+
+    saveProjectToFile() {
+        const mpkg = pkg.mainPkg
+        this.exportProjectToFileAsync()
+            .done((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".pxt");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
@@ -1411,6 +1433,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const targetTheme = pxt.appTarget.appTheme;
         const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
+        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
         const compile = pxt.appTarget.compile;
         const compileDisabled = !compile || (compile.simulatorPostMessage && !this.state.simulatorCompilation);
         const simOpts = pxt.appTarget.simulator;
@@ -1433,17 +1456,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
                                 {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='configure' class="secondary portrait only" onClick={() => this.openInstructions() } /> : undefined }
                                 <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
-                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="undo" onClick={() => this.editor.undo() } />}
-                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" text={lf("Undo") } icon="undo" onClick={() => this.editor.undo() } />}
                                 {this.editor.menu() }
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="folder open" onClick={() => this.openProject() } /> }
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" icon="folder open" text={lf("Open...") } onClick={() => this.openProject() } /> }
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="folder save" onClick={() => this.saveProjectToFile() } /> }
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" icon="folder save" text={lf("Save...") } onClick={() => this.saveProjectToFile() } /> }
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             {sandbox ? undefined : <div className="ui buttons">
                                 <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
-                                    <sui.Item role="menuitem" icon="folder open" text={lf("Open Project...") } onClick={() => this.openProject() } />
-                                    <sui.Item role="menuitem" icon="folder save" text={lf("Save Project...") } onClick={() => this.saveProjectToFile() } />
-                                    {this.state.header && packages ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
+                                    {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
@@ -1508,7 +1531,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 {sandbox || pxt.options.light ? undefined : <SideDocs ref="sidedoc" parent={this} />}
                 {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
-                {sandbox ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {sandbox || !sharingEnabled ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
                     <a className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
@@ -1770,7 +1793,7 @@ function initTheme() {
 function parseHash(): { cmd: string; arg: string } {
     let hashCmd = ""
     let hashArg = ""
-    let hashM = /^#(\w+)(:([\/\-\w]+))?$/.exec(window.location.hash)
+    let hashM = /^#(\w+)(:([\/\-\+\=\w]+))?$/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }
@@ -1813,6 +1836,12 @@ function handleHash(hash: { cmd: string; arg: string }) {
                 : workspace.installByIdAsync(hash.arg)
                     .then(hd => theEditor.loadHeaderAsync(hd)))
                 .done(() => core.hideLoading())
+        case "sandboxproject":
+        case "project":
+            let fileContents = Util.stringToUint8Array(atob(hash.arg));
+            core.showLoading(lf("loading project..."))
+            return theEditor.importProjectFromFileAsync(fileContents)
+                .done(() => core.hideLoading())
     }
 }
 
@@ -1825,7 +1854,9 @@ function initHashchange() {
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
-    sandbox = /sandbox=1|#sandbox/i.test(window.location.href);
+    sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
+        // in iframe
+        || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
     let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -1887,6 +1918,9 @@ $(document).ready(() => {
                         return theEditor.loadHeaderAsync(existing)
                     else return workspace.installByIdAsync(hash.arg)
                         .then(hd => theEditor.loadHeaderAsync(hd))
+                case "project":
+                    let fileContents = Util.stringToUint8Array(atob(hash.arg));
+                    return theEditor.importProjectFromFileAsync(fileContents);
                 default:
                     handleHash(hash); break;
             }

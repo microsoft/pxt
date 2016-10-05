@@ -823,7 +823,7 @@ namespace pxt.blocks {
                 enabled: topBlocks.length > 0,
                 callback: () => {
                     pxt.blocks.layout.screenshotAsync(this)
-                    .then((uri) => {
+                    .done((uri) => {
                         if (pxt.BrowserUtils.isSafari())
                             uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
                         BrowserUtils.browserDownloadDataUri(
