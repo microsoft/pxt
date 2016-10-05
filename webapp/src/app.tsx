@@ -1081,9 +1081,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.scriptSearch.modal.show()
     }
 
-    saveProjectToFile() {
-        const mpkg = pkg.mainPkg
-        this.saveFileAsync()
+    exportProjectToFileAsync(): Promise<Uint8Array> {
+        const mpkg = pkg.mainPkg;
+        return this.saveFileAsync()
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
                 const project: pxt.cpp.HexFile = {
@@ -1096,7 +1096,29 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     source: JSON.stringify(files, null, 2)
                 }
                 return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
-            }).done((buf: Uint8Array) => {
+            });
+    }
+
+    exportAsync(): Promise<string> {
+        pxt.debug("exporting project");
+        return this.exportProjectToFileAsync()
+            .then((buf) => {
+                return window.btoa(Util.uint8ArrayToString(buf));
+            });
+    }
+
+    importProjectFromFileAsync(buf: Uint8Array): Promise<void> {
+        return pxt.lzmaDecompressAsync(buf)
+            .then((project) => {
+                let hexFile = JSON.parse(project) as pxt.cpp.HexFile;
+                return this.importHex(hexFile);
+            })
+    }
+
+    saveProjectToFile() {
+        const mpkg = pkg.mainPkg
+        this.exportProjectToFileAsync()
+            .done((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".pxt");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
