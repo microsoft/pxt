@@ -395,26 +395,27 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
-        if (this.modal && this.modal.state.visible == false) return false;
+        if (this.modal && !this.modal.state.visible) return false;
         return true;
     }
 
     renderCore() {
         const header = this.props.parent.state.header;
+        let currentPubId = this.state.currentPubId;
         if (!header) return <div></div>
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
 
         const mode = this.state.mode;
-        const ready = (!!this.state.currentPubId && header.pubCurrent);
+        const ready = (!!currentPubId && header.pubCurrent);
         let url = '';
         let embed = '';
         let help = lf("Copy this HTML to your website or blog.");
         let helpUrl = "/share";
         if (ready) {
             url = `${rootUrl}${header.pubId}`;
-            let editUrl = `${rootUrl}#${this.state.publishingEnabled ? 'pub' : 'project'}:${this.state.currentPubId}`;
+            let editUrl = `${rootUrl}#${this.state.publishingEnabled ? 'pub' : 'project'}:${currentPubId}`;
             switch (mode) {
                 case ShareMode.Cli:
                     embed = `pxt extract ${header.pubId}`;
@@ -428,11 +429,11 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                     embed = pxt.docs.runUrl(pxt.webConfig.runUrl || rootUrl + "--run", padding, header.pubId);
                     break;
                 case ShareMode.Editor:
-                    embed = pxt.docs.embedUrl(rootUrl, this.state.publishingEnabled ? 'sandbox' : 'sandboxproject', this.state.currentPubId, header.meta.blocksHeight);
+                    embed = pxt.docs.embedUrl(rootUrl, this.state.publishingEnabled ? 'sandbox' : 'sandboxproject', currentPubId, header.meta.blocksHeight);
                     break;
                 default:
                     // render svg
-                    if (this.state.screenshotId == this.state.currentPubId) {
+                    if (this.state.screenshotId == currentPubId) {
                         if (this.state.screenshotUri)
                             embed = `<a href="${editUrl}"><img src="${this.state.screenshotUri}" /></a>`
                         else embed = lf("Ooops, no screenshot available.");
@@ -440,7 +441,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                         pxt.debug("rendering share-editor screenshot png");
                         embed = lf("rendering...");
                         pxt.blocks.layout.toPngAsync(this.props.parent.blocksEditor.editor)
-                            .done(uri => this.setState({ screenshotId: this.state.currentPubId, screenshotUri: uri }));
+                            .done(uri => this.setState({ screenshotId: currentPubId, screenshotUri: uri }));
                     }
                     break;
                 }
