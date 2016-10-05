@@ -1,34 +1,35 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="test_no_argument">
-<next>
-<block type="test_boolean_argument">
+<block type="test_no_argument_output">
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+<block type="test_boolean_argument_output">
 <value name="arg">
 <shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
 </shadow>
 </value>
-<next>
-<block type="test_number_argument">
+</block>
+<block type="test_number_argument_output">
 <value name="arg">
 <shadow type="math_number">
 <field name="NUM">5</field>
 </shadow>
 </value>
-<next>
-<block type="test_string_argument">
+</block>
+<block type="test_string_argument_output">
 <value name="arg">
 <shadow type="text">
 <field name="TEXT">okay</field>
 </shadow>
 </value>
-<next>
-<block type="test_enum_argument">
+</block>
+<block type="test_enum_argument_output">
 <field name="arg">TestEnum.testValue1</field>
-<next>
-<block type="test_enum_function_argument">
+</block>
+<block type="test_enum_function_argument_output">
 <field name="arg">EnumWithValueBlock.testValue2</field>
-<next>
-<block type="test_multiple_arguments">
+</block>
+<block type="test_multiple_argument_output">
 <value name="arg1">
 <shadow type="math_number">
 <field name="NUM">2</field>
@@ -39,18 +40,5 @@
 <field name="BOOL">FALSE</field>
 </shadow>
 </value>
-</block>
-</next>
-</block>
-</next>
-</block>
-</next>
-</block>
-</next>
-</block>
-</next>
-</block>
-</next>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </xml>

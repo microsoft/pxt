@@ -1,3 +1,5 @@
+// TODO: add a macro facility to make 8-bit assembly easier?
+
 namespace ts.pxtc.assembler {
 
     export interface InlineError {
@@ -37,6 +39,7 @@ namespace ts.pxtc.assembler {
         public friendlyFmt: string;
         public code: string;
         private ei: EncodersInstructions;
+        public is32bit: boolean;
 
         constructor(ei: EncodersInstructions, format: string, public opcode: number, public mask: number, public jsFormat: string) {
             assert((opcode & mask) == opcode)
@@ -53,6 +56,8 @@ namespace ts.pxtc.assembler {
             let words = tokenize(format)
             this.name = words[0]
             this.args = words.slice(1)
+            // a bit of a hack here...
+            this.is32bit = (jsFormat != undefined)
         }
 
         emit(ln: Line): EmitResult {
@@ -63,6 +68,8 @@ namespace ts.pxtc.assembler {
             let stack = 0;
             let numArgs: number[] = []
             let labelName: string = null
+            let bit32_value: number = null
+            let bit32_actual: string = null
 
             for (let i = 0; i < this.args.length; ++i) {
                 let formal = this.args[i]
@@ -71,35 +78,40 @@ namespace ts.pxtc.assembler {
                     let enc = this.ei.encoders[formal]
                     let v: number = null
                     if (enc.isRegister) {
-                        v = registerNo(actual);
+                        v = this.ei.registerNo(actual);
                         if (v == null) return emitErr("expecting register name", actual)
+                        // AVR specific code : check for pop/push instruction 
+                        // this doesn't apply in the ARM case 
+                        if (this.ei.isPush(this.opcode)) // push
+                            stack++;
+                        else if (this.ei.isPop(this.opcode)) // pop
+                            stack--;
                     } else if (enc.isImmediate) {
                         actual = actual.replace(/^#/, "")
                         v = ln.bin.parseOneInt(actual);
                         if (v == null) {
                             return emitErr("expecting number", actual)
                         } else {
-                            // ARM-specific
-                            if (this.opcode == 0xb000) // add sp, #imm
+                            if (this.ei.isAddSP(this.opcode))
                                 stack = -(v / 4);
-                            else if (this.opcode == 0xb080) // sub sp, #imm
+                            else if (this.ei.isSubSP(this.opcode))
                                 stack = (v / 4);
                         }
                     } else if (enc.isRegList) {
+                        // register lists are ARM-specific - this code not used in AVR 
                         if (actual != "{") return emitErr("expecting {", actual);
                         v = 0;
                         while (tokens[j] != "}") {
                             actual = tokens[j++];
                             if (!actual)
                                 return emitErr("expecting }", tokens[j - 2])
-                            let no = registerNo(actual);
+                            let no = this.ei.registerNo(actual);
                             if (no == null) return emitErr("expecting register name", actual)
                             if (v & (1 << no)) return emitErr("duplicate register name", actual)
                             v |= (1 << no);
-                            // ARM-specific 
-                            if (this.opcode == 0xb400) // push
+                            if (this.ei.isPush(this.opcode)) // push
                                 stack++;
-                            else if (this.opcode == 0xbc00) // pop
+                            else if (this.ei.isPop(this.opcode)) // pop
                                 stack--;
                             if (tokens[j] == ",") j++;
                         }
@@ -109,30 +121,37 @@ namespace ts.pxtc.assembler {
                         if (/^[+-]?\d+$/.test(actual)) {
                             v = parseInt(actual, 10)
                             labelName = "rel" + v
+                        } else if (/^0x[0-9a-fA-F]+$/.test(actual) ) {
+                            v = parseInt(actual, 16)
+                            labelName = "abs" + v
                         } else {
                             labelName = actual
+                            // console.log("op = ", this.name)
                             v = ln.bin.getRelativeLabel(actual, enc.isWordAligned)
                             if (v == null) {
                                 if (ln.bin.finalEmit)
                                     return emitErr("unknown label", actual)
                                 else
+                                    // just need some value when we are 
+                                    // doing some pass other than finalEmit
                                     v = 8; // needs to be divisible by 4 etc
                             }
+                        }
+                        if (this.ei.is32bit(this)) {
+                            bit32_value = v
+                            bit32_actual = actual
+                            continue
                         }
                     } else {
                         oops()
                     }
                     if (v == null) return emitErr("didn't understand it", actual); // shouldn't happen
 
-                    // special handling for long branch instruction (32-bit)
-                    if (this.ei.is32bit(this.name)) {
-                        if (tokens[j]) return emitErr("trailing tokens", tokens[j])
-                        return this.ei.emit32(v, ln.bin.normalizeExternalLabel(actual));
-                    }
-
                     numArgs.push(v)
 
                     v = enc.encode(v)
+
+                    // console.log("enc(v) = ",v)
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
                     assert((r & v) == 0)
                     r |= v;
@@ -144,6 +163,10 @@ namespace ts.pxtc.assembler {
             }
 
             if (tokens[j]) return emitErr("trailing tokens", tokens[j])
+
+            if (this.ei.is32bit(this)) {
+                return this.ei.emit32(r, bit32_value, ln.bin.normalizeExternalLabel(bit32_actual));
+            }
 
             return {
                 stack: stack,
@@ -177,39 +200,6 @@ namespace ts.pxtc.assembler {
 
         public getOp() {
             return this.instruction ? this.instruction.name : "";
-        }
-
-        // ARM-specific?
-        public singleReg() {
-            assert(this.getOp() == "push" || this.getOp() == "pop")
-            let k = 0;
-            let ret = -1;
-            let v = this.numArgs[0]
-            while (v > 0) {
-                if (v & 1) {
-                    if (ret == -1) ret = k;
-                    else ret = -2;
-                }
-                v >>= 1;
-                k++;
-            }
-            if (ret >= 0) return ret;
-            else return -1;
-        }
-
-        // ARM-specific
-        // if true then instruction doesn't write r<n> and doesn't read/write memory
-        public preservesReg(n: number) {
-            if (this.getOpExt() == "movs $r5, $i0" && this.numArgs[0] != n)
-                return true;
-            return false;
-        }
-
-        public clobbersReg(n: number) {
-            // TODO add some more
-            if (this.getOp() == "pop" && this.numArgs[0] & (1 << n))
-                return true;
-            return false;
         }
 
         public update(s: string) {
@@ -271,7 +261,8 @@ namespace ts.pxtc.assembler {
             this.buf.push(op);
         }
 
-        private location() {
+        public location() {
+            // store one short (2 bytes) per buf location
             return this.buf.length * 2;
         }
 
@@ -299,6 +290,8 @@ namespace ts.pxtc.assembler {
             if (s[0] == "-") {
                 mul *= -1;
                 s = s.slice(1)
+            } else if (s[0] == "+") {
+                s = s.slice(1)
             }
 
             let v: number = null
@@ -322,6 +315,8 @@ namespace ts.pxtc.assembler {
             // decimal encoding
             let m = /^(\d+)$/i.exec(s)
             if (m) v = parseInt(m[1], 10)
+
+            // stack-specific processing
 
             // more special characters to handle
             if (s.indexOf("@") >= 0) {
@@ -396,11 +391,7 @@ namespace ts.pxtc.assembler {
         }
 
         public getRelativeLabel(s: string, wordAligned = false) {
-            let l = this.lookupLabel(s);
-            if (l == null) return null;
-            let pc = this.location() + 4
-            if (wordAligned) pc = pc & 0xfffffffc
-            return l - pc;
+            return this.ei.getRelativeLabel(this, s, wordAligned)
         }
 
         private align(n: number) {
@@ -775,9 +766,11 @@ namespace ts.pxtc.assembler {
         }
 
         private iterLines() {
+            // TODO: check we have properly initialized everything
             this.stack = 0;
             this.buf = [];
             this.scopeId = 0;
+            // what about this.scope?
 
             this.lines.forEach(l => {
                 if (this.errors.length > 10)
@@ -820,10 +813,12 @@ namespace ts.pxtc.assembler {
             })
         }
 
+
         public getSource(clean: boolean) {
             let lenTotal = this.buf ? this.buf.length * 2 : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
             let res =
+                // ARM-specific
                 lf("; thumb size: {0} bytes; src size {1} bytes\n", lenThumb, lenTotal - lenThumb) +
                 lf("; assembly: {0} lines\n", this.lines.length) +
                 this.stats + "\n\n"
@@ -851,10 +846,6 @@ namespace ts.pxtc.assembler {
 
         private peepHole() {
             // TODO add: str X; ldr X -> str X ?
-
-            let lb11 = this.ei.encoders["$lb11"]
-            let lb = this.ei.encoders["$lb"]
-
             let mylines = this.lines.filter(l => l.type != "empty")
 
             for (let i = 0; i < mylines.length; ++i) {
@@ -865,59 +856,7 @@ namespace ts.pxtc.assembler {
                 if (!lnNext) continue;
                 let lnNext2 = mylines[i + 2]
                 if (ln.type == "instruction") {
-                    let lnop = ln.getOp()
-                    let isSkipBranch = false
-                    if (lnop == "bne" || lnop == "beq") {
-                        if (lnNext.getOp() == "b" && ln.numArgs[0] == 0)
-                            isSkipBranch = true;
-                        if (lnNext.getOp() == "bb" && ln.numArgs[0] == 2)
-                            isSkipBranch = true;
-                    }
-
-                    if (lnop == "bb" && lb11.encode(ln.numArgs[0]) != null) {
-                        // RULE: bb .somewhere -> b .somewhere (if fits)
-                        ln.update("b " + ln.words[1])
-                    } else if (lnop == "b" && ln.numArgs[0] == -2) {
-                        // RULE: b .somewhere; .somewhere: -> .somewhere:
-                        ln.update("")
-                    } else if (lnop == "bne" && isSkipBranch && lb.encode(lnNext.numArgs[0]) != null) {
-                        // RULE: bne .next; b .somewhere; .next: -> beq .somewhere
-                        ln.update("beq " + lnNext.words[1])
-                        lnNext.update("")
-                    } else if (lnop == "beq" && isSkipBranch && lb.encode(lnNext.numArgs[0]) != null) {
-                        // RULE: beq .next; b .somewhere; .next: -> bne .somewhere
-                        ln.update("bne " + lnNext.words[1])
-                        lnNext.update("")
-                    } else if (lnop == "push" && lnNext.getOp() == "pop" && ln.numArgs[0] == lnNext.numArgs[0]) {
-                        // RULE: push {X}; pop {X} -> nothing
-                        assert(ln.numArgs[0] > 0)
-                        ln.update("")
-                        lnNext.update("")
-                    } else if (lnop == "push" && lnNext.getOp() == "pop" &&
-                        ln.words.length == 4 &&
-                        lnNext.words.length == 4) {
-                        // RULE: push {rX}; pop {rY} -> mov rY, rX
-                        assert(ln.words[1] == "{")
-                        ln.update("mov " + lnNext.words[2] + ", " + ln.words[2])
-                        lnNext.update("")
-                    } else if (lnNext2 && ln.getOpExt() == "movs $r5, $i0" && lnNext.getOpExt() == "mov $r0, $r1" &&
-                        ln.numArgs[0] == lnNext.numArgs[1] &&
-                        lnNext2.clobbersReg(ln.numArgs[0])) {
-                        // RULE: movs rX, #V; mov rY, rX; clobber rX -> movs rY, #V
-                        ln.update("movs r" + lnNext.numArgs[0] + ", #" + ln.numArgs[1])
-                        lnNext.update("")
-                    } else if (lnop == "pop" && ln.singleReg() >= 0 && lnNext.getOp() == "push" &&
-                        ln.singleReg() == lnNext.singleReg()) {
-                        // RULE: pop {rX}; push {rX} -> ldr rX, [sp, #0]
-                        ln.update("ldr r" + ln.singleReg() + ", [sp, #0]")
-                        lnNext.update("")
-                    } else if (lnNext2 && lnop == "push" && ln.singleReg() >= 0 && lnNext.preservesReg(ln.singleReg()) &&
-                        lnNext2.getOp() == "pop" && ln.singleReg() == lnNext2.singleReg()) {
-                        // RULE: push {rX}; movs rY, #V; pop {rX} -> movs rY, #V (when X != Y)
-                        ln.update("")
-                        lnNext2.update("")
-                    }
-
+                    this.ei.peephole(ln, lnNext, lnNext2)
                 }
             }
         }
@@ -981,25 +920,6 @@ namespace ts.pxtc.assembler {
         }
     }
 
-    function registerNo(actual: string) {
-        if (!actual) return null;
-        actual = actual.toLowerCase()
-        switch (actual) {
-            // ARM-specific
-            case "pc": actual = "r15"; break;
-            case "lr": actual = "r14"; break;
-            case "sp": actual = "r13"; break;
-        }
-        let m = /^r(\d+)$/.exec(actual)
-        if (m) {
-            let r = parseInt(m[1], 10)
-            // ARM-specific (16 registers)
-            if (0 <= r && r < 16)
-                return r;
-        }
-        return null;
-    }
-
     // describes the encodings of various parts of an instruction
     // (registers, immediates, register lists, labels)
     export interface Encoder {
@@ -1027,12 +947,40 @@ namespace ts.pxtc.assembler {
             this.instructions = {}
         }
 
-        public is32bit(name: string) {
+        public is32bit(i: Instruction) {
             return false;
         }
 
-        public emit32(v: number, actual: string): EmitResult {
+        public emit32(v1: number, v2: number, actual: string): EmitResult {
             return null;
+        }
+
+        public peephole(ln: Line, lnNext: Line, lnNext2: Line) {
+
+        }
+
+        public registerNo(actual: string): number {
+            return null;
+        }
+
+        public getRelativeLabel(f: File, s: string, wordAligned = false): number {
+            return null;
+        }
+
+        public isPop(opcode: number): boolean {
+            return false;
+        }
+
+        public isPush(opcode: number): boolean {
+            return false;
+        }
+
+        public isAddSP(opcode: number): boolean {
+            return false;
+        }
+
+        public isSubSP(opcode: number): boolean {
+            return false;
         }
 
         protected addEnc = (n: string, p: string, e: (v: number) => number) => {
@@ -1168,8 +1116,10 @@ namespace ts.pxtc.assembler {
 
     export function expect(ei: EncodersInstructions, disasm: string) {
         let exp: number[] = []
-        let asm = disasm.replace(/^([0-9a-fA-F]{4})\s/gm, (w, n) => {
-            exp.push(parseInt(n, 16))
+        let asm = disasm.replace(/^([0-9a-fA-F]{4,8})\s/gm, (w, n) => {
+            exp.push(parseInt(n.slice(0,4), 16))
+            if (n.length == 8)
+                exp.push(parseInt(n.slice(4,8), 16))
             return ""
         })
 
@@ -1186,7 +1136,7 @@ namespace ts.pxtc.assembler {
             oops("ASMTEST: wrong buf len")
         for (let i = 0; i < exp.length; ++i) {
             if (b.buf[i] != exp[i])
-                oops("ASMTEST: wrong buf content, exp:" + tohex(exp[i]) + ", got: " + tohex(b.buf[i]))
+                oops("ASMTEST: wrong buf content at " + i + " , exp:" + tohex(exp[i]) + ", got: " + tohex(b.buf[i]))
         }
     }
 }

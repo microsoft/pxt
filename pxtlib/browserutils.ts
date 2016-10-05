@@ -1,5 +1,14 @@
 
 namespace pxt.BrowserUtils {
+
+    export function isIFrame(): boolean {
+        try {
+            return window && window.self !== window.top;
+        } catch (e) {
+            return true;
+        }
+    }
+
     export function isWindows(): boolean {
         return !!navigator && /(Win32|Win64|WOW64)/i.test(navigator.platform);
     }
