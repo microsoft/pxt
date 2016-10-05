@@ -147,7 +147,7 @@ export class Editor extends srceditor.Editor {
                 pxt.tickEvent("typescript.keepText");
             } else if (b == 2) {
                 pxt.tickEvent("typescript.removeBlocksFile");
-                this.parent.removeFile(bf);
+                this.parent.removeFile(bf, true);
             } else {
                 pxt.tickEvent("typescript.discardText");
                 this.parent.setFile(bf);

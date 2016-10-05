@@ -681,7 +681,9 @@ namespace ts.pxtc {
             res.usedArguments = {}
         }
 
-        let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
+        let allStmts = res.diagnostics.length > 0
+            ? [] // TODO: panic
+            : Util.concat(program.getSourceFiles().map(f => f.statements))
 
         let src = program.getSourceFiles()[0]
         let rootFunction = <any>{

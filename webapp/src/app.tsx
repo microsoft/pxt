@@ -864,7 +864,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
     }
 
-    removeFile(fn: pkg.File) {
+    removeFile(fn: pkg.File, skipConfirm = false) {
+        const removeIt = () => {
+            pkg.mainEditorPkg().removeFileAsync(fn.name)
+                .then(() => pkg.mainEditorPkg().saveFilesAsync())
+                .then(() => this.reloadHeaderAsync())
+                .done();
+        }
+
+        if (skipConfirm) {
+            removeIt();
+            return;
+        }
+
         core.confirmAsync({
             header: lf("Remove {0}", fn.name),
             body: lf("You are about to remove a file from your project. Are you sure?"),
@@ -872,12 +884,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             agreeIcon: "trash",
             agreeLbl: lf("Remove it"),
         }).done(res => {
-            if (res) {
-                pkg.mainEditorPkg().removeFileAsync(fn.name)
-                    .then(() => pkg.mainEditorPkg().saveFilesAsync())
-                    .then(() => this.reloadHeaderAsync())
-                    .done();
-            }
+            if (res) removeIt();
         })
     }
 
@@ -1209,7 +1216,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.clearLog();
         this.editor.beforeCompile();
         let state = this.editor.snapshotState()
-        compiler.compileAsync({ native: true })
+        compiler.compileAsync({ native: true, forceEmit: true })
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (!resp.outfiles[pxtc.BINARY_HEX]) {
@@ -1459,8 +1466,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 {this.editor.menu() }
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="folder open" onClick={() => this.openProject() } /> }
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" icon="folder open" text={lf("Open...") } onClick={() => this.openProject() } /> }
-                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="folder save" onClick={() => this.saveProjectToFile() } /> }
-                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" icon="folder save" text={lf("Save...") } onClick={() => this.saveProjectToFile() } /> }
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             {sandbox ? undefined : <div className="ui buttons">

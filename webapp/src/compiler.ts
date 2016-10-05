@@ -63,6 +63,7 @@ export interface CompileOptions {
     native?: boolean;
     debug?: boolean;
     background?: boolean; // not explicitely requested by user (hint for simulator)
+    forceEmit?: boolean;
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
@@ -75,6 +76,8 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 opts.justMyCode = true
             }
             opts.computeUsedSymbols = true
+            if (options.forceEmit)
+                opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))
                 opts.testMode = true
             return opts

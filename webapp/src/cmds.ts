@@ -26,6 +26,15 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         e => core.errorNotification(lf("saving file failed..."))
     );
 
+    if (!resp.success) {
+        return core.confirmAsync({
+            header: lf("Compilation failed"),
+            body: lf("Ooops, looks like there are errors in your program."),
+            hideAgree: true,
+            disagreeLbl: lf("Close")
+        }).then(() => {});
+    }
+
     let uploader = !!pxt.storage.getLocal("uploader");
     if (uploader) {
         core.infoNotification(lf("Save the .hex file to your Downloads folder and make sure the uploader is running."))
