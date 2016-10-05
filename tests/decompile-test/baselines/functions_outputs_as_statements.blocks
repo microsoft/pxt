@@ -1,0 +1,44 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_no_argument_output">
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+<block type="test_boolean_argument_output">
+<value name="arg">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+</block>
+<block type="test_number_argument_output">
+<value name="arg">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+</block>
+<block type="test_string_argument_output">
+<value name="arg">
+<shadow type="text">
+<field name="TEXT">okay</field>
+</shadow>
+</value>
+</block>
+<block type="test_enum_argument_output">
+<field name="arg">TestEnum.testValue1</field>
+</block>
+<block type="test_enum_function_argument_output">
+<field name="arg">EnumWithValueBlock.testValue2</field>
+</block>
+<block type="test_multiple_argument_output">
+<value name="arg1">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+<value name="arg2">
+<shadow type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</shadow>
+</value>
+</block>
+</xml>

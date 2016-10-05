@@ -103,6 +103,12 @@ ${output}</xml>`;
                     let op = (expr as ts.PostfixUnaryExpression).operator;
                     return op != SK.PlusPlusToken && op != SK.MinusMinusToken;
                 }
+                case SK.CallExpression:
+                    const callInfo: pxtc.CallInfo = (expr as any).callInfo
+                    if (!callInfo) {
+                        error(expr)
+                    }
+                    return callInfo.isExpression;
                 case SK.ParenthesizedExpression:
                 case SK.NumericLiteral:
                 case SK.StringLiteral:

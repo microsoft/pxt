@@ -111,6 +111,7 @@ declare namespace Blockly {
         inputList: Input[];
         disabled: boolean;
         comment: string | Comment;
+        dispose(healGap: boolean): void;
     }
 
     class Comment {
