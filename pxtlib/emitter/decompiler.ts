@@ -61,8 +61,10 @@ namespace ts.pxtc.decompiler {
         }
         const fileText = file.getFullText();
         let output = ""
+        const scopes: { [index: string]: string }[] = [{}];
+        const takenNames: { [index: string]: boolean } = {}
 
-        emitBlockStatement(stmts, undefined, true);
+        emitBlockStatement(stmts, undefined, true, true);
 
         result.outfiles[file.fileName.replace(/(\.blocks)?\.\w*$/i, '') + '.blocks'] = `<xml xmlns="http://www.w3.org/1999/xhtml">
 ${output}</xml>`;
@@ -119,9 +121,14 @@ ${output}</xml>`;
          * @param topLevel?     Indicates whether this block statement is at the top level scope (i.e. the source file) or not.
          *                      If false, an error will be thrown if any output expressions are encountered. False by default
          */
-        function emitBlockStatement(statements: ts.Node[], next?: ts.Node[], topLevel = false, parent?: ts.Node) {
+        function emitBlockStatement(statements: ts.Node[], next?: ts.Node[], partOfCurrentBlock = false, topLevel = false, parent?: ts.Node) {
             const outputStatements: ts.Node[] = [];
             const blockStatements: ts.Node[] = next || [];
+
+            if (!partOfCurrentBlock) {
+                // Push a marker indicating where this block ends (for scoping purposes)
+                blockStatements.unshift(undefined)
+            }
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
             statements.reverse().forEach(statement => {
@@ -136,7 +143,7 @@ ${output}</xml>`;
                 }
             });
 
-            if (blockStatements.length) {
+            if (blockStatements.length > (partOfCurrentBlock ? 0 : 1)) {
                 emitStatementBlock(blockStatements.shift(), blockStatements, parent);
             }
 
@@ -248,13 +255,14 @@ ${output}</xml>`;
         function emitStatementBlock(node: ts.Node, next?: ts.Node[], parent?: ts.Node) {
             switch (node.kind) {
                 case SK.Block:
+                    pushScope();
                     emitBlockStatement((node as ts.Block).statements, next);
                     return;
                 case SK.ExpressionStatement:
                     emitStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node);
                     return;
                 case SK.VariableStatement:
-                    emitBlockStatement((node as ts.VariableStatement).declarationList.declarations, next, false, parent || node);
+                    emitBlockStatement((node as ts.VariableStatement).declarationList.declarations, next, true, false, parent || node);
                     return;
                 case SK.ArrowFunction:
                     emitArrowFunction(node as ts.ArrowFunction, next);
@@ -270,11 +278,12 @@ ${output}</xml>`;
                 case SK.VariableDeclaration:
                     const decl = node as ts.VariableDeclaration;
                     if (decl.initializer && decl.initializer.kind === SyntaxKind.NullKeyword) {
-                        // Don't emit null initializers; They are implicit within the blocks
+                        // Don't emit null initializers; They are implicit within the blocks. But do add a name to the scope
+                        addVariableDeclaration(decl);
                         if (next && next.length) emitStatementBlock(next.shift(), next)
                         return;
                     }
-                    openVaraiableDeclarationBlock(node as ts.VariableDeclaration);
+                    openVariableDeclarationBlock(node as ts.VariableDeclaration);
                     break;
                 case SK.WhileStatement:
                     openWhileStatementBlock(node as ts.WhileStatement);
@@ -319,7 +328,11 @@ ${output}</xml>`;
             function consumeToNextBlock(): ts.Node {
                 if (next && next.length) {
                     const toEmit = next.shift();
-                    if (canBeEmitted(toEmit)) {
+
+                    if (!toEmit) {
+                        popScope();
+                    }
+                    else if (canBeEmitted(toEmit)) {
                         return toEmit;
                     }
                     return consumeToNextBlock();
@@ -332,7 +345,8 @@ ${output}</xml>`;
                     case SyntaxKind.VariableStatement:
                         const decl = node as ts.VariableDeclaration;
                         if (decl.initializer && decl.initializer.kind === SyntaxKind.NullKeyword) {
-                            // Don't emit null initializers; They are implicit within the blocks
+                            // Don't emit null initializers; They are implicit within the blocks. But do add a name to the scope
+                            addVariableDeclaration(decl);
                             return false;
                         }
                     break;
@@ -374,7 +388,7 @@ ${output}</xml>`;
                         break;
                     case SK.MinusEqualsToken:
                         openBlockTag("variables_change");
-                        emitField("VAR", name);
+                        emitField("VAR", getVariableName(name));
                         write(`<value name="VALUE">`);
                         negateAndEmitExpression(n.right);
                         write(`</value>`)
@@ -446,7 +460,10 @@ ${output}</xml>`;
                 // To decompile repeat, we would need to check to make sure the initialized variable is
                 // never referenced in the loop body
                 openBlockTag("controls_simple_for");
-                emitField("VAR", indexVar);
+
+                pushScope()
+                addVariable(indexVar)
+                emitField("VAR", getVariableName(indexVar));
 
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
@@ -470,7 +487,9 @@ ${output}</xml>`;
                     error(n, Util.lf("for loop conditional operator must be either < or <="))
                     return;
                 }
+
                 emitStatementTag("DO", n.statement);
+                popScope()
 
                 function incrementorIsValid(varName: string): boolean {
                     if (n.incrementor.kind === SK.PostfixUnaryExpression) {
@@ -485,21 +504,15 @@ ${output}</xml>`;
 
             function openVariableSetOrChangeBlock(name: string, value: Node | number, changed = false) {
                 openBlockTag(changed ? "variables_change" : "variables_set")
+                name = getVariableName(name);
                 emitField("VAR", name);
 
                 // We always do a number shadow even if the variable is not of type number
                 emitValue("VALUE", value, ShadowType.Number);
             }
 
-            function openVaraiableDeclarationBlock(n: ts.VariableDeclaration) {
-                if (n.name.kind !== SK.Identifier) {
-                    error(n, Util.lf("Variable declarations may not use binding patterns"))
-                    return;
-                }
-                else if (!n.initializer) {
-                    error(n, Util.lf("Variable declarations must have an initializer"))
-                    return;
-                }
+            function openVariableDeclarationBlock(n: ts.VariableDeclaration) {
+                addVariableDeclaration(n);
                 openVariableSetOrChangeBlock((n.name as ts.Identifier).text, n.initializer)
             }
 
@@ -606,6 +619,7 @@ ${output}</xml>`;
                     error(n);
                     return;
                 }
+                pushScope();
                 emitStatementBlock(n.body, next)
             }
 
@@ -717,7 +731,7 @@ ${output}</xml>`;
                 error(identifier, Util.lf("Undefined has no block equivalent"))
                 return;
             }
-            emitFieldBlock("variables_get", "VAR", identifier.text, false)
+            emitFieldBlock("variables_get", "VAR", getVariableName(identifier.text), false)
         }
 
         function emitStringLiteral(value: string, shadow = true) {
@@ -808,6 +822,66 @@ ${output}</xml>`;
                         text += currentLine + "\n"
                         currentLine = ""
                     }
+                }
+            }
+        }
+
+        function pushScope() {
+            scopes.push({})
+        }
+
+        function popScope() {
+            scopes.pop();
+        }
+
+        function addVariable(name: string) {
+            scopes[scopes.length - 1][name] = getNewName(name);
+        }
+
+        function addVariableDeclaration(node: VariableDeclaration) {
+            if (node.name.kind !== SK.Identifier) {
+                error(node, Util.lf("Variable declarations may not use binding patterns"))
+                return;
+            }
+            else if (!node.initializer) {
+                error(node, Util.lf("Variable declarations must have an initializer"))
+                return;
+            }
+            const name = (node.name as ts.Identifier).text
+            addVariable(name)
+        }
+
+        function getVariableName(name: string) {
+            const existingName = findVariableName(name);
+            if (existingName) {
+                return existingName;
+            }
+            else {
+                addVariable(name);
+                return name;
+            }
+        }
+
+        function findVariableName(name: string) {
+            for (var i = scopes.length - 1; i >= 0; i--) {
+                if (scopes[i][name]) {
+                    return scopes[i][name];
+                }
+            }
+            return undefined;
+        }
+
+        function getNewName(name: string) {
+            if (!takenNames[name]) {
+                takenNames[name] = true;
+                return name;
+            }
+
+            for (let i = 0; ; i++) {
+                const toTest = name + i;
+                if (!takenNames[toTest]) {
+                    takenNames[toTest] = true;
+                    return toTest;
                 }
             }
         }

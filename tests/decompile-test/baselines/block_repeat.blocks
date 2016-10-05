@@ -23,7 +23,7 @@
 </statement>
 <next>
 <block type="controls_simple_for">
-<field name="VAR">q</field>
+<field name="VAR">q0</field>
 <value name="TO">
 <shadow type="math_number">
 <field name="NUM">0</field>
@@ -44,7 +44,7 @@
 </value>
 <statement name="DO">
 <block type="variables_set">
-<field name="VAR">q</field>
+<field name="VAR">q0</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">0</field>
@@ -56,7 +56,7 @@
 <field name="NUM">0</field>
 </shadow>
 <block type="variables_get">
-<field name="VAR">q</field>
+<field name="VAR">q0</field>
 </block>
 </value>
 <value name="B">
