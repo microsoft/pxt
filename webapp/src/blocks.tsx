@@ -217,6 +217,8 @@ export class Editor extends srceditor.Editor {
         this.editor.addChangeListener((ev) => {
             if (ev.recordUndo)
                 this.changeCallback();
+            if (ev.type == 'create' && ev.xml.tagName == 'SHADOW')
+                this.cleanUpShadowBlocks();
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
@@ -335,5 +337,10 @@ export class Editor extends srceditor.Editor {
         return (
             <sui.Button text={lf("JavaScript") } textClass="ui landscape only" icon="keyboard" onClick={() => this.openTypeScript() } />
         )
+    }
+
+    cleanUpShadowBlocks() {
+        const blocks = this.editor.getTopBlocks(false);
+        blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
 }
