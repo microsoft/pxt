@@ -1169,39 +1169,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     launchFullEditor() {
-        let sandbox = /sandbox=1/i.test(window.location.href)
-        let sandboxPub = /#sandbox:/i.test(window.location.href)
-        let sandboxProject = /#sandboxproject:/i.test(window.location.href)
-        Util.assert(sandbox || sandboxPub || sandboxProject);
+        Util.assert(sandbox);
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl;
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
 
-        const launchEditor = (url: string) => {
-            pxt.tickEvent("sandbox.launchexternaleditor");
-            let editUrl = `${rootUrl}${url}`;
-            window.open(editUrl, '_blank')
-        }
-
-        if (sandboxPub) {
-            let mpkg = pkg.mainPkg
-            let epkg = pkg.getEditorPkg(mpkg)
-            if (epkg.header.pubCurrent) {
-                launchEditor(`#pub:${epkg.header.pubId}`);
-            } else {
-                this.publishAsync()
-                    .done(() => {
-                        launchEditor(`#pub:${epkg.header.pubId}`);
-                    })
-            }
-        } else if (sandboxProject) {
-            this.exportAsync()
-                .then(fileContent => {
-                    launchEditor(`#project:${fileContent}`);
-                })
-        } else {
-            launchEditor(``);
-        }
+        this.exportAsync()
+            .then(fileContent => {
+                pxt.tickEvent("sandbox.launchexternaleditor");
+                let editUrl = `${rootUrl}#project:${fileContent}`;
+                window.open(editUrl, '_parent')
+            })
     }
 
     addPackage() {
