@@ -1,4 +1,5 @@
 namespace ts.pxtc {
+    // TODO: ARM specific code should be lifted out 
     const jsOpMap: pxt.Map<string> = {
         "thumb::adds": "+",
         "thumb::subs": "-",

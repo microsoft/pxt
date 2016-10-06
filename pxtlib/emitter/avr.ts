@@ -287,6 +287,14 @@ namespace ts.pxtc.avr {
         let avr = new AVRProcessor();
 
         assembler.expect(avr,
+            "1124       eor	r1, r1 \n" +
+            "be1f       out	0x3f, r1 \n" +
+            "efcf       ldi	r28, 0xFF \n" +
+            "e0da       ldi	r29, 0x0A \n" +
+            "bfde       out	0x3e, r29 \n" +
+            "bfcd      	out	0x3d, r28 \n")
+
+        assembler.expect(avr,
             "0c00      lsl     r0\n" +
             "920f      push    r0\n" +
             "e604      ldi     r16, #100        ; 0x64\n" +

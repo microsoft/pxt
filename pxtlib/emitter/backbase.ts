@@ -19,15 +19,14 @@ namespace ts.pxtc {
     // ARM, so a mapping will be needed for other processors
 
     // Assumptions:
-    //
-    // - special registers include: pc, lr
-    // - registers are 32-bit
-    // - pop/push receive register sets: { r0, r3, r4 }
-    // - r0 is the current value (from expression evaluation)
-    // - also used (fixed) are r1, r2, r5, r6 
-    // - registers for runtime calls (r0, r1,r2,r3)
-    // - r5 is for captured locals in lambda and r6 for global{}
-    // - arguments passed on stack (user functions)
+    // - registers can hold a pointer (data or code)
+    // - special registers include: pc, lr, sp
+    // - fixed registers are r0, r1, r2, r3, r5, r6 
+    //   - r0 is the current value (from expression evaluation)
+    //   - registers for runtime calls (r0, r1,r2,r3)
+    //   - r5 is for captured locals in lambda
+    //   - r6 for global{}
+    // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
         nop() { return "TBD " }
@@ -198,8 +197,6 @@ ${baseLabel}:
             this.write(this.t.pop(["pc"]))
             this.write("@stackempty func");
             this.write("@stackempty args")
-
-            return this.resText
         }
 
         private mkLbl(root: string) {
@@ -240,6 +237,7 @@ ${baseLabel}:
                 } else {
                     this.emitExpr(jmp.expr)
 
+                    // TODO: remove ARM-specific code
                     if (jmp.expr.exprKind == ir.EK.RuntimeCall && jmp.expr.data === "thumb::subs") {
                         // no cmp required
                     } else {

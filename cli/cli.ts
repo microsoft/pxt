@@ -3251,7 +3251,7 @@ cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
-cmd("testassembler                - test the assemblers", testAssemblers, 2)
+cmd("testassembler                - test the assemblers", testAssemblers, 1)
 cmd("decompile file.ts...         - decompile ts files and produce similarly named .blocks files", decompileAsync, 1)
 cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and compare to baselines", testDecompilerAsync, 1)
 cmd("testdecompilererrors  DIR    - decompile unsupported files from DIR one-by-one and check for errors", testDecompilerErrorsAsync, 1)

@@ -47,16 +47,44 @@ namespace ts.pxtc {
     /*
      * Frame layout
      * 
+     * Y-register (R28-R29) is frame pointer
+     * 
      * Pseudos that don't get a hard register will be put into a stack slot and loaded / stored as needed. 
-     * In order to access stack locations, avr-gcc will set up a 16-bit frame pointer in R29:R28 (Y) 
-     * because the stack pointer (SP) cannot be used to access stack slots. 
-     * The stack grows downwards. Smaller addresses are at the bottom of the drawing at the right. 
+     * The stack grows downwards.
      * Stack pointer and frame pointer are not aligned, i.e. 1-byte aligned. 
      * After the function prologue, the frame pointer will point one byte below the stack frame, 
      * i.e. Y+1 points to the bottom of the stack frame. 
      */
 
     /*
+     * Calling convention
+     * - An argument is passed either completely in registers or completely in memory. 
+     * - To find the register where a function argument is passed, X = 26 and follow this procedure: 
+     *   1. If the argument SIZE is an odd number of bytes, round up the SIZE to the next even number. 
+     *   2. X = X -SIZE  
+     *   3. If the new X is at least 8 and the size of the object is non-zero, 
+     *      then the low-byte of the argument is passed in RX. Subsequent bytes of the argument 
+     *      are passed in the subsequent registers, i.e. in increasing register numbers. 
+     *   4. If X < 8 or the SIZE = 0, the argument will be passed in memory. 
+     *   5. If the current argument is passed in memory, stop the procedure: All subsequent arguments will also be passed in memory. 
+     *   6. If there are arguments left, goto 1. and proceed with the next argument. 
+     * Return values with a size of 1 byte up to and including a size of 8 bytes will be returned in registers. 
+     * Return values whose size is outside that range will be returned in memory. 
+     * If a return value cannot be returned in registers, the caller will allocate stack space and 
+     * pass the address as implicit first pointer argument to the callee. The callee will put the 
+     * return value into the space provided by the caller. 
+     * If the return value of a function is returned in registers, the same registers are used as if 
+     * the value was the first parameter of a non-varargs function. 
+     * For example, an 8-bit value is returned in R24 and an 32-bit value is returned R22...R25. 
+     * Arguments of varargs functions are passed on the stack. This applies even to the named arguments. 
+
+    */
+
+    // Notes = pop(pc) -> return (PC <- [SP])
+    // mapping
+    // R0,R1,R2,R3 are argument scratch registers -> R18,R19
+    // 
+
     class AVRSnippets extends AssemblerSnippets {
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) { return "TBD" }
@@ -87,5 +115,6 @@ namespace ts.pxtc {
         lsls(reg: string, imm: number) { return "TBD" }
         negs(reg: string) { return "TBD" }
     }
-    */
+
+    let x = new AVRSnippets()
 }
