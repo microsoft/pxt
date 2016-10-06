@@ -7,6 +7,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
+import defaultToolbox from "./toolbox"
 
 import Util = pxt.Util;
 let lf = Util.lf
@@ -58,9 +59,7 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-
-                    let toolbox = document.getElementById('blocklyToolboxDefinition');
-                    pxt.blocks.initBlocks(this.blockInfo, this.editor, toolbox)
+                    pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
