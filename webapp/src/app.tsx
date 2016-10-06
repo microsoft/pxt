@@ -1168,6 +1168,20 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             })
     }
 
+    launchFullEditor() {
+        Util.assert(sandbox);
+
+        let rootUrl = pxt.appTarget.appTheme.embedUrl;
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+
+        this.exportAsync()
+            .then(fileContent => {
+                pxt.tickEvent("sandbox.launchexternaleditor");
+                let editUrl = `${rootUrl}#project:${fileContent}`;
+                window.open(editUrl, '_parent')
+            })
+    }
+
     addPackage() {
         pxt.tickEvent("menu.addpackage");
         this.scriptSearch.setState({ packages: true, searchFor: '' })
@@ -1547,6 +1561,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div>}
                         {rightLogo ?
                             <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
+                                {sandbox ?
+                                    <div>
+                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open in ") + targetTheme.name} onClick={() => this.launchFullEditor()}/>
+                                        <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor()}/>
+                                    </div>
+                                    : undefined }
                                 <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a>
                             </div> : null }
                     </div>
