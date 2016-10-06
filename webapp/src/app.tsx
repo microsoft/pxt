@@ -1563,7 +1563,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
                                 {sandbox ?
                                     <div>
-                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open in full editor")} onClick={() => this.launchFullEditor()}/>
+                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open in ") + targetTheme.name} onClick={() => this.launchFullEditor()}/>
                                         <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor()}/>
                                     </div>
                                     : undefined }
