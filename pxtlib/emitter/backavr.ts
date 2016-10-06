@@ -116,5 +116,5 @@ namespace ts.pxtc {
         negs(reg: string) { return "TBD" }
     }
 
-    let x = new AVRSnippets()
+    // let x = new AVRSnippets()
 }
