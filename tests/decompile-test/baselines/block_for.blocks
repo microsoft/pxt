@@ -10,7 +10,7 @@
 </statement>
 <next>
 <block type="controls_simple_for">
-<field name="VAR">i0</field>
+<field name="VAR">j</field>
 <value name="TO">
 <shadow type="math_number">
 <field name="NUM">4</field>
@@ -18,7 +18,7 @@
 </value>
 <statement name="DO">
 <block type="variables_set">
-<field name="VAR">i0</field>
+<field name="VAR">j</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">0</field>
@@ -30,7 +30,7 @@
 <field name="NUM">0</field>
 </shadow>
 <block type="variables_get">
-<field name="VAR">i0</field>
+<field name="VAR">j</field>
 </block>
 </value>
 <value name="B">
@@ -42,7 +42,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">i0</field>
+<field name="VAR">j</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">0</field>
@@ -54,7 +54,7 @@
 <field name="NUM">0</field>
 </shadow>
 <block type="variables_get">
-<field name="VAR">i0</field>
+<field name="VAR">j</field>
 </block>
 </value>
 <value name="B">
@@ -73,7 +73,7 @@
 <field name="NUM">0</field>
 </shadow>
 <block type="variables_get">
-<field name="VAR">i0</field>
+<field name="VAR">j</field>
 </block>
 </value>
 </block>
@@ -173,7 +173,7 @@
 </statement>
 <next>
 <block type="controls_simple_for">
-<field name="VAR">t0</field>
+<field name="VAR">u</field>
 <value name="TO">
 <shadow type="math_number">
 <field name="NUM">0</field>

@@ -16,7 +16,7 @@
 </value>
 <statement name="HANDLER">
 <block type="variables_set">
-<field name="VAR">x0</field>
+<field name="VAR">y</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">0</field>
@@ -24,7 +24,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">x0</field>
+<field name="VAR">y</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">0</field>
@@ -36,7 +36,7 @@
 <field name="NUM">0</field>
 </shadow>
 <block type="variables_get">
-<field name="VAR">x0</field>
+<field name="VAR">y</field>
 </block>
 </value>
 <value name="B">

@@ -4,6 +4,9 @@ namespace ts.pxtc.decompiler {
 
     type NextNode = ts.Node | "ScopeEnd";
 
+    const lowerCaseAlphabetStartCode = 97;
+    const lowerCaseAlphabetEndCode = 122;
+
     enum ShadowType {
         Boolean,
         Number,
@@ -909,7 +912,23 @@ ${output}</xml>`;
                 return name;
             }
 
-            for (let i = 0; ; i++) {
+            // If the variable is a single lower case letter, try and rename it to a different letter (i.e. i -> j)
+            if (name.length === 1) {
+                const charCode = name.charCodeAt(0);
+                if (charCode >= lowerCaseAlphabetStartCode && charCode <= lowerCaseAlphabetEndCode) {
+                    const offset = charCode - lowerCaseAlphabetStartCode;
+                    for (let i = 1; i < 26; i++) {
+                        const newChar = String.fromCharCode(lowerCaseAlphabetStartCode + ((offset + i) % 26));
+                        if (!takenNames[newChar]) {
+                            takenNames[newChar] = true;
+                            return newChar;
+                        }
+                    }
+                }
+            }
+
+            // For all other names, add a number to the end. Start at 2 because it probably makes more sense for kids
+            for (let i = 2; ; i++) {
                 const toTest = name + i;
                 if (!takenNames[toTest]) {
                     takenNames[toTest] = true;

@@ -24,7 +24,7 @@
 </value>
 <statement name="DO0">
 <block type="variables_set">
-<field name="VAR">a0</field>
+<field name="VAR">b</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -32,7 +32,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">a0</field>
+<field name="VAR">b</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">0</field>
@@ -44,7 +44,7 @@
 <field name="NUM">0</field>
 </shadow>
 <block type="variables_get">
-<field name="VAR">a0</field>
+<field name="VAR">b</field>
 </block>
 </value>
 <value name="B">
@@ -84,7 +84,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">a00</field>
+<field name="VAR">c</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">2</field>
@@ -92,7 +92,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">a00</field>
+<field name="VAR">c</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">0</field>
@@ -104,7 +104,7 @@
 <field name="NUM">0</field>
 </shadow>
 <block type="variables_get">
-<field name="VAR">a00</field>
+<field name="VAR">c</field>
 </block>
 </value>
 <value name="B">

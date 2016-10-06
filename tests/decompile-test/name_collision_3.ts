@@ -6,5 +6,5 @@ if (!!true) {
 }
 a = a + 2
 
-let a0 = 2;
-a0 = a0 + 3;
+let b = 2;
+b = b + 3;
