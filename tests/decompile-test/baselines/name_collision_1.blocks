@@ -1,0 +1,205 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">y</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">y</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">z</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">z</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="controls_if">
+<mutation elseif="0" else="0"></mutation>
+<value name="IF0">
+<block type="logic_negate">
+<value name="BOOL">
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO0">
+<block type="variables_set">
+<field name="VAR">a</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">a</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</statement>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="device_while">
+<value name="COND">
+<block type="logic_negate">
+<value name="BOOL">
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO">
+<block type="variables_set">
+<field name="VAR">b</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">b</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</statement>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">c</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">c</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">d</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">d</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</xml>
