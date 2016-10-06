@@ -375,8 +375,8 @@ namespace pxt.docs {
         });
     }
 
-    export function embedUrl(rootUrl: string, id: string, height?: number): string {
-        const url = `${rootUrl}#sandbox:${id}`;
+    export function embedUrl(rootUrl: string, tag: string, id: string, height?: number): string {
+        const url = `${rootUrl}#${tag}:${id}`;
         let padding = '70%';
         return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`;
     }

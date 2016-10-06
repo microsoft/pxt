@@ -164,6 +164,7 @@ declare namespace ts.pxtc {
         hexinfo: any;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
+        forceEmit?: boolean;
         ast?: boolean;
         breakpoints?: boolean;
         justMyCode?: boolean;
