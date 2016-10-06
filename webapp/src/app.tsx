@@ -1168,6 +1168,42 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             })
     }
 
+    launchFullEditor() {
+        let sandbox = /sandbox=1/i.test(window.location.href)
+        let sandboxPub = /#sandbox:/i.test(window.location.href)
+        let sandboxProject = /#sandboxproject:/i.test(window.location.href)
+        Util.assert(sandbox || sandboxPub || sandboxProject);
+
+        let rootUrl = pxt.appTarget.appTheme.embedUrl;
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+
+        const launchEditor = (url: string) => {
+            pxt.tickEvent("sandbox.launchexternaleditor");
+            let editUrl = `${rootUrl}${url}`;
+            window.open(editUrl, '_blank')
+        }
+
+        if (sandboxPub) {
+            let mpkg = pkg.mainPkg
+            let epkg = pkg.getEditorPkg(mpkg)
+            if (epkg.header.pubCurrent) {
+                launchEditor(`#pub:${epkg.header.pubId}`);
+            } else {
+                this.publishAsync()
+                    .done(() => {
+                        launchEditor(`#pub:${epkg.header.pubId}`);
+                    })
+            }
+        } else if (sandboxProject) {
+            this.exportAsync()
+                .then(fileContent => {
+                    launchEditor(`#project:${fileContent}`);
+                })
+        } else {
+            launchEditor(``);
+        }
+    }
+
     addPackage() {
         pxt.tickEvent("menu.addpackage");
         this.scriptSearch.setState({ packages: true, searchFor: '' })
@@ -1547,6 +1583,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div>}
                         {rightLogo ?
                             <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
+                                {sandbox ?
+                                    <div>
+                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open in full editor")} onClick={() => this.launchFullEditor()}/>
+                                        <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor()}/>
+                                    </div>
+                                    : undefined }
                                 <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a>
                             </div> : null }
                     </div>
