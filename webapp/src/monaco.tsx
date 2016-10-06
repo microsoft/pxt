@@ -538,7 +538,7 @@ export class Editor extends srceditor.Editor {
 
         if (file && file.diagnostics) {
             for (let d of file.diagnostics) {
-                if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0) continue;
+                if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0 || this.errorLines.length > 0) continue;
                 let viewZoneId: any = null;
                 (this.editor as any).changeViewZones(function (changeAccessor: any) {
                     let domNode = document.createElement('div');
