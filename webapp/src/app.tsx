@@ -402,7 +402,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
     renderCore() {
         const header = this.props.parent.state.header;
         if (!header) return <div></div>
-        let currentPubId = header.pubId ? header.pubId : this.state.currentPubId;
+        let currentPubId = header.pubId || this.state.currentPubId;
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
