@@ -1154,6 +1154,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then((project) => {
                 let hexFile = JSON.parse(project) as pxt.cpp.HexFile;
                 return this.importHex(hexFile);
+            }).catch(() => {
+                return this.newEmptyProject();
             })
     }
 
