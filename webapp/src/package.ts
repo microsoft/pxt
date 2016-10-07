@@ -353,8 +353,8 @@ export function mainEditorPkg() {
 }
 
 export function genFileName(extension: string): string {
-    let sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
-    let fn = pxt.appTarget.id + "-" + sanitizedName + extension;
+    const sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
+    const fn = `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${sanitizedName}${extension}`;
     return fn;
 }
 

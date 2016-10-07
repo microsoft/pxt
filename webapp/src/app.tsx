@@ -277,7 +277,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             color="pink"
                             key="importhex"
                             name={lf("My Computer...") }
-                            description={lf("Open .hex or .pxt files on your computer") }
+                            description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
                     {bundles.map(scr =>
@@ -1380,11 +1380,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select an .hex or .pxt file to open.")}</label>
+    <label>${lf("Select a .hex file to open.")}</label>
     <input type="file" class="ui button blue fluid"></input>
   </div>
   <div class="ui message">
-    ${lf("You can also drag and drop .hex or .pxt files into the editor!")}
+    ${lf("You can also drag and drop .hex files into the editor!")}
   </div>
 </div>`,
         }).done(res => {

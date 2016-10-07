@@ -5,6 +5,7 @@ declare namespace pxt {
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
         forkof?: string; // id of a target we're based on
+        nickname?: string; // friendly id used when generating files, folders, etc... forkof or id is used instead if missing
         name: string;
         description?: string;
         corepkg: string;
