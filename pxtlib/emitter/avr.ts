@@ -1,3 +1,5 @@
+/// <reference path="assembler.ts"/>
+
 /* Docs:
     *
     * Atmel AVR 8-bit Instruction Set Manual
@@ -287,7 +289,7 @@ namespace ts.pxtc.avr {
         let avr = new AVRProcessor();
 
         assembler.expect(avr,
-            "1124       eor	r1, r1 \n" +
+            "2411       eor	r1, r1 \n" +
             "be1f       out	0x3f, r1 \n" +
             "efcf       ldi	r28, 0xFF \n" +
             "e0da       ldi	r29, 0x0A \n" +

@@ -1,3 +1,6 @@
+// Make sure backbase.ts is loaded before us, otherwise 'extends AssemblerSnippets' fails at runtime
+/// <reference path="backbase.ts"/>
+
 namespace ts.pxtc {
 
     // snippets for ARM Thumb assembly
