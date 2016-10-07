@@ -278,9 +278,9 @@ class Host
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string): void {
-        if (filename == pxt.CONFIG_NAME)
-            return; // ignore config writes
-        throw Util.oops("trying to write " + module + " / " + filename)
+        let epkg = getEditorPkg(module)
+        let file = epkg.files[filename];
+        file.content = contents;
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {

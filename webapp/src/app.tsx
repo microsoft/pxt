@@ -1045,6 +1045,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     importHex(data: pxt.cpp.HexFile) {
         let targetId = pxt.appTarget.id;
+        data.meta.cloudId = pkg.mainPkg.upgradePackage(data.meta.cloudId, pxt.CLOUD_ID);
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
             return;
