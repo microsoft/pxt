@@ -444,7 +444,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                             .done(uri => this.setState({ screenshotId: currentPubId, screenshotUri: uri }));
                     }
                     break;
-                }
+            }
         }
 
         const publish = () => {
@@ -455,13 +455,13 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
 
         return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Embed Project") }>
             <div className={`ui ${formState} form`}>
-                { this.state.publishingEnabled ? 
-                <div className="ui warning message">
-                    <div className="header">{lf("Almost there!") }</div>
-                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
-                        lf("You acknowledge having consent to publish this project.") }</p>
-                    <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
-                </div> : undefined }
+                { this.state.publishingEnabled ?
+                    <div className="ui warning message">
+                        <div className="header">{lf("Almost there!") }</div>
+                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
+                            lf("You acknowledge having consent to publish this project.") }</p>
+                        <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
+                    </div> : undefined }
                 { url && this.state.publishingEnabled ? <div className="ui success message">
                     <h3>{lf("Project URL") }</h3>
                     <div className="header"><a target="_blank" href={url}>{url}</a></div>
@@ -474,13 +474,13 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                                 { mode: ShareMode.Screenshot, label: lf("Screenshot") },
                                 { mode: ShareMode.Editor, label: lf("Editor") }]
                                 .concat(
-                                    this.state.publishingEnabled ? [
-                                        { mode: ShareMode.Simulator, label: lf("Simulator") },
-                                        { mode: ShareMode.Cli, label: lf("Command line") }
-                                    ] : []
+                                this.state.publishingEnabled ? [
+                                    { mode: ShareMode.Simulator, label: lf("Simulator") },
+                                    { mode: ShareMode.Cli, label: lf("Command line") }
+                                ] : []
                                 )
                                 .map(f =>
-                                    <div key={f.mode.toString()} className="field">
+                                    <div key={f.mode.toString() } className="field">
                                         <div className="ui radio checkbox">
                                             <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
                                             <label>{f.label}</label>
@@ -1130,7 +1130,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then(files => {
                 const project: pxt.cpp.HexFile = {
                     meta: {
-                        cloudId: `pxt/${pxt.appTarget.id}`,
+                        cloudId: pxt.Cloud + pxt.appTarget.id,
                         targetVersion: pxt.appTarget.versions.target,
                         editor: Util.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
                         name: mpkg.config.name
@@ -1374,7 +1374,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     importFileDialog() {
         let input: HTMLInputElement;
         core.confirmAsync({
-            header: lf("Open .hex or .pxt file"),
+            header: lf("Open .hex file"),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
@@ -1382,9 +1382,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
   <div class="ui field">
     <label>${lf("Select a .hex file to open.")}</label>
     <input type="file" class="ui button blue fluid"></input>
-  </div>
-  <div class="ui message">
-    ${lf("You can also drag and drop .hex files into the editor!")}
   </div>
 </div>`,
         }).done(res => {
@@ -1563,8 +1560,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
                                 {sandbox ?
                                     <div>
-                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open in ") + targetTheme.name} onClick={() => this.launchFullEditor()}/>
-                                        <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor()}/>
+                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open with {0}", targetTheme.name)} onClick={() => this.launchFullEditor() }/>
+                                        <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor() }/>
                                     </div>
                                     : undefined }
                                 <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a>
