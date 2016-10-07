@@ -796,7 +796,7 @@ namespace pxt.blocks {
                 Blockly.Events.setGroup(false);
             }
 
-            let deleteOption = {
+            const deleteOption = {
                 text: deleteList.length == 1 ? lf("Delete Block") :
                     lf("Delete {0} Blocks", deleteList.length),
                 enabled: deleteList.length > 0,
@@ -809,7 +809,7 @@ namespace pxt.blocks {
             };
             menuOptions.push(deleteOption);
 
-            let shuffleOption = {
+            const shuffleOption = {
                 text: lf("Shuffle Blocks"),
                 enabled: topBlocks.length > 0,
                 callback: () => {
@@ -818,7 +818,7 @@ namespace pxt.blocks {
             };
             menuOptions.push(shuffleOption);
 
-            let screenshotOption = {
+            const screenshotOption = {
                 text: lf("Download Screenshot"),
                 enabled: topBlocks.length > 0,
                 callback: () => {
@@ -828,7 +828,7 @@ namespace pxt.blocks {
                             uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
                         BrowserUtils.browserDownloadDataUri(
                             uri,
-                            `${pxt.appTarget.id}-${lf("screenshot")}.png`);
+                            `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${lf("screenshot")}.png`);
                     });
                 }
             };

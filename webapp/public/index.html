@@ -47,13 +47,11 @@
         @import "/cdn/icons.css";
     </style>
 
-    <!-- @include apptracking.html -->
-
     <script>
         // This line gets patched up by the cloud
         var pxtConfig = null;
     </script>
-
+    <!-- @include apptracking.html -->
     <!-- patch to load JS in electron -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
     <script type="text/javascript" src="/cdn/lzma/lzma_worker-min.js"></script>

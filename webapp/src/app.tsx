@@ -125,9 +125,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     fetchGhData(): pxt.github.Repo[] {
         const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
+        let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
         let res: pxt.github.SearchResults =
-            this.state.searchFor || cloud.preferredPackages
-                ? this.getData(`gh-search:${this.state.searchFor || cloud.preferredPackages.join('|')}`)
+            searchFor || cloud.preferredPackages
+                ? this.getData(`gh-search:${searchFor || cloud.preferredPackages.join('|')}`)
                 : null
         if (res) this.prevGhData = res.items
         return this.prevGhData
@@ -277,7 +278,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             color="pink"
                             key="importhex"
                             name={lf("My Computer...") }
-                            description={lf("Open .hex or .pxt files on your computer") }
+                            description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
                     {bundles.map(scr =>
@@ -444,7 +445,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                             .done(uri => this.setState({ screenshotId: currentPubId, screenshotUri: uri }));
                     }
                     break;
-                }
+            }
         }
 
         const publish = () => {
@@ -455,13 +456,13 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
 
         return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Embed Project") }>
             <div className={`ui ${formState} form`}>
-                { this.state.publishingEnabled ? 
-                <div className="ui warning message">
-                    <div className="header">{lf("Almost there!") }</div>
-                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
-                        lf("You acknowledge having consent to publish this project.") }</p>
-                    <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
-                </div> : undefined }
+                { this.state.publishingEnabled ?
+                    <div className="ui warning message">
+                        <div className="header">{lf("Almost there!") }</div>
+                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
+                            lf("You acknowledge having consent to publish this project.") }</p>
+                        <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
+                    </div> : undefined }
                 { url && this.state.publishingEnabled ? <div className="ui success message">
                     <h3>{lf("Project URL") }</h3>
                     <div className="header"><a target="_blank" href={url}>{url}</a></div>
@@ -474,13 +475,13 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                                 { mode: ShareMode.Screenshot, label: lf("Screenshot") },
                                 { mode: ShareMode.Editor, label: lf("Editor") }]
                                 .concat(
-                                    this.state.publishingEnabled ? [
-                                        { mode: ShareMode.Simulator, label: lf("Simulator") },
-                                        { mode: ShareMode.Cli, label: lf("Command line") }
-                                    ] : []
+                                this.state.publishingEnabled ? [
+                                    { mode: ShareMode.Simulator, label: lf("Simulator") },
+                                    { mode: ShareMode.Cli, label: lf("Command line") }
+                                ] : []
                                 )
                                 .map(f =>
-                                    <div key={f.mode.toString()} className="field">
+                                    <div key={f.mode.toString() } className="field">
                                         <div className="ui radio checkbox">
                                             <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
                                             <label>{f.label}</label>
@@ -1130,7 +1131,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then(files => {
                 const project: pxt.cpp.HexFile = {
                     meta: {
-                        cloudId: `pxt/${pxt.appTarget.id}`,
+                        cloudId: pxt.Cloud + pxt.appTarget.id,
                         targetVersion: pxt.appTarget.versions.target,
                         editor: Util.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
                         name: mpkg.config.name
@@ -1374,17 +1375,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     importFileDialog() {
         let input: HTMLInputElement;
         core.confirmAsync({
-            header: lf("Open .hex or .pxt file"),
+            header: lf("Open .hex file"),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select an .hex or .pxt file to open.")}</label>
+    <label>${lf("Select a .hex file to open.")}</label>
     <input type="file" class="ui button blue fluid"></input>
-  </div>
-  <div class="ui message">
-    ${lf("You can also drag and drop .hex or .pxt files into the editor!")}
   </div>
 </div>`,
         }).done(res => {
@@ -1563,8 +1561,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
                                 {sandbox ?
                                     <div>
-                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open in ") + targetTheme.name} onClick={() => this.launchFullEditor()}/>
-                                        <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor()}/>
+                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open with {0}", targetTheme.name)} onClick={() => this.launchFullEditor() }/>
+                                        <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor() }/>
                                     </div>
                                     : undefined }
                                 <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a>
@@ -1705,7 +1703,7 @@ function getsrc() {
     pxt.log(theEditor.editor.getCurrentSource())
 }
 
-function enableUserVoice(version: string) {
+function enableUserVoice() {
     if (sandbox) return;
 
     const analytics = (pxt.appTarget.analytics || {} as pxt.AppAnalytics);
@@ -1727,16 +1725,16 @@ function enableUserVoice(version: string) {
     userVoice.push(['autoprompt', {}]);
 }
 
-function enableFeedback(version: string) {
-    enableUserVoice(version);
+function enableFeedback() {
+    enableUserVoice();
 }
 
-function enableAnalytics(version: string) {
-    enableAppInsights(version);
-    enableMixPanel(version);
+function enableAnalytics() {
+    enableAppInsights();
+    enableMixPanel();
 }
 
-function enableAppInsights(version: string) {
+function enableAppInsights() {
     // TODO: use json configuration
     let ai = (window as any).appInsights;
     if (!ai) return;
@@ -1767,9 +1765,13 @@ function enableAppInsights(version: string) {
     }
 }
 
-function enableMixPanel(version: string) {
+function enableMixPanel() {
     let mp = (window as any).mixpanel;
     if (!mp) return;
+
+    mp.register({
+        sandbox: !!sandbox
+    });
 
     let report = pxt.reportError;
     pxt.reportError = function (msg: string, data: any): void {
@@ -1923,9 +1925,10 @@ $(document).ready(() => {
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
-    let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    const lang = mlang ? mlang[1] : (navigator.userLanguage || navigator.language);
 
-    enableAnalytics(config.targetVersion)
+    enableAnalytics()
     appcache.init();
     initLogin();
 
@@ -1954,7 +1957,7 @@ $(document).ready(() => {
                 }
             }
         })
-        .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
+        .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang))
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
@@ -1997,7 +2000,7 @@ $(document).ready(() => {
             else theEditor.newProject();
             return Promise.resolve();
         }).done(() => {
-            enableFeedback(config.targetVersion);
+            enableFeedback();
         });
 
     document.addEventListener("visibilitychange", ev => {

@@ -49,8 +49,9 @@ string. Stars in the middle of the string will **not** work.
 
 ## Setting release pointers
 
-Travis build for tag `v0.1.2` of the `microbit` target will set two release pointers:
+Travis build for tag `v0.1.2` of the `microbit` target will set three release pointers:
 * `microbit-v0.1.2` for https://codethemicrobit.com/v0.1.2
+* `microbit-v0.1` for https://codethemicrobit.com/v0.1
 * `microbit-beta` for https://codethemicrobit.com/beta
 
 The pointer for the main release, at https://codethemicrobit.com, is called `microbit` and 
@@ -63,25 +64,12 @@ You can use `pxt ptr` command to view and update pointers. For example:
 Using PXT/core from /Users/michal/src/pxt.
 { kind: 'pointer',
   id: 'ptr-microbit-v0-3-2',
-  time: 1469535690,
-  userid: 'zjfv',
-  username: 'Build Server',
-  userhaspicture: false,
-  userplatform: [ 'unknown' ],
+  ...
   path: 'microbit/v0-3-2',
-  scriptid: '',
-  artid: '',
-  htmlartid: '',
+  ...
   releaseid: 'bigzx',
-  redirect: '',
-  description: '',
-  comments: 0,
-  parentpath: '',
-  scriptname: '',
-  scriptdescription: '',
-  breadcrumbtitle: '',
-  customtick: '',
-  searchfeatures: [] }
+  ...
+ }
 ```
 
 The thing to look for is `releaseid`, here `bigzx`. To set the main release to this version do:

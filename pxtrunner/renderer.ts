@@ -130,7 +130,7 @@ namespace pxt.runner {
                 if (uri)
                     BrowserUtils.browserDownloadDataUri(
                         uri,
-                        (name || `${pxt.appTarget.id}-${filename}`) + ".png");
+                        (name || `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${filename}`) + ".png");
             });
         }
     }
@@ -166,7 +166,7 @@ namespace pxt.runner {
             let compiled = r.compileJS && r.compileJS.success;
             let hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
                 ? r.compileJS.outfiles[pxtc.BINARY_HEX] : undefined;
-            let hexname = `${appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
+            let hexname = `${appTarget.nickname || appTarget.forkof || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
             fillWithWidget(options, c, js, s, {
                 run: options.simulator && compiled,
                 hexname: hexname,

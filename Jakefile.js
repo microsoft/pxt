@@ -90,10 +90,10 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-file('built/blockly.d.ts', [], function() { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
-file('built/pxtparts.d.ts', [], function() { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
-file('built/pxtarget.d.ts', ['built/pxtpackage.d.ts', 'built/pxtparts.d.ts'], function() { ju.cpR('localtypings/pxtarget.d.ts', 'built/pxtarget.d.ts') })
-file('built/pxtpackage.d.ts', [], function() { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
+file('built/blockly.d.ts', ['localtypings/blockly.d.ts'], function() { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
+file('built/pxtparts.d.ts', ['localtypings/pxtparts.d.ts'], function() { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
+file('built/pxtarget.d.ts', ['built/pxtpackage.d.ts', 'built/pxtparts.d.ts', 'localtypings/pxtarget.d.ts'], function() { ju.cpR('localtypings/pxtarget.d.ts', 'built/pxtarget.d.ts') })
+file('built/pxtpackage.d.ts', ['localtypings/pxtpackage.d.ts'], function() { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
 
 compileDir("pxtlib", ["built/pxtarget.d.ts", "built/pxtparts.d.ts", "built/pxtpackage.d.ts", "built/typescriptServices.d.ts"])
 compileDir("pxtblocks", ["built/pxtlib.js", "built/blockly.d.ts"])
