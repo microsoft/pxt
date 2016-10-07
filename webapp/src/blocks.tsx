@@ -215,10 +215,15 @@ export class Editor extends srceditor.Editor {
         });
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
-            if (ev.recordUndo)
+            if (ev.recordUndo) {
+                pxt.tickEvent("blocks.edit");
                 this.changeCallback();
-            if (ev.type == 'create' && ev.xml.tagName == 'SHADOW')
-                this.cleanUpShadowBlocks();
+            }
+            if (ev.type == 'create') {
+                pxt.tickEvent("blocks.create");
+                if (ev.xml.tagName == 'SHADOW')
+                    this.cleanUpShadowBlocks();
+            }
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
@@ -329,7 +334,7 @@ export class Editor extends srceditor.Editor {
     }
 
     openTypeScript() {
-        pxt.tickEvent("blocks.showJavaScript");
+        pxt.tickEvent("blocks.showjavascript");
         this.parent.saveTypeScriptAsync(true).done();
     }
 
@@ -340,6 +345,7 @@ export class Editor extends srceditor.Editor {
     }
 
     cleanUpShadowBlocks() {
+        pxt.tickEvent("blocks.cleanshadow");
         const blocks = this.editor.getTopBlocks(false);
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
