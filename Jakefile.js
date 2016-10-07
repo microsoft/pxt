@@ -260,6 +260,30 @@ task('monaco-editor', [
     "built/web/vs/language/typescript/src/mode.js"
 ])
 
+
+task('serve', ['default'], {async: true}, function() {
+    let cmdArg = '';
+    if (process.env.sourceMaps === 'true') {
+        cmdArg = '-include-source-maps'
+    }
+    else if (process.env.noBrowser === 'true') {
+        cmdArg = '-no-browser'
+    }
+    else if (process.env.localYotta === 'true') {
+        cmdArg = '-yt'
+    }
+    else if (process.env.cloud === 'true') {
+        cmdArg = '-cloud'
+    }
+    else if (process.env.justServe === 'true') {
+        cmdArg = '-just'
+    }
+    else if (process.env.packaged === 'true') {
+        cmdArg = '-pkg'
+    }
+    cmdIn(this, '../pxt-microbit', 'node ../pxt/built/pxt.js serve ' + cmdArg)
+})
+
 file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], function () {
     console.log(`Updating the monaco editor bits`)
     jake.mkdirP("built/web/vs/editor")
