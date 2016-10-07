@@ -1703,7 +1703,7 @@ function getsrc() {
     pxt.log(theEditor.editor.getCurrentSource())
 }
 
-function enableUserVoice(version: string) {
+function enableUserVoice() {
     if (sandbox) return;
 
     const analytics = (pxt.appTarget.analytics || {} as pxt.AppAnalytics);
@@ -1725,16 +1725,16 @@ function enableUserVoice(version: string) {
     userVoice.push(['autoprompt', {}]);
 }
 
-function enableFeedback(version: string) {
-    enableUserVoice(version);
+function enableFeedback() {
+    enableUserVoice();
 }
 
-function enableAnalytics(version: string) {
-    enableAppInsights(version);
-    enableMixPanel(version);
+function enableAnalytics() {
+    enableAppInsights();
+    enableMixPanel();
 }
 
-function enableAppInsights(version: string) {
+function enableAppInsights() {
     // TODO: use json configuration
     let ai = (window as any).appInsights;
     if (!ai) return;
@@ -1765,9 +1765,13 @@ function enableAppInsights(version: string) {
     }
 }
 
-function enableMixPanel(version: string) {
+function enableMixPanel() {
     let mp = (window as any).mixpanel;
     if (!mp) return;
+
+    mp.register({
+        sandbox: !!sandbox
+    });
 
     let report = pxt.reportError;
     pxt.reportError = function (msg: string, data: any): void {
@@ -1921,9 +1925,10 @@ $(document).ready(() => {
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
-    let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    const lang = mlang ? mlang[1] : (navigator.userLanguage || navigator.language);
 
-    enableAnalytics(config.targetVersion)
+    enableAnalytics()
     appcache.init();
     initLogin();
 
@@ -1952,7 +1957,7 @@ $(document).ready(() => {
                 }
             }
         })
-        .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language)))
+        .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang))
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
@@ -1995,7 +2000,7 @@ $(document).ready(() => {
             else theEditor.newProject();
             return Promise.resolve();
         }).done(() => {
-            enableFeedback(config.targetVersion);
+            enableFeedback();
         });
 
     document.addEventListener("visibilitychange", ev => {
