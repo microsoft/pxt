@@ -62,6 +62,7 @@ declare namespace pxt {
         sharing?: boolean;
         publishing?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
+        githubPackages?: boolean; // allow searching github for packages
     }
 
     interface AppSimulator {
