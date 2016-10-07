@@ -336,7 +336,7 @@ ${files["main.ts"]}
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
+        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.nickname}/${docid}`)
             .then(md => renderMarkdownAsync(content, md, docid))
     }
 
