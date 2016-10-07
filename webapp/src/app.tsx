@@ -1778,12 +1778,20 @@ function enableMixPanel() {
         mp.track("error:" + msg);
         report(msg, data);
     }
+    pxt.timeEvent = function(id: string): void {
+        if (!id) return;
+        try {
+            mp.timeEvent(id);
+        } catch (e) {
+            console.error(e);
+        }
+    }
     pxt.tickEvent = function (id: string): void {
         if (!id) return;
         try {
             mp.track(id.toLowerCase());
         } catch (e) {
-            pxt.log(e);
+            console.error(e);
         }
     }
 }
