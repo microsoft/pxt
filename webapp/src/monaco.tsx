@@ -107,7 +107,7 @@ export class Editor extends srceditor.Editor {
                                 console.log(js.replace(cleanRx, ''));
                                 console.log('-- roundtrip:');
                                 console.log(b2jsr.source.replace(cleanRx, ''));
-                                pxt.reportError('decompilation failure', {
+                                pxt.reportError("compile", "decompilation failure", {
                                     js: js,
                                     blockly: xml,
                                     jsroundtrip: b2jsr.source

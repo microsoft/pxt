@@ -665,7 +665,7 @@ namespace pxt.blocks {
                         expr = compileStdCall(e, b, call, comments);
                 }
                 else {
-                    pxt.reportError("Unable to compile expression: " + b.type, null);
+                    pxt.reportError("blocks", "unabled compile expression", { "details": b.type });
                     expr = defaultValueForType(returnType(e, b));
                 }
                 break;
@@ -1051,7 +1051,7 @@ namespace pxt.blocks {
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
-                        pxt.reportError("compiler: function " + fn.attributes.blockId + " already defined", null);
+                        pxt.reportError("blocks", "function already defined", { "details" : fn.attributes.blockId });
                         return;
                     }
                     let fieldMap = pxt.blocks.parameterNames(fn);
