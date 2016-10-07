@@ -1286,7 +1286,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         pxt.reportException(e, resp);
                     })
             }).catch(e => {
-                pxt.reportError('compile failed', e);
+                pxt.reportError("compile", "compile failed", e);
             }).finally(() => pxt.tickEvent("perf.compile"))
             .done();
     }
@@ -1791,10 +1791,13 @@ function enableMixPanel() {
         sandbox: !!sandbox
     });
 
-    let report = pxt.reportError;
-    pxt.reportError = function (msg, data): void {
-        mp.track("error:" + msg);
-        report(msg, data);
+    const report = pxt.reportError;
+    pxt.reportError = function (cat, msg, data): void {
+        if (!data) data = {};
+        data["category"] = cat;
+        data["message"] = msg;
+        mp.track("error", data);
+        report(cat, msg, data);
     }
     pxt.timeEvent = function(id): void {
         if (!id) return;

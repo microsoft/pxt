@@ -81,7 +81,7 @@ function htmlmsg(kind: string, msg: string) {
 }
 
 export function errorNotification(msg: string) {
-    pxt.reportError(msg, undefined)
+    pxt.reportError("notification", msg)
     htmlmsg("err", msg)
 }
 
