@@ -329,7 +329,7 @@ export class Editor extends srceditor.Editor {
     }
 
     openTypeScript() {
-        pxt.tickEvent("text.showText");
+        pxt.tickEvent("blocks.showJavaScript");
         this.parent.saveTypeScriptAsync(true).done();
     }
 

@@ -58,7 +58,7 @@ namespace pxt {
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string) => void = function (id) {}
+    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) {}
 
     export interface WebConfig {
         relprefix: string; // "/beta---",
