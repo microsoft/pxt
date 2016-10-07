@@ -398,8 +398,8 @@ namespace pxt.blocks {
         if (tb) {
             let cats = tb.querySelectorAll('category');
             for (let i = 0; i < cats.length; i++) {
-                cats[i].setAttribute('name',
-                    Util._localize(cats[i].getAttribute('name')));
+                cats[i].setAttribute('name', Util.lf/**/('{id:category}' + cats[i].getAttribute('name')));
+                // Above '/**/' is to prevent the lf markup extraction.
             }
         }
 
