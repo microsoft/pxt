@@ -39,12 +39,12 @@ namespace pxt {
             }
         }
     }
-    export var reportError: (msg: string, data: any) => void = function (m, d) {
+    export var reportError: (cat: string, msg: string, data?: Map<number | string>) => void = function (cat, msg, data) {
         if (console) {
-            console.error(m);
-            if (d) {
+            console.error(`${cat}: ${msg}`);
+            if (data) {
                 try {
-                    pxt.log(JSON.stringify(d, null, 2))
+                    pxt.log(JSON.stringify(data, null, 2))
                 } catch (e) { }
             }
         }
@@ -58,7 +58,7 @@ namespace pxt {
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string) => void = function (id) {}
+    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) {}
 
     export interface WebConfig {
         relprefix: string; // "/beta---",
@@ -520,7 +520,7 @@ namespace pxt {
                                 let part = res[k] = p[k];
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
                                     let f = d.readFile(part.visual.image);
-                                    if (!f) pxt.reportError(`invalid part definition, missing visual ${part.visual.image}`, undefined)
+                                    if (!f) pxt.reportError("parts", "invalid part definition", { "error": `missing visual ${part.visual.image}` })
                                     part.visual.image = `data:image/svg+xml,` + encodeURI(f);
                                 }
                             }

@@ -62,7 +62,6 @@ namespace ts.pxtc {
             }
             return e
         }
-        debugger;
         throw e;
     }
 

@@ -1113,13 +1113,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && isHexFile(file.name) || isBlocksFile(file.name),
             files => {
-                if (files) this.importFile(files[0]);
+                if (files) {
+                    pxt.tickEvent("dragandrop.open")
+                    this.importFile(files[0]);
+                }
             }
         );
     }
 
     openProject() {
-        pxt.tickEvent("menu.openproject");
+        pxt.tickEvent("menu.open");
         this.scriptSearch.setState({ packages: false, searchFor: '' })
         this.scriptSearch.modal.show()
     }
@@ -1177,7 +1180,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         this.exportAsync()
             .then(fileContent => {
-                pxt.tickEvent("sandbox.launchexternaleditor");
+                pxt.tickEvent("sandbox.openfulleditor");
                 let editUrl = `${rootUrl}#project:${fileContent}`;
                 window.open(editUrl, '_parent')
             })
@@ -1265,6 +1268,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
 
         pxt.debug('compiling...')
+        pxt.timeEvent("perf.compile")
         this.clearLog();
         this.editor.beforeCompile();
         let state = this.editor.snapshotState()
@@ -1272,6 +1276,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (!resp.outfiles[pxtc.BINARY_HEX]) {
+                    pxt.tickEvent("compile.noemit")
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
@@ -1281,8 +1286,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         pxt.reportException(e, resp);
                     })
             }).catch(e => {
-                pxt.reportError('compile failed', e);
-            }).done();
+                pxt.reportError("compile", "compile failed", e);
+            }).finally(() => pxt.tickEvent("perf.compile"))
+            .done();
+    }
+
+    startStopSimulator() {
+        if(this.state.running)  {
+            pxt.tickEvent('simulator.stop')
+            this.stopSimulator()
+        } else {
+            pxt.tickEvent('simulator.run')
+            this.runSimulator();
+        }
     }
 
     stopSimulator(unload = false) {
@@ -1291,6 +1307,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     openInstructions() {
+        pxt.tickEvent("simulator.make");
         compiler.compileAsync({ native: true })
             .done(resp => {
                 let p = pkg.mainEditorPkg();
@@ -1387,6 +1404,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 </div>`,
         }).done(res => {
             if (res) {
+                pxt.tickEvent("menu.open.file");
                 this.importFile(input.files[0]);
             }
         })
@@ -1513,7 +1531,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
                                 {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='configure' class="secondary portrait only" onClick={() => this.openInstructions() } /> : undefined }
-                                <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                                <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } />
                                 {this.editor.menu() }
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="folder open" onClick={() => this.openProject() } /> }
                                 {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" icon="folder open" text={lf("Open...") } onClick={() => this.openProject() } /> }
@@ -1773,10 +1791,21 @@ function enableMixPanel() {
         sandbox: !!sandbox
     });
 
-    let report = pxt.reportError;
-    pxt.reportError = function (msg: string, data: any): void {
-        mp.track("error:" + msg);
-        report(msg, data);
+    const report = pxt.reportError;
+    pxt.reportError = function (cat, msg, data): void {
+        if (!data) data = {};
+        data["category"] = cat;
+        data["message"] = msg;
+        mp.track("error", data);
+        report(cat, msg, data);
+    }
+    pxt.timeEvent = function(id): void {
+        if (!id) return;
+        try {
+            mp.timeEvent(id);
+        } catch (e) {
+            console.error(e);
+        }
     }
     pxt.timeEvent = function(id: string): void {
         if (!id) return;
@@ -1786,10 +1815,10 @@ function enableMixPanel() {
             console.error(e);
         }
     }
-    pxt.tickEvent = function (id: string): void {
+    pxt.tickEvent = function (id, data): void {
         if (!id) return;
         try {
-            mp.track(id.toLowerCase());
+            mp.track(id.toLowerCase(), data);
         } catch (e) {
             console.error(e);
         }
@@ -1897,6 +1926,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
             editor.newProject();
             break;
         case "uploader": // editor launched by the uploader
+            pxt.tickEvent("hash.uploader")
             pxt.storage.setLocal("uploader", "1");
             break;
         case "sandbox":
