@@ -249,15 +249,17 @@ namespace pxt {
         upgradePackage(pkg: string, prefix: string = ""): string {
             let upgrades = appTarget.compile.upgrades;
             let value = pkg;
-            upgrades.forEach((rule) => {
-                if (rule.type == "package") {
-                    for (let match in rule.map) {
-                        if (value == prefix + match) {
-                            value = prefix + rule.map[match];
+            if (upgrades) {
+                upgrades.forEach((rule) => {
+                    if (rule.type == "package") {
+                        for (let match in rule.map) {
+                            if (value == prefix + match) {
+                                value = prefix + rule.map[match];
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
             return value;
         }
 
