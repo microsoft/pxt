@@ -280,7 +280,7 @@ class Host
     writeFile(module: pxt.Package, filename: string, contents: string): void {
         let epkg = getEditorPkg(module)
         let file = epkg.files[filename];
-        file.content = contents;
+        file.setContentAsync(contents).done();
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
