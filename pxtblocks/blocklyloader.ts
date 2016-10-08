@@ -687,7 +687,7 @@ namespace pxt.blocks {
         msg.DISABLE_BLOCK = lf("Disable Block");
         msg.DELETE_BLOCK = lf("Delete Block");
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
-        msg.HELP = "Help";
+        msg.HELP = lf("Help");
 
         /**
          * Show the context menu for the workspace.
