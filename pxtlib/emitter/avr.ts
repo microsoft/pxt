@@ -125,7 +125,7 @@ namespace ts.pxtc.avr {
             this.addEnc("$i8", "#0-63", v => this.inrange(63, v, v & 0x7 | (v & 0x18) << 7) | (v & 0x20) << 7)
             this.addEnc("$i9", "#0-7", v => this.inrange(7, v, v))
 
-            // TODO: revisit labelling
+            // labels
             this.addEnc("$la", "LABEL", v => this.inrange(255, v >> 1, v >> 1)).isWordAligned = true;
             this.addEnc("$lb", "LABEL", v => this.inrangeSigned(127, v >> 1, v >> 1) << 3)
             this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(2047, v >> 1, v >> 1))

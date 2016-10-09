@@ -6,8 +6,9 @@ namespace ts.pxtc {
    // AVR:
    // - 32 8-bit registers (R0 - R31), with mapping to data addresses 0x0000 - 0x001F
    //   - X-register R26 (low), R27 (high)
-   //   - Y-register R28 (low), R29 (high)
-   //   - Z-register R30 (low), R31 (high)
+   //   - Y-register R28 (low), R29 (high), Frame Pointer (FP)
+   //   - Z-register R30 (low), R31 (high), use for indirect addressing
+
    // - 64 I/0 registers ($00-$3F), with mapping to data addresses 0x0020 - 0x005F
    // - 160 Ext I/O registers (0x0060-0x00FF)
    // - Internal SRAM 0x100-
@@ -30,18 +31,14 @@ namespace ts.pxtc {
    /* 
     * Call-Used Registers
     * 
-    * The call-used or call-clobbered general purpose registers (GPRs) are registers that might be 
-    * destroyed (clobbered) by a function call. 
-    * R18–R27, R30, R31. These GPRs are call clobbered. An ordinary function may use them without restoring the contents. 
-    * Interrupt service routines (ISRs) must save and restore each register they use. 
-    * R0, T-Flag The temporary register and the T-flag in SREG are also call-clobbered, but this 
-    * knowledge is not exposed explicitly to the compiler (R0 is a fixed register). 
+    * R18–R27, R30, R31. These GPRs are call clobbered. 
+    * An ordinary function may use them without restoring the contents. 
     */
 
    /*
     * Call-Saved Registers
     * 
-    * R2–R17, R28, R29 
+    * R2–R17, (R28, R29) FP 
     * The remaining GPRs are call-saved, i.e. a function that uses such a registers must restore its original content. 
     * This applies even if the register is used to pass a function argument. 
     * R1 The zero-register is implicity call-saved (implicit because R1 is a fixed register). 
@@ -62,8 +59,9 @@ namespace ts.pxtc {
     /*
      * Calling convention
      * - An argument is passed either completely in registers or completely in memory. 
-     * - To find the register where a function argument is passed, X = 26 and follow this procedure: 
-     *   1. If the argument SIZE is an odd number of bytes, round up the SIZE to the next even number. 
+     * - To find the register where a function argument is passed, follow this procedure:
+     *   0. X = 26
+     *   1. If the argument SIZE is an odd number of bytes, round up SIZE to the next even number. 
      *   2. X = X -SIZE  
      *   3. If the new X is at least 8 and the size of the object is non-zero, 
      *      then the low-byte of the argument is passed in RX. Subsequent bytes of the argument 
@@ -80,27 +78,58 @@ namespace ts.pxtc {
      * the value was the first parameter of a non-varargs function. 
      * For example, an 8-bit value is returned in R24 and an 32-bit value is returned R22...R25. 
      * Arguments of varargs functions are passed on the stack. This applies even to the named arguments. 
+     */
 
-    */
-
-    // Notes = pop(pc) -> return (PC <- [SP])
-    // mapping
-    // R0,R1,R2,R3 are argument scratch registers -> R18,R19
-    // 
-
+    // for now, everything is 16-bit (word)
     class AVRSnippets extends AssemblerSnippets {
         nop() { return "nop" }
-        reg_gets_imm(reg: string, imm: number) { return "TBD" }
-        push(reg: string[]) { return "TBD" }
-        pop(reg: string[]) { return "TBD" }
-        debugger_hook(lbl: string) { return "TBD" }
-        debugger_bkpt(lbl: string) { return "TBD" }
-        breakpoint() { return "TBD" }
-        pop_locals(n: number) { return "TBD" }
-        unconditional_branch(lbl: string) { return "TBD" }
+        reg_gets_imm(reg: string, imm: number) {
+            // TODO: split immediate and load into register pair (check this is correct)
+            let imm_lo = imm & 0xff
+            let imm_hi = (imm & 0xff00) >> 8
+            return `ldi ${this.rmap_lo(reg)}, #${imm_lo}\nldi ${this.rmap_hi(reg)}, #${imm_hi}`
+        }
+        push(regs: string[]) {
+            let res = ""
+            regs.forEach(r => {
+                res = res + `push ${this.rmap_lo(r)}\npush ${this.rmap_hi(r)}`
+            });
+            return res
+        }
+        pop(regs: string[]) {
+            let res = ""
+            regs.forEach(r => {
+                res = res + `pop ${this.rmap_hi(r)}\npop ${this.rmap_lo(r)}`
+            });
+            return res
+        }
+        proc_setup() {
+            // push the frame pointer
+            return "push r28\npush r29"
+        }
+        proc_return() {
+            // pop frame pointer and return
+            return "pop r29\npush r28\nret"
+        }
+        debugger_hook(lbl: string) { return "nop" }
+        debugger_bkpt(lbl: string) { return "nop" }
+        breakpoint() { return "nop" }
+        pop_locals(n: number) {
+            // note: updates both the SP and FP
+            return `
+    in	r28, 0x3d
+    in	r29, 0x3e
+    sbiw	r28, #2*${n}
+    out	0x3d, r28
+    out	0x3e, r29`
+        }
+        unconditional_branch(lbl: string) { return "jmp " + lbl }
         beq(lbl: string) { return "TBD" }
         bne(lbl: string) { return "TBD" }
-        cmp(o1: string, o2: string) { return "TBD" }
+        cmp(reg1: string, o2: string) {
+            // TODO
+            return ""
+        }
         // load_reg_src_off is load/store indirect
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
@@ -109,15 +138,51 @@ namespace ts.pxtc {
         rt_call(name: string, r0: string, r1: string) { return "TBD"; }
         call_lbl(lbl: string) { return "TBD" }
         call_reg(reg: string) { return "TBD" }
-        vcall(mapMethod: string, isSet: boolean, vtableShift: number) { return "TBD" }
-        prologue_vtable(arg_index: number, vtableShift: number) { return "TBD" }
-        lambda_prologue() { return "TBD" }
-        lambda_epilogue() { return "TBD" }
-        load_ptr(lbl: string, reg: string) { return "TBD" }
-        adds(reg: string, imm: number) { return "TBD" }
-        lsls(reg: string, imm: number) { return "TBD" }
-        negs(reg: string) { return "TBD" }
-    }
 
-    // let x = new AVRSnippets()
+        // no virtuals or lambdas for now
+        vcall(mapMethod: string, isSet: boolean, vtableShift: number) { assert(false); return "" }
+        prologue_vtable(arg_index: number, vtableShift: number) { assert(false); return "" }
+        lambda_prologue() { assert(false); return "" }
+        lambda_epilogue() { assert(false); return "" }
+
+        load_ptr(lbl: string, reg: string) { return "TBD" }
+        emit_int(v: number, reg: string) { return "TBD" }
+
+        // mapping from virtual registers to AVR registers
+        private rmap_lo(vreg: string) {
+            assert(vreg != "sp" && vreg != "lr")
+            if (vreg == "r0")
+                return "r18"
+            if (vreg == "r1")
+                return "r20"
+            if (vreg == "r2")
+                return "r22"
+            if (vreg == "r3")
+                return "r24"
+            if (vreg == "r5")
+                return "r26"
+            if (vreg == "r6")
+                return "r30"
+            oops()
+            return ""
+        }
+
+        private rmap_hi(vreg: string) {
+            assert(vreg != "sp" && vreg != "lr")
+            if (vreg == "r0")
+                return "r19"
+            if (vreg == "r1")
+                return "r21"
+            if (vreg == "r2")
+                return "r23"
+            if (vreg == "r3")
+                return "r25"
+            if (vreg == "r5")
+                return "r27"
+            if (vreg == "r6")
+                return "r31"
+            oops()
+            return ""
+        }
+    }
 }

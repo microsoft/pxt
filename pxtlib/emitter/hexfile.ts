@@ -66,6 +66,7 @@ namespace ts.pxtc {
         let currentSetup: string = null;
         export let currentHexInfo: any;
 
+        // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
         export function setupFor(extInfo: ExtensionInfo, hexinfo: any) {
             if (isSetupFor(extInfo))
                 return;
@@ -118,7 +119,9 @@ namespace ts.pxtc {
 
                 if (/^:00000001/.test(hex[i]))
                     hitEnd()
-
+                
+                // random magic number, which marks the beginning of the array of function pointers in the .hex file
+                // it is defined in pxt-microbit-core
                 m = /^:10....000108010842424242010801083ED8E98D/.exec(hex[i])
                 if (m) {
                     jmpStartAddr = lastAddr
@@ -232,6 +235,7 @@ namespace ts.pxtc {
                 return bytes
             }
 
+            // 0x4209 is the version number matching pxt-microbit-core
             let hd = [0x4209, 0, bytecodeStartAddrPadded & 0xffff, bytecodeStartAddrPadded >>> 16]
             let tmp = hexTemplateHash()
             for (let i = 0; i < 4; ++i)
@@ -293,6 +297,7 @@ namespace ts.pxtc {
     function emitStrings(bin: Binary) {
         for (let s of Object.keys(bin.strings)) {
             let lbl = bin.strings[s]
+            // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(`
 .balign 4
 ${lbl}meta: .short 0xffff, ${s.length}

@@ -11,7 +11,8 @@ namespace ts.pxtc {
         }
         push(regs: string[]) { return "push {" + regs.join(", ") + "}"}
         pop(regs: string[]) { return "pop {" + regs.join(", ") + "}"}
-
+        proc_setup() { return "push {lr}" }
+        proc_return() { return "pop {pc}" }
         debugger_hook(lbl: string) {
             return `
     ldr r0, [r6, #0]
@@ -38,7 +39,7 @@ ${lbl}:`
         unconditional_branch(lbl: string) { return "bb " + lbl; }
         beq(lbl: string) { return "beq " + lbl }
         bne(lbl: string) { return "bne " + lbl }
-        cmp(o1: string, o2: string) { return "cmp " + o1 + ", " + o2 }
+        cmp(reg1: string, o2: string) { return "cmp " + reg1 + ", " + o2 }
         load_reg_src_off(reg: string, src: string, off: string, word: boolean, store: boolean, inf: BitSizeInfo) {
             if (word) {
                 off = `#4*${off}`
@@ -118,14 +119,74 @@ ${lbl}:`
     adds ${reg}, ${lbl}@lo
 `
         }
-        adds(reg: string, imm: number) {
-            return `adds ${reg}, #${imm}`
-        }
-        lsls(reg: string, imm: number) {
-            return `lsls ${reg}, ${reg}, #${imm}`
-        }
-        negs(reg: string) {
-            return `negs ${reg}, ${reg}`
+
+        private emit_int(v: number, reg: string) {
+            let movWritten = false
+
+            function writeMov(v: number) {
+                assert(0 <= v && v <= 255)
+                let result = ""
+                if (movWritten) {
+                    if (v)
+                        result = `adds ${reg}, #${v}\n`
+                } else
+                    result = `movs ${reg} ${v}\n`
+                movWritten = true
+                return result
+            }
+
+            function shift(v = 8) {
+                return `lsls ${reg}, ${reg}, #${v}\n`
+            }
+
+            assert(v != null);
+
+            let n = Math.floor(v)
+            let isNeg = false
+            if (n < 0) {
+                isNeg = true
+                n = -n
+            }
+
+            let numShift = 0
+            if (n > 0xff) {
+                let shifted = n
+                while ((shifted & 1) == 0) {
+                    shifted >>>= 1
+                    numShift++
+                }
+                if (this.numBytes(shifted) < this.numBytes(n)) {
+                    n = shifted
+                } else {
+                    numShift = 0
+                }
+            }
+
+            let result = ""
+            switch (this.numBytes(n)) {
+                case 4:
+                    result = writeMov((n >>> 24) & 0xff)
+                    result += shift()
+                case 3:
+                    result = writeMov((n >>> 16) & 0xff)
+                    result += shift()
+                case 2:
+                    result += writeMov((n >>> 8) & 0xff)
+                    result += shift()
+                case 1:
+                    result = writeMov(n & 0xff)
+                    break
+                default:
+                    oops()
+            }
+
+            if (numShift)
+                result += shift(numShift)
+
+            if (isNeg) {
+                result += `negs ${reg}, ${reg}`
+            }
+            return result
         }
     }
 }
