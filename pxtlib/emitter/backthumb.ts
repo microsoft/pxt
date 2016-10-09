@@ -120,7 +120,7 @@ ${lbl}:`
 `
         }
 
-        private emit_int(v: number, reg: string) {
+        emit_int(v: number, reg: string) {
             let movWritten = false
 
             function writeMov(v: number) {
@@ -130,7 +130,7 @@ ${lbl}:`
                     if (v)
                         result = `adds ${reg}, #${v}\n`
                 } else
-                    result = `movs ${reg} ${v}\n`
+                    result = `movs ${reg}, #${v}\n`
                 movWritten = true
                 return result
             }
@@ -148,6 +148,7 @@ ${lbl}:`
                 n = -n
             }
 
+            // compute number of lower-order 0s and shift that amount
             let numShift = 0
             if (n > 0xff) {
                 let shifted = n

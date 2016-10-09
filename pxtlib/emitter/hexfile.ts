@@ -119,7 +119,7 @@ namespace ts.pxtc {
 
                 if (/^:00000001/.test(hex[i]))
                     hitEnd()
-                
+
                 // random magic number, which marks the beginning of the array of function pointers in the .hex file
                 // it is defined in pxt-microbit-core
                 m = /^:10....000108010842424242010801083ED8E98D/.exec(hex[i])
@@ -491,6 +491,7 @@ _stored_program: .string "`
     export function thumbEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let src = serialize(bin)
         src = patchSrcHash(src)
+        console.log(src)
         if (opts.embedBlob)
             src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
         bin.writeFile(pxtc.BINARY_ASM, src)
