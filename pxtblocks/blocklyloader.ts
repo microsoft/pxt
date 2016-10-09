@@ -145,7 +145,7 @@ namespace pxt.blocks {
             category.setAttribute("weight", nsWeight.toString())
             if (nsn && nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
             else if (blockColors[ns]) category.setAttribute("colour", blockColors[ns].toString());
-            // find the place to insert the category        
+            // find the place to insert the category
             let categories = tb.querySelectorAll("category");
             let ci = 0;
             for (ci = 0; ci < categories.length; ++ci) {
@@ -181,7 +181,7 @@ namespace pxt.blocks {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
-            pxt.reportError('trying to override builtin block ' + id, null);
+            pxt.reportError("blocks", 'trying to override builtin block', { "details": id });
             return false;
         }
 
@@ -444,7 +444,7 @@ namespace pxt.blocks {
                 if (b) shadow.innerHTML = b.innerHTML;
             })
 
-            // update toolbox   
+            // update toolbox
             if (tb.innerHTML != cachedToolbox && workspace) {
                 cachedToolbox = tb.innerHTML;
                 workspace.updateToolbox(tb)
@@ -509,7 +509,7 @@ namespace pxt.blocks {
             name: name,
             software: 1,
             description: goog.isFunction(tooltip) ? tooltip() : tooltip,
-            blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"</block>`) + "</xml>") : undefined,
+            blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"></block>`) + "</xml>") : undefined,
             url: url
         };
     }
@@ -654,7 +654,7 @@ namespace pxt.blocks {
     export var onShowContextMenu: (workspace: Blockly.Workspace,
         items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
 
-    // TODO: port changes to blockly 
+    // TODO: port changes to blockly
     export function initMouse(ws: Blockly.Workspace) {
         Blockly.bindEvent_(ws.svgGroup_, 'wheel', ws, ev => {
             let e = ev as WheelEvent;

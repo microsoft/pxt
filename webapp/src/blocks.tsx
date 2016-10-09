@@ -7,6 +7,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
+import defaultToolbox from "./toolbox"
 
 import Util = pxt.Util;
 let lf = Util.lf
@@ -58,9 +59,7 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-
-                    let toolbox = document.getElementById('blocklyToolboxDefinition');
-                    pxt.blocks.initBlocks(this.blockInfo, this.editor, toolbox)
+                    pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -215,10 +214,15 @@ export class Editor extends srceditor.Editor {
         });
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
-            if (ev.recordUndo)
+            if (ev.recordUndo) {
+                pxt.tickEvent("blocks.edit");
                 this.changeCallback();
-            if (ev.type == 'create' && ev.xml.tagName == 'SHADOW')
-                this.cleanUpShadowBlocks();
+            }
+            if (ev.type == 'create') {
+                pxt.tickEvent("blocks.create");
+                if (ev.xml.tagName == 'SHADOW')
+                    this.cleanUpShadowBlocks();
+            }
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
@@ -329,7 +333,7 @@ export class Editor extends srceditor.Editor {
     }
 
     openTypeScript() {
-        pxt.tickEvent("text.showText");
+        pxt.tickEvent("blocks.showjavascript");
         this.parent.saveTypeScriptAsync(true).done();
     }
 
@@ -340,6 +344,7 @@ export class Editor extends srceditor.Editor {
     }
 
     cleanUpShadowBlocks() {
+        pxt.tickEvent("blocks.cleanshadow");
         const blocks = this.editor.getTopBlocks(false);
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
