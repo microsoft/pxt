@@ -42,7 +42,8 @@ namespace ts.pxtc {
         unconditional_branch(lbl: string) { return "TBD" }
         beq(lbl: string) { return "TBD" }
         bne(lbl: string) { return "TBD" }
-        cmp(reg1: string, o2: string) { return "TBD" }
+        cmp(reg1: string, reg: string) { return "TBD" }
+        cmp_zero(reg1: string) { return "TBD" }
         // load_reg_src_off is load/store indirect
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
@@ -251,7 +252,7 @@ ${baseLabel}:
                     if (jmp.expr.exprKind == ir.EK.RuntimeCall && jmp.expr.data === "thumb::subs") {
                         // no cmp required
                     } else {
-                        this.write(this.t.cmp("r0", "#0"))
+                        this.write(this.t.cmp_zero("r0"))
                     }
                 }
 

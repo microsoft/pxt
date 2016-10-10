@@ -39,7 +39,8 @@ ${lbl}:`
         unconditional_branch(lbl: string) { return "bb " + lbl; }
         beq(lbl: string) { return "beq " + lbl }
         bne(lbl: string) { return "bne " + lbl }
-        cmp(reg1: string, o2: string) { return "cmp " + reg1 + ", " + o2 }
+        cmp(reg1: string, reg2: string) { return "cmp " + reg1 + ", " + reg2 }
+        cmp_zero(reg1: string) { return "cmp " + reg1 + ", #0" }
         load_reg_src_off(reg: string, src: string, off: string, word: boolean, store: boolean, inf: BitSizeInfo) {
             if (word) {
                 off = `#4*${off}`
