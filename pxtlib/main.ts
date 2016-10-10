@@ -253,21 +253,22 @@ namespace pxt {
                     this.config.name, minVer, appTarget.versions.target))
         }
 
-        upgradePackage(pkg: string, prefix: string = ""): string {
+        upgradePackage(pkg: string, val: string): string {
+            if (val != "*") return pkg;
             let upgrades = appTarget.compile.upgrades;
-            let value = pkg;
+            let newPackage = pkg;
             if (upgrades) {
                 upgrades.forEach((rule) => {
                     if (rule.type == "package") {
                         for (let match in rule.map) {
-                            if (value == prefix + match) {
-                                value = prefix + rule.map[match];
+                            if (newPackage == match) {
+                                newPackage = rule.map[match];
                             }
                         }
                     }
                 });
             }
-            return value;
+            return newPackage;
         }
 
         private parseConfig(str: string) {
@@ -276,7 +277,7 @@ namespace pxt {
 
             let currentConfig = JSON.stringify(this.config);
             for (let dep in this.config.dependencies) {
-                let value = this.upgradePackage(dep);
+                let value = this.upgradePackage(dep, this.config.dependencies[dep]);
                 if (value != dep) {
                     delete this.config.dependencies[dep];
                     if (value) {
