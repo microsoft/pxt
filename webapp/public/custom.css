@@ -296,12 +296,6 @@ div.simframe > iframe {
     font-size:1.25rem !important;
 }
 
-.blocklyTreeRow {
-    padding-top: 0.75rem !important;
-    padding-bottom: 2rem !important;
-    border-left-width: 12px !important;
-}
-
 .blocklyTreeSelected {
     border-radius: 5px !important;
 }
@@ -556,6 +550,14 @@ html {
     }
     #sidedocspopout, #sidedocsexpand {
         display:block;
+    }
+}
+
+@media only screen and (min-width: 55em) and (min-height:44em) {
+    .blocklyTreeRow {
+        padding-top: 0.75rem !important;
+        padding-bottom: 2rem !important;
+        border-left-width: 12px !important;
     }
 }
 
