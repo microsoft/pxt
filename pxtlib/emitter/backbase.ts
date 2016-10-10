@@ -58,14 +58,15 @@ namespace ts.pxtc {
         load_ptr(lbl: string, reg: string) { return "TBD" }
 
         emit_int(v: number, reg: string) { return "TBD"  }
-        // helper for emit_int
-        protected numBytes(n: number) {
-            let v = 0
-            for (let q = n; q > 0; q >>>= 8) {
-                v++
-            }
-            return v || 1
+    }
+
+    // helper for emit_int
+    export function numBytes(n: number) {
+        let v = 0
+        for (let q = n; q > 0; q >>>= 8) {
+            v++
         }
+        return v || 1
     }
 
     export class ProctoAssembler {

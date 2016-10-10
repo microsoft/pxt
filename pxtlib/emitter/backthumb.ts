@@ -156,7 +156,7 @@ ${lbl}:`
                     shifted >>>= 1
                     numShift++
                 }
-                if (this.numBytes(shifted) < this.numBytes(n)) {
+                if (numBytes(shifted) < numBytes(n)) {
                     n = shifted
                 } else {
                     numShift = 0
@@ -164,18 +164,18 @@ ${lbl}:`
             }
 
             let result = ""
-            switch (this.numBytes(n)) {
+            switch (numBytes(n)) {
                 case 4:
-                    result = writeMov((n >>> 24) & 0xff)
+                    result += writeMov((n >>> 24) & 0xff)
                     result += shift()
                 case 3:
-                    result = writeMov((n >>> 16) & 0xff)
+                    result += writeMov((n >>> 16) & 0xff)
                     result += shift()
                 case 2:
                     result += writeMov((n >>> 8) & 0xff)
                     result += shift()
                 case 1:
-                    result = writeMov(n & 0xff)
+                    result += writeMov(n & 0xff)
                     break
                 default:
                     oops()
