@@ -296,15 +296,6 @@ div.simframe > iframe {
     font-size:1.25rem !important;
 }
 
-<<<<<<< HEAD
-.blocklyTreeRow {
-    padding-top: 0.75rem !important;
-    padding-bottom: 2rem !important;
-    border-left-width: 12px !important;
-}
-
-=======
->>>>>>> master
 .blocklyTreeSelected {
     border-radius: 5px !important;
 }
