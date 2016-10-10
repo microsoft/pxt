@@ -491,7 +491,6 @@ _stored_program: .string "`
     export function thumbEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let src = serialize(bin)
         src = patchSrcHash(src)
-        console.log(src)
         if (opts.embedBlob)
             src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
         bin.writeFile(pxtc.BINARY_ASM, src)
