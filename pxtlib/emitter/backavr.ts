@@ -3,46 +3,46 @@
 
 namespace ts.pxtc {
 
-   // AVR:
-   // - 32 8-bit registers (R0 - R31), with mapping to data addresses 0x0000 - 0x001F
-   //   - X-register R26 (low), R27 (high)
-   //   - Y-register R28 (low), R29 (high), Frame Pointer (FP)
-   //   - Z-register R30 (low), R31 (high), use for indirect addressing
+    // AVR:
+    // - 32 8-bit registers (R0 - R31), with mapping to data addresses 0x0000 - 0x001F
+    //   - X-register R26 (low), R27 (high)
+    //   - Y-register R28 (low), R29 (high), Frame Pointer (FP)
+    //   - Z-register R30 (low), R31 (high), use for indirect addressing
 
-   // - 64 I/0 registers ($00-$3F), with mapping to data addresses 0x0020 - 0x005F
-   // - 160 Ext I/O registers (0x0060-0x00FF)
-   // - Internal SRAM 0x100-
+    // - 64 I/0 registers ($00-$3F), with mapping to data addresses 0x0020 - 0x005F
+    // - 160 Ext I/O registers (0x0060-0x00FF)
+    // - Internal SRAM 0x100-
 
-   // - SP: special register in I/O space (0x3D, 0x3E)
-   // - instructions that use SP
-   //   - PUSH Rr (dec SP by 1) 
-   //   - CALL, ICALL, RCALL (dec by 2 - 16 bit code pointer)
-   //   - POP Rd (inc SP by 1)
-   //   - RET, RETI (inc by 2 - 16 bit code pointer)
+    // - SP: special register in I/O space (0x3D, 0x3E)
+    // - instructions that use SP
+    //   - PUSH Rr (dec SP by 1) 
+    //   - CALL, ICALL, RCALL (dec by 2 - 16 bit code pointer)
+    //   - POP Rd (inc SP by 1)
+    //   - RET, RETI (inc by 2 - 16 bit code pointer)
 
-   // - in AVR< 0x0060 is lowest address for the stack
-   // - stack grows from high (RAMEND) to low (top of stack)
+    // - in AVR< 0x0060 is lowest address for the stack
+    // - stack grows from high (RAMEND) to low (top of stack)
 
-   // Text below from http://gcc.gnu.org/wiki/avr-gcc 
+    // Text below from http://gcc.gnu.org/wiki/avr-gcc 
 
-   // R0 is used as scratch register that need not to be restored after its usage. 
-   // R1 always contains zero.
+    // R0 is used as scratch register that need not to be restored after its usage. 
+    // R1 always contains zero.
 
-   /* 
-    * Call-Used Registers
-    * 
-    * R18–R27, R30, R31. These GPRs are call clobbered. 
-    * An ordinary function may use them without restoring the contents. 
-    */
+    /* 
+     * Call-Used Registers
+     * 
+     * R18–R27, R30, R31. These GPRs are call clobbered. 
+     * An ordinary function may use them without restoring the contents. 
+     */
 
-   /*
-    * Call-Saved Registers
-    * 
-    * R2–R17, (R28, R29) FP 
-    * The remaining GPRs are call-saved, i.e. a function that uses such a registers must restore its original content. 
-    * This applies even if the register is used to pass a function argument. 
-    * R1 The zero-register is implicity call-saved (implicit because R1 is a fixed register). 
-    */
+    /*
+     * Call-Saved Registers
+     * 
+     * R2–R17, (R28, R29) FP 
+     * The remaining GPRs are call-saved, i.e. a function that uses such a registers must restore its original content. 
+     * This applies even if the register is used to pass a function argument. 
+     * R1 The zero-register is implicity call-saved (implicit because R1 is a fixed register). 
+     */
 
     /*
      * Frame layout
@@ -134,7 +134,7 @@ namespace ts.pxtc {
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
         // str?  - true=Store/false=Load
-        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }  
+        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
         rt_call(name: string, r0: string, r1: string) { return "TBD"; }
         call_lbl(lbl: string) { return "TBD" }
         call_reg(reg: string) { return "TBD" }

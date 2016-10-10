@@ -34,7 +34,7 @@ namespace ts.pxtc {
         push(reg: string[]) { return "TBD" }
         pop(reg: string[]) { return "TBD" }
         proc_setup() { return "TBD" }
-        proc_return(){ return "TBD" }
+        proc_return() { return "TBD" }
         debugger_hook(lbl: string) { return "TBD" }
         debugger_bkpt(lbl: string) { return "TBD" }
         breakpoint() { return "TBD" }
@@ -57,7 +57,7 @@ namespace ts.pxtc {
         lambda_epilogue() { return "TBD" }
         load_ptr(lbl: string, reg: string) { return "TBD" }
 
-        emit_int(v: number, reg: string) { return "TBD"  }
+        emit_int(v: number, reg: string) { return "TBD" }
     }
 
     // helper for emit_int
