@@ -274,7 +274,7 @@ namespace pxt {
             let cfg = <PackageConfig>JSON.parse(str)
             this.config = cfg;
 
-            let configChanged = false;
+            let currentConfig = JSON.stringify(this.config);
             for (let dep in this.config.dependencies) {
                 let value = this.upgradePackage(dep);
                 if (value != dep) {
@@ -282,10 +282,9 @@ namespace pxt {
                     if (value) {
                         this.config.dependencies[value] = "*";
                     }
-                    configChanged = true;
                 }
             }
-            if (configChanged) {
+            if (JSON.stringify(this.config) != currentConfig) {
                 this.saveConfig();
             }
             this.validateConfig();
