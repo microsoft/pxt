@@ -181,7 +181,7 @@ namespace pxt.blocks {
         let id = fn.attributes.blockId;
 
         if (builtinBlocks[id]) {
-            pxt.reportError('trying to override builtin block ' + id, null);
+            pxt.reportError("blocks", 'trying to override builtin block', { "details": id });
             return false;
         }
 
