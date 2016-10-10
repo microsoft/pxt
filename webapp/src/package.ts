@@ -278,8 +278,13 @@ class Host
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string): void {
-        if (filename == pxt.CONFIG_NAME)
-            return; // ignore config writes
+        if (filename == pxt.CONFIG_NAME) {
+            // only write config writes
+            let epkg = getEditorPkg(module)
+            let file = epkg.files[filename];
+            file.setContentAsync(contents).done();
+            return;
+        }
         throw Util.oops("trying to write " + module + " / " + filename)
     }
 
