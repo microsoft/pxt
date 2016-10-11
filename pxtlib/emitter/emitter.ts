@@ -275,6 +275,7 @@ namespace ts.pxtc {
         weight?: number;
         parts?: string;
         trackArgs?: number[];
+        advanced?: boolean;
 
         // on interfaces
         indexerGet?: string;

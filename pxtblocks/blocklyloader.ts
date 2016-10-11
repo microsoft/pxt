@@ -32,6 +32,7 @@ namespace pxt.blocks {
     }
     let cachedBlocks: Map<CachedBlock> = {};
     let cachedToolbox: string = "";
+    const advancedCategoryName = Util.lf("Advanced")
 
     export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
@@ -126,6 +127,16 @@ namespace pxt.blocks {
         return block;
     }
 
+    function createCategoryElement(name: string, weight: number, colour?: string): Element {
+        const result = document.createElement("category");
+        result.setAttribute("name", name);
+        result.setAttribute("weight", weight.toString());
+        if (colour) {
+            result.setAttribute("colour", colour);
+        }
+        return result;
+    }
+
     function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
@@ -137,26 +148,42 @@ namespace pxt.blocks {
         if (nsn) ns = nsn.attributes.block || ns;
         let catName = Util.capitalize(ns)
         let category = categoryElement(tb, catName);
+
         if (!category) {
+            let categories = getChildCategories(tb)
+            let parentCategoryList = tb;
+
             pxt.debug('toolbox: adding category ' + ns)
-            category = document.createElement("category");
-            category.setAttribute("name", catName)
-            let nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
-            category.setAttribute("weight", nsWeight.toString())
-            if (nsn && nsn.attributes.color) category.setAttribute("colour", nsn.attributes.color)
-            else if (blockColors[ns]) category.setAttribute("colour", blockColors[ns].toString());
-            // find the place to insert the category
-            let categories = tb.querySelectorAll("category");
+
+            const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
+            category = createCategoryElement(catName, nsWeight)
+
+            if (nsn && nsn.attributes.color) {
+                category.setAttribute("colour", nsn.attributes.color);
+            }
+            else if (blockColors[ns]) {
+                category.setAttribute("colour", blockColors[ns].toString());
+            }
+
+            if (nsn.attributes.advanced) {
+                parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1)
+                categories = getChildCategories(parentCategoryList)
+            }
+
+            // Insert the category based on weight
             let ci = 0;
             for (ci = 0; ci < categories.length; ++ci) {
-                let cat = categories.item(ci);
+                let cat = categories[ci];
                 if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
-                    tb.insertBefore(category, cat);
+                    parentCategoryList.insertBefore(category, cat);
                     break;
                 }
             }
             if (ci == categories.length)
-                tb.appendChild(category);
+                parentCategoryList.appendChild(category);
+        }
+        if (fn.attributes.advanced) {
+            category = getOrAddSubcategory(category, Util.lf("More\u2026"), 1, category.getAttribute("colour"))
         }
         category.appendChild(block);
     }
@@ -175,6 +202,31 @@ namespace pxt.blocks {
             ctx.fillText(c, canvas.width / 2, 56);
         }
         return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
+    }
+
+    function getChildCategories(parent: Element) {
+        const elements = parent.querySelectorAll("category");
+        const result: Element[] = [];
+
+        for (let i = 0; i < elements.length; i++) {
+            if (elements[i].parentElement === parent) {
+                result.push(elements[i])
+            }
+        }
+
+        return result;
+    }
+
+    function getOrAddSubcategory(parent: Element, name: string, weight: number, colour?: string) {
+         const existing = parent.querySelector(`category[name="${name}"]`);
+         if (existing) {
+             return existing;
+         }
+
+         const newCategory = createCategoryElement(name, weight, colour);
+         parent.appendChild(newCategory)
+
+         return newCategory;
     }
 
     function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>, blockXml: HTMLElement): boolean {
@@ -411,6 +463,7 @@ namespace pxt.blocks {
         // lf("{id:category}Lists")
         // lf("{id:category}Text")
         // lf("{id:category}Math")
+        // lf("{id:category}More\u2026")
 
         // add extra blocks
         if (tb && pxt.appTarget.runtime && pxt.appTarget.runtime.extraBlocks) {
@@ -841,7 +894,69 @@ namespace pxt.blocks {
             Blockly.ContextMenu.show(e, menuOptions, this.RTL);
         };
 
+        // We override Blockly's category mouse event handler so that only one
+        // category can be expanded at a time. Also prevent categories from toggling
+        // once openend.
+        (<any>Blockly).Toolbox.TreeNode.prototype.onMouseDown = function(a: any) {
 
+            // Collapse the currently selected node and its parent nodes
+            if (!this.isSelected()) {
+                collapseMoreCategory(this.getTree().getSelectedItem(), this);
+            }
+
+            if (this.hasChildren() && this.isUserCollapsible_) {
+                // If this is a category of categories, we want to toggle when clicked
+                if (this.getChildCount() > 1) {
+                    this.toggle();
+                    if (this.isSelected()) {
+                        this.getTree().setSelectedItem(null);
+                    }
+                    else {
+                        this.select();
+                    }
+                }
+                else {
+                    // If this category has 1 or less children, don't bother toggling; we always want "More..." to show
+                    this.setExpanded(true);
+                    this.select();
+                }
+            }
+            else if (!this.isSelected()) {
+                 this.select();
+            }
+
+            this.updateRow()
+        }
+
+        // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
+        const oldSetSelectedItem = (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem;
+        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function(a: any) {
+
+            if (a === null) {
+                collapseMoreCategory(this.selectedItem_);
+            }
+
+            oldSetSelectedItem.call(this, a);
+        }
+    }
+
+    function collapseMoreCategory(cat: any, child?: any) {
+        while (cat) {
+            // Only collapse categories that have a single child (e.g. "More...")
+            if (cat.getChildCount() === 1 && cat.isUserCollapsible_ && (!child || !isChild(child, cat))) {
+                cat.setExpanded(false);
+                cat.updateRow();
+            }
+            cat = cat.getParent();
+        }
+    }
+
+    function isChild(child: any, parent: any): boolean {
+        const myParent = child.getParent();
+        if (myParent) {
+            return myParent === parent || isChild(myParent, parent);
+        }
+        return false;
     }
 
     function initMath() {
