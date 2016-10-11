@@ -144,8 +144,18 @@ namespace ts.pxtc {
         // inf?  - control over size of referenced data
         // str?  - true=Store/false=Load
         load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) {
+            assert(src != "r1")
             let z_reg = ""
             let prelude = ""
+
+            function spill_it(new_off: number) {
+                prelude += this.reg_gets_imm("r1",new_off) + "\n"
+                if (z_reg == "Y")
+                    prelude += "movw r30, r28\n"
+                prelude += `add r30, ${this.rmap_lo["r1"]}\nadc r31, ${this.rmap_hi["r1"]}\n`
+                off = "0"
+                z_reg = "Z"
+            }
 
             // different possibilities for src: r0, r5, sp, r6
             // any indirection we want to do using Y+C, Z+C (recall Y=sp, r6 -> Z)
@@ -168,14 +178,21 @@ namespace ts.pxtc {
                 if (0 <= new_off && new_off <=63) {
                     off = new_off.toString()
                 } else {
-                    prelude += "TBD"
+                    spill_it(new_off)
                 }
             } else if (off[0] == "r") {
-                // Z = Z + reg
+                if (z_reg == "Y")
+                    prelude += "movw r30, r28\n"
                 prelude += `add r30, ${this.rmap_lo[off]}\nadc r31, ${this.rmap_hi[off]}\n`
+                off = "0"
             } else {
                 // args@, locals@
-                // TODO: check out assembler processing
+                let at_index = off.indexOf("@")
+                assert(at_index >=0)
+                let slot = parseInt(off.slice(at_index + 1)) * 2
+                if (!(0 <= slot && slot <= 63)) {
+                    spill_it(slot)
+                }
             }
 
             if (store)

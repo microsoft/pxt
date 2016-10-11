@@ -575,6 +575,7 @@ namespace ts.pxtc.assembler {
                     break;
                 case ".word":
                 case ".4bytes":
+                    // TODO: a word is machine-dependent (16-bit for AVR, 32-bit for ARM)
                     this.parseNumbers(words).forEach(n => {
                         // we allow negative numbers
                         if (-0x80000000 <= n && n <= 0xffffffff) {
