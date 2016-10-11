@@ -309,4 +309,28 @@ declare namespace Blockly {
         const UI: string;
         function setGroup(group: any): void;
     }
+
+    namespace Toolbox {
+        class TreeNode {
+            isUserCollapsible_: boolean;
+
+            getChildCount(): number;
+            getParent(): TreeNode;
+            getTree(): TreeControl;
+            hasChildren(): boolean;
+            isSelected(): boolean;
+            onMouseDown(e: Event): void;
+            select(): void;
+            setExpanded(expanded: boolean): void;
+            toggle(): void;
+            updateRow(): void;
+        }
+
+        class TreeControl {
+            selectedItem_: TreeNode;
+
+            getSelectedItem(): TreeNode;
+            setSelectedItem(t: TreeNode): void;
+        }
+    }
 }

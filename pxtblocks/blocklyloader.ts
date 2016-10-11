@@ -897,50 +897,52 @@ namespace pxt.blocks {
         // We override Blockly's category mouse event handler so that only one
         // category can be expanded at a time. Also prevent categories from toggling
         // once openend.
-        (<any>Blockly).Toolbox.TreeNode.prototype.onMouseDown = function(a: any) {
+        Blockly.Toolbox.TreeNode.prototype.onMouseDown = function(a: Event) {
+            const that = <Blockly.Toolbox.TreeNode>this;
 
             // Collapse the currently selected node and its parent nodes
-            if (!this.isSelected()) {
-                collapseMoreCategory(this.getTree().getSelectedItem(), this);
+            if (!that.isSelected()) {
+                collapseMoreCategory(that.getTree().getSelectedItem(), that);
             }
 
-            if (this.hasChildren() && this.isUserCollapsible_) {
+            if (that.hasChildren() && that.isUserCollapsible_) {
                 // If this is a category of categories, we want to toggle when clicked
-                if (this.getChildCount() > 1) {
-                    this.toggle();
-                    if (this.isSelected()) {
-                        this.getTree().setSelectedItem(null);
+                if (that.getChildCount() > 1) {
+                    that.toggle();
+                    if (that.isSelected()) {
+                        that.getTree().setSelectedItem(null);
                     }
                     else {
-                        this.select();
+                        that.select();
                     }
                 }
                 else {
                     // If this category has 1 or less children, don't bother toggling; we always want "More..." to show
-                    this.setExpanded(true);
-                    this.select();
+                    that.setExpanded(true);
+                    that.select();
                 }
             }
-            else if (!this.isSelected()) {
-                 this.select();
+            else if (!that.isSelected()) {
+                 that.select();
             }
 
-            this.updateRow()
+            that.updateRow()
         }
 
         // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
-        const oldSetSelectedItem = (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem;
-        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function(a: any) {
+        const oldSetSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
+        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function(a: Blockly.Toolbox.TreeNode) {
+            const that = <Blockly.Toolbox.TreeControl>this;
 
             if (a === null) {
-                collapseMoreCategory(this.selectedItem_);
+                collapseMoreCategory(that.selectedItem_);
             }
 
-            oldSetSelectedItem.call(this, a);
+            oldSetSelectedItem.call(that, a);
         }
     }
 
-    function collapseMoreCategory(cat: any, child?: any) {
+    function collapseMoreCategory(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
         while (cat) {
             // Only collapse categories that have a single child (e.g. "More...")
             if (cat.getChildCount() === 1 && cat.isUserCollapsible_ && (!child || !isChild(child, cat))) {
@@ -951,7 +953,7 @@ namespace pxt.blocks {
         }
     }
 
-    function isChild(child: any, parent: any): boolean {
+    function isChild(child: Blockly.Toolbox.TreeNode, parent: Blockly.Toolbox.TreeNode): boolean {
         const myParent = child.getParent();
         if (myParent) {
             return myParent === parent || isChild(myParent, parent);
