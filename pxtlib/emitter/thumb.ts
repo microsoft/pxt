@@ -179,6 +179,10 @@ namespace ts.pxtc.thumb {
         }
 
 
+        public wordSize() {
+            return 4
+        }
+
         public is32bit(i: assembler.Instruction) {
             return i.name == "bl" || i.name == "bb";
         }

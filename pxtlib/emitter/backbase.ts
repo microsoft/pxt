@@ -48,6 +48,8 @@ namespace ts.pxtc {
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
         // str?  - true=Store/false=Load
+        // src - can range over
+
         load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
         rt_call(name: string, r0: string, r1: string) { return "TBD"; }
         call_lbl(lbl: string) { return "TBD" }

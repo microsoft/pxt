@@ -20,7 +20,7 @@ namespace ts.pxtc {
     //   - POP Rd (inc SP by 1)
     //   - RET, RETI (inc by 2 - 16 bit code pointer)
 
-    // - in AVR< 0x0060 is lowest address for the stack
+    // - in AVR, 0x0060 is lowest address for the stack
     // - stack grows from high (RAMEND) to low (top of stack)
 
     // Text below from http://gcc.gnu.org/wiki/avr-gcc 
@@ -58,6 +58,7 @@ namespace ts.pxtc {
 
     /*
      * Calling convention
+     * 
      * - An argument is passed either completely in registers or completely in memory. 
      * - To find the register where a function argument is passed, follow this procedure:
      *   0. X = 26
@@ -69,15 +70,12 @@ namespace ts.pxtc {
      *   4. If X < 8 or the SIZE = 0, the argument will be passed in memory. 
      *   5. If the current argument is passed in memory, stop the procedure: All subsequent arguments will also be passed in memory. 
      *   6. If there are arguments left, goto 1. and proceed with the next argument. 
-     * Return values with a size of 1 byte up to and including a size of 8 bytes will be returned in registers. 
-     * Return values whose size is outside that range will be returned in memory. 
-     * If a return value cannot be returned in registers, the caller will allocate stack space and 
-     * pass the address as implicit first pointer argument to the callee. The callee will put the 
-     * return value into the space provided by the caller. 
-     * If the return value of a function is returned in registers, the same registers are used as if 
-     * the value was the first parameter of a non-varargs function. 
+     *
+     * - Return values with a size of 1 byte up to and including a size of 8 bytes will be returned in registers. 
+     * - Return values whose size is outside that range will be returned in memory. 
+     * - If the return value of a function is returned in registers, the same registers are used as if 
+     *   the value was the first parameter of a non-varargs function. 
      * For example, an 8-bit value is returned in R24 and an 32-bit value is returned R22...R25. 
-     * Arguments of varargs functions are passed on the stack. This applies even to the named arguments. 
      */
 
     // for now, everything is 16-bit (word)
@@ -87,19 +85,19 @@ namespace ts.pxtc {
             // TODO: split immediate and load into register pair (check this is correct)
             let imm_lo = imm & 0xff
             let imm_hi = (imm & 0xff00) >> 8
-            return `ldi ${this.rmap_lo(reg)}, #${imm_lo}\nldi ${this.rmap_hi(reg)}, #${imm_hi}`
+            return `ldi ${this.rmap_lo[reg]}, #${imm_lo}\nldi ${this.rmap_hi[reg]}, #${imm_hi}`
         }
         push(regs: string[]) {
             let res = ""
             regs.forEach(r => {
-                res = res + `push ${this.rmap_lo(r)}\npush ${this.rmap_hi(r)}`
+                res = res + `push ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
             });
             return res
         }
         pop(regs: string[]) {
             let res = ""
             regs.forEach(r => {
-                res = res + `pop ${this.rmap_hi(r)}\npop ${this.rmap_lo(r)}`
+                res = res + `pop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
             });
             return res
         }
@@ -116,6 +114,7 @@ namespace ts.pxtc {
         breakpoint() { return "nop" }
         pop_locals(n: number) {
             // note: updates both the SP and FP
+            // could make this into a call???
             return `
     in	r28, 0x3d
     in	r29, 0x3e
@@ -124,20 +123,95 @@ namespace ts.pxtc {
     out	0x3e, r29`
         }
         unconditional_branch(lbl: string) { return "jmp " + lbl }
-        beq(lbl: string) { return "TBD" }
-        bne(lbl: string) { return "TBD" }
-        cmp(reg1: string, o2: string) {
-            // TODO
-            return ""
+        beq(lbl: string) { return "breq " + lbl }
+        bne(lbl: string) { return "brne " + lbl }
+
+        cmp(reg1: string, reg2: string) {
+            let reg1_lo = this.rmap_lo[reg1]
+            let reg1_hi = this.rmap_hi[reg1]
+            let reg2_lo = this.rmap_lo[reg2]
+            let reg2_hi = this.rmap_hi[reg2]
+            return `cp ${reg1_lo}, ${reg2_lo}\ncpc ${reg1_hi}, ${reg2_hi}`
         }
+        cmp_zero(reg: string) {
+            let reg_lo = this.rmap_lo[reg]
+            let reg_hi = this.rmap_hi[reg]
+            return `cp ${reg_lo}, r1\ncpc ${reg_hi}, r1`
+        }
+
         // load_reg_src_off is load/store indirect
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
         // str?  - true=Store/false=Load
-        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
-        rt_call(name: string, r0: string, r1: string) { return "TBD"; }
-        call_lbl(lbl: string) { return "TBD" }
-        call_reg(reg: string) { return "TBD" }
+        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) {
+            let z_reg = ""
+            let prelude = ""
+
+            // different possibilities for src: r0, r5, sp, r6
+            // any indirection we want to do using Y+C, Z+C (recall Y=sp, r6 -> Z)
+            if (src == "r0" || src == "r5") {
+                prelude = `movw r30, ${this.rmap_lo[src]}\n`
+                z_reg = "Z"
+            } else
+                z_reg = this.ld_map[src]  // maps to Y or Z
+
+            // different possibilities for off
+            if (word || off[0] == "#") {
+                let new_off = 0
+                if (word) {
+                    // word true implies off is an integer
+                    new_off = 2 * parseInt(off)
+                } else {
+                    // word false means we have #integer
+                    new_off = parseInt(off.slice(1))
+                }
+                if (0 <= new_off && new_off <=63) {
+                    off = new_off.toString()
+                } else {
+                    prelude += "TBD"
+                }
+            } else if (off[0] == "r") {
+                // Z = Z + reg
+                prelude += `add r30, ${this.rmap_lo[off]}\nadc r31, ${this.rmap_hi[off]}\n`
+            } else {
+                // args@, locals@
+                // TODO: check out assembler processing
+            }
+
+            if (store)
+                // std	Y+2, r25
+                return `${prelude}std ${z_reg}+${off}, ${reg}`
+            else
+                // ldd	r24, Y+1
+                return `${prelude}ldd ${reg}, ${z_reg}+${off}`
+        }
+
+        rt_call(name: string, r0: string, r1: string) {
+            assert(r0 == "r0" && r1 == "r1")
+            assert(name == "adds" || name == "subs" || name == "muls")
+            if (name == "muls") {
+                // for multiplication, we get result of multiplying r20 x r18 into R0,R1!
+                // need to clear r0 at end - result in r24,r25 
+                // can we make this a procedure call??
+                return `
+    movw r20, r24 ; r24 will hold result
+    mul r20, r22
+    movw r24, r0
+    mul	r20, r23
+    add	r25, r0
+    mul	r21, r22
+    add	r25, r0
+    eor	r1, r1`
+            } else {
+                return `${this.inst_lo[name]} r18, r20\n${this.inst_hi[name]} r19, r21\n`
+            }
+        }
+        call_lbl(lbl: string) { return "call " + lbl }
+        call_reg(reg: string) {
+            return `
+    movw r30, ${this.rmap_lo[reg]}
+    icall`
+        }
 
         // no virtuals or lambdas for now
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) { assert(false); return "" }
@@ -145,44 +219,47 @@ namespace ts.pxtc {
         lambda_prologue() { assert(false); return "" }
         lambda_epilogue() { assert(false); return "" }
 
-        load_ptr(lbl: string, reg: string) { return "TBD" }
-        emit_int(v: number, reg: string) { return "TBD" }
-
-        // mapping from virtual registers to AVR registers
-        private rmap_lo(vreg: string) {
-            assert(vreg != "sp" && vreg != "lr")
-            if (vreg == "r0")
-                return "r18"
-            if (vreg == "r1")
-                return "r20"
-            if (vreg == "r2")
-                return "r22"
-            if (vreg == "r3")
-                return "r24"
-            if (vreg == "r5")
-                return "r26"
-            if (vreg == "r6")
-                return "r30"
-            oops()
-            return ""
+        load_ptr(lbl: string, reg: string) {
+            assert(!!lbl)
+            return  `ldi ${this.rmap_lo[reg]}, ${lbl}@lo\nldi ${this.rmap_hi[reg]}, ${lbl}@hi`
         }
 
-        private rmap_hi(vreg: string) {
-            assert(vreg != "sp" && vreg != "lr")
-            if (vreg == "r0")
-                return "r19"
-            if (vreg == "r1")
-                return "r21"
-            if (vreg == "r2")
-                return "r23"
-            if (vreg == "r3")
-                return "r25"
-            if (vreg == "r5")
-                return "r27"
-            if (vreg == "r6")
-                return "r31"
-            oops()
-            return ""
+        emit_int(v: number, reg: string) {
+            return this.reg_gets_imm(reg, v)
+        }
+
+        // mapping from virtual registers to AVR registers
+        rmap_lo: pxt.Map<string> = {
+            "r0": "r24",
+            "r1": "r22",
+            "r2": "r20",
+            "r3": "r18",
+            "r5": "r26",  // X
+            "r6": "r30"   // Z
+        }
+
+        rmap_hi: pxt.Map<string> = {
+            "r0": "r25",
+            "r1": "r23",
+            "r2": "r21",
+            "r3": "r19",
+            "r5": "r27",
+            "r6": "r30"
+        }
+
+        inst_lo: pxt.Map<string> = {
+            "adds": "add",
+            "subs": "sub"
+        }
+
+        inst_hi: pxt.Map<string> = {
+            "adds": "adc",
+            "subs": "sbc"
+        }
+
+        ld_map: pxt.Map<string> = {
+            "sp": "Y",
+            "r6": "Z"
         }
     }
 }

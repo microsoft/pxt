@@ -93,9 +93,9 @@ namespace ts.pxtc.assembler {
                             return emitErr("expecting number", actual)
                         } else {
                             if (this.ei.isAddSP(this.opcode))
-                                stack = -(v / 4);
+                                stack = -(v / this.ei.wordSize());
                             else if (this.ei.isSubSP(this.opcode))
-                                stack = (v / 4);
+                                stack = (v / this.ei.wordSize());
                         }
                     } else if (enc.isRegList) {
                         // register lists are ARM-specific - this code not used in AVR 
@@ -325,7 +325,7 @@ namespace ts.pxtc.assembler {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
                     if (this.stackpointers.hasOwnProperty(m[1]))
-                        v = 4 * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                        v = this.ei.wordSize() * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
                     else
                         this.directiveError(lf("saved stack not found"))
                 }
@@ -502,6 +502,7 @@ namespace ts.pxtc.assembler {
         private emitHex(words: string[]) {
             words.slice(1).forEach(w => {
                 if (w == ",") return
+                // TODO: why 4 and not 2?
                 if (w.length % 4 != 0)
                     this.directiveError(".hex needs an even number of bytes")
                 else if (!/^[a-f0-9]+$/i.test(w))
@@ -945,6 +946,10 @@ namespace ts.pxtc.assembler {
         constructor() {
             this.encoders = {};
             this.instructions = {}
+        }
+
+        public wordSize() {
+            return -1;
         }
 
         public is32bit(i: Instruction) {
