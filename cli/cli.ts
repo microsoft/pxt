@@ -477,8 +477,9 @@ let readJson = nodeutil.readJson;
 function travisAsync() {
     forceCloudBuild = true
 
-    let rel = process.env.TRAVIS_TAG || ""
-    let atok = process.env.NPM_ACCESS_TOKEN
+    const rel = process.env.TRAVIS_TAG || ""
+    const atok = process.env.NPM_ACCESS_TOKEN
+    const npmPublish = rel && atok;
 
     if (/^v\d/.test(rel) && atok) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
@@ -489,15 +490,12 @@ function travisAsync() {
 
     console.log("TRAVIS_TAG:", rel)
 
-    let branch = process.env.TRAVIS_BRANCH || "local"
-    let latest = branch == "master" ? "latest" : "git-" + branch
+    const branch = process.env.TRAVIS_BRANCH || "local"
+    const latest = branch == "master" ? "latest" : "git-" + branch
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
-        if (rel)
-            return runNpmAsync("publish")
-        else
-            return Promise.resolve()
+        return npmPublish ? runNpmAsync("publish") : Promise.resolve();
     } else {
         return buildTargetAsync()
             .then(() => uploader.checkDocsAsync())
@@ -505,7 +503,7 @@ function travisAsync() {
                 let trg = readLocalPxTarget()
                 if (rel)
                     return uploadtrgAsync(trg.id + "/" + rel)
-                        .then(() => runNpmAsync("publish"))
+                        .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
                 else
                     return uploadtrgAsync(trg.id + "/" + latest)
             })

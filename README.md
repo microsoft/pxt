@@ -22,7 +22,7 @@ More info:
 
 ## Running a target from localhost
 
-Please follow [instructions here](https://www.pxt.io/cli).
+Please follow the [instructions here](https://www.pxt.io/cli).
 
 ## Linking a target to PXT
 
@@ -59,14 +59,14 @@ After this you can run `pxt` from anywhere within the build tree.
 To start the local web server, run `pxt serve` from within the root
 of an app target (e.g. pxt-microbit) and then browse to http://localhost:3232
 
-Alterntively, if you clone your pxt and pxt-microbit directories next to each
+Alternatively, if you clone your pxt and pxt-microbit directories next to each
 other, you can serve your local pxt-microbit repo from within the pxt repo by
 running `jake serve`.
 
 
 ### Icons
 
-There is a number of custom icons (to use in addition
+There are a number of custom icons (to use in addition
 to http://semantic-ui.com/elements/icon.html) in the `svgicons/` directory.
 These need to be `1000x1000px`. Best start with an existing one. To see available icons go to
 http://localhost:3232/icons.html (this file, along with `icons.css` containing

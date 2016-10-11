@@ -253,12 +253,41 @@ namespace pxt {
                     this.config.name, minVer, appTarget.versions.target))
         }
 
+        upgradePackage(pkg: string, val: string): string {
+            if (val != "*") return pkg;
+            let upgrades = appTarget.compile.upgrades;
+            let newPackage = pkg;
+            if (upgrades) {
+                upgrades.forEach((rule) => {
+                    if (rule.type == "package") {
+                        for (let match in rule.map) {
+                            if (newPackage == match) {
+                                newPackage = rule.map[match];
+                            }
+                        }
+                    }
+                });
+            }
+            return newPackage;
+        }
+
         private parseConfig(str: string) {
             let cfg = <PackageConfig>JSON.parse(str)
             this.config = cfg;
-            // temp patch for cloud corrupted configs
-            for (let dep in this.config.dependencies)
-                if (/^microbit-(led|music|game|pins|serial)$/.test(dep)) delete this.config.dependencies[dep];
+
+            let currentConfig = JSON.stringify(this.config);
+            for (let dep in this.config.dependencies) {
+                let value = this.upgradePackage(dep, this.config.dependencies[dep]);
+                if (value != dep) {
+                    delete this.config.dependencies[dep];
+                    if (value) {
+                        this.config.dependencies[value] = "*";
+                    }
+                }
+            }
+            if (JSON.stringify(this.config) != currentConfig) {
+                this.saveConfig();
+            }
             this.validateConfig();
         }
 

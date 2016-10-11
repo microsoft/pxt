@@ -378,20 +378,6 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
     }
 
     show() {
-        const header = this.props.parent.state.header;
-        if (this.state.publishingEnabled) {
-            if (header.pubCurrent) {
-                this.setState({ currentPubId: header.pubId, screenshotId: undefined });
-            }
-        } else {
-            if (!header.pubCurrent) {
-                this.props.parent.exportAsync()
-                    .then(filedata => {
-                        header.pubCurrent = true;
-                        this.setState({ currentPubId: filedata, screenshotId: undefined })
-                    });
-            }
-        }
         this.modal.show();
     }
 
@@ -403,6 +389,14 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
     renderCore() {
         const header = this.props.parent.state.header;
         if (!header) return <div></div>
+
+        if (!header.pubCurrent && !this.state.publishingEnabled) {
+            this.props.parent.exportAsync()
+                .then(filedata => {
+                    header.pubCurrent = true;
+                    this.setState({ currentPubId: filedata, screenshotId: undefined })
+                });
+        }
         let currentPubId = header.pubId || this.state.currentPubId;
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl
@@ -466,6 +460,9 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                 { url && this.state.publishingEnabled ? <div className="ui success message">
                     <h3>{lf("Project URL") }</h3>
                     <div className="header"><a target="_blank" href={url}>{url}</a></div>
+                </div> : undefined }
+                { !ready && !this.state.publishingEnabled ? <div className="ui warning message">
+                    <h3>{lf("Loading...") }</h3>
                 </div> : undefined }
                 { ready ?
                     <div className="ui form">
@@ -1802,7 +1799,7 @@ function enableMixPanel() {
     pxt.timeEvent = function(id): void {
         if (!id) return;
         try {
-            mp.timeEvent(id);
+            mp.time_event(id);
         } catch (e) {
             console.error(e);
         }
@@ -1810,7 +1807,7 @@ function enableMixPanel() {
     pxt.timeEvent = function(id: string): void {
         if (!id) return;
         try {
-            mp.timeEvent(id);
+            mp.time_event(id);
         } catch (e) {
             console.error(e);
         }
