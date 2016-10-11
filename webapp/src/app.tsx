@@ -1799,7 +1799,7 @@ function enableMixPanel() {
     pxt.timeEvent = function(id): void {
         if (!id) return;
         try {
-            mp.timeEvent(id);
+            mp.time_event(id);
         } catch (e) {
             console.error(e);
         }
@@ -1807,7 +1807,7 @@ function enableMixPanel() {
     pxt.timeEvent = function(id: string): void {
         if (!id) return;
         try {
-            mp.timeEvent(id);
+            mp.time_event(id);
         } catch (e) {
             console.error(e);
         }
