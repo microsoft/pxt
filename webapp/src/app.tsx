@@ -957,6 +957,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let file = main.getMainFile()
                 if (e)
                     file = main.lookupFile(e.name) || file
+                if (!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName())
+                    file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                 if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
                     this.textEditor.decompile(file.getVirtualFileName()).then((success) => {
                         if (!success)
@@ -1132,15 +1134,19 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then(files => {
                 const project: pxt.cpp.HexFile = {
                     meta: {
-                        cloudId: pxt.Cloud + pxt.appTarget.id,
+                        cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
                         targetVersion: pxt.appTarget.versions.target,
-                        editor: Util.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
+                        editor: this.getPreferredEditor(),
                         name: mpkg.config.name
                     },
                     source: JSON.stringify(files, null, 2)
                 }
                 return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
             });
+    }
+
+    getPreferredEditor(): string {
+        return this.editor == this.blocksEditor ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
     }
 
     exportAsync(): Promise<string> {
@@ -1270,7 +1276,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.clearLog();
         this.editor.beforeCompile();
         let state = this.editor.snapshotState()
-        compiler.compileAsync({ native: true, forceEmit: true })
+        compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor()})
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (!resp.outfiles[pxtc.BINARY_HEX]) {

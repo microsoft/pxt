@@ -107,7 +107,9 @@ namespace pxt {
         else if (!webConfig) webConfig = localWebConfig()
     }
 
-    export type CompileTarget = pxtc.CompileTarget;
+    export interface CompileTarget extends pxtc.CompileTarget {
+        preferredEditor?: string; // used to indicate preferred editor to show code in
+    }
 
     export interface Host {
         readFile(pkg: Package, filename: string): string;
@@ -460,7 +462,7 @@ namespace pxt {
                             status: "unpublished",
                             scriptId: this.config.installedVersion,
                             cloudId: pxt.CLOUD_ID + appTarget.id,
-                            editor: U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
+                            editor: target.preferredEditor ? target.preferredEditor : (U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME),
                             targetVersion: pxt.appTarget.versions ? pxt.appTarget.versions.target : undefined
                         })
                         let programText = JSON.stringify(files)
