@@ -352,6 +352,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 enum ShareMode {
     Screenshot,
     Editor,
+    Url,
     Simulator,
     Cli
 }
@@ -362,6 +363,7 @@ interface ShareEditorState {
     screenshotUri?: string;
     publishingEnabled?: boolean;
     currentPubId?: string;
+    modalVisible?: boolean;
 }
 
 class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
@@ -373,7 +375,8 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
         this.state = {
             mode: ShareMode.Screenshot,
             publishingEnabled: cloud.publishing,
-            currentPubId: ''
+            currentPubId: '',
+            modalVisible: false
         }
     }
 
@@ -381,9 +384,9 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
         this.modal.show();
     }
 
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
-        if (this.modal && !this.modal.state.visible) return false;
-        return true;
+    visibilityChanged(visibility: boolean) {
+        if (visibility)
+            this.setState({ modalVisible: visibility, mode: ShareMode.Screenshot });
     }
 
     renderCore() {
@@ -402,6 +405,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
         let rootUrl = pxt.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
 
+        const isBlocks = this.props.parent.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const mode = this.state.mode;
         const ready = (!!currentPubId && header.pubCurrent);
         let url = '';
@@ -426,17 +430,28 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                 case ShareMode.Editor:
                     embed = pxt.docs.embedUrl(rootUrl, this.state.publishingEnabled ? 'sandbox' : 'sandboxproject', currentPubId, header.meta.blocksHeight);
                     break;
+                case ShareMode.Url:
+                    embed = editUrl;
+                    break;
                 default:
-                    // render svg
-                    if (this.state.screenshotId == currentPubId) {
-                        if (this.state.screenshotUri)
-                            embed = `<a href="${editUrl}"><img src="${this.state.screenshotUri}" /></a>`
-                        else embed = lf("Ooops, no screenshot available.");
+                    if (isBlocks) {
+                        // Render screenshot
+                        if (this.state.screenshotId == currentPubId) {
+                            if (this.state.screenshotUri)
+                                embed = `<a href="${editUrl}"><img src="${this.state.screenshotUri}" /></a>`
+                            else embed = lf("Ooops, no screenshot available.");
+                        } else {
+                            pxt.debug("rendering share-editor screenshot png");
+                            embed = lf("rendering...");
+                            pxt.blocks.layout.toPngAsync(this.props.parent.blocksEditor.editor)
+                                .done(uri => this.setState({ screenshotId: currentPubId, screenshotUri: uri }));
+                        }
                     } else {
-                        pxt.debug("rendering share-editor screenshot png");
-                        embed = lf("rendering...");
-                        pxt.blocks.layout.toPngAsync(this.props.parent.blocksEditor.editor)
-                            .done(uri => this.setState({ screenshotId: currentPubId, screenshotUri: uri }));
+                        // Render javascript code
+                        pxt.debug("rendering javascript code markdown");
+                        let fileContents = this.props.parent.textEditor.snapshotState().join('\n');
+                        let mdContent = pxt.docs.renderMarkdown(`@body@`, `\`\`\`javascript\n${fileContents}\n\`\`\``);
+                        embed = `<a style="text-decoration: none;" href="${editUrl}">${mdContent}</a>`;
                     }
                     break;
             }
@@ -448,7 +463,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
         }
         const formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
 
-        return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Embed Project") }>
+        return <sui.Modal ref={v => this.modal = v} visibilityChanged={this.visibilityChanged.bind(this)} addClass="small searchdialog" header={lf("Embed Project") }>
             <div className={`ui ${formState} form`}>
                 { this.state.publishingEnabled ?
                     <div className="ui warning message">
@@ -470,7 +485,8 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
                             <label>{lf("Embed...") }</label>
                             {[
                                 { mode: ShareMode.Screenshot, label: lf("Screenshot") },
-                                { mode: ShareMode.Editor, label: lf("Editor") }]
+                                { mode: ShareMode.Editor, label: lf("Editor") },
+                                { mode: ShareMode.Url, label: lf("Link") }]
                                 .concat(
                                 this.state.publishingEnabled ? [
                                     { mode: ShareMode.Simulator, label: lf("Simulator") },
@@ -1289,7 +1305,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     startStopSimulator() {
-        if(this.state.running)  {
+        if (this.state.running)  {
             pxt.tickEvent('simulator.stop')
             this.stopSimulator()
         } else {
