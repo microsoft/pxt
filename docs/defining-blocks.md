@@ -29,15 +29,16 @@ namespace basic {
 ````
 
 Special attribute annotation like `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
+To have a category appear under the "Advanced" section of the Block Editor toolbox, add the annotation `advanced=true`.
 
 ## Blocks
 
 All **exported** functions with a `blockId` and `block` attribute
-will be available in the Block Editor. 
+will be available in the Block Editor.
 
 ```
-//% blockId=device_show_number 
-//% block="show|number %v" 
+//% blockId=device_show_number
+//% block="show|number %v"
 //% icon="\uf1ec"
 export function showNumber(v: number, interval: number = 150): void
 { }
@@ -49,6 +50,7 @@ export function showNumber(v: number, interval: number = 150): void
 Other optional attributes can also be used:
 * `blockExternalInputs=` forces `External Inputs` rendering
 * `icon` icon character from the icon font to display
+* `advanced=true` causes this block to be placed under the parent category's "More..." subcategory. Useful for hiding advanced or rarely-used blocks by default
 
 ## Block syntax
 
@@ -56,8 +58,8 @@ The `block` attribute specifies how the parameters of the function
 will be organized to create the block.
 
 ```
-block = field, { '|' field } 
-field := string 
+block = field, { '|' field }
+field := string
     | string `%` parameter [ `=` type ]
 parameter = string
 type = string
@@ -136,7 +138,7 @@ The JSDoc comment is automatically used as the help for the block.
  * @param interval speed of scroll; eg: 150, 100, 200, -100
 */
 //% help=functions/show-number
-export function showNumber(value: number, interval: number = 150): void 
+export function showNumber(value: number, interval: number = 150): void
 { }
 ````
 
@@ -152,7 +154,7 @@ Blocks work best with "flat" C-style APIs. However, it is possible to expose ins
 ```
 //%
 class Message {
-    ...    
+    ...
     //% blockId="message_get_text" block="%this|text"
     public getText() { ... }
 }
@@ -185,7 +187,7 @@ flag to disable showing it in auto-completion.
 
 ## Grouping
 
-Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter, 
+Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter,
 this macro allows to definte groups of blocks. The default ``blockGap`` value is ``8``.
 
 ```
@@ -195,7 +197,7 @@ this macro allows to definte groups of blocks. The default ``blockGap`` value is
 
 ## Testing your Blocks
 
-We recommend to build your block APIs iteratively and try it out in the editor to get the "feel of it". 
+We recommend to build your block APIs iteratively and try it out in the editor to get the "feel of it".
 To do so, the ideal setup is:
 - run your target locally using ``pxt serve``
 - keep a code editor with the TypeScript opened where you can edit the APIs
