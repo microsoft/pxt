@@ -209,7 +209,7 @@ namespace pxt.blocks {
         const result: Element[] = [];
 
         for (let i = 0; i < elements.length; i++) {
-            if (elements[i].parentElement === parent) {
+            if (elements[i].parentNode === parent) { // IE11: no parentElement
                 result.push(elements[i])
             }
         }
@@ -390,8 +390,8 @@ namespace pxt.blocks {
 
     function removeCategory(tb: Element, name: string) {
         let e = categoryElement(tb, name);
-        if (e && e.parentElement)
-            e.parentElement.removeChild(e);
+        if (e && e.parentNode) // IE11: no parentElement
+            e.parentNode.removeChild(e);
     }
 
     export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
