@@ -1363,7 +1363,7 @@ export function serveAsync(...args: string[]) {
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
-    
+
     if (hasArg("yt")) {
         forceCloudBuild = false
     } else if (hasArg("cloud")) {
@@ -2337,7 +2337,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
     */
 }
 
-function testAssemblers(): Promise<void>  {
+function testAssemblers(): Promise<void> {
     console.log("- testing Thumb")
     pxtc.thumb.test();
     console.log("- done testing Thumb");
