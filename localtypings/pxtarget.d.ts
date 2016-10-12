@@ -157,7 +157,6 @@ declare namespace ts.pxtc {
         floatingPoint?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         upgrades?: PackageUpgradePolicy[];
-        preferredEditor?: string; // used to indicate preferred editor to show code in
     }
 
     interface CompileOptions {

@@ -107,7 +107,9 @@ namespace pxt {
         else if (!webConfig) webConfig = localWebConfig()
     }
 
-    export type CompileTarget = pxtc.CompileTarget;
+    export interface CompileTarget extends pxtc.CompileTarget {
+        preferredEditor?: string; // used to indicate preferred editor to show code in
+    }
 
     export interface Host {
         readFile(pkg: Package, filename: string): string;
