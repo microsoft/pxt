@@ -460,7 +460,7 @@ namespace pxt {
                             status: "unpublished",
                             scriptId: this.config.installedVersion,
                             cloudId: pxt.CLOUD_ID + appTarget.id,
-                            editor: U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME,
+                            editor: target.preferredEditor ? target.preferredEditor : (U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME),
                             targetVersion: pxt.appTarget.versions ? pxt.appTarget.versions.target : undefined
                         })
                         let programText = JSON.stringify(files)
