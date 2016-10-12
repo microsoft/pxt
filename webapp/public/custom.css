@@ -298,9 +298,7 @@ div.simframe > iframe {
 
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
 .blocklyTreeRoot div div div div .blocklyTreeRow {
-    border-left-width: 18px !important;
-    padding-top: 0px !important;
-    padding-bottom: 1.6rem !important;
+    border-left-width: 12px !important;
     padding-left: 0px !important;
 }
 
@@ -575,6 +573,11 @@ html {
         padding-top: 0.75rem !important;
         padding-bottom: 2rem !important;
         border-left-width: 12px !important;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow {
+        border-left-width: 18px !important;
+        padding-top: 0px !important;
+        padding-bottom: 1.6rem !important;
     }
 }
 
