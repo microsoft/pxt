@@ -29,7 +29,7 @@ namespace basic {
 ````
 
 Special attribute annotation like `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
-To have a category appear under the "Advanced" section of the toolbox editor, add the annotation `advanced=true`.
+To have a category appear under the "Advanced" section of the Block Editor toolbox, add the annotation `advanced=true`.
 
 ## Blocks
 
