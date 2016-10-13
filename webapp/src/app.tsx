@@ -1967,8 +1967,6 @@ $(document).ready(() => {
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
-    const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-    const lang = mlang ? mlang[1] : (navigator.userLanguage || navigator.language);
 
     enableAnalytics()
     appcache.init();
@@ -1999,7 +1997,11 @@ $(document).ready(() => {
                 }
             }
         })
-        .then(() => Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang))
+        .then(() => {
+            const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            const lang = mlang ? mlang[1] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang);
+        })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {

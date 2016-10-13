@@ -95,6 +95,7 @@ declare namespace pxt {
         name?: string;
         title?: string;
         description?: string;
+        defaultLocale?: string;
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
