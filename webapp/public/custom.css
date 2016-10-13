@@ -502,8 +502,8 @@ html {
 /* default layout */
 #filelist {
   left: 0;
-  min-width: 23rem;
-  max-width: 23rem;
+  min-width: 27rem;
+  max-width: 27rem;
 }
 .rtl #filelist {
     left: auto;
@@ -517,11 +517,11 @@ html {
 
 #maineditor {
   right: 0;
-  left: 23rem;
+  left: 27rem;
 }
 .rtl #maineditor {
     left:0;
-    right:23rem;
+    right:27rem;
 }
 
 .ui.widedesktop.only {
