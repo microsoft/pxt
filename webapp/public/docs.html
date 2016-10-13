@@ -68,6 +68,7 @@
 
 <body>
     <style type="text/css">
+        @import "/cdn/highlight.js/styles/vs.css";
         @import "/cdn/semantic.css";
         @import "/cdn/icons.css";
     </style>
@@ -85,6 +86,7 @@
     <!-- @include apptracking.html -->
     <script type="text/javascript" src="/cdn/lzma/lzma_worker-min.js"></script>
     <script type="text/javascript" src="/cdn/marked/marked.min.js"></script>
+    <script type="text/javascript" src="/cdn/highlight.js/highlight.pack.js"></script>
     <script type="text/javascript" src="/cdn/jquery.js"></script>
     <script type="text/javascript" src="/cdn/typescript.js"></script>
     <script type="text/javascript" src="/cdn/blockly/blockly_compressed.js"></script>
@@ -103,6 +105,7 @@
         var content = document.getElementById('content');        
         ksRunnerReady(function() {
             pxt.docs.requireMarked = function() { return marked; }
+            pxt.docs.requireHighlightJs = function() { return hljs; }
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href); 
             var code = /code=([^&?]+)/i.exec(window.location.href);
             var md = /md=([^&?]+)/i.exec(window.location.href);
