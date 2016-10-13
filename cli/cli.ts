@@ -1351,24 +1351,32 @@ function renderDocs(localDir: string) {
     console.log("Docs written.")
 }
 
-export function serveAsync(arg?: string) {
+export function serveAsync(...args: string[]) {
     forceCloudBuild = !globalConfig.localBuild
+    let trimmedArgs = args.map((arg) => {
+        return arg.replace(/^-*/, "");
+    });
+    let hasArg = (arg: string): boolean => {
+        return trimmedArgs && trimmedArgs.length && trimmedArgs.indexOf(arg) !== -1;
+    };
+
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
-    if (arg == "-yt") {
+
+    if (hasArg("yt")) {
         forceCloudBuild = false
-    } else if (arg == "-cloud") {
+    } else if (hasArg("cloud")) {
         forceCloudBuild = true
-    } else if (arg == "-just") {
+    } else if (hasArg("just")) {
         justServe = true
-    } else if (arg == "-pkg") {
+    } else if (hasArg("pkg")) {
         justServe = true
         packaged = true
-    } else if (arg == "-no-browser") {
+    } else if (hasArg("no-browser")) {
         justServe = true
         globalConfig.noAutoStart = true
-    } else if (arg == "-include-source-maps") {
+    } else if (hasArg("include-source-maps")) {
         includeSourceMaps = true;
     }
     if (!globalConfig.localToken) {
@@ -1397,7 +1405,8 @@ export function serveAsync(arg?: string) {
         .then(() => server.serveAsync({
             localToken: localToken,
             autoStart: !globalConfig.noAutoStart,
-            packaged: packaged
+            packaged: packaged,
+            electron: hasArg("electron")
         }))
 }
 
@@ -2328,7 +2337,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
     */
 }
 
-function testAssemblers(): Promise<void>  {
+function testAssemblers(): Promise<void> {
     console.log("- testing Thumb")
     pxtc.thumb.test();
     console.log("- done testing Thumb");
