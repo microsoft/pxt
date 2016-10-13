@@ -398,6 +398,7 @@ export class Editor extends srceditor.Editor {
                     this.editor.setValue(" ");
                 }
                 this.updateDiagnostics();
+                pxt.tickEvent("typescript.edit");
                 this.changeCallback();
             }
         });
