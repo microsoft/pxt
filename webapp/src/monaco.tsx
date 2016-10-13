@@ -38,6 +38,11 @@ export class Editor extends srceditor.Editor {
 
     openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
+        const header = this.parent.state.header;
+        if (header) {
+            header.editor = pxt.BLOCKS_PROJECT_NAME;
+            header.pubCurrent = false
+        }
 
         let promise = Promise.resolve().then(() => {
             let blockFile = this.currFile.getVirtualFileName();

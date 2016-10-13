@@ -264,7 +264,6 @@ export interface ModalProps {
     addClass?: string;
     headerClass?: string;
     header: string;
-    visibilityChanged?: (v: boolean) => void;
 }
 
 export interface ModalState {
@@ -280,12 +279,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     show() {
         this.setState({ visible: true })
-        if (this.props.visibilityChanged) this.props.visibilityChanged(true)
     }
 
     hide() {
         this.setState({ visible: false })
-        if (this.props.visibilityChanged) this.props.visibilityChanged(false)
     }
 
     renderCore() {
