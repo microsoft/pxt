@@ -16,6 +16,24 @@ namespace pxt.blocks {
         logic: 210
     }
 
+    const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
+        "string": {
+            field: "TEXT",
+            block: "text",
+            defaultValue: ""
+        },
+        "number": {
+            field: "NUM",
+            block: "math_number",
+            defaultValue: "0"
+        },
+        "boolean": {
+            field: "BOOL",
+            block: "logic_boolean",
+            defaultValue: "false"
+        }
+    }
+
     // list of built-in blocks, should be touched.
     const builtinBlocks: Map<{
         block: B.BlockDefinition;
@@ -42,24 +60,30 @@ namespace pxt.blocks {
     function createShadowValue(name: string, type: string, v?: string, shadowType?: string): Element {
         if (v && v.slice(0, 1) == "\"")
             v = JSON.parse(v);
-        if (type == "number" && shadowType && shadowType == "value") {
-            let field = document.createElement("field");
+        if (type == "number" && shadowType == "value") {
+            const field = document.createElement("field");
             field.setAttribute("name", name);
             field.appendChild(document.createTextNode("0"));
             return field;
         }
 
-        let value = document.createElement("value");
+        const value = document.createElement("value");
         value.setAttribute("name", name);
 
-        let shadowTypeType = shadowType == "variables_get" ? "block" : "shadow";
-        let shadow = document.createElement(shadowTypeType); value.appendChild(shadow);
-        shadow.setAttribute("type", shadowType ? shadowType : type == "number" ? "math_number" : type == "string" ? "text" : type);
-        if (type == "number" || type == "string") {
-            let field = document.createElement("field"); shadow.appendChild(field);
-            field.setAttribute("name", shadowType == "variables_get" ? "VAR" : type == "number" ? "NUM" : "TEXT");
-            field.appendChild(document.createTextNode(v || (type == "number" ? "0" : "")));
+        const shadow = document.createElement(shadowType == "variables_get" ? "block" : "shadow");
+        value.appendChild(shadow);
+
+        const typeInfo = typeDefaults[type];
+
+        shadow.setAttribute("type", shadowType || typeInfo && typeInfo.block || type);
+
+        if (typeInfo) {
+            const field = document.createElement("field");
+            shadow.appendChild(field);
+            field.setAttribute("name", shadowType == "variables_get" ? "VAR" : typeInfo.field);
+            field.appendChild(document.createTextNode(v || typeInfo.defaultValue));
         }
+
         return value;
     }
 
