@@ -5,17 +5,9 @@
     * Atmel AVR 8-bit Instruction Set Manual
     *  http://www.atmel.com/Images/Atmel-0856-AVR-Instruction-Set-Manual.pdf
     * 
-
-__SP_H__ 
- 
-Stack pointer high byte at address 0x3E 
- 
-
-__SP_L__ 
- 
-Stack pointer low byte at address 0x3D 
- 
-
+    * Common part for Arduino and Circuit Playground
+    * http://www.atmel.com/Images/Atmel-7766-8-bit-AVR-ATmega16U4-32U4_Datasheet.pdf
+    *
     */
 
 namespace ts.pxtc.avr {
