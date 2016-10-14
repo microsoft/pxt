@@ -1574,7 +1574,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Button role="menuitem" key='runmenubtn' icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } />
                             </div>
                         </div>
-                        {sandbox ? undefined : <div className="ui item wide only">
+                        {sandbox ? undefined : <div className="ui item wide only projectname">
                             <div className={`ui large input`}>
                                 <input id="fileNameInput"
                                     type="text"
@@ -1585,7 +1585,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </div>
                         </div>}
                         {this.editor.menu() }
-                        {sandbox ? undefined : <sui.Item role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
+                        {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar'>
                             <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
