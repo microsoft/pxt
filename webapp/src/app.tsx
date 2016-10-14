@@ -1561,7 +1561,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
-                    <div className={`ui borderless small menu`} role="menubar">
+                    <div className={`ui borderless ${targetTheme.invertedMenu ? `inverted` : ''} small menu`} role="menubar">
                         {sandbox ? undefined :
                             <span id="logo" className="ui item">
                                 {targetTheme.logo || targetTheme.portraitLogo
@@ -1585,8 +1585,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='configure' class="secondary portrait only" onClick={() => this.openInstructions() } /> : undefined }
                                 <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } />
                                 {this.editor.menu() }
-                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="folder open" onClick={() => this.openProject() } /> }
-                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" icon="folder open" text={lf("Open...") } onClick={() => this.openProject() } /> }
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide green portrait only" icon="folder open" onClick={() => this.openProject() } /> }
+                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide green landscape only" icon="folder open" text={lf("Open...") } onClick={() => this.openProject() } /> }
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             {sandbox ? undefined : <div className="ui buttons">
@@ -1919,11 +1919,13 @@ export var sandbox = false;
 
 function initTheme() {
     core.cookieNotification()
-    if (pxt.appTarget.appTheme.accentColor) {
+
+    const theme = pxt.appTarget.appTheme;
+    if (theme.accentColor) {
         let style = document.createElement('style');
         style.type = 'text/css';
-        style.innerHTML = `.ui.accent { color: ${pxt.appTarget.appTheme.accentColor}; }
-        .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${pxt.appTarget.appTheme.accentColor}; }`;
+        style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
+        .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
         document.getElementsByTagName('head')[0].appendChild(style);
     }
     // RTL languages
