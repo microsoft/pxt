@@ -344,7 +344,7 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <sui.Button text={lf("JavaScript") } textClass="ui landscape only" icon="align left" onClick={() => this.openTypeScript() } />
+            <sui.Item text={lf("JavaScript") } textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() } />
         )
     }
 
