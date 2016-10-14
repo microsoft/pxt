@@ -1569,7 +1569,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </span> }
                         <div className="ui item portrait only">
                             <div className="ui">
-                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue' icon='icon download' onClick={() => this.compile() } /> : "" }
+                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class="blue" icon="download" onClick={() => this.compile() } /> : "" }
                                 {make ? <sui.Button role="menuitem" icon='configure' class="secondary" onClick={() => this.openInstructions() } /> : undefined }
                                 <sui.Button role="menuitem" key='runmenubtn' icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } />
                             </div>
@@ -1585,7 +1585,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </div>
                         </div>}
                         {this.editor.menu() }
-                        {sandbox ? undefined : <sui.Item role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open...") } onClick={() => this.openProject() } />}
+                        {sandbox ? undefined : <sui.Item role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar'>
                             <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
