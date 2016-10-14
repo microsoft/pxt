@@ -1590,7 +1590,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 { workspaces ? <CloudSyncButton parent={this} /> : null }
                             </div>
                             {sandbox ? undefined : <div className="ui buttons">
-                                <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
+                                <sui.DropdownMenu class='floating icon button' icon='sidebar'>
                                     <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
