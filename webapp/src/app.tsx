@@ -1556,6 +1556,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const simOpts = pxt.appTarget.simulator;
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
+        const savingProjectName = this.state.header && this.state.projectName != this.state.header.name;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
@@ -1568,6 +1569,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     : <span>{targetTheme.name}</span>}
                                 {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                             </span> }
+                        {sandbox ? undefined : <div className="ui item wide only">
+                            <div className={`ui large input`}>
+                                <input id="fileNameInput"
+                                    type="text"
+                                    placeholder={lf("Pick a name...") }
+                                    value={this.state.projectName || ''}
+                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }>
+                                </input>
+                            </div>
+                        </div>}
                         <div className="ui item">
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
@@ -1605,17 +1616,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </div>
                             {sandbox ? undefined : <DocsMenu parent={this} />}
                         </div>
-                        {sandbox ? undefined : <div className="ui item wide only">
-                            <div className="ui massive transparent input">
-                                <input id="fileNameInput"
-                                    type="text"
-                                    placeholder={lf("Pick a name...") }
-                                    value={this.state.projectName || ''}
-                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }>
-                                </input>
-                                <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
-                            </div>
-                        </div>}
                         {rightLogo ?
                             <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
                                 {sandbox ?
