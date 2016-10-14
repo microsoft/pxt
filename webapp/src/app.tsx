@@ -378,9 +378,9 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
         return this.state.mode != nextState.mode
-                || this.state.pubCurrent != nextState.pubCurrent
-                || this.state.screenshotId != nextState.screenshotId
-                || this.state.currentPubId != nextState.currentPubId;
+            || this.state.pubCurrent != nextState.pubCurrent
+            || this.state.screenshotId != nextState.screenshotId
+            || this.state.currentPubId != nextState.currentPubId;
     }
 
     renderCore() {
@@ -653,7 +653,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                     className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                     >
                     {file.name} {meta.isSaved ? "" : "*"}
-                    {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
+                    {/\.ts$/.test(file.name) ? <i className="align left icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                     {meta.isReadonly ? <i className="lock icon"></i> : null}
                     {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                     {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removeFile(e, file) } /> : ''}
@@ -1311,7 +1311,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.clearLog();
         this.editor.beforeCompile();
         let state = this.editor.snapshotState()
-        compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor()})
+        compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (!resp.outfiles[pxtc.BINARY_HEX]) {
@@ -1331,7 +1331,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     startStopSimulator() {
-        if (this.state.running)  {
+        if (this.state.running) {
             pxt.tickEvent('simulator.stop')
             this.stopSimulator()
         } else {
@@ -1534,7 +1534,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     embed() {
         pxt.tickEvent("menu.embed");
         const header = this.state.header;
-        this.shareEditor.setState({ mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent});
+        this.shareEditor.setState({ mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
         this.shareEditor.modal.show();
     }
 
@@ -1620,7 +1620,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
                                 {sandbox ?
                                     <div>
-                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open with {0}", targetTheme.name)} onClick={() => this.launchFullEditor() }/>
+                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open with {0}", targetTheme.name) } onClick={() => this.launchFullEditor() }/>
                                         <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor() }/>
                                     </div>
                                     : undefined }
@@ -1840,7 +1840,7 @@ function enableMixPanel() {
         mp.track("error", data);
         report(cat, msg, data);
     }
-    pxt.timeEvent = function(id): void {
+    pxt.timeEvent = function (id): void {
         if (!id) return;
         try {
             mp.time_event(id);
@@ -1848,7 +1848,7 @@ function enableMixPanel() {
             console.error(e);
         }
     }
-    pxt.timeEvent = function(id: string): void {
+    pxt.timeEvent = function (id: string): void {
         if (!id) return;
         try {
             mp.time_event(id);
@@ -1872,7 +1872,7 @@ function showIcons() {
         "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle",
         "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
         "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
-        "user", "wizard", "configure",
+        "user", "wizard", "configure", "align left"
     ]
     core.confirmAsync({
         header: "Icons",
