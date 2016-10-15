@@ -170,7 +170,7 @@ export class Editor extends srceditor.Editor {
 
     menu(): JSX.Element {
         if (!this.hasBlocks()) return null
-        return <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
+        return <sui.Item textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
     }
 
     undo() {

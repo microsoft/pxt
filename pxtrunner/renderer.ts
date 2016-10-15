@@ -62,7 +62,7 @@ namespace pxt.runner {
         if (woptions.showJs) {
             appendJs($c, $js, woptions);
         } else {
-            let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
+            let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="align left icon"></i></a>').click(() => {
                 if ($c.find('.js')[0])
                     $c.find('.js').remove(); // remove previous simulators
                 else {
@@ -105,7 +105,7 @@ namespace pxt.runner {
         // download screenshots
         if (options.downloadScreenshots && woptions.hexname) {
             pxt.debug("Downloading screenshot for: " + woptions.hexname);
-            let filename = woptions.hexname.substr(0,woptions.hexname.lastIndexOf('.'));
+            let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
             let fontSize = window.getComputedStyle($svg.get(0).querySelector(".blocklyText")).getPropertyValue("font-size");
             const customCss = `
 .blocklyMainBackground {
@@ -126,12 +126,12 @@ namespace pxt.runner {
             let svgElement = $svg.get(0) as any;
             let bbox = $svg.get(0).getBoundingClientRect();
             pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height)
-            .done(uri => {
-                if (uri)
-                    BrowserUtils.browserDownloadDataUri(
-                        uri,
-                        (name || `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${filename}`) + ".png");
-            });
+                .done(uri => {
+                    if (uri)
+                        BrowserUtils.browserDownloadDataUri(
+                            uri,
+                            (name || `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${filename}`) + ".png");
+                });
         }
     }
 

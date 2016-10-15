@@ -260,7 +260,7 @@ export class Editor extends srceditor.Editor {
             }
 
             const selected = Blockly.selected
-            if (selected && selected.comment && typeof(selected.comment) !== "string") {
+            if (selected && selected.comment && typeof (selected.comment) !== "string") {
                 (selected.comment as Blockly.Comment).setVisible(true)
                 this.currentComment = selected.comment
             }
@@ -344,7 +344,7 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <sui.Button text={lf("JavaScript") } textClass="ui landscape only" icon="keyboard" onClick={() => this.openTypeScript() } />
+            <sui.Item text={lf("JavaScript") } textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() } />
         )
     }
 
