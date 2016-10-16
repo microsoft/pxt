@@ -182,12 +182,17 @@ function pkginfoAsync(repopath: string) {
 export function uploadCrowdinAsync(p: string): Promise<void> {
     const prj = process.env["CROWDIN_PROJECT"] as string;
     if (!prj) {
-        console.log("upload skipped, `CROWDIN_PROJECT` variable missing");
+        console.log("crowdin upload skipped, `CROWDIN_PROJECT` variable missing");
         return Promise.resolve();
     }
     const k = process.env["CROWDIN_KEY"] as string;
     if (!k) {
-        console.log("upload skipped, `CROWDIN_KEY` variable missing");
+        console.log("crowdin upload skipped, `CROWDIN_KEY` variable missing");
+        return Promise.resolve();
+    }
+
+    if (process.env.TRAVIS_BRANCH && process.env.TRAVIS_BRANCH != "master") {
+        console.log("crowdin upload skipped, not master branch");
         return Promise.resolve();
     }
 
