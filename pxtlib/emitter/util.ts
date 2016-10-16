@@ -656,6 +656,39 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    export function multipartPostAsync(uri: string, data: any = {}, filename: string = null, filecontents: string = null): Promise<HttpResponse> {
+        const boundry = "--------------------------0461489f461126c5"
+        let form = ""
+
+        function add(name: string, val: string) {
+            form += boundry + "\r\n"
+            form += "Content-Disposition: form-data; name=\"" + name + "\"\r\n\r\n"
+            form += val + "\r\n"
+        }
+
+        function addF(name: string, val: string) {
+            form += boundry + "\r\n"
+            form += "Content-Disposition: form-data; name=\"files[" + name + "]\"; filename=\"blah.json\"\r\n"
+            form += "\r\n"
+            form += val + "\r\n"
+        }
+
+        Object.keys(data).forEach(k => add(k, data[k]))
+        if (filename)
+            addF(filename, filecontents)
+
+        form += boundry + "--\r\n"
+
+        return Util.httpRequestCoreAsync({
+            url: uri,
+            method: "POST",
+            headers: {
+                "Content-Type": "multipart/form-data; boundary=" + boundry.slice(2)
+            },
+            data: form
+        })
+    }
+
     export function toDataUri(data: string, mimetype?: string): string {
         // TODO does this only support trusted data?
 

@@ -179,6 +179,18 @@ function pkginfoAsync(repopath: string) {
         })
 }
 
+export function uploadCrowdinAsync(p: string): Promise<void> {
+    const prj = process.env["CROWDIN_PROJECT"] as string;
+    if (!prj) throw new Error("`CROWDIN_PROJECT` variable not set");
+    const k = process.env["CROWDIN_KEY"] as string;
+    if (!k) throw new Error("`CROWDIN_KEY` variable not set");
+
+    const fn = path.basename(p);
+    const data = JSON.parse(fs.readFileSync(p, "utf8"));
+    console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}`);
+    return pxt.crowdin.uploadTranslationAsync(prj, k, fn, data);
+}
+
 export function apiAsync(path: string, postArguments?: string): Promise<void> {
     if (postArguments == "delete") {
         return Cloud.privateDeleteAsync(path)
@@ -3293,6 +3305,8 @@ cmd("travis                       - upload release and npm package", travisAsync
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
+
+cmd("uploadcrowdin PATH           - upload files to crowdin", uploadCrowdinAsync, 2);
 
 cmd("extension ADD_TEXT           - try compile extension", extensionAsync, 10)
 
