@@ -110,6 +110,7 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget",
         "node built/pxt.js uploaddoc",
+        "node built/pxt.js uploadcrowdin built/strings.json"
     ], { printStdout: true }, complete.bind(this));
 })
 

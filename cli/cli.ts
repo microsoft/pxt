@@ -181,9 +181,15 @@ function pkginfoAsync(repopath: string) {
 
 export function uploadCrowdinAsync(p: string): Promise<void> {
     const prj = process.env["CROWDIN_PROJECT"] as string;
-    if (!prj) throw new Error("`CROWDIN_PROJECT` variable not set");
+    if (!prj) {
+        console.log("upload skipped, `CROWDIN_PROJECT` variable missing");
+        return Promise.resolve();
+    }
     const k = process.env["CROWDIN_KEY"] as string;
-    if (!k) throw new Error("`CROWDIN_KEY` variable not set");
+    if (!k) {
+        console.log("upload skipped, `CROWDIN_KEY` variable missing");
+        return Promise.resolve();
+    }
 
     const fn = path.basename(p);
     const data = JSON.parse(fs.readFileSync(p, "utf8"));
