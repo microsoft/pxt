@@ -191,7 +191,7 @@ export function uploadCrowdinAsync(p: string): Promise<void> {
         return Promise.resolve();
     }
 
-    if (process.env.TRAVIS_BRANCH && process.env.TRAVIS_BRANCH != "master") {
+    if ((process.env.TRAVIS_BRANCH && process.env.TRAVIS_BRANCH != "master") || !!process.env.TRAVIS_PULL_REQUEST) {
         console.log("crowdin upload skipped, not master branch");
         return Promise.resolve();
     }
