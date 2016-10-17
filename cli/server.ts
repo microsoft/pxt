@@ -97,7 +97,7 @@ let readFileAsync = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
 
 // provided by target
-let deployCoreAsync: (r: pxtc.CompileResult) => void = undefined;
+let deployCoreAsync: (r: pxtc.CompileResult) => Promise<number> = undefined;
 
 function initTargetCommands() {
     let cmdsjs = path.resolve('built/cmds.js');
@@ -253,8 +253,10 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else if (cmd == "POST deploy" && deployCoreAsync)
         return readJsonAsync()
             .then(d => deployCoreAsync(d))
-            .catch((e) => {
-                throwError(404, "Board not found");
+            .then((boardCount) => {
+                return {
+                    boardCount: boardCount
+                };
             });
     else throw throwError(400)
 }
