@@ -179,27 +179,51 @@ function pkginfoAsync(repopath: string) {
         })
 }
 
-export function uploadCrowdinAsync(p: string): Promise<void> {
+export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
     const prj = process.env["CROWDIN_PROJECT"] as string;
     if (!prj) {
         console.log("crowdin upload skipped, `CROWDIN_PROJECT` variable missing");
         return Promise.resolve();
     }
-    const k = process.env["CROWDIN_KEY"] as string;
-    if (!k) {
+    const key = process.env["CROWDIN_KEY"] as string;
+    if (!key) {
         console.log("crowdin upload skipped, `CROWDIN_KEY` variable missing");
         return Promise.resolve();
     }
 
+    if (!args[0]) throw new Error("filename missing");
+    switch (cmd.toLowerCase()) {
+        case "upload": return uploadCrowdinAsync(prj, key, args[0]);
+        case "download": {
+            if (!args[1]) throw new Error("output path missing");
+            const fn = path.basename(args[0]);
+            return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0])
+                .then(r => {
+                    Object.keys(r).forEach(k => {
+                        nodeutil.mkdirP(path.join(args[1], k));
+                        const outf = path.join(args[1], k, fn);
+                        console.log(`writing ${outf}`)
+                        fs.writeFileSync(
+                            outf,
+                            JSON.stringify(r[k], null, 2),
+                            "utf8");
+                    })
+                })
+        }
+        default: throw new Error("unknown command");
+    }
+}
+
+function uploadCrowdinAsync(prj: string, key: string, p: string): Promise<void> {
     if ((process.env.TRAVIS_BRANCH && process.env.TRAVIS_BRANCH != "master") || !!process.env.TRAVIS_PULL_REQUEST) {
-        console.log("crowdin upload skipped, not master branch");
+        console.log("crowdin command skipped, not master branch");
         return Promise.resolve();
     }
 
     const fn = path.basename(p);
     const data = JSON.parse(fs.readFileSync(p, "utf8"));
     console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}`);
-    return pxt.crowdin.uploadTranslationAsync(prj, k, fn, data);
+    return pxt.crowdin.uploadTranslationAsync(prj, key, fn, data);
 }
 
 export function apiAsync(path: string, postArguments?: string): Promise<void> {
@@ -3317,7 +3341,7 @@ cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadF
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 
-cmd("uploadcrowdin PATH           - upload files to crowdin", uploadCrowdinAsync, 2);
+cmd("crowdin CMD PATH [OUTPUT]    - upload, download files to/from crowdin", execCrowdinAsync, 2);
 
 cmd("extension ADD_TEXT           - try compile extension", extensionAsync, 10)
 

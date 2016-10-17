@@ -1,11 +1,52 @@
 namespace pxt.crowdin {
+    function apiUri(prj: string, key: string, cmd: string, args?: Map<string>) {
+        Util.assert(!!prj && !!key && !!cmd);
+        const apiRoot = "https://api.crowdin.com/api/project/" + prj + "/";
+        let suff = "?key=" + key;
+        if (args) suff += "&" + Object.keys(args).map(k => `${k}=${encodeURIComponent(args[k])}`).join("&");
+        return apiRoot + cmd + suff;
+    }
+
+    interface CrowdinProjectInfo {
+        languages: { name: string; code: string; }[];
+    }
+
+    export function downloadTranslationsAsync(prj: string, key: string, filename: string): Promise<Map<Map<string>>> {
+        const r: Map<Map<string>> = {};
+        const infoUri = apiUri(prj, key, "info", { json: "true" });
+        return Util.httpGetTextAsync(infoUri).then(respText => {
+            const info = JSON.parse(respText) as CrowdinProjectInfo;
+            if (!info) throw new Error("info failed")
+
+            let todo = info.languages;
+            let nextFile = () : Promise<void> => {
+                const item = todo.pop();
+                const exportFileUri = apiUri(prj, key, "export-file", {
+                    file: filename,
+                    language: item.code
+                });
+                console.log(`downloading ${item.name}`)
+                return Util.httpGetTextAsync(exportFileUri).then((transationsText) => {
+                    try {
+                        const translations = JSON.parse(transationsText) as Map<string>;
+                        if (translations)
+                            r[item.code] = translations;
+                    } catch (e) {
+                        console.log(exportFileUri + ' ' + e)
+                    }
+                    if (todo.length > 0) return nextFile();
+                    else return Promise.resolve();
+                }).delay(1000); // throttling otherwise crowding fails
+            };
+
+            return nextFile();
+        }).then(() => r);
+    }
 
     export function uploadTranslationAsync(prj: string, key: string, filename: string, jsondata: pxt.Map<string>) {
         Util.assert(!!prj);
         Util.assert(!!key);
         let cnt = 0
-        const apiRoot = "https://api.crowdin.com/api/project/" + prj + "/";
-        const suff = "?key=" + key;
 
         function incr() {
             if (cnt++ > 10) {
@@ -13,14 +54,10 @@ namespace pxt.crowdin {
             }
         }
 
-        function createDirAsync(name: string) {
-            return createDir0Async(name);
-        }
-
-        function createDir0Async(name: string): Promise<void> {
+        function createDirAsync(name: string): Promise<void> {
             pxt.debug(`create directory ${name}`)
             incr();
-            return Util.multipartPostAsync(apiRoot + "add-directory" + suff, { json: "", name: name })
+            return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "", name: name })
                 .then(resp => {
                     if (resp.statusCode == 200)
                         return Promise.resolve();
@@ -47,7 +84,7 @@ namespace pxt.crowdin {
             opts["type"] = "auto";
             opts["json"] = "";
             incr();
-            return Util.multipartPostAsync(apiRoot + op + suff, opts, filename, JSON.stringify(jsondata))
+            return Util.multipartPostAsync(apiUri(prj, key, op), opts, filename, JSON.stringify(jsondata))
                 .then(resp => handleResponseAsync(resp))
         }
 
