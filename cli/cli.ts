@@ -180,14 +180,14 @@ function pkginfoAsync(repopath: string) {
 }
 
 export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
-    const prj = process.env["CROWDIN_PROJECT"] as string;
+    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
     if (!prj) {
-        console.log("crowdin upload skipped, `CROWDIN_PROJECT` variable missing");
+        console.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
-    const key = process.env["CROWDIN_KEY"] as string;
+    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
     if (!key) {
-        console.log("crowdin upload skipped, `CROWDIN_KEY` variable missing");
+        console.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
 
@@ -549,10 +549,10 @@ function travisAsync() {
             .then(() => {
                 let trg = readLocalPxTarget()
                 if (rel)
-                    return uploadtrgAsync(trg.id + "/" + rel)
+                    return uploadTargetAsync(trg.id + "/" + rel)
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
                 else
-                    return uploadtrgAsync(trg.id + "/" + latest)
+                    return uploadTargetAsync(trg.id + "/" + latest)
             })
     }
 }
@@ -696,7 +696,7 @@ export function staticpkgAsync(label?: string) {
         .then(() => renderDocs(dir))
 }
 
-export function uploadtrgAsync(label?: string) {
+export function uploadTargetAsync(label?: string) {
     return uploadCoreAsync({
         label: label,
         fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
@@ -3129,6 +3129,36 @@ function buildCoreAsync(mode: BuildOption) {
         })
 }
 
+export function uploadTargetTranslationsAsync() {
+    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
+    if (!prj) {
+        console.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+    if (!key) {
+        console.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+
+    const todo: string[] = [];
+    pxt.appTarget.bundleddirs.forEach(dir => {
+        const locdir = path.join(dir, "_locales");
+        if (fs.existsSync(locdir))
+            fs.readdirSync(locdir)
+                .filter(f => /\.json$/i.test(f))
+                .forEach(f => todo.push(path.join(locdir, f)))
+    });
+    const nextFileAsync = (): Promise<void> => {
+        const f = todo.pop();
+        if (!f) return Promise.resolve();
+        const data = JSON.parse(fs.readFileSync(f, 'utf8'));
+        return pxt.crowdin.uploadTranslationAsync(prj, key, path.basename(f), data)
+            .then(nextFileAsync);
+    }
+    return nextFileAsync();
+}
+
 export function buildAsync() {
     return buildCoreAsync(BuildOption.JustBuild)
 }
@@ -3318,8 +3348,9 @@ cmd("update                       - update pxt-core reference and install update
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
-cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
+cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
+cmd("uploadtrgtranslations           - upload translations from bundled projects", uploadTargetTranslationsAsync, 1)
 cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
