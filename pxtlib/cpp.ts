@@ -38,6 +38,7 @@ namespace pxt {
     }
 }
 
+// preprocess C++ file to find functions exposed to pxt
 namespace pxt.cpp {
     import U = pxtc.Util;
     let lf = U.lf;
@@ -196,9 +197,11 @@ namespace pxt.cpp {
 
             lineNo = 0
 
+            // the C++ types we can map to TypeScript
             function mapType(tp: string) {
                 switch (tp.replace(/\s+/g, "")) {
                     case "void": return "void";
+                    // TODO: need int16_t
                     case "int32_t":
                     case "uint32_t":
                     case "int": return "number";
