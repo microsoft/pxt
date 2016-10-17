@@ -551,6 +551,7 @@ function travisAsync() {
                 if (rel)
                     return uploadTargetAsync(trg.id + "/" + rel)
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
+                        .then(() => uploadTargetTranslationsAsync())
                 else
                     return uploadTargetAsync(trg.id + "/" + latest)
             })
