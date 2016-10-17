@@ -32,6 +32,10 @@ namespace pxt.runner {
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
         $parent.append($('<div class="ui content js"/>').append($js));
+        $('code.highlight').each(function(i, block) {
+            let hljs = pxt.docs.requireHighlightJs();
+            if (hljs) hljs.highlightBlock(block);
+        });
     }
 
     function fillWithWidget(
@@ -161,7 +165,7 @@ namespace pxt.runner {
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
-            let js = $('<code/>').text(c.text().trim());
+            let js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             let compiled = r.compileJS && r.compileJS.success;
             let hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
@@ -200,7 +204,7 @@ namespace pxt.runner {
             let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
-            let js = $('<code/>').text(sig);
+            let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
         }, { package: options.package });
