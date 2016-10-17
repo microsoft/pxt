@@ -257,7 +257,7 @@ namespace pxt {
 
         upgradePackage(pkg: string, val: string): string {
             if (val != "*") return pkg;
-            let upgrades = appTarget.compile.upgrades;
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
             let newPackage = pkg;
             if (upgrades) {
                 upgrades.forEach((rule) => {

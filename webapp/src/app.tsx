@@ -378,9 +378,9 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
         return this.state.mode != nextState.mode
-                || this.state.pubCurrent != nextState.pubCurrent
-                || this.state.screenshotId != nextState.screenshotId
-                || this.state.currentPubId != nextState.currentPubId;
+            || this.state.pubCurrent != nextState.pubCurrent
+            || this.state.screenshotId != nextState.screenshotId
+            || this.state.currentPubId != nextState.currentPubId;
     }
 
     renderCore() {
@@ -527,7 +527,7 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
     }
 }
 
-class DocsMenu extends data.Component<ISettingsProps, {}> {
+class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -539,12 +539,10 @@ class DocsMenu extends data.Component<ISettingsProps, {}> {
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         const sideDocs = !pxt.options.light;
-        return <div id="docsmenu" className="ui buttons">
-            <sui.DropdownMenu class="floating icon button" icon="help" title="Help">
+        return <sui.DropdownMenuItem icon="help" title={lf("Help")}>
                 {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs ? "widedesktop hide" : ""}`}>{m.name}</a>) }
                 {sideDocs ? targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
-            </sui.DropdownMenu>
-        </div>
+            </sui.DropdownMenuItem>
     }
 }
 
@@ -653,7 +651,7 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
                     className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                     >
                     {file.name} {meta.isSaved ? "" : "*"}
-                    {/\.ts$/.test(file.name) ? <i className="keyboard icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
+                    {/\.ts$/.test(file.name) ? <i className="align left icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
                     {meta.isReadonly ? <i className="lock icon"></i> : null}
                     {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                     {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removeFile(e, file) } /> : ''}
@@ -1311,7 +1309,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.clearLog();
         this.editor.beforeCompile();
         let state = this.editor.snapshotState()
-        compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor()})
+        compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (!resp.outfiles[pxtc.BINARY_HEX]) {
@@ -1331,7 +1329,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     startStopSimulator() {
-        if (this.state.running)  {
+        if (this.state.running) {
             pxt.tickEvent('simulator.stop')
             this.stopSimulator()
         } else {
@@ -1534,7 +1532,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     embed() {
         pxt.tickEvent("menu.embed");
         const header = this.state.header;
-        this.shareEditor.setState({ mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent});
+        this.shareEditor.setState({ mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
         this.shareEditor.modal.show();
     }
 
@@ -1556,11 +1554,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const simOpts = pxt.appTarget.simulator;
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
+        const savingProjectName = this.state.header && this.state.projectName != this.state.header.name;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
-                    <div className={`ui borderless small menu`} role="menubar">
+                    <div className={`ui borderless ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
                             <span id="logo" className="ui item">
                                 {targetTheme.logo || targetTheme.portraitLogo
@@ -1568,19 +1567,27 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     : <span>{targetTheme.name}</span>}
                                 {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                             </span> }
-                        <div className="ui item">
+                        <div className="ui item portrait only">
                             <div className="ui">
-                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class='icon blue portrait only' icon='icon download' onClick={() => this.compile() } /> : "" }
-                                {!sandbox && this.state.showParts ? <sui.Button role="menuitem" icon='configure' class="secondary portrait only" onClick={() => this.openInstructions() } /> : undefined }
-                                <sui.Button role="menuitem" key='runmenubtn' class={"portrait only"} icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } />
-                                {this.editor.menu() }
-                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide portrait only" icon="folder open" onClick={() => this.openProject() } /> }
-                                {sandbox ? undefined : <sui.Button role="menuitem" class="ui wide landscape only" icon="folder open" text={lf("Open...") } onClick={() => this.openProject() } /> }
-                                { workspaces ? <CloudSyncButton parent={this} /> : null }
+                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class="blue" icon="download" onClick={() => this.compile() } /> : "" }
+                                {make ? <sui.Button role="menuitem" icon='configure' class="secondary" onClick={() => this.openInstructions() } /> : undefined }
+                                <sui.Button role="menuitem" key='runmenubtn' icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } />
                             </div>
-                            {sandbox ? undefined : <div className="ui buttons">
-                                <sui.DropdownMenu class='floating icon button' text={lf("More...") } textClass="ui landscape only" icon='sidebar'>
-                                    <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
+                        </div>
+                        {sandbox ? undefined : <div className="ui item wide only projectname">
+                            <div className={`ui large input`}>
+                                <input id="fileNameInput"
+                                    type="text"
+                                    placeholder={lf("Pick a name...") }
+                                    value={this.state.projectName || ''}
+                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }>
+                                </input>
+                            </div>
+                        </div>}
+                        {this.editor.menu() }
+                        {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
+                        {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar'>
+                            <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                                     {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                                     {this.state.header ? <div className="ui divider"></div> : undefined }
                                     {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -1598,29 +1605,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                                     { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
                                     <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
-                                </sui.DropdownMenu>
-                            </div>}
-                            <div className="ui">
-                                {Cloud.isLoggedIn() ? <sui.Button class="wide only" role="menuitem" icon='user' onClick={() => LoginBox.showUserPropertiesAsync(settings).done() } /> : undefined}
-                            </div>
-                            {sandbox ? undefined : <DocsMenu parent={this} />}
-                        </div>
-                        {sandbox ? undefined : <div className="ui item wide only">
-                            <div className="ui massive transparent input">
-                                <input id="fileNameInput"
-                                    type="text"
-                                    placeholder={lf("Pick a name...") }
-                                    value={this.state.projectName || ''}
-                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }>
-                                </input>
-                                <i className={"write icon " + ((this.state.header && this.state.projectName == this.state.header.name) ? "grey" : "back") }></i>
-                            </div>
-                        </div>}
+                        </sui.DropdownMenuItem>}
+                        {sandbox ? undefined : <DocsMenuItem parent={this} />}
                         {rightLogo ?
                             <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
                                 {sandbox ?
                                     <div>
-                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open with {0}", targetTheme.name)} onClick={() => this.launchFullEditor() }/>
+                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open with {0}", targetTheme.name) } onClick={() => this.launchFullEditor() }/>
                                         <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor() }/>
                                     </div>
                                     : undefined }
@@ -1840,7 +1831,7 @@ function enableMixPanel() {
         mp.track("error", data);
         report(cat, msg, data);
     }
-    pxt.timeEvent = function(id): void {
+    pxt.timeEvent = function (id): void {
         if (!id) return;
         try {
             mp.time_event(id);
@@ -1848,7 +1839,7 @@ function enableMixPanel() {
             console.error(e);
         }
     }
-    pxt.timeEvent = function(id: string): void {
+    pxt.timeEvent = function (id: string): void {
         if (!id) return;
         try {
             mp.time_event(id);
@@ -1872,7 +1863,7 @@ function showIcons() {
         "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle",
         "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
         "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
-        "user", "wizard", "configure",
+        "user", "wizard", "configure", "align left"
     ]
     core.confirmAsync({
         header: "Icons",
@@ -1919,11 +1910,13 @@ export var sandbox = false;
 
 function initTheme() {
     core.cookieNotification()
-    if (pxt.appTarget.appTheme.accentColor) {
+
+    const theme = pxt.appTarget.appTheme;
+    if (theme.accentColor) {
         let style = document.createElement('style');
         style.type = 'text/css';
-        style.innerHTML = `.ui.accent { color: ${pxt.appTarget.appTheme.accentColor}; }
-        .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${pxt.appTarget.appTheme.accentColor}; }`;
+        style.innerHTML = `.ui.accent { color: ${theme.accentColor}; }
+        .ui.inverted.menu .accent.active.item, .ui.inverted.accent.menu  { background-color: ${theme.accentColor}; }`;
         document.getElementsByTagName('head')[0].appendChild(style);
     }
     // RTL languages

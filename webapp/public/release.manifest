@@ -5,6 +5,7 @@ CACHE:
 /cdn/main.js
 /cdn/typescript.js
 /cdn/marked/marked.min.js
+/cdn/highlight.js/highlight.pack.js
 /cdn/lzma/lzma_worker-min.js
 /cdn/jquery.js
 /cdn/pxtlib.js

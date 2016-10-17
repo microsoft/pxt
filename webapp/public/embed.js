@@ -9,6 +9,7 @@
     var simUrl = "/sim/simulator.html";
 
     var scripts = [
+        "highlight.js/highlight.pack.js",
         "bluebird.min.js",
         "typescript.js",
         "lzma/lzma_worker-min.js",
@@ -32,6 +33,7 @@
     }
 
     window.ksRunnerWhenLoaded = function() {
+        pxt.docs.requireHighlightJs = function() { return hljs; }
         pxt.setupWebConfig(pxtConfig || window.pxtWebConfig)
         pxt.runner.initCallbacks = pxtCallbacks
         pxtCallbacks.push(function() {

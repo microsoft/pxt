@@ -660,7 +660,7 @@ namespace ts.pxtc.Util {
         // TODO does this only support trusted data?
 
         // weed out urls
-        if (/^http?s:/i.test(data)) return data;
+        if (/^https?:/i.test(data)) return data;
 
         // already a data uri?       
         if (/^data:/i.test(data)) return data;
