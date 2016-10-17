@@ -720,9 +720,19 @@ namespace pxt.hex {
     let cdnUrlPromise: Promise<string>;
 
     function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
-        if (downloadCache.hasOwnProperty(extInfo.sha))
-            return downloadCache[extInfo.sha]
-        return (downloadCache[extInfo.sha] = downloadHexInfoCoreAsync(extInfo))
+        let cachePromise = Promise.resolve();
+
+        if (!downloadCache.hasOwnProperty(extInfo.sha)) {
+            cachePromise = downloadHexInfoCoreAsync(extInfo)
+                .then((hexFile) => {
+                    downloadCache[extInfo.sha] = hexFile;
+                });
+        }
+
+        return cachePromise
+            .then(() => {
+                return downloadCache[extInfo.sha];
+            });
     }
 
     function getCdnUrlAsync() {
@@ -732,33 +742,68 @@ namespace pxt.hex {
 
     function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo) {
         let hexurl = ""
-        return getCdnUrlAsync()
-            .then(url => {
-                hexurl = url + "/compile/" + extInfo.sha
-                return U.httpGetTextAsync(hexurl + ".hex")
+
+        return downloadHexInfoLocalAsync(extInfo)
+            .then((hex) => {
+                if (hex) {
+                    // Found the hex image in the local server cache, use that
+                    return hex;
+                }
+
+                return getCdnUrlAsync()
+                    .then(url => {
+                        hexurl = url + "/compile/" + extInfo.sha
+                        return U.httpGetTextAsync(hexurl + ".hex")
+                    })
+                    .then(r => r, e =>
+                        Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
+                            .then(ret => new Promise<string>((resolve, reject) => {
+                                let tryGet = () => Util.httpGetJsonAsync(ret.hex.replace(/\.hex/, ".json"))
+                                    .then(json => {
+                                        if (!json.success)
+                                            U.userError(JSON.stringify(json, null, 1))
+                                        else
+                                            resolve(U.httpGetTextAsync(hexurl + ".hex"))
+                                    },
+                                    e => {
+                                        setTimeout(tryGet, 1000)
+                                        return null
+                                    })
+                                tryGet();
+                            })))
+                    .then(text =>
+                        Util.httpGetJsonAsync(hexurl + "-metainfo.json")
+                            .then(meta => {
+                                meta.hex = text.split(/\r?\n/)
+                                return meta
+                            }))
             })
-            .then(r => r, e =>
-                Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
-                    .then(ret => new Promise<string>((resolve, reject) => {
-                        let tryGet = () => Util.httpGetJsonAsync(ret.hex.replace(/\.hex/, ".json"))
-                            .then(json => {
-                                if (!json.success)
-                                    U.userError(JSON.stringify(json, null, 1))
-                                else
-                                    resolve(U.httpGetTextAsync(hexurl + ".hex"))
-                            },
-                            e => {
-                                setTimeout(tryGet, 1000)
-                                return null
-                            })
-                        tryGet();
-                    })))
-            .then(text =>
-                Util.httpGetJsonAsync(hexurl + "-metainfo.json")
-                    .then(meta => {
-                        meta.hex = text.split(/\r?\n/)
-                        return meta
-                    }))
+    }
+
+    function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+        if (!/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken) {
+            return Promise.resolve();
+        }
+
+        return apiAsync("compile/" + extInfo.sha)
+            .then((json) => {
+                if (!json || json.notInOfflineCache || !json.hex) {
+                    return Promise.resolve();
+                }
+
+                json.hex = json.hex.split(/\r?\n/);
+                return json;
+            });
+    }
+
+    function apiAsync(path: string, data?: any) {
+        return U.requestAsync({
+            url: "http://localhost:3232/api/" + path,
+            headers: { "Authorization": Cloud.localToken },
+            method: data ? "POST" : "GET",
+            data: data || undefined,
+            allowHttpErrors: true
+        }).then(r => r.json);
     }
 
     export function storeWithLimitAsync(host: Host, idxkey: string, newkey: string, newval: string, maxLen = 10) {
@@ -789,7 +834,7 @@ namespace pxt.hex {
             })
     }
 
-    export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo): Promise<any> {
+    export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo, cloudModule?: any): Promise<any> {
         if (!extInfo.sha)
             return Promise.resolve(null)
 

@@ -23,6 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let tempDir = ""
 let packagedDir = ""
+let localHexDir = path.join("hexcache");
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -219,6 +220,35 @@ function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
         && req.headers["authorization"] == serveOptions.localToken;
 }
 
+function getCachedHexAsync(sha: string): Promise<any> {
+    if (!sha) {
+        return Promise.resolve();
+    }
+
+    let hexPath = path.resolve(localHexDir, sha);
+    let hexInfofiles = [
+        hexPath + ".hex",
+        hexPath + "-metainfo.json"
+    ];
+    let existPromises = hexInfofiles.map((file) => existsAsync(file));
+
+    return Promise.all(existPromises)
+        .then((results) => {
+            if (!results.every((r) => !!r)) {
+                console.log(`offline HEX not found: ${hexPath}`);
+                return Promise.resolve();
+            } else {
+                let readFilePromises = hexInfofiles.map((file) => readFileAsync(file));
+                return Promise.all(readFilePromises)
+                    .then((fileContents) => {
+                        let metainfo = JSON.parse(fileContents[1].toString());
+                        metainfo.hex = fileContents[0].toString();
+                        return metainfo;
+                    });
+            }
+        });
+}
+
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
     let opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
     let innerPath = elts.slice(2).join("/").replace(/^\//, "")
@@ -257,6 +287,17 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
                 return {
                     boardCount: boardCount
                 };
+            });
+    else if (cmd == "GET compile")
+        return getCachedHexAsync(innerPath)
+            .then((res) => {
+                if (!res) {
+                    return {
+                        notInOfflineCache: true
+                    };
+                }
+
+                return res;
             });
     else throw throwError(400)
 }
