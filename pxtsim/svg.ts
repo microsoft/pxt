@@ -138,8 +138,10 @@ namespace pxsim.svg {
     export function animate(el: SVGElement, cls: string) {
         svg.addClass(el, cls);
         let p = el.parentElement;
-        p.removeChild(el);
-        p.appendChild(el)
+        if (p) {
+            p.removeChild(el);
+            p.appendChild(el)
+        }
     }
 
     export function mkTitle(txt: string): SVGTitleElement {
