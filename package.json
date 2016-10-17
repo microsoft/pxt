@@ -48,6 +48,7 @@
     "typings/node",
     "typings/marked",
     "typings/jquery",
+    "typings/highlightjs",
     "docfiles"
   ],
   "main": "built/pxt.js",
