@@ -484,9 +484,9 @@ function travisAsync() {
 
     const rel = process.env.TRAVIS_TAG || ""
     const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = rel && atok;
+    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(rel) && atok;
 
-    if (/^v\d/.test(rel) && atok) {
+    if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
         console.log(`Setting up ${npmrc}`)
         let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
