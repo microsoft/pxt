@@ -3133,15 +3133,15 @@ function buildCoreAsync(mode: BuildOption) {
 export function uploadTargetTranslationsAsync() {
     const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
     if (!prj) {
-        console.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
     const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
     if (!key) {
-        console.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
-
+    const crowdinDir = pxt.appTarget.id;
     const todo: string[] = [];
     pxt.appTarget.bundleddirs.forEach(dir => {
         const locdir = path.join(dir, "_locales");
@@ -3154,7 +3154,9 @@ export function uploadTargetTranslationsAsync() {
         const f = todo.pop();
         if (!f) return Promise.resolve();
         const data = JSON.parse(fs.readFileSync(f, 'utf8'));
-        return pxt.crowdin.uploadTranslationAsync(prj, key, path.basename(f), data)
+        const crowdf = path.join(crowdinDir, path.basename(f));
+        pxt.log(`uploading ${f} to ${crowdf}`);
+        return pxt.crowdin.uploadTranslationAsync(prj, key, crowdf, data)
             .then(nextFileAsync);
     }
     return nextFileAsync();
