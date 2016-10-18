@@ -456,7 +456,7 @@ namespace pxt {
             let upgradeFile = (fn: string, cont: string) => {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
-                    // save file (force write)
+                    // save file (force write) 
                     pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, updatedCont, true)
                 }
