@@ -81,6 +81,7 @@ declare namespace pxt {
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
+        buildEngine?: string;  // default is yotta, set to platformio
     }
 
     interface SpecializedResource {
