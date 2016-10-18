@@ -17,18 +17,20 @@ namespace pxt.crowdin {
     export function downloadTranslationsAsync(prj: string, key: string, filename: string): Promise<Map<Map<string>>> {
         const r: Map<Map<string>> = {};
         const infoUri = apiUri(prj, key, "info", { json: "true" });
+        filename = normalizeFileName(filename);
         return Util.httpGetTextAsync(infoUri).then(respText => {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             if (!info) throw new Error("info failed")
 
-            let todo = info.languages;
-            let nextFile = (): Promise<void> => {
+            const todo = info.languages;
+            const nextFile = (): Promise<void> => {
                 const item = todo.pop();
+                if (!item) return Promise.resolve();
                 const exportFileUri = apiUri(prj, key, "export-file", {
                     file: filename,
                     language: item.code
                 });
-                pxt.debug(`downloading ${item.name}`)
+                pxt.log(`downloading ${item.name} (${todo.length} more)`)
                 return Util.httpGetTextAsync(exportFileUri).then((transationsText) => {
                     try {
                         const translations = JSON.parse(transationsText) as Map<string>;
@@ -37,8 +39,7 @@ namespace pxt.crowdin {
                     } catch (e) {
                         pxt.log(exportFileUri + ' ' + e)
                     }
-                    if (todo.length > 0) return nextFile();
-                    else return Promise.resolve();
+                    return nextFile();
                 }).delay(1000); // throttling otherwise crowding fails
             };
 
@@ -56,6 +57,7 @@ namespace pxt.crowdin {
     }
 
     export function createDirectoryAsync(prj: string, key: string, name: string, incr?: () => void): Promise<void> {
+        name = normalizeFileName(name);
         pxt.debug(`create directory ${name}`)
         if (!incr) incr = mkIncr(name);
         return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "", name: name })
@@ -77,13 +79,15 @@ namespace pxt.crowdin {
             })
     }
 
+    function normalizeFileName(filename: string): string {
+        return filename.replace(/\\/g, '/');
+    }
+
     export function uploadTranslationAsync(prj: string, key: string, filename: string, jsondata: pxt.Map<string>) {
         Util.assert(!!prj);
         Util.assert(!!key);
 
-        // normalize file name for crowdin
-        filename = filename.replace(/\\/g, '/');
-
+        filename = normalizeFileName(filename);
         const incr = mkIncr(filename);
 
         function startAsync(): Promise<void> {
