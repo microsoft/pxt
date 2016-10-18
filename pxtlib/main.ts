@@ -260,16 +260,15 @@ namespace pxt {
             const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
             let newPackage = pkg;
             if (upgrades) {
-                upgrades.forEach((rule) => {
-                    if (rule.type == "package") {
+                upgrades.filter(rule => rule.type == "package")
+                    .forEach((rule) => {
                         let pkgRule = rule as ts.pxtc.PackageUpgradePolicy;
                         for (let match in pkgRule.map) {
                             if (newPackage == match) {
                                 newPackage = pkgRule.map[match];
                             }
                         }
-                    }
-                });
+                    });
             }
             return newPackage;
         }
@@ -278,15 +277,14 @@ namespace pxt {
             const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
             let updatedContents = fileContents;
             if (upgrades) {
-                upgrades.forEach((rule) => {
-                    if (rule.type == "api") {
+                upgrades.filter(rule => rule.type == "api")
+                    .forEach((rule) => {
                         let apiRule = rule as ts.pxtc.APIUpgradePolicy;
                         for (let match in apiRule.map) {
                             let regex = new RegExp(match, 'g');
                             updatedContents = updatedContents.replace(regex, apiRule.map[match]);
                         }
-                    }
-                });
+                    });
             }
             return updatedContents;
         }
