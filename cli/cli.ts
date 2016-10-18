@@ -1649,8 +1649,8 @@ class Host
         if (extInfo.onlyPublic || forceCloudBuild)
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
-        return buildHexAsync(extInfo)
-            .then(() => patchHexInfo(extInfo))
+        return buildHexAsync(thisBuild, extInfo)
+            .then(() => patchHexInfo(thisBuild, extInfo))
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -1980,6 +1980,21 @@ export function initAsync() {
         .then(() => installAsync())
 }
 
+// abstract over build engine (currently yotta, soon to have platformio)
+
+export interface BuildEngine {
+    updateEngineAsync: () => Promise<void>;
+    setPlatformAsync: () => Promise<void>;
+    buildAsync: () => Promise<void>;
+    patchHexInfo: (extInfo: pxtc.ExtensionInfo) => any;
+    buildPath: string;
+}
+
+// abstract over C++ runtime target (currently the DAL)
+export interface TargetRuntime {
+    includePath: string;
+}
+
 enum BuildOption {
     JustBuild,
     Run,
@@ -2070,10 +2085,21 @@ function runYottaAsync(args: string[]) {
     })
 }
 
-function patchHexInfo(extInfo: pxtc.ExtensionInfo) {
-    let infopath = ytPath + "/yotta_modules/" + pxt.appTarget.compileService.yottaCorePackage + "/generated/metainfo.json"
+const yottaBuild: BuildEngine = {
+    updateEngineAsync: () => { return runYottaAsync(["update"]) },
+    buildAsync: () => { return runYottaAsync(["build"]) },
+    setPlatformAsync: () => { return runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget]) },
+    patchHexInfo: null,
+    buildPath: ytPath
+}
 
-    let hexPath = ytPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
+// once we have a different build engine, set this appropriately
+let thisBuild = yottaBuild
+
+function patchHexInfo(buildEngine: BuildEngine, extInfo: pxtc.ExtensionInfo) {
+    let infopath = buildEngine.buildPath + "/yotta_modules/" + pxt.appTarget.compileService.yottaCorePackage + "/generated/metainfo.json"
+
+    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
 
     let hexinfo = readJson(infopath)
     hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
@@ -2081,26 +2107,26 @@ function patchHexInfo(extInfo: pxtc.ExtensionInfo) {
     return hexinfo
 }
 
-function buildHexAsync(extInfo: pxtc.ExtensionInfo) {
-    let yottaTasks = Promise.resolve()
-    let buildCachePath = ytPath + "/buildcache.json"
+function buildHexAsync(buildEngine: BuildEngine, extInfo: pxtc.ExtensionInfo) {
+    let tasks = Promise.resolve()
+    let buildCachePath = buildEngine.buildPath + "/buildcache.json"
     let buildCache: BuildCache = {}
     if (fs.existsSync(buildCachePath)) {
         buildCache = readJson(buildCachePath)
     }
 
     if (buildCache.sha == extInfo.sha) {
-        console.log("Skipping yotta build.")
-        return yottaTasks
+        console.log("Skipping build.")
+        return tasks
     }
 
-    console.log("Writing yotta files to " + ytPath)
+    console.log("Writing build files to " + buildEngine.buildPath)
 
     let allFiles = U.clone(extInfo.generatedFiles)
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
 
     U.iterMap(allFiles, (fn, v) => {
-        fn = ytPath + fn
+        fn = buildEngine.buildPath + fn
         nodeutil.mkdirP(path.dirname(fn))
         let existing: string = null
         if (fs.existsSync(fn))
@@ -2113,32 +2139,33 @@ function buildHexAsync(extInfo: pxtc.ExtensionInfo) {
 
     let modSha = U.sha256(extInfo.generatedFiles["/module.json"])
     if (buildCache.modSha !== modSha) {
-        yottaTasks = yottaTasks
-            .then(() => runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget]))
-            .then(() => runYottaAsync(["update"]))
+        tasks = tasks
+            .then(() => buildEngine.setPlatformAsync())
+            .then(() => buildEngine.updateEngineAsync())
             .then(() => {
                 buildCache.sha = ""
                 buildCache.modSha = modSha
                 saveCache();
-                buildDalConst(true);
+                buildDalConst(buildEngine, true);
             })
     } else {
-        console.log("Skipping yotta update.")
+        console.log("Skipping build update.")
     }
 
-    yottaTasks = yottaTasks
-        .then(() => runYottaAsync(["build"]))
+    tasks = tasks
+        .then(() => buildEngine.buildAsync())
         .then(() => {
             buildCache.sha = extInfo.sha
             saveCache()
         })
 
-    return yottaTasks
+    return tasks
 }
 
 let parseCppInt = pxt.cpp.parseCppInt;
 
-function buildDalConst(force = false) {
+// TODO: DAL specific code should be lifted out
+function buildDalConst(buildEngine: BuildEngine, force = false) {
     let constName = "dal.d.ts"
     let vals: Map<string> = {}
     let done: Map<string> = {}
@@ -2165,6 +2192,7 @@ function buildDalConst(force = false) {
                     }
                 } else {
                     vals[n] = "?"
+                    // TODO: DAL-specific code
                     if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
                         console.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
                 }
@@ -2210,7 +2238,8 @@ function buildDalConst(force = false) {
     if (mainPkg && mainPkg.getFiles().indexOf(constName) >= 0 &&
         (force || !fs.existsSync(constName))) {
         console.log(`rebuilding ${constName}...`)
-        let incPath = ytPath + "/yotta_modules/microbit-dal/inc/"
+        // TODO: DAL-specific code
+        let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
         let files = allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: Map<string> = {}
@@ -3067,7 +3096,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
     return mainPkg.loadAsync()
         .then(() => {
             if (!quick) {
-                buildDalConst();
+                buildDalConst(thisBuild);
                 copyCommonFiles();
             }
             // TODO pass down 'quick' to disable the C++ extension work
