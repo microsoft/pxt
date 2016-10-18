@@ -739,6 +739,18 @@ html {
 
 /* monaco: Editor */
 
+.monaco-editor .margin-view-overlays.monaco-editor-background {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.monaco-editor .monaco-scrollable-element.editor-scrollable {
+    margin-left: .5rem;
+}
+
+.monaco-editor.vs .line-numbers {
+    color: #2c3e50 !important;
+}
+
 .monaco-editor .current-line {
 	background: rgba(0, 0, 255, 0.1);
 }
