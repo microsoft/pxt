@@ -158,7 +158,7 @@ declare namespace ts.pxtc {
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
-        upgrades?: PackageUpgradePolicy[];
+        upgrades?: UpgradePolicy[];
     }
 
     interface CompileOptions {
@@ -179,8 +179,17 @@ declare namespace ts.pxtc {
         embedBlob?: string; // base64
     }
 
-    interface PackageUpgradePolicy {
+    interface UpgradePolicy {
+        type: string;
+    }
+
+    interface PackageUpgradePolicy extends UpgradePolicy {
         type: "package";
+        map: pxt.Map<string>;
+    }
+
+    interface APIUpgradePolicy extends UpgradePolicy {
+        type: "api";
         map: pxt.Map<string>;
     }
 
