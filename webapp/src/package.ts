@@ -27,7 +27,8 @@ export class File {
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
     virtualSource: File;
-
+    forceChangeCallback: ((from: string, to: string) => void);
+    
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
     isReadonly() {
@@ -76,10 +77,11 @@ export class File {
         data.invalidate("open-meta:" + this.getName())
     }
 
-    setContentAsync(newContent: string) {
+    setContentAsync(newContent: string, force?: boolean) {
         Util.assert(newContent !== undefined);
         this.inSyncWithEditor = true;
         if (newContent != this.content) {
+            let prevContent = this.content;
             this.inSyncWithDisk = false;
             this.content = newContent;
             this.updateStatus();
@@ -89,11 +91,16 @@ export class File {
                         this.inSyncWithDisk = true;
                         this.updateStatus();
                     }
+                    if (force && this.forceChangeCallback) this.forceChangeCallback(prevContent, newContent);
                 })
         } else {
             this.updateStatus();
             return Promise.resolve()
         }
+    }
+
+    setForceChangeCallback(callback: (from: string, to: string) => void) {
+        this.forceChangeCallback = callback;
     }
 }
 
@@ -277,12 +284,12 @@ class Host
         return file ? file.content : null
     }
 
-    writeFile(module: pxt.Package, filename: string, contents: string): void {
-        if (filename == pxt.CONFIG_NAME) {
+    writeFile(module: pxt.Package, filename: string, contents: string, force?: boolean): void {
+        if (filename == pxt.CONFIG_NAME || force) {
             // only write config writes
             let epkg = getEditorPkg(module)
             let file = epkg.files[filename];
-            file.setContentAsync(contents).done();
+            file.setContentAsync(contents, force).done();
             return;
         }
         throw Util.oops("trying to write " + module + " / " + filename)

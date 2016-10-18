@@ -487,6 +487,13 @@ export class Editor extends srceditor.Editor {
 
         if (this.fileType == FileType.Markdown)
             this.parent.setSideMarkdown(file.content);
+
+        this.currFile.setForceChangeCallback((from: string, to:string) => {
+            if (from != to) {
+                pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
+                this.loadFile(this.currFile);
+            }
+        });
     }
 
     snapshotState() {
