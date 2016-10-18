@@ -10,6 +10,8 @@ export interface UiProps {
     children?: any;
     class?: string;
     role?: string;
+    tooltip?: string;
+    tooltipPosition?: string;
 }
 
 export interface WithPopupProps extends UiProps {
@@ -29,7 +31,7 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
 function genericContent(props: UiProps) {
     return [
         props.icon ? (<i key='iconkey' className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') }></i>) : null,
-        props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null
+        props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null,
     ]
 }
 
@@ -80,7 +82,8 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
     renderCore() {
         return (
-            <div className={genericClassName("ui dropdown item", this.props) } role={this.props.role} title={this.props.title ? this.props.title : this.props.text}>
+            <div className={genericClassName("ui dropdown item", this.props) } role={this.props.role} title={this.props.title ? this.props.title : this.props.text}
+                data-tooltip={this.props.tooltip} data-position={this.props.tooltipPosition}>
                 {genericContent(this.props) }
                 <div className="menu">
                     {this.props.children}
@@ -121,7 +124,8 @@ export class Button extends UiElement<ButtonProps> {
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
                 title={this.props.title ? this.props.title : this.props.text}
-                onClick={this.props.onClick}>
+                onClick={this.props.onClick}
+                data-tooltip={this.props.tooltip} data-position={this.props.tooltipPosition}>
                 {genericContent(this.props) }
                 {this.props.children}
             </button>
