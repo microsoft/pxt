@@ -158,7 +158,7 @@ namespace pxt.cpp {
                 serviceId: "nocompile"
             }
 
-        let enumVals: Map<string> = {
+        const enumVals: Map<string> = {
             "true": "1",
             "false": "0",
             "null": "0",
@@ -199,9 +199,22 @@ namespace pxt.cpp {
             function mapType(tp: string) {
                 switch (tp.replace(/\s+/g, "")) {
                     case "void": return "void";
+
                     case "int32_t":
                     case "uint32_t":
                     case "int": return "number";
+
+                    case "uint16_t": return "uint16";
+
+                    case "int16_t":
+                    case "short": return "int16";
+
+                    case "uint8_t":
+                    case "byte": return "uint8";
+
+                    case "int8_t":
+                    case "sbyte": return "int8";
+
                     case "bool": return "boolean";
                     case "StringData*": return "string";
                     case "ImageLiteral": return "string";
@@ -694,7 +707,7 @@ int main() {
                     return { meta: metajs, source: text }
                 })
         } else if (hd.compression) {
-            pxt.debug(lf("Compression type {0} not supported.", hd.compression))
+            pxt.debug(`Compression type ${hd.compression} not supported.`)
             return undefined
         } else {
             return Promise.resolve({ source: fromUTF8Bytes(tmp.text) });

@@ -170,7 +170,9 @@ export class Editor extends srceditor.Editor {
 
     menu(): JSX.Element {
         if (!this.hasBlocks()) return null
-        return <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
+        return <sui.Item textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
+                tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left"
+         />
     }
 
     undo() {
@@ -485,6 +487,13 @@ export class Editor extends srceditor.Editor {
 
         if (this.fileType == FileType.Markdown)
             this.parent.setSideMarkdown(file.content);
+
+        this.currFile.setForceChangeCallback((from: string, to:string) => {
+            if (from != to) {
+                pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
+                this.loadFile(this.currFile);
+            }
+        });
     }
 
     snapshotState() {

@@ -113,7 +113,7 @@ namespace pxt {
 
     export interface Host {
         readFile(pkg: Package, filename: string): string;
-        writeFile(pkg: Package, filename: string, contents: string): void;
+        writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
@@ -257,20 +257,36 @@ namespace pxt {
 
         upgradePackage(pkg: string, val: string): string {
             if (val != "*") return pkg;
-            let upgrades = appTarget.compile.upgrades;
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
             let newPackage = pkg;
             if (upgrades) {
-                upgrades.forEach((rule) => {
-                    if (rule.type == "package") {
-                        for (let match in rule.map) {
+                upgrades.filter(rule => rule.type == "package")
+                    .forEach((rule) => {
+                        let pkgRule = rule as ts.pxtc.PackageUpgradePolicy;
+                        for (let match in pkgRule.map) {
                             if (newPackage == match) {
-                                newPackage = rule.map[match];
+                                newPackage = pkgRule.map[match];
                             }
                         }
-                    }
-                });
+                    });
             }
             return newPackage;
+        }
+
+        upgradeAPI(fileContents: string): string {
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            let updatedContents = fileContents;
+            if (upgrades) {
+                upgrades.filter(rule => rule.type == "api")
+                    .forEach((rule) => {
+                        let apiRule = rule as ts.pxtc.APIUpgradePolicy;
+                        for (let match in apiRule.map) {
+                            let regex = new RegExp(match, 'g');
+                            updatedContents = updatedContents.replace(regex, apiRule.map[match]);
+                        }
+                    });
+            }
+            return updatedContents;
         }
 
         private parseConfig(str: string) {
@@ -432,9 +448,19 @@ namespace pxt {
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
-                    pxt.debug(lf("updating {0} (size={1})...", fn, cont.length))
+                    pxt.debug(`updating ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, cont)
                 }
+            }
+
+            let upgradeFile = (fn: string, cont: string) => {
+                let updatedCont = this.upgradeAPI(cont);
+                if (updatedCont != cont) {
+                    // save file (force write) 
+                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
+                    this.host().writeFile(this, fn, updatedCont, true)
+                }
+                return updatedCont;
             }
 
             return this.loadAsync()
@@ -456,6 +482,7 @@ namespace pxt {
                 .then(() => this.config.binaryonly ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
+                        files = U.mapMap(files, upgradeFile);
                         let headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,
