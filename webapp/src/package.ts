@@ -28,7 +28,7 @@ export class File {
     numDiagnosticsOverride: number;
     virtualSource: File;
     forceChangeCallback: ((from: string, to: string) => void);
-    
+
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
     isReadonly() {
