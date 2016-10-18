@@ -701,6 +701,11 @@ namespace pxt.blocks {
         incompatibleWithFor?: boolean;
     }
 
+    export interface NamedProperty {
+        property: string;
+        newName: string;
+    }
+
     function isCompiledAsForIndex(b: Binding) {
         return b.usedAsForIndex && !b.incompatibleWithFor;
     }
@@ -912,11 +917,12 @@ namespace pxt.blocks {
         return mkStmt(compileStdCall(e, b, f, comments))
     }
 
-    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node, callbackPropertyNames?: string[]): Node {
+    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node, callbackProperties?: NamedProperty[]): Node {
         body.noFinalNewline = true
         let callback: Node;
-        if (callbackPropertyNames && callbackPropertyNames.length) {
-            callback = mkGroup([mkText(`({${callbackPropertyNames.join(", ")}}) =>`), body]);
+        if (callbackProperties && callbackProperties.length) {
+            const declarations = callbackProperties.map(prop => prop.newName ? `${prop.property}: ${prop.newName}` : prop.property);
+            callback = mkGroup([mkText(`({${declarations.join(", ")}}) =>`), body]);
         }
         else {
             callback = mkGroup([mkText("() =>"), body]);
@@ -933,14 +939,24 @@ namespace pxt.blocks {
             return mkText(b.getFieldValue(arg))
         });
         let body = compileStatements(e, bBody);
-        let callbackPropertyNames: string[];
-        for (const input of b.inputList) {
-            if (input.name === "parameters" && input.fieldRow.length === 1) {
-                callbackPropertyNames = input.fieldRow[0].getText().split(", ");
-            }
+
+        let callbackProperties: NamedProperty[];
+
+        if (isMutatingBlock(b)) {
+            callbackProperties = b.parameters.map(param => {
+                const varName = b.getFieldValue(param);
+                return {
+                    property: param,
+                    newName: varName !== param ? varName : undefined
+                };
+            });
         }
 
-        return mkCallWithCallback(e, ns, event, compiledArgs, body, callbackPropertyNames);
+        return mkCallWithCallback(e, ns, event, compiledArgs, body, callbackProperties);
+    }
+
+    function isMutatingBlock(b: B.Block): b is MutatingBlock {
+        return !!(b as MutatingBlock).parameters;
     }
 
     function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: Node[]): Node {
@@ -1429,5 +1445,12 @@ namespace pxt.blocks {
         for (const commentNode of commentNodes.reverse()) {
             r.unshift(commentNode)
         }
+    }
+
+    function endsWith(text: string, suffix: string) {
+        if (text.length < suffix.length) {
+            return false;
+        }
+        return text.substr(text.length - suffix.length) === suffix;
     }
 }

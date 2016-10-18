@@ -10,12 +10,14 @@ namespace pxt.blocks {
      * This interface defines the optionally defined functions for mutations that Blockly
      * will call if they exist.
      */
-    interface MutatingBlock extends Blockly.Block {
-        // PXT Internal properties:
-        parameters: string[];
-        updateVisibleParameters(): void;
+    export interface MutatingBlock extends Blockly.Block {
+        /* Internal properties */
 
-        // Blockly defined functions:
+        parameters: string[];
+        currentlyVisible: string[]
+        updateVisibleProperties(): void;
+
+        /* Functions used by Blockly */
 
         // Set to save mutations. Should return an XML element
         mutationToDom(): Element;
@@ -26,6 +28,11 @@ namespace pxt.blocks {
         // Should be set to initialize the workspace inside a mutator dialog and return the top block
         decompose(workspace: Blockly.Workspace): Blockly.Block;
     }
+
+
+    const mutatedVariableInputName = "properties";
+    const mutatorStatmentInput = "PROPERTIES";
+    export const savedMutationAttribute = "callbackProperties";
 
     const blockColors: Map<number> = {
         loops: 120,
@@ -398,8 +405,13 @@ namespace pxt.blocks {
             }
         });
 
+        if (fn.attributes.mutate) {
+            block.appendDummyInput(mutatedVariableInputName);
+            addMutator(block as MutatingBlock, fn);
+        }
+
         let body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
-        if (body) {
+        if (body || fn.attributes.mutate) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");
         }
@@ -431,12 +443,6 @@ namespace pxt.blocks {
         block.setNextStatement(fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
-
-        if (fn.attributes.mutate) {
-            block.appendDummyInput("parameters");
-            block.appendStatementInput("HANDLER");
-            addMutator(block as MutatingBlock, fn);
-        }
     }
 
     function addMutator(block: MutatingBlock, info: pxtc.SymbolInfo) {
@@ -446,6 +452,7 @@ namespace pxt.blocks {
         }
 
         block.parameters = [];
+        block.currentlyVisible = [];
 
         // Define a block for each parameter to appear in the mutator dialog's flyout
         const subBlocks: string[] = [];
@@ -465,35 +472,50 @@ namespace pxt.blocks {
 
         block.setMutator(new Blockly.Mutator(subBlocks));
 
-        block.updateVisibleParameters = () => {
-            for (const input of block.inputList) {
-                if (input.name === "parameters") {
-                    const fieldText = block.parameters.join(", ");
-                    if (input.fieldRow.length === 0) {
-                        input.appendField(fieldText);
-                    }
-                    else {
-                        input.fieldRow[0].setText(fieldText);
-                    }
-                    break;
-                }
+        block.updateVisibleProperties = () => {
+            if (listsEqual(block.currentlyVisible, block.parameters)) {
+                return;
             }
+
+            const dummyInput = block.inputList.filter(i => i.name === mutatedVariableInputName)[0];
+            block.currentlyVisible.forEach(param => {
+                if (block.parameters.indexOf(param) === -1) {
+                    dummyInput.removeField(param);
+                }
+            });
+
+            block.parameters.forEach(param => {
+                if (block.currentlyVisible.indexOf(param) === -1) {
+                    dummyInput.appendField(new Blockly.FieldVariable(param), param);
+                }
+            });
+
+            block.currentlyVisible = block.parameters;
         };
 
         block.compose = (topBlock: Blockly.Block) => {
-            // Get the flyout workspace's sub-blocks and update the parameters listed in the real block
-            block.parameters = topBlock.getDescendants().map(subBlock => subBlock.inputList[0].name).filter(name => !!name);
-            block.updateVisibleParameters();
+            // Get the flyout workspace's sub-blocks and update the variables in the real block
+            const parts = topBlock.getDescendants().map(subBlock => subBlock.inputList[0].name).filter(name => !!name);
+            block.parameters = [];
+
+            // Ignore duplicate blocks
+            parts.forEach(p => {
+                if (block.parameters.indexOf(p) === -1) {
+                    block.parameters.push(p);
+                }
+            });
+
+            block.updateVisibleProperties();
         };
 
         block.decompose = (workspace: Blockly.Workspace) => {
             // Initialize flyout workspace's top block and add sub-blocks based on visible parameters
             const topBlock = Blockly.Block.obtain(workspace, topBlockName);
-            (topBlock as any).initSvg();
+            topBlock.initSvg();
 
             if (block.parameters.length) {
                 for (const input of topBlock.inputList) {
-                    if (input.name === "PARAMETERS") {
+                    if (input.name === mutatorStatmentInput) {
                         let currentConnection = input.connection;
 
                         block.parameters.forEach(parameter => {
@@ -511,20 +533,38 @@ namespace pxt.blocks {
         };
 
         block.mutationToDom = () => {
-            // Save the parameters that are currently visible to the DOM
+            // Save the parameters that are currently visible to the DOM along with their names
             const mutation = document.createElement("mutation");
-            mutation.setAttribute("parameters", block.parameters.join(","));
+            const attr = block.parameters.map(param => {
+                const varName = block.getFieldValue(param);
+                return varName !== param ? `${varName}:${param}` : param;
+            }).join(",");
+            mutation.setAttribute(savedMutationAttribute, attr);
 
             return mutation;
         };
 
         block.domToMutation = (xmlElement: Element) => {
             // Restore visible parameters based on saved DOM
-            const savedParameters = xmlElement.getAttribute("parameters");
+            const savedParameters = xmlElement.getAttribute(savedMutationAttribute);
             if (savedParameters) {
                 const split = savedParameters.split(",");
-                block.parameters = split.filter(parameter => info.parameters[0].properties.indexOf(parameter) !== -1);
-                block.updateVisibleParameters();
+                const properties: NamedProperty[] = [];
+                split.forEach(saved => {
+                    const parts = saved.split(":");
+                    if (info.parameters[0].properties.indexOf(parts[0]) !== -1) {
+                        properties.push({
+                            property: parts[0],
+                            newName: parts[1]
+                        });
+                    }
+                })
+                // Create the fields for each property with default variable names
+                block.parameters = properties.map(p => p.property);
+                block.updateVisibleProperties();
+
+                // Override any names that the user has changed
+                properties.filter(p => !!p.newName).forEach(p => block.setFieldValue(p.newName, p.property));
             }
         };
 
@@ -545,7 +585,19 @@ namespace pxt.blocks {
         block.appendDummyInput()
             .appendField(text);
         block.setColour(colour);
-        block.appendStatementInput("PARAMETERS");
+        block.appendStatementInput(mutatorStatmentInput);
+    }
+
+    function listsEqual<T>(a: T[], b: T[]) {
+        if (!a || !b || a.length !== b.length) {
+            return false;
+        }
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function removeCategory(tb: Element, name: string) {

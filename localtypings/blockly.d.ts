@@ -54,10 +54,13 @@ declare namespace Blockly {
     }
 
     class Field {
+        name: string;
+        EDITABLE: boolean;
         init(block: Block): void;
         static superClass_: Field;
         getText(): string;
-        setText(newText: any): void
+        setText(newText: any): void;
+        updateEditable(): void;
     }
 
     class FieldVariable extends Field {
