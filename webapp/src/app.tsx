@@ -717,7 +717,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             showFiles: false,
             active: document.visibilityState == 'visible'
         };
-        if (this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
+        if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
     }
 
