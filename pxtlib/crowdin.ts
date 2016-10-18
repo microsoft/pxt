@@ -40,7 +40,7 @@ namespace pxt.crowdin {
                         pxt.log(exportFileUri + ' ' + e)
                     }
                     return nextFile();
-                }).delay(1000); // throttling otherwise crowding fails
+                }).delay(1000); // throttling otherwise crowdin fails
             };
 
             return nextFile();
