@@ -281,6 +281,9 @@ namespace ts.pxtc {
         indexerGet?: string;
         indexerSet?: string;
 
+        mutate? : boolean;
+        mutateText?: string;
+
         _name?: string;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;

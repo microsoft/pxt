@@ -6,6 +6,27 @@ let lf = Util.lf;
 
 namespace pxt.blocks {
 
+    /**
+     * This interface defines the optionally defined functions for mutations that Blockly
+     * will call if they exist.
+     */
+    interface MutatingBlock extends Blockly.Block {
+        // PXT Internal properties:
+        parameters: string[];
+        updateVisibleParameters(): void;
+
+        // Blockly defined functions:
+
+        // Set to save mutations. Should return an XML element
+        mutationToDom(): Element;
+        // Set to restore mutations from save
+        domToMutation(xmlElement: Element): void;
+        // Should be set to modify a block after a mutator dialog is updated
+        compose(topBlock: Blockly.Block): void;
+        // Should be set to initialize the workspace inside a mutator dialog and return the top block
+        decompose(workspace: Blockly.Workspace): Blockly.Block;
+    }
+
     const blockColors: Map<number> = {
         loops: 120,
         images: 45,
@@ -316,7 +337,7 @@ namespace pxt.blocks {
         }
     }
 
-    function initBlock(block: any, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
+    function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
@@ -410,6 +431,121 @@ namespace pxt.blocks {
         block.setNextStatement(fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
+
+        if (fn.attributes.mutate) {
+            block.appendDummyInput("parameters");
+            block.appendStatementInput("HANDLER");
+            addMutator(block as MutatingBlock, fn);
+        }
+    }
+
+    function addMutator(block: MutatingBlock, info: pxtc.SymbolInfo) {
+        if (!info.parameters || info.parameters.length !== 1 || info.parameters[0].properties.length === 0) {
+            console.error("Mutating blocks only supported for functions with one parameter that has multiple properties");
+            return;
+        }
+
+        block.parameters = [];
+
+        // Define a block for each parameter to appear in the mutator dialog's flyout
+        const subBlocks: string[] = [];
+        info.parameters[0].properties.forEach(property => {
+            const subBlockName = parameterId(property);
+            subBlocks.push(subBlockName);
+            Blockly.Blocks[subBlockName] = Blockly.Blocks[subBlockName] || {
+                init: function() { initializeSubBlock(this as Blockly.Block, property, block.getColour()) }
+            };
+        });
+
+        // Also define the top-level block to appear in the mutator workspace
+        const topBlockName = block.type + "_mutator";
+        Blockly.Blocks[topBlockName] = Blockly.Blocks[topBlockName] || {
+            init: function() { initializeMutatorTopBlock(this as Blockly.Block, info.attributes.mutateText, block.getColour()) }
+        }
+
+        block.setMutator(new Blockly.Mutator(subBlocks));
+
+        block.updateVisibleParameters = () => {
+            for (const input of block.inputList) {
+                if (input.name === "parameters") {
+                    const fieldText = block.parameters.join(", ");
+                    if (input.fieldRow.length === 0) {
+                        input.appendField(fieldText);
+                    }
+                    else {
+                        input.fieldRow[0].setText(fieldText);
+                    }
+                    break;
+                }
+            }
+        };
+
+        block.compose = (topBlock: Blockly.Block) => {
+            // Get the flyout workspace's sub-blocks and update the parameters listed in the real block
+            block.parameters = topBlock.getDescendants().map(subBlock => subBlock.inputList[0].name).filter(name => !!name);
+            block.updateVisibleParameters();
+        };
+
+        block.decompose = (workspace: Blockly.Workspace) => {
+            // Initialize flyout workspace's top block and add sub-blocks based on visible parameters
+            const topBlock = Blockly.Block.obtain(workspace, topBlockName);
+            (topBlock as any).initSvg();
+
+            if (block.parameters.length) {
+                for (const input of topBlock.inputList) {
+                    if (input.name === "PARAMETERS") {
+                        let currentConnection = input.connection;
+
+                        block.parameters.forEach(parameter => {
+                            const subBlock = Blockly.Block.obtain(workspace, parameterId(parameter));
+                            subBlock.initSvg();
+                            currentConnection.connect(subBlock.previousConnection);
+                            currentConnection = subBlock.nextConnection;
+                        });
+                        break;
+                    }
+                }
+            }
+
+            return topBlock;
+        };
+
+        block.mutationToDom = () => {
+            // Save the parameters that are currently visible to the DOM
+            const mutation = document.createElement("mutation");
+            mutation.setAttribute("parameters", block.parameters.join(","));
+
+            return mutation;
+        };
+
+        block.domToMutation = (xmlElement: Element) => {
+            // Restore visible parameters based on saved DOM
+            const savedParameters = xmlElement.getAttribute("parameters");
+            if (savedParameters) {
+                const split = savedParameters.split(",");
+                block.parameters = split.filter(parameter => info.parameters[0].properties.indexOf(parameter) !== -1);
+                block.updateVisibleParameters();
+            }
+        };
+
+        function parameterId(parameter: string) {
+            return block.type + "_" + parameter;
+        }
+    }
+
+    function initializeSubBlock(block: Blockly.Block, parameter: string, colour: string) {
+        block.appendDummyInput(parameter)
+            .appendField(parameter);
+        block.setColour(colour);
+        block.setNextStatement(true);
+        block.setPreviousStatement(true);
+    }
+
+    function initializeMutatorTopBlock(block: Blockly.Block, text: string, colour: string) {
+        block.appendDummyInput()
+            .appendField(text);
+        block.setColour(colour);
+        block.appendStatementInput("PARAMETERS");
     }
 
     function removeCategory(tb: Element, name: string) {

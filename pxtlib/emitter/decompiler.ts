@@ -645,10 +645,23 @@ ${output}</xml>`;
             }
 
             function emitArrowFunction(n: ts.ArrowFunction, next: NextNode[]) {
-                if (n.parameters.length > 0) {
+                if (n.parameters.length === 1 && n.parameters[0].name.kind === SK.ObjectBindingPattern) {
+                    const elements = (n.parameters[0].name as ObjectBindingPattern).elements;
+                    const names = elements.map(e => {
+                        const name = e.propertyName || e.name;
+                        if (name.kind !== SK.Identifier) {
+                            error(name, Util.lf("Only identifiers may be used for variable names in object destructuring patterns"));
+                            return "";
+                        }
+                        return (name as Identifier).text;
+                    });
+                    write(`<mutation parameters="${names.join(",")}"></mutation>`)
+                }
+                else if (n.parameters.length > 0) {
                     error(n);
                     return;
                 }
+
                 pushScope();
                 emitStatementBlock(n.body, next)
             }

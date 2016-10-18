@@ -912,11 +912,16 @@ namespace pxt.blocks {
         return mkStmt(compileStdCall(e, b, f, comments))
     }
 
-    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node): Node {
+    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node, callbackPropertyNames?: string[]): Node {
         body.noFinalNewline = true
-        return mkStmt(H.namespaceCall(n, f, args.concat([
-            mkGroup([mkText("() =>"), body])
-        ])))
+        let callback: Node;
+        if (callbackPropertyNames && callbackPropertyNames.length) {
+            callback = mkGroup([mkText(`({${callbackPropertyNames.join(", ")}}) =>`), body]);
+        }
+        else {
+            callback = mkGroup([mkText("() =>"), body]);
+        }
+        return mkStmt(H.namespaceCall(n, f, args.concat([ callback ])))
     }
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): Node {
@@ -928,7 +933,14 @@ namespace pxt.blocks {
             return mkText(b.getFieldValue(arg))
         });
         let body = compileStatements(e, bBody);
-        return mkCallWithCallback(e, ns, event, compiledArgs, body);
+        let callbackPropertyNames: string[];
+        for (const input of b.inputList) {
+            if (input.name === "parameters" && input.fieldRow.length === 1) {
+                callbackPropertyNames = input.fieldRow[0].getText().split(", ");
+            }
+        }
+
+        return mkCallWithCallback(e, ns, event, compiledArgs, body, callbackPropertyNames);
     }
 
     function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: Node[]): Node {
@@ -1070,7 +1082,7 @@ namespace pxt.blocks {
                         f: fn.name,
                         isExtensionMethod: instance,
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: fn.parameters && fn.parameters.some(p => p.type == "() => void"),
+                        hasHandler: fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
                         args: args,
                         isIdentity: fn.attributes.shim == "TD_ID"

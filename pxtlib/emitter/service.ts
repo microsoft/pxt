@@ -5,6 +5,7 @@ namespace ts.pxtc {
         type: string;
         initializer?: string;
         defaults?: string[];
+        properties?: string[];
     }
 
     export enum SymbolKind {
@@ -196,12 +197,20 @@ namespace ts.pxtc {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
+                    let props: string[];
+                    if (attributes.mutate && p.type.kind === SK.FunctionType) {
+                        const callBackSignature = typechecker.getSignatureFromDeclaration(p.type as FunctionTypeNode);
+                        const callbackParameters = callBackSignature.getParameters();
+                        assert(callbackParameters.length > 0);
+                        props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => prop.getName());
+                    }
                     return {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
-                        defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined
+                        defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
+                        properties: props
                     }
                 })
             }
