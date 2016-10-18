@@ -547,6 +547,11 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 }
 
 class SideDocs extends data.Component<ISettingsProps, {}> {
+    public static notify(message: pxsim.SimulatorMessage) {
+        let sd = document.getElementById("sidedocs") as HTMLIFrameElement;
+        if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
+    }
+
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -568,7 +573,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     popOut() {
-        this.props.parent.notifySideDocs({
+        SideDocs.notify({
             type: "popout"
         })
     }
@@ -877,17 +882,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (e)
             this.editor.setViewState(e.pos)
 
-        this.notifySideDocs({
+        SideDocs.notify({
             type: "fileloaded",
             name: this.editorFile.getName()
         } as pxsim.SimulatorFileLoadedMessage)
 
         if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
-    }
-
-    notifySideDocs(message: pxsim.SimulatorMessage) {
-        let sd = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
     }
 
     setFile(fn: pkg.File) {
@@ -2094,6 +2094,17 @@ $(document).ready(() => {
     window.addEventListener("unload", ev => {
         if (theEditor && !LoginBox.signingOut)
             theEditor.saveSettings()
-    })
-
+    });
+    window.addEventListener("message", ev => {
+        let m = ev.data as pxsim.SimulatorMessage;
+        if (!m) {
+            return;
+        }
+        if (m.type === "sidedocready" && /^http:\/\/localhost/i.test(window.location.href) && Cloud.localToken) {
+            SideDocs.notify({
+                type: "localtoken",
+                localToken: Cloud.localToken
+            } as pxsim.SimulatorDocMessage);
+        }
+    }, false);
 })
