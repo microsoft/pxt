@@ -9,6 +9,7 @@ import * as nodeutil from './nodeutil';
 nodeutil.init();
 
 import * as fs from 'fs';
+import * as crypto from 'crypto';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
@@ -30,6 +31,10 @@ function initTargetCommands() {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
     }
+}
+
+function isNewBackend() {
+    return U.startsWith(Cloud.accessToken, "3.")
 }
 
 let prevExports = (global as any).savedModuleExports
@@ -668,8 +673,86 @@ interface UploadOptions {
     localDir?: string;
 }
 
+interface BlobReq {
+    hash: string;
+    content: string;
+    encoding: string;
+    filename: string; // comment only
+    size: number; // ditto
+}
+
+type GitTree = Map<GitEntry>;
+interface GitEntry {
+    hash?: string;
+    subtree?: GitTree;
+}
+
+interface CommitInfo {
+    tree: GitTree;
+    parents: string[];
+    message: string;
+}
+
 function uploadFileName(p: string) {
     return p.replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
+}
+
+function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+    let reqs = U.unique(U.values(uplReqs), r => r.hash)
+    console.log("Asking for", reqs.length, "hashes")
+    return Promise.resolve()
+        .then(() => Cloud.privatePostAsync("upload/status", {
+            hashes: reqs.map(r => r.hash)
+        }))
+        .then(resp => {
+            let missing = U.toDictionary(resp.missing as string[], s => s)
+            let missingReqs = reqs.filter(r => !!U.lookup(missing, r.hash))
+            let size = 0
+            for (let r of missingReqs) size += r.size
+            console.log("files missing: ", missingReqs.length, size, "bytes")
+            return Promise.map(missingReqs,
+                r => Cloud.privatePostAsync("upload/blob", r)
+                    .then(() => {
+                        console.log(r.filename + ": OK," + r.size + " " + r.hash)
+                    }))
+        })
+        .then(() => {
+            let roottree: Map<GitEntry> = {}
+            let get = (tree: GitTree, path: string): GitEntry => {
+                let subt = U.lookup(tree, path)
+                if (!subt)
+                    subt = tree[path] = {}
+                return subt
+            }
+            let lookup = (tree: GitTree, path: string): GitEntry => {
+                let m = /^([^\/]+)\/(.*)/.exec(path)
+                if (m) {
+                    let subt = get(tree, m[1])
+                    U.assert(!subt.hash)
+                    if (!subt.subtree) subt.subtree = {}
+                    return lookup(subt.subtree, m[2])
+                } else {
+                    return get(tree, path)
+                }
+            }
+            for (let fn of Object.keys(uplReqs)) {
+                let e = lookup(roottree, fn)
+                e.hash = uplReqs[fn].hash
+            }
+            let info = travisInfo()
+            let data: CommitInfo = {
+                message: "Upload from " + info.commitUrl,
+                parents: [],
+                tree: roottree,
+            }
+            console.log("Creating commit...")
+            fs.writeFileSync("data.json", JSON.stringify(data, null, 1))
+            return Cloud.privatePostAsync("upload/commit", data)
+        })
+        .then(res => {
+            console.log("Commit:", res)
+        })
+
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
@@ -736,6 +819,8 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     nodeutil.mkdirP("built/uploadrepl")
 
+    let uplReqs: Map<BlobReq> = {}
+
     let uploadFileAsync = (p: string) => {
         let rdf: Promise<Buffer> = null
         if (opts.fileContent) {
@@ -783,6 +868,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                         trg.appTheme.homeUrl = opts.localDir
                         data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                     } else {
+                        if (isNewBackend()) return Promise.resolve() // TODO
                         // expand usb help pages
                         return Promise.all(
                             (trg.appTheme.usbHelp || []).filter(h => !!h.path)
@@ -808,6 +894,24 @@ function uploadCoreAsync(opts: UploadOptions) {
                 return writeFileAsync(fn, data)
             }
 
+            if (isNewBackend()) {
+                let req = {
+                    encoding: isText ? "utf8" : "base64",
+                    content,
+                    hash: "",
+                    filename: fileName,
+                    size: 0
+                }
+                let hash = crypto.createHash("sha1")
+                let buf = new Buffer(req.content, req.encoding)
+                req.size = buf.length
+                hash.update(new Buffer("blob " + buf.length + "\u0000"))
+                hash.update(buf)
+                req.hash = hash.digest("hex")
+                uplReqs[fileName] = req
+                return Promise.resolve()
+            }
+
             return Cloud.privatePostAsync(liteId + "/files", {
                 encoding: isText ? "utf8" : "base64",
                 filename: fileName,
@@ -827,6 +931,11 @@ function uploadCoreAsync(opts: UploadOptions) {
             .then(() => {
                 console.log("Release files written to", path.resolve(builtPackaged + opts.localDir))
             })
+
+
+    if (isNewBackend())
+        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+            .then(() => gitUploadAsync(opts, uplReqs))
 
     let info = travisInfo()
     return Cloud.privatePostAsync("releases", {

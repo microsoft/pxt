@@ -350,6 +350,7 @@ namespace ts.pxtc.Util {
         data?: any;
         headers?: pxt.Map<string>;
         allowHttpErrors?: boolean; // don't treat non-200 responses as errors
+        allowGzipPost?: boolean;
     }
 
     export interface HttpResponse {

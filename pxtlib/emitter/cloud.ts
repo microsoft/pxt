@@ -25,6 +25,7 @@ namespace pxt.Cloud {
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = apiRoot + options.url
+        options.allowGzipPost = true
         if (!Cloud.isOnline()) {
             return offlineError(options.url);
         }
