@@ -3085,9 +3085,17 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
         })
 }
 
-function buildCoreAsync(mode: BuildOption) {
+interface BuildCoreOptions {
+    mode: BuildOption;
+
+    // docs
+    locs?: boolean;
+    docs?: boolean;
+}
+
+function buildCoreAsync(buildOpts: BuildCoreOptions) {
     ensurePkgDir();
-    return prepBuildOptionsAsync(mode)
+    return prepBuildOptionsAsync(buildOpts.mode)
         .then(pxtc.compile)
         .then(res => {
             U.iterMap(res.outfiles, (fn, c) =>
@@ -3099,34 +3107,39 @@ function buildCoreAsync(mode: BuildOption) {
 
             console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
 
-            if (mode == BuildOption.GenDocs) {
-                let apiInfo = pxtc.getApiInfo(res.ast)
-                // keeps apis from this module only
-                for (let infok in apiInfo.byQName) {
-                    let info = apiInfo.byQName[infok];
-                    if (info.pkg &&
-                        info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
-                }
-                let md = pxtc.genMarkdown(mainPkg.config.name, apiInfo, { package: mainPkg.config.name != pxt.appTarget.corepkg })
-                mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
-                for (let fn in md) {
-                    let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
-                    let ffn = folder + fn;
-                    mainPkg.host().writeFile(mainPkg, ffn, md[fn])
-                    console.log(`generated ${ffn}; size=${md[fn].length}`)
-                }
-                return null
-            } else if (mode == BuildOption.Deploy) {
-                if (!pxt.commands.deployCoreAsync) {
-                    console.log("no deploy functionality defined by this target")
+            switch (buildOpts.mode) {
+                case BuildOption.GenDocs:
+                    let apiInfo = pxtc.getApiInfo(res.ast)
+                    // keeps apis from this module only
+                    for (let infok in apiInfo.byQName) {
+                        let info = apiInfo.byQName[infok];
+                        if (info.pkg &&
+                            info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
+                    }
+                    let md = pxtc.genMarkdown(mainPkg.config.name, apiInfo, {
+                        package: mainPkg.config.name != pxt.appTarget.corepkg,
+                        locs: buildOpts.locs,
+                        docs: buildOpts.docs
+                    })
+                    mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
+                    for (let fn in md) {
+                        let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
+                        let ffn = folder + fn;
+                        mainPkg.host().writeFile(mainPkg, ffn, md[fn])
+                        console.log(`generated ${ffn}; size=${md[fn].length}`)
+                    }
+                    return null
+                case BuildOption.Deploy:
+                    if (!pxt.commands.deployCoreAsync) {
+                        console.log("no deploy functionality defined by this target")
+                        return null;
+                    }
+                    return pxt.commands.deployCoreAsync(res);
+                case BuildOption.Run:
+                    return runCoreAsync(res);
+                default:
                     return null;
-                }
-                return pxt.commands.deployCoreAsync(res);
             }
-            else if (mode == BuildOption.Run)
-                return runCoreAsync(res);
-            else
-                return null;
         })
 }
 
@@ -3196,12 +3209,12 @@ export function downloadTargetTranslationsAsync() {
                 Object.keys(data)
                     .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
                     .forEach(lang => {
-                    const tfdir = path.join(locdir, lang);
-                    const tf = path.join(tfdir, fn);
-                    nodeutil.mkdirP(tfdir)
-                    pxt.log(`writing ${tf}`);
-                    fs.writeFile(tf, JSON.stringify(data[lang], null, 2), "utf8");
-                })
+                        const tfdir = path.join(locdir, lang);
+                        const tf = path.join(tfdir, fn);
+                        nodeutil.mkdirP(tfdir)
+                        pxt.log(`writing ${tf}`);
+                        fs.writeFile(tf, JSON.stringify(data[lang], null, 2), "utf8");
+                    })
                 return nextFileAsync()
             });
     }
@@ -3209,23 +3222,27 @@ export function downloadTargetTranslationsAsync() {
 }
 
 export function buildAsync() {
-    return buildCoreAsync(BuildOption.JustBuild)
+    return buildCoreAsync({ mode: BuildOption.JustBuild })
 }
 
-export function gendocsAsync() {
-    return buildCoreAsync(BuildOption.GenDocs)
+export function gendocsAsync(...args: string[]) {
+    return buildCoreAsync({
+        mode: BuildOption.GenDocs,
+        docs: args.length == 0 || args.indexOf("--docs") > -1,
+        locs: args.length == 0 || args.indexOf("--locs") > -1
+    })
 }
 
 export function deployAsync() {
-    return buildCoreAsync(BuildOption.Deploy)
+    return buildCoreAsync({ mode: BuildOption.Deploy })
 }
 
 export function runAsync() {
-    return buildCoreAsync(BuildOption.Run)
+    return buildCoreAsync({ mode: BuildOption.Run })
 }
 
 export function testAsync() {
-    return buildCoreAsync(BuildOption.Test)
+    return buildCoreAsync({ mode: BuildOption.Test })
 }
 
 export function uploadDocsAsync(...args: string[]): Promise<void> {
@@ -3382,7 +3399,7 @@ cmd("deploy                       - build and deploy current package", deployAsy
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
-cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
+cmd("gendocs [--locs] [--docs]    - build current package and its docs. --locs produce localization files, --docs produce docs files", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testassembler                - test the assemblers", testAssemblers, 2)
 cmd("decompile file.ts...         - decompile ts files and produce similarly named .blocks files", decompileAsync, 1)
