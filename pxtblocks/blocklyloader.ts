@@ -50,7 +50,6 @@ namespace pxt.blocks {
     }
     let cachedBlocks: Map<CachedBlock> = {};
     let cachedToolbox: string = "";
-    const advancedCategoryName = Util.lf("Advanced")
 
     export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
@@ -190,6 +189,7 @@ namespace pxt.blocks {
             }
 
             if (nsn.attributes.advanced) {
+                const advancedCategoryName = Util.lf("{id:category}Advanced")
                 parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1)
                 categories = getChildCategories(parentCategoryList)
             }
@@ -475,7 +475,7 @@ namespace pxt.blocks {
             let cats = tb.querySelectorAll('category');
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
-                    Util._localize(cats[i].getAttribute('name')));
+                    Util.lf_va(`{id:category}${cats[i].getAttribute('name')}`, []));
             }
         }
 
@@ -487,6 +487,7 @@ namespace pxt.blocks {
         // lf("{id:category}Lists")
         // lf("{id:category}Text")
         // lf("{id:category}Math")
+        // lf("{id:category}Advanced")
         // lf("{id:category}More\u2026")
 
         // add extra blocks
@@ -816,7 +817,7 @@ namespace pxt.blocks {
         msg.DISABLE_BLOCK = lf("Disable Block");
         msg.DELETE_BLOCK = lf("Delete Block");
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
-        msg.HELP = "Help";
+        msg.HELP = lf("Help");
 
         /**
          * Show the context menu for the workspace.
@@ -865,7 +866,7 @@ namespace pxt.blocks {
                  * @param {boolean} shouldCollapse Whether a block should collapse.
                  * @private
                  */
-                let toggleOption = function (shouldCollapse: boolean) {
+                const toggleOption = function (shouldCollapse: boolean) {
                     let ms = 0;
                     for (let i = 0; i < topBlocks.length; i++) {
                         let block = topBlocks[i];
@@ -878,17 +879,19 @@ namespace pxt.blocks {
                 };
 
                 // Option to collapse top blocks.
-                let collapseOption: any = { enabled: hasExpandedBlocks };
+                const collapseOption: any = { enabled: hasExpandedBlocks };
                 collapseOption.text = lf("Collapse Blocks");
                 collapseOption.callback = function () {
+                    pxt.tickEvent("blocks.context.collapse")
                     toggleOption(true);
                 };
                 menuOptions.push(collapseOption);
 
                 // Option to expand top blocks.
-                let expandOption: any = { enabled: hasCollapsedBlocks };
+                const expandOption: any = { enabled: hasCollapsedBlocks };
                 expandOption.text = lf("Expand Blocks");
                 expandOption.callback = function () {
+                    pxt.tickEvent("blocks.context.expand")
                     toggleOption(false);
                 };
                 menuOptions.push(expandOption);
@@ -930,6 +933,7 @@ namespace pxt.blocks {
                     lf("Delete {0} Blocks", deleteList.length),
                 enabled: deleteList.length > 0,
                 callback: function () {
+                    pxt.tickEvent("blocks.context.delete");
                     if (deleteList.length < 2 ||
                         window.confirm(lf("Delete all {0} blocks?", deleteList.length))) {
                         deleteNext();
@@ -942,6 +946,7 @@ namespace pxt.blocks {
                 text: lf("Shuffle Blocks"),
                 enabled: topBlocks.length > 0,
                 callback: () => {
+                    pxt.tickEvent("blocks.context.shuffle");
                     pxt.blocks.layout.shuffle(this, 1);
                 }
             };
@@ -951,6 +956,7 @@ namespace pxt.blocks {
                 text: lf("Download Screenshot"),
                 enabled: topBlocks.length > 0,
                 callback: () => {
+                    pxt.tickEvent("blocks.context.screenshot");
                     pxt.blocks.layout.screenshotAsync(this)
                     .done((uri) => {
                         if (pxt.BrowserUtils.isSafari())
