@@ -151,7 +151,7 @@ namespace pxt.runner {
         console.error(msg)
     }
 
-    function loadPackageAsync(id: string, code? : string) {
+    function loadPackageAsync(id: string, code?: string) {
         let host = mainPkg.host();
         mainPkg = new pxt.MainPackage(host)
         mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
@@ -163,7 +163,7 @@ namespace pxt.runner {
                 return mainPkg.installAllAsync().then( () => {
                     if (code) {
                         //Set the custom code if provided for docs
-                        getEditorPkg(mainPkg).files["main.ts"] = code;                        
+                        getEditorPkg(mainPkg).files["main.ts"] = code;
                     }
                 }).catch(e => {
                         showError(lf("Cannot load package: {0}", e.message))
