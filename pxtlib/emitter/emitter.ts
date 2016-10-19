@@ -3122,6 +3122,9 @@ ${lbl}: .short 0xffff
             shimsDTS: "",
             enumsDTS: "",
             onlyPublic: true,
+            platformio: {
+                dependencies: {}
+            },
             yotta: {
                 dependencies: {},
                 config: {}

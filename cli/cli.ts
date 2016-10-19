@@ -20,6 +20,7 @@ import * as server from './server';
 import * as uploader from './uploader';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
+let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
 
 function initTargetCommands() {
     let cmdsjs = path.join(nodeutil.targetDir, 'built/cmds.js');
@@ -1646,7 +1647,7 @@ class Host
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
-        if (extInfo.onlyPublic || forceCloudBuild)
+        if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
         return buildHexAsync(thisBuild, extInfo)
@@ -1980,14 +1981,14 @@ export function initAsync() {
         .then(() => installAsync())
 }
 
-// abstract over build engine (currently yotta, soon to have platformio)
-
+// abstract over build engine 
 export interface BuildEngine {
     updateEngineAsync: () => Promise<void>;
     setPlatformAsync: () => Promise<void>;
     buildAsync: () => Promise<void>;
     patchHexInfo: (extInfo: pxtc.ExtensionInfo) => any;
     buildPath: string;
+    moduleConfig: string;
 }
 
 // abstract over C++ runtime target (currently the DAL)
@@ -2049,11 +2050,24 @@ export function timeAsync() {
         .then(() => console.log("MIN", min))
 }
 
-const ytPath = "built/yt"
-
 interface BuildCache {
     sha?: string;
     modSha?: string;
+}
+
+function runPlatformioAsync(args: string[]) {
+    console.log("*** platformio " + args.join(" "))
+    let child = child_process.spawn("platformio", args, {
+        cwd: thisBuild.buildPath,
+        stdio: "inherit",
+        env: process.env
+    })
+    return new Promise<void>((resolve, reject) => {
+        child.on("close", (code: number) => {
+            if (code === 0) resolve()
+            else reject(new Error("platformio " + args.join(" ") + ": exit code " + code))
+        })
+    })
 }
 
 function runYottaAsync(args: string[]) {
@@ -2073,7 +2087,7 @@ function runYottaAsync(args: string[]) {
 
     console.log("*** " + ytCommand + " " + args.join(" "))
     let child = child_process.spawn("yotta", args, {
-        cwd: ytPath,
+        cwd: thisBuild.buildPath,
         stdio: "inherit",
         env: env
     })
@@ -2085,16 +2099,30 @@ function runYottaAsync(args: string[]) {
     })
 }
 
-const yottaBuild: BuildEngine = {
-    updateEngineAsync: () => { return runYottaAsync(["update"]) },
-    buildAsync: () => { return runYottaAsync(["build"]) },
-    setPlatformAsync: () => { return runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget]) },
-    patchHexInfo: null,
-    buildPath: ytPath
+const buildEngines: Map<BuildEngine> = {
+    yotta: {
+        updateEngineAsync: () => { return runYottaAsync(["update"]) },
+        buildAsync: () => { return runYottaAsync(["build"]) },
+        setPlatformAsync: () => {
+            return runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget])
+        },
+        patchHexInfo: null,
+        buildPath: "built/yt",
+        moduleConfig: "module.json"
+    },
+
+    platformio: {
+        updateEngineAsync: () => Promise.resolve(),
+        buildAsync: () => { return runPlatformioAsync(["run"]) },
+        setPlatformAsync: () => Promise.resolve(),
+        patchHexInfo: null,
+        buildPath: "built/pio",
+        moduleConfig: "platformio.ini"
+    }
 }
 
 // once we have a different build engine, set this appropriately
-let thisBuild = yottaBuild
+let thisBuild = buildEngines['yotta']
 
 function patchHexInfo(buildEngine: BuildEngine, extInfo: pxtc.ExtensionInfo) {
     let infopath = buildEngine.buildPath + "/yotta_modules/" + pxt.appTarget.compileService.yottaCorePackage + "/generated/metainfo.json"
@@ -2137,7 +2165,7 @@ function buildHexAsync(buildEngine: BuildEngine, extInfo: pxtc.ExtensionInfo) {
 
     let saveCache = () => fs.writeFileSync(buildCachePath, JSON.stringify(buildCache, null, 4) + "\n")
 
-    let modSha = U.sha256(extInfo.generatedFiles["/module.json"])
+    let modSha = U.sha256(extInfo.generatedFiles["/" + buildEngine.moduleConfig])
     if (buildCache.modSha !== modSha) {
         tasks = tasks
             .then(() => buildEngine.setPlatformAsync())
@@ -3225,12 +3253,12 @@ export function downloadTargetTranslationsAsync() {
                 Object.keys(data)
                     .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
                     .forEach(lang => {
-                    const tfdir = path.join(locdir, lang);
-                    const tf = path.join(tfdir, fn);
-                    nodeutil.mkdirP(tfdir)
-                    pxt.log(`writing ${tf}`);
-                    fs.writeFile(tf, JSON.stringify(data[lang], null, 2), "utf8");
-                })
+                        const tfdir = path.join(locdir, lang);
+                        const tf = path.join(tfdir, fn);
+                        nodeutil.mkdirP(tfdir)
+                        pxt.log(`writing ${tf}`);
+                        fs.writeFile(tf, JSON.stringify(data[lang], null, 2), "utf8");
+                    })
                 return nextFileAsync()
             });
     }
@@ -3560,7 +3588,17 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     let trg = nodeutil.getPxtTarget()
     pxt.appTarget = trg;
 
-    process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
+    let compileId = "none"
+    if (trg.compileService) {
+        compileId = trg.compileService.buildEngine || "yotta"
+    }
+
+    process.stderr.write(`Using PXT/${trg.id} from ${targetDir} with build engine ${compileId}.\n`)
+
+    if (compileId != "none") {
+        thisBuild = buildEngines[compileId]
+        if (!thisBuild) U.userError("cannot find build engine: " + compileId)
+    }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
 

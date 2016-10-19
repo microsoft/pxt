@@ -126,6 +126,7 @@ namespace pxt.cpp {
     export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
         let pkgSnapshot: Map<string> = {}
         let constsName = "dal.d.ts"
+        let sourcePath = "/source/"
 
         for (let pkg of mainPkg.sortedDeps()) {
             pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
@@ -137,6 +138,15 @@ namespace pxt.cpp {
         }
 
         pxt.debug("Generating new extinfo")
+
+        let isPlatformio = false;
+        if (pxt.appTarget.compileService && pxt.appTarget.compileService.platformioIni) {
+            isPlatformio = true
+        }
+
+        if (isPlatformio) {
+            sourcePath = "/src/"
+        }
 
         let res = pxtc.emptyExtInfo();
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
@@ -454,6 +464,11 @@ namespace pxt.cpp {
         let settingSrc: Map<Package> = {}
 
         function parseJson(pkg: Package) {
+            let j0 = pkg.config.platformio
+            if (j0 && j0.dependencies) {
+                U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
+            }
+
             let json = pkg.config.yotta
             if (!json) return;
 
@@ -487,10 +502,13 @@ namespace pxt.cpp {
 
         // This is overridden on the build server, but we need it for command line build
         if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-            U.assert(!!pxt.appTarget.compileService.yottaCorePackage);
-            U.assert(!!pxt.appTarget.compileService.githubCorePackage);
-            U.assert(!!pxt.appTarget.compileService.gittag);
-            res.yotta.dependencies[pxt.appTarget.compileService.yottaCorePackage] = pxt.appTarget.compileService.githubCorePackage + "#" + compileService.gittag;
+            let cs = pxt.appTarget.compileService
+            U.assert(!!cs.yottaCorePackage);
+            U.assert(!!cs.githubCorePackage);
+            U.assert(!!cs.gittag);
+            let tagged = cs.githubCorePackage + "#" + compileService.gittag
+            res.yotta.dependencies[cs.yottaCorePackage] = tagged;
+            res.platformio.dependencies[cs.yottaCorePackage] = tagged;
         }
 
         if (mainPkg) {
@@ -513,12 +531,12 @@ namespace pxt.cpp {
                     if (isHeader || U.endsWith(fn, ".cpp")) {
                         let fullName = pkg.config.name + "/" + fn
                         if (isHeader)
-                            includesInc += `#include "source/${fullName}"\n`
+                            includesInc += `#include "${sourcePath.slice(1)}${fullName}"\n`
                         let src = pkg.readFile(fn)
                         fileName = fullName
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         src = parseCpp(src, isHeader)
-                        res.extensionFiles["/source/" + fullName] = src
+                        res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)
                             res.onlyPublic = false
@@ -537,26 +555,42 @@ namespace pxt.cpp {
 
         res.yotta.config = U.jsonUnFlatten(currSettings)
         let configJson = res.yotta.config
-        let moduleJson = {
-            "name": "pxt-microbit-app",
-            "version": "0.0.0",
-            "description": "Auto-generated. Do not edit.",
-            "license": "n/a",
-            "dependencies": res.yotta.dependencies,
-            "targetDependencies": {},
-            "bin": "./source"
+   
+        if (isPlatformio) {
+            let iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            iniLines.push("lib_deps =")
+            U.iterMap(res.platformio.dependencies, (pkg, ver) => {
+                let pkgSpec = /[@#\/]/.test(ver) ? ver : pkg + "@" + ver
+                iniLines.push("  " + pkgSpec)
+            })
+            res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
+        } else {
+            let moduleJson = {
+                "name": "pxt-microbit-app",
+                "version": "0.0.0",
+                "description": "Auto-generated. Do not edit.",
+                "license": "n/a",
+                "dependencies": res.yotta.dependencies,
+                "targetDependencies": {},
+                "bin": "./source"
+            }
+            res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         }
-        res.generatedFiles["/source/pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
-        res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
+
+        res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-        res.generatedFiles["/source/main.cpp"] = `
+        res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
+#ifdef PXT_MAIN
+PXT_MAIN
+#else
 int main() { 
     uBit.init(); 
     pxt::start(); 
     while (1) uBit.sleep(10000);    
     return 0; 
 }
+#endif
 `
 
         let tmp = res.extensionFiles
