@@ -198,7 +198,7 @@ export class Editor extends srceditor.Editor {
             scrollbars: true,
             media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
             sound: true,
-            trashcan: true,
+            trashcan: false,
             collapse: false,
             comments: true,
             disable: false,

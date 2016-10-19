@@ -330,6 +330,16 @@ body.blocklyMinimalBody {
     min-width: initial;
 }
 
+#blocklyTrashIcon {
+    position: absolute;
+    top: 20%;
+    right: 8%;
+    width: 100px;
+    height: 80px;
+    z-index: 8;
+    font-size:5rem;
+}
+
 @supports (-ms-accelerator:true) {
     .rtl .blocklyPreview {
         right:50%;
