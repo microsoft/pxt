@@ -14,7 +14,8 @@ namespace pxt.blocks {
         /* Internal properties */
 
         parameters: string[];
-        currentlyVisible: string[]
+        currentlyVisible: string[];
+        parameterTypes: {[index: string]: string};
         updateVisibleProperties(): void;
 
         /* Functions used by Blockly */
@@ -466,14 +467,16 @@ namespace pxt.blocks {
 
         block.parameters = [];
         block.currentlyVisible = [];
+        block.parameterTypes = {};
 
         // Define a block for each parameter to appear in the mutator dialog's flyout
         const subBlocks: string[] = [];
         info.parameters[0].properties.forEach(property => {
-            const subBlockName = parameterId(property);
+            block.parameterTypes[property.name] = property.type;
+            const subBlockName = parameterId(property.name);
             subBlocks.push(subBlockName);
             Blockly.Blocks[subBlockName] = Blockly.Blocks[subBlockName] || {
-                init: function() { initializeSubBlock(this as Blockly.Block, property, block.getColour()) }
+                init: function() { initializeSubBlock(this as Blockly.Block, property.name, block.getColour()) }
             };
         });
 
@@ -565,7 +568,7 @@ namespace pxt.blocks {
                 const properties: NamedProperty[] = [];
                 split.forEach(saved => {
                     const parts = saved.split(":");
-                    if (info.parameters[0].properties.indexOf(parts[0]) !== -1) {
+                    if (info.parameters[0].properties.some(p => p.name === parts[0])) {
                         properties.push({
                             property: parts[0],
                             newName: parts[1]
@@ -962,7 +965,7 @@ namespace pxt.blocks {
     }
 
     /**
-     * The following patch to blockly is to add the Trash icon on top of the toolbox, 
+     * The following patch to blockly is to add the Trash icon on top of the toolbox,
      * the trash icon should only show when a user drags a block that is already in the workspace.
      */
     function initDrag() {

@@ -281,7 +281,7 @@ namespace ts.pxtc {
         indexerGet?: string;
         indexerSet?: string;
 
-        mutate? : boolean;
+        mutate?: boolean;
         mutateText?: string;
         mutateDefaults?: string;
 

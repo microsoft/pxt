@@ -5,7 +5,13 @@ namespace ts.pxtc {
         type: string;
         initializer?: string;
         defaults?: string[];
-        properties?: string[];
+        properties?: PropertyDesc[];
+    }
+
+
+    export interface PropertyDesc {
+        name: string;
+        type: string;
     }
 
     export enum SymbolKind {
@@ -197,12 +203,14 @@ namespace ts.pxtc {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
-                    let props: string[];
+                    let props: PropertyDesc[];
                     if (attributes.mutate && p.type.kind === SK.FunctionType) {
                         const callBackSignature = typechecker.getSignatureFromDeclaration(p.type as FunctionTypeNode);
                         const callbackParameters = callBackSignature.getParameters();
                         assert(callbackParameters.length > 0);
-                        props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => prop.getName());
+                        props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
+                            return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
+                        });
                     }
                     return {
                         name: n,
