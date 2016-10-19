@@ -79,6 +79,7 @@ declare namespace pxt {
         yottaTarget?: string; // bbc-microbit-classic-gcc
         yottaCorePackage?: string; // pxt-microbit-core
         githubCorePackage?: string; // microsoft/pxt-microbit-core
+        platformioIni?: string[];
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
@@ -206,6 +207,7 @@ declare namespace ts.pxtc {
         generatedFiles: pxt.Map<string>;
         extensionFiles: pxt.Map<string>;
         yotta: pxt.YottaConfig;
+        platformio: pxt.PlatformIOConfig;
         sha: string;
         compileData: string;
         shimsDTS: string;
