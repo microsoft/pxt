@@ -151,7 +151,7 @@ namespace pxt.runner {
         console.error(msg)
     }
 
-    function loadPackageAsync(id: string) {
+    function loadPackageAsync(id: string, code? : string) {
         let host = mainPkg.host();
         mainPkg = new pxt.MainPackage(host)
         mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
@@ -160,8 +160,12 @@ namespace pxt.runner {
             .then(() => host.readFile(mainPkg, pxt.CONFIG_NAME))
             .then(str => {
                 if (!str) return Promise.resolve()
-                return mainPkg.installAllAsync()
-                    .catch(e => {
+                return mainPkg.installAllAsync().then( () => {
+                    if (code) {
+                        //Set the custom code if provided for docs
+                        getEditorPkg(mainPkg).files["main.ts"] = code;                        
+                    }
+                }).catch(e => {
                         showError(lf("Cannot load package: {0}", e.message))
                     })
             });
@@ -453,11 +457,11 @@ ${files["main.ts"]}
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-        return loadPackageAsync(options && options.package ? "docs:" + options.package : null)
+        return loadPackageAsync(options && options.package ? "docs:" + options.package : null, code)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 // compile
-                opts.fileSystem["main.ts"] = code
+                opts.fileSystem["main.ts"] = code;
                 opts.ast = true
                 let resp = pxtc.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0)
