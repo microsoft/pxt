@@ -54,26 +54,23 @@ body {
     left:1.25rem;
 }
 
-#logo {
+.ui.item.logo {
     font-size: 2.8rem;
     margin: 0;
     padding: 0 0.3rem;
 }
-#logo .name {
+.ui.item.logo .name {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
     color: #666666;
     padding: 0 0.3rem;
 }
-#logo svg {
+.ui.item.logo svg {
     width: 1.2rem;
     height: 1.2rem;
 }
 
-#logo img, #rightlogo img {
+.ui.item.logo img {
     height: 2.5rem;
-}
-#rightlogo {
-    line-height: 1;
 }
 #monacoEditor {
     direction:ltr;
