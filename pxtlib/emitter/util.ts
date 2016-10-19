@@ -555,7 +555,7 @@ namespace ts.pxtc.Util {
                     console.error('failed to load localizations')
                 })
         }
-        //                    
+        //
         return Promise.resolve(undefined);
     }
 
@@ -639,6 +639,12 @@ namespace ts.pxtc.Util {
     }
 
     export function lf(format: string, ...args: any[]): string {
+        return lf_va(format, args);
+    }
+    /**
+     * Similar to lf but the string do not get extracted into the loc file.
+     */
+    export function rlf(format: string, ...args: any[]): string {
         return lf_va(format, args);
     }
 
