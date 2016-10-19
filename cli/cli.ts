@@ -3162,15 +3162,15 @@ function buildCoreAsync(mode: BuildOption) {
 export function uploadTargetTranslationsAsync() {
     const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
     if (!prj) {
-        console.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
     const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
     if (!key) {
-        console.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
-
+    const crowdinDir = pxt.appTarget.id;
     const todo: string[] = [];
     pxt.appTarget.bundleddirs.forEach(dir => {
         const locdir = path.join(dir, "_locales");
@@ -3183,8 +3183,56 @@ export function uploadTargetTranslationsAsync() {
         const f = todo.pop();
         if (!f) return Promise.resolve();
         const data = JSON.parse(fs.readFileSync(f, 'utf8'));
-        return pxt.crowdin.uploadTranslationAsync(prj, key, path.basename(f), data)
+        const crowdf = path.join(crowdinDir, path.basename(f));
+        pxt.log(`uploading ${f} to ${crowdf}`);
+        return pxt.crowdin.uploadTranslationAsync(prj, key, crowdf, data)
             .then(nextFileAsync);
+    }
+    return nextFileAsync();
+}
+
+export function downloadTargetTranslationsAsync() {
+    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
+    if (!prj) {
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+    if (!key) {
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+    const crowdinDir = pxt.appTarget.id;
+    const todo: string[] = [];
+    pxt.appTarget.bundleddirs.forEach(dir => {
+        const locdir = path.join(dir, "_locales");
+        if (fs.existsSync(locdir))
+            fs.readdirSync(locdir)
+                .filter(f => /\.json$/i.test(f))
+                .forEach(f => todo.push(path.join(locdir, f)))
+    });
+
+    const nextFileAsync = (): Promise<void> => {
+        const f = todo.pop();
+        if (!f) return Promise.resolve();
+
+        const fn = path.basename(f);
+        const crowdf = path.join(crowdinDir, fn);
+        const locdir = path.dirname(f);
+        pxt.log(`downloading ${crowdf}`);
+        return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf)
+            .then(data => {
+                Object.keys(data)
+                    .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
+                    .forEach(lang => {
+                    const tfdir = path.join(locdir, lang);
+                    const tf = path.join(tfdir, fn);
+                    nodeutil.mkdirP(tfdir)
+                    pxt.log(`writing ${tf}`);
+                    fs.writeFile(tf, JSON.stringify(data[lang], null, 2), "utf8");
+                })
+                return nextFileAsync()
+            });
     }
     return nextFileAsync();
 }
@@ -3380,7 +3428,8 @@ cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
-cmd("uploadtrgtranslations           - upload translations from bundled projects", uploadTargetTranslationsAsync, 1)
+cmd("uploadtrgtranslations        - upload translations from bundled projects", uploadTargetTranslationsAsync, 1)
+cmd("downloadtrgtranslations      - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 

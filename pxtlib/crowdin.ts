@@ -17,67 +17,78 @@ namespace pxt.crowdin {
     export function downloadTranslationsAsync(prj: string, key: string, filename: string): Promise<Map<Map<string>>> {
         const r: Map<Map<string>> = {};
         const infoUri = apiUri(prj, key, "info", { json: "true" });
+        filename = normalizeFileName(filename);
         return Util.httpGetTextAsync(infoUri).then(respText => {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             if (!info) throw new Error("info failed")
 
-            let todo = info.languages;
-            let nextFile = () : Promise<void> => {
+            const todo = info.languages;
+            const nextFile = (): Promise<void> => {
                 const item = todo.pop();
+                if (!item) return Promise.resolve();
                 const exportFileUri = apiUri(prj, key, "export-file", {
                     file: filename,
                     language: item.code
                 });
-                console.log(`downloading ${item.name}`)
+                pxt.log(`downloading ${item.name} (${todo.length} more)`)
                 return Util.httpGetTextAsync(exportFileUri).then((transationsText) => {
                     try {
                         const translations = JSON.parse(transationsText) as Map<string>;
                         if (translations)
                             r[item.code] = translations;
                     } catch (e) {
-                        console.log(exportFileUri + ' ' + e)
+                        pxt.log(exportFileUri + ' ' + e)
                     }
-                    if (todo.length > 0) return nextFile();
-                    else return Promise.resolve();
-                }).delay(1000); // throttling otherwise crowding fails
+                    return nextFile();
+                }).delay(1000); // throttling otherwise crowdin fails
             };
 
             return nextFile();
         }).then(() => r);
     }
 
-    export function uploadTranslationAsync(prj: string, key: string, filename: string, jsondata: pxt.Map<string>) {
-        Util.assert(!!prj);
-        Util.assert(!!key);
+    function mkIncr(filename: string): () => void {
         let cnt = 0
-
-        function incr() {
+        return function incr() {
             if (cnt++ > 10) {
                 throw new Error("Too many API calls for " + filename);
             }
         }
+    }
 
-        function createDirAsync(name: string): Promise<void> {
-            pxt.debug(`create directory ${name}`)
-            incr();
-            return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "", name: name })
-                .then(resp => {
-                    if (resp.statusCode == 200)
-                        return Promise.resolve();
+    export function createDirectoryAsync(prj: string, key: string, name: string, incr?: () => void): Promise<void> {
+        name = normalizeFileName(name);
+        pxt.debug(`create directory ${name}`)
+        if (!incr) incr = mkIncr(name);
+        return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "", name: name })
+            .then(resp => {
+                if (resp.statusCode == 200)
+                    return Promise.resolve();
 
-                    const data: any = resp.json || { error: {} }
-                    if (resp.statusCode == 404 && data.error.code == 17) {
-                        pxt.log(`parent directory missing for ${name}`)
-                        const par = name.replace(/\/[^\/]+$/, "")
-                        if (par != name) {
-                            return createDirAsync(par)
-                                .then(() => createDirAsync(name)); // retry
-                        }
+                const data: any = resp.json || { error: {} }
+                if (resp.statusCode == 404 && data.error.code == 17) {
+                    pxt.log(`parent directory missing for ${name}`)
+                    const par = name.replace(/\/[^\/]+$/, "")
+                    if (par != name) {
+                        return createDirectoryAsync(prj, key, par, incr)
+                            .then(() => createDirectoryAsync(prj, key, name, incr)); // retry
                     }
+                }
 
-                    throw new Error(`cannot create dir ${name}: ${resp.toString()} ${JSON.stringify(data)}`)
-                })
-        }
+                throw new Error(`cannot create dir ${name}: ${resp.toString()} ${JSON.stringify(data)}`)
+            })
+    }
+
+    function normalizeFileName(filename: string): string {
+        return filename.replace(/\\/g, '/');
+    }
+
+    export function uploadTranslationAsync(prj: string, key: string, filename: string, jsondata: pxt.Map<string>) {
+        Util.assert(!!prj);
+        Util.assert(!!key);
+
+        filename = normalizeFileName(filename);
+        const incr = mkIncr(filename);
 
         function startAsync(): Promise<void> {
             return uploadAsync("update-file", { update_option: "update_as_unapproved" })
@@ -95,13 +106,13 @@ namespace pxt.crowdin {
             const code = resp.statusCode;
             const data: any = JSON.parse(resp.text);
 
-            console.log(`upload result: ${code}`);
+            pxt.debug(`upload result: ${code}`);
             if (code == 404 && data.error.code == 8) {
                 pxt.log(`create new translation file: ${filename}`)
                 return uploadAsync("add-file", {})
             }
             else if (code == 404 && data.error.code == 17) {
-                return createDirAsync(filename.replace(/\/[^\/]+$/, ""))
+                return createDirectoryAsync(prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
                     .then(() => startAsync())
             } else if (code == 200) {
                 return Promise.resolve()

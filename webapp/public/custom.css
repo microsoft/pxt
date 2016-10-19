@@ -330,6 +330,16 @@ body.blocklyMinimalBody {
     min-width: initial;
 }
 
+#blocklyTrashIcon {
+    position: absolute;
+    top: 20%;
+    right: 8%;
+    width: 100px;
+    height: 80px;
+    z-index: 8;
+    font-size:5rem;
+}
+
 @supports (-ms-accelerator:true) {
     .rtl .blocklyPreview {
         right:50%;
@@ -738,6 +748,18 @@ html {
 }
 
 /* monaco: Editor */
+
+.monaco-editor .margin-view-overlays.monaco-editor-background {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.monaco-editor .monaco-scrollable-element.editor-scrollable {
+    margin-left: .5rem;
+}
+
+.monaco-editor.vs .line-numbers {
+    color: #2c3e50 !important;
+}
 
 .monaco-editor .current-line {
 	background: rgba(0, 0, 255, 0.1);
