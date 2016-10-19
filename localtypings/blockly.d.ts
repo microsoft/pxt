@@ -256,6 +256,7 @@ declare namespace Blockly {
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
 
+        newBlock(prototypeName: string, opt_id?: string): Block;
         render(): void;
         clear(): void;
         dispose(): void;

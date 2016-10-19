@@ -283,6 +283,7 @@ namespace ts.pxtc {
 
         mutate? : boolean;
         mutateText?: string;
+        mutateDefaults?: string;
 
         _name?: string;
         jsDoc?: string;

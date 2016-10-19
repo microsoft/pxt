@@ -237,7 +237,20 @@ namespace pxt.blocks {
         if (fn.attributes.advanced) {
             category = getOrAddSubcategory(category, Util.lf("More\u2026"), 1, category.getAttribute("colour"))
         }
-        category.appendChild(block);
+
+        if (fn.attributes.mutateDefaults) {
+            const mutationValues = fn.attributes.mutateDefaults.split(";");
+            mutationValues.forEach(mutation => {
+                const mutatedBlock = block.cloneNode(true);
+                const mutationElement = document.createElement("mutation");
+                mutationElement.setAttribute(savedMutationAttribute, mutation);
+                mutatedBlock.appendChild(mutationElement);
+                category.appendChild(mutatedBlock);
+            });
+        }
+        else {
+            category.appendChild(block);
+        }
     }
 
     let iconCanvasCache: Map<HTMLCanvasElement> = {};
@@ -510,7 +523,7 @@ namespace pxt.blocks {
 
         block.decompose = (workspace: Blockly.Workspace) => {
             // Initialize flyout workspace's top block and add sub-blocks based on visible parameters
-            const topBlock = Blockly.Block.obtain(workspace, topBlockName);
+            const topBlock = workspace.newBlock(topBlockName);
             topBlock.initSvg();
 
             if (block.parameters.length) {
@@ -519,7 +532,7 @@ namespace pxt.blocks {
                         let currentConnection = input.connection;
 
                         block.parameters.forEach(parameter => {
-                            const subBlock = Blockly.Block.obtain(workspace, parameterId(parameter));
+                            const subBlock = workspace.newBlock(parameterId(parameter));
                             subBlock.initSvg();
                             currentConnection.connect(subBlock.previousConnection);
                             currentConnection = subBlock.nextConnection;
