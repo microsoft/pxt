@@ -475,7 +475,7 @@ namespace pxt.blocks {
             let cats = tb.querySelectorAll('category');
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
-                    Util.lf_va(`{id:category}${cats[i].getAttribute('name')}`, []));
+                    Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
             }
         }
 
