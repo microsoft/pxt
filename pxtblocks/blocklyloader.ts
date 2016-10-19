@@ -728,6 +728,15 @@ namespace pxt.blocks {
                 workspace.updateToolbox(tb)
             }
         }
+
+        // add trash icon to toolbox
+        let trashDiv = document.createElement('div');
+        trashDiv.id = "blocklyTrashIcon";
+        trashDiv.style.opacity = '0';
+        let trashIcon = document.createElement('i');
+        trashIcon.className = 'trash icon';
+        trashDiv.appendChild(trashIcon);
+        $('.blocklyToolboxDiv').append(trashDiv);
     }
 
     function categoryElement(tb: Element, name: string): Element {
@@ -770,6 +779,7 @@ namespace pxt.blocks {
         initLoops();
         initLogic();
         initText();
+        initDrag();
 
         // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
         // we're taking off hats.
@@ -949,6 +959,48 @@ namespace pxt.blocks {
             }
             e.preventDefault();
         });
+    }
+
+    /**
+     * The following patch to blockly is to add the Trash icon on top of the toolbox, 
+     * the trash icon should only show when a user drags a block that is already in the workspace.
+     */
+    function initDrag() {
+        const calculateDistance = (elem: any, mouseX: any) => {
+            return Math.floor(mouseX - (elem.offset().left + (elem.width() / 2)));
+        }
+        /**
+         * Track a drag of an object on this workspace.
+         * @param {!Event} e Mouse move event.
+         * @return {!goog.math.Coordinate} New location of object.
+         */
+        let moveDrag = (<any>Blockly).WorkspaceSvg.prototype.moveDrag;
+        (<any>Blockly).WorkspaceSvg.prototype.moveDrag = function(e: any) {
+            const blocklyTreeRoot = $('.blocklyTreeRoot');
+            const trashIcon = $("#blocklyTrashIcon");
+            const distance = calculateDistance(blocklyTreeRoot, e.pageX);
+            if (distance < 200) {
+                const opacity = distance / 200;
+                trashIcon.css('opacity', 1 - opacity);
+                trashIcon.show();
+                blocklyTreeRoot.css('opacity', opacity);
+            } else {
+                trashIcon.hide();
+                blocklyTreeRoot.css('opacity', 1);
+            }
+            return moveDrag.call(this, e);
+        };
+
+        /**
+         * Stop binding to the global mouseup and mousemove events.
+         * @private
+         */
+        let terminateDrag_ = (<any>Blockly).terminateDrag_;
+        (<any>Blockly).terminateDrag_ = function() {
+            $("#blocklyTrashIcon").hide();
+            $('.blocklyTreeRoot').css('opacity', 1);
+            terminateDrag_.call(this);
+        }
     }
 
     function initContextMenu() {

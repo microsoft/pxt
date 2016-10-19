@@ -65,7 +65,8 @@ namespace pxt.vs {
             experimentalScreenReader: true,
             mouseWheelZoom: true,
             tabCompletion: true,
-            wordBasedSuggestions: true
+            wordBasedSuggestions: true,
+            lineNumbersMinChars: 3
         });
 
         window.addEventListener('resize', function () {

@@ -288,6 +288,11 @@ declare namespace Blockly {
         }
     }
 
+    class WorkspaceSvg {
+        moveDrag(e: Event): goog.math.Coordinate;
+        showContextMenu_(e: Event): void;
+    }
+
     namespace Xml {
         function domToText(dom: Element): string;
         function domToPrettyText(dom: Element): string;

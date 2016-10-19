@@ -136,7 +136,7 @@ namespace pxt.BrowserUtils {
         else {
             matches = /(Firefox|Seamonkey)\/([0-9\.]+)/i.exec(navigator.userAgent);
         }
-        if (matches.length == 0) {
+        if (!matches || matches.length == 0) {
             return null;
         }
         return matches[matches.length - 1];
@@ -275,7 +275,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
-        const isMobileBrowser = /mobile/.test(navigator.userAgent);
+        const isMobileBrowser = /mobile/i.test(navigator.userAgent);
         const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
 
         const dataurl = "data:" + contentType + ";base64," + btoa(Util.uint8ArrayToString(buf))

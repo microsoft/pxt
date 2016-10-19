@@ -18,7 +18,7 @@ body {
 #maineditor,
 #sidedocs {
   position: absolute;
-  top:4.5rem;
+  top:3.7rem;
   bottom: 0rem;
 }
 #sidedocs {
@@ -58,10 +58,6 @@ body {
     font-size: 2.8rem;
     margin: 0;
     padding: 0 0.3rem;
-    /*font-weight: bold;
-    padding: 0 0.5em 0 0.5em;
-    color: #2185D0;
-    */
 }
 #logo .name {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
@@ -332,6 +328,16 @@ div.simframe > iframe {
 
 body.blocklyMinimalBody {
     min-width: initial;
+}
+
+#blocklyTrashIcon {
+    position: absolute;
+    top: 20%;
+    right: 8%;
+    width: 100px;
+    height: 80px;
+    z-index: 8;
+    font-size:5rem;
 }
 
 @supports (-ms-accelerator:true) {
@@ -742,6 +748,18 @@ html {
 }
 
 /* monaco: Editor */
+
+.monaco-editor .margin-view-overlays.monaco-editor-background {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.monaco-editor .monaco-scrollable-element.editor-scrollable {
+    margin-left: .5rem;
+}
+
+.monaco-editor.vs .line-numbers {
+    color: #2c3e50 !important;
+}
 
 .monaco-editor .current-line {
 	background: rgba(0, 0, 255, 0.1);

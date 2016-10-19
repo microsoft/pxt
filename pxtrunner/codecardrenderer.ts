@@ -67,7 +67,7 @@ namespace pxt.docs.codeCard {
             let hr = div(h, "right floated meta")
             if (card.any) div(hr, "ui grey circular label tiny", "i", card.any > 0 ? card.any : "");
             repeat(card.blocks, (k) => div(hr, "puzzle orange icon", "i"));
-            repeat(card.javascript, (k) => div(hr, "keyboard blue icon", "i"));
+            repeat(card.javascript, (k) => div(hr, "align left blue icon", "i"));
             repeat(card.hardware, (k) => div(hr, "certificate black icon", "i"));
             repeat(card.software, (k) => div(hr, "square teal icon", "i"));
 
