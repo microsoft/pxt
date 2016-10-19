@@ -555,7 +555,7 @@ namespace pxt.cpp {
 
         res.yotta.config = U.jsonUnFlatten(currSettings)
         let configJson = res.yotta.config
-   
+
         if (isPlatformio) {
             let iniLines = pxt.appTarget.compileService.platformioIni.slice()
             iniLines.push("lib_deps =")
