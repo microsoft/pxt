@@ -474,8 +474,8 @@ namespace pxt.blocks {
         if (tb) {
             let cats = tb.querySelectorAll('category');
             for (let i = 0; i < cats.length; i++) {
-                cats[i].setAttribute('name',
-                    Util._localize(cats[i].getAttribute('name')));
+                cats[i].setAttribute('name', Util.lf/**/('{id:category}' + cats[i].getAttribute('name')));
+                // Above '/**/' is to prevent the lf markup extraction.
             }
         }
 
@@ -816,7 +816,7 @@ namespace pxt.blocks {
         msg.DISABLE_BLOCK = lf("Disable Block");
         msg.DELETE_BLOCK = lf("Delete Block");
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
-        msg.HELP = "Help";
+        msg.HELP = lf("Help");
 
         /**
          * Show the context menu for the workspace.
