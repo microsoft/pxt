@@ -169,7 +169,7 @@ namespace pxt.blocks {
         let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         let nsn = info.apis.byQName[ns];
         if (nsn) ns = nsn.attributes.block || ns;
-        let catName = Util.capitalize(ns)
+        let catName = ts.pxtc.blocksCategory(fn);
         let category = categoryElement(tb, catName);
 
         if (!category) {
