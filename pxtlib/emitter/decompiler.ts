@@ -521,8 +521,8 @@ ${output}</xml>`;
                 popScope()
 
                 function incrementorIsValid(varName: string): boolean {
-                    if (n.incrementor.kind === SK.PostfixUnaryExpression) {
-                        const incrementor = n.incrementor as ts.PostfixUnaryExpression;
+                    if (n.incrementor.kind === SK.PostfixUnaryExpression || n.incrementor.kind === SK.PrefixUnaryExpression) {
+                        const incrementor = n.incrementor as ts.PostfixUnaryExpression | ts.PrefixUnaryExpression;
                         if (incrementor.operator === SK.PlusPlusToken && incrementor.operand.kind === SK.Identifier) {
                             return (incrementor.operand as ts.Identifier).text === varName;
                         }

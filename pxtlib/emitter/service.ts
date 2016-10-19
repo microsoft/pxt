@@ -61,6 +61,14 @@ namespace ts.pxtc {
 . . . . .
 `
 
+    /**
+     * Unlocalized category name for a symbol
+     */
+    export function blocksCategory(si: SymbolInfo): string {
+        const n = !si ? undefined : (si.attributes.blockNamespace || si.namespace);
+        return n ? Util.capitalize(n.split('.')[0]) : undefined;
+    }
+
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
         if (p.defaults) return p.defaults[0]
@@ -234,6 +242,10 @@ namespace ts.pxtc {
         const writeRef = (s: string) => reference += s + "\n"
         const writeLoc = (si: SymbolInfo) => {
             if (!si.qName) return;
+            // must match blockly loader
+            const ns = ts.pxtc.blocksCategory(si);
+            if (ns)
+                locStrings[`{id:category}${ns}`] = ns;
             if (si.attributes.jsDoc)
                 jsdocStrings[si.qName] = si.attributes.jsDoc;
             if (si.attributes.block)

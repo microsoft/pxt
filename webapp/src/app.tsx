@@ -539,10 +539,10 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         const sideDocs = !pxt.options.light;
-        return <sui.DropdownMenuItem icon="help" title={lf("Help")}>
-                {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs ? "widedesktop hide" : ""}`}>{m.name}</a>) }
-                {sideDocs ? targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
-            </sui.DropdownMenuItem>
+        return <sui.DropdownMenuItem icon="help" title={lf("Help") }>
+            {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs ? "widedesktop hide" : ""}`}>{m.name}</a>) }
+            {sideDocs ? targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
+        </sui.DropdownMenuItem>
     }
 }
 
@@ -1485,7 +1485,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    private debouncedSaveProjectName = Util.debounce(() => this.saveProjectName(), 2000, false);
+    private debouncedSaveProjectName = Util.debounce(() => {
+        pxt.tickEvent("nav.projectrename")
+        this.saveProjectName();
+    }, 2000, false);
 
     updateHeaderName(name: string) {
         this.setState({
@@ -1579,7 +1582,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </div>
                         </div>
                         {sandbox ? undefined : <div className="ui item wide only projectname">
-                            <div className={`ui large input`} data-tooltip={lf("Pick a name for your project")} data-position="bottom left">
+                            <div className={`ui large input`} data-tooltip={lf("Pick a name for your project") } data-position="bottom left">
                                 <input id="fileNameInput"
                                     type="text"
                                     placeholder={lf("Pick a name...") }
@@ -1592,23 +1595,23 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar'>
                             <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
-                                    {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
-                                    {this.state.header ? <div className="ui divider"></div> : undefined }
-                                    {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
-                                    {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
-                                    <div className="ui divider"></div>
-                                    <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
-                                        <i className="help icon"></i>
-                                        {lf("Help") }
-                                    </a>
-                                    {
-                                        // we always need a way to clear local storage, regardless if signed in or not
-                                    }
-                                    <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
-                                    <div className="ui divider"></div>
-                                    { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
-                                    { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
-                                    <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
+                            {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
+                            {this.state.header ? <div className="ui divider"></div> : undefined }
+                            {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
+                            {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
+                            <div className="ui divider"></div>
+                            <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
+                                <i className="help icon"></i>
+                                {lf("Help") }
+                            </a>
+                            {
+                                // we always need a way to clear local storage, regardless if signed in or not
+                            }
+                            <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
+                            <div className="ui divider"></div>
+                            { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
+                            { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
+                            <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                         </sui.DropdownMenuItem>}
                         {sandbox ? undefined : <DocsMenuItem parent={this} />}
                         {rightLogo ?
@@ -1786,6 +1789,7 @@ function enableFeedback() {
 function enableAnalytics() {
     enableAppInsights();
     enableMixPanel();
+    pxt.tickEvent("editor.loaded");
 }
 
 function enableAppInsights() {
@@ -1970,6 +1974,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "sandbox":
         case "pub":
         case "edit":
+            pxt.tickEvent("hash." + hash.cmd);
             let existing = workspace.getHeaders()
                 .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
             core.showLoading(lf("loading project..."))
@@ -1980,6 +1985,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
                 .done(() => core.hideLoading())
         case "sandboxproject":
         case "project":
+            pxt.tickEvent("hash." + hash.cmd);
             let fileContents = Util.stringToUint8Array(atob(hash.arg));
             core.showLoading(lf("loading project..."))
             return theEditor.importProjectFromFileAsync(fileContents)
@@ -2034,6 +2040,7 @@ $(document).ready(() => {
         .then(() => {
             const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             const lang = mlang ? mlang[1] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            if (lang) pxt.tickEvent("locale." + lang);
             return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang);
         })
         .then(() => initTheme())
