@@ -531,7 +531,7 @@ namespace pxt.cpp {
                     if (isHeader || U.endsWith(fn, ".cpp")) {
                         let fullName = pkg.config.name + "/" + fn
                         if (isHeader)
-                            includesInc += `#include "${sourcePath.slice(1)}${fullName}"\n`
+                            includesInc += `#include "${isPlatformio ? "" : sourcePath.slice(1)}${fullName}"\n`
                         let src = pkg.readFile(fn)
                         fileName = fullName
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
