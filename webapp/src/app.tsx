@@ -1581,7 +1581,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 <sui.Button role="menuitem" key='runmenubtn' icon={this.state.running ? "stop" : "play"} tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.startStopSimulator() } />
                             </div>
                         </div>
-                        {sandbox ? undefined : <div className="ui item wide only projectname">
+                        {sandbox ? undefined : <div className="ui item landscape only"></div>}
+                        {sandbox ? undefined : <div className="ui item landscape only"></div>}
+                        {sandbox ? undefined : <div className="ui item landscape only"></div>}
+                        <div className="ui item wide only projectname">
                             <div className={`ui large input`} data-tooltip={lf("Pick a name for your project") } data-position="bottom left">
                                 <input id="fileNameInput"
                                     type="text"
@@ -1590,7 +1593,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                     onChange={(e) => this.updateHeaderName((e.target as any).value) }>
                                 </input>
                             </div>
-                        </div>}
+                        </div>
                         {this.editor.menu() }
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar'>
