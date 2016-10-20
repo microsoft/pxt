@@ -17,7 +17,7 @@
 
 namespace ts.pxtc.thumb {
 
-    export class ThumbProcessor extends pxtc.assembler.EncodersInstructions {
+    export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
 
         constructor() {
             super();
@@ -317,6 +317,97 @@ namespace ts.pxtc.thumb {
             }
             return null;
         }
+
+        public testAssembler() {
+            assembler.expectError(this, "lsl r0, r0, #8");
+            assembler.expectError(this, "push {pc,lr}");
+            assembler.expectError(this, "push {r17}");
+            assembler.expectError(this, "mov r0, r1 foo");
+            assembler.expectError(this, "movs r14, #100");
+            assembler.expectError(this, "push {r0");
+            assembler.expectError(this, "push lr,r0}");
+            assembler.expectError(this, "pop {lr,r0}");
+            assembler.expectError(this, "b #+11");
+            assembler.expectError(this, "b #+102400");
+            assembler.expectError(this, "bne undefined_label");
+            assembler.expectError(this, ".foobar");
+
+            assembler.expect(this,
+                "0200      lsls    r0, r0, #8\n" +
+                "b500      push    {lr}\n" +
+                "2064      movs    r0, #100        ; 0x64\n" +
+                "b401      push    {r0}\n" +
+                "bc08      pop     {r3}\n" +
+                "b501      push    {r0, lr}\n" +
+                "bd20      pop {r5, pc}\n" +
+                "bc01      pop {r0}\n" +
+                "4770      bx      lr\n" +
+                "0000      .balign 4\n" +
+                "e6c0      .word   -72000\n" +
+                "fffe\n")
+
+            assembler.expect(this,
+                "4291      cmp     r1, r2\n" +
+                "d100      bne     l6\n" +
+                "e000      b       l8\n" +
+                "1840  l6: adds    r0, r0, r1\n" +
+                "4718  l8: bx      r3\n")
+
+            assembler.expect(this,
+                "          @stackmark base\n" +
+                "b403      push    {r0, r1}\n" +
+                "          @stackmark locals\n" +
+                "9801      ldr     r0, [sp, locals@1]\n" +
+                "b401      push    {r0}\n" +
+                "9802      ldr     r0, [sp, locals@1]\n" +
+                "bc01      pop     {r0}\n" +
+                "          @stackempty locals\n" +
+                "9901      ldr     r1, [sp, locals@1]\n" +
+                "9102      str     r1, [sp, base@0]\n" +
+                "          @stackempty locals\n" +
+                "b002      add     sp, #8\n" +
+                "          @stackempty base\n")
+
+            assembler.expect(this,
+                "b090      sub sp, #4*16\n" +
+                "b010      add sp, #4*16\n"
+            )
+
+            assembler.expect(this,
+                "6261      .string \"abc\"\n" +
+                "0063      \n"
+            )
+
+            assembler.expect(this,
+                "6261      .string \"abcde\"\n" +
+                "6463      \n" +
+                "0065      \n"
+            )
+
+            assembler.expect(this,
+                "3042      adds r0, 0x42\n" +
+                "1c0d      adds r5, r1, #0\n" +
+                "d100      bne #0\n" +
+                "2800      cmp r0, #0\n" +
+                "6b28      ldr r0, [r5, #48]\n" +
+                "0200      lsls r0, r0, #8\n" +
+                "2063      movs r0, 0x63\n" +
+                "4240      negs r0, r0\n" +
+                "46c0      nop\n" +
+                "b500      push {lr}\n" +
+                "b401      push {r0}\n" +
+                "b402      push {r1}\n" +
+                "b404      push {r2}\n" +
+                "b408      push {r3}\n" +
+                "b520      push {r5, lr}\n" +
+                "bd00      pop {pc}\n" +
+                "bc01      pop {r0}\n" +
+                "bc02      pop {r1}\n" +
+                "bc04      pop {r2}\n" +
+                "bc08      pop {r3}\n" +
+                "bd20      pop {r5, pc}\n" +
+                "9003      str r0, [sp, #4*3]\n")
+            }
     }
 
 
@@ -349,101 +440,5 @@ namespace ts.pxtc.thumb {
         }
         if (ret >= 0) return ret;
         else return -1;
-    }
-
-    export function test() {
-        let t = new ThumbProcessor();
-        testThumb(t);
-    }
-
-    export function testThumb(t: ThumbProcessor) {
-        assembler.expectError(t, "lsl r0, r0, #8");
-        assembler.expectError(t, "push {pc,lr}");
-        assembler.expectError(t, "push {r17}");
-        assembler.expectError(t, "mov r0, r1 foo");
-        assembler.expectError(t, "movs r14, #100");
-        assembler.expectError(t, "push {r0");
-        assembler.expectError(t, "push lr,r0}");
-        assembler.expectError(t, "pop {lr,r0}");
-        assembler.expectError(t, "b #+11");
-        assembler.expectError(t, "b #+102400");
-        assembler.expectError(t, "bne undefined_label");
-        assembler.expectError(t, ".foobar");
-
-        assembler.expect(t,
-            "0200      lsls    r0, r0, #8\n" +
-            "b500      push    {lr}\n" +
-            "2064      movs    r0, #100        ; 0x64\n" +
-            "b401      push    {r0}\n" +
-            "bc08      pop     {r3}\n" +
-            "b501      push    {r0, lr}\n" +
-            "bd20      pop {r5, pc}\n" +
-            "bc01      pop {r0}\n" +
-            "4770      bx      lr\n" +
-            "0000      .balign 4\n" +
-            "e6c0      .word   -72000\n" +
-            "fffe\n")
-
-        assembler.expect(t,
-            "4291      cmp     r1, r2\n" +
-            "d100      bne     l6\n" +
-            "e000      b       l8\n" +
-            "1840  l6: adds    r0, r0, r1\n" +
-            "4718  l8: bx      r3\n")
-
-        assembler.expect(t,
-            "          @stackmark base\n" +
-            "b403      push    {r0, r1}\n" +
-            "          @stackmark locals\n" +
-            "9801      ldr     r0, [sp, locals@1]\n" +
-            "b401      push    {r0}\n" +
-            "9802      ldr     r0, [sp, locals@1]\n" +
-            "bc01      pop     {r0}\n" +
-            "          @stackempty locals\n" +
-            "9901      ldr     r1, [sp, locals@1]\n" +
-            "9102      str     r1, [sp, base@0]\n" +
-            "          @stackempty locals\n" +
-            "b002      add     sp, #8\n" +
-            "          @stackempty base\n")
-
-        assembler.expect(t,
-            "b090      sub sp, #4*16\n" +
-            "b010      add sp, #4*16\n"
-        )
-
-        assembler.expect(t,
-            "6261      .string \"abc\"\n" +
-            "0063      \n"
-        )
-
-        assembler.expect(t,
-            "6261      .string \"abcde\"\n" +
-            "6463      \n" +
-            "0065      \n"
-        )
-
-        assembler.expect(t,
-            "3042      adds r0, 0x42\n" +
-            "1c0d      adds r5, r1, #0\n" +
-            "d100      bne #0\n" +
-            "2800      cmp r0, #0\n" +
-            "6b28      ldr r0, [r5, #48]\n" +
-            "0200      lsls r0, r0, #8\n" +
-            "2063      movs r0, 0x63\n" +
-            "4240      negs r0, r0\n" +
-            "46c0      nop\n" +
-            "b500      push {lr}\n" +
-            "b401      push {r0}\n" +
-            "b402      push {r1}\n" +
-            "b404      push {r2}\n" +
-            "b408      push {r3}\n" +
-            "b520      push {r5, lr}\n" +
-            "bd00      pop {pc}\n" +
-            "bc01      pop {r0}\n" +
-            "bc02      pop {r1}\n" +
-            "bc04      pop {r2}\n" +
-            "bc08      pop {r3}\n" +
-            "bd20      pop {r5, pc}\n" +
-            "9003      str r0, [sp, #4*3]\n")
     }
 }

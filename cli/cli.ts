@@ -2467,10 +2467,12 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
 function testAssemblers(): Promise<void> {
     console.log("- testing Thumb")
-    pxtc.thumb.test();
+    let thumb = new pxtc.thumb.ThumbProcessor();
+    thumb.testAssembler();
     console.log("- done testing Thumb");
     console.log("- testing AVR")
-    pxtc.avr.testAVR();
+    let avr = new pxtc.avr.AVRProcessor();
+    avr.testAssembler();
     console.log("- done testing AVR");
     return Promise.resolve();
 }

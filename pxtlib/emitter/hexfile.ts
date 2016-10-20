@@ -407,7 +407,7 @@ ${hex.hexPrelude()}
             snippets = new ThumbSnippets()
         else if (opts.target.nativeType.toLowerCase() == "avr")
             snippets = new AVRSnippets()
-        else 
+        else
             oops()
         bin.procs.forEach(p => {
             let p2a = new ProctoAssembler(snippets, bin, p)
@@ -437,8 +437,8 @@ ${hex.hexPrelude()}
         return src.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + sha.slice(0, 16).toUpperCase() + " ; program hash\n")
     }
 
-    export function thumbInlineAssemble(src: string) {
-        let b = mkThumbFile()
+    export function processorInlineAssemble(nativeType: string, src: string) {
+        let b = mkProcessorFile(nativeType)
         b.disablePeepHole = true
         b.emit(src)
         throwThumbErrors(b)
@@ -450,11 +450,18 @@ ${hex.hexPrelude()}
         return res
     }
 
-    function mkThumbFile() {
-        let tp = new thumb.ThumbProcessor()
-        thumb.testThumb(tp); // just in case
+    function mkProcessorFile(nativeType: string) {
+        let processor: assembler.AbstractProcessor = null
+        if (nativeType.toLowerCase() == "thumb")
+            processor = new thumb.ThumbProcessor()
+        else if (nativeType.toLowerCase() == "avr")
+            processor = new avr.AVRProcessor()
+        else
+            oops()
 
-        let b = new assembler.File(tp);
+        processor.testAssembler(); // just in case
+
+        let b = new assembler.File(processor);
         b.lookupExternalLabel = hex.lookupFunctionAddr;
         b.normalizeExternalLabel = s => {
             let inf = hex.lookupFunc(s)
@@ -492,8 +499,8 @@ ${hex.hexPrelude()}
     }
 
     let peepDbg = false
-    function assemble(bin: Binary, src: string) {
-        let b = mkThumbFile()
+    function assemble(nativeType: string, bin: Binary, src: string) {
+        let b = mkProcessorFile(nativeType)
         b.emit(src);
 
         src = b.getSource(!peepDbg);
@@ -548,7 +555,7 @@ _stored_program: .string "`
         if (opts.embedBlob)
             src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
         bin.writeFile(pxtc.BINARY_ASM, src)
-        let res = assemble(bin, src)
+        let res = assemble(opts.target.nativeType, bin, src)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
         if (res.buf) {

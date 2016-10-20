@@ -12,7 +12,7 @@
 
 namespace ts.pxtc.avr {
 
-    export class AVRProcessor extends assembler.EncodersInstructions {
+    export class AVRProcessor extends assembler.AbstractProcessor {
 
         public wordSize() {
             return 2
@@ -279,305 +279,178 @@ namespace ts.pxtc.avr {
             this.addInst("xch   Z, $r0", 0x9204, 0xfe0F);
         }
 
-    }
+        public testAssembler() {
+            assembler.expect(this,
+                "2411       eor	r1, r1 \n" +
+                "be1f       out	0x3f, r1 \n" +
+                "efcf       ldi	r28, 0xFF \n" +
+                "e0da       ldi	r29, 0x0A \n" +
+                "bfde       out	0x3e, r29 \n" +
+                "bfcd      	out	0x3d, r28 \n")
 
-    export function testAVR() {
-        let avr = new AVRProcessor();
+            assembler.expect(this,
+                "0c00      lsl     r0\n" +
+                "920f      push    r0\n" +
+                "e604      ldi     r16, #100        ; 0x64\n" +
+                "903f      pop     r3\n")
 
-        assembler.expect(avr,
-            "2411       eor	r1, r1 \n" +
-            "be1f       out	0x3f, r1 \n" +
-            "efcf       ldi	r28, 0xFF \n" +
-            "e0da       ldi	r29, 0x0A \n" +
-            "bfde       out	0x3e, r29 \n" +
-            "bfcd      	out	0x3d, r28 \n")
+            // had problems with .word
+            // "          .balign 4\n" +
+            //           "e6c0      .word   -72000\n")
 
-        assembler.expect(avr,
-            "0c00      lsl     r0\n" +
-            "920f      push    r0\n" +
-            "e604      ldi     r16, #100        ; 0x64\n" +
-            "903f      pop     r3\n")
-
-        // had problems with .word
-        // "          .balign 4\n" +
-        //           "e6c0      .word   -72000\n")
-
-        assembler.expect(avr,
-            "1412      cp      r1, r2\n" +
-            "f409      brne    l6\n" +
-            "c001      rjmp    l8\n" +
-            "0e01  l6: add     r0, r17\n" +
-            "0000  l8: nop     \n")
+            assembler.expect(this,
+                "1412      cp      r1, r2\n" +
+                "f409      brne    l6\n" +
+                "c001      rjmp    l8\n" +
+                "0e01  l6: add     r0, r17\n" +
+                "0000  l8: nop     \n")
 
 
-        assembler.expect(avr,
-            "92cf push r12\n" +
-            "92df push r13\n" +
-            "92ef push r14\n" +
-            "92ff push r15\n" +
-            "930f push r16\n" +
-            "931f push r17\n" +
-            "93cf push r28\n" +
-            "93df push r29\n" +
-            "017c movw r14, r24\n" +
-            "018a movw r16, r20\n" +
-            "91800363 lds r24, 0x0363\n" +
-            "2388 and r24, r24\n" +
-            "f089 breq L16\n" +
-            "01eb movw r28, r22\n" +
-            "016b movw r12, r22\n" +
-            "0ec4 add r12, r20\n" +
-            "1ed5 adc r13, r21\n" +
-            "15cc L18: cp r28, r12\n" +
-            "05dd cpc r29, r13\n" +
-            "f0f1 breq L17\n" +
-            "9169 ld r22, Y+\n" +
-            "01d7 movw r26, r14\n" +
-            "91ed ld r30, X+\n" +
-            "91fc ld r31, X\n" +
-            "9001 ld r0, Z+\n" +
-            "81f0 ld r31, Z\n" +
-            "2de0 mov r30, r0\n" +
-            "01c7 movw r24, r14\n" +
-            "9509 icall \n" +
-            "cff3 rjmp L18\n" +
-            "2f84 L16: mov r24, r20\n" +
-            "3241 cpi r20, 0x21\n" +
-            "f488 brcc L17\n" +
-            "91900362 lds r25, 0x0362\n" +
-            "3094 cpi r25, 0x04\n" +
-            "f469 brne L17\n" +
-            "934002d7 sts 0x02D7, r20\n" +
-            "01fb movw r30, r22\n" +
-            "eb25 ldi r18, 0xB5\n" +
-            "e032 ldi r19, 0x02\n" +
-            "01d9 movw r26, r18\n" +
-            "2f9a L19: mov r25, r26\n" +
-            "1b92 sub r25, r18\n" +
-            "1798 cp r25, r24\n" +
-            "f418 brcc L17\n" +
-            "9191 ld r25, Z+\n" +
-            "939d st X+, r25\n" +
-            "cff9 rjmp L19\n" +
-            "01c8 L17: movw r24, r16\n" +
-            "91df pop r29\n" +
-            "91cf pop r28\n" +
-            "911f pop r17\n" +
-            "910f pop r16\n" +
-            "90ff pop r15\n" +
-            "90ef pop r14\n" +
-            "90df pop r13\n" +
-            "90cf pop r12\n" +
-            "9508 ret \n")
+            assembler.expect(this,
+                "92cf push r12\n" +
+                "92df push r13\n" +
+                "92ef push r14\n" +
+                "92ff push r15\n" +
+                "930f push r16\n" +
+                "931f push r17\n" +
+                "93cf push r28\n" +
+                "93df push r29\n" +
+                "017c movw r14, r24\n" +
+                "018a movw r16, r20\n" +
+                "91800363 lds r24, 0x0363\n" +
+                "2388 and r24, r24\n" +
+                "f089 breq L16\n" +
+                "01eb movw r28, r22\n" +
+                "016b movw r12, r22\n" +
+                "0ec4 add r12, r20\n" +
+                "1ed5 adc r13, r21\n" +
+                "15cc L18: cp r28, r12\n" +
+                "05dd cpc r29, r13\n" +
+                "f0f1 breq L17\n" +
+                "9169 ld r22, Y+\n" +
+                "01d7 movw r26, r14\n" +
+                "91ed ld r30, X+\n" +
+                "91fc ld r31, X\n" +
+                "9001 ld r0, Z+\n" +
+                "81f0 ld r31, Z\n" +
+                "2de0 mov r30, r0\n" +
+                "01c7 movw r24, r14\n" +
+                "9509 icall \n" +
+                "cff3 rjmp L18\n" +
+                "2f84 L16: mov r24, r20\n" +
+                "3241 cpi r20, 0x21\n" +
+                "f488 brcc L17\n" +
+                "91900362 lds r25, 0x0362\n" +
+                "3094 cpi r25, 0x04\n" +
+                "f469 brne L17\n" +
+                "934002d7 sts 0x02D7, r20\n" +
+                "01fb movw r30, r22\n" +
+                "eb25 ldi r18, 0xB5\n" +
+                "e032 ldi r19, 0x02\n" +
+                "01d9 movw r26, r18\n" +
+                "2f9a L19: mov r25, r26\n" +
+                "1b92 sub r25, r18\n" +
+                "1798 cp r25, r24\n" +
+                "f418 brcc L17\n" +
+                "9191 ld r25, Z+\n" +
+                "939d st X+, r25\n" +
+                "cff9 rjmp L19\n" +
+                "01c8 L17: movw r24, r16\n" +
+                "91df pop r29\n" +
+                "91cf pop r28\n" +
+                "911f pop r17\n" +
+                "910f pop r16\n" +
+                "90ff pop r15\n" +
+                "90ef pop r14\n" +
+                "90df pop r13\n" +
+                "90cf pop r12\n" +
+                "9508 ret \n")
 
 
-        assembler.expect(avr,
-            "91200363 L123: lds r18, 0x0363\n" +
-            "2322 and r18, r18\n" +
-            "f0c9 breq L20\n" +
-            "91200386 lds r18, 0x0386\n" +
-            "3220 cpi r18, 0x20\n" +
-            "f040 brcs L21\n" +
-            "e021 ldi r18, 0x01\n" +
-            "e030 ldi r19, 0x00\n" +
-            "01fc movw r30, r24\n" +
-            "8333 std Z, #3, r19\n" +
-            "8322 std Z, #2, r18\n" +
-            "e080 ldi r24, 0x00\n" +
-            "e090 ldi r25, 0x00\n" +
-            "9508 ret \n" +
-            "91800364 L21: lds r24, 0x0364\n" +
-            "2fe8 mov r30, r24\n" +
-            "e0f0 ldi r31, 0x00\n" +
-            "59eb subi r30, 0x9B\n" +
-            "4ffc sbci r31, 0xFC\n" +
-            "8360 st Z, r22\n" +
-            "5f8f subi r24, 0xFF\n" +
-            "93800364 sts 0x0364, r24\n" +
-            "93800386 sts 0x0386, r24\n" +
-            "c009 rjmp L22\n" +
-            "91800362 L20: lds r24, 0x0362\n" +
-            "3084 cpi r24, 0x04\n" +
-            "f429 brne L22\n" +
-            "e081 ldi r24, 0x01\n" +
-            "938002d7 sts 0x02D7, r24\n" +
-            "936002b5 sts 0x02B5, r22\n" +
-            "e081 L22: ldi r24, 0x01\n" +
-            "e090 ldi r25, 0x00\n" +
-            "9508 ret \n")
+            assembler.expect(this,
+                "91200363 L123: lds r18, 0x0363\n" +
+                "2322 and r18, r18\n" +
+                "f0c9 breq L20\n" +
+                "91200386 lds r18, 0x0386\n" +
+                "3220 cpi r18, 0x20\n" +
+                "f040 brcs L21\n" +
+                "e021 ldi r18, 0x01\n" +
+                "e030 ldi r19, 0x00\n" +
+                "01fc movw r30, r24\n" +
+                "8333 std Z, #3, r19\n" +
+                "8322 std Z, #2, r18\n" +
+                "e080 ldi r24, 0x00\n" +
+                "e090 ldi r25, 0x00\n" +
+                "9508 ret \n" +
+                "91800364 L21: lds r24, 0x0364\n" +
+                "2fe8 mov r30, r24\n" +
+                "e0f0 ldi r31, 0x00\n" +
+                "59eb subi r30, 0x9B\n" +
+                "4ffc sbci r31, 0xFC\n" +
+                "8360 st Z, r22\n" +
+                "5f8f subi r24, 0xFF\n" +
+                "93800364 sts 0x0364, r24\n" +
+                "93800386 sts 0x0386, r24\n" +
+                "c009 rjmp L22\n" +
+                "91800362 L20: lds r24, 0x0362\n" +
+                "3084 cpi r24, 0x04\n" +
+                "f429 brne L22\n" +
+                "e081 ldi r24, 0x01\n" +
+                "938002d7 sts 0x02D7, r24\n" +
+                "936002b5 sts 0x02B5, r22\n" +
+                "e081 L22: ldi r24, 0x01\n" +
+                "e090 ldi r25, 0x00\n" +
+                "9508 ret \n")
 
-        assembler.expect(avr,
-            ".global\n" +
-            "931f L111: push r17\n" +
-            "93cf push r28\n" +
-            "93df push r29\n" +
-            "2f28 mov r18, r24\n" +
-            "e030 ldi r19, 0x00\n" +
-            "01f9 movw r30, r18\n" +
-            "56e7 subi r30, 0x67\n" +
-            "4ffe sbci r31, 0xFE\n" +
-            "9184 lpm r24, Z\n" +
-            "01f9 movw r30, r18\n" +
-            "5ce1 subi r30, 0xC1\n" +
-            "4ffe sbci r31, 0xFE\n" +
-            "91d4 lpm r29, Z\n" +
-            "01f9 movw r30, r18\n" +
-            "59e4 subi r30, 0x94\n" +
-            "4ffe sbci r31, 0xFE\n" +
-            "91c4 lpm r28, Z\n" +
-            "23cc and r28, r28\n" +
-            "f0c9 breq L31\n" +
-            "2f16 mov r17, r22\n" +
-            "1181 cpse r24, r1\n" +
-            "940e0229 call 0x0229\n" +
-            "2fec mov r30, r28\n" +
-            "e0f0 ldi r31, 0x00\n" +
-            "0fee add r30, r30\n" +
-            "1fff adc r31, r31\n" +
-            "5ae2 subi r30, 0xA2\n" +
-            "4ffe sbci r31, 0xFE\n" +
-            "91a5 lpm r26, Z+\n" +
-            "91b4 lpm r27, Z\n" +
-            "b78f in r24, 0x3f\n" +
-            "94f8 cli \n" +
-            "1111 cpse r17, r1\n" +
-            "c005 rjmp L33\n" +
-            "919c ld r25, X\n" +
-            "2fed mov r30, r29\n" +
-            "95e0 com r30\n" +
-            "23e9 and r30, r25\n" +
-            "c002 rjmp L34\n" +
-            "91ec L33: ld r30, X\n" +
-            "2bed or r30, r29\n" +
-            "93ec L34: st X, r30\n" +
-            "bf8f out 0x3f, r24\n" +
-            "91df L31: pop r29\n" +
-            "91cf pop r28\n" +
-            "911f pop r17\n" +
-            "9508 ret \n")
-
-    assembler.expect(avr,
-        "93cf L110: push r28\n" +
-        "93df push r29\n" +
-        "e090 ldi r25, 0x00\n" +
-        "01fc movw r30, r24\n" +
-        "5ce1 subi r30, 0xC1\n" +
-        "4ffe sbci r31, 0xFE\n" +
-        "9124 lpm r18, Z\n" +
-        "01fc movw r30, r24\n" +
-        "59e4 subi r30, 0x94\n" +
-        "4ffe sbci r31, 0xFE\n" +
-        "9184 lpm r24, Z\n" +
-        "2388 and r24, r24\n" +
-        "f161 breq L35\n" +      // 01 0110 0 = 12+32 = 44
-        "e090 ldi r25, 0x00\n" +
-        "0f88 add r24, r24\n" +
-        "1f99 adc r25, r25\n" +
-        "01fc movw r30, r24\n" +
-        "5cef subi r30, 0xCF\n" +
-        "4ffe sbci r31, 0xFE\n" +
-        "91c5 lpm r28, Z+\n" +
-        "91d4 lpm r29, Z\n" +
-        "01fc movw r30, r24\n" +
-        "5ae2 subi r30, 0xA2\n" +
-        "4ffe sbci r31, 0xFE\n" +
-        "91a5 lpm r26, Z+\n" +
-        "91b4 lpm r27, Z\n" +
-        "1161 cpse r22, r1\n" +
-        "c009 rjmp L36\n" +
-        "b79f in r25, 0x3f\n" +
-        "94f8 cli \n" +
-        "8188 ld r24, Y\n" +
-        "9520 com r18\n" +
-        "2382 and r24, r18\n" +
-        "8388 st Y, r24\n" +
-        "91ec ld r30, X\n" +
-        "232e and r18, r30\n" +
-        "c00b rjmp L37\n" +
-        "3062 L36: cpi r22, 0x02\n" +
-        "f461 brne L38\n" +
-        "b79f in r25, 0x3f\n" +
-        "94f8 cli \n" +
-        "8138 ld r19, Y\n" +
-        "2f82 mov r24, r18\n" +
-        "9580 com r24\n" +
-        "2383 and r24, r19\n" +
-        "8388 st Y, r24\n" +
-        "91ec ld r30, X\n" +
-        "2b2e or r18, r30\n" +
-        "932c L37: st X, r18\n" +
-        "bf9f out 0x3f, r25\n" +
-        "c006 rjmp L35\n" +
-        "b78f L38: in r24, 0x3f\n" +
-        "94f8 cli \n" +
-        "81e8 ld r30, Y\n" +
-        "2b2e or r18, r30\n" +
-        "8328 st Y, r18\n" +
-        "bf8f out 0x3f, r24\n" +
-        "91df L35: pop r29\n" +
-        "91cf pop r28\n" +
-        "9508 ret \n")
-
-/*
-        assembler.expect(avr,
-            "          @stackmark base\n" +
-            "920f      push    r0\n" +
-            "921f      push    r1\n" +
-            "          @stackmark locals\n" +
-            // TODO
-            "9801      ldr     r0, [sp, locals@1]\n" +
-            "920f      push    r0\n" +
-            //"9802      ldr     r0, [sp, locals@1]\n" +
-            "900f      pop     r0\n" +
-            "          @stackempty locals\n" +
-            //"9901      ldr     r1, [sp, locals@1]\n" +
-            //"9102      str     r1, [sp, base@0]\n" +
-            "          @stackempty locals\n" +
-            // AVR - does it have explicit access to SP?
-            // SP is in I/O space 
-            "b002      add     sp, #8\n" +
-            "          @stackempty base\n")
-
-        /* 
-                expect(
-                    "b090      sub sp, #4*16\n" +
-                    "b010      add sp, #4*16\n"
-                )
-        
-                expect(
-                    "6261      .string \"abc\"\n" +
-                    "0063      \n"
-                )
-        
-                expect(
-                    "6261      .string \"abcde\"\n" +
-                    "6463      \n" +
-                    "0065      \n"
-                )
-        
-                expect(
-                    "3042      adds r0, 0x42\n" +
-                    "1c0d      adds r5, r1, #0\n" +
-                    "d100      bne #0\n" +
-                    "2800      cmp r0, #0\n" +
-                    "6b28      ldr r0, [r5, #48]\n" +
-                    "0200      lsls r0, r0, #8\n" +
-                    "2063      movs r0, 0x63\n" +
-                    "4240      negs r0, r0\n" +
-                    "46c0      nop\n" +
-                    "b500      push {lr}\n" +
-                    "b401      push {r0}\n" +
-                    "b402      push {r1}\n" +
-                    "b404      push {r2}\n" +
-                    "b408      push {r3}\n" +
-                    "b520      push {r5, lr}\n" +
-                    "bd00      pop {pc}\n" +
-                    "bc01      pop {r0}\n" +
-                    "bc02      pop {r1}\n" +
-                    "bc04      pop {r2}\n" +
-                    "bc08      pop {r3}\n" +
-                    "bd20      pop {r5, pc}\n" +
-                    "9003      str r0, [sp, #4*3]\n")
-                    */
+            assembler.expect(this,
+                ".global\n" +
+                "931f L111: push r17\n" +
+                "93cf push r28\n" +
+                "93df push r29\n" +
+                "2f28 mov r18, r24\n" +
+                "e030 ldi r19, 0x00\n" +
+                "01f9 movw r30, r18\n" +
+                "56e7 subi r30, 0x67\n" +
+                "4ffe sbci r31, 0xFE\n" +
+                "9184 lpm r24, Z\n" +
+                "01f9 movw r30, r18\n" +
+                "5ce1 subi r30, 0xC1\n" +
+                "4ffe sbci r31, 0xFE\n" +
+                "91d4 lpm r29, Z\n" +
+                "01f9 movw r30, r18\n" +
+                "59e4 subi r30, 0x94\n" +
+                "4ffe sbci r31, 0xFE\n" +
+                "91c4 lpm r28, Z\n" +
+                "23cc and r28, r28\n" +
+                "f0c9 breq L31\n" +
+                "2f16 mov r17, r22\n" +
+                "1181 cpse r24, r1\n" +
+                "940e0229 call 0x0229\n" +
+                "2fec mov r30, r28\n" +
+                "e0f0 ldi r31, 0x00\n" +
+                "0fee add r30, r30\n" +
+                "1fff adc r31, r31\n" +
+                "5ae2 subi r30, 0xA2\n" +
+                "4ffe sbci r31, 0xFE\n" +
+                "91a5 lpm r26, Z+\n" +
+                "91b4 lpm r27, Z\n" +
+                "b78f in r24, 0x3f\n" +
+                "94f8 cli \n" +
+                "1111 cpse r17, r1\n" +
+                "c005 rjmp L33\n" +
+                "919c ld r25, X\n" +
+                "2fed mov r30, r29\n" +
+                "95e0 com r30\n" +
+                "23e9 and r30, r25\n" +
+                "c002 rjmp L34\n" +
+                "91ec L33: ld r30, X\n" +
+                "2bed or r30, r29\n" +
+                "93ec L34: st X, r30\n" +
+                "bf8f out 0x3f, r24\n" +
+                "91df L31: pop r29\n" +
+                "91cf pop r28\n" +
+                "911f pop r17\n" +
+                "9508 ret \n")
+        }
     }
 }

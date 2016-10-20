@@ -38,10 +38,10 @@ namespace ts.pxtc.assembler {
         public args: string[];
         public friendlyFmt: string;
         public code: string;
-        private ei: EncodersInstructions;
+        private ei: AbstractProcessor;
         public is32bit: boolean;
 
-        constructor(ei: EncodersInstructions, format: string, public opcode: number, public mask: number, public jsFormat: string) {
+        constructor(ei: AbstractProcessor, format: string, public opcode: number, public mask: number, public jsFormat: string) {
             assert((opcode & mask) == opcode)
 
             this.ei = ei;
@@ -222,7 +222,7 @@ namespace ts.pxtc.assembler {
     // File is the center of the action: parsing a file into a sequence of Lines
     // and also emitting the binary (buf)
     export class File {
-        constructor(ei: EncodersInstructions) {
+        constructor(ei: AbstractProcessor) {
             this.currLine = new Line(this, "<start>");
             this.currLine.lineNo = 0;
             this.ei = ei;
@@ -235,7 +235,7 @@ namespace ts.pxtc.assembler {
         public inlineMode = false;
         public lookupExternalLabel: (name: string) => number;
         public normalizeExternalLabel = (n: string) => n;
-        private ei: EncodersInstructions;
+        private ei: AbstractProcessor;
         private lines: Line[];
         private currLineNo: number = 0;
         private realCurrLineNo: number;
@@ -939,7 +939,7 @@ namespace ts.pxtc.assembler {
 
     // an assembler provider must inherit from this
     // class and provide Encoders and Instructions
-    export abstract class EncodersInstructions {
+    export abstract class AbstractProcessor {
 
         public encoders: pxt.Map<Encoder>;
         public instructions: pxt.Map<Instruction[]>;
@@ -987,6 +987,10 @@ namespace ts.pxtc.assembler {
 
         public isSubSP(opcode: number): boolean {
             return false;
+        }
+
+        public testAssembler() {
+            assert(false)
         }
 
         protected addEnc = (n: string, p: string, e: (v: number) => number) => {
@@ -1097,14 +1101,14 @@ namespace ts.pxtc.assembler {
         }
     }
 
-    function testOne(ei: EncodersInstructions, op: string, code: number) {
+    function testOne(ei: AbstractProcessor, op: string, code: number) {
         let b = new File(ei)
         b.checkStack = false;
         b.emit(op)
         assert(b.buf[0] == code)
     }
 
-    export function expectError(ei: EncodersInstructions, asm: string) {
+    export function expectError(ei: AbstractProcessor, asm: string) {
         let b = new File(ei);
         b.emit(asm);
         if (b.errors.length == 0) {
@@ -1120,7 +1124,7 @@ namespace ts.pxtc.assembler {
             return ("0x" + ("000" + n.toString(16)).slice(-4)).toLowerCase()
     }
 
-    export function expect(ei: EncodersInstructions, disasm: string) {
+    export function expect(ei: AbstractProcessor, disasm: string) {
         let exp: number[] = []
         let asm = disasm.replace(/^([0-9a-fA-F]{4,8})\s/gm, (w, n) => {
             exp.push(parseInt(n.slice(0,4), 16))

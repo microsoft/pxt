@@ -587,7 +587,7 @@ namespace ts.pxtc.service {
 
         assemble: v => {
             return {
-                words: thumbInlineAssemble(v.fileContent)
+                words: processorInlineAssemble(host.opts.target.nativeType, v.fileContent)
             }
         },
 
