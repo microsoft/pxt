@@ -21,13 +21,13 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
     }
-    
+
     interface ProjectTemplate {
         id: string;
         config: PackageConfig;
         files: Map<string>;
     }
-    
+
 
     interface RuntimeOptions {
         mathBlocks?: boolean;
@@ -160,6 +160,8 @@ declare namespace ts.pxtc {
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
+        shortPointers?: boolean; // set to true for 16 bit pointers
+        flashCodeAlign?: number; // defualts to 1k
         upgrades?: UpgradePolicy[];
     }
 

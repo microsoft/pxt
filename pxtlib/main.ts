@@ -432,6 +432,10 @@ namespace pxt {
                 res.jsRefCounting = true
             if (!res.hasHex && res.floatingPoint === undefined)
                 res.floatingPoint = true
+            if (res.nativeType == "AVR") {
+                res.shortPointers = true
+                res.flashCodeAlign = 0x10
+            }
             return res
         }
 

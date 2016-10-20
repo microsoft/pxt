@@ -14,7 +14,7 @@ namespace ts.pxtc {
         let bytecodeStartIdx: number;
         let asmLabels: Map<boolean> = {};
         export let asmTotalSource: string = "";
-        export const pageSize = 0x400;
+        export const defaultPageSize = 0x400;
 
         function swapBytes(str: string) {
             let r = ""
@@ -66,6 +66,10 @@ namespace ts.pxtc {
         let currentSetup: string = null;
         export let currentHexInfo: pxtc.HexInfo;
 
+        export function flashCodeAlign() {
+            return pxt.appTarget.compile.flashCodeAlign || defaultPageSize
+        }
+
         export function setupFor(extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
             if (isSetupFor(extInfo))
                 return;
@@ -106,6 +110,7 @@ namespace ts.pxtc {
                         }
 
                     bytecodeStartIdx = lastIdx + 1
+                    let pageSize = flashCodeAlign()
                     bytecodeStartAddrPadded = (bytecodeStartAddr & ~(pageSize - 1)) + pageSize
                     let paddingBytes = bytecodeStartAddrPadded - bytecodeStartAddr
                     assert((paddingBytes & 0xf) == 0)
@@ -152,17 +157,18 @@ namespace ts.pxtc {
                 if (!m) continue;
 
                 let s = hex[i].slice(9)
-                while (s.length >= 8) {
+                let step = pxt.appTarget.compile.shortPointers ? 4 : 8
+                while (s.length >= step) {
                     let inf = funs.shift()
                     if (!inf) return;
                     funcInfo[inf.name] = inf;
-                    let hexb = s.slice(0, 8)
+                    let hexb = s.slice(0, step)
                     //console.log(inf.name, hexb)
                     inf.value = parseInt(swapBytes(hexb), 16) & 0xfffffffe
                     if (!inf.value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }
-                    s = s.slice(8)
+                    s = s.slice(step)
                 }
             }
 
@@ -513,7 +519,7 @@ _stored_program: .string "`
             for (let i = 0; i < res.buf.length; i += 2) {
                 cres.quickFlash.words.push(res.buf[i] | (res.buf[i + 1] << 16))
             }
-            while (cres.quickFlash.words.length & ((hex.pageSize >> 2) - 1))
+            while (cres.quickFlash.words.length & ((hex.flashCodeAlign() >> 2) - 1))
                 cres.quickFlash.words.push(0)
         }
 
