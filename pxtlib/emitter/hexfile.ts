@@ -393,7 +393,7 @@ ${info.id}_IfaceVT:
     }
 
 
-    function serialize(bin: Binary) {
+    function serialize(bin: Binary, opts: CompileOptions) {
         let asmsource = `; start
 ${hex.hexPrelude()}        
     .hex 708E3B92C615A841C49866C975EE5197 ; magic number
@@ -402,7 +402,13 @@ ${hex.hexPrelude()}
     .short ${bin.globalsWords}   ; num. globals
     .space 14 ; reserved
 `
-        let snippets = new ThumbSnippets()
+        let snippets: AssemblerSnippets = null;
+        if (opts.target.nativeType.toLowerCase() == "thumb")
+            snippets = new ThumbSnippets()
+        else if (opts.target.nativeType.toLowerCase() == "avr")
+            snippets = new AVRSnippets()
+        else 
+            oops()
         bin.procs.forEach(p => {
             let p2a = new ProctoAssembler(snippets, bin, p)
             asmsource += "\n" + p2a.getAssembly() + "\n"
@@ -536,8 +542,8 @@ _stored_program: .string "`
         return str
     }
 
-    export function thumbEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
-        let src = serialize(bin)
+    export function processorEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
+        let src = serialize(bin,opts)
         src = patchSrcHash(src)
         if (opts.embedBlob)
             src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))

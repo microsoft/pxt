@@ -79,7 +79,7 @@ namespace ts.pxtc {
      */
 
     // for now, everything is 16-bit (word)
-    class AVRSnippets extends AssemblerSnippets {
+    export class AVRSnippets extends AssemblerSnippets {
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) {
             // TODO: split immediate and load into register pair (check this is correct)

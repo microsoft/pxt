@@ -882,7 +882,7 @@ namespace ts.pxtc {
                 host.writeFile(fn, data, false, null);
 
             if (opts.target.isNative) {
-                thumbEmit(bin, opts, res)
+                processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
