@@ -50,7 +50,7 @@ namespace pxt.runner {
             throw Util.oops("trying to write " + module + " / " + filename)
         }
 
-        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
             return pxt.hex.getHexInfoAsync(this, extInfo)
         }
 

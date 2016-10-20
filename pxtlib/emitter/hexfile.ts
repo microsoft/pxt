@@ -64,9 +64,9 @@ namespace ts.pxtc {
         }
 
         let currentSetup: string = null;
-        export let currentHexInfo: any;
+        export let currentHexInfo: pxtc.HexInfo;
 
-        export function setupFor(extInfo: ExtensionInfo, hexinfo: any) {
+        export function setupFor(extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
             if (isSetupFor(extInfo))
                 return;
 
@@ -84,16 +84,27 @@ namespace ts.pxtc {
             let hitEnd = () => {
                 if (!bytecodeStartAddr) {
                     let bytes = parseHexBytes(hex[lastIdx])
-                    if (bytes[0] != 0x10) {
-                        bytes.pop() // checksum
-                        bytes[0] = 0x10;
-                        while (bytes.length < 20)
-                            bytes.push(0x00)
-                        hex[lastIdx] = hexBytes(bytes)
-                    }
-                    assert((bytes[2] & 0xf) == 0)
+                    let missing = (0x10 - ((lastAddr + bytes[0]) & 0xf)) & 0xf
+                    if (missing)
+                        if (bytes[2] & 0xf) {
+                            let next = lastAddr + bytes[0]
+                            let newline = [missing, next >> 8, next & 0xff, 0x00]
+                            for (let i = 0; i < missing; ++i)
+                                newline.push(0x00)
+                            lastIdx++
+                            hex.splice(lastIdx, 0, hexBytes(newline))
+                            bytecodeStartAddr = next + missing
+                        } else {
+                            if (bytes[0] != 0x10) {
+                                bytes.pop() // checksum
+                                bytes[0] = 0x10;
+                                while (bytes.length < 20)
+                                    bytes.push(0x00)
+                                hex[lastIdx] = hexBytes(bytes)
+                            }
+                            bytecodeStartAddr = lastAddr + 16
+                        }
 
-                    bytecodeStartAddr = lastAddr + 16
                     bytecodeStartIdx = lastIdx + 1
                     bytecodeStartAddrPadded = (bytecodeStartAddr & ~(pageSize - 1)) + pageSize
                     let paddingBytes = bytecodeStartAddrPadded - bytecodeStartAddr
@@ -133,7 +144,7 @@ namespace ts.pxtc {
                 oops("No hex end")
 
             funcInfo = {};
-            let funs: FuncInfo[] = hexinfo.functions.concat(extInfo.functions);
+            let funs: FuncInfo[] = extInfo.functions;
 
             for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
                 let m = /^:10(....)00(.{16})/.exec(hex[i])

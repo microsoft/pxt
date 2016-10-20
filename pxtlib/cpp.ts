@@ -794,12 +794,7 @@ namespace pxt.hex {
                             })
                         tryGet();
                     })))
-            .then(text =>
-                Util.httpGetJsonAsync(hexurl + "-metainfo.json")
-                    .then(meta => {
-                        meta.hex = text.split(/\r?\n/)
-                        return meta
-                    }))
+            .then<pxtc.HexInfo>(text => ({ hex: text.split(/\r?\n/) }))
     }
 
     export function storeWithLimitAsync(host: Host, idxkey: string, newkey: string, newval: string, maxLen = 10) {
@@ -830,9 +825,9 @@ namespace pxt.hex {
             })
     }
 
-    export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo): Promise<any> {
+    export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         if (!extInfo.sha)
-            return Promise.resolve(null)
+            return Promise.resolve<any>(null)
 
         if (pxtc.hex.isSetupFor(extInfo))
             return Promise.resolve(pxtc.hex.currentHexInfo)

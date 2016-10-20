@@ -168,7 +168,7 @@ declare namespace ts.pxtc {
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
-        hexinfo: any;
+        hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
         forceEmit?: boolean;
@@ -213,5 +213,9 @@ declare namespace ts.pxtc {
         shimsDTS: string;
         enumsDTS: string;
         onlyPublic: boolean;
+    }
+
+    interface HexInfo {
+        hex: string[];
     }
 }

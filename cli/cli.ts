@@ -1559,9 +1559,9 @@ class SnippetHost implements pxt.Host {
         SnippetHost.files[module.id][filename] = contents
     }
 
-    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         //console.log(`getHexInfoAsync(${extInfo})`);
-        return Promise.resolve()
+        return Promise.resolve<any>(null)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -1651,7 +1651,7 @@ class Host
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
         return buildHexAsync(thisBuild, extInfo)
-            .then(() => patchHexInfo(thisBuild, extInfo))
+            .then(() => thisBuild.patchHexInfo(extInfo))
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -1986,7 +1986,7 @@ export interface BuildEngine {
     updateEngineAsync: () => Promise<void>;
     setPlatformAsync: () => Promise<void>;
     buildAsync: () => Promise<void>;
-    patchHexInfo: (extInfo: pxtc.ExtensionInfo) => any;
+    patchHexInfo: (extInfo: pxtc.ExtensionInfo) => pxtc.HexInfo;
     buildPath: string;
     moduleConfig: string;
 }
@@ -2106,7 +2106,7 @@ const buildEngines: Map<BuildEngine> = {
         setPlatformAsync: () => {
             return runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget])
         },
-        patchHexInfo: null,
+        patchHexInfo: patchYottaHexInfo,
         buildPath: "built/yt",
         moduleConfig: "module.json"
     },
@@ -2115,7 +2115,7 @@ const buildEngines: Map<BuildEngine> = {
         updateEngineAsync: () => Promise.resolve(),
         buildAsync: () => { return runPlatformioAsync(["run"]) },
         setPlatformAsync: () => Promise.resolve(),
-        patchHexInfo: null,
+        patchHexInfo: patchPioHexInfo,
         buildPath: "built/pio",
         moduleConfig: "platformio.ini"
     }
@@ -2124,15 +2124,21 @@ const buildEngines: Map<BuildEngine> = {
 // once we have a different build engine, set this appropriately
 let thisBuild = buildEngines['yotta']
 
-function patchHexInfo(buildEngine: BuildEngine, extInfo: pxtc.ExtensionInfo) {
-    let infopath = buildEngine.buildPath + "/yotta_modules/" + pxt.appTarget.compileService.yottaCorePackage + "/generated/metainfo.json"
-
+function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let buildEngine = buildEngines['yotta']
     let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
 
-    let hexinfo = readJson(infopath)
-    hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
 
-    return hexinfo
+function patchPioHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let buildEngine = buildEngines['platformio']
+    let hexPath = buildEngine.buildPath + "/.pioenvs/myenv/firmware.hex"
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
 }
 
 function buildHexAsync(buildEngine: BuildEngine, extInfo: pxtc.ExtensionInfo) {

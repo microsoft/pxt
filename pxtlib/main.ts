@@ -54,11 +54,11 @@ namespace pxt {
      * Time an event by including the time between this call 
      * and a later 'tickEvent' call for the same event in the properties sent with the event.
      */
-    export var timeEvent: (id: string) => void = function(id) {}
+    export var timeEvent: (id: string) => void = function (id) { }
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) {}
+    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) { }
 
     export interface WebConfig {
         relprefix: string; // "/beta---",
@@ -115,7 +115,7 @@ namespace pxt {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
-        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any>;
+        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
@@ -440,7 +440,7 @@ namespace pxt {
                 sourceFiles: [],
                 fileSystem: {},
                 target: target,
-                hexinfo: {}
+                hexinfo: { hex: [] }
             }
 
             let generateFile = (fn: string, cont: string) => {
@@ -469,7 +469,9 @@ namespace pxt {
                     let ext = cpp.getExtensionInfo(this)
                     if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
                     if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
-                    return (target.isNative ? this.host().getHexInfoAsync(ext) : Promise.resolve(null))
+                    return (target.isNative
+                        ? this.host().getHexInfoAsync(ext)
+                        : Promise.resolve<pxtc.HexInfo>(null))
                         .then(inf => {
                             ext = U.flatClone(ext)
                             delete ext.compileData;
