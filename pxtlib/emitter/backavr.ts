@@ -303,7 +303,7 @@ namespace ts.pxtc {
             "r2": "r21",
             "r3": "r19",
             "r5": "r27",
-            "r6": "r30"
+            "r6": "r31"
         }
 
         inst_lo: pxt.Map<string> = {
