@@ -227,6 +227,8 @@ namespace ts.pxtc {
 
     export interface GenMarkdownOptions {
         package?: boolean;
+        locs?: boolean;
+        docs?: boolean;
     }
 
     export function genMarkdown(pkg: string, apiInfo: ApisInfo, options: GenMarkdownOptions = {}): pxt.Map<string> {
@@ -241,7 +243,7 @@ namespace ts.pxtc {
         let reference = ""
         const writeRef = (s: string) => reference += s + "\n"
         const writeLoc = (si: SymbolInfo) => {
-            if (!si.qName) return;
+            if (!options.locs || !si.qName) return;
             // must match blockly loader
             const ns = ts.pxtc.blocksCategory(si);
             if (ns)
@@ -256,6 +258,7 @@ namespace ts.pxtc {
                 })
         }
         const mapLocs = (m: pxt.Map<string>, name: string) => {
+            if (!options.locs) return;
             let locs: pxt.Map<string> = {};
             Object.keys(m).sort().forEach(l => locs[l] = m[l]);
             files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
@@ -315,13 +318,15 @@ namespace ts.pxtc {
             writeNs('```')
             writePackage(writeNs);
             writeHelpPages(nsHelpPages, writeNs);
-            files["reference/" + ns.name + '.md'] = nsmd;
+            if (options.docs)
+                files["reference/" + ns.name + '.md'] = nsmd;
         }
         writeRef('```');
         writePackage(writeRef);
         writeHelpPages(helpPages, writeRef);
 
-        files[pkg + "-reference.md"] = reference;
+        if (options.docs)
+            files[pkg + "-reference.md"] = reference;
         mapLocs(locStrings, "");
         mapLocs(jsdocStrings, "-jsdoc");
         return files;

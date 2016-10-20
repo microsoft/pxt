@@ -1568,7 +1568,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 <div id="menubar" role="banner">
                     <div className={`ui borderless ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
-                            <span id="logo" className="ui item">
+                            <span id="logo" className="ui item logo">
                                 {targetTheme.logo || targetTheme.portraitLogo
                                     ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " landscape only" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
                                     : <span>{targetTheme.name}</span>}
@@ -1614,16 +1614,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                         </sui.DropdownMenuItem>}
                         {sandbox ? undefined : <DocsMenuItem parent={this} />}
-                        {rightLogo ?
-                            <div className={`ui item right ${sandbox ? "" : "wide only"}`}>
-                                {sandbox ?
-                                    <div>
-                                        <sui.Button role="menuitem" class="ui landscape only" icon="external" text={lf("Open with {0}", targetTheme.name) } onClick={() => this.launchFullEditor() }/>
-                                        <sui.Button role="menuitem" class="ui portrait only" icon="external" onClick={() => this.launchFullEditor() }/>
-                                    </div>
-                                    : undefined }
-                                <a target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a>
-                            </div> : null }
+                        {sandbox ? <div className="right menu">
+                            <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
+                            <span className="ui item link logo"><a className="ui image" target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a></span>
+                        </div> : undefined }
                     </div>
                 </div>
                 <div id="filelist" className="ui items" role="complementary">
@@ -1652,9 +1646,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox || !sharingEnabled ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
-                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
-                    <a className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
-                    <a className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
+                    <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
+                    <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
                 </div> : undefined}
             </div>
         );
