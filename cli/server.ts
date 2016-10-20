@@ -44,7 +44,6 @@ function forkDirs(lst: string[]) {
 
 function setupDocfilesdirs() {
     docfilesdirs = ["docfiles", path.join(nodeutil.pxtCoreDir, "docfiles"), path.join(nodeutil.pxtCoreDir, "docfiles")]
-    console.log('docfilesdir: ', docfilesdirs.join(', '))
 }
 
 function setupRootDir() {
@@ -58,6 +57,11 @@ function setupRootDir() {
     packagedDir = path.join(root, "built/packaged")
     setupDocfilesdirs()
     setupProjectsDir()
+
+    pxt.debug(`docs dir: ${docsDir}`)
+    pxt.debug(`doc files dir: ${docfilesdirs.join('\r\n    ')}`)
+    pxt.debug(`dirs: ${dirs.join('\r\n    ')}`)
+    pxt.debug(`projects dir: ${userProjectsDir}`);
 }
 
 function setupProjectsDir() {

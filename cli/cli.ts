@@ -682,7 +682,8 @@ function targetFileList() {
     let lst = onlyExts(forkFiles("built"), [".js", ".css", ".json", ".webmanifest"])
         .concat(forkFiles("sim/public"))
     // the cloud only accepts *.json and sim* files in targets - TODO is this still true?
-    return lst.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
+    pxt.debug(`target files: ${lst.join('\r\n    ')}`)
+    return lst;
 }
 
 export function staticpkgAsync(label?: string) {
@@ -3549,6 +3550,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.appTarget = trg;
 
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
+    if (process.env["PXT_DEBUG"]) {
+        pxt.options.debug = true;
+        pxt.debug = console.log;
+    }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
 
