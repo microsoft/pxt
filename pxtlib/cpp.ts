@@ -198,6 +198,9 @@ namespace pxt.cpp {
             let currAttrs = ""
             let inDocComment = false
 
+            // replace #if 0 .... #endif with newlines
+            src = src.replace(/^\s*#\s*if\s+0\s*$[^]*?^\s*#\s*endif\s*$/mg, f => f.replace(/[^\n]/g, ""))
+
             function interfaceName() {
                 let n = currNs.replace(/Methods$/, "")
                 if (n == currNs) return null
