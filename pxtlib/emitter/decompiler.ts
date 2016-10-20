@@ -596,6 +596,7 @@ ${output}</xml>`;
                 info.args.forEach((e, i) => {
                     switch (e.kind) {
                         case SK.ArrowFunction:
+                            emitMutation(e as ArrowFunction);
                             emitStatementTag("HANDLER", e);
                             break;
                         case SK.PropertyAccessExpression:
@@ -623,6 +624,30 @@ ${output}</xml>`;
                 });
             }
 
+            function emitMutation(callback: ArrowFunction) {
+                if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
+                    const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
+                    const names = elements.map(e => {
+                        if (checkName(e.propertyName) && checkName(e.name)) {
+                            const name = (e.name as Identifier).text;
+                            return e.propertyName ? `${(e.propertyName as Identifier).text}:${name}` : name;
+                        }
+                        else {
+                            return "";
+                        }
+                    });
+                    write(`<mutation callbackProperties="${names.join(",")}"></mutation>`)
+                }
+
+                function checkName(name: Node) {
+                    if (name && name.kind !== SK.Identifier) {
+                        error(name, Util.lf("Only identifiers may be used for variable names in object destructuring patterns"));
+                        return false;
+                    }
+                    return true;
+                }
+            }
+
             function emitMathRandomArgumentExpresion(e: ts.Expression) {
                 switch (e.kind) {
                     case SK.NumericLiteral:
@@ -645,10 +670,11 @@ ${output}</xml>`;
             }
 
             function emitArrowFunction(n: ts.ArrowFunction, next: NextNode[]) {
-                if (n.parameters.length > 0) {
+                if (n.parameters.length > 0 && !(n.parameters.length === 1 && n.parameters[0].name.kind === SK.ObjectBindingPattern)) {
                     error(n);
                     return;
                 }
+
                 pushScope();
                 emitStatementBlock(n.body, next)
             }

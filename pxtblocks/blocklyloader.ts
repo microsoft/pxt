@@ -6,6 +6,35 @@ let lf = Util.lf;
 
 namespace pxt.blocks {
 
+    /**
+     * This interface defines the optionally defined functions for mutations that Blockly
+     * will call if they exist.
+     */
+    export interface MutatingBlock extends Blockly.Block {
+        /* Internal properties */
+
+        parameters: string[];
+        currentlyVisible: string[];
+        parameterTypes: {[index: string]: string};
+        updateVisibleProperties(): void;
+
+        /* Functions used by Blockly */
+
+        // Set to save mutations. Should return an XML element
+        mutationToDom(): Element;
+        // Set to restore mutations from save
+        domToMutation(xmlElement: Element): void;
+        // Should be set to modify a block after a mutator dialog is updated
+        compose(topBlock: Blockly.Block): void;
+        // Should be set to initialize the workspace inside a mutator dialog and return the top block
+        decompose(workspace: Blockly.Workspace): Blockly.Block;
+    }
+
+
+    const mutatedVariableInputName = "properties";
+    const mutatorStatmentInput = "PROPERTIES";
+    export const savedMutationAttribute = "callbackProperties";
+
     const blockColors: Map<number> = {
         loops: 120,
         images: 45,
@@ -209,7 +238,20 @@ namespace pxt.blocks {
         if (fn.attributes.advanced) {
             category = getOrAddSubcategory(category, Util.lf("More\u2026"), 1, category.getAttribute("colour"))
         }
-        category.appendChild(block);
+
+        if (fn.attributes.mutateDefaults) {
+            const mutationValues = fn.attributes.mutateDefaults.split(";");
+            mutationValues.forEach(mutation => {
+                const mutatedBlock = block.cloneNode(true);
+                const mutationElement = document.createElement("mutation");
+                mutationElement.setAttribute(savedMutationAttribute, mutation);
+                mutatedBlock.appendChild(mutationElement);
+                category.appendChild(mutatedBlock);
+            });
+        }
+        else {
+            category.appendChild(block);
+        }
     }
 
     let iconCanvasCache: Map<HTMLCanvasElement> = {};
@@ -316,7 +358,7 @@ namespace pxt.blocks {
         }
     }
 
-    function initBlock(block: any, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
+    function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
@@ -377,8 +419,13 @@ namespace pxt.blocks {
             }
         });
 
+        if (fn.attributes.mutate) {
+            block.appendDummyInput(mutatedVariableInputName);
+            addMutator(block as MutatingBlock, fn);
+        }
+
         let body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
-        if (body) {
+        if (body || fn.attributes.mutate) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");
         }
@@ -410,6 +457,163 @@ namespace pxt.blocks {
         block.setNextStatement(fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
+    }
+
+    function addMutator(block: MutatingBlock, info: pxtc.SymbolInfo) {
+        if (!info.parameters || info.parameters.length !== 1 || info.parameters[0].properties.length === 0) {
+            console.error("Mutating blocks only supported for functions with one parameter that has multiple properties");
+            return;
+        }
+
+        block.parameters = [];
+        block.currentlyVisible = [];
+        block.parameterTypes = {};
+
+        // Define a block for each parameter to appear in the mutator dialog's flyout
+        const subBlocks: string[] = [];
+        info.parameters[0].properties.forEach(property => {
+            block.parameterTypes[property.name] = property.type;
+            const subBlockName = parameterId(property.name);
+            subBlocks.push(subBlockName);
+            Blockly.Blocks[subBlockName] = Blockly.Blocks[subBlockName] || {
+                init: function() { initializeSubBlock(this as Blockly.Block, property.name, block.getColour()) }
+            };
+        });
+
+        // Also define the top-level block to appear in the mutator workspace
+        const topBlockName = block.type + "_mutator";
+        Blockly.Blocks[topBlockName] = Blockly.Blocks[topBlockName] || {
+            init: function() { initializeMutatorTopBlock(this as Blockly.Block, info.attributes.mutateText, block.getColour()) }
+        }
+
+        block.setMutator(new Blockly.Mutator(subBlocks));
+
+        block.updateVisibleProperties = () => {
+            if (listsEqual(block.currentlyVisible, block.parameters)) {
+                return;
+            }
+
+            const dummyInput = block.inputList.filter(i => i.name === mutatedVariableInputName)[0];
+            block.currentlyVisible.forEach(param => {
+                if (block.parameters.indexOf(param) === -1) {
+                    dummyInput.removeField(param);
+                }
+            });
+
+            block.parameters.forEach(param => {
+                if (block.currentlyVisible.indexOf(param) === -1) {
+                    dummyInput.appendField(new Blockly.FieldVariable(param), param);
+                }
+            });
+
+            block.currentlyVisible = block.parameters;
+        };
+
+        block.compose = (topBlock: Blockly.Block) => {
+            // Get the flyout workspace's sub-blocks and update the variables in the real block
+            const parts = topBlock.getDescendants().map(subBlock => subBlock.inputList[0].name).filter(name => !!name);
+            block.parameters = [];
+
+            // Ignore duplicate blocks
+            parts.forEach(p => {
+                if (block.parameters.indexOf(p) === -1) {
+                    block.parameters.push(p);
+                }
+            });
+
+            block.updateVisibleProperties();
+        };
+
+        block.decompose = (workspace: Blockly.Workspace) => {
+            // Initialize flyout workspace's top block and add sub-blocks based on visible parameters
+            const topBlock = workspace.newBlock(topBlockName);
+            topBlock.initSvg();
+
+            if (block.parameters.length) {
+                for (const input of topBlock.inputList) {
+                    if (input.name === mutatorStatmentInput) {
+                        let currentConnection = input.connection;
+
+                        block.parameters.forEach(parameter => {
+                            const subBlock = workspace.newBlock(parameterId(parameter));
+                            subBlock.initSvg();
+                            currentConnection.connect(subBlock.previousConnection);
+                            currentConnection = subBlock.nextConnection;
+                        });
+                        break;
+                    }
+                }
+            }
+
+            return topBlock;
+        };
+
+        block.mutationToDom = () => {
+            // Save the parameters that are currently visible to the DOM along with their names
+            const mutation = document.createElement("mutation");
+            const attr = block.parameters.map(param => {
+                const varName = block.getFieldValue(param);
+                return varName !== param ? `${Util.htmlEscape(varName)}:${Util.htmlEscape(param)}` : Util.htmlEscape(param);
+            }).join(",");
+            mutation.setAttribute(savedMutationAttribute, attr);
+
+            return mutation;
+        };
+
+        block.domToMutation = (xmlElement: Element) => {
+            // Restore visible parameters based on saved DOM
+            const savedParameters = xmlElement.getAttribute(savedMutationAttribute);
+            if (savedParameters) {
+                const split = savedParameters.split(",");
+                const properties: NamedProperty[] = [];
+                split.forEach(saved => {
+                    const parts = saved.split(":");
+                    if (info.parameters[0].properties.some(p => p.name === parts[0])) {
+                        properties.push({
+                            property: parts[0],
+                            newName: parts[1]
+                        });
+                    }
+                })
+                // Create the fields for each property with default variable names
+                block.parameters = properties.map(p => p.property);
+                block.updateVisibleProperties();
+
+                // Override any names that the user has changed
+                properties.filter(p => !!p.newName).forEach(p => block.setFieldValue(p.newName, p.property));
+            }
+        };
+
+        function parameterId(parameter: string) {
+            return block.type + "_" + parameter;
+        }
+    }
+
+    function initializeSubBlock(block: Blockly.Block, parameter: string, colour: string) {
+        block.appendDummyInput(parameter)
+            .appendField(parameter);
+        block.setColour(colour);
+        block.setNextStatement(true);
+        block.setPreviousStatement(true);
+    }
+
+    function initializeMutatorTopBlock(block: Blockly.Block, text: string, colour: string) {
+        block.appendDummyInput()
+            .appendField(text);
+        block.setColour(colour);
+        block.appendStatementInput(mutatorStatmentInput);
+    }
+
+    function listsEqual<T>(a: T[], b: T[]) {
+        if (!a || !b || a.length !== b.length) {
+            return false;
+        }
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function removeCategory(tb: Element, name: string) {
@@ -762,7 +966,7 @@ namespace pxt.blocks {
     }
 
     /**
-     * The following patch to blockly is to add the Trash icon on top of the toolbox, 
+     * The following patch to blockly is to add the Trash icon on top of the toolbox,
      * the trash icon should only show when a user drags a block that is already in the workspace.
      */
     function initDrag() {
