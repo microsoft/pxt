@@ -32,7 +32,7 @@ namespace ts.pxtc.avr {
             assert(off != null)
             if ((off | 0) != off ||
                 // 16-bit only for now (so, can address 128k)
-                !(0 <= off && off < 65536))
+                !(-128 * 512 <= off && off <= 128 * 512))
                 return pxtc.assembler.emitErr("jump out of range", actual);
 
             // note that off is already in instructions, not bytes
