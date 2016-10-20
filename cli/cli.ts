@@ -909,13 +909,13 @@ function uploadCoreAsync(opts: UploadOptions) {
                     releaseid: liteId
                 })
             }).then(() => {
-                // tag release/v0.1.2 also as release/alpha
-                const alpha = opts.label.replace(/\/v\d.*$/, "/alpha")
-                if (alpha == opts.label) return Promise.resolve()
+                // tag release/v0.1.2 also as release/beta
+                const betaTag = opts.label.replace(/\/v\d.*$/, "/beta")
+                if (betaTag == opts.label) return Promise.resolve()
                 else {
-                    console.log("Also tagging with " + alpha)
+                    console.log("Also tagging with " + betaTag)
                     return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(alpha),
+                        path: nodeutil.sanitizePath(betaTag),
                         releaseid: liteId
                     })
                 }
