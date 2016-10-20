@@ -448,7 +448,10 @@ namespace pxt.cpp {
                         protos.write(`${retTp} ${funName}(${origArgs});`)
                     }
                     res.functions.push(fi)
-                    pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
+                    if (isPlatformio)
+                        pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
+                    else
+                        pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
                     return;
                 }
 
@@ -504,14 +507,13 @@ namespace pxt.cpp {
 
 
         // This is overridden on the build server, but we need it for command line build
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+        if (!isPlatformio && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             let cs = pxt.appTarget.compileService
             U.assert(!!cs.yottaCorePackage);
             U.assert(!!cs.githubCorePackage);
             U.assert(!!cs.gittag);
             let tagged = cs.githubCorePackage + "#" + compileService.gittag
             res.yotta.dependencies[cs.yottaCorePackage] = tagged;
-            res.platformio.dependencies[cs.yottaCorePackage] = tagged;
         }
 
         if (mainPkg) {
@@ -533,6 +535,8 @@ namespace pxt.cpp {
                     let isHeader = U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ".cpp")) {
                         let fullName = pkg.config.name + "/" + fn
+                        if (pkg.config.name == "core" && isHeader)
+                            fullName = fn
                         if (isHeader)
                             includesInc += `#include "${isPlatformio ? "" : sourcePath.slice(1)}${fullName}"\n`
                         let src = pkg.readFile(fn)
