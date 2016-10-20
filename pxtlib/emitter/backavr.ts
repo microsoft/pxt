@@ -230,11 +230,17 @@ namespace ts.pxtc {
     icall`
         }
 
-        // no virtuals or lambdas for now
+        // no virtuals for now
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) { assert(false); return "" }
         prologue_vtable(arg_index: number, vtableShift: number) { assert(false); return "" }
-        lambda_prologue() { assert(false); return "" }
-        lambda_epilogue() { assert(false); return "" }
+
+        lambda_prologue() {
+            return "@stackmark args\n" + this.proc_setup()  + "\nmovw r26, r24"
+        }
+
+        lambda_epilogue() {
+            return "jmp pxtrt::getGlobalsPtr\nmovw r30, r24\n" + this.proc_return() + "\n@stackempty args"
+        }
 
         load_ptr(lbl: string, reg: string) {
             assert(!!lbl)
