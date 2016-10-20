@@ -125,7 +125,7 @@ namespace pxt.runner {
         return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
             .then(() => Util.httpGetJsonAsync(cfg.targetCdnUrl + "target.json"))
             .then((trgbundle: pxt.TargetBundle) => {
-                pxt.appTarget = trgbundle
+                pxt.setAppTarget(trgbundle)
                 mainPkg = new pxt.MainPackage(new Host());
             })
     }

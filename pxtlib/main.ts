@@ -12,6 +12,23 @@ namespace pxt {
 
     export var appTarget: TargetBundle;
 
+    export function setAppTarget(trg: TargetBundle) {
+        appTarget = trg
+
+        // patch-up the target
+        let comp = appTarget.compile
+        if (!comp)
+            comp = appTarget.compile = { isNative: false, hasHex: false }
+        if (comp.hasHex && comp.jsRefCounting === undefined)
+            comp.jsRefCounting = true
+        if (!comp.hasHex && comp.floatingPoint === undefined)
+            comp.floatingPoint = true
+        if (comp.nativeType == "AVR") {
+            comp.shortPointers = true
+            comp.flashCodeAlign = 0x10
+        }
+    }
+
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
@@ -427,15 +444,7 @@ namespace pxt {
 
         getTargetOptions(): CompileTarget {
             let res = U.clone(appTarget.compile)
-            if (!res) res = { isNative: false, hasHex: false }
-            if (res.hasHex && res.jsRefCounting === undefined)
-                res.jsRefCounting = true
-            if (!res.hasHex && res.floatingPoint === undefined)
-                res.floatingPoint = true
-            if (res.nativeType == "AVR") {
-                res.shortPointers = true
-                res.flashCodeAlign = 0x10
-            }
+            U.assert(!!res)
             return res
         }
 

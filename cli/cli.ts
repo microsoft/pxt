@@ -1227,7 +1227,7 @@ let forkPref = server.forkPref
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
-    pxt.appTarget = cfg;
+    pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
     let isFork = !!pxt.appTarget.forkof
     if (isFork)
@@ -1265,7 +1265,7 @@ function buildTargetCoreAsync() {
             const webmanifest = buildWebManifest(cfg)
             const webmanifestjson = JSON.stringify(cfg, null, 2)
             fs.writeFileSync("built/target.json", webmanifestjson)
-            pxt.appTarget = cfg; // make sure we're using the latest version
+            pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
@@ -3592,7 +3592,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     nodeutil.targetDir = targetDir;
 
     let trg = nodeutil.getPxtTarget()
-    pxt.appTarget = trg;
+    pxt.setAppTarget(trg)
 
     let compileId = "none"
     if (trg.compileService) {

@@ -18,7 +18,7 @@ let extWeight: pxt.Map<number> = {
 
 export function setupAppTarget(trgbundle: pxt.TargetBundle) {
     //if (!trgbundle.appTheme) trgbundle.appTheme = {};
-    pxt.appTarget = trgbundle
+    pxt.setAppTarget(trgbundle)
 }
 
 export class File {
