@@ -184,6 +184,19 @@ function pkginfoAsync(repopath: string) {
         })
 }
 
+export function pokeRepoAsync(opt: string, repo: string): Promise<void> {
+    if (!repo) repo = opt
+    let data = {
+        repo: repo,
+        getkey: false
+    }
+    if (opt == "-u") data.getkey = true
+    return Cloud.privatePostAsync("pokerepo", data)
+        .then(resp => {
+            console.log(resp)
+        })
+}
+
 export function apiAsync(path: string, postArguments?: string): Promise<void> {
     if (postArguments == "delete") {
         return Cloud.privateDeleteAsync(path)
@@ -3396,6 +3409,7 @@ cmd("pkginfo  USER/REPO           - show info about named GitHub packge", pkginf
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("pokecloud                    - same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"), 2)
+cmd("pokerepo [-u] REPO           - refresh repo, or generate a URL to do so", pokeRepoAsync, 2)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
 cmd("ptrcheck                     - check pointers in the cloud against ones in the repo", ptrcheckAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
