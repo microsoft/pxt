@@ -156,3 +156,20 @@ export function mkdirP(thePath: string) {
         fs.mkdirSync(thePath)
     }
 }
+
+export function deleteFolderRecursive(thePath: string) {
+    if (!path || !fs.existsSync(thePath)) {
+        return;
+    }
+
+    fs.readdirSync(thePath).forEach((f) => {
+        let currentPath = path.join(thePath, f);
+
+        if (fs.lstatSync(currentPath).isDirectory()) {
+            deleteFolderRecursive(currentPath);
+        } else {
+            fs.unlinkSync(currentPath);
+        }
+    });
+    fs.rmdirSync(thePath);
+}

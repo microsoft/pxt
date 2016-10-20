@@ -781,7 +781,7 @@ namespace pxt.hex {
     }
 
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
-        if (!/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken) {
+        if (!Cloud.localToken || !window || !/^http:\/\/localhost/i.test(window.location.href)) {
             return Promise.resolve();
         }
 
@@ -793,6 +793,9 @@ namespace pxt.hex {
 
                 json.hex = json.hex.split(/\r?\n/);
                 return json;
+            })
+            .catch((e) => {
+                return Promise.resolve();
             });
     }
 

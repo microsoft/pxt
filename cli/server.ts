@@ -226,27 +226,24 @@ function getCachedHexAsync(sha: string): Promise<any> {
     }
 
     let hexPath = path.resolve(localHexDir, sha);
-    let hexInfofiles = [
-        hexPath + ".hex",
-        hexPath + "-metainfo.json"
-    ];
-    let existPromises = hexInfofiles.map((file) => existsAsync(file));
+    let hexFile = hexPath + ".hex";
 
-    return Promise.all(existPromises)
+    return existsAsync(hexFile)
         .then((results) => {
-            if (!results.every((r) => !!r)) {
+            if (!results) {
                 console.log(`offline HEX not found: ${hexPath}`);
-                return Promise.resolve();
-            } else {
-                console.log(`serving HEX from offline cache: ${hexPath}`);
-                let readFilePromises = hexInfofiles.map((file) => readFileAsync(file));
-                return Promise.all(readFilePromises)
-                    .then((fileContents) => {
-                        let metainfo = JSON.parse(fileContents[1].toString());
-                        metainfo.hex = fileContents[0].toString();
-                        return metainfo;
-                    });
+                return Promise.resolve(null);
             }
+            
+            console.log(`serving HEX from offline cache: ${hexPath}`);
+            return readFileAsync(hexFile)
+                .then((fileContent) => {
+                    return {
+                        enums: [],
+                        functions: [],
+                        hex: fileContent.toString()
+                    };
+                });
         });
 }
 

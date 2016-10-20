@@ -9,6 +9,7 @@ import * as nodeutil from './nodeutil';
 nodeutil.init();
 
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
@@ -3094,10 +3095,14 @@ interface BuildCoreOptions {
 }
 
 function buildCoreAsync(buildOpts: BuildCoreOptions) {
+    let compileOptions: pxtc.CompileOptions;
     ensurePkgDir();
     return prepBuildOptionsAsync(buildOpts.mode)
-        .then(pxtc.compile)
-        .then(res => {
+        .then((opts) => {
+            compileOptions = opts;
+            return pxtc.compile(opts);
+        })
+        .then((res): Promise<void | pxtc.CompileOptions> => {
             U.iterMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
             reportDiagnostics(res.diagnostics);
@@ -3138,7 +3143,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions) {
                 case BuildOption.Run:
                     return runCoreAsync(res);
                 default:
-                    return null;
+                    return Promise.resolve(compileOptions);
             }
         })
 }
@@ -3221,8 +3226,12 @@ export function downloadTargetTranslationsAsync() {
     return nextFileAsync();
 }
 
-export function buildAsync() {
-    return buildCoreAsync({ mode: BuildOption.JustBuild })
+export function buildAsync(arg?: string) {
+    if (arg && arg.replace(/-*/g, "") === "cloud") {
+        forceCloudBuild = true;
+    }
+
+    return buildCoreAsync({ mode: BuildOption.JustBuild });
 }
 
 export function gendocsAsync(...args: string[]) {
@@ -3367,6 +3376,79 @@ export function extractAsync(filename: string) {
         })
 }
 
+export function preCacheHexAsync() {
+    let trgInfo = readLocalPxTarget();
+
+    if (!trgInfo) {
+        console.log("pxtarget.json not found; make sure you are in a valid PXT target directory");
+        return Promise.resolve();
+    }
+
+    // Extract the target's default project to disk
+    if (!trgInfo.blocksprj) {
+        console.log("Could not find default project 'blocksprj' in pxtarget.json");
+        return Promise.resolve();
+    }
+
+    let projectsRoot = "projects";
+    let projectInitialName = "_precache_hex";
+    let projectName = projectInitialName;
+    let projectPath = path.join(projectsRoot, projectName);
+    let counter = 2;
+
+    while (fs.existsSync(projectPath)) {
+        projectName = projectInitialName + "-" + counter;
+        projectPath = path.join(projectsRoot, projectName);
+        ++counter;
+    }
+
+    nodeutil.mkdirP(projectPath);
+    trgInfo.blocksprj.config.name = projectName;
+    fs.writeFileSync(path.join(projectPath, "pxt.json"), JSON.stringify(trgInfo.blocksprj.config, null, 4));
+    Object.keys(trgInfo.blocksprj.files).forEach((f) => {
+        fs.writeFileSync(path.join(projectPath, f), trgInfo.blocksprj.files[f]);
+    });
+    console.log("default project extracted");
+
+    // Install package dependencies
+    let previousCwd = process.cwd();
+    process.chdir(projectPath);
+
+    return installAsync()
+        .then(() => {
+            console.log("packages installed");
+
+            // Build in the cloud
+            forceCloudBuild = true;
+            return buildAsync();
+        })
+        .then((compileOpts: pxtc.CompileOptions) => {
+            if (!compileOpts) {
+                console.log("Failed to extract HEX image");
+                return;
+            }
+
+            // Place the base HEX image in the hex cache if necessary
+            let sha = compileOpts.extinfo.sha;
+            let hex: string[] = compileOpts.hexinfo.hex;
+            let hexCache = path.join(previousCwd, "hexcache");
+            let hexFile = path.join(hexCache, sha + ".hex");
+
+            process.chdir(previousCwd);
+            nodeutil.mkdirP(hexCache);
+
+            if (fs.existsSync(hexFile)) {
+                console.log("HEX image already in offline cache");
+            } else {
+                fs.writeFileSync(hexFile, hex.join(os.EOL));
+                console.log(`Created HEX image in offline cache: ${hexFile}`);
+            }
+
+            // Clean up temp project
+            nodeutil.deleteFolderRecursive(projectPath);
+        });
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -3394,10 +3476,11 @@ cmd("help     [all]               - display this message", helpAsync)
 cmd("init                         - start new package (library) in current directory", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 
-cmd("build                        - build current package", buildAsync)
+cmd("build    [-cloud]            - build current package, -cloud forces a build in the cloud", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
+cmd("precachehex                  - download hex images of current target for offline compilation", preCacheHexAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs [--locs] [--docs]    - build current package and its docs. --locs produce localization files, --docs produce docs files", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
