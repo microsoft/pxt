@@ -1583,7 +1583,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div>
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
-                        {sandbox ? undefined : <div className="ui item landscape only"></div>}
+                        {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
+                        {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         <div className="ui item wide only projectname">
                             <div className={`ui large input`} data-tooltip={lf("Pick a name for your project") } data-position="bottom left">
                                 <input id="fileNameInput"
