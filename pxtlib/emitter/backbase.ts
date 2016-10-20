@@ -19,21 +19,22 @@ namespace ts.pxtc {
     // ARM, so a mapping will be needed for other processors
 
     // Assumptions:
-    //
-    // - special registers include: pc, lr
-    // - registers are 32-bit
-    // - pop/push receive register sets: { r0, r3, r4 }
-    // - r0 is the current value (from expression evaluation)
-    // - also used (fixed) are r1, r2, r5, r6 
-    // - registers for runtime calls (r0, r1,r2,r3)
-    // - r5 is for captured locals in lambda and r6 for global{}
-    // - arguments passed on stack (user functions)
+    // - registers can hold a pointer (data or code)
+    // - special registers include: sp
+    // - fixed registers are r0, r1, r2, r3, r5, r6 
+    //   - r0 is the current value (from expression evaluation)
+    //   - registers for runtime calls (r0, r1,r2,r3)
+    //   - r5 is for captured locals in lambda
+    //   - r6 for global{}
+    // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
         nop() { return "TBD " }
         reg_gets_imm(reg: string, imm: number) { return "TBD" }
         push(reg: string[]) { return "TBD" }
         pop(reg: string[]) { return "TBD" }
+        proc_setup() { return "TBD" }
+        proc_return() { return "TBD" }
         debugger_hook(lbl: string) { return "TBD" }
         debugger_bkpt(lbl: string) { return "TBD" }
         breakpoint() { return "TBD" }
@@ -41,11 +42,14 @@ namespace ts.pxtc {
         unconditional_branch(lbl: string) { return "TBD" }
         beq(lbl: string) { return "TBD" }
         bne(lbl: string) { return "TBD" }
-        cmp(o1: string, o2: string) { return "TBD" }
+        cmp(reg1: string, reg: string) { return "TBD" }
+        cmp_zero(reg1: string) { return "TBD" }
         // load_reg_src_off is load/store indirect
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
         // str?  - true=Store/false=Load
+        // src - can range over
+
         load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
         rt_call(name: string, r0: string, r1: string) { return "TBD"; }
         call_lbl(lbl: string) { return "TBD" }
@@ -55,9 +59,17 @@ namespace ts.pxtc {
         lambda_prologue() { return "TBD" }
         lambda_epilogue() { return "TBD" }
         load_ptr(lbl: string, reg: string) { return "TBD" }
-        adds(reg: string, imm: number) { return "TBD" }
-        lsls(reg: string, imm: number) { return "TBD" }
-        negs(reg: string) { return "TBD" }
+
+        emit_int(v: number, reg: string) { return "TBD" }
+    }
+
+    // helper for emit_int
+    export function numBytes(n: number) {
+        let v = 0
+        for (let q = n; q > 0; q >>>= 8) {
+            v++
+        }
+        return v || 1
     }
 
     export class ProctoAssembler {
@@ -104,7 +116,7 @@ ${baseLabel}:
     @stackmark func
     @stackmark args
 `)
-            this.write(this.t.push(["lr"]))
+            this.write(this.t.proc_setup())
 
             // create a new function for later use by hex file generation
             this.proc.fillDebugInfo = th => {
@@ -195,11 +207,9 @@ ${baseLabel}:
             assert(0 <= numlocals && numlocals < 127);
             if (numlocals > 0)
                 this.write(this.t.pop_locals(numlocals))
-            this.write(this.t.pop(["pc"]))
+            this.write(this.t.proc_return())
             this.write("@stackempty func");
             this.write("@stackempty args")
-
-            return this.resText
         }
 
         private mkLbl(root: string) {
@@ -240,10 +250,11 @@ ${baseLabel}:
                 } else {
                     this.emitExpr(jmp.expr)
 
+                    // TODO: remove ARM-specific code
                     if (jmp.expr.exprKind == ir.EK.RuntimeCall && jmp.expr.data === "thumb::subs") {
                         // no cmp required
                     } else {
-                        this.write(this.t.cmp("r0", "#0"))
+                        this.write(this.t.cmp_zero("r0"))
                     }
                 }
 
@@ -279,10 +290,10 @@ ${baseLabel}:
         private emitExprInto(e: ir.Expr, reg: string) {
             switch (e.exprKind) {
                 case ir.EK.NumberLiteral:
-                    if (e.data === true) this.emitInt(1, reg);
-                    else if (e.data === false) this.emitInt(0, reg);
-                    else if (e.data === null) this.emitInt(0, reg);
-                    else if (typeof e.data == "number") this.emitInt(e.data, reg)
+                    if (e.data === true) this.write(this.t.emit_int(1, reg))
+                    else if (e.data === false) this.write(this.t.emit_int(0, reg))
+                    else if (e.data === null) this.write(this.t.emit_int(0, reg))
+                    else if (typeof e.data == "number") this.write(this.t.emit_int(e.data, reg))
                     else oops();
                     break;
                 case ir.EK.PointerLiteral:
@@ -309,7 +320,7 @@ ${baseLabel}:
                         let inf = this.bitSizeInfo(cell.bitSize)
                         let off = "#" + cell.index
                         if (inf.needsSignExt || cell.index >= inf.immLimit) {
-                            this.emitInt(cell.index, reg)
+                            this.write(this.t.emit_int(cell.index, reg))
                             off = reg
                         }
                         this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
@@ -454,9 +465,9 @@ ${baseLabel}:
                     let isSet = /Set/.test(procid.mapMethod)
                     assert(isSet == (topExpr.args.length == 2))
                     assert(!isSet == (topExpr.args.length == 1))
-                    this.emitInt(procid.mapIdx, "r1")
+                    this.write(this.t.emit_int(procid.mapIdx, "r1"))
                     if (isSet)
-                        this.emitInt(procid.ifaceIndex, "r2")
+                        this.write(this.t.emit_int(procid.ifaceIndex, "r2"))
                     this.write(lbl + ":")
                     this.emitHelper(this.t.vcall(procid.mapMethod, isSet, vtableShift))
                 } else {
@@ -470,7 +481,7 @@ ${baseLabel}:
                     if (effIdx <= 31) {
                         this.write(this.t.load_reg_src_off("r0", "r0", effIdx.toString(), true) + " ; ld-method")
                     } else {
-                        this.emitInt(effIdx * 4, "r1")
+                        this.write(this.t.emit_int(effIdx * 4, "r1"))
                         this.write(this.t.load_reg_src_off("r0", "r0", "r1") + " ; ld-method")
                     }
 
@@ -505,7 +516,7 @@ ${baseLabel}:
                         let inf = this.bitSizeInfo(cell.bitSize)
                         let off = "#" + cell.index
                         if (cell.index >= inf.immLimit) {
-                            this.emitInt(cell.index, "r1")
+                            this.write(this.t.emit_int(cell.index, "r1"))
                             off = "r1"
                         }
                         this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
@@ -551,9 +562,10 @@ ${baseLabel}:
                 this.write(".themain:")
             let parms = this.proc.args.map(a => a.def)
             if (parms.length >= 1)
-                this.write(this.t.push(["r1", "r5", "r6", "lr"]))
+                this.write(this.t.push(["r1", "r5", "r6"]))
             else
-                this.write(this.t.push(["r5", "r6", "lr"]))
+                this.write(this.t.push(["r5", "r6"]))
+            this.write(this.t.proc_setup())
 
             parms.forEach((_, i) => {
                 if (i >= 3)
@@ -579,7 +591,8 @@ ${baseLabel}:
 
             if (parms.length)
                 this.write(this.t.pop_locals(parms.length))
-            this.write(this.t.pop(["r5", "r6", "pc"]))
+            this.write(this.t.pop(["r5", "r6"]))
+            this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }
 
@@ -587,81 +600,6 @@ ${baseLabel}:
             let inf = hex.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
             this.write(this.t.call_lbl(name) + " ; *" + inf.type + inf.args + " (raw)")
-        }
-
-        private numBytes(n: number) {
-            let v = 0
-            for (let q = n; q > 0; q >>>= 8) {
-                v++
-            }
-            return v || 1
-        }
-
-        private emitInt(v: number, reg: string) {
-            let movWritten = false
-            let write = this.write
-            let t = this.t
-
-            function writeMov(v: number) {
-                assert(0 <= v && v <= 255)
-                if (movWritten) {
-                    if (v)
-                        write(t.adds(reg, v))
-                } else
-                    write(t.reg_gets_imm(reg, v))
-                movWritten = true
-            }
-
-            function shift(v = 8) {
-                write(t.lsls(reg, v))
-            }
-
-            assert(v != null);
-
-            let n = Math.floor(v)
-            let isNeg = false
-            if (n < 0) {
-                isNeg = true
-                n = -n
-            }
-
-            let numShift = 0
-            if (n > 0xff) {
-                let shifted = n
-                while ((shifted & 1) == 0) {
-                    shifted >>>= 1
-                    numShift++
-                }
-                if (this.numBytes(shifted) < this.numBytes(n)) {
-                    n = shifted
-                } else {
-                    numShift = 0
-                }
-            }
-
-            switch (this.numBytes(n)) {
-                case 4:
-                    writeMov((n >>> 24) & 0xff)
-                    shift()
-                case 3:
-                    writeMov((n >>> 16) & 0xff)
-                    shift()
-                case 2:
-                    writeMov((n >>> 8) & 0xff)
-                    shift()
-                case 1:
-                    writeMov(n & 0xff)
-                    break
-                default:
-                    oops()
-            }
-
-            if (numShift)
-                shift(numShift)
-
-            if (isNeg) {
-                write(t.negs(reg))
-            }
         }
     }
 }

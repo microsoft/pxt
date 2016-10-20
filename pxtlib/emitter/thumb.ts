@@ -1,3 +1,5 @@
+/// <reference path="assembler.ts"/>
+
 /* Docs:
  *
  * Thumb 16-bit Instruction Set Quick Reference Card
@@ -177,6 +179,10 @@ namespace ts.pxtc.thumb {
         }
 
 
+        public wordSize() {
+            return 4
+        }
+
         public is32bit(i: assembler.Instruction) {
             return i.name == "bl" || i.name == "bb";
         }
@@ -283,6 +289,15 @@ namespace ts.pxtc.thumb {
                 // RULE: push {rX}; movs rY, #V; pop {rX} -> movs rY, #V (when X != Y)
                 ln.update("")
                 lnNext2.update("")
+            } else if ((lnop == "pop" || lnop == "push") && lnNext.getOp() == lnop) {
+                let sr = singleReg(lnNext)
+                if ((lnop == "pop" && sr == this.registerNo("pc")) || (lnop == "push" && sr == this.registerNo("lr"))) {
+                    let close = ln.words.indexOf("}")
+                    ln.words[close] = (lnop == "pop") ? ", pc" : ", lr"
+                    ln.words.push("}")
+                    ln.update(ln.words.join(""))
+                    lnNext.update("")
+                }
             }
         }
 

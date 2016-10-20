@@ -1,24 +1,22 @@
+/// <reference path="assembler.ts"/>
+
 /* Docs:
     *
     * Atmel AVR 8-bit Instruction Set Manual
     *  http://www.atmel.com/Images/Atmel-0856-AVR-Instruction-Set-Manual.pdf
     * 
-
-__SP_H__ 
- 
-Stack pointer high byte at address 0x3E 
- 
-
-__SP_L__ 
- 
-Stack pointer low byte at address 0x3D 
- 
-
+    * Common part for Arduino and Circuit Playground
+    * http://www.atmel.com/Images/Atmel-7766-8-bit-AVR-ATmega16U4-32U4_Datasheet.pdf
+    *
     */
 
 namespace ts.pxtc.avr {
 
     export class AVRProcessor extends assembler.EncodersInstructions {
+
+        public wordSize() {
+            return 2
+        }
 
         public is32bit(i: assembler.Instruction) {
             return i.is32bit;
@@ -123,7 +121,7 @@ namespace ts.pxtc.avr {
             this.addEnc("$i8", "#0-63", v => this.inrange(63, v, v & 0x7 | (v & 0x18) << 7) | (v & 0x20) << 7)
             this.addEnc("$i9", "#0-7", v => this.inrange(7, v, v))
 
-            // TODO: revisit labelling
+            // labels
             this.addEnc("$la", "LABEL", v => this.inrange(255, v >> 1, v >> 1)).isWordAligned = true;
             this.addEnc("$lb", "LABEL", v => this.inrangeSigned(127, v >> 1, v >> 1) << 3)
             this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(2047, v >> 1, v >> 1))
@@ -285,6 +283,14 @@ namespace ts.pxtc.avr {
 
     export function testAVR() {
         let avr = new AVRProcessor();
+
+        assembler.expect(avr,
+            "2411       eor	r1, r1 \n" +
+            "be1f       out	0x3f, r1 \n" +
+            "efcf       ldi	r28, 0xFF \n" +
+            "e0da       ldi	r29, 0x0A \n" +
+            "bfde       out	0x3e, r29 \n" +
+            "bfcd      	out	0x3d, r28 \n")
 
         assembler.expect(avr,
             "0c00      lsl     r0\n" +
