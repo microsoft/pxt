@@ -149,7 +149,7 @@ namespace ts.pxtc {
             let prelude = ""
 
             function spill_it(new_off: number) {
-                prelude += this.reg_gets_imm("r1",new_off) + "\n"
+                prelude += this.reg_gets_imm("r1", new_off) + "\n"
                 if (z_reg == "Y")
                     prelude += "movw r30, r28\n"
                 prelude += `add r30, ${this.rmap_lo["r1"]}\nadc r31, ${this.rmap_hi["r1"]}\n`
@@ -175,7 +175,7 @@ namespace ts.pxtc {
                     // word false means we have #integer
                     new_off = parseInt(off.slice(1))
                 }
-                if (0 <= new_off && new_off <=63) {
+                if (0 <= new_off && new_off <= 63) {
                     off = new_off.toString()
                 } else {
                     spill_it(new_off)
@@ -188,7 +188,7 @@ namespace ts.pxtc {
             } else {
                 // args@, locals@
                 let at_index = off.indexOf("@")
-                assert(at_index >=0)
+                assert(at_index >= 0)
                 let slot = parseInt(off.slice(at_index + 1)) * 2
                 if (!(0 <= slot && slot <= 63)) {
                     spill_it(slot)
@@ -238,7 +238,7 @@ namespace ts.pxtc {
 
         load_ptr(lbl: string, reg: string) {
             assert(!!lbl)
-            return  `ldi ${this.rmap_lo[reg]}, ${lbl}@lo\nldi ${this.rmap_hi[reg]}, ${lbl}@hi`
+            return `ldi ${this.rmap_lo[reg]}, ${lbl}@lo\nldi ${this.rmap_hi[reg]}, ${lbl}@hi`
         }
 
         emit_int(v: number, reg: string) {
