@@ -1989,6 +1989,7 @@ export interface BuildEngine {
     patchHexInfo: (extInfo: pxtc.ExtensionInfo) => pxtc.HexInfo;
     buildPath: string;
     moduleConfig: string;
+    deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
 }
 
 // abstract over C++ runtime target (currently the DAL)
@@ -2117,7 +2118,8 @@ const buildEngines: Map<BuildEngine> = {
         setPlatformAsync: () => Promise.resolve(),
         patchHexInfo: patchPioHexInfo,
         buildPath: "built/pio",
-        moduleConfig: "platformio.ini"
+        moduleConfig: "platformio.ini",
+        deployAsync: platformioDeployAsync,
     }
 }
 
@@ -2133,12 +2135,27 @@ function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     }
 }
 
-function patchPioHexInfo(extInfo: pxtc.ExtensionInfo) {
+function pioFirmwareHex() {
     let buildEngine = buildEngines['platformio']
-    let hexPath = buildEngine.buildPath + "/.pioenvs/myenv/firmware.hex"
+    return buildEngine.buildPath + "/.pioenvs/myenv/firmware.hex"
+}
+
+function patchPioHexInfo(extInfo: pxtc.ExtensionInfo) {
     return {
-        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+        hex: fs.readFileSync(pioFirmwareHex(), "utf8").split(/\r?\n/)
     }
+}
+
+function platformioDeployAsync(r: pxtc.CompileResult) {
+    // TODO maybe platformio has some option to do this?
+    let buildEngine = buildEngines['platformio']
+    let prevHex = fs.readFileSync(pioFirmwareHex())
+    fs.writeFileSync(pioFirmwareHex(), r.outfiles[pxtc.BINARY_HEX])
+    return runPlatformioAsync(["run", "--target", "upload", "-v"])
+        .finally(() => {
+            console.log('Restoring ' + pioFirmwareHex())
+            fs.writeFileSync(pioFirmwareHex(), prevHex)
+        })
 }
 
 function buildHexAsync(buildEngine: BuildEngine, extInfo: pxtc.ExtensionInfo) {
@@ -3614,6 +3631,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     if (cmd != "buildtarget") {
         initTargetCommands();
+    }
+
+    if (!pxt.commands.deployCoreAsync && thisBuild.deployAsync) {
+        pxt.commands.deployCoreAsync = thisBuild.deployAsync
     }
 
     if (!cmd) {

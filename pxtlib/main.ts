@@ -494,7 +494,7 @@ namespace pxt {
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly ? null : this.filesToBePublishedAsync(true))
+                .then(() => this.config.binaryonly || appTarget.compile.shortPointers ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
                         files = U.mapMap(files, upgradeFile);

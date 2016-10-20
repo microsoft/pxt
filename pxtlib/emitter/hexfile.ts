@@ -108,6 +108,9 @@ namespace ts.pxtc {
                             }
                             bytecodeStartAddr = lastAddr + 16
                         }
+                    else {
+                        bytecodeStartAddr = lastAddr + bytes[0]
+                    }
 
                     bytecodeStartIdx = lastIdx + 1
                     let pageSize = flashCodeAlign()
