@@ -694,7 +694,7 @@ html {
     }
 }
 
-@media only screen and (max-height:42.5em) {
+@media only screen and (max-height:45em) {
     .ui.tall.only {
         display:none !important;
     }
