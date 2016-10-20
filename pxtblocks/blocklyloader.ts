@@ -734,13 +734,16 @@ namespace pxt.blocks {
         }
 
         // add trash icon to toolbox
-        let trashDiv = document.createElement('div');
-        trashDiv.id = "blocklyTrashIcon";
-        trashDiv.style.opacity = '0';
-        let trashIcon = document.createElement('i');
-        trashIcon.className = 'trash icon';
-        trashDiv.appendChild(trashIcon);
-        $('.blocklyToolboxDiv').append(trashDiv);
+        if (!$('#blocklyTrashIcon').length) {
+            let trashDiv = document.createElement('div');
+            trashDiv.id = "blocklyTrashIcon";
+            trashDiv.style.opacity = '0';
+            trashDiv.style.display = 'none';
+            let trashIcon = document.createElement('i');
+            trashIcon.className = 'trash icon';
+            trashDiv.appendChild(trashIcon);
+            $('.blocklyToolboxDiv').append(trashDiv);
+        }
     }
 
     function categoryElement(tb: Element, name: string): Element {
