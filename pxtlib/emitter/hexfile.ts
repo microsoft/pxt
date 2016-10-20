@@ -403,12 +403,10 @@ ${hex.hexPrelude()}
     .space 14 ; reserved
 `
         let snippets: AssemblerSnippets = null;
-        if (opts.target.nativeType.toLowerCase() == "thumb")
-            snippets = new ThumbSnippets()
-        else if (opts.target.nativeType.toLowerCase() == "avr")
+        if (opts.target.nativeType.toLowerCase() == "avr")
             snippets = new AVRSnippets()
         else
-            oops()
+            snippets = new ThumbSnippets()
         bin.procs.forEach(p => {
             let p2a = new ProctoAssembler(snippets, bin, p)
             asmsource += "\n" + p2a.getAssembly() + "\n"
@@ -452,12 +450,10 @@ ${hex.hexPrelude()}
 
     function mkProcessorFile(nativeType: string) {
         let processor: assembler.AbstractProcessor = null
-        if (nativeType.toLowerCase() == "thumb")
-            processor = new thumb.ThumbProcessor()
-        else if (nativeType.toLowerCase() == "avr")
+        if (nativeType.toLowerCase() == "avr")
             processor = new avr.AVRProcessor()
         else
-            oops()
+            processor = new thumb.ThumbProcessor()
 
         processor.testAssembler(); // just in case
 
