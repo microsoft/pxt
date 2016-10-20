@@ -85,29 +85,45 @@ namespace ts.pxtc {
             // TODO: split immediate and load into register pair (check this is correct)
             let imm_lo = imm & 0xff
             let imm_hi = (imm & 0xff00) >> 8
-            return `ldi ${this.rmap_lo[reg]}, #${imm_lo}\nldi ${this.rmap_hi[reg]}, #${imm_hi}`
+            return `
+    ldi ${this.rmap_lo[reg]}, #${imm_lo}
+    ldi ${this.rmap_hi[reg]}, #${imm_hi}
+    `
         }
         push(regs: string[]) {
             let res = ""
             regs.forEach(r => {
-                res = res + `push ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
+                res = res + `
+    push ${this.rmap_lo[r]}
+    push ${this.rmap_hi[r]}
+    `
             });
             return res
         }
         pop(regs: string[]) {
             let res = ""
             regs.forEach(r => {
-                res = res + `pop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
+                res = res + `
+    pop ${this.rmap_hi[r]}
+    pop ${this.rmap_lo[r]}
+    `
             });
             return res
         }
         proc_setup() {
             // push the frame pointer
-            return "push r28\npush r29"
+            return `
+    push r28
+    push r29
+    `
         }
         proc_return() {
             // pop frame pointer and return
-            return "pop r29\npush r28\nret"
+            return `
+    pop r29
+    pop r28
+    ret
+    `
         }
         debugger_hook(lbl: string) { return "nop" }
         debugger_bkpt(lbl: string) { return "nop" }
@@ -120,7 +136,8 @@ namespace ts.pxtc {
     in	r29, 0x3e
     sbiw	r28, #2*${n}
     out	0x3d, r28
-    out	0x3e, r29`
+    out	0x3e, r29
+    `
         }
         unconditional_branch(lbl: string) { return "jmp " + lbl }
         beq(lbl: string) { return "breq " + lbl }
@@ -131,12 +148,18 @@ namespace ts.pxtc {
             let reg1_hi = this.rmap_hi[reg1]
             let reg2_lo = this.rmap_lo[reg2]
             let reg2_hi = this.rmap_hi[reg2]
-            return `cp ${reg1_lo}, ${reg2_lo}\ncpc ${reg1_hi}, ${reg2_hi}`
+            return `
+    cp ${reg1_lo}, ${reg2_lo}
+    cpc ${reg1_hi}, ${reg2_hi}
+    `
         }
         cmp_zero(reg: string) {
             let reg_lo = this.rmap_lo[reg]
             let reg_hi = this.rmap_hi[reg]
-            return `cp ${reg_lo}, r1\ncpc ${reg_hi}, r1`
+            return `
+    cp ${reg_lo}, r1
+    cpc ${reg_hi}, r1
+    `
         }
 
         // load_reg_src_off is load/store indirect
@@ -218,16 +241,21 @@ namespace ts.pxtc {
     add	r25, r0
     mul	r21, r22
     add	r25, r0
-    eor	r1, r1`
+    eor	r1, r1
+    `
             } else {
-                return `${this.inst_lo[name]} r18, r20\n${this.inst_hi[name]} r19, r21\n`
+                return `
+    ${this.inst_lo[name]} r18, r20
+    ${this.inst_hi[name]} r19, r21
+    `
             }
         }
         call_lbl(lbl: string) { return "call " + lbl }
         call_reg(reg: string) {
             return `
     movw r30, ${this.rmap_lo[reg]}
-    icall`
+    icall
+    `
         }
 
         // no virtuals for now
@@ -235,16 +263,24 @@ namespace ts.pxtc {
         prologue_vtable(arg_index: number, vtableShift: number) { assert(false); return "" }
 
         lambda_prologue() {
-            return "@stackmark args\n" + this.proc_setup()  + "\nmovw r26, r24"
+            return "@stackmark args\n" + this.proc_setup() + "\nmovw r26, r24"
         }
 
         lambda_epilogue() {
-            return "jmp pxtrt::getGlobalsPtr\nmovw r30, r24\n" + this.proc_return() + "\n@stackempty args"
+            return `
+    jmp pxtrt::getGlobalsPtr
+    movw r30, r24
+    ${this.proc_return()}
+    @stackempty args
+    `
         }
 
         load_ptr(lbl: string, reg: string) {
             assert(!!lbl)
-            return `ldi ${this.rmap_lo[reg]}, ${lbl}@lo\nldi ${this.rmap_hi[reg]}, ${lbl}@hi`
+            return `
+    ldi ${this.rmap_lo[reg]}, ${lbl}@lo
+    ldi ${this.rmap_hi[reg]}, ${lbl}@hi
+    `
         }
 
         emit_int(v: number, reg: string) {
