@@ -105,7 +105,7 @@ function saveConfig() {
 }
 
 function initConfig() {
-    let atok: string = process.env["CLOUD_ACCESS_TOKEN"]
+    let atok: string = process.env["PXT_ACCESS_TOKEN"] || process.env["CLOUD_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
         globalConfig = config
@@ -752,6 +752,7 @@ interface CommitInfo {
     tree: GitTree;
     parents: string[];
     message: string;
+    target: string;
 }
 
 function uploadFileName(p: string) {
@@ -804,16 +805,103 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
             let data: CommitInfo = {
                 message: "Upload from " + info.commitUrl,
                 parents: [],
+                target: pxt.appTarget.id,
                 tree: roottree,
             }
             console.log("Creating commit...")
-            fs.writeFileSync("data.json", JSON.stringify(data, null, 1))
             return Cloud.privatePostAsync("upload/commit", data)
         })
         .then(res => {
             console.log("Commit:", res)
+            return uploadToGitRepoAsync(opts, uplReqs)
         })
+}
 
+function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+    let label = opts.label
+    if (!label) return Promise.resolve()
+    let tid = pxt.appTarget.id
+    if (U.startsWith(label, tid + "/"))
+        label = label.slice(tid.length + 1)
+    let repoUrl = process.env["PXT_RELEASE_REPO"]
+    if (!repoUrl) {
+        console.log("no $PXT_RELEASE_REPO variable; not uploading label " + label)
+        return Promise.resolve()
+    }
+    nodeutil.mkdirP("tmp")
+    let trgPath = "tmp/releases"
+    let mm = /^https:\/\/([^:]+):([^@]+)@([^\/]+)(.*)/.exec(repoUrl)
+    if (!mm) {
+        U.userError("wrong format for $PXT_RELEASE_REPO")
+    }
+
+    let user = mm[1]
+    let pass = mm[2]
+    let host = mm[3]
+    let netRcLine = `machine ${host} login ${user} password ${pass}\n`
+    repoUrl = `https://${user}@${host}${mm[4]}`
+
+    let homePath = process.env["HOME"] || process.env["UserProfile"]
+    let netRcPath = path.join(homePath, /^win/.test(process.platform) ? "_netrc" : ".netrc")
+    let prevNetRc = fs.existsSync(netRcPath) ? fs.readFileSync(netRcPath, "utf8") : null
+    let newNetRc = prevNetRc ? prevNetRc + "\n" + netRcLine : netRcLine
+    console.log("Adding credentials to " + netRcPath)
+    fs.writeFileSync(netRcPath, newNetRc, {
+        encoding: "utf8",
+        mode: '600'
+    })
+
+    let cred = ["-c", "credential.helper="]
+    let gitAsync = (args: string[]) => spawnAsync({
+        cmd: "git",
+        cwd: trgPath,
+        args: cred.concat(args)
+    })
+    let info = travisInfo()
+    return Promise.resolve()
+        .then(() => {
+            if (fs.existsSync(trgPath)) {
+                let cfg = fs.readFileSync(trgPath + "/.git/config", "utf8")
+                if (cfg.indexOf("url = " + repoUrl) > 0) {
+                    return gitAsync(["pull", "--depth=3"])
+                } else {
+                    throw U.userError(trgPath + " already exists; please remove it")
+                }
+            } else {
+                return spawnAsync({
+                    cmd: "git",
+                    args: cred.concat(["clone", "--depth", "3", repoUrl, trgPath]),
+                    cwd: "."
+                })
+            }
+        })
+        .then(() => {
+            for (let u of U.values(uplReqs)) {
+                let fpath = path.join(trgPath, u.filename)
+                nodeutil.mkdirP(path.dirname(fpath))
+                fs.writeFileSync(fpath, u.content, u.encoding)
+            }
+            // make sure there's always something to commit
+            fs.writeFileSync(trgPath + "/stamp.txt", new Date().toString())
+        })
+        .then(() => gitAsync(["add", "."]))
+        .then(() => gitAsync(["commit", "-m", "Release " + label + " from " + info.commitUrl]))
+        .then(() => gitAsync(["tag", label]))
+        .then(() => gitAsync(["push"]))
+        .then(() => gitAsync(["push", "--tags"]))
+        .then(() => {
+        })
+        .finally(() => {
+            if (prevNetRc == null) {
+                console.log("Removing " + netRcPath)
+                fs.unlinkSync(netRcPath)
+            } else {
+                console.log("Restoring " + netRcPath)
+                fs.writeFileSync(netRcPath, prevNetRc, {
+                    mode: '600'
+                })
+            }
+        })
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
