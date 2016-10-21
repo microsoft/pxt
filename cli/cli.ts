@@ -3493,6 +3493,10 @@ export function uploadDocsAsync(...args: string[]): Promise<void> {
     let info = travisInfo()
     if (info.tag || (info.branch && info.branch != "master"))
         return Promise.resolve()
+    if (isNewBackend()) {
+        console.log("No doc upload on new backend.")
+        return Promise.resolve()
+    }
     let cfg = readLocalPxTarget()
     uploader.saveThemeJson = () => saveThemeJson(cfg)
     return uploader.uploadDocsAsync(...args)
