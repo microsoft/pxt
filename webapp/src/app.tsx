@@ -1829,7 +1829,8 @@ function enableMixPanel() {
     if (!mp) return;
 
     mp.register({
-        sandbox: !!sandbox
+        sandbox: !!sandbox,
+        content: "editor"
     });
 
     const report = pxt.reportError;
