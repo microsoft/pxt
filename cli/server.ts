@@ -225,17 +225,16 @@ function getCachedHexAsync(sha: string): Promise<any> {
         return Promise.resolve();
     }
 
-    let hexPath = path.resolve(localHexDir, sha);
-    let hexFile = hexPath + ".hex";
+    let hexFile = path.resolve(localHexDir, sha + ".hex");
 
     return existsAsync(hexFile)
         .then((results) => {
             if (!results) {
-                console.log(`offline HEX not found: ${hexPath}`);
+                console.log(`offline HEX not found: ${hexFile}`);
                 return Promise.resolve(null);
             }
             
-            console.log(`serving HEX from offline cache: ${hexPath}`);
+            console.log(`serving HEX from offline cache: ${hexFile}`);
             return readFileAsync(hexFile)
                 .then((fileContent) => {
                     return {

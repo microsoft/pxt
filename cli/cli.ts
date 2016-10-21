@@ -550,7 +550,8 @@ function travisAsync() {
             .then(() => {
                 let trg = readLocalPxTarget()
                 if (rel)
-                    return uploadTargetAsync(trg.id + "/" + rel)
+                    return preCacheHexAsync()
+                        .then(() => uploadTargetAsync(trg.id + "/" + rel))
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
                         .then(() => uploadTargetTranslationsAsync())
                 else
@@ -3446,6 +3447,11 @@ export function preCacheHexAsync() {
 
             // Clean up temp project
             nodeutil.deleteFolderRecursive(projectPath);
+        })
+        .finally(() => {
+            if (process.cwd() !== previousCwd) {
+                process.chdir(previousCwd);
+            }
         });
 }
 
