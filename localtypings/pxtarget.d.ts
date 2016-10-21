@@ -113,6 +113,7 @@ declare namespace pxt {
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
+        downloadClass?: string;
         invertedMenu?: boolean;
         locales?: Map<AppTheme>;
         cardLogo?: string;
@@ -122,7 +123,7 @@ declare namespace pxt {
         githubUrl?: string;
         usbHelp?: SpecializedResource[];
         usbDocs?: string
-        browserSupport?: SpecializedResource[];
+        browserSupport?: SpecializedResource[];        
     }
 
     interface DocMenuEntry {

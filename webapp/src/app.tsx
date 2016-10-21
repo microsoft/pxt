@@ -1561,7 +1561,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
-        const downloadClass = "green download";
+        const downloadClass = targetTheme.downloadClass || "green";
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
