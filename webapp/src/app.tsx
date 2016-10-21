@@ -1076,7 +1076,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     importHex(data: pxt.cpp.HexFile) {
-        let targetId = pxt.appTarget.id;
+        const targetId = pxt.appTarget.id;
+        const forkid = pxt.appTarget.forkof;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
             return;
@@ -1098,7 +1099,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.textEditor.formatCode()
                 })
             return;
-        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId) {
+        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
+            || (!forkid && Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
+            || (forkid && data.meta.cloudId == pxt.CLOUD_ID + forkid) // trying to load main target file into white-label
+        ) {
             pxt.debug("importing project")
             let h: InstallHeader = {
                 target: targetId,
@@ -1115,6 +1119,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
 
         core.warningNotification(lf("Sorry, we could not import this project."))
+        pxt.tickEvent("warning.importfailed");
     }
 
     importProjectFile(file: File) {
