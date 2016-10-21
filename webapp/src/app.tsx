@@ -822,7 +822,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.blocksEditor = new blocks.Editor(this);
 
         let changeHandler = () => {
-            if (this.editorFile) this.editorFile.markDirty();
+            if (this.editorFile) {
+                if (this.editorFile.inSyncWithEditor) 
+                    pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
+                this.editorFile.markDirty();
+            }
             this.editorChangeHandler();
         }
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
@@ -1394,10 +1398,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
-        pxt.tickEvent(opts.background ? "autorun" :
-            opts.debug ? "debug" : "run", {
-                editor: this.editor ? this.editor.getId().replace(/Editor$/, '') : undefined
-            });
+        const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
+        if (opts.background) pxt.tickActivity("autorun", "autorun." + editorId);
+        else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
         if (opts.background) {
             if (!simulator.isDirty()) {
@@ -1832,7 +1835,8 @@ function enableMixPanel() {
     if (!mp) return;
 
     mp.register({
-        sandbox: !!sandbox
+        sandbox: !!sandbox,
+        content: "editor"
     });
 
     const report = pxt.reportError;
