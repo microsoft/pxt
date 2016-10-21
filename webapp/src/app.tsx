@@ -1575,7 +1575,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
-                    <div className={`ui borderless ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+                    <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
                             <span id="logo" className="ui item logo">
                                 {targetTheme.logo || targetTheme.portraitLogo
