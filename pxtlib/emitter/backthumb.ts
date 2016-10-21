@@ -9,8 +9,8 @@ namespace ts.pxtc {
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
-        push(regs: string[]) { return "push {" + regs.join(", ") + "}"}
-        pop(regs: string[]) { return "pop {" + regs.join(", ") + "}"}
+        push_fixed(regs: string[]) { return "push {" + regs.join(", ") + "}"}
+        pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}"}
         proc_setup() { return "push {lr}" }
         proc_return() { return "pop {pc}" }
         debugger_hook(lbl: string) {
@@ -34,7 +34,7 @@ ${lbl}:`
         breakpoint() {
             return "bkpt 1"
         }
-
+        push_local(reg: string) { return `push {${reg}}` }
         pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
         unconditional_branch(lbl: string) { return "bb " + lbl; }
         beq(lbl: string) { return "beq " + lbl }

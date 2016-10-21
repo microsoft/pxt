@@ -82,7 +82,6 @@ namespace ts.pxtc {
     export class AVRSnippets extends AssemblerSnippets {
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) {
-            // TODO: split immediate and load into register pair (check this is correct)
             let imm_lo = imm & 0xff
             let imm_hi = (imm & 0xff00) >> 8
             return `
@@ -90,7 +89,8 @@ namespace ts.pxtc {
     ldi ${this.rmap_hi[reg]}, #${imm_hi}
     `
         }
-        push(regs: string[]) {
+        // TODO: when to adjust the FP?
+        push_fixed(regs: string[]) {
             let res = ""
             regs.forEach(r => {
                 res = res + `
@@ -100,7 +100,7 @@ namespace ts.pxtc {
             });
             return res
         }
-        pop(regs: string[]) {
+        pop_fixed(regs: string[]) {
             let res = ""
             regs.forEach(r => {
                 res = res + `
@@ -128,6 +128,12 @@ namespace ts.pxtc {
         debugger_hook(lbl: string) { return "nop" }
         debugger_bkpt(lbl: string) { return "nop" }
         breakpoint() { return "nop" }
+        push_local(reg: string) {
+            return `
+    push ${this.rmap_lo[reg]}
+    push ${this.rmap_hi[reg]}
+            `
+        }
         pop_locals(n: number) {
             // note: updates both the SP and FP
             // could make this into a call???

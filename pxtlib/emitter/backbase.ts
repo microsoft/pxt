@@ -31,13 +31,15 @@ namespace ts.pxtc {
     export abstract class AssemblerSnippets {
         nop() { return "TBD " }
         reg_gets_imm(reg: string, imm: number) { return "TBD" }
-        push(reg: string[]) { return "TBD" }
-        pop(reg: string[]) { return "TBD" }
+        // Registers are stored on the stack in numerical order 
+        push_fixed(reg: string[]) { return "TBD" }
+        pop_fixed(reg: string[]) { return "TBD" }
         proc_setup() { return "TBD" }
         proc_return() { return "TBD" }
         debugger_hook(lbl: string) { return "TBD" }
         debugger_bkpt(lbl: string) { return "TBD" }
         breakpoint() { return "TBD" }
+        push_local(reg: string) { return "TBD" }
         pop_locals(n: number) { return "TBD" }
         unconditional_branch(lbl: string) { return "TBD" }
         beq(lbl: string) { return "TBD" }
@@ -154,7 +156,7 @@ ${baseLabel}:
             if (numlocals > 0)
                 this.write(this.t.reg_gets_imm("r0", 0));
             this.proc.locals.forEach(l => {
-                this.write(this.t.push(["r0"]) + " ;loc")
+                this.write(this.t.push_local("r0") + " ;loc")
             })
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
@@ -307,7 +309,7 @@ ${baseLabel}:
                     let idx = this.exprStack.indexOf(arg)
                     U.assert(idx >= 0)
                     if (idx == 0 && arg.totalUses == arg.currUses) {
-                        this.write(this.t.pop([reg]) + `; tmpref @${this.exprStack.length}`)
+                        this.write(this.t.pop_fixed([reg]) + `; tmpref @${this.exprStack.length}`)
                         this.exprStack.shift()
                         this.clearStack()
                     } else {
@@ -399,7 +401,7 @@ ${baseLabel}:
             else {
                 this.emitExpr(arg)
                 this.exprStack.unshift(arg)
-                this.write(this.t.push(["r0"]) + "; tmpstore @" + this.exprStack.length)
+                this.write(this.t.push_fixed(["r0"]) + "; tmpstore @" + this.exprStack.length)
             }
         }
 
@@ -446,7 +448,7 @@ ${baseLabel}:
             //console.log("PROCCALL", topExpr.toString())
             let argStmts = topExpr.args.map((a, i) => {
                 this.emitExpr(a)
-                this.write(this.t.push(["r0"]) + " ; proc-arg")
+                this.write(this.t.push_fixed(["r0"]) + " ; proc-arg")
                 a.totalUses = 1
                 a.currUses = 0
                 this.exprStack.unshift(a)
@@ -561,17 +563,16 @@ ${baseLabel}:
             if (isMain)
                 this.write(".themain:")
             let parms = this.proc.args.map(a => a.def)
-            if (parms.length >= 1)
-                this.write(this.t.push(["r1", "r5", "r6"]))
-            else
-                this.write(this.t.push(["r5", "r6"]))
             this.write(this.t.proc_setup())
+            this.write(this.t.push_fixed(["r5", "r6"]))
+            if (parms.length >= 1)
+                this.write(this.t.push_local("r1"))
 
             parms.forEach((_, i) => {
                 if (i >= 3)
                     U.userError(U.lf("only up to three parameters supported in lambdas"))
                 if (i > 0) // r1 already done
-                    this.write(this.t.push([`r${i + 1}`]))
+                    this.write(this.t.push_local(`r${i + 1}`))
             })
 
             let asm = this.t.lambda_prologue()
@@ -591,7 +592,7 @@ ${baseLabel}:
 
             if (parms.length)
                 this.write(this.t.pop_locals(parms.length))
-            this.write(this.t.pop(["r5", "r6"]))
+            this.write(this.t.pop_fixed(["r6", "r5"]))
             this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }
