@@ -823,7 +823,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         let changeHandler = () => {
             if (this.editorFile) {
-                if(this.editorFile.inSyncWithEditor) pxt.tickActivity("edit." + this.editor.getId().replace(/Editor$/, ''))
+                if (this.editorFile.inSyncWithEditor) 
+                    pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
                 this.editorFile.markDirty();
             }
             this.editorChangeHandler();

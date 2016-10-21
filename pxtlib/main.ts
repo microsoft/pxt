@@ -64,7 +64,7 @@ namespace pxt {
     const tickActivityDebounced = Util.debounce(() => {
         tickEvent("activity", activityEvents);
         activityEvents = {};
-    }, 30000, false);
+    }, 60000, false);
     /**
      * Ticks activity events. This event gets aggregated and eventually gets sent.
      */
