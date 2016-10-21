@@ -6,6 +6,9 @@ In this page, we'll go through the steps necessary to get your target with your 
 Since this is a rather technical topic, we assume that the reader is familiar with Node.JS, NPM
 and JavaScript and/or C++.
 
+* [theming](/targets/theming)
+* [simulator](/targets/simulator)
+
 A target contains the following folders:
 
 * ``/libs``, packages (sometimes referred to as libraries) that define the JavaScript and APIs and how they should be exposed in blocks.
@@ -61,10 +64,6 @@ New projects are created under the ``/projects`` folder when testing a target lo
 
 Whenever you make a change, the local web server will trigger a build. Simply reload the page once the build is done.
 
-### Deploying targets
-
-Your best bet is likely static files on GitHub Pages, [read more](/staticpkg).
-
 ## Defining APIs and Blocks
 
 The APIs available in the PXT environment are loaded from TypeScript package (library) files
@@ -75,24 +74,4 @@ simulator files.
 Read more about [how to annotate your APIS](/defining-blocks)
 to expose them as blocks in PXT.
 
-## Simulator
 
-### Enums
-
-Enums (and interfaces) can be shared between simulator and the target libraries
-if you put them in the library, in `.d.ts` file, and then reference these
-files from the simulator.
-
-## Compilation to ARM native code
-
-If your target platform is ARM Mbed compatible, PXT will be able to compile programs to ARM machine code in browser.
-We recommend to contact the team to help you get started on this topic.
-
-## Async functions
-
-PXT support cooperative multithreading and implicit async functions.
-[See more](/async).
-
-## Favicon
-
-Use [realfavicongenerator](http://realfavicongenerator.net/) to generate all the relevant favicon icon files and save them under ``static/icons`` in the ``docs`` folder.

@@ -363,8 +363,8 @@ file('built/web/semantic.css', ["built/semantic-tmp.css"], function () {
     fs.writeFileSync('built/web/semantic.css', semCss)
 })
 
-file('built/semantic-tmp.css', ["webapp/theme.config", "webapp/site/globals/site.variables"], { async: true }, function () {
-    cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/semantic-tmp.css --include-path=node_modules/semantic-ui-less:webapp/foo/bar')
+file('built/semantic-tmp.css', ["webapp/theme.config", "theme/theme.config", "webapp/site/globals/site.variables"], { async: true }, function () {
+    cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/semantic-tmp.css --include-path=node_modules/semantic-ui-less:theme/foo/bar')
 })
 
 file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {

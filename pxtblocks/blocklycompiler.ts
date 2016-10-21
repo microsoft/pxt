@@ -696,20 +696,25 @@ namespace pxt.blocks {
     interface Binding {
         name: string;
         type: Point;
-        usedAsForIndex: number;
+        declaredInLocalScope: number;
         assigned?: VarUsage; // records the first usage of this variable (read/assign)
-        incompatibleWithFor?: boolean;
+        mustBeGlobal?: boolean;
     }
 
-    function isCompiledAsForIndex(b: Binding) {
-        return b.usedAsForIndex && !b.incompatibleWithFor;
+    export interface NamedProperty {
+        property: string;
+        newName: string;
+    }
+
+    function isCompiledAsLocalVariable(b: Binding) {
+        return b.declaredInLocalScope && !b.mustBeGlobal;
     }
 
     function extend(e: Environment, x: string, t: string): Environment {
         assert(lookup(e, x) == null);
         return {
             workspace: e.workspace,
-            bindings: [{ name: x, type: ground(t), usedAsForIndex: 0 }].concat(e.bindings),
+            bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
             stdCallTable: e.stdCallTable
         };
     }
@@ -779,7 +784,7 @@ namespace pxt.blocks {
         let incOne = !bBy || (bBy.type.match(/^math_number/) && extractNumber(bBy) == 1)
 
         let binding = lookup(e, bVar);
-        assert(binding.usedAsForIndex > 0);
+        assert(binding.declaredInLocalScope > 0);
 
         return [
             mkText("for (let " + bVar + " = "),
@@ -912,11 +917,17 @@ namespace pxt.blocks {
         return mkStmt(compileStdCall(e, b, f, comments))
     }
 
-    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node): Node {
+    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node, callbackProperties?: NamedProperty[]): Node {
         body.noFinalNewline = true
-        return mkStmt(H.namespaceCall(n, f, args.concat([
-            mkGroup([mkText("() =>"), body])
-        ])))
+        let callback: Node;
+        if (callbackProperties && callbackProperties.length) {
+            const declarations = callbackProperties.map(prop => prop.newName ? `${prop.property}: ${prop.newName}` : prop.property);
+            callback = mkGroup([mkText(`({${declarations.join(", ")}}) =>`), body]);
+        }
+        else {
+            callback = mkGroup([mkText("() =>"), body]);
+        }
+        return mkStmt(H.namespaceCall(n, f, args.concat([ callback ])))
     }
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): Node {
@@ -928,7 +939,24 @@ namespace pxt.blocks {
             return mkText(b.getFieldValue(arg))
         });
         let body = compileStatements(e, bBody);
-        return mkCallWithCallback(e, ns, event, compiledArgs, body);
+
+        let callbackProperties: NamedProperty[];
+
+        if (isMutatingBlock(b)) {
+            callbackProperties = b.parameters.map(param => {
+                const varName = b.getFieldValue(param);
+                return {
+                    property: escapeVarName(param),
+                    newName: varName !== param ? escapeVarName(varName) : undefined
+                };
+            });
+        }
+
+        return mkCallWithCallback(e, ns, event, compiledArgs, body, callbackProperties);
+    }
+
+    function isMutatingBlock(b: B.Block): b is MutatingBlock {
+        return !!(b as MutatingBlock).parameters;
     }
 
     function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: Node[]): Node {
@@ -1070,7 +1098,7 @@ namespace pxt.blocks {
                         f: fn.name,
                         isExtensionMethod: instance,
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: fn.parameters && fn.parameters.some(p => p.type == "() => void"),
+                        hasHandler: fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
                         args: args,
                         isIdentity: fn.attributes.shim == "TD_ID"
@@ -1083,23 +1111,36 @@ namespace pxt.blocks {
             else if ((b.type == "controls_for" || b.type == "controls_simple_for")
                 && escapeVarName(b.getFieldValue("VAR")) == name)
                 return true;
+            else if (isMutatingBlock(b) && isCallbackParameter(b, name))
+                return true;
             else
                 return variableIsScoped(b.getSurroundParent(), name);
         };
 
-        // collect loop variables.
+        function isCallbackParameter(b: MutatingBlock, name: string) {
+            return b.parameters.some(param => b.getFieldValue(param) === name)
+        }
+
+        function trackLocalDeclaration(name: string, type: string) {
+            // It's ok for two loops to share the same variable.
+            if (lookup(e, name) == null)
+                e = extend(e, name, type);
+            lookup(e, name).declaredInLocalScope++;
+            // If multiple loops share the same
+            // variable, that means there's potential race conditions in concurrent
+            // code, so faithfully compile this as a global variable.
+            if (lookup(e, name).declaredInLocalScope > 1)
+                lookup(e, name).mustBeGlobal = true;
+        }
+
+        // collect local variables.
         w.getAllBlocks().forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for") {
                 let x = escapeVarName(b.getFieldValue("VAR"));
-                // It's ok for two loops to share the same variable.
-                if (lookup(e, x) == null)
-                    e = extend(e, x, pNumber.type);
-                lookup(e, x).usedAsForIndex++;
-                // If multiple loops share the same
-                // variable, that means there's potential race conditions in concurrent
-                // code, so faithfully compile this as a global variable.
-                if (lookup(e, x).usedAsForIndex > 1)
-                    lookup(e, x).incompatibleWithFor = true;
+                trackLocalDeclaration(x, pNumber.type);
+            }
+            else if (isMutatingBlock(b)) {
+                b.parameters.forEach(parameter => trackLocalDeclaration(escapeVarName(b.getFieldValue(parameter)), b.parameterTypes[parameter]))
             }
         });
 
@@ -1112,9 +1153,9 @@ namespace pxt.blocks {
                     e = extend(e, x, null);
 
                 let binding = lookup(e, x);
-                if (binding.usedAsForIndex && !variableIsScoped(b, x))
+                if (binding.declaredInLocalScope && !variableIsScoped(b, x))
                     // loop index is read outside the loop.
-                    binding.incompatibleWithFor = true;
+                    binding.mustBeGlobal = true;
             }
         });
 
@@ -1138,7 +1179,7 @@ namespace pxt.blocks {
             });
 
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
-            let stmtsVariables = e.bindings.filter(b => !isCompiledAsForIndex(b) && b.assigned != VarUsage.Assign)
+            let stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
                     // let btype = find(b.type);
                     // Not sure we need the type here - is is always number or boolean?
@@ -1417,5 +1458,12 @@ namespace pxt.blocks {
         for (const commentNode of commentNodes.reverse()) {
             r.unshift(commentNode)
         }
+    }
+
+    function endsWith(text: string, suffix: string) {
+        if (text.length < suffix.length) {
+            return false;
+        }
+        return text.substr(text.length - suffix.length) === suffix;
     }
 }
