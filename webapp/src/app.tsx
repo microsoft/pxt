@@ -122,7 +122,25 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
     }
 
+    isVisible(): boolean {
+        return this.modal && this.modal.state.visible;
+    }
+
+    showAddPackages() {
+        this.setState({ packages: true, searchFor: '' })
+        this.modal.show()
+        this.forceUpdate();
+    }
+
+    showOpenProject() {
+        this.setState({ packages: false, searchFor: '' })
+        this.modal.show();
+        this.forceUpdate();
+    }
+
     fetchGhData(): pxt.github.Repo[] {
+        if (!this.isVisible()) return [];
+
         const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
         let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
@@ -135,6 +153,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchCloudData(): Cloud.JsonPointer[] {
+        if (!this.isVisible()) return [];
+
         let cloud = pxt.appTarget.cloud || {};
         if (cloud.packages) return [] // now handled on GitHub
         if (!cloud.workspaces && !cloud.packages) return [];
@@ -147,7 +167,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
-        if (this.state.packages) return []
+        if (this.state.packages || !this.isVisible()) return []
 
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (scriptid) {
@@ -161,7 +181,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchBundled(): pxt.PackageConfig[] {
-        if (!this.state.packages || !!this.state.searchFor) return [];
+        if (!this.state.packages || !!this.state.searchFor || !this.isVisible()) return [];
 
         const bundled = pxt.appTarget.bundledpkgs;
         return Util.values(bundled)
@@ -169,7 +189,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchLocalData(): Header[] {
-        if (this.state.packages) return [];
+        if (this.state.packages || !this.isVisible()) return [];
 
         let headers: Header[] = this.getData("header:*")
         if (this.state.searchFor)
@@ -1051,8 +1071,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return workspace.saveAsync(curr, {})
                 .then(() => {
                     if (workspace.getHeaders().length > 0) {
-                        this.scriptSearch.setState({ packages: false, searchFor: '' })
-                        this.scriptSearch.modal.show();
+                        this.scriptSearch.showOpenProject();
                     } else {
                         this.newProject();
                     }
@@ -1160,8 +1179,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     openProject() {
         pxt.tickEvent("menu.open");
-        this.scriptSearch.setState({ packages: false, searchFor: '' })
-        this.scriptSearch.modal.show()
+        this.scriptSearch.showOpenProject();
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -1229,8 +1247,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     addPackage() {
         pxt.tickEvent("menu.addpackage");
-        this.scriptSearch.setState({ packages: true, searchFor: '' })
-        this.scriptSearch.modal.show()
+        this.scriptSearch.showAddPackages();
     }
 
     newEmptyProject() {
