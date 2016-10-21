@@ -1065,6 +1065,7 @@ export function buildTargetAsync(): Promise<void> {
     return simshimAsync()
         .then(() => buildFolderAsync('sim'))
         .then(buildTargetCoreAsync)
+        .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildFolderAsync('server', true))
 }
@@ -1224,6 +1225,28 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 
 let forkPref = server.forkPref
 
+function buildSemanticUIAsync() {
+    if (!fs.existsSync(path.join("theme", "style.less")) ||
+        !fs.existsSync(path.join("theme", "theme.config")))
+        return Promise.resolve();
+
+    let dirty = !fs.existsSync("built/web/semantic.css");
+    if (!dirty) {
+        const csstime = fs.statSync("built/web/semantic.css").mtime;
+        dirty = allFiles("theme")
+            .map(f => fs.statSync(f))
+            .some(stat => stat.mtime > csstime);
+    }
+
+    if (!dirty) return Promise.resolve();
+
+    nodeutil.mkdirP(path.join("built", "web"));
+    return spawnAsync({
+        cmd: "node",
+        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:theme/foo/bar"]
+    });
+}
+
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
@@ -1236,6 +1259,10 @@ function buildTargetCoreAsync() {
     dirsToWatch = cfg.bundleddirs.slice()
     if (!isFork && pxt.appTarget.id != "core") {
         dirsToWatch.push("sim"); // simulator
+        if (fs.existsSync("theme")) {
+            dirsToWatch.push("theme"); // simulator
+            dirsToWatch.push(path.join("theme", "site", "globals")); // simulator
+        }
         dirsToWatch = dirsToWatch.concat(
             fs.readdirSync("sim")
                 .map(p => path.join("sim", p))
