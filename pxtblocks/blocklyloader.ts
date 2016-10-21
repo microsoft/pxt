@@ -50,7 +50,6 @@ namespace pxt.blocks {
     }
     let cachedBlocks: Map<CachedBlock> = {};
     let cachedToolbox: string = "";
-    const advancedCategoryName = Util.lf("Advanced")
 
     export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
@@ -170,7 +169,7 @@ namespace pxt.blocks {
         let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         let nsn = info.apis.byQName[ns];
         if (nsn) ns = nsn.attributes.block || ns;
-        let catName = Util.capitalize(ns)
+        let catName = ts.pxtc.blocksCategory(fn);
         let category = categoryElement(tb, catName);
 
         if (!category) {
@@ -190,6 +189,7 @@ namespace pxt.blocks {
             }
 
             if (nsn.attributes.advanced) {
+                const advancedCategoryName = Util.lf("{id:category}Advanced")
                 parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1)
                 categories = getChildCategories(parentCategoryList)
             }
@@ -475,7 +475,7 @@ namespace pxt.blocks {
             let cats = tb.querySelectorAll('category');
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
-                    Util._localize(cats[i].getAttribute('name')));
+                    Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
             }
         }
 
@@ -487,6 +487,7 @@ namespace pxt.blocks {
         // lf("{id:category}Lists")
         // lf("{id:category}Text")
         // lf("{id:category}Math")
+        // lf("{id:category}Advanced")
         // lf("{id:category}More\u2026")
 
         // add extra blocks
@@ -527,6 +528,15 @@ namespace pxt.blocks {
                 workspace.updateToolbox(tb)
             }
         }
+
+        // add trash icon to toolbox
+        let trashDiv = document.createElement('div');
+        trashDiv.id = "blocklyTrashIcon";
+        trashDiv.style.opacity = '0';
+        let trashIcon = document.createElement('i');
+        trashIcon.className = 'trash icon';
+        trashDiv.appendChild(trashIcon);
+        $('.blocklyToolboxDiv').append(trashDiv);
     }
 
     function categoryElement(tb: Element, name: string): Element {
@@ -569,6 +579,7 @@ namespace pxt.blocks {
         initLoops();
         initLogic();
         initText();
+        initDrag();
 
         // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
         // we're taking off hats.
@@ -750,6 +761,48 @@ namespace pxt.blocks {
         });
     }
 
+    /**
+     * The following patch to blockly is to add the Trash icon on top of the toolbox, 
+     * the trash icon should only show when a user drags a block that is already in the workspace.
+     */
+    function initDrag() {
+        const calculateDistance = (elem: any, mouseX: any) => {
+            return Math.floor(mouseX - (elem.offset().left + (elem.width() / 2)));
+        }
+        /**
+         * Track a drag of an object on this workspace.
+         * @param {!Event} e Mouse move event.
+         * @return {!goog.math.Coordinate} New location of object.
+         */
+        let moveDrag = (<any>Blockly).WorkspaceSvg.prototype.moveDrag;
+        (<any>Blockly).WorkspaceSvg.prototype.moveDrag = function(e: any) {
+            const blocklyTreeRoot = $('.blocklyTreeRoot');
+            const trashIcon = $("#blocklyTrashIcon");
+            const distance = calculateDistance(blocklyTreeRoot, e.pageX);
+            if (distance < 200) {
+                const opacity = distance / 200;
+                trashIcon.css('opacity', 1 - opacity);
+                trashIcon.show();
+                blocklyTreeRoot.css('opacity', opacity);
+            } else {
+                trashIcon.hide();
+                blocklyTreeRoot.css('opacity', 1);
+            }
+            return moveDrag.call(this, e);
+        };
+
+        /**
+         * Stop binding to the global mouseup and mousemove events.
+         * @private
+         */
+        let terminateDrag_ = (<any>Blockly).terminateDrag_;
+        (<any>Blockly).terminateDrag_ = function() {
+            $("#blocklyTrashIcon").hide();
+            $('.blocklyTreeRoot').css('opacity', 1);
+            terminateDrag_.call(this);
+        }
+    }
+
     function initContextMenu() {
         // Translate the context menu for blocks.
         let msg: any = Blockly.Msg;
@@ -764,7 +817,7 @@ namespace pxt.blocks {
         msg.DISABLE_BLOCK = lf("Disable Block");
         msg.DELETE_BLOCK = lf("Delete Block");
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
-        msg.HELP = "Help";
+        msg.HELP = lf("Help");
 
         /**
          * Show the context menu for the workspace.
@@ -813,7 +866,7 @@ namespace pxt.blocks {
                  * @param {boolean} shouldCollapse Whether a block should collapse.
                  * @private
                  */
-                let toggleOption = function (shouldCollapse: boolean) {
+                const toggleOption = function (shouldCollapse: boolean) {
                     let ms = 0;
                     for (let i = 0; i < topBlocks.length; i++) {
                         let block = topBlocks[i];
@@ -826,17 +879,19 @@ namespace pxt.blocks {
                 };
 
                 // Option to collapse top blocks.
-                let collapseOption: any = { enabled: hasExpandedBlocks };
+                const collapseOption: any = { enabled: hasExpandedBlocks };
                 collapseOption.text = lf("Collapse Blocks");
                 collapseOption.callback = function () {
+                    pxt.tickEvent("blocks.context.collapse")
                     toggleOption(true);
                 };
                 menuOptions.push(collapseOption);
 
                 // Option to expand top blocks.
-                let expandOption: any = { enabled: hasCollapsedBlocks };
+                const expandOption: any = { enabled: hasCollapsedBlocks };
                 expandOption.text = lf("Expand Blocks");
                 expandOption.callback = function () {
+                    pxt.tickEvent("blocks.context.expand")
                     toggleOption(false);
                 };
                 menuOptions.push(expandOption);
@@ -878,6 +933,7 @@ namespace pxt.blocks {
                     lf("Delete {0} Blocks", deleteList.length),
                 enabled: deleteList.length > 0,
                 callback: function () {
+                    pxt.tickEvent("blocks.context.delete");
                     if (deleteList.length < 2 ||
                         window.confirm(lf("Delete all {0} blocks?", deleteList.length))) {
                         deleteNext();
@@ -890,6 +946,7 @@ namespace pxt.blocks {
                 text: lf("Shuffle Blocks"),
                 enabled: topBlocks.length > 0,
                 callback: () => {
+                    pxt.tickEvent("blocks.context.shuffle");
                     pxt.blocks.layout.shuffle(this, 1);
                 }
             };
@@ -899,6 +956,7 @@ namespace pxt.blocks {
                 text: lf("Download Screenshot"),
                 enabled: topBlocks.length > 0,
                 callback: () => {
+                    pxt.tickEvent("blocks.context.screenshot");
                     pxt.blocks.layout.screenshotAsync(this)
                     .done((uri) => {
                         if (pxt.BrowserUtils.isSafari())

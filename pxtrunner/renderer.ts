@@ -32,6 +32,10 @@ namespace pxt.runner {
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
         $parent.append($('<div class="ui content js"/>').append($js));
+        $('code.highlight').each(function(i, block) {
+            let hljs = pxt.docs.requireHighlightJs();
+            if (hljs) hljs.highlightBlock(block);
+        });
     }
 
     function fillWithWidget(
@@ -62,7 +66,7 @@ namespace pxt.runner {
         if (woptions.showJs) {
             appendJs($c, $js, woptions);
         } else {
-            let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="keyboard icon"></i></a>').click(() => {
+            let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="align left icon"></i></a>').click(() => {
                 if ($c.find('.js')[0])
                     $c.find('.js').remove(); // remove previous simulators
                 else {
@@ -105,7 +109,7 @@ namespace pxt.runner {
         // download screenshots
         if (options.downloadScreenshots && woptions.hexname) {
             pxt.debug("Downloading screenshot for: " + woptions.hexname);
-            let filename = woptions.hexname.substr(0,woptions.hexname.lastIndexOf('.'));
+            let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
             let fontSize = window.getComputedStyle($svg.get(0).querySelector(".blocklyText")).getPropertyValue("font-size");
             const customCss = `
 .blocklyMainBackground {
@@ -126,12 +130,12 @@ namespace pxt.runner {
             let svgElement = $svg.get(0) as any;
             let bbox = $svg.get(0).getBoundingClientRect();
             pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height)
-            .done(uri => {
-                if (uri)
-                    BrowserUtils.browserDownloadDataUri(
-                        uri,
-                        (name || `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${filename}`) + ".png");
-            });
+                .done(uri => {
+                    if (uri)
+                        BrowserUtils.browserDownloadDataUri(
+                            uri,
+                            (name || `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${filename}`) + ".png");
+                });
         }
     }
 
@@ -161,7 +165,7 @@ namespace pxt.runner {
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
-            let js = $('<code/>').text(c.text().trim());
+            let js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
             let compiled = r.compileJS && r.compileJS.success;
             let hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
@@ -200,7 +204,7 @@ namespace pxt.runner {
             let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
-            let js = $('<code/>').text(sig);
+            let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
         }, { package: options.package });

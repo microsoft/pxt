@@ -197,6 +197,53 @@ export function pokeRepoAsync(opt: string, repo: string): Promise<void> {
         })
 }
 
+export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
+    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
+    if (!prj) {
+        console.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+    if (!key) {
+        console.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+
+    if (!args[0]) throw new Error("filename missing");
+    switch (cmd.toLowerCase()) {
+        case "upload": return uploadCrowdinAsync(prj, key, args[0]);
+        case "download": {
+            if (!args[1]) throw new Error("output path missing");
+            const fn = path.basename(args[0]);
+            return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0])
+                .then(r => {
+                    Object.keys(r).forEach(k => {
+                        nodeutil.mkdirP(path.join(args[1], k));
+                        const outf = path.join(args[1], k, fn);
+                        console.log(`writing ${outf}`)
+                        fs.writeFileSync(
+                            outf,
+                            JSON.stringify(r[k], null, 2),
+                            "utf8");
+                    })
+                })
+        }
+        default: throw new Error("unknown command");
+    }
+}
+
+function uploadCrowdinAsync(prj: string, key: string, p: string): Promise<void> {
+    if ((process.env.TRAVIS_BRANCH && process.env.TRAVIS_BRANCH != "master") || !!process.env.TRAVIS_PULL_REQUEST) {
+        console.log("crowdin command skipped, not master branch");
+        return Promise.resolve();
+    }
+
+    const fn = path.basename(p);
+    const data = JSON.parse(fs.readFileSync(p, "utf8"));
+    console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}`);
+    return pxt.crowdin.uploadTranslationAsync(prj, key, fn, data);
+}
+
 export function apiAsync(path: string, postArguments?: string): Promise<void> {
     if (postArguments == "delete") {
         return Cloud.privateDeleteAsync(path)
@@ -520,10 +567,11 @@ function travisAsync() {
             .then(() => {
                 let trg = readLocalPxTarget()
                 if (rel)
-                    return uploadtrgAsync(trg.id + "/" + rel)
+                    return uploadTargetAsync(trg.id + "/" + rel)
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
+                        .then(() => uploadTargetTranslationsAsync())
                 else
-                    return uploadtrgAsync(trg.id + "/" + latest)
+                    return uploadTargetAsync(trg.id + "/" + latest)
             })
     }
 }
@@ -667,7 +715,7 @@ export function staticpkgAsync(label?: string) {
         .then(() => renderDocs(dir))
 }
 
-export function uploadtrgAsync(label?: string) {
+export function uploadTargetAsync(label?: string) {
     return uploadCoreAsync({
         label: label,
         fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
@@ -983,13 +1031,13 @@ function uploadCoreAsync(opts: UploadOptions) {
                     releaseid: liteId
                 })
             }).then(() => {
-                // tag release/v0.1.2 also as release/beta
-                let beta = opts.label.replace(/\/v\d.*$/, "/beta")
-                if (beta == opts.label) return Promise.resolve()
+                // tag release/v0.1.2 also as release/alpha
+                const alpha = opts.label.replace(/\/v\d.*$/, "/alpha")
+                if (alpha == opts.label) return Promise.resolve()
                 else {
-                    console.log("Also tagging with " + beta)
+                    console.log("Also tagging with " + alpha)
                     return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(beta),
+                        path: nodeutil.sanitizePath(alpha),
                         releaseid: liteId
                     })
                 }
@@ -3159,9 +3207,17 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
         })
 }
 
-function buildCoreAsync(mode: BuildOption) {
+interface BuildCoreOptions {
+    mode: BuildOption;
+
+    // docs
+    locs?: boolean;
+    docs?: boolean;
+}
+
+function buildCoreAsync(buildOpts: BuildCoreOptions) {
     ensurePkgDir();
-    return prepBuildOptionsAsync(mode)
+    return prepBuildOptionsAsync(buildOpts.mode)
         .then(pxtc.compile)
         .then(res => {
             U.iterMap(res.outfiles, (fn, c) =>
@@ -3173,55 +3229,142 @@ function buildCoreAsync(mode: BuildOption) {
 
             console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
 
-            if (mode == BuildOption.GenDocs) {
-                let apiInfo = pxtc.getApiInfo(res.ast)
-                // keeps apis from this module only
-                for (let infok in apiInfo.byQName) {
-                    let info = apiInfo.byQName[infok];
-                    if (info.pkg &&
-                        info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
-                }
-                let md = pxtc.genMarkdown(mainPkg.config.name, apiInfo, { package: mainPkg.config.name != pxt.appTarget.corepkg })
-                mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
-                for (let fn in md) {
-                    let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
-                    let ffn = folder + fn;
-                    mainPkg.host().writeFile(mainPkg, ffn, md[fn])
-                    console.log(`generated ${ffn}; size=${md[fn].length}`)
-                }
-                return null
-            } else if (mode == BuildOption.Deploy) {
-                if (!pxt.commands.deployCoreAsync) {
-                    console.log("no deploy functionality defined by this target")
+            switch (buildOpts.mode) {
+                case BuildOption.GenDocs:
+                    let apiInfo = pxtc.getApiInfo(res.ast)
+                    // keeps apis from this module only
+                    for (let infok in apiInfo.byQName) {
+                        let info = apiInfo.byQName[infok];
+                        if (info.pkg &&
+                            info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
+                    }
+                    let md = pxtc.genMarkdown(mainPkg.config.name, apiInfo, {
+                        package: mainPkg.config.name != pxt.appTarget.corepkg,
+                        locs: buildOpts.locs,
+                        docs: buildOpts.docs
+                    })
+                    mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
+                    for (let fn in md) {
+                        let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
+                        let ffn = folder + fn;
+                        mainPkg.host().writeFile(mainPkg, ffn, md[fn])
+                        console.log(`generated ${ffn}; size=${md[fn].length}`)
+                    }
+                    return null
+                case BuildOption.Deploy:
+                    if (!pxt.commands.deployCoreAsync) {
+                        console.log("no deploy functionality defined by this target")
+                        return null;
+                    }
+                    return pxt.commands.deployCoreAsync(res);
+                case BuildOption.Run:
+                    return runCoreAsync(res);
+                default:
                     return null;
-                }
-                return pxt.commands.deployCoreAsync(res);
             }
-            else if (mode == BuildOption.Run)
-                return runCoreAsync(res);
-            else
-                return null;
         })
 }
 
-export function buildAsync() {
-    return buildCoreAsync(BuildOption.JustBuild)
+export function uploadTargetTranslationsAsync() {
+    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
+    if (!prj) {
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+    if (!key) {
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+    const crowdinDir = pxt.appTarget.id;
+    const todo: string[] = [];
+    pxt.appTarget.bundleddirs.forEach(dir => {
+        const locdir = path.join(dir, "_locales");
+        if (fs.existsSync(locdir))
+            fs.readdirSync(locdir)
+                .filter(f => /\.json$/i.test(f))
+                .forEach(f => todo.push(path.join(locdir, f)))
+    });
+    const nextFileAsync = (): Promise<void> => {
+        const f = todo.pop();
+        if (!f) return Promise.resolve();
+        const data = JSON.parse(fs.readFileSync(f, 'utf8'));
+        const crowdf = path.join(crowdinDir, path.basename(f));
+        pxt.log(`uploading ${f} to ${crowdf}`);
+        return pxt.crowdin.uploadTranslationAsync(prj, key, crowdf, data)
+            .then(nextFileAsync);
+    }
+    return nextFileAsync();
 }
 
-export function gendocsAsync() {
-    return buildCoreAsync(BuildOption.GenDocs)
+export function downloadTargetTranslationsAsync() {
+    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
+    if (!prj) {
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+    if (!key) {
+        pxt.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        return Promise.resolve();
+    }
+    const crowdinDir = pxt.appTarget.id;
+    const todo: string[] = [];
+    pxt.appTarget.bundleddirs.forEach(dir => {
+        const locdir = path.join(dir, "_locales");
+        if (fs.existsSync(locdir))
+            fs.readdirSync(locdir)
+                .filter(f => /\.json$/i.test(f))
+                .forEach(f => todo.push(path.join(locdir, f)))
+    });
+
+    const nextFileAsync = (): Promise<void> => {
+        const f = todo.pop();
+        if (!f) return Promise.resolve();
+
+        const fn = path.basename(f);
+        const crowdf = path.join(crowdinDir, fn);
+        const locdir = path.dirname(f);
+        pxt.log(`downloading ${crowdf}`);
+        return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf)
+            .then(data => {
+                Object.keys(data)
+                    .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
+                    .forEach(lang => {
+                        const tfdir = path.join(locdir, lang);
+                        const tf = path.join(tfdir, fn);
+                        nodeutil.mkdirP(tfdir)
+                        pxt.log(`writing ${tf}`);
+                        fs.writeFile(tf, JSON.stringify(data[lang], null, 2), "utf8");
+                    })
+                return nextFileAsync()
+            });
+    }
+    return nextFileAsync();
+}
+
+export function buildAsync() {
+    return buildCoreAsync({ mode: BuildOption.JustBuild })
+}
+
+export function gendocsAsync(...args: string[]) {
+    return buildCoreAsync({
+        mode: BuildOption.GenDocs,
+        docs: args.length == 0 || args.indexOf("--docs") > -1,
+        locs: args.length == 0 || args.indexOf("--locs") > -1
+    })
 }
 
 export function deployAsync() {
-    return buildCoreAsync(BuildOption.Deploy)
+    return buildCoreAsync({ mode: BuildOption.Deploy })
 }
 
 export function runAsync() {
-    return buildCoreAsync(BuildOption.Run)
+    return buildCoreAsync({ mode: BuildOption.Run })
 }
 
 export function testAsync() {
-    return buildCoreAsync(BuildOption.Test)
+    return buildCoreAsync({ mode: BuildOption.Test })
 }
 
 export function uploadDocsAsync(...args: string[]): Promise<void> {
@@ -3378,7 +3521,7 @@ cmd("deploy                       - build and deploy current package", deployAsy
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
-cmd("gendocs                      - build current package and its docs", gendocsAsync, 1)
+cmd("gendocs [--locs] [--docs]    - build current package and its docs. --locs produce localization files, --docs produce docs files", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
 cmd("testassembler                - test the assemblers", testAssemblers, 2)
 cmd("decompile file.ts...         - decompile ts files and produce similarly named .blocks files", decompileAsync, 1)
@@ -3393,8 +3536,10 @@ cmd("update                       - update pxt-core reference and install update
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
-cmd("uploadtrg [LABEL]            - upload target release", uploadtrgAsync, 1)
+cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
+cmd("uploadtrgtranslations        - upload translations from bundled projects", uploadTargetTranslationsAsync, 1)
+cmd("downloadtrgtranslations      - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
@@ -3416,6 +3561,8 @@ cmd("travis                       - upload release and npm package", travisAsync
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
+
+cmd("crowdin CMD PATH [OUTPUT]    - upload, download files to/from crowdin", execCrowdinAsync, 2);
 
 cmd("extension ADD_TEXT           - try compile extension", extensionAsync, 10)
 

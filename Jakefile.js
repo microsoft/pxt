@@ -110,7 +110,14 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget",
         "node built/pxt.js uploaddoc",
+        "node built/pxt.js crowdin upload built/strings.json"
     ], { printStdout: true }, complete.bind(this));
+})
+
+task('downloadcrowdin', ["built/pxt.js"], { async:true }, function() {
+    jake.exec([
+        "node built/pxt.js crowdin download strings.json webapp/public/locales"
+    ], { printStdout: true }, complete.bind(this));    
 })
 
 task("lint", [], { async: true }, function () {

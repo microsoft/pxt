@@ -556,7 +556,7 @@ namespace ts.pxtc.Util {
                     console.error('failed to load localizations')
                 })
         }
-        //                    
+        //
         return Promise.resolve(undefined);
     }
 
@@ -642,6 +642,12 @@ namespace ts.pxtc.Util {
     export function lf(format: string, ...args: any[]): string {
         return lf_va(format, args);
     }
+    /**
+     * Similar to lf but the string do not get extracted into the loc file.
+     */
+    export function rlf(format: string, ...args: any[]): string {
+        return lf_va(format, args);
+    }
 
     export let httpRequestCoreAsync: (options: HttpRequestOptions) => Promise<HttpResponse>;
     export let sha256: (hashData: string) => string;
@@ -655,6 +661,39 @@ namespace ts.pxtc.Util {
         let r: number[] = []
         for (let i = 0; i < len; ++i) r.push(i)
         return r
+    }
+
+    export function multipartPostAsync(uri: string, data: any = {}, filename: string = null, filecontents: string = null): Promise<HttpResponse> {
+        const boundry = "--------------------------0461489f461126c5"
+        let form = ""
+
+        function add(name: string, val: string) {
+            form += boundry + "\r\n"
+            form += "Content-Disposition: form-data; name=\"" + name + "\"\r\n\r\n"
+            form += val + "\r\n"
+        }
+
+        function addF(name: string, val: string) {
+            form += boundry + "\r\n"
+            form += "Content-Disposition: form-data; name=\"files[" + name + "]\"; filename=\"blah.json\"\r\n"
+            form += "\r\n"
+            form += val + "\r\n"
+        }
+
+        Object.keys(data).forEach(k => add(k, data[k]))
+        if (filename)
+            addF(filename, filecontents)
+
+        form += boundry + "--\r\n"
+
+        return Util.httpRequestCoreAsync({
+            url: uri,
+            method: "POST",
+            headers: {
+                "Content-Type": "multipart/form-data; boundary=" + boundry.slice(2)
+            },
+            data: form
+        })
     }
 
     export function toDataUri(data: string, mimetype?: string): string {

@@ -10,6 +10,8 @@ export interface UiProps {
     children?: any;
     class?: string;
     role?: string;
+    tooltip?: string;
+    tooltipPosition?: string;
 }
 
 export interface WithPopupProps extends UiProps {
@@ -22,14 +24,14 @@ export interface DropdownProps extends WithPopupProps {
     onChange?: (v: string) => void;
 }
 
-function genericClassName(cls: string, props: UiProps) {
-    return cls + " " + (props.icon ? " icon" : "") + " " + (props.class || "")
+function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = false): string {
+    return `${cls} ${props.icon && !ignoreIcon ? "icon" : ""} ${props.class || ""}`;
 }
 
 function genericContent(props: UiProps) {
     return [
         props.icon ? (<i key='iconkey' className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') }></i>) : null,
-        props.text ? (<span key='textkey' className={'text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null
+        props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null,
     ]
 }
 
@@ -59,7 +61,7 @@ export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
 
 }
 
-export class DropdownMenu extends UiElement<DropdownProps> {
+export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidMount() {
         this.popup()
         this.child("").dropdown({
@@ -80,29 +82,9 @@ export class DropdownMenu extends UiElement<DropdownProps> {
 
     renderCore() {
         return (
-            <div className={genericClassName("ui dropdown", this.props) } role={this.props.role} title={this.props.title ? this.props.title : this.props.text}>
+            <div className={genericClassName("ui dropdown item", this.props) } role={this.props.role} title={this.props.title ? this.props.title : this.props.text}
+                data-tooltip={this.props.tooltip} data-position={this.props.tooltipPosition}>
                 {genericContent(this.props) }
-                <div className="menu">
-                    {this.props.children}
-                </div>
-            </div>);
-    }
-}
-
-export class DropdownList extends DropdownMenu {
-
-    componentDidUpdate() {
-        this.child("").dropdown('set selected', this.props.value)
-        super.componentDidUpdate()
-    }
-
-    renderCore() {
-        return (
-            <div className={genericClassName("ui dropdown", this.props) }>
-                <input type="hidden" name="mydropdown"/>
-                {this.props.icon ? null : (<i className="dropdown icon"></i>) }
-                {genericContent(this.props) }
-                <div className="default text"></div>
                 <div className="menu">
                     {this.props.children}
                 </div>
@@ -118,7 +100,7 @@ export interface ItemProps extends UiProps {
 export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
         return (
-            <div className={genericClassName("ui item", this.props) }
+            <div className={genericClassName("ui item link", this.props, true) }
                 role={this.props.role}
                 title={this.props.text}
                 key={this.props.value}
@@ -142,7 +124,8 @@ export class Button extends UiElement<ButtonProps> {
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
                 title={this.props.title ? this.props.title : this.props.text}
-                onClick={this.props.onClick}>
+                onClick={this.props.onClick}
+                data-tooltip={this.props.tooltip} data-position={this.props.tooltipPosition}>
                 {genericContent(this.props) }
                 {this.props.children}
             </button>
