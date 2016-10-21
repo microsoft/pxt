@@ -824,6 +824,8 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     let tid = pxt.appTarget.id
     if (U.startsWith(label, tid + "/"))
         label = label.slice(tid.length + 1)
+    if (!/^v\d/.test(label))
+        return Promise.resolve()
     let repoUrl = process.env["PXT_RELEASE_REPO"]
     if (!repoUrl) {
         console.log("no $PXT_RELEASE_REPO variable; not uploading label " + label)
@@ -852,7 +854,11 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         mode: '600'
     })
 
-    let cred = ["-c", "credential.helper="]
+    let cuser = process.env["USER"] || "someone"
+    let cred = [
+        "-c", "credential.helper=",
+        "-c", "user.name=" + user + "-" + cuser,
+    ]
     let gitAsync = (args: string[]) => spawnAsync({
         cmd: "git",
         cwd: trgPath,
