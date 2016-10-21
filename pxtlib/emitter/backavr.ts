@@ -178,10 +178,17 @@ namespace ts.pxtc {
             let prelude = ""
 
             function spill_it(new_off: number) {
-                prelude += this.reg_gets_imm("r1", new_off) + "\n"
-                if (z_reg == "Y")
-                    prelude += "movw r30, r28\n"
-                prelude += `add r30, ${this.rmap_lo["r1"]}\nadc r31, ${this.rmap_hi["r1"]}\n`
+                prelude += `
+    ${this.reg_gets_imm("r1", new_off)}
+    `
+                if (z_reg == "Y") {
+                    prelude += `
+    movw r30, r28
+    `           }
+                prelude += `
+    add r30, ${this.rmap_lo["r1"]}
+    adc r31, ${this.rmap_hi["r1"]}
+    `
                 off = "0"
                 z_reg = "Z"
             }
@@ -189,7 +196,9 @@ namespace ts.pxtc {
             // different possibilities for src: r0, r5, sp, r6
             // any indirection we want to do using Y+C, Z+C (recall Y=sp, r6 -> Z)
             if (src == "r0" || src == "r5") {
-                prelude = `movw r30, ${this.rmap_lo[src]}\n`
+                prelude = `
+    movw r30, ${this.rmap_lo[src]}
+    `
                 z_reg = "Z"
             } else
                 z_reg = this.ld_map[src]  // maps to Y or Z
@@ -210,9 +219,14 @@ namespace ts.pxtc {
                     spill_it(new_off)
                 }
             } else if (off[0] == "r") {
-                if (z_reg == "Y")
-                    prelude += "movw r30, r28\n"
-                prelude += `add r30, ${this.rmap_lo[off]}\nadc r31, ${this.rmap_hi[off]}\n`
+                if (z_reg == "Y") {
+                    prelude += `
+    movw r30, r28
+    `           }
+                prelude += `
+    add r30, ${this.rmap_lo[off]}
+    adc r31, ${this.rmap_hi[off]}
+    `
                 off = "0"
             } else {
                 // args@, locals@
@@ -226,10 +240,15 @@ namespace ts.pxtc {
 
             if (store)
                 // std	Y+2, r25
-                return `${prelude}std ${z_reg}+${off}, ${reg}`
+                return `
+    ${prelude}
+    std ${z_reg}+${off}, ${reg}
+    `
             else
                 // ldd	r24, Y+1
-                return `${prelude}ldd ${reg}, ${z_reg}+${off}`
+                return `
+    ${prelude}ldd ${reg}, ${z_reg}+${off}
+    `
         }
 
         rt_call(name: string, r0: string, r1: string) {
@@ -269,7 +288,11 @@ namespace ts.pxtc {
         prologue_vtable(arg_index: number, vtableShift: number) { assert(false); return "" }
 
         lambda_prologue() {
-            return "@stackmark args\n" + this.proc_setup() + "\nmovw r26, r24"
+            return `
+    @stackmark args
+    ${this.proc_setup()}
+    movw r26, r24
+    `
         }
 
         lambda_epilogue() {
