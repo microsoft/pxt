@@ -3663,18 +3663,16 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         compileId = trg.compileService.buildEngine || "yotta"
     }
 
-<<<<<<< HEAD
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir} with build engine ${compileId}.\n`)
 
     if (compileId != "none") {
         thisBuild = buildEngines[compileId]
         if (!thisBuild) U.userError("cannot find build engine: " + compileId)
-=======
-    process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
+    }
+
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
         pxt.debug = console.log;
->>>>>>> refs/remotes/origin/master
     }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
