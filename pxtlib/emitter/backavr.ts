@@ -297,7 +297,7 @@ namespace ts.pxtc {
 
         lambda_epilogue() {
             return `
-    jmp pxtrt::getGlobalsPtr
+    call pxtrt::getGlobalsPtr
     movw r30, r24
     ${this.proc_return()}
     @stackempty args
