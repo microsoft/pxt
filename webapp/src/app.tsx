@@ -823,7 +823,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         let changeHandler = () => {
             if (this.editorFile) this.editorFile.markDirty();
-            pxt.tickEvent("edit");
             this.editorChangeHandler();
         }
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
@@ -1391,7 +1390,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     runSimulator(opts: compiler.CompileOptions = {}) {
         pxt.tickEvent(opts.background ? "autorun" :
-            opts.debug ? "debug" : "run");
+            opts.debug ? "debug" : "run", {
+                editor: this.editor ? this.editor.getId().replace(/Editor$/, '') : undefined
+            });
 
         if (opts.background) {
             if (!simulator.isDirty()) {

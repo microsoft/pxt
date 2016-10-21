@@ -215,7 +215,6 @@ export class Editor extends srceditor.Editor {
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
             if (ev.recordUndo) {
-                pxt.tickEvent("blocks.edit");
                 this.changeCallback();
             }
             if (ev.type == 'create') {
