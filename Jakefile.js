@@ -354,8 +354,8 @@ file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
 })
 
-file('built/web/semantic.css', ["webapp/theme.config", "webapp/site/globals/site.variables"], { async: true }, function () {
-    cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/web/semantic.css --include-path=node_modules/semantic-ui-less:webapp/foo/bar')
+file('built/web/semantic.css', ["theme/style.less", "theme/theme.config", "theme/site/globals/site.variables"], { async: true }, function () {
+    cmdIn(this, ".", 'node node_modules/less/bin/lessc theme/style.less built/web/semantic.css --include-path=node_modules/semantic-ui-less:theme/foo/bar')
 })
 
 file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {

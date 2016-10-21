@@ -683,7 +683,8 @@ function targetFileList() {
     let lst = onlyExts(forkFiles("built"), [".js", ".css", ".json", ".webmanifest"])
         .concat(forkFiles("sim/public"))
     // the cloud only accepts *.json and sim* files in targets - TODO is this still true?
-    return lst.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
+    pxt.debug(`target files: ${lst.join('\r\n    ')}`)
+    return lst;
 }
 
 export function staticpkgAsync(label?: string) {
@@ -910,13 +911,13 @@ function uploadCoreAsync(opts: UploadOptions) {
                     releaseid: liteId
                 })
             }).then(() => {
-                // tag release/v0.1.2 also as release/alpha
-                const alpha = opts.label.replace(/\/v\d.*$/, "/alpha")
-                if (alpha == opts.label) return Promise.resolve()
+                // tag release/v0.1.2 also as release/beta
+                const betaTag = opts.label.replace(/\/v\d.*$/, "/beta")
+                if (betaTag == opts.label) return Promise.resolve()
                 else {
-                    console.log("Also tagging with " + alpha)
+                    console.log("Also tagging with " + betaTag)
                     return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(alpha),
+                        path: nodeutil.sanitizePath(betaTag),
                         releaseid: liteId
                     })
                 }
@@ -1065,6 +1066,7 @@ export function buildTargetAsync(): Promise<void> {
     return simshimAsync()
         .then(() => buildFolderAsync('sim'))
         .then(buildTargetCoreAsync)
+        .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildFolderAsync('server', true))
 }
@@ -1224,6 +1226,28 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 
 let forkPref = server.forkPref
 
+function buildSemanticUIAsync() {
+    if (!fs.existsSync(path.join("theme", "style.less")) ||
+        !fs.existsSync(path.join("theme", "theme.config")))
+        return Promise.resolve();
+
+    let dirty = !fs.existsSync("built/web/semantic.css");
+    if (!dirty) {
+        const csstime = fs.statSync("built/web/semantic.css").mtime;
+        dirty = allFiles("theme")
+            .map(f => fs.statSync(f))
+            .some(stat => stat.mtime > csstime);
+    }
+
+    if (!dirty) return Promise.resolve();
+
+    nodeutil.mkdirP(path.join("built", "web"));
+    return spawnAsync({
+        cmd: "node",
+        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:theme/foo/bar"]
+    });
+}
+
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
@@ -1236,6 +1260,10 @@ function buildTargetCoreAsync() {
     dirsToWatch = cfg.bundleddirs.slice()
     if (!isFork && pxt.appTarget.id != "core") {
         dirsToWatch.push("sim"); // simulator
+        if (fs.existsSync("theme")) {
+            dirsToWatch.push("theme"); // simulator
+            dirsToWatch.push(path.join("theme", "site", "globals")); // simulator
+        }
         dirsToWatch = dirsToWatch.concat(
             fs.readdirSync("sim")
                 .map(p => path.join("sim", p))
@@ -3635,11 +3663,18 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         compileId = trg.compileService.buildEngine || "yotta"
     }
 
+<<<<<<< HEAD
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir} with build engine ${compileId}.\n`)
 
     if (compileId != "none") {
         thisBuild = buildEngines[compileId]
         if (!thisBuild) U.userError("cannot find build engine: " + compileId)
+=======
+    process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
+    if (process.env["PXT_DEBUG"]) {
+        pxt.options.debug = true;
+        pxt.debug = console.log;
+>>>>>>> refs/remotes/origin/master
     }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")

@@ -823,7 +823,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         let changeHandler = () => {
             if (this.editorFile) this.editorFile.markDirty();
-            pxt.tickEvent("edit");
             this.editorChangeHandler();
         }
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
@@ -1391,7 +1390,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     runSimulator(opts: compiler.CompileOptions = {}) {
         pxt.tickEvent(opts.background ? "autorun" :
-            opts.debug ? "debug" : "run");
+            opts.debug ? "debug" : "run", {
+                editor: this.editor ? this.editor.getId().replace(/Editor$/, '') : undefined
+            });
 
         if (opts.background) {
             if (!simulator.isDirty()) {
@@ -1561,7 +1562,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
-        const downloadClass = "green download";
+        const downloadClass = targetTheme.downloadClass || "green";
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
@@ -1628,7 +1629,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
                     <div className="ui item landscape only">
-                        {compile ? <sui.Button icon='icon download' class={`huge fluid ${downloadClass}}`} text={lf("Download") } disabled={compileDisabled} tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : ""}
+                        {compile ? <sui.Button icon='icon download' class={`huge fluid ${downloadClass}`} text={lf("Download") } disabled={compileDisabled} tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : ""}
                         {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } tooltip={makeTooltip} tooltipPosition="bottom left" onClick={() => this.openInstructions() } /> : undefined }
                         <sui.Button key='runbtn' icon={this.state.running ? "stop" : "play"} title={this.state.running ? lf("Stop") : lf("Play") } tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                     </div>
