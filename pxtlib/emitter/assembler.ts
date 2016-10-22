@@ -126,8 +126,7 @@ namespace ts.pxtc.assembler {
                             labelName = "abs" + v
                         } else {
                             labelName = actual
-                            // console.log("op = ", this.name)
-                            v = ln.bin.getRelativeLabel(actual, enc.isWordAligned)
+                            v = this.ei.getAddressFromLabel(ln.bin, this, actual, enc.isWordAligned)
                             if (v == null) {
                                 if (ln.bin.finalEmit)
                                     return emitErr("unknown label", actual)
@@ -388,10 +387,6 @@ namespace ts.pxtc.assembler {
                     v = 42;
             }
             return v;
-        }
-
-        public getRelativeLabel(s: string, wordAligned = false) {
-            return this.ei.getRelativeLabel(this, s, wordAligned)
         }
 
         private align(n: number) {
@@ -969,7 +964,7 @@ namespace ts.pxtc.assembler {
             return null;
         }
 
-        public getRelativeLabel(f: File, s: string, wordAligned = false): number {
+        public getAddressFromLabel(f: File, i: Instruction, s: string, wordAligned = false): number {
             return null;
         }
 

@@ -209,7 +209,7 @@ namespace ts.pxtc.thumb {
             }
         }
 
-        public getRelativeLabel(f: assembler.File, s: string, wordAligned = false): number {
+        public getAddressFromLabel(f: assembler.File, i: assembler.Instruction, s: string, wordAligned = false): number {
             let l = f.lookupLabel(s);
             if (l == null) return null;
             let pc = f.location() + 4

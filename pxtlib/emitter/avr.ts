@@ -64,9 +64,14 @@ namespace ts.pxtc.avr {
             return null;
         }
 
-        public getRelativeLabel(f: assembler.File, s: string, wordAligned = false): number {
+        public getAddressFromLabel(f: assembler.File, i: assembler.Instruction, s: string, wordAligned = false): number {
+            // lookup absolute, relative, dependeing
             let l = f.lookupLabel(s);
             if (l == null) return null;
+            // absolute addressing
+            if (i.is32bit)
+                return l
+            // relative addressing
             // assumes this instruction is 16-bit  
             let pc = f.location() + 2;
             // if (wordAligned) pc = pc & 0xfffffffc

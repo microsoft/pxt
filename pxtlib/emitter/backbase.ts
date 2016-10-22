@@ -32,15 +32,16 @@ namespace ts.pxtc {
         nop() { return "TBD " }
         reg_gets_imm(reg: string, imm: number) { return "TBD" }
         // Registers are stored on the stack in numerical order 
+        proc_setup(main?: boolean) { return "TBD" }
         push_fixed(reg: string[]) { return "TBD" }
+        push_local(reg: string) { return "TBD" }
+        proc_setup_end() { return "" }
         pop_fixed(reg: string[]) { return "TBD" }
-        proc_setup() { return "TBD" }
+        pop_locals(n: number) { return "TBD" }
         proc_return() { return "TBD" }
         debugger_hook(lbl: string) { return "TBD" }
         debugger_bkpt(lbl: string) { return "TBD" }
         breakpoint() { return "TBD" }
-        push_local(reg: string) { return "TBD" }
-        pop_locals(n: number) { return "TBD" }
         unconditional_branch(lbl: string) { return "TBD" }
         beq(lbl: string) { return "TBD" }
         bne(lbl: string) { return "TBD" }
@@ -118,7 +119,7 @@ ${baseLabel}:
     @stackmark func
     @stackmark args
 `)
-            this.write(this.t.proc_setup())
+            this.write(this.t.proc_setup(true))
 
             // create a new function for later use by hex file generation
             this.proc.fillDebugInfo = th => {
@@ -158,6 +159,8 @@ ${baseLabel}:
             this.proc.locals.forEach(l => {
                 this.write(this.t.push_local("r0") + " ;loc")
             })
+            this.write(this.t.proc_setup_end())
+
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
 
@@ -574,6 +577,7 @@ ${baseLabel}:
                 if (i > 0) // r1 already done
                     this.write(this.t.push_local(`r${i + 1}`))
             })
+            this.write(this.t.proc_setup_end())
 
             let asm = this.t.lambda_prologue()
 

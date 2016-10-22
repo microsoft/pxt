@@ -80,6 +80,8 @@ namespace ts.pxtc {
 
     // for now, everything is 16-bit (word)
     export class AVRSnippets extends AssemblerSnippets {
+        private push_cnt: number = 0;
+
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) {
             let imm_lo = imm & 0xff
@@ -89,8 +91,8 @@ namespace ts.pxtc {
     ldi ${this.rmap_hi[reg]}, #${imm_hi}
     `
         }
-        // TODO: when to adjust the FP?
         push_fixed(regs: string[]) {
+            this.push_cnt += regs.length
             let res = ""
             regs.forEach(r => {
                 res = res + `
@@ -110,12 +112,26 @@ namespace ts.pxtc {
             });
             return res
         }
-        proc_setup() {
+        proc_setup(main?: boolean) {
+            this.push_cnt = 0;
+            let set_r1_zero = main ? "eor r1, r1" : ""
             // push the frame pointer
             return `
+    ${set_r1_zero}
     push r28
     push r29
     `
+        }
+        proc_setup_end() {
+            if (this.push_cnt > 0) {
+                // FP <- SP
+                return `
+    in r28, 0x3d
+    in r29, 0x3e
+    `
+            } else {
+                return ""
+            }
         }
         proc_return() {
             // pop frame pointer and return
@@ -129,6 +145,7 @@ namespace ts.pxtc {
         debugger_bkpt(lbl: string) { return "nop" }
         breakpoint() { return "nop" }
         push_local(reg: string) {
+            this.push_cnt += 1
             return `
     push ${this.rmap_lo[reg]}
     push ${this.rmap_hi[reg]}

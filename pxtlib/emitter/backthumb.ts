@@ -11,7 +11,7 @@ namespace ts.pxtc {
         }
         push_fixed(regs: string[]) { return "push {" + regs.join(", ") + "}"}
         pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}"}
-        proc_setup() { return "push {lr}" }
+        proc_setup(main?: boolean) { return "push {lr}" }
         proc_return() { return "pop {pc}" }
         debugger_hook(lbl: string) {
             return `
