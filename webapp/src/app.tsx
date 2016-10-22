@@ -540,8 +540,8 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         const sideDocs = !pxt.options.light;
         return <sui.DropdownMenuItem icon="help" title={lf("Help") }>
-            {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs ? "widedesktop hide" : ""}`}>{m.name}</a>) }
-            {sideDocs ? targetTheme.docMenu.map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
+            {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
+            {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
     }
 }
@@ -822,7 +822,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.blocksEditor = new blocks.Editor(this);
 
         let changeHandler = () => {
-            if (this.editorFile) this.editorFile.markDirty();
+            if (this.editorFile) {
+                if (this.editorFile.inSyncWithEditor) 
+                    pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
+                this.editorFile.markDirty();
+            }
             this.editorChangeHandler();
         }
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
@@ -1076,7 +1080,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     importHex(data: pxt.cpp.HexFile) {
-        let targetId = pxt.appTarget.id;
+        const targetId = pxt.appTarget.id;
+        const forkid = pxt.appTarget.forkof;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
             return;
@@ -1098,7 +1103,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.textEditor.formatCode()
                 })
             return;
-        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId) {
+        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
+            || (!forkid && Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
+            || (forkid && data.meta.cloudId == pxt.CLOUD_ID + forkid) // trying to load main target file into white-label
+        ) {
             pxt.debug("importing project")
             let h: InstallHeader = {
                 target: targetId,
@@ -1115,6 +1123,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
 
         core.warningNotification(lf("Sorry, we could not import this project."))
+        pxt.tickEvent("warning.importfailed");
     }
 
     importProjectFile(file: File) {
@@ -1389,10 +1398,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
-        pxt.tickEvent(opts.background ? "autorun" :
-            opts.debug ? "debug" : "run", {
-                editor: this.editor ? this.editor.getId().replace(/Editor$/, '') : undefined
-            });
+        const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
+        if (opts.background) pxt.tickActivity("autorun", "autorun." + editorId);
+        else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
         if (opts.background) {
             if (!simulator.isDirty()) {
@@ -1567,7 +1575,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
-                    <div className={`ui borderless ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+                    <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
                             <span id="logo" className="ui item logo">
                                 {targetTheme.logo || targetTheme.portraitLogo
@@ -1827,7 +1835,8 @@ function enableMixPanel() {
     if (!mp) return;
 
     mp.register({
-        sandbox: !!sandbox
+        sandbox: !!sandbox,
+        content: "editor"
     });
 
     const report = pxt.reportError;

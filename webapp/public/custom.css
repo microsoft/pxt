@@ -96,7 +96,7 @@ body {
     top:1rem;
     right:1rem;
     height:2rem;
-    z-index:100;
+    z-index:102;
 }
 .rtl .organization {
     right:auto;
