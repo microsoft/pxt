@@ -107,40 +107,35 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
 interface ScriptSearchState {
     searchFor?: string;
     packages?: boolean;
+    visible?: boolean;
 }
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
-    prevData: Cloud.JsonPointer[] = [];
-    prevGhData: pxt.github.Repo[] = [];
-    prevUrlData: Cloud.JsonScript[] = [];
-    modal: sui.Modal;
+    private prevData: Cloud.JsonPointer[] = [];
+    private prevGhData: pxt.github.Repo[] = [];
+    private prevUrlData: Cloud.JsonScript[] = [];
 
     constructor(props: ISettingsProps) {
         super(props)
         this.state = {
-            searchFor: ''
+            searchFor: '',
+            visible: false
         }
     }
 
-    isVisible(): boolean {
-        return this.modal && this.modal.state.visible;
+    hide() {
+        this.setState({ visible: false });
     }
 
     showAddPackages() {
-        this.setState({ packages: true, searchFor: '' })
-        this.modal.show()
-        this.forceUpdate();
+        this.setState({ visible: true, packages: true, searchFor: '' })
     }
 
     showOpenProject() {
-        this.setState({ packages: false, searchFor: '' })
-        this.modal.show();
-        this.forceUpdate();
+        this.setState({ visible: true, packages: false, searchFor: '' })
     }
 
     fetchGhData(): pxt.github.Repo[] {
-        if (!this.isVisible()) return [];
-
         const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
         let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
@@ -153,8 +148,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchCloudData(): Cloud.JsonPointer[] {
-        if (!this.isVisible()) return [];
-
         let cloud = pxt.appTarget.cloud || {};
         if (cloud.packages) return [] // now handled on GitHub
         if (!cloud.workspaces && !cloud.packages) return [];
@@ -167,7 +160,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
-        if (this.state.packages || !this.isVisible()) return []
+        if (this.state.packages) return []
 
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (scriptid) {
@@ -181,7 +174,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchBundled(): pxt.PackageConfig[] {
-        if (!this.state.packages || !!this.state.searchFor || !this.isVisible()) return [];
+        if (!this.state.packages || !!this.state.searchFor) return [];
 
         const bundled = pxt.appTarget.bundledpkgs;
         return Util.values(bundled)
@@ -189,7 +182,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchLocalData(): Header[] {
-        if (this.state.packages || !this.isVisible()) return [];
+        if (this.state.packages) return [];
 
         let headers: Header[] = this.getData("header:*")
         if (this.state.searchFor)
@@ -198,10 +191,14 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
-        return this.state.searchFor != nextState.searchFor || this.state.packages != nextState.packages;
+        return this.state.visible != nextState.visible
+            || this.state.searchFor != nextState.searchFor
+            || this.state.packages != nextState.packages;
     }
 
     renderCore() {
+        if (!this.state.visible) return null;
+
         const headers = this.fetchLocalData();
         const data = this.fetchCloudData();
         const bundles = this.fetchBundled();
@@ -209,11 +206,11 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const urldata = this.fetchUrlData();
 
         const chgHeader = (hdr: Header) => {
-            if (this.modal) this.modal.hide();
+            this.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
         const chgBundle = (scr: pxt.PackageConfig) => {
-            if (this.modal) this.modal.hide();
+            this.hide();
             let p = pkg.mainEditorPkg();
             p.addDepAsync(scr.name, "*")
                 .then(r => this.props.parent.reloadHeaderAsync())
@@ -227,7 +224,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             if (ev.keyCode == 13) upd(ev);
         }
         const install = (scr: Cloud.JsonPointer) => {
-            if (this.modal) this.modal.hide();
+            this.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
                 p.addDepAsync(scr.scriptname, "*")
@@ -240,7 +237,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             }
         }
         const installScript = (scr: Cloud.JsonScript) => {
-            if (this.modal) this.modal.hide();
+            this.hide();
             if (!this.state.packages) {
                 core.showLoading(lf("loading project..."));
                 workspace.installByIdAsync(scr.id)
@@ -249,7 +246,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             }
         }
         const installGh = (scr: pxt.github.Repo) => {
-            if (this.modal) this.modal.hide();
+            this.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
                 core.showLoading(lf("downloading package..."));
@@ -264,7 +261,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             }
         }
         const importHex = () => {
-            if (this.modal) this.modal.hide();
+            this.hide();
             this.props.parent.importFileDialog();
         }
 
@@ -282,7 +279,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
 
         return (
-            <sui.Modal ref={v => this.modal = v} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog" >
+            <sui.Modal visible={this.state.visible} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog"
+                onHide={() => this.setState({ visible: false }) }>
                 <div className="ui search">
                     <div className="ui fluid action input" role="search">
                         <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
@@ -383,27 +381,38 @@ interface ShareEditorState {
     screenshotUri?: string;
     currentPubId?: string;
     pubCurrent?: boolean;
+    visible?: boolean;
 }
 
 class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
-    modal: sui.Modal;
-
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
             currentPubId: undefined,
-            pubCurrent: false
+            pubCurrent: false,
+            visible: false
         }
     }
 
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    show(header: Header) {
+        this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
+    }
+
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
-        return this.state.mode != nextState.mode
+        return this.state.visible != nextState.visible
+            || this.state.mode != nextState.mode
             || this.state.pubCurrent != nextState.pubCurrent
             || this.state.screenshotId != nextState.screenshotId
             || this.state.currentPubId != nextState.currentPubId;
     }
 
     renderCore() {
+        if (!this.state.visible) return null;
+
         const cloud = pxt.appTarget.cloud || {};
         const publishingEnabled = cloud.publishing || false;
         const header = this.props.parent.state.header;
@@ -493,7 +502,8 @@ class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
         }
         const formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
 
-        return <sui.Modal ref={v => this.modal = v} addClass="small searchdialog" header={lf("Embed Project") }>
+        return <sui.Modal visible={this.state.visible} addClass="small searchdialog" header={lf("Embed Project") }
+            onHide={() => this.setState({ visible: false }) }>
             <div className={`ui ${formState} form`}>
                 { publishingEnabled ?
                     <div className="ui warning message">
@@ -1558,8 +1568,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     embed() {
         pxt.tickEvent("menu.embed");
         const header = this.state.header;
-        this.shareEditor.setState({ mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
-        this.shareEditor.modal.show();
+        this.shareEditor.show(header);
     }
 
     renderCore() {
