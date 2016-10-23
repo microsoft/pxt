@@ -547,7 +547,13 @@ function travisAsync() {
     } else {
         return buildTargetAsync()
             .then(() => uploader.checkDocsAsync())
+            .then(() => testSnippetsAsync())
             .then(() => {
+                if (!process.env.CLOUD_ACCESS_TOKEN) {
+                    // pull request, don't try to upload target
+                    pxt.log('no token, skipping upload')
+                    return Promise.resolve();
+                }
                 let trg = readLocalPxTarget()
                 if (rel)
                     return uploadTargetAsync(trg.id + "/" + rel)
@@ -3092,7 +3098,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         let snippets = uploader.getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
-        extraDeps.push("microbit")
+        extraDeps.push("core")
         let ignoredTypes = ["Text", "sig", "pre", "codecard", "cards", "package", "namespaces"]
         let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0 && !s.ignore)
         ignoreCount += snippets.length - snippetsToCheck.length
@@ -3109,7 +3115,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                 let resp = pxtc.compile(opts)
 
                 if (resp.success) {
-                    if (/block/.test(snippet.type)) {
+                    if (/^block/.test(snippet.type)) {
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         let file = resp.ast.getSourceFile('main.ts');
                         let apis = pxtc.getApiInfo(resp.ast);
