@@ -187,6 +187,12 @@ namespace ts.pxtc.thumb {
             return i.name == "bl" || i.name == "bb";
         }
 
+        public postAddress(f: assembler.File, v: number) {
+            v = v & 0xfffffffe
+            v -= f.baseOffset
+            return v
+        }
+        
         public emit32(v0: number, v: number, actual: string): pxtc.assembler.EmitResult {
             if (v % 2) return pxtc.assembler.emitErr("uneven BL?", actual);
             let off = v / 2

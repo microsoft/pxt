@@ -197,8 +197,8 @@ namespace ts.pxtc {
                     if (!inf) return;
                     funcInfo[inf.name] = inf;
                     let hexb = s.slice(0, step)
-                    //console.log(inf.name, hexb)
-                    inf.value = parseInt(swapBytes(hexb), 16) & 0xfffffffe
+                    console.log(inf.name, hexb)
+                    inf.value = parseInt(swapBytes(hexb), 16)
                     if (!inf.value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }

@@ -371,14 +371,18 @@ namespace ts.pxtc.assembler {
             else return name;
         }
 
+
         public lookupLabel(name: string, direct = false) {
             let v: number = null;
             let scoped = this.scopedName(name)
             if (this.labels.hasOwnProperty(scoped))
                 v = this.labels[scoped];
             else if (this.lookupExternalLabel) {
-                v = this.lookupExternalLabel(name)
-                if (v != null) v -= this.baseOffset
+                // ARM specific
+                v = this.lookupExternalLabel(name) 
+                if (v != null)  {
+                    v this.ei.postAddress(this,v)
+                }
             }
             if (v == null && direct) {
                 if (this.finalEmit)
@@ -956,8 +960,12 @@ namespace ts.pxtc.assembler {
             return null;
         }
 
-        public peephole(ln: Line, lnNext: Line, lnNext2: Line) {
+        public postAddress(f: File, v: number): number {
+            return v;
+        }
 
+        public peephole(ln: Line, lnNext: Line, lnNext2: Line) {
+            return;
         }
 
         public registerNo(actual: string): number {
