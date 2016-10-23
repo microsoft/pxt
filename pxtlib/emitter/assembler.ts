@@ -381,7 +381,7 @@ namespace ts.pxtc.assembler {
                 // ARM specific
                 v = this.lookupExternalLabel(name) 
                 if (v != null)  {
-                    v this.ei.postAddress(this,v)
+                    v = this.ei.postAddress(this,v)
                 }
             }
             if (v == null && direct) {
