@@ -546,6 +546,7 @@ function travisAsync() {
     } else {
         return buildTargetAsync()
             .then(() => uploader.checkDocsAsync())
+            .then(() => testSnippetsAsync())
             .then(() => {
                 if (!process.env.CLOUD_ACCESS_TOKEN) {
                     // pull request, don't try to upload target
