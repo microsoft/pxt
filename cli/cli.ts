@@ -547,6 +547,11 @@ function travisAsync() {
         return buildTargetAsync()
             .then(() => uploader.checkDocsAsync())
             .then(() => {
+                if (!process.env.CLOUD_ACCESS_TOKEN) {
+                    // pull request, don't try to upload target
+                    pxt.log('no token, skipping upload')
+                    return Promise.resolve();
+                }
                 let trg = readLocalPxTarget()
                 if (rel)
                     return uploadTargetAsync(trg.id + "/" + rel)
