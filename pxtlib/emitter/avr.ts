@@ -26,8 +26,7 @@ namespace ts.pxtc.avr {
         // - lds and sts are both 16-bit
         // for now, we only support only 16-bit
         public emit32(v0: number, v: number, actual: string): pxtc.assembler.EmitResult {
-            // TODO: we can have odd addresses in AVR
-            // if (v % 2) return pxtc.assembler.emitErr("uneven target label?", actual);
+            // TODO: optimize call/jmp by rcall/rjmp
             let off = v // / 2
             assert(off != null)
             if ((off | 0) != off ||
@@ -64,16 +63,19 @@ namespace ts.pxtc.avr {
             return null;
         }
 
+        public postProcessRelAddress(f: assembler.File, v: number): number {
+            return v + f.baseOffset;
+        }
+
         public getAddressFromLabel(f: assembler.File, i: assembler.Instruction, s: string, wordAligned = false): number {
             // lookup absolute, relative, dependeing
             let l = f.lookupLabel(s);
             if (l == null) return null;
-            // absolute addressing
             if (i.is32bit)
+                // absolute address
                 return l
             // relative addressing
-            // assumes this instruction is 16-bit  
-            let pc = f.location() + 2;
+            let pc = f.baseOffset + f.location() + 2;
             // if (wordAligned) pc = pc & 0xfffffffc
             let rel = l - pc
             // console.log("lookup =", l, " pc+2 =", pc, " rel = ", rel);
@@ -235,7 +237,7 @@ namespace ts.pxtc.avr {
             this.addInst("out   $i5, $r0", 0xb800, 0xf800);
             this.addInst("pop $r0", 0x900f, 0xfe0f);
             this.addInst("push $r0", 0x920f, 0xfe0f);
-            this.addInst("rcall $lbl11", 0xd000, 0xf000);
+            this.addInst("rcall $lb11", 0xd000, 0xf000);
             this.addInst("ret", 0x9508, 0xffff);
             this.addInst("reti", 0x9518, 0xffff);
             this.addInst("rjmp $lb11", 0xc000, 0xf000);

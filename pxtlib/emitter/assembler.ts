@@ -375,13 +375,13 @@ namespace ts.pxtc.assembler {
         public lookupLabel(name: string, direct = false) {
             let v: number = null;
             let scoped = this.scopedName(name)
-            if (this.labels.hasOwnProperty(scoped))
+            if (this.labels.hasOwnProperty(scoped)) {
                 v = this.labels[scoped];
-            else if (this.lookupExternalLabel) {
-                // ARM specific
+                v = this.ei.postProcessRelAddress(this,v)
+            } else if (this.lookupExternalLabel) {
                 v = this.lookupExternalLabel(name) 
                 if (v != null)  {
-                    v = this.ei.postProcessAddress(this,v)
+                    v = this.ei.postProcessAbsAddress(this,v)
                 }
             }
             if (v == null && direct) {
@@ -960,7 +960,11 @@ namespace ts.pxtc.assembler {
             return null;
         }
 
-        public postProcessAddress(f: File, v: number): number {
+        public postProcessRelAddress(f: File, v: number): number {
+            return v;
+        }
+
+        public postProcessAbsAddress(f: File, v: number): number {
             return v;
         }
 

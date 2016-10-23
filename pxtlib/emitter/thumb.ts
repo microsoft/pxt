@@ -187,7 +187,7 @@ namespace ts.pxtc.thumb {
             return i.name == "bl" || i.name == "bb";
         }
 
-        public postProcessAddress(f: assembler.File, v: number) {
+        public postProcessAbsAddress(f: assembler.File, v: number) {
             v = v & 0xfffffffe
             v -= f.baseOffset
             return v

@@ -264,7 +264,8 @@ namespace ts.pxtc {
             else
                 // ldd	r24, Y+1
                 return `
-    ${prelude}ldd ${reg}, ${z_reg}+${off}
+    ${prelude}
+    ldd ${reg}, ${z_reg}+${off}
     `
         }
 
