@@ -381,7 +381,7 @@ namespace ts.pxtc.assembler {
                 // ARM specific
                 v = this.lookupExternalLabel(name) 
                 if (v != null)  {
-                    v = this.ei.postAddress(this,v)
+                    v = this.ei.postProcessAddress(this,v)
                 }
             }
             if (v == null && direct) {
@@ -960,7 +960,7 @@ namespace ts.pxtc.assembler {
             return null;
         }
 
-        public postAddress(f: File, v: number): number {
+        public postProcessAddress(f: File, v: number): number {
             return v;
         }
 
