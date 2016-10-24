@@ -354,17 +354,10 @@ file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
 })
 
-file('built/web/semantic.css', ["built/semantic-tmp.css"], function () {
-    let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff2")
-    let url = "url(data:application/font-woff;charset=utf-8;base64," + fontFile.toString("base64") + ") format('woff')"
-    let semCss = fs.readFileSync('built/semantic-tmp.css', "utf8")
-    semCss = semCss.replace('src: url("fonts/icons.eot");', "")
-        .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
-    fs.writeFileSync('built/web/semantic.css', semCss)
-})
-
-file('built/semantic-tmp.css', ["theme/style.less", "theme/theme.config", "theme/site/globals/site.variables"], { async: true }, function () {
-    cmdIn(this, ".", 'node node_modules/less/bin/lessc theme/style.less built/semantic-tmp.css --include-path=node_modules/semantic-ui-less:theme/foo/bar')
+file('built/web/semantic.css', ['built/pxt.js',
+    "theme/style.less", "theme/theme.config", "theme/site/globals/site.variables"
+    ], { async: true }, function () {
+    cmdIn(this, ".", 'node built/pxt.js buildcss')
 })
 
 file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
