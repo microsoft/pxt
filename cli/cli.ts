@@ -1466,7 +1466,15 @@ function buildSemanticUIAsync() {
     return spawnAsync({
         cmd: "node",
         args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:theme/foo/bar"]
-    });
+    }).then(() => {
+        let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff2")
+        let url = "url(data:application/font-woff;charset=utf-8;base64,"
+            + fontFile.toString("base64") + ") format('woff')"
+        let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
+        semCss = semCss.replace('src: url("fonts/icons.eot");', "")
+            .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+        fs.writeFileSync('built/web/semantic.css', semCss)
+    })
 }
 
 function buildTargetCoreAsync() {
@@ -3693,6 +3701,7 @@ cmd("travis                       - upload release and npm package", travisAsync
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
+cmd("buildcss                     - build required css files", buildSemanticUIAsync, 10)
 
 cmd("crowdin CMD PATH [OUTPUT]    - upload, download files to/from crowdin", execCrowdinAsync, 2);
 
