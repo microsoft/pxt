@@ -636,7 +636,7 @@ ${output}</xml>`;
                             return "";
                         }
                     });
-                    write(`<mutation callbackProperties="${names.join(",")}"></mutation>`)
+                    write(`<mutation callbackproperties="${names.join(",")}"></mutation>`)
                 }
 
                 function checkName(name: Node) {

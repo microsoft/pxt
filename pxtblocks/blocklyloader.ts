@@ -33,7 +33,7 @@ namespace pxt.blocks {
 
     const mutatedVariableInputName = "properties";
     const mutatorStatmentInput = "PROPERTIES";
-    export const savedMutationAttribute = "callbackProperties";
+    export const savedMutationAttribute = "callbackproperties";
 
     const blockColors: Map<number> = {
         loops: 120,
