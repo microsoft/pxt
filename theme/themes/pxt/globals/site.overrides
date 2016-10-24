@@ -1,0 +1,14 @@
+/*******************************
+         Site Overrides
+*******************************/
+
+@importGoogleFonts: false;
+
+
+.blocklyToolboxDiv {
+    background: @blocklyToolboxColor;
+}
+
+.blocklySvg {
+    background-color: @blocklySvgColor !important;
+}
