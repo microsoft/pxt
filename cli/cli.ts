@@ -3665,7 +3665,7 @@ export function preCacheHexAsync() {
     Object.keys(trgInfo.blocksprj.files).forEach((f) => {
         fs.writeFileSync(path.join(projectPath, f), trgInfo.blocksprj.files[f]);
     });
-    pxt.debug("default project extracted");
+    pxt.log("default project extracted");
 
     // Install package dependencies
     let previousCwd = process.cwd();
@@ -3673,7 +3673,7 @@ export function preCacheHexAsync() {
 
     return installAsync()
         .then(() => {
-            pxt.debug("packages installed");
+            pxt.log("packages installed");
 
             // Build in the cloud
             forceCloudBuild = true;
@@ -3681,7 +3681,7 @@ export function preCacheHexAsync() {
         })
         .then((compileOpts: pxtc.CompileOptions) => {
             if (!compileOpts) {
-                console.error("Failed to extract HEX image");
+                console.log("Failed to extract HEX image");
                 return;
             }
 
@@ -3695,10 +3695,10 @@ export function preCacheHexAsync() {
             nodeutil.mkdirP(hexCache);
 
             if (fs.existsSync(hexFile)) {
-                pxt.debug("HEX image already in offline cache");
+                pxt.log("HEX image already in offline cache");
             } else {
                 fs.writeFileSync(hexFile, hex.join(os.EOL));
-                pxt.debug(`Created HEX image in offline cache: ${hexFile}`);
+                pxt.log(`Created HEX image in offline cache: ${hexFile}`);
             }
         })
         .finally(() => {

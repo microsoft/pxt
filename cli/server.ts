@@ -244,11 +244,13 @@ function getCachedHexAsync(sha: string): Promise<any> {
                 console.log(`offline HEX not found: ${hexFile}`);
                 return Promise.resolve(null);
             }
-            
+
             console.log(`serving HEX from offline cache: ${hexFile}`);
             return readFileAsync(hexFile)
                 .then((fileContent) => {
                     return {
+                        enums: [],
+                        functions: [],
                         hex: fileContent.toString()
                     };
                 });

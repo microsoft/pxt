@@ -779,6 +779,8 @@ namespace pxt.hex {
                             })))
                     .then(text => {
                         return {
+                            enums: [],
+                            functions: [],
                             hex: text.split(/\r?\n/)
                         };
                     })
