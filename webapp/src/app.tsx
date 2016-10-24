@@ -824,7 +824,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         let changeHandler = () => {
             if (this.editorFile) {
-                if (this.editorFile.inSyncWithEditor) 
+                if (this.editorFile.inSyncWithEditor)
                     pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
                 this.editorFile.markDirty();
             }
@@ -1941,6 +1941,11 @@ function initTheme() {
         pxt.debug("rtl layout");
         pxsim.U.addClass(document.body, "rtl");
         document.body.style.direction = "rtl";
+    }
+
+    for (let u of pxt.appTarget.appTheme.usbHelp || []) {
+        u.path = u.path.replace("@pxtCdnUrl@",
+            pxt.webConfig.pxtCdnUrl.replace(/^(https:\/\/[^\/]+).*/, (a, b) => b))
     }
 }
 

@@ -917,6 +917,20 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         })
 }
 
+function uploadArtFileAsync(fn: string) {
+    if (isNewBackend())
+        return Promise.resolve("@pxtCdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn)
+    else
+        return uploader.uploadArtAsync(fn, true)
+}
+
+function gitHash(buf: Buffer) {
+    let hash = crypto.createHash("sha1")
+    hash.update(new Buffer("blob " + buf.length + "\u0000"))
+    hash.update(buf)
+    return hash.digest("hex")
+}
+
 function uploadCoreAsync(opts: UploadOptions) {
     let liteId = "<none>"
 
@@ -1030,11 +1044,10 @@ function uploadCoreAsync(opts: UploadOptions) {
                         trg.appTheme.homeUrl = opts.localDir
                         data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                     } else {
-                        if (isNewBackend()) return Promise.resolve() // TODO
                         // expand usb help pages
                         return Promise.all(
                             (trg.appTheme.usbHelp || []).filter(h => !!h.path)
-                                .map(h => uploader.uploadArtAsync(h.path, true)
+                                .map(h => uploadArtFileAsync(h.path)
                                     .then(blob => {
                                         console.log(`target.json patch:    ${h.path} -> ${blob}`)
                                         h.path = blob;
@@ -1064,12 +1077,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                     filename: fileName,
                     size: 0
                 }
-                let hash = crypto.createHash("sha1")
                 let buf = new Buffer(req.content, req.encoding)
                 req.size = buf.length
-                hash.update(new Buffer("blob " + buf.length + "\u0000"))
-                hash.update(buf)
-                req.hash = hash.digest("hex")
+                req.hash = gitHash(buf)
                 uplReqs[fileName] = req
                 return Promise.resolve()
             }
