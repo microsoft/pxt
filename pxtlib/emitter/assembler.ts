@@ -138,7 +138,7 @@ namespace ts.pxtc.assembler {
                         }
                         if (this.ei.is32bit(this)) {
                             // console.log(actual + " " + v.toString())
-                            bit32_value = enc.encode(v)
+                            bit32_value = v
                             bit32_actual = actual
                             continue
                         }

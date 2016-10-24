@@ -27,7 +27,7 @@ namespace ts.pxtc.avr {
         // for now, we only support only 16-bit
         public emit32(op: number, v: number, actual: string): pxtc.assembler.EmitResult {
             // TODO: optimize call/jmp by rcall/rjmp
-            let off = v
+            let off = v >> 1
             assert(off != null, "off null")
             if ((off | 0) != off ||
                 // 16-bit only for now (so, can address 128k)
