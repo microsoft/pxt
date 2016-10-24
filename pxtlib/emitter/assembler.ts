@@ -137,7 +137,8 @@ namespace ts.pxtc.assembler {
                             }
                         }
                         if (this.ei.is32bit(this)) {
-                            bit32_value = v
+                            // console.log(actual + " " + v.toString())
+                            bit32_value = enc.encode(v)
                             bit32_actual = actual
                             continue
                         }
@@ -379,7 +380,7 @@ namespace ts.pxtc.assembler {
                 v = this.labels[scoped];
                 v = this.ei.postProcessRelAddress(this,v)
             } else if (this.lookupExternalLabel) {
-                v = this.lookupExternalLabel(name) 
+                v = this.lookupExternalLabel(name)
                 if (v != null)  {
                     v = this.ei.postProcessAbsAddress(this,v)
                 }

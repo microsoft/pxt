@@ -25,10 +25,10 @@ namespace ts.pxtc.avr {
         // - the call and jmp instructions have both 16-bit and 22-bit varieties
         // - lds and sts are both 16-bit
         // for now, we only support only 16-bit
-        public emit32(v0: number, v: number, actual: string): pxtc.assembler.EmitResult {
+        public emit32(op: number, v: number, actual: string): pxtc.assembler.EmitResult {
             // TODO: optimize call/jmp by rcall/rjmp
-            let off = v // / 2
-            assert(off != null)
+            let off = v
+            assert(off != null, "off null")
             if ((off | 0) != off ||
                 // 16-bit only for now (so, can address 128k)
                 !(-128 * 512 <= off && off <= 128 * 512))
@@ -38,7 +38,7 @@ namespace ts.pxtc.avr {
             let imm = off & 0xffff
 
             return {
-                opcode: v0,
+                opcode: op,
                 opcode2: imm,
                 stack: 0,
                 numArgs: [v],
@@ -67,6 +67,11 @@ namespace ts.pxtc.avr {
             return v + f.baseOffset;
         }
 
+        // absolute addresses come in divide by two
+        public postProcessAbsAddress(f: assembler.File, v: number): number {
+            return v << 1;
+        }
+
         public getAddressFromLabel(f: assembler.File, i: assembler.Instruction, s: string, wordAligned = false): number {
             // lookup absolute, relative, dependeing
             let l = f.lookupLabel(s);
@@ -76,12 +81,10 @@ namespace ts.pxtc.avr {
                 return l
             // relative addressing
             let pc = f.baseOffset + f.location() + 2;
-            // if (wordAligned) pc = pc & 0xfffffffc
             let rel = l - pc
             // console.log("lookup =", l, " pc+2 =", pc, " rel = ", rel);
             return rel;
         }
-
 
         public isPop(opcode: number): boolean {
             return opcode == 0x900f;
@@ -129,9 +132,11 @@ namespace ts.pxtc.avr {
             this.addEnc("$i9", "#0-7", v => this.inrange(7, v, v))
 
             // labels
-            this.addEnc("$la", "LABEL", v => this.inrange(255, v >> 1, v >> 1)).isWordAligned = true;
+            // this.addEnc("$la", "LABEL", v => this.inrange(255, v >> 1, v >> 1)).isWordAligned = true;
+            this.addEnc("$la", "LABEL", v => this.inrange(65535, v, v))
             this.addEnc("$lb", "LABEL", v => this.inrangeSigned(127, v >> 1, v >> 1) << 3)
-            this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(2047, v >> 1, v >> 1))
+            this.addEnc("$lc", "LABEL", v => this.inrange(65535, v >> 1, v >> 1))
+            this.addEnc("$ld", "LABEL", v => this.inrangeSigned(2047, v >> 1, v >> 1))
 
             this.addInst("adc   $r0, $r1", 0x1C00, 0xfC00);
             this.addInst("add   $r0, $r1", 0x0C00, 0xfC00);
@@ -168,7 +173,7 @@ namespace ts.pxtc.avr {
             this.addInst("bset  $r4", 0x9408, 0xff8f);
             this.addInst("bst   $r0, $i9", 0xfa00, 0xfe08);
             // call - 32 bit - special handling
-            this.addInst("call  $lb", 0x940e, 0xffff, "CALL");
+            this.addInst("call  $lc", 0x940e, 0xffff, "CALL");
             this.addInst("cbi   $r7, $i9", 0x9800, 0xff00);
             this.addInst("cbr   $r3, $i3", 0x7000, 0xf000);
             this.addInst("clc", 0x9488, 0xffff);
@@ -201,7 +206,7 @@ namespace ts.pxtc.avr {
             this.addInst("in    $r0, $i5", 0xb000, 0xf800);
             this.addInst("inc   $r0", 0x9403, 0xfe0f);
             // jmp - 32 bit - special handling
-            this.addInst("jmp  $lb", 0x940c, 0xffff, "JMP")
+            this.addInst("jmp  $lc", 0x940c, 0xffff, "JMP")
             this.addInst("lac   Z, $r0", 0x9206, 0xfe0f);
             this.addInst("las   Z, $r0", 0x9205, 0xfe0f);
             this.addInst("lat   Z, $r0", 0x9207, 0xfe0f);
@@ -237,10 +242,10 @@ namespace ts.pxtc.avr {
             this.addInst("out   $i5, $r0", 0xb800, 0xf800);
             this.addInst("pop $r0", 0x900f, 0xfe0f);
             this.addInst("push $r0", 0x920f, 0xfe0f);
-            this.addInst("rcall $lb11", 0xd000, 0xf000);
+            this.addInst("rcall $ld", 0xd000, 0xf000);
             this.addInst("ret", 0x9508, 0xffff);
             this.addInst("reti", 0x9518, 0xffff);
-            this.addInst("rjmp $lb11", 0xc000, 0xf000);
+            this.addInst("rjmp $ld", 0xc000, 0xf000);
             this.addInst("rol $r6", 0x1c00, 0xfc00);
             this.addInst("lor $r0", 0x9407, 0xfe0f);
             this.addInst("sbc   $r0, $r1", 0x0800, 0xfC00);
@@ -377,7 +382,6 @@ namespace ts.pxtc.avr {
             assembler.expect(this,
                 "91200363 L123: lds r18, 0x0363\n" +
                 "2322 and r18, r18\n" +
-                "f0c9 breq L20\n" +
                 "91200386 lds r18, 0x0386\n" +
                 "3220 cpi r18, 0x20\n" +
                 "f040 brcs L21\n" +
@@ -408,7 +412,7 @@ namespace ts.pxtc.avr {
                 "e081 L22: ldi r24, 0x01\n" +
                 "e090 ldi r25, 0x00\n" +
                 "9508 ret \n")
-
+/*
             assembler.expect(this,
                 ".global\n" +
                 "931f L111: push r17\n" +
@@ -432,7 +436,7 @@ namespace ts.pxtc.avr {
                 "f0c9 breq L31\n" +
                 "2f16 mov r17, r22\n" +
                 "1181 cpse r24, r1\n" +
-                "940e0229 call 0x0229\n" +
+                // "940e0229 call 0x0229\n" +
                 "2fec mov r30, r28\n" +
                 "e0f0 ldi r31, 0x00\n" +
                 "0fee add r30, r30\n" +
@@ -458,6 +462,7 @@ namespace ts.pxtc.avr {
                 "91cf pop r28\n" +
                 "911f pop r17\n" +
                 "9508 ret \n")
+                */
         }
     }
 }
