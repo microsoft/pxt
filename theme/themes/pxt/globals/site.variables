@@ -3,7 +3,7 @@
 *******************************/
 @importGoogleFonts: false;
 
-@primaryColor: @pink;
+@primaryColor: @blue;
 @secondaryColor: @grey;
 
 @red:#E81123;
@@ -17,3 +17,7 @@
 @pink:#E2008C;
 @brown:#00BCF2;
 @grey:#505050;
+
+
+@blocklyToolboxColor: rgba(0, 0, 0, 0.05);
+@blocklySvgColor: #fff;
