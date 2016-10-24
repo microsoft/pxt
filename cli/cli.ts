@@ -3181,10 +3181,10 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
     let ignorePreviousSuccesses = false
 
     for (let i = 0; i < args.length; i++) {
-        if (args[i] == "-i") {
+        if (args[i] == "--i") {
             ignorePreviousSuccesses = true
         }
-        else if (args[i] == "-re" && i < args.length - 1) {
+        else if (args[i] == "--re" && i < args.length - 1) {
             try {
                 filenameMatch = new RegExp(args[i + 1])
                 i++
@@ -3309,9 +3309,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         }
         if (filenameMatch.source == '.*' && !ignorePreviousSuccesses) {
             let successData = successes.join("\n")
-            if (!fs.existsSync(path.dirname(ignorePath))) {
-                fs.mkdirSync(path.dirname(ignorePath))
-            }
+            nodeutil.mkdirP(ignorePath);
             fs.writeFileSync(ignorePath, successData)
         }
         else {
@@ -3669,7 +3667,7 @@ cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and comp
 cmd("testdecompilererrors  DIR    - decompile unsupported files from DIR one-by-one and check for errors", testDecompilerErrorsAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
-cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
+cmd("snippets [--re NAME] [--i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
