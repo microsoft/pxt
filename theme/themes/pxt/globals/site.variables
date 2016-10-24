@@ -3,7 +3,7 @@
 *******************************/
 @importGoogleFonts: false;
 
-@primaryColor: @blue;
+@primaryColor: @pink;
 @secondaryColor: @grey;
 
 @red:#E81123;
