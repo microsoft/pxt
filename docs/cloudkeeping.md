@@ -1,5 +1,7 @@
 # Cloud-keeping
 
+**This docs are outdated.**
+
 The [CLI tool](/cli) is also used for configuring the PXT cloud service. Unless you have your
 own PXT cloud you don't need to worry about it, otherwise the docs follow.
 
