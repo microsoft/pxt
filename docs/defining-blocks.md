@@ -81,6 +81,46 @@ The following types are supported in function signatures that are meant to be ex
 * custom classes that are also exported
 * arrays of the above
 
+## Callbacks with Parameters
+
+APIs that take in a callback function will have that callback converted into a statement input.
+If the callback in the API is designed to take in parameters, the best way to map that pattern
+to the blocks is by passing the callback a single parameter with a class type that contains
+all the other values. For example:
+
+```typescript
+
+export class ArgumentClass {
+    argumentA: number;
+    argumentB: string;
+}
+
+//% mutate=true
+//% mutateText="My Arguments"
+//% mutateDefaults="argumentA;argumentA,argumentB"
+// ...
+export function addSomeEventHandler((a: ArgumentClass) => void) { };
+```
+
+In the above example, setting `mutate=true` will cause this API to use Blockly "mutators"
+to let users change what parameters appear in the blocks. Each parameter will be given an
+optional variable field in the block that defines a variable that can be used within the callback.
+The variable fields compile to object destructuring in the TypeScript code. For example:
+
+```typescript
+
+addSomeEventHandler(({argumentA, argumentB}) => {
+
+})
+
+```
+
+For an example of this pattern in action, see the `radio.onDataPacketReceived` block. The other attributes
+related to mutators include:
+
+* `mutateText` - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
+* `mutateDefaults` - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
+
 ## Enums
 
 Enum are supported and will automatically be represented by a dropdown in blocks.
@@ -204,6 +244,19 @@ To do so, the ideal setup is:
 - refresh the browser and try out the changes on a dummy program.
 
 Interrestingly, you can design your entire API without implementing it!
+
+## Deprecating Blocks
+
+To deprecate an existing API, you can add the **deprecated** attribute like so:
+
+```
+//% deprecated=true
+```
+
+This will cause the API to still be usable in TypeScript, but prevent the block from appearing in the
+Blockly toolbox. If a user tries to load a project that uses the old API, the project will still load
+correctly as long as the TypeScript API is present. Any deprecated blocks in the project will appear in
+the editor but not the toolbox.
 
 ## API design Tips and Tricks
 
