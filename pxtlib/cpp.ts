@@ -771,12 +771,11 @@ namespace pxt.hex {
                                     })
                                 tryGet();
                             })))
-                    .then(text =>
-                        Util.httpGetJsonAsync(hexurl + "-metainfo.json")
-                            .then(meta => {
-                                meta.hex = text.split(/\r?\n/)
-                                return meta
-                            }))
+                    .then(text => {
+                        return {
+                            hex: text.split(/\r?\n/)
+                        };
+                    })
             })
     }
 

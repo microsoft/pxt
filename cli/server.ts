@@ -238,8 +238,6 @@ function getCachedHexAsync(sha: string): Promise<any> {
             return readFileAsync(hexFile)
                 .then((fileContent) => {
                     return {
-                        enums: [],
-                        functions: [],
                         hex: fileContent.toString()
                     };
                 });

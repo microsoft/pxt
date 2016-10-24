@@ -3095,7 +3095,7 @@ interface BuildCoreOptions {
     docs?: boolean;
 }
 
-function buildCoreAsync(buildOpts: BuildCoreOptions) {
+function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOptions> {
     let compileOptions: pxtc.CompileOptions;
     ensurePkgDir();
     return prepBuildOptionsAsync(buildOpts.mode)
@@ -3144,9 +3144,12 @@ function buildCoreAsync(buildOpts: BuildCoreOptions) {
                 case BuildOption.Run:
                     return runCoreAsync(res);
                 default:
-                    return Promise.resolve(compileOptions);
+                    return Promise.resolve();
             }
         })
+        .then(() => {
+            return compileOptions;
+        });
 }
 
 export function uploadTargetTranslationsAsync() {
@@ -3232,7 +3235,8 @@ export function buildAsync(arg?: string) {
         forceCloudBuild = true;
     }
 
-    return buildCoreAsync({ mode: BuildOption.JustBuild });
+    return buildCoreAsync({ mode: BuildOption.JustBuild })
+        .then((compileOpts) => { });
 }
 
 export function gendocsAsync(...args: string[]) {
@@ -3241,18 +3245,22 @@ export function gendocsAsync(...args: string[]) {
         docs: args.length == 0 || args.indexOf("--docs") > -1,
         locs: args.length == 0 || args.indexOf("--locs") > -1
     })
+        .then((compileOpts) => { });
 }
 
 export function deployAsync() {
     return buildCoreAsync({ mode: BuildOption.Deploy })
+        .then((compileOpts) => { });
 }
 
 export function runAsync() {
     return buildCoreAsync({ mode: BuildOption.Run })
+        .then((compileOpts) => { });
 }
 
 export function testAsync() {
     return buildCoreAsync({ mode: BuildOption.Test })
+        .then((compileOpts) => { });
 }
 
 export function uploadDocsAsync(...args: string[]): Promise<void> {
@@ -3381,35 +3389,29 @@ export function preCacheHexAsync() {
     let trgInfo = readLocalPxTarget();
 
     if (!trgInfo) {
-        console.log("pxtarget.json not found; make sure you are in a valid PXT target directory");
+        console.error("pxtarget.json not found; make sure you are in a valid PXT target directory");
         return Promise.resolve();
     }
 
     // Extract the target's default project to disk
     if (!trgInfo.blocksprj) {
-        console.log("Could not find default project 'blocksprj' in pxtarget.json");
+        console.error("Could not find default project 'blocksprj' in pxtarget.json");
         return Promise.resolve();
     }
 
-    let projectsRoot = "projects";
-    let projectInitialName = "_precache_hex";
-    let projectName = projectInitialName;
-    let projectPath = path.join(projectsRoot, projectName);
-    let counter = 2;
+    let projectPath = path.join("built", "precache");
 
-    while (fs.existsSync(projectPath)) {
-        projectName = projectInitialName + "-" + counter;
-        projectPath = path.join(projectsRoot, projectName);
-        ++counter;
+    if (fs.existsSync(projectPath)) {
+        nodeutil.deleteFolderRecursive(projectPath);
     }
 
     nodeutil.mkdirP(projectPath);
-    trgInfo.blocksprj.config.name = projectName;
+    trgInfo.blocksprj.config.name = path.basename(projectPath);
     fs.writeFileSync(path.join(projectPath, "pxt.json"), JSON.stringify(trgInfo.blocksprj.config, null, 4));
     Object.keys(trgInfo.blocksprj.files).forEach((f) => {
         fs.writeFileSync(path.join(projectPath, f), trgInfo.blocksprj.files[f]);
     });
-    console.log("default project extracted");
+    pxt.debug("default project extracted");
 
     // Install package dependencies
     let previousCwd = process.cwd();
@@ -3417,15 +3419,15 @@ export function preCacheHexAsync() {
 
     return installAsync()
         .then(() => {
-            console.log("packages installed");
+            pxt.debug("packages installed");
 
             // Build in the cloud
             forceCloudBuild = true;
-            return buildAsync();
+            return buildCoreAsync({ mode: BuildOption.JustBuild });
         })
         .then((compileOpts: pxtc.CompileOptions) => {
             if (!compileOpts) {
-                console.log("Failed to extract HEX image");
+                console.error("Failed to extract HEX image");
                 return;
             }
 
@@ -3439,14 +3441,11 @@ export function preCacheHexAsync() {
             nodeutil.mkdirP(hexCache);
 
             if (fs.existsSync(hexFile)) {
-                console.log("HEX image already in offline cache");
+                pxt.debug("HEX image already in offline cache");
             } else {
                 fs.writeFileSync(hexFile, hex.join(os.EOL));
-                console.log(`Created HEX image in offline cache: ${hexFile}`);
+                pxt.debug(`Created HEX image in offline cache: ${hexFile}`);
             }
-
-            // Clean up temp project
-            nodeutil.deleteFolderRecursive(projectPath);
         })
         .finally(() => {
             if (process.cwd() !== previousCwd) {
@@ -3482,7 +3481,7 @@ cmd("help     [all]               - display this message", helpAsync)
 cmd("init                         - start new package (library) in current directory", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 
-cmd("build    [-cloud]            - build current package, -cloud forces a build in the cloud", buildAsync)
+cmd("build    [--cloud]            - build current package, --cloud forces a build in the cloud", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
