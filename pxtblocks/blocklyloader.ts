@@ -195,62 +195,64 @@ namespace pxt.blocks {
         if (fn.attributes.shim == "TD_ID")
             return;
 
-        let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-        let nsn = info.apis.byQName[ns];
-        if (nsn) ns = nsn.attributes.block || ns;
-        let catName = ts.pxtc.blocksCategory(fn);
-        let category = categoryElement(tb, catName);
+        if (!fn.attributes.deprecated) {
+            let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+            let nsn = info.apis.byQName[ns];
+            if (nsn) ns = nsn.attributes.block || ns;
+            let catName = ts.pxtc.blocksCategory(fn);
+            let category = categoryElement(tb, catName);
 
-        if (!category) {
-            let categories = getChildCategories(tb)
-            let parentCategoryList = tb;
+            if (!category) {
+                let categories = getChildCategories(tb)
+                let parentCategoryList = tb;
 
-            pxt.debug('toolbox: adding category ' + ns)
+                pxt.debug('toolbox: adding category ' + ns)
 
-            const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
-            category = createCategoryElement(catName, nsWeight)
+                const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
+                category = createCategoryElement(catName, nsWeight)
 
-            if (nsn && nsn.attributes.color) {
-                category.setAttribute("colour", nsn.attributes.color);
-            }
-            else if (blockColors[ns]) {
-                category.setAttribute("colour", blockColors[ns].toString());
-            }
-
-            if (nsn.attributes.advanced) {
-                const advancedCategoryName = Util.lf("{id:category}Advanced")
-                parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1)
-                categories = getChildCategories(parentCategoryList)
-            }
-
-            // Insert the category based on weight
-            let ci = 0;
-            for (ci = 0; ci < categories.length; ++ci) {
-                let cat = categories[ci];
-                if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
-                    parentCategoryList.insertBefore(category, cat);
-                    break;
+                if (nsn && nsn.attributes.color) {
+                    category.setAttribute("colour", nsn.attributes.color);
                 }
-            }
-            if (ci == categories.length)
-                parentCategoryList.appendChild(category);
-        }
-        if (fn.attributes.advanced) {
-            category = getOrAddSubcategory(category, Util.lf("More\u2026"), 1, category.getAttribute("colour"))
-        }
+                else if (blockColors[ns]) {
+                    category.setAttribute("colour", blockColors[ns].toString());
+                }
 
-        if (fn.attributes.mutateDefaults) {
-            const mutationValues = fn.attributes.mutateDefaults.split(";");
-            mutationValues.forEach(mutation => {
-                const mutatedBlock = block.cloneNode(true);
-                const mutationElement = document.createElement("mutation");
-                mutationElement.setAttribute(savedMutationAttribute, mutation);
-                mutatedBlock.appendChild(mutationElement);
-                category.appendChild(mutatedBlock);
-            });
-        }
-        else {
-            category.appendChild(block);
+                if (nsn.attributes.advanced) {
+                    const advancedCategoryName = Util.lf("{id:category}Advanced")
+                    parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1)
+                    categories = getChildCategories(parentCategoryList)
+                }
+
+                // Insert the category based on weight
+                let ci = 0;
+                for (ci = 0; ci < categories.length; ++ci) {
+                    let cat = categories[ci];
+                    if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
+                        parentCategoryList.insertBefore(category, cat);
+                        break;
+                    }
+                }
+                if (ci == categories.length)
+                    parentCategoryList.appendChild(category);
+            }
+            if (fn.attributes.advanced) {
+                category = getOrAddSubcategory(category, Util.lf("More\u2026"), 1, category.getAttribute("colour"))
+            }
+
+            if (fn.attributes.mutateDefaults) {
+                const mutationValues = fn.attributes.mutateDefaults.split(";");
+                mutationValues.forEach(mutation => {
+                    const mutatedBlock = block.cloneNode(true);
+                    const mutationElement = document.createElement("mutation");
+                    mutationElement.setAttribute(savedMutationAttribute, mutation);
+                    mutatedBlock.appendChild(mutationElement);
+                    category.appendChild(mutatedBlock);
+                });
+            }
+            else {
+                category.appendChild(block);
+            }
         }
     }
 
