@@ -141,9 +141,9 @@ namespace ts.pxtc {
     ret
     `
         }
-        debugger_hook(lbl: string) { return "nop" }
-        debugger_bkpt(lbl: string) { return "nop" }
-        breakpoint() { return "nop" }
+        debugger_hook(lbl: string) { return "eor r1, r1" }
+        debugger_bkpt(lbl: string) { return "eor r1, r1" }
+        breakpoint() { return "eor r1, r1" }
         push_local(reg: string) {
             this.push_cnt += 1
             return `
