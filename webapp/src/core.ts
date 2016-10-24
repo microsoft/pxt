@@ -104,7 +104,7 @@ export function cookieNotification() {
             `
             <button arial-label="${lf("Continue")}" class="ui right floated icon button"><i class="remove icon"></i></button>
             ${lf("By using this site you agree to the use of cookies for analytics.")}
-            <a class="ui link" href="https://www.pxt.io/privacy">${lf("Learn more")}</a>
+            <a target="_blank" class="ui link" href="${pxt.appTarget.appTheme.privacyUrl}">${lf("Learn more")}</a>
             `
         ).fadeIn('fast')
         $d.find('button').click(() => {

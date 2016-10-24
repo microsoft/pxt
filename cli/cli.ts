@@ -8,6 +8,7 @@
 import * as nodeutil from './nodeutil';
 nodeutil.init();
 
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -31,6 +32,10 @@ function initTargetCommands() {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
     }
+}
+
+function isNewBackend() {
+    return U.startsWith(Cloud.accessToken, "3.")
 }
 
 let prevExports = (global as any).savedModuleExports
@@ -101,7 +106,7 @@ function saveConfig() {
 }
 
 function initConfig() {
-    let atok: string = process.env["CLOUD_ACCESS_TOKEN"]
+    let atok: string = process.env["PXT_ACCESS_TOKEN"] || process.env["CLOUD_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
         globalConfig = config
@@ -177,6 +182,19 @@ function pkginfoAsync(repopath: string) {
                 .then(heads => {
                     console.log("Branches: " + heads.join(", "))
                 })
+        })
+}
+
+export function pokeRepoAsync(opt: string, repo: string): Promise<void> {
+    if (!repo) repo = opt
+    let data = {
+        repo: repo,
+        getkey: false
+    }
+    if (opt == "-u") data.getkey = true
+    return Cloud.privatePostAsync("pokerepo", data)
+        .then(resp => {
+            console.log(resp)
         })
 }
 
@@ -527,9 +545,9 @@ function travisAsync() {
 
     const rel = process.env.TRAVIS_TAG || ""
     const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = rel && atok;
+    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(rel) && atok;
 
-    if (/^v\d/.test(rel) && atok) {
+    if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
         console.log(`Setting up ${npmrc}`)
         let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
@@ -547,7 +565,13 @@ function travisAsync() {
     } else {
         return buildTargetAsync()
             .then(() => uploader.checkDocsAsync())
+            .then(() => testSnippetsAsync())
             .then(() => {
+                if (!process.env.CLOUD_ACCESS_TOKEN) {
+                    // pull request, don't try to upload target
+                    pxt.log('no token, skipping upload')
+                    return Promise.resolve();
+                }
                 let trg = readLocalPxTarget()
                 if (rel)
                     return preCacheHexAsync()
@@ -684,7 +708,8 @@ function targetFileList() {
     let lst = onlyExts(forkFiles("built"), [".js", ".css", ".json", ".webmanifest"])
         .concat(forkFiles("sim/public"))
     // the cloud only accepts *.json and sim* files in targets - TODO is this still true?
-    return lst.filter(fn => /\.json$/.test(fn) || /[\/\\]sim[^\\\/]*$/.test(fn))
+    pxt.debug(`target files: ${lst.join('\r\n    ')}`)
+    return lst;
 }
 
 export function staticpkgAsync(label?: string) {
@@ -718,8 +743,180 @@ interface UploadOptions {
     localDir?: string;
 }
 
+interface BlobReq {
+    hash: string;
+    content: string;
+    encoding: string;
+    filename: string; // comment only
+    size: number; // ditto
+}
+
+type GitTree = Map<GitEntry>;
+interface GitEntry {
+    hash?: string;
+    subtree?: GitTree;
+}
+
+interface CommitInfo {
+    tree: GitTree;
+    parents: string[];
+    message: string;
+    target: string;
+}
+
 function uploadFileName(p: string) {
     return p.replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
+}
+
+function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+    let reqs = U.unique(U.values(uplReqs), r => r.hash)
+    console.log("Asking for", reqs.length, "hashes")
+    return Promise.resolve()
+        .then(() => Cloud.privatePostAsync("upload/status", {
+            hashes: reqs.map(r => r.hash)
+        }))
+        .then(resp => {
+            let missing = U.toDictionary(resp.missing as string[], s => s)
+            let missingReqs = reqs.filter(r => !!U.lookup(missing, r.hash))
+            let size = 0
+            for (let r of missingReqs) size += r.size
+            console.log("files missing: ", missingReqs.length, size, "bytes")
+            return Promise.map(missingReqs,
+                r => Cloud.privatePostAsync("upload/blob", r)
+                    .then(() => {
+                        console.log(r.filename + ": OK," + r.size + " " + r.hash)
+                    }))
+        })
+        .then(() => {
+            let roottree: Map<GitEntry> = {}
+            let get = (tree: GitTree, path: string): GitEntry => {
+                let subt = U.lookup(tree, path)
+                if (!subt)
+                    subt = tree[path] = {}
+                return subt
+            }
+            let lookup = (tree: GitTree, path: string): GitEntry => {
+                let m = /^([^\/]+)\/(.*)/.exec(path)
+                if (m) {
+                    let subt = get(tree, m[1])
+                    U.assert(!subt.hash)
+                    if (!subt.subtree) subt.subtree = {}
+                    return lookup(subt.subtree, m[2])
+                } else {
+                    return get(tree, path)
+                }
+            }
+            for (let fn of Object.keys(uplReqs)) {
+                let e = lookup(roottree, fn)
+                e.hash = uplReqs[fn].hash
+            }
+            let info = travisInfo()
+            let data: CommitInfo = {
+                message: "Upload from " + info.commitUrl,
+                parents: [],
+                target: pxt.appTarget.id,
+                tree: roottree,
+            }
+            console.log("Creating commit...")
+            return Cloud.privatePostAsync("upload/commit", data)
+        })
+        .then(res => {
+            console.log("Commit:", res)
+            return uploadToGitRepoAsync(opts, uplReqs)
+        })
+}
+
+function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
+    let label = opts.label
+    if (!label) return Promise.resolve()
+    let tid = pxt.appTarget.id
+    if (U.startsWith(label, tid + "/"))
+        label = label.slice(tid.length + 1)
+    if (!/^v\d/.test(label))
+        return Promise.resolve()
+    let repoUrl = process.env["PXT_RELEASE_REPO"]
+    if (!repoUrl) {
+        console.log("no $PXT_RELEASE_REPO variable; not uploading label " + label)
+        return Promise.resolve()
+    }
+    nodeutil.mkdirP("tmp")
+    let trgPath = "tmp/releases"
+    let mm = /^https:\/\/([^:]+):([^@]+)@([^\/]+)(.*)/.exec(repoUrl)
+    if (!mm) {
+        U.userError("wrong format for $PXT_RELEASE_REPO")
+    }
+
+    let user = mm[1]
+    let pass = mm[2]
+    let host = mm[3]
+    let netRcLine = `machine ${host} login ${user} password ${pass}\n`
+    repoUrl = `https://${user}@${host}${mm[4]}`
+
+    let homePath = process.env["HOME"] || process.env["UserProfile"]
+    let netRcPath = path.join(homePath, /^win/.test(process.platform) ? "_netrc" : ".netrc")
+    let prevNetRc = fs.existsSync(netRcPath) ? fs.readFileSync(netRcPath, "utf8") : null
+    let newNetRc = prevNetRc ? prevNetRc + "\n" + netRcLine : netRcLine
+    console.log("Adding credentials to " + netRcPath)
+    fs.writeFileSync(netRcPath, newNetRc, {
+        encoding: "utf8",
+        mode: '600'
+    })
+
+    let cuser = process.env["USER"] || "someone"
+    let cred = [
+        "-c", "credential.helper=",
+        "-c", "user.name=" + user + "-" + cuser,
+    ]
+    let gitAsync = (args: string[]) => spawnAsync({
+        cmd: "git",
+        cwd: trgPath,
+        args: cred.concat(args)
+    })
+    let info = travisInfo()
+    return Promise.resolve()
+        .then(() => {
+            if (fs.existsSync(trgPath)) {
+                let cfg = fs.readFileSync(trgPath + "/.git/config", "utf8")
+                if (cfg.indexOf("url = " + repoUrl) > 0) {
+                    return gitAsync(["pull", "--depth=3"])
+                } else {
+                    throw U.userError(trgPath + " already exists; please remove it")
+                }
+            } else {
+                return spawnAsync({
+                    cmd: "git",
+                    args: cred.concat(["clone", "--depth", "3", repoUrl, trgPath]),
+                    cwd: "."
+                })
+            }
+        })
+        .then(() => {
+            for (let u of U.values(uplReqs)) {
+                let fpath = path.join(trgPath, u.filename)
+                nodeutil.mkdirP(path.dirname(fpath))
+                fs.writeFileSync(fpath, u.content, u.encoding)
+            }
+            // make sure there's always something to commit
+            fs.writeFileSync(trgPath + "/stamp.txt", new Date().toString())
+        })
+        .then(() => gitAsync(["add", "."]))
+        .then(() => gitAsync(["commit", "-m", "Release " + label + " from " + info.commitUrl]))
+        .then(() => gitAsync(["tag", label]))
+        .then(() => gitAsync(["push"]))
+        .then(() => gitAsync(["push", "--tags"]))
+        .then(() => {
+        })
+        .finally(() => {
+            if (prevNetRc == null) {
+                console.log("Removing " + netRcPath)
+                fs.unlinkSync(netRcPath)
+            } else {
+                console.log("Restoring " + netRcPath)
+                fs.writeFileSync(netRcPath, prevNetRc, {
+                    mode: '600'
+                })
+            }
+        })
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
@@ -786,6 +983,8 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     nodeutil.mkdirP("built/uploadrepl")
 
+    let uplReqs: Map<BlobReq> = {}
+
     let uploadFileAsync = (p: string) => {
         let rdf: Promise<Buffer> = null
         if (opts.fileContent) {
@@ -833,6 +1032,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                         trg.appTheme.homeUrl = opts.localDir
                         data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                     } else {
+                        if (isNewBackend()) return Promise.resolve() // TODO
                         // expand usb help pages
                         return Promise.all(
                             (trg.appTheme.usbHelp || []).filter(h => !!h.path)
@@ -858,6 +1058,24 @@ function uploadCoreAsync(opts: UploadOptions) {
                 return writeFileAsync(fn, data)
             }
 
+            if (isNewBackend()) {
+                let req = {
+                    encoding: isText ? "utf8" : "base64",
+                    content,
+                    hash: "",
+                    filename: fileName,
+                    size: 0
+                }
+                let hash = crypto.createHash("sha1")
+                let buf = new Buffer(req.content, req.encoding)
+                req.size = buf.length
+                hash.update(new Buffer("blob " + buf.length + "\u0000"))
+                hash.update(buf)
+                req.hash = hash.digest("hex")
+                uplReqs[fileName] = req
+                return Promise.resolve()
+            }
+
             return Cloud.privatePostAsync(liteId + "/files", {
                 encoding: isText ? "utf8" : "base64",
                 filename: fileName,
@@ -877,6 +1095,11 @@ function uploadCoreAsync(opts: UploadOptions) {
             .then(() => {
                 console.log("Release files written to", path.resolve(builtPackaged + opts.localDir))
             })
+
+
+    if (isNewBackend())
+        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+            .then(() => gitUploadAsync(opts, uplReqs))
 
     let info = travisInfo()
     return Cloud.privatePostAsync("releases", {
@@ -911,13 +1134,13 @@ function uploadCoreAsync(opts: UploadOptions) {
                     releaseid: liteId
                 })
             }).then(() => {
-                // tag release/v0.1.2 also as release/alpha
-                const alpha = opts.label.replace(/\/v\d.*$/, "/alpha")
-                if (alpha == opts.label) return Promise.resolve()
+                // tag release/v0.1.2 also as release/beta
+                const betaTag = opts.label.replace(/\/v\d.*$/, "/beta")
+                if (betaTag == opts.label) return Promise.resolve()
                 else {
-                    console.log("Also tagging with " + alpha)
+                    console.log("Also tagging with " + betaTag)
                     return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(alpha),
+                        path: nodeutil.sanitizePath(betaTag),
                         releaseid: liteId
                     })
                 }
@@ -1066,6 +1289,7 @@ export function buildTargetAsync(): Promise<void> {
     return simshimAsync()
         .then(() => buildFolderAsync('sim'))
         .then(buildTargetCoreAsync)
+        .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildFolderAsync('server', true))
 }
@@ -1225,6 +1449,28 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 
 let forkPref = server.forkPref
 
+function buildSemanticUIAsync() {
+    if (!fs.existsSync(path.join("theme", "style.less")) ||
+        !fs.existsSync(path.join("theme", "theme.config")))
+        return Promise.resolve();
+
+    let dirty = !fs.existsSync("built/web/semantic.css");
+    if (!dirty) {
+        const csstime = fs.statSync("built/web/semantic.css").mtime;
+        dirty = allFiles("theme")
+            .map(f => fs.statSync(f))
+            .some(stat => stat.mtime > csstime);
+    }
+
+    if (!dirty) return Promise.resolve();
+
+    nodeutil.mkdirP(path.join("built", "web"));
+    return spawnAsync({
+        cmd: "node",
+        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:theme/foo/bar"]
+    });
+}
+
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
@@ -1237,6 +1483,10 @@ function buildTargetCoreAsync() {
     dirsToWatch = cfg.bundleddirs.slice()
     if (!isFork && pxt.appTarget.id != "core") {
         dirsToWatch.push("sim"); // simulator
+        if (fs.existsSync("theme")) {
+            dirsToWatch.push("theme"); // simulator
+            dirsToWatch.push(path.join("theme", "site", "globals")); // simulator
+        }
         dirsToWatch = dirsToWatch.concat(
             fs.readdirSync("sim")
                 .map(p => path.join("sim", p))
@@ -2984,7 +3234,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         let snippets = uploader.getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
-        extraDeps.push("microbit")
+        extraDeps.push("core")
         let ignoredTypes = ["Text", "sig", "pre", "codecard", "cards", "package", "namespaces"]
         let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0 && !s.ignore)
         ignoreCount += snippets.length - snippetsToCheck.length
@@ -3001,7 +3251,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                 let resp = pxtc.compile(opts)
 
                 if (resp.success) {
-                    if (/block/.test(snippet.type)) {
+                    if (/^block/.test(snippet.type)) {
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         let file = resp.ast.getSourceFile('main.ts');
                         let apis = pxtc.getApiInfo(resp.ast);
@@ -3267,6 +3517,10 @@ export function uploadDocsAsync(...args: string[]): Promise<void> {
     let info = travisInfo()
     if (info.tag || (info.branch && info.branch != "master"))
         return Promise.resolve()
+    if (isNewBackend()) {
+        console.log("No doc upload on new backend.")
+        return Promise.resolve()
+    }
     let cfg = readLocalPxTarget()
     uploader.saveThemeJson = () => saveThemeJson(cfg)
     return uploader.uploadDocsAsync(...args)
@@ -3520,6 +3774,7 @@ cmd("pkginfo  USER/REPO           - show info about named GitHub packge", pkginf
 
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("pokecloud                    - same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"), 2)
+cmd("pokerepo [-u] REPO           - refresh repo, or generate a URL to do so", pokeRepoAsync, 2)
 cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
 cmd("ptrcheck                     - check pointers in the cloud against ones in the repo", ptrcheckAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
@@ -3637,6 +3892,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.appTarget = trg;
 
     process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
+    if (process.env["PXT_DEBUG"]) {
+        pxt.options.debug = true;
+        pxt.debug = console.log;
+    }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
 

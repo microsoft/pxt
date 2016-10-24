@@ -1,0 +1,20 @@
+# Theming
+
+PXT uses the [Semantic UI](http://semantic-ui.com/) framework to create the user interface.
+
+## pxtarget.json
+
+The ``pxtarget.json`` contains an extensive customization section to control logos, names, colors, etc...
+
+## Semantic Theming
+
+PXT comes with a default Semantic UI theme. You can however completely override the theme and use all the flexibility of Semantic UI to customize your target.
+
+* copy the ``/theme`` folder from the [Microsoft/pxt](https://github.com/Microsoft/pxt) project to your target
+* customize the variables!
+
+``pxt serve`` or ``pxt buildtarget`` will automatically rebuild ``semantic.css`` and override the built-in CSS from the app.
+
+## Favicon
+
+Use [realfavicongenerator](http://realfavicongenerator.net/) to generate all the relevant favicon icon files and save them under ``static/icons`` in the ``docs`` folder.

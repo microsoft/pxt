@@ -44,21 +44,32 @@ function forkDirs(lst: string[]) {
 }
 
 function setupDocfilesdirs() {
-    docfilesdirs = ["docfiles", path.join(nodeutil.pxtCoreDir, "docfiles"), path.join(nodeutil.pxtCoreDir, "docfiles")]
-    console.log('docfilesdir: ', docfilesdirs.join(', '))
+    docfilesdirs = [
+        "docfiles",
+        path.join(nodeutil.pxtCoreDir, "docfiles")
+    ]
 }
 
 function setupRootDir() {
     root = nodeutil.targetDir
     console.log("Starting server in", root)
     console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
-    dirs = [path.join(nodeutil.pxtCoreDir, "built/web"), path.join(nodeutil.pxtCoreDir, "webapp/public")]
+    dirs = [
+        "built/web",
+        path.join(nodeutil.pxtCoreDir, "built/web"),
+        path.join(nodeutil.pxtCoreDir, "webapp/public")
+    ]
     simdirs = [path.join(nodeutil.targetDir, "built"), path.join(nodeutil.targetDir, "sim/public")]
     docsDir = path.join(root, "docs")
     tempDir = path.join(root, "built/docstmp")
     packagedDir = path.join(root, "built/packaged")
     setupDocfilesdirs()
     setupProjectsDir()
+
+    pxt.debug(`docs dir:\r\n    ${docsDir}`)
+    pxt.debug(`doc files dir: \r\n    ${docfilesdirs.join("\r\n    ")}`)
+    pxt.debug(`dirs:\r\n    ${dirs.join('\r\n    ')}`)
+    pxt.debug(`projects dir: ${userProjectsDir}`);
 }
 
 function setupProjectsDir() {

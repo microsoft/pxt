@@ -302,8 +302,8 @@ export function checkDocsAsync(...args: string[]): Promise<void> {
         checked++;
         let text = fs.readFileSync("docs" + f).toString("utf8");
         // look for broken urls
-        text.replace(/]\((\/[^)]+)\)/g, (m) => {
-            let url = /]\((\/[^)]+)\)/.exec(m)[1];
+        text.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
+            let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
             if (!urls[url]) {
                 console.error(`${f}: broken link ${url}`);
                 broken++;

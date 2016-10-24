@@ -90,10 +90,10 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-file('built/blockly.d.ts', ['localtypings/blockly.d.ts'], function() { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
-file('built/pxtparts.d.ts', ['localtypings/pxtparts.d.ts'], function() { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
-file('built/pxtarget.d.ts', ['built/pxtpackage.d.ts', 'built/pxtparts.d.ts', 'localtypings/pxtarget.d.ts'], function() { ju.cpR('localtypings/pxtarget.d.ts', 'built/pxtarget.d.ts') })
-file('built/pxtpackage.d.ts', ['localtypings/pxtpackage.d.ts'], function() { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
+file('built/blockly.d.ts', ['localtypings/blockly.d.ts'], function () { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
+file('built/pxtparts.d.ts', ['localtypings/pxtparts.d.ts'], function () { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
+file('built/pxtarget.d.ts', ['built/pxtpackage.d.ts', 'built/pxtparts.d.ts', 'localtypings/pxtarget.d.ts'], function () { ju.cpR('localtypings/pxtarget.d.ts', 'built/pxtarget.d.ts') })
+file('built/pxtpackage.d.ts', ['localtypings/pxtpackage.d.ts'], function () { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
 
 compileDir("pxtlib", ["built/pxtarget.d.ts", "built/pxtparts.d.ts", "built/pxtpackage.d.ts", "built/typescriptServices.d.ts"])
 compileDir("pxtblocks", ["built/pxtlib.js", "built/blockly.d.ts"])
@@ -158,10 +158,10 @@ task('updatestrings', ['built/localization.json'])
 
 
 file('built/localization.json', ju.expand1(
-    [   "pxtlib",
+    ["pxtlib",
         "pxtblocks",
         "webapp/src"]
-    ), function () {
+), function () {
     var errCnt = 0;
     var translationStrings = {}
     var translationHelpStrings = {}
@@ -268,7 +268,7 @@ task('monaco-editor', [
 ])
 
 
-task('serve', ['default'], {async: true}, function() {
+task('serve', ['default'], { async: true }, function () {
     let cmdArg = '';
     if (process.env.sourceMaps === 'true') {
         cmdArg = '-include-source-maps'
@@ -354,8 +354,17 @@ file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
 })
 
-file('built/web/semantic.css', ["webapp/theme.config", "webapp/site/globals/site.variables"], { async: true }, function () {
-    cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/web/semantic.css --include-path=node_modules/semantic-ui-less:webapp/foo/bar')
+file('built/web/semantic.css', ["built/semantic-tmp.css"], function () {
+    let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff2")
+    let url = "url(data:application/font-woff;charset=utf-8;base64," + fontFile.toString("base64") + ") format('woff')"
+    let semCss = fs.readFileSync('built/semantic-tmp.css', "utf8")
+    semCss = semCss.replace('src: url("fonts/icons.eot");', "")
+        .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+    fs.writeFileSync('built/web/semantic.css', semCss)
+})
+
+file('built/semantic-tmp.css', ["theme/style.less", "theme/theme.config", "theme/site/globals/site.variables"], { async: true }, function () {
+    cmdIn(this, ".", 'node node_modules/less/bin/lessc theme/style.less built/semantic-tmp.css --include-path=node_modules/semantic-ui-less:theme/foo/bar')
 })
 
 file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {

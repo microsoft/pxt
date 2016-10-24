@@ -758,17 +758,23 @@ namespace pxt.hex {
                     .then(r => r, e =>
                         Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
                             .then(ret => new Promise<string>((resolve, reject) => {
-                                let tryGet = () => Util.httpGetJsonAsync(ret.hex.replace(/\.hex/, ".json"))
-                                    .then(json => {
-                                        if (!json.success)
-                                            U.userError(JSON.stringify(json, null, 1))
-                                        else
-                                            resolve(U.httpGetTextAsync(hexurl + ".hex"))
-                                    },
-                                    e => {
-                                        setTimeout(tryGet, 1000)
-                                        return null
-                                    })
+                                let tryGet = () => {
+                                    let url = ret.hex.replace(/\.hex/, ".json")
+                                    pxt.log("polling at " + url)
+                                    return Util.httpGetJsonAsync(url)
+                                        .then(json => {
+                                            if (!json.success)
+                                                U.userError(JSON.stringify(json, null, 1))
+                                            else {
+                                                pxt.log("fetching " + hexurl + ".hex")
+                                                resolve(U.httpGetTextAsync(hexurl + ".hex"))
+                                            }
+                                        },
+                                        e => {
+                                            setTimeout(tryGet, 1000)
+                                            return null
+                                        })
+                                }
                                 tryGet();
                             })))
                     .then(text => {

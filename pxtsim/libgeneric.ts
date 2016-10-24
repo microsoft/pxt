@@ -156,7 +156,7 @@ namespace pxsim {
         }
 
         export function fromCharCode(code: number) {
-            return String.fromCharCode(code)
+            return initString(String.fromCharCode(code));
         }
 
         export function toNumber(s: string) {
@@ -192,7 +192,7 @@ namespace pxsim {
         }
 
         export function substr(s: string, start: number, length?: number) {
-            return s.substr(start, length)
+            return initString(s.substr(start, length));
         }
 
         function inRange(s: string, i: number) { return 0 <= i && i < s.length }
