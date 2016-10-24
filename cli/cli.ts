@@ -3309,7 +3309,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         }
         if (filenameMatch.source == '.*' && !ignorePreviousSuccesses) {
             let successData = successes.join("\n")
-            nodeutil.mkdirP(ignorePath);
+            nodeutil.mkdirP(path.dirname(ignorePath));
             fs.writeFileSync(ignorePath, successData)
         }
         else {
