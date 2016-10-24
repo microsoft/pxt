@@ -544,7 +544,7 @@ html {
 }
 
 /* extra-large desktop screen */
-@media only screen and (min-width: 92em) and (min-height:44em) {
+@media only screen and (min-width: 92em) and (min-height:30em) {
     .ui.widedesktop.only {
         display:block !important;
     }
@@ -556,7 +556,7 @@ html {
     }
     .rtl .sideDocs #maineditor {
         left:22rem;
-        right:23rem;
+        right:27rem;
     }
     .sideDocs #sidedocs {
         display:block;
@@ -567,7 +567,7 @@ html {
     }
 }
 
-@media only screen and (min-width: 55em) and (min-height:44em) {
+@media only screen and (min-width: 55em) and (min-height:30em) {
     .blocklyTreeRow {
         padding-top: 0.75rem !important;
         padding-bottom: 2rem !important;

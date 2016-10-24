@@ -688,7 +688,8 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
 
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
-        return <div className={"ui tiny vertical menu filemenu landscape only"}>
+        const targetTheme = pxt.appTarget.appTheme;
+        return <div className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
             <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
@@ -1595,7 +1596,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         <div className="ui item wide only projectname">
-                            <div className={`ui large input`} data-tooltip={lf("Pick a name for your project") } data-position="bottom left">
+                            <div className={`ui large ${targetTheme.invertedMenu ? `inverted` : ''} input`} data-tooltip={lf("Pick a name for your project") } data-position="bottom left">
                                 <input id="fileNameInput"
                                     type="text"
                                     placeholder={lf("Pick a name...") }
