@@ -71,6 +71,10 @@ namespace pxsim.svg {
         (<SVGStylable><any>el).style.fill = c;
     }
 
+    export function filter(el: SVGElement, c: string) {
+        (<SVGStylable><any>el).style.filter = c;
+    }
+
     export function fills(els: SVGElement[], c: string) {
         els.forEach(el => (<SVGStylable><any>el).style.fill = c);
     }
