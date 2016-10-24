@@ -10,8 +10,12 @@ The ``pxtarget.json`` contains an extensive customization section to control log
 
 PXT comes with a default Semantic UI theme. You can however completely override the theme and use all the flexibility of Semantic UI to customize your target.
 
-* copy the ``/theme`` folder from the [Microsoft/pxt](https://github.com/Microsoft/pxt) project to your target
+* copy the ``_theme`` folder from the project to the root of your target, and rename it to ``site``
 * customize the variables!
+
+You will most likely be updating the site variables under ``site/globals/site.variables``
+
+From more information on themeing, visit [http://semantic-ui.com/usage/theming.html](http://semantic-ui.com/usage/theming.html)
 
 ``pxt serve`` or ``pxt buildtarget`` will automatically rebuild ``semantic.css`` and override the built-in CSS from the app.
 

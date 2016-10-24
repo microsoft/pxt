@@ -1,0 +1,7 @@
+/*******************************
+         Site Overrides
+*******************************/
+
+.ui.inverted.menu {
+    border: 1px solid transparent;
+}

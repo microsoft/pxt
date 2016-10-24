@@ -355,7 +355,7 @@ file('built/web/fonts/icons.woff2', [], function () {
 })
 
 file('built/web/semantic.css', ['built/pxt.js',
-    "theme/style.less", "theme/theme.config", "theme/site/globals/site.variables"
+    "theme/style.less", "theme/theme.config", "theme/themes/pxt/globals/site.variables"
     ], { async: true }, function () {
     cmdIn(this, ".", 'node built/pxt.js buildcss')
 })
