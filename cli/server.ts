@@ -23,6 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let tempDir = ""
 let packagedDir = ""
+let localHexDir = path.join("hexcache");
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -230,6 +231,32 @@ function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
         && req.headers["authorization"] == serveOptions.localToken;
 }
 
+function getCachedHexAsync(sha: string): Promise<any> {
+    if (!sha) {
+        return Promise.resolve();
+    }
+
+    let hexFile = path.resolve(localHexDir, sha + ".hex");
+
+    return existsAsync(hexFile)
+        .then((results) => {
+            if (!results) {
+                console.log(`offline HEX not found: ${hexFile}`);
+                return Promise.resolve(null);
+            }
+
+            console.log(`serving HEX from offline cache: ${hexFile}`);
+            return readFileAsync(hexFile)
+                .then((fileContent) => {
+                    return {
+                        enums: [],
+                        functions: [],
+                        hex: fileContent.toString()
+                    };
+                });
+        });
+}
+
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
     let opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
     let innerPath = elts.slice(2).join("/").replace(/^\//, "")
@@ -268,6 +295,17 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
                 return {
                     boardCount: boardCount
                 };
+            });
+    else if (cmd == "GET compile")
+        return getCachedHexAsync(innerPath)
+            .then((res) => {
+                if (!res) {
+                    return {
+                        notInOfflineCache: true
+                    };
+                }
+
+                return res;
             });
     else throw throwError(400)
 }
