@@ -3547,7 +3547,17 @@ export interface SavedProject {
     files: Map<string>;
 }
 
-export function extractAsync(filename: string) {
+export function extractAsync(...args: string[]) {
+    let vscode = false;
+    if (/--code/i.test(args[0])) {
+        vscode = true;
+        args.shift();
+    }
+    const filename = args[0];
+    if (!filename) {
+        console.error("Missing filename to extract");
+        return Promise.resolve();
+    }
     let oneFile = (src: string, editor: string) => {
         let files: any = {}
         files["main." + (editor || "td")] = src || ""
@@ -3651,6 +3661,12 @@ export function extractAsync(filename: string) {
                     fs.writeFileSync(fullname, defaultFiles[f])
                     console.log("wrote " + fullname)
                 }
+
+                if (vscode)
+                    spawnAsync({
+                        cmd: "code",
+                        args: [dirname]
+                    }).catch(() => { });
             }
         })
 }
