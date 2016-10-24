@@ -57,9 +57,19 @@ namespace pxsim {
         sim?: boolean;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
-        data: number[];
-        rssi?: number;
+        rssi: number;
+        serial: number;
+        time: number;
+
+        payload: SimulatorRadioPacketPayload;
     }
+
+    export interface SimulatorRadioPacketPayload {
+        type: number;
+        stringData?: string;
+        numberData?: number;
+    }
+
 
     export namespace Embed {
         export function start() {
