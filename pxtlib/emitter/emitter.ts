@@ -276,6 +276,7 @@ namespace ts.pxtc {
         parts?: string;
         trackArgs?: number[];
         advanced?: boolean;
+        deprecated?: boolean;
 
         // on interfaces
         indexerGet?: string;

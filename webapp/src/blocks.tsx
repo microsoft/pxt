@@ -333,12 +333,7 @@ export class Editor extends srceditor.Editor {
 
     openTypeScript() {
         pxt.tickEvent("blocks.showjavascript");
-        this.parent.saveTypeScriptAsync(true).done();
-        const header = this.parent.state.header;
-        if (header) {
-            header.editor = pxt.JAVASCRIPT_PROJECT_NAME;
-            header.pubCurrent = false
-        }
+        this.parent.openTypeScriptAsync().done();
     }
 
     menu() {

@@ -8,8 +8,9 @@
 import * as nodeutil from './nodeutil';
 nodeutil.init();
 
-import * as fs from 'fs';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import * as child_process from 'child_process';
 
@@ -574,7 +575,8 @@ function travisAsync() {
                 }
                 let trg = readLocalPxTarget()
                 if (rel)
-                    return uploadTargetAsync(trg.id + "/" + rel)
+                    return  Promise.resolve() //preCacheHexAsync()
+                        .then(() => uploadTargetAsync(trg.id + "/" + rel))
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
                         .then(() => uploadTargetTranslationsAsync())
                 else
@@ -918,6 +920,20 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         })
 }
 
+function uploadArtFileAsync(fn: string) {
+    if (isNewBackend())
+        return Promise.resolve("@pxtCdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn)
+    else
+        return uploader.uploadArtAsync(fn, true)
+}
+
+function gitHash(buf: Buffer) {
+    let hash = crypto.createHash("sha1")
+    hash.update(new Buffer("blob " + buf.length + "\u0000"))
+    hash.update(buf)
+    return hash.digest("hex")
+}
+
 function uploadCoreAsync(opts: UploadOptions) {
     let liteId = "<none>"
 
@@ -1031,11 +1047,10 @@ function uploadCoreAsync(opts: UploadOptions) {
                         trg.appTheme.homeUrl = opts.localDir
                         data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                     } else {
-                        if (isNewBackend()) return Promise.resolve() // TODO
                         // expand usb help pages
                         return Promise.all(
                             (trg.appTheme.usbHelp || []).filter(h => !!h.path)
-                                .map(h => uploader.uploadArtAsync(h.path, true)
+                                .map(h => uploadArtFileAsync(h.path)
                                     .then(blob => {
                                         console.log(`target.json patch:    ${h.path} -> ${blob}`)
                                         h.path = blob;
@@ -1065,12 +1080,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                     filename: fileName,
                     size: 0
                 }
-                let hash = crypto.createHash("sha1")
                 let buf = new Buffer(req.content, req.encoding)
                 req.size = buf.length
-                hash.update(new Buffer("blob " + buf.length + "\u0000"))
-                hash.update(buf)
-                req.hash = hash.digest("hex")
+                req.hash = gitHash(buf)
                 uplReqs[fileName] = req
                 return Promise.resolve()
             }
@@ -1466,7 +1478,7 @@ function buildSemanticUIAsync() {
     nodeutil.mkdirP(path.join("built", "web"));
     return spawnAsync({
         cmd: "node",
-        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:theme/foo/bar"]
+        args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
     }).then(() => {
         let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff2")
         let url = "url(data:application/font-woff;charset=utf-8;base64,"
@@ -3263,10 +3275,10 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
     let ignorePreviousSuccesses = false
 
     for (let i = 0; i < args.length; i++) {
-        if (args[i] == "-i") {
+        if (args[i] == "--i") {
             ignorePreviousSuccesses = true
         }
-        else if (args[i] == "-re" && i < args.length - 1) {
+        else if (args[i] == "--re" && i < args.length - 1) {
             try {
                 filenameMatch = new RegExp(args[i + 1])
                 i++
@@ -3391,9 +3403,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         }
         if (filenameMatch.source == '.*' && !ignorePreviousSuccesses) {
             let successData = successes.join("\n")
-            if (!fs.existsSync(path.dirname(ignorePath))) {
-                fs.mkdirSync(path.dirname(ignorePath))
-            }
+            nodeutil.mkdirP(path.dirname(ignorePath));
             fs.writeFileSync(ignorePath, successData)
         }
         else {
@@ -3433,11 +3443,15 @@ interface BuildCoreOptions {
     docs?: boolean;
 }
 
-function buildCoreAsync(buildOpts: BuildCoreOptions) {
+function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOptions> {
+    let compileOptions: pxtc.CompileOptions;
     ensurePkgDir();
     return prepBuildOptionsAsync(buildOpts.mode)
-        .then(pxtc.compile)
-        .then(res => {
+        .then((opts) => {
+            compileOptions = opts;
+            return pxtc.compile(opts);
+        })
+        .then((res): Promise<void | pxtc.CompileOptions> => {
             U.iterMap(res.outfiles, (fn, c) =>
                 mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
             reportDiagnostics(res.diagnostics);
@@ -3478,9 +3492,12 @@ function buildCoreAsync(buildOpts: BuildCoreOptions) {
                 case BuildOption.Run:
                     return runCoreAsync(res);
                 default:
-                    return null;
+                    return Promise.resolve();
             }
         })
+        .then(() => {
+            return compileOptions;
+        });
 }
 
 export function uploadTargetTranslationsAsync() {
@@ -3561,8 +3578,13 @@ export function downloadTargetTranslationsAsync() {
     return nextFileAsync();
 }
 
-export function buildAsync() {
+export function buildAsync(arg?: string) {
+    if (arg && arg.replace(/-*/g, "") === "cloud") {
+        forceCloudBuild = true;
+    }
+
     return buildCoreAsync({ mode: BuildOption.JustBuild })
+        .then((compileOpts) => { });
 }
 
 export function gendocsAsync(...args: string[]) {
@@ -3571,18 +3593,22 @@ export function gendocsAsync(...args: string[]) {
         docs: args.length == 0 || args.indexOf("--docs") > -1,
         locs: args.length == 0 || args.indexOf("--locs") > -1
     })
+        .then((compileOpts) => { });
 }
 
 export function deployAsync() {
     return buildCoreAsync({ mode: BuildOption.Deploy })
+        .then((compileOpts) => { });
 }
 
 export function runAsync() {
     return buildCoreAsync({ mode: BuildOption.Run })
+        .then((compileOpts) => { });
 }
 
 export function testAsync() {
     return buildCoreAsync({ mode: BuildOption.Test })
+        .then((compileOpts) => { });
 }
 
 export function uploadDocsAsync(...args: string[]): Promise<void> {
@@ -3603,7 +3629,17 @@ export interface SavedProject {
     files: Map<string>;
 }
 
-export function extractAsync(filename: string) {
+export function extractAsync(...args: string[]) {
+    let vscode = false;
+    if (/--code/i.test(args[0])) {
+        vscode = true;
+        args.shift();
+    }
+    const filename = args[0];
+    if (!filename) {
+        console.error("Missing filename to extract");
+        return Promise.resolve();
+    }
     let oneFile = (src: string, editor: string) => {
         let files: any = {}
         files["main." + (editor || "td")] = src || ""
@@ -3707,8 +3743,83 @@ export function extractAsync(filename: string) {
                     fs.writeFileSync(fullname, defaultFiles[f])
                     console.log("wrote " + fullname)
                 }
+
+                if (vscode)
+                    spawnAsync({
+                        cmd: "code",
+                        args: [dirname]
+                    }).catch(() => { });
             }
         })
+}
+
+export function preCacheHexAsync() {
+    let trgInfo = readLocalPxTarget();
+
+    if (!trgInfo) {
+        console.error("pxtarget.json not found; make sure you are in a valid PXT target directory");
+        return Promise.resolve();
+    }
+
+    // Extract the target's default project to disk
+    if (!trgInfo.blocksprj) {
+        console.error("Could not find default project 'blocksprj' in pxtarget.json");
+        return Promise.resolve();
+    }
+
+    let projectPath = path.join("built", "precache");
+
+    if (fs.existsSync(projectPath)) {
+        nodeutil.deleteFolderRecursive(projectPath);
+    }
+
+    nodeutil.mkdirP(projectPath);
+    trgInfo.blocksprj.config.name = path.basename(projectPath);
+    fs.writeFileSync(path.join(projectPath, "pxt.json"), JSON.stringify(trgInfo.blocksprj.config, null, 4));
+    Object.keys(trgInfo.blocksprj.files).forEach((f) => {
+        fs.writeFileSync(path.join(projectPath, f), trgInfo.blocksprj.files[f]);
+    });
+    pxt.log("default project extracted");
+
+    // Install package dependencies
+    let previousCwd = process.cwd();
+    process.chdir(projectPath);
+
+    return installAsync()
+        .then(() => {
+            pxt.log("packages installed");
+
+            // Build in the cloud
+            forceCloudBuild = true;
+            return buildCoreAsync({ mode: BuildOption.JustBuild });
+        })
+        .then((compileOpts: pxtc.CompileOptions) => {
+            if (!compileOpts) {
+                console.log("Failed to extract HEX image");
+                return;
+            }
+
+            // Place the base HEX image in the hex cache if necessary
+            let sha = compileOpts.extinfo.sha;
+            let hex: string[] = compileOpts.hexinfo.hex;
+            let hexCache = path.join(previousCwd, "hexcache");
+            let hexFile = path.join(hexCache, sha + ".hex");
+
+            process.chdir(previousCwd);
+            nodeutil.mkdirP(hexCache);
+
+            if (fs.existsSync(hexFile)) {
+                pxt.log("HEX image already in offline cache");
+            } else {
+                fs.writeFileSync(hexFile, hex.join(os.EOL));
+                pxt.log(`Created HEX image in offline cache: ${hexFile}`);
+            }
+        })
+        .finally(() => {
+            if (process.cwd() !== previousCwd) {
+                process.chdir(previousCwd);
+            }
+        });
 }
 
 interface Command {
@@ -3738,10 +3849,11 @@ cmd("help     [all]               - display this message", helpAsync)
 cmd("init                         - start new package (library) in current directory", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 
-cmd("build                        - build current package", buildAsync)
+cmd("build    [--cloud]            - build current package, --cloud forces a build in the cloud", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
+cmd("precachehex                  - download hex images of current target for offline compilation", preCacheHexAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs [--locs] [--docs]    - build current package and its docs. --locs produce localization files, --docs produce docs files", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
@@ -3751,7 +3863,7 @@ cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and comp
 cmd("testdecompilererrors  DIR    - decompile unsupported files from DIR one-by-one and check for errors", testDecompilerErrorsAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
-cmd("snippets [-re NAME] [-i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
+cmd("snippets [--re NAME] [--i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
 
 cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)

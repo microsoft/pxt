@@ -247,10 +247,11 @@ export interface ModalProps {
     addClass?: string;
     headerClass?: string;
     header: string;
+    onHide: () => void;
+    visible?: boolean;
 }
 
 export interface ModalState {
-    visible?: boolean;
 }
 
 export class Modal extends data.Component<ModalProps, ModalState> {
@@ -260,16 +261,12 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         this.id = Util.guidGen();
     }
 
-    show() {
-        this.setState({ visible: true })
-    }
-
     hide() {
-        this.setState({ visible: false })
+        this.props.onHide();
     }
 
     renderCore() {
-        if (!this.state.visible) return null;
+        if (!this.props.visible) return null;
         return (
             <div id={this.id} className={`ui mydimmer dimmer modals page ${pxt.options.light ? "" : "transition"} visible active`} onClick={ev => {
                 if (/mydimmer/.test((ev.target as HTMLElement).className))

@@ -78,6 +78,18 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         }
     ];
 
+    if ((pxt.appTarget.appTheme.exportVsCode || pxt.options.debug) && (pxt.BrowserUtils.isMac() || pxt.BrowserUtils.isWindows() || pxt.BrowserUtils.isLinux())) {
+        instructions.push({
+            title: lf("(Optional) Edit your code from Visual Studio Code."),
+            body: lf("Install <a href='https://nodejs.org/en/download/' target='_blank'>Node.JS</a> and <a href='http://code.visualstudio.com/Download' target='_blank'>Visual Studio Code</a>, then run:") + `
+<pre><code>
+npm install -g pxt
+pxt target ${pxt.appTarget.id}
+pxt extract --code ${pxt.appTarget.nickname}-YOUR-PROJECT-NAME.hex
+</code></pre>`
+        });
+    }
+
     let usbImagePath = namedUsbImage("connection");
     let docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
