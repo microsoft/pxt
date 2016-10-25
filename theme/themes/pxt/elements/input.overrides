@@ -1,0 +1,9 @@
+/*******************************
+         Site Overrides
+*******************************/
+
+.ui.inverted.input input {
+    border: @transparentInvertedColor 2px solid !important;
+    color: @invertedItemTextColor;
+    background: transparent;
+}

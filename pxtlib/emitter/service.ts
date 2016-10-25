@@ -5,6 +5,13 @@ namespace ts.pxtc {
         type: string;
         initializer?: string;
         defaults?: string[];
+        properties?: PropertyDesc[];
+    }
+
+
+    export interface PropertyDesc {
+        name: string;
+        type: string;
     }
 
     export enum SymbolKind {
@@ -60,6 +67,14 @@ namespace ts.pxtc {
 . . . . .
 . . . . .
 `
+
+    /**
+     * Unlocalized category name for a symbol
+     */
+    export function blocksCategory(si: SymbolInfo): string {
+        const n = !si ? undefined : (si.attributes.blockNamespace || si.namespace);
+        return n ? Util.capitalize(n.split('.')[0]) : undefined;
+    }
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
@@ -196,12 +211,22 @@ namespace ts.pxtc {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
+                    let props: PropertyDesc[];
+                    if (attributes.mutate && p.type.kind === SK.FunctionType) {
+                        const callBackSignature = typechecker.getSignatureFromDeclaration(p.type as FunctionTypeNode);
+                        const callbackParameters = callBackSignature.getParameters();
+                        assert(callbackParameters.length > 0);
+                        props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
+                            return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
+                        });
+                    }
                     return {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
-                        defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined
+                        defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
+                        properties: props
                     }
                 })
             }
@@ -219,6 +244,8 @@ namespace ts.pxtc {
 
     export interface GenMarkdownOptions {
         package?: boolean;
+        locs?: boolean;
+        docs?: boolean;
     }
 
     export function genMarkdown(pkg: string, apiInfo: ApisInfo, options: GenMarkdownOptions = {}): pxt.Map<string> {
@@ -233,7 +260,11 @@ namespace ts.pxtc {
         let reference = ""
         const writeRef = (s: string) => reference += s + "\n"
         const writeLoc = (si: SymbolInfo) => {
-            if (!si.qName) return;
+            if (!options.locs || !si.qName) return;
+            // must match blockly loader
+            const ns = ts.pxtc.blocksCategory(si);
+            if (ns)
+                locStrings[`{id:category}${ns}`] = ns;
             if (si.attributes.jsDoc)
                 jsdocStrings[si.qName] = si.attributes.jsDoc;
             if (si.attributes.block)
@@ -244,6 +275,7 @@ namespace ts.pxtc {
                 })
         }
         const mapLocs = (m: pxt.Map<string>, name: string) => {
+            if (!options.locs) return;
             let locs: pxt.Map<string> = {};
             Object.keys(m).sort().forEach(l => locs[l] = m[l]);
             files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
@@ -303,13 +335,15 @@ namespace ts.pxtc {
             writeNs('```')
             writePackage(writeNs);
             writeHelpPages(nsHelpPages, writeNs);
-            files["reference/" + ns.name + '.md'] = nsmd;
+            if (options.docs)
+                files["reference/" + ns.name + '.md'] = nsmd;
         }
         writeRef('```');
         writePackage(writeRef);
         writeHelpPages(helpPages, writeRef);
 
-        files[pkg + "-reference.md"] = reference;
+        if (options.docs)
+            files[pkg + "-reference.md"] = reference;
         mapLocs(locStrings, "");
         mapLocs(jsdocStrings, "-jsdoc");
         return files;

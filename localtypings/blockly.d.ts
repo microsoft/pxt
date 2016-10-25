@@ -54,8 +54,13 @@ declare namespace Blockly {
     }
 
     class Field {
+        name: string;
+        EDITABLE: boolean;
         init(block: Block): void;
         static superClass_: Field;
+        getText(): string;
+        setText(newText: any): void;
+        updateEditable(): void;
     }
 
     class FieldVariable extends Field {
@@ -83,11 +88,13 @@ declare namespace Blockly {
         type: string;
         id: string;
         isShadow_: boolean;
+        nextConnection: Connection;
+        outputConnection: Connection;
+        previousConnection: Connection;
+
 
         // Returns null if the field does not exist on the specified block.
         getFieldValue(field: string): string;
-        setFieldValue(newValue: string, field: string): void;
-        setWarningText(text: string): void;
         // Returns null if the input does not exist on the specified block, or
         // is disconnected.
         getInputTargetBlock(field: string): Block;
@@ -102,7 +109,6 @@ declare namespace Blockly {
             topLeft: goog.math.Coordinate;
             bottomRight: goog.math.Coordinate;
         }
-        outputConnection: Connection;
 
         getSurroundParent(): Block;
 
@@ -110,6 +116,66 @@ declare namespace Blockly {
         parentBlock_: Block;
         inputList: Input[];
         disabled: boolean;
+        comment: string | Comment;
+
+        appendDummyInput(opt_name?: string): Input;
+        appendStatementInput(name: string): Input;
+        appendValueInput(name: string): Input;
+        getChildren(): Block[];
+        getColour(): string;
+        getDescendants(): Block[];
+        initSvg(): void;
+        removeInput(name: string, opt_quiet?: boolean): void;
+        dispose(healGap: boolean): void;
+        setCollapsed(collapsed: boolean): void;
+        setColour(colour: number | string): void;
+        setCommentText(text: string): void;
+        setConnectionsHidden(hidden: boolean): void;
+        setDeletable(deletable: boolean): void;
+        setDisabled(disabled: boolean): void;
+        setEditable(editable: boolean): void;
+        setFieldValue(newValue: string, name: string): void;
+        setHelpUrl(url: string): void;
+        setInputsInline(newBoolean: boolean): void;
+        setMovable(movable: boolean): void;
+        setMutator(mutator: Mutator): void;
+        setNextStatement(newBoolean: boolean, opt_check?: string | string[]): void;
+        setOutput(newBoolean: boolean, opt_check?: string | string[]): void;
+        setParent(newParent: Block): void;
+        setPreviousStatement(newBoolean: boolean, opt_check?: string | string[]): void;
+        setShadow(shadow: boolean): void;
+        setTitleValue(newValue: string, name: string): void;
+        setTooltip(newTip: string | (() => void)): void;
+        // Passing null will delete current text
+        setWarningText(text: string): void;
+    }
+
+    class Comment extends Icon {
+        constructor(b: Block);
+
+        dispose(): void;
+        getBubbleSize(): { width: number, height: number };
+        getText(): string;
+        setBubbleSize(width: number, height: number): void;
+        setText(text: string): void;
+        setVisible(visible: boolean): void;
+
+    }
+
+    class Icon {
+        constructor(block: Block);
+
+        collapseHidden: boolean;
+
+        computeIconLocation(): void;
+        createIcon(): void;
+        dispose(): void;
+        getIconLocation(): goog.math.Coordinate;
+        isVisible(): boolean;
+        renderIcon(cursorX: number): number;
+        setIconLocation(xy: goog.math.Coordinate): void;
+        updateColour(): void;
+        updateEditable(): void;
     }
 
     // if type == controls_if
@@ -123,6 +189,17 @@ declare namespace Blockly {
         name: string;
         connection: Connection;
         sourceBlock_: Block;
+        fieldRow: Field[];
+
+        appendField(field: Field | string, opt_name?: string): Input;
+        appendTitle(field: any, opt_name?: string): Input;
+        dispose(): void;
+        init(): void;
+        isVisible(): boolean;
+        removeField(name: string): void;
+        setAlign(align: number): Input;
+        setCheck(check: string | string[]): Input;
+        setVisible(visible: boolean): Block;
     }
 
     class Connection {
@@ -131,6 +208,7 @@ declare namespace Blockly {
         targetConnection: Connection;
         sourceBlock_: Block;
         targetBlock(): Block;
+        connect(otherConnection: Connection): void;
     }
 
     // if type is one of "procedures_def{,no}return", or "procedures_call{,no}return"
@@ -148,6 +226,17 @@ declare namespace Blockly {
         newValue?: string;
         name?: string;
         xml?: any;
+        group?: string;
+    }
+
+    class Mutator extends Icon {
+        /**
+         * @param quarkNames: list of sub_blocks for toolbox in mutator workspace
+         */
+        constructor(quarkNames: string[]);
+
+        reconnect(connectionChild: Connection, block: Block, inputName: string): boolean;
+        dispose(): void;
     }
 
     class ScrollbarPair {
@@ -167,6 +256,7 @@ declare namespace Blockly {
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
 
+        newBlock(prototypeName: string, opt_id?: string): Block;
         render(): void;
         clear(): void;
         dispose(): void;
@@ -196,6 +286,11 @@ declare namespace Blockly {
             viewTop: number;
             viewWidth: number;
         }
+    }
+
+    class WorkspaceSvg {
+        moveDrag(e: Event): goog.math.Coordinate;
+        showContextMenu_(e: Event): void;
     }
 
     namespace Xml {
@@ -287,5 +382,29 @@ declare namespace Blockly {
         const MOVE: string;
         const UI: string;
         function setGroup(group: any): void;
+    }
+
+    namespace Toolbox {
+        class TreeNode {
+            isUserCollapsible_: boolean;
+
+            getChildCount(): number;
+            getParent(): TreeNode;
+            getTree(): TreeControl;
+            hasChildren(): boolean;
+            isSelected(): boolean;
+            onMouseDown(e: Event): void;
+            select(): void;
+            setExpanded(expanded: boolean): void;
+            toggle(): void;
+            updateRow(): void;
+        }
+
+        class TreeControl {
+            selectedItem_: TreeNode;
+
+            getSelectedItem(): TreeNode;
+            setSelectedItem(t: TreeNode): void;
+        }
     }
 }

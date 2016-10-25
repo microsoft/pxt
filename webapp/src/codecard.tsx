@@ -59,30 +59,30 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
 
         let cardDiv = <div className={"ui card " + color + (card.onClick ? " link" : '') + (card.className ? (' ' + card.className) : '') } onClick={e => card.onClick ? card.onClick(e) : undefined } >
-                {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
-                    <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "") }>
-                        <div className="right floated meta">
-                            {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : null}</i>) : null}
-                            {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle oragne icon" ></i>) }
-                            {repeat(card.javascript, (k) => <i key={"costjs" + k} className="keyboard blue icon" ></i>) }
-                            {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
-                            {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
-                        </div>
-                        {card.header}
-                    </div> : null }
-                <div className={"ui image" + (card.responsive ? " tall landscape only" : "") }>
-                    {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : null}
-                    {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
-                    {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
-                </div>
-                <div className="content">
-                    {card.name ? <div className="header">{card.name}</div> : null}
-                    <div className="meta">
-                        {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
+            {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
+                <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "") }>
+                    <div className="right floated meta">
+                        {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : null}</i>) : null}
+                        {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle oragne icon" ></i>) }
+                        {repeat(card.javascript, (k) => <i key={"costjs" + k} className="align left blue icon" ></i>) }
+                        {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
+                        {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
                     </div>
-                    {card.description ? <div className="description">{card.description}</div> : null}
+                    {card.header}
+                </div> : null }
+            <div className={"ui image" + (card.responsive ? " tall landscape only" : "") }>
+                {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : null}
+                {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
+                {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
+            </div>
+            <div className="content">
+                {card.name ? <div className="header">{card.name}</div> : null}
+                <div className="meta">
+                    {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
                 </div>
-            </div>;
+                {card.description ? <div className="description">{card.description}</div> : null}
+            </div>
+        </div>;
 
         if (!card.onClick && url) {
             return (

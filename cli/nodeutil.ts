@@ -54,17 +54,26 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     u.headers["accept-encoding"] = "gzip"
     u.headers["user-agent"] = "PXT-CLI"
 
+    let gzipContent = false
+
     if (data != null) {
         if (Buffer.isBuffer(data)) {
             buf = data;
         } else if (typeof data == "object") {
             buf = new Buffer(JSON.stringify(data), "utf8")
             u.headers["content-type"] = "application/json; charset=utf8"
+            if (options.allowGzipPost) gzipContent = true
         } else if (typeof data == "string") {
             buf = new Buffer(data, "utf8")
+            if (options.allowGzipPost) gzipContent = true
         } else {
             Util.oops("bad data")
         }
+    }
+
+    if (gzipContent) {
+        buf = zlib.gzipSync(buf)
+        u.headers['content-encoding'] = "gzip"
     }
 
     if (buf)
@@ -155,4 +164,21 @@ export function mkdirP(thePath: string) {
         mkdirP(path.dirname(thePath))
         fs.mkdirSync(thePath)
     }
+}
+
+export function deleteFolderRecursive(thePath: string) {
+    if (!path || !fs.existsSync(thePath)) {
+        return;
+    }
+
+    fs.readdirSync(thePath).forEach((f) => {
+        let currentPath = path.join(thePath, f);
+
+        if (fs.lstatSync(currentPath).isDirectory()) {
+            deleteFolderRecursive(currentPath);
+        } else {
+            fs.unlinkSync(currentPath);
+        }
+    });
+    fs.rmdirSync(thePath);
 }

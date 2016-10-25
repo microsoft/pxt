@@ -2,22 +2,25 @@
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">0</field>
-</block>
+</shadow>
 </value>
 <next>
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 <next>
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
@@ -36,9 +39,9 @@
 </block>
 </value>
 <value name="B">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -50,41 +53,41 @@
 <block type="logic_operation">
 <field name="OP">AND</field>
 <value name="A">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 <block type="logic_negate">
 <value name="BOOL">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 <block type="logic_negate">
 <value name="BOOL">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 <block type="logic_boolean">
@@ -99,24 +102,24 @@
 <block type="logic_operation">
 <field name="OP">AND</field>
 <value name="A">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 <value name="B">
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</block>
+</shadow>
 </value>
 <value name="B">
 <block type="logic_negate">
 <value name="BOOL">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -130,14 +133,14 @@
 <block type="logic_operation">
 <field name="OP">AND</field>
 <value name="A">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>

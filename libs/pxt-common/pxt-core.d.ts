@@ -15,7 +15,7 @@ interface Array<T> {
     //% shim=Array_::push weight=75
     //% blockId="array_push" block="push into %this|with last item %item" blockNamespace="lists"
     push(item: T): void;
-    
+
     /**
       * Removes the last element from an array and returns it.
       */
@@ -24,12 +24,12 @@ interface Array<T> {
     pop(): T;
 
     /**
-      * Reverses the elements in an Array. 
+      * Reverses the elements in an Array.
       */
     //% helper=arrayReverse weight=10
     //% blockId="array_reverse" block="reverse %this" blockNamespace="lists"
     reverse(): void;
-    
+
     /**
       * Removes the first element from an array and returns it.
       */
@@ -44,8 +44,8 @@ interface Array<T> {
     //% helper=arrayUnshift weight=69
     //% blockId="array_unshift" block="unshift into %this|with first item %item" blockNamespace="lists"
     unshift(item:T): void;
-    
-    /** 
+
+    /**
       * Returns a section of an array.
       * @param start The beginning of the specified portion of the array. eg: 0
       * @param end The end of the specified portion of the array. eg: 0
@@ -64,14 +64,14 @@ interface Array<T> {
 
     /**
       * Calls a defined callback function on each element of an array, and returns an array that contains the results.
-      * @param callbackfn A function that accepts up to two arguments. The map method calls the callbackfn function one time for each element in the array. 
+      * @param callbackfn A function that accepts up to two arguments. The map method calls the callbackfn function one time for each element in the array.
       */
     //% helper=arrayMap weight=40
     map<U>(callbackfn: (value: T, index: number) => U): U[];
 
     /**
-      * Returns the elements of an array that meet the condition specified in a callback function. 
-      * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array. 
+      * Returns the elements of an array that meet the condition specified in a callback function.
+      * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array.
       */
     //% helper=arrayFilter weight=40
     filter(callbackfn: (value: T, index: number) => boolean): T[];
@@ -88,19 +88,19 @@ interface Array<T> {
     /** Removes the first occurence of an object. Returns true if removed. */
     //% shim=Array_::removeElement weight=48
     removeElement(element:T) : boolean;
-    
+
     /** Removes the object at position index. */
     //% shim=Array_::removeAt weight=49
     //% blockId="array_removeat" block="remove from %this|at %index" blockNamespace="lists"
     removeAt(index:number) : void;
-    
+
     /**
       * Returns the index of the first occurrence of a value in an array.
       * @param item The value to locate in the array.
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
     //% shim=Array_::indexOf weight=50
-    //% blockId="array_indexof" block="index in %this|of %item" blockNamespace="lists"    
+    //% blockId="array_indexof" block="index in %this|of %item" blockNamespace="lists"
     indexOf(item: T, fromIndex?: number): number;
 
     /**
@@ -126,7 +126,7 @@ interface Array<T> {
 declare interface String {
     /**
      * Returns a string that contains the concatenation of two or more strings.
-     * @param other The string to append to the end of the string.  
+     * @param other The string to append to the end of the string.
      */
     //% shim=String_::concat weight=80
     //% blockId="string_concat" block="join %this|%other" blockNamespace="text"
@@ -139,13 +139,13 @@ declare interface String {
     //% shim=String_::charAt weight=77
     //% blockId="string_get" block="char from %this|at %pos" blockNamespace="text"
     charAt(index: number): string;
-    
+
     /** Returns the length of a String object. */
     //% property shim=String_::length weight=75
     //% blockId="text_length" block="length of %VALUE" blockBuiltin=true blockNamespace="text"
     length: number;
-    
-    /** 
+
+    /**
      * Returns the Unicode value of the character at the specified location.
      * @param index The zero-based index of the desired character. If there is no character at the specified index, NaN is returned.
      */
@@ -168,10 +168,10 @@ declare interface String {
     //% shim=String_::substr length.defl=1000000
     //% blockId="string_substr" block="substring of %this|from %start|of length %length" blockNamespace="text"
     substr(start:number, length?:number): string;
-    
+
     /** Returns a value indicating if the string is empty */
     //% shim=String_::isEmpty
-    //% blockId="string_isempty" block="%this| is empty" blockNamespace="text" 
+    //% blockId="string_isempty" block="%this| is empty" blockNamespace="text"
     isEmpty() : boolean;
 
     [index: number]: string;
@@ -209,10 +209,11 @@ declare interface Boolean {
 declare namespace String {
 
     /**
-     * Make a string from the given ASCII character code. 
+     * Make a string from the given ASCII character code.
      */
     //% help=math/string-from-char-code
     //% shim=String_::fromCharCode
+    //% advanced=true
     //% blockNamespace="Math" blockId="stringFromCharCode" block="text from char code %code" weight=1 color=230
     function fromCharCode(code: number): string;
 }
@@ -229,15 +230,15 @@ declare interface Number {
 declare namespace Math {
 
     /**
-     * Returns the value of a base expression taken to a specified power. 
+     * Returns the value of a base expression taken to a specified power.
      * @param x The base value of the expression.
      * @param y The exponent value of the expression.
      */
     //% shim=Math_::pow
     function pow(x: number, y: number): number;
 
-    /** 
-     * Returns a pseudorandom number between 0 and `max`. 
+    /**
+     * Returns a pseudorandom number between 0 and `max`.
      */
     //% shim=Math_::random
     function random(max: number): number;

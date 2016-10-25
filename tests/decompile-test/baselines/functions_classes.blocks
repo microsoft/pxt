@@ -2,11 +2,14 @@
 <block type="variables_set">
 <field name="VAR">var1</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="test_create_class">
 <value name="x">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">0</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -14,11 +17,14 @@
 <block type="variables_set">
 <field name="VAR">var2</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="test_create_class">
 <value name="x">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">5</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -30,25 +36,25 @@
 </block>
 </value>
 <value name="x">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">2</field>
-</block>
+</shadow>
 </value>
 <next>
 <block type="test_class_method">
 <value name="testClass">
 <block type="test_create_class">
 <value name="x">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">1</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
 <value name="x">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">3</field>
-</block>
+</shadow>
 </value>
 </block>
 </next>
@@ -56,5 +62,6 @@
 </next>
 </block>
 </next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </xml>

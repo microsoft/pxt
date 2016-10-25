@@ -50,7 +50,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9257
+    // next free error 9260
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -62,7 +62,6 @@ namespace ts.pxtc {
             }
             return e
         }
-        debugger;
         throw e;
     }
 
@@ -276,10 +275,16 @@ namespace ts.pxtc {
         weight?: number;
         parts?: string;
         trackArgs?: number[];
+        advanced?: boolean;
+        deprecated?: boolean;
 
         // on interfaces
         indexerGet?: string;
         indexerSet?: string;
+
+        mutate?: boolean;
+        mutateText?: string;
+        mutateDefaults?: string;
 
         _name?: string;
         jsDoc?: string;
@@ -295,6 +300,7 @@ namespace ts.pxtc {
         qName: string;
         attrs: CommentAttrs;
         args: Expression[];
+        isExpression: boolean;
     }
 
     export interface ClassInfo {
@@ -680,7 +686,9 @@ namespace ts.pxtc {
             res.usedArguments = {}
         }
 
-        let allStmts = Util.concat(program.getSourceFiles().map(f => f.statements))
+        let allStmts = opts.forceEmit && res.diagnostics.length > 0
+            ? [] // TODO: panic
+            : Util.concat(program.getSourceFiles().map(f => f.statements))
 
         let src = program.getSourceFiles()[0]
         let rootFunction = <any>{
@@ -1206,7 +1214,7 @@ ${lbl}: .short 0xffff
 
         function emitIdentifier(node: Identifier): ir.Expr {
             let decl = getDecl(node)
-            if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
+            if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter || decl.kind === SK.BindingElement)) {
                 return emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
@@ -1249,7 +1257,16 @@ ${lbl}: .short 0xffff
                 if ((<any>node).imageLiteral) {
                     return ir.ptrlit((<any>node).imageLiteral, (<any>node).jsLit)
                 } else {
-                    return ir.numlit(parseInt(node.text))
+                    const parsed = parseFloat(node.text)
+                    if (!opts.target.floatingPoint) {
+                        if (Math.floor(parsed) !== parsed) {
+                            userError(9257, lf("Decimal numbers are not supported"))
+                        }
+                        else if (parsed << 0 !== parsed) {
+                            userError(9258, lf("Number is either too big or too small"))
+                        }
+                    }
+                    return ir.numlit(parsed)
                 }
             } else if (isStringLiteral(node)) {
                 return emitStringLiteral(node.text)
@@ -1282,7 +1299,6 @@ ${lbl}: .short 0xffff
         function emitQualifiedName(node: QualifiedName) { }
         function emitObjectBindingPattern(node: BindingPattern) { }
         function emitArrayBindingPattern(node: BindingPattern) { }
-        function emitBindingElement(node: BindingElement) { }
         function emitArrayLiteral(node: ArrayLiteralExpression) {
             let eltT = arrayElementType(typeOf(node))
             let isRef = isRefType(eltT)
@@ -1337,6 +1353,7 @@ ${lbl}: .short 0xffff
                 qName: getFullName(checker, decl.symbol),
                 attrs,
                 args: [],
+                isExpression: true
             };
             (node as any).callInfo = callInfo;
             if (decl.kind == SK.EnumMember) {
@@ -1581,7 +1598,8 @@ ${lbl}: .short 0xffff
                 decl,
                 qName: decl ? getFullName(checker, decl.symbol) : "?",
                 attrs,
-                args: args.slice(0)
+                args: args.slice(0),
+                isExpression: hasRet
             };
             (node as any).callInfo = callInfo
 
@@ -1757,7 +1775,7 @@ ${lbl}: .short 0xffff
 
         function layOutGlobals() {
             let globals = bin.globals.slice(0)
-            // stable-sort globals, with smallest first, because "strh/b" have 
+            // stable-sort globals, with smallest first, because "strh/b" have
             // smaller immediate range than plain "str" (and same for "ldr")
             globals.forEach((g, i) => g.index = i)
             globals.sort((a, b) =>
@@ -1978,7 +1996,12 @@ ${lbl}: .short 0xffff
 
             U.pushRange(typeBindings, bindings)
 
+            const destructuredParameters: ParameterDeclaration[] = []
+
             proc.args = getParameters(node).map((p, i) => {
+                if (p.name.kind === SK.ObjectBindingPattern) {
+                    destructuredParameters.push(p)
+                }
                 let l = new ir.Cell(i, p, getVarInfo(p))
                 l.isarg = true
                 return l
@@ -1993,6 +2016,8 @@ ${lbl}: .short 0xffff
                     proc.emitExpr(l.storeDirect(tmp))
                 }
             })
+
+            destructuredParameters.forEach(dp => emitVariableDeclaration(dp))
 
             if (node.body.kind == SK.Block) {
                 emit(node.body);
@@ -2190,16 +2215,21 @@ ${lbl}: .short 0xffff
         }
 
         function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
-            let tp = typeOf(pacc.expression)
+            const tp = typeOf(pacc.expression)
             if (isPossiblyGenericClassType(tp)) {
-                let info = getClassInfo(tp)
-                let fld = info.allfields.filter(f => (<Identifier>f.name).text == pacc.name.text)[0]
-                if (!fld)
-                    userError(9224, lf("field {0} not found", pacc.name.text))
-                return fieldIndexCore(info, fld, typeOf(pacc))
+                const info = getClassInfo(tp)
+                return fieldIndexCore(info, getFieldInfo(info, pacc.name.text), typeOf(pacc))
             } else {
                 throw unhandled(pacc, lf("bad field access"), 9247)
             }
+        }
+
+        function getFieldInfo(info: ClassInfo, fieldName: string) {
+            const field = info.allfields.filter(f => (<Identifier>f.name).text == fieldName)[0]
+            if (!field) {
+                userError(9224, lf("field {0} not found", fieldName))
+            }
+            return field;
         }
 
         function emitStore(trg: Expression, src: Expression) {
@@ -2635,7 +2665,7 @@ ${lbl}: .short 0xffff
                 return
             }
 
-            //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it 
+            //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it
             markUsed(declList.declarations[0])
             let iterVar = emitVariableDeclaration(declList.declarations[0]) // c
             //Start with null, TODO: Is this necessary
@@ -2772,7 +2802,7 @@ ${lbl}: .short 0xffff
                         }
                     }
                 } else if (cl.kind == SK.DefaultClause) {
-                    // Save default label for emit at the end of the 
+                    // Save default label for emit at the end of the
                     // tests section. Default label doesn't have to come at the
                     // end in JS.
                     assert(!defaultLabel)
@@ -2809,6 +2839,16 @@ ${lbl}: .short 0xffff
             emitBrk(node)
         }
         function emitVariableDeclaration(node: VarOrParam): ir.Cell {
+            if (node.name.kind === SK.ObjectBindingPattern) {
+                if (!node.initializer) {
+                    (node.name as BindingPattern).elements.forEach(e => emitVariableDeclaration(e))
+                    return null;
+                }
+                else {
+                    userError(9259, "Object destructuring with initializers is not supported")
+                }
+            }
+
             typeCheckVar(node)
             if (!isUsed(node)) {
                 return null;
@@ -2819,13 +2859,50 @@ ${lbl}: .short 0xffff
                 proc.emitClrIfRef(loc) // we might be in a loop
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuffix(), [])))
             }
-            // TODO make sure we don't emit code for top-level globals being initialized to zero
-            if (node.initializer) {
+
+            if (node.kind === SK.BindingElement) {
+                emitBrk(node)
+                proc.emitExpr(loc.storeByRef(bindingElementAccessExpression(node as BindingElement)[0]))
+                proc.stackEmpty();
+            }
+            else if (node.initializer) {
+                // TODO make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
             return loc;
+        }
+
+        function bindingElementAccessExpression(bindingElement: BindingElement): [ir.Expr, Type] {
+            const target = bindingElement.parent.parent;
+
+            let parentAccess: ir.Expr;
+            let parentType: Type;
+
+            if (target.kind === SK.BindingElement) {
+                const parent = bindingElementAccessExpression(target as BindingElement);
+                parentAccess = parent[0];
+                parentType = parent[1];
+            }
+            else {
+                parentType = typeOf(target);
+            }
+
+            const propertyName = (bindingElement.propertyName || bindingElement.name) as Identifier;
+
+            if (isPossiblyGenericClassType(parentType)) {
+                const info = getClassInfo(parentType)
+                parentAccess = parentAccess || emitLocalLoad(target as VariableDeclaration);
+
+                const myType = checker.getTypeOfSymbolAtLocation(checker.getPropertyOfType(parentType, propertyName.text), bindingElement);
+                return [
+                    ir.op(EK.FieldAccess, [parentAccess], fieldIndexCore(info, getFieldInfo(info, propertyName.text), myType)),
+                    myType
+                ];
+            } else {
+                throw unhandled(bindingElement, lf("bad field access"), 9247)
+            }
         }
 
         function emitClassExpression(node: ClassExpression) { }
@@ -2982,7 +3059,7 @@ ${lbl}: .short 0xffff
                 case SK.NumericLiteral:
                 case SK.StringLiteral:
                 case SK.NoSubstitutionTemplateLiteral:
-                    //case SyntaxKind.RegularExpressionLiteral:                    
+                    //case SyntaxKind.RegularExpressionLiteral:
                     return emitLiteral(<LiteralExpression>node);
                 case SK.PropertyAccessExpression:
                     return emitPropertyAccess(<PropertyAccessExpression>node);
@@ -3024,7 +3101,7 @@ ${lbl}: .short 0xffff
                     unhandled(node);
                     return null
 
-                /*    
+                /*
                 case SyntaxKind.TemplateSpan:
                     return emitTemplateSpan(<TemplateSpan>node);
                 case SyntaxKind.Parameter:

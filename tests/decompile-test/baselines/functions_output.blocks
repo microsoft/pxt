@@ -2,6 +2,9 @@
 <block type="variables_set">
 <field name="VAR">x1</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="test_no_argument_output">
 </block>
 </value>
@@ -9,19 +12,22 @@
 <block type="variables_set">
 <field name="VAR">x2</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 <value name="B">
 <block type="test_boolean_argument_output">
 <value name="arg">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -31,19 +37,25 @@
 <block type="variables_set">
 <field name="VAR">x3</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">1</field>
-</block>
+</shadow>
 </value>
 <value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="test_number_argument_output">
 <value name="arg">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">5</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -53,11 +65,14 @@
 <block type="variables_set">
 <field name="VAR">x4</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="test_string_argument_output">
 <value name="arg">
-<block type="text">
+<shadow type="text">
 <field name="TEXT">okay</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -65,6 +80,9 @@
 <block type="variables_set">
 <field name="VAR">x5</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="test_enum_argument_output">
 <field name="arg">TestEnum.testValue1</field>
 </block>
@@ -73,6 +91,9 @@
 <block type="variables_set">
 <field name="VAR">x6</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="test_enum_function_argument_output">
 <field name="arg">EnumWithValueBlock.testValue2</field>
 </block>
@@ -81,16 +102,19 @@
 <block type="variables_set">
 <field name="VAR">x7</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="test_multiple_argument_output">
 <value name="arg1">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">2</field>
-</block>
+</shadow>
 </value>
 <value name="arg2">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -99,9 +123,9 @@
 <value name="arg">
 <block type="test_boolean_argument_output">
 <value name="arg">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -110,9 +134,9 @@
 <value name="arg">
 <block type="test_number_argument_output">
 <value name="arg">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">5</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -121,24 +145,10 @@
 <value name="arg">
 <block type="test_string_argument_output">
 <value name="arg">
-<block type="text">
+<shadow type="text">
 <field name="TEXT">okay</field>
-</block>
+</shadow>
 </value>
-</block>
-</value>
-<next>
-<block type="test_enum_argument">
-<value name="arg">
-<block type="test_enum_argument_output">
-<field name="arg">TestEnum.testValue1</field>
-</block>
-</value>
-<next>
-<block type="test_enum_function_argument">
-<value name="arg">
-<block type="test_enum_function_argument_output">
-<field name="arg">EnumWithValueBlock.testValue2</field>
 </block>
 </value>
 <next>
@@ -146,16 +156,16 @@
 <value name="arg1">
 <block type="test_multiple_argument_output">
 <value name="arg1">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">2</field>
-</block>
+</shadow>
 </value>
 <value name="arg2">
 <block type="test_boolean_argument_output">
 <value name="arg">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -164,9 +174,9 @@
 <value name="arg2">
 <block type="test_boolean_argument_output">
 <value name="arg">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -190,9 +200,6 @@
 </next>
 </block>
 </next>
-</block>
-</next>
-</block>
-</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </xml>

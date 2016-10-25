@@ -3,41 +3,41 @@
 <next>
 <block type="test_boolean_argument">
 <value name="arg">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</block>
+</shadow>
 </value>
 <next>
 <block type="test_number_argument">
 <value name="arg">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">5</field>
-</block>
+</shadow>
 </value>
 <next>
 <block type="test_string_argument">
 <value name="arg">
-<block type="text">
+<shadow type="text">
 <field name="TEXT">okay</field>
-</block>
+</shadow>
 </value>
 <next>
 <block type="test_enum_argument">
 <field name="arg">TestEnum.testValue1</field>
 <next>
 <block type="test_enum_function_argument">
-<field name="arg">EnumWithValueBlock.testValue1</field>
+<field name="arg">EnumWithValueBlock.testValue2</field>
 <next>
 <block type="test_multiple_arguments">
 <value name="arg1">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">2</field>
-</block>
+</shadow>
 </value>
 <value name="arg2">
-<block type="logic_boolean">
+<shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
-</block>
+</shadow>
 </value>
 </block>
 </next>
@@ -51,5 +51,6 @@
 </next>
 </block>
 </next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </xml>

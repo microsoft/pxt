@@ -39,18 +39,38 @@ namespace pxt {
             }
         }
     }
-    export var reportError: (msg: string, data: any) => void = function (m, d) {
+    export var reportError: (cat: string, msg: string, data?: Map<number | string>) => void = function (cat, msg, data) {
         if (console) {
-            console.error(m);
-            if (d) {
+            console.error(`${cat}: ${msg}`);
+            if (data) {
                 try {
-                    pxt.log(JSON.stringify(d, null, 2))
+                    pxt.log(JSON.stringify(data, null, 2))
                 } catch (e) { }
             }
         }
     }
 
-    export var tickEvent: (id: string) => void = function (id) {
+    /**
+     * Time an event by including the time between this call 
+     * and a later 'tickEvent' call for the same event in the properties sent with the event.
+     */
+    export var timeEvent: (id: string) => void = function (id) { }
+    /**
+     * Track an event.
+     */
+    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) { }
+
+    let activityEvents: Map<number> = {};
+    const tickActivityDebounced = Util.debounce(() => {
+        tickEvent("activity", activityEvents);
+        activityEvents = {};
+    }, 60000, false);
+    /**
+     * Ticks activity events. This event gets aggregated and eventually gets sent.
+     */
+    export function tickActivity(...ids: string[]) {
+        ids.forEach(id =>  activityEvents[id] = (activityEvents[id] || 0) + 1);
+        tickActivityDebounced();
     }
 
     export interface WebConfig {
@@ -100,29 +120,17 @@ namespace pxt {
         else if (!webConfig) webConfig = localWebConfig()
     }
 
-    export type CompileTarget = pxtc.CompileTarget;
+    export interface CompileTarget extends pxtc.CompileTarget {
+        preferredEditor?: string; // used to indicate preferred editor to show code in
+    }
 
     export interface Host {
         readFile(pkg: Package, filename: string): string;
-        writeFile(pkg: Package, filename: string, contents: string): void;
+        writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
         cacheGetAsync(id: string): Promise<string>; // null if not found
-    }
-
-    export interface TargetVersions {
-        target: string;
-        pxt: string;
-        tag?: string;
-        branch?: string;
-        commits?: string; // URL
-    }
-
-    export interface TargetBundle extends AppTarget {
-        bundledpkgs: Map<Map<string>>;
-        bundleddirs: string[];
-        versions: TargetVersions;
     }
 
     // this is for remote file interface to packages
@@ -207,7 +215,7 @@ namespace pxt {
 
         saveConfig() {
             let cfg = JSON.stringify(this.config, null, 4) + "\n"
-            this.host().writeFile(this, configName, cfg)
+            this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
         }
 
         private resolveVersionAsync() {
@@ -231,9 +239,9 @@ namespace pxt {
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
-                            let confStr = this.readFile(configName)
+                            let confStr = this.readFile(pxt.CONFIG_NAME)
                             if (!confStr)
-                                U.userError(`package ${this.id} is missing ${configName}`)
+                                U.userError(`package ${this.id} is missing ${pxt.CONFIG_NAME}`)
                             this.parseConfig(confStr)
                             if (this.level != 0)
                                 this.config.installedVersion = this.version()
@@ -260,12 +268,57 @@ namespace pxt {
                     this.config.name, minVer, appTarget.versions.target))
         }
 
+        upgradePackage(pkg: string, val: string): string {
+            if (val != "*") return pkg;
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            let newPackage = pkg;
+            if (upgrades) {
+                upgrades.filter(rule => rule.type == "package")
+                    .forEach((rule) => {
+                        let pkgRule = rule as ts.pxtc.PackageUpgradePolicy;
+                        for (let match in pkgRule.map) {
+                            if (newPackage == match) {
+                                newPackage = pkgRule.map[match];
+                            }
+                        }
+                    });
+            }
+            return newPackage;
+        }
+
+        upgradeAPI(fileContents: string): string {
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            let updatedContents = fileContents;
+            if (upgrades) {
+                upgrades.filter(rule => rule.type == "api")
+                    .forEach((rule) => {
+                        let apiRule = rule as ts.pxtc.APIUpgradePolicy;
+                        for (let match in apiRule.map) {
+                            let regex = new RegExp(match, 'g');
+                            updatedContents = updatedContents.replace(regex, apiRule.map[match]);
+                        }
+                    });
+            }
+            return updatedContents;
+        }
+
         private parseConfig(str: string) {
             let cfg = <PackageConfig>JSON.parse(str)
             this.config = cfg;
-            // temp patch for cloud corrupted configs
-            for (let dep in this.config.dependencies)
-                if (/^microbit-(led|music|game|pins|serial)$/.test(dep)) delete this.config.dependencies[dep];
+
+            let currentConfig = JSON.stringify(this.config);
+            for (let dep in this.config.dependencies) {
+                let value = this.upgradePackage(dep, this.config.dependencies[dep]);
+                if (value != dep) {
+                    delete this.config.dependencies[dep];
+                    if (value) {
+                        this.config.dependencies[value] = "*";
+                    }
+                }
+            }
+            if (JSON.stringify(this.config) != currentConfig) {
+                this.saveConfig();
+            }
             this.validateConfig();
         }
 
@@ -275,7 +328,7 @@ namespace pxt {
             let initPromise = Promise.resolve()
 
             this.isLoaded = true
-            let str = this.readFile(configName)
+            let str = this.readFile(pxt.CONFIG_NAME)
             if (str == null) {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id)
@@ -318,7 +371,7 @@ namespace pxt {
                     files[this.id + "/" + fn] = this.readFile(fn)
                 }
             }
-            files[this.id + "/" + configName] = this.readFile(configName)
+            files[this.id + "/" + pxt.CONFIG_NAME] = this.readFile(pxt.CONFIG_NAME)
         }
 
         /**
@@ -405,12 +458,22 @@ namespace pxt {
 
             let generateFile = (fn: string, cont: string) => {
                 if (this.config.files.indexOf(fn) < 0)
-                    U.userError(lf("please add '{0}' to \"files\" in {1}", fn, configName))
+                    U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
-                    pxt.debug(lf("updating {0} (size={1})...", fn, cont.length))
+                    pxt.debug(`updating ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, cont)
                 }
+            }
+
+            let upgradeFile = (fn: string, cont: string) => {
+                let updatedCont = this.upgradeAPI(cont);
+                if (updatedCont != cont) {
+                    // save file (force write) 
+                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
+                    this.host().writeFile(this, fn, updatedCont, true)
+                }
+                return updatedCont;
             }
 
             return this.loadAsync()
@@ -432,13 +495,15 @@ namespace pxt {
                 .then(() => this.config.binaryonly ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
+                        files = U.mapMap(files, upgradeFile);
                         let headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,
                             status: "unpublished",
                             scriptId: this.config.installedVersion,
-                            cloudId: "pxt/" + appTarget.id,
-                            editor: U.lookup(files, "main.blocks") ? "blocksprj" : "tsprj"
+                            cloudId: pxt.CLOUD_ID + appTarget.id,
+                            editor: target.preferredEditor ? target.preferredEditor : (U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME),
+                            targetVersion: pxt.appTarget.versions ? pxt.appTarget.versions.target : undefined
                         })
                         let programText = JSON.stringify(files)
                         return lzmaCompressAsync(headerString + programText)
@@ -499,7 +564,7 @@ namespace pxt {
                             cfg.dependencies[k] = "*"
                         }
                     })
-                    files[configName] = JSON.stringify(cfg, null, 4)
+                    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
                     for (let f of this.getFiles()) {
                         let str = this.readFile(f)
                         if (str == null)
@@ -526,7 +591,7 @@ namespace pxt {
                                 let part = res[k] = p[k];
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
                                     let f = d.readFile(part.visual.image);
-                                    if (!f) pxt.reportError(`invalid part definition, missing visual ${part.visual.image}`,undefined)
+                                    if (!f) pxt.reportError("parts", "invalid part definition", { "error": `missing visual ${part.visual.image}` })
                                     part.visual.image = `data:image/svg+xml,` + encodeURI(f);
                                 }
                             }
@@ -541,7 +606,8 @@ namespace pxt {
 
     }
 
-    export const configName = "pxt.json"
-    export const blocksProjectName = "blocksprj";
-    export const javaScriptProjectName = "tsprj";
+    export const CONFIG_NAME = "pxt.json"
+    export const CLOUD_ID = "pxt/"
+    export const BLOCKS_PROJECT_NAME = "blocksprj";
+    export const JAVASCRIPT_PROJECT_NAME = "tsprj";
 }

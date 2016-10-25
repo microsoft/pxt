@@ -45,7 +45,7 @@ namespace pxt.runner {
         }
 
         writeFile(module: pxt.Package, filename: string, contents: string): void {
-            if (filename == pxt.configName)
+            if (filename == pxt.CONFIG_NAME)
                 return; // ignore config writes
             throw Util.oops("trying to write " + module + " / " + filename)
         }
@@ -77,7 +77,7 @@ namespace pxt.runner {
                         return Promise.resolve()
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
-                        let cfg = JSON.parse(files[pxt.configName]) as pxt.PackageConfig;
+                        let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         pkg.verArgument().split(',').forEach(d => {
                             let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(d);
                             if (m)
@@ -87,7 +87,7 @@ namespace pxt.runner {
                         });
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
-                        files[pxt.configName] = JSON.stringify(cfg, null, 4);
+                        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
                         epkg.setFiles(files);
                         return Promise.resolve();
                     } else {
@@ -115,7 +115,7 @@ namespace pxt.runner {
     function emptyPrjFiles() {
         let p = appTarget.tsprj
         let files = U.clone(p.files)
-        files[pxt.configName] = JSON.stringify(p.config, null, 4) + "\n"
+        files[pxt.CONFIG_NAME] = JSON.stringify(p.config, null, 4) + "\n"
         return files
     }
 
@@ -151,17 +151,21 @@ namespace pxt.runner {
         console.error(msg)
     }
 
-    function loadPackageAsync(id: string) {
+    function loadPackageAsync(id: string, code?: string) {
         let host = mainPkg.host();
         mainPkg = new pxt.MainPackage(host)
         mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
 
         return host.downloadPackageAsync(mainPkg)
-            .then(() => host.readFile(mainPkg, pxt.configName))
+            .then(() => host.readFile(mainPkg, pxt.CONFIG_NAME))
             .then(str => {
                 if (!str) return Promise.resolve()
-                return mainPkg.installAllAsync()
-                    .catch(e => {
+                return mainPkg.installAllAsync().then( () => {
+                    if (code) {
+                        //Set the custom code if provided for docs
+                        getEditorPkg(mainPkg).files["main.ts"] = code;
+                    }
+                }).catch(e => {
                         showError(lf("Cannot load package: {0}", e.message))
                     })
             });
@@ -266,6 +270,12 @@ namespace pxt.runner {
                     window.open(url, "_blank");
                 }
                 break;
+            case "localtoken":
+                let dm = m as pxsim.SimulatorDocMessage;
+                if (dm && dm.localToken) {
+                    Cloud.localToken = dm.localToken;
+                }
+                break;
         }
     }
 
@@ -318,6 +328,8 @@ namespace pxt.runner {
         window.addEventListener("hashchange", () => {
             renderHash();
         }, false);
+
+        parent.postMessage({type: "sidedocready"}, "*");
 
         // delay load doc page to allow simulator to load first
         setTimeout(() => renderHash(), 5000);
@@ -453,11 +465,11 @@ ${files["main.ts"]}
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
-        return loadPackageAsync(options && options.package ? "docs:" + options.package : null)
+        return loadPackageAsync(options && options.package ? "docs:" + options.package : null, code)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 // compile
-                opts.fileSystem["main.ts"] = code
+                opts.fileSystem["main.ts"] = code;
                 opts.ast = true
                 let resp = pxtc.compile(opts)
                 if (resp.diagnostics && resp.diagnostics.length > 0)

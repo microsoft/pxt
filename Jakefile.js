@@ -90,10 +90,10 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-file('built/blockly.d.ts', [], function() { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
-file('built/pxtparts.d.ts', [], function() { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
-file('built/pxtarget.d.ts', ['built/pxtpackage.d.ts', 'built/pxtparts.d.ts'], function() { ju.cpR('localtypings/pxtarget.d.ts', 'built/pxtarget.d.ts') })
-file('built/pxtpackage.d.ts', [], function() { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
+file('built/blockly.d.ts', ['localtypings/blockly.d.ts'], function () { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
+file('built/pxtparts.d.ts', ['localtypings/pxtparts.d.ts'], function () { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
+file('built/pxtarget.d.ts', ['built/pxtpackage.d.ts', 'built/pxtparts.d.ts', 'localtypings/pxtarget.d.ts'], function () { ju.cpR('localtypings/pxtarget.d.ts', 'built/pxtarget.d.ts') })
+file('built/pxtpackage.d.ts', ['localtypings/pxtpackage.d.ts'], function () { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
 
 compileDir("pxtlib", ["built/pxtarget.d.ts", "built/pxtparts.d.ts", "built/pxtpackage.d.ts", "built/typescriptServices.d.ts"])
 compileDir("pxtblocks", ["built/pxtlib.js", "built/blockly.d.ts"])
@@ -110,7 +110,14 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget",
         "node built/pxt.js uploaddoc",
+        "node built/pxt.js crowdin upload built/strings.json"
     ], { printStdout: true }, complete.bind(this));
+})
+
+task('downloadcrowdin', ["built/pxt.js"], { async:true }, function() {
+    jake.exec([
+        "node built/pxt.js crowdin download strings.json webapp/public/locales"
+    ], { printStdout: true }, complete.bind(this));    
 })
 
 task("lint", [], { async: true }, function () {
@@ -151,10 +158,10 @@ task('updatestrings', ['built/localization.json'])
 
 
 file('built/localization.json', ju.expand1(
-    [   "pxtlib",
+    ["pxtlib",
         "pxtblocks",
         "webapp/src"]
-    ), function () {
+), function () {
     var errCnt = 0;
     var translationStrings = {}
     var translationHelpStrings = {}
@@ -260,6 +267,30 @@ task('monaco-editor', [
     "built/web/vs/language/typescript/src/mode.js"
 ])
 
+
+task('serve', ['default'], { async: true }, function () {
+    let cmdArg = '';
+    if (process.env.sourceMaps === 'true') {
+        cmdArg = '-include-source-maps'
+    }
+    else if (process.env.noBrowser === 'true') {
+        cmdArg = '-no-browser'
+    }
+    else if (process.env.localYotta === 'true') {
+        cmdArg = '-yt'
+    }
+    else if (process.env.cloud === 'true') {
+        cmdArg = '-cloud'
+    }
+    else if (process.env.justServe === 'true') {
+        cmdArg = '-just'
+    }
+    else if (process.env.packaged === 'true') {
+        cmdArg = '-pkg'
+    }
+    cmdIn(this, '../pxt-microbit', 'node ../pxt/built/pxt.js serve ' + cmdArg)
+})
+
 file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], function () {
     console.log(`Updating the monaco editor bits`)
     jake.mkdirP("built/web/vs/editor")
@@ -323,8 +354,10 @@ file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
 })
 
-file('built/web/semantic.css', ["webapp/theme.config", "webapp/site/globals/site.variables"], { async: true }, function () {
-    cmdIn(this, ".", 'node node_modules/less/bin/lessc webapp/style.less built/web/semantic.css --include-path=node_modules/semantic-ui-less:webapp/foo/bar')
+file('built/web/semantic.css', ['built/pxt.js',
+    "theme/style.less", "theme/theme.config", "theme/themes/pxt/globals/site.variables"
+    ], { async: true }, function () {
+    cmdIn(this, ".", 'node built/pxt.js buildcss')
 })
 
 file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {

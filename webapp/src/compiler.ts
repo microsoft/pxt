@@ -63,11 +63,14 @@ export interface CompileOptions {
     native?: boolean;
     debug?: boolean;
     background?: boolean; // not explicitely requested by user (hint for simulator)
+    forceEmit?: boolean;
+    preferredEditor?: string;
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
+    trg.preferredEditor = options.preferredEditor;
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             if (options.debug) {
@@ -75,6 +78,8 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 opts.justMyCode = true
             }
             opts.computeUsedSymbols = true
+            if (options.forceEmit)
+                opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))
                 opts.testMode = true
             return opts

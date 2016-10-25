@@ -1,4 +1,3 @@
-// Code generated using all the blocks that map directly to js
 let item = 0
 for (let i = 0; i < 4; i++) {
     while (true || !(!(false))) {

@@ -2,17 +2,20 @@
 <block type="controls_simple_for">
 <field name="VAR">q</field>
 <value name="TO">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">4</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">1</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
@@ -20,37 +23,46 @@
 </statement>
 <next>
 <block type="controls_simple_for">
-<field name="VAR">q</field>
+<field name="VAR">r</field>
 <value name="TO">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">4</field>
-</block>
+</shadow>
 </value>
 <value name="B">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">1</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>
 <statement name="DO">
 <block type="variables_set">
-<field name="VAR">q</field>
+<field name="VAR">r</field>
 <value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
 <block type="variables_get">
-<field name="VAR">q</field>
+<field name="VAR">r</field>
 </block>
 </value>
 <value name="B">
-<block type="math_number">
+<shadow type="math_number">
 <field name="NUM">8</field>
-</block>
+</shadow>
 </value>
 </block>
 </value>

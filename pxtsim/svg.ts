@@ -1,4 +1,8 @@
 namespace pxsim.svg {
+    export function parseString(xml: string): SVGSVGElement {
+        return new DOMParser().parseFromString(xml, "image/svg+xml").querySelector("svg") as SVGSVGElement;
+    }
+
     export function toDataUri(xml: string): string {
         return 'data:image/svg+xml,' + encodeURI(xml);
     }
@@ -65,6 +69,10 @@ namespace pxsim.svg {
 
     export function fill(el: SVGElement, c: string) {
         (<SVGStylable><any>el).style.fill = c;
+    }
+
+    export function filter(el: SVGElement, c: string) {
+        (<SVGStylable><any>el).style.filter = c;
     }
 
     export function fills(els: SVGElement[], c: string) {
@@ -134,8 +142,10 @@ namespace pxsim.svg {
     export function animate(el: SVGElement, cls: string) {
         svg.addClass(el, cls);
         let p = el.parentElement;
-        p.removeChild(el);
-        p.appendChild(el)
+        if (p) {
+            p.removeChild(el);
+            p.appendChild(el)
+        }
     }
 
     export function mkTitle(txt: string): SVGTitleElement {

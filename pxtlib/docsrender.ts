@@ -1,4 +1,5 @@
 /// <reference path='../typings/marked/marked.d.ts' />
+/// <reference path='../typings/highlightjs/highlightjs.d.ts' />
 /// <reference path='../built/pxtarget.d.ts' />
 /// <reference path="emitter/util.ts"/>
 
@@ -78,6 +79,12 @@ namespace pxt.docs {
         if (typeof marked !== "undefined") return marked;
         if (typeof require === "undefined") return undefined;
         return require("marked");
+    }
+
+    export var requireHighlightJs = () => {
+        if (typeof hljs !== "undefined") return hljs;
+        if (typeof require === "undefined") return undefined;
+        return require("highlight.js");
     }
 
     export interface RenderData {
@@ -249,7 +256,7 @@ namespace pxt.docs {
                 smartypants: true,
                 highlight: function (code, lang) {
                     try {
-                        let hljs = require('highlight.js');
+                        let hljs = requireHighlightJs();
                         if (!hljs) return code;
                         return hljs.highlightAuto(code, [lang.replace('-ignore', '')]).value;
                     }
@@ -375,8 +382,8 @@ namespace pxt.docs {
         });
     }
 
-    export function embedUrl(rootUrl: string, id: string, height?: number): string {
-        const url = `${rootUrl}#sandbox:${id}`;
+    export function embedUrl(rootUrl: string, tag: string, id: string, height?: number): string {
+        const url = `${rootUrl}#${tag}:${id}`;
         let padding = '70%';
         return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`;
     }

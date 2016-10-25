@@ -1,0 +1,121 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">6</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">8</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">9</field>
+</shadow>
+</value>
+<next>
+<block type="variables_change">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">10</field>
+</shadow>
+</value>
+<comment pinned="false">More&#10;&#10;than one&#10;&#10;Comment</comment>
+</block>
+</next>
+<comment pinned="false">Paragraphs from&#10;single-line comments</comment>
+</block>
+</next>
+<comment pinned="false">Whitespace between comments and statement</comment>
+</block>
+</next>
+<comment pinned="false">Mixing it up</comment>
+</block>
+</next>
+<comment pinned="false">Single multi-line</comment>
+</block>
+</next>
+<comment pinned="false">Text at the top&#10;&#10;and the bottom</comment>
+</block>
+</next>
+<comment pinned="false">Multi-line with double asterisks</comment>
+</block>
+</next>
+<comment pinned="false">Multi-line with asterisks</comment>
+</block>
+</next>
+<comment pinned="false">Multi line with no asterisks on body</comment>
+</block>
+</next>
+<comment pinned="false">Multiple Single-line Comments</comment>
+</block>
+</next>
+<comment pinned="false">Single-line comment</comment>
+</block>
+</xml>

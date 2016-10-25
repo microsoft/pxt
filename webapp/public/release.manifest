@@ -5,6 +5,7 @@ CACHE:
 /cdn/main.js
 /cdn/typescript.js
 /cdn/marked/marked.min.js
+/cdn/highlight.js/highlight.pack.js
 /cdn/lzma/lzma_worker-min.js
 /cdn/jquery.js
 /cdn/pxtlib.js
@@ -52,7 +53,6 @@ CACHE:
 /sim/target.json
 
 # External
-https://az416426.vo.msecnd.net/scripts/a/ai.0.js
 https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
   
 NETWORK:

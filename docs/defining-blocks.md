@@ -29,15 +29,16 @@ namespace basic {
 ````
 
 Special attribute annotation like `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
+To have a category appear under the "Advanced" section of the Block Editor toolbox, add the annotation `advanced=true`.
 
 ## Blocks
 
 All **exported** functions with a `blockId` and `block` attribute
-will be available in the Block Editor. 
+will be available in the Block Editor.
 
 ```
-//% blockId=device_show_number 
-//% block="show|number %v" 
+//% blockId=device_show_number
+//% block="show|number %v"
 //% icon="\uf1ec"
 export function showNumber(v: number, interval: number = 150): void
 { }
@@ -49,6 +50,7 @@ export function showNumber(v: number, interval: number = 150): void
 Other optional attributes can also be used:
 * `blockExternalInputs=` forces `External Inputs` rendering
 * `icon` icon character from the icon font to display
+* `advanced=true` causes this block to be placed under the parent category's "More..." subcategory. Useful for hiding advanced or rarely-used blocks by default
 
 ## Block syntax
 
@@ -56,8 +58,8 @@ The `block` attribute specifies how the parameters of the function
 will be organized to create the block.
 
 ```
-block = field, { '|' field } 
-field := string 
+block = field, { '|' field }
+field := string
     | string `%` parameter [ `=` type ]
 parameter = string
 type = string
@@ -78,6 +80,46 @@ The following types are supported in function signatures that are meant to be ex
 * enums (see below)
 * custom classes that are also exported
 * arrays of the above
+
+## Callbacks with Parameters
+
+APIs that take in a callback function will have that callback converted into a statement input.
+If the callback in the API is designed to take in parameters, the best way to map that pattern
+to the blocks is by passing the callback a single parameter with a class type that contains
+all the other values. For example:
+
+```typescript
+
+export class ArgumentClass {
+    argumentA: number;
+    argumentB: string;
+}
+
+//% mutate=true
+//% mutateText="My Arguments"
+//% mutateDefaults="argumentA;argumentA,argumentB"
+// ...
+export function addSomeEventHandler((a: ArgumentClass) => void) { };
+```
+
+In the above example, setting `mutate=true` will cause this API to use Blockly "mutators"
+to let users change what parameters appear in the blocks. Each parameter will be given an
+optional variable field in the block that defines a variable that can be used within the callback.
+The variable fields compile to object destructuring in the TypeScript code. For example:
+
+```typescript
+
+addSomeEventHandler(({argumentA, argumentB}) => {
+
+})
+
+```
+
+For an example of this pattern in action, see the `radio.onDataPacketReceived` block. The other attributes
+related to mutators include:
+
+* `mutateText` - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
+* `mutateDefaults` - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
 
 ## Enums
 
@@ -136,7 +178,7 @@ The JSDoc comment is automatically used as the help for the block.
  * @param interval speed of scroll; eg: 150, 100, 200, -100
 */
 //% help=functions/show-number
-export function showNumber(value: number, interval: number = 150): void 
+export function showNumber(value: number, interval: number = 150): void
 { }
 ````
 
@@ -152,7 +194,7 @@ Blocks work best with "flat" C-style APIs. However, it is possible to expose ins
 ```
 //%
 class Message {
-    ...    
+    ...
     //% blockId="message_get_text" block="%this|text"
     public getText() { ... }
 }
@@ -185,7 +227,7 @@ flag to disable showing it in auto-completion.
 
 ## Grouping
 
-Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter, 
+Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter,
 this macro allows to definte groups of blocks. The default ``blockGap`` value is ``8``.
 
 ```
@@ -195,13 +237,26 @@ this macro allows to definte groups of blocks. The default ``blockGap`` value is
 
 ## Testing your Blocks
 
-We recommend to build your block APIs iteratively and try it out in the editor to get the "feel of it". 
+We recommend to build your block APIs iteratively and try it out in the editor to get the "feel of it".
 To do so, the ideal setup is:
 - run your target locally using ``pxt serve``
 - keep a code editor with the TypeScript opened where you can edit the APIs
 - refresh the browser and try out the changes on a dummy program.
 
 Interrestingly, you can design your entire API without implementing it!
+
+## Deprecating Blocks
+
+To deprecate an existing API, you can add the **deprecated** attribute like so:
+
+```
+//% deprecated=true
+```
+
+This will cause the API to still be usable in TypeScript, but prevent the block from appearing in the
+Blockly toolbox. If a user tries to load a project that uses the old API, the project will still load
+correctly as long as the TypeScript API is present. Any deprecated blocks in the project will appear in
+the editor but not the toolbox.
 
 ## API design Tips and Tricks
 

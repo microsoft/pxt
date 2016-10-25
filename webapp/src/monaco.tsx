@@ -38,6 +38,11 @@ export class Editor extends srceditor.Editor {
 
     openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
+        const header = this.parent.state.header;
+        if (header) {
+            header.editor = pxt.BLOCKS_PROJECT_NAME;
+            header.pubCurrent = false
+        }
 
         let promise = Promise.resolve().then(() => {
             let blockFile = this.currFile.getVirtualFileName();
@@ -107,7 +112,7 @@ export class Editor extends srceditor.Editor {
                                 console.log(js.replace(cleanRx, ''));
                                 console.log('-- roundtrip:');
                                 console.log(b2jsr.source.replace(cleanRx, ''));
-                                pxt.reportError('decompilation failure', {
+                                pxt.reportError("compile", "decompilation failure", {
                                     js: js,
                                     blockly: xml,
                                     jsroundtrip: b2jsr.source
@@ -147,7 +152,7 @@ export class Editor extends srceditor.Editor {
                 pxt.tickEvent("typescript.keepText");
             } else if (b == 2) {
                 pxt.tickEvent("typescript.removeBlocksFile");
-                this.parent.removeFile(bf);
+                this.parent.removeFile(bf, true);
             } else {
                 pxt.tickEvent("typescript.discardText");
                 this.parent.setFile(bf);
@@ -165,7 +170,9 @@ export class Editor extends srceditor.Editor {
 
     menu(): JSX.Element {
         if (!this.hasBlocks()) return null
-        return <sui.Button class="ui floating" textClass="ui landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() } />
+        return <sui.Item textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
+                tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left"
+         />
     }
 
     undo() {
@@ -479,6 +486,13 @@ export class Editor extends srceditor.Editor {
 
         if (this.fileType == FileType.Markdown)
             this.parent.setSideMarkdown(file.content);
+
+        this.currFile.setForceChangeCallback((from: string, to:string) => {
+            if (from != to) {
+                pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
+                this.loadFile(this.currFile);
+            }
+        });
     }
 
     snapshotState() {
@@ -538,7 +552,7 @@ export class Editor extends srceditor.Editor {
 
         if (file && file.diagnostics) {
             for (let d of file.diagnostics) {
-                if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0) continue;
+                if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0 || this.errorLines.length > 0) continue;
                 let viewZoneId: any = null;
                 (this.editor as any).changeViewZones(function (changeAccessor: any) {
                     let domNode = document.createElement('div');

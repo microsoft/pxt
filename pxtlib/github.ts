@@ -49,7 +49,7 @@ namespace pxt.github {
     }
 
     export function pkgConfigAsync(repopath: string, tag = "master") {
-        let url = "https://raw.githubusercontent.com/" + repopath + "/" + tag + "/" + pxt.configName
+        let url = "https://raw.githubusercontent.com/" + repopath + "/" + tag + "/" + pxt.CONFIG_NAME
         return U.httpGetTextAsync(url)
             .then(v => JSON.parse(v) as pxt.PackageConfig)
     }
@@ -68,11 +68,11 @@ namespace pxt.github {
                 if (current.sha === sha) return Promise.resolve(current)
                 else {
                     console.log(`Downloading ${repoWithTag} -> ${sha}`)
-                    return U.httpGetTextAsync(pref + pxt.configName)
+                    return U.httpGetTextAsync(pref + pxt.CONFIG_NAME)
                         .then(pkg => {
                             current.files = {}
                             current.sha = ""
-                            current.files[pxt.configName] = pkg
+                            current.files[pxt.CONFIG_NAME] = pkg
                             let cfg: pxt.PackageConfig = JSON.parse(pkg)
                             return Promise.map(cfg.files.concat(cfg.testFiles || []),
                                 fn => U.httpGetTextAsync(pref + fn)

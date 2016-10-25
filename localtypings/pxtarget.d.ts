@@ -5,6 +5,7 @@ declare namespace pxt {
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
         forkof?: string; // id of a target we're based on
+        nickname?: string; // friendly id used when generating files, folders, etc... forkof or id is used instead if missing
         name: string;
         description?: string;
         corepkg: string;
@@ -58,7 +59,10 @@ declare namespace pxt {
     interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
+        sharing?: boolean;
+        publishing?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
+        githubPackages?: boolean; // allow searching github for packages
     }
 
     interface AppSimulator {
@@ -91,6 +95,7 @@ declare namespace pxt {
         name?: string;
         title?: string;
         description?: string;
+        defaultLocale?: string;
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
@@ -108,6 +113,8 @@ declare namespace pxt {
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
+        downloadClass?: string;
+        invertedMenu?: boolean;
         locales?: Map<AppTheme>;
         cardLogo?: string;
         appLogo?: string;
@@ -115,8 +122,9 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbHelp?: SpecializedResource[];
-        usbDocs?: string
-        browserSupport?: SpecializedResource[];
+        usbDocs?: string;
+        exportVsCode?: boolean;
+        browserSupport?: SpecializedResource[];        
     }
 
     interface DocMenuEntry {
@@ -126,6 +134,19 @@ declare namespace pxt {
         subitems?: DocMenuEntry[];
     }
 
+    interface TargetVersions {
+        target: string;
+        pxt: string;
+        tag?: string;
+        branch?: string;
+        commits?: string; // URL
+    }
+
+    interface TargetBundle extends AppTarget {
+        bundledpkgs: Map<Map<string>>;
+        bundleddirs: string[];
+        versions: TargetVersions;
+    }
 }
 
 declare namespace ts.pxtc {
@@ -139,6 +160,7 @@ declare namespace ts.pxtc {
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
+        upgrades?: UpgradePolicy[];
     }
 
     interface CompileOptions {
@@ -149,6 +171,7 @@ declare namespace ts.pxtc {
         hexinfo: any;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
+        forceEmit?: boolean;
         ast?: boolean;
         breakpoints?: boolean;
         justMyCode?: boolean;
@@ -156,6 +179,20 @@ declare namespace ts.pxtc {
 
         embedMeta?: string;
         embedBlob?: string; // base64
+    }
+
+    interface UpgradePolicy {
+        type: string;
+    }
+
+    interface PackageUpgradePolicy extends UpgradePolicy {
+        type: "package";
+        map: pxt.Map<string>;
+    }
+
+    interface APIUpgradePolicy extends UpgradePolicy {
+        type: "api";
+        map: pxt.Map<string>;
     }
 
     interface FuncInfo {

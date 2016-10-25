@@ -17,8 +17,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 
 function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let hex = resp.outfiles[pxtc.BINARY_HEX]
-    let sanitizedName = pkg.mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
-    let fn = pxt.appTarget.id + "-" + sanitizedName + ".hex"
+    let fn = pkg.genFileName(".hex");
     pxt.debug('saving ' + fn)
     let url = pxt.BrowserUtils.browserDownloadText(
         hex,
@@ -26,6 +25,15 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         pxt.appTarget.compile.hexMimeType,
         e => core.errorNotification(lf("saving file failed..."))
     );
+
+    if (!resp.success) {
+        return core.confirmAsync({
+            header: lf("Compilation failed"),
+            body: lf("Ooops, looks like there are errors in your program."),
+            hideAgree: true,
+            disagreeLbl: lf("Close")
+        }).then(() => {});
+    }
 
     let uploader = !!pxt.storage.getLocal("uploader");
     if (uploader) {
@@ -70,6 +78,18 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         }
     ];
 
+    if ((pxt.appTarget.appTheme.exportVsCode || pxt.options.debug) && (pxt.BrowserUtils.isMac() || pxt.BrowserUtils.isWindows() || pxt.BrowserUtils.isLinux())) {
+        instructions.push({
+            title: lf("(Optional) Edit your code from Visual Studio Code."),
+            body: lf("Install <a href='https://nodejs.org/en/download/' target='_blank'>Node.JS</a> and <a href='http://code.visualstudio.com/Download' target='_blank'>Visual Studio Code</a>, then run:") + `
+<pre><code>
+npm install -g pxt
+pxt target ${pxt.appTarget.id}
+pxt extract --code ${pxt.appTarget.nickname}-YOUR-PROJECT-NAME.hex
+</code></pre>`
+        });
+    }
+
     let usbImagePath = namedUsbImage("connection");
     let docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
@@ -111,8 +131,16 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         url: "http://localhost:3232/api/deploy",
         headers: { "Authorization": Cloud.localToken },
         method: "POST",
-        data: resp
-    }).then(r => { });
+        data: resp,
+        allowHttpErrors: true // To prevent "Network request failed" warning in case of error. We're not actually doing network requests in localhost scenarios
+    }).then(r => {
+        if (r.statusCode !== 200) {
+            core.errorNotification(lf("There was a problem, please try again"));
+        } else if (r.json["boardCount"] === 0) {
+            core.warningNotification(lf("Please connect your {0} to your computer and try again", pxt.appTarget.appTheme.boardName));
+        }
+    });
+
     if (/quickflash/i.test(window.location.href))
         return hwdbg.partialFlashAsync(resp, deploy)
     else

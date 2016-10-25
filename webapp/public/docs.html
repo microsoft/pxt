@@ -68,6 +68,7 @@
 
 <body>
     <style type="text/css">
+        @import "/cdn/highlight.js/styles/vs.css";
         @import "/cdn/semantic.css";
         @import "/cdn/icons.css";
     </style>
@@ -77,15 +78,15 @@
     <div id="content" class="ui container">
         <i class="spinner loading icon"></i>
     </div>
-<!-- start Mixpanel --><script type="text/javascript">(function(e,b){if(!b.__SV){var a,f,i,g;window.mixpanel=b;b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config reset people.set people.set_once people.increment people.append people.union people.track_charge people.clear_charges people.delete_user".split(" ");
-for(g=0;g<i.length;g++)f(c,i[g]);b._i.push([a,e,d])};b.__SV=1.2;a=e.createElement("script");a.type="text/javascript";a.async=!0;a.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?MIXPANEL_CUSTOM_LIB_URL:"file:"===e.location.protocol&&"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//)?"https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js":"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";f=e.getElementsByTagName("script")[0];f.parentNode.insertBefore(a,f)}})(document,window.mixpanel||[]);
-mixpanel.init("762fef19c053a0ea4cec43d2fecae76e");</script><!-- end Mixpanel -->    
-    <script>
+
+    <script>   
         // This line gets patched up by the cloud
         var pxtConfig = null;
     </script>
+    <!-- @include apptracking.html -->
     <script type="text/javascript" src="/cdn/lzma/lzma_worker-min.js"></script>
     <script type="text/javascript" src="/cdn/marked/marked.min.js"></script>
+    <script type="text/javascript" src="/cdn/highlight.js/highlight.pack.js"></script>
     <script type="text/javascript" src="/cdn/jquery.js"></script>
     <script type="text/javascript" src="/cdn/typescript.js"></script>
     <script type="text/javascript" src="/cdn/blockly/blockly_compressed.js"></script>
@@ -104,6 +105,7 @@ mixpanel.init("762fef19c053a0ea4cec43d2fecae76e");</script><!-- end Mixpanel -->
         var content = document.getElementById('content');        
         ksRunnerReady(function() {
             pxt.docs.requireMarked = function() { return marked; }
+            pxt.docs.requireHighlightJs = function() { return hljs; }
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href); 
             var code = /code=([^&?]+)/i.exec(window.location.href);
             var md = /md=([^&?]+)/i.exec(window.location.href);

@@ -27,6 +27,7 @@ export class File {
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
     virtualSource: File;
+    forceChangeCallback: ((from: string, to: string) => void);
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
@@ -76,10 +77,11 @@ export class File {
         data.invalidate("open-meta:" + this.getName())
     }
 
-    setContentAsync(newContent: string) {
+    setContentAsync(newContent: string, force?: boolean) {
         Util.assert(newContent !== undefined);
         this.inSyncWithEditor = true;
         if (newContent != this.content) {
+            let prevContent = this.content;
             this.inSyncWithDisk = false;
             this.content = newContent;
             this.updateStatus();
@@ -89,11 +91,16 @@ export class File {
                         this.inSyncWithDisk = true;
                         this.updateStatus();
                     }
+                    if (force && this.forceChangeCallback) this.forceChangeCallback(prevContent, newContent);
                 })
         } else {
             this.updateStatus();
             return Promise.resolve()
         }
+    }
+
+    setForceChangeCallback(callback: (from: string, to: string) => void) {
+        this.forceChangeCallback = callback;
     }
 }
 
@@ -123,7 +130,7 @@ export class EditorPackage {
     }
 
     updateConfigAsync(update: (cfg: pxt.PackageConfig) => void) {
-        let cfgFile = this.files[pxt.configName]
+        let cfgFile = this.files[pxt.CONFIG_NAME]
         if (cfgFile) {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
@@ -225,7 +232,7 @@ export class EditorPackage {
     saveFilesAsync() {
         if (!this.header) return Promise.resolve();
 
-        let cfgFile = this.files[pxt.configName]
+        let cfgFile = this.files[pxt.CONFIG_NAME]
         if (cfgFile) {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
@@ -277,9 +284,14 @@ class Host
         return file ? file.content : null
     }
 
-    writeFile(module: pxt.Package, filename: string, contents: string): void {
-        if (filename == pxt.configName)
-            return; // ignore config writes
+    writeFile(module: pxt.Package, filename: string, contents: string, force?: boolean): void {
+        if (filename == pxt.CONFIG_NAME || force) {
+            // only write config writes
+            let epkg = getEditorPkg(module)
+            let file = epkg.files[filename];
+            file.setContentAsync(contents, force).done();
+            return;
+        }
         throw Util.oops("trying to write " + module + " / " + filename)
     }
 
@@ -352,6 +364,12 @@ export function mainEditorPkg() {
     return getEditorPkg(mainPkg)
 }
 
+export function genFileName(extension: string): string {
+    const sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
+    const fn = `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${sanitizedName}${extension}`;
+    return fn;
+}
+
 export function allEditorPkgs() {
     return getEditorPkg(mainPkg).pkgAndDeps()
 }
@@ -370,7 +388,7 @@ export function loadPkgAsync(id: string) {
 
     return theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
-        .then(() => theHost.readFile(mainPkg, pxt.configName))
+        .then(() => theHost.readFile(mainPkg, pxt.CONFIG_NAME))
         .then(str => {
             if (!str) return Promise.resolve()
             return mainPkg.installAllAsync()

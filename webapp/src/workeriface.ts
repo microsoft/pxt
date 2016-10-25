@@ -35,10 +35,10 @@ export function wrap(send: (v: any) => void): Iface {
             let id = "" + msgId++
             pendingMsgs[id] = v => {
                 if (!v) {
-                    pxt.reportError("no worker response", null)
+                    pxt.reportError("worker", "no response")
                     reject(new Error("no response"))
                 } else if (v.errorMessage) {
-                    pxt.reportError("worker response: " + v.errorMessage, null)
+                    pxt.reportError("worker", "response: " + v.errorMessage)
                     reject(new Error(v.errorMessage))
                 } else {
                     resolve(v)

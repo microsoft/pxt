@@ -1309,7 +1309,7 @@ namespace ObjLit {
 
 function testBitSize() {
     msg("testBitSize")
-    
+
     u8 = 10 * 100
     control.assert(u8 == 232)
     u8 = 255
@@ -1328,6 +1328,76 @@ function testBitSize() {
     control.assert(i16 == 16960)
     i16 = -1000 * 1000
     control.assert(i16 == -16960)
+}
+
+namespace ObjectDestructuring {
+    class X {
+        public a: number;
+        public b: string;
+        public c: boolean;
+        public d: Y;
+    }
+
+    class Y {
+        public e: number;
+        public f: number;
+    }
+
+    function testFunction(callBack: (x: X) => void) {
+        const test = new X();
+        test.a = 17;
+        test.b = "okay";
+        test.c = true;
+
+        const subTest = new Y();
+        subTest.e = 18;
+        subTest.f = 19;
+
+        test.d = subTest;
+
+        callBack(test);
+    }
+
+    export function run() {
+        glb1 = 0;
+
+        testFunction(({}) => {
+            glb1 = 1;
+        });
+
+        control.assert(glb1 === 1)
+
+        testFunction(({a}) => {
+            control.assert(a === 17);
+            glb1 = 2;
+        })
+
+        control.assert(glb1 === 2);
+
+        testFunction(({a: hello}) => {
+            control.assert(hello === 17);
+            glb1 = 3;
+        })
+
+        control.assert(glb1 === 3);
+
+        testFunction(({a, b, c}) => {
+            control.assert(a === 17);
+            control.assert(b === "okay");
+            control.assert(c);
+            glb1 = 4;
+        })
+
+        control.assert(glb1 === 4);
+
+        testFunction(({d: {e, f}}) => {
+            control.assert(e === 18);
+            control.assert(f === 19);
+            glb1 = 5;
+        })
+
+        control.assert(glb1 === 5);
+    }
 }
 
 
@@ -1379,6 +1449,7 @@ testLambdasWithMoreParams()
 Ifaces.run()
 ObjLit.run()
 testBitSize()
+ObjectDestructuring.run();
 
 
 msg("test top level code")

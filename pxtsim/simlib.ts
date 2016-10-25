@@ -115,6 +115,7 @@ namespace pxsim {
     }
 
     export namespace AudioContextManager {
+        let _frequency = 0;
         let _context: any; // AudioContext
         let _vco: any; // OscillatorNode;
         let _vca: any; // GainNode;
@@ -138,10 +139,17 @@ namespace pxsim {
 
         export function stop() {
             if (_vca) _vca.gain.value = 0;
+            _frequency = 0;
+        }
+
+        export function frequency(): number {
+            return _frequency;
         }
 
         export function tone(frequency: number, gain: number) {
             if (frequency <= 0) return;
+            _frequency = frequency;
+
             let ctx = context();
             if (!ctx) return;
 
@@ -339,7 +347,7 @@ namespace pxsim.visuals {
 
     export type WireColor =
         "black" | "white" | "gray" | "purple" | "blue" | "green" | "yellow" | "orange" | "red" | "brown" | "pink";
-    export const GPIO_WIRE_COLORS = ["pink", "orange", "yellow", "green", "purple" ];
+    export const GPIO_WIRE_COLORS = ["pink", "orange", "yellow", "green", "purple"];
     export const WIRE_COLOR_MAP: Map<string> = {
         black: "#514f4d",
         white: "#fcfdfc",
