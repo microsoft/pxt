@@ -733,6 +733,12 @@ html {
     }
 }
 
+@media only screen and (max-width:55em) {
+    #maineditor {
+        top:4.5rem !important;
+    }
+}
+
 .ui.fluid.button.half{
     width:50% !important;
 }
