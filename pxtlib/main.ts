@@ -81,7 +81,7 @@ namespace pxt {
         pxtVersion: string; // "0.3.8",
         pxtRelId: string; // "zstad",
         pxtCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zstad/c/",
-        targetUrl: string; // "https://codethemicrobit.com"
+        targetUrl: string; // "https://pxt.microbit.org"
         targetVersion: string; // "0.2.108",
         targetRelId: string; // "zowrj",
         targetCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zowrj/c/",
