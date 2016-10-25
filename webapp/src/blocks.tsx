@@ -120,7 +120,6 @@ export class Editor extends srceditor.Editor {
 
     private reportDeprecatedBlocks() {
         const deprecatedMap: {[index: string]: FoundState } = {};
-        let deprecatedFound = false;
 
         this.blockInfo.blocks.forEach(symbolInfo => {
             if (symbolInfo.attributes.deprecated) {
@@ -131,18 +130,19 @@ export class Editor extends srceditor.Editor {
         this.editor.getAllBlocks().forEach(block => {
             if (deprecatedMap[block.type]) {
                 deprecatedMap[block.type] = FoundState.IsPresent;
-                deprecatedFound = true;
             }
         });
 
-        if (deprecatedFound) {
-            for (const block in deprecatedMap) {
-                if (deprecatedMap[block] === FoundState.MaybePresent) {
-                    delete deprecatedMap[block];
-                }
-            }
+        const foundBlocks: string[] = []
 
-            pxt.tickEvent("blocks.usingDeprecated", deprecatedMap);
+        for (const block in deprecatedMap) {
+            if (deprecatedMap[block] === FoundState.IsPresent) {
+                foundBlocks.push(block);
+            }
+        }
+
+        if (foundBlocks.length) {
+            pxt.tickEvent("blocks.usingDeprecated", foundBlocks);
         }
     }
 
