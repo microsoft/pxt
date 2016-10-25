@@ -170,9 +170,10 @@ namespace pxt.cpp {
             return name.trim().replace(/_$/, "")
         }
 
-        for (let pkg of mainPkg.sortedDeps()) {
+        for (const pkg of mainPkg.sortedDeps()) {
             if (pkg.getFiles().indexOf(constsName) >= 0) {
-                let src = pkg.host().readFile(pkg, constsName)
+                const src = pkg.host().readFile(pkg, constsName)
+                Util.assert(!!src, `${constsName} not found in ${pkg.id}`)
                 src.split(/\r?\n/).forEach(ln => {
                     let m = /^\s*(\w+) = (.*),/.exec(ln)
                     if (m) {
