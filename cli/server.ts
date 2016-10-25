@@ -585,7 +585,9 @@ function openUrl(startUrl: string, browser: string) {
 function getBrowserLocation(browser: string) {
     let browserPath: string;
 
-    if (browser === "chrome") {
+    const normalizedBrowser = browser.toLowerCase();
+
+    if (normalizedBrowser === "chrome") {
         switch (os.platform()) {
             case "win32":
             case "win64":
@@ -601,11 +603,26 @@ function getBrowserLocation(browser: string) {
                 break;
         }
     }
-    else if (browser === "firefox") {
+    else if (normalizedBrowser === "firefox") {
         browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
+        switch (os.platform()) {
+            case "win32":
+            case "win64":
+                browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
+                break;
+            case "darwin":
+                browserPath = "/Applications/Firefox.app";
+                break;
+            case "linux":
+            default:
+                break;
+        }
     }
-    else if (browser === "ie") {
+    else if (normalizedBrowser === "ie") {
         browserPath = "C:/Program Files/Internet Explorer/iexplore.exe";
+    }
+    else if (normalizedBrowser === "safari") {
+        browserPath = "/Applications/Safari.app/Contents/MacOS/Safari";
     }
 
     if (browserPath && fs.existsSync(browserPath)) {
