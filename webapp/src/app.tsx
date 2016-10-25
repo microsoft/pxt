@@ -1270,8 +1270,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.exportAsync()
             .then(fileContent => {
                 pxt.tickEvent("sandbox.openfulleditor");
-                let editUrl = `${rootUrl}#project:${fileContent}`;
-                window.open(editUrl, '_parent')
+                const editUrl = `${rootUrl}#project:${fileContent}`;
+                window.open(editUrl, '_blank')
             })
     }
 

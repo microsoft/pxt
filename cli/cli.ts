@@ -1480,7 +1480,7 @@ function buildSemanticUIAsync() {
         cmd: "node",
         args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
     }).then(() => {
-        let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff2")
+        let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
         let url = "url(data:application/font-woff;charset=utf-8;base64,"
             + fontFile.toString("base64") + ") format('woff')"
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
@@ -2078,10 +2078,6 @@ pxt_modules
         "isTestCommand": true,
         "problemMatcher": "$tsc",
         "args": ["build"]
-    }, {
-        "taskName": "publish",
-        "problemMatcher": "$tsc",
-        "args": ["publish"]
     }]
 }
 `
@@ -3744,11 +3740,13 @@ export function extractAsync(...args: string[]) {
                     console.log("wrote " + fullname)
                 }
 
-                if (vscode)
-                    spawnAsync({
-                        cmd: "code",
-                        args: [dirname]
-                    }).catch(() => { });
+                // start installing in the background
+                child_process.exec(`pxt install`, { cwd: dirname });
+
+                if (vscode) {
+                    pxt.debug('launching code...')
+                    child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..                    
+                }
             }
         })
 }
