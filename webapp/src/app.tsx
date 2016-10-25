@@ -815,6 +815,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             });
     }
 
+    openTypeScriptAsync(): Promise<void> {
+        return this.saveTypeScriptAsync(true)
+            .then(() => {
+                const header = this.state.header;
+                if (header) {
+                    header.editor = pxt.JAVASCRIPT_PROJECT_NAME;
+                    header.pubCurrent = false
+                }
+            });
+    }
+
     public typecheckNow() {
         this.saveFile(); // don't wait for saving to backend store to finish before typechecking
         this.typecheck()
@@ -1117,6 +1128,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         }
         if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
+            pxt.tickEvent("import.blocks")
             pxt.debug('importing microbit.co.uk blocks project')
             compiler.getBlocksAsync()
                 .then(info => this.newBlocksProjectAsync({
@@ -1124,19 +1136,22 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 }, data.meta.name)).done();
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
+            pxt.tickEvent("import.td")
             pxt.debug('importing microbit.co.uk TD project')
             this.newBlocksProjectAsync({ "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">", "main.ts": "  " }, data.meta.name)
+                .then(() => this.openTypeScriptAsync())
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
                     // this is somewhat hacky...
-                    this.textEditor.overrideFile(text)
-                    this.textEditor.formatCode()
+                    this.textEditor.overrideFile(text);
+                    this.textEditor.formatCode();
                 })
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
             || (!forkid && Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
             || (forkid && data.meta.cloudId == pxt.CLOUD_ID + forkid) // trying to load main target file into white-label
         ) {
+            pxt.tickEvent("import.pxt")
             pxt.debug("importing project")
             let h: InstallHeader = {
                 target: targetId,
