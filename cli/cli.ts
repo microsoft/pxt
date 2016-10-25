@@ -3658,9 +3658,12 @@ export function extractAsync(...args: string[]) {
                     console.log("wrote " + fullname)
                 }
 
+                // start installing in the background
+                child_process.exec(`pxt install`, { cwd: dirname });
+
                 if (vscode) {
                     pxt.debug('launching code...')
-                    child_process.exec(`code ${dirname}`); // notice this without a callback..                    
+                    child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..                    
                 }
             }
         })
