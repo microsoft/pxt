@@ -84,6 +84,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
             body: lf("Install <a href='https://nodejs.org/en/download/' target='_blank'>Node.JS</a> and <a href='http://code.visualstudio.com/Download' target='_blank'>Visual Studio Code</a>, then run:") + `
 <pre><code>
 npm install -g pxt
+pxt target ${pxt.appTarget.id}
 pxt extract --code ${pxt.appTarget.nickname}-YOUR-PROJECT-NAME.hex
 </code></pre>`
         });
