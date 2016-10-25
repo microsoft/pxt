@@ -104,8 +104,8 @@ namespace ts.pxtc {
 ;
 `)
 
-            //if (this.proc.args.length <= 3)
-            //    this.emitLambdaWrapper(this.proc.isRoot)
+            if (this.proc.args.length <= 3)
+                this.emitLambdaWrapper(this.proc.isRoot)
 
             let baseLabel = this.proc.label()
             let bkptLabel = baseLabel + "_bkpt"
